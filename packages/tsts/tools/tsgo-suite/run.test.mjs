@@ -1,6 +1,81 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { fingerprint } from "../test-provenance.mjs";
 import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { caseIdentifier as reportCaseIdentifier, hashCaseIds, inventoryFingerprint, runManifestFingerprint, trimResult } from "./run.mjs";
+
+const testInputLabels = [
+  "accepted-overlay-active", "accepted-overlay-binding", "accepted-overlay-capture", "accepted-overlay-legacy-manifest", "accepted-overlay-plan",
+  "bundled-source-assets", "resolved-typescript-package", "source-pin", "suite-baseline-code", "suite-provenance-helper", "suite-report-verifier",
+  "suite-runner", "suite-sealed-evidence-helper", "suite-source-pin-verifier", "tsts-dist", "tsts-package", "vendored-typescript-lib-fallback",
+  "workspace-lock", "workspace-package",
+].sort();
+
+function protocolTestInventory() {
+  const bucket = () => ({ total: 0, inScope: 0, outOfScope: 0, unclassified: 0, entries: {} });
+  return { currentHarness: bucket(), typeScriptCases: { ...bucket(), languageServiceHarnessCases: 0 }, baselines: bucket(), goTests: bucket() };
+}
+
+function protocolTestManifest(caseNames = ["a"], execution = {}) {
+  const inventory = protocolTestInventory();
+  const cases = caseNames.map((name, index) => {
+    const identity = { corpus: "current", suite: "compiler", relativePath: `compiler/${name}.ts`, configurationName: "" };
+    return { index, ...identity, id: reportCaseIdentifier(identity), sourceSha256: String(index + 1).padStart(64, "0"), projectFixture: null };
+  });
+  const roots = testInputLabels.map((label) => ({ label, kind: "file", mode: 0o644, symlinkPolicy: "reject", fileCount: 1, symlinkCount: 0, bytes: 1, digest: "a".repeat(64) }));
+  const unsigned = {
+    schemaVersion: 2,
+    selection: { corpus: "current", suite: "compiler", filter: "", limit: 0 },
+    execution: {
+      exactBaselineContract: 1, verifyOnDisk: false, jobs: 1, failFast: false, caseTimeoutMs: 1000, poolCaseTimeoutMs: 2000,
+      maxOldSpaceSizeMb: 8192, resultRecordMaxBytes: 1024 * 1024, resultSegmentMaxBytes: 8 * 1024 * 1024, resultSegmentMaxRecords: 256,
+      ...execution,
+    },
+    runtime: {
+      execPath: { bytes: 1, sha256: "b".repeat(64) }, nodeVersion: "v1.0.0", v8Version: "1", execArgv: [], platform: "linux", arch: "x64",
+      locale: { locale: "en", calendar: "gregory", numberingSystem: "latn", timeZone: "UTC" }, hostname: "test-host",
+      childEnvironment: [
+        { name: "LANG", value: "C.UTF-8" }, { name: "LC_ALL", value: "C.UTF-8" }, { name: "NODE_OPTIONS", value: "" }, { name: "NODE_PATH", value: "" },
+        { name: "TSGO_CASE_TIMEOUT_MS", value: "1000" }, { name: "TSGO_POOL_TIMEOUT_MS", value: "2000" }, { name: "TZ", value: "UTC" },
+      ],
+    },
+    upstream: {
+      sourcePin: {
+        path: "packages/tsts/schema/tsgo/source-pin.json", sha256: "c".repeat(64), tsgoRevision: "d".repeat(40), tsgoObjectFormat: "sha1",
+        typescriptPath: "_submodules/TypeScript", typescriptRevision: "f".repeat(40), typescriptObjectFormat: "sha1",
+      },
+      tsgo: { revision: "d".repeat(40), tree: "e".repeat(40), objectFormat: "sha1", dirty: false },
+      typescript: { name: "TypeScript", path: "_submodules/TypeScript", revision: "f".repeat(40), tree: "1".repeat(40), objectFormat: "sha1", dirty: false },
+    },
+    inputs: { schemaVersion: 1, roots, digest: fingerprint(roots, "tsts-input-roots-v1") },
+    cases,
+    caseIdsHash: hashCaseIds(cases),
+    total: cases.length,
+    inventory,
+    inventoryHash: inventoryFingerprint(inventory),
+  };
+  return { ...unsigned, runFingerprint: runManifestFingerprint(unsigned) };
+}
+
+function protocolTestResult(caseEntry, overrides = {}) {
+  return trimResult({
+    corpus: caseEntry.corpus,
+    suite: caseEntry.suite,
+    relativePath: caseEntry.relativePath,
+    configurationName: caseEntry.configurationName,
+    expectedErrors: false,
+    actualErrors: false,
+    exitCode: 0,
+    signal: null,
+    caseDir: `/tmp/case-${caseEntry.index}`,
+    skipReason: "",
+    exactBaseline: undefined,
+    infrastructureFailure: false,
+    stdout: "",
+    stderr: "",
+    ...overrides,
+  });
+}
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -1071,6 +1146,10 @@ test("parseArgs validates supported suites", () => {
   assert.equal(parseArgs([]).resume, "");
   assert.equal(parseArgs(["--resume", ".temp/tsgo-suite/x"]).resume, ".temp/tsgo-suite/x");
   assert.equal(parseArgs(["--inventory"]).inventory, true);
+  assert.throws(() => parseArgs(["--jobs", "0"]), /--jobs must be a positive safe integer/);
+  assert.throws(() => parseArgs(["--jobs", "1.5"]), /--jobs must be a positive safe integer/);
+  assert.throws(() => parseArgs(["--limit", "-1"]), /--limit must be a non-negative safe integer/);
+  assert.throws(() => parseArgs(["--limit", "NaN"]), /--limit must be a non-negative safe integer/);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "current", "--suite", "transpile"]), /Unsupported suite/);
@@ -1141,6 +1220,13 @@ test("caseDirectoryFragment isolates TS-Go configuration variants", () => {
     caseDirectoryFragment({ ...base, configurationName: "strict=true" }),
     caseDirectoryFragment({ ...base, configurationName: "strict=false" }),
   );
+});
+
+test("normalizeHarnessPath canonicalizes contained paths and rejects traversal", async () => {
+  const { normalizeHarnessPath } = await import("./run.mjs");
+  assert.equal(normalizeHarnessPath("./src/../index.ts"), "index.ts");
+  assert.throws(() => normalizeHarnessPath("../outside.ts"), /not contained in the case root/);
+  assert.throws(() => normalizeHarnessPath("src/../../outside.ts"), /not contained in the case root/);
 });
 
 test("isEmittedJavaScriptSibling excludes generated JS beside TS sources", () => {
@@ -1482,7 +1568,7 @@ test("trimResult flattens retained lines, caps them, and passes through already-
     signal: null,
     caseDir: "/tmp/case",
     skipReason: "",
-    exactBaseline: { status: "pass", checked: 1, comparable: 1, unsupported: [], tsgoAccepted: [], mismatches: [] },
+    exactBaseline: { status: "pass", checked: 1, comparable: 1, unsupported: [], tsgoAccepted: [], mismatches: [], expectedDiagnosticsPresent: false, actualErrors: undefined, usedHarness: false },
     stdout: big,
     stderr: "",
   });
@@ -1496,24 +1582,266 @@ test("trimResult flattens retained lines, caps them, and passes through already-
   assert.equal(trimResult(trimmed), trimmed);
 });
 
-test("readResults restores discovery order and strips the caseIndex envelope", async () => {
-  const { readResults } = await import("./run.mjs");
+test("result ledger validates provenance, restores order, and tolerates only a truncated segment tail", async () => {
+  const { createResultRecord, loadResultLedger, readResults } = await import("./run.mjs");
   const { mkdtemp, writeFile: writeFileAsync, rm } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const { join: joinPath } = await import("node:path");
   const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-ndjson-"));
   try {
-    const path = joinPath(dir, "results.ndjson");
-    // Completion order differs from discovery order, as with parallel workers.
-    const lines = [
-      { caseIndex: 2, relativePath: "compiler/c.ts", status: "pass" },
-      { caseIndex: 0, relativePath: "compiler/a.ts", status: "skip" },
-      { caseIndex: 1, relativePath: "compiler/b.ts", status: "fail" },
-    ];
-    await writeFileAsync(path, lines.map((line) => JSON.stringify(line)).join("\n") + "\n");
-    const records = await readResults(path);
+    const path = joinPath(dir, "results-0001.ndjson");
+    const manifest = protocolTestManifest(["a", "b", "c"]);
+    const record = (caseIndex, status) => createResultRecord(manifest, caseIndex, protocolTestResult(manifest.cases[caseIndex], status === "skip"
+      ? { skipReason: "test" }
+      : status === "fail" ? { actualErrors: true, exitCode: 1 } : {}));
+    const lines = [record(2, "pass"), record(0, "skip"), record(1, "fail")];
+    await writeFileAsync(path, lines.map((line) => JSON.stringify(line)).join("\n") + "\n{truncated");
+    const records = await readResults(path, manifest);
     assert.deepEqual(records.map((record) => record.relativePath), ["compiler/a.ts", "compiler/b.ts", "compiler/c.ts"]);
-    assert.ok(records.every((record) => record.caseIndex === undefined));
+    assert.equal(loadResultLedger([path], manifest).doneIndices.size, 3);
+
+    const wrong = joinPath(dir, "results-0002.ndjson");
+    await writeFileAsync(wrong, `${JSON.stringify({ ...record(0, "pass"), caseId: "wrong" })}\n`);
+    assert.throws(() => loadResultLedger([wrong], manifest), /case identity mismatch/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("run manifest validation detects tampering and malformed case provenance", async () => {
+  const { validateRunManifest } = await import("./run.mjs");
+  const manifest = protocolTestManifest();
+  assert.equal(validateRunManifest(manifest), manifest);
+  assert.throws(() => validateRunManifest({ ...manifest, total: 2 }), /case inventory is invalid/);
+  const { runFingerprint: ignored, ...unsigned } = manifest;
+  const malformedUnsigned = { ...unsigned, cases: [{ ...unsigned.cases[0], id: "bad" }] };
+  assert.throws(
+    () => validateRunManifest({ ...malformedUnsigned, runFingerprint: runManifestFingerprint(malformedUnsigned) }),
+    /id does not match/,
+  );
+  const malformedInventory = { ...unsigned, inventoryHash: "0".repeat(64) };
+  assert.throws(() => validateRunManifest({ ...malformedInventory, runFingerprint: runManifestFingerprint(malformedInventory) }), /inventory hash/);
+});
+
+test("nested run-config and result schemas reject re-fingerprinted extra fields", async () => {
+  const { createRunConfig, validateResultPayload, validateRunConfig, validateRunManifest } = await import("./run.mjs");
+  const manifest = protocolTestManifest();
+  const { runFingerprint: ignored, ...unsigned } = manifest;
+  const malformedUnsigned = { ...unsigned, execution: { ...unsigned.execution, forged: true } };
+  assert.throws(() => validateRunManifest({ ...malformedUnsigned, runFingerprint: runManifestFingerprint(malformedUnsigned) }), /execution keys are invalid/);
+  assert.throws(() => validateRunConfig({ ...createRunConfig(manifest), forged: true }), /run config keys are invalid/);
+  const result = protocolTestResult(manifest.cases[0]);
+  assert.throws(() => validateResultPayload({ ...result, verdict: { ...result.verdict, forged: true } }, "forged verdict"), /verdict does not match its evidence/);
+});
+
+test("result verdict rejects forged passes from contradictory execution evidence", async () => {
+  const { validateResultPayload } = await import("./run.mjs");
+  const manifest = protocolTestManifest();
+  const caseEntry = manifest.cases[0];
+  const baselineMismatch = {
+    status: "fail", checked: 1, comparable: 1, unsupported: [], tsgoAccepted: [], mismatches: ["different"],
+    expectedDiagnosticsPresent: false, actualErrors: undefined, usedHarness: false,
+  };
+  const failures = [
+    protocolTestResult(caseEntry, { actualErrors: true, exitCode: 1 }),
+    protocolTestResult(caseEntry, { exitCode: 2 }),
+    protocolTestResult(caseEntry, { exactBaseline: baselineMismatch }),
+    protocolTestResult(caseEntry, { executionMismatches: ["on-disk divergence"] }),
+  ];
+  for (const [index, failure] of failures.entries()) {
+    const forged = {
+      ...failure,
+      status: "pass",
+      verdict: { ...failure.verdict, kind: "executed", diagnosticsMatch: true, exitCodeAccepted: true, signalAbsent: true, exactBaselineMatch: true, executionMatch: true },
+    };
+    assert.throws(() => validateResultPayload(forged, `forged pass ${index}`), /verdict does not match its evidence|status does not match its verdict/);
+  }
+});
+
+test("infrastructure failures remain partial under the shared completion predicate", async () => {
+  const { buildReportSummary, reportOutcome, resultCompletesCase } = await import("./run.mjs");
+  const manifest = protocolTestManifest();
+  const infrastructureFailure = protocolTestResult(manifest.cases[0], { actualErrors: true, exitCode: 1, caseDir: "", infrastructureFailure: true });
+  assert.equal(infrastructureFailure.status, "fail");
+  assert.equal(resultCompletesCase(infrastructureFailure), false);
+  const partial = buildReportSummary(manifest, [infrastructureFailure]);
+  assert.equal(partial.complete, false);
+  assert.deepEqual(partial.missingCaseIndices, [0]);
+  assert.equal(partial.infrastructureFailures, 1);
+  assert.equal(reportOutcome(partial), "partial");
+  const productFailure = protocolTestResult(manifest.cases[0], { actualErrors: true, exitCode: 1 });
+  const completed = buildReportSummary(manifest, [productFailure]);
+  assert.equal(completed.complete, true);
+  assert.equal(reportOutcome(completed), "failed");
+});
+
+test("result ledger rejects malformed payloads, duplicate completions, gaps, and malformed middle lines", async () => {
+  const { caseFingerprint, createResultRecord, loadResultLedger, resultFingerprint, resultSegmentPaths } = await import("./run.mjs");
+  const { mkdtemp, mkdir, writeFile: writeFileAsync, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-ledger-invalid-"));
+  const manifest = protocolTestManifest();
+  const result = protocolTestResult(manifest.cases[0]);
+  const caseFingerprintValue = caseFingerprint(manifest, 0);
+  const record = createResultRecord(manifest, 0, result);
+  try {
+    const duplicate = joinPath(dir, "results-0001.ndjson");
+    await writeFileAsync(duplicate, `${JSON.stringify(record)}\n${JSON.stringify(record)}\n`);
+    assert.throws(() => loadResultLedger([duplicate], manifest), /duplicate completed result/);
+    const malformedPayload = joinPath(dir, "results-0002.ndjson");
+    const badResult = { ...result, status: "unknown" };
+    await writeFileAsync(malformedPayload, `${JSON.stringify({ ...record, result: badResult, resultFingerprint: resultFingerprint(manifest.runFingerprint, caseFingerprintValue, badResult) })}\n`);
+    assert.throws(() => loadResultLedger([malformedPayload], manifest), /payload status is invalid/);
+    const tampered = joinPath(dir, "results-0004.ndjson");
+    await writeFileAsync(tampered, `${JSON.stringify({ ...record, result: { ...result, caseDir: "/tmp/tampered" } })}\n`);
+    assert.throws(() => loadResultLedger([tampered], manifest), /payload fingerprint mismatch/);
+    const failedResult = protocolTestResult(manifest.cases[0], { actualErrors: true, exitCode: 1 });
+    const contradictoryResult = { ...failedResult, status: "pass", verdict: { ...failedResult.verdict, kind: "executed", diagnosticsMatch: true, exitCodeAccepted: true, signalAbsent: true, exactBaselineMatch: true } };
+    const contradictory = joinPath(dir, "results-0005.ndjson");
+    await writeFileAsync(contradictory, `${JSON.stringify({
+      ...record,
+      result: contradictoryResult,
+      resultFingerprint: resultFingerprint(manifest.runFingerprint, caseFingerprintValue, contradictoryResult),
+    })}\n`);
+    assert.throws(() => loadResultLedger([contradictory], manifest), /verdict does not match its evidence/);
+    const malformedMiddle = joinPath(dir, "results-0003.ndjson");
+    await writeFileAsync(malformedMiddle, `${JSON.stringify(record)}\n{broken}\n${JSON.stringify(record)}\n`);
+    assert.throws(() => loadResultLedger([malformedMiddle], manifest), /invalid result ledger JSON/);
+    const gapDir = joinPath(dir, "gap");
+    await mkdir(gapDir);
+    await writeFileAsync(joinPath(gapDir, "results-0002.ndjson"), "");
+    assert.throws(() => resultSegmentPaths(gapDir), /sequence has a gap/);
+    const invalidDir = joinPath(dir, "invalid");
+    await mkdir(invalidDir);
+    await writeFileAsync(joinPath(invalidDir, "results-forged.ndjson"), "");
+    assert.throws(() => resultSegmentPaths(invalidDir), /invalid result segment entries/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("materializeSymlinks accepts an exact existing link and rejects a conflicting target", async () => {
+  const { materializeSymlinks } = await import("./run.mjs");
+  const { mkdtemp, mkdir, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-symlink-"));
+  try {
+    await mkdir(joinPath(dir, "a"));
+    await mkdir(joinPath(dir, "b"));
+    await materializeSymlinks(dir, new Map([["link", "a"]]), { useCaseSensitiveFileNames: true });
+    await materializeSymlinks(dir, new Map([["link", "a"]]), { useCaseSensitiveFileNames: true });
+    await assert.rejects(() => materializeSymlinks(dir, new Map([["link", "b"]]), { useCaseSensitiveFileNames: true }), /Conflicting harness symlink/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("only sealed result attempts are reusable and sealed bytes cannot drift", async () => {
+  const { createResultRecord, loadResultLedger, sealResultSegment, sealedResultSegments } = await import("./run.mjs");
+  const { mkdtemp, writeFile: writeFileAsync, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-sealed-attempt-"));
+  const manifest = protocolTestManifest();
+  try {
+    const segment = joinPath(dir, "results-0001.ndjson");
+    const record = createResultRecord(manifest, 0, protocolTestResult(manifest.cases[0]));
+    await writeFileAsync(segment, `${JSON.stringify(record)}\n`);
+    assert.deepEqual(sealedResultSegments(dir, manifest), []);
+    await sealResultSegment(dir, segment, manifest);
+    const sealed = sealedResultSegments(dir, manifest);
+    assert.equal(sealed.length, 1);
+    assert.equal(loadResultLedger(sealed, manifest).doneIndices.size, 1);
+    await writeFileAsync(segment, "tampered\n");
+    assert.throws(() => loadResultLedger(sealedResultSegments(dir, manifest), manifest), /sealed result segment digest mismatch/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("sealed result segments reject a truncated final record even with a matching forged digest", async () => {
+  const { createResultRecord, loadResultLedger, sealedResultSegments } = await import("./run.mjs");
+  const { createHash } = await import("node:crypto");
+  const { mkdtemp, mkdir, writeFile: writeFileAsync, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-truncated-seal-"));
+  const manifest = protocolTestManifest();
+  try {
+    const segmentName = "results-0001.ndjson";
+    const segment = joinPath(dir, segmentName);
+    const bytes = Buffer.from(JSON.stringify(createResultRecord(manifest, 0, protocolTestResult(manifest.cases[0]))));
+    await writeFileAsync(segment, bytes);
+    await mkdir(joinPath(dir, "segment-seals"));
+    const unsignedSeal = {
+      schemaVersion: 2,
+      attemptId: "00000000-0000-4000-8000-000000000000",
+      runFingerprint: manifest.runFingerprint,
+      segment: segmentName,
+      sequence: 1,
+      bytes: bytes.length,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      records: 1,
+    };
+    const seal = { ...unsignedSeal, sealFingerprint: fingerprint(unsignedSeal, "tsts-tsgo-suite-result-segment-seal-v2") };
+    await writeFileAsync(joinPath(dir, "segment-seals", `${segmentName}.json`), `${JSON.stringify(seal)}\n`);
+    assert.throws(() => loadResultLedger(sealedResultSegments(dir, manifest), manifest), /not newline-complete/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("bounded segment rotation preserves completed work across infrastructure resume attempts", async () => {
+  const { createResultSegmentWriter, loadResultLedger, sealedResultSegments } = await import("./run.mjs");
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-segment-resume-"));
+  const manifest = protocolTestManifest(["a", "b", "c"], { resultSegmentMaxRecords: 2 });
+  try {
+    const firstAttempt = await createResultSegmentWriter(dir, manifest, { attemptId: "00000000-0000-4000-8000-000000000001" });
+    await firstAttempt.append(0, protocolTestResult(manifest.cases[0]));
+    await firstAttempt.append(1, protocolTestResult(manifest.cases[1], { actualErrors: true, exitCode: 1, caseDir: "", infrastructureFailure: true }));
+    await firstAttempt.close();
+    const partial = loadResultLedger(sealedResultSegments(dir, manifest), manifest);
+    assert.deepEqual([...partial.doneIndices], [0]);
+
+    const resumedAttempt = await createResultSegmentWriter(dir, manifest, { attemptId: "00000000-0000-4000-8000-000000000002" });
+    await resumedAttempt.append(1, protocolTestResult(manifest.cases[1]));
+    await resumedAttempt.append(2, protocolTestResult(manifest.cases[2]));
+    await resumedAttempt.close();
+    const sealed = sealedResultSegments(dir, manifest);
+    assert.deepEqual(sealed.map((entry) => entry.sequence), [1, 2]);
+    const resumed = loadResultLedger(sealed, manifest);
+    assert.equal(resumed.doneIndices.size, 3);
+    assert.equal(resumed.recordsByIndex.get(1).result.status, "pass");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("run locks reject traversal-bearing owner tokens without moving the active lock", async () => {
+  const { acquireRunLock } = await import("./run.mjs");
+  const { mkdtemp, mkdir, writeFile: writeFileAsync, rm } = await import("node:fs/promises");
+  const { hostname } = await import("node:os");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-lock-token-"));
+  try {
+    const active = joinPath(dir, "ACTIVE.lock");
+    await mkdir(active);
+    await writeFileAsync(joinPath(active, "owner.json"), `${JSON.stringify({
+      schemaVersion: 1,
+      token: "../../escape",
+      pid: 2147483647,
+      hostname: hostname(),
+      startedAt: "2026-01-01T00:00:00.000Z",
+    })}\n`);
+    await assert.rejects(() => acquireRunLock(dir), /owner token is invalid/);
+    const { lstat } = await import("node:fs/promises");
+    assert.equal((await lstat(active)).isDirectory(), true);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -1522,9 +1850,9 @@ test("readResults restores discovery order and strips the caseIndex envelope", a
 test("summarize counts statuses and exact-baseline rollups from streamed records", async () => {
   const { summarize } = await import("./run.mjs");
   const summary = summarize([
-    { status: "pass", expectedErrors: true, exactBaseline: { status: "pass", comparable: 3, unsupported: [], tsgoAccepted: [], mismatches: [] } },
-    { status: "skip", expectedErrors: false, exactBaseline: undefined },
-    { status: "fail", expectedErrors: true, exactBaseline: { status: "fail", comparable: 2, unsupported: ["x"], tsgoAccepted: ["y"], mismatches: ["m1", "m2"] } },
+    { status: "pass", expectedErrors: true, infrastructureFailure: false, executionMismatchCount: 0, exactBaseline: { status: "pass", comparable: 3, unsupportedCount: 0, tsgoAcceptedCount: 0, mismatchCount: 0 } },
+    { status: "skip", expectedErrors: false, infrastructureFailure: false, executionMismatchCount: 0, exactBaseline: undefined },
+    { status: "fail", expectedErrors: true, infrastructureFailure: false, executionMismatchCount: 0, exactBaseline: { status: "fail", comparable: 2, unsupportedCount: 1, tsgoAcceptedCount: 1, mismatchCount: 2 } },
   ]);
   assert.equal(summary.total, 3);
   assert.equal(summary.passed, 1);

@@ -62,6 +62,7 @@ export function fileRecord(overrides) {
     packageName: "debug",
     lineCount: 10,
     generated: false,
+    structTags: [],
     units: [],
     featureCounts: {},
     ...overrides,

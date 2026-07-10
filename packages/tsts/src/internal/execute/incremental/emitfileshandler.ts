@@ -538,7 +538,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
 
       let aTime: Time = new Time();
       if (differsOnlyInMapBox.v) {
-        aTime = receiver!.program!.host.GetMTime(fileName);
+        aTime = receiver!.program!.host!.GetMTime(fileName);
       }
       let err: GoError;
       if (options.WriteFile !== undefined) {
@@ -547,7 +547,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
         err = compiler_Program_Host(receiver!.program!.program).FS().WriteFile(fileName, text);
       }
       if (err === undefined && differsOnlyInMapBox.v) {
-        err = receiver!.program!.host.SetMTime(fileName, aTime);
+        err = receiver!.program!.host!.SetMTime(fileName, aTime);
       }
       return err;
     },
@@ -556,6 +556,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.skipDtsOutputOfComposite","kind":"method","status":"implemented","sigHash":"7240360e91e809fc2ed741ce9ca6fe8e27683d21d8ab3947f0496fecd480c78a","bodyHash":"05ce1ca3e3dc9735d3c20a9fb97e6b901db45dec647c06ec9fdb4b7a7ae89707"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"skipDtsOutputOfComposite mutates the caller-owned differsOnlyInMap bool through a Go pointer; JavaScript primitives are not addressable, so the TypeScript port uses the exact GoRef<bool> box passed by its caller and mutates its value field.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::WriteFileData>,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::bool>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::WriteFileData>,string,packages/tsts/src/go/compat.ts::GoRef<packages/tsts/src/go/scalars.ts::bool>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (h *emitFilesHandler) skipDtsOutputOfComposite(file *ast.SourceFile, outputFileName string, text string, data *compiler.WriteFileData, newSignature string, differsOnlyInMap *bool) bool {

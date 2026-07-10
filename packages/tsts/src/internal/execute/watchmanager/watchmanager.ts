@@ -3,18 +3,19 @@ import type { GoChan, GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.
 import { GoChanAsReceive, GoChanSelect, GoChanSelectReceive, GoChanTrySend, MakeGoChan } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Is as errors_Is } from "../../../go/errors.js";
-import { Fprint, Fprintf, Fprintln } from "../../../go/fmt.js";
+import { Errorf, Fprint, Fprintf, Fprintln } from "../../../go/fmt.js";
 import type { Closer, Writer } from "../../../go/io.js";
 import { Mutex } from "../../../go/sync.js";
 import { DiffMapsFunc } from "../../core/core.js";
 import * as fswatch from "../../fswatch/fswatch.js";
 import type { ComparePathsOptions } from "../../tspath/path.js";
 import { ComparePaths, ContainsPath, GetDirectoryPath } from "../../tspath/path.js";
-import { CanWatchDirectory, FSWatchBackend_as_WatchBackend, ShouldIgnoreWatchPath } from "./watchbackend.js";
+import { CanWatchDirectory, FSWatchBackend_as_WatchBackend, RequireWatchCloser, ShouldIgnoreWatchPath } from "./watchbackend.js";
 import type { WatchBackend, WatchDirectoryRequest } from "./watchbackend.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchmanager.go::type::watchedDir","kind":"type","status":"implemented","sigHash":"529c48a4a0430446c841f0076a0da86ea53a672f4c2a8b059aea84bec0285889","bodyHash":"c244ad3d279d5734f2d9a7322393c36e7d75e4e4e09087d8b04238de4f336cf9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A watchedDir is allocated before its backend call completes so its callback can capture the entry; closer remains nil on the error path and is required on success, which TypeScript models with undefined plus success-path validation.","goSignature":"interface{closer:packages/tsts/src/go/io.ts::Closer;recursive:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{closer:packages/tsts/src/go/io.ts::Closer|undefined;recursive:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * watchedDir struct {
@@ -23,7 +24,7 @@ import type { WatchBackend, WatchDirectoryRequest } from "./watchbackend.js";
  * }
  */
 export interface watchedDir {
-  closer: Closer;
+  closer: Closer | undefined;
   recursive: bool;
 }
 
@@ -43,6 +44,7 @@ export interface dirWatchUpdate {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchmanager.go::type::WatchManager","kind":"type","status":"implemented","sigHash":"34d1fe6bd5f8eefcec09523d1ed2217a7b4cd2819e96b737fe53e5eb086badaf","bodyHash":"255755ece1362b19e9aff46cac8c6e81f29bba9c49071ff6bed6babf44bd4cd1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"WatchManager.backend is nil before backend selection, DebugLog is nil when verbose logging is disabled, and changedPaths is nil between event batches; TypeScript preserves these three independent Go lifecycle states with undefined.","goSignature":"interface{DebugLog:packages/tsts/src/go/io.ts::Writer;backend:packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchBackend;changedMu:packages/tsts/src/go/sync.ts::Mutex;changedOverflow:packages/tsts/src/go/scalars.ts::bool;changedPaths:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/fswatch/fswatch.ts::EventKind>;dirExists:(string)=>packages/tsts/src/go/scalars.ts::bool;doCycleCh:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;mu:packages/tsts/src/go/sync.ts::Mutex;warnWriter:packages/tsts/src/go/io.ts::Writer;watchedDirs:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::watchedDir>>}","tsSignature":"interface{DebugLog:packages/tsts/src/go/io.ts::Writer|undefined;backend:packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchBackend|undefined;changedMu:packages/tsts/src/go/sync.ts::Mutex;changedOverflow:packages/tsts/src/go/scalars.ts::bool;changedPaths:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/fswatch/fswatch.ts::EventKind>|undefined;dirExists:(string)=>packages/tsts/src/go/scalars.ts::bool;doCycleCh:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;mu:packages/tsts/src/go/sync.ts::Mutex;warnWriter:packages/tsts/src/go/io.ts::Writer;watchedDirs:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::watchedDir>>}"}
  *
  * Go source:
  * WatchManager struct {
@@ -115,12 +117,13 @@ export function WatchManager_SetBackend(receiver: GoPtr<WatchManager>, b: WatchB
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchmanager.go::method::WatchManager.Backend","kind":"method","status":"implemented","sigHash":"835e66ae7690dac11c67f880f7fdf1cc0f6107fdfb18bfa6f4949c1196d945bf","bodyHash":"9eb915d18dcce33061102a011c3dc23e92d2f2d7d95558354688a4bfce23fff2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Backend returns the manager's nil Go backend before SetBackend or EnsureDefaultBackend installs one; TypeScript represents that pre-initialization result with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>)=>packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchBackend","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>)=>packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchBackend|undefined"}
  *
  * Go source:
  * func (wm *WatchManager) Backend() WatchBackend { return wm.backend }
  */
-export function WatchManager_Backend(receiver: GoPtr<WatchManager>): WatchBackend {
-  return receiver!.backend!;
+export function WatchManager_Backend(receiver: GoPtr<WatchManager>): WatchBackend | undefined {
+  return receiver!.backend;
 }
 
 /**
@@ -179,6 +182,7 @@ export function WatchManager_DoCycleCh(receiver: GoPtr<WatchManager>): GoChan<{ 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchmanager.go::method::WatchManager.DrainEvents","kind":"method","status":"implemented","sigHash":"b21f7619cbf08a5463407366738695559d9de13e41c140dda3d461aeebcaf183","bodyHash":"887a002daeebb74e1db3cc1304d841dcb9be5b5a82fe0324b1b5a7f88e09499d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"DrainEvents returns the current changedPaths map and resets it to nil; when no events were collected the returned Go map is nil, which TypeScript represents with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>)=>[packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/fswatch/fswatch.ts::EventKind>,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>)=>[packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/fswatch/fswatch.ts::EventKind>|undefined,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (wm *WatchManager) DrainEvents() (changed map[string]fswatch.EventKind, overflow bool) {
@@ -391,7 +395,7 @@ export function WatchManager_CloseAllWatches(receiver: GoPtr<WatchManager>): voi
   receiver!.mu.Lock();
   const closers: GoSlice<Closer> = [];
   for (const [dir, wd] of receiver!.watchedDirs) {
-    closers.push(wd!.closer);
+    closers.push(RequireWatchCloser(wd!.closer, "stored watch directory"));
     receiver!.watchedDirs.delete(dir);
   }
   receiver!.mu.Unlock();
@@ -420,16 +424,16 @@ export function WatchManager_CloseAllWatches(receiver: GoPtr<WatchManager>): voi
  * }
  */
 export function WatchManager_createDirWatch(receiver: GoPtr<WatchManager>, dir: string, recursive: bool): GoError {
-  const entry: watchedDir = { closer: undefined as unknown as Closer, recursive };
+  const entry: watchedDir = { closer: undefined, recursive };
   const request = WatchManager_createDirWatchRequest(receiver, dir, entry);
   const [watch, err] = receiver!.backend!.WatchDirectory(request.Dir, request.Callback, request.Recursive, request.Ignore);
   if (err !== undefined) {
     if (receiver!.DebugLog !== undefined) {
       Fprintf(receiver!.DebugLog, "[watch] failed to watch directory %s: %v\n", dir, err);
     }
-    return new globalThis.Error(`failed to watch directory ${dir}: ${err.message}`);
+    return Errorf("failed to watch directory %s: %w", dir, err);
   }
-  entry.closer = watch;
+  entry.closer = RequireWatchCloser(watch, "WatchBackend.WatchDirectory()");
   receiver!.watchedDirs.set(dir, entry);
   return undefined;
 }
@@ -597,14 +601,14 @@ export function WatchManager_ReconcileWatches(receiver: GoPtr<WatchManager>, des
       if (receiver!.DebugLog !== undefined) {
         Fprintf(receiver!.DebugLog, "[watch] closing stale dir watch: %s\n", dir);
       }
-      wd!.closer.Close();
+      RequireWatchCloser(wd!.closer, "stored watch directory").Close();
       receiver!.watchedDirs.delete(dir);
     },
     (dir: string, wd: GoPtr<watchedDir>, recursive: bool): void => {
       if (receiver!.DebugLog !== undefined) {
         Fprintf(receiver!.DebugLog, "[watch] recreating dir watch %s (recursive %v→%v)\n", dir, wd!.recursive, recursive);
       }
-      wd!.closer.Close();
+      RequireWatchCloser(wd!.closer, "stored watch directory").Close();
       receiver!.watchedDirs.delete(dir);
       changes.push({ dir, recursive });
     },
@@ -654,7 +658,7 @@ export function WatchManager_createDirWatches(receiver: GoPtr<WatchManager>, upd
   const requests: GoSlice<WatchDirectoryRequest> = [];
   const entries: GoSlice<GoPtr<watchedDir>> = [];
   for (const update of updates) {
-    const entry: watchedDir = { closer: undefined as unknown as Closer, recursive: update.recursive };
+    const entry: watchedDir = { closer: undefined, recursive: update.recursive };
     entries.push(entry);
     requests.push(WatchManager_createDirWatchRequest(receiver, update.dir, entry));
   }
@@ -665,15 +669,19 @@ export function WatchManager_createDirWatches(receiver: GoPtr<WatchManager>, upd
       if (receiver!.DebugLog !== undefined) {
         Fprintf(receiver!.DebugLog, "[watch] failed to watch directory %s: %v\n", update.dir, err);
       }
-      if (i < closers.length && closers[i] !== undefined) {
+      if (closers !== undefined && i < closers.length && closers[i] !== undefined) {
         closers[i]!.Close();
       }
     }
     return err;
   }
+  if (closers === undefined || closers.length !== updates.length) {
+    throw new globalThis.TypeError("WatchBackend.WatchDirectories() returned an invalid closer count without an error");
+  }
+  const validatedClosers = closers.map((closer, index) => RequireWatchCloser(closer, `WatchBackend.WatchDirectories()[${index}]`));
   for (let i = 0; i < updates.length; i++) {
     const update = updates[i]!;
-    entries[i]!.closer = closers[i]!;
+    entries[i]!.closer = validatedClosers[i]!;
     receiver!.watchedDirs.set(update.dir, entries[i]);
   }
   return undefined;

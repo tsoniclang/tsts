@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import * as nodeFs from "node:fs";
+import { nodeIsSymlinkOrReparsePoint } from "./node_host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/symlink_other.go::func::IsSymlinkOrReparsePoint","kind":"func","status":"implemented","sigHash":"296ae0ab197f64d4e2c052aa779106c8480671870550027a943702a803f4fdd5","bodyHash":"129fa451d885396871d1b75d628691664befb9a07fffda454eef1fd549908583"}
@@ -12,9 +12,5 @@ import * as nodeFs from "node:fs";
  * }
  */
 export function IsSymlinkOrReparsePoint(path: string): bool {
-  try {
-    return nodeFs.lstatSync(path).isSymbolicLink() as bool;
-  } catch {
-    return false as bool;
-  }
+  return nodeIsSymlinkOrReparsePoint(path);
 }

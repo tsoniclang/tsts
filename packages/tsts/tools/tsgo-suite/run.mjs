@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 import { spawn, fork } from "node:child_process";
-import { cpus } from "node:os";
-import { dirname, isAbsolute, join, posix as posixPath, relative, sep } from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { cpus, hostname } from "node:os";
+import { basename, dirname, isAbsolute, join, posix as posixPath, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
-import { appendFile, cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { cp, lstat, mkdir, open, readFile, readdir, readlink, rename, stat, symlink, writeFile } from "node:fs/promises";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
+import { canonicalJson, compareUtf8, executableProvenance, fingerprint, hashInputRoots } from "../test-provenance.mjs";
+import { loadAndVerifyTsgoSourcePin } from "../tsgo-source-pin.mjs";
+import { publishSealedDirectory, sealEvidenceDirectory, writeDurableFileExclusive } from "../sealed-evidence.mjs";
+import {
+  ACCEPTED_OVERLAY_ABSENT_MARKER,
+  acceptedOverlaySections,
+  loadActiveAcceptedOverlayBinding,
+} from "./accepted-overlay-contract.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = join(dirname(scriptPath), "../../../..");
@@ -22,12 +30,48 @@ const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib"
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
 const apiPath = join(packageRoot, "dist/src/index.js");
 const tsgoAcceptedRoot = join(dirname(scriptPath), "tsgo-accepted");
+const tsbaselineRoot = join(dirname(scriptPath), "tsbaseline");
+const sourcePinPath = join(packageRoot, "schema/tsgo/source-pin.json");
+const distRoot = join(packageRoot, "dist");
+const bundledSourceRoot = join(packageRoot, "src/internal/bundled/libs");
+const resolvedTypeScriptEntry = fileURLToPath(import.meta.resolve("typescript"));
+const resolvedTypeScriptPackageRoot = dirname(dirname(resolvedTypeScriptEntry));
+const provenanceHelperPath = fileURLToPath(new URL("../test-provenance.mjs", import.meta.url));
+const sourcePinVerifierPath = fileURLToPath(new URL("../tsgo-source-pin.mjs", import.meta.url));
+const sealedEvidenceHelperPath = fileURLToPath(new URL("../sealed-evidence.mjs", import.meta.url));
+const reportVerifierPath = fileURLToPath(new URL("./verify-report.mjs", import.meta.url));
+const CASE_TIMEOUT_MS = positiveIntegerEnvironment("TSGO_CASE_TIMEOUT_MS", 120000);
+const POOL_CASE_TIMEOUT_MS = positiveIntegerEnvironment("TSGO_POOL_TIMEOUT_MS", 300000);
+const RESULT_RECORD_MAX_BYTES = positiveIntegerEnvironment("TSGO_RESULT_RECORD_MAX_BYTES", 1024 * 1024);
+const RESULT_SEGMENT_MAX_BYTES = positiveIntegerEnvironment("TSGO_RESULT_SEGMENT_MAX_BYTES", 8 * 1024 * 1024);
+const RESULT_SEGMENT_MAX_RECORDS = positiveIntegerEnvironment("TSGO_RESULT_SEGMENT_MAX_RECORDS", 256);
+const RESULT_SCHEMA_VERSION = 2;
+const RESULT_VERDICT_SCHEMA_VERSION = 1;
+const EXACT_BASELINE_SCHEMA_VERSION = 1;
+const RESULT_SEGMENT_SEAL_SCHEMA_VERSION = 2;
+const RUN_CONFIG_SCHEMA_VERSION = 1;
+const RUN_MANIFEST_SCHEMA_VERSION = 2;
+const REPORT_SCHEMA_VERSION = 3;
+const REPORT_SEAL_METADATA_SCHEMA_VERSION = 1;
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+const RESULT_SEGMENT_NAME_PATTERN = /^results-(\d{4})\.ndjson$/;
+const MAX_BASELINE_SAMPLES = 100;
+const MAX_BASELINE_SAMPLE_LENGTH = 2000;
 const utf8Decoder = new TextDecoder("utf-8");
+const strictUtf8Decoder = new TextDecoder("utf-8", { fatal: true });
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
 const harnessSourceFilePattern = /\.(?:[cm]?tsx?|[cm]?jsx?)$/i;
 const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
 let tstsApi;
+let activeAcceptedOverlayBinding;
+
+function positiveIntegerEnvironment(name, fallback) {
+  const value = Number(process.env[name] ?? fallback);
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive safe integer`);
+  return value;
+}
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
@@ -45,6 +89,7 @@ const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
 // compiler_runner.go getCompilerVaryByMap: every non-command-line-only boolean/enum
 // option with an Affects* flag varies, plus noEmit and isolatedModules.
 const { OptionsDeclarations: tstsOptionsDeclarations } = await import(new URL("../../dist/src/internal/tsoptions/declscompiler.js", import.meta.url).href);
+const { barebonesLibContent: suiteBarebonesLibContent } = await import(new URL("../../dist/src/index.js", import.meta.url).href);
 const compilerVaryByOptions = new Set([
   ...tstsOptionsDeclarations
     .filter((option) =>
@@ -258,9 +303,9 @@ export function parseArgs(argv) {
     // This is the provable on-disk-coverage gate; default off (harness-only fast
     // path) since 0 divergences over the corpus proves the two paths equivalent.
     verifyOnDisk: false,
-    // Resume a suspended run: path to a prior reportRoot. The runner skips cases
-    // already recorded in that run's results.ndjson and runs only the remainder,
-    // appending to the same file. Empty = fresh run.
+    // Resume a suspended run: path to a prior reportRoot. The runner validates
+    // the immutable run manifest and prior result segments, then writes a new
+    // append-only segment for the remaining cases. Empty = fresh run.
     resume: "",
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -274,7 +319,7 @@ export function parseArgs(argv) {
     } else if (arg === "--limit") {
       parsed.limit = Number(argv[++index] ?? "0");
     } else if (arg === "--jobs") {
-      parsed.jobs = Math.max(1, Number(argv[++index] ?? "1"));
+      parsed.jobs = Number(argv[++index] ?? "1");
     } else if (arg === "--fail-fast") {
       parsed.failFast = true;
       parsed.keepGoing = false;
@@ -300,6 +345,12 @@ export function parseArgs(argv) {
   if (parsed.suite !== "all" && !supportedSuites.has(parsed.suite)) {
     throw new Error(`Unsupported suite '${parsed.suite}' for corpus '${parsed.corpus}'. Expected one of: all, ${[...supportedSuites].join(", ")}`);
   }
+  if (!Number.isSafeInteger(parsed.limit) || parsed.limit < 0) {
+    throw new Error("--limit must be a non-negative safe integer");
+  }
+  if (!Number.isSafeInteger(parsed.jobs) || parsed.jobs < 1) {
+    throw new Error("--jobs must be a positive safe integer");
+  }
   return parsed;
 }
 
@@ -318,7 +369,7 @@ Options:
   --fail-fast                         Stop after the first failure.
   --exact-baselines                   Deprecated no-op: exact-baseline comparison is always on (weak mode removed).
   --verify-on-disk                    Also run the real on-disk CLI compile per case and prove it matches the in-memory harness (error verdict + emitted .js/.d.ts). Full on-disk-coverage gate; default off (fast harness-only path).
-  --resume <reportRoot>               Resume a suspended run: skip cases already recorded in that run's results.ndjson and run only the remainder. Re-use the SAME --corpus/--suite/--filter/--limit. To suspend, just stop the process.
+  --resume <reportRoot>               Resume a suspended run from its validated run-config and append-only result segments. Every source, baseline, build, runtime, option, and case-selection fingerprint must still match. To suspend, stop the process.
   --inventory                         Print the tracked upstream test universe and exit.
 `);
 }
@@ -347,7 +398,7 @@ function summarizeTypeScriptCaseCounts(typeScriptCases) {
 }
 
 function summarizeNamedCounts(counts, inScopeNames, outOfScopeNames = new Set()) {
-  const entries = Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));
+  const entries = Object.fromEntries(Object.entries(counts).sort(([left], [right]) => compareUtf8(left, right)));
   let inScope = 0;
   let outOfScope = 0;
   let unclassified = 0;
@@ -439,7 +490,7 @@ async function countGoTestFilesByPackage(root) {
     inScope: total - outOfScope,
     outOfScope,
     unclassified: 0,
-    entries: Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right))),
+    entries: Object.fromEntries(Object.entries(counts).sort(([left], [right]) => compareUtf8(left, right))),
   };
 }
 
@@ -467,7 +518,7 @@ export async function discoverCases(options) {
       if (isEmittedJavaScriptSibling(file)) {
         continue;
       }
-      const sourceText = await readSourceText(file);
+      const { text: sourceText, sha256: sourceSha256 } = await readSourceTextWithHash(file);
       if (options.corpus === "typescript" && isLanguageServiceHarnessCase(sourceText)) {
         continue;
       }
@@ -482,6 +533,7 @@ export async function discoverCases(options) {
           corpus: options.corpus,
           suite,
           sourcePath: file,
+          sourceSha256,
           relativePath,
           caseName: relativePath.replace(harnessSourceFilePattern, "").split("/").at(-1),
           sourceBaseName: relativePath.split("/").at(-1),
@@ -491,7 +543,7 @@ export async function discoverCases(options) {
       }
     }
   }
-  caseFiles.sort((left, right) => `${left.relativePath}:${left.configurationName}`.localeCompare(`${right.relativePath}:${right.configurationName}`));
+  caseFiles.sort((left, right) => compareUtf8(`${left.relativePath}:${left.configurationName}`, `${right.relativePath}:${right.configurationName}`));
   return options.limit > 0 ? caseFiles.slice(0, options.limit) : caseFiles;
 }
 
@@ -506,20 +558,24 @@ async function discoverProjectCases(selectedCaseRoot, options) {
     if (options.filter !== "" && !relativePath.includes(options.filter)) {
       continue;
     }
-    const descriptor = await readProjectTestDescriptor(file);
+    const { descriptor, sourceSha256 } = await readProjectTestDescriptorWithHash(file);
     const caseName = relativePath.split("/").at(-1).replace(/\.json$/i, "");
+    const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRootRelativeToCaseRoot(descriptor.projectRoot));
+    const projectFixture = projectFixtureProvenance(sourceProjectRoot);
     for (const moduleKind of ["commonjs", "amd"]) {
       cases.push({
         corpus: options.corpus,
         suite: "project",
         kind: "project",
         sourcePath: file,
+        sourceSha256,
         relativePath,
         caseName,
         sourceBaseName: relativePath.split("/").at(-1),
         configurationName: `module=${moduleKind}`,
         configuration: new Map([["module", moduleKind]]),
         descriptor,
+        projectFixture,
         moduleKind,
       });
     }
@@ -527,12 +583,16 @@ async function discoverProjectCases(selectedCaseRoot, options) {
   return cases;
 }
 
-async function readProjectTestDescriptor(file) {
-  const sourceText = await readSourceText(file);
+async function readProjectTestDescriptor(file, expectedSha256) {
+  return (await readProjectTestDescriptorWithHash(file, expectedSha256)).descriptor;
+}
+
+async function readProjectTestDescriptorWithHash(file, expectedSha256) {
+  const { text: sourceText, sha256 } = await readSourceTextWithHash(file, expectedSha256);
   try {
     const descriptor = JSON.parse(sourceText);
     assertProjectTestDescriptor(file, descriptor);
-    return descriptor;
+    return { descriptor, sourceSha256: sha256 };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Invalid project test descriptor '${file}': ${error.message}`);
@@ -681,7 +741,16 @@ export function decodeSourceText(bytes) {
 }
 
 async function readSourceText(file) {
-  return decodeSourceText(await readFile(file));
+  return (await readSourceTextWithHash(file)).text;
+}
+
+async function readSourceTextWithHash(file, expectedSha256) {
+  const bytes = await readFile(file);
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  if (expectedSha256 !== undefined && sha256 !== expectedSha256) {
+    throw new Error(`Suite source changed after discovery: ${file}`);
+  }
+  return { text: decodeSourceText(bytes), sha256 };
 }
 
 export function compilerOptionsFromSettings(settings) {
@@ -915,7 +984,7 @@ export function getFileBasedTestConfigurations(settings) {
     if (index === varyingEntries.length) {
       const varyingSettings = new Map(current);
       const name = [...varyingSettings]
-        .sort(([left], [right]) => left.localeCompare(right))
+        .sort(([left], [right]) => compareUtf8(left, right))
         .map(([option, value]) => `${option}=${value.toLowerCase()}`)
         .join(",");
       const merged = new Map(nonVaryingOptions);
@@ -1180,7 +1249,7 @@ function exactBaselineArtifacts(testCase) {
       });
     }
   }
-  return [...selected.values()].sort((left, right) => left.name.localeCompare(right.name));
+  return [...selected.values()].sort((left, right) => compareUtf8(left.name, right.name));
 }
 
 function exactProjectBaselineArtifacts(testCase) {
@@ -1196,7 +1265,7 @@ function exactProjectBaselineArtifacts(testCase) {
       path: join(baselineDir, entry.name),
       diff: entry.name.endsWith(".diff"),
     }))
-    .sort((left, right) => left.name.localeCompare(right.name));
+    .sort((left, right) => compareUtf8(left.name, right.name));
 }
 
 export function parseBaselineSections(text) {
@@ -1241,7 +1310,7 @@ export function parseBaselineSections(text) {
 // the section exists in Strada but is absent from real pinned output); applyTsgoAcceptedOverlay
 // drops the section from the expected outputs so the gate does not treat the intentional
 // non-emission as a missing baseline output.
-export const TSGO_ACCEPTED_ABSENT_MARKER = "<<< pinned TS-Go intentionally emits no output for this section >>>";
+export const TSGO_ACCEPTED_ABSENT_MARKER = ACCEPTED_OVERLAY_ABSENT_MARKER;
 
 // TS-Go-accepted overlays: where the pinned TS-Go compiler demonstrably diverges from the
 // Strada-generated reference baselines, the committed files under tools/tsgo-suite/tsgo-accepted/
@@ -1250,11 +1319,18 @@ export const TSGO_ACCEPTED_ABSENT_MARKER = "<<< pinned TS-Go intentionally emits
 // for everything else. Overlays are generated from real pinned-TS-Go runs by
 // capture-tsgo-accepted.mjs — never hand-edited, never derived from TSTS output.
 export function loadTsgoAcceptedOverlay(corpus, suite, artifactName) {
-  const overlayPath = join(tsgoAcceptedRoot, corpus, suite, artifactName);
-  if (!existsSync(overlayPath)) {
-    return undefined;
-  }
-  return parseBaselineSections(readFileSync(overlayPath, "utf8"));
+  return acceptedOverlaySections(getActiveAcceptedOverlayBinding(), corpus, suite, artifactName);
+}
+
+function getActiveAcceptedOverlayBinding() {
+  activeAcceptedOverlayBinding ??= loadActiveAcceptedOverlayBinding({
+    root: tsgoAcceptedRoot,
+    sourcePin: loadAndVerifyTsgoSourcePin({ repoRoot, packageRoot, vendorRoot }),
+    caseRoot: typeScriptSubmoduleCaseRoot,
+    baselineRoot: typeScriptSubmoduleBaselineRoot,
+    barebonesLibContent: suiteBarebonesLibContent,
+  });
+  return activeAcceptedOverlayBinding;
 }
 
 export function applyTsgoAcceptedOverlay(artifactName, overlaySections, expectedOutputs, expectedDiagnosticHeadlines, expectedDiagnosticSources) {
@@ -1877,15 +1953,17 @@ async function materializeCase(testCase, runRoot) {
     return materializeProjectCase(testCase, runRoot);
   }
 
-  const sourceText = await readSourceText(testCase.sourcePath);
+  const sourceText = (await readSourceTextWithHash(testCase.sourcePath, testCase.sourceSha256)).text;
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
   const pathOptions = harnessPathOptionsFromSettings(testCase.configuration);
   const caseDir = join(runRoot, caseDirectoryFragment(testCase));
   await mkdir(caseDir, { recursive: true });
-  const needsLibFolder = parsed.units.some((unit) => unit.content.includes("/.lib/")) || parsed.globalOptions.has("libfiles");
-  if (needsLibFolder) {
-    await cp(testLibRoot, join(caseDir, ".lib"), { recursive: true, force: true });
+  if (isTranspileCase(testCase)) {
+    return materializeTranspileCaseInputs({ caseDir, parsed, configuration: testCase.configuration, pathOptions });
   }
+
+  const needsLibFolder = parsed.units.some((unit) => unit.content.includes("/.lib/")) || parsed.globalOptions.has("libfiles");
+  if (needsLibFolder) await cp(testLibRoot, join(caseDir, ".lib"), { recursive: true, force: true });
 
   const unitRecords = parsed.units.map((unit) => ({
     unit,
@@ -1896,26 +1974,6 @@ async function materializeCase(testCase, runRoot) {
   recordOptionContentRewrites(testCase.configuration, pathOptions, contentRewrites);
   if (!hasRootPackageJson(writtenFiles)) {
     writtenFiles.push("package.json");
-  }
-
-  if (isTranspileCase(testCase)) {
-    await writeUnitRecords(caseDir, materializedUnitWriteOrder(unitRecords, []), pathOptions, contentRewrites);
-    await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
-    if (!hasRootPackageJson(unitRecords.map((record) => record.filePath))) {
-      await writeFile(join(caseDir, "package.json"), "{}\n");
-    }
-    await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
-    const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, writtenFiles);
-    return {
-      caseDir,
-      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions, testCase.configuration),
-      pathOptions,
-      writtenFiles,
-      writtenFileSet: normalizedWrittenFileSet(writtenFiles),
-      expectedErrors: false,
-      skipReason: "",
-      transpile: true,
-    };
   }
 
   const units = parsed.units.map((unit) => ({
@@ -2006,6 +2064,32 @@ async function materializeCase(testCase, runRoot) {
   };
 }
 
+export async function materializeTranspileCaseInputs({ caseDir, parsed, configuration, pathOptions = harnessPathOptionsFromSettings(configuration) }) {
+  await mkdir(caseDir, { recursive: true });
+  const needsLibFolder = parsed.units.some((unit) => unit.content.includes("/.lib/")) || parsed.globalOptions.has("libfiles");
+  if (needsLibFolder) await cp(testLibRoot, join(caseDir, ".lib"), { recursive: true, force: true });
+  const unitRecords = parsed.units.map((unit) => ({ unit, filePath: normalizeHarnessPath(unit.fileName, pathOptions) }));
+  const writtenFiles = unitRecords.map((record) => record.filePath);
+  const contentRewrites = [];
+  recordOptionContentRewrites(configuration, pathOptions, contentRewrites);
+  if (!hasRootPackageJson(writtenFiles)) writtenFiles.push("package.json");
+  await writeUnitRecords(caseDir, materializedUnitWriteOrder(unitRecords, []), pathOptions, contentRewrites);
+  await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
+  if (!hasRootPackageJson(unitRecords.map((record) => record.filePath))) await writeFile(join(caseDir, "package.json"), "{}\n");
+  await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
+  const compilerOptions = compilerOptionsForMaterializedCase(configuration, parsed, writtenFiles);
+  return {
+    caseDir,
+    invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions, configuration),
+    pathOptions,
+    writtenFiles,
+    writtenFileSet: normalizedWrittenFileSet(writtenFiles),
+    expectedErrors: false,
+    skipReason: "",
+    transpile: true,
+  };
+}
+
 async function writeUnitRecords(caseDir, unitRecords, pathOptions, contentRewrites) {
   for (const { unit, filePath } of unitRecords) {
     const fullPath = join(caseDir, filePath);
@@ -2024,7 +2108,7 @@ function materializedUnitWriteOrder(unitRecords, inputFiles) {
 }
 
 async function materializeProjectCase(testCase, runRoot) {
-  const descriptor = testCase.descriptor ?? await readProjectTestDescriptor(testCase.sourcePath);
+  const descriptor = testCase.descriptor ?? await readProjectTestDescriptor(testCase.sourcePath, testCase.sourceSha256);
   const projectRoot = projectRootRelativeToCaseRoot(descriptor.projectRoot);
   const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRoot);
 
@@ -2032,8 +2116,16 @@ async function materializeProjectCase(testCase, runRoot) {
   const materializedCaseRoot = join(caseDir, "tests/cases");
   const materializedProjectRoot = join(materializedCaseRoot, projectRoot);
   await mkdir(materializedProjectRoot, { recursive: true });
+  const sourceProvenance = projectFixtureProvenance(sourceProjectRoot);
+  if (canonicalJson(sourceProvenance) !== canonicalJson(testCase.projectFixture)) {
+    throw new Error(`Project fixture changed after discovery: ${sourceProjectRoot}`);
+  }
   if (existsSync(sourceProjectRoot)) {
     await cp(sourceProjectRoot, materializedProjectRoot, { recursive: true, force: true });
+    const copiedProvenance = projectFixtureProvenance(materializedProjectRoot);
+    if (canonicalJson(copiedProvenance) !== canonicalJson(testCase.projectFixture)) {
+      throw new Error(`Project fixture changed while it was copied: ${sourceProjectRoot}`);
+    }
   }
   await writeFile(join(caseDir, "package.json"), "{}\n");
 
@@ -2050,6 +2142,11 @@ async function materializeProjectCase(testCase, runRoot) {
   };
 }
 
+function projectFixtureProvenance(root) {
+  if (!existsSync(root)) return { kind: "absent" };
+  return hashInputRoots([{ label: "project-fixture", path: root }]).roots[0];
+}
+
 function normalizedWrittenFileSet(writtenFiles) {
   return new Set(writtenFiles.map((file) => normalizedBaselineSectionPath(file)));
 }
@@ -2059,7 +2156,11 @@ function projectRootRelativeToCaseRoot(projectRoot) {
 }
 
 function normalizeProjectDescriptorPath(path) {
-  return path.replaceAll("\\", "/").replace(/^\/+/, "").replace(/\/+$/, "");
+  const normalized = posixPath.normalize(path.replaceAll("\\", "/").replace(/^\/+/, "").replace(/\/+$/, ""));
+  if (normalized === "" || normalized === "." || normalized === ".." || normalized.startsWith("../")) {
+    throw new Error(`Project descriptor path is not contained in the case root: '${path}'`);
+  }
+  return normalized;
 }
 
 export function compilerOptionsForProjectDescriptor(descriptor, moduleKind, caseDir = "") {
@@ -2465,7 +2566,7 @@ function isHarnessAbsolutePath(fileName) {
   return /^[a-zA-Z]:\//.test(normalized) || normalized.startsWith("/");
 }
 
-async function materializeSymlinks(caseDir, symlinks, pathOptions) {
+export async function materializeSymlinks(caseDir, symlinks, pathOptions) {
   for (const [link, target] of symlinks) {
     const linkPath = join(caseDir, normalizeHarnessPath(link, pathOptions));
     const targetPath = join(caseDir, normalizeHarnessPath(target, pathOptions));
@@ -2475,6 +2576,10 @@ async function materializeSymlinks(caseDir, symlinks, pathOptions) {
     } catch (error) {
       if (!(error instanceof Error) || !("code" in error) || error.code !== "EEXIST") {
         throw error;
+      }
+      const existing = await lstat(linkPath);
+      if (!existing.isSymbolicLink() || await readlink(linkPath) !== targetPath) {
+        throw new Error(`Conflicting harness symlink '${link}'`);
       }
     }
   }
@@ -2677,7 +2782,13 @@ export function normalizeHarnessPath(fileName, options = defaultHarnessPathOptio
   if (normalized === "") {
     normalized = "input.ts";
   }
-  return normalized;
+  const virtualRoot = "/.tsts-case";
+  const resolved = posixPath.normalize(posixPath.join(virtualRoot, normalized));
+  if (resolved !== virtualRoot && !resolved.startsWith(`${virtualRoot}/`)) {
+    throw new Error(`Harness file path is not contained in the case root: '${fileName}'`);
+  }
+  const contained = posixPath.relative(virtualRoot, resolved);
+  return contained === "" ? "input.ts" : contained;
 }
 
 export function normalizeHarnessOptionPath(fileName, options = defaultHarnessPathOptions()) {
@@ -2752,7 +2863,7 @@ function defaultHarnessPathOptions() {
   return { useCaseSensitiveFileNames: true };
 }
 
-function harnessPathOptionsFromSettings(settings) {
+export function harnessPathOptionsFromSettings(settings) {
   return {
     useCaseSensitiveFileNames: settings.get("usecasesensitivefilenames")?.toLowerCase() !== "false",
   };
@@ -2793,8 +2904,6 @@ export function caseDirectoryFragment(testCase) {
   return safePathFragment(`${testCase.corpus ?? "current"}/${testCase.suite}/${configuredCaseName(testCase)}`);
 }
 
-const CASE_TIMEOUT_MS = Number(process.env.TSGO_CASE_TIMEOUT_MS ?? "120000");
-
 async function runTsts(invocation) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [
@@ -2804,6 +2913,7 @@ async function runTsts(invocation) {
     ], {
       cwd: invocation.cwd,
       stdio: ["ignore", "pipe", "pipe"],
+      env: suiteChildEnvironment(),
     });
     let stdout = "";
     let stderr = "";
@@ -2927,6 +3037,7 @@ async function runCase(testCase, runRoot, options) {
     stdout: onDiskDivergences.length === 0 ? result.stdout : `${result.stdout}\nON-DISK/HARNESS DIVERGENCE:\n${onDiskDivergences.join("\n")}`,
     stderr: result.stderr,
     exactBaseline,
+    executionMismatches: onDiskDivergences,
   };
 }
 
@@ -3139,7 +3250,7 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
   };
 }
 
-// Run all cases, streaming each trimmed result record to results.ndjson in the
+// Run all cases, streaming each trimmed result record to an append-only NDJSON
 // report root as it completes. The runner holds NO per-case records in memory:
 // memory stays O(in-flight cases) regardless of corpus size, and a killed run
 // leaves a complete machine-readable record of everything it finished. Each
@@ -3148,35 +3259,788 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
 // Stable identifier for a discovered case (independent of position in the list):
 // used to verify a --resume target points at the SAME case set the suspended run
 // was built from, so recorded caseIndex values still line up.
-function caseIdentifier(testCase) {
-  return `${testCase.corpus}/${testCase.suite}/${testCase.relativePath}#${testCase.configurationName ?? ""}`;
+export function caseIdentifier(testCase) {
+  return fingerprint({
+    corpus: testCase.corpus,
+    suite: testCase.suite,
+    relativePath: testCase.relativePath,
+    configurationName: testCase.configurationName ?? "",
+  }, "tsts-tsgo-suite-case-id-v1");
 }
 
-function hashCaseIds(testCases) {
-  return createHash("sha256").update(testCases.map(caseIdentifier).join("\n")).digest("hex");
+export function hashCaseIds(cases) {
+  return fingerprint(cases.map((entry) => typeof entry === "string" ? entry : entry.id ?? caseIdentifier(entry)), "tsts-tsgo-suite-case-inventory-v1");
 }
 
-// Load the set of caseIndex values already durably recorded in a prior run's
-// results.ndjson (each completed case appends exactly one line tagged with its index).
-function loadCompletedCaseIndices(resultsPath) {
-  const done = new Set();
-  if (!existsSync(resultsPath)) {
-    return done;
+export function inventoryFingerprint(inventory) {
+  return fingerprint(inventory, "tsts-tsgo-suite-inventory-v1");
+}
+
+export function runManifestFingerprint(manifest) {
+  return fingerprint(manifest, "tsts-tsgo-suite-run-v2");
+}
+
+export function buildRunManifest(testCases, options, inventory) {
+  const cases = testCases.map((testCase, index) => ({
+    index,
+    corpus: testCase.corpus,
+    suite: testCase.suite,
+    relativePath: testCase.relativePath,
+    configurationName: testCase.configurationName ?? "",
+    id: caseIdentifier(testCase),
+    sourceSha256: testCase.sourceSha256,
+    projectFixture: testCase.projectFixture ?? null,
+  }));
+  const childEnvironment = suiteChildEnvironment();
+  const sourcePin = loadAndVerifyTsgoSourcePin({ repoRoot, packageRoot, vendorRoot });
+  const typeScriptSource = sourcePin.nestedSources.find((entry) => entry.name === "TypeScript");
+  if (typeScriptSource === undefined) throw new Error("TS-Go source pin is missing the TypeScript nested source");
+  const manifest = {
+    schemaVersion: RUN_MANIFEST_SCHEMA_VERSION,
+    selection: {
+      corpus: options.corpus,
+      suite: options.suite,
+      filter: options.filter,
+      limit: options.limit,
+    },
+    execution: {
+      exactBaselineContract: 1,
+      verifyOnDisk: options.verifyOnDisk === true,
+      jobs: options.jobs,
+      failFast: options.failFast === true,
+      caseTimeoutMs: CASE_TIMEOUT_MS,
+      poolCaseTimeoutMs: POOL_CASE_TIMEOUT_MS,
+      maxOldSpaceSizeMb: 8192,
+      resultRecordMaxBytes: RESULT_RECORD_MAX_BYTES,
+      resultSegmentMaxBytes: RESULT_SEGMENT_MAX_BYTES,
+      resultSegmentMaxRecords: RESULT_SEGMENT_MAX_RECORDS,
+    },
+    runtime: {
+      execPath: executableProvenance(process.execPath),
+      nodeVersion: process.version,
+      v8Version: process.versions.v8,
+      execArgv: [...process.execArgv],
+      platform: process.platform,
+      arch: process.arch,
+      locale: runtimeLocaleEvidence(),
+      hostname: hostname(),
+      childEnvironment: Object.entries(childEnvironment).sort(([left], [right]) => compareUtf8(left, right)).map(([name, value]) => ({ name, value })),
+    },
+    upstream: {
+      sourcePin: {
+        path: sourcePin.path,
+        sha256: sourcePin.sha256,
+        tsgoRevision: sourcePin.pin.revision,
+        tsgoObjectFormat: sourcePin.pin.gitObjectFormat,
+        typescriptPath: typeScriptSource.path,
+        typescriptRevision: typeScriptSource.revision,
+        typescriptObjectFormat: typeScriptSource.gitObjectFormat,
+      },
+      tsgo: checkoutEvidence(sourcePin.primary),
+      typescript: { name: typeScriptSource.name, path: typeScriptSource.path, ...checkoutEvidence(typeScriptSource.checkout) },
+    },
+    inputs: hashInputRoots(runInputRoots()),
+    cases,
+    caseIdsHash: hashCaseIds(cases),
+    total: testCases.length,
+    inventory,
+    inventoryHash: inventoryFingerprint(inventory),
+  };
+  return { ...manifest, runFingerprint: runManifestFingerprint(manifest) };
+}
+
+export function validateRunManifest(manifest, expectedManifest) {
+  assertExactKeys(manifest, ["caseIdsHash", "cases", "execution", "inputs", "inventory", "inventoryHash", "runFingerprint", "runtime", "schemaVersion", "selection", "total", "upstream"], "run manifest");
+  if (manifest.schemaVersion !== RUN_MANIFEST_SCHEMA_VERSION) throw new Error(`unsupported run manifest schemaVersion '${manifest.schemaVersion}'`);
+  assertExactKeys(manifest.selection, ["corpus", "filter", "limit", "suite"], "run manifest selection");
+  validateCorpusSuite(manifest.selection.corpus, manifest.selection.suite, "run manifest selection");
+  assertBoundedString(manifest.selection.filter, "run manifest selection.filter", 10000);
+  assertNonNegativeInteger(manifest.selection.limit, "run manifest selection.limit");
+  assertExactKeys(manifest.execution, ["caseTimeoutMs", "exactBaselineContract", "failFast", "jobs", "maxOldSpaceSizeMb", "poolCaseTimeoutMs", "resultRecordMaxBytes", "resultSegmentMaxBytes", "resultSegmentMaxRecords", "verifyOnDisk"], "run manifest execution");
+  if (manifest.execution.exactBaselineContract !== 1) throw new Error("run manifest exact-baseline contract is unsupported");
+  for (const key of ["verifyOnDisk", "failFast"]) assertBoolean(manifest.execution[key], `run manifest execution.${key}`);
+  for (const key of ["jobs", "caseTimeoutMs", "poolCaseTimeoutMs", "maxOldSpaceSizeMb", "resultRecordMaxBytes", "resultSegmentMaxBytes", "resultSegmentMaxRecords"]) {
+    assertPositiveInteger(manifest.execution[key], `run manifest execution.${key}`);
   }
-  for (const line of readFileSync(resultsPath, "utf8").split("\n")) {
-    if (line.trim() === "") {
-      continue;
+  if (manifest.execution.resultRecordMaxBytes > manifest.execution.resultSegmentMaxBytes) throw new Error("run manifest result record limit exceeds its segment limit");
+  validateRuntimeEvidence(manifest.runtime, manifest.execution);
+  validateUpstreamEvidence(manifest.upstream);
+  validateInputInventory(manifest.inputs);
+  validateInventory(manifest.inventory);
+  if (manifest.inventoryHash !== inventoryFingerprint(manifest.inventory)) throw new Error("run manifest inventory hash does not match its inventory");
+  if (!Number.isSafeInteger(manifest.total) || manifest.total < 0 || !Array.isArray(manifest.cases) || manifest.cases.length !== manifest.total) {
+    throw new Error("run manifest case inventory is invalid");
+  }
+  const caseIds = new Set();
+  let previousCaseSortKey;
+  for (let index = 0; index < manifest.cases.length; index += 1) {
+    const entry = manifest.cases[index];
+    assertExactKeys(entry, ["configurationName", "corpus", "id", "index", "projectFixture", "relativePath", "sourceSha256", "suite"], `run manifest case ${index}`);
+    if (entry.index !== index) throw new Error(`run manifest case ${index} has an invalid index`);
+    validateCorpusSuite(entry.corpus, entry.suite, `run manifest case ${index}`);
+    if (entry.corpus !== manifest.selection.corpus || (manifest.selection.suite !== "all" && entry.suite !== manifest.selection.suite)) throw new Error(`run manifest case ${index} is outside the selected corpus/suite`);
+    assertSafeRelativePath(entry.relativePath, `run manifest case ${index}.relativePath`);
+    if (manifest.selection.filter !== "" && !entry.relativePath.includes(manifest.selection.filter)) throw new Error(`run manifest case ${index} does not match the selected filter`);
+    assertBoundedString(entry.configurationName, `run manifest case ${index}.configurationName`, 10000);
+    if (!DIGEST_PATTERN.test(entry.sourceSha256)) throw new Error(`run manifest case ${index} has an invalid source digest`);
+    validateProjectFixture(entry.projectFixture, entry.suite, `run manifest case ${index}.projectFixture`);
+    const expectedId = caseIdentifier(entry);
+    if (entry.id !== expectedId) throw new Error(`run manifest case ${index} id does not match its identity`);
+    if (caseIds.has(entry.id)) throw new Error(`run manifest case ${index} duplicates case id '${entry.id}'`);
+    caseIds.add(entry.id);
+    const caseSortKey = `${entry.relativePath}:${entry.configurationName}`;
+    if (previousCaseSortKey !== undefined && compareUtf8(previousCaseSortKey, caseSortKey) > 0) throw new Error(`run manifest case ${index} is out of discovery order`);
+    previousCaseSortKey = caseSortKey;
+  }
+  if (manifest.selection.limit > 0 && manifest.total > manifest.selection.limit) throw new Error("run manifest total exceeds its selected limit");
+  if (manifest.caseIdsHash !== hashCaseIds(manifest.cases)) throw new Error("run manifest case ID hash does not match its cases");
+  if (!DIGEST_PATTERN.test(manifest.runFingerprint)) throw new Error("run manifest fingerprint is invalid");
+  const { runFingerprint, ...unsigned } = manifest;
+  if (runFingerprint !== runManifestFingerprint(unsigned)) throw new Error("run manifest fingerprint does not match its contents");
+  if (expectedManifest !== undefined && manifest.runFingerprint !== expectedManifest.runFingerprint) {
+    throw new Error("run manifest does not match current source, baselines, compiler, runtime, environment, execution mode, or case selection");
+  }
+  return manifest;
+}
+
+export function createRunConfig(runManifest) {
+  validateRunManifest(runManifest);
+  return { schemaVersion: RUN_CONFIG_SCHEMA_VERSION, runFingerprint: runManifest.runFingerprint, runManifest };
+}
+
+export function validateRunConfig(config, expectedManifest) {
+  assertExactKeys(config, ["runFingerprint", "runManifest", "schemaVersion"], "run config");
+  if (config.schemaVersion !== RUN_CONFIG_SCHEMA_VERSION) throw new Error(`unsupported run config schemaVersion '${config.schemaVersion}'`);
+  validateRunManifest(config.runManifest);
+  if (config.runFingerprint !== config.runManifest.runFingerprint) throw new Error("run config fingerprint does not match its manifest");
+  if (expectedManifest !== undefined && config.runFingerprint !== expectedManifest.runFingerprint) {
+    throw new Error("run config does not match the current run manifest");
+  }
+  return config;
+}
+
+function runtimeLocaleEvidence() {
+  const locale = Intl.DateTimeFormat().resolvedOptions();
+  return { locale: locale.locale, calendar: locale.calendar, numberingSystem: locale.numberingSystem, timeZone: locale.timeZone };
+}
+
+function checkoutEvidence(checkout) {
+  return { revision: checkout.revision, tree: checkout.tree, objectFormat: checkout.objectFormat, dirty: checkout.dirty };
+}
+
+function runInputRoots() {
+  const accepted = getActiveAcceptedOverlayBinding();
+  return [
+    { label: "suite-runner", path: scriptPath },
+    { label: "suite-provenance-helper", path: provenanceHelperPath },
+    { label: "suite-source-pin-verifier", path: sourcePinVerifierPath },
+    { label: "suite-sealed-evidence-helper", path: sealedEvidenceHelperPath },
+    { label: "suite-report-verifier", path: reportVerifierPath },
+    { label: "suite-baseline-code", path: tsbaselineRoot },
+    { label: "accepted-overlay-active", path: join(tsgoAcceptedRoot, "active.json") },
+    { label: "accepted-overlay-plan", path: join(tsgoAcceptedRoot, accepted.plan.path) },
+    { label: "accepted-overlay-legacy-manifest", path: join(tsgoAcceptedRoot, "manifest.json") },
+    { label: "accepted-overlay-capture", path: accepted.capture.directory },
+    { label: "accepted-overlay-binding", path: accepted.binding.directory },
+    { label: "tsts-dist", path: distRoot },
+    { label: "bundled-source-assets", path: bundledSourceRoot },
+    { label: "source-pin", path: sourcePinPath },
+    { label: "workspace-package", path: join(repoRoot, "package.json") },
+    { label: "workspace-lock", path: join(repoRoot, "package-lock.json") },
+    { label: "tsts-package", path: join(packageRoot, "package.json") },
+    { label: "resolved-typescript-package", path: resolvedTypeScriptPackageRoot },
+    { label: "vendored-typescript-lib-fallback", path: vendoredTypeScriptLibRoot },
+  ];
+}
+
+function suiteChildEnvironment() {
+  const inheritedKeys = process.platform === "win32"
+    ? ["PATH", "HOME", "USERPROFILE", "TEMP", "TMP", "SystemRoot", "ComSpec", "PATHEXT"]
+    : ["PATH", "HOME", "TMPDIR", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"];
+  const environment = {};
+  for (const key of inheritedKeys) {
+    if (process.env[key] !== undefined) environment[key] = process.env[key];
+  }
+  environment.TZ = "UTC";
+  environment.LANG = "C.UTF-8";
+  environment.LC_ALL = "C.UTF-8";
+  environment.NODE_OPTIONS = "";
+  environment.NODE_PATH = "";
+  environment.TSGO_CASE_TIMEOUT_MS = String(CASE_TIMEOUT_MS);
+  environment.TSGO_POOL_TIMEOUT_MS = String(POOL_CASE_TIMEOUT_MS);
+  return environment;
+}
+
+const expectedRunInputLabels = [
+  "accepted-overlay-active",
+  "accepted-overlay-binding",
+  "accepted-overlay-capture",
+  "accepted-overlay-legacy-manifest",
+  "accepted-overlay-plan",
+  "bundled-source-assets",
+  "resolved-typescript-package",
+  "source-pin",
+  "suite-baseline-code",
+  "suite-provenance-helper",
+  "suite-report-verifier",
+  "suite-runner",
+  "suite-sealed-evidence-helper",
+  "suite-source-pin-verifier",
+  "tsts-dist",
+  "tsts-package",
+  "vendored-typescript-lib-fallback",
+  "workspace-lock",
+  "workspace-package",
+].sort(compareUtf8);
+
+function validateRuntimeEvidence(runtime, execution) {
+  assertExactKeys(runtime, ["arch", "childEnvironment", "execArgv", "execPath", "hostname", "locale", "nodeVersion", "platform", "v8Version"], "run manifest runtime");
+  validateFileProvenance(runtime.execPath, "run manifest runtime.execPath");
+  for (const key of ["nodeVersion", "v8Version", "platform", "arch", "hostname"]) assertBoundedString(runtime[key], `run manifest runtime.${key}`, 1000, true);
+  if (!Array.isArray(runtime.execArgv) || runtime.execArgv.length > 100 || !runtime.execArgv.every((entry) => typeof entry === "string" && entry.length <= 10000)) {
+    throw new Error("run manifest runtime.execArgv is invalid");
+  }
+  assertExactKeys(runtime.locale, ["calendar", "locale", "numberingSystem", "timeZone"], "run manifest runtime.locale");
+  for (const key of ["calendar", "locale", "numberingSystem", "timeZone"]) assertBoundedString(runtime.locale[key], `run manifest runtime.locale.${key}`, 1000, true);
+  if (!Array.isArray(runtime.childEnvironment) || runtime.childEnvironment.length > 32) throw new Error("run manifest runtime.childEnvironment is invalid");
+  const allowedNames = new Set(["ComSpec", "DYLD_LIBRARY_PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH", "NODE_OPTIONS", "NODE_PATH", "PATH", "PATHEXT", "SystemRoot", "TEMP", "TMP", "TMPDIR", "TSGO_CASE_TIMEOUT_MS", "TSGO_POOL_TIMEOUT_MS", "TZ", "USERPROFILE"]);
+  let previousName = "";
+  const environmentByName = new Map();
+  for (const [index, entry] of runtime.childEnvironment.entries()) {
+    assertExactKeys(entry, ["name", "value"], `run manifest runtime.childEnvironment[${index}]`);
+    if (!allowedNames.has(entry.name) || (index > 0 && compareUtf8(previousName, entry.name) >= 0)) throw new Error("run manifest runtime.childEnvironment names are invalid");
+    assertBoundedString(entry.value, `run manifest runtime.childEnvironment[${index}].value`, 1024 * 1024);
+    environmentByName.set(entry.name, entry.value);
+    previousName = entry.name;
+  }
+  const requiredValues = new Map([
+    ["LANG", "C.UTF-8"], ["LC_ALL", "C.UTF-8"], ["NODE_OPTIONS", ""], ["NODE_PATH", ""], ["TZ", "UTC"],
+    ["TSGO_CASE_TIMEOUT_MS", String(execution.caseTimeoutMs)], ["TSGO_POOL_TIMEOUT_MS", String(execution.poolCaseTimeoutMs)],
+  ]);
+  for (const [name, value] of requiredValues) {
+    if (environmentByName.get(name) !== value) throw new Error(`run manifest runtime.childEnvironment.${name} is invalid`);
+  }
+}
+
+function validateUpstreamEvidence(upstream) {
+  assertExactKeys(upstream, ["sourcePin", "tsgo", "typescript"], "run manifest upstream");
+  assertExactKeys(upstream.sourcePin, ["path", "sha256", "tsgoObjectFormat", "tsgoRevision", "typescriptObjectFormat", "typescriptPath", "typescriptRevision"], "run manifest upstream.sourcePin");
+  assertSafeRelativePath(upstream.sourcePin.path, "run manifest upstream.sourcePin.path");
+  assertDigest(upstream.sourcePin.sha256, "run manifest upstream.sourcePin.sha256");
+  validateCheckoutEvidence(upstream.tsgo, "run manifest upstream.tsgo");
+  assertExactKeys(upstream.typescript, ["dirty", "name", "objectFormat", "path", "revision", "tree"], "run manifest upstream.typescript");
+  if (upstream.typescript.name !== "TypeScript") throw new Error("run manifest TypeScript source name is invalid");
+  assertSafeRelativePath(upstream.typescript.path, "run manifest upstream.typescript.path");
+  validateCheckoutEvidence(upstream.typescript, "run manifest upstream.typescript", ["name", "path"]);
+  if (upstream.sourcePin.tsgoRevision !== upstream.tsgo.revision || upstream.sourcePin.tsgoObjectFormat !== upstream.tsgo.objectFormat) throw new Error("run manifest TS-Go checkout does not match its source pin");
+  if (upstream.sourcePin.typescriptPath !== upstream.typescript.path || upstream.sourcePin.typescriptRevision !== upstream.typescript.revision || upstream.sourcePin.typescriptObjectFormat !== upstream.typescript.objectFormat) throw new Error("run manifest TypeScript checkout does not match its source pin");
+}
+
+function validateCheckoutEvidence(checkout, label, additionalKeys = []) {
+  assertExactKeys(checkout, ["dirty", "objectFormat", "revision", "tree", ...additionalKeys], label);
+  if (!new Set(["sha1", "sha256"]).has(checkout.objectFormat) || checkout.dirty !== false) throw new Error(`${label} identity is invalid`);
+  const objectIdPattern = checkout.objectFormat === "sha1" ? /^[0-9a-f]{40}$/ : DIGEST_PATTERN;
+  if (!objectIdPattern.test(checkout.revision) || !objectIdPattern.test(checkout.tree)) throw new Error(`${label} object IDs are invalid`);
+}
+
+function validateInputInventory(inputs) {
+  assertExactKeys(inputs, ["digest", "roots", "schemaVersion"], "run manifest inputs");
+  if (inputs.schemaVersion !== 1 || !Array.isArray(inputs.roots)) throw new Error("run manifest inputs are invalid");
+  const labels = [];
+  for (const [index, root] of inputs.roots.entries()) {
+    assertExactKeys(root, ["bytes", "digest", "fileCount", "kind", "label", "mode", "symlinkCount", "symlinkPolicy"], `run manifest input root ${index}`);
+    assertBoundedString(root.label, `run manifest input root ${index}.label`, 1000, true);
+    if (!new Set(["directory", "file", "symlink"]).has(root.kind) || !new Set(["reject", "resolved-contained"]).has(root.symlinkPolicy)) throw new Error(`run manifest input root ${index} kind is invalid`);
+    assertMode(root.mode, `run manifest input root ${index}.mode`);
+    for (const key of ["fileCount", "symlinkCount", "bytes"]) assertNonNegativeInteger(root[key], `run manifest input root ${index}.${key}`);
+    assertDigest(root.digest, `run manifest input root ${index}.digest`);
+    labels.push(root.label);
+  }
+  if (canonicalJson(labels) !== canonicalJson(expectedRunInputLabels)) throw new Error("run manifest input root labels are invalid");
+  if (inputs.digest !== fingerprint(inputs.roots, "tsts-input-roots-v1")) throw new Error("run manifest input inventory digest does not match its roots");
+}
+
+export function validateInventory(inventory) {
+  assertExactKeys(inventory, ["baselines", "currentHarness", "goTests", "typeScriptCases"], "test universe inventory");
+  validateInventoryBucket(inventory.currentHarness, "test universe inventory.currentHarness");
+  validateInventoryBucket(inventory.baselines, "test universe inventory.baselines");
+  validateInventoryBucket(inventory.goTests, "test universe inventory.goTests");
+  validateInventoryBucket(inventory.typeScriptCases, "test universe inventory.typeScriptCases", true);
+  return inventory;
+}
+
+function validateInventoryBucket(bucket, label, hasLanguageServiceCount = false) {
+  const keys = ["entries", "inScope", "outOfScope", "total", "unclassified"];
+  if (hasLanguageServiceCount) keys.push("languageServiceHarnessCases");
+  assertExactKeys(bucket, keys, label);
+  for (const key of ["inScope", "outOfScope", "total", "unclassified"]) assertNonNegativeInteger(bucket[key], `${label}.${key}`);
+  if (bucket.inScope + bucket.outOfScope + bucket.unclassified !== bucket.total) throw new Error(`${label} classification totals do not match`);
+  assertPlainObject(bucket.entries, `${label}.entries`);
+  let entriesTotal = 0;
+  for (const [name, count] of Object.entries(bucket.entries)) {
+    assertBoundedString(name, `${label}.entries key`, 1000, true);
+    assertNonNegativeInteger(count, `${label}.entries.${name}`);
+    entriesTotal += count;
+    if (!Number.isSafeInteger(entriesTotal)) throw new Error(`${label}.entries total is unsafe`);
+  }
+  if (entriesTotal !== bucket.total) throw new Error(`${label}.entries do not match total`);
+  if (hasLanguageServiceCount) {
+    assertNonNegativeInteger(bucket.languageServiceHarnessCases, `${label}.languageServiceHarnessCases`);
+    if (bucket.languageServiceHarnessCases > bucket.outOfScope) throw new Error(`${label}.languageServiceHarnessCases exceeds out-of-scope count`);
+  }
+}
+
+function validateProjectFixture(projectFixture, suite, label) {
+  if (suite !== "project") {
+    if (projectFixture !== null) throw new Error(`${label} must be null for a non-project case`);
+    return;
+  }
+  assertPlainObject(projectFixture, label);
+  if (projectFixture.kind === "absent") {
+    assertExactKeys(projectFixture, ["kind"], label);
+    return;
+  }
+  assertExactKeys(projectFixture, ["bytes", "digest", "fileCount", "kind", "label", "mode", "symlinkCount", "symlinkPolicy"], label);
+  if (projectFixture.label !== "project-fixture" || projectFixture.kind !== "directory" || projectFixture.symlinkPolicy !== "reject") throw new Error(`${label} identity is invalid`);
+  assertMode(projectFixture.mode, `${label}.mode`);
+  for (const key of ["fileCount", "symlinkCount", "bytes"]) assertNonNegativeInteger(projectFixture[key], `${label}.${key}`);
+  assertDigest(projectFixture.digest, `${label}.digest`);
+}
+
+function validateCorpusSuite(corpus, suite, label) {
+  const supported = supportedSuitesByCorpus.get(corpus);
+  if (supported === undefined || (suite !== "all" && !supported.has(suite))) throw new Error(`${label} corpus/suite is invalid`);
+}
+
+function validateFileProvenance(value, label, expectedPath) {
+  const keys = expectedPath === undefined ? ["bytes", "sha256"] : ["bytes", "path", "sha256"];
+  assertExactKeys(value, keys, label);
+  assertNonNegativeInteger(value.bytes, `${label}.bytes`);
+  assertDigest(value.sha256, `${label}.sha256`);
+  if (expectedPath !== undefined && value.path !== expectedPath) throw new Error(`${label}.path is invalid`);
+}
+
+function assertPlainObject(value, label) {
+  if (value === null || typeof value !== "object" || Array.isArray(value) || (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) {
+    throw new Error(`${label} must be a plain object`);
+  }
+}
+
+function assertExactKeys(value, expectedKeys, label) {
+  assertPlainObject(value, label);
+  if (canonicalJson(Object.keys(value).sort(compareUtf8)) !== canonicalJson([...expectedKeys].sort(compareUtf8))) throw new Error(`${label} keys are invalid`);
+}
+
+function assertBoundedString(value, label, maximumLength, nonempty = false) {
+  if (typeof value !== "string" || value.length > maximumLength || (nonempty && value.length === 0) || value.includes("\0")) throw new Error(`${label} is invalid`);
+}
+
+function assertSafeRelativePath(value, label) {
+  assertBoundedString(value, label, 10000, true);
+  const parts = value.split("/");
+  if (value.includes("\\") || value.startsWith("/") || parts.some((part) => part === "" || part === "." || part === "..") || posixPath.normalize(value) !== value) throw new Error(`${label} is not a safe relative path`);
+}
+
+function assertBoolean(value, label) {
+  if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
+}
+
+function assertPositiveInteger(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${label} must be a positive safe integer`);
+}
+
+function assertNonNegativeInteger(value, label) {
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error(`${label} must be a non-negative safe integer`);
+}
+
+function assertMode(value, label) {
+  if (!Number.isSafeInteger(value) || value < 0 || value > 0o777) throw new Error(`${label} is invalid`);
+}
+
+function assertDigest(value, label) {
+  if (typeof value !== "string" || !DIGEST_PATTERN.test(value)) throw new Error(`${label} is invalid`);
+}
+
+export function caseFingerprint(runManifest, caseIndex) {
+  const expected = runManifest.cases[caseIndex];
+  if (expected === undefined) throw new Error(`case index ${caseIndex} is outside run manifest`);
+  return fingerprint({ runFingerprint: runManifest.runFingerprint, case: expected }, "tsts-tsgo-suite-case-v2");
+}
+
+export function loadResultLedger(segmentPaths, runManifest) {
+  validateRunManifest(runManifest);
+  if (!Array.isArray(segmentPaths)) throw new Error("result segment paths must be an array");
+  const recordsByIndex = new Map();
+  const allRecords = [];
+  const segmentEvidence = [];
+  const expectedKeys = ["caseFingerprint", "caseId", "caseIndex", "result", "resultFingerprint", "runFingerprint", "schemaVersion"];
+  const normalizedSegments = segmentPaths.map(normalizeResultSegmentInput).sort((left, right) => left.sequence - right.sequence);
+  const seenSequences = new Set();
+  for (const segment of normalizedSegments) {
+    if (seenSequences.has(segment.sequence)) throw new Error(`duplicate result segment sequence ${segment.sequence}`);
+    seenSequences.add(segment.sequence);
+    const segmentPath = segment.path;
+    const bytes = segment.content ?? readFileSync(segmentPath);
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    const seal = segment.seal?.value;
+    if (seal !== undefined) validateResultSegmentSeal(seal, runManifest, { segment: basename(segmentPath), sequence: segment.sequence });
+    if (seal !== undefined && (seal.bytes !== bytes.length || seal.sha256 !== digest)) {
+      throw new Error(`sealed result segment digest mismatch: ${segmentPath}`);
     }
+    if (seal !== undefined && (bytes.length === 0 || bytes.at(-1) !== 0x0a)) throw new Error(`sealed result segment is not newline-complete: ${segmentPath}`);
+    let text;
     try {
-      const record = JSON.parse(line);
-      if (typeof record.caseIndex === "number") {
-        done.add(record.caseIndex);
-      }
-    } catch {
-      // Ignore a truncated trailing line (killed mid-append) — that case just re-runs.
+      text = strictUtf8Decoder.decode(bytes);
+    } catch (error) {
+      throw new Error(`result segment is not valid UTF-8: ${segmentPath}: ${error instanceof Error ? error.message : String(error)}`);
     }
+    const finalNewline = text.lastIndexOf("\n");
+    const lines = finalNewline < 0 ? [] : text.slice(0, finalNewline).split("\n");
+    let segmentRecords = 0;
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+      const line = lines[lineIndex];
+      if (line === "" || line.endsWith("\r")) throw new Error(`invalid blank or CRLF result ledger line in ${segmentPath}:${lineIndex + 1}`);
+      if (Buffer.byteLength(line, "utf8") + 1 > runManifest.execution.resultRecordMaxBytes) throw new Error(`result ledger record exceeds its byte limit in ${segmentPath}:${lineIndex + 1}`);
+      let record;
+      try {
+        record = JSON.parse(line);
+      } catch (error) {
+        throw new Error(`invalid result ledger JSON in ${segmentPath}:${lineIndex + 1}: ${error.message}`);
+      }
+      const keys = record !== null && typeof record === "object" && !Array.isArray(record) ? Object.keys(record).sort() : [];
+      if (JSON.stringify(keys) !== JSON.stringify(expectedKeys)) throw new Error(`invalid result envelope keys in ${segmentPath}:${lineIndex + 1}`);
+      if (record.schemaVersion !== RESULT_SCHEMA_VERSION) throw new Error(`invalid result schemaVersion in ${segmentPath}:${lineIndex + 1}`);
+      if (record.runFingerprint !== runManifest.runFingerprint) throw new Error(`result run fingerprint mismatch in ${segmentPath}:${lineIndex + 1}`);
+      if (!Number.isInteger(record.caseIndex) || record.caseIndex < 0 || record.caseIndex >= runManifest.total) throw new Error(`invalid result caseIndex in ${segmentPath}:${lineIndex + 1}`);
+      const expectedCase = runManifest.cases[record.caseIndex];
+      if (record.caseId !== expectedCase.id) throw new Error(`result case identity mismatch in ${segmentPath}:${lineIndex + 1}`);
+      if (record.caseFingerprint !== caseFingerprint(runManifest, record.caseIndex)) throw new Error(`result case fingerprint mismatch in ${segmentPath}:${lineIndex + 1}`);
+      if (record.result === null || typeof record.result !== "object" || Array.isArray(record.result)) throw new Error(`result payload must be an object in ${segmentPath}:${lineIndex + 1}`);
+      validateResultPayload(record.result, `${segmentPath}:${lineIndex + 1}`);
+      if (record.resultFingerprint !== resultFingerprint(record.runFingerprint, record.caseFingerprint, record.result)) throw new Error(`result payload fingerprint mismatch in ${segmentPath}:${lineIndex + 1}`);
+      if (caseIdentifier(record.result) !== record.caseId) throw new Error(`result payload identity mismatch in ${segmentPath}:${lineIndex + 1}`);
+      const previous = recordsByIndex.get(record.caseIndex);
+      if (previous !== undefined && resultCompletesCase(previous.result)) throw new Error(`duplicate completed result for case ${record.caseIndex}`);
+      recordsByIndex.set(record.caseIndex, record);
+      allRecords.push(record);
+      segmentRecords += 1;
+    }
+    if (seal !== undefined && seal.records !== segmentRecords) throw new Error(`sealed result segment record count mismatch: ${segmentPath}`);
+    segmentEvidence.push({ sequence: segment.sequence, path: segmentPath, bytes: bytes.length, sha256: digest, records: segmentRecords, seal: segment.seal ?? null });
   }
-  return done;
+  const doneIndices = new Set([...recordsByIndex].filter(([, record]) => resultCompletesCase(record.result)).map(([index]) => index));
+  return { recordsByIndex, allRecords, doneIndices, segmentEvidence };
+}
+
+export function validateResultPayload(result, location) {
+  const expectedKeys = ["actualErrors", "caseDir", "configurationName", "corpus", "exactBaseline", "executionMismatchCount", "executionMismatches", "exitCode", "expectedErrors", "firstOutputLines", "infrastructureFailure", "relativePath", "signal", "skipReason", "status", "suite", "verdict"];
+  assertExactKeys(result, expectedKeys, `result payload in ${location}`);
+  validateCorpusSuite(result.corpus, result.suite, `result payload in ${location}`);
+  assertSafeRelativePath(result.relativePath, `result payload relativePath in ${location}`);
+  assertBoundedString(result.configurationName, `result payload configurationName in ${location}`, 10000);
+  assertBoundedString(result.caseDir, `result payload caseDir in ${location}`, 20000);
+  assertBoundedString(result.skipReason, `result payload skipReason in ${location}`, 10000);
+  if (result.caseDir !== "" && (!isAbsolute(result.caseDir) || resolve(result.caseDir) !== result.caseDir)) throw new Error(`result payload caseDir is not a canonical absolute path in ${location}`);
+  if (!new Set(["pass", "fail", "skip"]).has(result.status)) throw new Error(`result payload status is invalid in ${location}`);
+  if (typeof result.expectedErrors !== "boolean" || typeof result.actualErrors !== "boolean" || typeof result.infrastructureFailure !== "boolean") {
+    throw new Error(`result payload booleans are invalid in ${location}`);
+  }
+  if (!Number.isSafeInteger(result.exitCode) || result.exitCode < 0) throw new Error(`result payload exitCode is invalid in ${location}`);
+  if (result.signal !== null && (typeof result.signal !== "string" || !/^SIG[A-Z0-9]+$/.test(result.signal))) throw new Error(`result payload signal is invalid in ${location}`);
+  if (!Array.isArray(result.firstOutputLines) || result.firstOutputLines.length > 20 || !result.firstOutputLines.every((line) => typeof line === "string" && line.length <= 1000)) {
+    throw new Error(`result payload firstOutputLines is invalid in ${location}`);
+  }
+  assertNonNegativeInteger(result.executionMismatchCount, `result payload executionMismatchCount in ${location}`);
+  validateBaselineSamples(result.executionMismatches, result.executionMismatchCount, `result payload executionMismatches in ${location}`);
+  if (result.exactBaseline !== null) validateExactBaseline(result.exactBaseline, location);
+  if (result.skipReason !== "" && (result.infrastructureFailure || result.exitCode !== 0 || result.signal !== null || result.actualErrors || result.exactBaseline !== null || result.executionMismatchCount !== 0 || result.caseDir === "")) throw new Error(`skipped result evidence is contradictory in ${location}`);
+  if (result.skipReason === "" && result.status === "skip") throw new Error(`result cannot skip without a reason in ${location}`);
+  if (!result.infrastructureFailure && result.caseDir === "") throw new Error(`completed result must retain its case directory in ${location}`);
+  if (result.exactBaseline !== null && result.exactBaseline.expectedDiagnosticsPresent !== result.expectedErrors) throw new Error(`exact baseline expected diagnostics do not match result evidence in ${location}`);
+  if (result.exactBaseline?.usedHarness === true && result.exactBaseline.actualErrors !== result.actualErrors && result.executionMismatchCount === 0) throw new Error(`harness diagnostics do not match result evidence in ${location}`);
+  const expectedVerdict = deriveResultVerdict(result);
+  if (canonicalJson(result.verdict) !== canonicalJson(expectedVerdict)) throw new Error(`result verdict does not match its evidence in ${location}`);
+  if (result.status !== deriveResultStatus(expectedVerdict)) throw new Error(`result status does not match its verdict in ${location}`);
+  return result;
+}
+
+export function deriveResultVerdict(result) {
+  const skipped = result.skipReason !== "";
+  return {
+    schemaVersion: RESULT_VERDICT_SCHEMA_VERSION,
+    kind: skipped ? "skipped" : result.infrastructureFailure ? "infrastructure-failure" : "executed",
+    diagnosticsMatch: skipped ? null : result.expectedErrors === result.actualErrors,
+    exitCodeAccepted: skipped ? null : result.exitCode === 0 || (result.expectedErrors && result.actualErrors),
+    signalAbsent: skipped ? null : result.signal === null,
+    exactBaselineMatch: skipped ? null : result.exactBaseline === null || (result.exactBaseline.status === "pass" && result.exactBaseline.mismatchCount === 0),
+    executionMatch: skipped ? null : result.executionMismatchCount === 0,
+  };
+}
+
+export function deriveResultStatus(verdict) {
+  assertExactKeys(verdict, ["diagnosticsMatch", "exactBaselineMatch", "executionMatch", "exitCodeAccepted", "kind", "schemaVersion", "signalAbsent"], "result verdict");
+  if (verdict.schemaVersion !== RESULT_VERDICT_SCHEMA_VERSION || !new Set(["executed", "infrastructure-failure", "skipped"]).has(verdict.kind)) throw new Error("result verdict identity is invalid");
+  if (verdict.kind === "skipped") {
+    if ([verdict.diagnosticsMatch, verdict.exitCodeAccepted, verdict.signalAbsent, verdict.exactBaselineMatch, verdict.executionMatch].some((value) => value !== null)) throw new Error("skipped result verdict fields must be null");
+    return "skip";
+  }
+  if (![verdict.diagnosticsMatch, verdict.exitCodeAccepted, verdict.signalAbsent, verdict.exactBaselineMatch, verdict.executionMatch].every((value) => typeof value === "boolean")) throw new Error("executed result verdict fields must be booleans");
+  return verdict.kind === "executed" && verdict.diagnosticsMatch && verdict.exitCodeAccepted && verdict.signalAbsent && verdict.exactBaselineMatch && verdict.executionMatch ? "pass" : "fail";
+}
+
+export function resultCompletesCase(result) {
+  return result.infrastructureFailure === false;
+}
+
+function validateExactBaseline(baseline, location) {
+  assertExactKeys(baseline, ["actualErrors", "checked", "comparable", "expectedDiagnosticsPresent", "mismatchCount", "mismatches", "schemaVersion", "status", "tsgoAccepted", "tsgoAcceptedCount", "unsupported", "unsupportedCount", "usedHarness"], `result exactBaseline in ${location}`);
+  if (baseline.schemaVersion !== EXACT_BASELINE_SCHEMA_VERSION || !new Set(["pass", "fail"]).has(baseline.status)) throw new Error(`result exactBaseline identity is invalid in ${location}`);
+  for (const key of ["checked", "comparable", "mismatchCount", "tsgoAcceptedCount", "unsupportedCount"]) assertNonNegativeInteger(baseline[key], `result exactBaseline.${key} in ${location}`);
+  for (const key of ["expectedDiagnosticsPresent", "usedHarness"]) assertBoolean(baseline[key], `result exactBaseline.${key} in ${location}`);
+  if (baseline.actualErrors !== null && typeof baseline.actualErrors !== "boolean") throw new Error(`result exactBaseline.actualErrors is invalid in ${location}`);
+  if ((baseline.usedHarness && typeof baseline.actualErrors !== "boolean") || (!baseline.usedHarness && baseline.actualErrors !== null)) throw new Error(`result exactBaseline harness evidence is invalid in ${location}`);
+  validateBaselineSamples(baseline.mismatches, baseline.mismatchCount, `result exactBaseline.mismatches in ${location}`);
+  validateBaselineSamples(baseline.tsgoAccepted, baseline.tsgoAcceptedCount, `result exactBaseline.tsgoAccepted in ${location}`);
+  validateBaselineSamples(baseline.unsupported, baseline.unsupportedCount, `result exactBaseline.unsupported in ${location}`);
+  const expectedStatus = baseline.mismatchCount === 0 ? "pass" : "fail";
+  if (baseline.status !== expectedStatus) throw new Error(`result exactBaseline status does not match mismatches in ${location}`);
+}
+
+function validateBaselineSamples(samples, count, label) {
+  if (!Array.isArray(samples) || samples.length !== Math.min(count, MAX_BASELINE_SAMPLES) || !samples.every((entry) => typeof entry === "string" && entry.length <= MAX_BASELINE_SAMPLE_LENGTH)) throw new Error(`${label} is invalid`);
+}
+
+export function resultFingerprint(runFingerprint, caseFingerprintValue, result) {
+  return fingerprint({ runFingerprint, caseFingerprint: caseFingerprintValue, result }, "tsts-tsgo-suite-result-v2");
+}
+
+export function resultSegmentPaths(reportRoot) {
+  if (!existsSync(reportRoot)) return [];
+  const rootStat = lstatSync(reportRoot);
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) throw new Error(`result report root must be a regular directory: ${reportRoot}`);
+  const candidates = readdirSync(reportRoot, { withFileTypes: true }).filter((entry) => entry.name.startsWith("results-"));
+  const invalid = candidates.filter((entry) => !entry.isFile() || !RESULT_SEGMENT_NAME_PATTERN.test(entry.name));
+  if (invalid.length !== 0) throw new Error(`invalid result segment entries: ${invalid.map((entry) => entry.name).join(", ")}`);
+  const paths = candidates.map((entry) => join(reportRoot, entry.name)).sort(compareUtf8);
+  for (let index = 0; index < paths.length; index += 1) {
+    const expectedName = `results-${String(index + 1).padStart(4, "0")}.ndjson`;
+    if (paths[index] !== join(reportRoot, expectedName)) throw new Error(`result segment sequence has a gap before ${expectedName}`);
+  }
+  return paths;
+}
+
+export function sealedResultSegments(reportRoot, runManifest) {
+  validateRunManifest(runManifest);
+  const segments = resultSegmentPaths(reportRoot);
+  const sealsRoot = join(reportRoot, "segment-seals");
+  if (!existsSync(sealsRoot)) return [];
+  const sealsStat = lstatSync(sealsRoot);
+  if (!sealsStat.isDirectory() || sealsStat.isSymbolicLink()) throw new Error(`result segment seals root must be a regular directory: ${sealsRoot}`);
+  const sealEntries = readdirSync(sealsRoot, { withFileTypes: true });
+  const expectedSealNames = new Set(segments.map((segment) => `${segment.split(sep).at(-1)}.json`));
+  for (const entry of sealEntries) {
+    if (!entry.isFile() || !expectedSealNames.has(entry.name)) throw new Error(`invalid or orphan result segment seal '${entry.name}'`);
+  }
+  const sealed = [];
+  for (const segment of segments) {
+    const segmentName = basename(segment);
+    const sequence = resultSegmentSequence(segmentName);
+    const sealPath = join(sealsRoot, `${segmentName}.json`);
+    if (!existsSync(sealPath)) continue;
+    const sealBytes = readFileSync(sealPath);
+    const seal = parseJsonBytes(sealBytes, `result segment seal '${sealPath}'`);
+    validateResultSegmentSeal(seal, runManifest, { segment: segmentName, sequence });
+    sealed.push({
+      sequence,
+      path: segment,
+      seal: { path: sealPath, bytes: sealBytes.length, sha256: sha256(sealBytes), value: seal },
+    });
+  }
+  return sealed;
+}
+
+export async function sealResultSegment(reportRoot, segmentPath, runManifest, options = {}) {
+  validateRunManifest(runManifest);
+  const root = resolve(reportRoot);
+  const resolvedSegment = resolve(segmentPath);
+  const segmentName = basename(resolvedSegment);
+  if (dirname(resolvedSegment) !== root || !RESULT_SEGMENT_NAME_PATTERN.test(segmentName)) throw new Error(`result segment path is outside the report root: ${segmentPath}`);
+  const segmentStat = lstatSync(resolvedSegment);
+  if (!segmentStat.isFile() || segmentStat.isSymbolicLink()) throw new Error(`result segment must be a regular file: ${segmentPath}`);
+  await syncFile(resolvedSegment);
+  const bytes = readFileSync(resolvedSegment);
+  if (bytes.length === 0 || bytes.at(-1) !== 0x0a) throw new Error(`refusing to seal a result segment without a complete newline: ${segmentPath}`);
+  const records = loadResultLedger([resolvedSegment], runManifest).allRecords.length;
+  if (records === 0) throw new Error(`refusing to seal an empty result segment: ${segmentPath}`);
+  const sequence = resultSegmentSequence(segmentName);
+  const unsigned = {
+    schemaVersion: RESULT_SEGMENT_SEAL_SCHEMA_VERSION,
+    attemptId: options.attemptId ?? randomUUID(),
+    runFingerprint: runManifest.runFingerprint,
+    segment: segmentName,
+    sequence,
+    bytes: bytes.length,
+    sha256: sha256(bytes),
+    records,
+  };
+  const seal = { ...unsigned, sealFingerprint: fingerprint(unsigned, "tsts-tsgo-suite-result-segment-seal-v2") };
+  validateResultSegmentSeal(seal, runManifest, { segment: segmentName, sequence });
+  const sealsRoot = join(root, "segment-seals");
+  await mkdir(sealsRoot, { recursive: true });
+  const destination = join(sealsRoot, `${seal.segment}.json`);
+  if (existsSync(destination)) throw new Error(`refusing to replace result segment seal '${destination}'`);
+  const stagingRoot = join(root, "segment-seal-staging");
+  await mkdir(stagingRoot, { recursive: true });
+  const staging = join(stagingRoot, `${seal.segment}.partial-${randomUUID()}`);
+  await writeDurableFileExclusive(staging, `${JSON.stringify(seal, null, 2)}\n`);
+  await rename(staging, destination);
+  await syncDirectory(sealsRoot);
+  await syncDirectory(root);
+  const sealBytes = readFileSync(destination);
+  return { sequence, path: resolvedSegment, seal: { path: destination, bytes: sealBytes.length, sha256: sha256(sealBytes), value: seal } };
+}
+
+export function validateResultSegmentSeal(seal, runManifest, expected = {}) {
+  assertExactKeys(seal, ["attemptId", "bytes", "records", "runFingerprint", "schemaVersion", "sealFingerprint", "segment", "sequence", "sha256"], "result segment seal");
+  if (seal.schemaVersion !== RESULT_SEGMENT_SEAL_SCHEMA_VERSION || !UUID_V4_PATTERN.test(seal.attemptId)) throw new Error("result segment seal identity is invalid");
+  if (seal.runFingerprint !== runManifest.runFingerprint || !RESULT_SEGMENT_NAME_PATTERN.test(seal.segment) || resultSegmentSequence(seal.segment) !== seal.sequence) throw new Error("result segment seal provenance is invalid");
+  if (expected.segment !== undefined && seal.segment !== expected.segment) throw new Error("result segment seal filename does not match");
+  if (expected.sequence !== undefined && seal.sequence !== expected.sequence) throw new Error("result segment seal sequence does not match");
+  assertPositiveInteger(seal.bytes, "result segment seal.bytes");
+  assertPositiveInteger(seal.records, "result segment seal.records");
+  assertDigest(seal.sha256, "result segment seal.sha256");
+  if (seal.bytes > runManifest.execution.resultSegmentMaxBytes || seal.records > runManifest.execution.resultSegmentMaxRecords) throw new Error("result segment seal exceeds configured bounds");
+  const { sealFingerprint, ...unsigned } = seal;
+  if (sealFingerprint !== fingerprint(unsigned, "tsts-tsgo-suite-result-segment-seal-v2")) throw new Error("result segment seal fingerprint does not match its contents");
+  return seal;
+}
+
+function nextResultSegmentPath(reportRoot) {
+  const existing = resultSegmentPaths(reportRoot);
+  if (existing.length >= 9999) throw new Error("result segment sequence is exhausted");
+  return join(reportRoot, `results-${String(existing.length + 1).padStart(4, "0")}.ndjson`);
+}
+
+function normalizeResultSegmentInput(entry) {
+  const normalized = typeof entry === "string" ? { path: entry } : entry;
+  assertPlainObject(normalized, "result segment input");
+  if (typeof normalized.path !== "string") throw new Error("result segment input path must be a string");
+  const sequence = normalized.sequence ?? resultSegmentSequence(basename(normalized.path));
+  if (sequence !== resultSegmentSequence(basename(normalized.path))) throw new Error(`result segment input sequence does not match '${normalized.path}'`);
+  if (normalized.content !== undefined && !Buffer.isBuffer(normalized.content)) throw new Error(`result segment input content must be a Buffer: ${normalized.path}`);
+  if (normalized.seal !== undefined) {
+    assertExactKeys(normalized.seal, ["bytes", "path", "sha256", "value"], `result segment seal evidence for ${normalized.path}`);
+    if (typeof normalized.seal.path !== "string") throw new Error(`result segment seal evidence path is invalid for ${normalized.path}`);
+    validateFileProvenance({ bytes: normalized.seal.bytes, sha256: normalized.seal.sha256 }, `result segment seal evidence for ${normalized.path}`);
+  }
+  return { path: normalized.path, sequence, content: normalized.content, seal: normalized.seal };
+}
+
+function resultSegmentSequence(segmentName) {
+  const match = RESULT_SEGMENT_NAME_PATTERN.exec(segmentName);
+  if (match === null) throw new Error(`invalid result segment name '${segmentName}'`);
+  const sequence = Number(match[1]);
+  if (sequence < 1) throw new Error(`invalid result segment sequence '${segmentName}'`);
+  return sequence;
+}
+
+function parseJsonBytes(bytes, label) {
+  let text;
+  try {
+    text = strictUtf8Decoder.decode(bytes);
+  } catch (error) {
+    throw new Error(`${label} is not valid UTF-8: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`${label} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function sha256(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+export function createResultRecord(runManifest, caseIndex, result) {
+  const trimmed = trimResult(result);
+  const expectedCase = runManifest.cases[caseIndex];
+  if (expectedCase === undefined) throw new Error(`case index ${caseIndex} is outside run manifest`);
+  if (caseIdentifier(trimmed) !== expectedCase.id) throw new Error(`result identity does not match run manifest case ${caseIndex}`);
+  const caseFingerprintValue = caseFingerprint(runManifest, caseIndex);
+  return {
+    schemaVersion: RESULT_SCHEMA_VERSION,
+    runFingerprint: runManifest.runFingerprint,
+    caseIndex,
+    caseId: expectedCase.id,
+    caseFingerprint: caseFingerprintValue,
+    result: trimmed,
+    resultFingerprint: resultFingerprint(runManifest.runFingerprint, caseFingerprintValue, trimmed),
+  };
+}
+
+export async function createResultSegmentWriter(reportRoot, runManifest, options = {}) {
+  validateRunManifest(runManifest);
+  const root = resolve(reportRoot);
+  const rootStat = lstatSync(root);
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) throw new Error(`result report root must be a regular directory: ${root}`);
+  const attemptId = options.attemptId ?? randomUUID();
+  if (!UUID_V4_PATTERN.test(attemptId)) throw new Error(`invalid result segment attempt ID '${attemptId}'`);
+  let handle;
+  let segmentPath;
+  let segmentBytes = 0;
+  let segmentRecords = 0;
+  let closed = false;
+  const sealedSegments = [];
+
+  const openSegment = async () => {
+    segmentPath = nextResultSegmentPath(root);
+    handle = await open(segmentPath, "wx", 0o644);
+    segmentBytes = 0;
+    segmentRecords = 0;
+    await syncDirectory(root);
+  };
+
+  const closeSegment = async () => {
+    if (handle === undefined) return;
+    await handle.datasync();
+    await handle.close();
+    handle = undefined;
+    if (segmentRecords === 0) throw new Error(`result segment was opened without a record: ${segmentPath}`);
+    sealedSegments.push(await sealResultSegment(root, segmentPath, runManifest, { attemptId }));
+    segmentPath = undefined;
+    segmentBytes = 0;
+    segmentRecords = 0;
+  };
+
+  return {
+    get sealedSegments() {
+      return [...sealedSegments];
+    },
+    async append(caseIndex, result) {
+      if (closed) throw new Error("result segment writer is closed");
+      const record = createResultRecord(runManifest, caseIndex, result);
+      const line = Buffer.from(`${JSON.stringify(record)}\n`, "utf8");
+      if (line.length > runManifest.execution.resultRecordMaxBytes) throw new Error(`result record for case ${caseIndex} exceeds ${runManifest.execution.resultRecordMaxBytes} bytes`);
+      if (handle !== undefined && (segmentRecords >= runManifest.execution.resultSegmentMaxRecords || segmentBytes + line.length > runManifest.execution.resultSegmentMaxBytes)) await closeSegment();
+      if (handle === undefined) await openSegment();
+      let offset = 0;
+      while (offset < line.length) {
+        const { bytesWritten } = await handle.write(line, offset, line.length - offset, segmentBytes + offset);
+        if (bytesWritten <= 0) throw new Error(`short write while persisting result case ${caseIndex}`);
+        offset += bytesWritten;
+      }
+      segmentBytes += line.length;
+      segmentRecords += 1;
+      if (segmentRecords >= runManifest.execution.resultSegmentMaxRecords || segmentBytes >= runManifest.execution.resultSegmentMaxBytes) await closeSegment();
+      return record;
+    },
+    async close() {
+      if (closed) return;
+      closed = true;
+      await closeSegment();
+    },
+  };
 }
 
 // Process-pool runner. Each "job" is a long-lived worker process (this same
@@ -3186,36 +4050,31 @@ function loadCompletedCaseIndices(resultsPath) {
 // .types/.symbols walk) is CPU-bound and would otherwise serialize on one event
 // loop; running it across N worker processes is what actually keeps all cores
 // busy. --jobs sets the pool size (default = all cores; --jobs 1 = serial).
-// Results stream to results.ndjson tagged with caseIndex, so discovery order is
+// Results stream to a numbered segment tagged with caseIndex, so discovery order is
 // restored on read regardless of completion order.
-async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options, doneIndices = new Set()) {
-  const resultsPath = join(reportRoot, "results.ndjson");
-  const resuming = doneIndices.size > 0;
-  if (!resuming) {
-    // Fresh run truncates; resume keeps the prior results and appends the remainder.
-    await writeFile(resultsPath, "");
-  }
+async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options, runManifest, doneIndices = new Set()) {
+  const segmentWriter = await createResultSegmentWriter(reportRoot, runManifest);
   const total = testCases.length;
   // Backstop for an in-process hang inside a worker (e.g. an infinite loop in
   // the baseline assembly that the CLI's own timeout can't catch): kill+replace
   // the worker. Longer than the CLI's per-spawn timeout so real CLI timeouts
   // surface as themselves first.
-  const POOL_CASE_TIMEOUT_MS = Number(process.env.TSGO_POOL_TIMEOUT_MS ?? "300000");
   let appendChain = Promise.resolve();
   let completed = doneIndices.size;
   let cursor = 0;
   let stopped = false;
+  let interruptedSignal = null;
+  const children = new Set();
 
   const persist = async (caseIndex, result) => {
-    const record = { caseIndex, ...trimResult(result) };
-    const append = appendChain.then(() => appendFile(resultsPath, `${JSON.stringify(record)}\n`));
+    const append = appendChain.then(() => segmentWriter.append(caseIndex, result));
     appendChain = append;
-    await append;
+    const record = await append;
     completed += 1;
-    if (result.status === "fail" && failFast) {
+    if (record.result.status === "fail" && failFast) {
       stopped = true;
     }
-    printProgress(completed, total, result);
+    printProgress(completed, total, record.result);
   };
 
   const failResult = (testCase, stderr, signal) => ({
@@ -3229,18 +4088,35 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
     skipReason: "",
     stdout: "",
     stderr,
+    infrastructureFailure: true,
   });
 
   if (total === 0 || completed >= total) {
-    return { resultsPath, completed };
+    await segmentWriter.close();
+    return { resultSegments: segmentWriter.sealedSegments, completed, interruptedSignal };
   }
 
-  await new Promise((resolve) => {
+  const interrupt = (signal) => {
+    if (interruptedSignal !== null) return;
+    interruptedSignal = signal;
+    stopped = true;
+    for (const child of children) {
+      try { child.kill("SIGTERM"); } catch {}
+    }
+  };
+  const onSigint = () => interrupt("SIGINT");
+  const onSigterm = () => interrupt("SIGTERM");
+  process.once("SIGINT", onSigint);
+  process.once("SIGTERM", onSigterm);
+
+  try {
+    await new Promise((resolve, reject) => {
     const poolSize = Math.max(1, Math.min(jobs, total));
     let liveWorkers = 0;
     let spawnedTotal = 0;
     const maxSpawns = total + poolSize * 8; // respawn cap so a startup crash loop can't hang the run
     let done = false;
+    const pendingSettlements = new Set();
 
     const finish = () => {
       if (done) return;
@@ -3248,20 +4124,29 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
       resolve();
     };
 
+    const finishWhenSettled = () => {
+      Promise.all([...pendingSettlements]).then(() => appendChain).then(finish, reject);
+    };
+
     const spawnWorker = () => {
+      if (stopped) {
+        if (liveWorkers === 0) finishWhenSettled();
+        return;
+      }
       if (spawnedTotal >= maxSpawns) {
-        if (liveWorkers === 0) finish();
+        if (liveWorkers === 0) finishWhenSettled();
         return;
       }
       spawnedTotal += 1;
       const child = fork(scriptPath, [], {
-        env: { ...process.env, TSGO_SUITE_WORKER: "1" },
+        env: { ...suiteChildEnvironment(), TSGO_SUITE_WORKER: "1" },
         stdio: ["ignore", "ignore", "inherit", "ipc"],
         // Advanced (V8 structured-clone) IPC preserves Map/Set/etc. in the case
         // descriptor (e.g. testCase.settings is a Map); the default JSON IPC
         // would silently flatten Maps to {} and break materializeCase.
         serialization: "advanced",
       });
+      children.add(child);
       liveWorkers += 1;
       const state = { current: -1, settled: true, timer: null };
 
@@ -3273,6 +4158,16 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
         state.current = -1;
         await persist(idx, result);
         if (completed >= total) finish();
+      };
+
+      const trackedSettle = (result) => {
+        const pending = settle(result);
+        pendingSettlements.add(pending);
+        pending.then(
+          () => pendingSettlements.delete(pending),
+          () => pendingSettlements.delete(pending),
+        );
+        return pending;
       };
 
       const assignNext = () => {
@@ -3291,10 +4186,11 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
           // In-process hang: kill the worker; settle() records the timeout fail,
           // and the exit handler replaces the worker if work remains.
           try { child.kill("SIGKILL"); } catch {}
-          settle(failResult(testCases[idx], `TSTS case exceeded ${POOL_CASE_TIMEOUT_MS}ms in worker (killed).`, "SIGKILL"));
+          trackedSettle(failResult(testCases[idx], `TSTS case exceeded ${POOL_CASE_TIMEOUT_MS}ms in worker (killed).`, "SIGKILL")).catch(reject);
         }, POOL_CASE_TIMEOUT_MS);
+        const attemptRoot = join(runRoot, `${String(idx).padStart(6, "0")}-${caseFingerprint(runManifest, idx).slice(0, 16)}-${randomUUID()}`);
         try {
-          child.send({ type: "case", caseIndex: idx, testCase: testCases[idx], runRoot, options });
+          child.send({ type: "case", caseIndex: idx, testCase: testCases[idx], runRoot: attemptRoot, options });
         } catch {
           // Send failed (worker already dead); the exit handler settles + respawns.
         }
@@ -3303,31 +4199,38 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
       child.on("message", (msg) => {
         if (msg && msg.type === "ready") { assignNext(); return; }
         if (msg && msg.type === "result") {
-          settle(msg.result).then(() => {
+          trackedSettle(msg.result).then(() => {
             if (!stopped && cursor < total) assignNext();
             else { try { child.send({ type: "shutdown" }); } catch { try { child.kill(); } catch {} } }
-          });
+          }, reject);
         }
       });
 
       child.on("exit", () => {
+        children.delete(child);
         liveWorkers -= 1;
         // Crash with an unsettled in-flight case → record a fail for it.
         if (!state.settled && state.current >= 0) {
-          settle(failResult(testCases[state.current], "TSTS worker crashed before returning a result.", null));
+          trackedSettle(failResult(testCases[state.current], "TSTS worker crashed before returning a result.", null)).catch(reject);
         }
         if (!stopped && cursor < total) {
           spawnWorker();
         } else if (liveWorkers === 0) {
-          finish();
+          finishWhenSettled();
         }
       });
     };
 
     for (let i = 0; i < poolSize; i++) spawnWorker();
-  });
-
-  return { resultsPath, completed };
+    });
+    await appendChain;
+  } finally {
+    process.removeListener("SIGINT", onSigint);
+    process.removeListener("SIGTERM", onSigterm);
+    await appendChain.catch(() => {});
+    await segmentWriter.close();
+  }
+  return { resultSegments: segmentWriter.sealedSegments, completed, interruptedSignal };
 }
 
 // Worker mode: this same script, re-forked with TSGO_SUITE_WORKER=1. It loads
@@ -3353,6 +4256,7 @@ function runWorkerLoop() {
           skipReason: "",
           stdout: "",
           stderr: `TSTS worker error: ${error instanceof Error ? error.stack : String(error)}`,
+          infrastructureFailure: true,
         };
       }
       try { process.send({ type: "result", caseIndex: msg.caseIndex, result }); } catch {}
@@ -3367,22 +4271,19 @@ function runWorkerLoop() {
 // caseIndex envelope so the returned records match the results.json shape.
 // Every record was trimmed (capped, flattened) at write time, so the
 // materialized array is bounded regardless of per-case output sizes.
-export async function readResults(resultsPath) {
-  const text = await readFile(resultsPath, "utf8");
-  const records = text
-    .split("\n")
-    .filter((line) => line !== "")
-    .map((line) => JSON.parse(line));
-  records.sort((a, b) => a.caseIndex - b.caseIndex);
-  return records.map(({ caseIndex: _caseIndex, ...record }) => record);
+export async function readResults(segmentPaths, runManifest) {
+  const ledger = loadResultLedger(Array.isArray(segmentPaths) ? segmentPaths : [segmentPaths], runManifest);
+  return [...ledger.recordsByIndex.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([, record]) => record.result);
 }
 
 function printProgress(done, total, result) {
   const prefix = result.status === "pass" ? "PASS" : result.status === "skip" ? "SKIP" : "FAIL";
   const configuration = result.configurationName === "" ? "" : ` configuration=${result.configurationName}`;
   const skip = result.skipReason === "" ? "" : ` reason=${result.skipReason}`;
-  const tsgoAccepted = (result.exactBaseline?.tsgoAccepted?.length ?? 0) === 0 ? "" : ` tsgoAccepted=${result.exactBaseline.tsgoAccepted.length}`;
-  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}${tsgoAccepted}`;
+  const tsgoAccepted = (result.exactBaseline?.tsgoAcceptedCount ?? 0) === 0 ? "" : ` tsgoAccepted=${result.exactBaseline.tsgoAcceptedCount}`;
+  const baseline = result.exactBaseline === null || result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatchCount}${tsgoAccepted}`;
   console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
   if (done % 100 === 0 || total <= 20 || process.env.TSGO_MEM_EVERY === "1") {
     const m = process.memoryUsage();
@@ -3391,32 +4292,229 @@ function printProgress(done, total, result) {
   }
 }
 
-async function writeReports(reportRoot, resultsPath, inventory, caseRoot) {
-  const results = await readResults(resultsPath);
-  const summary = summarize(results);
-  await writeFile(join(reportRoot, "results.json"), `${JSON.stringify({ summary, inventory, caseRoot, results }, null, 2)}\n`);
-  await writeFile(join(reportRoot, "summary.md"), renderMarkdown(summary, results, inventory, caseRoot));
-  return summary;
+async function writeReports(reportRoot, segmentPaths, inventory, caseRoot, runManifest) {
+  const ledger = loadResultLedger(segmentPaths, runManifest);
+  const results = [...ledger.recordsByIndex.entries()].sort(([left], [right]) => left - right).map(([, record]) => record.result);
+  const summary = buildReportSummary(runManifest, results);
+  const reportsRoot = join(reportRoot, "reports");
+  await mkdir(reportsRoot, { recursive: true });
+  await syncDirectory(reportRoot);
+  const reportNumbers = readdirSync(reportsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^report-\d{4}$/.test(entry.name))
+    .map((entry) => Number(entry.name.slice("report-".length)));
+  const reportNumber = (reportNumbers.length === 0 ? 0 : Math.max(...reportNumbers)) + 1;
+  const reportName = `report-${String(reportNumber).padStart(4, "0")}`;
+  const staging = join(reportsRoot, `${reportName}.partial-${randomUUID()}`);
+  const destination = join(reportsRoot, reportName);
+  await mkdir(staging);
+  await syncDirectory(reportsRoot);
+  const resultSegments = ledger.segmentEvidence.map((entry) => reportSegmentEvidence(entry, reportRoot));
+  const runConfigPath = join(reportRoot, "run-config.json");
+  const runConfigBytes = readFileSync(runConfigPath);
+  validateRunConfig(parseJsonBytes(runConfigBytes, "run config"), runManifest);
+  const runConfig = fileBytesProvenance(runConfigPath, reportRoot, runConfigBytes);
+  const report = {
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    runFingerprint: runManifest.runFingerprint,
+    runManifest,
+    summary,
+    inventory,
+    inventoryHash: inventoryFingerprint(inventory),
+    caseRoot,
+    runConfig,
+    resultSegments,
+    results,
+  };
+  validateReportPayload(report, { ledger, reportRoot });
+  const resultsText = `${JSON.stringify(report, null, 2)}\n`;
+  const markdown = renderMarkdown(summary, results, inventory, caseRoot, runManifest);
+  await writeDurableFileExclusive(join(staging, "results.json"), resultsText);
+  await writeDurableFileExclusive(join(staging, "summary.md"), markdown);
+  await sealEvidenceDirectory(staging, reportSealMetadata(report), "REPORT.json");
+  await publishSealedDirectory(staging, destination, "REPORT.json");
+  return { summary, reportDirectory: destination };
+}
+
+export function validateReportPayload(report, options = {}) {
+  assertExactKeys(report, ["caseRoot", "inventory", "inventoryHash", "resultSegments", "results", "runConfig", "runFingerprint", "runManifest", "schemaVersion", "summary"], "TS-Go suite report");
+  if (report.schemaVersion !== REPORT_SCHEMA_VERSION) throw new Error(`unsupported TS-Go suite report schemaVersion '${report.schemaVersion}'`);
+  validateRunManifest(report.runManifest);
+  if (report.runFingerprint !== report.runManifest.runFingerprint) throw new Error("TS-Go suite report run fingerprint mismatch");
+  validateInventory(report.inventory);
+  if (report.inventoryHash !== inventoryFingerprint(report.inventory) || report.inventoryHash !== report.runManifest.inventoryHash || canonicalJson(report.inventory) !== canonicalJson(report.runManifest.inventory)) throw new Error("TS-Go suite report inventory provenance mismatch");
+  assertBoundedString(report.caseRoot, "TS-Go suite report caseRoot", 20000, true);
+  if (!isAbsolute(report.caseRoot)) throw new Error("TS-Go suite report caseRoot must be absolute");
+  validateFileProvenance(report.runConfig, "TS-Go suite report runConfig", "run-config.json");
+  if (!Array.isArray(report.resultSegments)) throw new Error("TS-Go suite report resultSegments must be an array");
+  let previousSequence = 0;
+  for (const [index, segment] of report.resultSegments.entries()) {
+    validateReportSegmentEvidence(segment, report.runManifest, `TS-Go suite report resultSegments[${index}]`);
+    if (segment.sequence <= previousSequence) throw new Error("TS-Go suite report result segments are not strictly ordered");
+    previousSequence = segment.sequence;
+  }
+  if (!Array.isArray(report.results)) throw new Error("TS-Go suite report results must be an array");
+  const caseIndexById = new Map(report.runManifest.cases.map((entry) => [entry.id, entry.index]));
+  const observed = new Set();
+  let previousCaseIndex = -1;
+  for (const [resultIndex, result] of report.results.entries()) {
+    validateResultPayload(result, `TS-Go suite report result ${resultIndex}`);
+    const caseIndex = caseIndexById.get(caseIdentifier(result));
+    if (caseIndex === undefined || observed.has(caseIndex)) throw new Error(`invalid or duplicate TS-Go suite report case '${caseIdentifier(result)}'`);
+    if (caseIndex <= previousCaseIndex) throw new Error("TS-Go suite report results are not in manifest order");
+    const expectedCase = report.runManifest.cases[caseIndex];
+    if (result.corpus !== expectedCase.corpus || result.suite !== expectedCase.suite || result.relativePath !== expectedCase.relativePath || result.configurationName !== expectedCase.configurationName) throw new Error(`TS-Go suite report result ${resultIndex} identity does not match its case`);
+    observed.add(caseIndex);
+    previousCaseIndex = caseIndex;
+  }
+  const expectedSummary = buildReportSummary(report.runManifest, report.results);
+  if (canonicalJson(report.summary) !== canonicalJson(expectedSummary)) throw new Error("TS-Go suite report summary does not match results");
+  if (options.reportRoot !== undefined) {
+    const expectedCaseRoot = join(resolve(options.reportRoot), "cases");
+    if (resolve(report.caseRoot) !== report.caseRoot || report.caseRoot !== expectedCaseRoot) throw new Error("TS-Go suite report caseRoot does not match its report root");
+    for (const result of report.results) {
+      if (result.caseDir !== "" && result.caseDir !== expectedCaseRoot && !result.caseDir.startsWith(`${expectedCaseRoot}${sep}`)) throw new Error("TS-Go suite report result case directory escapes its case root");
+    }
+  }
+  if (options.ledger !== undefined) {
+    const expectedSegments = options.ledger.segmentEvidence.map((entry) => reportSegmentEvidence(entry, options.reportRoot));
+    const expectedResults = [...options.ledger.recordsByIndex.entries()].sort(([left], [right]) => left - right).map(([, record]) => record.result);
+    if (canonicalJson(report.resultSegments) !== canonicalJson(expectedSegments)) throw new Error("TS-Go suite report result segment provenance does not match ledger bytes");
+    if (canonicalJson(report.results) !== canonicalJson(expectedResults)) throw new Error("TS-Go suite report results do not match result segments");
+  }
+  return report;
+}
+
+export function buildReportSummary(runManifest, results) {
+  const completedIds = new Set(results.filter(resultCompletesCase).map(caseIdentifier));
+  const missingCaseIndices = runManifest.cases.filter((entry) => !completedIds.has(entry.id)).map((entry) => entry.index);
+  return {
+    ...summarize(results),
+    expectedTotal: runManifest.total,
+    complete: missingCaseIndices.length === 0,
+    missingCaseIndices,
+  };
+}
+
+export function reportOutcome(summary) {
+  return !summary.complete ? "partial" : summary.failed === 0 ? "passed" : "failed";
+}
+
+export function reportSealMetadata(report) {
+  return {
+    schemaVersion: REPORT_SEAL_METADATA_SCHEMA_VERSION,
+    runFingerprint: report.runFingerprint,
+    inventoryHash: report.inventoryHash,
+    coverageComplete: report.summary.complete,
+    outcome: reportOutcome(report.summary),
+    counts: {
+      expected: report.summary.expectedTotal,
+      total: report.summary.total,
+      passed: report.summary.passed,
+      failed: report.summary.failed,
+      skipped: report.summary.skipped,
+      infrastructureFailures: report.summary.infrastructureFailures,
+      executionMismatches: report.summary.executionMismatches,
+    },
+  };
+}
+
+export function validateReportSealMetadata(metadata, report) {
+  assertExactKeys(metadata, ["counts", "coverageComplete", "inventoryHash", "outcome", "runFingerprint", "schemaVersion"], "TS-Go suite report seal metadata");
+  assertExactKeys(metadata.counts, ["executionMismatches", "expected", "failed", "infrastructureFailures", "passed", "skipped", "total"], "TS-Go suite report seal counts");
+  if (canonicalJson(metadata) !== canonicalJson(reportSealMetadata(report))) throw new Error("TS-Go suite report seal metadata does not match report data");
+  return metadata;
+}
+
+function validateReportSegmentEvidence(segment, runManifest, label) {
+  assertExactKeys(segment, ["bytes", "path", "records", "seal", "sequence", "sha256"], label);
+  const expectedName = `results-${String(segment.sequence).padStart(4, "0")}.ndjson`;
+  if (!Number.isSafeInteger(segment.sequence) || segment.sequence < 1 || segment.sequence > 9999 || segment.path !== expectedName) throw new Error(`${label} identity is invalid`);
+  assertPositiveInteger(segment.bytes, `${label}.bytes`);
+  assertPositiveInteger(segment.records, `${label}.records`);
+  assertDigest(segment.sha256, `${label}.sha256`);
+  assertExactKeys(segment.seal, ["bytes", "path", "sha256", "value"], `${label}.seal`);
+  validateFileProvenance({ bytes: segment.seal.bytes, sha256: segment.seal.sha256 }, `${label}.seal`);
+  if (segment.seal.path !== `segment-seals/${expectedName}.json`) throw new Error(`${label}.seal path is invalid`);
+  validateResultSegmentSeal(segment.seal.value, runManifest, { segment: expectedName, sequence: segment.sequence });
+  if (segment.bytes !== segment.seal.value.bytes || segment.records !== segment.seal.value.records || segment.sha256 !== segment.seal.value.sha256) throw new Error(`${label} does not match its seal`);
+}
+
+function reportSegmentEvidence(entry, reportRoot) {
+  if (entry.seal === null) throw new Error(`cannot report an unsealed result segment: ${entry.path}`);
+  return {
+    sequence: entry.sequence,
+    path: reportRelativePath(reportRoot, entry.path),
+    bytes: entry.bytes,
+    sha256: entry.sha256,
+    records: entry.records,
+    seal: {
+      path: reportRelativePath(reportRoot, entry.seal.path),
+      bytes: entry.seal.bytes,
+      sha256: entry.seal.sha256,
+      value: entry.seal.value,
+    },
+  };
+}
+
+function reportRelativePath(reportRoot, file) {
+  const value = relative(resolve(reportRoot), resolve(file)).split(sep).join("/");
+  assertSafeRelativePath(value, "report provenance path");
+  return value;
+}
+
+function fileBytesProvenance(file, root, contents = readFileSync(file)) {
+  const bytes = contents;
+  return { path: reportRelativePath(root, file), bytes: bytes.length, sha256: sha256(bytes) };
+}
+
+async function syncFile(file) {
+  const handle = await open(file, "r+");
+  try {
+    await handle.datasync();
+  } finally {
+    await handle.close();
+  }
+}
+
+async function syncDirectory(directory) {
+  let handle;
+  try {
+    handle = await open(directory, "r");
+    await handle.sync();
+  } catch (error) {
+    if (!new Set(["EINVAL", "ENOTSUP", "EISDIR", "EPERM"]).has(error?.code)) throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+
+async function writeDurableJson(destination, value) {
+  const staging = join(dirname(destination), `.${basename(destination)}.partial-${randomUUID()}`);
+  await writeDurableFileExclusive(staging, `${JSON.stringify(value, null, 2)}\n`);
+  await rename(staging, destination);
+  await syncDirectory(dirname(destination));
 }
 
 export function summarize(results) {
   const passed = results.filter((result) => result.status === "pass").length;
   const skipped = results.filter((result) => result.status === "skip").length;
   const failed = results.length - passed - skipped;
-  const exactBaselineResults = results.map((result) => result.exactBaseline).filter((baseline) => baseline !== undefined);
+  const exactBaselineResults = results.map((result) => result.exactBaseline).filter((baseline) => baseline !== undefined && baseline !== null);
   return {
     total: results.length,
     passed,
     failed,
     skipped,
+    infrastructureFailures: results.filter((result) => result.infrastructureFailure).length,
+    executionMismatches: results.reduce((sum, result) => sum + result.executionMismatchCount, 0),
     expectedErrorCases: results.filter((result) => result.expectedErrors).length,
     expectedCleanCases: results.filter((result) => !result.expectedErrors).length,
     exactBaselineCases: exactBaselineResults.length,
     exactBaselineFailedCases: exactBaselineResults.filter((baseline) => baseline.status === "fail").length,
     exactBaselineComparableArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.comparable, 0),
-    exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupported.length, 0),
-    exactBaselineTsgoAcceptedSections: exactBaselineResults.reduce((sum, baseline) => sum + (baseline.tsgoAccepted?.length ?? 0), 0),
-    exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatches.length, 0),
+    exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupportedCount, 0),
+    exactBaselineTsgoAcceptedSections: exactBaselineResults.reduce((sum, baseline) => sum + baseline.tsgoAcceptedCount, 0),
+    exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatchCount, 0),
   };
 }
 
@@ -3429,37 +4527,76 @@ function flattenString(value) {
 
 export function trimResult(result) {
   if (result.firstOutputLines !== undefined) {
-    // Already trimmed at accumulation time.
+    validateResultPayload(result, "already-trimmed result");
     return result;
   }
   const output = `${result.stdout}${result.stderr}`;
-  return {
+  const evidence = {
     corpus: result.corpus,
     suite: result.suite,
     relativePath: result.relativePath,
     configurationName: result.configurationName,
-    status: result.status,
     expectedErrors: result.expectedErrors,
     actualErrors: result.actualErrors,
     exitCode: result.exitCode,
     signal: result.signal,
     caseDir: result.caseDir,
     skipReason: result.skipReason,
-    exactBaseline: result.exactBaseline === undefined ? undefined : JSON.parse(JSON.stringify(result.exactBaseline)),
+    exactBaseline: normalizeExactBaseline(result.exactBaseline),
+    executionMismatchCount: (result.executionMismatches ?? []).length,
+    executionMismatches: baselineSamples(result.executionMismatches ?? []),
+    infrastructureFailure: result.infrastructureFailure === true,
     firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20).map((line) => flattenString(line.slice(0, 1000))),
+  };
+  const verdict = deriveResultVerdict(evidence);
+  const trimmed = { ...evidence, verdict, status: deriveResultStatus(verdict) };
+  validateResultPayload(trimmed, "trimmed result");
+  return trimmed;
+}
+
+function normalizeExactBaseline(baseline) {
+  if (baseline === undefined || baseline === null) return null;
+  const mismatchCount = baseline.mismatches.length;
+  const unsupportedCount = baseline.unsupported.length;
+  const tsgoAcceptedCount = baseline.tsgoAccepted.length;
+  return {
+    schemaVersion: EXACT_BASELINE_SCHEMA_VERSION,
+    status: mismatchCount === 0 ? "pass" : "fail",
+    checked: baseline.checked,
+    comparable: baseline.comparable,
+    unsupportedCount,
+    unsupported: baselineSamples(baseline.unsupported),
+    tsgoAcceptedCount,
+    tsgoAccepted: baselineSamples(baseline.tsgoAccepted),
+    mismatchCount,
+    mismatches: baselineSamples(baseline.mismatches),
+    expectedDiagnosticsPresent: baseline.expectedDiagnosticsPresent,
+    actualErrors: baseline.usedHarness === true ? baseline.actualErrors : null,
+    usedHarness: baseline.usedHarness === true,
   };
 }
 
-function renderMarkdown(summary, results, inventory, caseRoot) {
+function baselineSamples(values) {
+  if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) throw new Error("result mismatch samples must be strings");
+  return values.slice(0, MAX_BASELINE_SAMPLES).map((value) => flattenString(value.slice(0, MAX_BASELINE_SAMPLE_LENGTH)));
+}
+
+export function renderMarkdown(summary, results, inventory, caseRoot, runManifest) {
   const failed = results.filter((result) => result.status === "fail");
   const lines = [
     "# TSTS TS-Go Suite Run",
     "",
+    `- Run fingerprint: ${runManifest.runFingerprint}`,
+    `- Complete: ${summary.complete}`,
+    `- Expected total: ${summary.expectedTotal}`,
     `- Case root: ${caseRoot}`,
     `- Total: ${summary.total}`,
     `- Passed: ${summary.passed}`,
     `- Failed: ${summary.failed}`,
     `- Skipped: ${summary.skipped}`,
+    `- Infrastructure failures: ${summary.infrastructureFailures}`,
+    `- Execution mismatches: ${summary.executionMismatches}`,
+    `- Missing case indices: ${summary.missingCaseIndices.length}`,
     `- Expected-error cases: ${summary.expectedErrorCases}`,
     `- Expected-clean cases: ${summary.expectedCleanCases}`,
     `- Exact-baseline cases: ${summary.exactBaselineCases}`,
@@ -3483,7 +4620,7 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     lines.push("|---|---:|---:|---|---:|---|");
     for (const result of failed.slice(0, 200)) {
       const output = result.firstOutputLines?.[0] ?? "";
-      const exact = result.exactBaseline === undefined
+      const exact = result.exactBaseline === undefined || result.exactBaseline === null
         ? ""
         : `${result.exactBaseline.status}: ${result.exactBaseline.mismatches.slice(0, 3).join("; ")}`;
       lines.push(`| ${result.relativePath} | ${result.expectedErrors} | ${result.actualErrors} | ${escapeTable(exact)} | ${result.exitCode} | ${escapeTable(output)} |`);
@@ -3553,70 +4690,172 @@ async function main() {
     return;
   }
   const testCases = await discoverCases(options);
+  const currentManifest = buildRunManifest(testCases, options, inventory);
+  validateRunManifest(currentManifest);
   let reportRoot;
   let doneIndices = new Set();
   if (options.resume !== "") {
-    // Resume a suspended run: reuse its reportRoot, verify the case set is identical
-    // (so recorded caseIndex values still line up), and skip the cases it recorded.
     reportRoot = isAbsolute(options.resume) ? options.resume : join(repoRoot, options.resume);
     const configPath = join(reportRoot, "run-config.json");
     if (!existsSync(configPath)) {
       throw new Error(`Cannot resume: no run-config.json in ${reportRoot}.`);
     }
-    const config = JSON.parse(readFileSync(configPath, "utf8"));
-    const mismatched = [];
-    if (config.corpus !== options.corpus) mismatched.push(`corpus(${config.corpus} != ${options.corpus})`);
-    if (config.suite !== options.suite) mismatched.push(`suite(${config.suite} != ${options.suite})`);
-    if (config.filter !== options.filter) mismatched.push(`filter(${config.filter} != ${options.filter})`);
-    if (config.limit !== options.limit) mismatched.push(`limit(${config.limit} != ${options.limit})`);
-    if (mismatched.length !== 0) {
-      throw new Error(`Cannot resume: run options differ from the suspended run [${mismatched.join(", ")}]. Re-run --resume with matching --corpus/--suite/--filter/--limit.`);
+    const config = parseJsonBytes(readFileSync(configPath), "run config");
+    try {
+      validateRunConfig(config, currentManifest);
+    } catch (error) {
+      throw new Error(`Cannot resume: ${error instanceof Error ? error.message : String(error)}`);
     }
-    if (config.total !== testCases.length || config.caseIdsHash !== hashCaseIds(testCases)) {
-      throw new Error(`Cannot resume: the discovered case set changed since suspend (corpus/testdata drift). Start a fresh run.`);
-    }
-    doneIndices = loadCompletedCaseIndices(join(reportRoot, "results.ndjson"));
   } else {
-    const timestamp = new Date().toISOString().replaceAll(":", "").replace(".", "-").replace("Z", `-${process.pid}`);
+    const timestamp = new Date().toISOString().replaceAll(":", "").replace(".", "-").replace("Z", `-${process.pid}-${randomUUID()}`);
     reportRoot = join(repoRoot, ".temp/tsgo-suite", timestamp);
   }
   const caseRootForRun = join(reportRoot, "cases");
   await mkdir(reportRoot, { recursive: true });
+  await syncDirectory(dirname(reportRoot));
   await mkdir(caseRootForRun, { recursive: true });
+  await syncDirectory(reportRoot);
   if (options.resume === "") {
-    // Record this run's identity so it can be resumed later; resume refuses if the
-    // case set differs.
-    await writeFile(join(reportRoot, "run-config.json"), JSON.stringify({
-      corpus: options.corpus,
-      suite: options.suite,
-      filter: options.filter,
-      limit: options.limit,
-      total: testCases.length,
-      caseIdsHash: hashCaseIds(testCases),
-    }));
+    await writeDurableJson(join(reportRoot, "run-config.json"), createRunConfig(currentManifest));
   }
 
   if (!existsSync(cliPath)) {
     throw new Error(`TSTS CLI not found at ${cliPath}. Run TSTS emit first.`);
   }
-  console.log(`TSTS TS-Go suite run${options.resume !== "" ? " (RESUME)" : ""}`);
-  console.log(`cases=${testCases.length} corpus=${options.corpus} suite=${options.suite} jobs=${options.jobs}${doneIndices.size > 0 ? ` resumeSkip=${doneIndices.size}` : ""}`);
-  console.log(`upstreamInScope=${inventory.typeScriptCases.inScope + inventory.baselines.inScope + inventory.goTests.inScope} upstreamExcluded=${inventory.typeScriptCases.outOfScope + inventory.baselines.outOfScope + inventory.goTests.outOfScope}`);
-  console.log(`caseRoot=${caseRootForRun}`);
-  console.log(`reportRoot=${reportRoot}`);
+  const lock = await acquireRunLock(reportRoot);
+  try {
+    if (options.resume !== "") {
+      doneIndices = loadResultLedger(sealedResultSegments(reportRoot, currentManifest), currentManifest).doneIndices;
+    }
+    console.log(`TSTS TS-Go suite run${options.resume !== "" ? " (RESUME)" : ""}`);
+    console.log(`fingerprint=${currentManifest.runFingerprint}`);
+    console.log(`cases=${testCases.length} corpus=${options.corpus} suite=${options.suite} jobs=${options.jobs}${doneIndices.size > 0 ? ` resumeSkip=${doneIndices.size}` : ""}`);
+    console.log(`upstreamInScope=${inventory.typeScriptCases.inScope + inventory.baselines.inScope + inventory.goTests.inScope} upstreamExcluded=${inventory.typeScriptCases.outOfScope + inventory.baselines.outOfScope + inventory.goTests.outOfScope}`);
+    console.log(`caseRoot=${caseRootForRun}`);
+    console.log(`reportRoot=${reportRoot}`);
 
-  const run = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options, doneIndices);
-  const summary = await writeReports(reportRoot, run.resultsPath, inventory, caseRootForRun);
-  console.log(`SUMMARY total=${summary.total} passed=${summary.passed} failed=${summary.failed}`);
-  if (process.env.TSGO_HOLD_SECONDS !== undefined) {
-    // Diagnostics hook: keep the process alive (e.g. for --heapsnapshot-signal)
-    // so retained memory can be inspected after the run completes.
-    console.log(`HOLDING for ${process.env.TSGO_HOLD_SECONDS}s (TSGO_HOLD_SECONDS)`);
-    await new Promise((resolve) => setTimeout(resolve, Number(process.env.TSGO_HOLD_SECONDS) * 1000));
+    const attempt = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options, currentManifest, doneIndices);
+    const finalManifest = buildRunManifest(testCases, options, inventory);
+    validateRunManifest(finalManifest);
+    if (finalManifest.runFingerprint !== currentManifest.runFingerprint) {
+      await writeDurableJson(join(reportRoot, `input-drift-${Date.now()}-${randomUUID()}.json`), { expected: currentManifest, actual: finalManifest });
+      throw new Error("Suite inputs changed while the run was active; refusing to seal a mixed-evidence report.");
+    }
+    const report = await writeReports(reportRoot, sealedResultSegments(reportRoot, currentManifest), inventory, caseRootForRun, currentManifest);
+    const summary = report.summary;
+    console.log(`SUMMARY total=${summary.total}/${summary.expectedTotal} complete=${summary.complete} passed=${summary.passed} failed=${summary.failed}`);
+    if (attempt.interruptedSignal !== null) {
+      console.log(`INTERRUPTED ${attempt.interruptedSignal}; completed result segments are sealed for --resume.`);
+      console.log(`REPORT ${join(report.reportDirectory, "summary.md")}`);
+      process.exitCode = attempt.interruptedSignal === "SIGINT" ? 130 : 143;
+      await lock.release("interrupted");
+      return;
+    }
+    if (process.env.TSGO_HOLD_SECONDS !== undefined) {
+      console.log(`HOLDING for ${process.env.TSGO_HOLD_SECONDS}s (TSGO_HOLD_SECONDS)`);
+      await new Promise((resolve) => setTimeout(resolve, Number(process.env.TSGO_HOLD_SECONDS) * 1000));
+    }
+    console.log(`REPORT ${join(report.reportDirectory, "summary.md")}`);
+    if (!summary.complete || summary.failed > 0) process.exitCode = 1;
+    await lock.release(summary.complete ? "complete" : "partial");
+  } catch (error) {
+    await lock.release("failed");
+    throw error;
   }
-  console.log(`REPORT ${join(reportRoot, "summary.md")}`);
-  if (summary.failed > 0) {
-    process.exitCode = 1;
+}
+
+export async function acquireRunLock(reportRoot) {
+  const root = resolve(reportRoot);
+  const rootStat = await lstat(root);
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) throw new Error(`run lock root must be a regular directory: ${root}`);
+  const activePath = join(root, "ACTIVE.lock");
+  const token = randomUUID();
+  const preparedPath = join(root, `PENDING.lock-${token}`);
+  const ownerRecord = { schemaVersion: 1, token, pid: process.pid, hostname: hostname(), startedAt: new Date().toISOString() };
+  await mkdir(preparedPath);
+  await writeDurableFileExclusive(join(preparedPath, "owner.json"), `${JSON.stringify(ownerRecord, null, 2)}\n`);
+  await syncDirectory(preparedPath);
+  await syncDirectory(root);
+  const blockPrepared = async () => {
+    await rename(preparedPath, join(root, `BLOCKED.lock-${token}`));
+    await syncDirectory(root);
+  };
+  try {
+    await rename(preparedPath, activePath);
+    await syncDirectory(root);
+  } catch (error) {
+    if (!(error instanceof Error) || !("code" in error) || !new Set(["EEXIST", "ENOTEMPTY"]).has(error.code)) throw error;
+    let owner;
+    try {
+      owner = await readRunLockOwner(activePath);
+    } catch (ownerError) {
+      await blockPrepared();
+      throw new Error(`Cannot acquire run lock with unreadable owner evidence: ${ownerError instanceof Error ? ownerError.message : String(ownerError)}`);
+    }
+    if (owner.hostname !== hostname()) {
+      await blockPrepared();
+      throw new Error(`Cannot acquire run lock owned on another host: ${owner.hostname}`);
+    }
+    if (processIsAlive(owner.pid)) {
+      await blockPrepared();
+      throw new Error(`Cannot acquire run lock held by live process ${owner.pid}`);
+    }
+    const stalePath = join(root, `STALE.lock-${owner.token}`);
+    if (existsSync(stalePath)) {
+      await blockPrepared();
+      throw new Error(`Cannot acquire run lock because stale owner evidence already exists: ${stalePath}`);
+    }
+    await rename(activePath, stalePath);
+    await rename(preparedPath, activePath);
+    await syncDirectory(root);
+  }
+  let released = false;
+  return {
+    async release(status) {
+      if (released) return;
+      if (!new Set(["complete", "failed", "interrupted", "partial"]).has(status)) throw new Error(`invalid run-lock release status '${status}'`);
+      const owner = await readRunLockOwner(activePath);
+      if (canonicalJson(owner) !== canonicalJson(ownerRecord)) throw new Error("run lock ownership changed before release");
+      await rename(activePath, join(root, `${status.toUpperCase()}.lock-${token}`));
+      await syncDirectory(root);
+      released = true;
+    },
+  };
+}
+
+export function validateRunLockOwner(owner) {
+  assertExactKeys(owner, ["hostname", "pid", "schemaVersion", "startedAt", "token"], "run lock owner");
+  if (owner.schemaVersion !== 1 || !UUID_V4_PATTERN.test(owner.token)) throw new Error("run lock owner token is invalid");
+  assertPositiveInteger(owner.pid, "run lock owner.pid");
+  assertBoundedString(owner.hostname, "run lock owner.hostname", 255, true);
+  assertBoundedString(owner.startedAt, "run lock owner.startedAt", 100, true);
+  let normalizedStartedAt;
+  try {
+    normalizedStartedAt = new Date(owner.startedAt).toISOString();
+  } catch {
+    throw new Error("run lock owner.startedAt is invalid");
+  }
+  if (normalizedStartedAt !== owner.startedAt) throw new Error("run lock owner.startedAt is not canonical");
+  return owner;
+}
+
+async function readRunLockOwner(lockPath) {
+  const lockStat = await lstat(lockPath);
+  if (!lockStat.isDirectory() || lockStat.isSymbolicLink()) throw new Error(`run lock must be a regular directory: ${lockPath}`);
+  const entries = await readdir(lockPath, { withFileTypes: true });
+  if (entries.length !== 1 || entries[0].name !== "owner.json" || !entries[0].isFile()) throw new Error(`run lock directory contents are invalid: ${lockPath}`);
+  const ownerPath = join(lockPath, "owner.json");
+  const ownerStat = await lstat(ownerPath);
+  if (!ownerStat.isFile() || ownerStat.isSymbolicLink()) throw new Error(`run lock owner must be a regular file: ${ownerPath}`);
+  return validateRunLockOwner(parseJsonBytes(await readFile(ownerPath), `run lock owner '${ownerPath}'`));
+}
+
+function processIsAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
   }
 }
 

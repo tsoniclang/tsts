@@ -1,0 +1,1937 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "kind": "tsgo-accepted-capture",
+    "captureId": "5406a2fa03911a0346b39830f0c194d3ccb642a396ef92f3dd59be726599c62b"
+  },
+  "inventory": {
+    "schemaVersion": 1,
+    "records": [
+      {
+        "path": "capture.json",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 101192,
+        "sha256": "8a39888f673bdba67c8e900bed9fa3f53504ec29a797b34fb26a7cb3ce216bc1"
+      },
+      {
+        "path": "raw",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-000",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-000/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-000/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-000/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-000/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-000/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 102,
+        "sha256": "03f4f6126eb4df6ce0c32016449a3b0f35fc447c9e34cb97c6f59ec0a4b88e21"
+      },
+      {
+        "path": "raw/case-000/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-000/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-000/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-000/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-000/workspace/v1.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 103,
+        "sha256": "b207617d8f99bb306c6cde40cddc5a84686edd706b765429bf91d4ac3bc4ccc0"
+      },
+      {
+        "path": "raw/case-000/workspace/v1.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 113,
+        "sha256": "de2be4d13cb6fdbae3a7564ba16f9f827842a1bc2b29901e88709d95843f1675"
+      },
+      {
+        "path": "raw/case-000/workspace/v2.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 171,
+        "sha256": "41f2657bbed3b09431d004a3164eeb91ac621231e9a799a6306e82f35b163dfd"
+      },
+      {
+        "path": "raw/case-001",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-001/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-001/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-001/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-001/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-001/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 1183,
+        "sha256": "e184769c3753c27ed878e50390411434f9c917260c3a7f780a89405ef6b91268"
+      },
+      {
+        "path": "raw/case-001/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-001/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 1182,
+        "sha256": "98b77a31a9ec685464eecaeb9dd3927d3d16614c69b38e774ca352e9893a16b9"
+      },
+      {
+        "path": "raw/case-001/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-001/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-001/workspace/fnDecl.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 2534,
+        "sha256": "72f124caa0a7ac018bca7658a82b58b5f61e557737848cff3336da7f3d35c566"
+      },
+      {
+        "path": "raw/case-001/workspace/fnDecl.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 3245,
+        "sha256": "b4e480802e9f81cb77e3507e7d280a6b03c2bf6f9aead6a4e349ccd76622d90d"
+      },
+      {
+        "path": "raw/case-001/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-002",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-002/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-002/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-002/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 3815,
+        "sha256": "7cd23f4abc2481472e5ab06e58e70643eefd4c905e4a8afd61f430c7e7a70749"
+      },
+      {
+        "path": "raw/case-002/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-002/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 3814,
+        "sha256": "c175701c230ebe39dd3b0899806d0a36260d628e5b38bdd8c9a50d94d7505b47"
+      },
+      {
+        "path": "raw/case-002/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-002/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-002/workspace/declarationComputedPropertyNames.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 1578,
+        "sha256": "9083945066c4eae3411a5f6de1cc2d8c167c7247db9aec47d2fab2b4c23e5b60"
+      },
+      {
+        "path": "raw/case-002/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-003",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-003/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-003/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-003/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-003/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-003/invocations/003.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/003.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/004.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/004.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 96,
+        "sha256": "6ebab2b27e040203579fdcd0fe4711470f530ecf747414dd0f1bf48d5c85b790"
+      },
+      {
+        "path": "raw/case-003/invocations/005.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-003/invocations/005.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 108,
+        "sha256": "d19f5ff9d66813fef0d5987c141a59f105646bdf728763ec88f014b39b47a4f9"
+      },
+      {
+        "path": "raw/case-003/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-003/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 203,
+        "sha256": "8baba0358a6bbfa5311f6069dac136827df523adfc67e9967e07cf5b6bb1d6be"
+      },
+      {
+        "path": "raw/case-003/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-003/sections/002.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-003/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-003/workspace/consumes.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 210,
+        "sha256": "23045fa42bb447b69028f120b7edf612957a3704a9ac666344996f689b65f8b2"
+      },
+      {
+        "path": "raw/case-003/workspace/consumes.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 80,
+        "sha256": "25d8af6c1a639585ab1218f965147074693c044830a267a29b74594cb3c6b5b4"
+      },
+      {
+        "path": "raw/case-003/workspace/defines.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 71,
+        "sha256": "b9aefefa7c91f18899f1d6062ea8db8c8ecbefb1a08ec97557f30ae3e7ef8b70"
+      },
+      {
+        "path": "raw/case-003/workspace/defines.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 190,
+        "sha256": "edd428560eec5246fdf1219a67778a96d6c18863b3a0640afb53c84c6f7be4f5"
+      },
+      {
+        "path": "raw/case-003/workspace/defines.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 39,
+        "sha256": "137d5484ff07ce114ef94e990374d5de37a1630d7080780b7c4689094a905da0"
+      },
+      {
+        "path": "raw/case-003/workspace/exposes.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 199,
+        "sha256": "53c93a6d15f00696c2ed51f86719e494e019f0f68b1f9a049837625cace8873c"
+      },
+      {
+        "path": "raw/case-003/workspace/exposes.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 68,
+        "sha256": "ac3b54771b29debc9a3add491930f9ad7305ec2bcdb51fe40406baa83c944085"
+      },
+      {
+        "path": "raw/case-003/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-004",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-004/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-004/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-004/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-004/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-004/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 727,
+        "sha256": "1b406146687a20fee91a5c9a7f231f2e3b5330a6830f2ec9f73816c642642d6a"
+      },
+      {
+        "path": "raw/case-004/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-004/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-004/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-004/workspace/declarationAsyncAndGeneratorFunctions.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 289,
+        "sha256": "2b979ccf98c234ba0d9ab157697026a0676d8d9487ee79a69a2baef8a50e19d5"
+      },
+      {
+        "path": "raw/case-004/workspace/declarationAsyncAndGeneratorFunctions.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 332,
+        "sha256": "73ad075e9c0785d1230535be4d6f58f853b110b296a8cebc3c6fb6f202f2600d"
+      },
+      {
+        "path": "raw/case-004/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-005",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-005/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-005/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-005/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 69,
+        "sha256": "952336b894582334c3f088af9a94ab196b1860c1526cfa1a479174fe84b6921c"
+      },
+      {
+        "path": "raw/case-005/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-005/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 200,
+        "sha256": "2bf7922791ab0061393fb0a6c42044957ee95acc9af0b01ac286650a32b9d529"
+      },
+      {
+        "path": "raw/case-005/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-005/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-005/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-005/workspace/declarationSingleFileHasErrors.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 152,
+        "sha256": "6816a048031b421544f7c6618be6ac8ba7dbcbdfa37e8abe53e7cdc0c04298d7"
+      },
+      {
+        "path": "raw/case-005/workspace/declarationSingleFileHasErrors.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 40,
+        "sha256": "3e12a28e9dcbba46a1cd924ce404fc4b63de5c0df60f4a76a4c53927dd42b434"
+      },
+      {
+        "path": "raw/case-005/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-006",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-006/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-006/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-006/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 77,
+        "sha256": "ad978e575f5dbc6ae4037496080a09be65e6403720d78e8437b34ed0ab0df400"
+      },
+      {
+        "path": "raw/case-006/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-006/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 216,
+        "sha256": "04a4f8a9a46dfe67e236fa6cb60bb15afdd7ce9a11b61af500c1406e3454ff3f"
+      },
+      {
+        "path": "raw/case-006/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-006/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-006/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-006/workspace/declarationSingleFileHasErrorsReported.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 152,
+        "sha256": "98a7c9e60d5c4a435ac342adfe45263f350d4eeaaee63210e3dd1060d2b8e2cb"
+      },
+      {
+        "path": "raw/case-006/workspace/declarationSingleFileHasErrorsReported.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 40,
+        "sha256": "a97aeaa9aac9f3aa83a60ae55ee1b31bef7d4ab456701e1be2e1d13981c8633e"
+      },
+      {
+        "path": "raw/case-006/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-007",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-007/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-007/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-007/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-007/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-007/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 221,
+        "sha256": "30f1aa3ede7b9861db374ab5a373a25deca153fbc654e0cfb810273908b8f956"
+      },
+      {
+        "path": "raw/case-007/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-007/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-007/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-007/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-007/workspace/variables.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 168,
+        "sha256": "3f03d937bd56d219d0abfa0b2f9f5c71d117d8c753b7ba872e709152872f5a5a"
+      },
+      {
+        "path": "raw/case-007/workspace/variables.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 208,
+        "sha256": "ad3e894ebf30d5ccef62ded3df94f03686ee2396104f0330b89ad0345b3be7ef"
+      },
+      {
+        "path": "raw/case-008",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-008/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-008/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-008/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-008/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-008/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 102,
+        "sha256": "ef4003b00cb03e9087e620b708808c8cc4e0845ff54fcc8c4756547e88f3c231"
+      },
+      {
+        "path": "raw/case-008/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-008/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 102,
+        "sha256": "efe118cba38deb4c6e6593499d7bdffbe27f29c2833b344411e00250db1a538b"
+      },
+      {
+        "path": "raw/case-008/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-008/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-008/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-008/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-008/workspace/a.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 338,
+        "sha256": "b920331e720c48afaff585d44b39e4a8869f596303dcd2729909bde96212e8d3"
+      },
+      {
+        "path": "raw/case-008/workspace/a.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 305,
+        "sha256": "997baf3403031be957a23eccd68b8488e0a20ea62b85086c26743e08fdb69a39"
+      },
+      {
+        "path": "raw/case-008/workspace/b.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 47,
+        "sha256": "979646e57a48bb865b78ac43ef9d75f5b3c0a4ff1d67756fc9e3ef68a59184e3"
+      },
+      {
+        "path": "raw/case-008/workspace/c.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 58,
+        "sha256": "80ecfebb443fe3d08b986e9762b0dd3d880b4df4c16607efd2f62ef25cda8806"
+      },
+      {
+        "path": "raw/case-008/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-009",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-009/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-009/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-009/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-009/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-009/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 102,
+        "sha256": "ef4003b00cb03e9087e620b708808c8cc4e0845ff54fcc8c4756547e88f3c231"
+      },
+      {
+        "path": "raw/case-009/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-009/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 102,
+        "sha256": "efe118cba38deb4c6e6593499d7bdffbe27f29c2833b344411e00250db1a538b"
+      },
+      {
+        "path": "raw/case-009/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-009/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-009/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-009/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-009/workspace/a.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 338,
+        "sha256": "4491eb375eda7145a6e61817cfeecc0f65012a685ab061e1c20a52ca704ec944"
+      },
+      {
+        "path": "raw/case-009/workspace/a.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 279,
+        "sha256": "3678c2a35cb9c648402e9baad466c504bae17f8b6aec7c055141f68366dfcb65"
+      },
+      {
+        "path": "raw/case-009/workspace/b.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 79,
+        "sha256": "f175074e04d0e6b526a0f3a30962d958c5b9bb658da83604a0c5f685666bf6b4"
+      },
+      {
+        "path": "raw/case-009/workspace/c.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 47,
+        "sha256": "979646e57a48bb865b78ac43ef9d75f5b3c0a4ff1d67756fc9e3ef68a59184e3"
+      },
+      {
+        "path": "raw/case-009/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-010",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-010/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-010/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-010/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-010/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-010/invocations/003.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/003.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-010/invocations/004.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/004.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-010/invocations/005.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/005.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/006.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/006.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/007.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/007.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 130,
+        "sha256": "d479caa160c99f54b3dea8b4cd8a98d5d5b6b9bf5231a5331e9a58a32f7a2cf1"
+      },
+      {
+        "path": "raw/case-010/invocations/008.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/008.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/009.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/invocations/009.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-010/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-010/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-010/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-010/workspace/alias.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 37,
+        "sha256": "6989021c71dd33f3184bea7e1761ff9b83be41e38157e59a9bde8a62ce62a5ea"
+      },
+      {
+        "path": "raw/case-010/workspace/alias.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 12,
+        "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+      },
+      {
+        "path": "raw/case-010/workspace/alias.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 28,
+        "sha256": "74445c4b24c8af79b0b6f489272e00e595a456fc9ee803a96cebb86600e13f5b"
+      },
+      {
+        "path": "raw/case-010/workspace/class.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 168,
+        "sha256": "0dc4aae339c25833bd5c915a26b9e2ac5ffbb250058312fe2aecd55601c7b83a"
+      },
+      {
+        "path": "raw/case-010/workspace/class.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 300,
+        "sha256": "1f0de403ee9764134894eed53eeb520aea5c7dc9589244564ea38e15175cc726"
+      },
+      {
+        "path": "raw/case-010/workspace/interface.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 85,
+        "sha256": "7f5a625509d70f3a4a24e2382b606b578fccfdd285083005962c3595f77ba753"
+      },
+      {
+        "path": "raw/case-010/workspace/interface.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 12,
+        "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+      },
+      {
+        "path": "raw/case-010/workspace/interface.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 79,
+        "sha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0"
+      },
+      {
+        "path": "raw/case-010/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-010/workspace/namespace.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 194,
+        "sha256": "f703da699b46ae580d803ac975aeb0bbb80ea0e946bb4503d5a241f6e8b300c7"
+      },
+      {
+        "path": "raw/case-010/workspace/namespace.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 328,
+        "sha256": "d3f67730673c45f922d4600bf989fdc63d4c8163ddb5aa03388becd3b5328046"
+      },
+      {
+        "path": "raw/case-010/workspace/namespace.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 158,
+        "sha256": "6169076bfead831da63387e9ee9ceb2866dc89ceeca82178c60c418247033ef1"
+      },
+      {
+        "path": "raw/case-010/workspace/variables.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 179,
+        "sha256": "e02ecbb42d0139bb72fbd4b2aefa17c5c5e12fb4e93b9b7862865c524ca0a374"
+      },
+      {
+        "path": "raw/case-010/workspace/variables.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 2899,
+        "sha256": "2074d95647fd326c68c1c93c869a54be6d4bc4f2001021ff9d2f266a4f2aaab0"
+      },
+      {
+        "path": "raw/case-010/workspace/variables.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 131,
+        "sha256": "a94f49b20fa4268c553a57a045fcc0f147c8b604f7f94cea9dd68a8a0ec28c14"
+      },
+      {
+        "path": "raw/case-011",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-011/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-011/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-011/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-011/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-011/invocations/003.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/003.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-011/invocations/004.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/004.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-011/invocations/005.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/005.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/006.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/006.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/007.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/007.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 130,
+        "sha256": "d479caa160c99f54b3dea8b4cd8a98d5d5b6b9bf5231a5331e9a58a32f7a2cf1"
+      },
+      {
+        "path": "raw/case-011/invocations/008.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/008.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/009.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/invocations/009.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-011/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-011/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-011/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 67,
+        "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+      },
+      {
+        "path": "raw/case-011/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-011/workspace/alias.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 72,
+        "sha256": "62e73665b7d16176a879de2ef0fe62a9021e0bb28f2384fa6658cca9dd13f8f7"
+      },
+      {
+        "path": "raw/case-011/workspace/alias.d.ts.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 166,
+        "sha256": "cdeb7f178e56dddc83b8d23e5b552fb9cd010d2841621a5b6a9ba17472f92126"
+      },
+      {
+        "path": "raw/case-011/workspace/alias.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 12,
+        "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+      },
+      {
+        "path": "raw/case-011/workspace/alias.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 28,
+        "sha256": "74445c4b24c8af79b0b6f489272e00e595a456fc9ee803a96cebb86600e13f5b"
+      },
+      {
+        "path": "raw/case-011/workspace/class.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 168,
+        "sha256": "0dc4aae339c25833bd5c915a26b9e2ac5ffbb250058312fe2aecd55601c7b83a"
+      },
+      {
+        "path": "raw/case-011/workspace/class.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 300,
+        "sha256": "1f0de403ee9764134894eed53eeb520aea5c7dc9589244564ea38e15175cc726"
+      },
+      {
+        "path": "raw/case-011/workspace/interface.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 124,
+        "sha256": "228e1940b0e0380f75f21dd6119a3858366cbf5ea3f6687203d2c1d9dadfdcf4"
+      },
+      {
+        "path": "raw/case-011/workspace/interface.d.ts.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 221,
+        "sha256": "8ab858ae59a815e42d716025a13d476a8a4d05dabdbd6358c2c24dfa7bd83586"
+      },
+      {
+        "path": "raw/case-011/workspace/interface.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 12,
+        "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+      },
+      {
+        "path": "raw/case-011/workspace/interface.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 79,
+        "sha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0"
+      },
+      {
+        "path": "raw/case-011/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-011/workspace/namespace.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 233,
+        "sha256": "4585324bcbf18c1151384c46bd8e0f5c89b906f40d7e6dd9bba556444ef0e6a1"
+      },
+      {
+        "path": "raw/case-011/workspace/namespace.d.ts.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 246,
+        "sha256": "4f9b54e3238cbefd3b25d7fb141c2b60f9b486de6e609d6af59ab299f4e939a0"
+      },
+      {
+        "path": "raw/case-011/workspace/namespace.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 328,
+        "sha256": "d3f67730673c45f922d4600bf989fdc63d4c8163ddb5aa03388becd3b5328046"
+      },
+      {
+        "path": "raw/case-011/workspace/namespace.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 158,
+        "sha256": "6169076bfead831da63387e9ee9ceb2866dc89ceeca82178c60c418247033ef1"
+      },
+      {
+        "path": "raw/case-011/workspace/variables.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 218,
+        "sha256": "70a90333fd9d32f72dcf34ce5c0f7d395bff403cd087ba264012ca40ac6f3d98"
+      },
+      {
+        "path": "raw/case-011/workspace/variables.d.ts.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 319,
+        "sha256": "81ff29bc4bfcaea16a318fb90ff4d60f8409dbeb092e1f3aa450edd0aa5e48b4"
+      },
+      {
+        "path": "raw/case-011/workspace/variables.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 2899,
+        "sha256": "2074d95647fd326c68c1c93c869a54be6d4bc4f2001021ff9d2f266a4f2aaab0"
+      },
+      {
+        "path": "raw/case-011/workspace/variables.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 131,
+        "sha256": "a94f49b20fa4268c553a57a045fcc0f147c8b604f7f94cea9dd68a8a0ec28c14"
+      },
+      {
+        "path": "raw/case-012",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-012/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-012/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-012/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-012/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-012/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-012/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-012/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-012/invocations/003.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-012/invocations/003.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-012/invocations/004.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-012/invocations/004.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-012/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-012/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 402,
+        "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae"
+      },
+      {
+        "path": "raw/case-012/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 425,
+        "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d"
+      },
+      {
+        "path": "raw/case-012/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-012/workspace/alias.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 45,
+        "sha256": "b3ad573c3bde3b4c5c1e125fb232690d622aff3c7ae49c1975f49bbf8ee7c873"
+      },
+      {
+        "path": "raw/case-012/workspace/alias.js.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 95,
+        "sha256": "b638fadbaf738b286be35442da71708451e5aac0ce2b5090819e80622914ae10"
+      },
+      {
+        "path": "raw/case-012/workspace/alias.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 28,
+        "sha256": "74445c4b24c8af79b0b6f489272e00e595a456fc9ee803a96cebb86600e13f5b"
+      },
+      {
+        "path": "raw/case-012/workspace/class.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 201,
+        "sha256": "15d0abe9fa7477e870b1bfa502b36d10cfaecb069f7feb2f356ab41547c9ea45"
+      },
+      {
+        "path": "raw/case-012/workspace/class.js.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 211,
+        "sha256": "0d406a49bb0f756949d96a4ac88d48d81e13261e2fa1e14f0c0e6ea653b8c56e"
+      },
+      {
+        "path": "raw/case-012/workspace/class.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 300,
+        "sha256": "1f0de403ee9764134894eed53eeb520aea5c7dc9589244564ea38e15175cc726"
+      },
+      {
+        "path": "raw/case-012/workspace/interface.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 49,
+        "sha256": "6d8b01e28e7ef336ae631012106194cb7eedba892dbf5c4a7139982036082366"
+      },
+      {
+        "path": "raw/case-012/workspace/interface.js.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 103,
+        "sha256": "087d8f46ee9b07e19e0ea907b8cce675ddb51a3beeea897bf091ba64a3234180"
+      },
+      {
+        "path": "raw/case-012/workspace/interface.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 79,
+        "sha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0"
+      },
+      {
+        "path": "raw/case-012/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-012/workspace/namespace.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 365,
+        "sha256": "36f732713aef35e7f7fe79e1ede124a75944b1797ff5fb03cc1b5eda0b6174ff"
+      },
+      {
+        "path": "raw/case-012/workspace/namespace.js.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 425,
+        "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d"
+      },
+      {
+        "path": "raw/case-012/workspace/namespace.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 158,
+        "sha256": "6169076bfead831da63387e9ee9ceb2866dc89ceeca82178c60c418247033ef1"
+      },
+      {
+        "path": "raw/case-012/workspace/variables.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 2936,
+        "sha256": "f2af3a315cf4d10c933bdcf1dcd15ef931ce8c45f006d3b9393b760536d6f984"
+      },
+      {
+        "path": "raw/case-012/workspace/variables.js.map",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 402,
+        "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae"
+      },
+      {
+        "path": "raw/case-012/workspace/variables.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 131,
+        "sha256": "a94f49b20fa4268c553a57a045fcc0f147c8b604f7f94cea9dd68a8a0ec28c14"
+      },
+      {
+        "path": "raw/case-013",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-013/invocations",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-013/invocations/000.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-013/invocations/000.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-013/invocations/001.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-013/invocations/001.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-013/invocations/002.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-013/invocations/002.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-013/invocations/003.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-013/invocations/003.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-013/invocations/004.stderr",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "raw/case-013/invocations/004.stdout",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 505,
+        "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+      },
+      {
+        "path": "raw/case-013/sections",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-013/sections/000.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 3413,
+        "sha256": "80a17bbe39b5cda5994057f4ebb329cc92868ce037e4004453d3f0721f0eb649"
+      },
+      {
+        "path": "raw/case-013/sections/001.txt",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 933,
+        "sha256": "6e7cd17ae75c814a794de5de538e6d8df6ab84b84f26186c576d06841d32dee4"
+      },
+      {
+        "path": "raw/case-013/workspace",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "raw/case-013/workspace/alias.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 190,
+        "sha256": "e51d3865b9a21f065aa761f1a307e2b29d649efbc5c1cf163e21be6593fc83aa"
+      },
+      {
+        "path": "raw/case-013/workspace/alias.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 28,
+        "sha256": "74445c4b24c8af79b0b6f489272e00e595a456fc9ee803a96cebb86600e13f5b"
+      },
+      {
+        "path": "raw/case-013/workspace/class.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 502,
+        "sha256": "66c65807a39a9b6ab5e345c3a89a94af00e023079bb8da558d73a6bd6dc5ecd7"
+      },
+      {
+        "path": "raw/case-013/workspace/class.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 300,
+        "sha256": "1f0de403ee9764134894eed53eeb520aea5c7dc9589244564ea38e15175cc726"
+      },
+      {
+        "path": "raw/case-013/workspace/interface.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 202,
+        "sha256": "8fb423af2eac036464e7997f170fd8332a3488875c6f05e487e1b2897ea23384"
+      },
+      {
+        "path": "raw/case-013/workspace/interface.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 79,
+        "sha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0"
+      },
+      {
+        "path": "raw/case-013/workspace/lib.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 498,
+        "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+      },
+      {
+        "path": "raw/case-013/workspace/namespace.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 946,
+        "sha256": "90cd283ab7ce2a9cab70840a4d135b73d67b79286b61cbbb7703c2048ba30101"
+      },
+      {
+        "path": "raw/case-013/workspace/namespace.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 158,
+        "sha256": "6169076bfead831da63387e9ee9ceb2866dc89ceeca82178c60c418247033ef1"
+      },
+      {
+        "path": "raw/case-013/workspace/variables.js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 3485,
+        "sha256": "99679c6904a2a984287748beae335fd62cd08ce8d605cc45edaf533f4c7b2fde"
+      },
+      {
+        "path": "raw/case-013/workspace/variables.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 131,
+        "sha256": "a94f49b20fa4268c553a57a045fcc0f147c8b604f7f94cea9dd68a8a0ec28c14"
+      }
+    ],
+    "digest": "97fe3c08df4257783269fd90116cc55a322f2cf6556fb925e9760f9026834616"
+  },
+  "evidenceDigest": "e722cc749ebc30a3c915bd4f0d051f36ec2cd61540717b44b3621a5d692b328f"
+}

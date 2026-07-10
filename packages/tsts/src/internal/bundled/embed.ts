@@ -286,6 +286,7 @@ export let libsEntries: GoSlice<DirEntry> = LibNames.map((name): DirEntry =>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.Stat","kind":"method","status":"implemented","sigHash":"812fc06d7c7368a66cc078e05e801c33874b41a18a50a41a0436c8d2a6478b7c","bodyHash":"7eb7a34e0d03deb3152762e4fb37f11ef61849f8ca35f1e8d015f2e66a29743d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The embedded FS returns a nil FileInfo when fs.Stat reports an error; wrappedFS_Stat maps that exact error branch to undefined and forwards successful FileInfo values unchanged.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/bundled/embed.ts::wrappedFS>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/bundled/embed.ts::wrappedFS>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>"}
  *
  * Go source:
  * func (vfs *wrappedFS) Stat(path string) vfs.FileInfo {

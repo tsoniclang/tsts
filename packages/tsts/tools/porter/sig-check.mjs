@@ -15,6 +15,7 @@ import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extra
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
+import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
 const SIGNATURE_MISMATCH_KINDS = new Set([
@@ -30,6 +31,7 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "unsupported-member",
   "member-type",
   "extra-member",
+  "duplicate-member",
   "alias-type",
   "value-annotation-missing",
   "missing-value",
@@ -169,6 +171,12 @@ export function unitSignatureSnapshot(desc, canon = (x) => x) {
     return `value{${(desc.decls ?? []).map((d) => `${d.name}:${d.missing ? "<missing>" : typeSnapshot(d.type, canon)}`).join(";")}}`;
   }
   return `${desc.kind ?? "unknown"}:${JSON.stringify(desc)}`;
+}
+
+export function withSignatureOverrideSnapshots(mismatches, expected, actual, canon = (x) => x) {
+  const goSignature = unitSignatureSnapshot(expected, canon);
+  const tsSignature = unitSignatureSnapshot(actual, canon);
+  return mismatches.map((mismatch) => ({ ...mismatch, goSignature, tsSignature }));
 }
 
 export function validateOverrideUse(localOverride, mismatches, id, overrideIssues) {
@@ -313,6 +321,11 @@ function memberMap(desc) {
 }
 
 function compareInterface(expected, actual, push, eq) {
+  const actualCounts = new Map();
+  for (const member of actual.members ?? []) actualCounts.set(member.name, (actualCounts.get(member.name) ?? 0) + 1);
+  for (const [name, count] of actualCounts) {
+    if (count > 1) push("duplicate-member", `TypeScript interface member '${name}' occurs ${count} times`, 1, count);
+  }
   const em = memberMap(expected);
   const am = memberMap(actual);
   for (const [name, mem] of em) {
@@ -541,6 +554,7 @@ export async function computeSignatureReport(deps, options = {}) {
   }
 
   mismatches.push(...descriptorInventoryMismatches(expectedIds, descriptorsById));
+  const jsonTags = collectJsonTagMismatches(deps.snapshot, sources, deps.tsById, deps.activeIds, profile.jsonTags);
 
   for (const id of [...expectedIds].sort()) {
     const go = goById.get(id);
@@ -554,9 +568,11 @@ export async function computeSignatureReport(deps, options = {}) {
     const ignoredMismatch = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
     if (ignoredMismatch) overriddenUnits++;
     const ms = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
-    for (const m of ms) mismatches.push({ id, file: deps.tsById.get(id)?.path ?? "", ...m });
+    for (const m of withSignatureOverrideSnapshots(ms, expected, actual, canon)) {
+      mismatches.push({ id, file: deps.tsById.get(id)?.path ?? "", ...m });
+    }
   }
-  return { mismatches, checked: expectedIds.size, descriptors: [...descriptorsById.values()].reduce((count, rows) => count + rows.length, 0), overriddenUnits, overrideIssues };
+  return { mismatches, checked: expectedIds.size, descriptors: [...descriptorsById.values()].reduce((count, rows) => count + rows.length, 0), overriddenUnits, overrideIssues, jsonTags: { ...jsonTags, mismatchCount: jsonTags.mismatches.length } };
 }
 
 export function descriptorInventoryMismatches(expectedIds, descriptorsById) {

@@ -1,7 +1,9 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoAppend } from "../../go/compat.js";
 import { DeepEqual as reflect_DeepEqual } from "../../go/reflect.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
+import { AttachJsonFieldNamesForGoStruct, DefineJsonFieldNamesForGoStruct } from "../json/json.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import {
@@ -141,6 +143,31 @@ export interface TSConfig {
   CompileOnSave: GoPtr<bool>;
 }
 
+const tsConfigJsonFields = DefineJsonFieldNamesForGoStruct<TSConfig>(
+  "github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::TSConfig",
+  {
+    CompilerOptions: { name: "compilerOptions", marshal: orderedMapToJsonObject },
+    References: { name: "references", omitZero: true, zero: "nil" },
+    Files: { name: "files", omitZero: true, zero: "nil" },
+    Include: { name: "include", omitZero: true, zero: "nil" },
+    Exclude: { name: "exclude", omitZero: true, zero: "nil" },
+    CompileOnSave: { name: "compileOnSave", omitZero: true, zero: "nil" },
+  },
+  {
+    strategy: "runtime",
+    reason: "The show-config command marshals TSConfig through generic JSON and requires exact upstream field identities and omission rules.",
+  },
+);
+
+function orderedMapToJsonObject(value: GoPtr<OrderedMap<string, unknown>>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  OrderedMap_Entries(value)((key: string, entry: unknown): bool => {
+    result[key] = entry;
+    return true;
+  });
+  return result;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::ConvertToTSConfig","kind":"func","status":"implemented","sigHash":"9f36855e511ad0f1b8807f5d66cb4528095245f4ced190f47176cc0ac39e27db","bodyHash":"87d5f9cde37731adeacdb6cc2f629432e1dabf14f4e731a5a92dee8e67cdb673"}
  *
@@ -230,11 +257,11 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   };
 
   // Build the list of all resolved files as relative paths from the config file.
-  const files: GoSlice<string> = [];
+  let files: GoSlice<string> = undefined!;
   for (const f of ParsedCommandLine_FileNames(configParseResult)) {
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
-    files.push(relativePath);
+    files = GoAppend(files, relativePath);
   }
 
   // Serialize compiler options
@@ -250,10 +277,10 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   const config: TSConfig = {
     CompilerOptions: optionMap,
-    References: [],
-    Files: [],
-    Include: [],
-    Exclude: [],
+    References: undefined!,
+    Files: undefined!,
+    Include: undefined!,
+    Exclude: undefined!,
     CompileOnSave: undefined,
   };
 
@@ -273,7 +300,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   }
 
   // Add files
-  if (files.length > 0) {
+  if ((files?.length ?? 0) > 0) {
     config.Files = files;
   }
 
@@ -293,7 +320,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
     config.CompileOnSave = true;
   }
 
-  return config;
+  return AttachJsonFieldNamesForGoStruct(config, tsConfigJsonFields);
 }
 
 /**

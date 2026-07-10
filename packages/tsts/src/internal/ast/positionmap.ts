@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { DecodeRuneInStringAt, RuneSelf, StringByteAt, StringByteLen } from "../../go/unicode/utf8.js";
+import { RuneSelf, StringByteAt, StringByteLen, StringByteSlice } from "../../go/unicode/utf8.js";
+import { DecodeJSStringRune } from "../stringutil/util.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` reads a byte, and slices like `s[i:]` operate on byte offsets. We
@@ -83,7 +84,7 @@ export function ComputePositionMap(text: string): GoPtr<PositionMap> {
       i++;
       continue;
     }
-    const [r, size] = DecodeRuneInStringAt(text, i);
+    const [r, size] = DecodeJSStringRune(StringByteSlice(text, i));
     let utf16Size: int = 1;
     if (r >= 0x10000) {
       utf16Size = 2;

@@ -54,6 +54,7 @@ import { programToSnapshot } from "./programtosnapshot.js";
 import { snapshotToBuildInfo } from "./snapshottobuildinfo.js";
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 import { emitFiles } from "./emitfileshandler.js";
+import { PhaseEmit, Tracing_Push } from "../../tracing/tracing.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"implemented","sigHash":"ac0c33eecbaacc82f41ffe55d9ba7c906febdd4d060a27483938f399b0f01aee","bodyHash":"b55af211c61625d503f2cc14340da8cff9e286acac2d696a37b7b1fe9aa065d0"}
@@ -79,6 +80,7 @@ export const SignatureUpdateKindUsedVersion: SignatureUpdateKind = 2 as Signatur
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::Program","kind":"type","status":"implemented","sigHash":"c60019065d3ec9810ed2446897b82620c3db486992de68fd6eea46cab24d5e45","bodyHash":"62a9aaa5f0c06700779cde58aa4433d2f19ce9760f41bc92fb8270a6900d7b42"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Program.host is a nil Go Host interface for watcher-created programs and a concrete Host for build-created programs; TypeScript preserves that construction-mode state with undefined and only build-only emission paths dereference it.","goSignature":"interface{host:packages/tsts/src/internal/execute/incremental/host.ts::Host;program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>;snapshot:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::snapshot>;testingData:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::TestingData>}","tsSignature":"interface{host:packages/tsts/src/internal/execute/incremental/host.ts::Host|undefined;program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>;snapshot:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::snapshot>;testingData:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::TestingData>}"}
  *
  * Go source:
  * Program struct {
@@ -93,7 +95,7 @@ export const SignatureUpdateKindUsedVersion: SignatureUpdateKind = 2 as Signatur
 export interface Program {
   snapshot: GoPtr<snapshot>;
   program: GoPtr<Program_22a0a6ce>;
-  host: Host;
+  host: Host | undefined;
   testingData: GoPtr<TestingData>;
 }
 
@@ -127,6 +129,7 @@ export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): Progr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"3df5f6a3788f3fb352092e53e324630656089873eed39eddad307a11d05014c2","bodyHash":"8e871b7861682297cf1696551207473f296f7d4dc7aeb5a0e3f8a9987caad200"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Watcher construction deliberately calls NewProgram with a nil Host interface while build and incremental compilation pass a concrete Host; TypeScript represents that actual nil interface argument with undefined and host-dependent paths remain build-only.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>,packages/tsts/src/internal/execute/incremental/host.ts::Host,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>,packages/tsts/src/internal/execute/incremental/host.ts::Host|undefined,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>"}
  *
  * Go source:
  * func NewProgram(program *compiler.Program, oldProgram *Program, host Host, testing bool) *Program {
@@ -149,7 +152,7 @@ export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): Progr
  * 	return incrementalProgram
  * }
  */
-export function NewProgram(program: GoPtr<Program_22a0a6ce>, oldProgram: GoPtr<Program>, host: Host, testing: bool): GoPtr<Program> {
+export function NewProgram(program: GoPtr<Program_22a0a6ce>, oldProgram: GoPtr<Program>, host: Host | undefined, testing: bool): GoPtr<Program> {
   const incrementalProgram: Program = {
     snapshot: programToSnapshot(program, oldProgram, testing),
     program: program,
@@ -739,60 +742,70 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
  * }
  */
 export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
-  // Tracing: omit defer tr.Push (single-threaded, no goroutine cleanup needed)
-  const buildInfoFileName = GetBuildInfoFileName(receiver!.snapshot!.options, {
-    CurrentDirectory: compiler_Program_GetCurrentDirectory(receiver!.program),
-    UseCaseSensitiveFileNames: compiler_Program_UseCaseSensitiveFileNames(receiver!.program),
-  });
-  if (buildInfoFileName === "" || compiler_Program_IsEmitBlocked(receiver!.program, buildInfoFileName)) {
-    return undefined;
-  }
-  if (receiver!.snapshot!.hasErrors === TSUnknown) {
-    Program_ensureHasErrorsForState(receiver, ctx, receiver!.program);
-    if (receiver!.snapshot!.hasErrors !== receiver!.snapshot!.hasErrorsFromOldState || receiver!.snapshot!.hasSemanticErrors !== receiver!.snapshot!.hasSemanticErrorsFromOldState) {
-      receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
+  const tracing = compiler_Program_Tracing(receiver!.program);
+  const popTrace = tracing === undefined ? undefined : Tracing_Push(tracing, PhaseEmit, "emitBuildInfo", undefined, true as bool);
+  try {
+    const buildInfoFileName = GetBuildInfoFileName(receiver!.snapshot!.options, {
+      CurrentDirectory: compiler_Program_GetCurrentDirectory(receiver!.program),
+      UseCaseSensitiveFileNames: compiler_Program_UseCaseSensitiveFileNames(receiver!.program),
+    });
+    if (buildInfoFileName === "" || compiler_Program_IsEmitBlocked(receiver!.program, buildInfoFileName)) {
+      return undefined;
     }
-  }
-  if (receiver!.snapshot!.packageJsons === undefined) {
-    Program_ensurePackageJsonsForState(receiver);
-    if (!arrayEqual(receiver!.snapshot!.packageJsons, receiver!.snapshot!.packageJsonsFromOldState) ||
-      !arrayEqual(receiver!.snapshot!.missingPackageJsons, receiver!.snapshot!.missingPackageJsonsFromOldState)) {
-      receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
+    if (receiver!.snapshot!.hasErrors === TSUnknown) {
+      Program_ensureHasErrorsForState(receiver, ctx, receiver!.program);
+      if (receiver!.snapshot!.hasErrors !== receiver!.snapshot!.hasErrorsFromOldState || receiver!.snapshot!.hasSemanticErrors !== receiver!.snapshot!.hasSemanticErrorsFromOldState) {
+        receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
+      }
     }
-  }
-  if (!receiver!.snapshot!.buildInfoEmitPending.Load()) {
-    return undefined;
-  }
-  if (ctx.Err() !== undefined) {
-    return undefined;
-  }
-  const buildInfo = snapshotToBuildInfo(receiver!.snapshot, receiver!.program, buildInfoFileName);
-  const [textBytes, marshalError] = json_Marshal(buildInfo);
-  if (marshalError !== undefined) {
-    throw new globalThis.Error(`Failed to marshal build info: ${marshalError.message}`);
-  }
-  const text = new globalThis.TextDecoder().decode(globalThis.Uint8Array.from(textBytes as number[]));
-  let err: import("../../../go/compat.js").GoError;
-  if (options.WriteFile !== undefined) {
-    err = options.WriteFile(buildInfoFileName, text, { BuildInfo: buildInfo } as import("../../compiler/program.js").WriteFileData);
-  } else {
-    err = compiler_Program_Host(receiver!.program).FS().WriteFile(buildInfoFileName, text);
-  }
-  if (err !== undefined) {
+    if (receiver!.snapshot!.packageJsons === undefined) {
+      Program_ensurePackageJsonsForState(receiver);
+      if (!arrayEqual(receiver!.snapshot!.packageJsons, receiver!.snapshot!.packageJsonsFromOldState) ||
+        !arrayEqual(receiver!.snapshot!.missingPackageJsons, receiver!.snapshot!.missingPackageJsonsFromOldState)) {
+        receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
+      }
+    }
+    if (!receiver!.snapshot!.buildInfoEmitPending.Load()) {
+      return undefined;
+    }
+    if (ctx.Err() !== undefined) {
+      return undefined;
+    }
+    const buildInfo = snapshotToBuildInfo(receiver!.snapshot, receiver!.program, buildInfoFileName);
+    const [textBytes, marshalError] = json_Marshal(buildInfo);
+    if (marshalError !== undefined) {
+      throw new globalThis.Error(`Failed to marshal build info: ${marshalError.message}`);
+    }
+    const text = new globalThis.TextDecoder().decode(globalThis.Uint8Array.from(textBytes as number[]));
+    let err: import("../../../go/compat.js").GoError;
+    if (options.WriteFile !== undefined) {
+      err = options.WriteFile(buildInfoFileName, text, {
+        SourceMapUrlPos: 0,
+        BuildInfo: buildInfo,
+        Diagnostics: [],
+        SkippedDtsWrite: false as bool,
+      });
+    } else {
+      err = compiler_Program_Host(receiver!.program).FS().WriteFile(buildInfoFileName, text);
+    }
+    if (err !== undefined) {
+      return {
+        EmitSkipped: true as bool,
+        Diagnostics: [NewCompilerDiagnostic(diagnostics.Could_not_write_file_0_Colon_1, buildInfoFileName, err.message)],
+        EmittedFiles: [],
+        SourceMaps: [],
+      };
+    }
+    receiver!.snapshot!.buildInfoEmitPending.Store(false as bool);
     return {
-      EmitSkipped: true as bool,
-      Diagnostics: [NewCompilerDiagnostic(diagnostics.Could_not_write_file_0_Colon_1, buildInfoFileName, err.message)],
-      EmittedFiles: [],
+      EmitSkipped: false as bool,
+      Diagnostics: [],
+      EmittedFiles: [buildInfoFileName],
       SourceMaps: [],
     };
+  } finally {
+    popTrace?.();
   }
-  receiver!.snapshot!.buildInfoEmitPending.Store(false as bool);
-  return {
-    EmitSkipped: false as bool,
-    Diagnostics: [],
-    EmittedFiles: [buildInfoFileName],
-    SourceMaps: [],
-  };
 }
 
 /**
@@ -903,17 +916,17 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
   }
 
   if (hasIncludeProcessingDiagnostics!() ||
-    compiler_Program_GetConfigFileParsingDiagnostics(program).length > 0 ||
-    compiler_Program_GetSyntacticDiagnostics(program, ctx, undefined).length > 0 ||
-    compiler_Program_GetProgramDiagnostics(program).length > 0 ||
-    compiler_Program_GetGlobalDiagnostics(program, ctx).length > 0) {
+    (compiler_Program_GetConfigFileParsingDiagnostics(program) ?? []).length > 0 ||
+    (compiler_Program_GetSyntacticDiagnostics(program, ctx, undefined) ?? []).length > 0 ||
+    (compiler_Program_GetProgramDiagnostics(program) ?? []).length > 0 ||
+    (compiler_Program_GetGlobalDiagnostics(program, ctx) ?? []).length > 0) {
     receiver!.snapshot!.hasErrors = TSTrue;
     receiver!.snapshot!.hasSemanticErrors = false;
     return;
   }
 
   receiver!.snapshot!.hasErrors = TSFalse;
-  const hasSemanticErrors = compiler_Program_GetSourceFiles(program).some((file: GoPtr<SourceFile>): boolean => {
+  const hasSemanticErrors = compiler_Program_GetSourceFiles(receiver!.program).some((file: GoPtr<SourceFile>): boolean => {
     const [semanticDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
       SourceFile_Path(file)
@@ -985,6 +998,7 @@ export function Program_ensurePackageJsonsForState(receiver: GoPtr<Program>): vo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::func::normalizePackageJsons","kind":"func","status":"implemented","sigHash":"16d5c17c0afd8838f86c6ee126578bbb46788f6d31e32decbe89e8903b3c6872","bodyHash":"711bce823bc4fc66c9db35b6b2b8ae6614776d110439070e33c3e66087174875"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A snapshot package-json slice can be nil before collection; normalizePackageJsons detects that Go nil input and returns a newly allocated empty slice, so TypeScript accepts undefined for that exact input state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>|undefined)=>packages/tsts/src/go/compat.ts::GoSlice<string>"}
  *
  * Go source:
  * func normalizePackageJsons(packageJsons []string) []string {
@@ -1005,6 +1019,7 @@ export function normalizePackageJsons(packageJsons: GoSlice<string> | undefined)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.PackageJsonLookupPaths","kind":"method","status":"implemented","sigHash":"277991dcbe2f487e2dd1b192fc0011d0b460c6261319644e0b5985a351c40682","bodyHash":"841f35598e21d0bb056a2d646774699267fa714665d0319e708102c8f31fd4b5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"PackageJsonLookupPaths explicitly returns a nil Go slice when the program has no config directory, distinct from the allocated result used for configured programs; TypeScript represents that return branch with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoSlice<string>|undefined"}
  *
  * Go source:
  * func (p *Program) PackageJsonLookupPaths() []string {
@@ -1029,10 +1044,10 @@ export function normalizePackageJsons(packageJsons: GoSlice<string> | undefined)
  * 	return core.Deduplicate(packageJsons)
  * }
  */
-export function Program_PackageJsonLookupPaths(receiver: GoPtr<Program>): GoSlice<string> {
+export function Program_PackageJsonLookupPaths(receiver: GoPtr<Program>): GoSlice<string> | undefined {
   const config = GetDirectoryPath(ParsedCommandLine_ConfigName(compiler_Program_CommandLine(receiver!.program)));
   if (config === "") {
-    return undefined!;
+    return undefined;
   }
   let packageJsons: GoSlice<string> = [];
   compiler_Program_PackageJsonCacheEntries(receiver!.program, (_key: Path, value: GoPtr<InfoCacheEntry>): bool => {

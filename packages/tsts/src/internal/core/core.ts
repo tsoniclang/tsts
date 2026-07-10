@@ -67,6 +67,7 @@ export function ApplyDebugStackLimit(): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Filter","kind":"func","status":"implemented","sigHash":"c6f3794b23a576819ceb29c279308a1f44ca586c2ad73bca238043ddf5cc2be6","bodyHash":"d6f2f463faf92b0ac14d252dfde5b636c9d042a563bc223423e1dd6c7d26f801"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go callers may pass a nil slice, which this helper only ranges and filters; the TypeScript body treats undefined as the zero-length input and normalizes the nil result to the established empty-array slice representation.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
  *
  * Go source:
  * func Filter[T any](slice []T, f func(T) bool) []T {
@@ -105,6 +106,7 @@ export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSli
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FilterSeq","kind":"func","status":"implemented","sigHash":"f284bfa2470adcad948df44f98aa3dbfd8bb42a3d789acaa6666bd90463022b8","bodyHash":"2d468fa35e38be522ef3884bfa57f9f4842f7c868f409cd722bb5e177cb5b656"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A nil Go slice is a valid zero-element sequence input; the returned TypeScript sequence ranges over slice ?? [], so it yields no elements without inventing a separate nil-sequence state.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSeq<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSeq<T0>"}
  *
  * Go source:
  * func FilterSeq[T any](slice []T, f func(T) bool) iter.Seq[T] {
@@ -133,6 +135,7 @@ export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FilterIndex","kind":"func","status":"implemented","sigHash":"2c8591ea4e8c355d063b10ee051308e882d1ceb245c39684e589bbb5e41f0884","bodyHash":"6b099512b0b6271c6427a277d380077396da271a637a4c16251c5ef5d6fa07e3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go permits a nil slice and supplies that same zero-length slice to no predicate calls; the TypeScript body normalizes undefined to one empty array used consistently for iteration and callback arguments.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
  *
  * Go source:
  * func FilterIndex[T any](slice []T, f func(T, int, []T) bool) []T {
@@ -444,6 +447,7 @@ export function Same<T>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Some","kind":"func","status":"implemented","sigHash":"9cbe48e4837767d8e6e64571b1f05a4281e53311e62f370b3593a52a3056453b","bodyHash":"f31b8411854c97dced79ff69f46548c7852635572333b617c2c93fc45aa87a0e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Ranging a nil Go slice returns false without invoking the predicate; Some tests undefined first and returns that exact false result.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>|undefined,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func Some[T any](slice []T, f func(T) bool) bool {
@@ -470,6 +474,7 @@ export function Some<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Every","kind":"func","status":"implemented","sigHash":"ea99b9b3f35d67edb785af36c6532dd9ceebd77305cb8a13e0e17d48bcda57c6","bodyHash":"bdb02d6141ca0180793e634f2a789c4a880b9ab9d1feaea2af21689cbd744baa"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Ranging a nil Go slice returns true without invoking the predicate; Every tests undefined first and returns that exact vacuous-true result.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>|undefined,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func Every[T any](slice []T, f func(T) bool) bool {
@@ -739,6 +744,7 @@ export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Concatenate","kind":"func","status":"implemented","sigHash":"6956c1829700bd3fc3f92ccbb9409a1e9c08d886214b667237944eeaf8c08a06","bodyHash":"67b9e54b7b8b130caecdbdad8b4f6b2c6e0ad743ac2642b46473610f4f9f3921"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Either Go input slice may be nil and len treats it as empty; the TypeScript body applies the same branch order after normalizing each undefined input to the established empty-array slice representation.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
  *
  * Go source:
  * func Concatenate[T any](s1 []T, s2 []T) []T {
@@ -912,6 +918,7 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::AppendIfUnique","kind":"func","status":"implemented","sigHash":"306355ba71b10478033aadff90f427c91e2f254307d310e3474ae0425de73760","bodyHash":"6f5d70207c81fe269c7d13c587b1d2f3284f804428389f17fb94675b97806258"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The accumulator slice may start as Go nil; membership treats it as empty and append creates the first element, which the TypeScript body implements with slice ?? [] on both branches.","goSignature":"func<T0 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,T0)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,T0)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
  *
  * Go source:
  * func AppendIfUnique[T comparable](slice []T, element T) []T {
@@ -1429,6 +1436,7 @@ export interface levenshteinBuffers {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::varGroup::levenshteinBuffersPool","kind":"varGroup","status":"implemented","sigHash":"f73cd6a6740af43768f3ed3b4d193581ee5336a7de6a8a87a3b32eda65cb9133","bodyHash":"32d80bcc1299c82e6daca5392f8e7b0312096e620f6b33be1f7c88204c69f13b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries only the paired previous/current Levenshtein buffers created by its New function; GetSpellingSuggestion obtains one and returns it in finally after the distance scan.","goSignature":"value{levenshteinBuffersPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{levenshteinBuffersPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/internal/core/core.ts::levenshteinBuffers>}"}
  *
  * Go source:
  * var levenshteinBuffersPool = sync.Pool{
@@ -1783,7 +1791,8 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CopyMapInto","kind":"func","status":"implemented","sigHash":"fd702b4259fea6ec44fd16663c03f9e2ba72382a6560f546b7da5bf9d476cd56","bodyHash":"3410fce65c4fd853ac74c528911a11c401dd4e3ba2b83eb060eac2ad5d16d27e"}
+* @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CopyMapInto","kind":"func","status":"implemented","sigHash":"fd702b4259fea6ec44fd16663c03f9e2ba72382a6560f546b7da5bf9d476cd56","bodyHash":"3410fce65c4fd853ac74c528911a11c401dd4e3ba2b83eb060eac2ad5d16d27e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Both Go parameters preserve their distinct named map types while using the GoMap<K,V> runtime carrier; the two local intersections encode that exact representation without widening keys or values.","goSignature":"func<T0 extends raw(~map[K]V),T1 extends raw(~map[K]V),T2 extends name::comparable,T3 extends unknown>(T0,T1)=>packages/tsts/src/go/compat.ts::GoMap<T2,T3>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoConstraint<\"~map[K]V\">&packages/tsts/src/go/compat.ts::GoMap<T2,T3>,T1 extends packages/tsts/src/go/compat.ts::GoConstraint<\"~map[K]V\">&packages/tsts/src/go/compat.ts::GoMap<T2,T3>,T2 extends packages/tsts/src/go/compat.ts::GoComparable,T3>(T0,T1)=>packages/tsts/src/go/compat.ts::GoMap<T2,T3>"}
  *
  * Go source:
  * func CopyMapInto[M1 ~map[K]V, M2 ~map[K]V, K comparable, V any](dst M1, src M2) map[K]V {

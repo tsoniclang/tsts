@@ -332,6 +332,7 @@ export interface resolutionState {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::newResolutionState","kind":"func","status":"implemented","sigHash":"c5b35f1043a1889417c80d6787859e706a3accf19e2ceb72e3affc07a643bfff","bodyHash":"638564ce17cc1609b41276c2a903b4eb986357c38977b1a58fb9fa0015a2e66d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"newResolutionState receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(string,string,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::tracer>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::resolutionState>","tsSignature":"func(string,string,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::tracer>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::resolutionState>"}
  *
  * Go source:
  * func newResolutionState(
@@ -433,6 +434,7 @@ export function newResolutionState(name: string, containingDirectory: string, is
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::func::GetCompilerOptionsWithRedirect","kind":"func","status":"implemented","sigHash":"e3d6239768ca0f19fac6e2dc7ed3650e4c96383f3d11db9d91d35094c1e50b24","bodyHash":"3f4e5e3c312bb91bc8f5cd1a66e26e3f4273f93a39c28493feca39b535b5efa6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetCompilerOptionsWithRedirect receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>"}
  *
  * Go source:
  * func GetCompilerOptionsWithRedirect(compilerOptions *core.CompilerOptions, redirectedReference ResolvedProjectReference) *core.CompilerOptions {
@@ -628,6 +630,7 @@ export function Resolver_PackageJsonCacheEntries(receiver: GoPtr<Resolver>, f: (
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::tracer.traceResolutionUsingProjectReference","kind":"method","status":"implemented","sigHash":"f87db2498f10097e25f484eefb244b16412483684c4f2a6b46a14c5023802afb","bodyHash":"a91e3bc3548a950a819fb1ddc436d42a12b5f6c5e42a975eb8c82591524f44c0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"tracer.traceResolutionUsingProjectReference receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::tracer>,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::tracer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>void"}
  *
  * Go source:
  * func (r *tracer) traceResolutionUsingProjectReference(redirectedReference ResolvedProjectReference) {
@@ -644,6 +647,7 @@ export function tracer_traceResolutionUsingProjectReference(receiver: GoPtr<trac
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::Resolver.ResolveTypeReferenceDirective","kind":"method","status":"implemented","sigHash":"fa96182ff6b8ed76f6634c8a4d8c4a1c11e7f97530b514beefdbb7e7d69e48d5","bodyHash":"6db9e8e7ab1f08ce53ac47600c78429b11ec8908f858286b5f46a45b0686490d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Resolver.ResolveTypeReferenceDirective receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>]"}
  *
  * Go source:
  * func (r *Resolver) ResolveTypeReferenceDirective(
@@ -725,6 +729,7 @@ export function Resolver_ResolveTypeReferenceDirective(receiver: GoPtr<Resolver>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::Resolver.ResolveModuleName","kind":"method","status":"implemented","sigHash":"3704aaf9c9093b8ba6ae8661e4c52b10730cfa1c8c0068e17445178c074a428c","bodyHash":"94f8255bde09d1f88d0f04d161ca01a8357c57decd56db6c055dcea777d7c913"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Resolver.ResolveModuleName receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>]"}
  *
  * Go source:
  * func (r *Resolver) ResolveModuleName(moduleName string, containingFile string, resolutionMode core.ResolutionMode, redirectedReference ResolvedProjectReference) (*ResolvedModule, []DiagAndArgs) {
@@ -849,6 +854,7 @@ export function Resolver_ResolveModuleName(receiver: GoPtr<Resolver>, moduleName
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::Resolver.ResolvePackageDirectory","kind":"method","status":"implemented","sigHash":"00aaf0706d5b866127a21df6b761b99f248ee073c90aece628af4e287ccaccfc","bodyHash":"d7f08ae83d9a956b410bc2f12ad129f3fa2f29e4e739e39dd5465713713ee419"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Resolver.ResolvePackageDirectory receives the nil Go ResolvedProjectReference interface on ordinary non-redirected resolution; its control flow preserves the base options/identity in that case, and TypeScript represents the interface sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>,string,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>"}
  *
  * Go source:
  * func (r *Resolver) ResolvePackageDirectory(moduleName string, containingFile string, resolutionMode core.ResolutionMode, redirectedReference ResolvedProjectReference) *ResolvedModule {
@@ -4029,8 +4035,8 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
   let builder = "";
   for (const name of names) {
     const peerPackageJson = resolutionState_getPackageJsonInfo(receiver, nodeModules + name);
-    if (peerPackageJson !== undefined) {
-      const version = packageJsonHeaderStringField(peerPackageJson.Contents, "Version").Value;
+    if (InfoCacheEntry_Exists(peerPackageJson)) {
+      const version = packageJsonHeaderStringField(peerPackageJson!.Contents, "Version").Value;
       builder += "+" + name + "@" + version;
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Found_peerDependency_0_with_1_version, name, version);
@@ -4169,6 +4175,7 @@ export function resolutionState_conditionMatches(receiver: GoPtr<resolutionState
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.getTraceFunc","kind":"method","status":"implemented","sigHash":"54a05fda62e771ede480e80053ecfe22f558b755693a7515d0fb946105bc9554","bodyHash":"81c380433b36bce8f5f6a3639413e509edcb5cb0389e592af623d0bb8190dbc5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getTraceFunc explicitly returns a nil Go function when resolution tracing is disabled and a bound writer otherwise; TypeScript represents that return sentinel with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::resolutionState>)=>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::resolutionState>)=>packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void>"}
  *
  * Go source:
  * func (r *resolutionState) getTraceFunc() func(m *diagnostics.Message, args ...any) {
@@ -4308,7 +4315,10 @@ export function getNodeResolutionFeatures(options: GoPtr<CompilerOptions>): Node
  */
 export function moveToNextDirectorySeparatorIfAvailable(path: string, prevSeparatorIndex: int, isFolder: bool): int {
   const offset = prevSeparatorIndex + 1;
-  const nextSeparatorIndex = strings.Index(path.slice(offset), "/");
+  let nextSeparatorIndex = -1;
+  if (offset <= path.length) {
+    nextSeparatorIndex = strings.Index(path.slice(offset), "/");
+  }
   if (nextSeparatorIndex === -1) {
     if (isFolder) {
       return path.length;

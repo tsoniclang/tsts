@@ -375,6 +375,7 @@ export function ioFS_GetAccessibleEntries(receiver: GoPtr<ioFS>, path: string): 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Stat","kind":"method","status":"implemented","sigHash":"cc9ed4bdaa06db574da15f9e8889a50bc57c76d53a64db4404bacf1a590950f9","bodyHash":"ff34b3eb521a95c3f59707c40ed8e3c25a90b64cdd7abbf9f603f91e1e3621b9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"ioFS.Stat returns nil FileInfo when its underlying stat operation fails; the TypeScript error branch returns undefined and the success branch wraps the concrete info.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/iovfs/iofs.ts::ioFS>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/iovfs/iofs.ts::ioFS>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>"}
  *
  * Go source:
  * func (vfs *ioFS) Stat(path string) vfs.FileInfo {

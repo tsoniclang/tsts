@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoError, GoPtr } from "../../../go/compat.js";
+import type { GoError, GoInterfaceType, GoInterfaceValue, GoPtr } from "../../../go/compat.js";
+import { GoInterfaceAdapter, NewGoInterfaceType } from "../../../go/compat.js";
 import { Map as SyncGoMap } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
 import type { Time } from "../../../go/time.js";
@@ -9,6 +10,7 @@ import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.j
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"3bdbd7415c67215a30a19c2aea69fc8f9ae4c754c629b781144ac763012aa85d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"cachedvfs statCache must distinguish an absent cache entry from a cached nil FileInfo returned by a failed or missing-path Stat. SyncMap.Load supplies the separate presence bit, so the value type must retain undefined to cache and replay that exact underlying result.","goSignature":"interface{directoryExistsCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/go/scalars.ts::bool>;enabled:packages/tsts/src/go/sync/atomic.ts::Bool;fileExistsCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/go/scalars.ts::bool>;fs:packages/tsts/src/internal/vfs/vfs.ts::FS;getAccessibleEntriesCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/internal/vfs/vfs.ts::Entries>;realpathCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,string>;statCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/internal/vfs/vfs.ts::FileInfo>}","tsSignature":"interface{directoryExistsCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/go/scalars.ts::bool>;enabled:packages/tsts/src/go/sync/atomic.ts::Bool;fileExistsCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/go/scalars.ts::bool>;fs:packages/tsts/src/internal/vfs/vfs.ts::FS;getAccessibleEntriesCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/internal/vfs/vfs.ts::Entries>;realpathCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,string>;statCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>>}"}
  *
  * Go source:
  * FS struct {
@@ -32,6 +34,8 @@ export interface FS {
   statCache: SyncMap<string, GoPtr<FileInfo>>;
 }
 
+export const FS_GoInterfaceType: GoInterfaceType<FS> = NewGoInterfaceType<FS>("*cachedvfs.FS");
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"56c7355c9f6a8b3a02b0f81e66f6b3e4b9f10476c06641ddd7459f367652293d"}
  *
@@ -40,8 +44,8 @@ export interface FS {
  */
 export let __2bea44dc_0: FS_296ac81f = FS_as_vfs_FS(undefined);
 
-export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
-  return {
+export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f & GoInterfaceValue<FS> {
+  return GoInterfaceAdapter(FS_GoInterfaceType, receiver, {
     UseCaseSensitiveFileNames: (): bool => FS_UseCaseSensitiveFileNames(receiver),
     FileExists: (path: string): bool => FS_FileExists(receiver, path),
     ReadFile: (path: string): [string, bool] => FS_ReadFile(receiver, path),
@@ -54,7 +58,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
     Stat: (path: string): GoPtr<FileInfo> => FS_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => FS_Realpath(receiver, path),
-  };
+  });
 }
 
 /**
@@ -303,6 +307,7 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::method::FS.Stat","kind":"method","status":"implemented","sigHash":"38f3fd0a71f84a3986e7c4e8f8cf9d11f583e705fe843e262e644e0e44ef530b","bodyHash":"7d49b05fb89ea65cdca7a327f8b0b321f7c083cbb2a03082dc06eda5e2e63fe9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The wrapped FS Stat contract returns nil FileInfo for missing or failed paths; cached Stat preserves that undefined value through both cache-hit and delegated-result branches.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/cachedvfs/cachedvfs.ts::FS>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/cachedvfs/cachedvfs.ts::FS>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>"}
  *
  * Go source:
  * func (fsys *FS) Stat(path string) vfs.FileInfo {

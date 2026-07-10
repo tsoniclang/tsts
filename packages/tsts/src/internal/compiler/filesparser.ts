@@ -49,7 +49,7 @@ import type { processingDiagnostic, includeExplainingDiagnostic } from "./proces
 import { SyncMap_LoadOrStore } from "../collections/syncmap.js";
 import { MaxInt } from "../../go/math.js";
 import { Map as sync_Map } from "../../go/sync.js";
-import { Set_Add } from "../collections/set.js";
+import { Set_Add, Set_AddIfAbsent } from "../collections/set.js";
 import type { Set as Set_collections } from "../collections/set.js";
 import { Collect, Sort } from "../../go/slices.js";
 import { SyncMap_Keys } from "../collections/syncmap.js";
@@ -532,6 +532,7 @@ export interface filesParser {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::varGroup::parseTaskDataPool","kind":"varGroup","status":"implemented","sigHash":"9a754b609fc6b864cbc22463440afff1edc12b41faa8ebcd31287a5039152ee1","bodyHash":"1027fb1da62e20abd62d3eb2a2d491e001f4472b428ecad97632327167879c41"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries parseTaskData cells with a reusable task map; getParseTaskData seeds the current task and putParseTaskData clears that map before returning the cell.","goSignature":"value{parseTaskDataPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{parseTaskDataPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/internal/compiler/filesparser.ts::parseTaskData>}"}
  *
  * Go source:
  * var parseTaskDataPool = sync.Pool{
@@ -1062,7 +1063,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     packageIdToSourceFile = new globalThis.Map<string, GoPtr<SourceFile>>();
   }
 
-  let recordedDuplicates: GoMap<GoPtr<parseTaskData>, globalThis.Set<string>> | undefined;
+  let recordedDuplicates: GoMap<GoPtr<parseTaskData>, GoPtr<Set_collections<string>>> | undefined;
   const collectFiles = (tasks: GoSlice<GoPtr<parseTask>>, seen: GoMap<GoPtr<parseTaskData>, string>): void => {
     for (let task of tasks) {
       const includeReason = task!.includeReason;
@@ -1085,13 +1086,12 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       if (checkedName !== undefined) {
         if (task!.file !== undefined && checkedName !== task!.normalizedFilePath) {
           recordedDuplicates ??= new globalThis.Map();
-          let casings = recordedDuplicates.get(data);
-          if (casings === undefined) {
-            casings = new globalThis.Set();
-            recordedDuplicates.set(data, casings);
+          let dups = recordedDuplicates.get(data);
+          if (dups === undefined) {
+            dups = { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() };
+            recordedDuplicates.set(data, dups);
           }
-          if (!casings.has(task!.normalizedFilePath)) {
-            casings.add(task!.normalizedFilePath);
+          if (Set_AddIfAbsent(dups, task!.normalizedFilePath)) {
             duplicateSourceFiles = [...duplicateSourceFiles, {
               ParseOptions: SourceFile_ParseOptions(task!.file),
               Hash: task!.file!.Hash,

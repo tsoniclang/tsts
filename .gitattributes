@@ -1,0 +1,2 @@
+# Byte-exact TS-Go capture artifacts intentionally preserve upstream line endings and trailing whitespace.
+packages/tsts/tools/tsgo-suite/tsgo-accepted/captures/** -whitespace

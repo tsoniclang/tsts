@@ -348,6 +348,9 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /\/\/ @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","sourceRevision":"abc123","path":"go\/compat\.ts","contentHash":"[a-f0-9]{64}"}/);
   assert.match(compat, /export class GoStructMap<K, V> implements Map<K, V>/);
   assert.match(compat, /export function NewGoStructMap<K, V>\(\): GoStructMap<K, V>/);
+  assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
+  assert.match(compat, /export function GoInterfaceTryAssert<T>/);
+  assert.match(compat, /export function GoInterfaceAssert<T>/);
   assert.match(compat, /export function MakeGoChan<T>\(capacity = 0, zeroValue: \(\) => T/);
   assert.match(compat, /export function GoChanSelect\(cases: readonly GoChanSelectCase\[\]\)/);
   assert.match(compat, /export function GoChanAsReceive<T>\(channel: GoChan<T>\): GoChan<T, "receive">/);
@@ -387,6 +390,32 @@ test("external value facades render explicit host-native initializers from polic
     }, snapshotWith([])),
     /may declare tsInitializer only when kind is 'value'/,
   );
+});
+
+test("host-native body replacements do not create Go syscall facade obligations", () => {
+  const config = {
+    ...baseConfig,
+    policies: [
+      { match: "internal/native/**", category: "host-native", reason: "Node host boundary" },
+      ...baseConfig.policies,
+    ],
+  };
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/native/path.go",
+      importPath: "example/native",
+      imports: [{ path: "example.com/syscall", packageName: "syscall" }],
+      units: [unitRecord({
+        goPath: "internal/native/path.go",
+        parameters: [{ names: ["handle"], type: selectorType("syscall", "Handle") }],
+        externalRefs: [{ importPath: "example.com/syscall", name: "Open", role: "call", count: 1 }],
+      })],
+    }),
+  ]);
+
+  const facades = buildExternalFacadeMap(config, snapshot);
+  assert.ok(!facades.has("example.com/syscall.Open"));
+  assert.ok(facades.has("example.com/syscall.Handle"), "host-native source signatures remain facade obligations");
 });
 
 test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, and invalid generated files", () => {

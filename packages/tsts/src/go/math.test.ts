@@ -129,6 +129,6 @@ test("math.Float64bits supports jsnum.isNonFinite exponent-mask test", () => {
   // Inf and NaN have all exponent bits set; finite numbers do not.
   assert.equal(globalThis.Number((Float64bits(Inf(1)) as bigint) & globalThis.BigInt(mask)), mask);
   assert.equal(globalThis.Number((Float64bits(Inf(-1)) as bigint) & globalThis.BigInt(mask)), mask);
-  assert.equal(globalThis.Number((Float64bits(NaN())) as bigint & globalThis.BigInt(mask)), mask);
+  assert.equal(globalThis.Number((Float64bits(NaN()) as bigint) & globalThis.BigInt(mask)), mask);
   assert.notEqual(globalThis.Number((Float64bits(1.5) as bigint) & globalThis.BigInt(mask)), mask);
 });

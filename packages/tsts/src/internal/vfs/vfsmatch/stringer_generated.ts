@@ -1,5 +1,6 @@
 import type { byte } from "../../../go/scalars.js";
 import type { GoArray } from "../../../go/compat.js";
+import { UsageDirectories, UsageExclude, UsageFiles } from "./vfsmatch.js";
 import type { Usage } from "./vfsmatch.js";
 
 /**
@@ -16,7 +17,12 @@ import type { Usage } from "./vfsmatch.js";
  * }
  */
 export function _(): void {
-  // Compile-time constant validation — no runtime behavior needed.
+  // An "invalid array index" compiler error signifies that the constant values have changed.
+  // Re-run the stringer command to generate them again.
+  const x: GoArray<Record<string, never>, "1"> = [{}];
+  void x[UsageFiles - 0];
+  void x[UsageDirectories - 1];
+  void x[UsageExclude - 2];
 }
 
 /**

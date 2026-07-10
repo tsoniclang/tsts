@@ -1,0 +1,2 @@
+declarationSingleFileHasErrorsReported.ts(1,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+declarationSingleFileHasErrorsReported.ts(1,16): error TS1005: ',' expected.

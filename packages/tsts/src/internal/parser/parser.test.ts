@@ -1,13 +1,14 @@
-// Mirror of internal/parser/parser_test.go (TestJSDocImportTypeParentChain).
+// Mirrors the focused regression tests in internal/parser/parser_test.go.
 // BenchmarkParse is a Go benchmark and FuzzParser is a Go fuzz target; neither
 // has a mirror.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { SourceFileParseOptions } from "../ast/parseoptions.js";
 import { Node_End, Node_Pos } from "../ast/spine.js";
-import { SourceFile_Imports } from "../ast/ast.js";
+import { SourceFile_GetPositionMap, SourceFile_Imports } from "../ast/ast.js";
+import { PositionMap_IsAsciiOnly, PositionMap_UTF8ToUTF16 } from "../ast/positionmap.js";
 import { GetReparsedNodeForNode, GetSourceFileOfNode } from "../ast/utilities.js";
-import { ScriptKindJS } from "../core/scriptkind.js";
+import { ScriptKindJS, ScriptKindTS } from "../core/scriptkind.js";
 import { ParseSourceFile } from "./parser/statements-declarations.js";
 
 test("JSDocImportTypeParentChain", () => {
@@ -52,4 +53,27 @@ test("", async function () {
       `reparsed import at pos=${Node_Pos(imp)} has broken parent chain`,
     );
   }
+});
+
+test("SourceFileContainsNonASCIIInStringLiteralFastPath", () => {
+  const sourceText = `const x = "─";
+
+namespace N {
+  export const y = x;
+}
+`;
+  const file = ParseSourceFile(
+    { FileName: "/index.ts", Path: "/index.ts" } satisfies SourceFileParseOptions,
+    sourceText,
+    ScriptKindTS,
+  );
+
+  assert.ok(file!.ContainsNonASCII);
+  const positionMap = SourceFile_GetPositionMap(file);
+  assert.ok(!PositionMap_IsAsciiOnly(positionMap));
+  const characterIndex = sourceText.indexOf("─");
+  const afterBoxDrawingCharacter = new TextEncoder().encode(sourceText.slice(0, characterIndex + 1)).length;
+  const sourceByteLength = new TextEncoder().encode(sourceText).length;
+  assert.equal(PositionMap_UTF8ToUTF16(positionMap, afterBoxDrawingCharacter), afterBoxDrawingCharacter - 2);
+  assert.equal(PositionMap_UTF8ToUTF16(positionMap, sourceByteLength), sourceByteLength - 2);
 });

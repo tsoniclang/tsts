@@ -141,6 +141,7 @@ export function NewEmitContext(): GoPtr<EmitContext> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::varGroup::emitContextPool","kind":"varGroup","status":"implemented","sigHash":"5a60168a529115de856d1bf442db6aa4469fb20bee512d531b3531b9a47a29df","bodyHash":"db9d999dd8fb35432e1e19fadd8624323bc5d5934c2cfdf85949fa5336a2f625"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries EmitContext pointers created by NewEmitContext; GetEmitContext returns one with a cleanup closure that resets it before Put, matching the Go lifecycle.","goSignature":"value{emitContextPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{emitContextPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>>}"}
  *
  * Go source:
  * var emitContextPool = sync.Pool{

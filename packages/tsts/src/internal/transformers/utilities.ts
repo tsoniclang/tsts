@@ -647,6 +647,7 @@ export function ConvertVariableDeclarationToAssignmentExpression(emitContext: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::SingleOrMany","kind":"func","status":"implemented","sigHash":"cddfa4ce97dd905cf844b8a7a93df3aa13b96c7a2c829708e9003e7f149a56f1","bodyHash":"b40cf81412825da56d808a07e37958ec1887eb6fe0f795f2091600819bc94984"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"SingleOrMany distinguishes a nil slice from an allocated empty slice: nil means no transformed node and returns nil, whereas an empty non-nil slice becomes an empty SyntaxList. TypeScript uses undefined only for the nil input and preserves singleton/list behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>|undefined,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func SingleOrMany(nodes []*ast.Node, factory *printer.NodeFactory) *ast.Node {

@@ -1,5 +1,6 @@
 import type { byte } from "../../go/scalars.js";
 import type { GoArray } from "../../go/compat.js";
+import { SignatureKindCall, SignatureKindConstruct } from "./types.js";
 import type { SignatureKind } from "./types.js";
 
 /**
@@ -17,7 +18,9 @@ import type { SignatureKind } from "./types.js";
 export function _(): void {
   // An "invalid array index" compiler error signifies that the constant values have changed.
   // Re-run the stringer command to generate them again.
-  // (Compile-time index assertions in Go; no runtime effect.)
+  const x: GoArray<Record<string, never>, "1"> = [{}];
+  void x[SignatureKindCall - 0];
+  void x[SignatureKindConstruct - 1];
 }
 
 /**

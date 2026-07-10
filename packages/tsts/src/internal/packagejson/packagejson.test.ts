@@ -27,3 +27,11 @@ test("Parse mirrors upstream duplicate-name package.json behavior", () => {
   assert.equal(nameOk, true);
   assert.equal(name, "test-package");
 });
+
+test("Parse rejects non-object package metadata instead of accepting an empty struct", () => {
+  for (const source of ["[]", "null", '"package"']) {
+    const [fields, error] = Parse(bytes(source));
+    assert.deepEqual(fields, {});
+    assert.match(error?.message ?? "", /JSON object/);
+  }
+});

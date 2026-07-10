@@ -10,6 +10,7 @@ const CHAR_DOLLAR: int = 0x24;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchbackend.go::type::WatchBackend","kind":"type","status":"implemented","sigHash":"ad815e0a21cc8c6e319df712880e433c1539399f1e25a7f19dfce9c6e00b2bdf","bodyHash":"9862ebbef206f3776ba05868b4910bc0b6fb536c1cc38b54b039f6dd6f400343"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The WatchBackend interface must carry the Go contract that ignore callbacks may be nil and closer results may be nil only on error; TypeScript represents those interface-level nil values with undefined while validating successful results.","goSignature":"interface{WatchDirectories:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchDirectoryRequest>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/io.ts::Closer>,packages/tsts/src/go/compat.ts::GoError];WatchDirectory:(string,packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback,packages/tsts/src/go/scalars.ts::bool,(string)=>packages/tsts/src/go/scalars.ts::bool)=>[packages/tsts/src/go/io.ts::Closer,packages/tsts/src/go/compat.ts::GoError]}","tsSignature":"interface{WatchDirectories:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchDirectoryRequest>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/io.ts::Closer>|undefined,packages/tsts/src/go/compat.ts::GoError];WatchDirectory:(string,packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback,packages/tsts/src/go/scalars.ts::bool,(string)=>packages/tsts/src/go/scalars.ts::bool|undefined)=>[packages/tsts/src/go/io.ts::Closer|undefined,packages/tsts/src/go/compat.ts::GoError]}"}
  *
  * Go source:
  * WatchBackend interface {
@@ -18,12 +19,13 @@ const CHAR_DOLLAR: int = 0x24;
  * }
  */
 export interface WatchBackend {
-  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError];
-  WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer>, GoError];
+  WatchDirectory(dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: ((arg0: string) => bool) | undefined): [Closer | undefined, GoError];
+  WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer> | undefined, GoError];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchbackend.go::type::WatchDirectoryRequest","kind":"type","status":"implemented","sigHash":"993a94dad660958ac8e0acd76eb2ac6070adcb49b03f6b1a5abcab6113cb0938","bodyHash":"762ab4f30032ec84ac57bcbaa6914ab4583d0d89f71efcac4b162b2f52439667"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"WatchDirectoryRequest.Ignore is an optional Go function value and may be nil for a backend request with no path filter; TypeScript represents that request field with undefined.","goSignature":"interface{Callback:packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback;Dir:string;Ignore:(string)=>packages/tsts/src/go/scalars.ts::bool;Recursive:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{Callback:packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback;Dir:string;Ignore:(string)=>packages/tsts/src/go/scalars.ts::bool|undefined;Recursive:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * WatchDirectoryRequest struct {
@@ -37,7 +39,7 @@ export interface WatchDirectoryRequest {
   Dir: string;
   Callback: fswatch.WatchCallback;
   Recursive: bool;
-  Ignore: (arg0: string) => bool;
+  Ignore: ((arg0: string) => bool) | undefined;
 }
 
 /**
@@ -52,6 +54,41 @@ export interface CommandLineTestingWithWatchBackend {
   WatchBackend(): WatchBackend;
 }
 
+function isWatchBackend(value: unknown): value is WatchBackend {
+  return (typeof value === "object" || typeof value === "function") &&
+    value !== null &&
+    typeof Reflect.get(value, "WatchDirectory") === "function" &&
+    typeof Reflect.get(value, "WatchDirectories") === "function";
+}
+
+function isCloser(value: unknown): value is Closer {
+  return (typeof value === "object" || typeof value === "function") &&
+    value !== null &&
+    typeof Reflect.get(value, "Close") === "function";
+}
+
+export function RequireWatchCloser(value: unknown, source: string): Closer {
+  if (!isCloser(value)) {
+    throw new globalThis.TypeError(`${source} returned an invalid Closer without an error`);
+  }
+  return value;
+}
+
+export function GetCommandLineTestingWatchBackend(testing: unknown): WatchBackend | undefined {
+  if ((typeof testing !== "object" && typeof testing !== "function") || testing === null) {
+    return undefined;
+  }
+  const method = Reflect.get(testing, "WatchBackend");
+  if (typeof method !== "function") {
+    return undefined;
+  }
+  const backend: unknown = Reflect.apply(method, testing, []);
+  if (!isWatchBackend(backend)) {
+    throw new globalThis.TypeError("CommandLineTesting.WatchBackend() returned an invalid WatchBackend");
+  }
+  return backend;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchbackend.go::type::FSWatchBackend","kind":"type","status":"implemented","sigHash":"77bc63187164777c121ad7ecc82a5435e3ccdfb1d840633d3ab7382c969e19fa","bodyHash":"72719268d51d9dba17d4cbc7e41754bd6c920efb973b33ff01674f876e307123"}
  *
@@ -64,6 +101,7 @@ export interface FSWatchBackend {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchbackend.go::method::FSWatchBackend.WatchDirectory","kind":"method","status":"implemented","sigHash":"62fcaeac7e6582cc644653fde079547e2a8f64d7c4493c7a52660ee229aae1d7","bodyHash":"46131a5efea5b9a8524fee254ab1cbce7b2e411623f0707e5309b0f34d067081"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"FSWatchBackend.WatchDirectory accepts a nil ignore callback and returns a nil closer on watch failure; TypeScript represents those exact Go nil values with undefined and callers reject a missing closer on success.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::FSWatchBackend>,string,packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback,packages/tsts/src/go/scalars.ts::bool,(string)=>packages/tsts/src/go/scalars.ts::bool)=>[packages/tsts/src/go/io.ts::Closer,packages/tsts/src/go/compat.ts::GoError]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::FSWatchBackend>,string,packages/tsts/src/internal/fswatch/fswatch.ts::WatchCallback,packages/tsts/src/go/scalars.ts::bool,(string)=>packages/tsts/src/go/scalars.ts::bool|undefined)=>[packages/tsts/src/go/io.ts::Closer|undefined,packages/tsts/src/go/compat.ts::GoError]"}
  *
  * Go source:
  * func (b *FSWatchBackend) WatchDirectory(dir string, fn fswatch.WatchCallback, recursive bool, ignore func(string) bool) (io.Closer, error) {
@@ -79,7 +117,7 @@ export interface FSWatchBackend {
  * 	return closers[0], nil
  * }
  */
-export function FSWatchBackend_WatchDirectory(receiver: GoPtr<FSWatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError] {
+export function FSWatchBackend_WatchDirectory(receiver: GoPtr<FSWatchBackend>, dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: ((arg0: string) => bool) | undefined): [Closer | undefined, GoError] {
   const [closers, err] = FSWatchBackend_WatchDirectories(receiver, [{
     Dir: dir,
     Callback: fn,
@@ -87,13 +125,14 @@ export function FSWatchBackend_WatchDirectory(receiver: GoPtr<FSWatchBackend>, d
     Ignore: ignore,
   }]);
   if (err !== undefined) {
-    return [undefined as unknown as Closer, err];
+    return [undefined, err];
   }
-  return [closers[0]!, undefined];
+  return [closers![0], undefined];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watchmanager/watchbackend.go::method::FSWatchBackend.WatchDirectories","kind":"method","status":"implemented","sigHash":"1fb913c8f634fbadb46ce77d01db3db6db1748e404839140a5ed69ee0371fe69","bodyHash":"e674e3acda42d4de5a2f500bc6ab167d65032033d065b73fdc53713c3315a00d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"FSWatchBackend.WatchDirectories returns a nil closer slice when the underlying batch watch fails; TypeScript represents that error result with undefined and callers reject a missing slice on success.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::FSWatchBackend>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchDirectoryRequest>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/io.ts::Closer>,packages/tsts/src/go/compat.ts::GoError]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::FSWatchBackend>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/watchmanager/watchbackend.ts::WatchDirectoryRequest>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/io.ts::Closer>|undefined,packages/tsts/src/go/compat.ts::GoError]"}
  *
  * Go source:
  * func (b *FSWatchBackend) WatchDirectories(requests []WatchDirectoryRequest) ([]io.Closer, error) {
@@ -123,7 +162,7 @@ export function FSWatchBackend_WatchDirectory(receiver: GoPtr<FSWatchBackend>, d
  * 	return closers, nil
  * }
  */
-export function FSWatchBackend_WatchDirectories(receiver: GoPtr<FSWatchBackend>, requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer>, GoError] {
+export function FSWatchBackend_WatchDirectories(receiver: GoPtr<FSWatchBackend>, requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer> | undefined, GoError] {
   const fswatchRequests: GoSlice<fswatch.WatchDirectoryRequest> = [];
   for (const request of requests) {
     let opts: GoSlice<fswatch.WatchOption> = [];
@@ -136,15 +175,15 @@ export function FSWatchBackend_WatchDirectories(receiver: GoPtr<FSWatchBackend>,
     fswatchRequests.push({ Dir: request.Dir, Callback: request.Callback, Options: opts });
   }
   const [watches, err] = receiver!.Inner.WatchDirectories(fswatchRequests);
-  if (err !== undefined) return [[], err];
+  if (err !== undefined) return [undefined, err];
   return [watches, undefined];
 }
 
 export function FSWatchBackend_as_WatchBackend(receiver: GoPtr<FSWatchBackend>): WatchBackend {
   return {
-    WatchDirectory: (dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: (arg0: string) => bool): [Closer, GoError] =>
+    WatchDirectory: (dir: string, fn: fswatch.WatchCallback, recursive: bool, ignore: ((arg0: string) => bool) | undefined): [Closer | undefined, GoError] =>
       FSWatchBackend_WatchDirectory(receiver, dir, fn, recursive, ignore),
-    WatchDirectories: (requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer>, GoError] =>
+    WatchDirectories: (requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Closer> | undefined, GoError] =>
       FSWatchBackend_WatchDirectories(receiver, requests),
   };
 }

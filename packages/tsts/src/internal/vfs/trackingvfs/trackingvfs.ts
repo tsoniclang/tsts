@@ -158,6 +158,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::method::FS.Stat","kind":"method","status":"implemented","sigHash":"729186fb2718f26a75c0b4d37d399045bdae9c1b1dffe909c66f4dc2d2670821","bodyHash":"88b1bf1b6acfd6caafd17e8250e72f10f86059d98a883375641cb0f35aba2fea"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Tracking FS records the path and then forwards the inner FS nil FileInfo result for a missing or failed stat; TypeScript preserves that result as undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/trackingvfs/trackingvfs.ts::FS>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/trackingvfs/trackingvfs.ts::FS>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>"}
  *
  * Go source:
  * func (fs *FS) Stat(path string) vfs.FileInfo {

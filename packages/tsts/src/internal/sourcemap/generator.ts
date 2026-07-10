@@ -6,8 +6,7 @@ import type { WriteCloser } from "../../go/io.js";
 import { Builder } from "../../go/strings.js";
 import { Clone as slicesClone } from "../../go/slices.js";
 import type { UTF16Offset } from "../core/core.js";
-import { JsonFieldNames, Marshal as jsonMarshal } from "../json/json.js";
-import type { JsonFieldNameMap } from "../json/json.js";
+import { AttachJsonFieldNamesForGoStruct, DefineJsonFieldNamesForGoStruct, Marshal as jsonMarshal } from "../json/json.js";
 import { GetRelativePathToDirectoryOrUrl } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
@@ -50,6 +49,7 @@ export const notSetUTF16: UTF16Offset = -1;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::Generator","kind":"type","status":"implemented","sigHash":"610a92a8c4e5c4389263ff910a2867cc82668ceca75a12d85910dda54280fcf6","bodyHash":"5bf3a963be1b1845dec38ef31975804319106f42873a50c435aedf8eef8ebd82"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Generator.sourcesContent remains nil until SetSourceContent records the first embedded source. SetSourceContent allocates and extends it lazily, and RawSourceMap clones the nil state so JSON omitzero can omit sourcesContent when no source text was supplied.","goSignature":"interface{file:string;hasLast:packages/tsts/src/go/scalars.ts::bool;hasPending:packages/tsts/src/go/scalars.ts::bool;hasPendingName:packages/tsts/src/go/scalars.ts::bool;hasPendingSource:packages/tsts/src/go/scalars.ts::bool;lastGeneratedCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;lastGeneratedLine:packages/tsts/src/go/scalars.ts::int;lastNameIndex:packages/tsts/src/internal/sourcemap/generator.ts::NameIndex;lastSourceCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;lastSourceIndex:packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex;lastSourceLine:packages/tsts/src/go/scalars.ts::int;mappings:packages/tsts/src/go/strings.ts::Builder;nameToNameIndexMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/sourcemap/generator.ts::NameIndex>;names:packages/tsts/src/go/compat.ts::GoSlice<string>;pathOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;pendingGeneratedCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;pendingGeneratedLine:packages/tsts/src/go/scalars.ts::int;pendingNameIndex:packages/tsts/src/internal/sourcemap/generator.ts::NameIndex;pendingSourceCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;pendingSourceIndex:packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex;pendingSourceLine:packages/tsts/src/go/scalars.ts::int;rawSources:packages/tsts/src/go/compat.ts::GoSlice<string>;sourceRoot:string;sourceToSourceIndexMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex>;sources:packages/tsts/src/go/compat.ts::GoSlice<string>;sourcesContent:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<string>>;sourcesDirectoryPath:string}","tsSignature":"interface{file:string;hasLast:packages/tsts/src/go/scalars.ts::bool;hasPending:packages/tsts/src/go/scalars.ts::bool;hasPendingName:packages/tsts/src/go/scalars.ts::bool;hasPendingSource:packages/tsts/src/go/scalars.ts::bool;lastGeneratedCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;lastGeneratedLine:packages/tsts/src/go/scalars.ts::int;lastNameIndex:packages/tsts/src/internal/sourcemap/generator.ts::NameIndex;lastSourceCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;lastSourceIndex:packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex;lastSourceLine:packages/tsts/src/go/scalars.ts::int;mappings:packages/tsts/src/go/strings.ts::Builder;nameToNameIndexMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/sourcemap/generator.ts::NameIndex>;names:packages/tsts/src/go/compat.ts::GoSlice<string>;pathOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;pendingGeneratedCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;pendingGeneratedLine:packages/tsts/src/go/scalars.ts::int;pendingNameIndex:packages/tsts/src/internal/sourcemap/generator.ts::NameIndex;pendingSourceCharacter:packages/tsts/src/internal/core/core.ts::UTF16Offset;pendingSourceIndex:packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex;pendingSourceLine:packages/tsts/src/go/scalars.ts::int;rawSources:packages/tsts/src/go/compat.ts::GoSlice<string>;sourceRoot:string;sourceToSourceIndexMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/internal/sourcemap/generator.ts::SourceIndex>;sources:packages/tsts/src/go/compat.ts::GoSlice<string>;sourcesContent:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<string>>|undefined;sourcesDirectoryPath:string}"}
  *
  * Go source:
  * Generator struct {
@@ -114,6 +114,7 @@ export interface Generator {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::RawSourceMap","kind":"type","status":"implemented","sigHash":"d434ff395ac342979724943a02f02ef450750c76ddc3367d71323f60d4cce023","bodyHash":"d7eeacd8719eefd83b0802cd00cbb316fcbfc4020d76158135c318e27e8d7e94"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"RawSourceMap.SourcesContent is nil when the generator never received embedded source text. The JSON field is tagged omitzero upstream, so TypeScript undefined is required to omit the field rather than serializing an eagerly allocated empty array.","goSignature":"interface{File:string;Mappings:string;Names:packages/tsts/src/go/compat.ts::GoSlice<string>;SourceRoot:string;Sources:packages/tsts/src/go/compat.ts::GoSlice<string>;SourcesContent:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<string>>;Version:packages/tsts/src/go/scalars.ts::int}","tsSignature":"interface{File:string;Mappings:string;Names:packages/tsts/src/go/compat.ts::GoSlice<string>;SourceRoot:string;Sources:packages/tsts/src/go/compat.ts::GoSlice<string>;SourcesContent:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<string>>|undefined;Version:packages/tsts/src/go/scalars.ts::int}"}
  *
  * Go source:
  * RawSourceMap struct {
@@ -127,7 +128,6 @@ export interface Generator {
  * }
  */
 export interface RawSourceMap {
-  [JsonFieldNames]?: JsonFieldNameMap;
   Version: int;
   File: string;
   SourceRoot: string;
@@ -137,15 +137,22 @@ export interface RawSourceMap {
   SourcesContent: GoSlice<GoPtr<string>> | undefined;
 }
 
-export const rawSourceMapJsonFieldNames: JsonFieldNameMap = {
-  Version: "version",
-  File: "file",
-  SourceRoot: "sourceRoot",
-  Sources: "sources",
-  Names: "names",
-  Mappings: "mappings",
-  SourcesContent: { name: "sourcesContent", omitZero: true },
-};
+export const rawSourceMapJsonFieldNames = DefineJsonFieldNamesForGoStruct<RawSourceMap>(
+  "github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::RawSourceMap",
+  {
+    Version: "version",
+    File: "file",
+    SourceRoot: "sourceRoot",
+    Sources: "sources",
+    Names: "names",
+    Mappings: "mappings",
+    SourcesContent: { name: "sourcesContent", omitZero: true, zero: "nil" },
+  },
+  {
+    strategy: "runtime",
+    reason: "Raw source maps cross generic JSON marshal and unmarshal boundaries and require exact upstream field identities at runtime.",
+  },
+);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::func::NewGenerator","kind":"func","status":"implemented","sigHash":"c47b2eee893e75a4b3c33c30638e0ba067f4f3e0bab5e3c8d63aa6bec6033aea","bodyHash":"ceb2044bd99d55af4bf12a12ff7c5dcad99d41b4fd772161cae7e8d8e15b5da9"}
@@ -774,8 +781,7 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
   if (names === undefined) {
     names = [];
   }
-  return {
-    [JsonFieldNames]: rawSourceMapJsonFieldNames,
+  return AttachJsonFieldNamesForGoStruct({
     Version: 3,
     File: gen.file,
     SourceRoot: gen.sourceRoot,
@@ -783,7 +789,7 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
     Names: names,
     Mappings: gen.mappings.String(),
     SourcesContent: slicesClone(gen.sourcesContent),
-  };
+  }, rawSourceMapJsonFieldNames);
 }
 
 /**

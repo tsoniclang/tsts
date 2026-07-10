@@ -107,7 +107,7 @@ export function snapshotToBuildInfo(snapshot: GoPtr<snapshot>, program: GoPtr<Pr
     comparePathsOptions: {
       CurrentDirectory: Program_GetCurrentDirectory(program),
       UseCaseSensitiveFileNames: Program_UseCaseSensitiveFileNames(program),
-    } as ComparePathsOptions,
+    },
     fileNameToFileId: new Map<string, BuildInfoFileId>(),
     fileNamesToFileIdListId: new Map<string, BuildInfoFileIdListId>(),
     roots: new Map<GoPtr<SourceFile>, Path>(),
@@ -281,6 +281,7 @@ export function toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver: G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::method::toBuildInfo.toBuildInfoDiagnosticsFromFileNameDiagnostics","kind":"method","status":"implemented","sigHash":"b6713f72041b90272369d4b68d9bff359e1560d858ca2af87ff09fb8e9a91075","bodyHash":"a74c78b66d4bdd36fccb9197faa6f3e24a3c709ae2aded86182a2f4d126ddb1d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"toBuildInfoDiagnosticsFromFileNameDiagnostics receives and returns nil nested diagnostic slices while converting snapshot state back to build-info state; TypeScript preserves both nil sides with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshottobuildinfo.ts::toBuildInfo>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshottobuildinfo.ts::toBuildInfo>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>|undefined)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>|undefined"}
  *
  * Go source:
  * func (t *toBuildInfo) toBuildInfoDiagnosticsFromFileNameDiagnostics(diagnostics []*buildInfoDiagnosticWithFileName) []*BuildInfoDiagnostic {

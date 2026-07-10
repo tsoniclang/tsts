@@ -783,14 +783,14 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
             }
           } else {
             let index = inference.candidates.indexOf(candidate);
-            if (index < 0 || (inference.candidateDepths[index] ?? 0) < state.depth) {
+            if (index < 0 || inference.candidateDepths[index]! < state.depth) {
               if (index >= 0) {
                 inference.candidates = inference.candidates.slice(0, index).concat(inference.candidates.slice(index + 1));
                 inference.candidateDepths = inference.candidateDepths.slice(0, index).concat(inference.candidateDepths.slice(index + 1));
               }
               index = 0;
               while (index < inference.candidateDepths.length) {
-                if ((inference.candidateDepths[index] ?? 0) < state.depth) {
+                if (inference.candidateDepths[index]! < state.depth) {
                   break;
                 }
                 index++;
@@ -901,7 +901,6 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
 export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sourceTypes: GoSlice<GoPtr<Type>>, targetTypes: GoSlice<GoPtr<Type>>, variances: GoSlice<VarianceFlags>): void {
   const c = receiver!;
   n!.depth = (n!.depth + 1) as int;
-  try {
   const count = Math.min(sourceTypes.length, targetTypes.length);
   for (let i = 0; i < count; i++) {
     if (i < variances.length && (variances[i]! & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
@@ -910,9 +909,7 @@ export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPt
       Checker_inferFromTypes(c, n, sourceTypes[i], targetTypes[i]);
     }
   }
-  } finally {
-    n!.depth = (n!.depth - 1) as int;
-  }
+  n!.depth = (n!.depth - 1) as int;
 }
 
 /**
@@ -2883,6 +2880,7 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContext","kind":"method","status":"implemented","sigHash":"9d9eadeccda34131298ae31ead0aad3c05a3b90fedefb33d9f8464e9b7784864","bodyHash":"9862fab9f76519c52d757b8b1c4c1c083d81b39fe77280b4011f889bd0bb5572"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Overload and contextual inference call newInferenceContext with a nil TypeComparer to select checker.compareTypesAssignable; relation-specific inference passes its own comparer. TypeScript uses undefined only for that default-selection branch before constructing the worker context.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/internal/checker/checker/state.ts::InferenceFlags,packages/tsts/src/internal/checker/types.ts::TypeComparer)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/internal/checker/checker/state.ts::InferenceFlags,packages/tsts/src/internal/checker/types.ts::TypeComparer|undefined)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>"}
  *
  * Go source:
  * func (c *Checker) newInferenceContext(typeParameters []*Type, signature *Signature, flags InferenceFlags, compareTypes TypeComparer) *InferenceContext {
@@ -3761,7 +3759,7 @@ export function hasInferenceCandidates(info: GoPtr<InferenceInfo>): bool {
  * }
  */
 export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): bool {
-  return info!.candidates.length !== 0 || info!.contraCandidates.length !== 0 || hasTypeParameterDefault(info!.typeParameter);
+  return hasInferenceCandidates(info) || hasTypeParameterDefault(info!.typeParameter);
 }
 
 /**

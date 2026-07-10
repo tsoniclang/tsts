@@ -33,6 +33,7 @@ import { IsImplicitGlob } from "../vfs/vfsmatch/vfsmatch.js";
 import { configFileSpecs_getMatchedFileSpec, configFileSpecs_getMatchedIncludeSpec, getFileNamesFromConfigSpecs } from "./tsconfigparsing.js";
 import type { FileExtensionInfo, TsConfigSourceFile } from "./tsconfigparsing.js";
 import { getWildcardDirectories } from "./wildcarddirectories.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::constGroup::fileGlobPattern+recursiveFileGlobPattern","kind":"constGroup","status":"implemented","sigHash":"b72f79c30886c1bb508333146dea617bea7fa7ea2bcd9c06e79b68e1fe236c28","bodyHash":"96d7125f6189a185d3f4b801e9da617a5550789fed13a2e75ae059830b6bbdc8"}
@@ -108,6 +109,20 @@ export interface ParsedCommandLine {
   locale: Locale_c4184476;
   localeOnce: Once;
 }
+
+type parsedCommandLineJsonFields = JsonFieldNamesForGoStructContract<
+  ParsedCommandLine,
+  "github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::ParsedCommandLine",
+  {
+    ParsedConfig: "parsedConfig",
+    ConfigFile: "configFile",
+    Errors: "errors",
+    Raw: "raw",
+    CompileOnSave: "compileOnSave",
+  },
+  "source-metadata",
+  "Parsed command-line JSON identities describe upstream config state while dedicated parsers own its runtime representation."
+>;
 
 // ParsedCommandLine_as_ResolvedProjectReference adapts a *ParsedCommandLine to the
 // module.ResolvedProjectReference interface by delegating each method to the

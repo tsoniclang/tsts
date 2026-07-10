@@ -468,7 +468,7 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
     return SameMap(applicableSignatures, (sig): GoPtr<Signature> => {
       const typeArgumentTypes = Checker_checkTypeArguments(receiver, sig, typeArgumentNodes, true, undefined);
       if (typeArgumentTypes !== undefined) {
-        return Checker_getSignatureInstantiation(receiver, sig, typeArgumentTypes, IsInJSFile(sig!.declaration), undefined);
+        return Checker_getSignatureInstantiation(receiver, sig, typeArgumentTypes, IsInJSFile(sig!.declaration), []);
       }
       return sig;
     });
@@ -849,6 +849,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"486c2e26964946a849da0f8b1f7476d0be2b7dd56953c591ecec9c1cd890ad1d","bodyHash":"9ce3ce41a9a691160c4874344d6350db66dae40fef9bc308c097546398ac8106"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"When the normalized source-symbol slice is empty, createInstantiatedSymbolTable returns nil instead of allocating a SymbolTable, and anonymous-type resolution carries that resolved-empty table forward. TypeScript uses undefined only for that no-table result; non-empty inputs allocate and populate a Map in source order.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func (c *Checker) createInstantiatedSymbolTable(symbols []*ast.Symbol, m *TypeMapper) ast.SymbolTable {
@@ -862,13 +863,12 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
  * 	return result
  * }
  */
-export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoPtr<GoSlice<GoPtr<Symbol>>>, m: GoPtr<TypeMapper>): SymbolTable {
-  const sourceSymbols = symbols ?? [];
-  if (sourceSymbols.length === 0) {
-    return undefined as unknown as SymbolTable;
+export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>, m: GoPtr<TypeMapper>): GoPtr<SymbolTable> {
+  if (symbols.length === 0) {
+    return undefined;
   }
   const result: SymbolTable = new globalThis.Map();
-  for (const symbol of sourceSymbols) {
+  for (const symbol of symbols) {
     result.set(symbol!.Name, Checker_instantiateSymbol(receiver, symbol, m));
   }
   return result;

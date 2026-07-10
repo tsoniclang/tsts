@@ -237,6 +237,7 @@ export function osFS_GetAccessibleEntries(receiver: GoPtr<osFS>, path: string): 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::method::osFS.Stat","kind":"method","status":"implemented","sigHash":"39207f3817d8a8813d536d228c51775f21c18d54cb213f3944e3f3f0fd31a6c7","bodyHash":"cf18836334bbfa46686f1a5505a4912f6a37060ff215fdfb12caa735c83a61e5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"osFS.Stat delegates to Common.Stat, whose unavailable-root and stat-error branches return nil FileInfo; the TypeScript method forwards that undefined sentinel unchanged.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/osvfs/os.ts::osFS>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/osvfs/os.ts::osFS>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::FileInfo>"}
  *
  * Go source:
  * func (vfs *osFS) Stat(path string) vfs.FileInfo {
@@ -251,6 +252,7 @@ export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoPtr<FileInfo> 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::limitedWalkDirFuncPool","kind":"varGroup","status":"implemented","sigHash":"64a6535a071e12d4a2fba9b3669975334d44ff7e548385f9cfd4591b546cb6d8","bodyHash":"4cc18dea792f7314aacf5986f039cd2d7ed21b17b3bc244220447196e45f7ac2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries limitedWalkDirFunc wrappers with one prebound walk closure; acquisition installs the current inner callback and release clears it before Put.","goSignature":"value{limitedWalkDirFuncPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{limitedWalkDirFuncPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/internal/vfs/osvfs/os.ts::limitedWalkDirFunc>}"}
  *
  * Go source:
  * var limitedWalkDirFuncPool = sync.Pool{

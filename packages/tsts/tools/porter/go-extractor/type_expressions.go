@@ -298,12 +298,13 @@ func structMembers(expr *ast.StructType) []MemberReport {
 	for _, field := range expr.Fields.List {
 		fieldText := printed(field.Type)
 		fieldExpr := typeExpr(field.Type)
+		structTag, tagValues := fieldTags(field)
 		if len(field.Names) == 0 {
-			members = append(members, MemberReport{Kind: "embeddedField", Name: fieldText, Type: fieldText, TypeExpr: fieldExpr})
+			members = append(members, MemberReport{Kind: "embeddedField", Name: fieldText, Exported: embeddedFieldExported(field.Type), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
 			continue
 		}
 		for _, name := range field.Names {
-			members = append(members, MemberReport{Kind: "field", Name: name.Name, Type: fieldText, TypeExpr: fieldExpr})
+			members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
 		}
 	}
 	return members

@@ -1566,6 +1566,7 @@ export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsFileLevelUniqueName","kind":"func","status":"implemented","sigHash":"ea52aa7bb8bb4fa10dd521f946807cfe1027d209a1b682ecc409772f7c7bb724","bodyHash":"923abe2a9ba6ffd690249a85c3f7c6a53a06372df87c32833bba213c477cf7e1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The global-name predicate is nil when the caller has no global-name source; IsFileLevelUniqueName skips only that check and still consults SourceFile.Identifiers.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,string,(string)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,string,(string)=>packages/tsts/src/go/scalars.ts::bool|undefined)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func IsFileLevelUniqueName(sourceFile *ast.SourceFile, name string, hasGlobalName func(string) bool) bool {

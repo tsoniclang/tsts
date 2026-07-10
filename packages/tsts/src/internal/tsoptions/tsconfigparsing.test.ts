@@ -17,6 +17,7 @@ import type { Path } from "../tspath/path.js";
 import { ToPath } from "../tspath/path.js";
 import type { ExtendedConfigCache, ExtendedConfigCacheEntry, ParseConfigHost, TsConfigSourceFile } from "./tsconfigparsing.js";
 import { ParseExtendedConfig, ParseJsonSourceFileConfigFileContent } from "./tsconfigparsing.js";
+import { ParsedCommandLine_FileNames } from "./parsedcommandline.js";
 
 // tsoptionstest.NewVFSParseConfigHost
 function vfsParseConfigHost(files: ReadonlyMap<string, string>, currentDirectory: string, useCaseSensitiveFileNames: bool): ParseConfigHost {
@@ -117,4 +118,27 @@ test("ExtendedConfigErrorsAppearOnCacheHit / two configs share same base", () =>
   assert.ok((first!.Errors ?? []).length > 0, "expected diagnostics for projA parse, got 0");
   const second = parseConfig("/projB/tsconfig.json", cache);
   assert.ok((second!.Errors ?? []).length > 0, "expected diagnostics for projB parse (cache hit on base), got 0");
+});
+
+test("extended config preserves an explicitly empty include list", () => {
+  const files = new Map<string, string>([
+    ["/base.json", `{ "include": [] }`],
+    ["/tsconfig.json", `{ "extends": "./base.json" }`],
+    ["/app.ts", "export {}"],
+  ]);
+  const host = vfsParseConfigHost(files, "/", true as bool);
+  const parsed = makeParseConfig(host)("/tsconfig.json", new memoCache());
+
+  assert.deepEqual(ParsedCommandLine_FileNames(parsed), []);
+});
+
+test("extended config propagates the resolution stack for circularity detection", () => {
+  const files = new Map<string, string>([
+    ["/a.json", `{ "extends": "./b.json" }`],
+    ["/b.json", `{ "extends": "./a.json" }`],
+  ]);
+  const host = vfsParseConfigHost(files, "/", true as bool);
+  const parsed = makeParseConfig(host)("/a.json", new memoCache());
+
+  assert.ok((parsed!.Errors ?? []).length > 0, "expected a circularity diagnostic");
 });

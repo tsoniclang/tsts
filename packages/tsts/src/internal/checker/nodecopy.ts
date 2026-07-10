@@ -296,7 +296,7 @@ export interface recoveryBoundary {
   ctx: GoPtr<NodeBuilderContext>;
   hadError: bool;
   deferredReports: GoSlice<() => void>;
-  oldTracker: GoPtr<SymbolTracker>;
+  oldTracker: SymbolTracker;
   oldTrackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   oldEncounteredError: bool;
@@ -305,6 +305,7 @@ export interface recoveryBoundary {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::recoveryBoundary.markError","kind":"method","status":"implemented","sigHash":"4c9a198de34bd44348be3bb07fc3d697d095f0c9b1fce5c552127dc32e237848","bodyHash":"77dbf371ea7a6e0356d780855557491acd55664485da71d1750338dc231da854"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Recovery paths call markError(nil) when an unsupported reuse shape must mark the boundary failed but has no diagnostic callback to replay. The method always sets hadError and appends only non-nil callbacks; TypeScript uses undefined for that no-report callback case.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodecopy.ts::recoveryBoundary>,()=>void)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodecopy.ts::recoveryBoundary>,packages/tsts/src/go/compat.ts::GoPtr<()=>void>)=>void"}
  *
  * Go source:
  * func (b *recoveryBoundary) markError(f func()) {
@@ -379,7 +380,7 @@ export function recoveryBoundary_endRecoveryScope(receiver: GoPtr<recoveryBounda
  * }
  */
 export interface wrappingTracker {
-  wrapped: GoPtr<SymbolTracker>;
+  wrapped: SymbolTracker;
   bound: GoPtr<recoveryBoundary>;
 }
 
@@ -553,7 +554,7 @@ export function wrappingTracker_TrackSymbol(receiver: GoPtr<wrappingTracker>, sy
  * 	}
  * }
  */
-export function newWrappingTracker(inner: GoPtr<SymbolTracker>, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
+export function newWrappingTracker(inner: SymbolTracker, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
   return {
     wrapped: inner,
     bound: bound,
@@ -602,7 +603,7 @@ export function NodeBuilderImpl_createRecoveryBoundary(receiver: GoPtr<NodeBuild
   Checker_checkNotCanceled(receiver!.ch);
   const bound: recoveryBoundary = {
     ctx: receiver!.ctx,
-    oldTracker: receiver!.ctx!.tracker,
+    oldTracker: receiver!.ctx!.tracker!,
     oldTrackedSymbols: receiver!.ctx!.trackedSymbols,
     oldEncounteredError: receiver!.ctx!.encounteredError,
     oldApproximateLength: receiver!.ctx!.approximateLength,
@@ -610,7 +611,7 @@ export function NodeBuilderImpl_createRecoveryBoundary(receiver: GoPtr<NodeBuild
     deferredReports: [],
     trackedSymbols: [],
   };
-  const newTracker = NewSymbolTrackerImpl(receiver!.ctx, wrappingTracker_as_SymbolTracker(newWrappingTracker(receiver!.ctx!.tracker, bound)));
+  const newTracker = NewSymbolTrackerImpl(receiver!.ctx, wrappingTracker_as_SymbolTracker(newWrappingTracker(receiver!.ctx!.tracker!, bound)));
   receiver!.ctx!.tracker = SymbolTrackerImpl_as_SymbolTracker(newTracker);
   receiver!.ctx!.trackedSymbols = [];
   return bound;
@@ -1431,7 +1432,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
   const visitNode = (node: GoPtr<Node>): GoPtr<Node> => NodeVisitor_VisitNode(asNodeVisitor(), node);
   const visitNodes = (nodes: GoPtr<NodeList>): GoPtr<NodeList> => NodeVisitor_VisitNodes(asNodeVisitor(), nodes);
   const visitModifiers = (nodes: GoPtr<ModifierList>): GoPtr<ModifierList> => NodeVisitor_VisitModifiers(asNodeVisitor(), nodes);
-  const visitEachChild = (node: GoPtr<Node>): GoPtr<Node> => Node_VisitEachChild(node, asNodeVisitor() as unknown as GoPtr<NodeVisitor>);
+  const visitEachChild = (node: GoPtr<Node>): GoPtr<Node> => Node_VisitEachChild(node, asNodeVisitor());
 
   const attachSymbolToLeftmostIdentifier = (leftmost: GoPtr<Node>, node: GoPtr<Node>, sym: GoPtr<Symbol>): GoPtr<Node> => {
     let vis: GoPtr<ConcreteNodeVisitor>;
@@ -1442,7 +1443,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
         if (sym !== undefined) {
           type_ = Checker_getDeclaredTypeOfSymbol(b!.ch, sym);
           if ((sym.Flags & SymbolFlagsTypeParameter) !== 0) {
-            name = NodeBuilderImpl_typeParameterToName(b, type_) as unknown as GoPtr<Node>;
+            name = NodeBuilderImpl_typeParameterToName(b, type_);
           }
         }
         if (name === undefined) {
@@ -1452,7 +1453,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
         EmitContext_AddEmitFlags(b!.e, name, EFNoAsciiEscaping);
         return name;
       }
-      return NodeBuilderImpl_setTextRange(b, Node_VisitEachChild(current, vis as unknown as GoPtr<NodeVisitor>), current);
+      return NodeBuilderImpl_setTextRange(b, Node_VisitEachChild(current, vis), current);
     };
     vis = NewNodeVisitor(visitorFunc, b!.f, {});
     return visitorFunc(node);
@@ -1530,7 +1531,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     }
     return NodeBuilderImpl_setTextRange(
       b,
-      NodeFactory_UpdateIndexedAccessTypeNode(b!.f!, indexed, resultObjectType as unknown as GoPtr<never>, visitNode(indexed.IndexType) as unknown as GoPtr<never>),
+      NodeFactory_UpdateIndexedAccessTypeNode(b!.f!, indexed, resultObjectType, visitNode(indexed.IndexType)),
       node,
     );
   };
@@ -1540,7 +1541,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (typeNode === undefined) {
       return undefined;
     }
-    return NodeBuilderImpl_setTextRange(b, NodeFactory_UpdateTypeOperatorNode(b!.f!, typeOperator, typeOperator.Operator, typeNode as unknown as GoPtr<never>), node);
+    return NodeBuilderImpl_setTextRange(b, NodeFactory_UpdateTypeOperatorNode(b!.f!, typeOperator, typeOperator.Operator, typeNode), node);
   };
   const tryVisitTypeQuery = (node: GoPtr<Node>): GoPtr<Node> => {
     const typeQuery = AsTypeQueryNode(node)!;
@@ -1923,5 +1924,5 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       return result;
     },
   });
-  return visitor as unknown as GoPtr<NodeVisitor>;
+  return visitor;
 }

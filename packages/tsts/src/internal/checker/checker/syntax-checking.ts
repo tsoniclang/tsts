@@ -32,7 +32,7 @@ import {
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
   IterationUseYieldStar, IterationUseAsyncYieldStar,
   TypeFactsIsUndefined, TypeFactsTruthy, TypeFactsFalsy, UnusedKindLocal, UnusedKindParameter,
-  Checker_getSourceFileLinks, someSignature,
+  Checker_getSourceFileLinks, hashWrite64, someSignature,
 } from "./state.js";
 import type { Checker, CheckMode, keyBuilder, FlowLoopInfo, IterationTypes } from "./state.js";
 import {
@@ -3573,7 +3573,7 @@ export function Checker_getTargetOfAccessExpression(receiver: GoPtr<Checker>, no
  * }
  */
 export function keyBuilder_writeNodeId(receiver: GoPtr<keyBuilder>, id: NodeId): void {
-  keyBuilder_writeInt(receiver, id as unknown as int);
+  hashWrite64(receiver!.h, id);
 }
 
 /**

@@ -264,6 +264,18 @@ export interface ResponseError {
   Data: unknown;
 }
 
+type responseErrorJsonFields = json.JsonFieldNamesForGoStructContract<
+  ResponseError,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseError",
+  {
+    Code: "code",
+    Message: "message",
+    Data: { name: "data", omitZero: true },
+  },
+  "source-metadata",
+  "The standalone compiler preserves JSON-RPC declaration identities while the excluded session transport owns message serialization."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::ResponseError.String","kind":"method","status":"implemented","sigHash":"078342a1d72e84cd3a4819b474a6c365c50c9d29679690933d2806ac4f2b0a8a","bodyHash":"059c68916fed6c8813787debd0368efb0028ee6df07d23f4617557642933143e"}
  *
@@ -366,6 +378,21 @@ export interface Message {
   Error: GoPtr<ResponseError>;
 }
 
+type messageJsonFields = json.JsonFieldNamesForGoStructContract<
+  Message,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::Message",
+  {
+    JSONRPC: "jsonrpc",
+    ID: { name: "id", omitZero: true },
+    Method: { name: "method", omitZero: true },
+    Params: { name: "params", omitZero: true },
+    Result: { name: "result", omitZero: true },
+    Error: { name: "error", omitZero: true },
+  },
+  "source-metadata",
+  "The standalone compiler preserves JSON-RPC declaration identities while the excluded session transport owns message serialization."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::Message.Kind","kind":"method","status":"implemented","sigHash":"7ec366b5e0f6537af7a9bec0edf751bd93b787380c06a4bbff48b1cb5a9217ae","bodyHash":"9ac523d7d20ac3bed72f89683357e71ece83ffb693ea38966f5ed2c1844b3ce3"}
  *
@@ -448,6 +475,19 @@ export interface RequestMessage {
   Params: unknown;
 }
 
+type requestMessageJsonFields = json.JsonFieldNamesForGoStructContract<
+  RequestMessage,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::RequestMessage",
+  {
+    JSONRPC: "jsonrpc",
+    ID: { name: "id", omitZero: true },
+    Method: "method",
+    Params: { name: "params", omitZero: true },
+  },
+  "source-metadata",
+  "The standalone compiler preserves JSON-RPC declaration identities while the excluded session transport owns message serialization."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseMessage","kind":"type","status":"implemented","sigHash":"549281559d9afe85a1c939a420fa85e4a588f7c1acf73aa3645931b5bf8978d7","bodyHash":"e1e1ab59b79b0a01b898a6a4415a48684a158ea4151dd3562effc43cf452693c"}
  *
@@ -465,3 +505,16 @@ export interface ResponseMessage {
   Result: unknown;
   Error: GoPtr<ResponseError>;
 }
+
+type responseMessageJsonFields = json.JsonFieldNamesForGoStructContract<
+  ResponseMessage,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseMessage",
+  {
+    JSONRPC: "jsonrpc",
+    ID: { name: "id", omitZero: true },
+    Result: { name: "result", omitZero: true },
+    Error: { name: "error", omitZero: true },
+  },
+  "source-metadata",
+  "The standalone compiler preserves JSON-RPC declaration identities while the excluded session transport owns message serialization."
+>;

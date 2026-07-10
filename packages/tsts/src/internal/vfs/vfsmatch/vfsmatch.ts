@@ -118,6 +118,7 @@ function findFirstWildcard(s: string): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getBasePaths","kind":"func","status":"implemented","sigHash":"979ce35f7d356d25332b0898eccc14986ef19c73e864ec995fb40c2c4590a767","bodyHash":"b1ce1df8bd5fc810112af9f041b1987ec67bf48bb2dc35827b70ebfef039b485"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The include specification slice is nil when no includes were configured; getBasePaths treats undefined as zero entries and still returns the mandatory base path.","goSignature":"func(string,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<string>"}
  *
  * Go source:
  * func getBasePaths(path string, includes []string, useCaseSensitiveFileNames bool) []string {
@@ -1076,6 +1077,7 @@ export interface globMatcher {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::newGlobMatcher","kind":"func","status":"implemented","sigHash":"00dce2ed78e83667a0cfbf819df8ed59a3868b43b0b8b4d158720574825a955c","bodyHash":"0eaa12fc88b375a2e90ae95932e74e917c27aa8c4dc0a6275f1dd13cda67dd9d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Either include or exclude specification slice may be Go nil; newGlobMatcher records hadIncludes before iterating the two zero-length-normalized lists and produces the same matcher state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<string>,string,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/vfs/vfsmatch/vfsmatch.ts::Usage)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfsmatch/vfsmatch.ts::globMatcher>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,string,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/vfs/vfsmatch/vfsmatch.ts::Usage)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfsmatch/vfsmatch.ts::globMatcher>"}
  *
  * Go source:
  * func newGlobMatcher(includeSpecs, excludeSpecs []string, basePath string, caseSensitive bool, usage Usage) *globMatcher {
@@ -1344,6 +1346,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::matchFiles","kind":"func","status":"implemented","sigHash":"d49c8a50798469b5926e6428bff9230615efa440d458dc3a93315cae332efe5f","bodyHash":"af27c654ebb6556a0e63d9f31d216d1f32d2568a463f60fc49ff24d9671794b6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Extensions, excludes, and includes independently arrive as nil configuration slices; matchFiles forwards their zero-length meaning to matcher construction, extension checks, and base-path discovery.","goSignature":"func(string,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/scalars.ts::bool,string,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/internal/vfs/vfs.ts::FS)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/scalars.ts::bool,string,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/internal/vfs/vfs.ts::FS)=>packages/tsts/src/go/compat.ts::GoSlice<string>"}
  *
  * Go source:
  * func matchFiles(path string, extensions, excludes, includes []string, useCaseSensitiveFileNames bool, currentDirectory string, depth int, host vfs.FS) []string {

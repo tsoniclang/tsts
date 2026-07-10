@@ -23,7 +23,7 @@ export async function runSigCheck(config, options) {
   } else {
     printSigReport(report);
   }
-  if ((report.mismatches.length > 0 || (report.overrideIssues?.length ?? 0) > 0) && options["no-gate"] !== true) {
+  if ((report.mismatches.length > 0 || (report.overrideIssues?.length ?? 0) > 0 || (report.jsonTags?.mismatchCount ?? 0) > 0) && options["no-gate"] !== true) {
     process.exit(1);
   }
 }
@@ -52,10 +52,27 @@ export function summarizeSignatureReport(report) {
   };
 }
 
+export function summarizeJsonTagReport(report) {
+  const byKind = {};
+  for (const mismatch of report?.mismatches ?? []) byKind[mismatch.kind] = (byKind[mismatch.kind] ?? 0) + 1;
+  return {
+    taggedUnits: report?.taggedUnits ?? 0,
+    taggedFields: report?.taggedFields ?? 0,
+    fieldMapUnits: report?.fieldMapUnits ?? 0,
+    fieldMapFields: report?.fieldMapFields ?? 0,
+    runtimeUnits: report?.runtimeUnits ?? 0,
+    customCodecUnits: report?.customCodecUnits ?? 0,
+    sourceMetadataUnits: report?.sourceMetadataUnits ?? 0,
+    mismatches: report?.mismatchCount ?? report?.mismatches?.length ?? 0,
+    byKind,
+  };
+}
+
 export function printSigReport(report) {
   const byKind = new Map();
   for (const m of report.mismatches) byKind.set(m.kind, (byKind.get(m.kind) ?? 0) + 1);
   console.log(`porter sig-check: ${report.checked} units checked, ${report.overriddenUnits} overridden, ${report.mismatches.length} mismatches, ${report.overrideIssues?.length ?? 0} override metadata issues`);
+  console.log(`porter JSON tags: ${report.jsonTags?.taggedUnits ?? 0} structs/${report.jsonTags?.taggedFields ?? 0} fields, ${report.jsonTags?.fieldMapUnits ?? 0}/${report.jsonTags?.fieldMapFields ?? 0} mapped, runtime/custom/source=${report.jsonTags?.runtimeUnits ?? 0}/${report.jsonTags?.customCodecUnits ?? 0}/${report.jsonTags?.sourceMetadataUnits ?? 0}, ${report.jsonTags?.mismatchCount ?? 0} issues`);
   for (const issue of report.overrideIssues ?? []) {
     console.log(`\n[override-metadata] ${issue.id || "<config>"}\n  ${issue.reason}`);
   }
@@ -68,6 +85,13 @@ export function printSigReport(report) {
     if (m.expected !== undefined || m.actual !== undefined) {
       console.log(`  expected: ${m.expected}\n  actual:   ${m.actual}`);
     }
+    if (m.goSignature !== undefined || m.tsSignature !== undefined) {
+      console.log(`  goSignature: ${m.goSignature}\n  tsSignature: ${m.tsSignature}`);
+    }
+  }
+  for (const m of (report.jsonTags?.mismatches ?? []).slice(0, 50)) {
+    const unit = m.id.split("::").slice(2).join("::");
+    console.log(`\n[${m.kind}] ${unit}\n  ${m.file}\n  ${m.detail}`);
   }
   if (report.mismatches.length > 50) console.log(`\n… and ${report.mismatches.length - 50} more (use --json for the full list).`);
 }

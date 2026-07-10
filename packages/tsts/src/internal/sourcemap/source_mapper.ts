@@ -5,7 +5,7 @@ import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc 
 import { CutPrefix, EqualFold } from "../../go/strings.js";
 import { DeduplicateSorted, Map as coreMap, Some } from "../core/core.js";
 import { Assert as debugAssert } from "../debug/debug.js";
-import { Unmarshal as jsonUnmarshal } from "../json/json.js";
+import { AttachJsonFieldNamesForGoStruct, Unmarshal as jsonUnmarshal } from "../json/json.js";
 import { ComputePositionOfLineAndUTF16Character } from "../scanner/scanner.js";
 import { IsASCIILetter, IsDigit } from "../stringutil/util.js";
 import { GetCanonicalFileName, GetDirectoryPath, GetNormalizedAbsolutePath } from "../tspath/path.js";
@@ -13,7 +13,6 @@ import { DecodeMappings, Mapping_IsSourceMapping, MappingsDecoder_Error, Mapping
 import { TryGetSourceMappingURL } from "./util.js";
 import type { NameIndex, RawSourceMap, SourceIndex } from "./generator.js";
 import { rawSourceMapJsonFieldNames } from "./generator.js";
-import { JsonFieldNames } from "../json/json.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 
 // Go strings are immutable UTF-8 byte sequences; `[]byte(s)` and ranging over a
@@ -617,8 +616,7 @@ export function convertDocumentToSourceMapper(host: Host, contents: string, mapF
  * }
  */
 export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
-  const sourceMap: RawSourceMap = {
-    [JsonFieldNames]: rawSourceMapJsonFieldNames,
+  const sourceMap = AttachJsonFieldNamesForGoStruct<RawSourceMap>({
     Version: 0,
     File: "",
     SourceRoot: "",
@@ -626,7 +624,7 @@ export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
     Names: [],
     Mappings: "",
     SourcesContent: [],
-  };
+  }, rawSourceMapJsonFieldNames);
   const err: GoError = jsonUnmarshal(stringToBytes(contents), sourceMap);
   if (err !== undefined) {
     return undefined;

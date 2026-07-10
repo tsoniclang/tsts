@@ -1,0 +1,2 @@
+variables.ts(8,25): error TS9039: Type containing private name 'y' can't be used with --isolatedDeclarations.
+variables.ts(13,18): error TS9039: Type containing private name 'Z' can't be used with --isolatedDeclarations.

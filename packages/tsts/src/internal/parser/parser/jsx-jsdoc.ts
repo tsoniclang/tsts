@@ -150,6 +150,7 @@ export function Parser_nextJSDocCommentTextToken(receiver: GoPtr<Parser>, inBack
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.createJSDocCache","kind":"method","status":"implemented","sigHash":"cd097910a1199802741885f894e8d67fac363135bfa301a397b1b274899d7b53","bodyHash":"16fb6abe5e9851689ffc8cf744676a80ca9678b5e3ca5d9be9e53773fa94a6bd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"When parsing recorded no JSDoc infos, createJSDocCache returns the Go nil map; the TypeScript body returns undefined on that exact empty-info branch and allocates a map otherwise.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/parser/parser/state.ts::Parser>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/parser/parser/state.ts::Parser>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>|undefined"}
  *
  * Go source:
  * func (p *Parser) createJSDocCache() map[*ast.Node][]*ast.Node {

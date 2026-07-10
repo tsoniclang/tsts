@@ -7,8 +7,8 @@ import { KindAnyKeyword, KindBigIntKeyword, KindBooleanKeyword, KindDotDotDotTok
 import { IsArrowFunction, IsParameterDeclaration, IsReturnStatement, IsThisTypeNode, IsTypePredicateNode, IsUnionTypeNode } from "../ast/generated/predicates.js";
 import { SymbolFlagsOptional } from "../ast/symbolflags.js";
 import { GetContainingFunction, GetSourceFileOfNode, IsAccessor, IsDeclaration, IsEntityNameExpression, IsFunctionLike, IsThisIdentifier } from "../ast/utilities.js";
-import type { Node, NodeList } from "../ast/spine.js";
-import { Node_Name, NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
+import type { ModifierList, Node, NodeList } from "../ast/spine.js";
+import { Node_Name, NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { Assert, Fail } from "../debug/debug.js";
 import { IsInConstContext } from "../pseudochecker/lookup.js";
 import type { PseudoParameter, PseudoObjectElement, PseudoType } from "../pseudochecker/type.js";
@@ -472,7 +472,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         if (IsReturnStatement(node!.Parent)) {
           const enclosing = GetContainingFunction(node);
           if (IsAccessor(enclosing)) {
-            return NodeBuilderImpl_serializeTypeForDeclaration(b, enclosing as GoPtr<never>, undefined, undefined, false);
+            return NodeBuilderImpl_serializeTypeForDeclaration(b, enclosing, undefined, undefined, false);
           }
           return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, enclosing), false);
         }
@@ -480,7 +480,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, node!.Parent), false);
         }
         if (IsDeclaration(node!.Parent)) {
-          return NodeBuilderImpl_serializeTypeForDeclaration(b, node!.Parent as GoPtr<never>, undefined, undefined, false);
+          return NodeBuilderImpl_serializeTypeForDeclaration(b, node!.Parent, undefined, undefined, false);
         }
         const ty = Checker_getTypeOfExpression(b.ch, node);
         return NodeBuilderImpl_typeToTypeNode(b, ty);
@@ -491,7 +491,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         if (IsFunctionLike(node) && !IsAccessor(node)) {
           return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, node), false);
         }
-        return NodeBuilderImpl_serializeTypeForDeclaration(b, node as GoPtr<never>, undefined, undefined, false);
+        return NodeBuilderImpl_serializeTypeForDeclaration(b, node, undefined, undefined, false);
       }
       case PseudoTypeKindMaybeConstLocation: {
         const d = PseudoType_AsPseudoTypeMaybeConstLocation(t)!;
@@ -550,7 +550,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           }
           return NewKeywordTypeNode(b.f, KindNeverKeyword);
         }
-        return NewUnionTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
+        return NewUnionTypeNode(b.f, NodeFactory_NewNodeList(b.f, res));
       }
       case PseudoTypeKindUndefined:
         if (!b.ch!.strictNullChecks) {
@@ -581,19 +581,21 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const signature = Checker_getSignatureFromDeclaration(b.ch, d.Signature);
         const expandedParams = Checker_getExpandedParameters(b.ch, signature, true)[0];
         const cleanup = NodeBuilderImpl_enterNewScope(b, d.Signature, expandedParams ?? [], signature!.typeParameters ?? [], signature!.parameters ?? [], signature!.mapper);
-        let typeParams: GoPtr<NodeList> = undefined;
-        if (d.TypeParameters.length > 0) {
-          const res: GoPtr<Node>[] = [];
-          for (const tp of d.TypeParameters) {
-            res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+        try {
+          let typeParams: GoPtr<NodeList> = undefined;
+          if (d.TypeParameters.length > 0) {
+            const res: GoPtr<Node>[] = [];
+            for (const tp of d.TypeParameters) {
+              res.push(NodeBuilderImpl_reuseNode(b, NodeDefault_AsNode(tp)));
+            }
+            typeParams = NodeFactory_NewNodeList(b.f, res);
           }
-          typeParams = NodeFactory_NewNodeList(b.f, res);
+          const params = NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters);
+          const returnType = NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType);
+          return NewFunctionTypeNode(b.f, typeParams, params, returnType);
+        } finally {
+          cleanup();
         }
-        const params = NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters);
-        const returnType = NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType);
-        const fnResult = NewFunctionTypeNode(b.f, typeParams as GoPtr<never>, params as GoPtr<never>, returnType as GoPtr<never>);
-        cleanup();
-        return fnResult;
       }
       case PseudoTypeKindTuple: {
         const res: GoPtr<Node>[] = [];
@@ -601,14 +603,14 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         for (const element of elements) {
           res.push(NodeBuilderImpl_pseudoTypeToNode(b, element));
         }
-        const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
+        const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res));
         EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
-        return NewTypeOperatorNode(b.f, KindReadonlyKeyword, result as GoPtr<never>);
+        return NewTypeOperatorNode(b.f, KindReadonlyKeyword, result);
       }
       case PseudoTypeKindObjectLiteral: {
         const elements = PseudoType_AsPseudoTypeObjectLiteral(t)!.Elements;
         if (elements.length === 0) {
-          const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, []) as GoPtr<never>);
+          const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, []));
           EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
           return result;
         }
@@ -623,9 +625,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
 
         for (const element of elements) {
           const elementNode = element!;
-          let modifiers: GoPtr<NodeList> = undefined;
+          let modifiers: GoPtr<ModifierList> = undefined;
           if (isConst || (elementNode.Kind === PseudoObjectElementKindPropertyAssignment && PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!.Readonly)) {
-            modifiers = NodeFactory_NewModifierList(b.f, [NodeFactory_NewModifier(b.f, KindReadonlyKeyword)]) as GoPtr<NodeList>;
+            modifiers = NodeFactory_NewModifierList(b.f, [NodeFactory_NewModifier(b.f, KindReadonlyKeyword)]);
           }
           let cleanup: (() => void) | undefined = undefined;
           if (elementNode.Kind !== PseudoObjectElementKindPropertyAssignment) {
@@ -642,34 +644,34 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               if (d.TypeParameters.length > 0) {
                 const res: GoPtr<Node>[] = [];
                 for (const tp of d.TypeParameters) {
-                  res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+                  res.push(NodeBuilderImpl_reuseNode(b, NodeDefault_AsNode(tp)));
                 }
                 typeParams = NodeFactory_NewNodeList(b.f, res);
               }
               if (isConst) {
                 newProp = NewPropertySignatureDeclaration(
                   b.f,
-                  modifiers as GoPtr<never>,
-                  NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool) as GoPtr<never>,
+                  modifiers,
+                  NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool),
                   undefined,
                   NewFunctionTypeNode(
                     b.f,
-                    typeParams as GoPtr<never>,
-                    NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters) as GoPtr<never>,
-                    NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType) as GoPtr<never>,
-                  ) as GoPtr<never>,
+                    typeParams,
+                    NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters),
+                    NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType),
+                  ),
                   undefined,
                 );
                 break;
               }
               newProp = NewMethodSignatureDeclaration(
                 b.f,
-                modifiers as GoPtr<never>,
-                NodeBuilderImpl_reuseName(b, elementNode.Name, true as bool) as GoPtr<never>,
+                modifiers,
+                NodeBuilderImpl_reuseName(b, elementNode.Name, true as bool),
                 undefined,
-                typeParams as GoPtr<never>,
-                NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters) as GoPtr<never>,
-                NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType) as GoPtr<never>,
+                typeParams,
+                NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters),
+                NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType),
               );
               break;
             }
@@ -677,10 +679,10 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               const d = PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!;
               newProp = NewPropertySignatureDeclaration(
                 b.f,
-                modifiers as GoPtr<never>,
-                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool) as GoPtr<never>,
+                modifiers,
+                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool),
                 undefined,
-                NodeBuilderImpl_pseudoTypeToNode(b, d.Type) as GoPtr<never>,
+                NodeBuilderImpl_pseudoTypeToNode(b, d.Type),
                 undefined,
               );
               break;
@@ -690,9 +692,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               newProp = NewSetAccessorDeclaration(
                 b.f,
                 undefined,
-                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool) as GoPtr<never>,
+                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool),
                 undefined,
-                NodeFactory_NewNodeList(b.f, [NodeBuilderImpl_pseudoParameterToNode(b, d.Parameter)]) as GoPtr<never>,
+                NodeFactory_NewNodeList(b.f, [NodeBuilderImpl_pseudoParameterToNode(b, d.Parameter)]),
                 undefined,
                 undefined,
                 undefined,
@@ -704,10 +706,10 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               newProp = NewGetAccessorDeclaration(
                 b.f,
                 undefined,
-                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool) as GoPtr<never>,
+                NodeBuilderImpl_reuseName(b, elementNode.Name, false as bool),
                 undefined,
                 undefined,
-                NodeBuilderImpl_pseudoTypeToNode(b, d.Type) as GoPtr<never>,
+                NodeBuilderImpl_pseudoTypeToNode(b, d.Type),
                 undefined,
                 undefined,
               );
@@ -723,7 +725,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
           }
         }
         restoreObjectLiteralFlags();
-        const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, newElements) as GoPtr<never>);
+        const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, newElements));
         if ((b.ctx!.flags & FlagsMultilineObjectLiterals) === 0) {
           EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
         }

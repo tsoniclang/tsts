@@ -14,6 +14,7 @@ export function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
+  lines.push(`import { goReceiverKey } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -29,7 +30,6 @@ export function emitData(schema) {
   lines.push(`} from "./kinds.js";`);
   lines.push(`import {`);
   lines.push(`  cloneNode,`);
-  lines.push(`  goReceiverKey,`);
   lines.push(`  NodeFactory_NewModifierList,`);
   lines.push(`  NodeFactory_NewNodeList,`);
   lines.push(`  visit,`);

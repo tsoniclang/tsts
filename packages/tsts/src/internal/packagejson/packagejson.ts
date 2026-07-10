@@ -4,7 +4,7 @@ import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordere
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewSetWithSizeHint, Set_Add } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
-import { AllowDuplicateNames, Unmarshal } from "../json/json.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import { Expected_GetValue } from "./expected.js";
 import type { Expected } from "./expected.js";
 import type { ExportsOrImports } from "./exportsorimports.js";
@@ -27,6 +27,14 @@ export interface HeaderFields {
   Version: Expected<string>;
   Type: Expected<string>;
 }
+
+type headerFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  HeaderFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields",
+  { Name: "name", Version: "version", Type: "type" },
+  "custom-codec",
+  "Package metadata uses an explicit expected-value decoder while retaining exact upstream JSON field identities."
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::PathFields","kind":"type","status":"implemented","sigHash":"b6ff792acf7ce424b67cb3471cc4058a50087e75a054c4b570caeebcf09f6826","bodyHash":"bb4571732db48e0078e3bb1a2e7fb90f929764c31df44dc5248ff205fe235001"}
@@ -52,6 +60,22 @@ export interface PathFields {
   Exports: ExportsOrImports;
 }
 
+type pathFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  PathFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::PathFields",
+  {
+    TSConfig: "tsconfig",
+    Main: "main",
+    Types: "types",
+    Typings: "typings",
+    TypesVersions: "typesVersions",
+    Imports: "imports",
+    Exports: "exports",
+  },
+  "custom-codec",
+  "Package metadata uses an explicit expected-value decoder while retaining exact upstream JSON field identities."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::DependencyFields","kind":"type","status":"implemented","sigHash":"3ef5e9d174e2b24601466fcdfce76ae5cc24cf3e77a984764fa4f4222c6766ea","bodyHash":"b6f01b351f12cdbcd6b15f041f7df48778d8dac5a9fa8b5206ac232f4f194fe1"}
  *
@@ -69,6 +93,19 @@ export interface DependencyFields {
   PeerDependencies: Expected<GoMap<string, string>>;
   OptionalDependencies: Expected<GoMap<string, string>>;
 }
+
+type dependencyFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  DependencyFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::DependencyFields",
+  {
+    Dependencies: "dependencies",
+    DevDependencies: "devDependencies",
+    PeerDependencies: "peerDependencies",
+    OptionalDependencies: "optionalDependencies",
+  },
+  "custom-codec",
+  "Package dependency metadata uses an explicit typed decoder while retaining exact upstream JSON field identities."
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::method::DependencyFields.HasDependency","kind":"method","status":"implemented","sigHash":"6ee04c0f2499ce3c35a63e9efba1454b7a2109d17d30be4edc87e38b69cc7507","bodyHash":"906a190f1a5a1aa008ec0ecfe50149df2229e5dd28a1089ee7284005fb22e03b"}
@@ -266,13 +303,12 @@ export interface Fields {
  * }
  */
 export function Parse(data: GoSlice<byte>): [Fields, GoError] {
-  const f: Fields = {};
-  const err = Unmarshal(data, f, AllowDuplicateNames(true));
-  if (err !== undefined) {
-    return [{}, err];
-  }
   try {
-    return [decodeFields(globalThis.JSON.parse(new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as Array<number>)))), undefined];
+    const decoded = globalThis.JSON.parse(new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as Array<number>))) as unknown;
+    if (!isPlainObject(decoded)) {
+      return [{}, new globalThis.Error("package.json must contain a JSON object")];
+    }
+    return [decodeFields(decoded), undefined];
   } catch (error) {
     return [{}, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }

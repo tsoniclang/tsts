@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool } from "../../../go/scalars.js";
-import type { GoError } from "../../../go/compat.js";
+import { GoInterfaceAssert } from "../../../go/compat.js";
 import { FromMap } from "../vfstest/vfstest.js";
 import { Wrap } from "../vfsmock/wrapper.js";
 import {
@@ -18,9 +18,10 @@ import {
   FSMock_WriteFileCalls,
 } from "../vfsmock/mock_generated.js";
 import type { FSMock } from "../vfsmock/mock_generated.js";
-import type { DirEntry, WalkDirFunc } from "../vfs.js";
+import type { WalkDirFunc } from "../vfs.js";
 import {
   FS_ClearCache,
+  FS_as_vfs_FS,
   FS_DirectoryExists,
   FS_DisableAndClearCache,
   FS_Enable,
@@ -33,6 +34,7 @@ import {
   FS_UseCaseSensitiveFileNames,
   FS_WalkDir,
   FS_WriteFile,
+  FS_GoInterfaceType,
   From,
 } from "./cachedvfs.js";
 
@@ -41,6 +43,19 @@ function createMockFS(): FSMock {
     ["/some/path/file.txt", "hello world"],
   ]), true as bool))!;
 }
+
+test("vfs interface adaptation preserves the concrete cached FS receiver", () => {
+  const underlying = createMockFS();
+  const cached = From(FSMock_as_vfs_FS(underlying));
+  const adapter = FS_as_vfs_FS(cached);
+
+  assert.equal(GoInterfaceAssert(adapter, FS_GoInterfaceType), cached);
+  FS_DirectoryExists(cached, "/some/path");
+  assert.equal(FSMock_DirectoryExistsCalls(underlying).length, 1);
+  FS_ClearCache(GoInterfaceAssert(adapter, FS_GoInterfaceType));
+  FS_DirectoryExists(cached, "/some/path");
+  assert.equal(FSMock_DirectoryExistsCalls(underlying).length, 2);
+});
 
 test("DirectoryExists uses the cache exactly like TS-Go", () => {
   const underlying = createMockFS();
@@ -160,7 +175,7 @@ test("Realpath and Stat are cached, while mutation and read operations pass thro
 test("WalkDir and WriteFile pass through and preserve arguments", () => {
   const underlying = createMockFS();
   const cached = From(FSMock_as_vfs_FS(underlying));
-  const walkFn: WalkDirFunc = (_path: string, _info: DirEntry, _err: GoError): GoError => undefined;
+  const walkFn: WalkDirFunc = () => undefined;
 
   FS_WalkDir(cached, "/some/path", walkFn);
   FS_WalkDir(cached, "/some/path", walkFn);

@@ -225,6 +225,7 @@ export const missingListNodes: GoSlice<GoPtr<Node>> = [];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::parserPool","kind":"varGroup","status":"implemented","sigHash":"3fdc1286c48fa725161e8fd006c829b0d622c73db48a098be9f4f16883c2048e","bodyHash":"85c58e7891de25ca6c28a36cd456c6b0c6075aa9f16595f69f02bfe65b48dae3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries Parser instances created by newParser; getParser obtains one and putParser resets all per-parse state while preserving the scanner and parent-setting closure before reuse.","goSignature":"value{parserPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{parserPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/internal/parser/parser/state.ts::Parser>}"}
  *
  * Go source:
  * var parserPool = sync.Pool{

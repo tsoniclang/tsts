@@ -15,8 +15,10 @@ import { ScriptTargetESNext } from "../core/compileroptions.js";
 import { Parse as locale_Parse } from "../locale/locale.js";
 import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
 import { FromMap } from "../vfs/vfstest/vfstest.js";
+import type { CheckerPool } from "./checkerpool.js";
 import { NewCompilerHost } from "./host.js";
-import { NewProgram, Program_GetSourceFiles } from "./program.js";
+import { NewProgram, Program_GetCheckerPool, Program_GetSourceFiles } from "./program.js";
+import type { Program } from "./program.js";
 
 interface testFile {
   fileName: string;
@@ -282,3 +284,27 @@ for (const testCase of programTestCases) {
     assert.deepEqual(actualFiles, testCase.expectedFiles);
   });
 }
+
+test("Program checker pool is initialized before construction returns", () => {
+  const fs = WrapFS(FromMap(new Map<string, string>(), false as bool));
+  const checkerPool: CheckerPool = {
+    GetChecker: () => {
+      throw new Error("checker acquisition is outside this construction test");
+    },
+  };
+  let observedProgram: GoPtr<Program>;
+
+  const program = NewProgram({
+    Config: parsedCommandLine([], {} as CompilerOptions),
+    Host: NewCompilerHost("/", fs, LibPath(), undefined, undefined),
+    CreateCheckerPool: (candidate) => {
+      observedProgram = candidate;
+      assert.equal(candidate!.checkerPool, undefined);
+      return checkerPool;
+    },
+  });
+
+  assert.equal(observedProgram, program);
+  assert.equal(program!.checkerPool, checkerPool);
+  assert.equal(Program_GetCheckerPool(program), checkerPool);
+});

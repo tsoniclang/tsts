@@ -87,6 +87,15 @@ test("PositionMapMultipleNonASCII", () => {
   }
 });
 
+test("PositionMapLoneSurrogate", () => {
+  const text = "a\ud800b";
+  const pm = ComputePositionMap(text);
+
+  assert.equal(PositionMap_UTF8ToUTF16(pm, 1), 1, "lone surrogate starts at byte/code-unit offset 1");
+  assert.equal(PositionMap_UTF8ToUTF16(pm, 4), 2, "three-byte surrogate sentinel consumes one UTF-16 code unit");
+  assert.equal(PositionMap_UTF16ToUTF8(pm, 2), 4, "reverse mapping preserves the CESU-8 sentinel width");
+});
+
 test("PositionMapRoundtrip", () => {
   const text = "let café = \"🎉\"; // naïve";
   const pm = ComputePositionMap(text);

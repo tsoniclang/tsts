@@ -684,6 +684,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::varGroup::binderPool","kind":"varGroup","status":"implemented","sigHash":"df306d5a6fedccf9939ad726866d79807fbd22b996c9b1baa1f617cde53d2fd4","bodyHash":"35f9e43dd80865879d6ec5cc3853fa21171a2fd19c3717533bb57baeadaa82d9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries Binder instances whose bindFunc closure is allocated once; bindSourceFile obtains one, resets per-file state, and returns it in a finally block matching Go defer.","goSignature":"value{binderPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{binderPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/internal/binder/binder.ts::Binder>}"}
  *
  * Go source:
  * var binderPool = sync.Pool{
@@ -759,13 +760,16 @@ export function putBinder(b: GoPtr<Binder>): void {
 export function bindSourceFile(file: GoPtr<SourceFile>): void {
   SourceFile_BindOnce(file, () => {
     const b = getBinder()!;
-    b.file = file;
-    b.unreachableFlow = Binder_newFlowNode(b, FlowFlagsUnreachable);
-    Binder_bind(b, Node_AsNode(file as unknown as Node));
-    Binder_bindDeferredExpandoAssignments(b);
-    file!.SymbolCount = b.symbolCount;
-    file!.ClassifiableNames = b.classifiableNames;
-    putBinder(b);
+    try {
+      b.file = file;
+      b.unreachableFlow = Binder_newFlowNode(b, FlowFlagsUnreachable);
+      Binder_bind(b, Node_AsNode(file));
+      Binder_bindDeferredExpandoAssignments(b);
+      file!.SymbolCount = b.symbolCount;
+      file!.ClassifiableNames = b.classifiableNames;
+    } finally {
+      putBinder(b);
+    }
   });
 }
 
@@ -2688,7 +2692,7 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
  */
 export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   if (Binder_setCommonJSModuleIndicator(receiver, node)) {
-    const container = receiver!.file as unknown as GoPtr<Node>;
+    const container: GoPtr<Node> = receiver!.file;
     const flags = IfElse(ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsProperty) as SymbolFlags;
     const symbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, 0 as SymbolFlags);
     SetValueDeclaration(symbol!, node);
@@ -2849,7 +2853,7 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
  */
 export function Binder_bindExportsOrObjectDefineProperty(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   if (Binder_setCommonJSModuleIndicator(receiver, node)) {
-    const container = receiver!.file as unknown as GoPtr<Node>;
+    const container: GoPtr<Node> = receiver!.file;
     const flags = IfElse(IsBinaryExpression(node) && ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsFunctionScopedVariable) as SymbolFlags;
     Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, SymbolFlagsFunctionScopedVariableExcludes);
   }

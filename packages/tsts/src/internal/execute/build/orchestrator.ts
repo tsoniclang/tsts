@@ -1,12 +1,13 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoComparable, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoInterfaceAssert, MakeGoChan } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
 import { Fprintf } from "../../../go/fmt.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { Set_Has, Set_Add, NewSetFromItems } from "../../collections/set.js";
+import { Set_Has, Set_Add, NewSetFromItems, NewSetWithSizeHint } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store, SyncMap_Range } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -35,23 +36,22 @@ import { BuildTask_report, BuildTask_buildProject, BuildTask_cleanProject, Build
 import type { BuildTask } from "./buildtask.js";
 import { host_FS as host_FS_fn, host_DefaultLibraryPath, host_GetMTime, host_GetResolvedProjectReference, host_storeMTimeFromOldCache } from "./host.js";
 import { parseCache_reset, parseCache_store } from "./parseCache.js";
-import { FS_ClearCache } from "../../vfs/cachedvfs/cachedvfs.js";
-import type { FS as cachedvfs_FS } from "../../vfs/cachedvfs/cachedvfs.js";
+import { FS_ClearCache, FS_GoInterfaceType } from "../../vfs/cachedvfs/cachedvfs.js";
 import type { ExtendedConfigCache } from "../tsc/extendedconfigcache.js";
 import type { host } from "./host.js";
 import { Bool } from "../../../go/sync/atomic.js";
-import { Map as SyncGoMap } from "../../../go/sync.js";
+import { Map as SyncGoMap, Mutex } from "../../../go/sync.js";
 import * as strings from "../../../go/strings.js";
 import { Builder } from "../../../go/strings.js";
-import type { parseCache } from "./parseCache.js";
+import type { parseCache, parseCacheEntry } from "./parseCache.js";
 import * as fswatch from "../../fswatch/fswatch.js";
-import { CanWatchDirectory } from "../watchmanager/watchbackend.js";
-import type { CommandLineTestingWithWatchBackend } from "../watchmanager/watchbackend.js";
+import { CanWatchDirectory, GetCommandLineTestingWatchBackend } from "../watchmanager/watchbackend.js";
 import { IsDirCoveredByWatch, NewWatchManager, WatchManager_DrainEvents, WatchManager_EnsureDefaultBackend, WatchManager_ForceOverflow, WatchManager_IsPathUnderWatch, WatchManager_Lock, WatchManager_ReconcileWatches, WatchManager_ResolveDesiredDirs, WatchManager_RunLoop, WatchManager_SetBackend, WatchManager_Unlock } from "../watchmanager/watchmanager.js";
 import type { WatchManager } from "../watchmanager/watchmanager.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Options.Testing is a nil Go command-line testing interface during normal CLI execution; Start and Watch branch on that nil sentinel before invoking any testing hook, so TypeScript represents it with undefined.","goSignature":"interface{Command:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedbuildcommandline.ts::ParsedBuildCommandLine>;Sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;Testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting}","tsSignature":"interface{Command:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedbuildcommandline.ts::ParsedBuildCommandLine>;Sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;Testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined}"}
  *
  * Go source:
  * Options struct {
@@ -137,6 +137,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"af5dd0b93012fee5c6bd2fd91f8256c18f99185feae0343b1d7af612fa41aba1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NewOrchestrator installs watchStatusReporter only in watch mode and errorSummaryReporter only otherwise; the inactive Go function field remains nil and TypeScript preserves each mutually exclusive reporter state with undefined.","goSignature":"interface{comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;errorSummaryReporter:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter;errors:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;host:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/host.ts::host>;opts:packages/tsts/src/internal/execute/build/orchestrator.ts::Options;order:packages/tsts/src/go/compat.ts::GoSlice<string>;tasks:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>>>;watchStatusReporter:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;wm:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>}","tsSignature":"interface{comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;errorSummaryReporter:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter|undefined;errors:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;host:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/host.ts::host>;opts:packages/tsts/src/internal/execute/build/orchestrator.ts::Options;order:packages/tsts/src/go/compat.ts::GoSlice<string>;tasks:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>>>;watchStatusReporter:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter|undefined;wm:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>}"}
  *
  * Go source:
  * Orchestrator struct {
@@ -354,17 +355,17 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
           upStream: [],
           downStream: [],
           status: undefined,
-          done: {} as BuildTask["done"],
+          done: undefined,
           result: undefined,
           prevReporter: undefined,
-          reportDone: {} as BuildTask["reportDone"],
+          reportDone: undefined,
           buildInfoEntry: buildInfo,
-          buildInfoEntryMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["buildInfoEntryMu"],
+          buildInfoEntryMu: new Mutex(),
           packageJsons: [],
           errors: [],
           pending,
           isInitialCycle: oldTasks === undefined,
-          downStreamUpdateMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["downStreamUpdateMu"],
+          downStreamUpdateMu: new Mutex(),
           dirty: false,
         };
         task!.pending.Store(true as bool);
@@ -462,12 +463,12 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
     }
     circularityStack = circularityStack.slice(0, circularityStack.length - 1);
     Set_Add(completed, path);
-    task!.reportDone = {} as BuildTask["reportDone"];
+    task!.reportDone = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
     const prev = LastOrNil(receiver!.order);
     if (prev !== "") {
       task!.prevReporter = Orchestrator_getTask(receiver, Orchestrator_toPath(receiver, prev));
     }
-    task!.done = {} as BuildTask["done"];
+    task!.done = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
     receiver!.order.push(configName);
   }
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch) && downStream !== undefined) {
@@ -522,8 +523,8 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
   Orchestrator_createBuildTasks(receiver, oldTasks, projects, wg);
   wg.RunAndWait();
 
-  const completed: Set<Path> = {} as Set<Path>;
-  const analyzing: Set<Path> = {} as Set<Path>;
+  const completed = NewSetWithSizeHint<Path>(0)!;
+  const analyzing = NewSetWithSizeHint<Path>(0)!;
   const circularityStack: GoSlice<string> = [];
   for (const project of projects) {
     Orchestrator_setupBuildTask(receiver, project, undefined, false as bool, completed, analyzing, circularityStack);
@@ -646,7 +647,7 @@ export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
  * }
  */
 export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
-  const cachesVfs = receiver!.host!.host.FS() as unknown as cachedvfs_FS;
+  const cachesVfs = GoInterfaceAssert(receiver!.host!.host.FS(), FS_GoInterfaceType);
   FS_ClearCache(cachesVfs);
   receiver!.host!.extendedConfigCache = { m: newSyncMap() };
   parseCache_reset(receiver!.host!.sourceFiles);
@@ -819,10 +820,10 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
 
     let rootChanged = false;
     const fileNames = ParsedCommandLine_FileNames(task!.resolved);
-    const roots = new Set<Path>();
+    const roots = NewSetWithSizeHint<Path>(fileNames.length);
     for (const file of fileNames) {
       const fp = Orchestrator_toPath(receiver, file);
-      roots.add(fp);
+      Set_Add(roots, fp);
       if (!rootChanged && normalizedPaths.has(fp)) {
         BuildTask_resetStatus(task);
         needsUpdate!.Store(true as bool);
@@ -831,12 +832,14 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
     }
 
     if (!rootChanged) {
+      task!.buildInfoEntryMu.Lock();
       const bi = task!.buildInfoEntry;
+      task!.buildInfoEntryMu.Unlock();
       if (bi !== undefined && bi.buildInfo !== undefined) {
         const buildInfoDir = GetDirectoryPath(String(bi.path));
         for (const fileName of bi.buildInfo.FileNames ?? []) {
           const fp = Orchestrator_toPath(receiver, Orchestrator_resolveBuildInfoFileName(receiver, fileName, buildInfoDir));
-          if (roots.has(fp)) {
+          if (Set_Has(roots, fp)) {
             continue;
           }
           if (normalizedPaths.has(fp)) {
@@ -845,22 +848,24 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
             break;
           }
         }
-        for (const packageJson of seqToArray(BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir))) {
+        BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir)((packageJson: string): bool => {
           if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
             BuildTask_resetStatus(task);
             needsUpdate!.Store(true as bool);
-            break;
+            return false as bool;
           }
-        }
-        for (const packageJson of seqToArray(BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir))) {
+          return true as bool;
+        });
+        BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir)((packageJson: string): bool => {
           if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
             BuildTask_resetStatus(task);
             needsUpdate!.Store(true as bool);
-            break;
+            return false as bool;
           }
-        }
+          return true as bool;
+        });
       }
-      for (const packageJson of task!.packageJsons ?? []) {
+      for (const packageJson of task!.packageJsons) {
         if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
           BuildTask_resetStatus(task);
           needsUpdate!.Store(true as bool);
@@ -869,8 +874,8 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
       }
     }
 
-    task!.reportDone = {} as BuildTask["reportDone"];
-    task!.done = {} as BuildTask["done"];
+    task!.reportDone = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
+    task!.done = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
 
     const newConfig = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(task!.resolved, host_FS_fn(receiver!.host));
     if (!stringArrayEqual(ParsedCommandLine_FileNames(task!.resolved), ParsedCommandLine_FileNames(newConfig))) {
@@ -888,8 +893,8 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
         if (WatchManager_IsPathUnderWatch(receiver!.wm, eventPath, opts)) {
           Orchestrator_rangeTask(receiver, (_path: Path, task: GoPtr<BuildTask>): void => {
             BuildTask_resetStatus(task);
-            task!.reportDone = {} as BuildTask["reportDone"];
-            task!.done = {} as BuildTask["done"];
+            task!.reportDone = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
+            task!.done = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
           });
           needsUpdate!.Store(true as bool);
           break;
@@ -1056,26 +1061,30 @@ export function Orchestrator_computeDesiredWatches(receiver: GoPtr<Orchestrator>
       Orchestrator_addWatchDir(receiver, desiredDirs, dir);
     }
 
+    task!.buildInfoEntryMu.Lock();
     const bi = task!.buildInfoEntry;
+    task!.buildInfoEntryMu.Unlock();
     if (bi !== undefined && bi.buildInfo !== undefined) {
       const buildInfoDir = GetDirectoryPath(String(bi.path));
-      const roots = new Set<Path>(ParsedCommandLine_FileNames(task!.resolved).map((fileName) => Orchestrator_toPath(receiver, fileName)));
+      const roots = NewSetFromItems(...ParsedCommandLine_FileNames(task!.resolved).map((fileName) => Orchestrator_toPath(receiver, fileName)));
       for (const fileName of bi.buildInfo.FileNames ?? []) {
         const absPath = host_FS_fn(receiver!.host).Realpath(Orchestrator_resolveBuildInfoFileName(receiver, fileName, buildInfoDir));
         const fp = Orchestrator_toPath(receiver, absPath);
-        if (roots.has(fp)) {
+        if (Set_Has(roots, fp)) {
           continue;
         }
         Orchestrator_addWatchDir(receiver, desiredDirs, GetDirectoryPath(absPath));
       }
-      for (const packageJson of seqToArray(BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir))) {
+      BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir)((packageJson: string): bool => {
         Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
-      }
-      for (const packageJson of seqToArray(BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir))) {
+        return true as bool;
+      });
+      BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir)((packageJson: string): bool => {
         Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
-      }
+        return true as bool;
+      });
     }
-    for (const packageJson of task!.packageJsons ?? []) {
+    for (const packageJson of task!.packageJsons) {
       Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
     }
   }
@@ -1221,52 +1230,53 @@ export function Orchestrator_addPackageJsonWatchDirs(receiver: GoPtr<Orchestrato
  */
 export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
   WatchManager_Lock(receiver!.wm);
-  const needsConfigUpdate = new Bool();
-  const needsUpdate = new Bool();
-  const [changedPaths, overflow] = WatchManager_DrainEvents(receiver!.wm);
-  const hasEvents = (changedPaths !== undefined && changedPaths.size > 0) || overflow;
+  try {
+    const needsConfigUpdate = new Bool();
+    const needsUpdate = new Bool();
+    const [changedPaths, overflow] = WatchManager_DrainEvents(receiver!.wm);
+    const hasEvents = (changedPaths !== undefined && changedPaths.size > 0) || overflow;
 
-  if (!hasEvents) {
-    if (receiver!.wm!.DebugLog !== undefined) {
-      Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: no events, skipping\n");
+    if (!hasEvents) {
+      if (receiver!.wm!.DebugLog !== undefined) {
+        Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: no events, skipping\n");
+      }
+      return;
     }
-    WatchManager_Unlock(receiver!.wm);
-    return;
-  }
 
-  if (overflow) {
-    Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
-      BuildTask_resetConfig(task, receiver, path);
-      task!.reportDone = {} as BuildTask["reportDone"];
-      task!.done = {} as BuildTask["done"];
-    });
-    needsConfigUpdate.Store(true as bool);
-    needsUpdate.Store(true as bool);
-  } else {
-    Orchestrator_checkTasksForEventChanges(receiver, changedPaths!, needsConfigUpdate, needsUpdate);
-  }
+    if (overflow) {
+      Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
+        BuildTask_resetConfig(task, receiver, path);
+        task!.reportDone = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
+        task!.done = MakeGoChan<{ readonly __tsgoEmpty?: never }>(0, () => ({}));
+      });
+      needsConfigUpdate.Store(true as bool);
+      needsUpdate.Store(true as bool);
+    } else {
+      Orchestrator_checkTasksForEventChanges(receiver, changedPaths!, needsConfigUpdate, needsUpdate);
+    }
 
-  if (!needsUpdate.Load()) {
+    if (!needsUpdate.Load()) {
+      Orchestrator_resetCaches(receiver);
+      return;
+    }
+
+    receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
+    if (needsConfigUpdate.Load()) {
+      Orchestrator_GenerateGraphReusingOldTasks(receiver);
+    }
+
+    Orchestrator_buildOrClean(receiver);
+    Orchestrator_updateWatch(receiver);
+    const desiredDirs = Orchestrator_computeDesiredWatches(receiver);
+    const err = WatchManager_ReconcileWatches(receiver!.wm, desiredDirs);
+    if (err !== undefined) {
+      Fprintf(receiver!.opts.Sys.Writer(), "%v\n", err);
+      WatchManager_ForceOverflow(receiver!.wm);
+    }
     Orchestrator_resetCaches(receiver);
+  } finally {
     WatchManager_Unlock(receiver!.wm);
-    return;
   }
-
-  receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
-  if (needsConfigUpdate.Load()) {
-    Orchestrator_GenerateGraphReusingOldTasks(receiver);
-  }
-
-  Orchestrator_buildOrClean(receiver);
-  Orchestrator_updateWatch(receiver);
-  const desiredDirs = Orchestrator_computeDesiredWatches(receiver);
-  const err = WatchManager_ReconcileWatches(receiver!.wm, desiredDirs);
-  if (err !== undefined) {
-    Fprintf(receiver!.opts.Sys.Writer(), "%v\n", err);
-    WatchManager_ForceOverflow(receiver!.wm);
-  }
-  Orchestrator_resetCaches(receiver);
-  WatchManager_Unlock(receiver!.wm);
 }
 
 /**
@@ -1338,6 +1348,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.rangeTask","kind":"method","status":"implemented","sigHash":"c4b50a219b88c1e7ec3b1256d39ac98a97be09a55a8454631350f17e5bc19ad4","bodyHash":"659a424cabd1c3239753710c7f79a5ba56041d2200f577e3c31f3e8d52e50805"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"The JavaScript runtime has no blocking worker/goroutine execution for synchronous compiler bodies, so rangeTask walks the same topologically ordered task list synchronously; this preserves build/report ordering while the Go port uses a bounded worker group."}
  *
  * Go source:
  * func (o *Orchestrator) rangeTask(f func(path tspath.Path, task *BuildTask)) {
@@ -1406,18 +1417,19 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: 
  * }
  */
 export function Orchestrator_buildOrCleanProject(receiver: GoPtr<Orchestrator>, task: GoPtr<BuildTask>, path: Path, buildResult: GoPtr<orchestratorResult>): void {
+  const builder = new Builder();
+  const reportStatus = CreateBuilderStatusReporter(receiver!.opts.Sys, builder, ParsedBuildCommandLine_Locale(receiver!.opts.Command), receiver!.opts.Command!.CompilerOptions, receiver!.opts.Testing);
+  const diagnosticReporter = CreateDiagnosticReporter(receiver!.opts.Sys, builder, ParsedBuildCommandLine_Locale(receiver!.opts.Command), receiver!.opts.Command!.CompilerOptions);
   task!.result = {
-    builder: new Builder(),
-    reportStatus: undefined as unknown as import("../tsc/diagnostics.js").DiagnosticReporter,
-    diagnosticReporter: undefined as unknown as import("../tsc/diagnostics.js").DiagnosticReporter,
+    builder,
+    reportStatus,
+    diagnosticReporter,
     exitStatus: 0 as import("../tsc/compile.js").ExitStatus,
     statistics: undefined,
     program: undefined,
     buildKind: 0 as import("./buildtask.js").buildKind,
     filesToDelete: [],
   };
-  task!.result.reportStatus = Orchestrator_createBuilderStatusReporter(receiver, task);
-  task!.result.diagnosticReporter = Orchestrator_createDiagnosticReporter(receiver, task);
   if (!Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Clean)) {
     BuildTask_buildProject(task, receiver, path);
   } else {
@@ -1441,7 +1453,7 @@ export function Orchestrator_getWriter(receiver: GoPtr<Orchestrator>, task: GoPt
   if (task === undefined || task === null) {
     return receiver!.opts.Sys.Writer();
   }
-  return task!.result!.builder as unknown as Writer;
+  return task!.result!.builder;
 }
 
 /**
@@ -1506,24 +1518,15 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * }
  */
 function newSyncMap<K extends GoComparable = unknown, V = unknown>(): SyncMap<K, V> {
-  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<K, V>;
-}
-
-function seqToArray<T>(seq: GoSeq<T>): GoSlice<T> {
-  const values: GoSlice<T> = [];
-  seq((value: T): bool => {
-    values.push(value);
-    return true as bool;
-  });
-  return values;
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() };
 }
 
 function stringArrayEqual(left: GoSlice<string>, right: GoSlice<string>): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-function newParseCache(): parseCache {
-  return { entries: newSyncMap() };
+function newParseCache<K extends GoComparable, V extends GoComparable>(): parseCache<K, V> {
+  return { entries: newSyncMap<K, GoPtr<parseCacheEntry<V>>>() };
 }
 
 export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
@@ -1553,17 +1556,17 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
       undefined,
     ),
     extendedConfigCache,
-    sourceFiles: newParseCache() as unknown as host["sourceFiles"],
+    sourceFiles: newParseCache(),
     configTimes: newSyncMap(),
-    resolvedReferences: newParseCache() as unknown as host["resolvedReferences"],
+    resolvedReferences: newParseCache(),
     mTimes: newSyncMap(),
   };
   orchestrator.host = innerHost;
   if (Tristate_IsTrue(opts.Command!.CompilerOptions!.Watch)) {
     orchestrator.watchStatusReporter = CreateWatchStatusReporter(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions, opts.Testing);
-    const testingWithWatchBackend = opts.Testing as (CommandLineTestingWithWatchBackend | undefined);
-    if (testingWithWatchBackend?.WatchBackend !== undefined) {
-      WatchManager_SetBackend(wm, testingWithWatchBackend.WatchBackend());
+    const backend = GetCommandLineTestingWatchBackend(opts.Testing);
+    if (backend !== undefined) {
+      WatchManager_SetBackend(wm, backend);
     }
   } else {
     orchestrator.errorSummaryReporter = CreateReportErrorSummary(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions);

@@ -105,6 +105,65 @@ The signature checker recomputes these snapshots from the pinned Go source and
 the actual TypeScript declaration. Any upstream Go drift or local TS signature
 drift invalidates the override and fails `porter:verify`.
 
+The comparison follows the mechanical port's declaration boundary:
+
+- A Go struct type unit is its data layout: declared fields plus explicit
+  `__tsgoEmbeddedN` carriers. Receiver methods are independent Go units and are
+  compared with their standalone TypeScript functions; they are never injected
+  into the struct's TypeScript interface.
+- A Go interface's declared and embedded interface methods are structural and
+  remain members of the expected TypeScript interface.
+- Method promotion from an embedded struct does not create TypeScript object
+  properties. Calls continue through the separately verified method adapters.
+- An embedded interface is different: its method contract is expanded even
+  when embedded by a struct, because the containing runtime object must satisfy
+  that structural interface.
+
+This distinction prevents a type-level override from hiding missing or changed
+method units, while still checking every method exactly once.
+
+## Go Struct-Tag Contract
+
+Snapshot schema 3 preserves every Go struct field's export status, exact raw
+tag text, and ordered key/value tag entries. The extractor parses tags once at
+the Go AST boundary and fails on malformed syntax; downstream checks never
+re-scan source text or infer JSON names from TypeScript spelling. Each file also
+carries a complete tagged-field inventory, including anonymous structs declared
+inside function bodies, so summary counts cannot be limited to exported or
+signature-visible declarations.
+
+Every active Go struct with a `json` tag has exactly one typed contract. Porter
+binds the literal Go unit ID, local TypeScript type argument, complete field
+map, and one explicit strategy:
+
+- `runtime` uses `DefineJsonFieldNamesForGoStruct<T>` because generic JSON
+  marshal or unmarshal observes the struct. Its metadata must be attached
+  through `AttachJsonFieldNamesForGoStruct` in the defining module.
+- `custom-codec` means authored encode/decode logic owns the wire shape. The
+  exact field map remains mandatory and cannot be waived by the codec. It uses
+  the type-only `JsonFieldNamesForGoStructContract` and emits no runtime object.
+- `source-metadata` means the standalone port preserves the upstream schema,
+  while a dedicated parser or excluded subsystem owns runtime serialization.
+  It also uses the type-only contract and emits no runtime object.
+
+The check compares default and explicit names, ignored fields, `omitzero`, and
+`omitempty` independently. It rejects missing, extra, duplicate, orphaned,
+dynamic, unsupported-option, embedded-field, and unattached contracts. Helper
+calls must resolve through the configured ESM contract module; terminal-name
+matching is not accepted. JSON-tag failures are a separate hard verification
+gate and cannot be suppressed with signature overrides.
+
+Runtime omission follows the pinned `go-json-experiment` distinction:
+`omitzero` tests the mapped Go zero representation (nil/`undefined`, false,
+numeric zero, or the empty string), while `omitempty` tests the encoded JSON
+value (null, empty string, object, or array) after any field marshaler runs.
+Allocated empty slices and maps therefore survive `omitzero` but are removed by
+`omitempty`. Runtime registrations explicitly mark nil-only Go kinds with
+`zero: "nil"`; this preserves non-nil pointers to scalar zero values instead of
+mistaking their payload for a nil pointer. Runtime fields whose Go zero value
+requires deep array/struct comparison or unresolved named-type semantics fail
+the Porter gate rather than silently using scalar rules.
+
 ## Out-of-Scope Language-Service Surface
 
 The standalone compiler porter excludes the language-service/editor surface completely:

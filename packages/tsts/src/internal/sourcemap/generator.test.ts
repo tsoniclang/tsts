@@ -1,7 +1,7 @@
 // Mirror of internal/sourcemap/generator_test.go (all TestSourceMapGenerator_*
 // functions). Go's assert.DeepEqual compares RawSourceMap by field; rawFields()
-// projects the port's RawSourceMap (dropping the JsonFieldNames symbol) for the
-// same comparison. Go nil slices/pointers map to undefined.
+// projects the port's RawSourceMap data fields, excluding non-enumerable JSON
+// contract metadata, for the same comparison. Go nil slices/pointers map to undefined.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";

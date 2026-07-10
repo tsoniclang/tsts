@@ -10,6 +10,7 @@ export function printScanSummary(config, snapshot) {
   console.log(`Go files: ${snapshot.summary.goFileCount}`);
   console.log(`Lines: ${snapshot.summary.lineCount}`);
   console.log(`Units: ${snapshot.summary.unitCount}`);
+  console.log(`Struct tags: ${snapshot.summary.structTagCount} fields (${Object.entries(snapshot.summary.structTagKeyCounts ?? {}).map(([key, count]) => `${key}=${count}`).join(", ")})`);
   console.log(`Snapshot: ${path.relative(repoRoot, resolveRepo(config.snapshotOut))}`);
 }
 
@@ -41,6 +42,7 @@ export function printStatus(config, status) {
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  console.log(`JSON tagged structs/fields mapped structs/fields runtime/custom/source/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.fieldMapUnits ?? 0}/${status.jsonTagCheck?.fieldMapFields ?? 0} ${status.jsonTagCheck?.runtimeUnits ?? 0}/${status.jsonTagCheck?.customCodecUnits ?? 0}/${status.jsonTagCheck?.sourceMetadataUnits ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
   console.log(`Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
   console.log(`Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
   console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
@@ -86,6 +88,7 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  lines.push(`- JSON tagged structs/fields mapped structs/fields runtime/custom/source/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.fieldMapUnits ?? 0}/${status.jsonTagCheck?.fieldMapFields ?? 0} ${status.jsonTagCheck?.runtimeUnits ?? 0}/${status.jsonTagCheck?.customCodecUnits ?? 0}/${status.jsonTagCheck?.sourceMetadataUnits ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
   lines.push(`- Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
   lines.push(`- Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
   lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);

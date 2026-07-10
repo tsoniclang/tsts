@@ -82,6 +82,7 @@ export interface Watcher {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CommandLineResult","kind":"type","status":"implemented","sigHash":"e50a93841ad66672ce21962a3d4d374bb2472aff8487ed7239bc95d44088fdcb","bodyHash":"8cd421d8a62457b8fc3ecdb7160c29500d3f538fcb2bd182c1d4dbe861068538"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"CommandLineResult.Watcher is nil for non-watch compilation results and contains a watcher only for watch commands; TypeScript preserves that result-mode sentinel with undefined.","goSignature":"interface{Status:packages/tsts/src/internal/execute/tsc/compile.ts::ExitStatus;Watcher:packages/tsts/src/internal/execute/tsc/compile.ts::Watcher}","tsSignature":"interface{Status:packages/tsts/src/internal/execute/tsc/compile.ts::ExitStatus;Watcher:packages/tsts/src/internal/execute/tsc/compile.ts::Watcher|undefined}"}
  *
  * Go source:
  * CommandLineResult struct {

@@ -1,8 +1,8 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
 import { KindUnknown } from "./generated/kinds.js";
 import {
-  goReceiverKey,
   newNode,
   NodeDefault_AsNode,
   NodeDefault_BodyData,

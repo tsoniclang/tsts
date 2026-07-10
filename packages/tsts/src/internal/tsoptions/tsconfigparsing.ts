@@ -5,11 +5,10 @@ import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
 import * as strings from "../../go/strings.js";
 import type { Node } from "../ast/spine.js";
-import { Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
+import { NewNodeFactory, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import { Node_Text, Node_Expression, Node_Elements, Node_QuestionToken, SourceFile_FileName, SourceFile_Diagnostics, SourceFile_SetDiagnostics, NodeFactory_NewSourceFile, AsSourceFile } from "../ast/ast.js";
 import { AsObjectLiteralExpression, AsPropertyAssignment, AsPrefixUnaryExpression, AsStringLiteral } from "../ast/generated/casts.js";
-import type { NodeFactory } from "../ast/generated/factory.js";
 import type { TokenNode } from "../ast/generated/unions.js";
 import { NewToken as NodeFactory_NewToken } from "../ast/generated/factory.js";
 import * as cmp from "../../go/cmp.js";
@@ -95,6 +94,7 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"implemented","sigHash":"c7aea5f73d967b08ac0528a1d8b41421b0c463f32ac68d98e843b3a3f34c9be2","bodyHash":"a9a5e4be3ccd0e78727df342c62c509aaaf6cc61a508b4445c448b8a516cc80d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"extendsResult must distinguish an inherited include, exclude, or files property that is explicitly present with an empty array from a property that was never inherited; Go uses nil slices for the absent state and TypeScript represents those three declaration-local sentinels with undefined.","goSignature":"interface{compileOnSave:packages/tsts/src/go/scalars.ts::bool;exclude:packages/tsts/src/go/compat.ts::GoSlice<unknown>;extendedSourceFiles:packages/tsts/src/internal/collections/set.ts::Set<string>;files:packages/tsts/src/go/compat.ts::GoSlice<unknown>;include:packages/tsts/src/go/compat.ts::GoSlice<unknown>;options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;watchOptionsCopied:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{compileOnSave:packages/tsts/src/go/scalars.ts::bool;exclude:packages/tsts/src/go/compat.ts::GoSlice<unknown>|undefined;extendedSourceFiles:packages/tsts/src/internal/collections/set.ts::Set<string>;files:packages/tsts/src/go/compat.ts::GoSlice<unknown>|undefined;include:packages/tsts/src/go/compat.ts::GoSlice<unknown>|undefined;options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;watchOptionsCopied:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * extendsResult struct {
@@ -111,9 +111,9 @@ import { NewParsedCommandLine } from "./parsedcommandline.js";
 export interface extendsResult {
   options: GoPtr<CompilerOptions>;
   watchOptionsCopied: bool;
-  include: GoSlice<unknown>;
-  exclude: GoSlice<unknown>;
-  files: GoSlice<unknown>;
+  include: GoSlice<unknown> | undefined;
+  exclude: GoSlice<unknown> | undefined;
+  files: GoSlice<unknown> | undefined;
   compileOnSave: bool;
   extendedSourceFiles: Set<string>;
 }
@@ -1644,6 +1644,7 @@ export function resolverHost_Trace(receiver: GoPtr<resolverHost>, msg: string): 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseJsonSourceFileConfigFileContent","kind":"func","status":"implemented","sigHash":"07570e635c9066f02bcd69060aa86410c9df81e65836bdc1f3826509f4d026dc","bodyHash":"3e630cc9e243556da22404b78d49ecb1a356f6ee8887e5d6f345ec453a25a7ba"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"ParseJsonSourceFileConfigFileContent accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>"}
  *
  * Go source:
  * func ParseJsonSourceFileConfigFileContent(
@@ -1920,6 +1921,7 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseJsonConfigFileContent","kind":"func","status":"implemented","sigHash":"4ab514aceb1a0ae5dfa96518a2c9cd21d2cefd2d7296c829bc99f346a7ec8997","bodyHash":"b91cd745c6135d9951cd499e3a17098a361f261b18398c8b2eadfd8782942403"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"ParseJsonConfigFileContent accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(unknown,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>","tsSignature":"func(unknown,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>"}
  *
  * Go source:
  * func ParseJsonConfigFileContent(json any, host ParseConfigHost, basePath string, existingOptions *core.CompilerOptions, configFileName string, resolutionStack []tspath.Path, extraFileExtensions []FileExtensionInfo, extendedConfigCache ExtendedConfigCache) *ParsedCommandLine {
@@ -2140,7 +2142,7 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
       diagnostic,
     ];
   } else {
-    const factory: NodeFactory = { hooks: {}, nodeCount: 0 as int, textCount: 0 as int } as NodeFactory;
+    const factory = NewNodeFactory({})!;
     const endOfFileToken = NodeFactory_NewToken(factory, KindEndOfFile) as GoPtr<TokenNode>;
     const statements = NodeFactory_NewNodeList(factory, []);
     const sourceFileNode = NodeFactory_NewSourceFile(factory, { FileName: fileName, Path: path } as SourceFileParseOptions, "", statements, endOfFileToken);
@@ -2157,6 +2159,7 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendedConfig","kind":"func","status":"implemented","sigHash":"97935625ee5c8195784e7fda94b3e4dd47d9a465a012bde61aaf86782b28283d","bodyHash":"177b19e8754db18386644ae999c3903fe13b1636f09f5c2e8ce387c8510bb6a2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getExtendedConfig accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,string,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::extendsResult>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::parsedTsconfig>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,string,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::extendsResult>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::parsedTsconfig>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]"}
  *
  * Go source:
  * func getExtendedConfig(
@@ -2228,6 +2231,7 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseExtendedConfig","kind":"func","status":"implemented","sigHash":"7d5ef8759588edfc02e87e53044892276036a348da5423565bc91aaab1ae2a0b","bodyHash":"9ec615c18215d2cf9a07f2f77d6aa398634f500c92f99222aca254d06b7aab23"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"ParseExtendedConfig accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(string,packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCacheEntry>","tsSignature":"func(string,packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCacheEntry>"}
  *
  * Go source:
  * func ParseExtendedConfig(
@@ -2285,6 +2289,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"45dfb38c07a9a7d025ff07e892e4089507cb96f59134e822a7cd4969350e0111","bodyHash":"3d351ff93085587c1c99dfde3305039f37b1ae78211fb71fae8569603a896e6e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"parseConfig accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::parsedTsconfig>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::parsedTsconfig>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]"}
  *
  * Go source:
  * func parseConfig(
@@ -2429,8 +2434,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
   if (Contains(resolutionStack, resolvedPath)) {
     errors.push(NewCompilerDiagnostic(diagnostics.Circularity_detected_while_resolving_configuration_Colon_0));
     let result: GoPtr<parsedTsconfig>;
-    const jsonMap = json as GoPtr<OrderedMap<string, unknown>>;
-    if (json !== undefined && OrderedMap_Size(jsonMap) === 0) {
+    if (OrderedMap_Size(json) === 0) {
       result = { raw: json, options: undefined, typeAcquisition: undefined, extendedConfigPath: undefined };
     } else {
       const [rawResult, err] = convertToObject(sourceFile!.SourceFile);
@@ -2515,15 +2519,15 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
 
   if (ownConfig!.extendedConfigPath !== undefined && ownConfig!.extendedConfigPath !== null) {
     // copy the resolution stack so it is never reused between branches in potential diamond-problem scenarios.
-    const newResolutionStack = [...resolutionStack, resolvedPath];
+    resolutionStack = [...resolutionStack, resolvedPath];
     const result: extendsResult = {
       options: {} as CompilerOptions,
       watchOptionsCopied: false,
-      include: [],
-      exclude: [],
-      files: [],
+      include: undefined,
+      exclude: undefined,
+      files: undefined,
       compileOnSave: false,
-      extendedSourceFiles: new Set() as unknown as import("../collections/set.js").Set<string>,
+      extendedSourceFiles: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
     };
     if (typeof ownConfig!.extendedConfigPath === "string") {
       applyExtendedConfig(result, ownConfig!.extendedConfigPath as string);
@@ -2533,13 +2537,13 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       }
     }
     const ownRawMap = ownConfig!.raw as GoPtr<OrderedMap<string, unknown>>;
-    if (result.include !== undefined && (result.include as unknown[]).length > 0) {
+    if (result.include !== undefined) {
       OrderedMap_Set(ownRawMap, "include", result.include);
     }
-    if (result.exclude !== undefined && (result.exclude as unknown[]).length > 0) {
+    if (result.exclude !== undefined) {
       OrderedMap_Set(ownRawMap, "exclude", result.exclude);
     }
-    if (result.files !== undefined && (result.files as unknown[]).length > 0) {
+    if (result.files !== undefined) {
       OrderedMap_Set(ownRawMap, "files", result.files);
     }
     if (result.compileOnSave && !OrderedMap_Has(ownRawMap, "compileOnSave")) {
@@ -2552,7 +2556,6 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
     }
     ownConfig!.options = mergeCompilerOptions(result.options, ownConfig!.options, ownConfig!.raw);
     // ownConfig.watchOptions = ...
-    resolutionStack = newResolutionStack;
   }
   return [ownConfig, errors];
 }
@@ -2581,6 +2584,7 @@ export interface propOfRaw {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e","bodyHash":"4349650316d909310878709025d63a77949d6fb8eef1a22158759ce135495972"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"parseJsonConfigFileContentWorker accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>"}
  *
  * Go source:
  * func parseJsonConfigFileContentWorker(
@@ -3323,6 +3327,7 @@ export function getSubstitutedPathWithConfigDirTemplate(value: string, basePath:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getSubstitutedStringArrayWithConfigDirTemplate","kind":"func","status":"implemented","sigHash":"a7f7c47e06c2010a9067bfa9a6f0800ccc4fd180dddb356c4f7328dd050f6dab","bodyHash":"c25a1415f7bbb11fdc7d446b7b6c4f45c605c58e5d1efddffdbc15e2ba57ecef"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getSubstitutedStringArrayWithConfigDirTemplate accepts a nil Go list and returns nil when no config-directory template substitution occurred; callers distinguish that sentinel from an allocated replacement, so TypeScript represents both input and result with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>,string)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>"}
  *
  * Go source:
  * func getSubstitutedStringArrayWithConfigDirTemplate(list []string, basePath string) []string {
@@ -3355,8 +3360,7 @@ export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoPtr<GoSli
   if (result !== undefined) {
     return result;
   }
-  // Return undefined (nil in Go) if no substitution happened
-  return undefined as unknown as GoSlice<string>;
+  return undefined;
 }
 
 /**
@@ -3832,6 +3836,7 @@ export function GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOption
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::GetParsedCommandLineOfConfigFile","kind":"func","status":"implemented","sigHash":"65f56f01994894b906e772a362e2f208302b65df11351b74a9f68d4ff02d2191","bodyHash":"b79e2cdc3c41250c9499d147feaf699f7ecff70b00f5d15d1db632b8f9bbae1e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetParsedCommandLineOfConfigFile accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]"}
  *
  * Go source:
  * func GetParsedCommandLineOfConfigFile(
@@ -3852,6 +3857,7 @@ export function GetParsedCommandLineOfConfigFile(configFileName: string, options
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::GetParsedCommandLineOfConfigFilePath","kind":"func","status":"implemented","sigHash":"b143617fe618e5a596ae32db98b693da30e3beaea485bcaefe96b3c310a37180","bodyHash":"1df1d700c4f109dbdbff35fed1a0bb34974ffd31781ec5b025fee5385f7cd3a5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetParsedCommandLineOfConfigFilePath accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(string,packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(string,packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]"}
  *
  * Go source:
  * func GetParsedCommandLineOfConfigFilePath(
@@ -3891,5 +3897,5 @@ export function GetParsedCommandLineOfConfigFilePath(configFileName: string, pat
     return [undefined, readErrors];
   }
   const tsConfigSourceFile = NewTsconfigSourceFileFromFilePath(configFileName, path, configFileText);
-  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw as GoPtr<OrderedMap<string, unknown>>, configFileName, [], undefined as unknown as GoSlice<FileExtensionInfo>, extendedConfigCache), undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw, configFileName, [], [], extendedConfigCache), []];
 }

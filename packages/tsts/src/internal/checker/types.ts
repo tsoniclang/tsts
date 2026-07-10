@@ -1,7 +1,7 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
-import type { GoArray, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import type { GoInterfaceValue, Node } from "../ast/spine.js";
-import { goReceiverKey } from "../ast/spine.js";
+import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
 import type { ConditionalTypeNode, MappedTypeNode } from "../ast/generated/data.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
@@ -434,6 +434,7 @@ export interface AliasSymbolLinks {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ModuleSymbolLinks","kind":"type","status":"implemented","sigHash":"0562a62618d9e8ba3150e5162b811ca69dcef3c4f680f7ea4bd016e6458b58cd","bodyHash":"5dce7ab5d79605a40ef5990b7889ca43c4bc8ab2463d3b9f99e64808bb24d7d8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A newly allocated LinkStore entry has a nil typeOnlyExportStarMap until export resolution discovers an export-type-star contribution; lookups on the nil map mean no type-only origin. TypeScript uses undefined and allocates a Map only on the first such contribution.","goSignature":"interface{exportsChecked:packages/tsts/src/go/scalars.ts::bool;resolvedExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;typeOnlyExportStarMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>}","tsSignature":"interface{exportsChecked:packages/tsts/src/go/scalars.ts::bool;resolvedExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;typeOnlyExportStarMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>}"}
  *
  * Go source:
  * ModuleSymbolLinks struct {

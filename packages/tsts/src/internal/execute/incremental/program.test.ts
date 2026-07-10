@@ -5,10 +5,14 @@ import { Background } from "../../../go/context.js";
 import { Map as SyncMapImpl, Once } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { Diagnostic_Code, Diagnostic_MessageArgs } from "../../ast/diagnostic.js";
+import { SourceFile_Path } from "../../ast/ast.js";
+import { Diagnostic_Code, Diagnostic_MessageArgs, NewCompilerDiagnostic } from "../../ast/diagnostic.js";
+import { LibPath, WrapFS } from "../../bundled/bundled.js";
 import { SyncMap_Store } from "../../collections/syncmap.js";
 import type { CompilerHost } from "../../compiler/host.js";
+import { NewCompilerHost } from "../../compiler/host.js";
 import type { EmitOptions, Program as CompilerProgram } from "../../compiler/program.js";
+import { NewProgram as NewCompilerProgram, Program_GetSourceFiles } from "../../compiler/program.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { TSFalse, TSTrue } from "../../core/tristate.js";
 import * as diagnostics from "../../diagnostics/generated/messages.js";
@@ -22,13 +26,38 @@ import {
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
 import type { Path } from "../../tspath/path.js";
 import type { FS } from "../../vfs/vfs.js";
+import { FromMap } from "../../vfs/vfstest/vfstest.js";
 import type { SyncMap } from "../../collections/syncmap.js";
-import { Program_emitBuildInfo, Program_ensurePackageJsonsForState } from "./program.js";
+import { Program_emitBuildInfo, Program_ensureHasErrorsForState, Program_ensurePackageJsonsForState } from "./program.js";
 import type { Program } from "./program.js";
-import type { snapshot } from "./snapshot.js";
+import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, snapshot } from "./snapshot.js";
 
 function newSyncMap<Key, Value>(): SyncMap<Key, Value> {
   return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() };
+}
+
+function compilerProgram(files: ReadonlyMap<string, string>, roots: readonly string[]): CompilerProgram {
+  const fileSystem = WrapFS(FromMap(new Map(files), true));
+  const config = NewParsedCommandLine(
+    { NoLib: TSTrue } as CompilerOptions,
+    [...roots],
+    { CurrentDirectory: "/", UseCaseSensitiveFileNames: true },
+  );
+  return NewCompilerProgram({
+    Config: config,
+    Host: NewCompilerHost("/", fileSystem, LibPath(), undefined, undefined),
+  })!;
+}
+
+function diagnosticState(): snapshot {
+  return {
+    options: {} as CompilerOptions,
+    emitDiagnosticsPerFile: newSyncMap(),
+    semanticDiagnosticsPerFile: newSyncMap(),
+    hasEmitDiagnostics: false,
+    hasErrors: TSFalse,
+    hasSemanticErrors: false,
+  } as snapshot;
 }
 
 interface PackageJsonEntrySpec {
@@ -135,6 +164,53 @@ test("package-json state accumulation does not mutate old-state aliases", () => 
   assert.notEqual(state.missingPackageJsons, missingPackageJsonsFromOldState);
   assert.deepEqual(state.packageJsons, ["/work/node_modules/present/package.json"]);
   assert.deepEqual(state.missingPackageJsons, ["/work/node_modules/missing/package.json"]);
+});
+
+test("error-state closure uses the selected program for emit diagnostics and the owned program for semantic state", () => {
+  const selectedSourceProgram = compilerProgram(new Map([["/selected.ts", "export const selected = 1;"]]), ["/selected.ts"]);
+  const ownedSourceProgram = compilerProgram(new Map([["/owned.ts", "export const owned = 1;"]]), ["/owned.ts"]);
+  const emptyProgram = compilerProgram(new Map(), []);
+
+  const emitState = diagnosticState();
+  const selectedSource = Program_GetSourceFiles(selectedSourceProgram)[0]!;
+  SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
+    emitState.emitDiagnosticsPerFile,
+    SourceFile_Path(selectedSource),
+    { diagnostics: [], buildInfoDiagnostics: undefined },
+  );
+  const emitProgram: Program = {
+    snapshot: emitState,
+    program: emptyProgram,
+    host: undefined,
+    testingData: undefined,
+  };
+
+  Program_ensureHasErrorsForState(emitProgram, Background(), selectedSourceProgram);
+
+  assert.equal(emitState.hasErrors, TSTrue, "emit diagnostics must be scanned from the selected program argument");
+  assert.equal(emitState.hasSemanticErrors, false);
+
+  const semanticState = diagnosticState();
+  const ownedSource = Program_GetSourceFiles(ownedSourceProgram)[0]!;
+  SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
+    semanticState.semanticDiagnosticsPerFile,
+    SourceFile_Path(ownedSource),
+    {
+      diagnostics: [NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation)],
+      buildInfoDiagnostics: undefined,
+    },
+  );
+  const semanticProgram: Program = {
+    snapshot: semanticState,
+    program: ownedSourceProgram,
+    host: undefined,
+    testingData: undefined,
+  };
+
+  Program_ensureHasErrorsForState(semanticProgram, Background(), emptyProgram);
+
+  assert.equal(semanticState.hasErrors, TSFalse);
+  assert.equal(semanticState.hasSemanticErrors, true, "semantic cache state must be scanned from the incremental program's owned compiler program");
 });
 
 test("build-info write failures return the Go compiler diagnostic", () => {

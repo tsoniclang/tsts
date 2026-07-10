@@ -1,10 +1,11 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
-import { goReceiverKey, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, NodeList_End, NodeList_Pos } from "../ast/spine.js";
+import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, NodeList_End, NodeList_Pos } from "../ast/spine.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
 import type { ClassLikeDeclaration, EntityName, SignatureDeclaration } from "../ast/generated/unions.js";
 import type { ParameterDeclaration } from "../ast/generated/data.js";

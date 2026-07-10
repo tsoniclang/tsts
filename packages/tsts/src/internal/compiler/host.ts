@@ -57,6 +57,7 @@ export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/host.go::type::compilerHost","kind":"type","status":"implemented","sigHash":"982024fc2e1946fec6a927ad0cf4e28a846e3a63f8797cb85d3f4f9b52080235","bodyHash":"f7c43bc4eafc5ebbf42aef5f0ad6d223b712751461eedb723e678d8ba5cde7e2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"compilerHost retains a nil ExtendedConfigCache when callers request uncached config parsing. NewCompilerHost stores that interface value unchanged, and config parsing branches on its absence before lookup; TypeScript undefined preserves that explicit no-cache mode.","goSignature":"interface{currentDirectory:string;defaultLibraryPath:string;extendedConfigCache:packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache;fs:packages/tsts/src/internal/vfs/vfs.ts::FS;trace:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void}","tsSignature":"interface{currentDirectory:string;defaultLibraryPath:string;extendedConfigCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>;fs:packages/tsts/src/internal/vfs/vfs.ts::FS;trace:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void}"}
  *
  * Go source:
  * compilerHost struct {
@@ -77,6 +78,7 @@ export interface compilerHost {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/host.go::func::NewCachedFSCompilerHost","kind":"func","status":"implemented","sigHash":"60930d3c5b37765ea6556d812a899df6810424f41904f279f449c8be2bb0c2ed","bodyHash":"ce3bb418c7b72b8a776beece1327f9f1d3fbf1a585d316d38117798194f93bf9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Callers may pass a nil ExtendedConfigCache and nil trace callback; this wrapper forwards both to NewCompilerHost, which preserves the absent cache and installs the Go no-op trace.","goSignature":"func(string,packages/tsts/src/internal/vfs/vfs.ts::FS,string,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void)=>packages/tsts/src/internal/compiler/host.ts::CompilerHost","tsSignature":"func(string,packages/tsts/src/internal/vfs/vfs.ts::FS,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void>)=>packages/tsts/src/internal/compiler/host.ts::CompilerHost"}
  *
  * Go source:
  * func NewCachedFSCompilerHost(
@@ -95,6 +97,7 @@ export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e80401
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/host.go::func::NewCompilerHost","kind":"func","status":"implemented","sigHash":"e6e45396ef101cb38a02eccde7240ad601b1af04a145b53b886342dba2c37136","bodyHash":"6a9ec54bf7f71bf2e20f431f68c9d2b4779c06598e9fb9cefbd390e94f3146da"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NewCompilerHost accepts a nil ExtendedConfigCache for uncached config parsing and a nil trace callback that it replaces with the upstream no-op function; TypeScript handles both sentinels on those exact branches.","goSignature":"func(string,packages/tsts/src/internal/vfs/vfs.ts::FS,string,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void)=>packages/tsts/src/internal/compiler/host.ts::CompilerHost","tsSignature":"func(string,packages/tsts/src/internal/vfs/vfs.ts::FS,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void>)=>packages/tsts/src/internal/compiler/host.ts::CompilerHost"}
  *
  * Go source:
  * func NewCompilerHost(

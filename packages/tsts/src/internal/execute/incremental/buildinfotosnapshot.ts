@@ -12,7 +12,7 @@ import type { Path } from "../../tspath/path.js";
 import type { BuildInfo, BuildInfoDiagnostic, BuildInfoDiagnosticsOfFile, BuildInfoEmitSignature, BuildInfoFileId, BuildInfoFileIdListId, BuildInfoFileInfo, BuildInfoRepopulateInfo } from "./buildInfo.js";
 import { BuildInfo_GetCompilerOptions, BuildInfoEmitSignature_noEmitSignature, BuildInfoEmitSignature_toEmitSignature, BuildInfoFileInfo_GetFileInfo, IsBuildInfoFileNameDefaultLibrary } from "./buildInfo.js";
 import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileEmitKind, FileInfo, snapshot } from "./snapshot.js";
-import { GetFileEmitKind } from "./snapshot.js";
+import { createSnapshotZeroValue, GetFileEmitKind } from "./snapshot.js";
 import { SyncMap_Store, SyncMap_Load, SyncMap_Delete, SyncMap_Range } from "../../collections/syncmap.js";
 import { SyncSet_Add, SyncSet_Has } from "../../collections/syncset.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -72,7 +72,7 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
   const to: toSnapshot = {
     buildInfo: buildInfo,
     buildInfoDirectory: buildInfoDirectory,
-    snapshot: {} as snapshot,
+    snapshot: createSnapshotZeroValue(),
     filePaths: [],
     filePathSet: [],
   };
@@ -173,6 +173,7 @@ export function toSnapshot_toFilePathSet(receiver: GoPtr<toSnapshot>, fileIdList
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildinfotosnapshot.go::method::toSnapshot.toBuildInfoDiagnosticsWithFileName","kind":"method","status":"implemented","sigHash":"a7f2f85451e1d721ba5e067f9ad6e4fb7deb8265917c10fac3719d6eaa00dc5a","bodyHash":"85b93ba96be8aca86d363e259d60f7e233a4eeeb182181e580b51601765fcdbf"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"toBuildInfoDiagnosticsWithFileName receives nil nested build-info diagnostic slices and returns nil for the same absence; recursive conversion preserves that sentinel and TypeScript represents both sides with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildinfotosnapshot.ts::toSnapshot>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildinfotosnapshot.ts::toSnapshot>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>|undefined)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>|undefined"}
  *
  * Go source:
  * func (t *toSnapshot) toBuildInfoDiagnosticsWithFileName(diagnostics []*BuildInfoDiagnostic) []*buildInfoDiagnosticWithFileName {

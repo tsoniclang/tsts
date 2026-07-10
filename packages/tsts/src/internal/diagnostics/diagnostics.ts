@@ -232,6 +232,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::localizedMessagesCache","kind":"varGroup","status":"implemented","sigHash":"906df1cb73699858abcb438c57d96db64425fd2917e44637f6c0fcca821356f7","bodyHash":"093651b41111727927e039b3167bcaf45d52bb87807322a704bec38d3255ae25"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go's untyped sync.Map stores language.Tag keys with nil-or-localized-message-map values. TypeScript specializes the wrapper to those exact key/value types so Load preserves the value/ok distinction without broad casts, with undefined representing a cached nil catalog.","goSignature":"value{localizedMessagesCache:packages/tsts/src/go/sync.ts::Map}","tsSignature":"value{localizedMessagesCache:packages/tsts/src/go/sync.ts::Map<packages/tsts/src/go/golang.org/x/text/language.ts::Tag,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/diagnostics/diagnostics.ts::Key,string>|undefined>}"}
  *
  * Go source:
  * var localizedMessagesCache sync.Map
@@ -240,6 +241,7 @@ export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236","bodyHash":"79c121d4902ea2df4ae30c8163ca050fd98619c9fb79b1a85d5287003efc1cdb"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The und locale, an unmatched locale, and a cached miss return nil so localization falls back to the built-in message text. TypeScript uses undefined for that no-catalog result and caches it distinctly from an absent cache entry.","goSignature":"func(packages/tsts/src/go/golang.org/x/text/language.ts::Tag)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/diagnostics/diagnostics.ts::Key,string>","tsSignature":"func(packages/tsts/src/go/golang.org/x/text/language.ts::Tag)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/diagnostics/diagnostics.ts::Key,string>|undefined"}
  *
  * Go source:
  * func getLocalizedMessages(loc language.Tag) map[Key]string {

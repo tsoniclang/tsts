@@ -1,8 +1,9 @@
-import type { bool, int } from "../../go/scalars.js";
-import * as syscall from "../../go/syscall.js";
+import type { bool } from "../../go/scalars.js";
+import { nodeIsSymlinkOrReparsePoint } from "./node_host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/symlink_windows.go::func::IsSymlinkOrReparsePoint","kind":"func","status":"implemented","sigHash":"296ae0ab197f64d4e2c052aa779106c8480671870550027a943702a803f4fdd5","bodyHash":"74a75c2b9c39f068afc56287e2fd330deefc0b50576f9f47a289a99a840591e7"}
+ * @tsgo-override {"category":"host-native","allow":["body"],"reason":"Node fs.lstatSync owns Windows reparse-point classification and preserves the false-on-error boolean contract without exposing Win32 buffers or generated syscall facades."}
  *
  * Go source:
  * func IsSymlinkOrReparsePoint(path string) bool {
@@ -29,25 +30,5 @@ import * as syscall from "../../go/syscall.js";
  * }
  */
 export function IsSymlinkOrReparsePoint(path: string): bool {
-  let p = path;
-  if (p.length >= 248) {
-    p = "\\\\?\\" + p;
-  }
-
-  const [pathUTF16, pathUTF16Err] = syscall.UTF16PtrFromString(p) as [unknown, { message: string } | undefined];
-  if (pathUTF16Err !== undefined) {
-    return false as bool;
-  }
-
-  const data = { FileAttributes: 0 as int };
-  const getAttrErr = syscall.GetFileAttributesEx(
-    pathUTF16,
-    syscall.GetFileExInfoStandard,
-    data,
-  ) as { message: string } | undefined;
-  if (getAttrErr !== undefined) {
-    return false as bool;
-  }
-
-  return ((data.FileAttributes & (syscall.FILE_ATTRIBUTE_REPARSE_POINT as int)) !== 0) as bool;
+  return nodeIsSymlinkOrReparsePoint(path);
 }

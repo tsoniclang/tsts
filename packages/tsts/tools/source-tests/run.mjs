@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from "node:child_process";
-import { cpSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = join(dirname(scriptPath), "../../../..");
-const testRoot = join(repoRoot, ".temp/source-tests/dist/src");
+mkdirSync(join(repoRoot, ".temp"), { recursive: true });
+const testRunRoot = mkdtempSync(join(repoRoot, ".temp/source-tests-"));
+const testRoot = join(testRunRoot, "dist/src");
 const testConfig = "packages/tsts/tsconfig.source-tests.json";
 const tscPath = join(repoRoot, "node_modules/typescript/bin/tsc");
 
-rmSync(join(repoRoot, ".temp/source-tests"), { recursive: true, force: true });
-
-const build = spawnSync(process.execPath, [tscPath, "-p", testConfig, "--pretty", "false"], {
+const build = spawnSync(process.execPath, [tscPath, "-p", testConfig, "--pretty", "false", "--outDir", join(testRunRoot, "dist")], {
   cwd: repoRoot,
   stdio: "inherit",
 });
@@ -66,6 +66,7 @@ if (tests.length === 0) {
 }
 
 console.log(`Running ${tests.length} built source tests.`);
+console.log(`Source-test artifacts: ${relative(repoRoot, testRunRoot)}`);
 const child = spawn(process.execPath, ["--test", ...tests], {
   cwd: repoRoot,
   stdio: "inherit",

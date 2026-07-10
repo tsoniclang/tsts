@@ -13,7 +13,7 @@ import { buildLocalOverrideStatus } from "./local-overrides.mjs";
 import { printScanSummary, printStatus, renderStatusMarkdown } from "./reporting.mjs";
 import { fail, loadConfig, parseArgs, repoRoot, resolveRepo, writeJson, writeJsonSafely, writeText, writeTextSafely } from "./runtime.mjs";
 import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
-import { activeSignatureUnitIds, runSigCheck, summarizeSignatureReport } from "./signature-command.mjs";
+import { activeSignatureUnitIds, runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
 import { runPinnedScan, runScan } from "./snapshot.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
 import { buildEmbeddedGoSourceUpdates, scanTsUnits } from "./ts-units.mjs";
@@ -227,6 +227,7 @@ export async function main() {
         },
       );
       status.signatureCheck = summarizeSignatureReport(signatureReport);
+      status.jsonTagCheck = summarizeJsonTagReport(signatureReport.jsonTags);
     }
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);

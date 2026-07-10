@@ -1415,6 +1415,7 @@ export function Checker_elaborateArrayLiteral(receiver: GoPtr<Checker>, node: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateElement","kind":"method","status":"implemented","sigHash":"cb460c5db11ffbde97f43c5f26a97504e374403f043a6ad41ed31c35bc854d5b","bodyHash":"c7f1a1fd7a7fdd4a3815326c48ebdc52481703b9fb18e3bdc49074935e1b02b9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Array/object elaboration normally passes a nil diagnostic factory and uses the standard relation diagnostic, while JSX text supplies a custom factory. TypeScript uses undefined to select the standard branch and invokes a supplied factory only on the custom-diagnostic path.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/relater.ts::Relation>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/relater.ts::Relation>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (c *Checker) elaborateElement(source *Type, target *Type, relation *Relation, prop *ast.Node, next *ast.Node, nameType *Type, errorMessage *diagnostics.Message, diagnosticFactory func(prop *ast.Node) *ast.Diagnostic, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -2373,22 +2374,21 @@ export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, s
  * 	return properties
  * }
  */
-export function excludeProperties(properties: GoPtr<GoSlice<GoPtr<Symbol>>>, excludedProperties: Set<string>): GoSlice<GoPtr<Symbol>> {
-  const sourceProperties = properties ?? [];
-  if (Set_Len(excludedProperties) === 0 || sourceProperties.length === 0) {
-    return sourceProperties;
+export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedProperties: Set<string>): GoSlice<GoPtr<Symbol>> {
+  if (Set_Len(excludedProperties) === 0 || properties.length === 0) {
+    return properties;
   }
   let excluded = false;
   const reduced: GoPtr<Symbol>[] = [];
-  for (let i = 0; i < sourceProperties.length; i++) {
-    const prop = sourceProperties[i]!;
+  for (let i = 0; i < properties.length; i++) {
+    const prop = properties[i]!;
     if (!Set_Has(excludedProperties, prop!.Name)) {
       if (excluded) {
         reduced.push(prop);
       }
     } else if (!excluded) {
       for (let j = 0; j < i; j++) {
-        reduced.push(sourceProperties[j]!);
+        reduced.push(properties[j]!);
       }
       excluded = true;
     }
@@ -2396,7 +2396,7 @@ export function excludeProperties(properties: GoPtr<GoSlice<GoPtr<Symbol>>>, exc
   if (excluded) {
     return reduced;
   }
-  return sourceProperties;
+  return properties;
 }
 
 /**
@@ -2643,6 +2643,7 @@ export function Checker_getConstituentTypeForKeyType(receiver: GoPtr<Checker>, t
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.computeKeyPropertyNameAndMap","kind":"method","status":"implemented","sigHash":"0cfdc4a9ceb6bb58c1aef76029123ab358434cbda88b00e94da6cc899dffba38","bodyHash":"c27aee042833c036b0c837cce454bde2da1fa1050f118904b21560db2c47a259"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The large-union discriminant fast path returns a missing-name plus nil map for small/primitive unions, absent candidate keys, or rejected key maps. Callers use nil to disable keyed constituent lookup; TypeScript uses undefined for that unavailable-cache result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>[string,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>[string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>]"}
  *
  * Go source:
  * func (c *Checker) computeKeyPropertyNameAndMap(t *Type) (string, map[*Type]*Type) {
@@ -2721,6 +2722,7 @@ export function Checker_getKeyPropertyCandidateName(receiver: GoPtr<Checker>, ty
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.mapTypesByKeyProperty","kind":"method","status":"implemented","sigHash":"9ac57bcd8575918fe39b1f37952f34932045d6e964d780cf177ab6aa514b6812","bodyHash":"22376013ffacd5f50e29300db95f56c3f63f2f9aa6b2792b6fc12818dc091838"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The discriminant-map builder returns nil when a key is non-literal or fewer than ten/half the constituents have unique keys, disabling the optimization. TypeScript uses undefined for that rejected-map result and returns the populated Map only when the threshold contract is met.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,string)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) mapTypesByKeyProperty(types []*Type, keyPropertyName string) map[*Type]*Type {
@@ -5163,6 +5165,7 @@ export function Checker_isTypeMatchedByTemplateLiteralType(receiver: GoPtr<Check
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.inferTypesFromTemplateLiteralType","kind":"method","status":"implemented","sigHash":"965d18ddd76a1ee04fbd4bfad399a1074d88d1e2dfb4e91d055f5a8fdd523c53","bodyHash":"7e72b718f7b107e02d043d067decf74af70da15d0f128a0ad12e6d7d8ebb7809"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Non-literal source kinds and delegated template-part mismatches return nil so the caller can skip this inference route, while successful inference returns an array. TypeScript uses undefined for the no-inference result and preserves arrays as successful evidence.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TemplateLiteralType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TemplateLiteralType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>|undefined"}
  *
  * Go source:
  * func (c *Checker) inferTypesFromTemplateLiteralType(source *Type, target *TemplateLiteralType) []*Type {
@@ -5209,6 +5212,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.inferFromLiteralPartsToTemplateLiteral","kind":"method","status":"implemented","sigHash":"f775ef3f0af4f8266224b735b052ed3eb5820efac6f50f920cd063ec4593524e","bodyHash":"7c0a0b3102db6dab117124dc37a39ff778007ff1cac92d3decab1ef005804cd6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A prefix, suffix, delimiter, or segment mismatch returns nil to mean that template-literal inference failed; a successful inference may legitimately return an empty slice. TypeScript uses undefined for failure and an array, including an empty one, for success.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TemplateLiteralType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TemplateLiteralType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>|undefined"}
  *
  * Go source:
  * func (c *Checker) inferFromLiteralPartsToTemplateLiteral(sourceTexts []string, sourceTypes []*Type, target *TemplateLiteralType) []*Type {
@@ -5327,7 +5331,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
         matchTexts[k] = sourceTexts[seg + k]!;
       }
       matchTexts[s - seg] = getSourceText(s).slice(0, p);
-      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, (sourceTypes ?? []).slice(seg, s));
+      matchType = Checker_getTemplateLiteralType(receiver, matchTexts, sourceTypes.slice(seg, s));
     }
     matches = [...matches, matchType];
     seg = s;

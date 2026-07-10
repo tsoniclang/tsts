@@ -21,6 +21,7 @@ interface DirEntryMethods {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::type::Common","kind":"type","status":"implemented","sigHash":"cc65d17e65e9de241504cec36dc63839e4025fb80c1511fe3b145c1cdb1af9ba","bodyHash":"83ca938ae0a7f2ee0c5582ef0ae8cf46aec5dbe5c930ac981b04a7300526f448"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Common.RootFor may return nil fs.FS when no filesystem exists for a root, and IsReparsePoint is an optional platform capability that GetAccessibleEntries tests before invocation. RootAndPath and Stat preserve the unavailable-root sentinel, while irregular entries simply skip reparse probing when the callback is nil.","goSignature":"interface{IsReparsePoint:(string)=>packages/tsts/src/go/scalars.ts::bool;RootFor:(string)=>packages/tsts/src/go/io/fs.ts::FS}","tsSignature":"interface{IsReparsePoint?:(string)=>packages/tsts/src/go/scalars.ts::bool;RootFor:(string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/io/fs.ts::FS>}"}
  *
  * Go source:
  * Common struct {
@@ -80,6 +81,7 @@ export function SplitPath(p: string): [string, string] {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.RootAndPath","kind":"method","status":"implemented","sigHash":"b3f8aae815d288096eb17f609907dacb1623b82e97e4682920e10be2d957f51a","bodyHash":"2a68d64cb141d674340c23aa703c0e623a11206c153ac7ab55787d0327c05209"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"RootFor returns a nil fs.FS when the absolute root is unavailable; RootAndPath carries that exact undefined root alongside the normalized root name and relative path.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/internal/internal.ts::Common>,string)=>[packages/tsts/src/go/io/fs.ts::FS,string,string]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/internal/internal.ts::Common>,string)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/io/fs.ts::FS>,string,string]"}
  *
  * Go source:
  * func (vfs *Common) RootAndPath(path string) (fsys fs.FS, rootName string, rest string) {
@@ -100,6 +102,7 @@ export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.Stat","kind":"method","status":"implemented","sigHash":"951163363ad8a28632591eeefa8e79f0b36c7a9fc637f8be4ef01a2ed52c4b71","bodyHash":"bded9b36166fce959dc50e2c6380d0c410d5d96333d0c4c0fd337ac4cf2bd61c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Common.Stat returns nil when RootFor cannot supply a filesystem or fs.Stat returns an error; both branches return undefined before a successful FileInfo is forwarded.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/internal/internal.ts::Common>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/internal/internal.ts::Common>,string)=>packages/tsts/src/internal/vfs/vfs.ts::FileInfo|undefined"}
  *
  * Go source:
  * func (vfs *Common) Stat(path string) vfs.FileInfo {

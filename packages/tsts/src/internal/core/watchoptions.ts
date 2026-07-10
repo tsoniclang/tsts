@@ -2,6 +2,7 @@ import type { int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Duration } from "../../go/time.js";
 import type { Tristate } from "./tristate.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions","kind":"type","status":"implemented","sigHash":"cb0c0f5cde73c40bd392764df9c11a6c64cdb45186a668c0f7fbc7899c3d5c07","bodyHash":"878872bc263824b9d8ed38d79fa2fd5300d8036cdd21656a3238122d128c2e3e"}
@@ -26,6 +27,22 @@ export interface WatchOptions {
   ExcludeDir: GoSlice<string>;
   ExcludeFiles: GoSlice<string>;
 }
+
+type watchOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  WatchOptions,
+  "github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions",
+  {
+    Interval: "watchInterval",
+    FileKind: "watchFile",
+    DirectoryKind: "watchDirectory",
+    FallbackPolling: "fallbackPolling",
+    SyncWatchDir: "synchronousWatchDirectory",
+    ExcludeDir: "excludeDirectories",
+    ExcludeFiles: "excludeFiles",
+  },
+  "source-metadata",
+  "Watch-option JSON identities are consumed through explicit config parsing rather than generic struct marshaling."
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchFileKind","kind":"type","status":"implemented","sigHash":"27b5bcc61523b22c128da14de2ffc6338679d8776c9c1d5ab560d0d71c6bfbb6","bodyHash":"5671fb516878da4b72087729ceac403fec9dccefa4be16c20f523790162824c7"}

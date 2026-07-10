@@ -199,6 +199,7 @@ export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::method::Statistics.Report","kind":"method","status":"implemented","sigHash":"db86f4afaa75ae469bba85e3e3a28572e5287e6eb891b0268621be8477d61741","bodyHash":"b7a9329129c4f007328ce0096718d96886937ea1e02c43376292c6d2b65527f8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Statistics.Report receives a nil Go CommandLineTesting interface for production reporting and guards test-only memory/timing behavior on that sentinel; TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/statistics.ts::Statistics>,packages/tsts/src/go/io.ts::Writer,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/statistics.ts::Statistics>,packages/tsts/src/go/io.ts::Writer,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>void"}
  *
  * Go source:
  * func (s *Statistics) Report(w io.Writer, testing CommandLineTesting) {

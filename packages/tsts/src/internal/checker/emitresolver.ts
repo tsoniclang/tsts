@@ -3,7 +3,7 @@ import type { GoPtr, GoSlice, GoMap } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
-import { Node_Name, Node_AsNode } from "../ast/spine.js";
+import { Node_Name, Node_AsNode, NodeDefault_AsNode } from "../ast/spine.js";
 import type { Node as NodeSpine } from "../ast/spine.js";
 import type { Declaration, ElementAccessExpression, EntityName, IdentifierNode, ImportDeclaration, SignatureDeclaration, ImportAttributes } from "../ast/ast_generated.js";
 import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes, AsIndexSignatureDeclaration } from "../ast/generated/casts.js";
@@ -116,6 +116,7 @@ export interface DeclarationFileLinks {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"TS-Go lazily initializes the ReferenceResolver interface and tests it against nil; TypeScript represents that exact nil interface state as undefined because JavaScript objects have no Go nil interface value. The initialized resolver contract remains identical.","goSignature":"interface{aliasMarkingVisitor:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool;checker:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>;checkerMu:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/sync.ts::Mutex>;declarationFileLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::DeclarationFileLinks>;declarationLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::DeclarationLinks>;isValueAliasDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool;jsxLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::JSXLinks>;referenceResolver:packages/tsts/src/internal/binder/referenceresolver.ts::ReferenceResolver}","tsSignature":"interface{aliasMarkingVisitor:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool;checker:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>;checkerMu:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/sync.ts::Mutex>;declarationFileLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::DeclarationFileLinks>;declarationLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::DeclarationLinks>;isValueAliasDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool;jsxLinks:packages/tsts/src/internal/core/linkstore.ts::LinkStore<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/checker/emitresolver.ts::JSXLinks>;referenceResolver:packages/tsts/src/internal/binder/referenceresolver.ts::ReferenceResolver|undefined}"}
  *
  * Go source:
  * EmitResolver struct {
@@ -317,36 +318,34 @@ export function EmitResolver_IsThisPropertyAssignmentDeclarationRedundant(receiv
   }
 
   receiver!.checkerMu!.Lock();
-
-  const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
-  if (s === undefined || s!.Parent === undefined) {
-    receiver!.checkerMu!.Unlock();
+  try {
+    const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
+    if (s === undefined || s!.Parent === undefined) {
+      return false as bool;
+    }
+    const parentType = Checker_getDeclaredTypeOfSymbol(receiver!.checker, s!.Parent);
+    if (parentType === undefined) {
+      return false as bool;
+    }
+    const bases = Checker_getBaseTypes(receiver!.checker, parentType);
+    for (const b of bases) {
+      const baseProp = Checker_getPropertyOfType(receiver!.checker, b, s!.Name);
+      if (baseProp === undefined) {
+        continue;
+      }
+      if ((baseProp!.Flags & (SymbolFlagsAccessor | SymbolFlagsMethod | SymbolFlagsFunction)) !== 0) {
+        return true as bool;
+      }
+      if (Checker_isReadonlySymbol(receiver!.checker, baseProp) === Checker_isReadonlySymbol(receiver!.checker, s) &&
+        (s!.Flags & SymbolFlagsOptional) === (baseProp!.Flags & SymbolFlagsOptional) &&
+        Checker_isTypeIdenticalTo(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, s), Checker_getTypeOfSymbol(receiver!.checker, baseProp))) {
+        return true as bool;
+      }
+    }
     return false as bool;
-  }
-  const parentType = Checker_getDeclaredTypeOfSymbol(receiver!.checker, s!.Parent);
-  if (parentType === undefined) {
+  } finally {
     receiver!.checkerMu!.Unlock();
-    return false as bool;
   }
-  const bases = Checker_getBaseTypes(receiver!.checker, parentType);
-  for (const b of bases ?? []) {
-    const baseProp = Checker_getPropertyOfType(receiver!.checker, b, s!.Name);
-    if (baseProp === undefined) {
-      continue;
-    }
-    if ((baseProp!.Flags & (SymbolFlagsAccessor | SymbolFlagsMethod | SymbolFlagsFunction)) !== 0) {
-      receiver!.checkerMu!.Unlock();
-      return true as bool;
-    }
-    if (Checker_isReadonlySymbol(receiver!.checker, baseProp) === Checker_isReadonlySymbol(receiver!.checker, s) &&
-      (s!.Flags & SymbolFlagsOptional) === (baseProp!.Flags & SymbolFlagsOptional) &&
-      Checker_isTypeIdenticalTo(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, s), Checker_getTypeOfSymbol(receiver!.checker, baseProp))) {
-      receiver!.checkerMu!.Unlock();
-      return true as bool;
-    }
-  }
-  receiver!.checkerMu!.Unlock();
-  return false as bool;
 }
 
 /**
@@ -1825,6 +1824,7 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"7292b5d3381dc3e5fd98e69f0c124f36041dc0dea651cc776ddfea70119112f8"}
+ * @tsgo-override {"category":"runtime-correctness-performance","allow":["body"],"reason":"TypeScript performs the same pre-order traversal with an explicit LIFO worklist so deeply nested parse trees cannot overflow the JavaScript call stack; child order, import-pruning boundaries, reference marking, and checker-lock lifetime remain identical to TS-Go."}
  *
  * Go source:
  * func (r *EmitResolver) MarkLinkedReferencesRecursively(file *ast.SourceFile) {
@@ -1852,7 +1852,7 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
  * }
  */
 export function EmitResolver_MarkLinkedReferencesRecursively(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
-  if (!IsParseTreeNode(file as unknown as GoPtr<Node>)) {
+  if (!IsParseTreeNode(NodeDefault_AsNode(file))) {
     return;
   }
   receiver!.checkerMu!.Lock();
@@ -2124,9 +2124,12 @@ export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<Emit
  */
 export function EmitResolver_IsNameResolvable(receiver: GoPtr<EmitResolver>, location: GoPtr<Node>, name: string): bool {
   receiver!.checkerMu!.Lock();
-  const symbol_ = receiver!.checker!.resolveName(location, name, (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool);
-  receiver!.checkerMu!.Unlock();
-  return (symbol_ !== undefined) as bool;
+  try {
+    const symbol_ = receiver!.checker!.resolveName(location, name, (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool);
+    return (symbol_ !== undefined) as bool;
+  } finally {
+    receiver!.checkerMu!.Unlock();
+  }
 }
 
 /**

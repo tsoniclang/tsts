@@ -20,6 +20,9 @@ export function renderGoCompatModule() {
 
 declare const __goBrand: unique symbol;
 
+export const goReceiverKey: unique symbol = Symbol("GoInterface.receiver");
+const goInterfaceTypeKey: unique symbol = Symbol("GoInterface.type");
+
 export type GoPtr<T> = T | undefined;
 export type GoRef<T> = { v: T };
 export type GoSlice<T> = T[];
@@ -41,6 +44,51 @@ export type GoComplex64 = { readonly real: number; readonly imag: number };
 export type GoComplex128 = { readonly real: number; readonly imag: number };
 export type GoUnsafePointer = GoPtr<unknown>;
 export type GoRune = int;
+
+export interface GoInterfaceType<T> {
+  readonly name: string;
+  readonly identity: symbol;
+  readonly __receiverType?: (receiver: T) => T;
+}
+
+export type GoInterfaceValue<T> = {
+  readonly [goReceiverKey]?: GoPtr<T>;
+  readonly [goInterfaceTypeKey]?: GoInterfaceType<T>;
+};
+
+export function NewGoInterfaceType<T>(name: string): GoInterfaceType<T> {
+  if (name.length === 0) {
+    throw new Error("Go interface concrete type name must not be empty");
+  }
+  return Object.freeze({ name, identity: Symbol(name) });
+}
+
+export function GoInterfaceAdapter<T, I extends object>(type: GoInterfaceType<T>, receiver: GoPtr<T>, adapter: I): I & GoInterfaceValue<T> {
+  globalThis.Object.defineProperties(adapter, {
+    [goReceiverKey]: { value: receiver },
+    [goInterfaceTypeKey]: { value: type },
+  });
+  return adapter;
+}
+
+export function GoInterfaceTryAssert<T>(value: unknown, type: GoInterfaceType<T>): [GoPtr<T>, bool] {
+  if (!isGoInterfaceObject(value) || value[goInterfaceTypeKey] !== type) {
+    return [undefined, false as bool];
+  }
+  return [value[goReceiverKey] as GoPtr<T>, true as bool];
+}
+
+export function GoInterfaceAssert<T>(value: unknown, type: GoInterfaceType<T>): GoPtr<T> {
+  const [receiver, ok] = GoInterfaceTryAssert(value, type);
+  if (!ok) {
+    throw new TypeError("Go interface conversion: value does not contain " + type.name);
+  }
+  return receiver;
+}
+
+function isGoInterfaceObject(value: unknown): value is GoInterfaceValue<unknown> {
+  return (typeof value === "object" && value !== null) || typeof value === "function";
+}
 
 type GoChannelReceiver<T> = (value: T, ok: bool) => void;
 

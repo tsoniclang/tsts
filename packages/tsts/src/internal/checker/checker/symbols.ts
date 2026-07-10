@@ -2,12 +2,13 @@ import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
 import { NewGoStructMap } from "../../../go/compat.js";
+import { Assert } from "../../debug/debug.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
 import { isShorthandAmbientModuleSymbol } from "../utilities.js";
 import { Checker_hasSignatures } from "./signatures.js";
 import { Checker_canHaveSyntheticDefault } from "./support.js";
-import { isESMFormatImportImportingCommonjsFormatFile } from "./state.js";
+import { hashWrite64, isESMFormatImportImportingCommonjsFormatFile } from "./state.js";
 import { Checker_cloneTypeAsModuleType, Checker_getSpreadType, Checker_getTypeWithSyntheticDefaultOnly, Checker_isValidSpreadType, Checker_mapTypeEx, Checker_removeType } from "./types.js";
 import type { Hasher } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
@@ -555,6 +556,7 @@ export function Checker_getSuggestedSymbolForNonexistentSymbol(receiver: GoPtr<C
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestionForSymbolNameLookup","kind":"method","status":"implemented","sigHash":"c89b3c38a06f9e7922ed0d75c0fed7ac55e85428ef2454a3a47fc39c235114b9","bodyHash":"4d47fdc0c51d1e8522af8cbb3a05b45f2b4efd16e66cb4b2fda7e893ef0c6b89"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NameResolver can present zero-valued Members or Exports tables while walking scopes. Go treats a nil symbol map as empty for direct lookup and maps.Values; TypeScript guards undefined, while primitive alias suggestions are still added only on the global-lookup path.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable,string,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable|undefined,string,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>"}
  *
  * Go source:
  * func (c *Checker) getSuggestionForSymbolNameLookup(symbols ast.SymbolTable, name string, meaning ast.SymbolFlags) *ast.Symbol {
@@ -576,7 +578,7 @@ export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker
   }
   let extras: GoSeq<GoPtr<Symbol>> | undefined;
   if ((meaning & SymbolFlagsGlobalLookup) !== 0) {
-    extras = getPrimitiveTypeAliasSuggestions(symbols);
+    extras = getPrimitiveTypeAliasSuggestions(symbols!);
   }
   return Checker_getSpellingSuggestionForName(receiver, name, ConcatenateSeq(MapValues(symbols), extras ?? SliceValues([] as GoSlice<GoPtr<Symbol>>)), meaning);
 }
@@ -1181,6 +1183,7 @@ export function Checker_getImmediateAliasedSymbol(receiver: GoPtr<Checker>, symb
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSymbol","kind":"method","status":"implemented","sigHash":"1825262d8c7066dd508f69a67d58cfe305ec3cdccd4c559ebc726bc78f28e8e5","bodyHash":"50c3ef6afb17aaeefc6c4bc78043e23262c3a5a33f7b24af06715383dbbf2e03"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Core name resolution passes zero-valued Locals, Members, or Exports tables to getSymbol. A nil Go map means that no candidate exists rather than a lookup failure; TypeScript tests undefined before Map.get and otherwise preserves merged-symbol and meaning checks exactly.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable,string,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable|undefined,string,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>"}
  *
  * Go source:
  * func (c *Checker) getSymbol(symbols ast.SymbolTable, name string, meaning ast.SymbolFlags) *ast.Symbol {
@@ -10442,6 +10445,7 @@ export function isNotReplacableByMethod(decl: GoPtr<Node>): bool {
  * }
  */
 export function Checker_addDeclarationToLateBoundSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, member: GoPtr<Node>, symbolFlags: SymbolFlags): void {
+  Assert((symbol_!.CheckFlags & CheckFlagsLate) !== 0, "Expected a late-bound symbol.");
   (LinkStore_Get(receiver!.lateBoundLinks, Node_Symbol(member)) as GoPtr<LateBoundLinks>)!.lateSymbol = symbol_;
   if ((symbol_!.Declarations ?? []).length === 0 || (Node_Symbol(member)!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
     symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
@@ -10506,6 +10510,7 @@ export function Checker_getExportsOfModule(receiver: GoPtr<Checker>, moduleSymbo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getExportsOfModuleWorker","kind":"method","status":"implemented","sigHash":"15dc07fa9c4a955e5335e3896d3e8fa1a70e87ed30340e21001650a0f5236ff7","bodyHash":"6d8699b7b645979bcec70f951d95247297bda3b2e12f671163949687d1fe2ca1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getExportsOfModuleWorker returns a nil type-only export-star map when no export-type-star contribution is found and allocates it only on the first contribution; TypeScript returns undefined for that nil tuple element and a Map once populated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>[packages/tsts/src/internal/ast/symbol.ts::SymbolTable,packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>[packages/tsts/src/internal/ast/symbol.ts::SymbolTable,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>]"}
  *
  * Go source:
  * func (c *Checker) getExportsOfModuleWorker(moduleSymbol *ast.Symbol) (exports ast.SymbolTable, typeOnlyExportStarMap map[string]*ast.Node) {
@@ -10591,10 +10596,10 @@ export function Checker_getExportsOfModule(receiver: GoPtr<Checker>, moduleSymbo
  * 	return exports, typeOnlyExportStarMap
  * }
  */
-export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>): [SymbolTable, GoMap<string, GoPtr<Node>>] {
+export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>): [SymbolTable, GoPtr<GoMap<string, GoPtr<Node>>>] {
   const visitedSymbols: GoSlice<GoPtr<Symbol>> = [];
   const nonTypeOnlyNames = NewSetWithSizeHint<string>((moduleSymbol?.Exports?.size ?? 0) as int)!;
-  const typeOnlyExportStarMap: GoMap<string, GoPtr<Node>> = new globalThis.Map();
+  let typeOnlyExportStarMap: GoPtr<GoMap<string, GoPtr<Node>>>;
   const visit = (symbol_: GoPtr<Symbol>, exportStar: GoPtr<Node>, isTypeOnly: bool): SymbolTable => {
     if (!isTypeOnly && symbol_ !== undefined) {
       for (const name of symbol_!.Exports?.keys() ?? []) {
@@ -10630,6 +10635,9 @@ export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, modul
     }
     if (exportStar !== undefined && Node_IsTypeOnly(exportStar)) {
       for (const name of symbols.keys()) {
+        if (typeOnlyExportStarMap === undefined) {
+          typeOnlyExportStarMap = new globalThis.Map();
+        }
         typeOnlyExportStarMap.set(name, exportStar);
       }
     }
@@ -11623,7 +11631,7 @@ export function Checker_getPropertyNameFromBindingElement(receiver: GoPtr<Checke
  * }
  */
 export function keyBuilder_writeSymbol(receiver: GoPtr<keyBuilder>, s: GoPtr<Symbol>): void {
-  keyBuilder_writeInt(receiver, GetSymbolId(s) as unknown as int);
+  hashWrite64(receiver!.h, GetSymbolId(s));
 }
 
 /**
@@ -12581,7 +12589,7 @@ export function Checker_resolveTypeReferenceMembers(receiver: GoPtr<Checker>, t:
  */
 export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, source: GoPtr<Type>, typeParameters: GoSlice<GoPtr<Type>>, typeArguments: GoSlice<GoPtr<Type>>): void {
   let mapper: GoPtr<TypeMapper>;
-  let members: SymbolTable;
+  let members: GoPtr<SymbolTable>;
   let callSignatures: GoSlice<GoPtr<Signature>>;
   let constructSignatures: GoSlice<GoPtr<Signature>>;
   let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
@@ -12630,6 +12638,7 @@ export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addInheritedMembers","kind":"method","status":"implemented","sigHash":"fd610b3605a0d7ac5f006abc9b531092964a234ffc710fd8cdbe047175c735d9","bodyHash":"d6505f2722e36f5749c576036c7376fef08f91e5ab1aa338ff0612b8d3ce1d6b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A declared member table can be nil when base processing starts. addInheritedMembers must return that nil table unchanged when no eligible base member exists, but allocate it at the first inherited non-private value member; TypeScript uses undefined and performs the same first-insertion allocation.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func (c *Checker) addInheritedMembers(symbols ast.SymbolTable, baseSymbols []*ast.Symbol) ast.SymbolTable {
@@ -12646,7 +12655,7 @@ export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: Go
  * 	return symbols
  * }
  */
-export function Checker_addInheritedMembers(receiver: GoPtr<Checker>, symbols: SymbolTable, baseSymbols: GoSlice<GoPtr<Symbol>>): SymbolTable {
+export function Checker_addInheritedMembers(receiver: GoPtr<Checker>, symbols: GoPtr<SymbolTable>, baseSymbols: GoSlice<GoPtr<Symbol>>): GoPtr<SymbolTable> {
   let result = symbols;
   for (const base of baseSymbols ?? []) {
     if (!isStaticPrivateIdentifierProperty(base)) {
@@ -13277,7 +13286,7 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
     Checker_setStructuredTypeMembers(receiver, t, members, callSignatures, constructSignatures, indexInfos);
     return;
   }
-  let members = Checker_getExportsOfSymbol(receiver, symbol_);
+  let members: GoPtr<SymbolTable> = Checker_getExportsOfSymbol(receiver, symbol_);
   let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
   if (symbol_ === receiver!.globalThisSymbol) {
     const varsOnly: SymbolTable = new globalThis.Map();
@@ -13332,6 +13341,7 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSymbolTable","kind":"method","status":"implemented","sigHash":"451e3ac4defe07d94f67a6e1a8253e0416d0ed97d6b5983f7ca29fabe79f8bb0","bodyHash":"ad6116604ccb969b30eec205ca45b53225003cd43deaa92715af84ea71e1f81e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Instantiating a nil or empty declared-member table returns nil without allocating, preserving the resolved-empty member-table state used by object-type resolution. TypeScript accepts undefined and returns undefined on that path; non-empty tables allocate and retain only named members.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func (c *Checker) instantiateSymbolTable(symbols ast.SymbolTable, m *TypeMapper) ast.SymbolTable {
@@ -13347,12 +13357,12 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
  * 	return result
  * }
  */
-export function Checker_instantiateSymbolTable(receiver: GoPtr<Checker>, symbols: SymbolTable, m: GoPtr<TypeMapper>): SymbolTable {
-  if (symbols.size === 0) {
-    return undefined as unknown as SymbolTable;
+export function Checker_instantiateSymbolTable(receiver: GoPtr<Checker>, symbols: GoPtr<SymbolTable>, m: GoPtr<TypeMapper>): GoPtr<SymbolTable> {
+  if ((symbols?.size ?? 0) === 0) {
+    return undefined;
   }
   const result: SymbolTable = new globalThis.Map();
-  for (const [id, symbol_] of symbols) {
+  for (const [id, symbol_] of symbols ?? []) {
     if (Checker_isNamedMember(receiver, symbol_, id)) {
       result.set(id, Checker_instantiateSymbol(receiver, symbol_, m));
     }
@@ -16020,6 +16030,7 @@ export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.setStructuredTypeMembers","kind":"method","status":"implemented","sigHash":"e649ac184d5bc5716185caa88aca7227728b47c57cf0911559c52bf0ef5b77cf","bodyHash":"2dcec9b0b626b5cc4b4637449daa6b8a758c97a63b9dacd40ea1da6117c1d350"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Structured-type resolution deliberately calls this method with nil member, call-signature, construct-signature, and index-info containers for resolved-empty and call-only/construct-only states. TypeScript represents those nil containers as undefined while preserving the resolved flag, named-member derivation, and combined-signature construction.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>>)=>void"}
  *
  * Go source:
  * func (c *Checker) setStructuredTypeMembers(t *Type, members ast.SymbolTable, callSignatures []*Signature, constructSignatures []*Signature, indexInfos []*IndexInfo) {

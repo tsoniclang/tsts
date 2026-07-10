@@ -1,55 +1,9 @@
-import type { bool, int } from "../../go/scalars.js";
 import type { GoError } from "../../go/compat.js";
-import { EvalSymlinks } from "../../go/path/filepath.js";
-import { Itoa } from "../../go/strconv.js";
-import { OnceValue } from "../../go/sync.js";
-import * as unix from "../../go/golang.org/x/sys/unix.js";
-import { ignoringEINTR } from "./eintr_unix.js";
-
-// On Linux, we use the O_PATH + /proc/self/fd trick to resolve the canonical
-// path in O(1) syscalls (open + readlink + close) instead of Go's
-// filepath.EvalSymlinks which does an lstat per path component — O(depth).
-//
-// This is the approach libuv/Node.js could use, though libuv currently just
-// calls C realpath(3) which itself does a readlink per component. On the Go
-// side, the per-component approach is even more expensive because each
-// os.Lstat call involves goroutine scheduling overhead (entersyscall /
-// exitsyscall).
-//
-// How it works:
-//   - open(path, O_PATH|O_CLOEXEC) gives us a lightweight fd that follows all
-//     symlinks to the final target. O_PATH requires only search permission on
-//     directories (same as lstat), and works for both files and directories.
-//   - readlink("/proc/self/fd/<fd>") returns the fully resolved canonical path
-//     that the kernel computed during the open.
-//
-// Falls back to filepath.EvalSymlinks if /proc is not available (e.g. containers
-// or chroots without procfs mounted).
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184","bodyHash":"cb954cedd01898122ff5f4e66abd8344cecc872e881ac8aea86612e8fd10c55f"}
- *
- * Go source:
- * const _procSelfFD = "/proc/self/fd/"
- */
-export const _procSelfFD: string = "/proc/self/fd/";
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233","bodyHash":"167bc9acff221338d8a8cf37c697c0655a0006bd54bcd25664f930d0e88922d5"}
- *
- * Go source:
- * var hasProcSelfFD = sync.OnceValue(func() bool {
- * 	var stat unix.Stat_t
- * 	return unix.Stat(_procSelfFD, &stat) == nil
- * })
- */
-export const hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
-  const stat: unknown = {};
-  return (unix.Stat(_procSelfFD, stat) === undefined) as bool;
-});
+import { nodeRealpath } from "./node_host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::func::Realpath","kind":"func","status":"implemented","sigHash":"d3268f3d2d02bd7a7b7bb6ec7a50b67fd2d89738798baed9229942884b3db182","bodyHash":"d092d3948623cbf2130a60e40a6c34a898c5515219dfdbf7933f01b044077e63"}
+ * @tsgo-override {"category":"host-native","allow":["body"],"reason":"Node fs.realpathSync.native owns the Linux canonical-path syscall boundary and preserves the path-or-error contract without exposing procfs file descriptors or generated syscall facades."}
  *
  * Go source:
  * func Realpath(path string) (string, error) {
@@ -86,32 +40,5 @@ export const hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
  * }
  */
 export function Realpath(path: string): [string, GoError] {
-  if (!hasProcSelfFD()) {
-    return EvalSymlinks(path);
-  }
-
-  const [fd, err] = ignoringEINTR<int>((): [int, GoError] => {
-    return unix.Open(path, (unix.O_CLOEXEC as number) | (unix.O_PATH as number), 0) as [int, GoError];
-  });
-  if (err !== undefined) {
-    return ["", new globalThis.Error(`open ${path}: ${err.message}`)];
-  }
-  try {
-    const procPath = _procSelfFD + Itoa(fd);
-    let buf = new Uint8Array(256);
-    for (;;) {
-      const [nn, readlinkErr] = ignoringEINTR<int>((): [int, GoError] => {
-        return unix.Readlink(procPath, buf) as [int, GoError];
-      });
-      if (readlinkErr !== undefined) {
-        return ["", new globalThis.Error(`readlink ${path}: ${readlinkErr.message}`)];
-      }
-      if ((nn as number) < buf.length) {
-        return [new TextDecoder("utf-8").decode(buf.subarray(0, nn as number)), undefined];
-      }
-      buf = new Uint8Array(buf.length * 2);
-    }
-  } finally {
-    unix.Close(fd);
-  }
+  return nodeRealpath(path);
 }

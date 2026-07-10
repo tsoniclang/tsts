@@ -1,0 +1,5 @@
+declarationAsyncAndGeneratorFunctions.ts(1,23): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+declarationAsyncAndGeneratorFunctions.ts(5,23): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+declarationAsyncAndGeneratorFunctions.ts(9,23): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+declarationAsyncAndGeneratorFunctions.ts(13,18): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+declarationAsyncAndGeneratorFunctions.ts(17,24): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.

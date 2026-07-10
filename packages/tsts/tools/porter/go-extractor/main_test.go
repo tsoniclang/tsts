@@ -247,6 +247,107 @@ func TestImplicitBuildTagsUseExactGoFilenameSuffixes(t *testing.T) {
 	}
 }
 
+func TestStructMembersPreserveExactStructAndJSONTags(t *testing.T) {
+	source := "package sample\ntype Event struct {\n  Name string `json:\"name,omitzero\" xml:\"Name\"`\n  Empty string `json:\"\"`\n  Internal string\n}\n"
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.go")
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	report := scanGoFile(root, path, "example")
+	if report.ParseError != "" {
+		t.Fatalf("unexpected report: %#v", report)
+	}
+	var event *UnitReport
+	for index := range report.Units {
+		if report.Units[index].Kind == "type" && report.Units[index].Name == "Event" {
+			event = &report.Units[index]
+			break
+		}
+	}
+	if event == nil {
+		t.Fatalf("missing Event type unit: %#v", report.Units)
+	}
+	members := event.Members
+	if len(members) != 3 {
+		t.Fatalf("members = %#v", members)
+	}
+	if members[0].StructTag == nil || *members[0].StructTag != `json:"name,omitzero" xml:"Name"` || len(members[0].TagValues) != 2 || members[0].TagValues[0] != (StructTagValueReport{Key: "json", Value: "name,omitzero"}) || members[0].TagValues[1] != (StructTagValueReport{Key: "xml", Value: "Name"}) {
+		t.Fatalf("tagged member = %#v", members[0])
+	}
+	if members[1].StructTag == nil || len(members[1].TagValues) != 1 || members[1].TagValues[0] != (StructTagValueReport{Key: "json", Value: ""}) {
+		t.Fatalf("empty JSON tag must remain distinguishable from no tag: %#v", members[1])
+	}
+	if members[2].StructTag != nil || members[2].TagValues != nil {
+		t.Fatalf("untagged member = %#v", members[2])
+	}
+}
+
+func TestParseStructTagValuesRejectsMalformedAndPreservesDuplicates(t *testing.T) {
+	values, err := parseStructTagValues(`json:"first" json:"second" note:"a\\tb"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(values) != 3 || values[0].Value != "first" || values[1].Value != "second" || values[2].Value != `a\tb` {
+		t.Fatalf("values = %#v", values)
+	}
+	for _, malformed := range []string{`json`, `json:name`, `json:"unterminated`, `json:"bad\q"`} {
+		if _, err := parseStructTagValues(malformed); err == nil {
+			t.Fatalf("expected malformed tag %q to fail", malformed)
+		}
+	}
+}
+
+func TestStructTagsPreserveExportStatusInlineStructsAndSummaryCounts(t *testing.T) {
+	source := "package sample\ntype Wrapper struct {\n  Public string `json:\"public,omitempty\"`\n  hidden string `json:\"hidden\"`\n  Nested struct { Value string `json:\"value,omitzero\"` }\n}\n"
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.go")
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	report := scanGoFile(root, path, "example")
+	var wrapper *UnitReport
+	for index := range report.Units {
+		if report.Units[index].Kind == "type" && report.Units[index].Name == "Wrapper" {
+			wrapper = &report.Units[index]
+		}
+	}
+	if wrapper == nil || len(wrapper.Members) != 3 {
+		t.Fatalf("wrapper = %#v", wrapper)
+	}
+	if !wrapper.Members[0].Exported || wrapper.Members[1].Exported {
+		t.Fatalf("export status = %#v", wrapper.Members)
+	}
+	nested := wrapper.Members[2].TypeExpr
+	if nested == nil || len(nested.Members) != 1 || nested.Members[0].TagValues[0].Value != "value,omitzero" {
+		t.Fatalf("nested tags = %#v", nested)
+	}
+	summary := Summary{StructTagKeys: map[string]int{}}
+	accumulateUnitStructTags(&summary, *wrapper)
+	if summary.StructTagCount != 3 || summary.StructTagKeys["json"] != 3 {
+		t.Fatalf("summary = %#v", summary)
+	}
+}
+
+func TestFileStructTagInventoryIncludesFunctionLocalAnonymousStructs(t *testing.T) {
+	source := "package sample\ntype Top struct { Name string `json:\"name\"` }\nfunc read() { var local struct { Value *int `json:\"value,omitzero\"` }; _ = local }\n"
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.go")
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	report := scanGoFile(root, path, "example")
+	if len(report.StructTags) != 2 {
+		t.Fatalf("struct tags = %#v", report.StructTags)
+	}
+	if report.StructTags[0].Name != "Name" || report.StructTags[0].TagValues[0].Value != "name" {
+		t.Fatalf("top-level tag = %#v", report.StructTags[0])
+	}
+	if report.StructTags[1].Name != "Value" || report.StructTags[1].TypeExpr == nil || report.StructTags[1].TypeExpr.Kind != "pointer" || report.StructTags[1].TagValues[0].Value != "value,omitzero" {
+		t.Fatalf("local tag = %#v", report.StructTags[1])
+	}
+}
+
 func TestExternalReferencesResolveDefaultPackageNamesAndGenericCalls(t *testing.T) {
 	source := `package sample
 import (

@@ -1,7 +1,7 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
-import { goReceiverKey } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { Symbol as Symbol_0b94c68b } from "../ast/symbol.js";
 import type { Phase, TracedType, Tracer as Tracer_5708eec8, Tracing } from "../tracing/tracing.js";

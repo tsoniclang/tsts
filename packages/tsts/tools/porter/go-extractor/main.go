@@ -29,7 +29,7 @@ func main() {
 	}
 
 	snapshot := Snapshot{
-		SchemaVersion: 2,
+		SchemaVersion: 3,
 		SourceRoot:    filepath.ToSlash(absRoot),
 		ModulePath:    *modulePath,
 		GitRevision:   gitRevision(absRoot),
@@ -43,6 +43,7 @@ func main() {
 			NodeKindCounts: make(map[string]int),
 			BuildTagCounts: make(map[string]int),
 			PackageCounts:  make(map[string]int),
+			StructTagKeys:  make(map[string]int),
 		},
 	}
 
@@ -78,6 +79,12 @@ func main() {
 		for kind, count := range report.NodeKindCounts {
 			snapshot.Summary.NodeKindCounts[kind] += count
 		}
+		for _, member := range report.StructTags {
+			snapshot.Summary.StructTagCount++
+			for _, value := range member.TagValues {
+				snapshot.Summary.StructTagKeys[value.Key]++
+			}
+		}
 		for _, unit := range report.Units {
 			snapshot.Summary.UnitCount++
 			snapshot.Summary.UnitKindCounts[unit.Kind]++
@@ -98,5 +105,51 @@ func main() {
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(snapshot); err != nil {
 		fatalf("encode snapshot: %v", err)
+	}
+}
+
+func accumulateUnitStructTags(summary *Summary, unit UnitReport) {
+	if len(unit.Members) > 0 {
+		accumulateMemberStructTags(summary, unit.Members)
+	} else {
+		accumulateTypeExpressionStructTags(summary, unit.TypeExpression)
+	}
+	accumulateTypeExpressionStructTags(summary, unit.ReceiverType)
+	for _, parameter := range append(append([]ParamReport{}, unit.Parameters...), unit.Results...) {
+		accumulateTypeExpressionStructTags(summary, parameter.Type)
+	}
+	for _, spec := range unit.ValueSpecs {
+		accumulateTypeExpressionStructTags(summary, spec.Type)
+		for _, inferred := range spec.InferredValueTypes {
+			accumulateTypeExpressionStructTags(summary, inferred)
+		}
+	}
+}
+
+func accumulateMemberStructTags(summary *Summary, members []MemberReport) {
+	for _, member := range members {
+		if member.StructTag != nil {
+			summary.StructTagCount++
+			for _, value := range member.TagValues {
+				summary.StructTagKeys[value.Key]++
+			}
+		}
+		accumulateTypeExpressionStructTags(summary, member.TypeExpr)
+	}
+}
+
+func accumulateTypeExpressionStructTags(summary *Summary, expression *TypeExprReport) {
+	if expression == nil {
+		return
+	}
+	accumulateMemberStructTags(summary, expression.Members)
+	for _, child := range []*TypeExprReport{expression.Element, expression.Key, expression.Value, expression.Left, expression.Right} {
+		accumulateTypeExpressionStructTags(summary, child)
+	}
+	for index := range expression.TypeArgs {
+		accumulateTypeExpressionStructTags(summary, &expression.TypeArgs[index])
+	}
+	for _, parameter := range append(append([]ParamReport{}, expression.Parameters...), expression.Results...) {
+		accumulateTypeExpressionStructTags(summary, parameter.Type)
 	}
 }

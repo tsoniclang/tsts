@@ -61,6 +61,7 @@ import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, Generat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NodeFactory","kind":"type","status":"implemented","sigHash":"090eeeccd7a9312c831c8c23dfcfe79fc09da23cd3a387758c5fda1591b6992f","bodyHash":"a712ecc9d60b4ded4861ea18bb957773602cb73b7775e87938062ca2de6cfd5f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A TypeScript NodeFactory carries an AsNodeFactory self-adapter so the concrete object satisfies NodeFactoryCoercible at direct Go-style call sites without a second wrapper object. NodeFactory_AsNodeFactory remains the separately verified receiver method; the extra callable field is only the runtime structural-interface carrier installed on each factory.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory;emitContext:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>}","tsSignature":"interface{AsNodeFactory:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>;__tsgoEmbedded0?:packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory;emitContext:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>}"}
  *
  * Go source:
  * NodeFactory struct {

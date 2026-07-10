@@ -117,7 +117,8 @@ export function collectExternalRefUsages(config, snapshot) {
   const usages = new Map();
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
-      if (!isActivePortPolicy(policyForUnit(config, unit, file))) continue;
+      const policy = policyForUnit(config, unit, file);
+      if (!isActivePortPolicy(policy) || policy.category === "host-native") continue;
       for (const ref of unit.externalRefs ?? []) {
         if (!ref.importPath || ref.importPath.startsWith(config.goModulePath)) continue;
         const goName = `${ref.importPath}.${ref.name}`;

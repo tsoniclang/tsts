@@ -110,11 +110,10 @@ export function CreateHost(compilerHost: CompilerHost): Host {
  * }
  */
 export function GetMTime(host: CompilerHost, fileName: string): Time {
-  type FileInfoWithModTime = { ModTime(): Time };
   const stat = host.FS().Stat(fileName);
   let mTime: Time = new Time();
   if (stat !== undefined) {
-    mTime = (stat as unknown as FileInfoWithModTime).ModTime();
+    mTime = stat.ModTime();
   }
   return mTime;
 }

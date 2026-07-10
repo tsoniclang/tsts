@@ -177,6 +177,7 @@ export function newCaches(currentDirectory: string, useCaseSensitiveFileNames: b
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::func::getRedirectConfigName","kind":"func","status":"implemented","sigHash":"c73d7d1d07689bf4be9d6b7d7a67ec3d31f4fd31ef272958e8aee9233f4d9aa2","bodyHash":"b720fc09bfed2ba77e015c3d013f672a6cc8138807cea57bf635a6460c762690"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getRedirectConfigName accepts the nil Go ResolvedProjectReference interface used when no project-reference redirect applies and maps it to the empty cache-key component; TypeScript represents that argument with undefined.","goSignature":"func(packages/tsts/src/internal/module/types.ts::ResolvedProjectReference)=>string","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedProjectReference>)=>string"}
  *
  * Go source:
  * func getRedirectConfigName(redirect ResolvedProjectReference) string {

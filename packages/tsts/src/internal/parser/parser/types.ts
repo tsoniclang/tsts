@@ -37,7 +37,7 @@ import {
   NewOptionalTypeNode,
   NewUnionTypeNode,
 } from "../../ast/generated/factory.js";
-import { KindAbstractKeyword, KindAmpersandToken, KindAnyKeyword, KindAssertKeyword, KindAssertsKeyword, KindAsKeyword, KindAsteriskEqualsToken, KindAsteriskToken, KindBarToken, KindBigIntKeyword, KindBigIntLiteral, KindBooleanKeyword, KindCallSignature, KindCloseBraceToken, KindCloseBracketToken, KindCloseParenToken, KindColonToken, KindCommaToken, KindConstructSignature, KindDotToken, KindDotDotDotToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationToken, KindExtendsKeyword, KindFalseKeyword, KindFunctionKeyword, KindFunctionType, KindGetAccessor, KindGetKeyword, KindGreaterThanToken, KindImplementsKeyword, KindImportKeyword, KindInKeyword, KindInferKeyword, KindIntrinsicKeyword, KindIsKeyword, KindKeyOfKeyword, KindLessThanToken, KindMinusToken, KindNeverKeyword, KindNewKeyword, KindNullKeyword, KindNumberKeyword, KindNumericLiteral, KindNoSubstitutionTemplateLiteral, KindObjectKeyword, KindOpenBraceToken, KindOpenBracketToken, KindOpenParenToken, KindPlusToken, KindQuestionToken, KindQuestionQuestionToken, KindReadonlyKeyword, KindSetAccessor, KindSetKeyword, KindStringKeyword, KindStringLiteral, KindSymbolKeyword, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword, KindTypeKeyword, KindTypeOfKeyword, KindUndefinedKeyword, KindUniqueKeyword, KindUnknownKeyword, KindVoidKeyword, KindWithKeyword } from "../../ast/generated/kinds.js";
+import { KindAbstractKeyword, KindAmpersandToken, KindAnyKeyword, KindAssertKeyword, KindAssertsKeyword, KindAsKeyword, KindAsteriskEqualsToken, KindAsteriskToken, KindBarToken, KindBigIntKeyword, KindBigIntLiteral, KindBooleanKeyword, KindCallSignature, KindCloseBraceToken, KindCloseBracketToken, KindCloseParenToken, KindColonToken, KindCommaToken, KindConstructSignature, KindDotToken, KindDotDotDotToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationToken, KindExtendsKeyword, KindFalseKeyword, KindFunctionKeyword, KindFunctionType, KindGetAccessor, KindGetKeyword, KindGreaterThanToken, KindImplementsKeyword, KindImportKeyword, KindInKeyword, KindInferKeyword, KindIntrinsicKeyword, KindIsKeyword, KindKeyOfKeyword, KindLessThanLessThanToken, KindLessThanToken, KindMinusToken, KindNeverKeyword, KindNewKeyword, KindNullKeyword, KindNumberKeyword, KindNumericLiteral, KindNoSubstitutionTemplateLiteral, KindObjectKeyword, KindOpenBraceToken, KindOpenBracketToken, KindOpenParenToken, KindPlusToken, KindQuestionToken, KindQuestionQuestionToken, KindReadonlyKeyword, KindSetAccessor, KindSetKeyword, KindStringKeyword, KindStringLiteral, KindSymbolKeyword, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword, KindTypeKeyword, KindTypeOfKeyword, KindUndefinedKeyword, KindUniqueKeyword, KindUnknownKeyword, KindVoidKeyword, KindWithKeyword } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsDisallowConditionalTypesContext, NodeFlagsJavaScriptFile, NodeFlagsPossiblyContainsDynamicImport, NodeFlagsTypeExcludesFlags } from "../../ast/generated/flags.js";
 import { IsExpressionWithTypeArguments, IsJSDocNullableType, IsModifierKind } from "../../ast/generated/predicates.js";
@@ -1837,8 +1837,14 @@ export function Parser_parseTypeAssertion(receiver: GoPtr<Parser>): GoPtr<Node> 
  */
 export function Parser_tryParseTypeArgumentsInExpression(receiver: GoPtr<Parser>): GoPtr<NodeList> {
   // TypeArguments must not be parsed in JavaScript files to avoid ambiguity with binary operators.
+  // Check the cheap preconditions before saving parser state: unless the current token is `<`
+  // (or `<<`, which reScanLessThanToken splits), speculative parsing cannot succeed.
+  if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) !== 0 ||
+    (receiver!.token !== KindLessThanToken && receiver!.token !== KindLessThanLessThanToken)) {
+    return undefined;
+  }
   const state = Parser_mark(receiver);
-  if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) === 0 && Parser_reScanLessThanToken(receiver) === KindLessThanToken) {
+  if (Parser_reScanLessThanToken(receiver) === KindLessThanToken) {
     Parser_nextToken(receiver);
     const typeArguments = Parser_parseDelimitedList(receiver, PCTypeArguments, Parser_parseType);
     // If it doesn't have the closing `>` then it's definitely not an type argument list.

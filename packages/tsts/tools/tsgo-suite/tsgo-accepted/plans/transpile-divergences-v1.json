@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "planName": "transpile-divergences-v1",
+  "entries": [
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationRestParameters.ts",
+      "configuration": null,
+      "artifact": "declarationRestParameters.d.ts",
+      "divergences": [
+        {
+          "section": "v2.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationRestParameters.d.ts"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationFunctionDeclarations.ts",
+      "configuration": null,
+      "artifact": "declarationFunctionDeclarations.d.ts",
+      "divergences": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics."
+        },
+        {
+          "section": "fnDecl.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationFunctionDeclarations.d.ts",
+        "declarationFunctionDeclarations.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationComputedPropertyNames.ts",
+      "configuration": null,
+      "artifact": "declarationComputedPropertyNames.d.ts",
+      "divergences": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics."
+        },
+        {
+          "section": "declarationComputedPropertyNames.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationComputedPropertyNames.d.ts"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationCrossFileInferences.ts",
+      "configuration": null,
+      "artifact": "declarationCrossFileInferences.d.ts",
+      "divergences": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics."
+        },
+        {
+          "section": "consumes.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        },
+        {
+          "section": "exposes.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationCrossFileInferences.d.ts",
+        "declarationCrossFileInferences.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationAsyncAndGeneratorFunctions.ts",
+      "configuration": null,
+      "artifact": "declarationAsyncAndGeneratorFunctions.d.ts",
+      "divergences": [
+        {
+          "section": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationAsyncAndGeneratorFunctions.d.ts",
+        "declarationAsyncAndGeneratorFunctions.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationSingleFileHasErrors.ts",
+      "configuration": null,
+      "artifact": "declarationSingleFileHasErrors.d.ts",
+      "divergences": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "reason": "Pinned TS-Go reports both the isolated-declaration diagnostic and the parser diagnostic for this malformed source, while the Strada transpile baseline records only the isolated-declaration diagnostic."
+        },
+        {
+          "section": "declarationSingleFileHasErrors.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationSingleFileHasErrors.d.ts",
+        "declarationSingleFileHasErrors.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationSingleFileHasErrorsReported.ts",
+      "configuration": null,
+      "artifact": "declarationSingleFileHasErrorsReported.d.ts",
+      "divergences": [
+        {
+          "section": "declarationSingleFileHasErrorsReported.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationSingleFileHasErrorsReported.d.ts",
+        "declarationSingleFileHasErrorsReported.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationNotInScopeTypes.ts",
+      "configuration": null,
+      "artifact": "declarationNotInScopeTypes.d.ts",
+      "divergences": [
+        {
+          "section": "variables.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationNotInScopeTypes.d.ts",
+        "declarationNotInScopeTypes.js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationEmitPartialNodeReuse.ts",
+      "configuration": null,
+      "artifact": "declarationEmitPartialNodeReuse.d.ts",
+      "divergences": [
+        {
+          "section": "b.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        },
+        {
+          "section": "c.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationEmitPartialNodeReuse.d.ts"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationPartialNodeReuseTypeOf.ts",
+      "configuration": null,
+      "artifact": "declarationPartialNodeReuseTypeOf.d.ts",
+      "divergences": [
+        {
+          "section": "b.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        },
+        {
+          "section": "c.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationPartialNodeReuseTypeOf.d.ts"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationBasicSyntax.ts",
+      "configuration": "declarationmap=false",
+      "artifact": "declarationBasicSyntax(declarationMap=false).d.ts",
+      "divergences": [
+        {
+          "section": "class.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationBasicSyntax(declarationMap=false).d.ts",
+        "declarationBasicSyntax(declarationMap=false).js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationBasicSyntax.ts",
+      "configuration": "declarationmap=true",
+      "artifact": "declarationBasicSyntax(declarationMap=true).d.ts",
+      "divergences": [
+        {
+          "section": "class.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        },
+        {
+          "section": "class.d.ts.map",
+          "occurrence": 1,
+          "action": "absent",
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file."
+        }
+      ],
+      "referenceArtifacts": [
+        "declarationBasicSyntax(declarationMap=true).d.ts",
+        "declarationBasicSyntax(declarationMap=true).js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/jsWithSourceMapBasic.ts",
+      "configuration": "sourcemap=true",
+      "artifact": "jsWithSourceMapBasic(sourceMap=true).js",
+      "divergences": [
+        {
+          "section": "variables.js.map",
+          "occurrence": 1,
+          "action": "content",
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline."
+        },
+        {
+          "section": "namespace.js.map",
+          "occurrence": 1,
+          "action": "content",
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline."
+        }
+      ],
+      "referenceArtifacts": [
+        "jsWithSourceMapBasic(sourceMap=true).js"
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/jsWithInlineSourceMapBasic.ts",
+      "configuration": "inlinesourcemap=true",
+      "artifact": "jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "divergences": [
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "content",
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline."
+        },
+        {
+          "section": "namespace.js",
+          "occurrence": 1,
+          "action": "content",
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline."
+        }
+      ],
+      "referenceArtifacts": [
+        "jsWithInlineSourceMapBasic(inlineSourceMap=true).js"
+      ]
+    }
+  ]
+}

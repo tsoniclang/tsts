@@ -572,11 +572,11 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
  * 	return flow.Antecedents
  * }
  */
-export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoPtr<GoSlice<GoPtr<FlowReduceLabelData>>>): GoPtr<FlowList> {
-  let i = reduceLabels?.length ?? 0;
+export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoSlice<GoPtr<FlowReduceLabelData>>): GoPtr<FlowList> {
+  let i = reduceLabels.length;
   while (i !== 0) {
     i--;
-    const data = reduceLabels![i];
+    const data = reduceLabels[i];
     if (data!.Target === flow) {
       return data!.Antecedents;
     }

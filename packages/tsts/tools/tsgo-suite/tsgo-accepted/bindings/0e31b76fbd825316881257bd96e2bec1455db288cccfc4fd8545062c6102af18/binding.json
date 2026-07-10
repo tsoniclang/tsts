@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "plan": {
+    "path": "plans/transpile-divergences-v1.json",
+    "bytes": 4434,
+    "sha256": "2749c7555bd146534290824a5007fc67ea851915c3dcdca2ecb5818a16f21a5f",
+    "planFingerprint": "76001b544c86c03a77d186504ee8c9bf643a4771be1c6d73e6c5631f5c54b4b0"
+  },
+  "sourcePin": {
+    "path": "packages/tsts/schema/tsgo/source-pin.json",
+    "sha256": "07ef345f2c4addfa9fc12caa70285dfbae35a7cf6a3006c1316d7e1ae2d962ff",
+    "revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+    "tree": "ab848098ac8a45086c49886aa77886b199da92a6",
+    "objectFormat": "sha1",
+    "nestedSources": [
+      {
+        "name": "TypeScript",
+        "path": "_submodules/TypeScript",
+        "revision": "4d4f005c8541e0255a9d8791205fdce326e462bc",
+        "tree": "52d822feb4a8e997f866296b960402e97b0ed49b",
+        "objectFormat": "sha1"
+      }
+    ]
+  },
+  "capture": {
+    "captureId": "5406a2fa03911a0346b39830f0c194d3ccb642a396ef92f3dd59be726599c62b",
+    "path": "captures/5406a2fa03911a0346b39830f0c194d3ccb642a396ef92f3dd59be726599c62b",
+    "evidenceDigest": "e722cc749ebc30a3c915bd4f0d051f36ec2cd61540717b44b3621a5d692b328f"
+  },
+  "overlays": [
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationRestParameters.d.ts",
+      "path": "overlays/typescript/transpile/declarationRestParameters.d.ts",
+      "sha256": "a41d97ae7c8d2320a2584fc3e0c61d94264e9c3053b48d1b0db9f8fce5a0cf2f",
+      "sections": [
+        {
+          "name": "v2.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationFunctionDeclarations.d.ts",
+      "path": "overlays/typescript/transpile/declarationFunctionDeclarations.d.ts",
+      "sha256": "a4bbcfb1e21b8e4f3cb11b811f5e5664afac6e79c647e7e483cdfb046e7e217f",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "kind": "content",
+          "sha256": "98b77a31a9ec685464eecaeb9dd3927d3d16614c69b38e774ca352e9893a16b9"
+        },
+        {
+          "name": "fnDecl.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationComputedPropertyNames.d.ts",
+      "path": "overlays/typescript/transpile/declarationComputedPropertyNames.d.ts",
+      "sha256": "4d534acea7a7e2a115c4188335606f79d16f37a92ff33b5cbb931e24d5a8eda7",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "kind": "content",
+          "sha256": "c175701c230ebe39dd3b0899806d0a36260d628e5b38bdd8c9a50d94d7505b47"
+        },
+        {
+          "name": "declarationComputedPropertyNames.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationCrossFileInferences.d.ts",
+      "path": "overlays/typescript/transpile/declarationCrossFileInferences.d.ts",
+      "sha256": "999c89537fefe8f91f4ea2f0b125ca422a14f6ec5aaf47358c8392ebacb05779",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "kind": "content",
+          "sha256": "8baba0358a6bbfa5311f6069dac136827df523adfc67e9967e07cf5b6bb1d6be"
+        },
+        {
+          "name": "consumes.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "exposes.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationAsyncAndGeneratorFunctions.d.ts",
+      "path": "overlays/typescript/transpile/declarationAsyncAndGeneratorFunctions.d.ts",
+      "sha256": "130845bfe07c53b01181194a22106bd7764323e0a7e47bd031a57009876d4eb3",
+      "sections": [
+        {
+          "name": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationSingleFileHasErrors.d.ts",
+      "path": "overlays/typescript/transpile/declarationSingleFileHasErrors.d.ts",
+      "sha256": "68ee99d2dc4bf95f1933545b5369ec122d367fe3956657b970984ebc0b5ffbc8",
+      "sections": [
+        {
+          "name": "declarationSingleFileHasErrors.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationSingleFileHasErrorsReported.d.ts",
+      "path": "overlays/typescript/transpile/declarationSingleFileHasErrorsReported.d.ts",
+      "sha256": "bb477cdc522c30d1192ef9add12b3d8153933cc23ac4f01ae24c6a1c7edf1380",
+      "sections": [
+        {
+          "name": "declarationSingleFileHasErrorsReported.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationNotInScopeTypes.d.ts",
+      "path": "overlays/typescript/transpile/declarationNotInScopeTypes.d.ts",
+      "sha256": "4cf826a5c06abc0e83d464d61650386488618083df18fadeda5d8de929220f50",
+      "sections": [
+        {
+          "name": "variables.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationEmitPartialNodeReuse.d.ts",
+      "path": "overlays/typescript/transpile/declarationEmitPartialNodeReuse.d.ts",
+      "sha256": "0efd8bf048eda0c4b558fdce75f6322cb26c984a6f64e3e35b7f95c83d0424dd",
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "c.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationPartialNodeReuseTypeOf.d.ts",
+      "path": "overlays/typescript/transpile/declarationPartialNodeReuseTypeOf.d.ts",
+      "sha256": "7296959f60b761864db100357eb8338dce46203c332d1ea74fe3fa2a6e4cf682",
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "c.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationBasicSyntax(declarationMap=false).d.ts",
+      "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=false).d.ts",
+      "sha256": "afaf57708582d9e9838febf1587dce5b4a0f92c2ef3d14edaa9e2c3248a25600",
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationBasicSyntax(declarationMap=true).d.ts",
+      "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=true).d.ts",
+      "sha256": "ab62bf3d0bc8557459987c8cf1f717a5b0aa4c5ff0f73c3a7292fcd4ed715801",
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "class.d.ts.map",
+          "kind": "absent",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "jsWithSourceMapBasic(sourceMap=true).js",
+      "path": "overlays/typescript/transpile/jsWithSourceMapBasic(sourceMap=true).js",
+      "sha256": "f170c245f7c0b26adfa0dfbc5199f0fc650ba0dc70e4a6d0b8cf4d2eb7e0dbe6",
+      "sections": [
+        {
+          "name": "variables.js.map",
+          "kind": "content",
+          "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae"
+        },
+        {
+          "name": "namespace.js.map",
+          "kind": "content",
+          "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "path": "overlays/typescript/transpile/jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "sha256": "0556b17a2c43146679462617aad9dddb2c5c6cc708b60e8134157f5cfbb1306f",
+      "sections": [
+        {
+          "name": "variables.js",
+          "kind": "content",
+          "sha256": "80a17bbe39b5cda5994057f4ebb329cc92868ce037e4004453d3f0721f0eb649"
+        },
+        {
+          "name": "namespace.js",
+          "kind": "content",
+          "sha256": "6e7cd17ae75c814a794de5de538e6d8df6ab84b84f26186c576d06841d32dee4"
+        }
+      ]
+    }
+  ],
+  "bindingId": "0e31b76fbd825316881257bd96e2bec1455db288cccfc4fd8545062c6102af18"
+}

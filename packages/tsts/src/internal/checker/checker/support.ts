@@ -148,7 +148,7 @@ import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDo
 import { Checker_checkConstructorDeclaration, Checker_checkParameter, Checker_checkPropertySignature, Checker_checkSignatureDeclaration, Checker_checkThisType, Checker_checkTypeParameter, Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker, Checker_isValidConstAssertionArgument } from "./signatures.js";
 import { Checker_checkAccessorDeclaration, Checker_checkClassDeclaration, Checker_checkClassStaticBlockDeclaration, Checker_checkEnumDeclaration, Checker_checkEnumMember, Checker_checkExportDeclaration, Checker_checkFunctionDeclaration, Checker_checkImportDeclaration, Checker_checkImportEqualsDeclaration, Checker_checkImportType, Checker_checkIndexedAccessType, Checker_checkInterfaceDeclaration, Checker_checkMethodDeclaration, Checker_checkMissingDeclaration, Checker_checkModuleDeclaration, Checker_checkNamedTupleMember, Checker_checkPropertyDeclaration, Checker_checkTypeAliasDeclaration, Checker_checkVariableDeclaration, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_createTypeFromGenericGlobalType, Checker_evaluateEnumMember, Checker_getEnumMemberValue, Checker_getGlobalStrictFunctionType, Checker_getGlobalSymbol, Checker_getGlobalType, Checker_getGlobalTypesResolver, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isBlockScopedNameDeclaredBeforeUse, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_mergeSymbolTable, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_getSymbolOfDeclaration, Checker_resolveExportByName } from "./symbols.js";
 import { Checker_checkBlock, Checker_checkBreakOrContinueStatement, Checker_checkDoStatement, Checker_checkExpressionEx, Checker_checkExpressionStatement, Checker_checkForInStatement, Checker_checkForOfStatement, Checker_checkForStatement, Checker_checkIfStatement, Checker_checkLabeledStatement, Checker_checkNodeDeferred, Checker_checkReturnStatement, Checker_checkSwitchStatement, Checker_checkThrowStatement, Checker_checkTryStatement, Checker_checkVariableStatement, Checker_checkWhileStatement, Checker_checkWithStatement, Checker_reportUnusedVariable } from "./syntax-checking.js";
-import { createDiagnosticForNode } from "./state.js";
+import { createDiagnosticForNode, hashWrite64 } from "./state.js";
 import type { CacheHashKey, Checker, CheckMode, IterationTypesResolver, keyBuilder, UnusedKind } from "./state.js";
 import type { AssertionLinks } from "../types.js";
 import { Checker_checkTypePredicate } from "./flow-narrowing.js";
@@ -1475,13 +1475,7 @@ export function keyBuilder_writeString(receiver: GoPtr<keyBuilder>, s: string): 
  * }
  */
 export function keyBuilder_writeInt(receiver: GoPtr<keyBuilder>, value: int): void {
-  let v = BigInt(globalThis.Math.trunc(value)) & ((1n << 64n) - 1n);
-  const bytes: GoSlice<byte> = [];
-  for (let index = 0; index < 8; index++) {
-    bytes.push(Number(v & 0xffn) as byte);
-    v >>= 8n;
-  }
-  receiver!.h.Write(bytes);
+  hashWrite64(receiver!.h, value);
 }
 
 /**

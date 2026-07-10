@@ -1,14 +1,14 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../../go/compat.js";
-import type { Writer } from "../../../go/io.js";
+import { GoChanClose } from "../../../go/compat.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
 import type { Bool } from "../../../go/sync/atomic.js";
 import { Time as TimeClass } from "../../../go/time.js";
-import type { Time } from "../../../go/time.js";
+import type { Duration, Time } from "../../../go/time.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { Set_Has, Set_Add, NewSetFromItems } from "../../collections/set.js";
+import { Set_Has, Set_Add, NewSetFromItems, NewSetWithSizeHint } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import { SyncMap_Load, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -39,7 +39,7 @@ import { EmitAndReportStatistics, GetTraceWithWriterFromSys } from "../tsc/emit.
 import { QuietDiagnosticsReporter } from "../tsc/diagnostics.js";
 import { compilerHost_as_compiler_CompilerHost } from "./compilerHost.js";
 import type { compilerHost } from "./compilerHost.js";
-import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_storeMTimeFromOldCache } from "./host.js";
+import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_as_incremental_Host, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_storeMTimeFromOldCache } from "./host.js";
 import type { BuildInfo } from "../incremental/buildInfo.js";
 import type { Program } from "../incremental/program.js";
 import { ExitStatusDiagnosticsPresent_OutputsSkipped, ExitStatusDiagnosticsPresent_OutputsGenerated } from "../tsc/compile.js";
@@ -144,6 +144,7 @@ export interface taskResult {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4","bodyHash":"f811c0baa1e50e3c578edfa12dc396899bbb7d701f49525b2987afe8def36a8e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A build task is allocated before graph wiring creates its done and reportDone channels; those nil channel lifecycle states are observable until setup and TypeScript represents only those two Go nil channels with undefined.","goSignature":"interface{buildInfoEntry:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::buildInfoEntry>;buildInfoEntryMu:packages/tsts/src/go/sync.ts::Mutex;config:string;dirty:packages/tsts/src/go/scalars.ts::bool;done:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;downStream:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>>;downStreamUpdateMu:packages/tsts/src/go/sync.ts::Mutex;errors:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;isInitialCycle:packages/tsts/src/go/scalars.ts::bool;packageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;pending:packages/tsts/src/go/sync/atomic.ts::Bool;prevReporter:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>;reportDone:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;resolved:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;result:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::taskResult>;status:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/uptodatestatus.ts::upToDateStatus>;upStream:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::upstreamTask>>}","tsSignature":"interface{buildInfoEntry:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::buildInfoEntry>;buildInfoEntryMu:packages/tsts/src/go/sync.ts::Mutex;config:string;dirty:packages/tsts/src/go/scalars.ts::bool;done:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">|undefined;downStream:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>>;downStreamUpdateMu:packages/tsts/src/go/sync.ts::Mutex;errors:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;isInitialCycle:packages/tsts/src/go/scalars.ts::bool;packageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;pending:packages/tsts/src/go/sync/atomic.ts::Bool;prevReporter:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>;reportDone:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">|undefined;resolved:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;result:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::taskResult>;status:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/uptodatestatus.ts::upToDateStatus>;upStream:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::upstreamTask>>}"}
  *
  * Go source:
  * BuildTask struct {
@@ -176,10 +177,10 @@ export interface BuildTask {
   upStream: GoSlice<GoPtr<upstreamTask>>;
   downStream: GoSlice<GoPtr<BuildTask>>;
   status: GoPtr<upToDateStatus>;
-  done: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
+  done: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional"> | undefined;
   result: GoPtr<taskResult>;
   prevReporter: GoPtr<BuildTask>;
-  reportDone: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
+  reportDone: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional"> | undefined;
   buildInfoEntry: GoPtr<buildInfoEntry>;
   buildInfoEntryMu: Mutex;
   packageJsons: GoSlice<string>;
@@ -192,6 +193,7 @@ export interface BuildTask {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.waitOnUpstream","kind":"method","status":"implemented","sigHash":"701bc79680eb4398d9fb875fb6f8b4788558d34039a39485776dfdc62ddcea1b","bodyHash":"b98ea9aaa1e9fabc901aa80d9d70fcf8ce23595b82fc5a78f5f5b5acdc311060"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"Orchestrator.rangeTask deliberately executes the topologically ordered build list synchronously in JavaScript, so every upstream task has closed done before this method is reached; the corresponding blocking receives are order-proven no-ops."}
  *
  * Go source:
  * func (t *BuildTask) waitOnUpstream() {
@@ -220,7 +222,7 @@ export function BuildTask_waitOnUpstream(receiver: GoPtr<BuildTask>): void {
 export function BuildTask_unblockDownstream(receiver: GoPtr<BuildTask>): void {
   receiver!.pending.Store(false as bool);
   receiver!.isInitialCycle = false;
-  // close(t.done) — no-op in single-threaded
+  GoChanClose(receiver!.done!);
 }
 
 /**
@@ -239,6 +241,7 @@ export function BuildTask_reportDiagnostic(receiver: GoPtr<BuildTask>, err: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.report","kind":"method","status":"implemented","sigHash":"ab9bdba31c07d18ba0147728b0daec51d0f8f56f2c041513ccbb4fc0d9482d8d","bodyHash":"e12f112beda55afe0aeb7526b065f2f4fa6f8ede44d65b9eb70582ba03b33454"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"Orchestrator.rangeTask invokes build and report synchronously in deterministic order, so prevReporter has already closed reportDone before the next report begins; the Go ordering receive is therefore an order-proven no-op in JavaScript."}
  *
  * Go source:
  * func (t *BuildTask) report(orchestrator *Orchestrator, configPath tspath.Path, buildResult *orchestratorResult) {
@@ -299,7 +302,7 @@ export function BuildTask_report(receiver: GoPtr<BuildTask>, orchestrator: GoPtr
   }
   buildResult!.filesToDelete = [...buildResult!.filesToDelete, ...receiver!.result!.filesToDelete];
   receiver!.result = undefined;
-  // close(t.reportDone) — no-op in single-threaded
+  GoChanClose(receiver!.reportDone!);
 }
 
 /**
@@ -517,27 +520,24 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
  * }
  */
 export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): void {
-  type DurationOps = number & { Sub(t: unknown): number };
-  type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
-
   receiver!.errors = [];
   if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
     receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
   }
 
   const compileTimes: import("../tsc/compile.js").CompileTimes = {
-    ConfigTime: 0 as import("../../../go/time.js").Duration,
-    ParseTime: 0 as import("../../../go/time.js").Duration,
-    bindTime: 0 as import("../../../go/time.js").Duration,
-    checkTime: 0 as import("../../../go/time.js").Duration,
-    totalTime: 0 as import("../../../go/time.js").Duration,
-    emitTime: 0 as import("../../../go/time.js").Duration,
-    BuildInfoReadTime: 0 as import("../../../go/time.js").Duration,
-    ChangesComputeTime: 0 as import("../../../go/time.js").Duration,
+    ConfigTime: 0,
+    ParseTime: 0,
+    bindTime: 0,
+    checkTime: 0,
+    totalTime: 0,
+    emitTime: 0,
+    BuildInfoReadTime: 0,
+    ChangesComputeTime: 0,
   };
 
   const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
-  compileTimes.ConfigTime = configTime as import("../../../go/time.js").Duration;
+  compileTimes.ConfigTime = configTime ?? (0 as Duration);
 
   const buildInfoReadStart = orchestrator!.opts.Sys.Now();
   let oldProgram: GoPtr<Program> = undefined;
@@ -548,26 +548,26 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
       host_as_compiler_CompilerHost(orchestrator!.host),
     );
   }
-  compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
+  compileTimes.BuildInfoReadTime = orchestrator!.opts.Sys.Now().Sub(buildInfoReadStart);
 
   const parseStart = orchestrator!.opts.Sys.Now();
   const trace = GetTraceWithWriterFromSys(
-    receiver!.result!.builder as unknown as Writer,
+    receiver!.result!.builder,
     ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
     orchestrator!.opts.Testing,
   );
   const buildCompilerHost = compilerHost_as_compiler_CompilerHost({ host: orchestrator!.host, trace } as compilerHost);
-  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
-  compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
+  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost });
+  compileTimes.ParseTime = orchestrator!.opts.Sys.Now().Sub(parseStart);
 
   const changesComputeStart = orchestrator!.opts.Sys.Now();
   receiver!.result!.program = incremental_NewProgram(
     program,
     oldProgram,
-    orchestrator!.host as unknown as Parameters<typeof incremental_NewProgram>[2],
+    host_as_incremental_Host(orchestrator!.host),
     (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool,
   );
-  compileTimes.ChangesComputeTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(changesComputeStart) as import("../../../go/time.js").Duration;
+  compileTimes.ChangesComputeTime = orchestrator!.opts.Sys.Now().Sub(changesComputeStart);
 
   const [result, statistics] = EmitAndReportStatistics({
     Sys: orchestrator!.opts.Sys,
@@ -576,7 +576,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     Config: receiver!.resolved,
     ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
     ReportErrorSummary: QuietDiagnosticsReporter,
-    Writer: receiver!.result!.builder as unknown as Writer,
+    Writer: receiver!.result!.builder,
     WriteFile: (fileName, text, data) => BuildTask_writeFile(receiver, orchestrator, fileName, text, data),
     CompileTimes: compileTimes,
     Testing: orchestrator!.opts.Testing,
@@ -585,7 +585,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   });
   receiver!.result!.exitStatus = result.Status;
   receiver!.result!.statistics = statistics;
-  receiver!.packageJsons = Program_PackageJsonLookupPaths(receiver!.result!.program);
+  receiver!.packageJsons = Program_PackageJsonLookupPaths(receiver!.result!.program) ?? [];
 
   if ((!Tristate_IsTrue(compiler_Program_Options(program)!.NoEmitOnError) || result.Diagnostics.length === 0) &&
     (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
@@ -1027,18 +1027,16 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   let inputTextUnchanged = false;
   let oldestOutputFileAndTime: fileAndTime = { file: buildInfoPath, time: buildInfoTime };
   let newestInputFileAndTime: fileAndTime = { file: "", time: new TimeClass() };
-  const seenRoots: Set<Path> = {} as Set<Path>;
+  const seenRoots = NewSetWithSizeHint<Path>(0)!;
   let buildInfoRootInfoReader: GoPtr<BuildInfoRootInfoReader> = undefined;
-
-  type TimeWithOps = Time & { IsZero(): bool; After(t: Time): bool; Before(t: Time): bool };
 
   for (const inputFile of ParsedCommandLine_FileNames(receiver!.resolved)) {
     const inputTime = host_GetMTime(orchestrator!.host, inputFile);
-    if ((inputTime as TimeWithOps).IsZero()) {
+    if (inputTime.IsZero()) {
       return { kind: upToDateStatusTypeInputFileMissing, data: inputFile };
     }
     const inputPath = Orchestrator_toPath(orchestrator, inputFile);
-    if ((inputTime as TimeWithOps).After(oldestOutputFileAndTime.time)) {
+    if (inputTime.After(oldestOutputFileAndTime.time)) {
       let version = "";
       let currentVersion = "";
       if (BuildInfo_IsIncremental(buildInfo)) {
@@ -1062,7 +1060,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
         return { kind: upToDateStatusTypeInputFileNewer, data: { input: inputFile, output: buildInfoPath } as inputOutputName };
       }
     }
-    if ((inputTime as TimeWithOps).After(newestInputFileAndTime.time)) {
+    if (inputTime.After(newestInputFileAndTime.time)) {
       newestInputFileAndTime = { file: inputFile, time: inputTime };
     }
     Set_Add(seenRoots, inputPath);
@@ -1078,7 +1076,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   }
 
   if (BuildInfo_IsIncremental(buildInfo)) {
-    const resolvedRoots: Set<Path> = {} as Set<Path>;
+    const resolvedRoots = NewSetWithSizeHint<Path>(0)!;
     for (const root of slicesCollect(BuildInfoRootInfoReader_Roots(buildInfoRootInfoReader))) {
       const [, resolved] = BuildInfoRootInfoReader_GetBuildInfoFileInfo(buildInfoRootInfoReader, root);
       if (resolved !== "") {
@@ -1104,7 +1102,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
       if (Set_Has(seenRoots, inputPath) || Set_Has(resolvedRoots, inputPath)) {
         continue;
       }
-      const inputTime = host_GetMTime(orchestrator!.host, inputFile) as TimeWithOps;
+      const inputTime = host_GetMTime(orchestrator!.host, inputFile);
       if (inputTime.IsZero()) {
         return { kind: upToDateStatusTypeInputFileMissing, data: inputFile };
       }
@@ -1131,7 +1129,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
 
   if (!CompilerOptions_IsIncremental(resolvedCompilerOptions)) {
     for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
-      const outputTime = host_GetMTime(orchestrator!.host, outputFile) as TimeWithOps;
+      const outputTime = host_GetMTime(orchestrator!.host, outputFile);
       if (outputTime.IsZero()) {
         return { kind: upToDateStatusTypeOutputMissing, data: outputFile };
       }
@@ -1150,13 +1148,13 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
       continue;
     }
     const refInputOutputFileAndTime = upToDateStatus_inputOutputFileAndTime(upstream!.task!.status);
-    if (refInputOutputFileAndTime !== undefined && !(refInputOutputFileAndTime.input.time as TimeWithOps).IsZero() && (refInputOutputFileAndTime.input.time as TimeWithOps).Before(oldestOutputFileAndTime.time)) {
+    if (refInputOutputFileAndTime !== undefined && !refInputOutputFileAndTime.input.time.IsZero() && refInputOutputFileAndTime.input.time.Before(oldestOutputFileAndTime.time)) {
       continue;
     }
     if (BuildTask_hasConflictingBuildInfo(receiver, orchestrator, upstream!.task)) {
       return { kind: upToDateStatusTypeInputFileNewer, data: { input: ParsedCommandLine_ProjectReferences(receiver!.resolved)![upstream!.refIndex]!.Path, output: oldestOutputFileAndTime.file } as inputOutputName };
     }
-    const newestDtsChangeTime = BuildTask_getLatestChangedDtsMTime(upstream!.task, orchestrator) as TimeWithOps;
+    const newestDtsChangeTime = BuildTask_getLatestChangedDtsMTime(upstream!.task, orchestrator);
     if (!newestDtsChangeTime.IsZero() && newestDtsChangeTime.Before(oldestOutputFileAndTime.time)) {
       refDtsUnchanged = true;
       continue;
@@ -1165,7 +1163,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   }
 
   const checkInputFileTime = (inputFile: string): GoPtr<upToDateStatus> => {
-    const inputTime = host_GetMTime(orchestrator!.host, inputFile) as TimeWithOps;
+    const inputTime = host_GetMTime(orchestrator!.host, inputFile);
     if (inputTime.After(oldestOutputFileAndTime.time)) {
       return { kind: upToDateStatusTypeInputFileNewer, data: { input: inputFile, output: oldestOutputFileAndTime.file } as inputOutputName };
     }
@@ -1183,7 +1181,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
     }
   }
   for (const packageJson of slicesCollect(BuildInfo_GetPackageJsons(buildInfo, getBuildInfoDirectory()))) {
-    const packageJsonTime = host_GetMTime(orchestrator!.host, packageJson) as TimeWithOps;
+    const packageJsonTime = host_GetMTime(orchestrator!.host, packageJson);
     if (packageJsonTime.IsZero()) {
       return { kind: upToDateStatusTypeInputFileMissing, data: packageJson };
     }
@@ -1192,7 +1190,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
     }
   }
   for (const packageJson of slicesCollect(BuildInfo_GetMissingPackageJsons(buildInfo, getBuildInfoDirectory()))) {
-    if (!(host_GetMTime(orchestrator!.host, packageJson) as TimeWithOps).IsZero()) {
+    if (!host_GetMTime(orchestrator!.host, packageJson).IsZero()) {
       return { kind: upToDateStatusTypeInputFileNewer, data: { input: packageJson, output: oldestOutputFileAndTime.file } as inputOutputName };
     }
   }
@@ -1601,7 +1599,7 @@ export function BuildTask_cleanProjectOutput(receiver: GoPtr<BuildTask>, orchest
   if (Set_Has(inputs, outputPath)) {
     return;
   }
-  const fs = host_FS_fn(orchestrator!.host) as unknown as { FileExists(f: string): bool; Remove(f: string): unknown };
+  const fs = host_FS_fn(orchestrator!.host);
   if (fs.FileExists(outputFile)) {
     if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Dry)) {
       const err = fs.Remove(outputFile);
@@ -1698,7 +1696,7 @@ export function BuildTask_loadOrStoreBuildInfo(receiver: GoPtr<BuildTask>, orche
     receiver!.buildInfoEntryMu.Unlock();
     return [receiver!.buildInfoEntry.buildInfo, receiver!.buildInfoEntry.mTime];
   }
-  const reader = NewBuildInfoReader(orchestrator!.host as unknown as Parameters<typeof NewBuildInfoReader>[0]);
+  const reader = NewBuildInfoReader(host_as_compiler_CompilerHost(orchestrator!.host));
   receiver!.buildInfoEntry = {
     buildInfo: reader.ReadBuildInfo(receiver!.resolved),
     path,

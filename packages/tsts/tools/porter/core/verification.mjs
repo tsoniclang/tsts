@@ -55,6 +55,13 @@ export function collectVerifyFailures(status, options) {
       .join(", ");
     failures.push(`${status.signatureCheck.mismatches} signature/type mismatches${byKind ? ` (${byKind})` : ""}`);
   }
+  if ((status.jsonTagCheck?.mismatches ?? 0) > 0) {
+    const byKind = Object.entries(status.jsonTagCheck.byKind ?? {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([kind, count]) => `${kind}=${count}`)
+      .join(", ");
+    failures.push(`${status.jsonTagCheck.mismatches} Go struct JSON-tag mismatches${byKind ? ` (${byKind})` : ""}`);
+  }
   if ((status.counts.mechanicalPortRisks ?? 0) > 0) {
     const examples = (status.mechanicalRisks ?? []).slice(0, 3).map((risk) => `${risk.name}:${risk.kind}`).join(", ");
     failures.push(`${status.counts.mechanicalPortRisks} mechanical port risks${examples ? ` (${examples})` : ""}`);

@@ -68,6 +68,9 @@ export const TSTS_PROFILE = {
   // Everything else under global::/name::/unresolved:: remains a hard
   // unresolved-ref mismatch.
   allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
+  jsonTags: {
+    contractModules: ["packages/tsts/src/internal/json/json.ts"],
+  },
   // External Go interface aliases whose zero value is nil and therefore may be
   // represented as GoPtr<Alias> in the TypeScript port.
   externalInterfaceMembers: {

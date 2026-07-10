@@ -32,6 +32,53 @@
   "diagnosticsGeneratedStatusOut": ".temp/porter/diagnostics-generated.json",
   "unitPolicies": [
     {
+      "id": "github.com/microsoft/typescript-go::cmd/tsgo/enablevtprocessing_windows.go::func::init",
+      "category": "host-native",
+      "reason": "Node owns Windows terminal-mode initialization; the TypeScript host does not call Win32 console APIs directly."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/eintr_unix.go::func::ignoringEINTR",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary calls fs.realpathSync.native and therefore has no raw syscall loop to retry."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_darwin.go::varGroup::hasFGetPath",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Darwin F_GETPATH probe with fs.realpathSync.native."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_darwin.go::func::fcntlGetPath",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Darwin fcntl helper with fs.realpathSync.native."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_darwin.go::func::fcntlGetPathPtr",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Darwin pointer syscall helper with fs.realpathSync.native."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::constGroup::_procSelfFD",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Linux procfs file-descriptor path with fs.realpathSync.native."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::varGroup::hasProcSelfFD",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Linux procfs availability probe with fs.realpathSync.native."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/nativepath/realpath_windows.go::func::openMetadata",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The Node nativepath boundary replaces the Win32 metadata handle helper with fs.realpathSync.native."
+    },
+    {
       "id": "github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI",
       "category": "out-of-scope",
       "active": false,
@@ -211,6 +258,16 @@
       "reason": "The LSP command entrypoint must not exist in the active standalone compiler source tree."
     },
     {
+      "match": "packages/tsts/src/cmd/tsgo/isprocessalive_*.ts",
+      "category": "forbidden-source",
+      "reason": "Process-liveness helpers exist only for the excluded LSP command and must not enter the standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/internal/nativepath/node_host.ts",
+      "category": "host-native",
+      "reason": "Node fs is the single cross-platform host implementation behind the build-tagged nativepath contracts."
+    },
+    {
       "match": "packages/tsts/src/cli/**",
       "category": "public-entrypoint",
       "reason": "Node executable adapter for the standalone compiler; it delegates to the TS-Go cmd/tsgo main port and has no upstream Go unit."
@@ -345,6 +402,12 @@
       "category": "out-of-scope",
       "active": false,
       "reason": "The LSP command entrypoint is outside the standalone compiler porter scope."
+    },
+    {
+      "match": "cmd/tsgo/isprocessalive_*.go",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "These process-liveness helpers are reachable only from the excluded LSP command."
     },
     {
       "match": "internal/api/**",

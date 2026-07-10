@@ -1309,7 +1309,8 @@ export function parseCompilerOptions(key: string, value: unknown, allOptions: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::floatOrInt32ToFlag","kind":"func","status":"implemented","sigHash":"20db0255f87e7140b6f355ea9e6fd6c8eb69783915b5e9cb30fc1e919c370e3a","bodyHash":"5e695971846c5a0862cf1487c978e12f30cb85e0aa3b7643e7aed0b0d4532921"}
+* @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::floatOrInt32ToFlag","kind":"func","status":"implemented","sigHash":"20db0255f87e7140b6f355ea9e6fd6c8eb69783915b5e9cb30fc1e919c370e3a","bodyHash":"5e695971846c5a0862cf1487c978e12f30cb85e0aa3b7643e7aed0b0d4532921"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A named ~int32 flag type is number-backed at runtime; the local intersection retains the generic result identity while constraining the carrier used by the conversion.","goSignature":"func<T0 extends raw(~int32)>(unknown)=>T0","tsSignature":"func<T0 extends number&packages/tsts/src/go/compat.ts::GoConstraint<\"~int32\">>(unknown)=>T0"}
  *
  * Go source:
  * func floatOrInt32ToFlag[T ~int32](value any) T {

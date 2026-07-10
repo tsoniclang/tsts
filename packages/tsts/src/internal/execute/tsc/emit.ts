@@ -35,6 +35,7 @@ import type { Statistics } from "./statistics.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124","bodyHash":"76b0ac1f82c5140960e3030c49fb947d1cfb8ec5538145aa47b05d3011859c09"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetTraceWithWriterFromSys receives a nil Go CommandLineTesting interface for production runs and uses testing trace hooks only when present; TypeScript represents that argument with undefined.","goSignature":"func(packages/tsts/src/go/io.ts::Writer,packages/tsts/src/internal/locale/locale.ts::Locale,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void","tsSignature":"func(packages/tsts/src/go/io.ts::Writer,packages/tsts/src/internal/locale/locale.ts::Locale,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void"}
  *
  * Go source:
  * func GetTraceWithWriterFromSys(w io.Writer, locale locale.Locale, testing CommandLineTesting) func(msg *diagnostics.Message, args ...any) {
@@ -59,6 +60,7 @@ export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: Co
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642","bodyHash":"4f076a1f5307477c5cfd12bb558a34129ff8d11e1855b22c33d0486d04d4cbb8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"EmitInput.WriteFile is nil to select the program host writer and EmitInput.Testing is nil outside test execution; both Go nil function/interface branches are consumed by EmitAndReportStatistics and TypeScript represents them with undefined.","goSignature":"interface{CompileTimes:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>;Config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;Program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>;ProgramLike:packages/tsts/src/internal/compiler/program.ts::ProgramLike;ReportDiagnostic:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;ReportErrorSummary:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter;Sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;Testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting;TestingMTimesCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/time.ts::Time>>;Tracing:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;WriteFile:packages/tsts/src/internal/compiler/program.ts::WriteFile;Writer:packages/tsts/src/go/io.ts::Writer}","tsSignature":"interface{CompileTimes:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>;Config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;Program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>;ProgramLike:packages/tsts/src/internal/compiler/program.ts::ProgramLike;ReportDiagnostic:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;ReportErrorSummary:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter;Sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;Testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined;TestingMTimesCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/time.ts::Time>>;Tracing:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;WriteFile:packages/tsts/src/internal/compiler/program.ts::WriteFile|undefined;Writer:packages/tsts/src/go/io.ts::Writer}"}
  *
  * Go source:
  * EmitInput struct {
@@ -84,7 +86,7 @@ export interface EmitInput {
   ReportDiagnostic: DiagnosticReporter;
   ReportErrorSummary: DiagnosticsReporter;
   Writer: Writer;
-  WriteFile: WriteFile;
+  WriteFile: WriteFile | undefined;
   CompileTimes: GoPtr<CompileTimes>;
   Testing: CommandLineTesting | undefined;
   TestingMTimesCache: GoPtr<SyncMap<Path, Time>>;
@@ -260,7 +262,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
   let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
   if (!Tristate_IsTrue(input.ProgramLike.Options()!.ListFilesOnly)) {
     const emitStart = input.Sys.Now();
-    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
+    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile! });
     result.times!.emitTime = (input.Sys.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
   }
   if (emitResult !== undefined) {
@@ -313,7 +315,7 @@ export function listFiles(input: EmitInput, emitResult: GoPtr<EmitResult>): void
     const options = Program_Options(input.Program);
     if (Tristate_IsTrue(options!.ListEmittedFiles)) {
       for (const file of emitResult!.EmittedFiles) {
-        Fprintln(input.Writer, "TSFILE: ", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
+        Fprintln(input.Writer, "TSFILE:", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
       }
     }
     if (Tristate_IsTrue(options!.ExplainFiles)) {

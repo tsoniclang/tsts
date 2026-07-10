@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { canonicalJson, compareUtf8, fingerprint } from "./test-provenance.mjs";
 
-const PRODUCER_SCHEMA_VERSION = 2;
+export const PINNED_GO_PRODUCER_SCHEMA_VERSION = 2;
 const PUBLICATION_MARKER = ".publishing";
 const producerDriverPath = fileURLToPath(import.meta.url);
 const nullDevice = process.platform === "win32" ? "NUL" : "/dev/null";
@@ -55,12 +55,16 @@ const fixedBuildArgumentPrefixes = [
 
 class PublishingProducerError extends Error {}
 
+export function pinnedGoProducerId(request) {
+  return fingerprint(request, "tsts-pinned-go-producer-v2");
+}
+
 export async function ensurePinnedGoProducer(options) {
   assertProducerOptions(options);
   await ensurePlainDirectory(options.cacheRoot, "pinned producer cache root");
   const prepared = await prepareProducer(options);
   try {
-    const producerId = fingerprint(prepared.request, "tsts-pinned-go-producer-v2");
+    const producerId = pinnedGoProducerId(prepared.request);
     const destination = join(resolve(options.cacheRoot), producerId);
     const existing = await verifyOrWaitForProducer(destination, prepared.request, producerId, prepared);
     if (existing !== undefined) return existing;
@@ -83,7 +87,7 @@ export async function ensurePinnedGoProducer(options) {
     validateBuildMetadata(buildMetadata, prepared.request);
 
     const provenance = {
-      schemaVersion: PRODUCER_SCHEMA_VERSION,
+      schemaVersion: PINNED_GO_PRODUCER_SCHEMA_VERSION,
       producerId,
       request: prepared.request,
       binary: { name: options.outputName, ...stagedBinary.identity },
@@ -155,7 +159,7 @@ export function verifyProducerDirectory(directory, request, producerId, prepared
     throw new Error(`pinned producer provenance is not in canonical serialized form: ${directory}`);
   }
   if (
-    provenance.schemaVersion !== PRODUCER_SCHEMA_VERSION
+    provenance.schemaVersion !== PINNED_GO_PRODUCER_SCHEMA_VERSION
     || provenance.producerId !== producerId
     || canonicalJson(provenance.request) !== canonicalJson(request)
   ) {
@@ -272,7 +276,7 @@ async function prepareProducer(options) {
     assertStatus(moduleRoot, expectedStatus, gitExecutable, gitEnvironment, "after dependency graph inspection");
 
     const request = {
-      schemaVersion: PRODUCER_SCHEMA_VERSION,
+      schemaVersion: PINNED_GO_PRODUCER_SCHEMA_VERSION,
       label: options.label,
       source,
       sourceModule: graph.mainModule,

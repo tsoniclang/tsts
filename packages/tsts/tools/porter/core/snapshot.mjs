@@ -39,12 +39,13 @@ export function runPinnedScan(config) {
 
 export const PORTER_SNAPSHOT_KEYS = Object.freeze(["environment", "files", "gitRevision", "modulePath", "schemaVersion", "sourceRoot", "summary"]);
 export const PORTER_ENVIRONMENT_KEYS = Object.freeze(["goVersion", "goarch", "goos"]);
-export const PORTER_SUMMARY_KEYS = Object.freeze(["buildTagCounts", "fileCount", "generatedFiles", "goFileCount", "importPathCount", "lineCount", "nodeKindCounts", "packageCounts", "unitCount", "unitKindCounts"]);
-export const PORTER_FILE_KEYS = new Set(["buildTags", "featureCounts", "generated", "gitBlobHash", "implicitBuildTags", "importPath", "imports", "lineCount", "metadata", "nodeKindCounts", "packageName", "parseError", "path", "sourceHash", "units"]);
+export const PORTER_SUMMARY_KEYS = Object.freeze(["buildTagCounts", "fileCount", "generatedFiles", "goFileCount", "importPathCount", "lineCount", "nodeKindCounts", "packageCounts", "structTagCount", "structTagKeyCounts", "unitCount", "unitKindCounts"]);
+export const PORTER_FILE_KEYS = new Set(["buildTags", "featureCounts", "generated", "gitBlobHash", "implicitBuildTags", "importPath", "imports", "lineCount", "metadata", "nodeKindCounts", "packageName", "parseError", "path", "sourceHash", "structTags", "units"]);
 export const PORTER_IMPORT_KEYS = new Set(["name", "packageName", "path", "resolutionError"]);
 export const PORTER_UNIT_KEYS = new Set(["bodyHash", "endLine", "exported", "externalRefs", "featureCounts", "generated", "id", "kind", "members", "metadata", "name", "nodeKindCounts", "parameters", "qualifiedName", "receiver", "receiverMode", "receiverType", "results", "sigHash", "signature", "snippet", "startLine", "typeExpression", "typeKind", "typeParameterDetails", "typeParameters", "valueSpecs"]);
 export const PORTER_TYPE_PARAMETER_KEYS = new Set(["constraint", "name"]);
-export const PORTER_MEMBER_KEYS = new Set(["kind", "name", "type", "typeExpr"]);
+export const PORTER_MEMBER_KEYS = new Set(["exported", "kind", "name", "startLine", "structDepth", "structTag", "tagValues", "type", "typeExpr"]);
+export const PORTER_STRUCT_TAG_VALUE_KEYS = new Set(["key", "value"]);
 export const PORTER_VALUE_SPEC_KEYS = new Set(["constIndex", "constantValues", "inferredValueTypes", "names", "type", "values"]);
 export const PORTER_CONSTANT_VALUE_KEYS = new Set(["exact", "kind", "reason", "supported"]);
 export const PORTER_EXTERNAL_REFERENCE_KEYS = new Set(["count", "importPath", "name", "package", "role"]);
@@ -56,7 +57,7 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
   const issues = [];
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)) return ["snapshot must be an object"];
   compareExactKeys(snapshot, PORTER_SNAPSHOT_KEYS, "snapshot", issues);
-  if (snapshot.schemaVersion !== 2) issues.push(`snapshot.schemaVersion must be 2, got ${JSON.stringify(snapshot.schemaVersion)}`);
+  if (snapshot.schemaVersion !== 3) issues.push(`snapshot.schemaVersion must be 3, got ${JSON.stringify(snapshot.schemaVersion)}`);
   if (snapshot.modulePath !== config.goModulePath) issues.push(`snapshot.modulePath must be ${JSON.stringify(config.goModulePath)}`);
   const expectedRoot = resolveRepo(config.sourceRoot).split(path.sep).join("/");
   if (snapshot.sourceRoot !== expectedRoot) issues.push(`snapshot.sourceRoot must be ${JSON.stringify(expectedRoot)}`);
@@ -86,6 +87,8 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
     nodeKindCounts: {},
     buildTagCounts: {},
     packageCounts: {},
+    structTagCount: 0,
+    structTagKeyCounts: {},
     importPaths: new Set(),
   };
   for (const [fileIndex, file] of snapshot.files.entries()) {
@@ -117,6 +120,18 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
     for (const [importIndex, imported] of (file.imports ?? []).entries()) {
       validateSnapshotObject(imported, PORTER_IMPORT_KEYS, `${label}.imports[${importIndex}]`, issues);
     }
+    if (!Array.isArray(file.structTags)) issues.push(`${label}.structTags must be an array`);
+    for (const [tagIndex, member] of (file.structTags ?? []).entries()) {
+      const tagLabel = `${label}.structTags[${tagIndex}]`;
+      validateSnapshotObject(member, PORTER_MEMBER_KEYS, tagLabel, issues);
+      validateStructTagValues(member, tagLabel, issues);
+      validateTypeExpression(member?.typeExpr, `${tagLabel}.typeExpr`, issues);
+      if (typeof member?.structTag !== "string") issues.push(`${tagLabel}.structTag is required`);
+      if (!Number.isInteger(member?.startLine) || member.startLine < 1 || member.startLine > file.lineCount) issues.push(`${tagLabel}.startLine must identify a line in the source file`);
+      if (!Number.isInteger(member?.structDepth) || member.structDepth < 1) issues.push(`${tagLabel}.structDepth must be a positive integer`);
+      aggregate.structTagCount++;
+      for (const value of member?.tagValues ?? []) incrementPlain(aggregate.structTagKeyCounts, value.key);
+    }
     let previousUnit = undefined;
     for (const [unitIndex, unit] of (file.units ?? []).entries()) {
       const unitLabel = `${label}.units[${unitIndex}]`;
@@ -126,7 +141,7 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
       }
       compareAllowedKeys(unit, PORTER_UNIT_KEYS, unitLabel, issues);
       validateUnitPayload(unit, unitLabel, issues);
-      if (!PORTER_UNIT_KINDS.has(unit.kind)) issues.push(`${unitLabel}.kind '${unit.kind}' is unknown to snapshot schema 2`);
+      if (!PORTER_UNIT_KINDS.has(unit.kind)) issues.push(`${unitLabel}.kind '${unit.kind}' is unknown to snapshot schema 3`);
       const expectedPrefix = `${snapshot.modulePath}::${file.path}::${unit.kind}::`;
       if (typeof unit.id !== "string" || !unit.id.startsWith(expectedPrefix)) issues.push(`${unitLabel}.id must start with ${expectedPrefix}`);
       if (unitIDs.has(unit.id)) issues.push(`${unitLabel}.id duplicates ${unit.id}`);
@@ -155,6 +170,7 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
     lineCount: aggregate.lineCount,
     unitCount: aggregate.unitCount,
     importPathCount: aggregate.importPaths.size,
+    structTagCount: aggregate.structTagCount,
   };
   for (const [key, expected] of Object.entries(expectedSummary)) {
     if (snapshot.summary[key] !== expected) issues.push(`snapshot.summary.${key} is ${snapshot.summary[key]}, expected ${expected}`);
@@ -167,10 +183,40 @@ export function validatePorterSnapshot(snapshot, config, options = {}) {
     ["nodeKindCounts", aggregate.nodeKindCounts],
     ["buildTagCounts", aggregate.buildTagCounts],
     ["packageCounts", aggregate.packageCounts],
+    ["structTagKeyCounts", aggregate.structTagKeyCounts],
   ]) {
     if (canonicalJson(snapshot.summary[key] ?? {}) !== canonicalJson(expected)) issues.push(`snapshot.summary.${key} does not match file records`);
   }
   return issues;
+}
+
+export function accumulateUnitStructTags(aggregate, unit) {
+  if ((unit.members?.length ?? 0) > 0) accumulateMemberStructTags(aggregate, unit.members);
+  else accumulateTypeExpressionStructTags(aggregate, unit.typeExpression);
+  accumulateTypeExpressionStructTags(aggregate, unit.receiverType);
+  for (const parameter of [...(unit.parameters ?? []), ...(unit.results ?? [])]) accumulateTypeExpressionStructTags(aggregate, parameter.type);
+  for (const spec of unit.valueSpecs ?? []) {
+    accumulateTypeExpressionStructTags(aggregate, spec.type);
+    for (const inferred of spec.inferredValueTypes ?? []) accumulateTypeExpressionStructTags(aggregate, inferred);
+  }
+}
+
+export function accumulateMemberStructTags(aggregate, members) {
+  for (const member of members ?? []) {
+    if (member.structTag !== undefined) {
+      aggregate.structTagCount++;
+      for (const value of member.tagValues ?? []) incrementPlain(aggregate.structTagKeyCounts, value.key);
+    }
+    accumulateTypeExpressionStructTags(aggregate, member.typeExpr);
+  }
+}
+
+export function accumulateTypeExpressionStructTags(aggregate, expression) {
+  if (expression === undefined || expression === null) return;
+  accumulateMemberStructTags(aggregate, expression.members);
+  for (const key of ["element", "key", "value", "left", "right"]) accumulateTypeExpressionStructTags(aggregate, expression[key]);
+  for (const argument of expression.typeArgs ?? []) accumulateTypeExpressionStructTags(aggregate, argument);
+  for (const parameter of [...(expression.parameters ?? []), ...(expression.results ?? [])]) accumulateTypeExpressionStructTags(aggregate, parameter.type);
 }
 
 export function assertPorterSnapshot(snapshot, config, options) {
@@ -187,7 +233,7 @@ export function compareExactKeys(value, expected, label, issues) {
 
 export function compareAllowedKeys(value, allowed, label, issues) {
   for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-2 key '${key}'`);
+    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-3 key '${key}'`);
   }
 }
 
@@ -210,6 +256,7 @@ export function validateUnitPayload(unit, label, issues) {
   }
   for (const [index, member] of (unit.members ?? []).entries()) {
     validateSnapshotObject(member, PORTER_MEMBER_KEYS, `${label}.members[${index}]`, issues);
+    validateStructTagValues(member, `${label}.members[${index}]`, issues);
     validateTypeExpression(member?.typeExpr, `${label}.members[${index}].typeExpr`, issues);
   }
   for (const [specIndex, spec] of (unit.valueSpecs ?? []).entries()) {
@@ -241,7 +288,21 @@ export function validateTypeExpression(expression, label, issues) {
   for (const [index, result] of (expression.results ?? []).entries()) validateParameter(result, `${label}.results[${index}]`, issues);
   for (const [index, member] of (expression.members ?? []).entries()) {
     validateSnapshotObject(member, PORTER_MEMBER_KEYS, `${label}.members[${index}]`, issues);
+    validateStructTagValues(member, `${label}.members[${index}]`, issues);
     validateTypeExpression(member?.typeExpr, `${label}.members[${index}].typeExpr`, issues);
+  }
+}
+
+export function validateStructTagValues(member, label, issues) {
+  if (member?.structTag !== undefined && typeof member.structTag !== "string") issues.push(`${label}.structTag must be a string when present`);
+  if (member?.tagValues !== undefined && !Array.isArray(member.tagValues)) {
+    issues.push(`${label}.tagValues must be an array when present`);
+    return;
+  }
+  for (const [index, value] of (member?.tagValues ?? []).entries()) {
+    validateSnapshotObject(value, PORTER_STRUCT_TAG_VALUE_KEYS, `${label}.tagValues[${index}]`, issues);
+    if (typeof value?.key !== "string" || value.key === "") issues.push(`${label}.tagValues[${index}].key must be non-empty`);
+    if (typeof value?.value !== "string") issues.push(`${label}.tagValues[${index}].value must be a string`);
   }
 }
 

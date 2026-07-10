@@ -70,6 +70,7 @@ import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017","bodyHash":"5f6e018002e7f04d00870f5ff47c7da112138a4523fe860bc9a0ad20c70a064a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"startTracingIfNeeded accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>","tsSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>"}
  *
  * Go source:
  * func startTracingIfNeeded(sys tsc.System, config *tsoptions.ParsedCommandLine, testing tsc.CommandLineTesting) *tracing.Tracing {
@@ -129,6 +130,7 @@ export function stopTracing(sys: System, tr: GoPtr<Tracing>): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::CommandLine","kind":"func","status":"implemented","sigHash":"3a208e3a9c96e7c8034b72e4604c502f4f0c9f9b585cb027b24f0ae032a8f286","bodyHash":"52f0414c6d29ff8174e17bf7322503f8d3f8fdb0154f0e2ec8e17e3b58b48e8f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"CommandLine accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult","tsSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult"}
  *
  * Go source:
  * func CommandLine(ctx context.Context, sys tsc.System, commandLineArgs []string, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -193,6 +195,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"implemented","sigHash":"4bb367e07c320fa321bae542eadbd4c2f8885cfa2e187327a27b90dbf1363695","bodyHash":"1085d6a2f2bccddca81ec3f1e39627d471af1e496eb26cad345e8ce8fbdfdc4a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"tscBuildCompilation accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedbuildcommandline.ts::ParsedBuildCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult","tsSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedbuildcommandline.ts::ParsedBuildCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult"}
  *
  * Go source:
  * func tscBuildCompilation(ctx context.Context, sys tsc.System, buildCommand *tsoptions.ParsedBuildCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -261,6 +264,7 @@ export function tscBuildCompilation(ctx: Context, sys: System, buildCommand: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation","kind":"func","status":"implemented","sigHash":"4cfc67a51dc65422489b2bff627706eeb09e78308acefd4b9b523152ad189f9e","bodyHash":"ddadfa54cfa27644cf238dda5e7387ea302c08b095816dd6b6e3705c3a2e2224"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"tscCompilation accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult","tsSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult"}
  *
  * Go source:
  * func tscCompilation(ctx context.Context, sys tsc.System, commandLine *tsoptions.ParsedCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -505,7 +509,7 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
           commandLineRaw = wrapped;
         }
       }
-      const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(configFileName, compilerOptionsFromCommandLine, commandLineRaw, sys as unknown as import("../tsoptions/tsconfigparsing.js").ParseConfigHost, ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache));
+      const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(configFileName, compilerOptionsFromCommandLine, commandLineRaw, sys, ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache));
       type TimeWithSub = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
       compileTimes.ConfigTime = (sys.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
       if ((errors?.length ?? 0) !== 0) {
@@ -598,6 +602,7 @@ export function findConfigFile(searchPath: string, fileExists: (arg0: string) =>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::getTraceFromSys","kind":"func","status":"implemented","sigHash":"26a8b1e54054f27c17d5a0e2a6253c861e66ba3abcc1087307625fa0b57ef2a0","bodyHash":"ae54e619360e678865b25c086b9d9d08cfe7b87d54a02af94635f11027be9c47"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getTraceFromSys accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/internal/locale/locale.ts::Locale,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void","tsSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/internal/locale/locale.ts::Locale,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,...unknown[])=>void"}
  *
  * Go source:
  * func getTraceFromSys(sys tsc.System, locale locale.Locale, testing tsc.CommandLineTesting) func(msg *diagnostics.Message, args ...any) {
@@ -610,6 +615,7 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"implemented","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"performIncrementalCompilation accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult","tsSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult"}
  *
  * Go source:
  * func performIncrementalCompilation(
@@ -684,7 +690,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
     ReportDiagnostic: reportDiagnostic,
     ReportErrorSummary: reportErrorSummary,
     Writer: sys.Writer(),
-    WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
+    WriteFile: undefined,
     CompileTimes: compileTimes,
     Testing: testing,
     TestingMTimesCache: undefined,
@@ -701,6 +707,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"implemented","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"performCompilation accepts the nil Go CommandLineTesting interface used by normal CLI execution; its testing-specific control flow checks that sentinel before invoking hooks, and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult","tsSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineResult"}
  *
  * Go source:
  * func performCompilation(
@@ -760,7 +767,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
     ReportDiagnostic: reportDiagnostic,
     ReportErrorSummary: reportErrorSummary,
     Writer: sys.Writer(),
-    WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
+    WriteFile: undefined,
     CompileTimes: compileTimes,
     Testing: testing,
     TestingMTimesCache: undefined,

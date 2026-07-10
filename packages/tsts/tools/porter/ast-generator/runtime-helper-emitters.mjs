@@ -116,7 +116,7 @@ function emitKindAliasGuards(schema, lines) {
 export function emitCasts(schema) {
   const lines = [];
   lines.push(`import type { GoPtr } from "../../../go/compat.js";`);
-  lines.push(`import { goReceiverKey } from "../spine.js";`);
+  lines.push(`import { goReceiverKey } from "../../../go/compat.js";`);
   lines.push(`import type { Node } from "../spine.js";`);
   lines.push(`import type {`);
   const dataImports = [];

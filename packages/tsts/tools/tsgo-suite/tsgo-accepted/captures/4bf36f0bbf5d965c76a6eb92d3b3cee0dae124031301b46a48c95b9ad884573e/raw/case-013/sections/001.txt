@@ -1,0 +1,14 @@
+export var ns;
+(function (ns) {
+    let internal;
+    (function (internal) {
+        class Foo {
+        }
+        internal.Foo = Foo;
+    })(internal || (internal = {}));
+    let nested;
+    (function (nested) {
+        nested.inner = internal;
+    })(nested = ns.nested || (ns.nested = {}));
+})(ns || (ns = {}));
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibmFtZXNwYWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsibmFtZXNwYWNlLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLE1BQU0sS0FBVyxFQUFFLENBT2xCO0FBUEQsV0FBaUIsRUFBRTtJQUNmLElBQVUsUUFBUSxDQUVqQjtJQUZELFdBQVUsUUFBUTtRQUNkLE1BQWEsR0FBRztTQUFHO1FBQU4sU0FBQSxHQUFHLE1BQUcsQ0FBQTtJQUN2QixDQUFDLEVBRlMsUUFBUSxLQUFSLFFBQVEsUUFFakI7SUFDRCxJQUFpQixNQUFNLENBRXRCO0lBRkQsV0FBaUIsTUFBTTtRQUNMLE9BQUEsS0FBSyxHQUFHLFFBQVMsQ0FBQTtJQUNuQyxDQUFDLEVBRmdCLE1BQU0sR0FBTixHQUFBLE1BQU0sS0FBTixHQUFBLE1BQU0sUUFFdEI7QUFDTCxDQUFDLEVBUGdCLEVBQUUsS0FBRixFQUFFLFFBT2xCIn0=

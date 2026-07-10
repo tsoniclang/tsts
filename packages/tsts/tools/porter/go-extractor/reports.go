@@ -27,6 +27,8 @@ type Summary struct {
 	BuildTagCounts  map[string]int `json:"buildTagCounts"`
 	PackageCounts   map[string]int `json:"packageCounts"`
 	ImportPathCount int            `json:"importPathCount"`
+	StructTagCount  int            `json:"structTagCount"`
+	StructTagKeys   map[string]int `json:"structTagKeyCounts"`
 }
 
 type FileReport struct {
@@ -40,6 +42,7 @@ type FileReport struct {
 	BuildTags         []string          `json:"buildTags"`
 	ImplicitBuildTags []string          `json:"implicitBuildTags"`
 	Imports           []ImportReport    `json:"imports"`
+	StructTags        []MemberReport    `json:"structTags"`
 	Units             []UnitReport      `json:"units"`
 	NodeKindCounts    map[string]int    `json:"nodeKindCounts"`
 	FeatureCounts     map[string]int    `json:"featureCounts"`
@@ -93,10 +96,20 @@ type ExternalRefReport struct {
 }
 
 type MemberReport struct {
-	Kind     string          `json:"kind"`
-	Name     string          `json:"name"`
-	Type     string          `json:"type,omitempty"`
-	TypeExpr *TypeExprReport `json:"typeExpr,omitempty"`
+	Kind        string                 `json:"kind"`
+	Name        string                 `json:"name"`
+	Exported    bool                   `json:"exported"`
+	Type        string                 `json:"type,omitempty"`
+	TypeExpr    *TypeExprReport        `json:"typeExpr,omitempty"`
+	StructTag   *string                `json:"structTag,omitempty"`
+	TagValues   []StructTagValueReport `json:"tagValues,omitempty"`
+	StartLine   int                    `json:"startLine,omitempty"`
+	StructDepth int                    `json:"structDepth,omitempty"`
+}
+
+type StructTagValueReport struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type ParamReport struct {

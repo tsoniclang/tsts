@@ -165,7 +165,7 @@ test("declaration transformer resets source state and precalculates the most-ori
     assert.notEqual(transformer!.seenProperties.M, secondTransformer!.seenProperties.M);
 
     const staleDeferredAssignments = transformer!.deferredExpandoAssignments;
-    staleDeferredAssignments.set(1, []);
+    staleDeferredAssignments.set(1n, []);
     const clone = AsSourceFile(Node_Clone(source, context!.Factory!));
     EmitContext_SetOriginal(context, clone, source);
     Transformer_TransformSourceFile(transformer!.__tsgoEmbedded0, clone);

@@ -1,0 +1,2 @@
+consumes.ts(3,12): error TS9013: Expression type can't be inferred with --isolatedDeclarations.
+exposes.ts(2,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.

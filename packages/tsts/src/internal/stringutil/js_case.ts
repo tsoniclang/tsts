@@ -93,7 +93,7 @@ export function ToLowerJS(str: string): string {
     } else {
       const mapping = specialCasingMappings.get(r);
       if (mapping !== undefined) {
-      if (mapping.condition === specialCasingConditionFinalSigma && isFinalSigmaContext(casedBefore, str, i)) {
+        if (mapping.condition === specialCasingConditionFinalSigma && isFinalSigmaContext(casedBefore, str, i)) {
           builder.push(mapping.conditionalLower);
         } else {
           builder.push(mapping.lower);

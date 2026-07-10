@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -61,18 +62,28 @@ type dumpNode struct {
 
 func main() {
 	fileName := flag.String("file", "", "source file to parse")
+	stdin := flag.Bool("stdin", false, "read source bytes from stdin")
 	logicalName := flag.String("logical", "", "logical file name/path used by the parser")
 	outName := flag.String("out", "", "output JSON path; stdout when omitted")
 	pretty := flag.Bool("pretty", false, "pretty-print JSON")
 	flag.Parse()
 
-	if *fileName == "" {
-		fatalf("--file is required")
+	if (*fileName == "") == !*stdin {
+		fatalf("exactly one of --file or --stdin is required")
+	}
+	if *stdin && *logicalName == "" {
+		fatalf("--logical is required with --stdin")
 	}
 
-	sourceBytes, err := os.ReadFile(*fileName)
+	var sourceBytes []byte
+	var err error
+	if *stdin {
+		sourceBytes, err = io.ReadAll(os.Stdin)
+	} else {
+		sourceBytes, err = os.ReadFile(*fileName)
+	}
 	if err != nil {
-		fatalf("read %s: %v", *fileName, err)
+		fatalf("read source: %v", err)
 	}
 
 	parserFileName := *logicalName

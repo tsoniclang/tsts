@@ -109,6 +109,10 @@ export function getWildcardDirectories(
   //  /a/b/*      - Watch /a/b directly to catch any new file
   //  /a/b/a?z    - Watch /a/b directly to catch any new file matching a?z
 
+  if (include.length === 0) {
+    return new globalThis.Map<string, bool>();
+  }
+
   const excludeMatcher = NewSpecMatcher(
     exclude,
     comparePathsOptions.CurrentDirectory,
@@ -117,9 +121,6 @@ export function getWildcardDirectories(
   );
 
   const wildcardDirectories: GoMap<string, bool> = new globalThis.Map<string, bool>();
-  if (include.length === 0) {
-    return wildcardDirectories;
-  }
   const wildCardKeyToPath: GoMap<string, string> = new globalThis.Map<string, string>();
 
   const recursiveKeys: GoSlice<string> = [];

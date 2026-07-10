@@ -1,0 +1,5360 @@
+{
+  "schemaVersion": 1,
+  "captureId": "4bf36f0bbf5d965c76a6eb92d3b3cee0dae124031301b46a48c95b9ad884573e",
+  "request": {
+    "schemaVersion": 1,
+    "plan": {
+      "path": "plans/transpile-divergences-v1.json",
+      "bytes": 12538,
+      "sha256": "0da0f506e70bcd32d44d62c90ecc46dbe93d2713adf50e4e96ba1c393eca8967",
+      "planFingerprint": "a817ae550894ca2ae7cc894a39ad2e862a8d7e5da943945a82821ec040b2ed28"
+    },
+    "sourcePin": {
+      "path": "packages/tsts/schema/tsgo/source-pin.json",
+      "sha256": "07ef345f2c4addfa9fc12caa70285dfbae35a7cf6a3006c1316d7e1ae2d962ff",
+      "revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+      "tree": "ab848098ac8a45086c49886aa77886b199da92a6",
+      "objectFormat": "sha1",
+      "nestedSources": [
+        {
+          "name": "TypeScript",
+          "path": "_submodules/TypeScript",
+          "revision": "4d4f005c8541e0255a9d8791205fdce326e462bc",
+          "tree": "52d822feb4a8e997f866296b960402e97b0ed49b",
+          "objectFormat": "sha1"
+        }
+      ]
+    },
+    "producer": {
+      "schemaVersion": 1,
+      "producerId": "3a79bc6719cf7ef807e65e567018c537f948eecbc27e10eb87eec1de5d75b854",
+      "request": {
+        "schemaVersion": 1,
+        "label": "pinned TS-Go accepted-overlay compiler",
+        "source": {
+          "revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+          "tree": "ab848098ac8a45086c49886aa77886b199da92a6",
+          "objectFormat": "sha1",
+          "dirty": false
+        },
+        "sourceModule": "github.com/microsoft/typescript-go",
+        "producerDriver": {
+          "label": "pinned-go-producer",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 12703,
+          "digest": "d5814b190cd27748d05a44416ce89bbd3f35fab678e4cb2574170d33cf26e05e"
+        },
+        "overlays": [],
+        "additionalProvenance": {
+          "sourcePin": {
+            "path": "packages/tsts/schema/tsgo/source-pin.json",
+            "sha256": "07ef345f2c4addfa9fc12caa70285dfbae35a7cf6a3006c1316d7e1ae2d962ff",
+            "revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+            "tree": "ab848098ac8a45086c49886aa77886b199da92a6",
+            "objectFormat": "sha1",
+            "nestedSources": [
+              {
+                "name": "TypeScript",
+                "path": "_submodules/TypeScript",
+                "revision": "4d4f005c8541e0255a9d8791205fdce326e462bc",
+                "tree": "52d822feb4a8e997f866296b960402e97b0ed49b",
+                "objectFormat": "sha1"
+              }
+            ]
+          }
+        },
+        "build": {
+          "package": "./cmd/tsgo",
+          "arguments": [
+            "build",
+            "-mod=readonly",
+            "-trimpath",
+            "-buildvcs=true"
+          ],
+          "environment": {
+            "CGO_ENABLED": "0",
+            "GOTOOLCHAIN": "local",
+            "GOWORK": "off",
+            "GOFLAGS": "",
+            "GOENV": "off",
+            "GOEXPERIMENT": "",
+            "GODEBUG": "",
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+            "TZ": "UTC"
+          },
+          "toolchain": {
+            "executable": {
+              "bytes": 15434568,
+              "sha256": "86b748c64de0175db601f56805251f3b08cd12bffb927ad5c68ef8497c50c7ba"
+            },
+            "version": "go version go1.26.4 linux/amd64",
+            "values": {
+              "CGO_ENABLED": "0",
+              "GO386": "",
+              "GOAMD64": "v1",
+              "GOARCH": "amd64",
+              "GOARM": "",
+              "GOARM64": "",
+              "GOEXPERIMENT": "",
+              "GOMIPS": "",
+              "GOMIPS64": "",
+              "GOOS": "linux",
+              "GOTOOLCHAIN": "local",
+              "GOVERSION": "go1.26.4",
+              "GOWASM": ""
+            }
+          }
+        },
+        "outputName": "tsgo"
+      },
+      "binary": {
+        "name": "tsgo",
+        "bytes": 38637648,
+        "sha256": "12f6c38cc11469855d280e19240c3cb8b4e742f66818e68cf4636ea52fcb81b6"
+      },
+      "buildMetadata": {
+        "path": "github.com/microsoft/typescript-go/cmd/tsgo",
+        "module": "github.com/microsoft/typescript-go\tv0.0.0-20260708232853-d35cc5f48564",
+        "settings": {
+          "-buildmode": "exe",
+          "-compiler": "gc",
+          "-trimpath": "true",
+          "CGO_ENABLED": "0",
+          "GOARCH": "amd64",
+          "GOOS": "linux",
+          "GOAMD64": "v1",
+          "vcs": "git",
+          "vcs.revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+          "vcs.time": "2026-07-08T23:28:53Z",
+          "vcs.modified": "false"
+        }
+      }
+    },
+    "barebonesLib": {
+      "bytes": 498,
+      "sha256": "721d46a726b348df77d4d092742fac3d0e777f908a2b8be1ea91245b8a966fea"
+    },
+    "inputs": {
+      "schemaVersion": 1,
+      "roots": [
+        {
+          "label": "accepted-overlay-capture-cli",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 2182,
+          "digest": "91858835ca2db41d073bc6db2bc39418c20eb54bf803cf63efec6f5a2f3a95ef"
+        },
+        {
+          "label": "accepted-overlay-capture-driver",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 26751,
+          "digest": "862198883001ab8ea38d4c26aedc9ec00f87873639b208d748ab982b611ecad1"
+        },
+        {
+          "label": "accepted-overlay-contract",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 34409,
+          "digest": "091eb93d535b9321be9858d9e46b7abd9f50b6c1e6e2d3d2d55ae7c8ffda332a"
+        },
+        {
+          "label": "accepted-overlay-plan",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 12538,
+          "digest": "125047745709365866d3d213f5a003f8b61a784e865dfed3c3d93c236651c0c0"
+        },
+        {
+          "label": "accepted-overlay-producer",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 12703,
+          "digest": "f20b4b591184b9be51eed91c56c6c4af19c7e7d250d6cbb4ef4118082d6a33da"
+        },
+        {
+          "label": "accepted-overlay-provenance",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 7706,
+          "digest": "b6a961fbd5af61230a94d94900d3eaff64e0d016f84b57254a9afff3ef55ca5c"
+        },
+        {
+          "label": "accepted-overlay-seal",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 4960,
+          "digest": "998f7c97c23dac4f1640bec113c21e9ff8c24ae5ae446b14666e770320e39ecb"
+        },
+        {
+          "label": "accepted-overlay-source-pin-verifier",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 7300,
+          "digest": "3bfb9a35636807a9e2e4010f8a57ddc8102906e3bde639741d384a7dd4209bc5"
+        },
+        {
+          "label": "accepted-overlay-suite-runner",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 180100,
+          "digest": "645f49498695037f5e4d1b4016bee7a17e5a0bf2c1b2b6cd507faddd74a4c41f"
+        },
+        {
+          "label": "accepted-overlay-tsbaseline",
+          "kind": "directory",
+          "mode": 509,
+          "symlinkPolicy": "reject",
+          "fileCount": 5,
+          "symlinkCount": 0,
+          "bytes": 66185,
+          "digest": "a9e9a45d8d57a31387a68ac5f3083352536b05c583a9874ee291ffa52d137e07"
+        },
+        {
+          "label": "accepted-overlay-tsts-dist",
+          "kind": "directory",
+          "mode": 509,
+          "symlinkPolicy": "reject",
+          "fileCount": 1748,
+          "symlinkCount": 0,
+          "bytes": 42677549,
+          "digest": "71431a192e305ebebf6f3761e5645343cab87d6c62c210b67c2a1f0e91c2fe01"
+        },
+        {
+          "label": "accepted-overlay-tsts-package",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 877,
+          "digest": "ec7c6ab982238035efa6037a06197f6a9835f84191453026e2318059f83215bb"
+        },
+        {
+          "label": "accepted-overlay-typescript-package",
+          "kind": "directory",
+          "mode": 509,
+          "symlinkPolicy": "reject",
+          "fileCount": 140,
+          "symlinkCount": 0,
+          "bytes": 24346827,
+          "digest": "87eab8d45599730130824b2aacfb906f5b03630949fa12645664f590cb16099a"
+        },
+        {
+          "label": "accepted-overlay-workspace-lock",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 2180,
+          "digest": "661487fb6fb847405b68a4a2838a2dc8ecb6ad58deff0eb6663ed7c54a772c03"
+        },
+        {
+          "label": "accepted-overlay-workspace-package",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 3901,
+          "digest": "e2622f846c627da380dbe97b78a3dbd4223a4d2886b4827ae45816ac89a4b332"
+        },
+        {
+          "label": "baseline:0:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1211,
+          "digest": "5c02bb5b59f549df0efc02fb83b0ef7b43fb20997be8f4dbcf465695d41e6f78"
+        },
+        {
+          "label": "baseline:10:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 2401,
+          "digest": "70b340e005921af229d90340d2dfd2b079971b356f58288c7a88596f660158de"
+        },
+        {
+          "label": "baseline:10:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 4272,
+          "digest": "9230abca613bc6b9f9deefb477406e1c103ba035d65397b9481935f493d59d1f"
+        },
+        {
+          "label": "baseline:11:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 4124,
+          "digest": "14810f10aa53914f69f50c0980f0037b24b004ec391201e12bcda7f55ddca5b2"
+        },
+        {
+          "label": "baseline:11:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 4272,
+          "digest": "2f0a7ac41b15dc17467ece3b3e90ed0fa5e57dc2965739728eec882e4c5fc486"
+        },
+        {
+          "label": "baseline:12:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 5817,
+          "digest": "5be8424229b1b4c4546e71dec228403d94922104f41cd79df7377459722c7b9c"
+        },
+        {
+          "label": "baseline:13:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 6148,
+          "digest": "cd296171feaf2b6d95adce18d1019be80c5b9615951bc7358a5e4e2bb653e0ec"
+        },
+        {
+          "label": "baseline:1:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 14973,
+          "digest": "bae6b22971deba2720587d18bebe6bc99771bf6d248d6958a9bdee2656684471"
+        },
+        {
+          "label": "baseline:1:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 5744,
+          "digest": "2a36390058f9c10eb429fda38bd3c1f25ed742f48ced51cfef234bf3dd519f8c"
+        },
+        {
+          "label": "baseline:2:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 12447,
+          "digest": "77dc3c1be3ca3f1dac3455956dfac3d8b2d1d947e210996401320b5adc828834"
+        },
+        {
+          "label": "baseline:3:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1446,
+          "digest": "4fb5b8a4872e1d3e7cb9fc3a42896043fcea1d81766f4dfe561796bb9071898d"
+        },
+        {
+          "label": "baseline:3:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 917,
+          "digest": "711acd1b5e132fef36bad9bdbb8677e1f8eaedb59b9b5e7011f8ed24c057be0b"
+        },
+        {
+          "label": "baseline:4:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 3197,
+          "digest": "ac8eb52fcad2ed42ab1d730b1a55b162174d5fd587ac71f769286445af896e51"
+        },
+        {
+          "label": "baseline:4:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 716,
+          "digest": "0c1b44c05bb54b3e476aaa59b132460f887dc90c1a56b8aef7849ef7b6889291"
+        },
+        {
+          "label": "baseline:5:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 680,
+          "digest": "4076629d6ac8a7a861d756d59ee13508a0302b2866bf68a953e0dfcf865baf3c"
+        },
+        {
+          "label": "baseline:5:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 284,
+          "digest": "23b8d3aa7746a3302ab90fa869c6e578e886542fbb70c6eacd4feeb16cc708b3"
+        },
+        {
+          "label": "baseline:6:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 858,
+          "digest": "9eadbbf21074ccd72c4eb4f8ee1059697447a15b8a3dcc387d3bc9a1afaf308d"
+        },
+        {
+          "label": "baseline:6:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 585,
+          "digest": "a778ffd95c85bd5803c3775b3c70f2d803cc1cb20908d41b5baa12f6d89a8224"
+        },
+        {
+          "label": "baseline:7:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1406,
+          "digest": "26fdc61f59e34476ec3ef300a1eaeb2d043e1160702266dc53cdd563b5ec1751"
+        },
+        {
+          "label": "baseline:7:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 419,
+          "digest": "7f3aec8262bf3337b5d7d6edd9d2ad257d3c590d7043d139092e45ce7b6f7a18"
+        },
+        {
+          "label": "baseline:8:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1751,
+          "digest": "9613fe73adf9c3a780b3b65d94fd4980a1d572db887d55d5b5202ce181dffe2a"
+        },
+        {
+          "label": "baseline:9:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1777,
+          "digest": "983cf4c1aeb398b6b2a3d3c9068c942acff3071f18f36de415330addaee32f3f"
+        },
+        {
+          "label": "case:0",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 440,
+          "digest": "b92590453c2db8bd1e85faf384732c8517f7f36762c93e3fced885842676b16f"
+        },
+        {
+          "label": "case:1",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 3385,
+          "digest": "56486260c6f43009e5b615a15161bb2420aea7ef5f21553918ea89486d89625d"
+        },
+        {
+          "label": "case:10",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 941,
+          "digest": "97e3c1784dd49105bc8e99a8988cfdf3359c616f95c9159b2751c157f7838369"
+        },
+        {
+          "label": "case:11",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 941,
+          "digest": "7a8226216fccd736d52b9c0bb7d2515a055b371db6f2e449c069c961997500c2"
+        },
+        {
+          "label": "case:12",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 913,
+          "digest": "d029ebd5aef4f47cd338c8e1698a48a08c1408e8d906531809e8493afd7aae51"
+        },
+        {
+          "label": "case:13",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 919,
+          "digest": "ab1fcf5dc63db8f9aa115c449e21d08776e71afd95c494548b6c2b221fadb882"
+        },
+        {
+          "label": "case:2",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 1712,
+          "digest": "a57ca52a96e0686cc2a79e10bc11df4993f11517717bf637b50245a37f06610d"
+        },
+        {
+          "label": "case:3",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 341,
+          "digest": "be4b044eb03ad15382bf82e6318da39d04f65063592eb904bb97e521532cea86"
+        },
+        {
+          "label": "case:4",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 395,
+          "digest": "51210bfe2240bb3ef13beebc09d404778ed2a3fb6cf6e0f9b64348b638a6a9e8"
+        },
+        {
+          "label": "case:5",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 105,
+          "digest": "f0b036b1e351557f4577fe945bc105352434450f22ea82823241ec19dfad5906"
+        },
+        {
+          "label": "case:6",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 134,
+          "digest": "73dbe3a614a90d5d891481c17a39f4d2b579914c88b18704c3acb9aec8057d90"
+        },
+        {
+          "label": "case:7",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 289,
+          "digest": "8d0a6aed2ae217acd49d2f34cf5457e6de86ad19232a7fa2cd6717716acce682"
+        },
+        {
+          "label": "case:8",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 578,
+          "digest": "4c81cf73df2490d649002a0fa3bd1d41ba80f425599c90848e5904c656ac961d"
+        },
+        {
+          "label": "case:9",
+          "kind": "file",
+          "mode": 436,
+          "symlinkPolicy": "reject",
+          "fileCount": 1,
+          "symlinkCount": 0,
+          "bytes": 572,
+          "digest": "8b7933fe12e155d4a0f2eb8a6c852cce0ddbe182a69cb8b462a927496c5a1547"
+        }
+      ],
+      "digest": "54e7788795c3f9c521914e7eeae81837f4114c073336c970d6e865bad7f6ea93"
+    },
+    "execution": {
+      "runtime": {
+        "executable": {
+          "bytes": 147441512,
+          "sha256": "da220b82279ed9885a7759f6efb8c4b9351ece579f93429bf7b7d2fbd481bcf8"
+        },
+        "version": "v26.1.0",
+        "versions": {
+          "node": "26.1.0",
+          "acorn": "8.16.0",
+          "ada": "3.4.4",
+          "amaro": "1.1.9",
+          "ares": "1.34.6",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.3",
+          "libffi": "3.5.2",
+          "lief": "0.17.0",
+          "llhttp": "9.4.1",
+          "merve": "1.2.2",
+          "modules": "147",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.69.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "3.5.6",
+          "simdjson": "4.6.1",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.0",
+          "tz": "2026b",
+          "undici": "8.2.0",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "14.6.202.34-node.19",
+          "zlib": "1.3.1-e00f703",
+          "zstd": "1.5.7"
+        },
+        "execArgv": [],
+        "startupNodeOptions": ""
+      },
+      "platform": "linux",
+      "arch": "x64",
+      "environment": {
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "TZ": "UTC"
+      }
+    }
+  },
+  "cases": [
+    {
+      "index": 0,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationRestParameters.ts",
+      "configuration": null,
+      "artifact": "declarationRestParameters.d.ts",
+      "input": {
+        "bytes": 440,
+        "sha256": "12bc4f63e971cf21e7dad3615aad1dab18ae0afbf2c2a408da8becb7823ed9d7"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationRestParameters.d.ts",
+          "bytes": 1211,
+          "sha256": "ad24a3e122d3f58b98d7ded5e3909a38eec99e97e82f74264ea85aba353ed1eb"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-000/input",
+        "digest": {
+          "label": "capture-input-0",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 4,
+          "symlinkCount": 0,
+          "bytes": 785,
+          "digest": "e56ed45d0273c1028c583887eaed6a4362263b1379470e64d4b0db7147a30a9e"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "declaration:v1.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "v1.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-000/invocations/000.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-000/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-000/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-0-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 888,
+              "digest": "accda4338e65055447cc14e49bf98ed7e270233599dacf01bb4066df7c35b27b"
+            }
+          },
+          "outputs": [
+            {
+              "path": "v1.d.ts",
+              "present": true,
+              "bytes": 103,
+              "sha256": "b207617d8f99bb306c6cde40cddc5a84686edd706b765429bf91d4ac3bc4ccc0"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:v2.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "v2.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-000/invocations/001.stdout",
+            "bytes": 102,
+            "sha256": "03f4f6126eb4df6ce0c32016449a3b0f35fc447c9e34cb97c6f59ec0a4b88e21"
+          },
+          "stderr": {
+            "path": "raw/case-000/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-000/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-0-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 785,
+              "digest": "eec477940a552f2005d1bac2db455a1ac400188b20876f84a559f8b7cb86d7ea"
+            }
+          },
+          "outputs": [
+            {
+              "path": "v2.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "b7e6830c566acafb983d19e93974ca3effd222b93d4d2687a060fe66ef11b90b",
+          "baselineSha256": "b7e6830c566acafb983d19e93974ca3effd222b93d4d2687a060fe66ef11b90b"
+        },
+        {
+          "section": "v1.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "08bb74d035ae573660f85a6b359ce0a17a87c31c069b6130817a7b2467dc8f56",
+          "baselineSha256": "08bb74d035ae573660f85a6b359ce0a17a87c31c069b6130817a7b2467dc8f56"
+        },
+        {
+          "section": "v2.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "9cd1239eda862280735b35e912ab96c5a87ed4509601890c69ce6604307ad47d"
+        }
+      ],
+      "sections": [
+        {
+          "name": "v2.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-000/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "9cd1239eda862280735b35e912ab96c5a87ed4509601890c69ce6604307ad47d"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationFunctionDeclarations.ts",
+      "configuration": null,
+      "artifact": "declarationFunctionDeclarations.d.ts",
+      "input": {
+        "bytes": 3385,
+        "sha256": "bce5aec7e289ea3bcd6004e00e851fa1aed085192d7fdecef5a87371849c0774"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationFunctionDeclarations.d.ts",
+          "bytes": 14973,
+          "sha256": "94bf636d93fe0d5c05f58c26e4898327ec9dfff18cb841b8ba10cb0b628c69a7"
+        },
+        {
+          "artifact": "declarationFunctionDeclarations.js",
+          "bytes": 5744,
+          "sha256": "8e48cb990227783af5eebd89f3cc2f07235803383b99c02f98609ec7bcc6deae"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-001/input",
+        "digest": {
+          "label": "capture-input-1",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 3746,
+          "digest": "bae9cc9c5b6a477c7b96941454bade8cbb12bf3c2bb10ee65487a3f728317d11"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:fnDecl.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "esnext",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "fnDecl.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-001/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-001/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-001/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-1-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 6280,
+              "digest": "18780f85766a10119efb05ef34cc32aad0f1462fdd99e9d6cf2107108884f68a"
+            }
+          },
+          "outputs": [
+            {
+              "path": "fnDecl.js",
+              "present": true,
+              "bytes": 2534,
+              "sha256": "72f124caa0a7ac018bca7658a82b58b5f61e557737848cff3336da7f3d35c566"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:fnDecl.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "esnext",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "fnDecl.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-001/invocations/001.stdout",
+            "bytes": 1183,
+            "sha256": "e184769c3753c27ed878e50390411434f9c917260c3a7f780a89405ef6b91268"
+          },
+          "stderr": {
+            "path": "raw/case-001/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-001/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-1-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 3746,
+              "digest": "3d00707ac74ee8b4c91e313bf5f31da46582c93e0aa030b2a626e7a1a59305df"
+            }
+          },
+          "outputs": [
+            {
+              "path": "fnDecl.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "actualSha256": "98b77a31a9ec685464eecaeb9dd3927d3d16614c69b38e774ca352e9893a16b9",
+          "baselineSha256": "a3ba3b8d58039ab2c562bb607e635b8beb9424ffa3c5725362d9e57ff00a7745"
+        },
+        {
+          "section": "fnDecl.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "93dc87853af6b4e56435ae3d738f75f5954f715da88a69d124f55a633b627d25",
+          "baselineSha256": "93dc87853af6b4e56435ae3d738f75f5954f715da88a69d124f55a633b627d25"
+        },
+        {
+          "section": "fnDecl.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "18bda0b9b4171fc1f76ec5a2ac420498f6e7c01f805374308396a0a539369b8c"
+        }
+      ],
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "contentPath": "raw/case-001/sections/000.txt",
+          "sha256": "98b77a31a9ec685464eecaeb9dd3927d3d16614c69b38e774ca352e9893a16b9",
+          "baselineSha256": "a3ba3b8d58039ab2c562bb607e635b8beb9424ffa3c5725362d9e57ff00a7745"
+        },
+        {
+          "name": "fnDecl.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-001/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "18bda0b9b4171fc1f76ec5a2ac420498f6e7c01f805374308396a0a539369b8c"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationComputedPropertyNames.ts",
+      "configuration": null,
+      "artifact": "declarationComputedPropertyNames.d.ts",
+      "input": {
+        "bytes": 1712,
+        "sha256": "b3a9c8cc8e618795aa4d20bc81599f86b7e9882dadb89b7d53fbd5b49e8403e1"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationComputedPropertyNames.d.ts",
+          "bytes": 12447,
+          "sha256": "7461486682a30e99bc3b5c33fb1e5073cef107de82c1cd8451cc67bb4a32b414"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-002/input",
+        "digest": {
+          "label": "capture-input-2",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 2079,
+          "digest": "d2062eaf2b8ae1d37bc7fda6f3747e7378f4e9d0a3e2784ae615fd81d0b27277"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "declaration:declarationComputedPropertyNames.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "declarationComputedPropertyNames.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-002/invocations/000.stdout",
+            "bytes": 3815,
+            "sha256": "7cd23f4abc2481472e5ab06e58e70643eefd4c905e4a8afd61f430c7e7a70749"
+          },
+          "stderr": {
+            "path": "raw/case-002/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-002/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-2-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 2079,
+              "digest": "a2e0928a05c2d9d965a6231f44152fd089a69567c101885b229f7123163b2e58"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationComputedPropertyNames.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "actualSha256": "c175701c230ebe39dd3b0899806d0a36260d628e5b38bdd8c9a50d94d7505b47",
+          "baselineSha256": "b88182d9ff3d92f1a89a16ce3910305fdbcd19b00462f553681296f5b385ff4d"
+        },
+        {
+          "section": "declarationComputedPropertyNames.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "71c51c56261267a298e7dc4b7e52f0013c11172cded03918e1f84e65cb549a14"
+        }
+      ],
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "contentPath": "raw/case-002/sections/000.txt",
+          "sha256": "c175701c230ebe39dd3b0899806d0a36260d628e5b38bdd8c9a50d94d7505b47",
+          "baselineSha256": "b88182d9ff3d92f1a89a16ce3910305fdbcd19b00462f553681296f5b385ff4d"
+        },
+        {
+          "name": "declarationComputedPropertyNames.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-002/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "71c51c56261267a298e7dc4b7e52f0013c11172cded03918e1f84e65cb549a14"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationCrossFileInferences.ts",
+      "configuration": null,
+      "artifact": "declarationCrossFileInferences.d.ts",
+      "input": {
+        "bytes": 341,
+        "sha256": "6f4650e10d813de9aa88c0588d7a2908baf05ed453fc8881da1c3951cf652e2d"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationCrossFileInferences.d.ts",
+          "bytes": 1446,
+          "sha256": "7b791b205511307288cbe7ad622ecd75374b7b49be9355397e1cf19ba30ded48"
+        },
+        {
+          "artifact": "declarationCrossFileInferences.js",
+          "bytes": 917,
+          "sha256": "02ac1b866a38b32c851e3b62eccb3daf094b074e3abe1e723cc05186e8c6a10c"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-003/input",
+        "digest": {
+          "label": "capture-input-3",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 5,
+          "symlinkCount": 0,
+          "bytes": 688,
+          "digest": "dc072857fb2f2642def5c4c087c4dda02a2421e870fe27191a3ba8260318f753"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:defines.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "defines.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-3-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 878,
+              "digest": "0564ea58f56207b53b17d3eefe7e3bf7d4deb136e4a3ef4b69105037a7004cb4"
+            }
+          },
+          "outputs": [
+            {
+              "path": "defines.js",
+              "present": true,
+              "bytes": 190,
+              "sha256": "edd428560eec5246fdf1219a67778a96d6c18863b3a0640afb53c84c6f7be4f5"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "module:consumes.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "consumes.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/001.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-3-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 898,
+              "digest": "33304d170e41db848dce26e0b79477192211b9c26c8be3020068b619a9207c3e"
+            }
+          },
+          "outputs": [
+            {
+              "path": "consumes.js",
+              "present": true,
+              "bytes": 210,
+              "sha256": "23045fa42bb447b69028f120b7edf612957a3704a9ac666344996f689b65f8b2"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "module:exposes.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "exposes.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/002.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-3-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 887,
+              "digest": "868eb0ddd13ae9353305664e72729635e32b0d5555a37e50675a1a418a27eea6"
+            }
+          },
+          "outputs": [
+            {
+              "path": "exposes.js",
+              "present": true,
+              "bytes": 199,
+              "sha256": "53c93a6d15f00696c2ed51f86719e494e019f0f68b1f9a049837625cace8873c"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "label": "declaration:defines.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "defines.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/003.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/003.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/003",
+            "digest": {
+              "label": "capture-invocation-3-3",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 759,
+              "digest": "7c1b2a6c280283ee91db569b324251d5ae141ea88182f7f676a976649e0ab5d6"
+            }
+          },
+          "outputs": [
+            {
+              "path": "defines.d.ts",
+              "present": true,
+              "bytes": 71,
+              "sha256": "b9aefefa7c91f18899f1d6062ea8db8c8ecbefb1a08ec97557f30ae3e7ef8b70"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "label": "declaration:consumes.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "consumes.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/004.stdout",
+            "bytes": 96,
+            "sha256": "6ebab2b27e040203579fdcd0fe4711470f530ecf747414dd0f1bf48d5c85b790"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/004.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/004",
+            "digest": {
+              "label": "capture-invocation-3-4",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 688,
+              "digest": "899a55ccd549d420cae0d50ae9e418c23e87122f352d2bc274a89a7e9b0246f9"
+            }
+          },
+          "outputs": [
+            {
+              "path": "consumes.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "label": "declaration:exposes.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "exposes.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-003/invocations/005.stdout",
+            "bytes": 108,
+            "sha256": "d19f5ff9d66813fef0d5987c141a59f105646bdf728763ec88f014b39b47a4f9"
+          },
+          "stderr": {
+            "path": "raw/case-003/invocations/005.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-003/workspaces/005",
+            "digest": {
+              "label": "capture-invocation-3-5",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 688,
+              "digest": "00e9dca75710ca844d588c63aeeaee61a46064cb8985eb47dbd6224af457a197"
+            }
+          },
+          "outputs": [
+            {
+              "path": "exposes.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "actualSha256": "8baba0358a6bbfa5311f6069dac136827df523adfc67e9967e07cf5b6bb1d6be",
+          "baselineSha256": "45e7c2c266755caf3d337cb65aafd3ff00211dd2bc8723f2e5129426142295bf"
+        },
+        {
+          "section": "defines.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "9547db920ac1745e0d4e3a1d40f908af272b729b1ef7b814cf8f6d93fdae2e81",
+          "baselineSha256": "9547db920ac1745e0d4e3a1d40f908af272b729b1ef7b814cf8f6d93fdae2e81"
+        },
+        {
+          "section": "consumes.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "67a42140f1eaa189780a05d133548500c3fb01012c7360ab7aaf9453606bbfdb",
+          "baselineSha256": "67a42140f1eaa189780a05d133548500c3fb01012c7360ab7aaf9453606bbfdb"
+        },
+        {
+          "section": "exposes.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "994a7cc8804cf3324fc19ca5addda6377b09a434625a6a55de83bcd545e9b435",
+          "baselineSha256": "994a7cc8804cf3324fc19ca5addda6377b09a434625a6a55de83bcd545e9b435"
+        },
+        {
+          "section": "defines.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "17f1a7310d6fd9431cd4269692f0052f5e078a68158dddc51a7c6362cffa3997",
+          "baselineSha256": "17f1a7310d6fd9431cd4269692f0052f5e078a68158dddc51a7c6362cffa3997"
+        },
+        {
+          "section": "consumes.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "208cab46b7f5ad6a61b869475d76bfa682a7bf33a97df75d3f907423d9893960"
+        },
+        {
+          "section": "exposes.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "25276de8cf963b14efe3448adcce0f1f97b465542f62e63da7f3db724f55dacc"
+        }
+      ],
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "contentPath": "raw/case-003/sections/000.txt",
+          "sha256": "8baba0358a6bbfa5311f6069dac136827df523adfc67e9967e07cf5b6bb1d6be",
+          "baselineSha256": "45e7c2c266755caf3d337cb65aafd3ff00211dd2bc8723f2e5129426142295bf"
+        },
+        {
+          "name": "consumes.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-003/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "208cab46b7f5ad6a61b869475d76bfa682a7bf33a97df75d3f907423d9893960"
+        },
+        {
+          "name": "exposes.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-003/sections/002.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "25276de8cf963b14efe3448adcce0f1f97b465542f62e63da7f3db724f55dacc"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationAsyncAndGeneratorFunctions.ts",
+      "configuration": null,
+      "artifact": "declarationAsyncAndGeneratorFunctions.d.ts",
+      "input": {
+        "bytes": 395,
+        "sha256": "4aa4c17ff8ed8d29909a37586b42bea24eb3e37025112094abb49db67bdef6b3"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "bytes": 3197,
+          "sha256": "8ad51939b218427c702b149458b9d187338e464a64f126f76d274ba375bf4269"
+        },
+        {
+          "artifact": "declarationAsyncAndGeneratorFunctions.js",
+          "bytes": 716,
+          "sha256": "04c3256abe6032721555c9e6940746cbbbc601f005ba19728d140b5554cffc5b"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-004/input",
+        "digest": {
+          "label": "capture-input-4",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 833,
+          "digest": "409a1ded1e8bfcbf1de601c4b4b253ce9101f7f0a0bc4ec267b2f581339cc96d"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:declarationAsyncAndGeneratorFunctions.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "esnext",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "declarationAsyncAndGeneratorFunctions.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-004/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-004/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-004/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-4-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 1122,
+              "digest": "82d53ae7b580db382c4f502870c53b7587e271a3bca4f74f34b6177db30f4322"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationAsyncAndGeneratorFunctions.js",
+              "present": true,
+              "bytes": 289,
+              "sha256": "2b979ccf98c234ba0d9ab157697026a0676d8d9487ee79a69a2baef8a50e19d5"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:declarationAsyncAndGeneratorFunctions.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "esnext",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "declarationAsyncAndGeneratorFunctions.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-004/invocations/001.stdout",
+            "bytes": 727,
+            "sha256": "1b406146687a20fee91a5c9a7f231f2e3b5330a6830f2ec9f73816c642642d6a"
+          },
+          "stderr": {
+            "path": "raw/case-004/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-004/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-4-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 833,
+              "digest": "bdf2c5d45f9636c892d2944e9f0e8bea5f873149630762cfb304d7d2c61860ba"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationAsyncAndGeneratorFunctions.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "e007dd89e9c89624c61dc9552296878a32680fce2f208962cca6cc5a6b5481d2",
+          "baselineSha256": "e007dd89e9c89624c61dc9552296878a32680fce2f208962cca6cc5a6b5481d2"
+        },
+        {
+          "section": "declarationAsyncAndGeneratorFunctions.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "7fe409adffd4af471b21da3b285bea752b1e48bdc8c08b2a12f16ce95c7f068b",
+          "baselineSha256": "7fe409adffd4af471b21da3b285bea752b1e48bdc8c08b2a12f16ce95c7f068b"
+        },
+        {
+          "section": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "f5889e3296b1465806f739b0ec70e2feafb2e80e65b3891558b3bf24fc8721ee"
+        }
+      ],
+      "sections": [
+        {
+          "name": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-004/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "f5889e3296b1465806f739b0ec70e2feafb2e80e65b3891558b3bf24fc8721ee"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationSingleFileHasErrors.ts",
+      "configuration": null,
+      "artifact": "declarationSingleFileHasErrors.d.ts",
+      "input": {
+        "bytes": 105,
+        "sha256": "9dcd91abb2e5d5c5de5f100bafb447ec042a81d82eef81a65c46fed6421abd36"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationSingleFileHasErrors.d.ts",
+          "bytes": 680,
+          "sha256": "087e1096b698461f8216f19689d1ae9485f3cfcccb564da6ada9f0fac9800e01"
+        },
+        {
+          "artifact": "declarationSingleFileHasErrors.js",
+          "bytes": 284,
+          "sha256": "cce55cd9ba028d4dcea18f57802f291e1e46fff44f1fc45646dfddc15cb9ced7"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-005/input",
+        "digest": {
+          "label": "capture-input-5",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 541,
+          "digest": "6f4e4b2700fbb6f63050805d7ca806e43086bef484c4b029e207c6bcb43bdc4f"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:declarationSingleFileHasErrors.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "declarationSingleFileHasErrors.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-005/invocations/000.stdout",
+            "bytes": 69,
+            "sha256": "952336b894582334c3f088af9a94ab196b1860c1526cfa1a479174fe84b6921c"
+          },
+          "stderr": {
+            "path": "raw/case-005/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-005/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-5-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 693,
+              "digest": "05013aa069b76398f3ef173321891f63583414b7e717e4b804e8edb9061739b6"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationSingleFileHasErrors.js",
+              "present": true,
+              "bytes": 152,
+              "sha256": "6816a048031b421544f7c6618be6ac8ba7dbcbdfa37e8abe53e7cdc0c04298d7"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:declarationSingleFileHasErrors.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "declarationSingleFileHasErrors.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-005/invocations/001.stdout",
+            "bytes": 200,
+            "sha256": "2bf7922791ab0061393fb0a6c42044957ee95acc9af0b01ac286650a32b9d529"
+          },
+          "stderr": {
+            "path": "raw/case-005/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-005/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-5-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 541,
+              "digest": "3a073398f51c26cc572d188dd9fcf157e66c18d95198a5190537f2f599dbd741"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationSingleFileHasErrors.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "content",
+          "actualSha256": "5f635754ff0006fb91683a70cd8c2f4db32418c1688cf5ddf149e19790d01979",
+          "baselineSha256": "7b86baea8040725dfe2ae9583dff7c138b48519bffa3273a16bafb022758fa69"
+        },
+        {
+          "section": "declarationSingleFileHasErrors.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "a1956842f265c2d5e9847cbf719c0766439ced68d7ff06840214ab548f91d024",
+          "baselineSha256": "a1956842f265c2d5e9847cbf719c0766439ced68d7ff06840214ab548f91d024"
+        },
+        {
+          "section": "declarationSingleFileHasErrors.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "9751954635596abe20b571943e9cff3991796eb31210dfd7263ac59632d9ec27"
+        }
+      ],
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports both the isolated-declaration diagnostic and the parser diagnostic for this malformed source, while the Strada transpile baseline records only the isolated-declaration diagnostic.",
+          "contentPath": "raw/case-005/sections/000.txt",
+          "sha256": "5f635754ff0006fb91683a70cd8c2f4db32418c1688cf5ddf149e19790d01979",
+          "baselineSha256": "7b86baea8040725dfe2ae9583dff7c138b48519bffa3273a16bafb022758fa69"
+        },
+        {
+          "name": "declarationSingleFileHasErrors.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-005/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "9751954635596abe20b571943e9cff3991796eb31210dfd7263ac59632d9ec27"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationSingleFileHasErrorsReported.ts",
+      "configuration": null,
+      "artifact": "declarationSingleFileHasErrorsReported.d.ts",
+      "input": {
+        "bytes": 134,
+        "sha256": "61d005cc4b3153b68744a284077cee66452c8fec0ae5d888cc3b2ffd361da447"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationSingleFileHasErrorsReported.d.ts",
+          "bytes": 858,
+          "sha256": "b6ba891adf5a163deaa04e9498693085638804d07cd0aba90a018ab68c50a8cb"
+        },
+        {
+          "artifact": "declarationSingleFileHasErrorsReported.js",
+          "bytes": 585,
+          "sha256": "07036f25db09fe8fd32f030f2a9f6bc7ffef6dc55087674898f09998ff36591d"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-006/input",
+        "digest": {
+          "label": "capture-input-6",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 541,
+          "digest": "47f2750528e57c59cac8f92585c56d500f9df52db1d2ab81dc43d449a2fb393e"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:declarationSingleFileHasErrorsReported.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "declarationSingleFileHasErrorsReported.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-006/invocations/000.stdout",
+            "bytes": 77,
+            "sha256": "ad978e575f5dbc6ae4037496080a09be65e6403720d78e8437b34ed0ab0df400"
+          },
+          "stderr": {
+            "path": "raw/case-006/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-006/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-6-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 693,
+              "digest": "902e83f5f9c8c5eb99b5b8655670716adc4206a516e870ae4513975da45938d3"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationSingleFileHasErrorsReported.js",
+              "present": true,
+              "bytes": 152,
+              "sha256": "98a7c9e60d5c4a435ac342adfe45263f350d4eeaaee63210e3dd1060d2b8e2cb"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:declarationSingleFileHasErrorsReported.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--module",
+            "commonjs",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es2015",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "declarationSingleFileHasErrorsReported.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-006/invocations/001.stdout",
+            "bytes": 216,
+            "sha256": "04a4f8a9a46dfe67e236fa6cb60bb15afdd7ce9a11b61af500c1406e3454ff3f"
+          },
+          "stderr": {
+            "path": "raw/case-006/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-006/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-6-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 541,
+              "digest": "6e44cf7d25b464062bb411639ad32c71a7459f2730d9b47bf2e80c92e12c6d14"
+            }
+          },
+          "outputs": [
+            {
+              "path": "declarationSingleFileHasErrorsReported.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "3be89268b7ee42373889950c5007cfaf96c26d824565c80061399296370737c9",
+          "baselineSha256": "3be89268b7ee42373889950c5007cfaf96c26d824565c80061399296370737c9"
+        },
+        {
+          "section": "declarationSingleFileHasErrorsReported.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "89126f9ecc119e9e59135dc0803e9442d6dfe7e9837b476e3241d39d4f321662",
+          "baselineSha256": "89126f9ecc119e9e59135dc0803e9442d6dfe7e9837b476e3241d39d4f321662"
+        },
+        {
+          "section": "declarationSingleFileHasErrorsReported.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "e68190394e9d2f1cb4436fd9ae7cc4ec2c2fe0bb8cec3b29985f0318ed870022"
+        }
+      ],
+      "sections": [
+        {
+          "name": "declarationSingleFileHasErrorsReported.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-006/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "e68190394e9d2f1cb4436fd9ae7cc4ec2c2fe0bb8cec3b29985f0318ed870022"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationNotInScopeTypes.ts",
+      "configuration": null,
+      "artifact": "declarationNotInScopeTypes.d.ts",
+      "input": {
+        "bytes": 289,
+        "sha256": "665ca18dd6bb0383f51881db708b318c4b57b07324af4b91157531998a80ea21"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationNotInScopeTypes.d.ts",
+          "bytes": 1406,
+          "sha256": "911d26a7851ea0a8ffcee29c85ae11ba2ccd468254c3f1f0f2f5bc4f14ee6078"
+        },
+        {
+          "artifact": "declarationNotInScopeTypes.js",
+          "bytes": 419,
+          "sha256": "144c4e5b080028c23c3b3955f770726fd48af15630dc83cccf064a5fb23badb0"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-007/input",
+        "digest": {
+          "label": "capture-input-7",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 3,
+          "symlinkCount": 0,
+          "bytes": 709,
+          "digest": "70e4925696a24826086e595180711ead0bee278f3671a5aa7ad16e5bb8dd1fe0"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:variables.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "variables.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-007/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-007/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-007/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-7-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 4,
+              "symlinkCount": 0,
+              "bytes": 877,
+              "digest": "d0c6ac74235f3a4a884056ac9b060bd8eeb43e21421150f1d4b089b6989cf4da"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.js",
+              "present": true,
+              "bytes": 168,
+              "sha256": "3f03d937bd56d219d0abfa0b2f9f5c71d117d8c753b7ba872e709152872f5a5a"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:variables.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "variables.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-007/invocations/001.stdout",
+            "bytes": 221,
+            "sha256": "30f1aa3ede7b9861db374ab5a373a25deca153fbc654e0cfb810273908b8f956"
+          },
+          "stderr": {
+            "path": "raw/case-007/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-007/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-7-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 3,
+              "symlinkCount": 0,
+              "bytes": 709,
+              "digest": "3bacfcc871000225bf25c1802b659f8196eae1e64084e0258f5acb5a12983a08"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "e719fbef6b7f9f37ebc749048acd279022d85db81777486208003f050ca8c2ca",
+          "baselineSha256": "e719fbef6b7f9f37ebc749048acd279022d85db81777486208003f050ca8c2ca"
+        },
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "c0f8afe985c0092ba819e2037973fa77e740e48c979943b3fb136d46ae93a587",
+          "baselineSha256": "c0f8afe985c0092ba819e2037973fa77e740e48c979943b3fb136d46ae93a587"
+        },
+        {
+          "section": "variables.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "13815b4bbcd291b90926ffa031cc63617f50a61c918985dce10cc47fc5f5f23b"
+        }
+      ],
+      "sections": [
+        {
+          "name": "variables.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-007/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "13815b4bbcd291b90926ffa031cc63617f50a61c918985dce10cc47fc5f5f23b"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationEmitPartialNodeReuse.ts",
+      "configuration": null,
+      "artifact": "declarationEmitPartialNodeReuse.d.ts",
+      "input": {
+        "bytes": 578,
+        "sha256": "12bde7a809a1cc285c2e7af6ce5b918c34c7ded6e52d2f3d14e78f419076feec"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationEmitPartialNodeReuse.d.ts",
+          "bytes": 1751,
+          "sha256": "8169fb9bc3378ae9126b2b0958c3b70b745fea6546a4f868164472dee738914c"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-008/input",
+        "digest": {
+          "label": "capture-input-8",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 5,
+          "symlinkCount": 0,
+          "bytes": 911,
+          "digest": "82fe53474bcdeb10e21967f290d3931144e25dc9f896b6a7b75509bec668c169"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "declaration:a.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "a.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-008/invocations/000.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-008/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-008/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-8-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 1249,
+              "digest": "e21a09342b63fb1a01290f90cc3fc64b1f80d82afea10ad31ac387e97b786a8a"
+            }
+          },
+          "outputs": [
+            {
+              "path": "a.d.ts",
+              "present": true,
+              "bytes": 338,
+              "sha256": "b920331e720c48afaff585d44b39e4a8869f596303dcd2729909bde96212e8d3"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:b.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "b.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-008/invocations/001.stdout",
+            "bytes": 102,
+            "sha256": "ef4003b00cb03e9087e620b708808c8cc4e0845ff54fcc8c4756547e88f3c231"
+          },
+          "stderr": {
+            "path": "raw/case-008/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-008/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-8-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 911,
+              "digest": "1a2f8d21c43b8378ecadc7502f572ca00f6b88419a1e8c9fdd279d3efe44923c"
+            }
+          },
+          "outputs": [
+            {
+              "path": "b.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "declaration:c.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "c.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-008/invocations/002.stdout",
+            "bytes": 102,
+            "sha256": "efe118cba38deb4c6e6593499d7bdffbe27f29c2833b344411e00250db1a538b"
+          },
+          "stderr": {
+            "path": "raw/case-008/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-008/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-8-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 911,
+              "digest": "643551697c9db2b1dd5fed2c33c260041721ab399f1a7729b6baa8f58e643b75"
+            }
+          },
+          "outputs": [
+            {
+              "path": "c.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "06dbe2361bf58ac9d02d38c753023f240c295d2d2caf6c0a27d2acff2e33cef4",
+          "baselineSha256": "06dbe2361bf58ac9d02d38c753023f240c295d2d2caf6c0a27d2acff2e33cef4"
+        },
+        {
+          "section": "a.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "e6dbda94024f71651499b7aa4a1c7403831887140507c998a23df335803758c8",
+          "baselineSha256": "e6dbda94024f71651499b7aa4a1c7403831887140507c998a23df335803758c8"
+        },
+        {
+          "section": "b.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        },
+        {
+          "section": "c.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        }
+      ],
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-008/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        },
+        {
+          "name": "c.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-008/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationPartialNodeReuseTypeOf.ts",
+      "configuration": null,
+      "artifact": "declarationPartialNodeReuseTypeOf.d.ts",
+      "input": {
+        "bytes": 572,
+        "sha256": "e4a8187685f7e90f74153f537b6c9f73614d8f5e0fa0d727f767b3108d4a9c6c"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationPartialNodeReuseTypeOf.d.ts",
+          "bytes": 1777,
+          "sha256": "0101f4173b1524e1029b533aa9dae59892e6373435f31061dcde0fed3d8cd898"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-009/input",
+        "digest": {
+          "label": "capture-input-9",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 5,
+          "symlinkCount": 0,
+          "bytes": 906,
+          "digest": "46fefb11cb6c40245bb38d4ebb5248d759d28f6a14fe83b17750dfddf621de37"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "declaration:a.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "a.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-009/invocations/000.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-009/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-009/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-9-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 6,
+              "symlinkCount": 0,
+              "bytes": 1244,
+              "digest": "62794be5d1c691571a82acb5616a2cff78a84fc21975f02314c155e8c5471263"
+            }
+          },
+          "outputs": [
+            {
+              "path": "a.d.ts",
+              "present": true,
+              "bytes": 338,
+              "sha256": "4491eb375eda7145a6e61817cfeecc0f65012a685ab061e1c20a52ca704ec944"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "declaration:b.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "b.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-009/invocations/001.stdout",
+            "bytes": 102,
+            "sha256": "ef4003b00cb03e9087e620b708808c8cc4e0845ff54fcc8c4756547e88f3c231"
+          },
+          "stderr": {
+            "path": "raw/case-009/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-009/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-9-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 906,
+              "digest": "18bbb158ef29ecc183c01e17532eeb8d2bb81be4a62e3c49d8c3f6399c2853e5"
+            }
+          },
+          "outputs": [
+            {
+              "path": "b.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "declaration:c.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--strict",
+            "--target",
+            "es2020",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "c.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-009/invocations/002.stdout",
+            "bytes": 102,
+            "sha256": "efe118cba38deb4c6e6593499d7bdffbe27f29c2833b344411e00250db1a538b"
+          },
+          "stderr": {
+            "path": "raw/case-009/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-009/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-9-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 5,
+              "symlinkCount": 0,
+              "bytes": 906,
+              "digest": "e18300397ada81cf634f6b6bf764bad0469fa5c6def108fa3987bcd11b1b2419"
+            }
+          },
+          "outputs": [
+            {
+              "path": "c.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "06dbe2361bf58ac9d02d38c753023f240c295d2d2caf6c0a27d2acff2e33cef4",
+          "baselineSha256": "06dbe2361bf58ac9d02d38c753023f240c295d2d2caf6c0a27d2acff2e33cef4"
+        },
+        {
+          "section": "a.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "806c4478fe9829f2183b900dc28284d8815b9b843ae40610ff836bc3fbe313a1",
+          "baselineSha256": "806c4478fe9829f2183b900dc28284d8815b9b843ae40610ff836bc3fbe313a1"
+        },
+        {
+          "section": "b.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        },
+        {
+          "section": "c.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        }
+      ],
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-009/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        },
+        {
+          "name": "c.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-009/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "3ca6072c9c053a5e9c351b20473a839864390990f2259e622c1aa19e60a2e7ac"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationBasicSyntax.ts",
+      "configuration": "declarationmap=false",
+      "artifact": "declarationBasicSyntax(declarationMap=false).d.ts",
+      "input": {
+        "bytes": 941,
+        "sha256": "5e8fd0ec505965fbcb98dff73ab1791d442fde5316e441f41185613d7c744dab"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationBasicSyntax(declarationMap=false).d.ts",
+          "bytes": 2401,
+          "sha256": "2a04c0d5bf6982cf35a9fba7fdd64e4ff2cb93edfc4dc9d83f34f3917e3180eb"
+        },
+        {
+          "artifact": "declarationBasicSyntax(declarationMap=false).js",
+          "bytes": 4272,
+          "sha256": "f175897b6f5abfea950fd9944183cf31e93f4a4ac826aedd2571ccaa527acdce"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-010/input",
+        "digest": {
+          "label": "capture-input-10",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 7,
+          "symlinkCount": 0,
+          "bytes": 1197,
+          "digest": "fb836ac417be0d5cb68d98de01917e7cc5e72369f1489b593a0a4d6311451447"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:variables.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "variables.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-10-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 4096,
+              "digest": "b0a91e4009381227e723fbb8ab75b010417e567df6a241e33593b87bd9c50283"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.js",
+              "present": true,
+              "bytes": 2899,
+              "sha256": "2074d95647fd326c68c1c93c869a54be6d4bc4f2001021ff9d2f266a4f2aaab0"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "module:interface.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "interface.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/001.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-10-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1209,
+              "digest": "ac39d31cd2baa9d9ca7e356664c1d83309b69eb90feb39d2fcf59da9748d665d"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.js",
+              "present": true,
+              "bytes": 12,
+              "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "module:class.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "class.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/002.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-10-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1365,
+              "digest": "ebab2224dce9ec755f8439b93364b001eddb473ccc650fb9649c7ecfa402af36"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.js",
+              "present": true,
+              "bytes": 168,
+              "sha256": "0dc4aae339c25833bd5c915a26b9e2ac5ffbb250058312fe2aecd55601c7b83a"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "label": "module:namespace.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "namespace.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/003.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/003.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/003",
+            "digest": {
+              "label": "capture-invocation-10-3",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1525,
+              "digest": "6ce8834b2d207a8a2a3df0b3e29648dbc200493ef36d2771f57be71d3ae42b92"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.js",
+              "present": true,
+              "bytes": 328,
+              "sha256": "d3f67730673c45f922d4600bf989fdc63d4c8163ddb5aa03388becd3b5328046"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "label": "module:alias.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "alias.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/004.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/004.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/004",
+            "digest": {
+              "label": "capture-invocation-10-4",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1209,
+              "digest": "9fe74b1788ade0893768fea1eaf731cd4738dbc5c39d55058dc0d04bbf748c2c"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.js",
+              "present": true,
+              "bytes": 12,
+              "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "label": "declaration:variables.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "false",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "variables.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/005.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/005.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/005",
+            "digest": {
+              "label": "capture-invocation-10-5",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1376,
+              "digest": "9902b6e688e0746a6cbee03e2fe0657d93fa6c0ee7d8d869860c12f83a2373c1"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.d.ts",
+              "present": true,
+              "bytes": 179,
+              "sha256": "e02ecbb42d0139bb72fbd4b2aefa17c5c5e12fb4e93b9b7862865c524ca0a374"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "label": "declaration:interface.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "false",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "interface.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/006.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/006.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/006",
+            "digest": {
+              "label": "capture-invocation-10-6",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1282,
+              "digest": "e994bec79083e74106c07a40a9946518ee02a975d00dda1caae8836c88f064ec"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.d.ts",
+              "present": true,
+              "bytes": 85,
+              "sha256": "7f5a625509d70f3a4a24e2382b606b578fccfdd285083005962c3595f77ba753"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "label": "declaration:class.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "false",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "class.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/007.stdout",
+            "bytes": 130,
+            "sha256": "d479caa160c99f54b3dea8b4cd8a98d5d5b6b9bf5231a5331e9a58a32f7a2cf1"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/007.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/007",
+            "digest": {
+              "label": "capture-invocation-10-7",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 7,
+              "symlinkCount": 0,
+              "bytes": 1197,
+              "digest": "55062a710fdd0edfa9de3ee8f0f04894a6c5c1d29d654a70d5bea2cabb8b6b1a"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "label": "declaration:namespace.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "false",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "namespace.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/008.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/008.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/008",
+            "digest": {
+              "label": "capture-invocation-10-8",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1391,
+              "digest": "8ff255b56931cfc1475af2e15599850dda56e5976f9e29af01a37b3484afdb81"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.d.ts",
+              "present": true,
+              "bytes": 194,
+              "sha256": "f703da699b46ae580d803ac975aeb0bbb80ea0e946bb4503d5a241f6e8b300c7"
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "label": "declaration:alias.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "false",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "alias.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-010/invocations/009.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-010/invocations/009.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-010/workspaces/009",
+            "digest": {
+              "label": "capture-invocation-10-9",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1234,
+              "digest": "0483e10441509633a94eb0e2c1d97ae8acb484ced1a08bb01ecfe77ab520cbf2"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.d.ts",
+              "present": true,
+              "bytes": 37,
+              "sha256": "6989021c71dd33f3184bea7e1761ff9b83be41e38157e59a9bde8a62ce62a5ea"
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "8ed7d25697ebcd0d52b8909e09154904196a5ac5e84c971320b0cf4bc9030f4d",
+          "baselineSha256": "8ed7d25697ebcd0d52b8909e09154904196a5ac5e84c971320b0cf4bc9030f4d"
+        },
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "5961cd08dfb2b5dd401f6bdab12cc98c3dbb9383d0909c7128a116d6bf471804",
+          "baselineSha256": "5961cd08dfb2b5dd401f6bdab12cc98c3dbb9383d0909c7128a116d6bf471804"
+        },
+        {
+          "section": "interface.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05",
+          "baselineSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05"
+        },
+        {
+          "section": "class.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "f45778f046544689609d4469abcdcbbd274a43ce04ce10c96b0159f5d1c95b17",
+          "baselineSha256": "f45778f046544689609d4469abcdcbbd274a43ce04ce10c96b0159f5d1c95b17"
+        },
+        {
+          "section": "namespace.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "9a56e4e7771923fbf4d5bc406645dab4eb60574179f014b504db05d296c4d881",
+          "baselineSha256": "9a56e4e7771923fbf4d5bc406645dab4eb60574179f014b504db05d296c4d881"
+        },
+        {
+          "section": "alias.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05",
+          "baselineSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05"
+        },
+        {
+          "section": "variables.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "54d523127ce50ca85ec639dd2aa682c47656d106b543f881b5a756804be4fb50",
+          "baselineSha256": "54d523127ce50ca85ec639dd2aa682c47656d106b543f881b5a756804be4fb50"
+        },
+        {
+          "section": "interface.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0",
+          "baselineSha256": "707c60978f00b090ff34df62e7931078355b0af55ceda3d966db138708233ab0"
+        },
+        {
+          "section": "class.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "fefec67d9a9877bd77e4ee84591dc2600fce2c8e0f07cea6a4c56269ee5dce3f"
+        },
+        {
+          "section": "namespace.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "e4567f3ace078a4df406daf186035038d8121518eeffb786597eea31e8516f79",
+          "baselineSha256": "e4567f3ace078a4df406daf186035038d8121518eeffb786597eea31e8516f79"
+        },
+        {
+          "section": "alias.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "453f6acb057ceb370da3886ab7ebd01abe07fbb07da1a3d469cd2fc1684627ea",
+          "baselineSha256": "453f6acb057ceb370da3886ab7ebd01abe07fbb07da1a3d469cd2fc1684627ea"
+        }
+      ],
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-010/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "fefec67d9a9877bd77e4ee84591dc2600fce2c8e0f07cea6a4c56269ee5dce3f"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/declarationBasicSyntax.ts",
+      "configuration": "declarationmap=true",
+      "artifact": "declarationBasicSyntax(declarationMap=true).d.ts",
+      "input": {
+        "bytes": 941,
+        "sha256": "5e8fd0ec505965fbcb98dff73ab1791d442fde5316e441f41185613d7c744dab"
+      },
+      "baselines": [
+        {
+          "artifact": "declarationBasicSyntax(declarationMap=true).d.ts",
+          "bytes": 4124,
+          "sha256": "3cca67f16f6ab6bf1b8208dc0d04f125cd67faa787266b7356d12965b7ad67a9"
+        },
+        {
+          "artifact": "declarationBasicSyntax(declarationMap=true).js",
+          "bytes": 4272,
+          "sha256": "f175897b6f5abfea950fd9944183cf31e93f4a4ac826aedd2571ccaa527acdce"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-011/input",
+        "digest": {
+          "label": "capture-input-11",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 7,
+          "symlinkCount": 0,
+          "bytes": 1197,
+          "digest": "39ba41ea7f248123c6cbff06a1c4709e60720fb776760b5e32ad43376f880548"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:variables.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "variables.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-11-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 4096,
+              "digest": "90efe5178042bfbb04a4e61542a0595b4437f23060689ecac83e3641a702d876"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.js",
+              "present": true,
+              "bytes": 2899,
+              "sha256": "2074d95647fd326c68c1c93c869a54be6d4bc4f2001021ff9d2f266a4f2aaab0"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "module:interface.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "interface.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/001.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-11-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1209,
+              "digest": "00e251f99b18bdcf534fd165465f782defaf846009928844cf4afe7b8f0f1c12"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.js",
+              "present": true,
+              "bytes": 12,
+              "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "module:class.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "class.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/002.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-11-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1365,
+              "digest": "3cf815245d457fc407c933a953e87a20726348b7139dbf816cdf3e065430bf6e"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.js",
+              "present": true,
+              "bytes": 168,
+              "sha256": "0dc4aae339c25833bd5c915a26b9e2ac5ffbb250058312fe2aecd55601c7b83a"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "label": "module:namespace.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "namespace.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/003.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/003.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/003",
+            "digest": {
+              "label": "capture-invocation-11-3",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1525,
+              "digest": "f9fd86557ab3483ca6641e061cbe0cdcecd8d0a45597bbec0acfa665e4e88ca3"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.js",
+              "present": true,
+              "bytes": 328,
+              "sha256": "d3f67730673c45f922d4600bf989fdc63d4c8163ddb5aa03388becd3b5328046"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "label": "module:alias.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "alias.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/004.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/004.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/004",
+            "digest": {
+              "label": "capture-invocation-11-4",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1209,
+              "digest": "f11bfd27721e91fe49f1cda8e38daf5f24c78674782fe119fbd4a1e06a40c5d7"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.js",
+              "present": true,
+              "bytes": 12,
+              "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "label": "declaration:variables.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "variables.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/005.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/005.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/005",
+            "digest": {
+              "label": "capture-invocation-11-5",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1734,
+              "digest": "fadf8584711cf65c8240bdffa3c75a40d1f07adf2b7e0f7891eace3137c74f14"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.d.ts",
+              "present": true,
+              "bytes": 218,
+              "sha256": "70a90333fd9d32f72dcf34ce5c0f7d395bff403cd087ba264012ca40ac6f3d98"
+            },
+            {
+              "path": "variables.d.ts.map",
+              "present": true,
+              "bytes": 319,
+              "sha256": "81ff29bc4bfcaea16a318fb90ff4d60f8409dbeb092e1f3aa450edd0aa5e48b4"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "label": "declaration:interface.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "interface.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/006.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/006.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/006",
+            "digest": {
+              "label": "capture-invocation-11-6",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1542,
+              "digest": "05647595d5ad6f59ca8ea24a442ae527dc8b3578aad69b491e127238df8efc45"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.d.ts",
+              "present": true,
+              "bytes": 124,
+              "sha256": "228e1940b0e0380f75f21dd6119a3858366cbf5ea3f6687203d2c1d9dadfdcf4"
+            },
+            {
+              "path": "interface.d.ts.map",
+              "present": true,
+              "bytes": 221,
+              "sha256": "8ab858ae59a815e42d716025a13d476a8a4d05dabdbd6358c2c24dfa7bd83586"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "label": "declaration:class.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "class.ts"
+          ],
+          "status": 1,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/007.stdout",
+            "bytes": 130,
+            "sha256": "d479caa160c99f54b3dea8b4cd8a98d5d5b6b9bf5231a5331e9a58a32f7a2cf1"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/007.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/007",
+            "digest": {
+              "label": "capture-invocation-11-7",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 7,
+              "symlinkCount": 0,
+              "bytes": 1197,
+              "digest": "b1d6fb3c5539eb2f20945059e727b954b390c8d65979e9699d49e8a476d94743"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.d.ts",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            },
+            {
+              "path": "class.d.ts.map",
+              "present": false,
+              "bytes": null,
+              "sha256": null
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "label": "declaration:namespace.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "namespace.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/008.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/008.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/008",
+            "digest": {
+              "label": "capture-invocation-11-8",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1676,
+              "digest": "5c85e505947b10ba0d54ccab73c81303ae3a96bec6de8ac08fc9d2d782c304d6"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.d.ts",
+              "present": true,
+              "bytes": 233,
+              "sha256": "4585324bcbf18c1151384c46bd8e0f5c89b906f40d7e6dd9bba556444ef0e6a1"
+            },
+            {
+              "path": "namespace.d.ts.map",
+              "present": true,
+              "bytes": 246,
+              "sha256": "4f9b54e3238cbefd3b25d7fb141c2b60f9b486de6e609d6af59ab299f4e939a0"
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "label": "declaration:alias.ts",
+          "kind": "declaration",
+          "args": [
+            "--ignoreConfig",
+            "--declaration",
+            "--declarationMap",
+            "--emitDeclarationOnly",
+            "--isolatedDeclarations",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--noLib",
+            "lib.d.ts",
+            "alias.ts"
+          ],
+          "status": 0,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-011/invocations/009.stdout",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "path": "raw/case-011/invocations/009.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-011/workspaces/009",
+            "digest": {
+              "label": "capture-invocation-11-9",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1435,
+              "digest": "93129bb2d09c3f793842b1c0505ca584b41ae85ffab5f48562db922e8ea30647"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.d.ts",
+              "present": true,
+              "bytes": 72,
+              "sha256": "62e73665b7d16176a879de2ef0fe62a9021e0bb28f2384fa6658cca9dd13f8f7"
+            },
+            {
+              "path": "alias.d.ts.map",
+              "present": true,
+              "bytes": 166,
+              "sha256": "cdeb7f178e56dddc83b8d23e5b552fb9cd010d2841621a5b6a9ba17472f92126"
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "8ed7d25697ebcd0d52b8909e09154904196a5ac5e84c971320b0cf4bc9030f4d",
+          "baselineSha256": "8ed7d25697ebcd0d52b8909e09154904196a5ac5e84c971320b0cf4bc9030f4d"
+        },
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "5961cd08dfb2b5dd401f6bdab12cc98c3dbb9383d0909c7128a116d6bf471804",
+          "baselineSha256": "5961cd08dfb2b5dd401f6bdab12cc98c3dbb9383d0909c7128a116d6bf471804"
+        },
+        {
+          "section": "interface.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05",
+          "baselineSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05"
+        },
+        {
+          "section": "class.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "f45778f046544689609d4469abcdcbbd274a43ce04ce10c96b0159f5d1c95b17",
+          "baselineSha256": "f45778f046544689609d4469abcdcbbd274a43ce04ce10c96b0159f5d1c95b17"
+        },
+        {
+          "section": "namespace.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "9a56e4e7771923fbf4d5bc406645dab4eb60574179f014b504db05d296c4d881",
+          "baselineSha256": "9a56e4e7771923fbf4d5bc406645dab4eb60574179f014b504db05d296c4d881"
+        },
+        {
+          "section": "alias.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05",
+          "baselineSha256": "2e29cd9a98755c46896f7a2d56524db2d6d96b248e36db46de14c30bf47c8d05"
+        },
+        {
+          "section": "variables.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "833a0785fc7ae769526998b221b4943f22bc4bd391982d288832d2b0da8d6fd8",
+          "baselineSha256": "833a0785fc7ae769526998b221b4943f22bc4bd391982d288832d2b0da8d6fd8"
+        },
+        {
+          "section": "variables.d.ts.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "81ff29bc4bfcaea16a318fb90ff4d60f8409dbeb092e1f3aa450edd0aa5e48b4",
+          "baselineSha256": "81ff29bc4bfcaea16a318fb90ff4d60f8409dbeb092e1f3aa450edd0aa5e48b4"
+        },
+        {
+          "section": "interface.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "d6f3a5fe612247034f1bb94b638e1d8604c5c92c4fa4075dfd7337820e4bad99",
+          "baselineSha256": "d6f3a5fe612247034f1bb94b638e1d8604c5c92c4fa4075dfd7337820e4bad99"
+        },
+        {
+          "section": "interface.d.ts.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "8ab858ae59a815e42d716025a13d476a8a4d05dabdbd6358c2c24dfa7bd83586",
+          "baselineSha256": "8ab858ae59a815e42d716025a13d476a8a4d05dabdbd6358c2c24dfa7bd83586"
+        },
+        {
+          "section": "class.d.ts",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "35fea1f6766f284125d059433bc20d5b2c6626615aa477b8edc5ab2dccecf803"
+        },
+        {
+          "section": "class.d.ts.map",
+          "occurrence": 1,
+          "action": "absent",
+          "actualSha256": null,
+          "baselineSha256": "2cb6dacf7c7b7f304bbf9cd479ee5859757eca717e19dd1b3557801cc4f329ee"
+        },
+        {
+          "section": "namespace.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "125dfca36c6c6bce1409a78d2a12fc033f90768a84e0b76b9358214ce0006e48",
+          "baselineSha256": "125dfca36c6c6bce1409a78d2a12fc033f90768a84e0b76b9358214ce0006e48"
+        },
+        {
+          "section": "namespace.d.ts.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "4f9b54e3238cbefd3b25d7fb141c2b60f9b486de6e609d6af59ab299f4e939a0",
+          "baselineSha256": "4f9b54e3238cbefd3b25d7fb141c2b60f9b486de6e609d6af59ab299f4e939a0"
+        },
+        {
+          "section": "alias.d.ts",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "4bb330ea880b24805cc34dd87feaef3b97bcaff61fd0dc785ba8b3c72462319c",
+          "baselineSha256": "4bb330ea880b24805cc34dd87feaef3b97bcaff61fd0dc785ba8b3c72462319c"
+        },
+        {
+          "section": "alias.d.ts.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "cdeb7f178e56dddc83b8d23e5b552fb9cd010d2841621a5b6a9ba17472f92126",
+          "baselineSha256": "cdeb7f178e56dddc83b8d23e5b552fb9cd010d2841621a5b6a9ba17472f92126"
+        }
+      ],
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-011/sections/000.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "35fea1f6766f284125d059433bc20d5b2c6626615aa477b8edc5ab2dccecf803"
+        },
+        {
+          "name": "class.d.ts.map",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "contentPath": "raw/case-011/sections/001.txt",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80",
+          "baselineSha256": "2cb6dacf7c7b7f304bbf9cd479ee5859757eca717e19dd1b3557801cc4f329ee"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/jsWithSourceMapBasic.ts",
+      "configuration": "sourcemap=true",
+      "artifact": "jsWithSourceMapBasic(sourceMap=true).js",
+      "input": {
+        "bytes": 913,
+        "sha256": "410401f2065af931a2d6c742836b6c2b22af659188c6b4923aaaae4a21b97b3b"
+      },
+      "baselines": [
+        {
+          "artifact": "jsWithSourceMapBasic(sourceMap=true).js",
+          "bytes": 5817,
+          "sha256": "ae9e6e35a1f70ea33c3a49468786885f9bd72daabc1ba0f9d5e7a7c0042ad9c7"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-012/input",
+        "digest": {
+          "label": "capture-input-12",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 7,
+          "symlinkCount": 0,
+          "bytes": 1197,
+          "digest": "0f4a6fb55998ac9b2cdcfd694ca373bb141f9b56b2c3db0766bab77d00287ae3"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:variables.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--sourceMap",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "variables.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-012/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-012/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-012/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-12-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 4535,
+              "digest": "3c458268463f79af36c3b2e52fee28cf754de899287203db7f2f9690b1b56905"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.js",
+              "present": true,
+              "bytes": 2936,
+              "sha256": "f2af3a315cf4d10c933bdcf1dcd15ef931ce8c45f006d3b9393b760536d6f984"
+            },
+            {
+              "path": "variables.js.map",
+              "present": true,
+              "bytes": 402,
+              "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "module:interface.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--sourceMap",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "interface.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-012/invocations/001.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-012/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-012/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-12-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1349,
+              "digest": "a620fa4d9ff5a4f0db5e8fa8830843d45c1b9be55f5fa76ff6daddf0e0218bb4"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.js",
+              "present": true,
+              "bytes": 49,
+              "sha256": "6d8b01e28e7ef336ae631012106194cb7eedba892dbf5c4a7139982036082366"
+            },
+            {
+              "path": "interface.js.map",
+              "present": true,
+              "bytes": 103,
+              "sha256": "087d8f46ee9b07e19e0ea907b8cce675ddb51a3beeea897bf091ba64a3234180"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "module:class.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--sourceMap",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "class.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-012/invocations/002.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-012/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-012/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-12-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1609,
+              "digest": "2cc508f66244666d3dbea9789a4d4e8801f0ce349b21f41dd5d4c12fdc66d63e"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.js",
+              "present": true,
+              "bytes": 201,
+              "sha256": "15d0abe9fa7477e870b1bfa502b36d10cfaecb069f7feb2f356ab41547c9ea45"
+            },
+            {
+              "path": "class.js.map",
+              "present": true,
+              "bytes": 211,
+              "sha256": "0d406a49bb0f756949d96a4ac88d48d81e13261e2fa1e14f0c0e6ea653b8c56e"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "label": "module:namespace.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--sourceMap",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "namespace.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-012/invocations/003.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-012/invocations/003.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-012/workspaces/003",
+            "digest": {
+              "label": "capture-invocation-12-3",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1987,
+              "digest": "ecd5edfedb40ed1a1c304a784a4fcba1d68150e4407e10834dea97138bd2b004"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.js",
+              "present": true,
+              "bytes": 365,
+              "sha256": "36f732713aef35e7f7fe79e1ede124a75944b1797ff5fb03cc1b5eda0b6174ff"
+            },
+            {
+              "path": "namespace.js.map",
+              "present": true,
+              "bytes": 425,
+              "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "label": "module:alias.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--sourceMap",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "alias.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-012/invocations/004.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-012/invocations/004.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-012/workspaces/004",
+            "digest": {
+              "label": "capture-invocation-12-4",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 9,
+              "symlinkCount": 0,
+              "bytes": 1337,
+              "digest": "e1917e497e1af87c253c29f2f95cea888b9f746f84e9006eab1406956dfc658b"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.js",
+              "present": true,
+              "bytes": 45,
+              "sha256": "b3ad573c3bde3b4c5c1e125fb232690d622aff3c7ae49c1975f49bbf8ee7c873"
+            },
+            {
+              "path": "alias.js.map",
+              "present": true,
+              "bytes": 95,
+              "sha256": "b638fadbaf738b286be35442da71708451e5aac0ce2b5090819e80622914ae10"
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "baselineSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "e2dd973c90370449c98ad417bd9341d52391d4985f274c9c8d960047076c4d88",
+          "baselineSha256": "e2dd973c90370449c98ad417bd9341d52391d4985f274c9c8d960047076c4d88"
+        },
+        {
+          "section": "variables.js.map",
+          "occurrence": 1,
+          "action": "content",
+          "actualSha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae",
+          "baselineSha256": "a43ab2ee3ba964ec1136b76a4f16ccd6692314a9f72b3a15deef0e46e67d65ce"
+        },
+        {
+          "section": "interface.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "8fa84aa17e52ad42624c65fd0fb63e288ec05eed683813b511c7caac6b83b6a9",
+          "baselineSha256": "8fa84aa17e52ad42624c65fd0fb63e288ec05eed683813b511c7caac6b83b6a9"
+        },
+        {
+          "section": "interface.js.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "087d8f46ee9b07e19e0ea907b8cce675ddb51a3beeea897bf091ba64a3234180",
+          "baselineSha256": "087d8f46ee9b07e19e0ea907b8cce675ddb51a3beeea897bf091ba64a3234180"
+        },
+        {
+          "section": "class.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "5221095eaa3f57455eb8328acffe5108d781891bebaeef9425d0fb038c941568",
+          "baselineSha256": "5221095eaa3f57455eb8328acffe5108d781891bebaeef9425d0fb038c941568"
+        },
+        {
+          "section": "class.js.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "0d406a49bb0f756949d96a4ac88d48d81e13261e2fa1e14f0c0e6ea653b8c56e",
+          "baselineSha256": "0d406a49bb0f756949d96a4ac88d48d81e13261e2fa1e14f0c0e6ea653b8c56e"
+        },
+        {
+          "section": "namespace.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "1c0416130c19ef8c0b5e47d9a0e4b73732d58c1927494d5e543ddb781bc20ed7",
+          "baselineSha256": "1c0416130c19ef8c0b5e47d9a0e4b73732d58c1927494d5e543ddb781bc20ed7"
+        },
+        {
+          "section": "namespace.js.map",
+          "occurrence": 1,
+          "action": "content",
+          "actualSha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d",
+          "baselineSha256": "a5138c8e566f4886e930cbd9d82bfa5a67ef7743f98bb5cba9144b65582b9239"
+        },
+        {
+          "section": "alias.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "8f3388ea6c2886aa517a1d2a92133dd5cedd4b0dc02cf8fd405f54059ba064de",
+          "baselineSha256": "8f3388ea6c2886aa517a1d2a92133dd5cedd4b0dc02cf8fd405f54059ba064de"
+        },
+        {
+          "section": "alias.js.map",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "b638fadbaf738b286be35442da71708451e5aac0ce2b5090819e80622914ae10",
+          "baselineSha256": "b638fadbaf738b286be35442da71708451e5aac0ce2b5090819e80622914ae10"
+        }
+      ],
+      "sections": [
+        {
+          "name": "variables.js.map",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "contentPath": "raw/case-012/sections/000.txt",
+          "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae",
+          "baselineSha256": "a43ab2ee3ba964ec1136b76a4f16ccd6692314a9f72b3a15deef0e46e67d65ce"
+        },
+        {
+          "name": "namespace.js.map",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "contentPath": "raw/case-012/sections/001.txt",
+          "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d",
+          "baselineSha256": "a5138c8e566f4886e930cbd9d82bfa5a67ef7743f98bb5cba9144b65582b9239"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "corpus": "typescript",
+      "suite": "transpile",
+      "caseFile": "transpile/jsWithInlineSourceMapBasic.ts",
+      "configuration": "inlinesourcemap=true",
+      "artifact": "jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "input": {
+        "bytes": 919,
+        "sha256": "a783d8b12e378f932763ca2e2a85adef3d47de98a622676e43393d95ee704c8d"
+      },
+      "baselines": [
+        {
+          "artifact": "jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+          "bytes": 6148,
+          "sha256": "b0b36a0ee2122f9ddf8f6a5124f1b6807d66ca2d21ccc971c8eb9763df303c33"
+        }
+      ],
+      "inputWorkspace": {
+        "path": "raw/case-013/input",
+        "digest": {
+          "label": "capture-input-13",
+          "kind": "directory",
+          "mode": 493,
+          "symlinkPolicy": "reject",
+          "fileCount": 7,
+          "symlinkCount": 0,
+          "bytes": 1197,
+          "digest": "c1a2f2e08922950f419e4fa79261d704fdcf761199b02013d6e5616e271cfd6c"
+        }
+      },
+      "invocations": [
+        {
+          "index": 0,
+          "label": "module:variables.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--inlineSourceMap",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "variables.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-013/invocations/000.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-013/invocations/000.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-013/workspaces/000",
+            "digest": {
+              "label": "capture-invocation-13-0",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 4682,
+              "digest": "81c4dc046688f69d2824bc0c6aab8f103340879b6b993d4cca1cd5dca187b9de"
+            }
+          },
+          "outputs": [
+            {
+              "path": "variables.js",
+              "present": true,
+              "bytes": 3485,
+              "sha256": "99679c6904a2a984287748beae335fd62cd08ce8d605cc45edaf533f4c7b2fde"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "label": "module:interface.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--inlineSourceMap",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "interface.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-013/invocations/001.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-013/invocations/001.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-013/workspaces/001",
+            "digest": {
+              "label": "capture-invocation-13-1",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1399,
+              "digest": "38431d2520053bee18b13c578e23b6140217f1f18e84347775103ac2320107db"
+            }
+          },
+          "outputs": [
+            {
+              "path": "interface.js",
+              "present": true,
+              "bytes": 202,
+              "sha256": "8fb423af2eac036464e7997f170fd8332a3488875c6f05e487e1b2897ea23384"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "label": "module:class.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--inlineSourceMap",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "class.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-013/invocations/002.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-013/invocations/002.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-013/workspaces/002",
+            "digest": {
+              "label": "capture-invocation-13-2",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1699,
+              "digest": "a4029e2587bc6a9da6f40353e919058c449851eb77de41e7883c06c2d0fec29b"
+            }
+          },
+          "outputs": [
+            {
+              "path": "class.js",
+              "present": true,
+              "bytes": 502,
+              "sha256": "66c65807a39a9b6ab5e345c3a89a94af00e023079bb8da558d73a6bd6dc5ecd7"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "label": "module:namespace.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--inlineSourceMap",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "namespace.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-013/invocations/003.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-013/invocations/003.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-013/workspaces/003",
+            "digest": {
+              "label": "capture-invocation-13-3",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 2143,
+              "digest": "723d9f826d13a438d2e32e1323a6e0f34a55749881dacb6f1869ea4f13b0c278"
+            }
+          },
+          "outputs": [
+            {
+              "path": "namespace.js",
+              "present": true,
+              "bytes": 946,
+              "sha256": "90cd283ab7ce2a9cab70840a4d135b73d67b79286b61cbbb7703c2048ba30101"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "label": "module:alias.ts",
+          "kind": "module",
+          "args": [
+            "--ignoreConfig",
+            "--inlineSourceMap",
+            "--newLine",
+            "crlf",
+            "--noCheck",
+            "--noErrorTruncation",
+            "--skipDefaultLibCheck",
+            "--target",
+            "es6",
+            "--pretty",
+            "false",
+            "--noResolve",
+            "--isolatedModules",
+            "--declaration",
+            "false",
+            "--declarationMap",
+            "false",
+            "--noLib",
+            "alias.ts"
+          ],
+          "status": 2,
+          "signal": null,
+          "stdout": {
+            "path": "raw/case-013/invocations/004.stdout",
+            "bytes": 505,
+            "sha256": "8aca2483d54c03a08172ecf20e4c904a6429632cc36412c1fca05b621fc80c39"
+          },
+          "stderr": {
+            "path": "raw/case-013/invocations/004.stderr",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "workspace": {
+            "path": "raw/case-013/workspaces/004",
+            "digest": {
+              "label": "capture-invocation-13-4",
+              "kind": "directory",
+              "mode": 493,
+              "symlinkPolicy": "reject",
+              "fileCount": 8,
+              "symlinkCount": 0,
+              "bytes": 1387,
+              "digest": "589123eb25d96f21b255f45b01acdf8825b794792164bf033f724fb98395f228"
+            }
+          },
+          "outputs": [
+            {
+              "path": "alias.js",
+              "present": true,
+              "bytes": 190,
+              "sha256": "e51d3865b9a21f065aa761f1a307e2b29d649efbc5c1cf163e21be6593fc83aa"
+            }
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "section": "Diagnostics reported",
+          "occurrence": "aggregate",
+          "action": "equal",
+          "actualSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "baselineSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "section": "variables.js",
+          "occurrence": 1,
+          "action": "content",
+          "actualSha256": "80a17bbe39b5cda5994057f4ebb329cc92868ce037e4004453d3f0721f0eb649",
+          "baselineSha256": "54bdbf15c07d523ca32972f78b833ac1b0564fc90f2cce1aa16bb7c014dfe99d"
+        },
+        {
+          "section": "interface.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "e8d3b44dd7d86c8a52ce9c696b1a1a04406e93b610b20c09536ee856a94ec1fc",
+          "baselineSha256": "e8d3b44dd7d86c8a52ce9c696b1a1a04406e93b610b20c09536ee856a94ec1fc"
+        },
+        {
+          "section": "class.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "2dec8c68a5296383732de669db83c5e249444dc7076fa80364b82db35a9be74c",
+          "baselineSha256": "2dec8c68a5296383732de669db83c5e249444dc7076fa80364b82db35a9be74c"
+        },
+        {
+          "section": "namespace.js",
+          "occurrence": 1,
+          "action": "content",
+          "actualSha256": "6e7cd17ae75c814a794de5de538e6d8df6ab84b84f26186c576d06841d32dee4",
+          "baselineSha256": "3f990defabfcea59c4d1ef77de35e48506eaaf352ef046bef5546beb33f06a77"
+        },
+        {
+          "section": "alias.js",
+          "occurrence": 1,
+          "action": "equal",
+          "actualSha256": "285ffe476c0ead75b253225438643bbec27a3de6b7d38cb41b4a298ec5b4605c",
+          "baselineSha256": "285ffe476c0ead75b253225438643bbec27a3de6b7d38cb41b4a298ec5b4605c"
+        }
+      ],
+      "sections": [
+        {
+          "name": "variables.js",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "contentPath": "raw/case-013/sections/000.txt",
+          "sha256": "80a17bbe39b5cda5994057f4ebb329cc92868ce037e4004453d3f0721f0eb649",
+          "baselineSha256": "54bdbf15c07d523ca32972f78b833ac1b0564fc90f2cce1aa16bb7c014dfe99d"
+        },
+        {
+          "name": "namespace.js",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "contentPath": "raw/case-013/sections/001.txt",
+          "sha256": "6e7cd17ae75c814a794de5de538e6d8df6ab84b84f26186c576d06841d32dee4",
+          "baselineSha256": "3f990defabfcea59c4d1ef77de35e48506eaaf352ef046bef5546beb33f06a77"
+        }
+      ]
+    }
+  ]
+}

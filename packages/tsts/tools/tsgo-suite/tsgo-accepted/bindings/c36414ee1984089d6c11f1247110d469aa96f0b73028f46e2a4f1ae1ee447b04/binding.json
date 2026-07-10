@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "plan": {
+    "path": "plans/transpile-divergences-v1.json",
+    "bytes": 12538,
+    "sha256": "0da0f506e70bcd32d44d62c90ecc46dbe93d2713adf50e4e96ba1c393eca8967",
+    "planFingerprint": "a817ae550894ca2ae7cc894a39ad2e862a8d7e5da943945a82821ec040b2ed28"
+  },
+  "sourcePin": {
+    "path": "packages/tsts/schema/tsgo/source-pin.json",
+    "sha256": "07ef345f2c4addfa9fc12caa70285dfbae35a7cf6a3006c1316d7e1ae2d962ff",
+    "revision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+    "tree": "ab848098ac8a45086c49886aa77886b199da92a6",
+    "objectFormat": "sha1",
+    "nestedSources": [
+      {
+        "name": "TypeScript",
+        "path": "_submodules/TypeScript",
+        "revision": "4d4f005c8541e0255a9d8791205fdce326e462bc",
+        "tree": "52d822feb4a8e997f866296b960402e97b0ed49b",
+        "objectFormat": "sha1"
+      }
+    ]
+  },
+  "capture": {
+    "captureId": "dab810e2806433255f72afc89cd0064f02ebab8e6f52e193b54f54b99c8dc9e7",
+    "path": "captures/dab810e2806433255f72afc89cd0064f02ebab8e6f52e193b54f54b99c8dc9e7",
+    "evidenceDigest": "df7e703d85f7dee02f09d71307be0111a101c2d42c022b99605256fbad5cc8b1"
+  },
+  "overlays": [
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationRestParameters.d.ts",
+      "path": "overlays/typescript/transpile/declarationRestParameters.d.ts",
+      "sha256": "a02e3e9cf711bf99cb230bc565d723bebfa656befb2199b22e295607a89abdfa",
+      "sections": [
+        {
+          "name": "v2.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationFunctionDeclarations.d.ts",
+      "path": "overlays/typescript/transpile/declarationFunctionDeclarations.d.ts",
+      "sha256": "34c065c62c182e0431838e28b4c2725e7ac66827d0692800799d884da466ea86",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "sha256": "98b77a31a9ec685464eecaeb9dd3927d3d16614c69b38e774ca352e9893a16b9"
+        },
+        {
+          "name": "fnDecl.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationComputedPropertyNames.d.ts",
+      "path": "overlays/typescript/transpile/declarationComputedPropertyNames.d.ts",
+      "sha256": "f58113f44042cb3de0c84225efb5875dafe292469676d61fa6aa4ddd384c3660",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "sha256": "c175701c230ebe39dd3b0899806d0a36260d628e5b38bdd8c9a50d94d7505b47"
+        },
+        {
+          "name": "declarationComputedPropertyNames.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationCrossFileInferences.d.ts",
+      "path": "overlays/typescript/transpile/declarationCrossFileInferences.d.ts",
+      "sha256": "c693d90bf58522999d5f6d33c4d580158ca6351eff23a93fd1ff070607d77c8c",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports the isolated-declaration diagnostics produced by its transpile implementation rather than the Strada transpile baseline diagnostics.",
+          "sha256": "8baba0358a6bbfa5311f6069dac136827df523adfc67e9967e07cf5b6bb1d6be"
+        },
+        {
+          "name": "consumes.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "exposes.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationAsyncAndGeneratorFunctions.d.ts",
+      "path": "overlays/typescript/transpile/declarationAsyncAndGeneratorFunctions.d.ts",
+      "sha256": "c6e8c8a7dc81bbe1a56cc77f389a053882052c29960a7d24d73d9d373f94debb",
+      "sections": [
+        {
+          "name": "declarationAsyncAndGeneratorFunctions.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationSingleFileHasErrors.d.ts",
+      "path": "overlays/typescript/transpile/declarationSingleFileHasErrors.d.ts",
+      "sha256": "033c1bc4fc2b2772ab1a401f56a019c6871420ecaea3c1bd750bbf91e6146e23",
+      "sections": [
+        {
+          "name": "Diagnostics reported",
+          "action": "content",
+          "occurrence": "aggregate",
+          "reason": "Pinned TS-Go reports both the isolated-declaration diagnostic and the parser diagnostic for this malformed source, while the Strada transpile baseline records only the isolated-declaration diagnostic.",
+          "sha256": "5f635754ff0006fb91683a70cd8c2f4db32418c1688cf5ddf149e19790d01979"
+        },
+        {
+          "name": "declarationSingleFileHasErrors.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationSingleFileHasErrorsReported.d.ts",
+      "path": "overlays/typescript/transpile/declarationSingleFileHasErrorsReported.d.ts",
+      "sha256": "cd2f617ebc9d14c1aabc090b41b74b452b52f46eff2be8bb922974c7935b3e6a",
+      "sections": [
+        {
+          "name": "declarationSingleFileHasErrorsReported.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationNotInScopeTypes.d.ts",
+      "path": "overlays/typescript/transpile/declarationNotInScopeTypes.d.ts",
+      "sha256": "b15b0dd5c94dc70d87e7bd356784801d96cd6f9c8a478741bba0d2f71e9ba351",
+      "sections": [
+        {
+          "name": "variables.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationEmitPartialNodeReuse.d.ts",
+      "path": "overlays/typescript/transpile/declarationEmitPartialNodeReuse.d.ts",
+      "sha256": "d92985ba5cdb244e3c6ec02b887343fc07f94c7764dc68d780511be7bf20d086",
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "c.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationPartialNodeReuseTypeOf.d.ts",
+      "path": "overlays/typescript/transpile/declarationPartialNodeReuseTypeOf.d.ts",
+      "sha256": "e998be2841f4183bac38d9428d5537606ac9d36de9d66eb7e14e73ff6e193058",
+      "sections": [
+        {
+          "name": "b.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "c.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationBasicSyntax(declarationMap=false).d.ts",
+      "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=false).d.ts",
+      "sha256": "f3760d665ea1b587bdd6888c430b716529d27f71370523e030868f4d0e302a6b",
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "declarationBasicSyntax(declarationMap=true).d.ts",
+      "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=true).d.ts",
+      "sha256": "72ea4f854434942d98a85bc5a2f79cad938462812a1e7f05427ccc9516cb5862",
+      "sections": [
+        {
+          "name": "class.d.ts",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        },
+        {
+          "name": "class.d.ts.map",
+          "action": "absent",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go blocks this declaration output under isolated-declaration checking and emits no file, while the Strada transpile baseline contains the file.",
+          "sha256": "735814d804cb86bc4603de366cec37b976aa97e3cd48a0f321b6bc62f19c7a80"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "jsWithSourceMapBasic(sourceMap=true).js",
+      "path": "overlays/typescript/transpile/jsWithSourceMapBasic(sourceMap=true).js",
+      "sha256": "1fdbc37173e235344018f86030da0e4e561316bd572c2eb9ae9c21798eaa67d7",
+      "sections": [
+        {
+          "name": "variables.js.map",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "sha256": "631ee4c135004594e496a91694a2bb32edf33cb080935accd619c8889207c2ae"
+        },
+        {
+          "name": "namespace.js.map",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "sha256": "a48c58931805e530cbc1fd55e32150f8168c5608f3764a4066339ac17cc3292d"
+        }
+      ]
+    },
+    {
+      "corpus": "typescript",
+      "suite": "transpile",
+      "artifact": "jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "path": "overlays/typescript/transpile/jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+      "sha256": "d51991e616e664817320a6c6c88cc026399a46b8e8bacc87bdd60a421bc33277",
+      "sections": [
+        {
+          "name": "variables.js",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "sha256": "80a17bbe39b5cda5994057f4ebb329cc92868ce037e4004453d3f0721f0eb649"
+        },
+        {
+          "name": "namespace.js",
+          "action": "content",
+          "occurrence": 1,
+          "reason": "Pinned TS-Go emits source-map content using its own transpile coordinate mapping, which differs byte-for-byte from the Strada transpile baseline.",
+          "sha256": "6e7cd17ae75c814a794de5de538e6d8df6ab84b84f26186c576d06841d32dee4"
+        }
+      ]
+    }
+  ],
+  "bindingId": "c36414ee1984089d6c11f1247110d469aa96f0b73028f46e2a4f1ae1ee447b04"
+}

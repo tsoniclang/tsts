@@ -37,6 +37,7 @@ func scanGoFile(root string, path string, modulePath string, knownPackageNames .
 		BuildTags:         explicitBuildTags(source, rel),
 		ImplicitBuildTags: implicitBuildTags(rel),
 		Imports:           []ImportReport{},
+		StructTags:        []MemberReport{},
 		Units:             []UnitReport{},
 		NodeKindCounts:    make(map[string]int),
 		FeatureCounts:     make(map[string]int),
@@ -54,6 +55,7 @@ func scanGoFile(root string, path string, modulePath string, knownPackageNames .
 	report.Imports = importsOf(parsed, packageNames, rel)
 	report.NodeKindCounts = nodeCounts(parsed)
 	report.FeatureCounts = featureCounts(parsed)
+	report.StructTags = structTagsOf(fileSet, parsed)
 	report.Units = unitsOf(fileSet, parsed, source, rel, modulePath, report.Generated, report.Imports)
 	return report
 }
@@ -307,12 +309,13 @@ func typeMembers(spec *ast.TypeSpec) []MemberReport {
 			for _, field := range typed.Fields.List {
 				fieldType := printed(field.Type)
 				fieldExpr := typeExpr(field.Type)
+				structTag, tagValues := fieldTags(field)
 				if len(field.Names) == 0 {
-					members = append(members, MemberReport{Kind: "embeddedField", Name: fieldType, Type: fieldType, TypeExpr: fieldExpr})
+					members = append(members, MemberReport{Kind: "embeddedField", Name: fieldType, Exported: embeddedFieldExported(field.Type), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
 					continue
 				}
 				for _, name := range field.Names {
-					members = append(members, MemberReport{Kind: "field", Name: name.Name, Type: fieldType, TypeExpr: fieldExpr})
+					members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
 				}
 			}
 		}

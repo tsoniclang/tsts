@@ -2527,14 +2527,14 @@ export function IsOuterExpression(node: GoPtr<Expression>, kinds: OuterExpressio
  * }
  */
 export function SkipOuterExpressions(node: GoPtr<Expression>, kinds: OuterExpressionKinds): GoPtr<Expression> {
-  const loop = (current: GoPtr<Expression>): GoPtr<Expression> => {
-    if (!IsOuterExpression(current, kinds)) return current;
-    if (IsBinaryExpression(current)) {
-      return loop(AsBinaryExpression(current)!.Right);
+  while (IsOuterExpression(node, kinds)) {
+    if (IsBinaryExpression(node)) {
+      node = AsBinaryExpression(node)!.Right;
+    } else {
+      node = Node_Expression(node);
     }
-    return loop(Node_Expression(current));
-  };
-  return loop(node);
+  }
+  return node;
 }
 
 /**
@@ -2643,6 +2643,7 @@ export function GetSourceFileOfNode(node: GoPtr<Node>): GoPtr<SourceFile> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::setParentInChildrenPool","kind":"varGroup","status":"implemented","sigHash":"ae451dac263fcd49a052fbaaa91c461d227f7ab108efd244750e66b475cd12be","bodyHash":"10ec3135e70425ace0e1321700abd0e4a2d549977d7e18cb9f2fb6b7acd151fc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries only the stateful child-parent visitor created by newParentInChildrenSetter; SetParentInChildren gets that exact function, invokes it, and returns the same function to the pool.","goSignature":"value{setParentInChildrenPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{setParentInChildrenPool:packages/tsts/src/go/sync.ts::Pool<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool>}"}
  *
  * Go source:
  * var setParentInChildrenPool = sync.Pool{
@@ -3278,7 +3279,8 @@ export function GetRootDeclaration(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getCombinedFlags","kind":"func","status":"implemented","sigHash":"57357718aef237ec0c4225b4d23ebf3fbe4fd8b63d51ae00c3dd43d04c15541f","bodyHash":"e917b239c8a6620fa1a968fc4cc6822fe724a441a184b3b63cc8c9a53af31bf6"}
+* @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getCombinedFlags","kind":"func","status":"implemented","sigHash":"57357718aef237ec0c4225b4d23ebf3fbe4fd8b63d51ae00c3dd43d04c15541f","bodyHash":"e917b239c8a6620fa1a968fc4cc6822fe724a441a184b3b63cc8c9a53af31bf6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go's ~uint32 constraint preserves each concrete flag type while all participating 32-bit flag carriers are exact JavaScript numbers; the local intersection records that runtime carrier without erasing the source constraint.","goSignature":"func<T0 extends raw(~uint32)>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>T0)=>T0","tsSignature":"func<T0 extends number&packages/tsts/src/go/compat.ts::GoConstraint<\"~uint32\">>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>T0)=>T0"}
  *
  * Go source:
  * func getCombinedFlags[T ~uint32](node *Node, getFlags func(*Node) T) T {

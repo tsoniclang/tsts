@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
+import { StringByteSlice } from "../../go/unicode/utf8.js";
 import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -1491,13 +1492,16 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
   let state: jsdocState = jsdocStateBeginningOfLine;
   let backtickCount = 0;
   let inFencedCodeBlock = false;
+  if (indent < 0) {
+    throw new globalThis.Error("indent must be a natural number");
+  }
   let margin = -1;
   const pushComment = (text: string): void => {
     if (margin === -1) {
       margin = indent;
     }
     comments.push(text);
-    indent += text.length;
+    indent += byteLen(text);
   };
 
   if (initialMargin !== undefined) {
@@ -1541,17 +1545,20 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
         // Done
         break loop;
       case KindWhitespaceTrivia: {
+        if (state === jsdocStateSavingComments || state === jsdocStateSavingBackticks) {
+          throw new globalThis.Error("whitespace shouldn't come from the scanner while saving comment text");
+        }
         const whitespace = Scanner_TokenText(receiver!.scanner);
         // if the whitespace crosses the margin, take only the whitespace that passes the margin
-        if (margin > -1 && indent + whitespace.length > margin) {
-          comments.push(whitespace.slice(Math.max(margin - indent, 0)));
+        if (margin > -1 && indent + byteLen(whitespace) > margin) {
+          comments.push(StringByteSlice(whitespace, Math.max(margin - indent, 0)));
           if (inFencedCodeBlock) {
             state = jsdocStateSavingBackticks;
           } else {
             state = jsdocStateSavingComments;
           }
         }
-        indent += whitespace.length;
+        indent += byteLen(whitespace);
         break;
       }
       case KindOpenBraceToken: {

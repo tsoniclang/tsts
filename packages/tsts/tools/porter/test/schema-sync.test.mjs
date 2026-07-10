@@ -225,3 +225,13 @@ test("collectVerifyFailures hard-gates signature mismatches", () => {
   };
   assert.deepEqual(collectVerifyFailures(status, {}), ["2 signature/type mismatches (param-type=1, alias-type=1)"]);
 });
+
+test("collectVerifyFailures hard-gates JSON-tag mismatches separately from signature overrides", () => {
+  const status = {
+    counts: { parseErrors: 0, duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
+    signatureCheck: { checked: 1, overrideIssues: 0, mismatches: 0, byKind: {} },
+    jsonTagCheck: { taggedUnits: 1, taggedFields: 2, fieldMapUnits: 1, fieldMapFields: 2, mismatches: 1, byKind: { "json-tag-field-drift": 1 } },
+    rows: [],
+  };
+  assert.deepEqual(collectVerifyFailures(status, {}), ["1 Go struct JSON-tag mismatches (json-tag-field-drift=1)"]);
+});

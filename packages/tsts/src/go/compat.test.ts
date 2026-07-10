@@ -8,7 +8,11 @@ import {
   GoChanSelect,
   GoChanSelectReceive,
   GoChanTrySend,
+  GoInterfaceAdapter,
+  GoInterfaceAssert,
+  GoInterfaceTryAssert,
   MakeGoChan,
+  NewGoInterfaceType,
 } from "./compat.js";
 
 async function flushMicrotasks(): Promise<void> {
@@ -26,6 +30,57 @@ test("GoAppend returns an extended slice without mutating the input slice", () =
 
   assert.deepEqual(source, ["a"]);
   assert.deepEqual(result, ["a", "b"]);
+});
+
+test("Go interface adapters preserve and validate concrete receiver identity", () => {
+  interface Receiver {
+    readonly value: number;
+  }
+  const receiverType = NewGoInterfaceType<Receiver>("example.Receiver");
+  const otherType = NewGoInterfaceType<Receiver>("example.Other");
+  const receiver: Receiver = { value: 42 };
+  const adapter = GoInterfaceAdapter(receiverType, receiver, {
+    Value: (): number => receiver.value,
+  });
+
+  assert.deepEqual(globalThis.Object.keys(adapter), ["Value"]);
+  assert.equal(adapter.Value(), 42);
+  assert.equal(GoInterfaceAssert(adapter, receiverType), receiver);
+  assert.deepEqual(GoInterfaceTryAssert(adapter, receiverType), [receiver, true]);
+  assert.deepEqual(GoInterfaceTryAssert(adapter, otherType), [undefined, false]);
+  assert.throws(() => GoInterfaceAssert(adapter, otherType), /does not contain example\.Other/);
+  assert.throws(() => GoInterfaceAssert({ Value: adapter.Value }, receiverType), /does not contain example\.Receiver/);
+});
+
+test("Go interface adapters preserve a typed nil concrete pointer", () => {
+  interface Receiver {
+    readonly value: number;
+  }
+  const receiverType = NewGoInterfaceType<Receiver>("example.NilReceiver");
+  const adapter = GoInterfaceAdapter(receiverType, undefined, {
+    Value: (): number => 0,
+  });
+
+  assert.deepEqual(GoInterfaceTryAssert(adapter, receiverType), [undefined, true]);
+  assert.equal(GoInterfaceAssert(adapter, receiverType), undefined);
+});
+
+test("Go interface adaptation preserves the adapter object and its prototype", () => {
+  interface Receiver {
+    readonly value: number;
+  }
+  class Adapter {
+    Value(): number {
+      return 7;
+    }
+  }
+  const receiverType = NewGoInterfaceType<Receiver>("example.PrototypeReceiver");
+  const adapter = new Adapter();
+  const adapted = GoInterfaceAdapter(receiverType, { value: 7 }, adapter);
+
+  assert.equal(adapted, adapter);
+  assert.equal(adapted instanceof Adapter, true);
+  assert.equal(adapted.Value(), 7);
 });
 
 test("bounded Go channels coalesce nonblocking sends and deliver queued values", async () => {

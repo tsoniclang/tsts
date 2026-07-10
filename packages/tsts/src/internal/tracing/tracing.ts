@@ -16,7 +16,7 @@ import { Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { Symbol } from "../ast/symbol.js";
 import { GetSourceFileOfNode } from "../ast/utilities.js";
-import { Deterministic, MarshalIndent, MarshalWrite } from "../json/json.js";
+import { AttachJsonFieldNamesForGoStruct, DefineJsonFieldNamesForGoStruct, Deterministic, MarshalIndent, MarshalWrite } from "../json/json.js";
 import { GetECMALineAndUTF16CharacterOfPosition, GetTokenPosOfNode } from "../scanner/scanner.js";
 import { CombinePaths, ToPath } from "../tspath/path.js";
 import type { FS } from "../vfs/vfs.js";
@@ -25,6 +25,100 @@ import type { FS } from "../vfs/vfs.js";
 // other ported internal files.
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
+
+const traceRecordJsonFieldNames = DefineJsonFieldNamesForGoStruct<TraceRecord>(
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TraceRecord",
+  {
+    ConfigFilePath: { name: "configFilePath", omitZero: true },
+    TracePath: { name: "tracePath", omitZero: true },
+    TypesPath: { name: "typesPath", omitZero: true },
+    CheckerID: "checkerId",
+  },
+  {
+    strategy: "runtime",
+    reason: "Trace records are marshaled through the generic JSON runtime and require exact upstream field identities and omission rules.",
+  },
+);
+
+const traceEventJsonFieldNames = DefineJsonFieldNamesForGoStruct<traceEvent>(
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::traceEvent",
+  {
+    PID: "pid",
+    TID: "tid",
+    PH: "ph",
+    Cat: "cat",
+    TS: "ts",
+    Name: { name: "name", omitZero: true },
+    S: { name: "s", omitZero: true },
+    Dur: { name: "dur", omitZero: true, zero: "nil" },
+    Args: { name: "args", omitZero: true, zero: "nil" },
+  },
+  {
+    strategy: "runtime",
+    reason: "Trace events are marshaled through the generic JSON runtime and require exact upstream field identities and omission rules.",
+  },
+);
+
+const typeDescriptorJsonFieldNames = DefineJsonFieldNamesForGoStruct<TypeDescriptor>(
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TypeDescriptor",
+  {
+    ID: "id",
+    IntrinsicName: { name: "intrinsicName", omitZero: true },
+    SymbolName: { name: "symbolName", omitZero: true },
+    RecursionID: { name: "recursionId", omitZero: true, zero: "nil" },
+    IsTuple: { name: "isTuple", omitZero: true },
+    UnionTypes: { name: "unionTypes", omitZero: true, zero: "nil" },
+    IntersectionTypes: { name: "intersectionTypes", omitZero: true, zero: "nil" },
+    AliasTypeArguments: { name: "aliasTypeArguments", omitZero: true, zero: "nil" },
+    KeyofType: { name: "keyofType", omitZero: true, zero: "nil" },
+    IndexedAccessObjectType: { name: "indexedAccessObjectType", omitZero: true, zero: "nil" },
+    IndexedAccessIndexType: { name: "indexedAccessIndexType", omitZero: true, zero: "nil" },
+    ConditionalCheckType: { name: "conditionalCheckType", omitZero: true, zero: "nil" },
+    ConditionalExtendsType: { name: "conditionalExtendsType", omitZero: true, zero: "nil" },
+    ConditionalTrueType: { name: "conditionalTrueType", omitZero: true, zero: "nil" },
+    ConditionalFalseType: { name: "conditionalFalseType", omitZero: true, zero: "nil" },
+    SubstitutionBaseType: { name: "substitutionBaseType", omitZero: true, zero: "nil" },
+    ConstraintType: { name: "constraintType", omitZero: true, zero: "nil" },
+    InstantiatedType: { name: "instantiatedType", omitZero: true, zero: "nil" },
+    TypeArguments: { name: "typeArguments", omitZero: true, zero: "nil" },
+    ReferenceLocation: { name: "referenceLocation", omitZero: true, zero: "nil" },
+    ReverseMappedSourceType: { name: "reverseMappedSourceType", omitZero: true, zero: "nil" },
+    ReverseMappedMappedType: { name: "reverseMappedMappedType", omitZero: true, zero: "nil" },
+    ReverseMappedConstraintType: { name: "reverseMappedConstraintType", omitZero: true, zero: "nil" },
+    EvolvingArrayElementType: { name: "evolvingArrayElementType", omitZero: true, zero: "nil" },
+    EvolvingArrayFinalType: { name: "evolvingArrayFinalType", omitZero: true, zero: "nil" },
+    DestructuringPattern: { name: "destructuringPattern", omitZero: true, zero: "nil" },
+    FirstDeclaration: { name: "firstDeclaration", omitZero: true, zero: "nil" },
+    Flags: "flags",
+    Display: { name: "display", omitZero: true },
+  },
+  {
+    strategy: "runtime",
+    reason: "Type tracing emits descriptors through the generic JSON runtime with exact upstream field identities and omission rules.",
+  },
+);
+
+const locationJsonFieldNames = DefineJsonFieldNamesForGoStruct<Location>(
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::Location",
+  {
+    Path: "path",
+    Start: { name: "start", omitZero: true, zero: "nil" },
+    End: { name: "end", omitZero: true, zero: "nil" },
+  },
+  {
+    strategy: "runtime",
+    reason: "Trace source locations are nested in generic JSON output and require exact upstream field identities and omission rules.",
+  },
+);
+
+const lineAndCharJsonFieldNames = DefineJsonFieldNamesForGoStruct<LineAndChar>(
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::LineAndChar",
+  { Line: "line", Character: "character" },
+  {
+    strategy: "runtime",
+    reason: "Trace line and character records are nested in generic JSON output and require exact upstream field identities.",
+  },
+);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::Tracer","kind":"type","status":"implemented","sigHash":"f025a175c8bf255a7a0c4a78754baaf46fe3b6e9322c24578e20f1d77f199940","bodyHash":"a5ff61987ff2fdf516bbb9c86b1f4e7e80d3d62feeae171108f8f17bb9127d46"}
@@ -136,6 +230,7 @@ export interface TraceRecord {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::traceEvent","kind":"type","status":"implemented","sigHash":"90996833e7be7432b4981336a37dae26edb766dd1deb7fbc0e3a201be79427bf","bodyHash":"0aa86b982ea4cc805c3969ceb26b510fbb71ce81662d2a0593a33c6e0fb3335f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"traceEvent.Args is an omitzero Go map and event literals intentionally leave it nil for events without arguments; TypeScript represents that exact nil map as undefined while preserving populated Map values.","goSignature":"interface{Args:packages/tsts/src/go/compat.ts::GoMap<string,unknown>;Cat:string;Dur:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::double>;Name:string;PH:string;PID:packages/tsts/src/go/scalars.ts::int;S:string;TID:packages/tsts/src/go/scalars.ts::int;TS:packages/tsts/src/go/scalars.ts::double}","tsSignature":"interface{Args:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,unknown>>;Cat:string;Dur:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::double>;Name:string;PH:string;PID:packages/tsts/src/go/scalars.ts::int;S:string;TID:packages/tsts/src/go/scalars.ts::int;TS:packages/tsts/src/go/scalars.ts::double}"}
  *
  * Go source:
  * traceEvent struct {
@@ -159,7 +254,7 @@ export interface traceEvent {
   Name: string;
   S: string;
   Dur: GoPtr<double>;
-  Args: GoMap<string, unknown>;
+  Args: GoPtr<GoMap<string, unknown>>;
 }
 
 /**
@@ -338,7 +433,7 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
   tr.traceContent.WriteString(",\n");
   Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "__metadata", TS: metaTs, Name: "thread_name", S: "", Dur: undefined, Args: new globalThis.Map([["name", "Main"]]) });
   tr.traceContent.WriteString(",\n");
-  Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser", S: "", Dur: undefined, Args: undefined as unknown as GoMap<string, unknown> });
+  Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser", S: "", Dur: undefined, Args: undefined });
 
   // Truncate any existing trace file with the header so subsequent AppendFile
   // calls extend a clean file.
@@ -384,7 +479,7 @@ export function Tracing_timestamp(receiver: GoPtr<Tracing>): double {
  * }
  */
 export function writeEventTo(buf: GoPtr<Builder>, event: traceEvent): void {
-  const err = MarshalWrite(buf!, event, Deterministic(true));
+  const err = MarshalWrite(buf!, AttachJsonFieldNamesForGoStruct(event, traceEventJsonFieldNames), Deterministic(true));
   if (err !== undefined) {
     throw new globalThis.Error(Sprintf("failed to marshal trace event: %v", err));
   }
@@ -438,6 +533,7 @@ export function Tracing_maybeFlushLocked(receiver: GoPtr<Tracing>): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.Instant","kind":"method","status":"implemented","sigHash":"e72ba6ff68ef9b87d7ce9af888330afdabda477c1cc3070b04b1a13d81c2c477","bodyHash":"8a069e49367f2e7fe80f5f42b9ee914598bfb7011bc7eec8a75cecdef07bebfd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Instant accepts the nil Go argument map used by argument-free trace events; TypeScript represents that nil map as undefined and passes populated maps through unchanged.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/internal/tracing/tracing.ts::Phase,string,packages/tsts/src/go/compat.ts::GoMap<string,unknown>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/internal/tracing/tracing.ts::Phase,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,unknown>>)=>void"}
  *
  * Go source:
  * func (tr *Tracing) Instant(phase Phase, name string, args map[string]any) {
@@ -462,7 +558,7 @@ export function Tracing_maybeFlushLocked(receiver: GoPtr<Tracing>): void {
  * 	tr.maybeFlushLocked()
  * }
  */
-export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>): void {
+export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoPtr<GoMap<string, unknown>>): void {
   const tr = receiver;
   if (tr === undefined || !tr.traceStarted.Load()) {
     return;
@@ -489,6 +585,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.Push","kind":"method","status":"implemented","sigHash":"f718c05374a354a9bd493a2b4808be89935c9995e89990c29664a18f9c0d8253","bodyHash":"8405e0cf4cb3df02e667cda24b786ace3e373b28cbc260e7a2bf93974eb71650"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Push accepts and clones a nil Go argument map as nil for argument-free events; TypeScript uses undefined for that nil map and allocates a Map clone only for a populated input.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/internal/tracing/tracing.ts::Phase,string,packages/tsts/src/go/compat.ts::GoMap<string,unknown>,packages/tsts/src/go/scalars.ts::bool)=>()=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/internal/tracing/tracing.ts::Phase,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,unknown>>,packages/tsts/src/go/scalars.ts::bool)=>()=>void"}
  *
  * Go source:
  * func (tr *Tracing) Push(phase Phase, name string, args map[string]any, separateBeginAndEnd bool) func() {
@@ -549,7 +646,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 	}
  * }
  */
-export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): () => void {
+export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoPtr<GoMap<string, unknown>>, separateBeginAndEnd: bool): () => void {
   const tr = receiver;
   if (tr === undefined || !tr.traceStarted.Load()) {
     return (): void => {};
@@ -590,7 +687,7 @@ export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: strin
     return (): void => {};
   }
   const startMicros = (globalThis.performance.now() * 1000.0) as double;
-  const argsClone: GoMap<string, unknown> = new globalThis.Map(args);
+  const argsClone: GoPtr<GoMap<string, unknown>> = args === undefined ? undefined : new globalThis.Map(args);
   return (): void => {
     const endMicros = (globalThis.performance.now() * 1000.0) as double;
     const dur = (endMicros as number - startMicros as number) as double;
@@ -677,6 +774,7 @@ export interface traceThreadKey {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.threadIDLocked","kind":"method","status":"implemented","sigHash":"304e42395e9673f6b5b3d524230ffeca9053b6177cdeba9f70994df31a81167a","bodyHash":"2c65a947c18fcc4f12f1d8a35ac445946dc4ec6342a3ee151cc5668edb35a2f0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"threadIDLocked treats a nil Go argument map exactly like an empty map and selects the main thread; TypeScript represents only that nil state with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/go/compat.ts::GoMap<string,unknown>)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,unknown>>)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func (tr *Tracing) threadIDLocked(args map[string]any) int {
@@ -702,7 +800,7 @@ export interface traceThreadKey {
  * 	return tid
  * }
  */
-export function Tracing_threadIDLocked(receiver: GoPtr<Tracing>, args: GoMap<string, unknown>): int {
+export function Tracing_threadIDLocked(receiver: GoPtr<Tracing>, args: GoPtr<GoMap<string, unknown>>): int {
   const tr = receiver!;
   const [key, ok] = traceThreadKeyFromArgs(args);
   if (!ok) {
@@ -744,6 +842,7 @@ export function Tracing_writeThreadNameEventLocked(receiver: GoPtr<Tracing>, tid
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::traceThreadKeyFromArgs","kind":"func","status":"implemented","sigHash":"cbdb4de76873e98fafdc5a2f4f1aac74d7766fe349836f97b6c7fa38d06d46c0","bodyHash":"ca4b501f6ecc1cebc57bbbe2b6719130150298dcfbef477f5e4689932953920c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go len and lookup operations accept a nil map and classify it as having no thread key; TypeScript receives that exact nil-map state as undefined while retaining ordinary Map lookup semantics.","goSignature":"func(packages/tsts/src/go/compat.ts::GoMap<string,unknown>)=>[packages/tsts/src/internal/tracing/tracing.ts::traceThreadKey,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,unknown>>)=>[packages/tsts/src/internal/tracing/tracing.ts::traceThreadKey,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func traceThreadKeyFromArgs(args map[string]any) (traceThreadKey, bool) {
@@ -766,7 +865,7 @@ export function Tracing_writeThreadNameEventLocked(receiver: GoPtr<Tracing>, tid
  * 	return traceThreadKey{}, false
  * }
  */
-export function traceThreadKeyFromArgs(args: GoMap<string, unknown>): [traceThreadKey, bool] {
+export function traceThreadKeyFromArgs(args: GoPtr<GoMap<string, unknown>>): [traceThreadKey, bool] {
   if ((args?.size ?? 0) === 0) {
     return [{ kind: "", text: "", index: 0 as int, hasIndex: false as bool }, false as bool];
   }
@@ -893,12 +992,12 @@ export function Tracing_NewTypeTracer(receiver: GoPtr<Tracing>, checkerIndex: in
     tr.tracers = [...tr.tracers, tracer];
     tr.legend = [
       ...tr.legend,
-      {
+      AttachJsonFieldNamesForGoStruct({
         ConfigFilePath: tr.configFilePath,
         TracePath: tr.tracePath,
         TypesPath: typesPath,
         CheckerID: checkerIndex,
-      },
+      }, traceRecordJsonFieldNames),
     ];
     return typeTracer_as_Tracer(tracer);
   } finally {
@@ -1141,6 +1240,7 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TypeDescriptor","kind":"type","status":"implemented","sigHash":"0c5e33638db6ffbad2993546d26239e79b8fd894527927c23372c0bf72e2584c","bodyHash":"4faa31b6d1f7bf30b98d7a3dff7ebea03202533babb26238ab6895c4bbe652a0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The four omitzero descriptor slices remain nil until a non-empty type family is recorded; TypeScript preserves those zero-value slices as undefined and allocates arrays only for non-empty values, matching Go JSON output without conflating nil and allocated empty slices.","goSignature":"interface{AliasTypeArguments:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>;ConditionalCheckType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ConditionalExtendsType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ConditionalFalseType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ConditionalTrueType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ConstraintType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;DestructuringPattern:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;Display:string;EvolvingArrayElementType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;EvolvingArrayFinalType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;FirstDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;Flags:packages/tsts/src/go/compat.ts::GoSlice<string>;ID:packages/tsts/src/go/scalars.ts::uint;IndexedAccessIndexType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;IndexedAccessObjectType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;InstantiatedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;IntersectionTypes:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>;IntrinsicName:string;IsTuple:packages/tsts/src/go/scalars.ts::bool;KeyofType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;RecursionID:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ReferenceLocation:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;ReverseMappedConstraintType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ReverseMappedMappedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ReverseMappedSourceType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;SubstitutionBaseType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;SymbolName:string;TypeArguments:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>;UnionTypes:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>}","tsSignature":"interface{AliasTypeArguments:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>>;ConditionalCheckType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ConditionalExtendsType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ConditionalFalseType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ConditionalTrueType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ConstraintType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;DestructuringPattern:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;Display:string;EvolvingArrayElementType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;EvolvingArrayFinalType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;FirstDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;Flags:packages/tsts/src/go/compat.ts::GoSlice<string>;ID:packages/tsts/src/go/scalars.ts::uint;IndexedAccessIndexType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;IndexedAccessObjectType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;InstantiatedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;IntersectionTypes:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>>;IntrinsicName:string;IsTuple:packages/tsts/src/go/scalars.ts::bool;KeyofType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;RecursionID:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::int>;ReferenceLocation:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Location>;ReverseMappedConstraintType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ReverseMappedMappedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;ReverseMappedSourceType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;SubstitutionBaseType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::uint>;SymbolName:string;TypeArguments:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>>;UnionTypes:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>>}"}
  *
  * Go source:
  * TypeDescriptor struct {
@@ -1183,9 +1283,9 @@ export interface TypeDescriptor {
   SymbolName: string;
   RecursionID: GoPtr<int>;
   IsTuple: bool;
-  UnionTypes: GoSlice<uint>;
-  IntersectionTypes: GoSlice<uint>;
-  AliasTypeArguments: GoSlice<uint>;
+  UnionTypes: GoPtr<GoSlice<uint>>;
+  IntersectionTypes: GoPtr<GoSlice<uint>>;
+  AliasTypeArguments: GoPtr<GoSlice<uint>>;
   KeyofType: GoPtr<uint>;
   IndexedAccessObjectType: GoPtr<uint>;
   IndexedAccessIndexType: GoPtr<uint>;
@@ -1196,7 +1296,7 @@ export interface TypeDescriptor {
   SubstitutionBaseType: GoPtr<uint>;
   ConstraintType: GoPtr<uint>;
   InstantiatedType: GoPtr<uint>;
-  TypeArguments: GoSlice<uint>;
+  TypeArguments: GoPtr<GoSlice<uint>>;
   ReferenceLocation: GoPtr<Location>;
   ReverseMappedSourceType: GoPtr<uint>;
   ReverseMappedMappedType: GoPtr<uint>;
@@ -1392,16 +1492,16 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
   const symbol = typ.Symbol();
   const aliasSymbol = typ.AliasSymbol();
 
-  const desc: TypeDescriptor = {
+  const desc: TypeDescriptor = AttachJsonFieldNamesForGoStruct({
     ID: typ.Id(),
     Flags: typ.FormatFlags(),
     IntrinsicName: "",
     SymbolName: "",
     RecursionID: undefined,
     IsTuple: false,
-    UnionTypes: [],
-    IntersectionTypes: [],
-    AliasTypeArguments: [],
+    UnionTypes: undefined,
+    IntersectionTypes: undefined,
+    AliasTypeArguments: undefined,
     KeyofType: undefined,
     IndexedAccessObjectType: undefined,
     IndexedAccessIndexType: undefined,
@@ -1412,7 +1512,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     SubstitutionBaseType: undefined,
     ConstraintType: undefined,
     InstantiatedType: undefined,
-    TypeArguments: [],
+    TypeArguments: undefined,
     ReferenceLocation: undefined,
     ReverseMappedSourceType: undefined,
     ReverseMappedMappedType: undefined,
@@ -1422,7 +1522,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     DestructuringPattern: undefined,
     FirstDeclaration: undefined,
     Display: "",
-  };
+  }, typeDescriptorJsonFieldNames);
 
   // Assign a unique integer token per recursion identity, matching TypeScript's behavior.
   if (typ.RecursionIdentity() !== undefined && typ.RecursionIdentity() !== null) {
@@ -1586,6 +1686,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::mapTypeIds","kind":"func","status":"implemented","sigHash":"d19b55124c78fdf345d4bc1f8eec6bb30a47f63baf28f5ccbd9ae15e97ac8d0b","bodyHash":"e61ad13c5b60e1afa2294c3f439de116a0b00782debdd8afa766a5f92dbc201e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"mapTypeIds returns the nil Go slice for an empty input so omitzero descriptor fields remain absent; TypeScript represents that exact nil result as undefined and returns an allocated array for non-empty inputs.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::uint>>"}
  *
  * Go source:
  * func mapTypeIds(types []TracedType) []uint32 {
@@ -1601,9 +1702,9 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
  * 	return ids
  * }
  */
-export function mapTypeIds(types: GoSlice<TracedType>): GoSlice<uint> {
+export function mapTypeIds(types: GoSlice<TracedType>): GoPtr<GoSlice<uint>> {
   if (types.length === 0) {
-    return [];
+    return undefined;
   }
   return types.map((t) => (t !== undefined ? t.Id() : 0 as uint));
 }
@@ -1657,15 +1758,17 @@ export function getLocation(node: GoPtr<Node>): GoPtr<Location> {
   const [startLine, startChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFileLike, startPos);
   const [endLine, endChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFileLike, Node_End(node));
 
-  return {
+  const start = AttachJsonFieldNamesForGoStruct({
+    Line: (startLine as number + 1) as int,
+    Character: (startChar as number + 1) as int,
+  }, lineAndCharJsonFieldNames);
+  const end = AttachJsonFieldNamesForGoStruct({
+    Line: (endLine as number + 1) as int,
+    Character: (endChar as number + 1) as int,
+  }, lineAndCharJsonFieldNames);
+  return AttachJsonFieldNamesForGoStruct({
     Path: ToPath(SourceFile_FileName(file), "", false as bool) as string,
-    Start: {
-      Line: (startLine as number + 1) as int,
-      Character: (startChar as number + 1) as int,
-    },
-    End: {
-      Line: (endLine as number + 1) as int,
-      Character: (endChar as number + 1) as int,
-    },
-  };
+    Start: start,
+    End: end,
+  }, locationJsonFieldNames);
 }

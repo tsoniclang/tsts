@@ -1,0 +1,9 @@
+const n = Symbol();
+export const v2 = (...a: [n: "n", a: "a"]): {
+    /** r rest param */
+    a: typeof a,
+    /** module var */
+    n: typeof n,
+} => {
+    return null!
+}

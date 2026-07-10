@@ -55,7 +55,7 @@ test("reflect.Value.String/Int/Uint/Bool", () => {
   assert.equal(ValueOf("hello").String(), "hello");
   assert.equal(ValueOf(7).Int(), 7);
   assert.equal(ValueOf(7.9).Int(), 7);
-  assert.equal(ValueOf(7).Uint(), 7);
+  assert.equal(ValueOf(7).Uint(), 7n);
   assert.equal(ValueOf(true).Bool(), true);
 });
 

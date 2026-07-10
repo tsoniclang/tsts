@@ -1,5 +1,6 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import type { GoInterfaceType, GoPtr } from "../../go/compat.js";
+import { GoInterfaceAdapter, GoInterfaceTryAssert, NewGoInterfaceType } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Symbol } from "../ast/symbol.js";
@@ -10,6 +11,7 @@ import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534","bodyHash":"27e1a5a4dd922451780ff5dccd97da42572e29cd8859ee5e60ca633255fc28f9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NewSymbolTrackerImpl stores a nil inner tracker when no external sink exists; TrackSymbol records internally regardless, while every outward diagnostic and fallback delegation tests inner for nil. TypeScript uses undefined for that exact no-outer-sink state.","goSignature":"interface{DisableTrackSymbol:packages/tsts/src/go/scalars.ts::bool;context:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderContext>;inner:packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker}","tsSignature":"interface{DisableTrackSymbol:packages/tsts/src/go/scalars.ts::bool;context:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderContext>;inner:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>}"}
  *
  * Go source:
  * SymbolTrackerImpl struct {
@@ -24,8 +26,11 @@ export interface SymbolTrackerImpl {
   DisableTrackSymbol: bool;
 }
 
+const SymbolTrackerImpl_GoInterfaceType: GoInterfaceType<SymbolTrackerImpl> = NewGoInterfaceType<SymbolTrackerImpl>("*checker.SymbolTrackerImpl");
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl","kind":"func","status":"implemented","sigHash":"aa81ec4495e050dfe9722a9c6f214546af9853725abde4bda16689746419bf26","bodyHash":"e8d00d40de29f34d80778f592a6d281380031b1cc81719624c605ebe420626c8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body","signature"],"reason":"Node-builder entry points pass a nil outer SymbolTracker when no external diagnostics sink exists. NewSymbolTrackerImpl preserves that nil as undefined and mirrors Go's concrete *SymbolTrackerImpl assertion through the shared Go interface adapter identity; it still returns one live internal tracker and performs the same repeated unwrap.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderContext>,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/symboltracker.ts::SymbolTrackerImpl>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/symboltracker.ts::SymbolTrackerImpl>"}
  *
  * Go source:
  * func NewSymbolTrackerImpl(context *NodeBuilderContext, tracker nodebuilder.SymbolTracker) *SymbolTrackerImpl {
@@ -43,14 +48,12 @@ export interface SymbolTrackerImpl {
  * }
  */
 export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: GoPtr<SymbolTracker>): GoPtr<SymbolTrackerImpl> {
-  if (tracker !== undefined) {
-    for (;;) {
-      const t = tracker as unknown as GoPtr<SymbolTrackerImpl>;
-      if (t === undefined || !("inner" in (t as object) && "context" in (t as object) && "DisableTrackSymbol" in (t as object))) {
-        break;
-      }
-      tracker = t!.inner;
+  while (tracker !== undefined) {
+    const [concrete, ok] = GoInterfaceTryAssert(tracker, SymbolTrackerImpl_GoInterfaceType);
+    if (!ok) {
+      break;
     }
+    tracker = concrete!.inner;
   }
   return { context, inner: tracker, DisableTrackSymbol: false };
 }
@@ -59,7 +62,7 @@ export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTracker
   if (receiver === undefined) {
     return undefined;
   }
-  return {
+  return GoInterfaceAdapter(SymbolTrackerImpl_GoInterfaceType, receiver, {
     TrackSymbol: (symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool =>
       SymbolTrackerImpl_TrackSymbol(receiver, symbol_, enclosingDeclaration, meaning),
     ReportInaccessibleThisError: (): void => SymbolTrackerImpl_ReportInaccessibleThisError(receiver),
@@ -77,7 +80,7 @@ export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTracker
     ReportInferenceFallback: (node: GoPtr<Node>): void => SymbolTrackerImpl_ReportInferenceFallback(receiver, node),
     PushErrorFallbackNode: (node: GoPtr<Node>): void => SymbolTrackerImpl_PushErrorFallbackNode(receiver, node),
     PopErrorFallbackNode: (): void => SymbolTrackerImpl_PopErrorFallbackNode(receiver),
-  };
+  });
 }
 
 /**

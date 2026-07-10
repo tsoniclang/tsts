@@ -10,6 +10,7 @@ import type { Locale as Locale_b0d69dd1 } from "../locale/locale.js";
 import { Parse } from "../locale/locale.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import { ResolvePath } from "../tspath/path.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"38430521b70f19c4577653334ca223fc0270319362c20f5925094804f9baee54","bodyHash":"34d6e236b3813a9814ee5118fb03da108b503c446cfe8ee915b12fac81ab1559"}
@@ -45,6 +46,21 @@ export interface ParsedBuildCommandLine {
   locale: Locale_b0d69dd1;
   localeOnce: Once;
 }
+
+type parsedBuildCommandLineJsonFields = JsonFieldNamesForGoStructContract<
+  ParsedBuildCommandLine,
+  "github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine",
+  {
+    BuildOptions: "buildOptions",
+    CompilerOptions: "compilerOptions",
+    WatchOptions: "watchOptions",
+    Projects: "projects",
+    Errors: "errors",
+    Raw: "raw",
+  },
+  "source-metadata",
+  "Parsed build-command JSON identities describe upstream config state while dedicated parsers own its runtime representation."
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::method::ParsedBuildCommandLine.ResolvedProjectPaths","kind":"method","status":"implemented","sigHash":"62d754c0a97d15832830d10c5f4f3c52e86d46117e3f8b18cee454ea84eba9d3","bodyHash":"d7ab444200098a4ff923891337b44c60ed0dd6dc607c7cc4f1b51725e86ef2c4"}

@@ -1,10 +1,10 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
 import * as strings from "../../../go/strings.js";
 import type { Builder } from "../../../go/strings.js";
 import { Sprintf } from "../../../go/fmt.js";
-import type { Once } from "../../../go/sync.js";
-import type { Bool } from "../../../go/sync/atomic.js";
+import { Map as SyncGoMap, Once } from "../../../go/sync.js";
+import { Bool } from "../../../go/sync/atomic.js";
 import { SourceFile_Path } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import {
@@ -41,7 +41,7 @@ import { NewTextRange } from "../../core/text.js";
 import type { Tristate } from "../../core/tristate.js";
 import { Category_Name, Message_Category, Message_Code, Message_Key, StringifyArgs } from "../../diagnostics/diagnostics.js";
 import type { Category, Key } from "../../diagnostics/diagnostics.js";
-import { Tristate_IsTrue } from "../../core/tristate.js";
+import { TSUnknown, Tristate_IsTrue } from "../../core/tristate.js";
 import {
   CreateModeMismatchDetails,
   CreateModuleNotFoundChain,
@@ -342,6 +342,7 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::buildInfoDiagnosticWithFileName","kind":"type","status":"implemented","sigHash":"f444af1094148757fd2d891f751dbc25d6860f82693ecd3bd3209e4b6e059e2c","bodyHash":"b8c53da23e43a66669ae070fe5f61c71f7bfba29091f38c9c828d2cc5e8b391a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Nested diagnostic argument, chain, and related-information slices retain nil from omitted build-info fields during snapshot conversion; TypeScript preserves those three nil slices with undefined.","goSignature":"interface{category:packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;code:packages/tsts/src/go/scalars.ts::int;end:packages/tsts/src/go/scalars.ts::int;file:packages/tsts/src/internal/tspath/path.ts::Path;messageArgs:packages/tsts/src/go/compat.ts::GoSlice<string>;messageChain:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>;messageKey:packages/tsts/src/internal/diagnostics/diagnostics.ts::Key;noFile:packages/tsts/src/go/scalars.ts::bool;pos:packages/tsts/src/go/scalars.ts::int;relatedInformation:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>;repopulateInfo:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::RepopulateDiagnosticInfo>;reportsDeprecated:packages/tsts/src/go/scalars.ts::bool;reportsUnnecessary:packages/tsts/src/go/scalars.ts::bool;skippedOnNoEmit:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{category:packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;code:packages/tsts/src/go/scalars.ts::int;end:packages/tsts/src/go/scalars.ts::int;file:packages/tsts/src/internal/tspath/path.ts::Path;messageArgs:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;messageChain:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>|undefined;messageKey:packages/tsts/src/internal/diagnostics/diagnostics.ts::Key;noFile:packages/tsts/src/go/scalars.ts::bool;pos:packages/tsts/src/go/scalars.ts::int;relatedInformation:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>|undefined;repopulateInfo:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::RepopulateDiagnosticInfo>;reportsDeprecated:packages/tsts/src/go/scalars.ts::bool;reportsUnnecessary:packages/tsts/src/go/scalars.ts::bool;skippedOnNoEmit:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * buildInfoDiagnosticWithFileName struct {
@@ -381,6 +382,7 @@ export interface buildInfoDiagnosticWithFileName {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::DiagnosticsOrBuildInfoDiagnosticsWithFileName","kind":"type","status":"implemented","sigHash":"dc70a950215271445b76035ffefd479590c00e321621a5914b228f56f78da355","bodyHash":"3612d657c84048241ed00a1960400fa7ae940a957d011dd80f7e813422102be6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This carrier stores either live diagnostics or build-info diagnostics; the unselected Go slice is nil and selection tests rely on that state, so TypeScript represents each inactive arm with undefined.","goSignature":"interface{buildInfoDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>}","tsSignature":"interface{buildInfoDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::buildInfoDiagnosticWithFileName>>|undefined;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>|undefined}"}
  *
  * Go source:
  * DiagnosticsOrBuildInfoDiagnosticsWithFileName struct {
@@ -697,6 +699,7 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::snapshot","kind":"type","status":"implemented","sigHash":"b212cd3cc90f62b68f10e9ecb1dc99a8c26d92f32e39159057ad970f6b7eddef","bodyHash":"6cc4c90d701124e42bd93a6ec4cf8f9c7098bc9b0eeca366e3d7b5675b399e3d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Package-json and missing-package-json slices are nil until lookup collection and their old-state counterparts are nil when no prior snapshot exists; TypeScript preserves those four snapshot lifecycle sentinels with undefined.","goSignature":"interface{affectedFilesPendingEmit:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/execute/incremental/snapshot.ts::FileEmitKind>;allFilesExcludingDefaultLibraryFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;allFilesExcludingDefaultLibraryFileOnce:packages/tsts/src/go/sync.ts::Once;buildInfoEmitPending:packages/tsts/src/go/sync/atomic.ts::Bool;changedFilesSet:packages/tsts/src/internal/collections/syncset.ts::SyncSet<packages/tsts/src/internal/tspath/path.ts::Path>;checkPending:packages/tsts/src/go/scalars.ts::bool;emitDiagnosticsPerFile:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>>;emitSignatures:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::emitSignature>>;fileInfos:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::FileInfo>>;hasChangedDtsFile:packages/tsts/src/go/scalars.ts::bool;hasEmitDiagnostics:packages/tsts/src/go/scalars.ts::bool;hasErrors:packages/tsts/src/internal/core/tristate.ts::Tristate;hasErrorsFromOldState:packages/tsts/src/internal/core/tristate.ts::Tristate;hasSemanticErrors:packages/tsts/src/go/scalars.ts::bool;hasSemanticErrorsFromOldState:packages/tsts/src/go/scalars.ts::bool;hashWithText:packages/tsts/src/go/scalars.ts::bool;latestChangedDtsFile:string;missingPackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;missingPackageJsonsFromOldState:packages/tsts/src/go/compat.ts::GoSlice<string>;options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;packageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;packageJsonsFromOldState:packages/tsts/src/go/compat.ts::GoSlice<string>;referencedMap:packages/tsts/src/internal/execute/incremental/referencemap.ts::referenceMap;semanticDiagnosticsPerFile:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>>}","tsSignature":"interface{affectedFilesPendingEmit:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/execute/incremental/snapshot.ts::FileEmitKind>;allFilesExcludingDefaultLibraryFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;allFilesExcludingDefaultLibraryFileOnce:packages/tsts/src/go/sync.ts::Once;buildInfoEmitPending:packages/tsts/src/go/sync/atomic.ts::Bool;changedFilesSet:packages/tsts/src/internal/collections/syncset.ts::SyncSet<packages/tsts/src/internal/tspath/path.ts::Path>;checkPending:packages/tsts/src/go/scalars.ts::bool;emitDiagnosticsPerFile:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>>;emitSignatures:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::emitSignature>>;fileInfos:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::FileInfo>>;hasChangedDtsFile:packages/tsts/src/go/scalars.ts::bool;hasEmitDiagnostics:packages/tsts/src/go/scalars.ts::bool;hasErrors:packages/tsts/src/internal/core/tristate.ts::Tristate;hasErrorsFromOldState:packages/tsts/src/internal/core/tristate.ts::Tristate;hasSemanticErrors:packages/tsts/src/go/scalars.ts::bool;hasSemanticErrorsFromOldState:packages/tsts/src/go/scalars.ts::bool;hashWithText:packages/tsts/src/go/scalars.ts::bool;latestChangedDtsFile:string;missingPackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;missingPackageJsonsFromOldState:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;packageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;packageJsonsFromOldState:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;referencedMap:packages/tsts/src/internal/execute/incremental/referencemap.ts::referenceMap;semanticDiagnosticsPerFile:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>>}"}
  *
  * Go source:
  * snapshot struct {
@@ -772,6 +775,47 @@ export interface snapshot {
   hasChangedDtsFile: bool;
   hasEmitDiagnostics: bool;
   hashWithText: bool;
+}
+
+function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap<K, V>() };
+}
+
+function newSyncSet<T extends GoComparable>(): SyncSet<T> {
+  return { m: newSyncMap<T, { readonly __tsgoEmpty?: never }>() };
+}
+
+export function createSnapshotZeroValue(): snapshot {
+  return {
+    fileInfos: newSyncMap<Path, GoPtr<FileInfo>>(),
+    options: undefined,
+    referencedMap: {
+      references: newSyncMap<Path, GoPtr<import("../../collections/set.js").Set<Path>>>(),
+      referencedBy: new globalThis.Map(),
+      referenceBy: new Once(),
+    },
+    semanticDiagnosticsPerFile: newSyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(),
+    emitDiagnosticsPerFile: newSyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(),
+    changedFilesSet: newSyncSet<Path>(),
+    affectedFilesPendingEmit: newSyncMap<Path, FileEmitKind>(),
+    latestChangedDtsFile: "",
+    emitSignatures: newSyncMap<Path, GoPtr<emitSignature>>(),
+    hasErrors: TSUnknown,
+    hasSemanticErrors: false as bool,
+    checkPending: false as bool,
+    packageJsons: undefined,
+    missingPackageJsons: undefined,
+    buildInfoEmitPending: new Bool(),
+    hasErrorsFromOldState: TSUnknown,
+    hasSemanticErrorsFromOldState: false as bool,
+    allFilesExcludingDefaultLibraryFileOnce: new Once(),
+    packageJsonsFromOldState: undefined,
+    missingPackageJsonsFromOldState: undefined,
+    allFilesExcludingDefaultLibraryFile: [],
+    hasChangedDtsFile: false as bool,
+    hasEmitDiagnostics: false as bool,
+    hashWithText: false as bool,
+  };
 }
 
 /**

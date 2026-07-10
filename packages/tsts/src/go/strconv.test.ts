@@ -24,7 +24,7 @@ test("strconv.Atoi parses base-10 integers", () => {
 
 test("strconv.Atoi reports a NumError on invalid syntax", () => {
   const [value, err] = Atoi("12x");
-  assert.equal(value, 0n);
+  assert.equal(value, 0);
   assert.ok(err instanceof NumError);
   assert.equal(Is(err, ErrSyntax), true);
 });
@@ -65,7 +65,7 @@ test("strconv.ParseInt reports range error and clamps on overflow", () => {
 
 test("strconv.ParseUint rejects a leading sign", () => {
   const [value, err] = ParseUint("-5", 10, 32);
-  assert.equal(value, 0);
+  assert.equal(value, 0n);
   assert.equal(Is(err, ErrSyntax), true);
 });
 

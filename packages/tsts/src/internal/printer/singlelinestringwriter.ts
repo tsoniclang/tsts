@@ -51,6 +51,7 @@ function singleLineStringWriter_as_EmitTextWriter(
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/singlelinestringwriter.go::varGroup::singleLineStringWriterPool","kind":"varGroup","status":"implemented","sigHash":"47953f36e85fe12c52a621383c30c1494c6b401f2e5968c23fe1216b5399e5bd","bodyHash":"a2f7a75a6d6c3f307d597f8b3709145f6231447325af97ecdc93890ba5a274ef"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This pool carries singleLineStringWriter pointers with a retained Builder; acquisition clears writer state and release returns the same concrete writer for reuse.","goSignature":"value{singleLineStringWriterPool:packages/tsts/src/go/sync.ts::Pool}","tsSignature":"value{singleLineStringWriterPool:packages/tsts/src/go/sync.ts::Pool<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/singlelinestringwriter.ts::singleLineStringWriter>>}"}
  *
  * Go source:
  * var singleLineStringWriterPool sync.Pool = sync.Pool{

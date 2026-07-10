@@ -178,6 +178,19 @@ export interface buildInfoFileInfoNoSignature {
   ImpliedNodeFormat: ResolutionMode;
 }
 
+type buildInfoFileInfoNoSignatureJsonFields = json.JsonFieldNamesForGoStructContract<
+  buildInfoFileInfoNoSignature,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoNoSignature",
+  {
+    Version: { name: "version", omitZero: true },
+    NoSignature: { name: "noSignature", omitZero: true },
+    AffectsGlobalScope: { name: "affectsGlobalScope", omitZero: true },
+    ImpliedNodeFormat: { name: "impliedNodeFormat", omitZero: true },
+  },
+  "custom-codec",
+  "Build-info file variants use explicit compact union codecs while retaining exact upstream JSON field identities."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoWithSignature","kind":"type","status":"implemented","sigHash":"dd7c16998a3247d7fefc58c82f938d9c154c1a0d61e17732a1bb8a5f6520002b","bodyHash":"896bc369792213e1afab4659e51bb107dee9f308c57de1a2447a8d7422c1da41"}
  *
@@ -195,6 +208,19 @@ export interface buildInfoFileInfoWithSignature {
   AffectsGlobalScope: bool;
   ImpliedNodeFormat: ResolutionMode;
 }
+
+type buildInfoFileInfoWithSignatureJsonFields = json.JsonFieldNamesForGoStructContract<
+  buildInfoFileInfoWithSignature,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoWithSignature",
+  {
+    Version: { name: "version", omitZero: true },
+    Signature: { name: "signature", omitZero: true },
+    AffectsGlobalScope: { name: "affectsGlobalScope", omitZero: true },
+    ImpliedNodeFormat: { name: "impliedNodeFormat", omitZero: true },
+  },
+  "custom-codec",
+  "Build-info file variants use explicit compact union codecs while retaining exact upstream JSON field identities."
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoFileInfo","kind":"type","status":"implemented","sigHash":"a2ca7deb9e69021b0c381f518f57ce8b4a24d18bbae771489f3ae577b61acee5","bodyHash":"b22ec3bb4237fbcf7e2f9c8363946bbb608d37339134b273a759aeee7ab5520d"}
@@ -457,6 +483,7 @@ export function BuildInfoReferenceMapEntry_UnmarshalJSON(receiver: GoPtr<BuildIn
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnostic","kind":"type","status":"implemented","sigHash":"f9d75c486731a00418a54c10b6452ad50d9114e06e72ec0ea66649ee02d7d8de","bodyHash":"e1120ef01a8bf630483c18ec5cace365e2121a4ca3f5c993573cbe859b7a1562"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"MessageArgs, MessageChain, and RelatedInformation are omitzero diagnostic slices; an absent field decodes to a nil Go slice and must be omitted again, so TypeScript preserves those three nil states with undefined.","goSignature":"interface{Category:packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;Code:packages/tsts/src/go/scalars.ts::int;End:packages/tsts/src/go/scalars.ts::int;File:packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId;MessageArgs:packages/tsts/src/go/compat.ts::GoSlice<string>;MessageChain:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>;MessageKey:packages/tsts/src/internal/diagnostics/diagnostics.ts::Key;NoFile:packages/tsts/src/go/scalars.ts::bool;Pos:packages/tsts/src/go/scalars.ts::int;RelatedInformation:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>;RepopulateInfo:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoRepopulateInfo>;ReportsDeprecated:packages/tsts/src/go/scalars.ts::bool;ReportsUnnecessary:packages/tsts/src/go/scalars.ts::bool;SkippedOnNoEmit:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{Category:packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;Code:packages/tsts/src/go/scalars.ts::int;End:packages/tsts/src/go/scalars.ts::int;File:packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId;MessageArgs:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;MessageChain:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>|undefined;MessageKey:packages/tsts/src/internal/diagnostics/diagnostics.ts::Key;NoFile:packages/tsts/src/go/scalars.ts::bool;Pos:packages/tsts/src/go/scalars.ts::int;RelatedInformation:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>|undefined;RepopulateInfo:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoRepopulateInfo>;ReportsDeprecated:packages/tsts/src/go/scalars.ts::bool;ReportsUnnecessary:packages/tsts/src/go/scalars.ts::bool;SkippedOnNoEmit:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * BuildInfoDiagnostic struct {
@@ -494,6 +521,29 @@ export interface BuildInfoDiagnostic {
   RepopulateInfo: GoPtr<BuildInfoRepopulateInfo>;
 }
 
+type buildInfoDiagnosticJsonFields = json.JsonFieldNamesForGoStructContract<
+  BuildInfoDiagnostic,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnostic",
+  {
+    File: { name: "file", omitZero: true },
+    NoFile: { name: "noFile", omitZero: true },
+    Pos: { name: "pos", omitZero: true },
+    End: { name: "end", omitZero: true },
+    Code: { name: "code", omitZero: true },
+    Category: { name: "category", omitZero: true },
+    MessageKey: { name: "messageKey", omitZero: true },
+    MessageArgs: { name: "messageArgs", omitZero: true },
+    MessageChain: { name: "messageChain", omitZero: true },
+    RelatedInformation: { name: "relatedInformation", omitZero: true },
+    ReportsUnnecessary: { name: "reportsUnnecessary", omitZero: true },
+    ReportsDeprecated: { name: "reportsDeprecated", omitZero: true },
+    SkippedOnNoEmit: { name: "skippedOnNoEmit", omitZero: true },
+    RepopulateInfo: { name: "repopulateInfo", omitZero: true },
+  },
+  "custom-codec",
+  "Build-info diagnostics use recursive explicit codecs while retaining exact upstream JSON field identities and omission rules."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRepopulateInfo","kind":"type","status":"implemented","sigHash":"4b69c4ef4d7b11ea29cdff11e30aa97c2599ae873012e60c9a121b929e56d870","bodyHash":"e44a59fcc5ba121161bddc29652fb3acfe61b3dbf0c4388dd59c7ad65f6926a6"}
  *
@@ -512,8 +562,22 @@ export interface BuildInfoRepopulateInfo {
   PackageName: string;
 }
 
+type buildInfoRepopulateInfoJsonFields = json.JsonFieldNamesForGoStructContract<
+  BuildInfoRepopulateInfo,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRepopulateInfo",
+  {
+    Kind: "kind",
+    ModuleReference: { name: "moduleReference", omitZero: true },
+    Mode: { name: "mode", omitZero: true },
+    PackageName: { name: "packageName", omitZero: true },
+  },
+  "custom-codec",
+  "Build-info repopulation records use explicit recursive codecs while retaining exact upstream JSON field identities."
+>;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnosticsOfFile","kind":"type","status":"implemented","sigHash":"a764df163f6be6639e204e09c2e624f2575dceb7ce56124e331a5400ff68c179","bodyHash":"0a7019fd6356082fe666db8dd9935f542f573e3b52187064aeae4f556c831432"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The compact diagnostics tuple can decode a null diagnostics payload to a nil Go slice and must encode that state as null rather than an allocated list; TypeScript represents that payload with undefined.","goSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>;FileId:packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId}","tsSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnostic>>|undefined;FileId:packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId}"}
  *
  * Go source:
  * BuildInfoDiagnosticsOfFile struct {
@@ -1053,6 +1117,7 @@ export function BuildInfoResolvedRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoRes
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo","kind":"type","status":"implemented","sigHash":"3047e84be7615e3b3f127ac18cf18d6dd08664a62e46a19d7b153de078e72299","bodyHash":"4ec6d1e9be6b9b1f266ac215bdcb61a28b1a7d248f3fe65a4486291efd76bb50"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"BuildInfo uses omitzero JSON fields whose nil slices must remain distinguishable from allocated empty slices across decode, encode, and build-info round trips; TypeScript represents those declaration-local nil slices, including nil nested FileIdsList entries, with undefined.","goSignature":"interface{AffectedFilesPendingEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFilePendingEmit>>;ChangeFileSet:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId>;CheckPending:packages/tsts/src/go/scalars.ts::bool;EmitDiagnosticsPerFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnosticsOfFile>>;EmitSignatures:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoEmitSignature>>;Errors:packages/tsts/src/go/scalars.ts::bool;FileIdsList:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId>>;FileInfos:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileInfo>>;FileNames:packages/tsts/src/go/compat.ts::GoSlice<string>;LatestChangedDtsFile:string;MissingPackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;Options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;PackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>;ReferencedMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoReferenceMapEntry>>;ResolvedRoot:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoResolvedRoot>>;Root:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoRoot>>;SemanticDiagnosticsPerFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoSemanticDiagnostic>>;SemanticErrors:packages/tsts/src/go/scalars.ts::bool;Version:string}","tsSignature":"interface{AffectedFilesPendingEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFilePendingEmit>>|undefined;ChangeFileSet:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId>|undefined;CheckPending:packages/tsts/src/go/scalars.ts::bool;EmitDiagnosticsPerFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoDiagnosticsOfFile>>|undefined;EmitSignatures:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoEmitSignature>>|undefined;Errors:packages/tsts/src/go/scalars.ts::bool;FileIdsList:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileId>|undefined>|undefined;FileInfos:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoFileInfo>>|undefined;FileNames:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;LatestChangedDtsFile:string;MissingPackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;Options:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;PackageJsons:packages/tsts/src/go/compat.ts::GoSlice<string>|undefined;ReferencedMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoReferenceMapEntry>>|undefined;ResolvedRoot:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoResolvedRoot>>|undefined;Root:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoRoot>>|undefined;SemanticDiagnosticsPerFile:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/buildInfo.ts::BuildInfoSemanticDiagnostic>>|undefined;SemanticErrors:packages/tsts/src/go/scalars.ts::bool;Version:string}"}
  *
  * Go source:
  * BuildInfo struct {
@@ -1534,7 +1599,9 @@ function decodeBuildInfoArray<T>(value: unknown, name: string, decode: (entry: u
   return decodeOptionalArray({ [name]: value }, name, decode);
 }
 
-const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
+const buildInfoJSONFieldNames = json.DefineJsonFieldNamesForGoStruct<BuildInfo>(
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo",
+  {
   Version: {
     name: "version",
     omitZero: true,
@@ -1553,12 +1620,14 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   Root: {
     name: "root",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoRoot>>).map(encodeBuildInfoRoot),
     unmarshal: (value) => decodeBuildInfoArray(value, "root", (entry) => entry === null ? undefined : decodeBuildInfoRoot(entry)),
   },
   PackageJsons: {
     name: "packageJsons",
     omitZero: true,
+    zero: "nil",
     unmarshal: (value) => decodeBuildInfoArray(value, "packageJsons", (entry) => {
       if (typeof entry !== "string") throw new BuildInfoJSONError("packageJsons entries must be strings");
       return entry;
@@ -1567,6 +1636,7 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   MissingPackageJsons: {
     name: "missingPackageJsons",
     omitZero: true,
+    zero: "nil",
     unmarshal: (value) => decodeBuildInfoArray(value, "missingPackageJsons", (entry) => {
       if (typeof entry !== "string") throw new BuildInfoJSONError("missingPackageJsons entries must be strings");
       return entry;
@@ -1575,6 +1645,7 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   FileNames: {
     name: "fileNames",
     omitZero: true,
+    zero: "nil",
     unmarshal: (value) => decodeBuildInfoArray(value, "fileNames", (entry) => {
       if (typeof entry !== "string") throw new BuildInfoJSONError("fileNames entries must be strings");
       return entry;
@@ -1583,12 +1654,14 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   FileInfos: {
     name: "fileInfos",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoFileInfo>>).map(buildInfoFileInfoToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "fileInfos", decodeBuildInfoFileInfo),
   },
   FileIdsList: {
     name: "fileIdsList",
     omitZero: true,
+    zero: "nil",
     unmarshal: (value) => decodeBuildInfoArray(value, "fileIdsList", (entry) => {
       if (entry === null) return undefined;
       if (!globalThis.Array.isArray(entry)) throw new BuildInfoJSONError("fileIdsList entries must be arrays");
@@ -1598,35 +1671,41 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   Options: {
     name: "options",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => buildInfoOptionsToJSON(value as GoPtr<OrderedMap<string, unknown>>),
     unmarshal: decodeBuildInfoOptions,
   },
   ReferencedMap: {
     name: "referencedMap",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoReferenceMapEntry>>).map(buildInfoReferenceMapEntryToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "referencedMap", decodeBuildInfoReferenceMapEntry),
   },
   SemanticDiagnosticsPerFile: {
     name: "semanticDiagnosticsPerFile",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoSemanticDiagnostic>>).map(buildInfoSemanticDiagnosticToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "semanticDiagnosticsPerFile", decodeBuildInfoSemanticDiagnostic),
   },
   EmitDiagnosticsPerFile: {
     name: "emitDiagnosticsPerFile",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>>).map(buildInfoDiagnosticsOfFileToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "emitDiagnosticsPerFile", (entry) => entry === null ? undefined : decodeBuildInfoDiagnosticsOfFile(entry)),
   },
   ChangeFileSet: {
     name: "changeFileSet",
     omitZero: true,
+    zero: "nil",
     unmarshal: (value) => decodeBuildInfoArray(value, "changeFileSet", (entry) => jsonIntegerValue(entry, "changeFileSet fileId") as BuildInfoFileId),
   },
   AffectedFilesPendingEmit: {
     name: "affectedFilesPendingEmit",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoFilePendingEmit>>).map(buildInfoFilePendingEmitToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "affectedFilesPendingEmit", decodeBuildInfoFilePendingEmit),
   },
@@ -1638,12 +1717,14 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
   EmitSignatures: {
     name: "emitSignatures",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoEmitSignature>>).map(buildInfoEmitSignatureToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "emitSignatures", decodeBuildInfoEmitSignature),
   },
   ResolvedRoot: {
     name: "resolvedRoot",
     omitZero: true,
+    zero: "nil",
     marshal: (value) => (value as GoSlice<GoPtr<BuildInfoResolvedRoot>>).map(buildInfoResolvedRootToJSON),
     unmarshal: (value) => decodeBuildInfoArray(value, "resolvedRoot", decodeBuildInfoResolvedRoot),
   },
@@ -1652,14 +1733,15 @@ const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
     omitZero: true,
     unmarshal: (value) => jsonBooleanField({ semanticErrors: value }, "semanticErrors"),
   },
-};
+  },
+  {
+    strategy: "runtime",
+    reason: "BuildInfo is marshaled and unmarshaled through generic JSON entry points with exact custom field codecs attached at runtime.",
+  },
+);
 
 function attachBuildInfoJSONMetadata(receiver: BuildInfo): BuildInfo {
-  globalThis.Object.defineProperty(receiver, json.JsonFieldNames, {
-    configurable: true,
-    value: buildInfoJSONFieldNames,
-  });
-  return receiver;
+  return json.AttachJsonFieldNamesForGoStruct(receiver, buildInfoJSONFieldNames);
 }
 
 export function NewBuildInfo(): BuildInfo {
@@ -1868,6 +1950,7 @@ export function BuildInfo_GetMissingPackageJsons(receiver: GoPtr<BuildInfo>, bui
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::func::getNormalizedPaths","kind":"func","status":"implemented","sigHash":"779c23d3f06fb2f7ab792acd9b2c5014c8e5779a89c86895212ec9af7b706cb5","bodyHash":"c9d3c17305b737fef3dc7b65c7974b49304cfdcb37c0aac201c5967647a8ed05"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"BuildInfo package-json fields may be nil after omitzero decoding; Go ranges that nil slice as an empty sequence, and this helper accepts the corresponding undefined slice while preserving lazy iteration and early termination.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>,string)=>packages/tsts/src/go/compat.ts::GoSeq<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>|undefined,string)=>packages/tsts/src/go/compat.ts::GoSeq<string>"}
  *
  * Go source:
  * func getNormalizedPaths(paths []string, buildInfoDirectory string) iter.Seq[string] {

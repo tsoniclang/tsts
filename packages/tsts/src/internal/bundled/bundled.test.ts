@@ -20,6 +20,7 @@ test("embedded bundled filesystem mirrors upstream lib names", () => {
     if (walkErr !== undefined) {
       return walkErr;
     }
+    assert.ok(dirEntry);
     if (!dirEntry.IsDir()) {
       files.push(GetBaseFileName(path));
     }

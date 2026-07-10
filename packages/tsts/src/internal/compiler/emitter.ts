@@ -342,7 +342,7 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
   const options = host.Options();
 
   // JS files don't use reference calculations as they don't do import elision, no need to calculate it
-  const importElisionEnabled = !Tristate_IsTrue(options!.VerbatimModuleSyntax) && !IsInJSFile(sourceFile as GoPtr<Node>);
+  const importElisionEnabled = !Tristate_IsTrue(options!.VerbatimModuleSyntax) && !IsInJSFile(sourceFile);
   const jsxTransformEnabled = CompilerOptions_GetJSXTransformEnabled(options) && sourceFile!.LanguageVariant === LanguageVariantJSX;
 
   const emitResolver = host.GetEmitResolver();

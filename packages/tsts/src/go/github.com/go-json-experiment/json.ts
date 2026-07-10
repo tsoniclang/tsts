@@ -13,16 +13,60 @@ export interface Options extends Option {
 
 export const JsonFieldNames: unique symbol = Symbol("tsts.jsonFieldNames");
 
-export interface JsonFieldSpec {
+export interface JsonFieldSpec<T = unknown> {
   readonly name: string;
   readonly omitZero?: bool;
-  readonly marshal?: (value: unknown) => unknown;
-  readonly unmarshal?: (value: unknown) => unknown;
+  readonly omitEmpty?: bool;
+  readonly ignored?: bool;
+  readonly zero?: "value" | "nil";
+  readonly isZero?: (value: T) => bool;
+  readonly marshal?: (value: T) => unknown;
+  readonly unmarshal?: (value: unknown) => T;
 }
 
-export type JsonFieldName = string | JsonFieldSpec;
+export type JsonFieldName<T = unknown> = string | JsonFieldSpec<T>;
 
 export type JsonFieldNameMap = Record<string, JsonFieldName>;
+
+export type JsonFieldNameMapFor<T extends object> = {
+  readonly [K in Extract<keyof T, string>]?: JsonFieldName<T[K]>;
+};
+
+export interface JsonStructMetadata<T extends object> {
+  readonly unitId: string;
+  readonly fields: JsonFieldNameMapFor<T>;
+  readonly strategy: "runtime" | "custom-codec" | "source-metadata";
+  readonly reason: string;
+}
+
+export type JsonFieldNamesForGoStructContract<
+  T extends object,
+  UnitId extends string,
+  Fields extends JsonFieldNameMapFor<T>,
+  Strategy extends "custom-codec" | "source-metadata",
+  Reason extends string,
+> = {
+  readonly __jsonFieldNamesForGoStructContract?: {
+    readonly value: T;
+    readonly unitId: UnitId;
+    readonly fields: Fields;
+    readonly strategy: Strategy;
+    readonly reason: Reason;
+  };
+};
+
+export function DefineJsonFieldNamesForGoStruct<T extends object>(
+  unitId: string,
+  fields: JsonFieldNameMapFor<T>,
+  contract: Pick<JsonStructMetadata<T>, "strategy" | "reason">,
+): JsonStructMetadata<T> {
+  return { unitId, fields, strategy: contract.strategy, reason: contract.reason };
+}
+
+export function AttachJsonFieldNamesForGoStruct<T extends object>(value: T, metadata: JsonStructMetadata<T>): T {
+  globalThis.Object.defineProperty(value, JsonFieldNames, { configurable: true, value: metadata.fields });
+  return value;
+}
 
 export interface MarshalerTo {
   MarshalJSONTo(encoder: Encoder): GoError;
@@ -113,13 +157,20 @@ const normalizeForJson = (value: unknown): unknown => {
       if (typeof current === "function") {
         continue;
       }
-      const name = typeof field === "string" ? field : field.name;
-      if (typeof field === "object" && field.omitZero === true && isZeroJsonValue(current)) {
+      if (typeof field === "object" && field.ignored === true) {
         continue;
       }
-      normalized[name] = typeof field === "object" && field.marshal !== undefined
+      const name = typeof field === "string" ? field : field.name;
+      if (typeof field === "object" && field.omitZero === true && isZeroJsonValue(current, field)) {
+        continue;
+      }
+      const projected = typeof field === "object" && field.marshal !== undefined
         ? field.marshal(current)
         : current;
+      if (typeof field === "object" && field.omitEmpty === true && isEmptyJsonValue(normalizeForJson(projected))) {
+        continue;
+      }
+      normalized[name] = projected;
     }
     return normalized;
   }
@@ -146,6 +197,7 @@ const decodeFieldNames = (out: object, value: Record<string, unknown>): Record<s
   }
   const reverse = new Map<string, string>();
   for (const [key, field] of Object.entries(fieldNames)) {
+    if (typeof field === "object" && field.ignored === true) continue;
     reverse.set(typeof field === "string" ? field : field.name, key);
   }
   const decoded: Record<string, unknown> = {};
@@ -169,8 +221,18 @@ const getJsonFieldNames = (value: unknown): JsonFieldNameMap | undefined => {
   return (value as { [JsonFieldNames]?: JsonFieldNameMap })[JsonFieldNames];
 }
 
-const isZeroJsonValue = (value: unknown): bool => {
-  return value === undefined || value === null || value === false || value === 0 || value === "";
+const isZeroJsonValue = (value: unknown, field: JsonFieldSpec): bool => {
+  if (field.isZero !== undefined) return field.isZero(value);
+  if (field.zero === "nil") return value === undefined;
+  return value === undefined || value === false || value === 0 || value === 0n || value === "";
+}
+
+const isEmptyJsonValue = (value: unknown): bool => {
+  if (value === undefined || value === null || value === "") return true;
+  if (Array.isArray(value) || value instanceof Uint8Array) return value.length === 0;
+  if (value instanceof Map || value instanceof Set) return value.size === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
+  return false;
 }
 
 const isMarshalerTo = (value: unknown): value is MarshalerTo => {

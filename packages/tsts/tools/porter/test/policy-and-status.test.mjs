@@ -131,7 +131,7 @@ test("extractor snapshots reject schema drift, unknown units, parse errors, and 
     units: [unit],
   });
   const snapshot = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceRoot,
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -147,15 +147,37 @@ test("extractor snapshots reject schema drift, unknown units, parse errors, and 
       buildTagCounts: {},
       packageCounts: { debug: 1 },
       importPathCount: 1,
+      structTagCount: 0,
+      structTagKeyCounts: {},
     },
     files: [file],
   };
   assert.deepEqual(validatePorterSnapshot(snapshot, config), []);
-  assert.match(validatePorterSnapshot({ ...snapshot, schemaVersion: 3 }, config)[0], /schemaVersion/);
+  assert.match(validatePorterSnapshot({ ...snapshot, schemaVersion: 2 }, config)[0], /schemaVersion/);
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, imports: [{ name: "x", packageName: "x", path: "example/x", resolutionError: "", futureField: true }] }] }, config).some((issue) => issue.includes("futureField")));
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, kind: "futureDecl" }] }] }, config).some((issue) => issue.includes("unknown")));
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, parseError: "broken" }] }, config).some((issue) => issue.includes("parse error")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, unitCount: 0 } }, config).some((issue) => issue.includes("unitCount")));
+  assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, structTagCount: 1 } }, config).some((issue) => issue.includes("structTagCount")));
+
+  const taggedMember = {
+    kind: "field",
+    name: "Value",
+    exported: true,
+    type: "string",
+    typeExpr: { kind: "ident", text: "string", name: "string" },
+    structTag: 'json:"value,omitzero" xml:"Value"',
+    tagValues: [{ key: "json", value: "value,omitzero" }, { key: "xml", value: "Value" }],
+    startLine: 2,
+    structDepth: 1,
+  };
+  const taggedSnapshot = {
+    ...snapshot,
+    files: [{ ...file, structTags: [taggedMember] }],
+    summary: { ...snapshot.summary, structTagCount: 1, structTagKeyCounts: { json: 1, xml: 1 } },
+  };
+  assert.deepEqual(validatePorterSnapshot(taggedSnapshot, config), []);
+  assert.ok(validatePorterSnapshot({ ...taggedSnapshot, files: [{ ...file, structTags: [{ ...taggedMember, structTag: undefined }] }] }, config).some((issue) => issue.includes("structTag is required")));
 });
 
 test("repeated Go declarations receive distinct deterministic TypeScript owners", () => {

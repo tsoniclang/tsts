@@ -60,6 +60,15 @@ function goConstraintText(d) {
   return undefined;
 }
 
+function normalizeGoConstraint(d) {
+  const constraintText = goConstraintText(d);
+  if (!constraintText) return undefined;
+  const marker = { t: "conv", token: `go-constraint:${constraintText}` };
+  if (d.t !== "intersect") return marker;
+  const carriers = d.members.filter((member) => !isGoConstraint(member));
+  return carriers.length === 0 ? marker : { t: "intersect", members: [marker, ...carriers] };
+}
+
 // Recursively normalize a type descriptor under the active conventions.
 // `context` is "type" (ordinary positions) or "constraint" (type-param bounds);
 // structural shape rules apply only to "type"; equivalences apply only to their
@@ -97,8 +106,8 @@ export function normalizeDescriptor(d, conv, context = "type") {
   }
 
   if (context === "constraint") {
-    const constraintText = goConstraintText(n);
-    if (constraintText) return { t: "conv", token: `go-constraint:${constraintText}` };
+    const goConstraint = normalizeGoConstraint(n);
+    if (goConstraint) return goConstraint;
   }
 
   // Value-equivalence rules: collapse matching forms to a shared token, but only

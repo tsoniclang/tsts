@@ -6,7 +6,7 @@ import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse } from "./sig-check.mjs";
+import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse, withSignatureOverrideSnapshots } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
@@ -155,6 +155,15 @@ test("local signature override captures go and ts snapshots", () => {
   assert.equal(staleIssues.length, 1);
 });
 
+test("signature mismatches carry exact local-override snapshots", () => {
+  const expected = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
+  const actual = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] };
+  const [mismatch] = withSignatureOverrideSnapshots(compareSignatures(expected, actual, null), expected, actual);
+
+  assert.equal(mismatch.goSignature, "func(m::A)=>void");
+  assert.equal(mismatch.tsSignature, "func(m::B)=>void");
+});
+
 test("signature override cannot waive initializer or value-order drift", () => {
   const expected = {
     kind: "value",
@@ -268,10 +277,16 @@ test("compareTypeParams: non-trivial constraints cannot be erased", () => {
   assert.ok(kinds(compareSignatures(exp, actual, null, (x) => x, noConv)).has("type-param-constraint"));
 });
 
-test("compareTypeParams: exact GoConstraint marker preserves raw tilde constraints", () => {
+test("compareTypeParams: exact GoConstraint marker preserves raw tilde constraints and audits runtime carriers", () => {
   const conv = loadConventions({});
   const exp = { kind: "func", typeParams: [{ constraint: { t: "raw", text: "~int32 | ~uint32" } }], ret: kw("void"), params: [] };
-  const actual = {
+  const markerOnly = {
+    kind: "func",
+    typeParams: [{ constraint: ref("packages/tsts/src/go/compat.ts::GoConstraint", { t: "lit", text: JSON.stringify("~int32 | ~uint32") }) }],
+    ret: kw("void"),
+    params: [],
+  };
+  const markerWithCarrier = {
     kind: "func",
     typeParams: [{
       constraint: {
@@ -285,13 +300,20 @@ test("compareTypeParams: exact GoConstraint marker preserves raw tilde constrain
     ret: kw("void"),
     params: [],
   };
-  assert.equal(compareSignatures(exp, actual, null, (x) => x, conv).length, 0);
+  assert.equal(compareSignatures(exp, markerOnly, null, (x) => x, conv).length, 0);
+  assert.ok(kinds(compareSignatures(exp, markerWithCarrier, null, (x) => x, conv)).has("type-param-constraint"));
 });
 
 test("compareInterface: unsupported member shapes are reported, not dropped", () => {
   const exp = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }] };
   const actual = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }, { name: "<IndexSignature>", unsupported: "IndexSignature" }] };
   assert.ok(kinds(compareSignatures(exp, actual, null)).has("unsupported-member"));
+});
+
+test("compareInterface: duplicate members cannot collapse through the comparison map", () => {
+  const expected = { kind: "interface", typeParams: [], members: [{ name: "value", type: kw("string") }] };
+  const actual = { kind: "interface", typeParams: [], members: [{ name: "value", type: kw("string") }, { name: "value", type: kw("string") }] };
+  assert.ok(kinds(compareSignatures(expected, actual, null)).has("duplicate-member"));
 });
 
 test("gate: unresolved type identity is surfaced", () => {
@@ -400,7 +422,7 @@ test("expected-from-go: inline struct value types are structural descriptors", (
   assert.equal(canonicalKey(desc.decls[0].type), "R:src/rt/bridge.ts::Arr<O:{flag:R:@acme/prim::i32;name:K:string},L:\"...\">");
 });
 
-test("expected-from-go: embedded receiver methods do not override direct fields", () => {
+test("expected-from-go: receiver methods remain separate from struct data signatures", () => {
   const config = {
     goModulePath: "example.com/proj",
     signatureCheck: {
@@ -450,4 +472,77 @@ test("expected-from-go: embedded receiver methods do not override direct fields"
   const signatureMembers = desc.members.filter((member) => member.name === "Signature");
   assert.equal(signatureMembers.length, 1);
   assert.equal(canonicalKey(signatureMembers[0].type), "K:string");
+  assert.deepEqual(
+    desc.members.map((member) => member.name),
+    ["Signature", "__tsgoEmbedded0"],
+    "the embedded receiver method is checked by its own method unit, not injected into the struct interface",
+  );
+
+  const baseDescriptor = goUnitDescriptor({ ...baseType, file }, index);
+  assert.equal(baseDescriptor.members.some((member) => member.name === "Signature"), false);
+});
+
+test("expected-from-go: interface methods and embedded interface contracts remain structural", () => {
+  const config = {
+    goModulePath: "example.com/proj",
+    signatureCheck: {
+      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
+      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
+      primitives: { keyword: { bool: "boolean", string: "string" }, core: {}, compat: {} },
+      stdlibTypes: {},
+      facadeTemplate: "src/rt/{importPath}.ts",
+    },
+  };
+  const reader = {
+    id: "example.com/proj::pkg/contracts.go::type::Reader",
+    kind: "type",
+    name: "Reader",
+    typeKind: "interface",
+    members: [{
+      kind: "method",
+      name: "Read",
+      typeExpr: {
+        kind: "func",
+        parameters: [{ names: ["path"], type: { kind: "ident", name: "string" } }],
+        results: [{ type: { kind: "ident", name: "bool" } }],
+      },
+    }],
+    typeParameterDetails: [],
+  };
+  const closer = {
+    id: "example.com/proj::pkg/contracts.go::type::ReadCloser",
+    kind: "type",
+    name: "ReadCloser",
+    typeKind: "interface",
+    members: [
+      { kind: "embeddedInterface", typeExpr: { kind: "ident", name: "Reader" } },
+      { kind: "method", name: "Close", typeExpr: { kind: "func", parameters: [], results: [] } },
+    ],
+    typeParameterDetails: [],
+  };
+  const wrapper = {
+    id: "example.com/proj::pkg/contracts.go::type::ReaderWrapper",
+    kind: "type",
+    name: "ReaderWrapper",
+    typeKind: "struct",
+    members: [{ kind: "embeddedInterface", typeExpr: { kind: "ident", name: "Reader" } }],
+    typeParameterDetails: [],
+  };
+  const file = { importPath: "example.com/proj/pkg", imports: [], units: [reader, closer, wrapper] };
+  const profile = loadProfile(config);
+  const tsById = new Map([
+    [reader.id, { path: "pkg/contracts.ts" }],
+    [closer.id, { path: "pkg/contracts.ts" }],
+    [wrapper.id, { path: "pkg/contracts.ts" }],
+  ]);
+  const index = buildExpectedIndex(config, { files: [file] }, tsById, profile);
+  const descriptor = goUnitDescriptor({ ...closer, file }, index);
+  assert.deepEqual(descriptor.members.map((member) => member.name), ["Close", "__tsgoEmbedded0", "Read"]);
+  assert.equal(canonicalKey(descriptor.members[0].type), "F:()=>K:void");
+  assert.equal(canonicalKey(descriptor.members[2].type), "F:(K:string)=>K:boolean");
+  assert.equal(descriptor.members[2].optional, true);
+
+  const wrapperDescriptor = goUnitDescriptor({ ...wrapper, file }, index);
+  assert.deepEqual(wrapperDescriptor.members.map((member) => member.name), ["__tsgoEmbedded0", "Read"]);
+  assert.equal(wrapperDescriptor.members[1].optional, true);
 });

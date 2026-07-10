@@ -190,6 +190,7 @@ export function singleThreadedWorkGroup_RunAndWait(receiver: GoPtr<singleThreade
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.pop","kind":"method","status":"implemented","sigHash":"b4591f455dfbfc9dda4bf6bd450de895d37dc08301e65bf2298c34ac129d51ab","bodyHash":"0c6c6851e5da8b2d74873f7fa4cccd909e3189aedf69cf4fe1a3a7a2338cd81c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"An empty single-threaded work queue makes pop return a nil function; the scheduler tests the undefined result before invocation and terminates exactly on that sentinel.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/workgroup.ts::singleThreadedWorkGroup>)=>()=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/workgroup.ts::singleThreadedWorkGroup>)=>packages/tsts/src/go/compat.ts::GoPtr<()=>void>"}
  *
  * Go source:
  * func (w *singleThreadedWorkGroup) pop() func() {

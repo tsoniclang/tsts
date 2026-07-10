@@ -2,6 +2,7 @@ import type { int } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
 import type { noCopy } from "./compileroptions.js";
 import type { Tristate } from "./tristate.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/buildoptions.go::type::BuildOptions","kind":"type","status":"implemented","sigHash":"ba7b8c9b824a7fa2f401dfcf231296b22b0d81902ca437b9390ae2ea448f032c","bodyHash":"f27845d308765682fbd60c4beebec49b9af23184ed41b9ec8cd4399ea433931c"}
@@ -31,3 +32,18 @@ export interface BuildOptions {
   StopBuildOnErrors: Tristate;
   Clean: Tristate;
 }
+
+type buildOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  BuildOptions,
+  "github.com/microsoft/typescript-go::internal/core/buildoptions.go::type::BuildOptions",
+  {
+    Dry: { name: "dry", omitZero: true },
+    Force: { name: "force", omitZero: true },
+    Verbose: { name: "verbose", omitZero: true },
+    Builders: { name: "builders", omitZero: true },
+    StopBuildOnErrors: { name: "stopBuildOnErrors", omitZero: true },
+    Clean: { name: "clean", omitZero: true },
+  },
+  "source-metadata",
+  "Build-option JSON identities are consumed by explicit command-line and config serialization rather than generic struct marshaling."
+>;

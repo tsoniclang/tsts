@@ -45,7 +45,6 @@ function goEmbeddedMembers(unit, ctx) {
       if (embedded.unit.typeKind === "interface") {
         out.push(...goExpandedInterfaceMembers(embedded.unit, embeddedCtx).filter((m) => !directNames.has(m.name)).map((m) => ({ ...m, optional: true })));
       }
-      out.push(...receiverMethodMembers(embedded.unit, embeddedCtx).filter((m) => !directNames.has(m.name)).map((m) => ({ ...m, optional: true })));
     } else {
       out.push(...externalInterfaceMembers(member.typeExpr, ctx).filter((m) => !directNames.has(m.name)).map((m) => ({ ...m, optional: true })));
     }
@@ -155,7 +154,6 @@ export function goUnitDescriptor(unit, index) {
       const members = [
         ...goInterfaceDeclaredMembers(unit, ctx),
         ...goEmbeddedMembers(unit, ctx),
-        ...receiverMethodMembers(unit, ctx),
       ];
       if (unit.typeKind === "struct" && unit.typeExpression?.kind === "struct" && (unit.typeExpression.members ?? []).length === 0) {
         members.push({ name: "__tsgoEmpty", optional: true, type: { t: "kw", kw: "never" } });

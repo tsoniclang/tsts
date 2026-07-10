@@ -1,5 +1,5 @@
 import type { bool, int, short } from "../../go/scalars.js";
-import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import type { GoInterfaceValue, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
@@ -37,22 +37,6 @@ import {
   propagateSubtreeFacts,
 } from "./subtreefacts.js";
 import { ModifierFlagsAmbient } from "./modifierflags.js";
-
-// ──────────────────────────────────────────────────────────────────────
-// Go interface value brand
-//
-// A Go interface value (`nodeData`) is represented as a method-bearing adapter
-// object. To recover the concrete receiver behind an interface value (Go's
-// `x, ok := v.(*Concrete)` / `v.(*Concrete)`), the generated `Concrete_as_nodeData`
-// adapter attaches the concrete receiver under this brand. `casts.ts` reads it.
-// ──────────────────────────────────────────────────────────────────────
-
-// The brand key is a real runtime symbol whose `unique symbol` type is inferred
-// directly from the `Symbol(...)` initializer (no cast needed). `GoInterfaceValue`
-// keys an optional receiver slot by that symbol type so adapters can attach, and
-// casts.ts can recover, the concrete receiver.
-export const goReceiverKey: unique symbol = Symbol("goReceiver");
-export type GoInterfaceValue<C> = { readonly [goReceiverKey]?: C };
 
 // Re-export the @tsgo-unit spine units below.
 
@@ -142,6 +126,7 @@ export function visitModifiers(v: Visitor, modifiers: GoPtr<ModifierList>): bool
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeFactoryHooks","kind":"type","status":"implemented","sigHash":"c19e715861a55c48c6334471ef372544e01b33173c699f7d4c23340ef38721bf","bodyHash":"cf0ecdafbd06e0cb0dffa6e3f837220bb3cde3169037611ed215bab1f93a9763"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NodeFactory hooks are Go nil function fields until a caller installs an individual hook; every create, update, and clone path tests the corresponding field before invocation, so TypeScript optional callbacks preserve the per-hook disabled sentinel.","goSignature":"interface{OnClone:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void;OnCreate:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void;OnUpdate:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void}","tsSignature":"interface{OnClone?:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void>;OnCreate?:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void>;OnUpdate?:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void>}"}
  *
  * Go source:
  * NodeFactoryHooks struct {

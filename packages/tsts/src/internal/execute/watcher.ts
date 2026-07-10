@@ -18,7 +18,6 @@ import { SyncSet_Add, SyncSet_ToSlice } from "../collections/syncset.js";
 import type { CompilerHost } from "../compiler/host.js";
 import { NewCompilerHost } from "../compiler/host.js";
 import { NewProgram, Program_FilesByPath } from "../compiler/program.js";
-import type { ProgramOptions } from "../compiler/program.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import * as fswatch from "../fswatch/fswatch.js";
 import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
@@ -43,25 +42,23 @@ import type { FS as TrackingFS } from "../vfs/trackingvfs/trackingvfs.js";
 import { FS_as_vfs_FS as trackingFSAsVfsFS } from "../vfs/trackingvfs/trackingvfs.js";
 import * as diagnosticMessages from "../diagnostics/generated/messages.js";
 import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
-import type { Host as IncrementalHost } from "./incremental/host.js";
 import type { Program } from "./incremental/program.js";
 import {
   NewProgram as IncrementalNewProgram,
+  Program_as_compiler_ProgramLike as IncrementalProgramAsCompilerProgramLike,
   Program_GetProgram,
 } from "./incremental/program.js";
 import {
   ReadBuildInfoProgram,
   NewBuildInfoReader,
 } from "./incremental/incremental.js";
-import type { CommandLineTesting, CompileAndEmitResult, CompileTimes, System, Watcher as Watcher_c5dada01 } from "./tsc/compile.js";
+import type { CommandLineTesting, CompileAndEmitResult, System, Watcher as Watcher_c5dada01 } from "./tsc/compile.js";
 import { CreateWatchStatusReporter } from "./tsc/diagnostics.js";
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
 import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
 import { EmitFilesAndReportErrors } from "./tsc/emit.js";
-import type { EmitInput } from "./tsc/emit.js";
-import type { CommandLineTestingWithWatchBackend } from "./watchmanager/watchbackend.js";
-import { CanWatchDirectory } from "./watchmanager/watchbackend.js";
+import { CanWatchDirectory, GetCommandLineTestingWatchBackend } from "./watchmanager/watchbackend.js";
 import type { WatchManager } from "./watchmanager/watchmanager.js";
 import {
   IsDirCoveredByWatch,
@@ -146,12 +143,11 @@ export function watchCompilerHost_as_compiler_CompilerHost(receiver: GoPtr<watch
  * }
  */
 export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHost>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
-  type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
   const info = receiver!.__tsgoEmbedded0!.FS().Stat(opts.FileName);
 
   const [cached, ok] = SyncMap_Load(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
   if (ok) {
-    if (info !== undefined && (info as unknown as FileInfoWithModTime).ModTime().Equal(cached!.modTime)) {
+    if (info !== undefined && info.ModTime().Equal(cached!.modTime)) {
       return cached!.file;
     }
   }
@@ -161,7 +157,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
     if (info !== undefined) {
       SyncMap_Store(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path, {
         file,
-        modTime: (info as unknown as FileInfoWithModTime).ModTime() as unknown as Time,
+        modTime: info.ModTime(),
       });
     }
   } else {
@@ -172,6 +168,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::Watcher","kind":"type","status":"implemented","sigHash":"3c7720db1dd07fc5ed867242203119169d9e8b287c5f9fa9070d8b37e7c6e4e8","bodyHash":"8bf7c82d2cffb13943cb3f6185d44578ee7a5c9d189e61b7d61b7fbde2d259dd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Watcher.testing is the nil Go testing interface outside tests, while configMtimes remains a nil map until the first successful config-time capture; TypeScript preserves both independent lifecycle sentinels with undefined.","goSignature":"interface{commandLineRaw:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;compilerOptionsFromCommandLine:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;configFileName:string;configFilePaths:packages/tsts/src/go/compat.ts::GoSlice<string>;configHasErrors:packages/tsts/src/go/scalars.ts::bool;configModified:packages/tsts/src/go/scalars.ts::bool;configMtimes:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/time.ts::Time>;extendedConfigCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>;program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>;reportDiagnostic:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;reportErrorSummary:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter;reportWatchStatus:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;seenFiles:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>>;sourceFileCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watcher.ts::cachedSourceFile>>>;sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting;wm:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>}","tsSignature":"interface{commandLineRaw:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;compilerOptionsFromCommandLine:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;configFileName:string;configFilePaths:packages/tsts/src/go/compat.ts::GoSlice<string>;configHasErrors:packages/tsts/src/go/scalars.ts::bool;configModified:packages/tsts/src/go/scalars.ts::bool;configMtimes:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/time.ts::Time>|undefined;extendedConfigCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>;program:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/program.ts::Program>;reportDiagnostic:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;reportErrorSummary:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter;reportWatchStatus:packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter;seenFiles:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>>;sourceFileCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watcher.ts::cachedSourceFile>>>;sys:packages/tsts/src/internal/execute/tsc/compile.ts::System;testing:packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined;wm:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watchmanager/watchmanager.ts::WatchManager>}"}
  *
  * Go source:
  * Watcher struct {
@@ -216,7 +213,7 @@ export interface Watcher {
   sourceFileCache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
   wm: GoPtr<WatchManager>;
   seenFiles: GoPtr<Set<Path>>;
-  configMtimes: GoMap<string, Time>;
+  configMtimes: GoMap<string, Time> | undefined;
 }
 
 /**
@@ -243,6 +240,7 @@ function newSyncSet<T>(): SyncSet<T> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher","kind":"func","status":"implemented","sigHash":"0bd5b51e65f4826577017b4b24ad4ee240e6a42a38f2d93cc31bd1a9a18b236a","bodyHash":"a1261d67c2208d91ff6744b602a78c28160300da4ecfb3271a9b07d33bb6a64a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"createWatcher accepts the nil Go CommandLineTesting interface for normal watch execution and conditionally installs testing hooks and backends only when present; TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watcher.ts::Watcher>","tsSignature":"func(packages/tsts/src/internal/execute/tsc/compile.ts::System,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticReporter,packages/tsts/src/internal/execute/tsc/diagnostics.ts::DiagnosticsReporter,packages/tsts/src/internal/execute/tsc/compile.ts::CommandLineTesting|undefined)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/watcher.ts::Watcher>"}
  *
  * Go source:
  * func createWatcher(
@@ -279,9 +277,9 @@ function newSyncSet<T>(): SyncSet<T> {
 export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, unknown>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
   const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   const wm = NewWatchManager(sys.Writer(), (path: string): bool => sys.FS().DirectoryExists(path));
-  const t = asCommandLineTestingWithWatchBackend(testing);
-  if (t !== undefined) {
-    WatchManager_SetBackend(wm, t.WatchBackend());
+  const backend = GetCommandLineTestingWatchBackend(testing);
+  if (backend !== undefined) {
+    WatchManager_SetBackend(wm, backend);
   }
   const w: Watcher = {
     sys,
@@ -301,26 +299,12 @@ export function createWatcher(sys: System, configParseResult: GoPtr<ParsedComman
     sourceFileCache: sourceFileCache,
     wm,
     seenFiles: undefined,
-    configMtimes: undefined as unknown as GoMap<string, Time>,
+    configMtimes: undefined,
   };
   if (configParseResult!.ConfigFile !== undefined && configParseResult!.ConfigFile !== null) {
     w.configFileName = configParseResult!.ConfigFile!.SourceFile!.fileName;
   }
   return w;
-}
-
-// Go type-assertion `testing.(commandLineTestingWithWatchBackend)`: a CommandLineTesting
-// also satisfies commandLineTestingWithWatchBackend iff it carries a WatchBackend() method.
-// Structural duck-typing matches the Go interface assertion (ok == method present).
-function asCommandLineTestingWithWatchBackend(testing: CommandLineTesting | undefined): CommandLineTestingWithWatchBackend | undefined {
-  if (testing === undefined) {
-    return undefined;
-  }
-  const candidate = testing as unknown as Partial<CommandLineTestingWithWatchBackend>;
-  if (typeof candidate.WatchBackend === "function") {
-    return candidate as CommandLineTestingWithWatchBackend;
-  }
-  return undefined;
 }
 
 /**
@@ -594,50 +578,46 @@ export function Watcher_comparePathsOptions(receiver: GoPtr<Watcher>): ComparePa
  */
 export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
   WatchManager_Lock(receiver!.wm);
+  try {
+    const [changedPaths, overflow] = WatchManager_DrainEvents(receiver!.wm);
+    const hasEvents = (changedPaths?.size ?? 0) > 0 || overflow;
 
-  const [changedPaths, overflow] = WatchManager_DrainEvents(receiver!.wm);
+    if (Watcher_recheckTsConfig(receiver)) {
+      return;
+    }
 
-  const hasEvents = (changedPaths?.size ?? 0) > 0 || overflow;
-
-  if (Watcher_recheckTsConfig(receiver)) {
-    WatchManager_Unlock(receiver!.wm);
-    return;
-  }
-
-  if (hasEvents && !overflow && !receiver!.configModified) {
-    // Filter fswatch events against known dependencies
-    if (Watcher_isRelevantChange(receiver, changedPaths ?? new Map<string, fswatch.EventKind>())) {
-      Watcher_evictChangedSourceFiles(receiver, changedPaths ?? new Map<string, fswatch.EventKind>());
-    } else {
+    if (hasEvents && !overflow && !receiver!.configModified) {
+      const eventPaths = changedPaths ?? new Map<string, fswatch.EventKind>();
+      if (Watcher_isRelevantChange(receiver, eventPaths)) {
+        Watcher_evictChangedSourceFiles(receiver, eventPaths);
+      } else {
+        if (receiver!.wm!.DebugLog !== undefined) {
+          Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: %d event(s) not relevant to compilation, skipping rebuild\n", eventPaths.size);
+        }
+        if (receiver!.testing !== undefined) {
+          receiver!.testing.OnProgram(receiver!.program);
+        }
+        return;
+      }
+    } else if (overflow) {
+      receiver!.sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
+    } else if (!hasEvents && !receiver!.configModified) {
       if (receiver!.wm!.DebugLog !== undefined) {
-        Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: %d event(s) not relevant to compilation, skipping rebuild\n", changedPaths?.size ?? 0);
+        Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: no events, skipping\n");
       }
       if (receiver!.testing !== undefined) {
         receiver!.testing.OnProgram(receiver!.program);
       }
-      WatchManager_Unlock(receiver!.wm);
       return;
     }
-  } else if (overflow) {
-    // Overflow: evict the entire source file cache to force re-build
-    receiver!.sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
-  } else if (!hasEvents && !receiver!.configModified) {
-    // No events and no config change
-    if (receiver!.wm!.DebugLog !== undefined) {
-      Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: no events, skipping\n");
-    }
-    if (receiver!.testing !== undefined) {
-      receiver!.testing.OnProgram(receiver!.program);
-    }
-    WatchManager_Unlock(receiver!.wm);
-    return;
-  }
 
-  receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.File_change_detected_Starting_incremental_compilation));
-  if (Watcher_doBuild(receiver) !== undefined) {
-    WatchManager_ForceOverflow(receiver!.wm);
+    receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.File_change_detected_Starting_incremental_compilation));
+    if (Watcher_doBuild(receiver) !== undefined) {
+      WatchManager_ForceOverflow(receiver!.wm);
+    }
+  } finally {
+    WatchManager_Unlock(receiver!.wm);
   }
-  WatchManager_Unlock(receiver!.wm);
 }
 
 /**
@@ -813,9 +793,9 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): GoError {
   }
 
   receiver!.program = IncrementalNewProgram(
-    NewProgram({ Config: receiver!.config, Host: watchCompilerHost_as_compiler_CompilerHost(host) } as ProgramOptions),
+    NewProgram({ Config: receiver!.config, Host: watchCompilerHost_as_compiler_CompilerHost(host) }),
     receiver!.program,
-    undefined as unknown as IncrementalHost,
+    undefined,
     receiver!.testing !== undefined,
   );
 
@@ -830,12 +810,11 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): GoError {
     Set_Add(receiver!.seenFiles, ToPath(p, cwd, caseSensitive));
   }
 
-  type FileInfoModTime = { ModTime(): Time };
   receiver!.configMtimes = new Map<string, Time>();
   for (const cfgPath of receiver!.configFilePaths) {
     const s = receiver!.sys.FS().Stat(cfgPath);
     if (s !== undefined && s !== null) {
-      receiver!.configMtimes.set(cfgPath, (s as unknown as FileInfoModTime).ModTime());
+      receiver!.configMtimes.set(cfgPath, s.ModTime());
     }
   }
 
@@ -921,15 +900,27 @@ export function Watcher_evictChangedSourceFiles(receiver: GoPtr<Watcher>, change
 export function Watcher_compileAndEmit(receiver: GoPtr<Watcher>): CompileAndEmitResult {
   return EmitFilesAndReportErrors({
     Sys: receiver!.sys,
-    ProgramLike: receiver!.program,
+    ProgramLike: IncrementalProgramAsCompilerProgramLike(receiver!.program),
     Program: Program_GetProgram(receiver!.program),
     Config: receiver!.config,
     ReportDiagnostic: receiver!.reportDiagnostic,
     ReportErrorSummary: receiver!.reportErrorSummary,
     Writer: receiver!.sys.Writer(),
-    CompileTimes: {} as CompileTimes,
+    WriteFile: undefined,
+    CompileTimes: {
+      ConfigTime: 0,
+      ParseTime: 0,
+      bindTime: 0,
+      checkTime: 0,
+      totalTime: 0,
+      emitTime: 0,
+      BuildInfoReadTime: 0,
+      ChangesComputeTime: 0,
+    },
     Testing: receiver!.testing,
-  } as unknown as EmitInput);
+    TestingMTimesCache: undefined,
+    Tracing: undefined,
+  });
 }
 
 /**
@@ -982,20 +973,18 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     return false;
   }
 
-  type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
-
   if (!receiver!.configHasErrors && receiver!.configFilePaths.length > 0) {
     let changed = false;
     for (const path of receiver!.configFilePaths) {
-      const ok = receiver!.configMtimes !== undefined && receiver!.configMtimes.has(path);
-      const oldMtime = ok ? receiver!.configMtimes.get(path)! : undefined;
+      const oldMtime = receiver!.configMtimes?.get(path);
+      const ok = oldMtime !== undefined;
       const s = receiver!.sys.FS().Stat(path);
       if (!ok) {
         if (s !== undefined && s !== null) {
           changed = true;
           break;
         }
-      } else if (s === undefined || s === null || !(s as unknown as FileInfoWithModTime).ModTime().Equal(oldMtime)) {
+      } else if (s === undefined || s === null || !s.ModTime().Equal(oldMtime!)) {
         changed = true;
         break;
       }
@@ -1055,7 +1044,7 @@ export function Watcher_parseConfigFile(receiver: GoPtr<Watcher>): GoPtr<ParsedC
     receiver!.configFileName,
     receiver!.compilerOptionsFromCommandLine,
     receiver!.commandLineRaw,
-    receiver!.sys as unknown as Parameters<typeof GetParsedCommandLineOfConfigFile>[3],
+    receiver!.sys,
     ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
   );
   if (errors.length > 0) {
