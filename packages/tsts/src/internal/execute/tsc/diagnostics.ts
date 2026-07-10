@@ -300,19 +300,21 @@ export function colors_brightWhite(receiver: GoPtr<colors>, str: string): string
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::type::DiagnosticsReporter","kind":"type","status":"implemented","sigHash":"91cec3fe70a52450aba483010aebb25cb7c769e63f4490efc31c695d63277f95","bodyHash":"acc1d29496696cbc139f7ef284151ce1753a53050ec5b169ce8effe7c7a0c384"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type DiagnosticsReporter uses an explicit undefined-capable TypeScript representation at the aliased value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"type=(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void","tsSignature":"type=(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>void"}
  *
  * Go source:
  * DiagnosticsReporter = func(diagnostics []*ast.Diagnostic)
  */
-export type DiagnosticsReporter = (diagnostics: GoSlice<GoPtr<Diagnostic>>) => void;
+export type DiagnosticsReporter = (diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>) => void;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::QuietDiagnosticsReporter","kind":"func","status":"implemented","sigHash":"5866eb42e1d11e1d6e3d78c27eeff3d02994bf2be70a7674c203bbf5e977ac78","bodyHash":"05884c5312b784d3e6c0913f7342bb374ba210586a6717a99fe11f3b7d6ecf7f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func QuietDiagnosticsReporter uses an explicit undefined-capable TypeScript representation at parameter #0 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>void"}
  *
  * Go source:
  * func QuietDiagnosticsReporter(diagnostics []*ast.Diagnostic) {}
  */
-export function QuietDiagnosticsReporter(_diagnostics: GoSlice<GoPtr<Diagnostic>>): void {}
+export function QuietDiagnosticsReporter(_diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>): void {}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::CreateReportErrorSummary","kind":"func","status":"implemented","sigHash":"36b641688fde56b26213a3941e5ab3f3137a6483ffe4a73af4b16ad75e068f02","bodyHash":"9f36ed7889632c95ebe2ee5390933292a284e14533a38fb233f83b71568fa672"}
@@ -331,8 +333,8 @@ export function QuietDiagnosticsReporter(_diagnostics: GoSlice<GoPtr<Diagnostic>
 export function CreateReportErrorSummary(sys: System, locale: Locale, options: GoPtr<CompilerOptions>): DiagnosticsReporter {
   if (shouldBePretty(sys, options)) {
     const formatOpts = getFormatOptsOfSys(sys, locale);
-    return (diagnostics: GoSlice<GoPtr<Diagnostic>>): void => {
-      WriteErrorSummaryText(sys.Writer(), FromASTDiagnostics(diagnostics), formatOpts!);
+    return (diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>): void => {
+      WriteErrorSummaryText(sys.Writer(), FromASTDiagnostics(diagnostics === undefined ? [] : diagnostics), formatOpts!);
     };
   }
   return QuietDiagnosticsReporter;

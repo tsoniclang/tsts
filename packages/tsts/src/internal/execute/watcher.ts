@@ -145,7 +145,7 @@ export function watchCompilerHost_as_compiler_CompilerHost(receiver: GoPtr<watch
 export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHost>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
   const info = receiver!.__tsgoEmbedded0!.FS().Stat(opts.FileName);
 
-  const [cached, ok] = SyncMap_Load(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+  const [cached, ok] = SyncMap_Load(receiver!.cache, opts.Path, (): GoPtr<cachedSourceFile> => undefined);
   if (ok) {
     if (info !== undefined && info.ModTime().Equal(cached!.modTime)) {
       return cached!.file;
@@ -155,13 +155,13 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
   const file = receiver!.__tsgoEmbedded0!.GetSourceFile(opts);
   if (file !== undefined) {
     if (info !== undefined) {
-      SyncMap_Store(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path, {
+      SyncMap_Store(receiver!.cache, opts.Path, {
         file,
         modTime: info.ModTime(),
       });
     }
   } else {
-    SyncMap_Delete(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+    SyncMap_Delete(receiver!.cache, opts.Path);
   }
   return file;
 }
@@ -826,14 +826,14 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): GoError {
   receiver!.configModified = false;
 
   const programFiles = Program_FilesByPath(Program_GetProgram(receiver!.program));
-  SyncMap_Range(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, (path: Path) => {
+  SyncMap_Range(receiver!.sourceFileCache, (path: Path) => {
     if (!programFiles.has(path)) {
-      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, path);
+      SyncMap_Delete(receiver!.sourceFileCache, path);
     }
     return true;
   });
 
-  const errorCount = result.Diagnostics.length;
+  const errorCount = result.Diagnostics === undefined ? 0 : result.Diagnostics.length;
   if (errorCount === 1) {
     receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
   } else {
@@ -869,12 +869,12 @@ export function Watcher_evictChangedSourceFiles(receiver: GoPtr<Watcher>, change
   const cwd = receiver!.sys.GetCurrentDirectory();
   for (const [eventPath] of changedPaths) {
     const p = ToPath(eventPath, cwd, caseSensitive);
-    const [, ok] = SyncMap_Load(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p);
+    const [, ok] = SyncMap_Load(receiver!.sourceFileCache, p, (): GoPtr<cachedSourceFile> => undefined);
     if (ok) {
       if (receiver!.wm!.DebugLog !== undefined) {
         Fprintf(receiver!.wm!.DebugLog, "[watch] evicting cached source file: %s\n", p);
       }
-      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p);
+      SyncMap_Delete(receiver!.sourceFileCache, p);
     }
   }
 }

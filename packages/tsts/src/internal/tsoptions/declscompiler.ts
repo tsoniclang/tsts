@@ -31,7 +31,7 @@ import type { CommandLineOption } from "./commandlineoption.js";
 // Go initializes package-level vars by dependency order; OptionsDeclarations
 // depends on commonOptionsWithBuild and optionsForCompiler (both defined below),
 // so it is assigned after those declarations to avoid temporal-dead-zone access.
-export let OptionsDeclarations: GoSlice<GoPtr<CommandLineOption>> = undefined as never;
+export let OptionsDeclarations: GoSlice<GoPtr<CommandLineOption>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::commonOptionsWithBuild","kind":"varGroup","status":"implemented","sigHash":"2c17198da8a392c5648ccb2c395f017b90231ded77bd50210550ea220477854b","bodyHash":"f160ff5b514596093f18a27bc5cc6acf24c64dcdae1099e5513290d1b094cc28"}

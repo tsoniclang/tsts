@@ -139,6 +139,9 @@ function createProgram(sourceText: string): { readonly program: GoPtr<Program>; 
 
 function assertCleanSemanticDiagnostics(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
+  if (diagnostics === undefined) {
+    return;
+  }
   assert.equal(diagnostics.length, 0, diagnostics.map(Diagnostic_String).join("\n"));
 }
 

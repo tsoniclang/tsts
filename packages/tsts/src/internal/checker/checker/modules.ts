@@ -2,7 +2,7 @@ import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
-import type { SourceFile } from "../../ast/ast.js";
+import type { PatternAmbientModule, SourceFile } from "../../ast/ast.js";
 import { Diagnostic_SetRepopulateInfo, DiagnosticsCollection_Add, RepopulateModuleNotFound } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { IsImportDeclarationOrJSImportDeclaration, Node_Arguments, Node_Elements, Node_Expression, Node_ImportClause, Node_IsTypeOnly, Node_ModuleSpecifier, Node_PropertyNameOrName, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
@@ -132,11 +132,13 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
     return;
   }
 
-  if (mainModule!.Exports?.get(InternalSymbolNameExportStar) !== undefined && (moduleAugmentationSymbol!.Exports?.size ?? 0) !== 0) {
+  const mainExports = mainModule!.Exports;
+  const augmentationExports = moduleAugmentationSymbol!.Exports;
+  if (mainExports?.get(InternalSymbolNameExportStar) !== undefined && augmentationExports !== undefined && augmentationExports.size !== 0) {
     const resolvedExports = Checker_getResolvedMembersOrExportsOfSymbol(receiver, mainModule, MembersOrExportsResolutionKindResolvedExports);
-    for (const [key, value] of moduleAugmentationSymbol!.Exports) {
+    for (const [key, value] of augmentationExports) {
       const resolvedExport = resolvedExports.get(key);
-      if (resolvedExport !== undefined && mainModule!.Exports.get(key) === undefined) {
+      if (resolvedExport !== undefined && mainExports.get(key) === undefined) {
         Checker_mergeSymbol(receiver, resolvedExport, value, false);
       }
     }
@@ -179,7 +181,7 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
 export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   switch (node!.Kind) {
     case KindVariableStatement:
-      for (const decl of AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes) {
+      for (const decl of AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes ?? []) {
         Checker_checkModuleAugmentationElement(receiver, decl);
       }
       break;
@@ -834,7 +836,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
   }
 
   if (receiver!.patternAmbientModules.length !== 0) {
-    const pattern = FindBestPatternMatch(receiver!.patternAmbientModules, (value) => value!.Pattern, moduleReference);
+    const pattern = FindBestPatternMatch(receiver!.patternAmbientModules, (value) => value!.Pattern, moduleReference, (): GoPtr<PatternAmbientModule> => undefined);
     if (pattern !== undefined) {
       const augmentation = receiver!.patternAmbientModuleAugmentations.get(moduleReference);
       if (augmentation !== undefined) {

@@ -103,9 +103,9 @@ test("provider-backed virtual modules participate in normal program binding", ()
 
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
-  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(Program_GetProgramDiagnostics(program)?.length ?? 0, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index)?.length ?? 0, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index)?.length ?? 0, 0);
   const resolvedProviderModule = Program_GetResolvedModule(program, SourceFile_as_ast_HasFileName(index), "@example/target/Acme.Buffers.js", ResolutionModeESM);
   assert.equal(ResolvedModule_IsProviderVirtual(resolvedProviderModule), true);
   assert.equal(resolvedProviderModule?.Extension, ResolvedModuleExtensionProviderVirtual);
@@ -958,12 +958,15 @@ test("provider type families keep variant members separate", () => {
   const program = NewProgram(options);
   const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(sourceFile !== undefined);
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
+  assert.equal(Program_GetProgramDiagnostics(program)?.length ?? 0, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile)?.length ?? 0, 0);
   const semanticDiagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
+  assert.ok(semanticDiagnostics !== undefined);
   assert.equal(semanticDiagnostics.length, 1, semanticDiagnostics.map(Diagnostic_String).join("\n"));
-  assert.equal(Diagnostic_Code(semanticDiagnostics[0]), 2339);
-  assert.match(Diagnostic_String(semanticDiagnostics[0]), /Result/);
+  const semanticDiagnostic = semanticDiagnostics[0];
+  assert.ok(semanticDiagnostic !== undefined);
+  assert.equal(Diagnostic_Code(semanticDiagnostic), 2339);
+  assert.match(Diagnostic_String(semanticDiagnostic), /Result/);
 });
 
 test("provider virtual declaration facts include enum members", () => {
@@ -1188,8 +1191,8 @@ test("programs without an extension host stay on the direct TS-Go path", () => {
 
   assert.equal(getExtensionHost(program), undefined);
   assert.ok(!Program_GetSourceFiles(program).some((file) => SourceFile_FileName(file).startsWith("tsts-provider://")));
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(Program_GetProgramDiagnostics(program)?.length ?? 0, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index)?.length ?? 0, 0);
 });
 
 test("checker records provider-owned target call facts for consumers", () => {
@@ -2219,10 +2222,13 @@ test("checker validates provider-owned flow use diagnostics from source-semantic
   assert.ok(index !== undefined);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9920301);
-  assert.match(Diagnostic_String(diagnostics[0]), /BORROW0301/);
-  assert.match(Diagnostic_String(diagnostics[0]), /value was moved/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9920301);
+  assert.match(Diagnostic_String(diagnostic), /BORROW0301/);
+  assert.match(Diagnostic_String(diagnostic), /value was moved/);
 
   const movedUse = findLastIdentifierByText(index, "value");
   const flowDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "BORROW_MOVED_VALUE");
@@ -2287,10 +2293,13 @@ test("checker validates provider-owned assignability after normal TS compatibili
   assert.equal(extended.extensionHost.facts.get(moveCall, flowStateFactKey)?.state, "moved");
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9920401);
-  assert.match(Diagnostic_String(diagnostics[0]), /BORROW0401/);
-  assert.match(Diagnostic_String(diagnostics[0]), /moved expression cannot be assigned/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9920401);
+  assert.match(Diagnostic_String(diagnostic), /BORROW0401/);
+  assert.match(Diagnostic_String(diagnostic), /moved expression cannot be assigned/);
 
   const assignabilityDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "BORROW_MOVED_ASSIGNMENT");
   assert.equal(assignabilityDiagnostics.length, 1);
@@ -2350,10 +2359,13 @@ test("checker validates provider-owned target constraints through standard seman
   assert.ok(index !== undefined);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9910201);
-  assert.match(Diagnostic_String(diagnostics[0]), /ACME0201/);
-  assert.match(Diagnostic_String(diagnostics[0]), /must implement Acme\.IEquatable`1/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9910201);
+  assert.match(Diagnostic_String(diagnostic), /ACME0201/);
+  assert.match(Diagnostic_String(diagnostic), /must implement Acme\.IEquatable`1/);
 
   const targetDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "ACME_CONSTRAINT");
   assert.equal(targetDiagnostics.length, 1);
@@ -2463,9 +2475,9 @@ test("checker-owned target call seam reports deferred providers without fallback
   assert.equal(extended.extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedCall)?.identity.id, "acme-provider-extension");
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
-  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(Program_GetProgramDiagnostics(program)?.length ?? 0, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index)?.length ?? 0, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index)?.length ?? 0, 0);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
@@ -2574,7 +2586,7 @@ test("checker-owned member element and operator seams report deferred providers 
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
-  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index)?.length ?? 0, 0);
 
   const propertyAccess = findFirstNodeByKind(index, KindPropertyAccessExpression);
   const elementAccess = findFirstNodeByKind(index, KindElementAccessExpression);
@@ -2621,10 +2633,13 @@ test("extension-owned semantic rejections surface through standard diagnostics w
   assert.ok(index !== undefined);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9910125);
-  assert.match(Diagnostic_String(diagnostics[0]), /ACME0125/);
-  assert.match(Diagnostic_String(diagnostics[0]), /does not fit in Acme.Byte/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9910125);
+  assert.match(Diagnostic_String(diagnostic), /ACME0125/);
+  assert.match(Diagnostic_String(diagnostic), /does not fit in Acme.Byte/);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
@@ -2666,11 +2681,14 @@ test("extension diagnostics can use explicit source spans through the standard s
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9910126);
-  assert.equal(Diagnostic_Pos(diagnostics[0]), Node_Pos(call));
-  assert.equal(Diagnostic_End(diagnostics[0]), Node_End(call));
-  assert.match(Diagnostic_String(diagnostics[0]), /ACME0126/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9910126);
+  assert.equal(Diagnostic_Pos(diagnostic), Node_Pos(call));
+  assert.equal(Diagnostic_End(diagnostic), Node_End(call));
+  assert.match(Diagnostic_String(diagnostic), /ACME0126/);
 });
 
 test("unsupported native surface operations are diagnostics, not fallback calls", () => {
@@ -2710,12 +2728,15 @@ test("unsupported native surface operations are diagnostics, not fallback calls"
   const call = findFirstNodeByKind(index, KindCallExpression);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9910301);
-  assert.ok(Diagnostic_Pos(diagnostics[0]) >= Node_Pos(call));
-  assert.ok(Diagnostic_End(diagnostics[0]) <= Node_End(call));
-  assert.match(Diagnostic_String(diagnostics[0]), /ACME0301/);
-  assert.match(Diagnostic_String(diagnostics[0]), /native-array surface does not support push/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9910301);
+  assert.ok(Diagnostic_Pos(diagnostic) >= Node_Pos(call));
+  assert.ok(Diagnostic_End(diagnostic) <= Node_End(call));
+  assert.match(Diagnostic_String(diagnostic), /ACME0301/);
+  assert.match(Diagnostic_String(diagnostic), /native-array surface does not support push/);
 
   const nativeSurfaceDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "ACME_NATIVE_ARRAY_PUSH");
   assert.equal(nativeSurfaceDiagnostics.length, 1);
@@ -4760,9 +4781,12 @@ function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFil
   const programDiagnostics = Program_GetProgramDiagnostics(program);
   const syntacticDiagnostics = Program_GetSyntacticDiagnostics(program, Background(), sourceFile);
   const semanticDiagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
-  assert.equal(programDiagnostics.length, 0, programDiagnostics.map(Diagnostic_String).join("\n"));
-  assert.equal(syntacticDiagnostics.length, 0, syntacticDiagnostics.map(Diagnostic_String).join("\n"));
-  assert.equal(semanticDiagnostics.length, 0, semanticDiagnostics.map(Diagnostic_String).join("\n"));
+  const programDiagnosticText = programDiagnostics === undefined ? "" : programDiagnostics.map(Diagnostic_String).join("\n");
+  const syntacticDiagnosticText = syntacticDiagnostics === undefined ? "" : syntacticDiagnostics.map(Diagnostic_String).join("\n");
+  const semanticDiagnosticText = semanticDiagnostics === undefined ? "" : semanticDiagnostics.map(Diagnostic_String).join("\n");
+  assert.equal(programDiagnostics?.length ?? 0, 0, programDiagnosticText);
+  assert.equal(syntacticDiagnostics?.length ?? 0, 0, syntacticDiagnosticText);
+  assert.equal(semanticDiagnostics?.length ?? 0, 0, semanticDiagnosticText);
 }
 
 function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {

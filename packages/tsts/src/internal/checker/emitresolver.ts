@@ -148,7 +148,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
     GetReferencedMemberValueDeclaration: (node: GoPtr<Node>): GoPtr<Declaration> => EmitResolver_GetReferencedMemberValueDeclaration(receiver, node),
     GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclaration(receiver, node),
     GetReferencedValueDeclarationUnsafe: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclarationUnsafe(receiver, node),
-    GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> => EmitResolver_GetReferencedValueDeclarations(receiver, node),
+    GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoPtr<GoSlice<GoPtr<Declaration>>> => EmitResolver_GetReferencedValueDeclarations(receiver, node),
     GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string => EmitResolver_GetElementAccessExpressionName(receiver, expression),
     IsReferencedAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsReferencedAliasDeclaration(receiver, node),
     IsValueAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsValueAliasDeclaration(receiver, node),
@@ -178,14 +178,14 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
     IsOptionalParameter: (node: GoPtr<Node>): bool => EmitResolver_IsOptionalParameter(receiver, node),
     IsNameResolvable: (location: GoPtr<Node>, name: string): bool => EmitResolver_IsNameResolvable(receiver, location, name),
     IsThisPropertyAssignmentDeclarationRedundant: (node: GoPtr<Node>): bool => EmitResolver_IsThisPropertyAssignmentDeclarationRedundant(receiver, node),
-    GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> => EmitResolver_GetPropertiesOfContainerFunction(receiver, node),
+    GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Symbol>>> => EmitResolver_GetPropertiesOfContainerFunction(receiver, node),
     RequiresAddingImplicitUndefinedUnsafe: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver, node, symbol_, enclosingDeclaration),
     CreateTypeOfDeclaration: (emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfDeclaration(receiver, emitContext, declaration, enclosingDeclaration, flags, internalFlags, tracker),
     CreateReturnTypeOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateTypeParametersOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateTypeParametersOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<GoSlice<GoPtr<Node>>> => EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
     CreateLiteralConstValue: (emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateLiteralConstValue(receiver, emitContext, node, tracker),
     CreateTypeOfExpression: (emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfExpression(receiver, emitContext, expression, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateLateBoundIndexSignatures: (emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateLateBoundIndexSignatures(receiver, emitContext, container, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateLateBoundIndexSignatures: (emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<GoSlice<GoPtr<Node>>> => EmitResolver_CreateLateBoundIndexSignatures(receiver, emitContext, container, enclosingDeclaration, flags, internalFlags, tracker),
     TryJSTypeNodeToTypeNode: (emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_TryJSTypeNodeToTypeNode(receiver, emitContext, typeNode, enclosingDeclaration, flags, internalFlags, tracker),
   };
 }
@@ -1537,8 +1537,10 @@ export function EmitResolver_IsLiteralConstDeclaration(receiver: GoPtr<EmitResol
 export function EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
   if (!IsParseTreeNode(node)) { return false as bool; }
   const props = EmitResolver_GetPropertiesOfContainerFunction(receiver, node);
-  for (const p of props) {
-    if (IsExpandoPropertyDeclaration(p!.ValueDeclaration)) { return true as bool; }
+  if (props !== undefined) {
+    for (const p of props) {
+      if (IsExpandoPropertyDeclaration(p!.ValueDeclaration)) { return true as bool; }
+    }
   }
   return false as bool;
 }
@@ -2089,6 +2091,7 @@ export function EmitResolver_GetReferencedValueDeclarationUnsafe(receiver: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa","bodyHash":"5e5adc4ee3583ab55fe00181c683b78596a409630cbafb6c93aa40f111942e1a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Emit resolution explicitly returns nil outside parse-tree identifiers and propagates a resolver nil declaration slice; GoPtr preserves both no-result paths.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>>"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedValueDeclarations(node *ast.IdentifierNode) []*ast.Declaration {
@@ -2102,8 +2105,8 @@ export function EmitResolver_GetReferencedValueDeclarationUnsafe(receiver: GoPtr
  * 	return r.getReferenceResolver().GetReferencedValueDeclarations(node)
  * }
  */
-export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> {
-  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return []; }
+export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<GoSlice<GoPtr<Declaration>>> {
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return undefined; }
   receiver!.checkerMu!.Lock();
   const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclarations(node);
   receiver!.checkerMu!.Unlock();
@@ -2185,6 +2188,7 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"6466a396d096c01f245287f104f1633a0e572256787db5e30693470a34eea12b","bodyHash":"f88b18ad8f3f0d47e4dfe7373c3a983abc31cad91eb94da0505d65e2daa0f368"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeParametersOfSignatureDeclaration(emitContext *printer.EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -2199,10 +2203,10 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
  * 	return requestNodeBuilder.SerializeTypeParametersForSignature(original, enclosingDeclaration, flags, internalFlags, tracker)
  * }
  */
-export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<GoSlice<GoPtr<Node>>> {
   const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
   if (original === undefined) {
-    return [];
+    return undefined;
   }
   receiver!.checkerMu!.Lock();
   const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
@@ -2392,6 +2396,7 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures","kind":"method","status":"implemented","sigHash":"0d29f2b50850d24cede0425c1ece2503aa0e34e10d939d6a80b47870f30090c3","bodyHash":"b5a25f4a31e0fde34f7eb9d711b75a8baa76c96db0bfcebc0d21f5e76180e03e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Late-bound index-signature creation accumulates into a nil result slice and can return nil when no signatures are emitted; GoPtr preserves the upstream result state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (r *EmitResolver) CreateLateBoundIndexSignatures(emitContext *printer.EmitContext, container *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -2484,14 +2489,14 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * 	return result
  * }
  */
-export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<GoSlice<GoPtr<Node>>> {
   container = EmitContext_ParseNode(emitContext, container);
   receiver!.checkerMu!.Lock();
 
   const sym = Node_Symbol(container);
   const staticInfos = Checker_getIndexInfosOfType(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, sym));
   const instanceIndexSymbol = Checker_getIndexSymbol(receiver!.checker, sym);
-  let instanceInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  let instanceInfos: GoPtr<GoSlice<GoPtr<IndexInfo>>>;
   if (instanceIndexSymbol !== undefined) {
     const siblingSymbols = Array.from(Checker_getMembersOfSymbol(receiver!.checker, sym).values());
     instanceInfos = Checker_getIndexInfosOfIndexSymbol(receiver!.checker, instanceIndexSymbol, siblingSymbols);
@@ -2499,11 +2504,11 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
 
   const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
 
-  const result: GoSlice<GoPtr<Node>> = [];
+  let result: GoPtr<GoSlice<GoPtr<Node>>>;
   for (let index = 0; index < 2; index++) {
     const infoList = index === 0 ? staticInfos : instanceInfos;
     const isStatic = index === 0;
-    if (infoList.length === 0) {
+    if (infoList === undefined || infoList.length === 0) {
       continue;
     }
     for (const info of infoList) {
@@ -2513,8 +2518,9 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
       if (info === receiver!.checker!.anyBaseTypeIndexInfo) {
         continue;
       }
-      if (info!.components.length !== 0) {
-        const allComponentComputedNamesSerializable = enclosingDeclaration !== undefined && Every(info!.components, (component: GoPtr<Node>): bool => {
+      const components = info!.components;
+      if (components !== undefined && components.length !== 0) {
+        const allComponentComputedNamesSerializable = enclosingDeclaration !== undefined && Every(components, (component: GoPtr<Node>): bool => {
           const name = Node_Name(component);
           return name !== undefined &&
             IsComputedPropertyName(name) &&
@@ -2522,7 +2528,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
             EmitResolver_isEntityNameVisible(receiver, Node_Expression(name), enclosingDeclaration, false).Accessibility === SymbolAccessibilityAccessible;
         });
         if (allComponentComputedNamesSerializable) {
-          for (const component of info!.components) {
+          for (const component of components) {
             if (Checker_hasLateBindableName(receiver!.checker, component)) {
               continue;
             }
@@ -2546,7 +2552,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
               NodeBuilder_TypeToTypeNode(requestNodeBuilder, Checker_getTypeOfSymbol(receiver!.checker, Node_Symbol(component)), enclosingDeclaration, flags, internalFlags, tracker),
               undefined,
             );
-            result.push(decl);
+            (result ??= []).push(decl);
           }
           continue;
         }
@@ -2564,7 +2570,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
         );
       }
       if (node !== undefined) {
-        result.push(node);
+        (result ??= []).push(node);
       }
     }
   }
@@ -2819,6 +2825,7 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction","kind":"method","status":"implemented","sigHash":"7e97da3a092cb9f8f383787ad8d6b688d469b559048c069fca1a57744db2d17d","bodyHash":"b8569f40bafa10f9d9fbeb46850ccf1a752c3005dcb8d1e95a6d71d701b45b83"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>"}
  *
  * Go source:
  * func (r *EmitResolver) GetPropertiesOfContainerFunction(node *ast.Node) []*ast.Symbol {
@@ -2836,7 +2843,7 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
  * 	return r.checker.getPropertiesOfType(r.checker.getTypeOfSymbol(s))
  * }
  */
-export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> {
+export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Symbol>>> {
   if (node === undefined) { return []; }
   const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
   if (s === undefined) { return []; }

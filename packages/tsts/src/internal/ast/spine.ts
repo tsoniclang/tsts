@@ -68,6 +68,7 @@ export function visit(v: Visitor, node: GoPtr<Node>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::visitNodes","kind":"func","status":"implemented","sigHash":"318dd6aac412b7d70696ac774621b0b9bfee7c247a324ef2f5d4ca4369145ce0","bodyHash":"d837ebe0e8ffbcf5ce212c251c6e24175c399d6f1a77e7f0d709d986550ddcf3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A nil Go node slice is a valid zero-element range input; GoPtr preserves that nil sentinel while the loop ranges over nodes ?? [] without changing the observable result.","goSignature":"func(packages/tsts/src/internal/ast/spine.ts::Visitor,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/internal/ast/spine.ts::Visitor,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func visitNodes(v Visitor, nodes []*Node) bool {
@@ -79,8 +80,8 @@ export function visit(v: Visitor, node: GoPtr<Node>): bool {
  * 	return false
  * }
  */
-export function visitNodes(v: Visitor, nodes: GoSlice<GoPtr<Node>>): bool {
-  for (const node of nodes) {
+export function visitNodes(v: Visitor, nodes: GoPtr<GoSlice<GoPtr<Node>>>): bool {
+  for (const node of nodes ?? []) {
     if (v(node)) {
       return true as bool;
     }
@@ -155,6 +156,7 @@ export interface NodeFactoryCoercible {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeList","kind":"type","status":"implemented","sigHash":"95375bfc85379bc18d3fe518dc4aeaf4354df9f076b9ac02ab2d12f001888d64","bodyHash":"c8e49635f756c63779a06db63e3f0f54e80fd180acd91a2781abc4f267a193d2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go distinguishes a nil NodeList.Nodes slice from an allocated empty slice; GoPtr preserves that state so constructors, visitors, and incremental checks mirror the upstream nil contract exactly.","goSignature":"interface{Loc:packages/tsts/src/internal/core/text.ts::TextRange;Nodes:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>}","tsSignature":"interface{Loc:packages/tsts/src/internal/core/text.ts::TextRange;Nodes:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>}"}
  *
  * Go source:
  * NodeList struct {
@@ -164,7 +166,7 @@ export interface NodeFactoryCoercible {
  */
 export interface NodeList {
   Loc: TextRange;
-  Nodes: GoSlice<GoPtr<Node>>;
+  Nodes: GoPtr<GoSlice<GoPtr<Node>>>;
 }
 
 /**
@@ -427,6 +429,7 @@ export function cloneNode(updated: GoPtr<Node>, original: GoPtr<Node>, hooks: No
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewNodeList","kind":"method","status":"implemented","sigHash":"d0973f83680713f78dca1b1c637fb79cc9fa2d0486fd9579a615e64cc544ebf1","bodyHash":"31ca54a4fade1d75d92151e390530cbaec44d667148f860c02e16fd99566b042"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NewNodeList assigns the incoming Go slice without allocating; GoPtr retains an incoming nil slice instead of normalizing it to an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>"}
  *
  * Go source:
  * func (f *NodeFactory) NewNodeList(nodes []*Node) *NodeList {
@@ -436,8 +439,8 @@ export function cloneNode(updated: GoPtr<Node>, original: GoPtr<Node>, hooks: No
  * 	return list
  * }
  */
-export function NodeFactory_NewNodeList(receiver: GoPtr<NodeFactory>, nodes: GoSlice<GoPtr<Node>>): GoPtr<NodeList> {
-  const list: NodeList = { Loc: UndefinedTextRange(), Nodes: nodes ?? [] };
+export function NodeFactory_NewNodeList(receiver: GoPtr<NodeFactory>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<NodeList> {
+  const list: NodeList = { Loc: UndefinedTextRange(), Nodes: nodes };
   return list;
 }
 
@@ -474,10 +477,11 @@ export function NodeList_End(receiver: GoPtr<NodeList>): int {
  * }
  */
 export function NodeList_HasTrailingComma(receiver: GoPtr<NodeList>): bool {
-  if (receiver!.Nodes.length === 0) {
+  const nodes = receiver!.Nodes ?? [];
+  if (nodes.length === 0) {
     return false as bool;
   }
-  const last = receiver!.Nodes[receiver!.Nodes.length - 1];
+  const last = nodes[nodes.length - 1];
   return (Node_End(last) < NodeList_End(receiver)) as bool;
 }
 
@@ -499,6 +503,7 @@ export function NodeList_Clone(receiver: GoPtr<NodeList>, f: NodeFactoryCoercibl
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewModifierList","kind":"method","status":"implemented","sigHash":"2d151b40697b4ad4ee8d4d6aa2fb4370d9bfc1194eec409f292a4cda504cd6ec","bodyHash":"ec390041b92643092dd07c81af7e531c0edee4d4090dcc230e48a084e1fa7a11"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NewModifierList preserves the input slice on its embedded NodeList; GoPtr retains nil while ModifiersToFlags applies the same zero-element range semantics as Go.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::ModifierList>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::ModifierList>"}
  *
  * Go source:
  * func (f *NodeFactory) NewModifierList(nodes []*Node) *ModifierList {
@@ -509,7 +514,7 @@ export function NodeList_Clone(receiver: GoPtr<NodeList>, f: NodeFactoryCoercibl
  * 	return list
  * }
  */
-export function NodeFactory_NewModifierList(receiver: GoPtr<NodeFactory>, nodes: GoSlice<GoPtr<Node>>): GoPtr<ModifierList> {
+export function NodeFactory_NewModifierList(receiver: GoPtr<NodeFactory>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<ModifierList> {
   const list: ModifierList = { Loc: UndefinedTextRange(), Nodes: nodes, ModifierFlags: ModifiersToFlags(nodes) };
   return list;
 }

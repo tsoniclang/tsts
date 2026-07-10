@@ -474,7 +474,7 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
     throw new globalThis.Error("Expected end of file token from scanner.");
   }
   if (receiver!.reparseList.length !== 0) {
-    statements = [...statements, ...receiver!.reparseList];
+    statements = [...(statements ?? []), ...receiver!.reparseList];
     receiver!.reparseList = [];
   }
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts!, receiver!.sourceText, Parser_newNodeList(receiver, NewTextRange(pos, end), statements), eof), pos);
@@ -818,14 +818,14 @@ export function Parser_parseDeclaration(receiver: GoPtr<Parser>): GoPtr<Statemen
   const pos = Parser_nodePos(receiver);
   const jsdoc = Parser_jsdocScannerInfo(receiver);
   const modifiers = Parser_parseModifiersEx(receiver, /*allowDecorators*/ true, false /*permitConstAsModifier*/, false /*stopOnStartOfClassStaticBlock*/);
-  const isAmbient = modifiers !== undefined && Some(modifiers.Nodes, isDeclareModifier);
+  const isAmbient = modifiers !== undefined && Some(modifiers.Nodes ?? [], isDeclareModifier);
   if (isAmbient) {
     // !!! incremental parsing
     // node := p.tryReuseAmbientDeclaration(pos)
     // if node {
     // 	return node
     // }
-    for (const m of modifiers!.Nodes) {
+    for (const m of modifiers!.Nodes ?? []) {
       m!.Flags |= NodeFlagsAmbient;
     }
     const saveContextFlags = receiver!.contextFlags;
@@ -1922,9 +1922,9 @@ export function Parser_parseClassElement(receiver: GoPtr<Parser>): GoPtr<Node> {
     receiver!.token === KindAsteriskToken ||
     receiver!.token === KindOpenBracketToken
   ) {
-    const isAmbient = modifiers !== undefined && Some(modifiers.Nodes, isDeclareModifier);
+    const isAmbient = modifiers !== undefined && Some(modifiers.Nodes ?? [], isDeclareModifier);
     if (isAmbient) {
-      for (const m of modifiers!.Nodes) {
+      for (const m of modifiers!.Nodes ?? []) {
         m!.Flags |= NodeFlagsAmbient;
       }
       const saveContextFlags = receiver!.contextFlags;

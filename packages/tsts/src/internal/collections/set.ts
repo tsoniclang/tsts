@@ -4,6 +4,7 @@ import * as maps from "../../go/maps.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::type::Set","kind":"type","status":"implemented","sigHash":"b78751182a173542a2fc40a2d7a06459ad2b7539fa753c39278377d1cbed21b3","bodyHash":"26fea571e8a25382cc169b0b08e08a87923711113a0a52733743b8fd4d92640b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A zero-value Go Set contains a nil map, so the TypeScript field uses GoPtr and remains undefined until Add allocates it.","goSignature":"interface<T0 extends name::comparable>{M:packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable>{M:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>>}"}
  *
  * Go source:
  * Set[T comparable] struct {
@@ -11,7 +12,7 @@ import * as maps from "../../go/maps.js";
  * }
  */
 export interface Set<T extends GoComparable = unknown> {
-  M: GoMap<T, { readonly __tsgoEmpty?: never }>;
+  M: GoPtr<GoMap<T, { readonly __tsgoEmpty?: never }>>;
 }
 
 /**
@@ -100,6 +101,7 @@ export function Set_Len<T extends GoComparable>(receiver: GoPtr<Set<T>>): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::method::Set.Keys","kind":"method","status":"implemented","sigHash":"830e54f2b773e473d934914bccf5d69905924ba29447a256b1f6a8865bb8ea82","bodyHash":"c1d78df500630217b7948f70efc43d04df68c6b9ca59620c585321ee29dc48f5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go map results may be nil; GoPtr preserves the receiver's nil backing map instead of replacing it with an allocated empty JavaScript Map.","goSignature":"func<T0 extends name::comparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<T0>>)=>packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<T0>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>>"}
  *
  * Go source:
  * func (s *Set[T]) Keys() map[T]struct{} {
@@ -109,11 +111,8 @@ export function Set_Len<T extends GoComparable>(receiver: GoPtr<Set<T>>): int {
  * 	return s.M
  * }
  */
-export function Set_Keys<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoMap<T, { readonly __tsgoEmpty?: never }> {
-  if (receiver === undefined || receiver.M === undefined) {
-    return new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
-  }
-  return receiver.M;
+export function Set_Keys<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoPtr<GoMap<T, { readonly __tsgoEmpty?: never }>> {
+  return receiver?.M;
 }
 
 /**
@@ -170,7 +169,7 @@ export function Set_Clone<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoPt
   if (receiver === undefined) {
     return undefined;
   }
-  const clone: Set<T> = { M: maps.Clone(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())! };
+  const clone: Set<T> = { M: maps.Clone(receiver.M) };
   return clone;
 }
 
@@ -200,10 +199,10 @@ export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other
     throw new globalThis.Error("cannot modify nil Set");
   }
   if (receiver.M === undefined) {
-    receiver.M = maps.Clone(other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())!;
+    receiver.M = maps.Clone(other?.M);
     return;
   }
-  maps.Copy(receiver.M, other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  maps.Copy(receiver.M, other?.M);
 }
 
 /**
@@ -241,7 +240,7 @@ export function Set_UnionedWith<T extends GoComparable>(receiver: GoPtr<Set<T>>,
   if (result.M === undefined) {
     result.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
   }
-  maps.Copy(result.M, other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  maps.Copy(result.M, other.M);
   return result;
 }
 
@@ -266,7 +265,7 @@ export function Set_Equals<T extends GoComparable>(receiver: GoPtr<Set<T>>, othe
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  return maps.Equal(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>(), other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  return maps.Equal(receiver.M, other.M);
 }
 
 /**
@@ -289,7 +288,7 @@ export function Set_IsSubsetOf<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
   if (receiver === undefined) {
     return true;
   }
-  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
+  for (const key of receiver.M?.keys() ?? []) {
     if (!Set_Has(other, key)) {
       return false;
     }
@@ -317,7 +316,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
+  for (const key of receiver.M?.keys() ?? []) {
     if (Set_Has(other, key)) {
       return true;
     }
@@ -338,7 +337,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
  * }
  */
 export function NewSetFromItems<T extends GoComparable>(...items: Array<T>): GoPtr<Set<T>> {
-  const s: Set<T> = { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
+  const s: Set<T> = { M: undefined };
   for (const item of items) {
     Set_Add(s, item);
   }

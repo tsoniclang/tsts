@@ -304,6 +304,8 @@ test("renderExternalFacadeModules generates canonical facade modules for observe
       { names: ["option"], type: selectorType("json", "Options") },
     ],
     externalRefs: [
+      { importPath: "encoding", package: "encoding", name: "TextMarshaler", role: "type", arity: 0, count: 1 },
+      { importPath: "iter", package: "iter", name: "Seq", role: "type", arity: 1, count: 1 },
       { importPath: "path/filepath", package: "filepath", name: "Join", role: "call", count: 1 },
       { importPath: "os", package: "os", name: "PathSeparator", role: "value", count: 1 },
     ],
@@ -323,6 +325,8 @@ test("renderExternalFacadeModules generates canonical facade modules for observe
   const facades = buildExternalFacadeMap(baseConfig, snapshot);
   assert.equal(facades.get("io.Writer").tsModule, "go/io.ts");
   assert.equal(facades.get("github.com/go-json-experiment/json.Options").tsModule, "go/github.com/go-json-experiment/json.ts");
+  assert.equal(facades.get("encoding.TextMarshaler").kind, "interface");
+  assert.ok(!facades.has("iter.Seq"), "standard Go sequence types map to GoSeq instead of runtime facades");
   assert.equal(facades.get("path/filepath.Join").kind, "functionValue");
   assert.equal(facades.get("os.PathSeparator").kind, "value");
 
@@ -331,8 +335,12 @@ test("renderExternalFacadeModules generates canonical facade modules for observe
   assert.match(modules.get("go/io.ts"), /Write\(p: GoSlice<byte>\): \[int, GoError\]/);
   assert.match(modules.get("go/time.ts"), /export type Duration = long;/);
   assert.match(modules.get("go/github.com/go-json-experiment/json.ts"), /export interface Options/);
+  assert.match(modules.get("go/encoding.ts"), /export interface TextMarshaler/);
+  assert.match(modules.get("go/encoding.ts"), /MarshalText\(\): \[GoSlice<byte>, GoError\]/);
+  assert.equal(modules.has("go/iter.ts"), false);
   assert.match(modules.get("go/path/filepath.ts"), /export function Join\(\.\.\.args: Array<unknown>\): unknown/);
-  assert.match(modules.get("go/os.ts"), /export const PathSeparator: unknown = undefined as never;/);
+  assert.match(modules.get("go/os.ts"), /export const PathSeparator: unknown = \(\(\) => \{[\s\S]*TSGO_EXTERNAL_FACADE_UNIMPLEMENTED os\.PathSeparator/);
+  assert.doesNotMatch(modules.get("go/os.ts"), /= undefined/);
   assert.doesNotMatch(modules.get("go/github.com/go-json-experiment/json.ts"), /GoExternal/);
 });
 
@@ -351,7 +359,9 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
   assert.match(compat, /export function GoInterfaceTryAssert<T>/);
   assert.match(compat, /export function GoInterfaceAssert<T>/);
-  assert.match(compat, /export function MakeGoChan<T>\(capacity = 0, zeroValue: \(\) => T/);
+  assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T/);
+  assert.match(compat, /export function GoRequireNonNilAfterSuccess<T>/);
+  assert.match(compat, /export function GoMapLookup<K, V>/);
   assert.match(compat, /export function GoChanSelect\(cases: readonly GoChanSelectCase\[\]\)/);
   assert.match(compat, /export function GoChanAsReceive<T>\(channel: GoChan<T>\): GoChan<T, "receive">/);
   assert.match(compat, /export function GoChanAsSend<T>\(channel: GoChan<T>\): GoChan<T, "send">/);
@@ -506,7 +516,7 @@ test("bundled-generator catches missing, stale, orphan, untracked, and invalid g
   }
 });
 
-test("authoredFacadeModules: authored modules are excluded from generation and exempt from generated checks", () => {
+test("authoredFacadeModules require the exact public symbol while remaining excluded from generation", () => {
   const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
   try {
     const config = {
@@ -514,7 +524,12 @@ test("authoredFacadeModules: authored modules are excluded from generation and e
       tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
       authoredFacadeModules: ["go/io.ts"],
     };
-    const snapshot = snapshotWith([]);
+    const snapshot = snapshotWith([fileRecord({
+      units: [unitRecord({ externalRefs: [
+        { importPath: "io", package: "io", name: "SomeValue", role: "value", arity: 0, count: 1 },
+        { importPath: "io", package: "io", name: "Writer", role: "type", arity: 0, count: 1 },
+      ] })],
+    })]);
     const generatedRoot = path.join(root, "src/go");
     mkdirSync(generatedRoot, { recursive: true });
 
@@ -531,8 +546,13 @@ test("authoredFacadeModules: authored modules are excluded from generation and e
       writeFileSync(targetPath, text);
     }
 
-    // A header-free authored io.ts is exempt: no missing/stale/orphan/untracked/invalid.
+    // The module path alone cannot discharge a symbol obligation.
     writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\n");
+    const missingSymbol = buildGeneratedArtifactStatus(config, snapshot);
+    assert.deepEqual(missingSymbol.unresolved.map((entry) => entry.symbol), ["io.SomeValue"]);
+    assert.match(missingSymbol.unresolved[0].reason, /exact value symbol 'SomeValue'/);
+
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\nexport const SomeValue = 1;\n");
     assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot), { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] });
 
     // An authored module that still carries @tsgo-generated metadata is invalid (never both).
@@ -548,13 +568,16 @@ test("authoredFacadeModules: authored modules are excluded from generation and e
   }
 });
 
-test("generated facade status exposes active throwing dependency obligations", () => {
+test("generated facade status exposes active function and value obligations", () => {
   const root = mkdtempSync(path.join(repoRoot, ".temp/porter-obligation-test-"));
   try {
     const config = { ...baseConfig, tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/") };
     const snapshot = snapshotWith([fileRecord({
       path: "internal/tool/tool.go",
-      units: [unitRecord({ externalRefs: [{ importPath: "example.com/native", name: "Run", role: "call", count: 1 }] })],
+      units: [unitRecord({ externalRefs: [
+        { importPath: "example.com/native", name: "Run", role: "call", count: 1 },
+        { importPath: "example.com/native", name: "Value", role: "value", count: 1 },
+      ] })],
     })]);
     for (const [relativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot)) {
       const targetPath = path.join(repoRoot, relativePath);
@@ -562,7 +585,7 @@ test("generated facade status exposes active throwing dependency obligations", (
       writeFileSync(targetPath, text);
     }
     const status = buildGeneratedArtifactStatus(config, snapshot);
-    assert.deepEqual(status.unresolved.map((entry) => entry.symbol), ["example.com/native.Run"]);
+    assert.deepEqual(status.unresolved.map((entry) => entry.symbol), ["example.com/native.Run", "example.com/native.Value"]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

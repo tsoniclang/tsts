@@ -279,8 +279,10 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
   if (IsExternalModule(result) &&
     CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) !== ModuleKindPreserve &&
     !Some(result!.Statements!.Nodes, IsExternalModuleIndicator)) {
-    let statements2: GoSlice<GoPtr<Node>> = [...result!.Statements!.Nodes];
-    statements2 = [...statements2, createEmptyImports(pf!)];
+    const resultStatementNodes = result!.Statements!.Nodes;
+    const statements2: GoSlice<GoPtr<Node>> = resultStatementNodes === undefined
+      ? [createEmptyImports(pf!)]
+      : [...resultStatementNodes, createEmptyImports(pf!)];
     const statementList2 = NodeFactory_NewNodeList(af, statements2);
     statementList2!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList2, node!.EndOfFileToken));
@@ -665,8 +667,9 @@ export function ESModuleTransformer_visitExportDeclaration(receiver: GoPtr<ESMod
 export function ESModuleTransformer_visitCallExpression(receiver: GoPtr<ESModuleTransformer>, node: GoPtr<CallExpression>): GoPtr<Node> {
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   const nodeAsNode = node as unknown as GoPtr<Node>;
+  const argumentNodes = node!.Arguments!.Nodes;
   if (Tristate_IsTrue(receiver!.compilerOptions!.RewriteRelativeImportExtensions)) {
-    if ((IsImportCall(nodeAsNode) && node!.Arguments!.Nodes.length > 0) ||
+    if ((IsImportCall(nodeAsNode) && argumentNodes !== undefined && argumentNodes.length > 0) ||
       (IsInJSFile(nodeAsNode) && IsRequireCall(nodeAsNode, false))) {
       return ESModuleTransformer_visitImportOrRequireCall(receiver, node);
     }
@@ -716,27 +719,30 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   const nodeAsNode = node as unknown as GoPtr<Node>;
+  const argumentNodes = node!.Arguments!.Nodes;
 
-  if (node!.Arguments!.Nodes.length === 0) {
+  if (argumentNodes === undefined || argumentNodes.length === 0) {
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
 
   const expression = NodeVisitor_VisitNode(visitor, node!.Expression as unknown as GoPtr<Node>);
 
   let argument: GoPtr<Expression>;
-  if (IsStringLiteralLike(node!.Arguments!.Nodes[0])) {
-    argument = rewriteModuleSpecifier(emitContext, node!.Arguments!.Nodes[0] as unknown as GoPtr<Expression>, receiver!.compilerOptions);
+  if (IsStringLiteralLike(argumentNodes[0])) {
+    argument = rewriteModuleSpecifier(emitContext, argumentNodes[0] as unknown as GoPtr<Expression>, receiver!.compilerOptions);
   } else {
     argument = NodeFactory_NewRewriteRelativeImportExtensionsHelper(
       pf!,
-      node!.Arguments!.Nodes[0],
+      argumentNodes[0],
       receiver!.compilerOptions!.Jsx === JsxEmitPreserve,
     );
   }
 
   let args: GoSlice<GoPtr<Node>> = [argument as unknown as GoPtr<Node>];
-  const rest = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1))[0];
-  args = [...args, ...rest];
+  const rest = NodeVisitor_VisitSlice(visitor, argumentNodes.slice(1))[0];
+  if (rest !== undefined) {
+    args = [...args, ...rest];
+  }
 
   const argumentList = NodeFactory_NewNodeList(af, args);
   argumentList!.Loc = node!.Arguments!.Loc;
@@ -844,7 +850,7 @@ export function ESModuleTransformer_createRequireCall(receiver: GoPtr<ESModuleTr
   const af = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
 
-  const moduleName = getExternalModuleNameLiteral(pf!, node, receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*emitResolver*/, receiver!.compilerOptions);
+  const moduleName = getExternalModuleNameLiteral(pf!, node, receiver!.currentSourceFile, undefined /*host*/, undefined /*emitResolver*/, receiver!.compilerOptions);
 
   let args: GoSlice<GoPtr<Node>> = [];
   if (moduleName !== undefined) {

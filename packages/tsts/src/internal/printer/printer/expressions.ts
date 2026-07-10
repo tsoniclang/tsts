@@ -147,6 +147,7 @@ import {
   LFPreferNewLine,
   LFSingleArrowParameter,
   LFTemplateExpressionSpans,
+  Printer_Writer,
   WriteKindKeyword,
   WriteKindOperator,
   WriteKindPunctuation,
@@ -186,20 +187,20 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
     Options: options,
     emitContext: emitContext ?? NewEmitContext(),
     currentSourceFile: undefined,
-    uniqueHelperNames: new Map(),
+    uniqueHelperNames: undefined,
     externalHelpersModuleName: undefined,
     nextListElementPos: 0 as int,
-    writer: undefined!,
-    ownWriter: undefined!,
+    writer: undefined,
+    ownWriter: undefined,
     writeKind: 0 as WriteKind,
     sourceMapsDisabled: false as bool,
     sourceMapGenerator: undefined,
-    sourceMapSource: undefined!,
-    sourceMapSourceIndex: undefined!,
+    sourceMapSource: undefined,
+    sourceMapSourceIndex: 0,
     sourceMapSourceIsJson: false as bool,
     sourceMapLineCharCache: undefined,
-    mostRecentSourceMapSource: undefined!,
-    mostRecentSourceMapSourceIndex: undefined!,
+    mostRecentSourceMapSource: undefined,
+    mostRecentSourceMapSourceIndex: 0,
     containerPos: -1 as int,
     containerEnd: -1 as int,
     declarationListContainerEnd: -1 as int,
@@ -217,7 +218,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
       privateNameGenerationScope: undefined,
       generatedNames: { M: new Map() },
     },
-    makeFileLevelOptimisticUniqueName: undefined!,
+    makeFileLevelOptimisticUniqueName: undefined,
     commentStateArena: { data: [] },
     sourceMapStateArena: { data: [] },
     IdToSymbol: undefined,
@@ -314,7 +315,7 @@ export function Printer_getLiteralTextOfNode(receiver: GoPtr<Printer>, node: GoP
  * }
  */
 export function Printer_writeLiteral(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteLiteral(text);
+  Printer_Writer(receiver).WriteLiteral(text);
 }
 
 /**
@@ -380,7 +381,7 @@ export function Printer_emitLiteral(receiver: GoPtr<Printer>, node: GoPtr<Litera
 
   // Quick info expects all literals to be called with writeStringLiteral, as there's no specific type for
   // numberLiterals
-  receiver!.writer.WriteStringLiteral(text);
+  Printer_Writer(receiver).WriteStringLiteral(text);
 
   // }
 }
@@ -600,13 +601,14 @@ export function Printer_emitMemberName(receiver: GoPtr<Printer>, node: GoPtr<Mem
  * }
  */
 export function canEmitSimpleArrowHead(parentNode: GoPtr<Node>, parameters: GoPtr<ParameterList>): bool {
+  const parameterNodes = parameters!.Nodes;
   // only arrow functions with a single parameter may have simple arrow head
-  if (!IsArrowFunction(parentNode) || parameters!.Nodes.length !== 1) {
+  if (!IsArrowFunction(parentNode) || parameterNodes === undefined || parameterNodes.length !== 1) {
     return false;
   }
 
   const parent = AsArrowFunction(parentNode);
-  const parameter = AsParameterDeclaration(parameters!.Nodes[0]);
+  const parameter = AsParameterDeclaration(parameterNodes[0]);
 
   const parentModifiers = Node_Modifiers(parent);
   const parameterModifiers = Node_Modifiers(parameter);
@@ -614,7 +616,7 @@ export function canEmitSimpleArrowHead(parentNode: GoPtr<Node>, parameters: GoPt
   return Node_Pos(parameter) === Node_Pos(parent) && // may not have parsed tokens between start of parent and parameter
     parent!.TypeParameters === undefined && // parent may not have type parameters
     parent!.Type === undefined && // parent may not have return type annotation
-    (parentModifiers === undefined || parentModifiers!.Nodes.length === 0) && // parent may not have modifiers
+    (parentModifiers === undefined || parentModifiers.Nodes === undefined || parentModifiers.Nodes.length === 0) && // parent may not have modifiers
     !NodeList_HasTrailingComma(parameters) && // parameters may not have a trailing comma
     parameterModifiers === undefined && // parameter may not have decorators or modifiers
     parameter!.DotDotDotToken === undefined && // parameter may not be rest
@@ -923,8 +925,8 @@ export function Printer_emitPropertyAccessExpression(receiver: GoPtr<Printer>, n
   const shouldEmitDotDot =
     token!.Kind !== KindQuestionDotToken &&
     Printer_mayNeedDotDotForPropertyAccess(receiver, node!.Expression) &&
-    !receiver!.writer.HasTrailingComment() &&
-    !receiver!.writer.HasTrailingWhitespace();
+    !Printer_Writer(receiver).HasTrailingComment() &&
+    !Printer_Writer(receiver).HasTrailingWhitespace();
   if (shouldEmitDotDot) {
     Printer_writePunctuation(receiver, ".");
   }
@@ -2781,8 +2783,10 @@ export function Printer_generateAllMemberNames(receiver: GoPtr<Printer>, nodes: 
   if (nodes === undefined) {
     return;
   }
-  for (const node of nodes!.Nodes) {
-    Printer_generateMemberNames(receiver, node);
+  if (nodes.Nodes !== undefined) {
+    for (const node of nodes.Nodes) {
+      Printer_generateMemberNames(receiver, node);
+    }
   }
 }
 

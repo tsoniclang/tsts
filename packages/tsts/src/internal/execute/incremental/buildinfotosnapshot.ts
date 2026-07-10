@@ -1,7 +1,7 @@
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { RepopulateDiagnosticInfo } from "../../ast/diagnostic.js";
 import type { Set } from "../../collections/set.js";
-import { NewSetWithSizeHint } from "../../collections/set.js";
+import { NewSetWithSizeHint, Set_Add } from "../../collections/set.js";
 import type { CompilerHost } from "../../compiler/host.js";
 import * as core from "../../core/core.js";
 import { TSFalse, TSTrue, Tristate_IsTrue } from "../../core/tristate.js";
@@ -86,7 +86,7 @@ export function buildInfoToSnapshot(buildInfo: GoPtr<BuildInfo>, config: GoPtr<P
     const fileIds = fileIdList ?? [];
     const fileSet = NewSetWithSizeHint<Path>(fileIds.length);
     for (const fileId of fileIds) {
-      fileSet!.M.set(toSnapshot_toFilePath(to, fileId), {} as { readonly __tsgoEmpty?: never });
+      Set_Add(fileSet, toSnapshot_toFilePath(to, fileId));
     }
     return fileSet;
   });

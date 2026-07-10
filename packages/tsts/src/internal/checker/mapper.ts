@@ -96,6 +96,7 @@ export interface TypeMapperData extends GoInterfaceValue<unknown> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newTypeMapper","kind":"func","status":"implemented","sigHash":"ab1a8786574e9e2a6efb1736947d0240a0af389d42f74134c0537744f2652f78","bodyHash":"40ad9406d71b7da2fa5bb2164113afe203d429eb9e16ee56e158178d3bf92abd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>"}
  *
  * Go source:
  * func newTypeMapper(sources []*Type, targets []*Type) *TypeMapper {
@@ -105,8 +106,11 @@ export interface TypeMapperData extends GoInterfaceValue<unknown> {
  * 	return newArrayTypeMapper(sources, targets)
  * }
  */
-export function newTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
-  if (sources.length === 1) {
+export function newTypeMapper(sources: GoPtr<GoSlice<GoPtr<Type>>>, targets: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<TypeMapper> {
+  if (sources !== undefined && sources.length === 1) {
+    if (targets === undefined || targets.length === 0) {
+      throw new Error("single-source type mapper requires a target");
+    }
     return newSimpleTypeMapper(sources[0], targets[0]);
   }
   return newArrayTypeMapper(sources, targets);
@@ -335,6 +339,7 @@ export function SimpleTypeMapper_MapsThisOnly(receiver: GoPtr<SimpleTypeMapper>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::ArrayTypeMapper","kind":"type","status":"implemented","sigHash":"39cee8f8a64e6e65a09d7c3ca6ca7ea371b4bca7ed91545ced3207204af66b61","bodyHash":"79137dedbeca1f796334d3023832b77509bb8c1ee65835e69c3f4b4d72c6616e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/mapper.ts::TypeMapperBase;sources:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;targets:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/mapper.ts::TypeMapperBase;sources:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;targets:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>}"}
  *
  * Go source:
  * ArrayTypeMapper struct {
@@ -345,12 +350,13 @@ export function SimpleTypeMapper_MapsThisOnly(receiver: GoPtr<SimpleTypeMapper>)
  */
 export interface ArrayTypeMapper {
   readonly __tsgoEmbedded0?: TypeMapperBase;
-  sources: GoSlice<GoPtr<Type>>;
-  targets: GoSlice<GoPtr<Type>>;
+  sources: GoPtr<GoSlice<GoPtr<Type>>>;
+  targets: GoPtr<GoSlice<GoPtr<Type>>>;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newArrayTypeMapper","kind":"func","status":"implemented","sigHash":"5af187ba0d403d01152b1047b41c77e2bfbe4d9f1b6b5ff47dd0f16e3df7a9c5","bodyHash":"f7a235f59a818733fa660f6a199d65b2a42398d770a4d8bb810342824bd1b50e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>"}
  *
  * Go source:
  * func newArrayTypeMapper(sources []*Type, targets []*Type) *TypeMapper {
@@ -361,7 +367,7 @@ export interface ArrayTypeMapper {
  * 	return &m.TypeMapper
  * }
  */
-export function newArrayTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
+export function newArrayTypeMapper(sources: GoPtr<GoSlice<GoPtr<Type>>>, targets: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<TypeMapper> {
   const m: ArrayTypeMapper = {
     sources: sources,
     targets: targets,
@@ -392,9 +398,15 @@ function ArrayTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayTypeMapper>): Ty
  * }
  */
 export function ArrayTypeMapper_Map(receiver: GoPtr<ArrayTypeMapper>, t: GoPtr<Type>): GoPtr<Type> {
+  if (receiver!.sources === undefined) {
+    return t;
+  }
   for (let i = 0; i < receiver!.sources.length; i++) {
     const s = receiver!.sources[i];
     if (t === s) {
+      if (receiver!.targets === undefined || i >= receiver!.targets.length) {
+        throw new Error("type mapper source has no corresponding target");
+      }
       return receiver!.targets[i];
     }
   }
@@ -422,7 +434,7 @@ export function ArrayTypeMapper_Kind(receiver: GoPtr<ArrayTypeMapper>): TypeMapp
  * }
  */
 export function ArrayTypeMapper_MapsThisOnly(receiver: GoPtr<ArrayTypeMapper>): bool {
-  return receiver!.sources.length === 1 && isThisTypeParameter(receiver!.sources[0]);
+  return receiver!.sources !== undefined && receiver!.sources.length === 1 && isThisTypeParameter(receiver!.sources[0]);
 }
 
 /**

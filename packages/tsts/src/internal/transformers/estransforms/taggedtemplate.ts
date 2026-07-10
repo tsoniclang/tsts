@@ -155,18 +155,19 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
 
   if (receiver!.taggedTemplateStringDeclarations.length > 0) {
     const visitedSourceFile = AsSourceFile(visited);
-    const statements: GoSlice<GoPtr<Node>> = [
-      ...visitedSourceFile!.Statements!.Nodes,
-      NewVariableStatement(
+    const visitedStatementNodes = visitedSourceFile!.Statements!.Nodes;
+    const declaration = NewVariableStatement(
+      af,
+      undefined,
+      NewVariableDeclarationList(
         af,
-        undefined,
-        NewVariableDeclarationList(
-          af,
-          NodeFactory_NewNodeList(af, receiver!.taggedTemplateStringDeclarations),
-          NodeFlagsNone,
-        ),
+        NodeFactory_NewNodeList(af, receiver!.taggedTemplateStringDeclarations),
+        NodeFlagsNone,
       ),
-    ];
+    );
+    const statements: GoSlice<GoPtr<Node>> = visitedStatementNodes === undefined
+      ? [declaration]
+      : [...visitedStatementNodes, declaration];
     const stmtList = NodeFactory_NewNodeList(af, statements);
     stmtList!.Loc = node!.Statements!.Loc;
     visited = NodeFactory_UpdateSourceFile(af, visitedSourceFile, stmtList, visitedSourceFile!.EndOfFileToken);
@@ -272,11 +273,13 @@ export function taggedTemplateTransformer_processTaggedTemplateExpression(receiv
     const te = AsTemplateExpression(template);
     cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)));
     rawStrings.push(getRawLiteral(pf, te!.Head as unknown as GoPtr<Node>));
-    for (const span of te!.TemplateSpans!.Nodes) {
-      const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
-      cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)));
-      rawStrings.push(getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>));
-      templateArguments.push(NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>));
+    if (te!.TemplateSpans!.Nodes !== undefined) {
+      for (const span of te!.TemplateSpans!.Nodes) {
+        const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
+        cookedStrings.push(createTemplateCooked(pf, Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)));
+        rawStrings.push(getRawLiteral(pf, ts!.Literal as unknown as GoPtr<Node>));
+        templateArguments.push(NodeVisitor_VisitNode(visitor, ts!.Expression as unknown as GoPtr<Node>));
+      }
     }
   }
 
@@ -407,10 +410,12 @@ export function hasInvalidEscape(template: GoPtr<Node>): bool {
   if ((Node_TemplateLiteralLikeData(te!.Head as unknown as GoPtr<Node>)!.TemplateFlags & TokenFlagsContainsInvalidEscape) !== 0) {
     return true as bool;
   }
-  for (const span of te!.TemplateSpans!.Nodes) {
-    const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
-    if ((Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)!.TemplateFlags & TokenFlagsContainsInvalidEscape) !== 0) {
-      return true as bool;
+  if (te!.TemplateSpans!.Nodes !== undefined) {
+    for (const span of te!.TemplateSpans!.Nodes) {
+      const ts: GoPtr<TemplateSpan> = AsTemplateSpan(span);
+      if ((Node_TemplateLiteralLikeData(ts!.Literal as unknown as GoPtr<Node>)!.TemplateFlags & TokenFlagsContainsInvalidEscape) !== 0) {
+        return true as bool;
+      }
     }
   }
   return false as bool;

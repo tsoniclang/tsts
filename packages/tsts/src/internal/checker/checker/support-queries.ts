@@ -122,7 +122,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
   // > [done] is the result status of an iterator `next` method call. If the end of the iterator was reached `done` is `true`.
   // > If the end was not reached `done` is `false` and a value is available.
   // > If a `done` property (either own or inherited) does not exist, it is consider to have the value `false`.
-  const doneType = OrElse(Checker_getTypeOfPropertyOfType(receiver, t, "done"), receiver!.falseType);
+  const doneType = OrElse(Checker_getTypeOfPropertyOfType(receiver, t, "done"), receiver!.falseType, () => undefined, (left, right) => left === right);
   return Checker_isTypeAssignableTo(receiver, IfElse(kind === IterationTypeKindYield, receiver!.falseType, receiver!.trueType), doneType);
 }
 
@@ -413,9 +413,9 @@ export function Checker_isSideEffectFree(receiver: GoPtr<Checker>, node: GoPtr<N
  * 	})
  * }
  */
-export function Checker_getExactOptionalUnassignableProperties(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
+export function Checker_getExactOptionalUnassignableProperties(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Symbol>>> {
   if (isTupleType(source) && isTupleType(target)) {
-    return [];
+    return undefined;
   }
   return Filter(Checker_getPropertiesOfType(receiver, target), (targetProp) =>
     Checker_isExactOptionalPropertyMismatch(
@@ -597,8 +597,11 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
     const names = new globalThis.Map<string, GoPtr<Symbol>>();
     for (const t of Checker_getSiblingsOfContext(receiver, context)) {
       if (isObjectLiteralType(t) && (t!.objectFlags & ObjectFlagsContainsSpread) === 0) {
-        for (const prop of Checker_getPropertiesOfType(receiver, t)) {
-          names.set(prop!.Name, prop);
+        const properties = Checker_getPropertiesOfType(receiver, t);
+        if (properties !== undefined) {
+          for (const prop of properties) {
+            names.set(prop!.Name, prop);
+          }
         }
       }
     }
@@ -736,10 +739,11 @@ export function Checker_getCombinedModifierFlagsCached(receiver: GoPtr<Checker>,
 export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: GoPtr<Type>, newMapper: GoPtr<TypeMapper>): [GoPtr<ConditionalRoot>, GoPtr<TypeMapper>] {
   if ((newType!.flags & TypeFlagsConditional) !== 0 && newMapper !== undefined) {
     const newRoot = Type_AsConditionalType(newType)!.root;
-    if (newRoot!.outerTypeParameters.length !== 0) {
+    const outerTypeParameters = newRoot!.outerTypeParameters;
+    if (outerTypeParameters !== undefined && outerTypeParameters.length !== 0) {
       const typeParamMapper = Checker_combineTypeMappers(receiver, Type_AsConditionalType(newType)!.mapper, newMapper);
-      const typeArguments = core_Map(newRoot!.outerTypeParameters, (t: GoPtr<Type>): GoPtr<Type> => TypeMapper_Map(typeParamMapper, t));
-      const newRootMapper = newTypeMapper(newRoot!.outerTypeParameters, typeArguments);
+      const typeArguments = core_Map(outerTypeParameters, (t: GoPtr<Type>): GoPtr<Type> => TypeMapper_Map(typeParamMapper, t));
+      const newRootMapper = newTypeMapper(outerTypeParameters, typeArguments);
       const newCheckType: GoPtr<Type> = newRoot!.isDistributive ? TypeMapper_Map(newRootMapper, newRoot!.checkType) : undefined;
       if (newCheckType === undefined || newCheckType === newRoot!.checkType || (newCheckType!.flags & (TypeFlagsUnion | TypeFlagsNever)) === 0) {
         return [newRoot, newRootMapper];

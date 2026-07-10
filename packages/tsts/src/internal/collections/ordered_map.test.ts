@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import type { byte, int } from "../../go/scalars.js";
 import { Collect, IsSorted } from "../../go/slices.js";
 import { NewDecoder } from "../../go/github.com/go-json-experiment/json/jsontext.js";
+import { ValueOf } from "../../go/reflect.js";
 import {
   NewOrderedMapWithSizeHint,
   OrderedMap_as_json_UnmarshalerFrom,
   OrderedMap_Clear,
   OrderedMap_Clone,
   OrderedMap_Delete,
+  OrderedMap_EntryAt,
+  OrderedMap_EntryAtExisting,
   OrderedMap_Entries,
   OrderedMap_Get,
   OrderedMap_GetOrZero,
@@ -18,6 +21,7 @@ import {
   OrderedMap_Size,
   OrderedMap_UnmarshalJSONFrom,
   OrderedMap_Values,
+  resolveKeyName,
 } from "./ordered_map.js";
 import type { OrderedMap } from "./ordered_map.js";
 
@@ -62,7 +66,7 @@ test("OrderedMap mirrors upstream insertion, overwrite, iteration, and deletion"
   assert.equal(OrderedMap_Size(map), count);
 
   for (let index = start; index < end; index++) {
-    const [value, ok] = OrderedMap_Get(map, index);
+    const [value, ok] = OrderedMap_Get(map, index, () => "");
     assert.equal(ok, true);
     assert.equal(value, padInt(index));
   }
@@ -84,26 +88,36 @@ test("OrderedMap mirrors upstream insertion, overwrite, iteration, and deletion"
   assert.deepEqual(collectEntries(map)[0], [start, padInt(start)]);
 
   for (let index = start + 1; index < end; index++) {
-    const [deletedValue, deletedOk] = OrderedMap_Delete(map, index);
+    const [deletedValue, deletedOk] = OrderedMap_Delete(map, index, () => "");
     assert.equal(deletedOk, true);
     assert.equal(deletedValue, padInt(index));
     assert.equal(OrderedMap_Has(map, index), false);
 
-    const [, getOk] = OrderedMap_Get(map, index);
+    const [missingValue, getOk] = OrderedMap_Get(map, index, () => "");
     assert.equal(getOk, false);
+    assert.equal(missingValue, "");
 
-    const [, deleteOk] = OrderedMap_Delete(map, index);
+    const [missingDeletedValue, deleteOk] = OrderedMap_Delete(map, index, () => "");
     assert.equal(deleteOk, false);
+    assert.equal(missingDeletedValue, "");
   }
 
   assert.equal(OrderedMap_Size(map), 1);
   assert.equal(OrderedMap_Has(map, start), true);
 
-  const [deletedValue, deletedOk] = OrderedMap_Delete(map, start);
+  const [deletedValue, deletedOk] = OrderedMap_Delete(map, start, () => "");
   assert.equal(deletedOk, true);
   assert.equal(deletedValue, padInt(start));
 
   assert.equal(OrderedMap_Size(map), 0);
+});
+
+test("OrderedMap_EntryAtExisting returns proven entries and rejects absent indices", () => {
+  const map = NewOrderedMapWithSizeHint<string, number>(0)!;
+  OrderedMap_Set(map, "first", 1);
+
+  assert.deepEqual(OrderedMap_EntryAtExisting(map, 0), ["first", 1]);
+  assert.throws(() => OrderedMap_EntryAtExisting(map, 1), /OrderedMap index 1 is not present/);
 });
 
 test("OrderedMap.Clone mirrors upstream copy isolation", () => {
@@ -118,11 +132,11 @@ test("OrderedMap.Clone mirrors upstream copy isolation", () => {
   assert.deepEqual(Collect(OrderedMap_Keys(clone)), [1, 2]);
   assert.deepEqual(Collect(OrderedMap_Values(clone)), ["one", "two"]);
 
-  const [value, ok] = OrderedMap_Get(clone, 1);
+  const [value, ok] = OrderedMap_Get(clone, 1, () => "");
   assert.equal(ok, true);
   assert.equal(value, "one");
 
-  OrderedMap_Delete(map, 1);
+  OrderedMap_Delete(map, 1, () => "");
 
   assert.equal(OrderedMap_Size(map), 1);
   assert.equal(OrderedMap_Size(clone), 2);
@@ -152,7 +166,10 @@ test("NewOrderedMapWithSizeHint preserves ordered-map behavior", () => {
 
   assert.equal(OrderedMap_Size(map), count);
   assert.deepEqual(Collect(OrderedMap_Keys(map)).slice(0, 4), [0, 1, 2, 3]);
-  assert.equal(OrderedMap_GetOrZero(map, 1023), 1023);
+  assert.equal(OrderedMap_GetOrZero(map, 1023, () => 0), 1023);
+
+  const [missingKey, missingValue, found] = OrderedMap_EntryAt(map, count, () => 0, () => 0);
+  assert.deepEqual([missingKey, missingValue, found], [0, 0, false]);
 });
 
 test("OrderedMap.UnmarshalJSONFrom mirrors upstream object/null/non-object behavior", () => {
@@ -162,7 +179,7 @@ test("OrderedMap.UnmarshalJSONFrom mirrors upstream object/null/non-object behav
   assert.equal(error, undefined);
 
   assert.equal(OrderedMap_Size(map), 3);
-  assert.equal(OrderedMap_GetOrZero(map, "a"), 1);
+  assert.equal(OrderedMap_GetOrZero(map, "a", () => undefined), 1);
   assert.deepEqual(Collect(OrderedMap_Keys(map)), ["a", "b", "c"]);
 
   error = OrderedMap_as_json_UnmarshalerFrom(map).UnmarshalJSONFrom(NewDecoder(jsonBytes(`null`)));
@@ -171,4 +188,22 @@ test("OrderedMap.UnmarshalJSONFrom mirrors upstream object/null/non-object behav
 
   error = OrderedMap_UnmarshalJSONFrom(map, NewDecoder(jsonBytes(`"foo"`)));
   assert.match(error?.message ?? "", /cannot unmarshal non-object JSON value into Map/);
+});
+
+test("resolveKeyName honors encoding.TextMarshaler before numeric fallback", () => {
+  const expectedError = new Error("marshal failed");
+  const encoded = Array.from(textEncoder.encode("custom-key")) as byte[];
+  const marshaler = {
+    MarshalText(): [byte[], Error | undefined] {
+      return [encoded, undefined];
+    },
+  };
+  const failingMarshaler = {
+    MarshalText(): [byte[], Error | undefined] {
+      return [[], expectedError];
+    },
+  };
+
+  assert.deepEqual(resolveKeyName(ValueOf(marshaler)), ["custom-key", undefined]);
+  assert.deepEqual(resolveKeyName(ValueOf(failingMarshaler)), ["", expectedError]);
 });

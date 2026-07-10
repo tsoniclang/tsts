@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
-import { NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_ForEachChild, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
+import { Node_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_ForEachChild, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, ComputedPropertyName, ConstructorDeclaration, GetAccessorDeclaration, Identifier, MethodDeclaration, ParameterDeclaration, PropertyAccessExpression, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
 import type { AccessorDeclaration, DeclarationName, IdentifierNode } from "../../ast/generated/unions.js";
 import { KindClassDeclaration, KindClassExpression, KindConstructor, KindDecorator, KindDefaultKeyword, KindExportKeyword, KindGetAccessor, KindIdentifier, KindMethodDeclaration, KindParameter, KindPropertyDeclaration, KindPropertyAccessExpression, KindSetAccessor, KindSourceFile, KindThisKeyword, KindNullKeyword } from "../../ast/generated/kinds.js";
@@ -9,7 +9,7 @@ import { IsComputedPropertyName, IsDecorator, IsIdentifier, IsPrivateIdentifier,
 import { SubtreeContainsDecorators, SubtreeContainsPrivateIdentifierInExpression } from "../../ast/subtreefacts.js";
 import { NewBlock, NewClassExpression, NewClassStaticBlockDeclaration, NewExpressionStatement, NewIdentifier, NewKeywordExpression, NewPropertyAccessExpression, NewStringLiteral, NewSyntaxList, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
 import { AsComputedPropertyName, AsGetAccessorDeclaration, AsPropertyAccessExpression, AsSetAccessorDeclaration } from "../../ast/generated/casts.js";
-import { CanHaveDecorators, ChildIsDecorated, ClassOrConstructorParameterIsDecorated, GetAllAccessorDeclarations, GetFirstConstructorWithBody, HasAccessorModifier, HasDecorators, HasSyntacticModifier, HasStaticModifier, IsStatic, IsThisParameter, NodeOrChildIsDecorated, SkipPartiallyEmittedExpressions } from "../../ast/utilities.js";
+import { CanHaveDecorators, ChildIsDecorated, ClassOrConstructorParameterIsDecorated, GetAllAccessorDeclarations, GetAllAccessorDeclarationsForDeclaration, GetFirstConstructorWithBody, HasAccessorModifier, HasDecorators, HasSyntacticModifier, HasStaticModifier, IsStatic, IsThisParameter, NodeOrChildIsDecorated, SkipPartiallyEmittedExpressions } from "../../ast/utilities.js";
 import { Node_Body, Node_Decorators, Node_Expression, Node_Members, Node_ParameterList, Node_Parameters, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateSetAccessorDeclaration } from "../../ast/ast.js";
 import { ModifierFlagsAbstract, ModifierFlagsAmbient, ModifierFlagsDefault, ModifierFlagsExport } from "../../ast/modifierflags.js";
 import { NodeFlagsAmbient, NodeFlagsLet, NodeFlagsNone } from "../../ast/generated/flags.js";
@@ -246,7 +246,7 @@ export function elideNodes(f: GoPtr<NodeFactory>, nodes: GoPtr<NodeList>): GoPtr
   if (nodes === undefined) {
     return undefined;
   }
-  if (nodes!.Nodes.length === 0) {
+  if (nodes.Nodes === undefined || nodes.Nodes.length === 0) {
     return nodes;
   }
   const replacement = NodeFactory_NewNodeList(f!.__tsgoEmbedded0!, []);
@@ -274,7 +274,7 @@ export function elideModifiers(f: GoPtr<NodeFactory>, nodes: GoPtr<ModifierList>
   if (nodes === undefined) {
     return undefined;
   }
-  if (nodes!.Nodes.length === 0) {
+  if (nodes.Nodes === undefined || nodes.Nodes.length === 0) {
     return nodes;
   }
   const replacement = NodeFactory_NewModifierList(f!.__tsgoEmbedded0!, []);
@@ -958,10 +958,11 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
   const isDefault = HasSyntacticModifier(nodeAsNode, ModifierFlagsDefault as never);
 
   const nodeModifiers = Node_Modifiers(nodeAsNode);
-  const modifiers: GoPtr<ModifierList> = (nodeModifiers !== undefined && nodeModifiers!.Nodes.length > 0)
+  const nodeModifierNodes = nodeModifiers === undefined ? undefined : nodeModifiers.Nodes;
+  const modifiers: GoPtr<ModifierList> = (nodeModifierNodes !== undefined && nodeModifierNodes.length > 0)
     ? (() => {
-        const modifierNodes = Filter(nodeModifiers!.Nodes, isNotExportOrDefaultOrDecorator);
-        if (modifierNodes.length !== nodeModifiers!.Nodes.length) {
+        const modifierNodes = Filter(nodeModifierNodes, isNotExportOrDefaultOrDecorator)!;
+        if (modifierNodes.length !== nodeModifierNodes.length) {
           const newMods = NodeFactory_NewModifierList(astFactory, modifierNodes);
           newMods!.Loc = nodeModifiers!.Loc;
           return newMods;
@@ -981,12 +982,16 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
   const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
   const visitedMembers = NodeVisitor_VisitNodes(visitor, node!.Members);
   const [members0, decorationStatements] = LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(receiver, node, visitedMembers);
+  const memberNodes0 = members0 === undefined ? undefined : members0.Nodes;
 
-  const assignClassAliasInStaticBlock = receiver!.languageVersion >= ScriptTargetES2022 && classAlias !== undefined && members0 !== undefined && members0!.Nodes.length > 0 && Some(members0!.Nodes, isClassStaticBlockDeclarationOrStaticProperty);
+  const assignClassAliasInStaticBlock = receiver!.languageVersion >= ScriptTargetES2022 && classAlias !== undefined && memberNodes0 !== undefined && memberNodes0.length > 0 && Some(memberNodes0, isClassStaticBlockDeclarationOrStaticProperty);
 
   const members: GoPtr<NodeList> = assignClassAliasInStaticBlock
     ? (() => {
-        const memberNodes: GoSlice<GoPtr<Node>> = members0 !== undefined ? [...members0!.Nodes] : [];
+        if (memberNodes0 === undefined) {
+          throw new globalThis.TypeError("nil member list");
+        }
+        const memberNodes: GoSlice<GoPtr<Node>> = [...memberNodes0];
         const staticBlockStmt = NodeFactory_NewNodeList(astFactory, [
           NewExpressionStatement(astFactory, NodeFactory_NewAssignmentExpression(printerFactory, classAlias as never, NewKeywordExpression(astFactory, KindThisKeyword) as never) as never),
         ]);
@@ -1092,9 +1097,11 @@ export function LegacyDecoratorsTransformer_hasInternalStaticReference(receiver:
   if (members === undefined) {
     return false as bool;
   }
-  for (const member of members!.Nodes) {
-    if (Node_ForEachChild(member, isOrContainsStaticSelfReference)) {
-      return true as bool;
+  if (members.Nodes !== undefined) {
+    for (const member of members.Nodes) {
+      if (Node_ForEachChild(member, isOrContainsStaticSelfReference)) {
+        return true as bool;
+      }
     }
   }
   return false as bool;
@@ -1216,7 +1223,7 @@ export function LegacyDecoratorsTransformer_generateConstructorDecorationExpress
   if (hasAlias) {
     LegacyDecoratorsTransformer_pushEnclosingClass(receiver, node);
   }
-  if (decoratorExpressions.length === 0) {
+  if (decoratorExpressions === undefined || decoratorExpressions.length === 0) {
     return undefined;
   }
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
@@ -1308,10 +1315,12 @@ export function parameterDecoratorsContainPrivateIdentifierInExpression(paramete
  * }
  */
 export function hasClassElementWithDecoratorContainingPrivateIdentifierInExpression(node: GoPtr<ClassDeclaration>): bool {
-  if (node!.Members === undefined || node!.Members!.Nodes.length === 0) {
+  const members = node!.Members;
+  const memberNodes = members === undefined ? undefined : members.Nodes;
+  if (memberNodes === undefined || memberNodes.length === 0) {
     return false as bool;
   }
-  for (const member of node!.Members!.Nodes) {
+  for (const member of memberNodes) {
     if (!CanHaveDecorators(member)) {
       continue;
     }
@@ -1448,8 +1457,11 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
   if (Node_Body(accessor) === undefined) {
     return undefined;
   }
-  const memberNodes: GoSlice<GoPtr<Node>> = parent!.Members !== undefined ? parent!.Members!.Nodes : [];
-  const decls = GetAllAccessorDeclarations(memberNodes, accessor as unknown as GoPtr<AccessorDeclaration>);
+  const members = parent!.Members;
+  const memberNodes = members === undefined ? undefined : members.Nodes;
+  const decls = memberNodes === undefined
+    ? GetAllAccessorDeclarationsForDeclaration(accessor as unknown as GoPtr<AccessorDeclaration>, [Node_AsNode(accessor)])
+    : GetAllAccessorDeclarations(memberNodes, accessor as unknown as GoPtr<AccessorDeclaration>);
   const firstAccessorWithDecorators: GoPtr<Node> = HasDecorators(decls.FirstAccessor as unknown as GoPtr<Node>)
     ? decls.FirstAccessor as unknown as GoPtr<Node>
     : (decls.SecondAccessor !== undefined && HasDecorators(decls.SecondAccessor as unknown as GoPtr<Node>))
@@ -1604,10 +1616,15 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(r
     ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, true as bool),
   ];
   if (hasClassElementWithDecoratorContainingPrivateIdentifierInExpression(node)) {
-    const memberNodes: GoSlice<GoPtr<Node>> = (members !== undefined && members!.Nodes.length > 0) ? [...members!.Nodes] : [];
+    const memberNodes = members === undefined ? undefined : members.Nodes;
     const stmtList = NodeFactory_NewNodeList(astFactory, decorationStatements);
     const staticBlock = NewClassStaticBlockDeclaration(astFactory, undefined, NewBlock(astFactory, stmtList as never, true as bool) as never);
-    const newMembers = NodeFactory_NewNodeList(astFactory, [...memberNodes, staticBlock]);
+    const newMemberNodes: GoSlice<GoPtr<Node>> = [];
+    if (memberNodes !== undefined) {
+      newMemberNodes.push(...memberNodes);
+    }
+    newMemberNodes.push(staticBlock);
+    const newMembers = NodeFactory_NewNodeList(astFactory, newMemberNodes);
     return [newMembers, []];
   }
   return [members, decorationStatements];
@@ -1646,6 +1663,7 @@ export function isDecoratedClassElement(member: GoPtr<Node>, isStaticElement: bo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratedClassElements","kind":"func","status":"implemented","sigHash":"8eee5bfefeec5a3a1e091393416e149c9f485593de6b1240f1026784c7058bdd","bodyHash":"8ec4c321f12a5e4d057446b59d871b9040d851a7099313640ffdba136dd46f82"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"TS-Go returns a nil slice when the class member list is nil, empty, or has no decorated elements; TypeScript preserves that exact result as undefined and ranges it only when populated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func getDecoratedClassElements(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1661,11 +1679,23 @@ export function isDecoratedClassElement(member: GoPtr<Node>, isStaticElement: bo
  * 	return members
  * }
  */
-export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
-  if (node!.Members === undefined || node!.Members!.Nodes.length === 0) {
-    return [];
+export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStatic: bool): GoPtr<GoSlice<GoPtr<Node>>> {
+  const classMembers = node!.Members;
+  const memberNodes = classMembers === undefined ? undefined : classMembers.Nodes;
+  if (memberNodes === undefined || memberNodes.length === 0) {
+    return undefined;
   }
-  return node!.Members!.Nodes.filter(member => isDecoratedClassElement(member, isStatic, node));
+  let members: GoPtr<GoSlice<GoPtr<Node>>>;
+  for (const member of memberNodes) {
+    if (isDecoratedClassElement(member, isStatic, node)) {
+      if (members === undefined) {
+        members = [member];
+      } else {
+        members.push(member);
+      }
+    }
+  }
+  return members;
 }
 
 /**
@@ -1687,10 +1717,12 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
 export function LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
   const members = getDecoratedClassElements(node, isStatic);
   const expressions: GoSlice<GoPtr<Node>> = [];
-  for (const member of members) {
-    const expr = LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver, node, member);
-    if (expr !== undefined) {
-      expressions.push(expr);
+  if (members !== undefined) {
+    for (const member of members) {
+      const expr = LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver, node, member);
+      if (expr !== undefined) {
+        expressions.push(expr);
+      }
     }
   }
   return expressions;
@@ -1766,7 +1798,7 @@ export function LegacyDecoratorsTransformer_generateClassElementDecorationExpres
 export function LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, member: GoPtr<Node>): GoPtr<Node> {
   const allDecs = getAllDecoratorsOfClassElement(member, node, true as bool);
   const decoratorExpressions = LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(receiver, allDecs);
-  if (decoratorExpressions.length === 0) {
+  if (decoratorExpressions === undefined || decoratorExpressions.length === 0) {
     return undefined;
   }
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
@@ -1796,6 +1828,7 @@ export function LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receive
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"c52e0b600ef1259638fa0fa02c8194fa971ee3c24557edc04f3e71a7d7ac2045","bodyHash":"91710ea50354b7e50315d7a74d28c8fa9708e35d7afde64e784c521899ebb308"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"transformAllDecoratorsOfDeclaration returns a nil Go slice for nil input and retains a nil accumulator until an expression is appended; GoPtr preserves those states.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::allDecorators>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::allDecorators>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformAllDecoratorsOfDeclaration(allDecorators *allDecorators) []*ast.Node {
@@ -1815,18 +1848,24 @@ export function LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receive
  * 	return decoratorExpressions
  * }
  */
-export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, allDecorators: GoPtr<allDecorators>): GoSlice<GoPtr<Node>> {
+export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, allDecorators: GoPtr<allDecorators>): GoPtr<GoSlice<GoPtr<Node>>> {
   if (allDecorators === undefined) {
-    return [];
+    return undefined;
   }
   const mm = GroupBy(allDecorators!.decorators, (d) => LegacyDecoratorsTransformer_isSyntheticMetadataDecorator(receiver, d));
   const metadata = MultiMap_Get(mm, true as bool);
   const decorators = MultiMap_Get(mm, false as bool);
-  return [
-    ...LegacyDecoratorsTransformer_transformDecorators(receiver, decorators),
-    ...LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver, allDecorators!.parameters),
-    ...LegacyDecoratorsTransformer_transformDecorators(receiver, metadata),
-  ];
+  let decoratorExpressions: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  for (const expressions of [
+    LegacyDecoratorsTransformer_transformDecorators(receiver, decorators),
+    LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver, allDecorators.parameters),
+    LegacyDecoratorsTransformer_transformDecorators(receiver, metadata),
+  ]) {
+    if (expressions.length !== 0) {
+      decoratorExpressions = [...(decoratorExpressions ?? []), ...expressions];
+    }
+  }
+  return decoratorExpressions;
 }
 
 /**

@@ -301,9 +301,12 @@ test("source-semantics records out ref inref borrow move call-site facts without
   ]));
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   assert.equal(diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(diagnostics[0]), 9901101);
-  assert.match(Diagnostic_String(diagnostics[0]), /out\(\.\.\.\) requires a storage expression/);
+  const diagnostic = diagnostics[0];
+  assert.ok(diagnostic !== undefined);
+  assert.equal(Diagnostic_Code(diagnostic), 9901101);
+  assert.match(Diagnostic_String(diagnostic), /out\(\.\.\.\) requires a storage expression/);
   Program_BindSourceFiles(program);
 
   const outCall = getCallExpression(index, "out", 0);
@@ -358,6 +361,7 @@ test("source-semantics does not record marker facts for invalid marker arity", (
   `);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.ok(diagnostics !== undefined);
   const diagnosticText = diagnostics.map(Diagnostic_String).join("\n");
   assert.match(diagnosticText, /Expected 1 arguments?, but got 0/);
   assert.match(diagnosticText, /Expected 1 arguments?, but got 2/);
@@ -629,9 +633,9 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
 }
 
 function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
-  assert.equal(Program_GetSemanticDiagnostics(program, Background(), sourceFile).length, 0);
+  assert.equal(Program_GetProgramDiagnostics(program)?.length ?? 0, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile)?.length ?? 0, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), sourceFile)?.length ?? 0, 0);
 }
 
 function getNamedImportSpecifier(sourceFile: GoPtr<SourceFile>, localName: string): GoPtr<Node> {

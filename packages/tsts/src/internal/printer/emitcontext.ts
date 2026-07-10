@@ -352,7 +352,20 @@ export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>)
  */
 export function EmitContext_EndAndMergeVariableEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
+  const nodes = statements === undefined ? undefined : statements.Nodes;
+
+  if (nodes === undefined) {
+    const declarations = EmitContext_EndVariableEnvironment(receiver);
+    if (declarations.length === 0) {
+      return statements;
+    }
+    if (statements === undefined) {
+      throw new globalThis.TypeError("nil StatementList");
+    }
+    const list = NodeFactory_NewNodeList(c.Factory!.__tsgoEmbedded0!, declarations)!;
+    list.Loc = statements.Loc;
+    return list;
+  }
 
   const [result, changed] = EmitContext_endAndMergeVariableEnvironment(receiver, nodes);
   if (changed) {
@@ -494,7 +507,20 @@ export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>):
  */
 export function EmitContext_EndAndMergeLexicalEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
+  const nodes = statements === undefined ? undefined : statements.Nodes;
+
+  if (nodes === undefined) {
+    const declarations = EmitContext_EndLexicalEnvironment(receiver);
+    if (declarations.length === 0) {
+      return statements;
+    }
+    if (statements === undefined) {
+      throw new globalThis.TypeError("nil StatementList");
+    }
+    const list = NodeFactory_NewNodeList(c.Factory!.__tsgoEmbedded0!, declarations)!;
+    list.Loc = statements.Loc;
+    return list;
+  }
 
   const [result, changed] = EmitContext_endAndMergeLexicalEnvironment(receiver, nodes);
   if (changed) {
@@ -566,6 +592,20 @@ export function EmitContext_AddLexicalDeclaration(receiver: GoPtr<EmitContext>, 
  */
 export function EmitContext_MergeEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>, declarations: GoSlice<GoPtr<Statement>>): GoPtr<StatementList> {
   const c = receiver!;
+  if (statements === undefined) {
+    if (declarations.length === 0) {
+      return statements;
+    }
+    throw new globalThis.TypeError("nil StatementList");
+  }
+  if (statements.Nodes === undefined) {
+    if (declarations.length === 0) {
+      return statements;
+    }
+    const list = NodeFactory_NewNodeList(c.Factory!.__tsgoEmbedded0!, declarations)!;
+    list.Loc = statements.Loc;
+    return list;
+  }
   const [result, changed] = EmitContext_mergeEnvironment(receiver, statements!.Nodes, declarations);
   if (changed) {
     const list = NodeFactory_NewNodeList(c.Factory!.__tsgoEmbedded0!, result)!;
@@ -712,26 +752,26 @@ export function EmitContext_mergeEnvironment(receiver: GoPtr<EmitContext>, state
 
   // splice other custom prologues from right into left
   if (rightCustomPrologueEnd > rightHoistedVariablesEnd) {
-    left = Splice(left, leftHoistedVariablesEnd, 0, ...declarations.slice(rightHoistedVariablesEnd, rightCustomPrologueEnd));
+    left = Splice(left, leftHoistedVariablesEnd, 0, ...declarations.slice(rightHoistedVariablesEnd, rightCustomPrologueEnd))!;
     changed = true;
   }
 
   // splice hoisted variables from right into left
   if (rightHoistedVariablesEnd > rightHoistedFunctionsEnd) {
-    left = Splice(left, leftHoistedFunctionsEnd, 0, ...declarations.slice(rightHoistedFunctionsEnd, rightHoistedVariablesEnd));
+    left = Splice(left, leftHoistedFunctionsEnd, 0, ...declarations.slice(rightHoistedFunctionsEnd, rightHoistedVariablesEnd))!;
     changed = true;
   }
 
   // splice hoisted functions from right into left
   if (rightHoistedFunctionsEnd > rightStandardPrologueEnd) {
-    left = Splice(left, leftStandardPrologueEnd, 0, ...declarations.slice(rightStandardPrologueEnd, rightHoistedFunctionsEnd));
+    left = Splice(left, leftStandardPrologueEnd, 0, ...declarations.slice(rightStandardPrologueEnd, rightHoistedFunctionsEnd))!;
     changed = true;
   }
 
   // splice standard prologues from right into left (that are not already in left)
   if (rightStandardPrologueEnd > 0) {
     if (leftStandardPrologueEnd === 0) {
-      left = Splice(left, 0, 0, ...declarations.slice(0, rightStandardPrologueEnd));
+      left = Splice(left, 0, 0, ...declarations.slice(0, rightStandardPrologueEnd))!;
       changed = true;
     } else {
       const leftPrologues: Set<string> = { M: new globalThis.Map() };
@@ -742,7 +782,7 @@ export function EmitContext_mergeEnvironment(receiver: GoPtr<EmitContext>, state
       for (let i = rightStandardPrologueEnd - 1; i >= 0; i--) {
         const rightPrologue = declarations[i]!;
         if (!Set_Has(leftPrologues, Node_Text(rightPrologue))) {
-          left = Concatenate([rightPrologue], left);
+          left = Concatenate([rightPrologue], left)!;
           changed = true;
         }
       }
@@ -1574,13 +1614,12 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
   if (sourceEmitNode === undefined) {
     return;
   }
-  const sourceEmitHelpers = sourceEmitNode.helpers ?? [];
-  if (sourceEmitHelpers.length === 0) {
+  const sourceEmitHelpers = sourceEmitNode.helpers;
+  if (sourceEmitHelpers === undefined || sourceEmitHelpers.length === 0) {
     return;
   }
 
   const targetEmitNode = LinkStore_Get(c.emitNodes, target)!;
-  targetEmitNode.helpers ??= [];
   let helpersRemoved = 0;
   for (let i = 0; i < sourceEmitHelpers.length; i++) {
     const helper = sourceEmitHelpers[i]!;
@@ -1599,6 +1638,7 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.GetEmitHelpers","kind":"method","status":"implemented","sigHash":"6edd816d1a5f024108169764638e1424079610caebb1ef548c3aee761f1565e9","bodyHash":"33fdefda7a6b9eafbd389f2a49205c87158a6ac619454639bdcc09954cdd22da"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetEmitHelpers returns the stored Go slice verbatim or nil when no emit node exists; GoPtr preserves both nil paths without allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitHelper>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitHelper>>>"}
  *
  * Go source:
  * func (c *EmitContext) GetEmitHelpers(node *ast.Node) []*EmitHelper {
@@ -1609,13 +1649,13 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
  * 	return nil
  * }
  */
-export function EmitContext_GetEmitHelpers(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<GoPtr<EmitHelper>> {
+export function EmitContext_GetEmitHelpers(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<EmitHelper>>> {
   const c = receiver!;
   const emitNode = LinkStore_TryGet(c.emitNodes, node);
   if (emitNode !== undefined) {
-    return emitNode.helpers ?? [];
+    return emitNode.helpers;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -1802,14 +1842,16 @@ export function EmitContext_addDefaultValueAssignmentsIfNeeded(receiver: GoPtr<E
   const c = receiver!;
   const nodes = nodeList.Nodes;
   let result: GoSlice<GoPtr<Node>> | undefined = undefined;
-  for (let i = 0; i < nodes.length; i++) {
-    const parameter = nodes[i]!;
-    const updated = EmitContext_addDefaultValueAssignmentIfNeeded(receiver, parameter as GoPtr<ParameterDeclaration>);
-    if (updated !== parameter) {
-      if (result === undefined) {
-        result = slices.Clone(nodes);
+  if (nodes !== undefined) {
+    for (let i = 0; i < nodes.length; i++) {
+      const parameter = nodes[i];
+      const updated = EmitContext_addDefaultValueAssignmentIfNeeded(receiver, parameter as GoPtr<ParameterDeclaration>);
+      if (updated !== parameter) {
+        if (result === undefined) {
+          result = slices.Clone(nodes);
+        }
+        result![i] = updated;
       }
-      result![i] = updated;
     }
   }
   if (result !== undefined) {
@@ -2203,6 +2245,7 @@ export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitConte
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.GetSyntheticLeadingComments","kind":"method","status":"implemented","sigHash":"e01deefc2f083661e490ceaccd0c704644f86143b4c0e890ad77eb32cc8f2075","bodyHash":"4040811e9ce89a33f0aa36969956238e895dbf537818b2b56e1e4833b65b7dd4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetSyntheticLeadingComments returns the stored Go slice verbatim or nil when no emit node exists; GoPtr preserves both nil paths without allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/printer/emitcontext.ts::SynthesizedComment>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/printer/emitcontext.ts::SynthesizedComment>>"}
  *
  * Go source:
  * func (c *EmitContext) GetSyntheticLeadingComments(node *ast.Node) []SynthesizedComment {
@@ -2212,12 +2255,12 @@ export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitConte
  * 	return nil
  * }
  */
-export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
+export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoPtr<GoSlice<SynthesizedComment>> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node)!.leadingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node)!.leadingComments;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -2253,6 +2296,7 @@ export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitCont
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.GetSyntheticTrailingComments","kind":"method","status":"implemented","sigHash":"ef2de6437943b2f8394e16fdb7933a770cc3143a531070e527fbbec33bf91eb9","bodyHash":"d513b8893abe43a9d8c36d45babcdb44ffafeafd93ddb2bfe98c6ec885f9fc90"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetSyntheticTrailingComments returns the stored Go slice verbatim or nil when no emit node exists; GoPtr preserves both nil paths without allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/printer/emitcontext.ts::SynthesizedComment>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/printer/emitcontext.ts::SynthesizedComment>>"}
  *
  * Go source:
  * func (c *EmitContext) GetSyntheticTrailingComments(node *ast.Node) []SynthesizedComment {
@@ -2262,12 +2306,12 @@ export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitCont
  * 	return nil
  * }
  */
-export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
+export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoPtr<GoSlice<SynthesizedComment>> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node)!.trailingComments ?? [];
+    return LinkStore_Get(c.emitNodes, node)!.trailingComments;
   }
-  return [];
+  return undefined;
 }
 
 /**

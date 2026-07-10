@@ -41,7 +41,7 @@ import { IsExternalModuleNameRelative } from "../tspath/path.js";
  */
 export function collectExternalModuleReferences(file: GoPtr<SourceFileNode>): void {
   const sf = AsSourceFile(file)!;
-  for (const node of sf.Statements!.Nodes) {
+  for (const node of sf.Statements!.Nodes ?? []) {
     collectModuleReferences(file, node as GoPtr<Statement>, false /*inAmbientModule*/);
   }
 

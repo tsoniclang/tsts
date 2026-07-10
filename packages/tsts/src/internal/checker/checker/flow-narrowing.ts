@@ -224,12 +224,15 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
       }
     } else if (parameterName !== undefined) {
       let hasReportedError = false;
-      for (const param of Node_Parameters(parent)) {
-        const name = Node_Name(param);
-        if (name !== undefined && (IsArrayBindingPattern(name) || IsObjectBindingPattern(name)) &&
-          Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver, name, parameterName, typePredicate!.parameterName)) {
-          hasReportedError = true;
-          break;
+      const parameters = Node_Parameters(parent);
+      if (parameters !== undefined) {
+        for (const param of parameters) {
+          const name = Node_Name(param);
+          if (name !== undefined && (IsArrayBindingPattern(name) || IsObjectBindingPattern(name)) &&
+            Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver, name, parameterName, typePredicate!.parameterName)) {
+            hasReportedError = true;
+            break;
+          }
         }
       }
       if (!hasReportedError) {
@@ -452,7 +455,7 @@ export function Checker_checkTestingKnownTruthyType(receiver: GoPtr<Checker>, co
   }
   const callSignatures = Checker_getSignaturesOfType(receiver, t, SignatureKindCall);
   const isPromise = Checker_getAwaitedTypeOfPromise(receiver, t) !== undefined;
-  if (callSignatures.length === 0 && !isPromise) {
+  if ((callSignatures?.length ?? 0) === 0 && !isPromise) {
     return;
   }
   let testedNode: GoPtr<Node>;

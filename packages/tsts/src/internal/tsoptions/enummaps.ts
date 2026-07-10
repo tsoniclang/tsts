@@ -349,7 +349,7 @@ export function GetLibFileName(libName: string): [string, bool] {
   if (Set_Has(LibFilesSet, lowered)) {
     return [lowered, true];
   }
-  const [lib, ok] = OrderedMap_Get(LibMap, lowered);
+  const [lib, ok] = OrderedMap_Get(LibMap, lowered, () => "");
   if (!ok) {
     return ["", false];
   }

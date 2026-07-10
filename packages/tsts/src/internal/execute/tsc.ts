@@ -587,13 +587,13 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
  * }
  */
 export function findConfigFile(searchPath: string, fileExists: (arg0: string) => bool, configName: string): string {
-  const [result, ok] = ForEachAncestorDirectory(searchPath, (ancestor) => {
+  const [result, ok] = ForEachAncestorDirectory(searchPath, (ancestor): [string, bool] => {
     const fullConfigName = CombinePaths(ancestor, configName);
     if (fileExists(fullConfigName)) {
-      return [fullConfigName, true] as [string, bool];
+      return [fullConfigName, true as bool];
     }
-    return [fullConfigName, false] as [string, bool];
-  });
+    return [fullConfigName, false as bool];
+  }, (): string => "");
   if (!ok) {
     return "";
   }

@@ -25,22 +25,29 @@ import { verifyTsgoSuiteReport } from "./verify-report.mjs";
 const inputLabels = [
   "accepted-overlay-active", "accepted-overlay-binding", "accepted-overlay-capture", "accepted-overlay-legacy-manifest", "accepted-overlay-plan",
   "bundled-source-assets", "resolved-typescript-package", "source-pin", "suite-baseline-code", "suite-provenance-helper", "suite-report-verifier",
-  "suite-runner", "suite-sealed-evidence-helper", "suite-source-pin-verifier", "tsts-dist", "tsts-package", "vendored-typescript-lib-fallback",
+  "suite-runner", "suite-sealed-evidence-helper", "suite-source-pin-verifier", "tsts-dist", "tsts-package", "tsts-prepared-build", "tsts-source", "vendored-typescript-lib-fallback",
   "workspace-lock", "workspace-package",
 ].sort();
 
 function inventoryFixture() {
   const bucket = () => ({ total: 0, inScope: 0, outOfScope: 0, unclassified: 0, entries: {} });
-  return { currentHarness: bucket(), typeScriptCases: { ...bucket(), languageServiceHarnessCases: 0 }, baselines: bucket(), goTests: bucket() };
+  return {
+    schemaVersion: 2,
+    currentHarness: bucket(),
+    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
+    typeScriptUnitTests: { ...bucket(), entries: { exportedModules: 0, supportModules: 0 } },
+    baselines: bucket(),
+    goTests: bucket(),
+  };
 }
 
 function manifestFixture() {
   const inventory = inventoryFixture();
   const identity = { corpus: "current", suite: "compiler", relativePath: "compiler/a.ts", configurationName: "" };
-  const cases = [{ index: 0, ...identity, id: caseIdentifier(identity), sourceSha256: "a".repeat(64), projectFixture: null }];
+  const cases = [{ index: 0, ...identity, id: caseIdentifier(identity), sourceSha256: "a".repeat(64), projectFixture: null, expectedSkipReason: "" }];
   const roots = inputLabels.map((label) => ({ label, kind: "file", mode: 0o644, symlinkPolicy: "reject", fileCount: 1, symlinkCount: 0, bytes: 1, digest: "b".repeat(64) }));
   const unsigned = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     selection: { corpus: "current", suite: "compiler", filter: "", limit: 0 },
     execution: {
       exactBaselineContract: 1, verifyOnDisk: false, jobs: 1, failFast: false, caseTimeoutMs: 1000, poolCaseTimeoutMs: 2000,
@@ -180,6 +187,10 @@ test("TS-Go suite report verifier preserves infrastructure failures as partial",
     assert.equal(verified.report.summary.complete, false);
     assert.deepEqual(verified.report.summary.missingCaseIndices, [0]);
     assert.equal(verified.seal.metadata.outcome, "partial");
+    assert.throws(
+      () => verifyTsgoSuiteReport(fixture.reportDirectory, { requirePassed: true }),
+      /report is not a passing gate: outcome=partial/,
+    );
   } finally {
     await rm(fixture.temporaryRoot, { recursive: true, force: true });
   }

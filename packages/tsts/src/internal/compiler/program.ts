@@ -4,7 +4,7 @@ import { NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import { Sprintf } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
-import { Once, Map as SyncMapMap } from "../../go/sync.js";
+import { Once, Pool, Map as SyncMapMap } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
@@ -30,6 +30,7 @@ import { Set_Has, Set_Add, Set_AddIfAbsent, Set_Keys, NewSetFromItems } from "..
 import { SyncMap_Load, SyncMap_LoadOrStore } from "../collections/syncmap.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { Concatenate, Filter, FindIndex, Map as core_Map, Some, Memoize, IfElse, Find, Must } from "../core/core.js";
+import { NewWorkGroup } from "../core/workgroup.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, JsxEmit } from "../core/compileroptions.js";
 import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetIsolatedModules, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String, NewLineKind_GetNewLineCharacter } from "../core/compileroptions.js";
 import { ModuleKind_String } from "../core/modulekind_stringer_generated.js";
@@ -62,7 +63,7 @@ import { GetECMALineStarts, GetECMALineOfPosition, ComputeLineOfPosition } from 
 import { IsIdentifierText } from "../scanner/utilities.js";
 import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
 import { NewKnownSymlink, KnownSymlinks_HasDirectory, KnownSymlinks_ProcessResolution, KnownSymlinks_SetSymlinksFromResolutions } from "../symlinks/knownsymlinks.js";
-import { PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
+import { PhaseEmit, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import type { Tracing as Tracing_bcfc8412 } from "../tracing/tracing.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_FileNames, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_ProjectReferences, ParsedCommandLine_as_ResolvedProjectReference } from "../tsoptions/parsedcommandline.js";
@@ -101,6 +102,7 @@ import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f","bodyHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type ProgramOptions uses an explicit undefined-capable TypeScript representation at member 'CreateCheckerPool' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{Config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;CreateCheckerPool:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool;Host:packages/tsts/src/internal/compiler/host.ts::CompilerHost;ProjectName:string;SingleThreaded:packages/tsts/src/internal/core/tristate.ts::Tristate;Tracing:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;TypingsLocation:string;UseSourceOfProjectReference:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{Config:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>;CreateCheckerPool?:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool>;Host:packages/tsts/src/internal/compiler/host.ts::CompilerHost;ProjectName?:string;SingleThreaded?:packages/tsts/src/internal/core/tristate.ts::Tristate;Tracing?:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;TypingsLocation?:string;UseSourceOfProjectReference?:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * ProgramOptions struct {
@@ -119,7 +121,7 @@ export interface ProgramOptions {
   Config: GoPtr<ParsedCommandLine>;
   UseSourceOfProjectReference?: bool;
   SingleThreaded?: Tristate;
-  CreateCheckerPool?: (arg0: GoPtr<Program>) => CheckerPool;
+  CreateCheckerPool?: GoPtr<(arg0: GoPtr<Program>) => CheckerPool>;
   TypingsLocation?: string;
   ProjectName?: string;
   Tracing?: GoPtr<Tracing_bcfc8412>;
@@ -213,7 +215,7 @@ export interface packageNamesInfo {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::Program","kind":"type","status":"implemented","sigHash":"c60019065d3ec9810ed2446897b82620c3db486992de68fd6eea46cab24d5e45","bodyHash":"226134a82a0b16b10bc9114dc0e1985fa956b94e77464701479ad0a96d9e4462"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Program.checkerPool is undefined only during two-phase self-referential construction: the Program object must exist before initCheckerPool can pass that same object to ProgramOptions.CreateCheckerPool(program) or the default pool constructor. NewProgram and UpdateProgram call initCheckerPool before returning or invoking any checker-pool consumer; the factory callback is the sole observer in the window and exists to produce the field. Every read site is post-initialization and non-null-asserts the invariant.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/compiler/fileloader.ts::processedFiles;checkerPool:packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool;commonSourceDirectory:string;commonSourceDirectoryOnce:packages/tsts/src/go/sync.ts::Once;comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;compilerCheckerPool:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>;declarationDiagnosticCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;hasEmitBlockingDiagnostics:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;hasTSFile:packages/tsts/src/go/scalars.ts::bool;hasTSFileOnce:packages/tsts/src/go/sync.ts::Once;knownSymlinks:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/symlinks/knownsymlinks.ts::KnownSymlinks>;opts:packages/tsts/src/internal/compiler/program.ts::ProgramOptions;packageNames:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/compiler/program.ts::packageNamesInfo>;packagesMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::bool>;packagesMapOnce:packages/tsts/src/go/sync.ts::Once;programDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;sourceFilesToEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;sourceFilesToEmitOnce:packages/tsts/src/go/sync.ts::Once;unresolvedImports:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/collections/set.ts::Set<string>>;usesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/compiler/fileloader.ts::processedFiles;checkerPool:packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool|undefined;commonSourceDirectory:string;commonSourceDirectoryOnce:packages/tsts/src/go/sync.ts::Once;comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;compilerCheckerPool:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>;declarationDiagnosticCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;hasEmitBlockingDiagnostics:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;hasTSFile:packages/tsts/src/go/scalars.ts::bool;hasTSFileOnce:packages/tsts/src/go/sync.ts::Once;knownSymlinks:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/symlinks/knownsymlinks.ts::KnownSymlinks>;opts:packages/tsts/src/internal/compiler/program.ts::ProgramOptions;packageNames:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/compiler/program.ts::packageNamesInfo>;packagesMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::bool>;packagesMapOnce:packages/tsts/src/go/sync.ts::Once;programDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;sourceFilesToEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;sourceFilesToEmitOnce:packages/tsts/src/go/sync.ts::Once;unresolvedImports:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/collections/set.ts::Set<string>>;usesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate}"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Program.checkerPool is undefined only during two-phase self-referential construction: the Program object must exist before initCheckerPool can pass that same object to ProgramOptions.CreateCheckerPool(program) or the default pool constructor. NewProgram and UpdateProgram call initCheckerPool before returning or invoking any checker-pool consumer; the factory callback is the sole observer in the window and exists to produce the field. Every read site is post-initialization and non-null-asserts the invariant. type Program uses an explicit undefined-capable TypeScript representation at member 'checkerPool', member 'declarationDiagnosticCache' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/compiler/fileloader.ts::processedFiles;checkerPool:packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool;commonSourceDirectory:string;commonSourceDirectoryOnce:packages/tsts/src/go/sync.ts::Once;comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;compilerCheckerPool:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>;declarationDiagnosticCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;hasEmitBlockingDiagnostics:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;hasTSFile:packages/tsts/src/go/scalars.ts::bool;hasTSFileOnce:packages/tsts/src/go/sync.ts::Once;knownSymlinks:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/symlinks/knownsymlinks.ts::KnownSymlinks>;opts:packages/tsts/src/internal/compiler/program.ts::ProgramOptions;packageNames:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/compiler/program.ts::packageNamesInfo>;packagesMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::bool>;packagesMapOnce:packages/tsts/src/go/sync.ts::Once;programDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;sourceFilesToEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;sourceFilesToEmitOnce:packages/tsts/src/go/sync.ts::Once;unresolvedImports:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/collections/set.ts::Set<string>>;usesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/compiler/fileloader.ts::processedFiles;checkerPool:packages/tsts/src/internal/compiler/checkerpool.ts::CheckerPool|undefined;commonSourceDirectory:string;commonSourceDirectoryOnce:packages/tsts/src/go/sync.ts::Once;comparePathsOptions:packages/tsts/src/internal/tspath/path.ts::ComparePathsOptions;compilerCheckerPool:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>;declarationDiagnosticCache:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>>;hasEmitBlockingDiagnostics:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;hasTSFile:packages/tsts/src/go/scalars.ts::bool;hasTSFileOnce:packages/tsts/src/go/sync.ts::Once;knownSymlinks:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/symlinks/knownsymlinks.ts::KnownSymlinks>;opts:packages/tsts/src/internal/compiler/program.ts::ProgramOptions;packageNames:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/compiler/program.ts::packageNamesInfo>;packagesMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::bool>;packagesMapOnce:packages/tsts/src/go/sync.ts::Once;programDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;sourceFilesToEmit:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;sourceFilesToEmitOnce:packages/tsts/src/go/sync.ts::Once;unresolvedImports:packages/tsts/src/internal/compiler/program.ts::lazyValue<packages/tsts/src/internal/collections/set.ts::Set<string>>;usesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate}"}
  *
  * Go source:
  * Program struct {
@@ -267,7 +269,7 @@ export interface Program {
   usesUriStyleNodeCoreModules: Tristate;
   commonSourceDirectory: string;
   commonSourceDirectoryOnce: Once;
-  declarationDiagnosticCache: SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>;
+  declarationDiagnosticCache: SyncMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>;
   programDiagnostics: GoSlice<GoPtr<Diagnostic>>;
   hasEmitBlockingDiagnostics: Set<Path>;
   sourceFilesToEmitOnce: Once;
@@ -623,7 +625,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
     GetEmitSyntaxForUsageLocation: (sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetEmitSyntaxForUsageLocation(receiver, sourceFile, usageLocation),
     GetImpliedNodeFormatForEmit: (sourceFile: HasFileName): ModuleKind => Program_GetImpliedNodeFormatForEmit(receiver, sourceFile),
     GetResolvedModule: (currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule> => Program_GetResolvedModule(receiver, currentSourceFile, moduleReference, mode),
-    GetResolvedModules: (): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>> => Program_GetResolvedModules(receiver),
+    GetResolvedModules: (): GoMap<Path, GoPtr<ModeAwareCache<GoPtr<ResolvedModule>>>> => Program_GetResolvedModules(receiver),
     GetPackagesMap: (): GoMap<string, bool> => Program_GetPackagesMap(receiver),
     GetSourceFileMetaData: (path: Path): SourceFileMetaData => Program_GetSourceFileMetaData(receiver, path),
     GetJSXRuntimeImportSpecifier: (path: Path): [string, GoPtr<Node>] => Program_GetJSXRuntimeImportSpecifier(receiver, path),
@@ -763,7 +765,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
     usesUriStyleNodeCoreModules: TSUnknown,
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>,
+    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>,
     programDiagnostics: [],
     hasEmitBlockingDiagnostics: { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() },
     sourceFilesToEmitOnce: new Once(),
@@ -877,7 +879,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
     usesUriStyleNodeCoreModules: receiver!.usesUriStyleNodeCoreModules,
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>,
+    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>,
     programDiagnostics: receiver!.programDiagnostics,
     hasEmitBlockingDiagnostics: receiver!.hasEmitBlockingDiagnostics,
     sourceFilesToEmitOnce: new Once(),
@@ -1121,13 +1123,14 @@ export function Program_Tracing(receiver: GoPtr<Program>): GoPtr<Tracing_bcfc841
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetConfigFileParsingDiagnostics","kind":"method","status":"implemented","sigHash":"a5bd0bd1fc1c78e44ba8319a3319cb03633083eced257f55b1566222533f268a","bodyHash":"409df864dd15ccde15265e4ff9a4b9842fd692746efc9c74a3381533dd7d0dbc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetConfigFileParsingDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetConfigFileParsingDiagnostics() []*ast.Diagnostic {
  * 	return slices.Clip(p.opts.Config.GetConfigFileParsingDiagnostics())
  * }
  */
-export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return slices.Clip(ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver!.opts.Config));
 }
 
@@ -1364,13 +1367,14 @@ export function Program_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<Pro
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetResolvedModules","kind":"method","status":"implemented","sigHash":"da91cb47c6a885908aa99b705ab7e6a069659a4186a8f807641d2fc622ea0e6e","bodyHash":"b6658a5be9c6947dcccd152b6c97e689551c4b50bc5a511463e2033ce81aaf94"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetResolvedModules uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>>>"}
  *
  * Go source:
  * func (p *Program) GetResolvedModules() map[tspath.Path]module.ModeAwareCache[*module.ResolvedModule] {
  * 	return p.resolvedModules
  * }
  */
-export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>> {
+export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path, GoPtr<ModeAwareCache<GoPtr<ResolvedModule>>>> {
   return receiver!.__tsgoEmbedded0!.resolvedModules;
 }
 
@@ -1412,6 +1416,7 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectDiagnostics","kind":"method","status":"implemented","sigHash":"124e0090ae352ee76aa7b31ad4da3be50da7c5737365b0a14c7fcff73f002e78","bodyHash":"ca301f1777e2a458258c4bf7939d82416cdd6fdef5438f961928bf63785edee4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.collectDiagnostics uses an explicit undefined-capable TypeScript representation at parameter #4, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) collectDiagnostics(ctx context.Context, sourceFile *ast.SourceFile, concurrent bool, collect func(context.Context, *ast.SourceFile) []*ast.Diagnostic) []*ast.Diagnostic {
@@ -1425,19 +1430,25 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
  * 	return SortAndDeduplicateDiagnostics(result)
  * }
  */
-export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  let result: GoSlice<GoPtr<Diagnostic>>;
+export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  let result: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   if (sourceFile !== undefined) {
     result = collect(ctx, sourceFile);
   } else {
     const diagnostics = Program_collectDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, concurrent, collect);
-    result = slices.Concat(...diagnostics);
+    result = undefined;
+    for (const diagnostic of diagnostics) {
+      if (diagnostic !== undefined) {
+        result = result === undefined ? diagnostic : slices.Concat(result, diagnostic);
+      }
+    }
   }
   return SortAndDeduplicateDiagnostics(result);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectDiagnosticsFromFiles","kind":"method","status":"implemented","sigHash":"9144f49fb3417b26eeadc037bd2267b2fa8e312a015b1343138387df643df1b5","bodyHash":"f7485aa15aa7256dec49f5785a0b59becd0d74ecb18dda9d2ce3997221a4d9fe"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.collectDiagnosticsFromFiles uses an explicit undefined-capable TypeScript representation at parameter #4, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>>"}
  *
  * Go source:
  * func (p *Program) collectDiagnosticsFromFiles(ctx context.Context, sourceFiles []*ast.SourceFile, concurrent bool, collect func(context.Context, *ast.SourceFile) []*ast.Diagnostic) [][]*ast.Diagnostic {
@@ -1452,16 +1463,21 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Contex
  * 	return diagnostics
  * }
  */
-export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
-  const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
+export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<GoSlice<GoPtr<Diagnostic>>>> {
+  const diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>[] = new Array(sourceFiles.length);
+  const wg = NewWorkGroup((!concurrent || Program_SingleThreaded(receiver)) as bool);
   for (let i = 0; i < sourceFiles.length; i++) {
-    diagnostics[i] = collect(ctx, sourceFiles[i]);
+    wg.Queue((): void => {
+      diagnostics[i] = collect(ctx, sourceFiles[i]);
+    });
   }
+  wg.RunAndWait();
   return diagnostics;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnostics","kind":"method","status":"implemented","sigHash":"51b1af4466cb4d0534fd7782470e7a60e57b6d407e86bbebb938dac174a4f05a","bodyHash":"3ae1f043e02be01ef6006fd6879b5910500e1a3ee875630aa445069020e69359"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.collectCheckerDiagnostics uses an explicit undefined-capable TypeScript representation at parameter #3, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) collectCheckerDiagnostics(ctx context.Context, sourceFile *ast.SourceFile, collect func(context.Context, *checker.Checker, *ast.SourceFile) []*ast.Diagnostic) []*ast.Diagnostic {
@@ -1477,22 +1493,33 @@ export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ct
  * 	return SortAndDeduplicateDiagnostics(slices.Concat(p.collectCheckerDiagnosticsFromFiles(ctx, p.files, collect)...))
  * }
  */
-export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (sourceFile !== undefined) {
     if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-      return undefined!;
+      return undefined;
     }
     const [c, done] = Program_GetTypeCheckerForFileExclusive(receiver, ctx, sourceFile);
-    const result = collect(ctx, c, sourceFile);
-    done();
+    let result: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+    try {
+      result = collect(ctx, c, sourceFile);
+    } finally {
+      done();
+    }
     return SortAndDeduplicateDiagnostics(result);
   }
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, collect);
-  return SortAndDeduplicateDiagnostics(slices.Concat(...allDiags));
+  let result: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
+  for (const diagnostics of allDiags) {
+    if (diagnostics !== undefined) {
+      result = result === undefined ? diagnostics : slices.Concat(result, diagnostics);
+    }
+  }
+  return SortAndDeduplicateDiagnostics(result);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectCheckerDiagnosticsFromFiles","kind":"method","status":"implemented","sigHash":"6c8971e48d6bae50278c40718b6b259e90eb1e626abb7ae5fbbabf424eb24261","bodyHash":"9cfe7a80720fb87a365dd8f5cc4240ab9c5fc71382d105763ab6a43ce58b1e2c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.collectCheckerDiagnosticsFromFiles uses an explicit undefined-capable TypeScript representation at parameter #3, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>>"}
  *
  * Go source:
  * func (p *Program) collectCheckerDiagnosticsFromFiles(ctx context.Context, sourceFiles []*ast.SourceFile, collect func(context.Context, *checker.Checker, *ast.SourceFile) []*ast.Diagnostic) [][]*ast.Diagnostic {
@@ -1518,28 +1545,36 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	return diagnostics
  * }
  */
-export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
-  const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
+export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<GoSlice<GoPtr<Diagnostic>>>> {
+  const diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>[] = new Array(sourceFiles.length);
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerGroupDo(receiver!.compilerCheckerPool, ctx, sourceFiles, Program_SingleThreaded(receiver), (c, fileIndex, file) => {
       diagnostics[fileIndex] = collect(ctx, c, file);
     });
   } else {
+    const wg = NewWorkGroup(Program_SingleThreaded(receiver));
     for (let i = 0; i < sourceFiles.length; i++) {
       const file = sourceFiles[i];
       if (Program_SkipTypeChecking(receiver, file, false as bool)) {
         continue;
       }
-      const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
-      diagnostics[i] = collect(ctx, c, file);
-      done();
+      wg.Queue((): void => {
+        const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
+        try {
+          diagnostics[i] = collect(ctx, c, file);
+        } finally {
+          done();
+        }
+      });
     }
+    wg.RunAndWait();
   }
   return diagnostics;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSyntacticDiagnostics","kind":"method","status":"implemented","sigHash":"5b7931971e5188c205afc074b2b9cf7fc2773d14b5ad5a3d43cd75043f1dbe21","bodyHash":"1bda46865064eb8cc42e2cd09b256086035279f05e0fa57141469199d9792e28"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetSyntacticDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetSyntacticDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1555,7 +1590,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
  * 	})
  * }
  */
-export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return Program_collectDiagnostics(receiver, ctx, sourceFile, false as bool, (_, file) => {
     let diags = Concatenate(SourceFile_Diagnostics(file), SourceFile_JSDiagnostics(file));
     if (IsSourceFileJS(file) && !IsCheckJSEnabledForFile(file, Program_Options(receiver))) {
@@ -1567,6 +1602,7 @@ export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: C
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::getAdditionalJSSyntacticDiagnostics","kind":"func","status":"implemented","sigHash":"4cc134e32ccd6eb365106c7b13be731a4c16d12b9df6e3157876d7e86a0987a1","bodyHash":"a22d56db91f9912ae834bbb4dd0f947aabc7e73a3d7c4c17587fb36a709a52d4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func getAdditionalJSSyntacticDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func getAdditionalJSSyntacticDiagnostics(file *ast.SourceFile, options *core.CompilerOptions) []*ast.Diagnostic {
@@ -1594,9 +1630,9 @@ export function Program_GetSyntacticDiagnostics(receiver: GoPtr<Program>, ctx: C
  * 	return diags
  * }
  */
-export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, options: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, options: GoPtr<CompilerOptions>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (Tristate_IsTrue(options!.ExperimentalDecorators)) {
-    return undefined!;
+    return undefined;
   }
   const diags: GoPtr<Diagnostic>[] = [];
   const walk: Visitor = (node) => {
@@ -1618,7 +1654,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetBindDiagnostics","kind":"method","status":"implemented","sigHash":"095da506f9a3fd3269680f3ea12f04dfced3daec560c8cc8df2fe01d23a70933","bodyHash":"f6c8852b40bcb61a165361ac7131698cf8e257dfab659607bb4ce1d8b48bd30c"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Single-file binding also records provider virtual module facts after normal TS-Go binding; no-extension programs remain unchanged."}
+ * @tsgo-override {"category":"extension-host","allow":["body","signature"],"reason":"Single-file binding also records provider virtual module facts after normal TS-Go binding; no-extension programs remain unchanged. method Program.GetBindDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetBindDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1632,7 +1668,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
  * 	})
  * }
  */
-export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (sourceFile !== undefined) {
     BindSourceFile(sourceFile);
     recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
@@ -1646,25 +1682,25 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnostics","kind":"method","status":"implemented","sigHash":"bcc981c426c3f57d04542f3263562ddee4d27f91f7f301bdb982d72820e92c2a","bodyHash":"0b0cd7dfbd0c07892569d7456156b81b17ea53d19683a187b810ba8cd57e8718"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended to the normal TSTS semantic diagnostic channel after TS-Go checking; no-extension programs return the exact TS-Go result."}
+ * @tsgo-override {"category":"extension-host","allow":["body","signature"],"reason":"Extension-owned semantic diagnostics are appended to the normal TSTS semantic diagnostic channel after TS-Go checking; no-extension programs return the exact TS-Go result. method Program.GetSemanticDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
  * 	return p.collectCheckerDiagnostics(ctx, sourceFile, p.getSemanticDiagnosticsWithChecker)
  * }
  */
-export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver)) ?? [];
+export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver));
   const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, sourceFile);
   if (extensionDiagnostics.length === 0) {
     return diagnostics;
   }
-  return SortAndDeduplicateDiagnostics([...diagnostics, ...extensionDiagnostics]);
+  return SortAndDeduplicateDiagnostics(diagnostics === undefined ? extensionDiagnostics : [...diagnostics, ...extensionDiagnostics]);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnosticsWithoutNoEmitFiltering","kind":"method","status":"implemented","sigHash":"d3d9c2f85f878717309d4b733bc00728a9022c33d1c199c86ccdf25566f1b67a","bodyHash":"214d5d450b18e7c7c4643d91816182a617d3eb3c8732e5e57212cbce0dc32ee1"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended per source file before final sort/deduplication; no-extension programs return the exact TS-Go result."}
+ * @tsgo-override {"category":"extension-host","allow":["body","signature"],"reason":"Extension-owned semantic diagnostics are appended per source file before final sort/deduplication; no-extension programs return the exact TS-Go result. method Program.GetSemanticDiagnosticsWithoutNoEmitFiltering uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>>"}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnosticsWithoutNoEmitFiltering(ctx context.Context, sourceFiles []*ast.SourceFile) map[*ast.SourceFile][]*ast.Diagnostic {
@@ -1676,30 +1712,34 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Co
  * 	return result
  * }
  */
-export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>> {
+export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: GoPtr<Program>, ctx: Context, sourceFiles: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>> {
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
-  const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
+  const result = new globalThis.Map<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>();
   for (let i = 0; i < allDiags.length; i++) {
     const file = sourceFiles[i];
-    result.set(file, SortAndDeduplicateDiagnostics([...(allDiags[i] ?? []), ...collectExtensionDiagnosticsForSourceFile(receiver!, file)]));
+    const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, file);
+    const diagnostics = allDiags[i];
+    result.set(file, SortAndDeduplicateDiagnostics(extensionDiagnostics.length === 0 ? diagnostics : diagnostics === undefined ? extensionDiagnostics : [...diagnostics, ...extensionDiagnostics]));
   }
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSuggestionDiagnostics","kind":"method","status":"implemented","sigHash":"90d9d4190153ef91a9d8c50bd06a034bfeb4aed45ba7b3c553be5c1f9519f7be","bodyHash":"949c8a81c4ad4fb8f03b35aef3b3c7f2c8b74574651b608b95309b3d0b1faf0a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetSuggestionDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetSuggestionDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
  * 	return p.collectCheckerDiagnostics(ctx, sourceFile, p.getSuggestionDiagnosticsWithChecker)
  * }
  */
-export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSuggestionDiagnosticsWithChecker.bind(undefined, receiver));
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetProgramDiagnostics","kind":"method","status":"implemented","sigHash":"26d89878cad6bdc89a718a62296967d3f30a5323975dac05f14234c33e3559d5","bodyHash":"0249fa629ce89987da7bcc065f99315a2c78de2ea1643508108fcf8222c35e31"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetProgramDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetProgramDiagnostics() []*ast.Diagnostic {
@@ -1709,7 +1749,7 @@ export function Program_GetSuggestionDiagnostics(receiver: GoPtr<Program>, ctx: 
  * 	))
  * }
  */
-export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return SortAndDeduplicateDiagnostics(Concatenate(
     receiver!.programDiagnostics,
     DiagnosticsCollection_GetGlobalDiagnostics(includeProcessor_getDiagnostics(receiver!.__tsgoEmbedded0!.includeProcessor, receiver)),
@@ -1718,6 +1758,7 @@ export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoSlice
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetIncludeProcessorDiagnostics","kind":"method","status":"implemented","sigHash":"8f118bd3b19429cb32fc1f20ad63ecbc44b27028ee32d85d3862551c9d3fa44d","bodyHash":"2ea2e5ba03a3c16aad0a0c1f749ff436abcde9220f108ba853778e96c06ebd27"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetIncludeProcessorDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetIncludeProcessorDiagnostics(sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1728,9 +1769,9 @@ export function Program_GetProgramDiagnostics(receiver: GoPtr<Program>): GoSlice
  * 	return filtered
  * }
  */
-export function Program_GetIncludeProcessorDiagnostics(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetIncludeProcessorDiagnostics(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return undefined;
   }
   const [filtered] = Program_getDiagnosticsWithPrecedingDirectives(
     receiver,
@@ -2329,7 +2370,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   const sourceFile = Memoize(() => {
     const configFile = receiver!.opts.Config!.ConfigFile;
     if (configFile === undefined) {
-      return undefined as GoPtr<import("../ast/ast.js").SourceFile>;
+      return undefined;
     }
     return configFile!.SourceFile;
   });
@@ -2546,8 +2587,9 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
           const initializer = keyProps!.Initializer;
           if (IsArrayLiteralExpression(initializer)) {
             const elements = AsArrayLiteralExpression(initializer!)!.Elements;
-            if (elements !== undefined && elements!.Nodes.length > valueIndex) {
-              const d = CreateDiagnosticForNodeInSourceFile(sourceFile()!, elements!.Nodes[valueIndex], message, ...args);
+            const elementNodes = elements?.Nodes ?? [];
+            if (elementNodes.length > valueIndex) {
+              const d = CreateDiagnosticForNodeInSourceFile(sourceFile()!, elementNodes[valueIndex], message, ...args);
               receiver!.programDiagnostics = [...receiver!.programDiagnostics, d];
               return d;
             }
@@ -2965,6 +3007,7 @@ export function emitModuleKindIsNonNodeESM(moduleKind: ModuleKind): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetGlobalDiagnostics","kind":"method","status":"implemented","sigHash":"af850db7e0012d4a166325e0bfc7157e77f96394fcf83ca8e2841cbe7899ce6e","bodyHash":"341c36b45ed10cb633b9c8ef41f06ce51072514e3053966089be68d6e24753cf"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetGlobalDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetGlobalDiagnostics(ctx context.Context) []*ast.Diagnostic {
@@ -2979,30 +3022,42 @@ export function emitModuleKindIsNonNodeESM(moduleKind: ModuleKind): bool {
  * 	return nil
  * }
  */
-export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Context): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Context): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (receiver!.__tsgoEmbedded0!.files.length === 0) {
-    return undefined!;
+    return undefined;
   }
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_GetGlobalDiagnostics(receiver!.compilerCheckerPool);
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetDeclarationDiagnostics","kind":"method","status":"implemented","sigHash":"c3917b6b1826f05f4b2c8ab649d4c7b1e31dc6031facb585157d92dde07a9fa4","bodyHash":"a96a64fe445cbc89370cfd1a5427734010aadfb9096374fdb668b2efc6ccb7c6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetDeclarationDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) GetDeclarationDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
  * 	return p.collectDiagnostics(ctx, sourceFile, true /*concurrent* /, p.getDeclarationDiagnosticsForFile)
  * }
  */
-export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return Program_collectDiagnostics(receiver, ctx, sourceFile, true as bool, Program_getDeclarationDiagnosticsForFile.bind(undefined, receiver));
+}
+
+function concatenateDiagnostics(left: GoPtr<GoSlice<GoPtr<Diagnostic>>>, right: GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  if (right === undefined || right.length === 0) {
+    return left;
+  }
+  if (left === undefined || left.length === 0) {
+    return right;
+  }
+  return slices.Concat(left, right);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::FilterNoEmitSemanticDiagnostics","kind":"func","status":"implemented","sigHash":"5e6ed69f28095291eb89e0af0888bcd352e47d8aea82eadea016b77b2908aac5","bodyHash":"ea80c8d631aab1599946381ca064b78a0692a64d1cbc128b3d9a3e05f8a47712"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func FilterNoEmitSemanticDiagnostics uses an explicit undefined-capable TypeScript representation at parameter #0, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func FilterNoEmitSemanticDiagnostics(diagnostics []*ast.Diagnostic, options *core.CompilerOptions) []*ast.Diagnostic {
@@ -3014,15 +3069,19 @@ export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	})
  * }
  */
-export function FilterNoEmitSemanticDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>, options: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function FilterNoEmitSemanticDiagnostics(diags: GoPtr<GoSlice<GoPtr<Diagnostic>>>, options: GoPtr<CompilerOptions>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (!Tristate_IsTrue(options!.NoEmit)) {
     return diags;
+  }
+  if (diags === undefined) {
+    return undefined;
   }
   return Filter(diags, (d) => !Diagnostic_SkippedOnNoEmit(d));
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getSemanticDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"1b2927878abfa426f8e674d5a82927fbd22894eaf9d5357fa6d75d1c4659bcd1","bodyHash":"a9540bbd5e53b32192ca4a03320434bcc5b203eeb9309dd804513a70ebe04bd0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.getSemanticDiagnosticsWithChecker uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) getSemanticDiagnosticsWithChecker(ctx context.Context, c *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3032,8 +3091,8 @@ export function FilterNoEmitSemanticDiagnostics(diags: GoSlice<GoPtr<Diagnostic>
  * 	)
  * }
  */
-export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, c: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  return Concatenate(
+export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, c: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  return concatenateDiagnostics(
     FilterNoEmitSemanticDiagnostics(Program_getBindAndCheckDiagnosticsWithChecker(receiver, ctx, c, sourceFile), Program_Options(receiver)),
     Program_GetIncludeProcessorDiagnostics(receiver, sourceFile),
   );
@@ -3041,7 +3100,7 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"58024f4d99ada564df7a23698f4cc8b6567aebe9250892ed517fdaae0f7ab8be","bodyHash":"c692dec725a0f679b5f3c530607a70c1efda4dbcf2b03c2aeb6de6c86e56976e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Checker diagnostics force binding in TS-Go; extension-enabled programs must also publish bound-source lifecycle facts before checker hooks consume them. No-extension programs return immediately through the existing extension integration guard."}
+ * @tsgo-override {"category":"extension-host","allow":["body","signature"],"reason":"Checker diagnostics force binding in TS-Go; extension-enabled programs must also publish bound-source lifecycle facts before checker hooks consume them. No-extension programs return immediately through the existing extension integration guard. method Program.getBindAndCheckDiagnosticsWithChecker uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) getBindAndCheckDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3078,34 +3137,41 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
  * 	return filtered
  * }
  */
-export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const compilerOptions = Program_Options(receiver);
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return undefined;
   }
 
   recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
-  let diags: GoPtr<Diagnostic>[] = slices.Clip(SourceFile_BindDiagnostics(sourceFile)) ?? [];
-  diags = [...diags, ...(Checker_GetDiagnostics(fileChecker, ctx, sourceFile) ?? [])];
+  let diags: GoPtr<GoSlice<GoPtr<Diagnostic>>> = slices.Clip(SourceFile_BindDiagnostics(sourceFile));
+  diags = concatenateDiagnostics(diags, Checker_GetDiagnostics(fileChecker, ctx, sourceFile));
 
   const isPlainJS = IsPlainJSFile(sourceFile, compilerOptions!.CheckJs);
   if (isPlainJS) {
+    if (diags === undefined) {
+      return undefined;
+    }
     return Filter(diags, (d) => Set_Has(plainJSErrors as GoPtr<Set<int>>, Diagnostic_Code(d)));
   }
 
   const isJS = sourceFile!.ScriptKind === ScriptKindJS || sourceFile!.ScriptKind === ScriptKindJSX;
   const isCheckJS = isJS && IsCheckJSEnabledForFile(sourceFile, compilerOptions);
   if (isCheckJS) {
-    diags = [...diags, ...(SourceFile_JSDocDiagnostics(sourceFile) ?? [])];
+    diags = concatenateDiagnostics(diags, SourceFile_JSDocDiagnostics(sourceFile));
   }
 
   const [filtered, directivesByLine] = Program_getDiagnosticsWithPrecedingDirectives(receiver, sourceFile, diags);
+  if (directivesByLine === undefined) {
+    return filtered;
+  }
+  if (filtered === undefined) {
+    throw new globalThis.Error("diagnostic directive filtering returned a nil slice with directives");
+  }
   const result: GoPtr<Diagnostic>[] = [...filtered];
-  if (directivesByLine !== undefined) {
-    for (const [, directive] of directivesByLine) {
-      if (directive.Kind === CommentDirectiveKindExpectError) {
-        result.push(NewDiagnostic(sourceFile, directive.Loc, diagnostics.Unused_ts_expect_error_directive));
-      }
+  for (const [, directive] of directivesByLine) {
+    if (directive.Kind === CommentDirectiveKindExpectError) {
+      result.push(NewDiagnostic(sourceFile, directive.Loc, diagnostics.Unused_ts_expect_error_directive));
     }
   }
   return result;
@@ -3113,6 +3179,7 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getDiagnosticsWithPrecedingDirectives","kind":"method","status":"implemented","sigHash":"cfad4c54294ed6238befb391c0c1cdc142c1e9810460139fbd1e08b7d3ece4f3","bodyHash":"7b20e030799de4f003e3d4a21755d0f0f52da30754ddd389539cecaf3ea50d7f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.getDiagnosticsWithPrecedingDirectives uses an explicit undefined-capable TypeScript representation at parameter #2, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/scalars.ts::int,packages/tsts/src/internal/ast/ast.ts::CommentDirective>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/scalars.ts::int,packages/tsts/src/internal/ast/ast.ts::CommentDirective>>]"}
  *
  * Go source:
  * func (p *Program) getDiagnosticsWithPrecedingDirectives(sourceFile *ast.SourceFile, diags []*ast.Diagnostic) ([]*ast.Diagnostic, map[int]ast.CommentDirective) {
@@ -3150,9 +3217,9 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
  * 	return filtered, directivesByLine
  * }
  */
-export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>, diags: GoSlice<GoPtr<Diagnostic>>): [GoSlice<GoPtr<Diagnostic>>, GoMap<int, CommentDirective>] {
+export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>, diags: GoPtr<GoSlice<GoPtr<Diagnostic>>>): [GoPtr<GoSlice<GoPtr<Diagnostic>>>, GoPtr<GoMap<int, CommentDirective>>] {
   if (sourceFile!.CommentDirectives === undefined || sourceFile!.CommentDirectives.length === 0) {
-    return [diags, undefined!];
+    return [diags, undefined];
   }
   const directivesByLine = new globalThis.Map<int, CommentDirective>();
   const sourceFileLike: SourceFileLike = { Text: () => SourceFile_Text(sourceFile), ECMALineMap: () => SourceFile_ECMALineMap(sourceFile) };
@@ -3162,21 +3229,23 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
   }
   const lineStarts = GetECMALineStarts(sourceFileLike);
   const filtered: GoPtr<Diagnostic>[] = [];
-  for (const diagnostic of diags) {
-    let ignoreDiagnostic = false;
-    for (let line = ComputeLineOfPosition(lineStarts, Diagnostic_Pos(diagnostic)) - 1; line >= 0; line--) {
-      const dir = directivesByLine.get(line);
-      if (dir !== undefined) {
-        ignoreDiagnostic = true;
-        directivesByLine.set(line, { ...dir, Kind: CommentDirectiveKindIgnore });
-        break;
+  if (diags !== undefined) {
+    for (const diagnostic of diags) {
+      let ignoreDiagnostic = false;
+      for (let line = ComputeLineOfPosition(lineStarts, Diagnostic_Pos(diagnostic)) - 1; line >= 0; line--) {
+        const dir = directivesByLine.get(line);
+        if (dir !== undefined) {
+          ignoreDiagnostic = true;
+          directivesByLine.set(line, { ...dir, Kind: CommentDirectiveKindIgnore });
+          break;
+        }
+        if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), lineStarts[line]!)) {
+          break;
+        }
       }
-      if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), lineStarts[line]!)) {
-        break;
+      if (!ignoreDiagnostic) {
+        filtered.push(diagnostic);
       }
-    }
-    if (!ignoreDiagnostic) {
-      filtered.push(diagnostic);
     }
   }
   return [filtered, directivesByLine];
@@ -3184,6 +3253,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getDeclarationDiagnosticsForFile","kind":"method","status":"implemented","sigHash":"342ad0d3ce5ef039ad93dcb41c26af4af6823117e0dda02880de2cdc3363dd4b","bodyHash":"45459b62826b0ecaca3562e5e1800604b59cf18ed45f334bb5aa59fac21bbf38"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.getDeclarationDiagnosticsForFile uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) getDeclarationDiagnosticsForFile(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3202,23 +3272,27 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
  * 	return diagnostics
  * }
  */
-export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (sourceFile!.IsDeclarationFile) {
     return [];
   }
-  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile);
+  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile, (): GoPtr<GoSlice<GoPtr<Diagnostic>>> => undefined);
   if (ok) {
-    return cached as GoSlice<GoPtr<Diagnostic>>;
+    return cached;
   }
   const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-  const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
-  const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags);
-  done();
-  return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
+  try {
+    const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
+    const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags);
+    return stored;
+  } finally {
+    done();
+  }
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getSuggestionDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"3f4cddb03eb443780d3e6d49fe4e18d093b340e664670eb829a660fe3f87116c","bodyHash":"77902dc26f70d565ae83bdbbf1bdcfd57de81927f43efdf43895db078201b6ca"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.getSuggestionDiagnosticsWithChecker uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *Program) getSuggestionDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3233,13 +3307,11 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
  * 	return diags
  * }
  */
-export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Program>, ctx: Context, fileChecker: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
-    return undefined!;
+    return undefined;
   }
-  let diags: GoPtr<Diagnostic>[] = slices.Clip(sourceFile!.BindSuggestionDiagnostics) ?? [];
-  diags = [...diags, ...(Checker_GetSuggestionDiagnostics(fileChecker, ctx, sourceFile) ?? [])];
-  return diags;
+  return concatenateDiagnostics(slices.Clip(sourceFile!.BindSuggestionDiagnostics), Checker_GetSuggestionDiagnostics(fileChecker, ctx, sourceFile));
 }
 
 /**
@@ -3267,6 +3339,7 @@ export function isCommentOrBlankLine(text: string, pos: int): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::SortAndDeduplicateDiagnostics","kind":"func","status":"implemented","sigHash":"9915c58133857e0f27b023ab28200543e6b2ff75f632810af0fa3f2a9021027a","bodyHash":"3f32e7d0dec67ac2088362abad58f7ee732df988deca8063d504672d0e130a98"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A nil Go diagnostics slice is observably distinct from an allocated empty slice and slices.Clone preserves that distinction; TypeScript arrays cannot carry the nil state, so the parameter and result use GoPtr while the body remains the direct three-statement Go algorithm.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func SortAndDeduplicateDiagnostics(diagnostics []*ast.Diagnostic) []*ast.Diagnostic {
@@ -3275,14 +3348,15 @@ export function isCommentOrBlankLine(text: string, pos: int): bool {
  * 	return compactAndMergeRelatedInfos(diagnostics)
  * }
  */
-export function SortAndDeduplicateDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  const cloned = slices.Clone(diags) ?? [];
-  cloned.sort(CompareDiagnostics);
+export function SortAndDeduplicateDiagnostics(diags: GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  const cloned = slices.Clone(diags);
+  slices.SortFunc(cloned, CompareDiagnostics);
   return compactAndMergeRelatedInfos(cloned);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::compactAndMergeRelatedInfos","kind":"func","status":"implemented","sigHash":"42709cae8871346e6c6a3377b0e66bcbe09454353ad492549702e97ff9075513","bodyHash":"e765bda8e871e462ee82676791c0e23190a24aa3ca2eb57fefec4b4ae6fb8b40"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func compactAndMergeRelatedInfos uses an explicit undefined-capable TypeScript representation at parameter #0, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func compactAndMergeRelatedInfos(diagnostics []*ast.Diagnostic) []*ast.Diagnostic {
@@ -3316,7 +3390,7 @@ export function SortAndDeduplicateDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>)
  * 	return diagnostics[:j]
  * }
  */
-export function compactAndMergeRelatedInfos(diags: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function compactAndMergeRelatedInfos(diags: GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (diags === undefined || diags.length < 2) {
     return diags;
   }
@@ -3704,6 +3778,7 @@ export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, s
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::WriteFileData","kind":"type","status":"implemented","sigHash":"d02490559e7148904b3f7b5cb45b50fc74ceda7b7b8f1867e80c5e3c4fa1c2f4","bodyHash":"e6fe73d2896a49d500f38236d0752b6a65a8c754fc8813de34a9afa374cfb4a3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type WriteFileData uses an explicit undefined-capable TypeScript representation at member 'Diagnostics' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{BuildInfo:unknown;Diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;SkippedDtsWrite:packages/tsts/src/go/scalars.ts::bool;SourceMapUrlPos:packages/tsts/src/go/scalars.ts::int}","tsSignature":"interface{BuildInfo:unknown;Diagnostics:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;SkippedDtsWrite:packages/tsts/src/go/scalars.ts::bool;SourceMapUrlPos:packages/tsts/src/go/scalars.ts::int}"}
  *
  * Go source:
  * WriteFileData struct {
@@ -3716,7 +3791,7 @@ export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, s
 export interface WriteFileData {
   SourceMapUrlPos: int;
   BuildInfo: unknown;
-  Diagnostics: GoSlice<GoPtr<Diagnostic>>;
+  Diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   SkippedDtsWrite: bool;
 }
 
@@ -3730,6 +3805,7 @@ export type WriteFile = (fileName: string, text: string, data: GoPtr<WriteFileDa
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitOptions","kind":"type","status":"implemented","sigHash":"83ed49471ad2467500bc809d9a9f0d63d64794c8e634e9fce9d4baf6375d0a61","bodyHash":"5653afb4ca3dcd588dcbb73c6cd0144bf3603504503b2785ee45b7bac68521bc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type EmitOptions uses an explicit undefined-capable TypeScript representation at member 'WriteFile' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{EmitOnly:packages/tsts/src/internal/compiler/emitter.ts::EmitOnly;TargetSourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;WriteFile:packages/tsts/src/internal/compiler/program.ts::WriteFile}","tsSignature":"interface{EmitOnly:packages/tsts/src/internal/compiler/emitter.ts::EmitOnly;TargetSourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;WriteFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::WriteFile>}"}
  *
  * Go source:
  * EmitOptions struct {
@@ -3741,11 +3817,12 @@ export type WriteFile = (fileName: string, text: string, data: GoPtr<WriteFileDa
 export interface EmitOptions {
   TargetSourceFile: GoPtr<SourceFile>;
   EmitOnly: EmitOnly;
-  WriteFile: WriteFile;
+  WriteFile: GoPtr<WriteFile>;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::EmitResult","kind":"type","status":"implemented","sigHash":"2b25aa59d895e79438eb5e11a2f176f46472bb77b9e5124546e1db4ee3fb05fb","bodyHash":"95514003bfcb59d4414b8dab535aca2f66de7283ac74f432d494df29dc155936"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type EmitResult uses an explicit undefined-capable TypeScript representation at member 'Diagnostics', member 'EmittedFiles', member 'SourceMaps' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;EmitSkipped:packages/tsts/src/go/scalars.ts::bool;EmittedFiles:packages/tsts/src/go/compat.ts::GoSlice<string>;SourceMaps:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::SourceMapEmitResult>>}","tsSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;EmitSkipped:packages/tsts/src/go/scalars.ts::bool;EmittedFiles:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;SourceMaps:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::SourceMapEmitResult>>>}"}
  *
  * Go source:
  * EmitResult struct {
@@ -3757,9 +3834,9 @@ export interface EmitOptions {
  */
 export interface EmitResult {
   EmitSkipped: bool;
-  Diagnostics: GoSlice<GoPtr<Diagnostic>>;
-  EmittedFiles: GoSlice<string>;
-  SourceMaps: GoSlice<GoPtr<SourceMapEmitResult>>;
+  Diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  EmittedFiles: GoPtr<GoSlice<string>>;
+  SourceMaps: GoPtr<GoSlice<GoPtr<SourceMapEmitResult>>>;
 }
 
 /**
@@ -3847,49 +3924,73 @@ export interface SourceMapEmitResult {
  * }
  */
 export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
-  if (options.EmitOnly !== 3 /* EmitOnlyForcedDts */) {
-    const result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
-    if (result !== undefined) {
-      return result;
+  const popTrace = receiver!.opts.Tracing === undefined
+    ? undefined
+    : Tracing_Push(receiver!.opts.Tracing, PhaseEmit, "emit", undefined, true as bool);
+  try {
+    if (options.EmitOnly !== 3 /* EmitOnlyForcedDts */) {
+      const result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
+      if (result !== undefined || ctx.Err() !== undefined) {
+        return result;
+      }
     }
+
+    const newLine = NewLineKind_GetNewLineCharacter(Program_Options(receiver)!.NewLine);
+    const writerPool = new Pool<ReturnType<typeof NewTextWriter>>();
+    writerPool.New = (): ReturnType<typeof NewTextWriter> => NewTextWriter(newLine, 0 as int);
+    const wg = NewWorkGroup(Program_SingleThreaded(receiver));
+    const sourceFiles = Program_getSourceFilesToEmit(receiver, options.TargetSourceFile, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
+    const emitters: GoPtr<emitterType>[] = [];
+
+    for (const sourceFile of sourceFiles) {
+      const e: emitterType = {
+        host: undefined,
+        sourceFile,
+        emitOnly: options.EmitOnly,
+        writeFile: options.WriteFile,
+        tr: receiver!.opts.Tracing,
+        writer: undefined,
+        paths: undefined,
+        emitterDiagnostics: {
+          mu: new (class { Lock(): void {} Unlock(): void {} TryLock(): bool { return true as bool; } })(),
+          count: 0 as int,
+          fileDiagnostics: undefined,
+          fileDiagnosticsSorted: { M: new globalThis.Map() } as unknown as import("../collections/set.js").Set<string>,
+          nonFileDiagnostics: undefined,
+          nonFileDiagnosticsSorted: false as bool,
+        },
+        emitResult: { EmitSkipped: false as bool, Diagnostics: undefined, EmittedFiles: undefined, SourceMaps: undefined },
+      };
+      emitters.push(e);
+      wg.Queue((): void => {
+        const [host, done] = newEmitHost(ctx, receiver, sourceFile);
+        try {
+          e.host = emitHost_as_compiler_EmitHost(host);
+          const writer = writerPool.Get();
+          if (writer === undefined) {
+            throw new globalThis.Error("sync.Pool returned nil emit writer");
+          }
+          writer.Clear();
+          e.writer = writer;
+          e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
+          emitter_emit(e);
+          e.writer = undefined;
+          writerPool.Put(writer);
+        } finally {
+          done();
+        }
+      });
+    }
+
+    wg.RunAndWait();
+    const results = core_Map(emitters, (e) => e !== undefined ? e!.emitResult : undefined);
+    if (results === undefined) {
+      throw new globalThis.Error("core.Map returned nil for a non-nil emitter slice");
+    }
+    return CombineEmitResults(results);
+  } finally {
+    popTrace?.();
   }
-
-  const newLine = NewLineKind_GetNewLineCharacter(Program_Options(receiver)!.NewLine);
-  const sourceFiles = Program_getSourceFilesToEmit(receiver, options.TargetSourceFile, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
-  const emitters: GoPtr<emitterType>[] = [];
-
-  for (const sourceFile of sourceFiles) {
-    const e: emitterType = {
-      host: undefined!,
-      sourceFile,
-      emitOnly: options.EmitOnly,
-      writeFile: options.WriteFile,
-      tr: receiver!.opts.Tracing,
-      writer: undefined!,
-      paths: undefined!,
-      emitterDiagnostics: {
-        mu: new (class { Lock(): void {} Unlock(): void {} TryLock(): bool { return true as bool; } })(),
-        count: 0 as int,
-        fileDiagnostics: undefined,
-        fileDiagnosticsSorted: { M: new globalThis.Map() } as unknown as import("../collections/set.js").Set<string>,
-        nonFileDiagnostics: undefined,
-        nonFileDiagnosticsSorted: false as bool,
-      },
-      emitResult: { EmitSkipped: false as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] },
-    };
-    emitters.push(e);
-    const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-    e.host = emitHost_as_compiler_EmitHost(host);
-    const writer = NewTextWriter(newLine, 0);
-    writer.Clear();
-    e.writer = writer;
-    e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
-    emitter_emit(e);
-    e.writer = undefined!;
-    done();
-  }
-
-  return CombineEmitResults(core_Map(emitters, (e) => e !== undefined ? e!.emitResult : undefined));
 }
 
 /**
@@ -3917,9 +4018,9 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
 export function CombineEmitResults(results: GoSlice<GoPtr<EmitResult>>): GoPtr<EmitResult> {
   const result: EmitResult = {
     EmitSkipped: false as bool,
-    Diagnostics: [],
-    EmittedFiles: [],
-    SourceMaps: [],
+    Diagnostics: undefined,
+    EmittedFiles: undefined,
+    SourceMaps: undefined,
   };
   for (const emitResult of results) {
     if (emitResult === undefined) {
@@ -3928,10 +4029,20 @@ export function CombineEmitResults(results: GoSlice<GoPtr<EmitResult>>): GoPtr<E
     if (emitResult!.EmitSkipped) {
       result.EmitSkipped = true as bool;
     }
-    result.Diagnostics = [...result.Diagnostics, ...(emitResult!.Diagnostics ?? [])];
-    result.EmittedFiles = [...result.EmittedFiles, ...(emitResult!.EmittedFiles ?? [])];
-    if (emitResult!.SourceMaps !== undefined) {
-      result.SourceMaps = [...result.SourceMaps, ...(emitResult!.SourceMaps ?? [])];
+    if (emitResult.Diagnostics !== undefined && emitResult.Diagnostics.length !== 0) {
+      result.Diagnostics = result.Diagnostics === undefined
+        ? [...emitResult.Diagnostics]
+        : [...result.Diagnostics, ...emitResult.Diagnostics];
+    }
+    if (emitResult.EmittedFiles !== undefined && emitResult.EmittedFiles.length !== 0) {
+      result.EmittedFiles = result.EmittedFiles === undefined
+        ? [...emitResult.EmittedFiles]
+        : [...result.EmittedFiles, ...emitResult.EmittedFiles];
+    }
+    if (emitResult.SourceMaps !== undefined && emitResult.SourceMaps.length !== 0) {
+      result.SourceMaps = result.SourceMaps === undefined
+        ? [...emitResult.SourceMaps]
+        : [...result.SourceMaps, ...emitResult.SourceMaps];
     }
   }
   return result;
@@ -3939,6 +4050,7 @@ export function CombineEmitResults(results: GoSlice<GoPtr<EmitResult>>): GoPtr<E
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramLike","kind":"type","status":"implemented","sigHash":"45c6e989acc4aaba77f0d584525ceb25ca00c5414248da6530c643ddac31b5c1","bodyHash":"f4ac1b6b329fc5133cc1f242b5040885638a4bd626ec4c5c9912fec1a3613300"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type ProgramLike uses an explicit undefined-capable TypeScript representation at member 'GetConfigFileParsingDiagnostics', member 'GetSyntacticDiagnostics', member 'GetBindDiagnostics', member 'GetProgramDiagnostics', member 'GetGlobalDiagnostics', member 'GetSemanticDiagnostics', member 'GetDeclarationDiagnostics', member 'GetSuggestionDiagnostics' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{CommonSourceDirectory:()=>string;Emit:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/compiler/program.ts::EmitOptions)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>;GetBindDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetConfigFileParsingDiagnostics:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetDeclarationDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetGlobalDiagnostics:(packages/tsts/src/go/context.ts::Context)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetProgramDiagnostics:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetSemanticDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetSourceFile:(string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;GetSourceFiles:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;GetSuggestionDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;GetSyntacticDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;IsSourceFileDefaultLibrary:(packages/tsts/src/internal/tspath/path.ts::Path)=>packages/tsts/src/go/scalars.ts::bool;Options:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;Program:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>}","tsSignature":"interface{CommonSourceDirectory:()=>string;Emit:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/compiler/program.ts::EmitOptions)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>;GetBindDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetConfigFileParsingDiagnostics:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetDeclarationDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetGlobalDiagnostics:(packages/tsts/src/go/context.ts::Context)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetProgramDiagnostics:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetSemanticDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetSourceFile:(string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;GetSourceFiles:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;GetSuggestionDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;GetSyntacticDiagnostics:(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;IsSourceFileDefaultLibrary:(packages/tsts/src/internal/tspath/path.ts::Path)=>packages/tsts/src/go/scalars.ts::bool;Options:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;Program:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>}"}
  *
  * Go source:
  * ProgramLike interface {
@@ -3963,14 +4075,14 @@ export interface ProgramLike {
   Options(): GoPtr<CompilerOptions>;
   GetSourceFile(path: string): GoPtr<SourceFile>;
   GetSourceFiles(): GoSlice<GoPtr<SourceFile>>;
-  GetConfigFileParsingDiagnostics(): GoSlice<GoPtr<Diagnostic>>;
-  GetSyntacticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetBindDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetProgramDiagnostics(): GoSlice<GoPtr<Diagnostic>>;
-  GetGlobalDiagnostics(ctx: Context): GoSlice<GoPtr<Diagnostic>>;
-  GetSemanticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetDeclarationDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
-  GetSuggestionDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>>;
+  GetConfigFileParsingDiagnostics(): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetSyntacticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetBindDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetProgramDiagnostics(): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetGlobalDiagnostics(ctx: Context): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetSemanticDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetDeclarationDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  GetSuggestionDiagnostics(ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   Emit(ctx: Context, options: EmitOptions): GoPtr<EmitResult>;
   CommonSourceDirectory(): string;
   IsSourceFileDefaultLibrary(path: Path): bool;
@@ -3982,14 +4094,14 @@ export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): Progr
     Options: (): GoPtr<CompilerOptions> => Program_Options(receiver),
     GetSourceFile: (path: string): GoPtr<SourceFile> => Program_GetSourceFile(receiver, path),
     GetSourceFiles: (): GoSlice<GoPtr<SourceFile>> => Program_GetSourceFiles(receiver),
-    GetConfigFileParsingDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetConfigFileParsingDiagnostics(receiver),
-    GetSyntacticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSyntacticDiagnostics(receiver, ctx, file),
-    GetBindDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetBindDiagnostics(receiver, ctx, file),
-    GetProgramDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetProgramDiagnostics(receiver),
-    GetGlobalDiagnostics: (ctx: Context): GoSlice<GoPtr<Diagnostic>> => Program_GetGlobalDiagnostics(receiver, ctx),
-    GetSemanticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSemanticDiagnostics(receiver, ctx, file),
-    GetDeclarationDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetDeclarationDiagnostics(receiver, ctx, file),
-    GetSuggestionDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSuggestionDiagnostics(receiver, ctx, file),
+    GetConfigFileParsingDiagnostics: (): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetConfigFileParsingDiagnostics(receiver),
+    GetSyntacticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetSyntacticDiagnostics(receiver, ctx, file),
+    GetBindDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetBindDiagnostics(receiver, ctx, file),
+    GetProgramDiagnostics: (): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetProgramDiagnostics(receiver),
+    GetGlobalDiagnostics: (ctx: Context): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetGlobalDiagnostics(receiver, ctx),
+    GetSemanticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetSemanticDiagnostics(receiver, ctx, file),
+    GetDeclarationDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetDeclarationDiagnostics(receiver, ctx, file),
+    GetSuggestionDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> => Program_GetSuggestionDiagnostics(receiver, ctx, file),
     Emit: (ctx: Context, options: EmitOptions): GoPtr<EmitResult> => Program_Emit(receiver, ctx, options),
     CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
     IsSourceFileDefaultLibrary: (path: Path): bool => Program_IsSourceFileDefaultLibrary(receiver, path),
@@ -4035,19 +4147,20 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
     program.GetBindDiagnostics.bind(program),
     program.GetSemanticDiagnostics.bind(program),
   );
-  if (diags.length === 0) {
+  if (diags === undefined || diags.length === 0) {
     return undefined;
   }
   return {
     Diagnostics: diags,
     EmitSkipped: true as bool,
-    EmittedFiles: [],
-    SourceMaps: [],
+    EmittedFiles: undefined,
+    SourceMaps: undefined,
   };
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::GetDiagnosticsOfAnyProgram","kind":"func","status":"implemented","sigHash":"83c1b7952f0c3423e8da28b9f912beda2d8a85c7d4385beed1bbae4c8c45876b","bodyHash":"61bcff9a2f65f8cd53b0f29e8d69499e04c7faea584b8d36dbf386aaf0867171"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func GetDiagnosticsOfAnyProgram uses an explicit undefined-capable TypeScript representation at parameter #4, parameter #5, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/compiler/program.ts::ProgramLike,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/context.ts::Context,packages/tsts/src/internal/compiler/program.ts::ProgramLike,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>,(packages/tsts/src/go/context.ts::Context,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func GetDiagnosticsOfAnyProgram(
@@ -4088,29 +4201,29 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
  * 	return allDiagnostics
  * }
  */
-export function GetDiagnosticsOfAnyProgram(ctx: Context, program: ProgramLike, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>, getSemanticDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  let allDiagnostics: GoPtr<Diagnostic>[] = [...(slices.Clip(program.GetConfigFileParsingDiagnostics()) ?? [])];
-  const configFileParsingDiagnosticsLength = allDiagnostics.length;
+export function GetDiagnosticsOfAnyProgram(ctx: Context, program: ProgramLike, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>, getSemanticDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  let allDiagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>> = slices.Clip(program.GetConfigFileParsingDiagnostics());
+  const configFileParsingDiagnosticsLength = allDiagnostics === undefined ? 0 : allDiagnostics.length;
 
-  allDiagnostics = [...allDiagnostics, ...(program.GetSyntacticDiagnostics(ctx, file) ?? [])];
+  allDiagnostics = concatenateDiagnostics(allDiagnostics, program.GetSyntacticDiagnostics(ctx, file));
 
   // If we didn't have any syntactic errors, then also try getting the program (options),
   // global and semantic errors.
-  if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-    allDiagnostics = [...allDiagnostics, ...(program.GetProgramDiagnostics() ?? [])];
+  if ((allDiagnostics === undefined ? 0 : allDiagnostics.length) === configFileParsingDiagnosticsLength) {
+    allDiagnostics = concatenateDiagnostics(allDiagnostics, program.GetProgramDiagnostics());
 
     getBindDiagnostics(ctx, file);
 
     if (Tristate_IsFalseOrUnknown(program.Options()!.ListFilesOnly)) {
-      allDiagnostics = [...allDiagnostics, ...(program.GetGlobalDiagnostics(ctx) ?? [])];
+      allDiagnostics = concatenateDiagnostics(allDiagnostics, program.GetGlobalDiagnostics(ctx));
 
-      if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = [...allDiagnostics, ...(getSemanticDiagnostics(ctx, file) ?? [])];
-        allDiagnostics = [...allDiagnostics, ...(program.GetGlobalDiagnostics(ctx) ?? [])];
+      if ((allDiagnostics === undefined ? 0 : allDiagnostics.length) === configFileParsingDiagnosticsLength) {
+        allDiagnostics = concatenateDiagnostics(allDiagnostics, getSemanticDiagnostics(ctx, file));
+        allDiagnostics = concatenateDiagnostics(allDiagnostics, program.GetGlobalDiagnostics(ctx));
       }
 
-      if ((skipNoEmitCheckForDtsDiagnostics || Tristate_IsTrue(program.Options()!.NoEmit)) && CompilerOptions_GetEmitDeclarations(program.Options()) && allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = [...allDiagnostics, ...(program.GetDeclarationDiagnostics(ctx, file) ?? [])];
+      if ((skipNoEmitCheckForDtsDiagnostics || Tristate_IsTrue(program.Options()!.NoEmit)) && CompilerOptions_GetEmitDeclarations(program.Options()) && (allDiagnostics === undefined ? 0 : allDiagnostics.length) === configFileParsingDiagnosticsLength) {
+        allDiagnostics = concatenateDiagnostics(allDiagnostics, program.GetDeclarationDiagnostics(ctx, file));
       }
     }
   }
@@ -4395,13 +4508,14 @@ export function Program_GetResolvedTypeReferenceDirectiveFromTypeReferenceDirect
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetResolvedTypeReferenceDirectives","kind":"method","status":"implemented","sigHash":"f3c33f8d4696f8abb437609f1da0e76ea173e3723b42fbe095c7330f9fc3c016","bodyHash":"ad9db4680067a6d25ce50e1bc3fa939363f3a839ff390879a64674981aa5326f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method Program.GetResolvedTypeReferenceDirectives uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>>"}
  *
  * Go source:
  * func (p *Program) GetResolvedTypeReferenceDirectives() map[tspath.Path]module.ModeAwareCache[*module.ResolvedTypeReferenceDirective] {
  * 	return p.typeResolutionsInFile
  * }
  */
-export function Program_GetResolvedTypeReferenceDirectives(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>> {
+export function Program_GetResolvedTypeReferenceDirectives(receiver: GoPtr<Program>): GoMap<Path, GoPtr<ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>> {
   return receiver!.__tsgoEmbedded0!.typeResolutionsInFile;
 }
 
@@ -4774,18 +4888,21 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
       }
       const packageJsonName = CombinePaths(meta.PackageJsonDirectory, "package.json");
       const info = Program_GetPackageJsonInfo(receiver, packageJsonName);
-      if (InfoCacheEntry_GetContents(info) === undefined) {
+      const contents = InfoCacheEntry_GetContents(info);
+      if (contents === undefined) {
         continue;
       }
 
-      const contents = InfoCacheEntry_GetContents(info)!;
       const depFields = contents.__tsgoEmbedded0?.__tsgoEmbedded2;
       if (depFields === undefined) {
         continue;
       }
       const runtimeDeps = DependencyFields_GetRuntimeDependencyNames(depFields);
-      for (const depUnknown of Set_Keys(runtimeDeps).keys()) {
-        const dep = depUnknown as string;
+      const runtimeDepNames = Set_Keys(runtimeDeps);
+      if (runtimeDepNames === undefined) {
+        continue;
+      }
+      for (const dep of runtimeDepNames.keys()) {
         const possibleDirectoryPath = Program_toPath(receiver, CombinePaths(meta.PackageJsonDirectory, "node_modules", dep));
         if (KnownSymlinks_HasDirectory(knownSymlinks, possibleDirectoryPath)) {
           continue;
@@ -4852,6 +4969,7 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead","bodyHash":"329c0952e7574a74184dd36045f61ffd8bccce2f84c7b9402d1423c207ea0735"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func forEachResolution uses an explicit undefined-capable TypeScript representation at parameter #0 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<T0>>,(T0,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/internal/tspath/path.ts::Path)=>void,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>void","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<T0>>>>,(T0,string,packages/tsts/src/internal/core/compileroptions.ts::ResolutionMode,packages/tsts/src/internal/tspath/path.ts::Path)=>void,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>void"}
  *
  * Go source:
  * func forEachResolution[T any](resolutionCache map[tspath.Path]module.ModeAwareCache[T], callback func(resolution T, moduleName string, mode core.ResolutionMode, filePath tspath.Path), file *ast.SourceFile) {
@@ -4870,27 +4988,25 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * 	}
  * }
  */
-const emptyResolutionCache: GoMap<Path, ModeAwareCache<unknown>> = new globalThis.Map<Path, ModeAwareCache<unknown>>();
-const emptyModeAwareCache: ModeAwareCache<unknown> = NewGoStructMap<ModeAwareCacheKey, unknown>();
-
-const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
-  map !== undefined ? map : empty;
-
-const resolutionCacheEntries = <T>(resolutionCache: GoMap<Path, ModeAwareCache<T>> | undefined): Iterable<[Path, ModeAwareCache<T>]> =>
-  goMapEntries(resolutionCache, emptyResolutionCache as GoMap<Path, ModeAwareCache<T>>);
-
-const modeAwareCacheEntries = <T>(modeAwareCache: ModeAwareCache<T> | undefined): Iterable<[ModeAwareCacheKey, T]> =>
-  goMapEntries(modeAwareCache, emptyModeAwareCache as ModeAwareCache<T>);
-
-export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+export function forEachResolution<T>(resolutionCache: GoPtr<GoMap<Path, GoPtr<ModeAwareCache<T>>>>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+  if (resolutionCache === undefined) {
+    return;
+  }
   if (file !== undefined) {
-    const resolutions = resolutionCache.get(SourceFile_Path(file));
-    for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
+    const filePath = SourceFile_Path(file);
+    const resolutions = resolutionCache.get(filePath);
+    if (resolutions === undefined) {
+      return;
+    }
+    for (const [key, resolution] of resolutions) {
       callback(resolution, key.Name, key.Mode, SourceFile_Path(file));
     }
   } else {
-    for (const [filePath, resolutions] of resolutionCacheEntries(resolutionCache)) {
-      for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
+    for (const [filePath, resolutions] of resolutionCache) {
+      if (resolutions === undefined) {
+        continue;
+      }
+      for (const [key, resolution] of resolutions) {
         callback(resolution, key.Name, key.Mode, filePath);
       }
     }

@@ -31,7 +31,6 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode, NodeVisitor_VisitSlice } from "../../ast/visitor.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
-import { FirstOrNil } from "../../core/core.js";
 import { FirstResult } from "../../core/core.js";
 import { convertClassDeclarationToClassExpression } from "./utilities.js";
 import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.js";
@@ -400,7 +399,9 @@ export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDecl
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
     let statements: GoSlice<GoPtr<Node>> = [];
     const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
-    statements = [...statements, ...prologueVisited];
+    if (prologueVisited !== undefined) {
+      statements = [...statements, ...prologueVisited];
+    }
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(
       receiver,
       usingDeclarationTransformer_transformUsingDeclarations(receiver, rest as GoSlice<GoPtr<Statement>>, envBinding, undefined),
@@ -541,7 +542,8 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
     const factory = printerFactory!.__tsgoEmbedded0!;
     const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
     const forInitializer = AsVariableDeclarationList(node!.Initializer);
-    let forDecl = FirstOrNil(forInitializer!.Declarations!.Nodes) as GoPtr<Node>;
+    const declarationNodes = forInitializer!.Declarations!.Nodes;
+    let forDecl = declarationNodes === undefined || declarationNodes.length === 0 ? undefined : declarationNodes[0];
     if (forDecl === undefined) {
       forDecl = NewVariableDeclaration(factory, NodeFactory_NewTempVariable(printerFactory), undefined, undefined, undefined) as GoPtr<Node>;
     }

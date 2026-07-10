@@ -45,6 +45,13 @@ export type GoComplex128 = { readonly real: number; readonly imag: number };
 export type GoUnsafePointer = GoPtr<unknown>;
 export type GoRune = int;
 
+export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: string): T {
+  if (value === undefined) {
+    throw new TypeError(\`\${operation} returned nil after success\`);
+  }
+  return value;
+}
+
 export interface GoInterfaceType<T> {
   readonly name: string;
   readonly identity: symbol;
@@ -112,7 +119,7 @@ export interface GoChanSelectCase {
 
 const goChannelState: unique symbol = Symbol("GoChannel.state");
 
-export function MakeGoChan<T>(capacity = 0, zeroValue: () => T = (): T => undefined as T): GoChan<T> {
+export function MakeGoChan<T>(capacity: number, zeroValue: () => T): GoChan<T> {
   if (!Number.isSafeInteger(capacity) || capacity < 0) {
     throw new RangeError("makechan: size out of range");
   }
@@ -264,209 +271,259 @@ function takeGoChannelReadyValue<T>(state: GoChannelState<T>): [T, bool] {
   throw new Error("receive from channel that is not ready");
 }
 
-const goObjectIds = new WeakMap<object, number>();
-let nextGoObjectId = 1;
+export interface GoMapKeyDescriptor<K> {
+  readonly identity: symbol;
+  append(parts: unknown[], value: K): void;
+}
+
+export interface GoStructKeyField<K> {
+  append(parts: unknown[], value: K): void;
+}
+
+export interface GoDynamicComparable {
+  readonly descriptor: GoMapKeyDescriptor<unknown>;
+  readonly value: unknown;
+}
+
+const goNilPointerKey = Symbol("GoKey.nilPointer");
+const goNilInterfaceKey = Symbol("GoKey.nilInterface");
+
+function createGoMapKeyDescriptor<K>(append: (parts: unknown[], value: K) => void): GoMapKeyDescriptor<K> {
+  return globalThis.Object.freeze({ identity: Symbol("GoKey.type"), append });
+}
+
+function appendGoMapKey<K>(parts: unknown[], descriptor: GoMapKeyDescriptor<K>, value: K): void {
+  parts.push(descriptor.identity);
+  descriptor.append(parts, value);
+}
+
+function requireGoKeyType(value: unknown, expected: string): void {
+  if (typeof value !== expected) throw new TypeError(`Go map key descriptor expected ${expected}, got ${typeof value}`);
+}
+
+export const GoBooleanKey: GoMapKeyDescriptor<boolean> = createGoMapKeyDescriptor((parts, value) => {
+  requireGoKeyType(value, "boolean");
+  parts.push(value);
+});
+
+export const GoNumberKey: GoMapKeyDescriptor<number> = createGoMapKeyDescriptor((parts, value) => {
+  requireGoKeyType(value, "number");
+  parts.push(Number.isNaN(value) ? Symbol("GoKey.NaN") : value);
+});
+
+export const GoBigIntKey: GoMapKeyDescriptor<bigint> = createGoMapKeyDescriptor((parts, value) => {
+  requireGoKeyType(value, "bigint");
+  parts.push(value);
+});
+
+export const GoStringKey: GoMapKeyDescriptor<string> = createGoMapKeyDescriptor((parts, value) => {
+  requireGoKeyType(value, "string");
+  parts.push(value);
+});
+
+export function GoPointerKey<T extends object>(): GoMapKeyDescriptor<GoPtr<T>> {
+  return createGoMapKeyDescriptor((parts, value) => {
+    if (value === undefined) {
+      parts.push(goNilPointerKey);
+      return;
+    }
+    if ((typeof value !== "object" || value === null) && typeof value !== "function") {
+      throw new TypeError("Go pointer map key must retain object identity");
+    }
+    parts.push(value);
+  });
+}
+
+export function GoArrayKey<T>(length: number, element: GoMapKeyDescriptor<T>): GoMapKeyDescriptor<readonly T[]> {
+  if (!Number.isSafeInteger(length) || length < 0) throw new RangeError("Go array key length must be a non-negative safe integer");
+  return createGoMapKeyDescriptor((parts, value) => {
+    if (!globalThis.Array.isArray(value) || value.length !== length) {
+      throw new TypeError(`Go array map key expected length ${length}`);
+    }
+    for (const item of value) appendGoMapKey(parts, element, item);
+  });
+}
+
+export function GoStructField<K, V>(read: (value: K) => V, descriptor: GoMapKeyDescriptor<V>): GoStructKeyField<K> {
+  return { append: (parts, value) => appendGoMapKey(parts, descriptor, read(value)) };
+}
+
+export function GoStructKey<K>(fields: readonly GoStructKeyField<K>[]): GoMapKeyDescriptor<K> {
+  return createGoMapKeyDescriptor((parts, value) => {
+    if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
+    for (const field of fields) field.append(parts, value);
+  });
+}
+
+export function GoNamedKey<K>(underlying: GoMapKeyDescriptor<K>): GoMapKeyDescriptor<K> {
+  return createGoMapKeyDescriptor((parts, value) => appendGoMapKey(parts, underlying, value));
+}
+
+export function GoInterfaceKey<K>(dynamic: (value: K) => GoDynamicComparable | undefined): GoMapKeyDescriptor<K> {
+  return createGoMapKeyDescriptor((parts, value) => {
+    const selected = dynamic(value);
+    if (selected === undefined) {
+      parts.push(goNilInterfaceKey);
+      return;
+    }
+    appendGoMapKey(parts, selected.descriptor, selected.value);
+  });
+}
+
+interface GoStructMapEntry<K, V> {
+  readonly key: K;
+  value: V;
+  active: boolean;
+}
+
+interface GoStructMapTrieNode<K, V> {
+  readonly children: Map<unknown, GoStructMapTrieNode<K, V>>;
+  entry?: GoStructMapEntry<K, V>;
+}
+
+function newGoStructMapTrieNode<K, V>(): GoStructMapTrieNode<K, V> {
+  return { children: new globalThis.Map() };
+}
 
 export class GoStructMap<K, V> implements Map<K, V> {
   readonly [Symbol.toStringTag] = "Map";
-  private readonly entriesByKey = new globalThis.Map<string, { key: K; value: V }>();
+  private root = newGoStructMapTrieNode<K, V>();
+  private readonly orderedEntries: Array<GoStructMapEntry<K, V>> = [];
+  private activeSize = 0;
 
-  get size(): number {
-    return this.entriesByKey.size;
-  }
+  constructor(private readonly keyDescriptor: GoMapKeyDescriptor<K>) {}
+
+  get size(): number { return this.activeSize; }
 
   clear(): void {
-    this.entriesByKey.clear();
+    this.root = newGoStructMapTrieNode<K, V>();
+    this.orderedEntries.length = 0;
+    this.activeSize = 0;
   }
 
   delete(key: K): boolean {
-    return this.entriesByKey.delete(goStructMapKey(key));
+    const entry = this.findEntry(key);
+    if (entry === undefined) return false;
+    entry.active = false;
+    this.leafFor(key, false)!.entry = undefined;
+    this.activeSize--;
+    return true;
   }
 
   forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: unknown): void {
-    for (const entry of this.entriesByKey.values()) {
-      callbackfn.call(thisArg, entry.value, entry.key, this as unknown as Map<K, V>);
-    }
+    for (const entry of this.orderedEntries) if (entry.active) callbackfn.call(thisArg, entry.value, entry.key, this);
   }
 
-  get(key: K): V | undefined {
-    return this.entriesByKey.get(goStructMapKey(key))?.value;
-  }
+  get(key: K): V | undefined { return this.findEntry(key)?.value; }
 
   getOrInsert(key: K, value: V): V {
-    const keyText = goStructMapKey(key);
-    const existing = this.entriesByKey.get(keyText);
-    if (existing !== undefined) {
-      return existing.value;
-    }
-    this.entriesByKey.set(keyText, { key, value });
+    const existing = this.findEntry(key);
+    if (existing !== undefined) return existing.value;
+    this.insert(key, value);
     return value;
   }
 
   getOrInsertComputed(key: K, callbackfn: (key: K) => V): V {
-    const keyText = goStructMapKey(key);
-    const existing = this.entriesByKey.get(keyText);
-    if (existing !== undefined) {
-      return existing.value;
-    }
+    const existing = this.findEntry(key);
+    if (existing !== undefined) return existing.value;
     const value = callbackfn(key);
-    this.entriesByKey.set(keyText, { key, value });
+    this.insert(key, value);
     return value;
   }
 
-  has(key: K): boolean {
-    return this.entriesByKey.has(goStructMapKey(key));
-  }
+  has(key: K): boolean { return this.findEntry(key) !== undefined; }
 
   set(key: K, value: V): this {
-    this.entriesByKey.set(goStructMapKey(key), { key, value });
+    const existing = this.findEntry(key);
+    if (existing !== undefined) existing.value = value;
+    else this.insert(key, value);
     return this;
   }
 
   load(key: K): [V | undefined, boolean] {
-    const entry = this.entriesByKey.get(goStructMapKey(key));
-    if (entry === undefined) {
-      return [undefined, false];
-    }
-    return [entry.value, true];
+    const entry = this.findEntry(key);
+    return entry === undefined ? [undefined, false] : [entry.value, true];
+  }
+
+  lookup(key: K): { value: V } | undefined {
+    const entry = this.findEntry(key);
+    return entry === undefined ? undefined : { value: entry.value };
   }
 
   loadOrStore(key: K, value: V): [V, boolean] {
-    const keyText = goStructMapKey(key);
-    const existing = this.entriesByKey.get(keyText);
-    if (existing !== undefined) {
-      return [existing.value, true];
-    }
-    this.entriesByKey.set(keyText, { key, value });
+    const existing = this.findEntry(key);
+    if (existing !== undefined) return [existing.value, true];
+    this.insert(key, value);
     return [value, false];
   }
 
   loadAndDelete(key: K): [V | undefined, boolean] {
-    const keyText = goStructMapKey(key);
-    const existing = this.entriesByKey.get(keyText);
-    if (existing === undefined) {
-      return [undefined, false];
-    }
-    this.entriesByKey.delete(keyText);
-    return [existing.value, true];
+    const entry = this.findEntry(key);
+    if (entry === undefined) return [undefined, false];
+    const value = entry.value;
+    this.delete(key);
+    return [value, true];
   }
 
-  *entries(): MapIterator<[K, V]> {
-    for (const entry of this.entriesByKey.values()) {
-      yield [entry.key, entry.value];
-    }
+  *entries(): MapIterator<[K, V]> { for (const entry of this.orderedEntries) if (entry.active) yield [entry.key, entry.value]; }
+  *keys(): MapIterator<K> { for (const entry of this.orderedEntries) if (entry.active) yield entry.key; }
+  *values(): MapIterator<V> { for (const entry of this.orderedEntries) if (entry.active) yield entry.value; }
+  [Symbol.iterator](): MapIterator<[K, V]> { return this.entries(); }
+
+  private findEntry(key: K): GoStructMapEntry<K, V> | undefined {
+    return this.leafFor(key, false)?.entry;
   }
 
-  *keys(): MapIterator<K> {
-    for (const entry of this.entriesByKey.values()) {
-      yield entry.key;
-    }
+  private insert(key: K, value: V): void {
+    const entry = { key, value, active: true };
+    this.leafFor(key, true)!.entry = entry;
+    this.orderedEntries.push(entry);
+    this.activeSize++;
   }
 
-  *values(): MapIterator<V> {
-    for (const entry of this.entriesByKey.values()) {
-      yield entry.value;
+  private leafFor(key: K, create: boolean): GoStructMapTrieNode<K, V> | undefined {
+    const parts: unknown[] = [];
+    appendGoMapKey(parts, this.keyDescriptor, key);
+    let node = this.root;
+    for (const part of parts) {
+      let child = node.children.get(part);
+      if (child === undefined) {
+        if (!create) return undefined;
+        child = newGoStructMapTrieNode<K, V>();
+        node.children.set(part, child);
+      }
+      node = child;
     }
-  }
-
-  [Symbol.iterator](): MapIterator<[K, V]> {
-    return this.entries();
+    return node;
   }
 }
 
-export function NewGoStructMap<K, V>(): GoStructMap<K, V> {
-  return new GoStructMap<K, V>();
+export function NewGoStructMap<K, V>(keyDescriptor: GoMapKeyDescriptor<K>): GoStructMap<K, V> {
+  return new GoStructMap<K, V>(keyDescriptor);
+}
+
+export function GoMapGetExisting<K, V>(map: GoMap<K, V>, key: K): V {
+  if (map instanceof GoStructMap) {
+    const entry = map.lookup(key);
+    if (entry !== undefined) {
+      return entry.value;
+    }
+  } else if (map.has(key)) {
+    return map.get(key)!;
+  }
+  throw new TypeError("map key lookup is inconsistent with its entries");
+}
+
+export function GoMapLookup<K, V>(map: GoPtr<GoMap<K, V>>, key: K, zeroValue: () => V): [V, bool] {
+  if (map === undefined || !map.has(key)) {
+    return [zeroValue(), false];
+  }
+  return [GoMapGetExisting(map, key), true];
 }
 
 export function GoAppend<T>(slice: GoPtr<GoSlice<T>>, ...items: GoSlice<T>): GoSlice<T> {
   return [...(slice ?? []), ...items];
 }
 
-function goStructMapKey(value: unknown): string {
-  return goValueKey(value, true);
-}
-
-function goValueKey(value: unknown, topLevelStruct: boolean): string {
-  if (value === undefined || value === null) {
-    return "nil";
-  }
-  const valueType = typeof value;
-  switch (valueType) {
-    case "boolean":
-    case "number":
-    case "bigint":
-    case "string":
-      return \`\${valueType}:\${String(value)}\`;
-    case "symbol":
-      return \`symbol:\${String(value)}\`;
-    case "function":
-      return \`ref:\${goObjectId(value)}\`;
-    case "object":
-      break;
-    default:
-      return \`\${valueType}:\${String(value)}\`;
-  }
-
-  const objectValue = value as Record<PropertyKey, unknown>;
-  if (isUint128Like(objectValue)) {
-    return \`u128:\${objectValue.Hi!.toString()}:\${objectValue.Lo!.toString()}\`;
-  }
-  if (!topLevelStruct) {
-    if (isValueStruct(objectValue)) {
-      return goStructFieldsKey(objectValue);
-    }
-    return \`ref:\${goObjectId(objectValue)}\`;
-  }
-  return goStructFieldsKey(objectValue);
-}
-
-function goStructFieldsKey(value: Record<PropertyKey, unknown>): string {
-  if (globalThis.Array.isArray(value)) {
-    let result = "array:[";
-    for (let index = 0; index < value.length; index++) {
-      if (index > 0) {
-        result += ",";
-      }
-      result += goValueKey(value[index], false);
-    }
-    return result + "]";
-  }
-  const keys = globalThis.Object.keys(value).sort();
-  let result = "struct:{";
-  for (let index = 0; index < keys.length; index++) {
-    if (index > 0) {
-      result += ",";
-    }
-    const key = keys[index]!;
-    result += \`\${key}=\${goValueKey(value[key], false)}\`;
-  }
-  return result + "}";
-}
-
-function isUint128Like(value: Record<PropertyKey, unknown>): boolean {
-  return typeof value.Hi === "bigint" && typeof value.Lo === "bigint";
-}
-
-function isValueStruct(value: Record<PropertyKey, unknown>): boolean {
-  if (isUint128Like(value)) {
-    return true;
-  }
-  if (typeof value.Negative === "boolean" && typeof value.Base10Value === "string") {
-    return true;
-  }
-  if (typeof value.pos === "number" && typeof value.end === "number") {
-    return true;
-  }
-  return false;
-}
-
-function goObjectId(value: object): number {
-  let id = goObjectIds.get(value);
-  if (id === undefined) {
-    id = nextGoObjectId++;
-    goObjectIds.set(value, id);
-  }
-  return id;
-}
 `;
 }

@@ -1,23 +1,19 @@
 #!/usr/bin/env node
 import { performance } from "node:perf_hooks";
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(here, "../../../..");
-const utf8Dist = join(repoRoot, "packages/tsts/dist/src/go/unicode/utf8.js");
-const unicodeDist = join(repoRoot, "packages/tsts/dist/src/go/unicode.js");
-const coreDist = join(repoRoot, "packages/tsts/dist/src/internal/core/core.js");
-const stringutilDist = join(repoRoot, "packages/tsts/dist/src/internal/stringutil/util.js");
-const stringCompareDist = join(repoRoot, "packages/tsts/dist/src/internal/stringutil/compare.js");
+import { dispersion } from "./benchmark-core.mjs";
+import { prepareTstsMicrobenchmark } from "./microbenchmark-context.mjs";
 
-const requiredDist = [utf8Dist, unicodeDist, coreDist, stringutilDist, stringCompareDist];
-for (const file of requiredDist) {
-  if (!existsSync(file)) {
-    throw new Error(`Missing built TSTS artifact: ${file}. Run npx tsc -p packages/tsts/tsconfig.json first.`);
-  }
-}
+const driverPath = fileURLToPath(import.meta.url);
+const options = parseArgs(process.argv.slice(2));
+const context = await prepareTstsMicrobenchmark({ driverPath, noBuild: options.noBuild, quiet: options.json });
+const utf8Dist = join(context.dist, "src/go/unicode/utf8.js");
+const unicodeDist = join(context.dist, "src/go/unicode.js");
+const coreDist = join(context.dist, "src/internal/core/core.js");
+const stringutilDist = join(context.dist, "src/internal/stringutil/util.js");
+const stringCompareDist = join(context.dist, "src/internal/stringutil/compare.js");
 
 const utf8 = await import(pathToFileURL(utf8Dist).href);
 const unicode = await import(pathToFileURL(unicodeDist).href);
@@ -29,14 +25,16 @@ const encoder = new globalThis.TextEncoder();
 const decoder = new globalThis.TextDecoder("utf-8");
 
 function parseArgs(argv) {
-  const options = { runs: 7, json: false };
+  const parsed = { runs: 7, json: false, noBuild: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--runs") options.runs = Math.max(3, Number(argv[++i]));
-    else if (arg === "--json") options.json = true;
+    if (arg === "--runs") parsed.runs = Number(argv[++i]);
+    else if (arg === "--json") parsed.json = true;
+    else if (arg === "--no-build") parsed.noBuild = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  return options;
+  if (!Number.isSafeInteger(parsed.runs) || parsed.runs < 5) throw new Error("--runs must be an integer of at least 5");
+  return parsed;
 }
 
 function median(values) {
@@ -80,12 +78,17 @@ function runPair(name, legacy, current, runs) {
 
   const legacyMs = median(legacySamples);
   const currentMs = median(currentSamples);
+  if (!Number.isFinite(legacyMs) || legacyMs <= 0 || !Number.isFinite(currentMs) || currentMs <= 0) throw new Error(`${name} produced a non-positive timing sample`);
   return {
     name,
     legacyMs,
     currentMs,
     speedup: legacyMs / currentMs,
     checksum: currentChecksum,
+    legacySamples,
+    currentSamples,
+    legacyDispersion: dispersion(legacySamples),
+    currentDispersion: dispersion(currentSamples),
   };
 }
 
@@ -190,9 +193,7 @@ const mixedSource = makeMixedSource(300);
 const smallAsciiSource = makeAsciiSource(48);
 const smallMixedSource = makeMixedSource(24);
 const compareLeft = makeMixedSource(40);
-const compareRight = compareLeft.toLocaleUpperCase();
-
-const options = parseArgs(process.argv.slice(2));
+const compareRight = compareLeft.toUpperCase();
 
 const benchmarks = [
   runPair(
@@ -327,14 +328,18 @@ const benchmarks = [
   ),
 ];
 
+context.reverify();
+
 if (options.json) {
-  console.log(JSON.stringify({ runs: options.runs, benchmarks }, null, 2));
+  console.log(JSON.stringify({ schemaVersion: 1, classification: "exploratory-not-a-regression-gate", runs: options.runs, evidence: context.evidence, benchmarks }, null, 2));
 } else {
   console.log(`# UTF-8/source-text performance benchmark`);
-  console.log(`runs: ${options.runs} (median)`);
-  console.log(`| case | legacy ms | current ms | speedup |`);
-  console.log(`|---|---:|---:|---:|`);
+  console.log(`classification: exploratory, not a regression gate`);
+  console.log(`prepared TSTS build: ${context.evidence.tstsBuild.buildId}`);
+  console.log(`runs: ${options.runs} (median with dispersion)`);
+  console.log(`| case | legacy ms | current ms | current CV | speedup |`);
+  console.log(`|---|---:|---:|---:|---:|`);
   for (const row of benchmarks) {
-    console.log(`| ${row.name} | ${row.legacyMs.toFixed(3)} | ${row.currentMs.toFixed(3)} | ${row.speedup.toFixed(1)}x |`);
+    console.log(`| ${row.name} | ${row.legacyMs.toFixed(3)} | ${row.currentMs.toFixed(3)} | ${(row.currentDispersion.coefficientOfVariation * 100).toFixed(1)}% | ${row.speedup.toFixed(1)}x |`);
   }
 }

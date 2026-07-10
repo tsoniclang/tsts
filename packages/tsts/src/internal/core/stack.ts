@@ -48,8 +48,6 @@ export function Stack_Pop<T>(receiver: GoPtr<Stack<T>>): T {
     throw new globalThis.Error("stack is empty");
   }
   const item = s.data[l - 1]!;
-  const zero = undefined as T;
-  s.data[l - 1] = zero;
   s.data.length = l - 1;
   return item;
 }

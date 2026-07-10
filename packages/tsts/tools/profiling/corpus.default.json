@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "projects": [
+    {
+      "name": "compiler-shaped",
+      "cwd": "project",
+      "args": ["-p", "tsconfig.json", "--noEmit", "--incremental", "false"],
+      "inputs": [
+        {
+          "label": "configuration",
+          "source": "fixtures/compiler-shaped/config",
+          "destination": "project",
+          "replicas": 1
+        },
+        {
+          "label": "compiler-kernel",
+          "source": "fixtures/compiler-shaped/template",
+          "destination": "project/src",
+          "replicas": 32
+        }
+      ]
+    }
+  ]
+}

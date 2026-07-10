@@ -332,7 +332,7 @@ export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, c
       continue;
     }
 
-    const sym = Node_Symbol(possibleContainer)!.Exports.get(InternalSymbolNameExportEquals);
+    const sym = Node_Symbol(possibleContainer)!.Exports?.get(InternalSymbolNameExportEquals);
     if (sym === undefined) {
       continue;
     }
@@ -689,7 +689,11 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
       host.GetGlobalTypingsCacheLocation(),
       GetDirectoryPath(fullImportedFileName),
       (realPathDirectory: string): [boolean, boolean] => {
-        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host.UseCaseSensitiveFileNames())) as any);
+        const [symlinkSet, ok] = SyncMap_Load(
+          KnownSymlinks_DirectoriesByRealpath(symlinkCache),
+          EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host.UseCaseSensitiveFileNames())),
+          () => undefined,
+        );
         if (!ok) {
           return [false, false]; // Continue to ancestor directory
         }
@@ -708,7 +712,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
             UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
             CurrentDirectory: cwd,
           });
-          SyncSet_Range(symlinkSet as any, (symlinkDirectory: string): bool => {
+          SyncSet_Range(symlinkSet, (symlinkDirectory: string): bool => {
             const option = ResolvePath(symlinkDirectory, relative);
             results.push({
               FileName: option,
@@ -722,6 +726,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
 
         return [false, false];
       },
+      () => false,
     );
   }
 

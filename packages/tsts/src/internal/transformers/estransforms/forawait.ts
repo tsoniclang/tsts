@@ -845,8 +845,8 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
 
   if (IsBlock(statement)) {
     const stmts = Node_StatementList(statement);
-    if (stmts !== undefined) {
-      for (const stmt of stmts!.Nodes) {
+    if (stmts !== undefined && stmts.Nodes !== undefined) {
+      for (const stmt of stmts.Nodes) {
         statements.push(stmt);
       }
       statementsLocation = stmts!.Loc;
@@ -1682,21 +1682,24 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
     return EmitContext_VisitParameters(emitContext, Node_ParameterList(node), visitor);
   }
   const newParameters: Array<GoPtr<Node>> = [];
-  for (const parameter of Node_Parameters(node)) {
-    const param = AsParameterDeclaration(parameter as unknown as GoPtr<Node>);
-    if (param!.Initializer !== undefined || param!.DotDotDotToken !== undefined) {
-      break;
+  const parameters = Node_Parameters(node);
+  if (parameters !== undefined) {
+    for (const parameter of parameters) {
+      const param = AsParameterDeclaration(parameter as unknown as GoPtr<Node>);
+      if (param!.Initializer !== undefined || param!.DotDotDotToken !== undefined) {
+        break;
+      }
+      const newParameter = NewParameterDeclaration(
+        factory,
+        undefined,
+        undefined,
+        NodeFactory_NewGeneratedNameForNodeEx(printerFactory, Node_Name(parameter as unknown as GoPtr<Node>), { Flags: GeneratedIdentifierFlagsReservedInNestedScopes } as AutoGenerateOptions),
+        undefined,
+        undefined,
+        undefined,
+      );
+      newParameters.push(newParameter);
     }
-    const newParameter = NewParameterDeclaration(
-      factory,
-      undefined,
-      undefined,
-      NodeFactory_NewGeneratedNameForNodeEx(printerFactory, Node_Name(parameter as unknown as GoPtr<Node>), { Flags: GeneratedIdentifierFlagsReservedInNestedScopes } as AutoGenerateOptions),
-      undefined,
-      undefined,
-      undefined,
-    );
-    newParameters.push(newParameter);
   }
   const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
   newParametersArray!.Loc = Node_ParameterList(node)!.Loc;

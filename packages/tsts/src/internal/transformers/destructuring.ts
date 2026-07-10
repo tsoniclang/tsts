@@ -94,6 +94,7 @@ export type CreateAssignmentCallback = (name: GoPtr<IdentifierNode>, value: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::func::FlattenDestructuringAssignment","kind":"func","status":"implemented","sigHash":"559311f1142b906ea38fcd6e5917789a93de1f70933fd7bc622b36ec64bd8faf","bodyHash":"f2a6078479cb5bc915d7478e98b3fe9f3c02ecd5de39bc9b4835598989b36509"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func FlattenDestructuringAssignment uses an explicit undefined-capable TypeScript representation at parameter #4 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/transformer.ts::Transformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/transformers/destructuring.ts::FlattenLevel,packages/tsts/src/internal/transformers/destructuring.ts::CreateAssignmentCallback)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/transformer.ts::Transformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/transformers/destructuring.ts::FlattenLevel,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::CreateAssignmentCallback>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func FlattenDestructuringAssignment(
@@ -114,7 +115,7 @@ export type CreateAssignmentCallback = (name: GoPtr<IdentifierNode>, value: GoPt
  * 	return f.flattenDestructuringAssignment(node, needsValue)
  * }
  */
-export function FlattenDestructuringAssignment(tx: GoPtr<Transformer>, node: GoPtr<Node>, needsValue: bool, level: FlattenLevel, createAssignmentCallback: CreateAssignmentCallback): GoPtr<Expression> {
+export function FlattenDestructuringAssignment(tx: GoPtr<Transformer>, node: GoPtr<Node>, needsValue: bool, level: FlattenLevel, createAssignmentCallback: GoPtr<CreateAssignmentCallback>): GoPtr<Expression> {
   const f = newFlattener(tx, level);
   f!.createAssignmentCallback = createAssignmentCallback;
   f!.hoistTempVariables = true;
@@ -179,6 +180,7 @@ export function FlattenDestructuringBinding(tx: GoPtr<Transformer>, node: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/destructuring.go::type::flattener","kind":"type","status":"implemented","sigHash":"d102b0a1bcc94fdcf695fb1015b0add4366ffab7c095c9b35a9ab31e4c5558e6","bodyHash":"dac4d20c8a7c52ce833b426be16922112b62b8b7e7c96bfa8d4deb97a704d74b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type flattener uses an explicit undefined-capable TypeScript representation at member 'createAssignmentCallback', member 'emitBindingOrAssignment', member 'createArrayBindingOrAssignmentPattern', member 'createObjectBindingOrAssignmentPattern', member 'createArrayBindingOrAssignmentElement' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{createArrayBindingOrAssignmentElement:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;createArrayBindingOrAssignmentPattern:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;createAssignmentCallback:packages/tsts/src/internal/transformers/destructuring.ts::CreateAssignmentCallback;createObjectBindingOrAssignmentPattern:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;declarations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/transformers/destructuring.ts::pendingDecl>;emitBindingOrAssignment:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/core/text.ts::TextRange,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void;expressions:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;hasTransformedPriorElement:packages/tsts/src/go/scalars.ts::bool;hoistTempVariables:packages/tsts/src/go/scalars.ts::bool;level:packages/tsts/src/internal/transformers/destructuring.ts::FlattenLevel;tx:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/transformer.ts::Transformer>}","tsSignature":"interface{createArrayBindingOrAssignmentElement:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;createArrayBindingOrAssignmentPattern:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;createAssignmentCallback:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::CreateAssignmentCallback>;createObjectBindingOrAssignmentPattern:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;declarations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/transformers/destructuring.ts::pendingDecl>;emitBindingOrAssignment:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/destructuring.ts::flattener>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/core/text.ts::TextRange,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>void>;expressions:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;hasTransformedPriorElement:packages/tsts/src/go/scalars.ts::bool;hoistTempVariables:packages/tsts/src/go/scalars.ts::bool;level:packages/tsts/src/internal/transformers/destructuring.ts::FlattenLevel;tx:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/transformer.ts::Transformer>}"}
  *
  * Go source:
  * flattener struct {
@@ -203,15 +205,43 @@ export function FlattenDestructuringBinding(tx: GoPtr<Transformer>, node: GoPtr<
 export interface flattener {
   tx: GoPtr<Transformer>;
   level: FlattenLevel;
-  createAssignmentCallback: CreateAssignmentCallback;
+  createAssignmentCallback: GoPtr<CreateAssignmentCallback>;
   expressions: GoSlice<GoPtr<Node>>;
   declarations: GoSlice<pendingDecl>;
   hasTransformedPriorElement: bool;
   hoistTempVariables: bool;
-  emitBindingOrAssignment: (f: GoPtr<flattener>, target: GoPtr<Node>, value: GoPtr<Node>, location: TextRange, original: GoPtr<Node>) => void;
-  createArrayBindingOrAssignmentPattern: (f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node>;
-  createObjectBindingOrAssignmentPattern: (f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node>;
-  createArrayBindingOrAssignmentElement: (f: GoPtr<flattener>, expr: GoPtr<Node>) => GoPtr<Node>;
+  emitBindingOrAssignment: GoPtr<(f: GoPtr<flattener>, target: GoPtr<Node>, value: GoPtr<Node>, location: TextRange, original: GoPtr<Node>) => void>;
+  createArrayBindingOrAssignmentPattern: GoPtr<(f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node>>;
+  createObjectBindingOrAssignmentPattern: GoPtr<(f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node>>;
+  createArrayBindingOrAssignmentElement: GoPtr<(f: GoPtr<flattener>, expr: GoPtr<Node>) => GoPtr<Node>>;
+}
+
+function flattenerEmitBindingOrAssignment(receiver: GoPtr<flattener>): (f: GoPtr<flattener>, target: GoPtr<Node>, value: GoPtr<Node>, location: TextRange, original: GoPtr<Node>) => void {
+  if (receiver === undefined || receiver.emitBindingOrAssignment === undefined) {
+    throw new globalThis.Error("nil flattener.emitBindingOrAssignment");
+  }
+  return receiver.emitBindingOrAssignment;
+}
+
+function flattenerCreateArrayPattern(receiver: GoPtr<flattener>): (f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node> {
+  if (receiver === undefined || receiver.createArrayBindingOrAssignmentPattern === undefined) {
+    throw new globalThis.Error("nil flattener.createArrayBindingOrAssignmentPattern");
+  }
+  return receiver.createArrayBindingOrAssignmentPattern;
+}
+
+function flattenerCreateObjectPattern(receiver: GoPtr<flattener>): (f: GoPtr<flattener>, elements: GoSlice<GoPtr<Node>>) => GoPtr<Node> {
+  if (receiver === undefined || receiver.createObjectBindingOrAssignmentPattern === undefined) {
+    throw new globalThis.Error("nil flattener.createObjectBindingOrAssignmentPattern");
+  }
+  return receiver.createObjectBindingOrAssignmentPattern;
+}
+
+function flattenerCreateArrayElement(receiver: GoPtr<flattener>): (f: GoPtr<flattener>, expr: GoPtr<Node>) => GoPtr<Node> {
+  if (receiver === undefined || receiver.createArrayBindingOrAssignmentElement === undefined) {
+    throw new globalThis.Error("nil flattener.createArrayBindingOrAssignmentElement");
+  }
+  return receiver.createArrayBindingOrAssignmentElement;
 }
 
 /**
@@ -229,15 +259,15 @@ export function newFlattener(tx: GoPtr<Transformer>, level: FlattenLevel): GoPtr
   return {
     tx,
     level,
-    createAssignmentCallback: undefined!,
+    createAssignmentCallback: undefined,
     expressions: [],
     declarations: [],
     hasTransformedPriorElement: false,
     hoistTempVariables: false,
-    emitBindingOrAssignment: undefined!,
-    createArrayBindingOrAssignmentPattern: undefined!,
-    createObjectBindingOrAssignmentPattern: undefined!,
-    createArrayBindingOrAssignmentElement: undefined!,
+    emitBindingOrAssignment: undefined,
+    createArrayBindingOrAssignmentPattern: undefined,
+    createObjectBindingOrAssignmentPattern: undefined,
+    createArrayBindingOrAssignmentElement: undefined,
   };
 }
 
@@ -427,7 +457,7 @@ export function flattener_ensureIdentifier(receiver: GoPtr<flattener>, value: Go
     assign!.Loc = location;
     flattener_emitExpression(receiver, assign);
   } else {
-    receiver!.emitBindingOrAssignment(receiver, temp, value, location, undefined);
+    flattenerEmitBindingOrAssignment(receiver)(receiver, temp, value, location, undefined);
   }
   return temp;
 }
@@ -666,7 +696,7 @@ export function flattener_flattenDestructuringBinding(receiver: GoPtr<flattener>
     if (receiver!.hoistTempVariables) {
       const value = NodeFactory_InlineExpressions(pf, receiver!.expressions);
       receiver!.expressions = [];
-      receiver!.emitBindingOrAssignment(receiver, temp, value, { pos: 0, end: 0 }, undefined);
+      flattenerEmitBindingOrAssignment(receiver)(receiver, temp, value, { pos: 0, end: 0 }, undefined);
     } else {
       EmitContext_AddVariableDeclaration(ec, temp);
       const last: pendingDecl = receiver!.declarations[receiver!.declarations.length - 1]!;
@@ -763,7 +793,7 @@ export function flattener_flattenBindingOrAssignmentElement(receiver: GoPtr<flat
   } else if (isArrayBindingOrAssignmentPattern(bindingTarget)) {
     flattener_flattenArrayBindingOrAssignmentPattern(receiver, element, bindingTarget, currentValue, location);
   } else {
-    receiver!.emitBindingOrAssignment(receiver, bindingTarget, currentValue, location, element);
+    flattenerEmitBindingOrAssignment(receiver)(receiver, bindingTarget, currentValue, location, element);
   }
 }
 
@@ -817,7 +847,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
   const pf = Transformer_Factory(receiver!.tx)!;
   const visitor = Transformer_Visitor(receiver!.tx) as ConcreteNodeVisitor;
   const elements = GetElementsOfBindingOrAssignmentPattern(pattern);
-  const numElements = elements.length;
+  const numElements = elements === undefined ? 0 : elements.length;
   let currentValue = value;
   if (numElements !== 1) {
     const reuseIdentifierExpressions = !IsDeclarationBindingElement(parent) || numElements !== 0;
@@ -825,7 +855,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
   }
   let bindingElements: GoSlice<GoPtr<Node>> = [];
   let computedTempVariables: GoSlice<GoPtr<Node>> = [];
-  for (let i = 0; i < elements.length; i++) {
+  for (let i = 0; elements !== undefined && i < elements.length; i++) {
     const element = elements[i];
     if (GetRestIndicatorOfBindingOrAssignmentElement(element) === undefined) {
       const propertyName = TryGetPropertyNameOfBindingOrAssignmentElement(element);
@@ -838,7 +868,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
         bindingElements = [...bindingElements, NodeVisitor_VisitNode(visitor, element)];
       } else {
         if (bindingElements.length > 0) {
-          receiver!.emitBindingOrAssignment(receiver, receiver!.createObjectBindingOrAssignmentPattern(receiver, bindingElements), currentValue, location, pattern);
+          flattenerEmitBindingOrAssignment(receiver)(receiver, flattenerCreateObjectPattern(receiver)(receiver, bindingElements), currentValue, location, pattern);
           bindingElements = [];
         }
         const rhsValue = flattener_createDestructuringPropertyAccess(receiver, currentValue, propertyName!);
@@ -849,7 +879,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
       }
     } else if (i === numElements - 1) {
       if (bindingElements.length > 0) {
-        receiver!.emitBindingOrAssignment(receiver, receiver!.createObjectBindingOrAssignmentPattern(receiver, bindingElements), currentValue, location, pattern);
+        flattenerEmitBindingOrAssignment(receiver)(receiver, flattenerCreateObjectPattern(receiver)(receiver, bindingElements), currentValue, location, pattern);
         bindingElements = [];
       }
       const rhsValue = NodeFactory_NewRestHelper(pf, currentValue, elements, computedTempVariables, pattern!.Loc);
@@ -857,7 +887,7 @@ export function flattener_flattenObjectBindingOrAssignmentPattern(receiver: GoPt
     }
   }
   if (bindingElements.length > 0) {
-    receiver!.emitBindingOrAssignment(receiver, receiver!.createObjectBindingOrAssignmentPattern(receiver, bindingElements), currentValue, location, pattern);
+    flattenerEmitBindingOrAssignment(receiver)(receiver, flattenerCreateObjectPattern(receiver)(receiver, bindingElements), currentValue, location, pattern);
   }
 }
 
@@ -925,15 +955,15 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
   const pf = Transformer_Factory(receiver!.tx)!;
   const af = pf.__tsgoEmbedded0!;
   const elements = GetElementsOfBindingOrAssignmentPattern(pattern);
-  const numElements = elements.length;
+  const numElements = elements === undefined ? 0 : elements.length;
   let currentValue = value;
-  if ((numElements !== 1 && (receiver!.level < FlattenLevelObjectRest || numElements === 0)) || Every(elements, IsOmittedExpression)) {
+  if ((numElements !== 1 && (receiver!.level < FlattenLevelObjectRest || numElements === 0)) || elements === undefined || Every(elements, IsOmittedExpression)) {
     const reuseIdentifierExpressions = !IsDeclarationBindingElement(parent) || numElements !== 0;
     currentValue = flattener_ensureIdentifier(receiver, currentValue, reuseIdentifierExpressions, location);
   }
   let bindingElements: GoSlice<GoPtr<Node>> = [];
   let restContainingElements: GoSlice<restIdElemPair> = [];
-  for (let i = 0; i < elements.length; i++) {
+  for (let i = 0; elements !== undefined && i < elements.length; i++) {
     const element = elements[i];
     if (receiver!.level >= FlattenLevelObjectRest) {
       if ((Node_SubtreeFacts(element) & SubtreeContainsObjectRestOrSpread) !== 0 || receiver!.hasTransformedPriorElement && !isSimpleBindingOrAssignmentElement(element)) {
@@ -943,7 +973,7 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
           EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.tx), temp);
         }
         restContainingElements = [...restContainingElements, { id: temp, element }];
-        bindingElements = [...bindingElements, receiver!.createArrayBindingOrAssignmentElement(receiver, temp)];
+        bindingElements = [...bindingElements, flattenerCreateArrayElement(receiver)(receiver, temp)];
       } else {
         bindingElements = [...bindingElements, element];
       }
@@ -958,7 +988,7 @@ export function flattener_flattenArrayBindingOrAssignmentPattern(receiver: GoPtr
     }
   }
   if (bindingElements.length > 0) {
-    receiver!.emitBindingOrAssignment(receiver, receiver!.createArrayBindingOrAssignmentPattern(receiver, bindingElements), currentValue, location, pattern);
+    flattenerEmitBindingOrAssignment(receiver)(receiver, flattenerCreateArrayPattern(receiver)(receiver, bindingElements), currentValue, location, pattern);
   }
   if (restContainingElements.length > 0) {
     for (const pair of restContainingElements) {
@@ -1013,6 +1043,9 @@ export function BindingOrAssignmentElementAssignsToName(element: GoPtr<Node>, na
  */
 export function bindingOrAssignmentPatternAssignsToName(pattern: GoPtr<Node>, name: string): bool {
   const elements = GetElementsOfBindingOrAssignmentPattern(pattern);
+  if (elements === undefined) {
+    return false;
+  }
   for (const element of elements) {
     if (BindingOrAssignmentElementAssignsToName(element, name)) {
       return true;
@@ -1054,7 +1087,7 @@ export function BindingOrAssignmentElementContainsNonLiteralComputedName(element
  */
 export function bindingOrAssignmentPatternContainsNonLiteralComputedName(pattern: GoPtr<Node>): bool {
   const elements = GetElementsOfBindingOrAssignmentPattern(pattern);
-  return elements.some(BindingOrAssignmentElementContainsNonLiteralComputedName);
+  return elements !== undefined && elements.some(BindingOrAssignmentElementContainsNonLiteralComputedName);
 }
 
 /**

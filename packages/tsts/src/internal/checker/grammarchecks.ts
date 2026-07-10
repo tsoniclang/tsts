@@ -478,7 +478,7 @@ export function Checker_checkGrammarRegularExpressionLiteral(receiver: GoPtr<Che
     Scanner_Scan(receiver!.regExpScanner);
     const tokenIsRegularExpressionLiteral = Scanner_ReScanSlashToken(receiver!.regExpScanner, true) === KindRegularExpressionLiteral;
     Scanner_SetText(receiver!.regExpScanner, "");
-    Scanner_SetOnError(receiver!.regExpScanner, undefined as unknown as ErrorCallback);
+    Scanner_SetOnError(receiver!.regExpScanner, undefined);
     Assert(tokenIsRegularExpressionLiteral);
     return lastError !== undefined;
   }
@@ -538,8 +538,9 @@ export function Checker_checkGrammarPrivateIdentifierExpression(receiver: GoPtr<
  * }
  */
 export function Checker_checkGrammarMappedType(receiver: GoPtr<Checker>, node: GoPtr<MappedTypeNode>): bool {
-  if (node!.Members!.Nodes.length > 0) {
-    return Checker_grammarErrorOnNode(receiver, node!.Members!.Nodes[0]!, A_mapped_type_may_not_declare_properties_or_methods);
+  const members = node!.Members!.Nodes ?? [];
+  if (members.length > 0) {
+    return Checker_grammarErrorOnNode(receiver, members[0], A_mapped_type_may_not_declare_properties_or_methods);
   }
   return false;
 }
@@ -1662,7 +1663,11 @@ export function Checker_checkGrammarAsyncModifier(receiver: GoPtr<Checker>, node
  */
 export function Checker_checkGrammarForDisallowedTrailingComma(receiver: GoPtr<Checker>, list: GoPtr<NodeList>, diag: GoPtr<Message>): bool {
   if (list !== undefined && NodeList_HasTrailingComma(list)) {
-    return Checker_grammarErrorAtPos(receiver, list!.Nodes[0], NodeList_End(list) - ",".length, ",".length, diag);
+    const firstNode = list.Nodes?.[0];
+    if (firstNode === undefined) {
+      throw new globalThis.RangeError("index out of range [0] with length 0");
+    }
+    return Checker_grammarErrorAtPos(receiver, firstNode, NodeList_End(list) - ",".length, ",".length, diag);
   }
   return false;
 }
@@ -1681,7 +1686,7 @@ export function Checker_checkGrammarForDisallowedTrailingComma(receiver: GoPtr<C
  * }
  */
 export function Checker_checkGrammarTypeParameterList(receiver: GoPtr<Checker>, typeParameters: GoPtr<NodeList>, file: GoPtr<SourceFile>): bool {
-  if (typeParameters !== undefined && typeParameters!.Nodes.length === 0) {
+  if (typeParameters !== undefined && (typeParameters.Nodes?.length ?? 0) === 0) {
     const start = NodeList_Pos(typeParameters) - "<".length;
     const end = SkipTrivia(SourceFile_Text(file), NodeList_End(typeParameters)) + ">".length;
     return Checker_grammarErrorAtPos(receiver, file as unknown as GoPtr<Node>, start, end - start, Type_parameter_list_cannot_be_empty);
@@ -1730,9 +1735,10 @@ export function Checker_checkGrammarTypeParameterList(receiver: GoPtr<Checker>, 
  */
 export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, parameters: GoPtr<NodeList>): bool {
   let seenOptionalParameter = false;
-  const parameterCount = parameters!.Nodes.length;
+  const parameterNodes = parameters!.Nodes ?? [];
+  const parameterCount = parameterNodes.length;
   for (let i = 0; i < parameterCount; i++) {
-    const parameter = AsParameterDeclaration(parameters!.Nodes[i]);
+    const parameter = AsParameterDeclaration(parameterNodes[i]);
     if (parameter!.DotDotDotToken !== undefined) {
       if (i !== parameterCount - 1) {
         return Checker_grammarErrorOnNode(receiver, parameter!.DotDotDotToken, A_rest_parameter_must_be_last_in_a_parameter_list);
@@ -1903,12 +1909,12 @@ export function Checker_checkGrammarArrowFunction(receiver: GoPtr<Checker>, node
   const arrowFunc = AsArrowFunction(node);
   const typeParameters = arrowFunc!.TypeParameters;
   if (typeParameters !== undefined) {
-    const typeParamNodes = typeParameters!.Nodes;
+    const typeParamNodes = typeParameters!.Nodes ?? [];
     const hasConstraint = typeParamNodes.length > 0 && AsTypeParameterDeclaration(typeParamNodes[0])!.Constraint !== undefined;
     if (!(typeParamNodes.length > 1 || NodeList_HasTrailingComma(typeParameters) || hasConstraint)) {
       if (FileExtensionIsOneOf(SourceFile_FileName(file), [ExtensionMts, ExtensionCts])) {
         // TODO(danielr): should we return early here?
-        Checker_grammarErrorOnNode(receiver, typeParameters!.Nodes[0], This_syntax_is_reserved_in_files_with_the_mts_or_cts_extension_Add_a_trailing_comma_or_explicit_constraint);
+        Checker_grammarErrorOnNode(receiver, typeParamNodes[0], This_syntax_is_reserved_in_files_with_the_mts_or_cts_extension_Add_a_trailing_comma_or_explicit_constraint);
       }
     }
   }
@@ -1968,7 +1974,7 @@ export function Checker_checkGrammarArrowFunction(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_checkGrammarIndexSignatureParameters(receiver: GoPtr<Checker>, node: GoPtr<IndexSignatureDeclaration>): bool {
-  const paramNodes = node!.Parameters!.Nodes;
+  const paramNodes = node!.Parameters!.Nodes ?? [];
   if (paramNodes.length === 0) {
     return Checker_grammarErrorOnNode(receiver, node as unknown as GoPtr<Node>, An_index_signature_must_have_exactly_one_parameter);
   }
@@ -2035,7 +2041,7 @@ export function Checker_checkGrammarIndexSignature(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_checkGrammarForAtLeastOneTypeArgument(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeArguments: GoPtr<NodeList>): bool {
-  if (typeArguments !== undefined && typeArguments!.Nodes.length === 0) {
+  if (typeArguments !== undefined && (typeArguments.Nodes?.length ?? 0) === 0) {
     const sourceFile = GetSourceFileOfNode(node);
     const start = NodeList_Pos(typeArguments) - "<".length;
     const end = SkipTrivia(SourceFile_Text(sourceFile), NodeList_End(typeArguments)) + ">".length;
@@ -2102,13 +2108,14 @@ export function Checker_checkGrammarHeritageClause(receiver: GoPtr<Checker>, nod
   if (Checker_checkGrammarForDisallowedTrailingComma(receiver, types, Trailing_comma_not_allowed)) {
     return true;
   }
-  if (types !== undefined && types!.Nodes.length === 0) {
+  const typeNodes = types?.Nodes ?? [];
+  if (types !== undefined && typeNodes.length === 0) {
     const listType = TokenToString(node!.Token);
     // TODO(danielr): why not error on the token?
     return Checker_grammarErrorAtPos(receiver, node as unknown as GoPtr<Node>, NodeList_Pos(types), 0, X_0_list_cannot_be_empty, listType);
   }
   if (types !== undefined) {
-    for (const n of types!.Nodes) {
+    for (const n of typeNodes) {
       if (Checker_checkGrammarExpressionWithTypeArguments(receiver, n)) {
         return true;
       }
@@ -2205,7 +2212,7 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
   let seenImplementsClause = false;
   const classLikeData = Node_ClassLikeData(node as unknown as GoPtr<Node>);
   if (!Checker_checkGrammarModifiers(receiver, node as unknown as GoPtr<Node>) && classLikeData!.HeritageClauses !== undefined) {
-    for (const heritageClauseNode of classLikeData!.HeritageClauses!.Nodes) {
+    for (const heritageClauseNode of classLikeData!.HeritageClauses!.Nodes ?? []) {
       const heritageClause = AsHeritageClause(heritageClauseNode);
       if (heritageClause!.Token === KindExtendsKeyword) {
         if (seenExtendsClause) {
@@ -2214,7 +2221,7 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
         if (seenImplementsClause) {
           return Checker_grammarErrorOnFirstToken(receiver, heritageClauseNode, X_extends_clause_must_precede_implements_clause);
         }
-        const typeNodes = heritageClause!.Types!.Nodes;
+        const typeNodes = heritageClause!.Types!.Nodes ?? [];
         if (typeNodes.length > 1) {
           return Checker_grammarErrorOnFirstToken(receiver, typeNodes[1], Classes_can_only_extend_a_single_class);
         }
@@ -2223,7 +2230,7 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
             if (AsJSDoc(j)!.Tags === undefined) {
               continue;
             }
-            for (const tag of AsJSDoc(j)!.Tags!.Nodes) {
+            for (const tag of AsJSDoc(j)!.Tags!.Nodes ?? []) {
               if (tag!.Kind === KindJSDocAugmentsTag) {
                 const target = AsExpressionWithTypeArguments(typeNodes[0]);
                 const source = AsExpressionWithTypeArguments(Node_ClassName(tag));
@@ -2287,7 +2294,7 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
 export function Checker_checkGrammarInterfaceDeclaration(receiver: GoPtr<Checker>, node: GoPtr<InterfaceDeclaration>): bool {
   if (node!.HeritageClauses !== undefined) {
     let seenExtendsClause = false;
-    for (const heritageClauseNode of node!.HeritageClauses!.Nodes) {
+    for (const heritageClauseNode of node!.HeritageClauses!.Nodes ?? []) {
       const heritageClause = AsHeritageClause(heritageClauseNode);
       switch (heritageClause!.Token) {
         case KindExtendsKeyword:
@@ -2543,7 +2550,7 @@ export function Checker_checkGrammarForInvalidExclamationToken(receiver: GoPtr<C
  */
 export function Checker_checkGrammarObjectLiteralExpression(receiver: GoPtr<Checker>, node: GoPtr<ObjectLiteralExpression>, inDestructuring: bool): bool {
   const seen = new Map<string, DeclarationMeaning>();
-  const properties = node!.Properties !== undefined ? node!.Properties!.Nodes : [];
+  const properties = node!.Properties?.Nodes ?? [];
   for (const prop of properties) {
     if (prop!.Kind === KindSpreadAssignment) {
       const spreadAssignment = AsSpreadAssignment(prop);
@@ -2916,27 +2923,28 @@ export function Checker_checkGrammarForInOrForOfStatement(receiver: GoPtr<Checke
     const variableList = AsVariableDeclarationList(forInOrOfStatement!.Initializer as unknown as GoPtr<Node>);
     if (!Checker_checkGrammarVariableDeclarationList(receiver, variableList)) {
       const declarations = variableList!.Declarations;
-      if (declarations!.Nodes.length === 0) {
+      const declarationNodes = declarations!.Nodes ?? [];
+      if (declarationNodes.length === 0) {
         return false;
       }
-      if (declarations!.Nodes.length > 1) {
+      if (declarationNodes.length > 1) {
         const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
           ? Only_a_single_variable_declaration_is_allowed_in_a_for_in_statement
           : Only_a_single_variable_declaration_is_allowed_in_a_for_of_statement;
-        return Checker_grammarErrorOnFirstToken(receiver, declarations!.Nodes[1], diagnostic);
+        return Checker_grammarErrorOnFirstToken(receiver, declarationNodes[1], diagnostic);
       }
-      const firstVariableDeclaration = AsVariableDeclaration(declarations!.Nodes[0]);
+      const firstVariableDeclaration = AsVariableDeclaration(declarationNodes[0]);
       if (firstVariableDeclaration!.Initializer !== undefined) {
         const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
           ? The_variable_declaration_of_a_for_in_statement_cannot_have_an_initializer
           : The_variable_declaration_of_a_for_of_statement_cannot_have_an_initializer;
-        return Checker_grammarErrorOnNode(receiver, Node_Name(declarations!.Nodes[0]), diagnostic);
+        return Checker_grammarErrorOnNode(receiver, Node_Name(declarationNodes[0]), diagnostic);
       }
       if (firstVariableDeclaration!.Type !== undefined) {
         const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
           ? The_left_hand_side_of_a_for_in_statement_cannot_use_a_type_annotation
           : The_left_hand_side_of_a_for_of_statement_cannot_use_a_type_annotation;
-        return Checker_grammarErrorOnNode(receiver, declarations!.Nodes[0], diagnostic);
+        return Checker_grammarErrorOnNode(receiver, declarationNodes[0], diagnostic);
       }
     }
   }
@@ -3058,7 +3066,7 @@ export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor:
 export function Checker_doesAccessorHaveCorrectParameterCount(receiver: GoPtr<Checker>, accessor: GoPtr<AccessorDeclaration>): bool {
   const asNode = accessor as unknown as GoPtr<Node>;
   const funcData = Node_FunctionLikeData(asNode);
-  const paramCount = funcData !== undefined && funcData!.Parameters !== undefined ? funcData!.Parameters!.Nodes.length : 0;
+  const paramCount = funcData?.Parameters?.Nodes?.length ?? 0;
   return Checker_getAccessorThisParameter(receiver, asNode) !== undefined || paramCount === IfElse(asNode!.Kind === KindGetAccessor, 0, 1);
 }
 
@@ -3258,7 +3266,8 @@ export function Checker_checkGrammarMethod(receiver: GoPtr<Checker>, node: GoPtr
   if (node!.Kind === KindMethodDeclaration) {
     if (node!.Parent!.Kind === KindObjectLiteralExpression) {
       const modifiers = Node_Modifiers(node);
-      if (modifiers !== undefined && !(modifiers!.Nodes.length === 1 && modifiers!.Nodes[0]!.Kind === KindAsyncKeyword)) {
+      const modifierNodes = modifiers?.Nodes ?? [];
+      if (modifiers !== undefined && !(modifierNodes.length === 1 && modifierNodes[0]!.Kind === KindAsyncKeyword)) {
         return Checker_grammarErrorOnFirstToken(receiver, node, Modifiers_cannot_appear_here);
       }
       const methodDecl = AsMethodDeclaration(node);
@@ -3421,7 +3430,7 @@ export function Checker_checkGrammarBindingElement(receiver: GoPtr<Checker>, nod
   const asNode = node as unknown as GoPtr<Node>;
   if (node!.DotDotDotToken !== undefined) {
     const elements = Node_ElementList(asNode!.Parent);
-    if (asNode !== LastOrNil(elements!.Nodes)) {
+    if (asNode !== LastOrNil(elements!.Nodes ?? [], () => undefined)) {
       return Checker_grammarErrorOnNode(receiver, asNode, A_rest_element_must_be_last_in_a_destructuring_pattern);
     }
     Checker_checkGrammarForDisallowedTrailingComma(receiver, elements, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
@@ -3664,7 +3673,7 @@ export function Checker_checkGrammarVariableDeclarationList(receiver: GoPtr<Chec
   if (Checker_checkGrammarForDisallowedTrailingComma(receiver, declarations, Trailing_comma_not_allowed)) {
     return true;
   }
-  if (declarations!.Nodes.length === 0) {
+  if ((declarations!.Nodes?.length ?? 0) === 0) {
     return Checker_grammarErrorAtPos(receiver, asNode, NodeList_Pos(declarations), NodeList_End(declarations) - NodeList_Pos(declarations), Variable_declaration_list_cannot_be_empty);
   }
   const blockScopeFlags = asNode!.Flags & NodeFlagsBlockScoped;
@@ -4649,7 +4658,7 @@ export function Checker_checkGrammarImportClause(receiver: GoPtr<Checker>, node:
  */
 export function Checker_checkGrammarTypeOnlyNamedImportsOrExports(receiver: GoPtr<Checker>, namedBindings: GoPtr<Node>): bool {
   const nodeList = Node_ElementList(namedBindings);
-  for (const specifier of nodeList!.Nodes) {
+  for (const specifier of nodeList!.Nodes ?? []) {
     let specifierIsTypeOnly: bool;
     let message: GoPtr<Message>;
     if (specifier!.Kind === KindImportSpecifier) {
@@ -4729,7 +4738,7 @@ export function Checker_checkGrammarImportCallExpression(receiver: GoPtr<Checker
     return Checker_grammarErrorOnNode(receiver, node, This_use_of_import_is_invalid_import_calls_can_be_written_but_they_must_have_parentheses_and_cannot_have_type_arguments);
   }
   const nodeArguments = nodeAsCall!.Arguments;
-  const argumentNodes = nodeArguments!.Nodes;
+  const argumentNodes = nodeArguments!.Nodes ?? [];
   if (!(ModuleKindNode16 <= receiver!.moduleKind && receiver!.moduleKind <= ModuleKindNodeNext) && receiver!.moduleKind !== ModuleKindESNext && receiver!.moduleKind !== ModuleKindPreserve) {
     Checker_checkGrammarForDisallowedTrailingComma(receiver, nodeArguments, Trailing_comma_not_allowed);
     if (argumentNodes.length > 1) {

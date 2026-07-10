@@ -670,6 +670,7 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::method::DiagnosticsOrBuildInfoDiagnosticsWithFileName.getDiagnostics","kind":"method","status":"implemented","sigHash":"86382b07d8c95af4c9a289fb0a0d6212960127adf4b1e267cbf1e09960d49b9c","bodyHash":"4b3c6d19e18e23aa2765a3c0aa17a57f14b7c68ac06eecaf523e4be5bb8cd39e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method DiagnosticsOrBuildInfoDiagnosticsWithFileName.getDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/snapshot.ts::DiagnosticsOrBuildInfoDiagnosticsWithFileName>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (d *DiagnosticsOrBuildInfoDiagnosticsWithFileName) getDiagnostics(p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -683,13 +684,13 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
  * 	return d.diagnostics
  * }
  */
-export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(receiver: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(receiver: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (receiver!.diagnostics !== undefined && receiver!.diagnostics !== null) {
     return receiver!.diagnostics;
   }
   // Convert and cache the diagnostics
   if (receiver!.buildInfoDiagnostics === undefined) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return undefined;
   }
   receiver!.diagnostics = receiver!.buildInfoDiagnostics.map((diag: GoPtr<buildInfoDiagnosticWithFileName>) =>
     buildInfoDiagnosticWithFileName_toDiagnostic(diag, p, file)
@@ -846,7 +847,7 @@ export function snapshot_addFileToChangeSet(receiver: GoPtr<snapshot>, filePath:
  * }
  */
 export function snapshot_addFileToAffectedFilesPendingEmit(receiver: GoPtr<snapshot>, filePath: Path, emitKind: FileEmitKind): void {
-  const [existingKind] = SyncMap_Load(receiver!.affectedFilesPendingEmit as import("../../collections/syncmap.js").SyncMap<Path, FileEmitKind>, filePath);
+  const [existingKind] = SyncMap_Load(receiver!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone);
   SyncMap_Store(receiver!.affectedFilesPendingEmit as import("../../collections/syncmap.js").SyncMap<Path, FileEmitKind>, filePath, ((existingKind ?? 0) | emitKind) as FileEmitKind);
   if ((emitKind & FileEmitKindDtsErrors) !== 0) {
     SyncMap_Delete(receiver!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath);
@@ -934,8 +935,10 @@ export function getTextHandlingSourceMapForSignature(text: string, data: GoPtr<W
 export function snapshot_computeSignatureWithDiagnostics(receiver: GoPtr<snapshot>, file: GoPtr<SourceFile>, text: string, data: GoPtr<WriteFileData>): string {
   const builder = new strings.Builder();
   builder.WriteString(getTextHandlingSourceMapForSignature(text, data));
-  for (const diag of data!.Diagnostics) {
-    diagnosticToStringBuilder(diag, file, builder);
+  if (data !== undefined && data.Diagnostics !== undefined) {
+    for (const diag of data.Diagnostics) {
+      diagnosticToStringBuilder(diag, file, builder);
+    }
   }
   return snapshot_computeHash(receiver, builder.String());
 }

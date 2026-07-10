@@ -26,6 +26,13 @@ import type { ParseConfigHost } from "../tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
 import { FromMap } from "../vfs/vfstest/vfstest.js";
 
+function nodeAt(nodes: ReadonlyArray<GoPtr<Node>> | undefined, index: number): Node {
+  assert.ok(nodes !== undefined, "Expected node list to be non-nil");
+  const node = nodes[index];
+  assert.ok(node !== undefined, `Expected node at index ${index}`);
+  return node;
+}
+
 test("GetSymbolAtLocation", () => {
   const content = `interface Foo {
   bar: string;
@@ -64,9 +71,13 @@ foo.bar;`;
     assert.equal(checker.withinUnreachableCode, false, "checker withinUnreachableCode should start at Go zero-value");
     const file = Program_GetSourceFile(p, "/foo.ts");
     assert.ok(file !== undefined);
-    const interfaceId = Node_Name(file!.Statements!.Nodes[0]);
-    const varId = Node_Name(AsVariableDeclarationList(AsVariableStatement(file!.Statements!.Nodes[1])!.DeclarationList)!.Declarations!.Nodes[0]);
-    const propAccess = Node_Expression(file!.Statements!.Nodes[2]);
+    const interfaceId = Node_Name(nodeAt(file.Statements?.Nodes, 0));
+    const variableStatement = AsVariableStatement(nodeAt(file.Statements?.Nodes, 1));
+    assert.ok(variableStatement !== undefined);
+    const declarationList = AsVariableDeclarationList(variableStatement.DeclarationList);
+    assert.ok(declarationList !== undefined);
+    const varId = Node_Name(nodeAt(declarationList.Declarations?.Nodes, 0));
+    const propAccess = Node_Expression(nodeAt(file.Statements?.Nodes, 2));
     const nodes: Array<GoPtr<Node>> = [interfaceId, varId, propAccess];
     for (const node of nodes) {
       const symbol = Checker_GetSymbolAtLocation(checker, node);
@@ -103,11 +114,11 @@ test("this-only symbol instantiation reuses thisless parameters exactly", () => 
     assert.ok(checker !== undefined);
     const file = Program_GetSourceFile(program, "/checker.ts");
     assert.ok(file !== undefined);
-    const classDeclaration = file.Statements?.Nodes[0];
-    assert.ok(classDeclaration !== undefined);
-    const methodDeclaration = (Node_Members(classDeclaration) ?? [])[0];
-    assert.ok(methodDeclaration !== undefined);
-    const [thislessParameter, thisfulParameter] = Node_Parameters(methodDeclaration);
+    const classDeclaration = nodeAt(file.Statements?.Nodes, 0);
+    const methodDeclaration = nodeAt(Node_Members(classDeclaration), 0);
+    const parameters = Node_Parameters(methodDeclaration);
+    const thislessParameter = nodeAt(parameters, 0);
+    const thisfulParameter = nodeAt(parameters, 1);
     const classSymbol = Node_Symbol(classDeclaration);
     const thislessSymbol = Node_Symbol(thislessParameter);
     const thisfulSymbol = Node_Symbol(thisfulParameter);
@@ -161,8 +172,7 @@ test("merged applicable index info remains synthetic and declarationless", () =>
     assert.ok(checker !== undefined);
     const file = Program_GetSourceFile(program, "/checker.ts");
     assert.ok(file !== undefined);
-    const declaration = file.Statements?.Nodes[0];
-    assert.ok(declaration !== undefined);
+    const declaration = nodeAt(file.Statements?.Nodes, 0);
     const symbol = Node_Symbol(declaration);
     assert.ok(symbol !== undefined);
     const type = Checker_getDeclaredTypeOfSymbol(checker, symbol);

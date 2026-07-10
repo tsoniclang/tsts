@@ -210,6 +210,7 @@ export function ModifierToFlag(token: Kind): ModifierFlags {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ModifiersToFlags","kind":"func","status":"implemented","sigHash":"bf456fe687f51bf75e93125c2f9626af2ded45dabe6e445d7531c56399c38a76","bodyHash":"549175831d96c6fae6cea9448905951d683138b8b498901deac2043cee497efd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Ranging a nil Go modifier slice yields no flags; GoPtr accepts that nil sentinel and modifiers ?? [] performs the equivalent zero-iteration range.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/internal/ast/modifierflags.ts::ModifierFlags","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/internal/ast/modifierflags.ts::ModifierFlags"}
  *
  * Go source:
  * func ModifiersToFlags(modifiers []*Node) ModifierFlags {
@@ -220,9 +221,9 @@ export function ModifierToFlag(token: Kind): ModifierFlags {
  * 	return flags
  * }
  */
-export function ModifiersToFlags(modifiers: GoSlice<GoPtr<Node>>): ModifierFlags {
+export function ModifiersToFlags(modifiers: GoPtr<GoSlice<GoPtr<Node>>>): ModifierFlags {
   let flags: ModifierFlags = 0;
-  for (const modifier of modifiers) {
+  for (const modifier of modifiers ?? []) {
     flags = (flags | ModifierToFlag(modifier!.Kind)) >>> 0;
   }
   return flags;

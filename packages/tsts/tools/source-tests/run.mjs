@@ -17,6 +17,9 @@ const build = spawnSync(process.execPath, [tscPath, "-p", testConfig, "--pretty"
   cwd: repoRoot,
   stdio: "inherit",
 });
+if (build.error !== undefined) {
+  throw new Error(`source test build could not start: ${build.error.message}`, { cause: build.error });
+}
 if (build.status !== 0 || build.signal !== null) {
   if (build.signal !== null) {
     console.error(`source test build terminated by ${build.signal}`);
@@ -70,6 +73,11 @@ console.log(`Source-test artifacts: ${relative(repoRoot, testRunRoot)}`);
 const child = spawn(process.execPath, ["--test", ...tests], {
   cwd: repoRoot,
   stdio: "inherit",
+});
+
+child.on("error", (error) => {
+  console.error(`source tests could not start: ${error.message}`);
+  process.exitCode = 1;
 });
 
 child.on("exit", (code, signal) => {

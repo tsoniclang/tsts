@@ -7,6 +7,7 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -348,36 +349,155 @@ func TestFileStructTagInventoryIncludesFunctionLocalAnonymousStructs(t *testing.
 	}
 }
 
-func TestExternalReferencesResolveDefaultPackageNamesAndGenericCalls(t *testing.T) {
+func TestExternalReferencesClassifyCallsValuesAndTypes(t *testing.T) {
 	source := `package sample
 import (
+	"encoding"
+	"iter"
+	"os"
   "reflect"
   "math/rand/v2"
 )
-func run() {
+func run(seq iter.Seq[int]) {
   _ = reflect.TypeFor[int]()
+	_, _ = reflect.TypeAssert[encoding.TextMarshaler](reflect.Value{})
   _ = (rand.IntN)(4)
+	_ = os.PathSeparator
 }`
 	fileSet := token.NewFileSet()
 	parsed, err := parser.ParseFile(fileSet, "sample.go", source, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
-	imports := importsOf(parsed, map[string]string{"reflect": "reflect", "math/rand/v2": "rand"}, "sample.go")
+	imports := importsOf(parsed, map[string]string{
+		"encoding":     "encoding",
+		"iter":         "iter",
+		"math/rand/v2": "rand",
+		"os":           "os",
+		"reflect":      "reflect",
+	}, "sample.go")
 	refs := externalRefsOf(parsed.Decls[len(parsed.Decls)-1], imports)
-	if len(refs) != 4 {
-		t.Fatalf("expected call and value identities for two selectors, got %#v", refs)
+	if len(refs) != 7 {
+		t.Fatalf("expected one semantic role per selector occurrence, got %#v", refs)
 	}
-	wantCalls := map[string]bool{"reflect.TypeFor": false, "math/rand/v2.IntN": false}
+	want := map[string]bool{
+		"encoding.TextMarshaler:type:0": false,
+		"iter.Seq:type:1":               false,
+		"math/rand/v2.IntN:call:0":      false,
+		"os.PathSeparator:value:0":      false,
+		"reflect.TypeAssert:call:0":     false,
+		"reflect.TypeFor:call:0":        false,
+		"reflect.Value:type:0":          false,
+	}
 	for _, ref := range refs {
-		if ref.Role == "call" {
-			wantCalls[ref.ImportPath+"."+ref.Name] = true
+		key := ref.ImportPath + "." + ref.Name + ":" + ref.Role + ":" + strconv.Itoa(ref.Arity)
+		if _, ok := want[key]; !ok {
+			t.Fatalf("unexpected external reference %s in %#v", key, refs)
+		}
+		want[key] = true
+	}
+	for name, found := range want {
+		if !found {
+			t.Fatalf("missing external reference %s in %#v", name, refs)
 		}
 	}
-	for name, found := range wantCalls {
-		if !found {
-			t.Fatalf("missing external call identity %s in %#v", name, refs)
+}
+
+func TestExternalReferencesResolveTheImportBindingInsteadOfAliasText(t *testing.T) {
+	source := `package sample
+import "context"
+type holder struct{}
+func (holder) receiver(context holder) {
+	_ = context.flags
+	{
+		context := holder{}
+		_ = context.inferences
+	}
+	for context := range []holder{} {
+		_ = context.returnMapper
+	}
+}
+
+func generic[context interface{ marker() }](value context) {
+	_ = value
+}
+func external(value context.Context) context.Context {
+	return context.Background()
+}`
+	fileSet := token.NewFileSet()
+	parsed, err := parser.ParseFile(fileSet, "sample.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	imports := importsOf(parsed, map[string]string{"context": "context"}, "sample.go")
+	var refs []ExternalRefReport
+	for _, declaration := range parsed.Decls {
+		refs = append(refs, externalRefsOf(declaration, imports)...)
+	}
+	if len(refs) != 2 {
+		t.Fatalf("expected only the actual context package selectors, got %#v", refs)
+	}
+	want := map[string]bool{
+		"Background:call": false,
+		"Context:type":    false,
+	}
+	for _, ref := range refs {
+		key := ref.Name + ":" + ref.Role
+		if _, ok := want[key]; !ok {
+			t.Fatalf("shadowed lexical binding was classified as an import: %#v", ref)
 		}
+		want[key] = true
+		if ref.Name == "Context" && ref.Count != 2 {
+			t.Fatalf("context.Context count = %d, want 2", ref.Count)
+		}
+	}
+	for key, found := range want {
+		if !found {
+			t.Fatalf("missing import-bound selector %s in %#v", key, refs)
+		}
+	}
+}
+
+func TestReturnFactsDistinguishNilFromAllocatedEmptyValues(t *testing.T) {
+	source := `package sample
+func nilSlice(flag bool) []int {
+	if flag { return nil }
+	return []int{}
+}
+func madeSlice() []int { return make([]int, 0) }
+func nilMap() map[string]int { return nil }
+func madeMap() map[string]int { return make(map[string]int) }
+func nested() func() []int { return func() []int { return nil } }
+`
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.go")
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	report := scanGoFile(root, path, "example")
+	facts := map[string][]ReturnFactReport{}
+	for _, unit := range report.Units {
+		if unit.Kind == "func" {
+			facts[unit.Name] = unit.ReturnFacts
+		}
+	}
+	assertReturnKinds(t, facts["nilSlice"], "nil", "empty-slice")
+	assertReturnKinds(t, facts["madeSlice"], "make-empty-slice")
+	assertReturnKinds(t, facts["nilMap"], "nil")
+	assertReturnKinds(t, facts["madeMap"], "make-empty-map")
+	assertReturnKinds(t, facts["nested"], "other")
+}
+
+func assertReturnKinds(t *testing.T, facts []ReturnFactReport, expected ...string) {
+	t.Helper()
+	actual := []string{}
+	for _, fact := range facts {
+		for _, result := range fact.Results {
+			actual = append(actual, result.Kind)
+		}
+	}
+	if strings.Join(actual, ",") != strings.Join(expected, ",") {
+		t.Fatalf("return facts = %v, want %v", actual, expected)
 	}
 }
 

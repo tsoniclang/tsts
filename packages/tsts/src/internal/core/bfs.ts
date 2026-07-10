@@ -2,7 +2,7 @@ import type { bool, int, long } from "../../go/scalars.js";
 import type { GoComparable, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { OrderedMap_Delete, OrderedMap_EntryAt, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
+import { OrderedMap_Delete, OrderedMap_EntryAtExisting, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
 import { NewOrderedMapFromList, NewOrderedMapWithSizeHint } from "../collections/ordered_map.js";
 import type { MapEntry } from "../collections/ordered_map.js";
 import { SyncSet_AddIfAbsent } from "../collections/syncset.js";
@@ -70,7 +70,7 @@ export function BreadthFirstSearchLevel_Has<K extends GoComparable, N>(receiver:
  * }
  */
 export function BreadthFirstSearchLevel_Delete<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, key: K): void {
-  OrderedMap_Delete(receiver!.jobs, key);
+  OrderedMap_Delete(receiver!.jobs, key, () => undefined);
 }
 
 /**
@@ -130,6 +130,7 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705","bodyHash":"2ce499b01553903ae4f70fea7c871e70ec82d58ff3d387a29b8127e2ef04802b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"JavaScript has no synchronous goroutine primitive, so jobs within a breadth level run in stable index order. The port preserves TS-Go's visited-set updates, lowest-index stop/fallback selection, per-parent neighbor ordering, level barrier, deduplication, and returned path; only parallel scheduling is serialized."}
  *
  * Go source:
  * func BreadthFirstSearchParallelEx[K comparable, N any](
@@ -325,12 +326,12 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
       return true;
     });
     if (lowestGoal !== Number.MAX_SAFE_INTEGER) {
-      const [, job] = OrderedMap_EntryAt(jobs, lowestGoal as int);
+      const [, job] = OrderedMap_EntryAtExisting(jobs, lowestGoal as int);
       return { stop: true, job: job, next: undefined };
     }
     if (fallback === undefined) {
       if (lowestFallback !== Number.MAX_SAFE_INTEGER) {
-        const [, fb] = OrderedMap_EntryAt(jobs, lowestFallback as int);
+        const [, fb] = OrderedMap_EntryAtExisting(jobs, lowestFallback as int);
         fallback = fb;
       }
     }

@@ -8,16 +8,33 @@ import assert from "node:assert/strict";
 import type { bool, int } from "../../go/scalars.js";
 import { Once } from "../../go/sync.js";
 import type { GoPtr } from "../../go/compat.js";
+import { Background, WithCancel } from "../../go/context.js";
 import { SourceFile_FileName } from "../ast/ast.js";
+import type { SourceFile } from "../ast/ast.js";
 import { LibPath, WrapFS } from "../bundled/bundled.js";
 import type { CompilerOptions, ScriptTarget } from "../core/compileroptions.js";
-import { ScriptTargetESNext } from "../core/compileroptions.js";
+import { NewLineKindLF, ScriptTargetESNext } from "../core/compileroptions.js";
+import { TSFalse, TSTrue } from "../core/tristate.js";
 import { Parse as locale_Parse } from "../locale/locale.js";
 import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
 import { FromMap } from "../vfs/vfstest/vfstest.js";
+import type { FS } from "../vfs/vfs.js";
+import { StartTracing, Tracing_StopTracing } from "../tracing/tracing.js";
+import type { Checker } from "../checker/checker/state.js";
 import type { CheckerPool } from "./checkerpool.js";
 import { NewCompilerHost } from "./host.js";
-import { NewProgram, Program_GetCheckerPool, Program_GetSourceFiles } from "./program.js";
+import { EmitAll } from "./emitter.js";
+import {
+  NewProgram,
+  Program_Emit,
+  Program_GetCheckerPool,
+  Program_GetSourceFiles,
+  Program_GetTypeCheckerForFile,
+  Program_collectCheckerDiagnostics,
+  Program_collectCheckerDiagnosticsFromFiles,
+  Program_getDeclarationDiagnosticsForFile,
+  SortAndDeduplicateDiagnostics,
+} from "./program.js";
 import type { Program } from "./program.js";
 
 interface testFile {
@@ -165,6 +182,40 @@ function parsedCommandLine(fileNames: string[], compilerOptions: GoPtr<CompilerO
   } as ParsedCommandLine;
 }
 
+function focusedProgram(tracing: Program["opts"]["Tracing"] = undefined): { fs: FS; program: GoPtr<Program>; sourceFile: GoPtr<SourceFile> } {
+  const fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", "export const value = 1;"],
+    ["/trace/.keep", ""],
+  ]), true as bool);
+  const options = {
+    NoEmitOnError: TSFalse,
+    NoLib: TSTrue,
+    NewLine: NewLineKindLF,
+    Target: ScriptTargetESNext,
+  } as CompilerOptions;
+  const program = NewProgram({
+    Config: parsedCommandLine(["/src/index.ts"], options),
+    Host: NewCompilerHost("/src", WrapFS(fs), LibPath(), undefined, undefined),
+    Tracing: tracing,
+  });
+  const sourceFile = Program_GetSourceFiles(program).find((file) => SourceFile_FileName(file) === "/src/index.ts");
+  assert.notEqual(sourceFile, undefined);
+  return { fs, program, sourceFile };
+}
+
+function installLeaseTrackingPool(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): { releaseCount: () => number } {
+  const [checker, releaseOriginal] = Program_GetTypeCheckerForFile(program, Background(), sourceFile);
+  releaseOriginal();
+  let releases = 0;
+  program!.compilerCheckerPool = undefined;
+  program!.checkerPool = {
+    GetChecker: (): [GoPtr<Checker>, () => void] => [checker, () => {
+      releases++;
+    }],
+  };
+  return { releaseCount: () => releases };
+}
+
 const programTestCases: programTest[] = [
   {
     testName: "BasicFileOrdering",
@@ -307,4 +358,152 @@ test("Program checker pool is initialized before construction returns", () => {
   assert.equal(observedProgram, program);
   assert.equal(program!.checkerPool, checkerPool);
   assert.equal(Program_GetCheckerPool(program), checkerPool);
+});
+
+test("SortAndDeduplicateDiagnostics preserves the Go nil-slice distinction", () => {
+  assert.equal(SortAndDeduplicateDiagnostics(undefined), undefined);
+
+  const allocatedEmpty: [] = [];
+  const result = SortAndDeduplicateDiagnostics(allocatedEmpty);
+  assert.deepEqual(result, []);
+  assert.notEqual(result, allocatedEmpty);
+});
+
+test("Program.Emit stops after no-emit-on-error handling when its context is canceled", () => {
+  const { fs, program, sourceFile } = focusedProgram();
+  const [ctx, cancel] = WithCancel(Background());
+  let writes = 0;
+  cancel();
+
+  const result = Program_Emit(program, ctx, {
+    TargetSourceFile: sourceFile,
+    EmitOnly: EmitAll,
+    WriteFile: () => {
+      writes++;
+      return undefined;
+    },
+  });
+
+  assert.equal(result, undefined);
+  assert.equal(writes, 0);
+  assert.equal(fs.FileExists("/src/index.js"), false);
+});
+
+test("Program.Emit closes its trace scope when cancellation returns nil", () => {
+  const fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", "export const value = 1;"],
+    ["/trace/.keep", ""],
+  ]), true as bool);
+  const [tracing, startError] = StartTracing(fs, "/trace", "", true as bool);
+  assert.equal(startError, undefined);
+  assert.notEqual(tracing, undefined);
+  const options = {
+    NoEmitOnError: TSFalse,
+    NoLib: TSTrue,
+    NewLine: NewLineKindLF,
+    Target: ScriptTargetESNext,
+  } as CompilerOptions;
+  const program = NewProgram({
+    Config: parsedCommandLine(["/src/index.ts"], options),
+    Host: NewCompilerHost("/src", WrapFS(fs), LibPath(), undefined, undefined),
+    Tracing: tracing,
+  });
+  const sourceFile = Program_GetSourceFiles(program).find((file) => SourceFile_FileName(file) === "/src/index.ts");
+  const [ctx, cancel] = WithCancel(Background());
+  cancel();
+
+  assert.equal(Program_Emit(program, ctx, { TargetSourceFile: sourceFile, EmitOnly: EmitAll, WriteFile: undefined }), undefined);
+  assert.equal(Tracing_StopTracing(tracing), undefined);
+  const [traceText, ok] = fs.ReadFile("/trace/trace.json");
+  assert.equal(ok, true);
+  const events = JSON.parse(traceText) as Array<{ readonly ph: string; readonly name?: string }>;
+  assert.deepEqual(events.filter((event) => event.name === "emit").map((event) => event.ph), ["B", "E"]);
+});
+
+test("focused checker diagnostics release their checker lease when collection throws", () => {
+  const { program, sourceFile } = focusedProgram();
+  let releases = 0;
+  program!.compilerCheckerPool = undefined;
+  program!.checkerPool = {
+    GetChecker: (): [GoPtr<Checker>, () => void] => [{} as Checker, () => {
+      releases++;
+    }],
+  };
+  const failure = new globalThis.Error("focused diagnostic failure");
+
+  assert.throws(
+    () => Program_collectCheckerDiagnostics(program, Background(), sourceFile, () => {
+      throw failure;
+    }),
+    failure,
+  );
+  assert.equal(releases, 1);
+});
+
+test("all-file checker diagnostics release their checker lease when collection throws", () => {
+  const { program, sourceFile } = focusedProgram();
+  let releases = 0;
+  program!.compilerCheckerPool = undefined;
+  program!.checkerPool = {
+    GetChecker: (): [GoPtr<Checker>, () => void] => [{} as Checker, () => {
+      releases++;
+    }],
+  };
+  const failure = new globalThis.Error("all-file diagnostic failure");
+
+  assert.throws(
+    () => Program_collectCheckerDiagnosticsFromFiles(program, Background(), [sourceFile], () => {
+      throw failure;
+    }),
+    failure,
+  );
+  assert.equal(releases, 1);
+});
+
+test("declaration diagnostics release their checker lease when transformation setup throws", () => {
+  const { program, sourceFile } = focusedProgram();
+  const lease = installLeaseTrackingPool(program, sourceFile);
+  const failure = new globalThis.Error("declaration setup failure");
+  const compilerOptions = program!.opts.Config!.ParsedConfig!.CompilerOptions!;
+  program!.opts.Config!.ParsedConfig!.CompilerOptions = new Proxy(compilerOptions, {
+    get(target, property, receiver) {
+      if (property === "NoEmitForJsFiles") {
+        throw failure;
+      }
+      return Reflect.get(target, property, receiver) as unknown;
+    },
+  });
+
+  assert.throws(() => Program_getDeclarationDiagnosticsForFile(program, Background(), sourceFile), failure);
+  assert.equal(lease.releaseCount(), 1);
+});
+
+test("Program.Emit releases its checker lease when a writer panics", () => {
+  const traceFS = FromMap(new Map<string, string>([["/trace/.keep", ""]]), true as bool);
+  const [tracing, startError] = StartTracing(traceFS, "/trace", "", true as bool);
+  assert.equal(startError, undefined);
+  if (tracing === undefined) {
+    assert.fail("StartTracing returned nil without an error");
+  }
+  const { program, sourceFile } = focusedProgram(tracing);
+  const lease = installLeaseTrackingPool(program, sourceFile);
+  const failure = new globalThis.Error("write failure");
+
+  assert.throws(
+    () => Program_Emit(program, Background(), {
+      TargetSourceFile: sourceFile,
+      EmitOnly: EmitAll,
+      WriteFile: () => {
+        throw failure;
+      },
+    }),
+    failure,
+  );
+  assert.equal(lease.releaseCount(), 1);
+  assert.equal(Tracing_StopTracing(tracing), undefined);
+  const [traceText, ok] = traceFS.ReadFile("/trace/trace.json");
+  assert.equal(ok, true);
+  const emitEvents = (JSON.parse(traceText) as Array<{ readonly ph: string; readonly name?: string }>).filter((event) => event.name === "emit");
+  assert.equal(emitEvents.filter((event) => event.ph === "B").length, 2);
+  assert.equal(emitEvents.filter((event) => event.ph === "E").length, 2);
 });

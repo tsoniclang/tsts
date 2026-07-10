@@ -266,6 +266,7 @@ export function NodeBuilder_exitContext(receiver: GoPtr<NodeBuilder>, result: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.exitContextSlice","kind":"method","status":"implemented","sigHash":"5f687e71539c989d757d6146e94b1af9cd2109b12be9fb84d8d62763bce6966e","bodyHash":"3aa8b76718ac9ca70286c64d812ddcc6e809b64bc12788345464f47319ed3026"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilder) exitContextSlice(result []*ast.Node) []*ast.Node {
@@ -278,13 +279,13 @@ export function NodeBuilder_exitContext(receiver: GoPtr<NodeBuilder>, result: Go
  * 	return result
  * }
  */
-export function NodeBuilder_exitContextSlice(receiver: GoPtr<NodeBuilder>, result: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_exitContextSlice(receiver: GoPtr<NodeBuilder>, result: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Node>>> {
   const b = receiver!;
   NodeBuilder_propagateVerbosityOut(b);
   NodeBuilder_exitContextCheck(b);
   try {
     if (b.impl!.ctx!.encounteredError) {
-      return [];
+      return undefined;
     }
     return result;
   } finally {
@@ -351,7 +352,7 @@ export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<Node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.SerializeTypeParametersForSignature","kind":"method","status":"implemented","sigHash":"27fc3405a9e0e7cc1de5afb5278e12eaec19a8d07a216d584b4979bd8e12896b","bodyHash":"36a8af50cb89a3f36c76eb511b602d7b7998e132175dc9c4ea0048480db58ae3"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Signature serialization forwards its caller-supplied tracker and permits nil when no external symbol diagnostics are requested. enterContext installs the internal tracker before collecting type parameters; TypeScript uses undefined for that absent outer sink.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Signature serialization forwards its caller-supplied tracker and permits nil when no external symbol diagnostics are requested. enterContext installs the internal tracker before collecting type parameters; TypeScript uses undefined for that absent outer sink.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilder) SerializeTypeParametersForSignature(signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -361,7 +362,7 @@ export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<Node
  * 	return b.exitContextSlice(typeParams)
  * }
  */
-export function NodeBuilder_SerializeTypeParametersForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_SerializeTypeParametersForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<GoSlice<GoPtr<Node>>> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   const symbol_ = Checker_getSymbolOfDeclaration(b.impl!.ch, signatureDeclaration);
@@ -419,6 +420,7 @@ export function NodeBuilder_SignatureToSignatureDeclaration(receiver: GoPtr<Node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"299d247699cd16119b504c97a121df69e1e68386d3c8923750aa31aaba141a62","bodyHash":"d640931b39a98ef8eaa129251bdeabd767dedac623f4d7cb5d88e82edfb3f170"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilder) ExpandSymbolForHover(symbol *ast.Symbol, meaning ast.SymbolFlags) []*ast.Node {
@@ -457,9 +459,9 @@ export function NodeBuilder_SignatureToSignatureDeclaration(receiver: GoPtr<Node
  * 	return b.exitContextSlice(result)
  * }
  */
-export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): GoPtr<GoSlice<GoPtr<Node>>> {
   const b = receiver!;
-  NodeBuilder_enterContext(b, undefined, (FlagsIgnoreErrors | FlagsMultilineObjectLiterals | FlagsUseAliasDefinedOutsideCurrentScope) as Flags, 0 as InternalFlags, undefined as unknown as SymbolTracker);
+  NodeBuilder_enterContext(b, undefined, (FlagsIgnoreErrors | FlagsMultilineObjectLiterals | FlagsUseAliasDefinedOutsideCurrentScope) as Flags, 0 as InternalFlags, undefined);
   const declaredType = Checker_getDeclaredTypeOfSymbol(b.impl!.ch, symbol_);
   b.impl!.ctx!.typeStack = [...b.impl!.ctx!.typeStack, declaredType];
   b.impl!.ctx!.typeStack = [...b.impl!.ctx!.typeStack, undefined];
@@ -635,7 +637,7 @@ export function NodeBuilder_SymbolToParameterDeclaration(receiver: NodeBuilder, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.SymbolToTypeParameterDeclarations","kind":"method","status":"implemented","sigHash":"fdec68156ada3a287eb6281f926566ce7d868cfc029609125c1a52bcc79e0122","bodyHash":"2acbbb860093b219b3f8b8707e1feb82bf8a49aaf5855c9e42524a5bb2445d7c"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This helper forwards the tracker from SerializeTypeParametersForSignature, including the valid nil outer-sink case. enterContext has already defined the lifecycle that wraps it before type-parameter serialization; TypeScript represents that absent sink as undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This helper forwards the tracker from SerializeTypeParametersForSignature, including the valid nil outer-sink case. enterContext has already defined the lifecycle that wraps it before type-parameter serialization; TypeScript represents that absent sink as undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilder.ts::NodeBuilder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/nodebuilder/types.ts::Flags,packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilder) SymbolToTypeParameterDeclarations(symbol *ast.Symbol, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -643,7 +645,7 @@ export function NodeBuilder_SymbolToParameterDeclaration(receiver: NodeBuilder, 
  * 	return b.exitContextSlice(b.impl.symbolToTypeParameterDeclarations(symbol))
  * }
  */
-export function NodeBuilder_SymbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_SymbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<GoSlice<GoPtr<Node>>> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContextSlice(b, NodeBuilderImpl_symbolToTypeParameterDeclarations(b.impl, symbol_));

@@ -1,30 +1,37 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fingerprint } from "../test-provenance.mjs";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
-import { caseIdentifier as reportCaseIdentifier, hashCaseIds, inventoryFingerprint, runManifestFingerprint, trimResult } from "./run.mjs";
+import { compareUtf8, fingerprint } from "../test-provenance.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, buildTypeScriptUnitTestInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, plannedSkipReasonForParsedCase, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { caseIdentifier as reportCaseIdentifier, hashCaseIds, inventoryFingerprint, runManifestFingerprint, trimResult, validatePreparedBuildRunBinding } from "./run.mjs";
 
 const testInputLabels = [
   "accepted-overlay-active", "accepted-overlay-binding", "accepted-overlay-capture", "accepted-overlay-legacy-manifest", "accepted-overlay-plan",
   "bundled-source-assets", "resolved-typescript-package", "source-pin", "suite-baseline-code", "suite-provenance-helper", "suite-report-verifier",
-  "suite-runner", "suite-sealed-evidence-helper", "suite-source-pin-verifier", "tsts-dist", "tsts-package", "vendored-typescript-lib-fallback",
+  "suite-runner", "suite-sealed-evidence-helper", "suite-source-pin-verifier", "tsts-dist", "tsts-package", "tsts-prepared-build", "tsts-source", "vendored-typescript-lib-fallback",
   "workspace-lock", "workspace-package",
 ].sort();
 
 function protocolTestInventory() {
   const bucket = () => ({ total: 0, inScope: 0, outOfScope: 0, unclassified: 0, entries: {} });
-  return { currentHarness: bucket(), typeScriptCases: { ...bucket(), languageServiceHarnessCases: 0 }, baselines: bucket(), goTests: bucket() };
+  return {
+    schemaVersion: 2,
+    currentHarness: bucket(),
+    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
+    typeScriptUnitTests: { ...bucket(), entries: { exportedModules: 0, supportModules: 0 } },
+    baselines: bucket(),
+    goTests: bucket(),
+  };
 }
 
-function protocolTestManifest(caseNames = ["a"], execution = {}) {
+function protocolTestManifest(caseNames = ["a"], execution = {}, expectedSkipReasons = {}) {
   const inventory = protocolTestInventory();
   const cases = caseNames.map((name, index) => {
     const identity = { corpus: "current", suite: "compiler", relativePath: `compiler/${name}.ts`, configurationName: "" };
-    return { index, ...identity, id: reportCaseIdentifier(identity), sourceSha256: String(index + 1).padStart(64, "0"), projectFixture: null };
+    return { index, ...identity, id: reportCaseIdentifier(identity), sourceSha256: String(index + 1).padStart(64, "0"), projectFixture: null, expectedSkipReason: expectedSkipReasons[index] ?? "" };
   });
   const roots = testInputLabels.map((label) => ({ label, kind: "file", mode: 0o644, symlinkPolicy: "reject", fileCount: 1, symlinkCount: 0, bytes: 1, digest: "a".repeat(64) }));
   const unsigned = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     selection: { corpus: "current", suite: "compiler", filter: "", limit: 0 },
     execution: {
       exactBaselineContract: 1, verifyOnDisk: false, jobs: 1, failFast: false, caseTimeoutMs: 1000, poolCaseTimeoutMs: 2000,
@@ -1165,6 +1172,34 @@ test("parseBaselineSections preserves repeated section names for input/output ba
   ]);
 });
 
+test("on-disk comparison includes declaration artifacts", async () => {
+  const { compareGroupedEmittedOutputs } = await import("./run.mjs");
+  assert.deepEqual(
+    compareGroupedEmittedOutputs(
+      new Map([["index.d.ts", ["export declare const value: number;"]]]),
+      new Map([["index.d.ts", ["export declare const value: string;"]]]),
+    ),
+    ["emit: 'index.d.ts' content differs between on-disk and harness"],
+  );
+});
+
+test("prepared builds are bound to the exact source and dist inputs used by a suite run", () => {
+  const root = (label, digest) => ({ label, kind: "directory", mode: 0o755, symlinkPolicy: "reject", fileCount: 1, symlinkCount: 0, bytes: 1, digest });
+  const source = root("tsts-source", "a".repeat(64));
+  const dist = root("tsts-dist", "b".repeat(64));
+  const runInputs = { schemaVersion: 1, roots: [dist, source], digest: "c".repeat(64) };
+  const preparedBuild = { provenance: { request: { inputs: { schemaVersion: 1, roots: [source], digest: "d".repeat(64) } }, output: dist } };
+  assert.doesNotThrow(() => validatePreparedBuildRunBinding(runInputs, preparedBuild));
+  assert.throws(
+    () => validatePreparedBuildRunBinding(runInputs, { provenance: { request: { inputs: { roots: [{ ...source, digest: "e".repeat(64) }] } }, output: dist } }),
+    /does not match the suite run input/,
+  );
+  assert.throws(
+    () => validatePreparedBuildRunBinding(runInputs, { provenance: { request: { inputs: { roots: [source] } }, output: { ...dist, digest: "f".repeat(64) } } }),
+    /output does not match/,
+  );
+});
+
 test("parseBaselineSections preserves embedded diagnostics sections", () => {
   const sections = parseBaselineSections(`//// [index.d.ts] ////\r\nexport {};\r\n//// [Diagnostics reported]\r\nindex.ts(1,1): error TS9007: Needs annotation.\r\n`);
   assert.deepEqual(sections, [
@@ -1192,6 +1227,13 @@ test("diagnosticHeadlineText accepts TS-Go message headlines", () => {
   assert.equal(
     diagnosticHeadlineText(`file.ts(1,1): message TS1450: First.\r\nfile.ts(2,1): message TS1451: Second.\r\n\r\n==== file.ts (2 errors) ====\r\n    source\r\n`),
     "file.ts(1,1): message TS1450: First.\nfile.ts(2,1): message TS1451: Second.",
+  );
+});
+
+test("diagnosticHeadlineText preserves TS-Go harness diagnostics with negative codes", () => {
+  assert.equal(
+    diagnosticHeadlineText(`error TS-1: Pre-emit (0) and post-emit (1) diagnostic counts do not match!\r\n\r\n!!! related TS2708 file.ts:1:1: Cannot use namespace 'N' as a value.\r\n`),
+    "error TS-1: Pre-emit (0) and post-emit (1) diagnostic counts do not match!",
   );
 });
 
@@ -1236,24 +1278,7 @@ test("isEmittedJavaScriptSibling excludes generated JS beside TS sources", () =>
   assert.equal(isEmittedJavaScriptSibling(emitted.pathname), true);
 });
 
-test("isLanguageServiceHarnessCase identifies LS harness real-world cases only", () => {
-  assert.equal(isLanguageServiceHarnessCase(`///<reference path='..\\services\\typescriptServices.ts' />
-declare var assert: Harness.Assert;
-declare var describe;
-declare var it;
-declare var run;
-declare var IO: IIO;`), true);
-  assert.equal(isLanguageServiceHarnessCase(`///<reference path='formatting.ts' />
-export class Indenter implements ILineIndenationResolver {
-  constructor(public snapshot: ITextSnapshot, public editorOptions: Services.EditorOptions) {}
-}`), true);
-  assert.equal(isLanguageServiceHarnessCase(`declare var it: Iterator<number>;
-for (const value of it) {
-  value;
-}`), false);
-});
-
-test("discoverCases excludes TypeScript LS harness cases before scheduling", async () => {
+test("discoverCases includes pinned parserharness and parserindenter compiler-runner cases", async () => {
   const parserHarnessCases = await discoverCases({
     corpus: "typescript",
     suite: "conformance",
@@ -1266,45 +1291,22 @@ test("discoverCases excludes TypeScript LS harness cases before scheduling", asy
     filter: "parserindenter",
     limit: 0,
   });
-  assert.deepEqual(parserHarnessCases, []);
-  assert.deepEqual(parserIndenterCases, []);
+  assert.equal(parserHarnessCases.length, 1);
+  assert.equal(parserHarnessCases[0].relativePath, "conformance/parser/ecmascript5/RealWorld/parserharness.ts");
+  assert.equal(parserHarnessCases[0].expectedSkipReason, "");
+  assert.equal(parserIndenterCases.length, 1);
+  assert.equal(parserIndenterCases[0].relativePath, "conformance/parser/ecmascript5/RealWorld/parserindenter.ts");
+  assert.equal(parserIndenterCases[0].expectedSkipReason, "");
 });
 
-test("discoverCases schedules project descriptors instead of fixture source files", async () => {
-  const cases = await discoverCases({
-    corpus: "typescript",
-    suite: "project",
-    filter: "project/baseline.json",
-    limit: 0,
-  });
-  assert.deepEqual(cases.map((testCase) => ({
-    suite: testCase.suite,
-    kind: testCase.kind,
-    relativePath: testCase.relativePath,
-    caseName: testCase.caseName,
-    configurationName: testCase.configurationName,
-    projectRoot: testCase.descriptor.projectRoot,
-    inputFiles: testCase.descriptor.inputFiles,
-  })), [
-    {
-      suite: "project",
-      kind: "project",
-      relativePath: "project/baseline.json",
-      caseName: "baseline",
-      configurationName: "module=amd",
-      projectRoot: "tests/cases/projects/baseline",
-      inputFiles: ["emit.ts"],
-    },
-    {
-      suite: "project",
-      kind: "project",
-      relativePath: "project/baseline.json",
-      caseName: "baseline",
-      configurationName: "module=commonjs",
-      projectRoot: "tests/cases/projects/baseline",
-      inputFiles: ["emit.ts"],
-    },
-  ]);
+test("discoverCases retains every project descriptor variant with an exact sealed skip disposition", async () => {
+  const projectCases = await discoverCases({ corpus: "typescript", suite: "project", filter: "", limit: 0 });
+  assert.equal(projectCases.length, 632);
+  assert.equal(new Set(projectCases.map((testCase) => testCase.relativePath)).size, 316);
+  assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module resolution kind classic").length, 313);
+  assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module resolution kind node").length, 3);
+  assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module kind amd").length, 316);
+  assert.ok(projectCases.every((testCase) => testCase.expectedSkipReason !== "" && testCase.projectFixture !== null));
 });
 
 test("compilerOptionsForProjectDescriptor mirrors upstream project defaults and descriptor overrides", () => {
@@ -1438,6 +1440,30 @@ test("getSkipReason mirrors TS-Go runner skips", () => {
   assert.equal(getSkipReason(base), "");
 });
 
+test("planned skip disposition includes embedded and inherited tsconfig options", () => {
+  const direct = parseFileBasedTest(`// @target: es2015
+// @Filename: /tsconfig.json
+{ "compilerOptions": { "module": "nodenext", "baseUrl": "." } }
+// @Filename: /src/index.ts
+export {};`, "case.ts");
+  const directCase = {
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/case.ts",
+    sourceBaseName: "case.ts",
+    configuration: new Map([["target", "es2015"]]),
+  };
+  assert.match(plannedSkipReasonForParsedCase(directCase, direct), /unsupported baseUrl/);
+
+  const inherited = parseFileBasedTest(`// @Filename: /configs/base.json
+{ "compilerOptions": { "moduleResolution": "node10" } }
+// @Filename: /project/tsconfig.json
+{ "extends": "../configs/base.json" }
+// @Filename: /project/index.ts
+export {};`, "case.ts");
+  assert.match(plannedSkipReasonForParsedCase(directCase, inherited), /unsupported module resolution kind node10/);
+});
+
 test("compilerOptionsFromSettings preserves removed option values for TS-Go diagnostics", () => {
   const options = compilerOptionsFromSettings(new Map([["target", "ES5"]]));
   assert.equal(options.target, "ES5");
@@ -1477,8 +1503,8 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.equal(inventory.typeScriptCases.entries.projects, 0);
   assert.equal(inventory.typeScriptCases.entries.unittests, 1);
   assert.equal(inventory.typeScriptCases.languageServiceHarnessCases, 2);
-  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.languageServiceHarnessCases);
-  assert.ok(inventory.typeScriptCases.inScope >= inventory.typeScriptCases.entries.unittests);
+  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.project + inventory.typeScriptCases.entries.unittests + inventory.typeScriptCases.languageServiceHarnessCases);
+  assert.ok(inventory.typeScriptCases.inScope > 0);
   assert.ok(inventory.baselines.entries.astnav > 0);
   assert.ok(inventory.baselines.entries.tsbuildWatch > 0);
   assert.ok(inventory.baselines.entries.tscWatch > 0);
@@ -1590,10 +1616,14 @@ test("result ledger validates provenance, restores order, and tolerates only a t
   const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-ndjson-"));
   try {
     const path = joinPath(dir, "results-0001.ndjson");
-    const manifest = protocolTestManifest(["a", "b", "c"]);
+    const manifest = protocolTestManifest(["a", "b", "c"], {}, { 0: "test" });
     const record = (caseIndex, status) => createResultRecord(manifest, caseIndex, protocolTestResult(manifest.cases[caseIndex], status === "skip"
       ? { skipReason: "test" }
       : status === "fail" ? { actualErrors: true, exitCode: 1 } : {}));
+    assert.throws(
+      () => createResultRecord(manifest, 0, protocolTestResult(manifest.cases[0], { skipReason: "forged" })),
+      /skip disposition does not match/,
+    );
     const lines = [record(2, "pass"), record(0, "skip"), record(1, "fail")];
     await writeFileAsync(path, lines.map((line) => JSON.stringify(line)).join("\n") + "\n{truncated");
     const records = await readResults(path, manifest);
@@ -1601,8 +1631,85 @@ test("result ledger validates provenance, restores order, and tolerates only a t
     assert.equal(loadResultLedger([path], manifest).doneIndices.size, 3);
 
     const wrong = joinPath(dir, "results-0002.ndjson");
-    await writeFileAsync(wrong, `${JSON.stringify({ ...record(0, "pass"), caseId: "wrong" })}\n`);
+    await writeFileAsync(wrong, `${JSON.stringify({ ...record(1, "pass"), caseId: "wrong" })}\n`);
     assert.throws(() => loadResultLedger([wrong], manifest), /case identity mismatch/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("parallel workers preserve sealed case bindings when results complete out of order", async () => {
+  const { EventEmitter } = await import("node:events");
+  const { mkdtemp, mkdir, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const { bindWorkerResultMessage, readResults, runQueue } = await import("./run.mjs");
+  const dir = await mkdtemp(joinPath(tmpdir(), "tsgo-suite-parallel-order-"));
+  const runRoot = joinPath(dir, "cases");
+  await mkdir(runRoot);
+  const skipReason = "TS-Go runner skips unsupported baseUrl .";
+  const manifest = protocolTestManifest(["a-slow-skip", "b-fast-pass"], { jobs: 2 }, { 0: skipReason });
+  const testCases = manifest.cases.map((entry) => ({
+    corpus: entry.corpus,
+    suite: entry.suite,
+    relativePath: entry.relativePath,
+    configurationName: entry.configurationName,
+    expectedSkipReason: entry.expectedSkipReason,
+  }));
+  const completionOrder = [];
+  let releaseSlow;
+
+  const forkWorkerProcess = () => {
+    const child = new EventEmitter();
+    let exited = false;
+    const exit = () => {
+      if (exited) return;
+      exited = true;
+      queueMicrotask(() => child.emit("exit", 0, null));
+    };
+    child.kill = exit;
+    child.send = (message) => {
+      if (message.type === "shutdown") {
+        exit();
+        return;
+      }
+      assert.equal(message.type, "case");
+      const complete = () => {
+        completionOrder.push(message.caseIndex);
+        child.emit("message", {
+          type: "result",
+          caseIndex: message.caseIndex,
+          assignmentId: message.assignmentId,
+          result: protocolTestResult(manifest.cases[message.caseIndex], message.caseIndex === 0 ? { skipReason } : {}),
+        });
+      };
+      if (message.caseIndex === 0) {
+        releaseSlow = complete;
+      } else {
+        queueMicrotask(() => {
+          complete();
+          setImmediate(releaseSlow);
+        });
+      }
+    };
+    queueMicrotask(() => child.emit("message", { type: "ready" }));
+    return child;
+  };
+
+  try {
+    const attempt = await runQueue(testCases, runRoot, dir, 2, false, {}, manifest, new Set(), { forkWorkerProcess });
+    assert.deepEqual(completionOrder, [1, 0]);
+    const results = await readResults(attempt.resultSegments, manifest);
+    assert.deepEqual(results.map((result) => result.relativePath), ["compiler/a-slow-skip.ts", "compiler/b-fast-pass.ts"]);
+    assert.deepEqual(results.map((result) => result.status), ["skip", "pass"]);
+
+    const firstAssignment = { caseIndex: 0, assignmentId: "00000000-0000-4000-8000-000000000001" };
+    assert.throws(() => bindWorkerResultMessage(firstAssignment, {
+      type: "result",
+      caseIndex: 1,
+      assignmentId: firstAssignment.assignmentId,
+      result: protocolTestResult(manifest.cases[1]),
+    }), /does not match active assignment/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -1668,10 +1775,13 @@ test("infrastructure failures remain partial under the shared completion predica
   assert.equal(partial.complete, false);
   assert.deepEqual(partial.missingCaseIndices, [0]);
   assert.equal(partial.infrastructureFailures, 1);
+  assert.equal(partial.onDiskVerificationRequested, false);
+  assert.equal(partial.onDiskVerifiedCases, 0);
   assert.equal(reportOutcome(partial), "partial");
   const productFailure = protocolTestResult(manifest.cases[0], { actualErrors: true, exitCode: 1 });
   const completed = buildReportSummary(manifest, [productFailure]);
   assert.equal(completed.complete, true);
+  assert.equal(completed.onDiskEligibleCases, 1);
   assert.equal(reportOutcome(completed), "failed");
 });
 

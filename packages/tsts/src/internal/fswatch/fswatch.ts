@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoError, GoSlice } from "../../go/compat.js";
+import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Closer } from "../../go/io.js";
 import * as errors from "../../go/errors.js";
 import * as nodeFs from "node:fs";
@@ -83,9 +83,9 @@ export interface Watcher {
   Name(): string;
   Available(): bool;
   HasFastRecursiveBackend(): bool;
-  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [Watch, GoError];
+  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [GoPtr<Watch>, GoError];
   WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Watch>, GoError];
-  WatchFile(path: string, fn: WatchCallback): [Watch, GoError];
+  WatchFile(path: string, fn: WatchCallback): [GoPtr<Watch>, GoError];
 }
 
 interface ParsedWatchOptions {
@@ -117,9 +117,9 @@ class hostWatcher implements Watcher {
   HasFastRecursiveBackend(): bool {
     return (process.platform === "darwin" || process.platform === "win32") as bool;
   }
-  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [Watch, GoError] {
+  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [GoPtr<Watch>, GoError] {
     const [watches, err] = this.WatchDirectories([{ Dir: dir, Callback: fn, Options: opts }]);
-    return err === undefined ? [watches[0]!, undefined] : [undefined as unknown as Watch, err];
+    return err === undefined ? [watches[0]!, undefined] : [undefined, err];
   }
   WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Watch>, GoError] {
     const validated: Array<{ request: WatchDirectoryRequest; options: ParsedWatchOptions }> = [];
@@ -136,15 +136,18 @@ class hostWatcher implements Watcher {
         for (const opened of watches) opened.Close();
         return [[], err];
       }
+      if (watch === undefined) {
+        throw new globalThis.Error("filesystem watcher returned neither a watch nor an error");
+      }
       watches.push(watch);
     }
     return [watches, undefined];
   }
-  WatchFile(path: string, fn: WatchCallback): [Watch, GoError] {
-    if (!nodePath.isAbsolute(path)) return [undefined as unknown as Watch, new globalThis.Error("fswatch: path must be absolute")];
-    if (typeof fn !== "function") return [undefined as unknown as Watch, new globalThis.Error("fswatch: callback must not be nil")];
+  WatchFile(path: string, fn: WatchCallback): [GoPtr<Watch>, GoError] {
+    if (!nodePath.isAbsolute(path)) return [undefined, new globalThis.Error("fswatch: path must be absolute")];
+    if (typeof fn !== "function") return [undefined, new globalThis.Error("fswatch: callback must not be nil")];
     const parent = nodePath.dirname(path);
-    if (parent === path) return [undefined as unknown as Watch, new globalThis.Error("fswatch: cannot watch a root path")];
+    if (parent === path) return [undefined, new globalThis.Error("fswatch: cannot watch a root path")];
     const expected = nodePath.resolve(path);
     return createDirectoryWatch(parent, (events, err) => {
       if (err !== undefined) {
@@ -178,7 +181,7 @@ function parseWatchOptions(options: GoSlice<WatchOption>): ParsedWatchOptions {
   return { recursive, ignore };
 }
 
-function createDirectoryWatch(dir: string, callback: WatchCallback, options: ParsedWatchOptions): [Watch, GoError] {
+function createDirectoryWatch(dir: string, callback: WatchCallback, options: ParsedWatchOptions): [GoPtr<Watch>, GoError] {
   const pending = new globalThis.Map<string, EventKind>();
   let scheduled = false;
   let terminated = false;
@@ -211,7 +214,7 @@ function createDirectoryWatch(dir: string, callback: WatchCallback, options: Par
     });
     return [new nodeWatch(watcher), undefined];
   } catch (error) {
-    return [undefined as unknown as Watch, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
+    return [undefined, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }
 }
 

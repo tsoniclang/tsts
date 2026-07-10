@@ -276,8 +276,9 @@ export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<N
     return Checker_resolveErrorCall(receiver, node);
   }
   const callSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindCall);
-  const numConstructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct).length;
-  if (Checker_isUntypedFunctionCall(receiver, funcType, apparentType, callSignatures.length, numConstructSignatures)) {
+  const numConstructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct)?.length ?? 0;
+  const numCallSignatures = callSignatures?.length ?? 0;
+  if (Checker_isUntypedFunctionCall(receiver, funcType, apparentType, numCallSignatures, numConstructSignatures)) {
     return Checker_resolveUntypedCall(receiver, node);
   }
   if (Checker_isPotentiallyUncalledDecorator(receiver, node, callSignatures) && !IsParenthesizedExpression(Node_Expression(node))) {
@@ -286,7 +287,7 @@ export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<N
     return Checker_resolveErrorCall(receiver, node);
   }
   const headMessage = Checker_getDiagnosticHeadMessageForDecoratorResolution(receiver, node);
-  if (callSignatures.length === 0) {
+  if (callSignatures === undefined || callSignatures.length === 0) {
     const diag = NewDiagnosticChain(Checker_invocationErrorDetails(receiver, Node_Expression(node), apparentType, SignatureKindCall), headMessage);
     Checker_addDiagnostic(receiver, diag);
     Checker_invocationErrorRecovery(receiver, apparentType, SignatureKindCall, diag);
@@ -301,6 +302,7 @@ export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<N
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPotentiallyUncalledDecorator","kind":"method","status":"implemented","sigHash":"d5e6380b617064cef6327cd283cab36e1a19d9aa4cb1c9bad25881686487882d","bodyHash":"7aa58dcc7e561e520b744f5a4ac45d943f9af986ee2efd00793f14f081077183"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (c *Checker) isPotentiallyUncalledDecorator(decorator *ast.Node, signatures []*Signature) bool {
@@ -309,8 +311,8 @@ export function Checker_resolveDecorator(receiver: GoPtr<Checker>, node: GoPtr<N
  * 	})
  * }
  */
-export function Checker_isPotentiallyUncalledDecorator(receiver: GoPtr<Checker>, decorator: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>): bool {
-  return signatures.length !== 0 && Every(signatures, (sig: GoPtr<Signature>): bool => {
+export function Checker_isPotentiallyUncalledDecorator(receiver: GoPtr<Checker>, decorator: GoPtr<Node>, signatures: GoPtr<GoSlice<GoPtr<Signature>>>): bool {
+  return signatures !== undefined && signatures.length !== 0 && Every(signatures, (sig: GoPtr<Signature>): bool => {
     return sig!.minArgumentCount === 0 && !signatureHasRestParameter(sig) && sig!.parameters.length < Checker_getDecoratorArgumentCount(receiver, decorator, sig);
   });
 }

@@ -4,6 +4,7 @@ import { Map as sync_Map } from "../../go/sync.js";
 import type { Time } from "../../go/time.js";
 import * as strings from "../../go/strings.js";
 import type { Set } from "../collections/set.js";
+import { Set_Keys } from "../collections/set.js";
 import { IfElse } from "../core/core.js";
 import { TSTrue, TSFalse, TSUnknown } from "../core/tristate.js";
 import type { Tristate } from "../core/tristate.js";
@@ -334,7 +335,7 @@ export function projectReferenceDtsFakingVfs_WalkDir(receiver: GoPtr<projectRefe
  */
 export function projectReferenceDtsFakingVfs_Realpath(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): string {
   const files = KnownSymlinks_Files(receiver!.knownSymlinks);
-  const [result, ok] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, projectReferenceDtsFakingVfs_toPath(receiver, path));
+  const [result, ok] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, projectReferenceDtsFakingVfs_toPath(receiver, path), (): string => "");
   if (ok) {
     return result;
   }
@@ -400,7 +401,7 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
 
   const directoryPath = EnsureTrailingDirectorySeparator(projectReferenceDtsFakingVfs_toPath(receiver, directory) as string) as Path;
   const directories = KnownSymlinks_Directories(receiver!.knownSymlinks);
-  const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, directoryPath);
+  const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, directoryPath, (): GoPtr<KnownDirectoryLink> => undefined);
   if (ok) {
     return;
   }
@@ -498,7 +499,7 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
   }
   if (isFile) {
     const files = KnownSymlinks_Files(receiver!.knownSymlinks);
-    const [, okFile] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, fileOrDirectoryPath);
+    const [, okFile] = SyncMap_Load<Path, string>(files as SyncMap<Path, string>, fileOrDirectoryPath, (): string => "");
     if (okFile) {
       return true;
     }
@@ -575,7 +576,11 @@ export function projectReferenceDtsFakingVfs_fileExistsIfProjectReferenceDts(rec
 export function projectReferenceDtsFakingVfs_directoryExistsIfProjectReferenceDeclDir(receiver: GoPtr<projectReferenceDtsFakingVfs>, dir: string): Tristate {
   const dirPath = projectReferenceDtsFakingVfs_toPath(receiver, dir);
   const dirPathWithTrailingDirectorySeparator = (dirPath as string) + "/";
-  for (const [declDirPath] of receiver!.dtsDirectories.M) {
+  const declarationDirectories = Set_Keys(receiver!.dtsDirectories);
+  if (declarationDirectories === undefined) {
+    return TSUnknown;
+  }
+  for (const [declDirPath] of declarationDirectories) {
     if (dirPath === declDirPath ||
       // Any parent directory of declaration dir
       strings.HasPrefix(declDirPath as string, dirPathWithTrailingDirectorySeparator) ||

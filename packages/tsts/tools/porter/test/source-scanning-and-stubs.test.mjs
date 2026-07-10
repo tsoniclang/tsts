@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, w
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
 import {
   authoredFacadePathSet,
@@ -17,6 +18,7 @@ import {
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
   collectMechanicalPortRisks,
+  collectTypeScriptFileMechanicalRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -101,7 +103,14 @@ test("mechanical risk checks reject no-op and lossy standard-library substitutio
 
   const correctMarshalWithUnrelatedStringify = collectMechanicalPortRisks(
     unitRecord({ snippet: "func write(v Value) { text, _ := json.Marshal(v) }", externalRefs: [{ importPath: "encoding/json", name: "Marshal", role: "call" }], nodeKindCounts: { CallExpr: 1 } }),
-    { status: "implemented", implementationBody: "{ const [text] = json_Marshal(value); debug(JSON.stringify(metadata)); return text; }" },
+    {
+      status: "implemented",
+      implementationBody: "{ const [text] = json_Marshal(value); debug(JSON.stringify(metadata)); return text; }",
+      implementationAnalysis: { calls: [
+        { text: "json_Marshal", terminal: "json_Marshal", importedName: "Marshal", moduleFile: "/repo/packages/tsts/src/internal/json/json.ts", argumentCalls: [] },
+        { text: "JSON.stringify", terminal: "stringify", importedName: undefined, moduleFile: undefined, argumentCalls: [] },
+      ] },
+    },
   );
   assert.deepEqual(correctMarshalWithUnrelatedStringify, []);
 
@@ -110,10 +119,23 @@ test("mechanical risk checks reject no-op and lossy standard-library substitutio
     {
       status: "implemented",
       implementationBody: "{ return GoMarshal(value); }",
-      implementationAnalysis: { calls: [{ text: "GoMarshal", terminal: "GoMarshal", importedName: "Marshal", argumentCalls: [] }] },
+      implementationAnalysis: { calls: [{ text: "GoMarshal", terminal: "GoMarshal", importedName: "Marshal", moduleFile: "/repo/packages/tsts/src/internal/json/json.ts", argumentCalls: [] }] },
     },
   );
   assert.deepEqual(aliasedMarshal, []);
+
+  const sameNameWrongModule = collectMechanicalPortRisks(
+    unitRecord({ externalRefs: [{ importPath: "encoding/json", name: "Marshal", role: "call" }], nodeKindCounts: { CallExpr: 1 } }),
+    {
+      status: "implemented",
+      implementationBody: "{ fakeMarshal(value); return JSON.stringify(value); }",
+      implementationAnalysis: { calls: [
+        { text: "fakeMarshal", terminal: "fakeMarshal", importedName: "Marshal", moduleFile: "/repo/packages/tsts/src/testing/fake-json.ts", argumentCalls: [] },
+        { text: "JSON.stringify", terminal: "stringify", importedName: undefined, moduleFile: undefined, argumentCalls: [] },
+      ] },
+    },
+  );
+  assert.deepEqual(sameNameWrongModule.map((risk) => risk.kind), ["json-marshal-substitution"]);
 
   const deepEqual = collectMechanicalPortRisks(
     unitRecord({ snippet: "func same(a, b Value) bool { return reflect.DeepEqual(a, b) }", externalRefs: [{ importPath: "reflect", name: "DeepEqual", role: "call" }], nodeKindCounts: { ReturnStmt: 1, CallExpr: 1 } }),
@@ -192,6 +214,135 @@ test("mechanical risk checks reject no-op and lossy standard-library substitutio
   assert.deepEqual(reverseCopy.map((risk) => risk.kind), ["slice-reverse-reimplementation"]);
 });
 
+test("nil return, defer, and concurrency risks require structural semantic evidence", () => {
+  const nilReturning = unitRecord({
+    results: [{ type: sliceType(identType("int")) }],
+    returnFacts: [{ line: 3, results: [{ kind: "nil" }] }],
+  });
+  const normalized = collectMechanicalPortRisks(nilReturning, {
+    status: "implemented",
+    implementationBody: "{ return value ?? []; }",
+    returnSemantics: { paths: [{ kind: "normalization-empty-array" }] },
+  });
+  assert.deepEqual(normalized.map((risk) => risk.kind), ["nil-return-normalized"]);
+
+  const preserved = collectMechanicalPortRisks(nilReturning, {
+    status: "implemented",
+    implementationBody: "{ return undefined; }",
+    returnSemantics: { paths: [{ kind: "nil" }] },
+  });
+  assert.deepEqual(preserved, []);
+
+  const nonNilEmpty = collectMechanicalPortRisks(unitRecord({
+    results: [{ type: sliceType(identType("int")) }],
+    returnFacts: [{ line: 3, results: [{ kind: "make-empty-slice" }] }],
+  }), {
+    status: "implemented",
+    implementationBody: "{ return []; }",
+    returnSemantics: { paths: [{ kind: "empty-array" }] },
+  });
+  assert.deepEqual(nonNilEmpty, []);
+
+  const exactOverride = collectMechanicalPortRisks(nilReturning, {
+    status: "implemented",
+    implementationBody: "{ return []; }",
+    returnSemantics: { paths: [{ kind: "empty-array" }] },
+    override: { allow: ["body", "signature"], reason: "The target representation intentionally materializes a nonnil result under an exact contract." },
+  });
+  assert.deepEqual(exactOverride, []);
+
+  const trailingCleanup = collectMechanicalPortRisks(unitRecord({ featureCounts: { deferStmt: 1 } }), {
+    status: "implemented",
+    implementationBody: "{ acquire(); cleanup(); }",
+    exceptionSafeCleanup: { cleanupCalls: 0, finallyBlocks: 0 },
+  });
+  assert.deepEqual(trailingCleanup.map((risk) => risk.kind), ["defer-cleanup-not-exception-safe"]);
+
+  const finallyCleanup = collectMechanicalPortRisks(unitRecord({ featureCounts: { deferStmt: 1 } }), {
+    status: "implemented",
+    implementationBody: "{ try { acquire(); } finally { cleanup(); } }",
+    exceptionSafeCleanup: { cleanupCalls: 1, finallyBlocks: 1 },
+  });
+  assert.deepEqual(finallyCleanup, []);
+
+  const vanishedConcurrency = collectMechanicalPortRisks(unitRecord({ featureCounts: { goStmt: 1, selectStmt: 1, sendStmt: 1 } }), {
+    status: "implemented",
+    implementationBody: "{ run(); }",
+    implementationAnalysis: { calls: [{ text: "run", terminal: "run", importedName: undefined, moduleFile: undefined, argumentCalls: [] }] },
+  });
+  assert.deepEqual(vanishedConcurrency.map((risk) => risk.kind), ["goroutine-semantics-unproven", "select-semantics-missing", "channel-send-semantics-missing"]);
+});
+
+test("asserted Go zero risks recognize every void expression and intrinsic undefined only", () => {
+  const source = ts.createSourceFile("zero.ts", `
+const a = undefined as unknown as Map<string, string>;
+const b = undefined!;
+const c = <never>null;
+const d = (void 0 as unknown) as string;
+const e = void sideEffect() as string;
+const f = void 1 as string;
+const g = (void (0)) as string;
+const h = undefined;
+const i = (undefined);
+const j = value as string;
+function shadowed(undefined: string): string { return undefined as string; }
+function locallyShadowed(): string { const undefined = "value"; return undefined as string; }
+try {} catch (undefined) { undefined as Error; }
+`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const risks = collectTypeScriptFileMechanicalRisks(source);
+  assert.equal(risks.length, 7);
+  assert.deepEqual(risks.map((risk) => risk.kind), Array(7).fill("asserted-go-zero"));
+  assert.deepEqual(risks.map((risk) => risk.line), [2, 3, 4, 5, 6, 7, 8]);
+});
+
+test("buildStatus gates asserted Go zeros only inside active port units", () => {
+  const active = unitRecord({
+    id: "m::internal/debug/debug.go::func::Active",
+    name: "Active",
+    qualifiedName: "Active",
+    sigHash: "sig-active",
+    bodyHash: "body-active",
+    snippet: "func Active() {}",
+  });
+  const inactive = unitRecord({
+    id: "m::internal/debug/debug_test.go::func::Inactive",
+    name: "Inactive",
+    qualifiedName: "Inactive",
+    goPath: "internal/debug/debug_test.go",
+    sigHash: "sig-inactive",
+    bodyHash: "body-inactive",
+    snippet: "func Inactive() {}",
+  });
+  const risk = {
+    kind: "asserted-go-zero",
+    line: 10,
+    column: 3,
+    message: "asserted Go zero",
+  };
+  const status = buildStatus(
+    baseConfig,
+    snapshotWith([
+      fileRecord({ path: "internal/debug/debug.go", units: [active] }),
+      fileRecord({ path: "internal/debug/debug_test.go", units: [inactive] }),
+    ]),
+    {
+      fileCount: 3,
+      files: [
+        { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1, sourceRisks: [risk] },
+        { path: "packages/tsts/src/internal/debug/debug_test.ts", metadataCount: 1, sourceRisks: [risk] },
+        { path: "packages/tsts/src/extensions/host.ts", metadataCount: 0, sourceRisks: [risk] },
+      ],
+      units: [
+        { id: active.id, kind: active.kind, path: "packages/tsts/src/internal/debug/debug.ts", status: "implemented", sigHash: active.sigHash, bodyHash: active.bodyHash, mechanicalRisks: [risk] },
+        { id: inactive.id, kind: inactive.kind, path: "packages/tsts/src/internal/debug/debug_test.ts", status: "implemented", sigHash: inactive.sigHash, bodyHash: inactive.bodyHash, mechanicalRisks: [risk] },
+      ],
+    },
+  );
+
+  assert.equal(status.counts.mechanicalPortRisks, 1);
+  assert.deepEqual(status.mechanicalRisks.map((entry) => entry.id), [active.id]);
+});
+
 test("scanTsUnits records files with and without metadata", () => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-"));
   try {
@@ -210,10 +361,11 @@ test("scanTsUnits records files with and without metadata", () => {
  * Go source:
  * func Fail() {}
  */
-export function Fail(): void { const text = ${JSON.stringify(longLiteral)}; if (text === "}") return; tailMarker(); }
+export function Fail(): void { const hidden = undefined as never; const text = ${JSON.stringify(longLiteral)}; if (text === "}") return; tailMarker(); void hidden; }
+export const unrelated = void 2 as never;
 `,
     );
-    writeFileSync(path.join(root, "internal/debug/helper.ts"), "export const helper = true;\n");
+    writeFileSync(path.join(root, "internal/debug/helper.ts"), "export const helper = void 1 as never;\n");
     const result = scanTsUnits(root);
     assert.equal(result.fileCount, 2);
     assert.equal(result.units.length, 1);
@@ -224,8 +376,143 @@ export function Fail(): void { const text = ${JSON.stringify(longLiteral)}; if (
     });
     assert.equal(result.units[0].embeddedGoSource, " * func Fail() {}");
     assert.match(result.units[0].implementationBody, /tailMarker\(\)/);
-    assert.equal(result.files.find((file) => file.path.endsWith("debug.ts")).metadataCount, 1);
-    assert.equal(result.files.find((file) => file.path.endsWith("helper.ts")).metadataCount, 0);
+    assert.equal(result.units[0].mechanicalRisks.length, 1);
+    const debugFile = result.files.find((file) => file.path.endsWith("debug.ts"));
+    const helperFile = result.files.find((file) => file.path.endsWith("helper.ts"));
+    assert.equal(debugFile.metadataCount, 1);
+    assert.equal(debugFile.sourceRisks.length, 2);
+    assert.equal(helperFile.metadataCount, 0);
+    assert.equal(helperFile.sourceRisks.length, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("scanTsUnits attributes every value-group declaration without claiming helpers", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-group-risks-"));
+  try {
+    mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    writeFileSync(path.join(root, "internal/debug/debug.ts"), `
+/**
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::constGroup::First+Second","kind":"constGroup","status":"implemented","sigHash":"${"a".repeat(64)}","bodyHash":"${"b".repeat(64)}"}
+ *
+ * Go source:
+ * const ( First = 1; Second = 2 )
+ */
+export const helper = undefined as never;
+export const First = 1;
+export const Second = void sideEffect() as never;
+`);
+
+    const result = scanTsUnits(root);
+    assert.equal(result.units[0].mechanicalRisks.length, 1);
+    assert.equal(result.units[0].mechanicalRisks[0].line, 10);
+    assert.equal(result.files[0].sourceRisks.length, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("scanTsUnits assigns mechanical risks through symbol-resolved helper dependencies", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-helper-risks-"));
+  try {
+    mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    writeFileSync(path.join(root, "internal/debug/helper.ts"), `
+export function helper(): number {
+  return undefined as never;
+}
+export function unrelated(): number {
+  return void 1 as never;
+}
+`);
+    writeFileSync(path.join(root, "internal/debug/debug.ts"), `
+import { helper } from "./helper.js";
+/**
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Run","kind":"func","status":"implemented","sigHash":"${"a".repeat(64)}","bodyHash":"${"b".repeat(64)}"}
+ *
+ * Go source:
+ * func Run() int { return helper() }
+ */
+export function Run(): number { return helper(); }
+`);
+
+    const result = scanTsUnits(root);
+    assert.deepEqual(result.units[0].mechanicalRisks.map((risk) => risk.kind), ["asserted-go-zero"]);
+    assert.match(result.units[0].mechanicalRiskBody, /function helper/);
+    assert.doesNotMatch(result.units[0].mechanicalRiskBody, /function unrelated/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("strict verification rejects helper-transitive nil-to-empty normalization", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-nil-normalization-"));
+  try {
+    mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    writeFileSync(path.join(root, "internal/debug/debug.ts"), `
+function normalized(value: number[] | undefined): number[] {
+  if (value !== undefined) return value;
+  return [];
+}
+/**
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Read","kind":"func","status":"implemented","sigHash":"${"a".repeat(64)}","bodyHash":"${"b".repeat(64)}"}
+ *
+ * Go source:
+ * func Read() []int { return nil }
+ */
+export function Read(): number[] { return normalized(undefined); }
+`);
+    const tsUnits = scanTsUnits(root);
+    const goUnit = unitRecord({
+      id: "m::internal/debug/debug.go::func::Read",
+      name: "Read",
+      qualifiedName: "Read",
+      sigHash: "a".repeat(64),
+      bodyHash: "b".repeat(64),
+      snippet: "func Read() []int { return nil }",
+      results: [{ type: sliceType(identType("int")) }],
+      returnFacts: [{ line: 1, results: [{ kind: "nil" }] }],
+    });
+    assert.deepEqual(
+      collectMechanicalPortRisks(goUnit, tsUnits.units[0]).map((risk) => risk.kind),
+      ["nil-return-normalized"],
+      JSON.stringify(tsUnits.units[0].returnSemantics),
+    );
+    const config = { ...baseConfig, tsRoot: path.relative(repoRoot, root).split(path.sep).join("/") };
+    const status = buildStatus(config, snapshotWith([fileRecord({ units: [goUnit] })]), tsUnits);
+    assert.deepEqual(status.mechanicalRisks.map((risk) => risk.kind), ["nil-return-normalized"]);
+    assert.ok(collectVerifyFailures(status, { "strict-port": true }).some((failure) => failure.includes("mechanical port risks")));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("implementation call identities follow the selected import symbol, not a shadowing name", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-call-identities-"));
+  try {
+    mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    writeFileSync(path.join(root, "internal/debug/facade.ts"), "export function Split(value: string): string { return value; }\n");
+    writeFileSync(path.join(root, "internal/debug/debug.ts"), `
+import { Split as path_Split } from "./facade.js";
+/**
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Run","kind":"func","status":"implemented","sigHash":"${"a".repeat(64)}","bodyHash":"${"b".repeat(64)}"}
+ *
+ * Go source:
+ * func Run() {}
+ */
+export function Run(): void {
+  path_Split("imported");
+  const invoke = (path_Split: (value: string) => string): string => path_Split("shadowed");
+  void invoke;
+}
+`);
+
+    const result = scanTsUnits(root);
+    const splitCalls = result.units[0].implementationAnalysis.calls.filter((call) => call.terminal === "path_Split");
+    assert.equal(splitCalls.length, 2);
+    assert.equal(splitCalls.filter((call) => call.importedName === "Split").length, 1);
+    assert.match(splitCalls.find((call) => call.importedName === "Split").moduleFile, /\/internal\/debug\/facade\.ts$/);
+    assert.equal(splitCalls.find((call) => call.importedName === undefined).moduleFile, undefined);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

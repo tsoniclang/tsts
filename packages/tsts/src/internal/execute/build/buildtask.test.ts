@@ -111,10 +111,10 @@ test("up-to-date checking scans non-root build-info FileInfos", () => {
     upStream: [],
     downStream: [],
     status: undefined,
-    done: undefined!,
+    done: undefined,
     result: undefined,
     prevReporter: undefined,
-    reportDone: undefined!,
+    reportDone: undefined,
     buildInfoEntry: {
       buildInfo,
       path: ToPath(buildInfoFileName, currentDirectory, true),

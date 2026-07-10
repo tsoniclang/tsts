@@ -123,6 +123,7 @@ export const impliedOptions: GoSlice<impliedOption> = [
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::TSConfig","kind":"type","status":"implemented","sigHash":"ab01a041699515c279b4d7a9ad597a7527f3f4e3c8709fb0988e30d1c8506bf0","bodyHash":"fe188ede4b798e258eff0105011e7432a7682c798129f743d5906386957c3597"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"References, Files, Include, and Exclude are nil Go slices when omitted so JSON omission remains distinct from explicit empty arrays; GoPtr preserves those field states.","goSignature":"interface{CompileOnSave:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::bool>;CompilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;Exclude:packages/tsts/src/go/compat.ts::GoSlice<string>;Files:packages/tsts/src/go/compat.ts::GoSlice<string>;Include:packages/tsts/src/go/compat.ts::GoSlice<string>;References:packages/tsts/src/go/compat.ts::GoSlice<unknown>}","tsSignature":"interface{CompileOnSave:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/scalars.ts::bool>;CompilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>;Exclude:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;Files:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;Include:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;References:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<unknown>>}"}
  *
  * Go source:
  * TSConfig struct {
@@ -136,10 +137,10 @@ export const impliedOptions: GoSlice<impliedOption> = [
  */
 export interface TSConfig {
   CompilerOptions: GoPtr<OrderedMap<string, unknown>>;
-  References: GoSlice<unknown>;
-  Files: GoSlice<string>;
-  Include: GoSlice<string>;
-  Exclude: GoSlice<string>;
+  References: GoPtr<GoSlice<unknown>>;
+  Files: GoPtr<GoSlice<string>>;
+  Include: GoPtr<GoSlice<string>>;
+  Exclude: GoPtr<GoSlice<string>>;
   CompileOnSave: GoPtr<bool>;
 }
 
@@ -257,7 +258,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   };
 
   // Build the list of all resolved files as relative paths from the config file.
-  let files: GoSlice<string> = undefined!;
+  let files: GoPtr<GoSlice<string>> = undefined;
   for (const f of ParsedCommandLine_FileNames(configParseResult)) {
     const normalizedFilePath = GetNormalizedAbsolutePath(f, ParsedCommandLine_GetCurrentDirectory(configParseResult));
     const relativePath = GetRelativePathFromFile(normalizedConfigPath, normalizedFilePath, comparePathsOptions);
@@ -269,7 +270,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   // Remove command-line-only options from the output
   for (const name of ["showConfig", "configFile", "configFilePath", "help", "init", "listFilesOnly", "listEmittedFiles", "project", "build", "version"]) {
-    OrderedMap_Delete(optionMap, name);
+    OrderedMap_Delete(optionMap, name, () => undefined);
   }
 
   // Add implied compiler options
@@ -277,10 +278,10 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   const config: TSConfig = {
     CompilerOptions: optionMap,
-    References: undefined!,
-    Files: undefined!,
-    Include: undefined!,
-    Exclude: undefined!,
+    References: undefined,
+    Files: undefined,
+    Include: undefined,
+    Exclude: undefined,
     CompileOnSave: undefined,
   };
 

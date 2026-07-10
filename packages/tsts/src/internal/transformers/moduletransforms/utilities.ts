@@ -109,6 +109,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral","kind":"func","status":"implemented","sigHash":"332f3906d02f3957621ee33167bfa1acd3c6b1bbbc072635ec7d0237090bc214","bodyHash":"61a61fa3ea9fdaf998b027e378ba6446533ba8f18f649bfccba7e70f6ee05613"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func getExternalModuleNameLiteral uses an explicit undefined-capable TypeScript representation at parameter #4 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,unknown,packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,unknown,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>"}
  *
  * Go source:
  * func getExternalModuleNameLiteral(factory *printer.NodeFactory, importNode *ast.Node /*ImportDeclaration | ExportDeclaration | ImportEqualsDeclaration | ImportCall* /, sourceFile *ast.SourceFile, host any /*EmitHost* /, resolver printer.EmitResolver, compilerOptions *core.CompilerOptions) *ast.StringLiteralNode {
@@ -126,7 +127,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
  * 	return nil
  * }
  */
-export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, importNode: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, host: unknown, resolver: EmitResolver, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
+export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, importNode: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, host: unknown, resolver: GoPtr<EmitResolver>, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
   const moduleName = GetExternalModuleName(importNode);
   if (moduleName !== undefined && IsStringLiteral(moduleName as unknown as GoPtr<Node>)) {
     let name = tryGetModuleNameFromDeclaration(importNode, host, factory, resolver, compilerOptions);
@@ -169,6 +170,7 @@ export function tryGetModuleNameFromFile(factory: GoPtr<NodeFactory>, file: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::tryGetModuleNameFromDeclaration","kind":"func","status":"implemented","sigHash":"42090b48f212d30ce223102feb69c4c02726acf95f6426315ccb32e213cefd6e","bodyHash":"209ee8908d2b2c31ef39e0626012d8e364bbf814a50b40c4af1c8ff112e214c5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func tryGetModuleNameFromDeclaration uses an explicit undefined-capable TypeScript representation at parameter #3 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,unknown,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,unknown,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>"}
  *
  * Go source:
  * func tryGetModuleNameFromDeclaration(declaration *ast.Node /*ImportEqualsDeclaration | ImportDeclaration | ExportDeclaration | ImportCall* /, host any /*EmitHost* /, factory *printer.NodeFactory, resolver printer.EmitResolver, compilerOptions *core.CompilerOptions) *ast.StringLiteralNode {
@@ -178,7 +180,7 @@ export function tryGetModuleNameFromFile(factory: GoPtr<NodeFactory>, file: GoPt
  * 	return tryGetModuleNameFromFile(factory, resolver.GetExternalModuleFileFromDeclaration(declaration), host, compilerOptions)
  * }
  */
-export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: unknown, factory: GoPtr<NodeFactory>, resolver: EmitResolver, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
+export function tryGetModuleNameFromDeclaration(declaration: GoPtr<Node>, host: unknown, factory: GoPtr<NodeFactory>, resolver: GoPtr<EmitResolver>, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
   if (resolver === undefined) {
     return undefined;
   }

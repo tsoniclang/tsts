@@ -1,4 +1,5 @@
-import { buildExternalFacadeMap, collectExternalRefUsages } from "./external-facades.mjs";
+import { buildAuthoredFacadeExportIndex } from "./authored-facade-exports.mjs";
+import { buildExternalFacadeMap, collectExternalRefUsages, collectExternalTypeUsages } from "./external-facades.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { readFileSync } from "node:fs";
@@ -23,19 +24,46 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
   const unresolved = [];
 
   const facades = buildExternalFacadeMap(config, snapshot);
+  const authoredObligations = [];
+  for (const usage of collectExternalTypeUsages(config, snapshot)) {
+    const facade = facades.get(usage.goName);
+    if (facade === undefined) continue;
+    const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
+    if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath, usage });
+  }
   for (const usage of collectExternalRefUsages(config, snapshot)) {
     const facade = facades.get(usage.goName);
     if (facade === undefined) continue;
     const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
-    if (authored.has(relativePath)) continue;
-    const expectedText = expected.get(relativePath);
-    if (expectedText?.includes(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${usage.goName}`)) {
+    if (authored.has(relativePath)) {
+      authoredObligations.push({ facade, namespace: "value", relativePath, usage });
+      continue;
+    }
+    const isUnimplementedFunction = facade.kind === "functionValue";
+    const isUnimplementedValue = facade.kind === "value" && facade.tsInitializer === undefined;
+    if (isUnimplementedFunction || isUnimplementedValue) {
       unresolved.push({
         path: relativePath,
         symbol: usage.goName,
         reason: "Active external dependency has only a generated throwing scaffold; implement or explicitly replace the dependency boundary before strict verification.",
       });
     }
+  }
+  const authoredExports = buildAuthoredFacadeExportIndex(authoredObligations.map((obligation) => obligation.relativePath));
+  const seenAuthoredObligations = new Set();
+  for (const obligation of authoredObligations) {
+    const key = `${obligation.relativePath}\0${obligation.facade.tsName}\0${obligation.namespace}`;
+    if (seenAuthoredObligations.has(key)) continue;
+    seenAuthoredObligations.add(key);
+    const moduleExports = authoredExports.get(obligation.relativePath);
+    const exported = moduleExports?.symbols.get(obligation.facade.tsName);
+    if (moduleExports?.error === undefined && exported?.[obligation.namespace] === true) continue;
+    unresolved.push({
+      path: obligation.relativePath,
+      symbol: obligation.usage.goName,
+      reason: moduleExports?.error
+        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.usage.goName}'.`,
+    });
   }
 
   for (const relativePath of [...expectedPaths].sort()) {

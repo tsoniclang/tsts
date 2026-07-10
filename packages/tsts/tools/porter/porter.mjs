@@ -43,6 +43,9 @@ export {
   emptySchemaSourceSyncStatus,
 } from "./core/status.mjs";
 export {
+  collectTypeScriptFileMechanicalRisks,
+} from "./core/asserted-zero-risks.mjs";
+export {
   buildEmbeddedGoSourceUpdates,
   scanTsUnits,
   validateTsgoUnitMetadata,

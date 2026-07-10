@@ -8,7 +8,7 @@ import { AsSourceFile, SourceFile_Text, SourceFile_ECMALineMap } from "../../ast
 import { Node_End, Node_Pos, NodeFactory_AsNodeFactory } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { NodeFactory } from "../factory.js";
-import { KindJsxExpression, KindJsxText, KindMultiLineCommentTrivia, KindNotEmittedStatement, KindSingleLineCommentTrivia, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
+import { KindJsxExpression, KindJsxText, KindMultiLineCommentTrivia, KindNotEmittedStatement, KindSingleLineCommentTrivia, KindUnknown, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { StatementList } from "../../ast/generated/unions.js";
 import { IsSourceFile } from "../../ast/generated/predicates.js";
@@ -35,7 +35,7 @@ import { GetDefaultIndentSize, getIndentString } from "../textwriter.js";
 import { byteLen, byteSlice, calculateIndent, IsRecognizedTripleSlashComment, IsPinnedComment, isJSDocLikeText, PositionsAreOnSameLine } from "../utilities.js";
 import { Printer_writeLine } from "./source-maps.js";
 import { Printer_emitPos } from "./emit-core.js";
-import { commentSeparatorAfter, commentSeparatorBefore, commentSeparatorNone, tefIndentLeadingComments, tefNoComments } from "./state.js";
+import { commentSeparatorAfter, commentSeparatorBefore, commentSeparatorNone, Printer_Writer, tefIndentLeadingComments, tefNoComments } from "./state.js";
 import type { commentSeparator, commentState, detachedCommentsInfo, Printer, tokenEmitFlags } from "./state.js";
 import { Printer_increaseIndentIf, Printer_decreaseIndentIf } from "./statements-declarations.js";
 import { Printer_writeSpace } from "./emit-core.js";
@@ -50,7 +50,7 @@ import { Printer_emitStatement } from "./statements-declarations.js";
  * }
  */
 export function Printer_writeComment(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteComment(text);
+  Printer_Writer(receiver).WriteComment(text);
 }
 
 /**
@@ -190,7 +190,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
         }
 
         // These are number of spaces writer is going to write at current indent
-        const currentWriterIndentSpacing = receiver!.writer.GetIndent() * indentSize;
+        const currentWriterIndentSpacing = Printer_Writer(receiver).GetIndent() * indentSize;
 
         // Number of spaces we want to be writing
         // eg: Assume writer indent
@@ -212,16 +212,16 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
           const indentSizeSpaceString = getIndentString((spacesToEmit - numberOfSingleSpacesToEmit) / indentSize, indentSize);
 
           // Write indent size string ( in eg 1: = "", 2: "" , 3: string with 8 spaces 4: string with 12 spaces
-          receiver!.writer.RawWrite(indentSizeSpaceString);
+          Printer_Writer(receiver).RawWrite(indentSizeSpaceString);
 
           // Emit the single spaces (in eg: 1: 3 spaces, 2: 2 spaces, 3: 1 space, 4: 3 spaces)
           for (; numberOfSingleSpacesToEmit > 0; ) {
-            receiver!.writer.RawWrite(" ");
+            Printer_Writer(receiver).RawWrite(" ");
             numberOfSingleSpacesToEmit--;
           }
         } else {
           // No spaces to emit write empty string
-          receiver!.writer.RawWrite("");
+          Printer_Writer(receiver).RawWrite("");
         }
       }
 
@@ -246,7 +246,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
         }
       } else {
         // Empty string - make sure we write empty line
-        receiver!.writer.WriteLineForce(true);
+        Printer_Writer(receiver).WriteLineForce(true);
       }
 
       pos = nextLineStart;
@@ -349,12 +349,13 @@ export function Printer_shouldEmitDetachedComments(receiver: GoPtr<Printer>, nod
   }
 
   const file = AsSourceFile(node);
+  const statements = file!.Statements!.Nodes;
 
   // Emit detached comment if there are no prologue directives or if the first node is synthesized.
   // The synthesized node will have no leading comment so some comments may be missed.
-  return (file!.Statements!.Nodes.length === 0 ||
-    !IsPrologueDirective(file!.Statements!.Nodes[0]) ||
-    NodeIsSynthesized(file!.Statements!.Nodes[0])) as bool;
+  return (statements === undefined || statements.length === 0 ||
+    !IsPrologueDirective(statements[0]) ||
+    NodeIsSynthesized(statements[0])) as bool;
 }
 
 /**
@@ -425,8 +426,12 @@ export function Printer_syntheticCommentWillEmitNewLine(receiver: GoPtr<Printer>
  * }
  */
 export function Printer_emitPrologueDirectives(receiver: GoPtr<Printer>, statements: GoPtr<StatementList>): int {
-  for (let i = 0; i < statements!.Nodes.length; i++) {
-    const statement = statements!.Nodes[i];
+  const nodes = statements!.Nodes;
+  if (nodes === undefined) {
+    return 0;
+  }
+  for (let i = 0; i < nodes.length; i++) {
+    const statement = nodes[i];
     if (IsPrologueDirective(statement)) {
       Printer_writeLine(receiver);
       Printer_emitStatement(receiver, statement);
@@ -434,7 +439,7 @@ export function Printer_emitPrologueDirectives(receiver: GoPtr<Printer>, stateme
       return i as int;
     }
   }
-  return statements!.Nodes.length as int;
+  return nodes.length as int;
 }
 
 /**
@@ -760,7 +765,7 @@ export function Printer_emitDetachedCommentsAfterStatementList(receiver: GoPtr<P
 
   if (!skipTrailingComments) {
     const hasWrittenComment = Printer_emitLeadingComments(receiver, TextRange_End(detachedRange), false as bool);
-    if (hasWrittenComment && !receiver!.writer.IsAtStartOfLine()) {
+    if (hasWrittenComment && !Printer_Writer(receiver).IsAtStartOfLine()) {
       Printer_writeLine(receiver);
     }
   }
@@ -899,7 +904,7 @@ export function Printer_emitLeadingSyntheticCommentsOfNode(receiver: GoPtr<Print
     return;
   }
   const synth = EmitContext_GetSyntheticLeadingComments(receiver!.emitContext, node);
-  for (const c of synth) {
+  for (const c of synth ?? []) {
     Printer_emitLeadingSynthesizedComment(receiver, c);
   }
 }
@@ -922,13 +927,13 @@ export function Printer_emitLeadingSyntheticCommentsOfNode(receiver: GoPtr<Print
  */
 export function Printer_emitLeadingSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
   if (comment.HasLeadingNewLine || comment.Kind === KindSingleLineCommentTrivia) {
-    receiver!.writer.WriteLine();
+    Printer_Writer(receiver).WriteLine();
   }
   Printer_writeSynthesizedComment(receiver, comment);
   if (comment.HasTrailingNewLine || comment.Kind === KindSingleLineCommentTrivia) {
-    receiver!.writer.WriteLine();
+    Printer_Writer(receiver).WriteLine();
   } else {
-    receiver!.writer.WriteSpace(" ");
+    Printer_Writer(receiver).WriteSpace(" ");
   }
 }
 
@@ -951,7 +956,7 @@ export function Printer_emitTrailingSyntheticCommentsOfNode(receiver: GoPtr<Prin
     return;
   }
   const synth = EmitContext_GetSyntheticTrailingComments(receiver!.emitContext, node);
-  for (const c of synth) {
+  for (const c of synth ?? []) {
     Printer_emitTrailingSynthesizedComment(receiver, c);
   }
 }
@@ -971,12 +976,12 @@ export function Printer_emitTrailingSyntheticCommentsOfNode(receiver: GoPtr<Prin
  * }
  */
 export function Printer_emitTrailingSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
-  if (!receiver!.writer.IsAtStartOfLine()) {
-    receiver!.writer.WriteSpace(" ");
+  if (!Printer_Writer(receiver).IsAtStartOfLine()) {
+    Printer_Writer(receiver).WriteSpace(" ");
   }
   Printer_writeSynthesizedComment(receiver, comment);
   if (comment.HasTrailingNewLine) {
-    receiver!.writer.WriteLine();
+    Printer_Writer(receiver).WriteLine();
   }
 }
 
@@ -1298,7 +1303,7 @@ export function Printer_emitTrailingCommentsOfPosition(receiver: GoPtr<Printer>,
       if (!Printer_shouldWriteComment(receiver, comment)) {
         continue;
       }
-      if (!receiver!.writer.IsAtStartOfLine()) {
+      if (!Printer_Writer(receiver).IsAtStartOfLine()) {
         Printer_writeSpace(receiver);
       }
       Printer_emitComment(receiver, comment);
@@ -1460,7 +1465,7 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
 
   if (leadingComments.length > 0) {
     const detachedComments: CommentRange[] = [];
-    let lastComment: CommentRange = undefined!;
+    let lastComment: CommentRange = { pos: 0, end: 0, Kind: KindUnknown, HasTrailingNewLine: false };
     for (let i = 0; i < leadingComments.length; i++) {
       const comment = leadingComments[i]!;
       if (i > 0) {
@@ -1481,7 +1486,10 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
       // All comments look like they could have been part of the copyright header. Make
       // sure there is at least one blank line between it and the node. If not, it's not
       // a copyright header.
-      const lastDetachedComment = LastOrNil(detachedComments) as CommentRange;
+      const lastDetachedComment = detachedComments[detachedComments.length - 1];
+      if (lastDetachedComment === undefined) {
+        throw new globalThis.Error("nonempty detached comment slice has no last element");
+      }
       const lastCommentLine = ComputeLineOfPosition(lineMap, TextRange_End(lastDetachedComment));
       const nodeLine = ComputeLineOfPosition(lineMap, SkipTrivia(text, TextRange_Pos(textRange)));
       if (nodeLine >= lastCommentLine + 2) {

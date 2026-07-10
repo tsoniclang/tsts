@@ -107,7 +107,7 @@ export function createCompilerSessionFromProgram(program: GoPtr<Program>, host: 
     getSourceFile: (fileName) => Program_GetSourceFile(program, fileName),
     getSourceFilesToEmit: (targetSourceFile, forceDtsEmit = false) => Program_getSourceFilesToEmit(program, targetSourceFile, forceDtsEmit) ?? [],
     ensureBound: () => Program_BindSourceFiles(program),
-    ensureChecked: (sourceFile) => Program_GetSemanticDiagnostics(program, context, sourceFile),
+    ensureChecked: (sourceFile) => diagnosticsForService(Program_GetSemanticDiagnostics(program, context, sourceFile)),
     getDiagnostics: (kind = "all", sourceFile) => getDiagnostics(program, context, kind, sourceFile),
     finalizeExtensions: () => finalizeExtensionSemantics(program!),
     isFinalized: () => getExtensionHost(program!)?.finalized === true,
@@ -133,7 +133,7 @@ export function createCompilerSessionFromFiles(options: InMemoryCompilerSessionO
   } satisfies CompilerHostOptions);
   const defaultOptions = {} as CompilerOptions;
   const [config, configErrors] = GetParsedCommandLineOfConfigFile(configFileName, defaultOptions, undefined, host as ParseConfigHost, undefined);
-  if ((configErrors ?? []).length !== 0) {
+  if (configErrors !== undefined && configErrors.length !== 0) {
     const programOptions = { Config: config, Host: host } satisfies ProgramOptions;
     return createCompilerSession({
       programOptions,
@@ -154,30 +154,41 @@ export function createCompilerSessionFromFiles(options: InMemoryCompilerSessionO
 function getDiagnostics(program: GoPtr<Program>, context: Context, kind: CompilerDiagnosticKind, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   switch (kind) {
     case "config":
-      return Program_GetConfigFileParsingDiagnostics(program);
+      return diagnosticsForService(Program_GetConfigFileParsingDiagnostics(program));
     case "program":
-      return Program_GetProgramDiagnostics(program);
+      return diagnosticsForService(Program_GetProgramDiagnostics(program));
     case "global":
-      return Program_GetGlobalDiagnostics(program, context);
+      return diagnosticsForService(Program_GetGlobalDiagnostics(program, context));
     case "syntactic":
-      return Program_GetSyntacticDiagnostics(program, context, sourceFile);
+      return diagnosticsForService(Program_GetSyntacticDiagnostics(program, context, sourceFile));
     case "bind":
-      return Program_GetBindDiagnostics(program, context, sourceFile);
+      return diagnosticsForService(Program_GetBindDiagnostics(program, context, sourceFile));
     case "semantic":
-      return Program_GetSemanticDiagnostics(program, context, sourceFile);
+      return diagnosticsForService(Program_GetSemanticDiagnostics(program, context, sourceFile));
     case "suggestion":
-      return Program_GetSuggestionDiagnostics(program, context, sourceFile);
+      return diagnosticsForService(Program_GetSuggestionDiagnostics(program, context, sourceFile));
     case "declaration":
-      return Program_GetDeclarationDiagnostics(program, context, sourceFile);
-    case "all":
-      return [
-        ...Program_GetConfigFileParsingDiagnostics(program),
-        ...Program_GetProgramDiagnostics(program),
-        ...Program_GetGlobalDiagnostics(program, context),
-        ...Program_GetSyntacticDiagnostics(program, context, sourceFile),
-        ...Program_GetBindDiagnostics(program, context, sourceFile),
-        ...Program_GetSemanticDiagnostics(program, context, sourceFile),
-      ];
+      return diagnosticsForService(Program_GetDeclarationDiagnostics(program, context, sourceFile));
+    case "all": {
+      const diagnostics: GoSlice<GoPtr<Diagnostic>> = [];
+      appendServiceDiagnostics(diagnostics, Program_GetConfigFileParsingDiagnostics(program));
+      appendServiceDiagnostics(diagnostics, Program_GetProgramDiagnostics(program));
+      appendServiceDiagnostics(diagnostics, Program_GetGlobalDiagnostics(program, context));
+      appendServiceDiagnostics(diagnostics, Program_GetSyntacticDiagnostics(program, context, sourceFile));
+      appendServiceDiagnostics(diagnostics, Program_GetBindDiagnostics(program, context, sourceFile));
+      appendServiceDiagnostics(diagnostics, Program_GetSemanticDiagnostics(program, context, sourceFile));
+      return diagnostics;
+    }
+  }
+}
+
+function diagnosticsForService(diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
+  return diagnostics === undefined ? [] : diagnostics;
+}
+
+function appendServiceDiagnostics(target: GoSlice<GoPtr<Diagnostic>>, diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>): void {
+  if (diagnostics !== undefined) {
+    target.push(...diagnostics);
   }
 }
 

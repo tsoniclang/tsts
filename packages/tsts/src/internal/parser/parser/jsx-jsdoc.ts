@@ -438,7 +438,7 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
     case KindJsxOpeningElement: {
       let children: GoPtr<NodeList> = Parser_parseJsxChildren(receiver, opening);
       let closingElement: GoPtr<Node>;
-      const lastChild = LastOrNil(children!.Nodes);
+      const lastChild = LastOrNil(children!.Nodes ?? [], () => undefined);
       if (lastChild !== undefined && lastChild.Kind === KindJsxElement &&
         !TagNamesAreEquivalent(Node_TagName(AsJsxElement(lastChild)!.OpeningElement), Node_TagName(AsJsxElement(lastChild)!.ClosingElement)) &&
         TagNamesAreEquivalent(Node_TagName(opening), Node_TagName(AsJsxElement(lastChild)!.ClosingElement))) {
@@ -459,12 +459,13 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
           AsJsxElement(lastChild)!.OpeningElement!.Parent = newLast;
         }
         if (Node_Children(lastChild) !== undefined) {
-          for (const c of Node_Children(lastChild)!.Nodes) {
+          for (const c of Node_Children(lastChild)!.Nodes ?? []) {
             c!.Parent = newLast;
           }
         }
         newClosingElement!.Parent = newLast;
-        children = Parser_newNodeList(receiver, NewTextRange(NodeList_Pos(children), Node_End(newLast)), [...children!.Nodes.slice(0, children!.Nodes.length - 1), newLast]);
+        const childNodes = children!.Nodes ?? [];
+        children = Parser_newNodeList(receiver, NewTextRange(NodeList_Pos(children), Node_End(newLast)), [...childNodes.slice(0, childNodes.length - 1), newLast]);
         closingElement = AsJsxElement(lastChild)!.ClosingElement;
       } else {
         closingElement = Parser_parseJsxClosingElement(receiver, opening, inExpressionContext);

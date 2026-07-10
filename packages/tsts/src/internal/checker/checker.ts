@@ -440,6 +440,7 @@ export function Checker_containsSameNamedThisProperty(receiver: GoPtr<Checker>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createNormalizedTupleTypeEx","kind":"method","status":"implemented","sigHash":"4f4ea628889c0e9a6e31fef37e0d5172f7a5ee1c446daeb8e4807b11234d3dbd","bodyHash":"bf557dff42ce8274ac85e3c849834a4eaa6ab5d6e54c2fb6d0c7ddeadae42274"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/internal/checker/types.ts::ObjectFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/internal/checker/types.ts::ObjectFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>"}
  *
  * Go source:
  * func (c *Checker) createNormalizedTupleTypeEx(target *Type, elementTypes []*Type, objectFlags ObjectFlags) *Type {
@@ -490,19 +491,26 @@ export function Checker_containsSameNamedThisProperty(receiver: GoPtr<Checker>, 
  * 	return tupleTarget
  * }
  */
-export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, target: GoPtr<Type>, elementTypes: GoSlice<GoPtr<Type>>, objectFlags: ObjectFlags): GoPtr<Type> {
+export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, target: GoPtr<Type>, elementTypes: GoPtr<GoSlice<GoPtr<Type>>>, objectFlags: ObjectFlags): GoPtr<Type> {
   const d = Type_AsTupleType(target)!;
   if ((d.combinedFlags & ElementFlagsNonRequired) === 0) {
     // No need to normalize when we only have regular required elements
     return Checker_createTypeReferenceEx(receiver, target, elementTypes, objectFlags);
   }
+  const elementInfos = d.elementInfos;
+  if (elementInfos === undefined) {
+    throw new Error("non-required tuple target has no element information");
+  }
+  if (elementTypes === undefined) {
+    throw new Error("non-required tuple target has no element types");
+  }
   if ((d.combinedFlags & ElementFlagsVariadic) !== 0) {
     for (let i = 0; i < elementTypes.length; i++) {
       const e = elementTypes[i];
-      if (i < d.elementInfos.length && (d.elementInfos[i]!.flags & ElementFlagsVariadic) !== 0 && (e!.flags & (TypeFlagsNever | TypeFlagsUnion)) !== 0) {
+      if (i < elementInfos.length && (elementInfos[i]!.flags & ElementFlagsVariadic) !== 0 && (e!.flags & (TypeFlagsNever | TypeFlagsUnion)) !== 0) {
         // Transform [A, ...(X | Y | Z)] into [A, ...X] | [A, ...Y] | [A, ...Z]
         const checkTypes = core.MapIndex(elementTypes, (t: GoPtr<Type>, ti: int): GoPtr<Type> => {
-          if (ti < d.elementInfos.length && (d.elementInfos[ti]!.flags & ElementFlagsVariadic) !== 0) {
+          if (ti < elementInfos.length && (elementInfos[ti]!.flags & ElementFlagsVariadic) !== 0) {
             return t;
           }
           return receiver!.unknownType;
@@ -522,11 +530,11 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
     firstRestIndex: -1,
     lastOptionalOrRestIndex: -1,
   };
-  if (!TupleNormalizer_normalize(n, receiver, elementTypes.slice(0, d.elementInfos.length), d.elementInfos)) {
+  if (!TupleNormalizer_normalize(n, receiver, elementTypes.slice(0, elementInfos.length), elementInfos)) {
     return receiver!.errorType;
   }
-  if (elementTypes.length > d.elementInfos.length) {
-    n.types.push(elementTypes[d.elementInfos.length]);
+  if (elementTypes.length > elementInfos.length) {
+    n.types.push(elementTypes[elementInfos.length]);
   }
   const tupleTarget = Checker_getTupleTargetType(receiver, n.infos, d.readonly);
   if (tupleTarget === receiver!.emptyGenericType) {
@@ -540,6 +548,7 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createTypeReferenceEx","kind":"method","status":"implemented","sigHash":"f0e2d94fd9968195c4af11835051df6ae56b8f3af4769906866aa93b8f84f5d8","bodyHash":"61bdb57e6fe5c0cad5507b6a79b8f56a047891727c167e9b28819bfefe687c9b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/internal/checker/types.ts::ObjectFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/internal/checker/types.ts::ObjectFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>"}
  *
  * Go source:
  * func (c *Checker) createTypeReferenceEx(target *Type, typeArguments []*Type, objectFlags ObjectFlags) *Type {
@@ -556,17 +565,21 @@ export function Checker_createNormalizedTupleTypeEx(receiver: GoPtr<Checker>, ta
  * 	return t
  * }
  */
-export function Checker_createTypeReferenceEx(receiver: GoPtr<Checker>, target: GoPtr<Type>, typeArguments: GoSlice<GoPtr<Type>>, objectFlags: ObjectFlags): GoPtr<Type> {
+export function Checker_createTypeReferenceEx(receiver: GoPtr<Checker>, target: GoPtr<Type>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>, objectFlags: ObjectFlags): GoPtr<Type> {
   const id = getTypeListKey(typeArguments);
   const intf = Type_AsObjectType(target);
-  const cached = intf!.instantiations.get(id);
+  const instantiations = intf!.instantiations;
+  if (instantiations === undefined) {
+    throw new Error("generic type reference target has no instantiation map");
+  }
+  const cached = instantiations.get(id);
   if (cached !== undefined) {
     return cached;
   }
   const t = Checker_newObjectType(receiver, (ObjectFlagsReference | objectFlags | Checker_getPropagatingFlagsOfTypes(receiver, typeArguments, TypeFlagsNone)) as ObjectFlags, target!["symbol"]);
   Type_AsObjectType(t)!.target = target;
   Type_AsTypeReference(t)!.resolvedTypeArguments = typeArguments;
-  intf!.instantiations.set(id, t);
+  instantiations.set(id, t);
   return t;
 }
 

@@ -395,25 +395,25 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
   // Note:: Currently we try the real path only if the
   // file is from node_modules to avoid having to run real path on all file paths
   const path = file.Path();
-  const [realpathDtsToSource, ok] = SyncMap_Load<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path);
+  const [realpathDtsToSource, ok] = SyncMap_Load<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource, path, (): GoPtr<SourceOutputAndProjectReference> => undefined);
   if (ok) {
     return realpathDtsToSource;
   }
   if (receiver!.loader !== undefined && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.PreserveSymlinks)) {
     const fileName = file.FileName();
     if (!strings.Contains(fileName, "/node_modules/")) {
-      SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+      SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource, path, undefined);
     } else {
       const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS().Realpath(fileName));
       if (realDeclarationPath === path) {
-        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource, path, undefined);
       } else {
         const realpathDtsToSourceResult = projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver, realDeclarationPath);
         if (realpathDtsToSourceResult !== undefined) {
-          SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, realpathDtsToSourceResult);
+          SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource, path, realpathDtsToSourceResult);
           return realpathDtsToSourceResult;
         }
-        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
+        SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource, path, undefined);
       }
     }
   }

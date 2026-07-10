@@ -519,7 +519,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
         const appendTypeNode = (node: GoPtr<Node>): void => {
           if (IsUnionTypeNode(node)) {
-            for (const child of AsUnionTypeNode(node)!.Types!.Nodes) {
+            for (const child of AsUnionTypeNode(node)!.Types!.Nodes ?? []) {
               appendTypeNode(child);
             }
             return;
@@ -1219,8 +1219,12 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
         return false;
       }
       const elementTypes = Checker_getTypeArguments(b.ch, undefinedStripped);
-      if (pt.Elements.length !== elementTypes.length) {
+      const elementTypeCount = elementTypes === undefined ? 0 : elementTypes.length;
+      if (pt.Elements.length !== elementTypeCount) {
         return false;
+      }
+      if (elementTypes === undefined) {
+        return true;
       }
       for (let index = 0; index < pt.Elements.length; index++) {
         if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, pt.Elements[index], elementTypes[index], false, reportErrors)) {

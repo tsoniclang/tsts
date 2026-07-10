@@ -309,7 +309,7 @@ export function Parser_reparseTags(receiver: GoPtr<Parser>, parent: GoPtr<Node>,
     if (tags === undefined) {
       continue;
     }
-    for (const tag of tags!.Nodes) {
+    for (const tag of tags!.Nodes ?? []) {
       Parser_reparseUnhosted(receiver, tag, parent, j);
       if (isLast) {
         Parser_reparseHosted(receiver, tag, parent, j);
@@ -602,7 +602,7 @@ export function Parser_reparseJSDocSignature(receiver: GoPtr<Parser>, jsSignatur
     Node_FunctionLikeData(signature)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, false as bool);
   }
   let parameters = Arena_NewSlice(receiver!.nodeSliceArena, 0) as GoSlice<GoPtr<Node>>;
-  const jsSignatureParameters = Node_Parameters(jsSignature);
+  const jsSignatureParameters = Node_Parameters(jsSignature) ?? [];
   for (let pi: int = 0; pi < jsSignatureParameters.length; pi++) {
     const param = jsSignatureParameters[pi];
     let parameter: GoPtr<Node>;
@@ -799,7 +799,7 @@ export function Parser_reparseJSDocTypeLiteral(receiver: GoPtr<Parser>, t: GoPtr
 export function Parser_reparseJSDocComment(receiver: GoPtr<Parser>, node: GoPtr<Node>, tag: GoPtr<Node>): void {
   const comment = Node_CommentList(tag);
   if (comment !== undefined) {
-    const newComment = NodeFactory_NewNodeList(receiver!.factory, core_Map(comment!.Nodes, (n) => NodeFactory_DeepCloneReparse(receiver!.factory, n)));
+    const newComment = NodeFactory_NewNodeList(receiver!.factory, core_Map(comment.Nodes, (n) => NodeFactory_DeepCloneReparse(receiver!.factory, n)));
     newComment!.Loc = comment!.Loc;
     const propJSDoc = NewJSDoc(receiver!.factory, newComment, undefined);
     Parser_finishReparsedNode(receiver, propJSDoc, tag);
@@ -867,7 +867,7 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
   let pos: int = -1;
   let endPos: int = -1;
   let firstTemplate = true;
-  for (const tag of AsJSDoc(j)!.Tags!.Nodes) {
+  for (const tag of AsJSDoc(j)!.Tags!.Nodes ?? []) {
     // When a JSDoc comment contains an `@typedef` or `@callback` tag, `@template` type parameter
     // declarations apply to the type being defined.
     if (!typedefOrCallback && (IsJSDocTypedefTag(tag) || IsJSDocCallbackTag(tag))) {
@@ -1191,7 +1191,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       switch (parent!.Kind) {
         case KindVariableStatement: {
           if (AsVariableStatement(parent)!.DeclarationList !== undefined) {
-            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes) {
+            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes ?? []) {
               if (Node_Type(declaration) === undefined && Node_TypeExpression(tag) !== undefined) {
                 MutableNode_SetType(Node_AsMutable(declaration), Parser_addDeepCloneReparse(receiver, Node_Type(Node_TypeExpression(tag))));
                 Parser_finishMutatedNode(receiver, declaration);
@@ -1262,7 +1262,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       switch (parent!.Kind) {
         case KindVariableStatement: {
           if (AsVariableStatement(parent)!.DeclarationList !== undefined) {
-            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes) {
+            for (const declaration of AsVariableDeclarationList(AsVariableStatement(parent)!.DeclarationList)!.Declarations!.Nodes ?? []) {
               if (Node_Initializer(declaration) !== undefined && Node_TypeExpression(tag) !== undefined) {
                 MutableNode_SetInitializer(Node_AsMutable(declaration), Parser_makeNewCast(
                   receiver,
@@ -1381,7 +1381,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
     case KindJSDocThisTag: {
       const fun = getFunctionLikeHost(parent);
       if (fun !== undefined) {
-        const params = Node_Parameters(fun);
+        const params = Node_Parameters(fun) ?? [];
         if (params.length === 0 || (Node_Name(params[0])!.Kind !== KindThisKeyword && !IsThisIdentifier(Node_Name(params[0])))) {
           const thisParam = NewParameterDeclaration(
             receiver!.factory,
@@ -1485,9 +1485,9 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         const implementsTag = AsJSDocImplementsTag(tag);
 
         if (cls!.HeritageClauses !== undefined) {
-          const implementsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool);
+          const implementsClause = Find(cls!.HeritageClauses!.Nodes ?? [], (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool);
           if (implementsClause !== undefined) {
-            AsHeritageClause(implementsClause)!.Types!.Nodes = [...AsHeritageClause(implementsClause)!.Types!.Nodes, Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName)];
+            AsHeritageClause(implementsClause)!.Types!.Nodes = [...(AsHeritageClause(implementsClause)!.Types!.Nodes ?? []), Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName)];
             Parser_finishMutatedNode(receiver, implementsClause);
             return;
           }
@@ -1500,7 +1500,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         if (cls!.HeritageClauses === undefined) {
           cls!.HeritageClauses = Parser_newNodeList(receiver, implementsTag!.ClassName!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena, heritageClause) as GoSlice<GoPtr<Node>>);
         } else {
-          cls!.HeritageClauses!.Nodes = [...cls!.HeritageClauses!.Nodes, heritageClause];
+          cls!.HeritageClauses!.Nodes = [...(cls!.HeritageClauses!.Nodes ?? []), heritageClause];
         }
         Parser_finishMutatedNode(receiver, parent);
       }
@@ -1509,15 +1509,17 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
     case KindJSDocAugmentsTag: {
       const cls = getClassLikeData(parent);
       if (cls !== undefined && cls!.HeritageClauses !== undefined) {
-        const extendsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool);
-        if (extendsClause !== undefined && AsHeritageClause(extendsClause)!.Types!.Nodes.length === 1) {
-          const target = AsExpressionWithTypeArguments(AsHeritageClause(extendsClause)!.Types!.Nodes[0]);
+        const extendsClause = Find(cls!.HeritageClauses!.Nodes ?? [], (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool);
+        const extendsTypes = extendsClause === undefined ? undefined : AsHeritageClause(extendsClause)!.Types!.Nodes;
+        if (extendsClause !== undefined && (extendsTypes?.length ?? 0) === 1) {
+          const target = AsExpressionWithTypeArguments(extendsTypes![0]);
           const source = AsExpressionWithTypeArguments(Node_ClassName(tag));
           if (HasSamePropertyAccessName(target!.Expression, source!.Expression)) {
             if (target!.TypeArguments === undefined && source!.TypeArguments !== undefined) {
-              const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, source!.TypeArguments!.Nodes.length as int) as GoSlice<GoPtr<Node>>;
-              for (let i: int = 0; i < source!.TypeArguments!.Nodes.length; i++) {
-                newArguments[i] = Parser_addDeepCloneReparse(receiver, source!.TypeArguments!.Nodes[i]);
+              const sourceTypeArguments = source!.TypeArguments!.Nodes ?? [];
+              const newArguments = Arena_NewSlice(receiver!.nodeSliceArena, sourceTypeArguments.length as int) as GoSlice<GoPtr<Node>>;
+              for (let i: int = 0; i < sourceTypeArguments.length; i++) {
+                newArguments[i] = Parser_addDeepCloneReparse(receiver, sourceTypeArguments[i]);
               }
               target!.TypeArguments = Parser_newNodeList(receiver, source!.TypeArguments!.Loc, newArguments);
               Parser_finishMutatedNode(receiver, target);
@@ -1586,7 +1588,7 @@ export function Parser_makeQuestionIfOptional(receiver: GoPtr<Parser>, parameter
 export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDocParameterOrPropertyTag>, jsDoc: GoPtr<Node>): [GoPtr<ParameterDeclaration>, bool] {
   let tagIndex: int = -1;
   let paramCount: int = -1;
-  for (const tag of AsJSDoc(jsDoc)!.Tags!.Nodes) {
+  for (const tag of AsJSDoc(jsDoc)!.Tags!.Nodes ?? []) {
     if (tag!.Kind === KindJSDocParameterTag) {
       paramCount++;
       if (AsJSDocParameterOrPropertyTag(tag) === parameterTag) {
@@ -1595,7 +1597,7 @@ export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDo
       }
     }
   }
-  const parameters = Node_Parameters(fun);
+  const parameters = Node_Parameters(fun) ?? [];
   for (let parameterIndex: int = 0; parameterIndex < parameters.length; parameterIndex++) {
     const parameter = parameters[parameterIndex];
     if (Node_Name(parameter)!.Kind === KindIdentifier) {
@@ -1659,8 +1661,8 @@ export function getFunctionLikeHost(host: GoPtr<Node>): GoPtr<Node> {
   switch (host!.Kind) {
     case KindVariableStatement: {
       const nodes = AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes;
-      if (nodes.length !== 0) {
-        fun = Node_Initializer(nodes[0]);
+      if ((nodes?.length ?? 0) !== 0) {
+        fun = Node_Initializer(nodes![0]);
       }
       break;
     }

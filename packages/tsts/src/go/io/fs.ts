@@ -2,6 +2,7 @@ import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 
 import type { GoError, GoPtr, GoSlice } from "../compat.js";
+import { GoRequireNonNilAfterSuccess } from "../compat.js";
 import { EOF } from "../io.js";
 import type { bool, int, long } from "../scalars.js";
 import type { Time } from "../time.js";
@@ -84,11 +85,11 @@ export interface DirEntry {
   Name(): string;
   IsDir(): bool;
   Type(): FileMode;
-  Info(): [FileInfo, GoError];
+  Info(): [GoPtr<FileInfo>, GoError];
 }
 
 export interface File {
-  Stat(): [FileInfo, GoError];
+  Stat(): [GoPtr<FileInfo>, GoError];
   Read(buffer: GoSlice<number>): [int, GoError];
   Close(): GoError;
 }
@@ -98,13 +99,13 @@ export interface ReadDirFile extends File {
 }
 
 export interface FS {
-  Open(name: string): [File, GoError];
+  Open(name: string): [GoPtr<File>, GoError];
   ReadFile?(name: string): [Uint8Array, GoError];
   ReadDir?(name: string): [GoSlice<DirEntry>, GoError];
-  Stat?(name: string): [FileInfo, GoError];
-  Sub?(dir: string): [FS, GoError];
+  Stat?(name: string): [GoPtr<FileInfo>, GoError];
+  Sub?(dir: string): [GoPtr<FS>, GoError];
   ReadLink?(name: string): [string, GoError];
-  Lstat?(name: string): [FileInfo, GoError];
+  Lstat?(name: string): [GoPtr<FileInfo>, GoError];
   readonly root?: string;
 }
 
@@ -116,7 +117,7 @@ interface NodeFsRoot extends FS {
 
 export function NodeFS(root: string): FS {
   const resolvedRoot = nodePath.resolve(root);
-  const open = (name: string): [File, GoError] => openNodeFile(resolvedRoot, name);
+  const open = (name: string): [GoPtr<File>, GoError] => openNodeFile(resolvedRoot, name);
   return {
     root: resolvedRoot,
     Open: open,
@@ -133,7 +134,7 @@ export function NodeFS(root: string): FS {
     ReadDir(name: string): [GoSlice<DirEntry>, GoError] {
       return readDirFromOpen(open, name);
     },
-    Stat(name: string): [FileInfo, GoError] {
+    Stat(name: string): [GoPtr<FileInfo>, GoError] {
       return nodeStat(resolvedRoot, name, false, "stat");
     },
     ReadLink(name: string): [string, GoError] {
@@ -146,7 +147,7 @@ export function NodeFS(root: string): FS {
         return ["", normalizeFsError(error, "readlink", name)];
       }
     },
-    Lstat(name: string): [FileInfo, GoError] {
+    Lstat(name: string): [GoPtr<FileInfo>, GoError] {
       return nodeStat(resolvedRoot, name, true, "lstat");
     },
   };
@@ -198,12 +199,13 @@ export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
   if (openErr !== undefined) {
     return [new Uint8Array(), openErr];
   }
+  const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
 
   const data: number[] = [];
   const buffer = new globalThis.Array<number>(8192).fill(0);
   try {
     for (;;) {
-      const [count, readErr] = file.Read(buffer);
+      const [count, readErr] = openedFile.Read(buffer);
       const boundedCount = Math.max(0, Math.min(count as number, buffer.length));
       for (let index = 0; index < boundedCount; index += 1) {
         data.push(buffer[index]!);
@@ -213,7 +215,7 @@ export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
       }
     }
   } finally {
-    file.Close();
+    openedFile.Close();
   }
 }
 
@@ -224,35 +226,37 @@ export function ReadDir(fsys: FS, name: string): [GoSlice<DirEntry>, GoError] {
   return readDirFromOpen((path) => fsys.Open(path), name);
 }
 
-function readDirFromOpen(open: (name: string) => [File, GoError], name: string): [GoSlice<DirEntry>, GoError] {
+function readDirFromOpen(open: (name: string) => [GoPtr<File>, GoError], name: string): [GoSlice<DirEntry>, GoError] {
   const [file, openErr] = open(name);
   if (openErr !== undefined) {
     return [[], openErr];
   }
+  const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
   try {
-    if (!isReadDirFile(file)) {
+    if (!isReadDirFile(openedFile)) {
       return [[], new PathError("readdir", name, new globalThis.Error("not implemented"))];
     }
-    const [entries, readErr] = file.ReadDir(-1 as int);
+    const [entries, readErr] = openedFile.ReadDir(-1 as int);
     entries.sort((left, right) => compareByteStrings(left.Name(), right.Name()));
     return [entries, readErr];
   } finally {
-    file.Close();
+    openedFile.Close();
   }
 }
 
-export function Stat(fsys: FS, name: string): [FileInfo, GoError] {
+export function Stat(fsys: FS, name: string): [GoPtr<FileInfo>, GoError] {
   if (typeof fsys.Stat === "function") {
     return fsys.Stat(name);
   }
   const [file, openErr] = fsys.Open(name);
   if (openErr !== undefined) {
-    return [undefined as unknown as FileInfo, openErr];
+    return [undefined, openErr];
   }
+  const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
   try {
-    return file.Stat();
+    return openedFile.Stat();
   } finally {
-    file.Close();
+    openedFile.Close();
   }
 }
 
@@ -263,7 +267,7 @@ export function ReadLink(fsys: FS, name: string): [string, GoError] {
   return fsys.ReadLink(name);
 }
 
-export function Lstat(fsys: FS, name: string): [FileInfo, GoError] {
+export function Lstat(fsys: FS, name: string): [GoPtr<FileInfo>, GoError] {
   if (typeof fsys.Lstat !== "function") {
     return Stat(fsys, name);
   }
@@ -276,7 +280,9 @@ export function WalkDir(fsys: FS, root: string, walkFn: WalkDirFunc): GoError {
   if (statErr !== undefined) {
     err = walkFn(root, undefined, statErr);
   } else {
-    err = walkDir(fsys, root, FileInfoToDirEntry(info)!, walkFn);
+    const statInfo = GoRequireNonNilAfterSuccess(info, "fs.Stat");
+    const entry = GoRequireNonNilAfterSuccess(FileInfoToDirEntry(statInfo), "fs.FileInfoToDirEntry");
+    err = walkDir(fsys, root, entry, walkFn);
   }
   return err === SkipDir || err === SkipAll ? undefined : err;
 }
@@ -323,9 +329,9 @@ export function FileInfoToDirEntry(info: GoPtr<FileInfo>): GoPtr<DirEntry> {
   };
 }
 
-export function Sub(fsys: FS, dir: string): [FS, GoError] {
+export function Sub(fsys: FS, dir: string): [GoPtr<FS>, GoError] {
   if (!ValidPath(dir)) {
-    return [undefined as unknown as FS, new PathError("sub", dir, ErrInvalid)];
+    return [undefined, new PathError("sub", dir, ErrInvalid)];
   }
   if (dir === ".") {
     return [fsys, undefined];
@@ -352,10 +358,10 @@ export function Sub(fsys: FS, dir: string): [FS, GoError] {
   };
 
   const result: FS = {
-    Open(name: string): [File, GoError] {
+    Open(name: string): [GoPtr<File>, GoError] {
       const [full, nameErr] = fullName("open", name);
       if (nameErr !== undefined) {
-        return [undefined as unknown as File, nameErr];
+        return [undefined, nameErr];
       }
       const [file, err] = fsys.Open(full);
       return [file, fixErr(err)];
@@ -384,21 +390,21 @@ export function Sub(fsys: FS, dir: string): [FS, GoError] {
       const [target, err] = ReadLink(fsys, full);
       return [target, fixErr(err)];
     },
-    Lstat(name: string): [FileInfo, GoError] {
+    Lstat(name: string): [GoPtr<FileInfo>, GoError] {
       const [full, nameErr] = fullName("lstat", name);
       if (nameErr !== undefined) {
-        return [undefined as unknown as FileInfo, nameErr];
+        return [undefined, nameErr];
       }
       const [info, err] = Lstat(fsys, full);
       return [info, fixErr(err)];
     },
-    Sub(name: string): [FS, GoError] {
+    Sub(name: string): [GoPtr<FS>, GoError] {
       if (name === ".") {
         return [result, undefined];
       }
       const [full, nameErr] = fullName("sub", name);
       if (nameErr !== undefined) {
-        return [undefined as unknown as FS, nameErr];
+        return [undefined, nameErr];
       }
       return Sub(fsys, full);
     },
@@ -471,7 +477,7 @@ function hasValidUnicode(value: string): boolean {
 }
 
 function isReadDirFile(file: File): file is ReadDirFile {
-  return typeof (file as Partial<ReadDirFile>).ReadDir === "function";
+  return "ReadDir" in file && typeof file.ReadDir === "function";
 }
 
 function joinPath(parent: string, child: string): string {
@@ -506,9 +512,9 @@ function compareByteStrings(left: string, right: string): number {
   return leftBytes.length - rightBytes.length;
 }
 
-function openNodeFile(root: string, name: string): [File, GoError] {
+function openNodeFile(root: string, name: string): [GoPtr<File>, GoError] {
   if (!ValidPath(name)) {
-    return [undefined as unknown as File, new PathError("open", name, ErrInvalid)];
+    return [undefined, new PathError("open", name, ErrInvalid)];
   }
   const fullPath = resolveNodePath(root, name);
   try {
@@ -520,15 +526,15 @@ function openNodeFile(root: string, name: string): [File, GoError] {
     const descriptor = nodeFs.openSync(fullPath, "r");
     return [nodeRegularFile(name, descriptor, info), undefined];
   } catch (error) {
-    return [undefined as unknown as File, normalizeFsError(error, "open", name)];
+    return [undefined, normalizeFsError(error, "open", name)];
   }
 }
 
 function nodeRegularFile(path: string, descriptor: number, info: FileInfo): File {
   let closed = false;
   return {
-    Stat(): [FileInfo, GoError] {
-      return closed ? [undefined as unknown as FileInfo, new PathError("stat", path, ErrClosed)] : [info, undefined];
+    Stat(): [GoPtr<FileInfo>, GoError] {
+      return closed ? [undefined, new PathError("stat", path, ErrClosed)] : [info, undefined];
     },
     Read(buffer: GoSlice<number>): [int, GoError] {
       if (closed) {
@@ -565,8 +571,8 @@ function nodeDirectoryFile(path: string, fullPath: string, info: FileInfo): Read
   let offset = 0;
   let entries: DirEntry[] | undefined;
   return {
-    Stat(): [FileInfo, GoError] {
-      return closed ? [undefined as unknown as FileInfo, new PathError("stat", path, ErrClosed)] : [info, undefined];
+    Stat(): [GoPtr<FileInfo>, GoError] {
+      return closed ? [undefined, new PathError("stat", path, ErrClosed)] : [info, undefined];
     },
     Read(_buffer: GoSlice<number>): [int, GoError] {
       return [0 as int, new PathError("read", path, closed ? ErrClosed : ErrInvalid)];
@@ -605,25 +611,25 @@ function nodeDirEntry(parent: string, dirent: nodeFs.Dirent): DirEntry {
     Name: () => dirent.name,
     IsDir: () => dirent.isDirectory() as bool,
     Type: () => FileMode_Type(mode),
-    Info: (): [FileInfo, GoError] => {
+    Info: (): [GoPtr<FileInfo>, GoError] => {
       try {
         return [fileInfoFromStats(dirent.name, nodeFs.lstatSync(nodePath.join(parent, dirent.name))), undefined];
       } catch (error) {
-        return [undefined as unknown as FileInfo, normalizeFsError(error, "lstat", dirent.name)];
+        return [undefined, normalizeFsError(error, "lstat", dirent.name)];
       }
     },
   };
 }
 
-function nodeStat(root: string, name: string, lstat: boolean, op: string): [FileInfo, GoError] {
+function nodeStat(root: string, name: string, lstat: boolean, op: string): [GoPtr<FileInfo>, GoError] {
   if (!ValidPath(name)) {
-    return [undefined as unknown as FileInfo, new PathError(op, name, ErrInvalid)];
+    return [undefined, new PathError(op, name, ErrInvalid)];
   }
   try {
     const stats = lstat ? nodeFs.lstatSync(resolveNodePath(root, name)) : nodeFs.statSync(resolveNodePath(root, name));
     return [fileInfoFromStats(name === "." ? "." : nodePath.posix.basename(name), stats), undefined];
   } catch (error) {
-    return [undefined as unknown as FileInfo, normalizeFsError(error, op, name)];
+    return [undefined, normalizeFsError(error, op, name)];
   }
 }
 

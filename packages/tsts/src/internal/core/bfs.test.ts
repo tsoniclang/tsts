@@ -26,7 +26,7 @@ function makeVisitedSet(): SyncSet<string> {
 function makeOptions(visited: SyncSet<string>): BreadthFirstSearchOptions<string, string> {
   return {
     Visited: visited,
-    PreprocessLevel: undefined as unknown as BreadthFirstSearchOptions<string, string>["PreprocessLevel"],
+    PreprocessLevel: () => undefined,
   };
 }
 

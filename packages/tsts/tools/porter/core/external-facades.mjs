@@ -53,6 +53,17 @@ export function collectExternalTypeUsages(config, snapshot) {
     for (const unit of file.units ?? []) {
       if (!isActivePortPolicy(policyForUnit(config, unit, file))) continue;
       collectExternalTypesFromUnit(config, symbolIndex, aliases, file.importPath, unit, usages);
+      for (const ref of unit.externalRefs ?? []) {
+        if (ref.role !== "type") continue;
+        if (!Number.isSafeInteger(ref.arity ?? 0) || (ref.arity ?? 0) < 0) {
+          fail(`external type reference '${ref.importPath}.${ref.name}' has invalid arity '${ref.arity}'`);
+        }
+        const goName = `${ref.importPath}.${ref.name}`;
+        if (standardSelectorTypes.has(goName)) continue;
+        if (ref.importPath.startsWith(config.goModulePath)
+          && symbolIndex.has(`${ref.importPath}::${ref.name}`)) continue;
+        recordExternalUsage(usages, goName, ref.arity ?? 0);
+      }
     }
   }
   return [...usages.values()].sort((left, right) => left.goName.localeCompare(right.goName));
@@ -121,8 +132,12 @@ export function collectExternalRefUsages(config, snapshot) {
       if (!isActivePortPolicy(policy) || policy.category === "host-native") continue;
       for (const ref of unit.externalRefs ?? []) {
         if (!ref.importPath || ref.importPath.startsWith(config.goModulePath)) continue;
+        if (ref.role === "type") continue;
+        if (ref.role !== "call" && ref.role !== "value") {
+          fail(`external reference '${ref.importPath}.${ref.name}' has unsupported role '${ref.role}'`);
+        }
         const goName = `${ref.importPath}.${ref.name}`;
-        const role = ref.role === "call" ? "call" : "value";
+        const role = ref.role;
         const existing = usages.get(goName);
         if (existing) {
           existing.count += ref.count ?? 1;
@@ -215,6 +230,14 @@ export function knownExternalFacadePolicies() {
       kind: "interface",
       arity: 0,
       members: [{ kind: "method", name: "Read", parameters: [{ names: ["p"], type: byteSlice }], results: [{ type: intType }, { type: errorType }] }],
+    },
+    {
+      goName: "encoding.TextMarshaler",
+      tsModule: "go/encoding.ts",
+      tsName: "TextMarshaler",
+      kind: "interface",
+      arity: 0,
+      members: [{ kind: "method", name: "MarshalText", results: [{ type: byteSlice }, { type: errorType }] }],
     },
     { goName: "io.Closer", tsModule: "go/io.ts", tsName: "Closer", kind: "interface", arity: 0, members: [{ kind: "method", name: "Close", results: [{ type: errorType }] }] },
     { goName: "io.ReadCloser", tsModule: "go/io.ts", tsName: "ReadCloser", kind: "interface", arity: 0, extends: ["io.Reader", "io.Closer"] },

@@ -11,8 +11,12 @@ import {
   GoInterfaceAdapter,
   GoInterfaceAssert,
   GoInterfaceTryAssert,
+  GoMapGetExisting,
+  GoMapLookup,
+  GoRequireNonNilAfterSuccess,
   MakeGoChan,
   NewGoInterfaceType,
+  NewGoStructMap,
 } from "./compat.js";
 
 async function flushMicrotasks(): Promise<void> {
@@ -30,6 +34,33 @@ test("GoAppend returns an extended slice without mutating the input slice", () =
 
   assert.deepEqual(source, ["a"]);
   assert.deepEqual(result, ["a", "b"]);
+});
+
+test("GoMapGetExisting preserves undefined values and structural Go keys", () => {
+  const native = new Map<string, undefined>([["present", undefined]]);
+  assert.equal(GoMapGetExisting(native, "present"), undefined);
+
+  const numeric = new Map<number, string>([[Number.NaN, "nan"], [-0, "zero"]]);
+  assert.equal(GoMapGetExisting(numeric, Number.NaN), "nan");
+  assert.equal(GoMapGetExisting(numeric, +0), "zero");
+
+  const structured = NewGoStructMap<{ code: number }, string>();
+  structured.set({ code: 1 }, "one");
+  assert.equal(GoMapGetExisting(structured, { code: 1 }), "one");
+});
+
+test("GoMapLookup distinguishes a present nil value from a missing generic value", () => {
+  const map = new Map<string, string | undefined>([["present", undefined]]);
+
+  assert.deepEqual(GoMapLookup(map, "present", () => "zero"), [undefined, true]);
+  assert.deepEqual(GoMapLookup(map, "missing", () => "zero"), ["zero", false]);
+  assert.deepEqual(GoMapLookup(undefined, "missing", () => "zero"), ["zero", false]);
+});
+
+test("GoRequireNonNilAfterSuccess enforces the Go result invariant", () => {
+  const value = { name: "value" };
+  assert.equal(GoRequireNonNilAfterSuccess(value, "example.Open"), value);
+  assert.throws(() => GoRequireNonNilAfterSuccess(undefined, "example.Open"), /example\.Open returned nil after success/);
 });
 
 test("Go interface adapters preserve and validate concrete receiver identity", () => {
@@ -84,7 +115,7 @@ test("Go interface adaptation preserves the adapter object and its prototype", (
 });
 
 test("bounded Go channels coalesce nonblocking sends and deliver queued values", async () => {
-  const channel = MakeGoChan<number>(1);
+  const channel = MakeGoChan<number>(1, () => 0);
   assert.equal(GoChanTrySend(channel, 1), true);
   assert.equal(GoChanTrySend(channel, 2), false);
 
@@ -95,7 +126,7 @@ test("bounded Go channels coalesce nonblocking sends and deliver queued values",
 });
 
 test("Go channel receive cancellation prevents stale select arms", async () => {
-  const channel = MakeGoChan<number>();
+  const channel = MakeGoChan<number>(0, () => 0);
   const received: number[] = [];
   const cancel = GoChanReceive(channel, (value) => received.push(value!));
   cancel();
@@ -140,8 +171,8 @@ test("Go channel select commits exactly one already-ready receive", async () => 
 });
 
 test("canceling a pending Go channel select leaves both channels available", async () => {
-  const left = MakeGoChan<number>();
-  const right = MakeGoChan<number>();
+  const left = MakeGoChan<number>(0, () => 0);
+  const right = MakeGoChan<number>(0, () => 0);
   const received: number[] = [];
   const cancel = GoChanSelect([
     GoChanSelectReceive(left, (value) => received.push(value)),

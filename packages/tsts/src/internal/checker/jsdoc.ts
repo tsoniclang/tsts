@@ -98,13 +98,16 @@ import { entityNameToString } from "./utilities.js";
  */
 export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const jsdocParameters: GoSlice<GoPtr<Node>> = [];
-  for (const tag of getAllJSDocTags(node)) {
-    if (tag!.Kind === KindJSDocParameterTag) {
-      const name = Node_Name(tag);
-      if (IsIdentifier(name) && Node_Text(name).length === 0) {
-        continue;
+  const jsdocTags = getAllJSDocTags(node);
+  if (jsdocTags !== undefined) {
+    for (const tag of jsdocTags) {
+      if (tag!.Kind === KindJSDocParameterTag) {
+        const name = Node_Name(tag);
+        if (IsIdentifier(name) && Node_Text(name).length === 0) {
+          continue;
+        }
+        jsdocParameters.push(tag);
       }
-      jsdocParameters.push(tag);
     }
   }
 
@@ -116,14 +119,17 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
   const parameters = NewSetWithSizeHint<string>(0);
   const excludedParameters = NewSetWithSizeHint<number>(0);
 
-  for (let index = 0; index < Node_Parameters(node).length; index++) {
-    const param = Node_Parameters(node)[index];
-    const name = Node_Name(param);
-    if (IsIdentifier(name)) {
-      Set_Add(parameters, Node_Text(name));
-    }
-    if (IsBindingPattern(name)) {
-      Set_Add(excludedParameters, index);
+  const nodeParameters = Node_Parameters(node);
+  if (nodeParameters !== undefined) {
+    for (let index = 0; index < nodeParameters.length; index++) {
+      const param = nodeParameters[index];
+      const name = Node_Name(param);
+      if (IsIdentifier(name)) {
+        Set_Add(parameters, Node_Text(name));
+      }
+      if (IsBindingPattern(name)) {
+        Set_Add(excludedParameters, index);
+      }
     }
   }
   if (Checker_containsArgumentsReference(receiver, node)) {
@@ -182,6 +188,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags","kind":"func","status":"implemented","sigHash":"64e6a55ef6d0d498291e6a741c2d0231176ba9e6069c1771ce7875c29458684e","bodyHash":"d6ffeae36195eb45eee0b5ac8556d73b53e0677bc5936fa5d8ed17e446268912"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The JSDoc lookup explicitly returns a nil slice when no applicable tags exist; GoPtr preserves that state while callers retain Go len/range semantics.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func getAllJSDocTags(node *ast.Node) []*ast.Node {
@@ -200,7 +207,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
  * 	return nil
  * }
  */
-export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function getAllJSDocTags(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   if ((node!.Flags & NodeFlagsJSDoc) === 0) {
     for (let current = node; current !== undefined; current = GetNextJSDocCommentLocation(current)) {
       const jsdocs = Node_JSDoc(current, undefined);
@@ -213,5 +220,5 @@ export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
       }
     }
   }
-  return [];
+  return undefined;
 }

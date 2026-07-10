@@ -77,7 +77,7 @@ export function OrderedSet_Has<T extends GoComparable>(receiver: GoPtr<OrderedSe
  */
 export function OrderedSet_Delete<T extends GoComparable>(receiver: GoPtr<OrderedSet<T>>, value: T): bool {
   const s = receiver!;
-  const [, ok] = OrderedMap_Delete(s.m, value);
+  const [, ok] = OrderedMap_Delete(s.m, value, () => ({}));
   return ok;
 }
 

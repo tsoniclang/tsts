@@ -15,10 +15,9 @@ export const GOARCH: string =
   process.arch;
 
 export interface MemStats {
-  Alloc?: ulong;
-  TotalAlloc?: ulong;
-  Sys?: ulong;
-  NumGC?: ulong;
+  Alloc: ulong;
+  /** Node exposes no allocation-event count; zero is the Go-field fallback, not a measured count. */
+  Mallocs: ulong;
 }
 
 export function Caller(skip: int): [unknown, string, int, bool] {
@@ -42,6 +41,9 @@ export function CallersFrames(_callers: Array<unknown>): unknown {
 }
 
 export function GC(): void {
+  if (typeof globalThis.gc === "function") {
+    globalThis.gc();
+  }
 }
 
 export function GOMAXPROCS(_n: int): int {
@@ -50,8 +52,6 @@ export function GOMAXPROCS(_n: int): int {
 
 export function ReadMemStats(stats: MemStats): void {
   const usage = process.memoryUsage();
-  stats.Alloc = globalThis.BigInt(usage.heapUsed) as ulong;
-  stats.TotalAlloc = globalThis.BigInt(usage.heapTotal) as ulong;
-  stats.Sys = globalThis.BigInt(usage.rss) as ulong;
-  stats.NumGC = 0n as ulong;
+  stats.Alloc = globalThis.BigInt(usage.heapUsed);
+  stats.Mallocs = 0n;
 }

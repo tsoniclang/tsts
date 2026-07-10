@@ -1,5 +1,5 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
-import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoRef, GoSlice } from "../../go/compat.js";
 import { goReceiverKey } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
@@ -555,6 +555,7 @@ export const ExhaustiveStateTrue: ExhaustiveState = 3;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SwitchStatementLinks","kind":"type","status":"implemented","sigHash":"5712ff63334a4a4c3edaca3ffa03f5d82858a32157f34642cf04a9ab8aedd03a","bodyHash":"1ddb1f4f2baab1210d28ba540bbf605ebac6b5b066968f28181a9cce74b86657"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{exhaustiveState:packages/tsts/src/internal/checker/types.ts::ExhaustiveState;switchTypes:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;switchTypesComputed:packages/tsts/src/go/scalars.ts::bool;witnesses:packages/tsts/src/go/compat.ts::GoSlice<string>;witnessesComputed:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{exhaustiveState:packages/tsts/src/internal/checker/types.ts::ExhaustiveState;switchTypes:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;switchTypesComputed:packages/tsts/src/go/scalars.ts::bool;witnesses:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;witnessesComputed:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * SwitchStatementLinks struct {
@@ -570,7 +571,7 @@ export interface SwitchStatementLinks {
   switchTypesComputed: bool;
   witnessesComputed: bool;
   switchTypes: GoSlice<GoPtr<Type>>;
-  witnesses: GoSlice<string>;
+  witnesses: GoPtr<GoSlice<string>>;
 }
 
 /**
@@ -719,9 +720,9 @@ export interface accessibleChainCacheKey {
  * }
  */
 export interface ContainingSymbolLinks {
-  extendedContainersByFile: GoMap<NodeId, GoSlice<GoPtr<Symbol_62f2f8bf>>>;
-  extendedContainers: GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>;
-  accessibleChainCache: GoMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol_62f2f8bf>>>;
+  extendedContainersByFile: GoPtr<GoMap<NodeId, GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>>>;
+  extendedContainers: GoPtr<GoRef<GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>>>;
+  accessibleChainCache: GoPtr<GoMap<accessibleChainCacheKey, GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>>>;
 }
 
 /**
@@ -1484,6 +1485,7 @@ export const ObjectFlagsIsConstrainedTypeVariable: int = 1 << 27;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeAlias","kind":"type","status":"implemented","sigHash":"ac31cd554edf60bdb87690df0da0f914d5ea5d6200e1d23f439d5e995fe23407","bodyHash":"6b302ee2ca3d3aa440faae4a150d6dd86dd562e71461887666ecb08303a0d335"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{symbol:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;typeArguments:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}","tsSignature":"interface{symbol:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;typeArguments:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>}"}
  *
  * Go source:
  * TypeAlias struct {
@@ -1493,7 +1495,7 @@ export const ObjectFlagsIsConstrainedTypeVariable: int = 1 << 27;
  */
 export interface TypeAlias {
   "symbol": GoPtr<Symbol_62f2f8bf>;
-  typeArguments: GoSlice<GoPtr<Type>>;
+  typeArguments: GoPtr<GoSlice<GoPtr<Type>>>;
 }
 
 /**
@@ -1516,6 +1518,7 @@ export function TypeAlias_Symbol(receiver: GoPtr<TypeAlias>): GoPtr<Symbol_62f2f
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeAlias.TypeArguments","kind":"method","status":"implemented","sigHash":"d9ec20c58e98fbec383d651b650d376b181246db0cfb567dd34d2a72b1e0566b","bodyHash":"5938a33d1e200988652a121e1bdf681648d7d01f570821a3eb6e6dcc28e33afa"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (a *TypeAlias) TypeArguments() []*Type {
@@ -1525,9 +1528,9 @@ export function TypeAlias_Symbol(receiver: GoPtr<TypeAlias>): GoPtr<Symbol_62f2f
  * 	return a.typeArguments
  * }
  */
-export function TypeAlias_TypeArguments(receiver: GoPtr<TypeAlias>): GoSlice<GoPtr<Type>> {
+export function TypeAlias_TypeArguments(receiver: GoPtr<TypeAlias>): GoPtr<GoSlice<GoPtr<Type>>> {
   if (receiver === undefined) {
-    return [];
+    return undefined;
   }
   return receiver.typeArguments;
 }
@@ -2382,6 +2385,7 @@ export function ConstrainedType_AsConstrainedType(receiver: GoPtr<ConstrainedTyp
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::StructuredType","kind":"type","status":"implemented","sigHash":"41db2d621cac9009453b89086219ba06dc816be099afff985eb148fe23e70a7c","bodyHash":"291dea22693e23a0dc4319edb02d8ffb9856fd084b9029dbd97c8d64d4dd2ff3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::ConstrainedType;callSignatureCount:packages/tsts/src/go/scalars.ts::int;indexInfos:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>;members:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;objectTypeWithoutAbstractConstructSignatures:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;properties:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;signatures:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::ConstrainedType;callSignatureCount:packages/tsts/src/go/scalars.ts::int;indexInfos:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>>;members:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>;objectTypeWithoutAbstractConstructSignatures:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;properties:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>;signatures:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>}"}
  *
  * Go source:
  * StructuredType struct {
@@ -2397,11 +2401,11 @@ export function ConstrainedType_AsConstrainedType(receiver: GoPtr<ConstrainedTyp
  */
 export interface StructuredType {
   readonly __tsgoEmbedded0?: ConstrainedType;
-  members: SymbolTable;
-  properties: GoSlice<GoPtr<Symbol_62f2f8bf>>;
-  signatures: GoSlice<GoPtr<Signature>>;
+  members: GoPtr<SymbolTable>;
+  properties: GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>;
+  signatures: GoPtr<GoSlice<GoPtr<Signature>>>;
   callSignatureCount: int;
-  indexInfos: GoSlice<GoPtr<IndexInfo>>;
+  indexInfos: GoPtr<GoSlice<GoPtr<IndexInfo>>>;
   objectTypeWithoutAbstractConstructSignatures: GoPtr<Type>;
 }
 
@@ -2417,42 +2421,46 @@ export function StructuredType_AsStructuredType(receiver: GoPtr<StructuredType>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::StructuredType.CallSignatures","kind":"method","status":"implemented","sigHash":"9ee91e522a9cdc1dd4e12e51caf3dcaa20617b8ad869dc68d329a645e504e510","bodyHash":"dec07d038e31011d835941b91acce08e00bd16ccd6651b9f9905586cca4e02a5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (t *StructuredType) CallSignatures() []*Signature {
  * 	return slices.Clip(t.signatures[:t.callSignatureCount])
  * }
  */
-export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return (receiver!.signatures ?? []).slice(0, receiver!.callSignatureCount ?? 0);
+export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): GoPtr<GoSlice<GoPtr<Signature>>> {
+  return receiver!.signatures?.slice(0, receiver!.callSignatureCount ?? 0);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::StructuredType.ConstructSignatures","kind":"method","status":"implemented","sigHash":"e3bd4814ac0551e38894fd3534b20e4cef3786360c4409d1ec414df65a702a1d","bodyHash":"d5864224e7e209055b61047cb5d4b142d081b967d73d755760c440403e769a0a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (t *StructuredType) ConstructSignatures() []*Signature {
  * 	return slices.Clip(t.signatures[t.callSignatureCount:])
  * }
  */
-export function StructuredType_ConstructSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return (receiver!.signatures ?? []).slice(receiver!.callSignatureCount ?? 0);
+export function StructuredType_ConstructSignatures(receiver: GoPtr<StructuredType>): GoPtr<GoSlice<GoPtr<Signature>>> {
+  return receiver!.signatures?.slice(receiver!.callSignatureCount ?? 0);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::StructuredType.Properties","kind":"method","status":"implemented","sigHash":"9f309724b998ab56beaec07f3ba1bcb7de3db8821e3f18616524be80398db100","bodyHash":"8f49322a439369dbdf71f192e07995bd1f5cc6f399f01e4ef25794db4422f3c1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::StructuredType>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>"}
  *
  * Go source:
  * func (t *StructuredType) Properties() []*ast.Symbol {
  * 	return t.properties
  * }
  */
-export function StructuredType_Properties(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Symbol_62f2f8bf>> {
+export function StructuredType_Properties(receiver: GoPtr<StructuredType>): GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>> {
   return receiver!.properties;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ObjectType","kind":"type","status":"implemented","sigHash":"11abaec9fce3692a4d66a221189409e1def09c52c3ef7e13ee1fe1376e073dac","bodyHash":"e560f8338ef61361ce03e4210582ff763a75d71ca99cd2dfa164ed96cbec9a2a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::StructuredType;instantiations:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;target:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::StructuredType;instantiations:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;target:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}"}
  *
  * Go source:
  * ObjectType struct {
@@ -2466,7 +2474,7 @@ export interface ObjectType {
   readonly __tsgoEmbedded0?: StructuredType;
   target: GoPtr<Type>;
   mapper: GoPtr<TypeMapper>;
-  instantiations: GoMap<CacheHashKey, GoPtr<Type>>;
+  instantiations: GoPtr<GoMap<CacheHashKey, GoPtr<Type>>>;
 }
 
 /**
@@ -2481,6 +2489,7 @@ export function ObjectType_AsObjectType(receiver: GoPtr<ObjectType>): GoPtr<Obje
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeReference","kind":"type","status":"implemented","sigHash":"ca9caf6089f505886e94e7ddbe6e0a1409410747fcd5ac2501f5759901de4639","bodyHash":"d5ad0dde2430c89d919b5289823b2cdfbfc2eaf79209f57bd478bb8c1a641f06"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::ObjectType;node:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;resolvedTypeArguments:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::ObjectType;node:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;resolvedTypeArguments:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>}"}
  *
  * Go source:
  * TypeReference struct {
@@ -2492,7 +2501,7 @@ export function ObjectType_AsObjectType(receiver: GoPtr<ObjectType>): GoPtr<Obje
 export interface TypeReference {
   readonly __tsgoEmbedded0?: ObjectType;
   node: GoPtr<Node>;
-  resolvedTypeArguments: GoSlice<GoPtr<Type>>;
+  resolvedTypeArguments: GoPtr<GoSlice<GoPtr<Type>>>;
 }
 
 /**
@@ -2673,6 +2682,7 @@ export function TupleElementInfo_LabeledDeclaration(receiver: GoPtr<TupleElement
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleType","kind":"type","status":"implemented","sigHash":"576882c2dbd6dea2abcc1ccb8d2100af1e041bddff1f6df3083ac640e4a96081","bodyHash":"15096f4880f63d84cddd7d65d2dd69414a4592bf89b3015d9206dc977ff53b6d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::InterfaceType;combinedFlags:packages/tsts/src/internal/checker/types.ts::ElementFlags;elementInfos:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::TupleElementInfo>;fixedLength:packages/tsts/src/go/scalars.ts::int;minLength:packages/tsts/src/go/scalars.ts::int;readonly:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::InterfaceType;combinedFlags:packages/tsts/src/internal/checker/types.ts::ElementFlags;elementInfos:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::TupleElementInfo>>;fixedLength:packages/tsts/src/go/scalars.ts::int;minLength:packages/tsts/src/go/scalars.ts::int;readonly:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * TupleType struct {
@@ -2686,7 +2696,7 @@ export function TupleElementInfo_LabeledDeclaration(receiver: GoPtr<TupleElement
  */
 export interface TupleType {
   readonly __tsgoEmbedded0?: InterfaceType;
-  elementInfos: GoSlice<TupleElementInfo>;
+  elementInfos: GoPtr<GoSlice<TupleElementInfo>>;
   minLength: int;
   fixedLength: int;
   combinedFlags: ElementFlags;
@@ -2726,16 +2736,23 @@ export function TupleType_IsReadonly(receiver: GoPtr<TupleType>): bool {
  * }
  */
 export function TupleType_ElementFlags(receiver: GoPtr<TupleType>): GoSlice<ElementFlags> {
-  return receiver!.elementInfos.map((info) => info.flags);
+  const elementFlags: GoSlice<ElementFlags> = [];
+  if (receiver!.elementInfos !== undefined) {
+    for (const info of receiver!.elementInfos) {
+      elementFlags.push(info.flags);
+    }
+  }
+  return elementFlags;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TupleType.ElementInfos","kind":"method","status":"implemented","sigHash":"5783e5665a3a66e09dea7662982b1f11c5d2200cc01a75470953d47e41765dd5","bodyHash":"db835ee4620bd64ca1be63e1c9be5ce26f83d507bd379556178edade26cd7a9a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TupleType>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::TupleElementInfo>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TupleType>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::TupleElementInfo>>"}
  *
  * Go source:
  * func (t *TupleType) ElementInfos() []TupleElementInfo { return t.elementInfos }
  */
-export function TupleType_ElementInfos(receiver: GoPtr<TupleType>): GoSlice<TupleElementInfo> {
+export function TupleType_ElementInfos(receiver: GoPtr<TupleType>): GoPtr<GoSlice<TupleElementInfo>> {
   return receiver!.elementInfos;
 }
 
@@ -2817,6 +2834,7 @@ export interface EvolvingArrayType {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionOrIntersectionType","kind":"type","status":"implemented","sigHash":"b6134fce3a624180fbb8f633c08b60268b4c23eb5b2c7fe58272cb3e0b364b58","bodyHash":"3630b6a7a9959024244f24dc47637d781efc754ed09697edadfa42d8d195fc80"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::StructuredType;propertyCache:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;propertyCacheWithoutFunctionPropertyAugment:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;resolvedProperties:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;types:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::StructuredType;propertyCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>;propertyCacheWithoutFunctionPropertyAugment:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>;resolvedProperties:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>;types:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}"}
  *
  * Go source:
  * UnionOrIntersectionType struct {
@@ -2830,9 +2848,9 @@ export interface EvolvingArrayType {
 export interface UnionOrIntersectionType {
   readonly __tsgoEmbedded0?: StructuredType;
   types: GoSlice<GoPtr<Type>>;
-  propertyCache: SymbolTable;
-  propertyCacheWithoutFunctionPropertyAugment: SymbolTable;
-  resolvedProperties: GoSlice<GoPtr<Symbol_62f2f8bf>>;
+  propertyCache: GoPtr<SymbolTable>;
+  propertyCacheWithoutFunctionPropertyAugment: GoPtr<SymbolTable>;
+  resolvedProperties: GoPtr<GoSlice<GoPtr<Symbol_62f2f8bf>>>;
 }
 
 /**
@@ -2859,6 +2877,7 @@ export function UnionOrIntersectionType_Types(receiver: GoPtr<UnionOrIntersectio
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::UnionType","kind":"type","status":"implemented","sigHash":"6034ad0b7153fbbbabc172c1f454cf32bdae4fb0adf552f7d60eda5dad8c3b81","bodyHash":"d37aa462da97726b2e5a52b0888e9500f89e60396e58e59b19ab4fa389d6abb7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::UnionOrIntersectionType;constituentMap:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;keyPropertyName:string;origin:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;regularType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;resolvedReducedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/checker/types.ts::UnionOrIntersectionType;constituentMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;keyPropertyName:string;origin:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;regularType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;resolvedReducedType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}"}
  *
  * Go source:
  * UnionType struct {
@@ -2876,7 +2895,7 @@ export interface UnionType {
   regularType: GoPtr<Type>;
   origin: GoPtr<Type>;
   keyPropertyName: string;
-  constituentMap: GoMap<GoPtr<Type>, GoPtr<Type>>;
+  constituentMap: GoPtr<GoMap<GoPtr<Type>, GoPtr<Type>>>;
 }
 
 /**
@@ -3113,6 +3132,7 @@ export function SubstitutionType_SubstConstraint(receiver: GoPtr<SubstitutionTyp
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::ConditionalRoot","kind":"type","status":"implemented","sigHash":"424b2c5b1128de1df0b948b7b7e4032257ff529e6a15490fed60ad1c4926a448","bodyHash":"10a7b0b739fe0b0606eed4560065892eef29df703c569817e6577f0baaec7de3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{alias:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>;checkType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;extendsType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;inferTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;instantiations:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;isDistributive:packages/tsts/src/go/scalars.ts::bool;node:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ConditionalTypeNode>;outerTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>}","tsSignature":"interface{alias:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>;checkType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;extendsType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;inferTypeParameters:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;instantiations:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;isDistributive:packages/tsts/src/go/scalars.ts::bool;node:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ConditionalTypeNode>;outerTypeParameters:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>}"}
  *
  * Go source:
  * ConditionalRoot struct {
@@ -3131,9 +3151,9 @@ export interface ConditionalRoot {
   checkType: GoPtr<Type>;
   extendsType: GoPtr<Type>;
   isDistributive: bool;
-  inferTypeParameters: GoSlice<GoPtr<Type>>;
-  outerTypeParameters: GoSlice<GoPtr<Type>>;
-  instantiations: GoMap<CacheHashKey, GoPtr<Type>>;
+  inferTypeParameters: GoPtr<GoSlice<GoPtr<Type>>>;
+  outerTypeParameters: GoPtr<GoSlice<GoPtr<Type>>>;
+  instantiations: GoPtr<GoMap<CacheHashKey, GoPtr<Type>>>;
   alias: GoPtr<TypeAlias>;
 }
 
@@ -3494,6 +3514,7 @@ export function TypePredicate_ParameterName(receiver: GoPtr<TypePredicate>): str
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::IndexInfo","kind":"type","status":"implemented","sigHash":"206f6d34df1dc009195d4f975c81bb377c8cc22733d15ce66c2af60f8d4c861b","bodyHash":"9de72171592d665478a4260729be4ac8b27cda834761d80500f6eb60a4433233"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"interface{components:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;declaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;indexSymbol:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;isReadonly:packages/tsts/src/go/scalars.ts::bool;keyType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;valueType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}","tsSignature":"interface{components:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;indexSymbol:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;isReadonly:packages/tsts/src/go/scalars.ts::bool;keyType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;valueType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>}"}
  *
  * Go source:
  * IndexInfo struct {
@@ -3511,7 +3532,7 @@ export interface IndexInfo {
   isReadonly: bool;
   declaration: GoPtr<Node>;
   indexSymbol: GoPtr<Symbol_62f2f8bf>;
-  components: GoSlice<GoPtr<Node>>;
+  components: GoPtr<GoSlice<GoPtr<Node>>>;
 }
 
 /**

@@ -57,6 +57,19 @@ test("sync.OnceFunc runs once", () => {
   assert.equal(count, 1);
 });
 
+test("sync.OnceFunc rethrows the original panic on every call", () => {
+  const panic = { name: "panic" };
+  let calls = 0;
+  const f = OnceFunc(() => {
+    calls += 1;
+    throw panic;
+  });
+
+  assert.throws(f, (error) => error === panic);
+  assert.throws(f, (error) => error === panic);
+  assert.equal(calls, 1);
+});
+
 test("sync.OnceValue memoizes the result", () => {
   let calls = 0;
   const get = OnceValue<string>(() => {
@@ -77,6 +90,39 @@ test("sync.OnceValues memoizes a tuple", () => {
   assert.deepEqual(get(), ["s", 42]);
   assert.deepEqual(get(), ["s", 42]);
   assert.equal(calls, 1);
+});
+
+test("sync.OnceValue memoizes an undefined result without using it as state", () => {
+  let calls = 0;
+  const get = OnceValue<undefined>(() => {
+    calls += 1;
+    return undefined;
+  });
+
+  assert.equal(get(), undefined);
+  assert.equal(get(), undefined);
+  assert.equal(calls, 1);
+});
+
+test("sync.OnceValue and OnceValues rethrow the original panic on every call", () => {
+  const panic = { name: "panic" };
+  let valueCalls = 0;
+  let valuesCalls = 0;
+  const value = OnceValue(() => {
+    valueCalls += 1;
+    throw panic;
+  });
+  const values = OnceValues((): [number, number] => {
+    valuesCalls += 1;
+    throw panic;
+  });
+
+  assert.throws(value, (error) => error === panic);
+  assert.throws(value, (error) => error === panic);
+  assert.throws(values, (error) => error === panic);
+  assert.throws(values, (error) => error === panic);
+  assert.equal(valueCalls, 1);
+  assert.equal(valuesCalls, 1);
 });
 
 test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {

@@ -236,6 +236,7 @@ import {
   LFSingleLineBlockStatements,
   LFSingleLineFunctionBodyStatements,
   LFVariableDeclarationList,
+  Printer_Writer,
   WriteKindKeyword,
   WriteKindOperator,
   WriteKindPunctuation,
@@ -494,10 +495,10 @@ export function Printer_emitFunctionBody(receiver: GoPtr<Printer>, body: GoPtr<B
   Printer_increaseIndent(receiver);
   const detachedState = Printer_emitDetachedCommentsBeforeStatementList(receiver, Node_AsNode(body), body!.Statements!.Loc);
   const statementOffset = Printer_emitPrologueDirectives(receiver, body!.Statements);
-  const pos = receiver!.writer.GetTextPos();
+  const pos = Printer_Writer(receiver).GetTextPos();
   Printer_emitHelpers(receiver, Node_AsNode(body));
 
-  if (Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver, body) && statementOffset === 0 && pos === receiver!.writer.GetTextPos()) {
+  if (Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver, body) && statementOffset === 0 && pos === Printer_Writer(receiver).GetTextPos()) {
     Printer_decreaseIndent(receiver);
     Printer_emitListRange(receiver, Printer_emitStatement, Node_AsNode(body), body!.Statements, LFSingleLineFunctionBodyStatements, statementOffset, -1);
     Printer_increaseIndent(receiver);
@@ -657,7 +658,8 @@ export function Printer_emitSemicolonClassElement(receiver: GoPtr<Printer>, node
  * }
  */
 export function Printer_isEmptyBlock(receiver: GoPtr<Printer>, block: GoPtr<Node>, statements: GoPtr<StatementList>): bool {
-  return (statements!.Nodes.length === 0 &&
+  const nodes = statements!.Nodes;
+  return ((nodes === undefined || nodes.length === 0) &&
     (receiver!.currentSourceFile === undefined || rangeEndIsOnSameLineAsRangeStart(block!.Loc, block!.Loc, receiver!.currentSourceFile))) as bool;
 }
 
@@ -2530,13 +2532,20 @@ export function Printer_emitJsxNamespacedName(receiver: GoPtr<Printer>, node: Go
  * }
  */
 export function Printer_emitCaseOrDefaultClauseStatements(receiver: GoPtr<Printer>, node: GoPtr<CaseOrDefaultClause>, colonPos: int): void {
-  const emitAsSingleStatement =
-    node!.Statements!.Nodes.length === 1 &&
-    // treat synthesized nodes as located on the same line for emit purposes
-    (receiver!.currentSourceFile === undefined ||
+  const statements = node!.Statements!.Nodes;
+  let emitAsSingleStatement = false;
+  if (statements !== undefined && statements.length === 1) {
+    const statement = statements[0];
+    if (statement === undefined) {
+      throw new globalThis.TypeError("nil statement");
+    }
+    emitAsSingleStatement =
+      // treat synthesized nodes as located on the same line for emit purposes
+      receiver!.currentSourceFile === undefined ||
       NodeIsSynthesized(Node_AsNode(node)) ||
-      NodeIsSynthesized(node!.Statements!.Nodes[0]) ||
-      RangeStartPositionsAreOnSameLine(node!.Loc, node!.Statements!.Nodes[0]!.Loc, receiver!.currentSourceFile));
+      NodeIsSynthesized(statement) ||
+      RangeStartPositionsAreOnSameLine(node!.Loc, statement.Loc, receiver!.currentSourceFile);
+  }
 
   let format: int = LFCaseOrDefaultClauseStatements;
   if (emitAsSingleStatement) {

@@ -270,16 +270,16 @@ export function host_SetMTime(receiver: GoPtr<host>, file: string, mTime: Time):
  */
 export function host_loadOrStoreMTime(receiver: GoPtr<host>, file: string, oldCache: GoPtr<SyncMap<Path, Time>>, store: bool): Time {
   const path = Orchestrator_toPath(receiver!.orchestrator, file);
-  const [existing, loaded] = SyncMap_Load(receiver!.mTimes, path);
+  const [existing, loaded] = SyncMap_Load(receiver!.mTimes, path, (): Time => new TimeClass());
   if (loaded) {
-    return existing as Time;
+    return existing;
   }
   let found = false;
   let mTime: Time = new TimeClass();
   if (oldCache !== undefined) {
-    const [oldMTime, oldFound] = SyncMap_Load(oldCache, path);
+    const [oldMTime, oldFound] = SyncMap_Load(oldCache, path, (): Time => new TimeClass());
     if (oldFound) {
-      mTime = oldMTime as Time;
+      mTime = oldMTime;
       found = true;
     }
   }
@@ -288,7 +288,7 @@ export function host_loadOrStoreMTime(receiver: GoPtr<host>, file: string, oldCa
   }
   if (store) {
     const [storedMTime] = SyncMap_LoadOrStore(receiver!.mTimes, path, mTime);
-    mTime = storedMTime as Time;
+    mTime = storedMTime;
   }
   return mTime;
 }
@@ -320,7 +320,7 @@ export function host_storeMTime(receiver: GoPtr<host>, file: string, mTime: Time
  */
 export function host_storeMTimeFromOldCache(receiver: GoPtr<host>, file: string, oldCache: GoPtr<SyncMap<Path, Time>>): void {
   const path = Orchestrator_toPath(receiver!.orchestrator, file);
-  const [mTime, found] = SyncMap_Load(oldCache, path);
+  const [mTime, found] = SyncMap_Load(oldCache, path, (): Time => new TimeClass());
   if (found) {
     SyncMap_Store(receiver!.mTimes, path, mTime);
   }

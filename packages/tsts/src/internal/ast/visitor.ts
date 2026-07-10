@@ -231,6 +231,7 @@ export function NodeVisitor_VisitModifiers(receiver: GoPtr<NodeVisitor>, nodes: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSlice","kind":"method","status":"implemented","sigHash":"7f6d7b935cad6648f8da34ba098c15309e471581a85f5794c28718db2cdaed78","bodyHash":"86416c2fc6ccbdcb12df629cd9b443018c2783e8593696679609f5a05dc161f6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"VisitSlice explicitly returns an incoming nil Go slice unchanged with changed=false; GoPtr is required on both the input and tuple result to preserve that sentinel.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitSlice(nodes []*Node) (result []*Node, changed bool) {
@@ -281,7 +282,7 @@ export function NodeVisitor_VisitModifiers(receiver: GoPtr<NodeVisitor>, nodes: 
  * 	return nodes, false
  * }
  */
-export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {
+export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): [GoPtr<GoSlice<GoPtr<Node>>>, bool] {
   if (nodes === undefined || receiver!.Visit === undefined) {
     return [nodes, false as bool];
   }

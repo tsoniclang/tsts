@@ -67,8 +67,9 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
     if (EmitContext_IsCallToHelper(emitContext, expression, "__setFunctionName")) {
       const callExpr = AsCallExpression(expression);
       const args = callExpr!.Arguments;
-      return args!.Nodes.length >= 2 &&
-        args!.Nodes[1] === EmitContext_AssignedName(emitContext, node);
+      const argumentNodes = args!.Nodes;
+      return argumentNodes !== undefined && argumentNodes.length >= 2 &&
+        argumentNodes[1] === EmitContext_AssignedName(emitContext, node);
     }
   }
   return false;
@@ -122,6 +123,7 @@ export type anonymousFunctionDefinition = Node;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition","kind":"func","status":"implemented","sigHash":"837c166f1b0fe809c982161dd9d4fba0fad539484530366ef517fb80f50a3f75","bodyHash":"6469512651378f6a29f1d7ce40ed4b4a47ac140495c340c3b9f50c94a152b7e9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func isAnonymousFunctionDefinition uses an explicit undefined-capable TypeScript representation at parameter #2 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func isAnonymousFunctionDefinition(emitContext *printer.EmitContext, node *ast.Expression, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -148,7 +150,7 @@ export type anonymousFunctionDefinition = Node;
  * 	return true
  * }
  */
-export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
+export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, cb: GoPtr<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>): bool {
   const skipped = SkipOuterExpressions(node, OEKAll);
   switch (skipped!.Kind) {
     case KindClassExpression:
@@ -181,11 +183,12 @@ export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, n
  * }
  */
 export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>): bool {
-  return isNamedEvaluationAnd(emitContext, node, undefined as unknown as (arg0: GoPtr<anonymousFunctionDefinition>) => bool);
+  return isNamedEvaluationAnd(emitContext, node, undefined);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd","kind":"func","status":"implemented","sigHash":"5cc7c91b9e6c5a560d4cb2edf14f7ee220f9d9c506e85f9b0b312b46c1d6a79c","bodyHash":"16a0eeaf7e3930cfeeb9055c506d02e992027f576942d5c6910bb475bf5d328d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func isNamedEvaluationAnd uses an explicit undefined-capable TypeScript representation at parameter #2 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func isNamedEvaluationAnd(emitContext *printer.EmitContext, node *ast.Node, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -207,7 +210,7 @@ export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<N
  * 	}
  * }
  */
-export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
+export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, cb: GoPtr<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>): bool {
   if (!IsNamedEvaluationSource(node)) {
     return false;
   }

@@ -1,6 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
+import { Und } from "../../go/golang.org/x/text/language.js";
 import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
@@ -43,6 +44,7 @@ import { GetNameMapFromList, NameMap_Get, NameMap_GetOptionDeclarationFromName }
 import { BuildNameMap, CompilerNameMap, WatchNameMap } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
 import type { ParsedBuildCommandLine } from "./parsedbuildcommandline.js";
+import type { Locale } from "../locale/locale.js";
 import { NewParsedCommandLine } from "./parsedcommandline.js";
 import type { ParsedCommandLine } from "./parsedcommandline.js";
 import { TscBuildOption } from "./declsbuild.js";
@@ -268,9 +270,9 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
       UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
       CurrentDirectory: host.GetCurrentDirectory(),
     },
-    resolvedProjectPaths: [],
+    resolvedProjectPaths: undefined,
     resolvedProjectPathsOnce: new Once(),
-    locale: undefined as never,
+    locale: Und as Locale,
     localeOnce: new Once(),
   };
   if (result.Projects.length === 0) {
@@ -737,8 +739,8 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         case CommandLineOptionTypeList: {
           const [result, err] = commandLineParser_parseListTypeOption(p, opt, args[i]!);
           OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, result);
-          p.errors = [...p.errors, ...err];
-          if (result.length > 0 || err.length > 0) {
+          p.errors = [...p.errors, ...(err ?? [])];
+          if (result.length > 0 || (err?.length ?? 0) > 0) {
             i++;
           }
           break;
@@ -750,7 +752,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         default: {
           const [val, err] = convertJsonOptionOfEnumType(opt, strings.TrimFunc(args[i]!, IsWhiteSpaceLike), undefined, undefined);
           OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, val);
-          p.errors = [...p.errors, ...err];
+          p.errors = [...p.errors, ...(err ?? [])];
           i++;
           break;
         }
@@ -877,6 +879,7 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType","kind":"func","status":"implemented","sigHash":"1e73b48b6273364dada906e24fa936e03652113afa5c578c3221f861d4629ba1","bodyHash":"fe1ef0b12861440f67da7f5bfd8c3cd49d42965c18d4aa82f38dfa58f8b050ec"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Successful enum-option conversion returns a nil diagnostic slice; GoPtr preserves that no-diagnostics result rather than allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/commandlineoption.ts::CommandLineOption>,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[unknown,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/commandlineoption.ts::CommandLineOption>,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[unknown,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>]"}
  *
  * Go source:
  * func convertJsonOptionOfEnumType(
@@ -900,16 +903,16 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
  * 	return nil, []*ast.Diagnostic{createDiagnosticForInvalidEnumType(opt, sourceFile, valueExpression)}
  * }
  */
-export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value: string, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value: string, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoPtr<GoSlice<GoPtr<Diagnostic>>>] {
   if (value === "") {
-    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+    return [undefined, undefined];
   }
   const key = strings.ToLower(value);
   const typeMap = CommandLineOption_EnumMap(opt);
   if (typeMap === undefined) {
-    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+    return [undefined, undefined];
   }
-  const [val, ok] = OrderedMap_Get(typeMap as GoPtr<OrderedMap<string, unknown>>, key);
+  const [val, ok] = OrderedMap_Get(typeMap as GoPtr<OrderedMap<string, unknown>>, key, () => undefined);
   if (ok) {
     return validateJsonOptionValue(opt, val, valueExpression, sourceFile);
   }

@@ -291,6 +291,7 @@ export function checkerPool_forEachCheckerParallel(receiver: GoPtr<checkerPool>,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::method::checkerPool.GetGlobalDiagnostics","kind":"method","status":"implemented","sigHash":"410fa0340cbce64a38248739a4536a44f70f45c4d9210e984dc35a650a1b4bd6","bodyHash":"d6cb8aeb0c5ba82ebec06f96763ba7958812fd8f8d3bb216abdeffb55072c676"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method checkerPool.GetGlobalDiagnostics uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/checkerpool.ts::checkerPool>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (p *checkerPool) GetGlobalDiagnostics() []*ast.Diagnostic {
@@ -302,9 +303,9 @@ export function checkerPool_forEachCheckerParallel(receiver: GoPtr<checkerPool>,
  * 	return SortAndDeduplicateDiagnostics(slices.Concat(globalDiagnostics...))
  * }
  */
-export function checkerPool_GetGlobalDiagnostics(receiver: GoPtr<checkerPool>): GoSlice<GoPtr<Diagnostic>> {
+export function checkerPool_GetGlobalDiagnostics(receiver: GoPtr<checkerPool>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   checkerPool_createCheckers(receiver);
-  const globalDiagnostics: GoSlice<GoSlice<GoPtr<Diagnostic>>> = new globalThis.Array(receiver!.checkers.length).fill([]);
+  const globalDiagnostics: GoSlice<GoPtr<GoSlice<GoPtr<Diagnostic>>>> = new globalThis.Array(receiver!.checkers.length);
   checkerPool_forEachCheckerParallel(receiver, (idx: int, checker: GoPtr<Checker>): void => {
     globalDiagnostics[idx] = Checker_GetGlobalDiagnostics(checker);
   });

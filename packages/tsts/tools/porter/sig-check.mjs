@@ -19,6 +19,7 @@ import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
 const SIGNATURE_MISMATCH_KINDS = new Set([
+  "declaration-kind",
   "value-type-unresolved",
   "type-param-count",
   "type-param-constraint",
@@ -217,6 +218,11 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
   }
   if (!expected || expected.kind === "other") {
     push("value-type-unresolved", "expected signature could not be derived from Go");
+    return out;
+  }
+
+  if (expected.kind !== actual.kind) {
+    push("declaration-kind", `expected ${expected.kind} declaration, found ${actual.kind}`, expected.kind, actual.kind);
     return out;
   }
 

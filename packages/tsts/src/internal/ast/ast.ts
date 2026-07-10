@@ -300,22 +300,23 @@ export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeD
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::varGroup::parseJSDocForNode","kind":"varGroup","status":"implemented","sigHash":"5ac2e1c2b1fa4923ca9e2b5a393324ec40d359485e4b84a71e90a0e3709b2a59","bodyHash":"ee0732b6f5907671106f1890827985a41457e26b69ec619310f430583e750e74"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The lazy JSDoc parser callback is nil until parser initialization calls SetParseJSDocForNode; resolveJSDoc explicitly rejects that pre-registration state, and TypeScript undefined preserves the same lifecycle sentinel.","goSignature":"value{parseJSDocForNode:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>}","tsSignature":"value{parseJSDocForNode:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>|undefined}"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The lazy JSDoc parser callback is nil until parser registration, and a registered callback may itself return a nil Go slice when no JSDoc exists; the nested GoPtr representation preserves both independent nil states.","goSignature":"value{parseJSDocForNode:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>}","tsSignature":"value{parseJSDocForNode:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>}"}
  *
  * Go source:
  * var parseJSDocForNode func(*SourceFile, *Node) []*Node
  */
-export let parseJSDocForNode: ((arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>) | undefined = undefined;
+export let parseJSDocForNode: GoPtr<(arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoPtr<GoSlice<GoPtr<Node>>>> = undefined;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::SetParseJSDocForNode","kind":"func","status":"implemented","sigHash":"5aca890b39fdda6f4899a1aa07e2be2add8bfdb3e21fbf63d0ef1efdeccb0d2a","bodyHash":"42d8f8eca703ba54c171f8255bb5ea33de96b58602e639bc20aa9a826183ce5f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The registered parser callback may return a nil Go slice when a node has no lazily parsed JSDoc; GoPtr preserves that nil result rather than conflating it with an allocated empty array.","goSignature":"func((packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>void","tsSignature":"func((packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>void"}
  *
  * Go source:
  * func SetParseJSDocForNode(fn func(*SourceFile, *Node) []*Node) {
  * 	parseJSDocForNode = fn
  * }
  */
-export function SetParseJSDocForNode(fn: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>): void {
+export function SetParseJSDocForNode(fn: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoPtr<GoSlice<GoPtr<Node>>>): void {
   parseJSDocForNode = fn;
 }
 
@@ -331,11 +332,12 @@ export function Node_ParameterList(receiver: GoPtr<Node>): GoPtr<ParameterList_5
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Parameters","kind":"method","status":"implemented","sigHash":"23cf975d760f34a8befc8b0300529b27a330b0a6f5f699459e4a6535e1360d20","bodyHash":"25c5242a76db327b5348ff6821dbce5e95d90da3edb45ae378f8315b9b3f2c9b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Node.Parameters forwards ParameterList.Nodes directly, so a nil Go slice must remain undefined instead of becoming an allocated empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ParameterDeclarationNode>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ParameterDeclarationNode>>>"}
  *
  * Go source:
  * func (n *Node) Parameters() []*ParameterDeclarationNode   { return n.ParameterList().Nodes }
  */
-export function Node_Parameters(receiver: GoPtr<Node>): GoSlice<GoPtr<ParameterDeclarationNode>> {
+export function Node_Parameters(receiver: GoPtr<Node>): GoPtr<GoSlice<GoPtr<ParameterDeclarationNode>>> {
   return Node_ParameterList(receiver)!.Nodes;
 }
 
@@ -352,10 +354,11 @@ export function Node_Parameters(receiver: GoPtr<Node>): GoSlice<GoPtr<ParameterD
  * }
  */
 export function Node_Decorators(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | undefined {
-  if (Node_Modifiers(receiver) === undefined) {
+  const modifiers = Node_Modifiers(receiver);
+  if (modifiers === undefined || modifiers.Nodes === undefined) {
     return undefined;
   }
-  return Filter(Node_Modifiers(receiver)!.Nodes, predicates.IsDecorator);
+  return Filter(modifiers.Nodes, predicates.IsDecorator);
 }
 
 /**
@@ -428,6 +431,7 @@ export function Node_LocalSymbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Locals","kind":"method","status":"implemented","sigHash":"96cc6e0f6d53895751a7e2645ec3fa462ce5e01286476998db8cfac3aea047c9","bodyHash":"9b2e77308b497b3559bac318b2a7f17966334c73e00d92ffae8d73f9f9f31eb9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A node has a nil SymbolTable map before the binder allocates locals; GoPtr preserves that observable Go zero-value state while populated tables remain ordinary maps.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func (n *Node) Locals() SymbolTable {
@@ -438,12 +442,12 @@ export function Node_LocalSymbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> 
  * 	return nil
  * }
  */
-export function Node_Locals(receiver: GoPtr<Node>): SymbolTable {
+export function Node_Locals(receiver: GoPtr<Node>): GoPtr<SymbolTable> {
   const data = Node_LocalsContainerData(receiver);
   if (data !== undefined) {
     return data.Locals;
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -3181,6 +3185,7 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc","kind":"method","status":"implemented","sigHash":"1d3cb1d38faf7da5151a84121dbb168530bdb76d1d2635bff4233a5f578ff362","bodyHash":"ca10b85819bcd16331ec0db578a050d65273704844816a269c21500830ebea7c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JSDoc returns a nil Go slice when the node has no JSDoc, has no source file, or has a cached nil result; GoPtr preserves each nil result without allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (node *Node) JSDoc(file *SourceFile) []*Node {
@@ -3199,25 +3204,26 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
  * 	return file.jsdocCache[node]
  * }
  */
-export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
+export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Node>>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return [];
+    return undefined;
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return [];
+      return undefined;
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     return SourceFile_resolveJSDoc(resolvedFile, receiver);
   }
-  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
+  return resolvedFile.jsdocCache?.get(receiver);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc","kind":"method","status":"implemented","sigHash":"e1b1dc027f606be82d9a51f3ca645f4d04947c0767ea65a7f6cbf47bf6a8b3a2","bodyHash":"76d96b9c8c86f92cf8d4793d5808deb5c9682c7601a303ad3ddb6ed382d4b813"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"EagerJSDoc returns a nil Go slice when the node has no JSDoc, has no source file, or has a cached nil result; GoPtr preserves each nil result without allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (node *Node) EagerJSDoc(file *SourceFile) []*Node {
@@ -3239,24 +3245,24 @@ export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSl
  * 	return file.jsdocCache[node]
  * }
  */
-export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
+export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Node>>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return [];
+    return undefined;
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return [];
+      return undefined;
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     resolvedFile.jsdocMu.RLock();
-    const jsdocs = resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
+    const jsdocs = resolvedFile.jsdocCache?.get(receiver);
     resolvedFile.jsdocMu.RUnlock();
-    return jsdocs ?? [];
+    return jsdocs;
   }
-  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
+  return resolvedFile.jsdocCache?.get(receiver);
 }
 
 /**
@@ -4802,12 +4808,13 @@ export function ImportAttributesNode_GetResolutionModeOverride(receiver: GoPtr<I
   }
 
   const attributes = casts.AsImportAttributes(receiver)!.Attributes;
+  const attributeNodes = attributes!.Nodes ?? [];
 
-  if (attributes!.Nodes.length !== 1) {
+  if (attributeNodes.length !== 1) {
     return [ResolutionModeNone, false];
   }
 
-  const elem = casts.AsImportAttribute(attributes!.Nodes[0]);
+  const elem = casts.AsImportAttribute(attributeNodes[0]);
   const name = elem!.name;
   if (!utilities.IsStringLiteralLike(name)) {
     return [ResolutionModeNone, false];
@@ -5199,7 +5206,7 @@ export let sourceFileDataKeyCounter: Uint64 = new Uint64();
  */
 export interface sourceFileDataCell<T> {
   once: Once;
-  value: T;
+  value?: T;
 }
 
 /**
@@ -5234,6 +5241,9 @@ export function GetOrComputeSourceFileData<T>(file: GoPtr<SourceFile>, key: GoPt
   cell!.once.Do(() => {
     cell!.value = compute(file);
   });
+  if (!("value" in cell!)) {
+    throw new globalThis.Error("source file data cell initialized without a value");
+  }
   return cell!.value;
 }
 
@@ -5274,7 +5284,7 @@ export function getSourceFileDataCell<T>(file: GoPtr<SourceFile>, key: GoPtr<Sou
     if (existing !== undefined) {
       return existing as sourceFileDataCell<T>;
     }
-    const cell: sourceFileDataCell<T> = { once: new Once(), value: undefined as T };
+    const cell: sourceFileDataCell<T> = { once: new Once() };
     file!.sourceFileData.set(key.key, cell);
     return cell;
   } finally {
@@ -5330,7 +5340,7 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9","bodyHash":"06e136226e880bd03a63dd26c084903969342e5dd7501748424382a75106c3e4"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The TypeScript SourceFile object is also the shared Node envelope: its Node.data field already stores nodeData, so the new Go SourceFile.data map is represented as sourceFileData. FileName, Path, Text, ECMALineMap, Imports, and IsJS are callable receiver adapters installed by NodeFactory_NewSourceFile so the same object can satisfy Go receiver/interface calls; their receiver functions remain separately tracked units.","goSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoMap<string,string>;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;__tsgoEmbedded0?:packages/tsts/src/internal/ast/spine.ts::NodeBase;__tsgoEmbedded1?:packages/tsts/src/internal/ast/generated/node.ts::DeclarationBase;__tsgoEmbedded2?:packages/tsts/src/internal/ast/generated/node.ts::LocalsContainerBase;__tsgoEmbedded3?:packages/tsts/src/internal/ast/generated/node.ts::CompositeBase;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;data:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}","tsSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;ECMALineMap:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;FileName:()=>string;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoMap<string,string>;Imports:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;IsJS:()=>packages/tsts/src/go/scalars.ts::bool;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;Path:()=>packages/tsts/src/internal/tspath/path.ts::Path;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;Text:()=>string;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;sourceFileData:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The TypeScript SourceFile object is also the shared Node envelope, so sourceFileData avoids colliding with Node.data; receiver adapters expose FileName, Path, Text, ECMALineMap, Imports, and IsJS on the same object, while GoPtr on Identifiers preserves its nil map state before parser initialization.","goSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoMap<string,string>;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;__tsgoEmbedded0?:packages/tsts/src/internal/ast/spine.ts::NodeBase;__tsgoEmbedded1?:packages/tsts/src/internal/ast/generated/node.ts::DeclarationBase;__tsgoEmbedded2?:packages/tsts/src/internal/ast/generated/node.ts::LocalsContainerBase;__tsgoEmbedded3?:packages/tsts/src/internal/ast/generated/node.ts::CompositeBase;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;data:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}","tsSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;ECMALineMap:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;FileName:()=>string;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,string>>;Imports:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;IsJS:()=>packages/tsts/src/go/scalars.ts::bool;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;Path:()=>packages/tsts/src/internal/tspath/path.ts::Path;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;Text:()=>string;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;sourceFileData:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}"}
  *
  * Go source:
  * SourceFile struct {
@@ -5437,17 +5447,17 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   IsDeclarationFile: bool;
   ContainsNonASCII: bool;
   UsesUriStyleNodeCoreModules: Tristate;
-  Identifiers: GoMap<string, string>;
+  Identifiers: GoPtr<GoMap<string, string>>;
   IdentifierCount: int;
   imports: GoSlice<GoPtr<LiteralLikeNode>>;
   ModuleAugmentations: GoSlice<GoPtr<ModuleName>>;
   AmbientModuleNames: GoSlice<string>;
   CommentDirectives: GoSlice<CommentDirective>;
-  jsdocCache: GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>>;
+  jsdocCache: GoPtr<GoMap<GoPtr<Node>, GoPtr<GoSlice<GoPtr<Node>>>>>;
   jsdocMu: RWMutex;
   hasLazyJSDoc: bool;
   ReparsedClones: GoSlice<GoPtr<Node>>;
-  Pragmas: GoSlice<Pragma>;
+  Pragmas: GoPtr<GoSlice<Pragma>>;
   ReferencedFiles: GoSlice<GoPtr<FileReference>>;
   TypeReferenceDirectives: GoSlice<GoPtr<FileReference>>;
   LibReferenceDirectives: GoSlice<GoPtr<FileReference>>;
@@ -5566,7 +5576,7 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.AmbientModuleNames = [];
   data.CommentDirectives = [];
   data.ReparsedClones = [];
-  data.Pragmas = [];
+  data.Pragmas = undefined;
   data.ReferencedFiles = [];
   data.TypeReferenceDirectives = [];
   data.LibReferenceDirectives = [];
@@ -5727,13 +5737,14 @@ export function SourceFile_SetJSDocDiagnostics(receiver: GoPtr<SourceFile>, diag
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDocCache","kind":"method","status":"implemented","sigHash":"a9f922f59ad6626e26a22947c508ee3f71789b21939055546c51c223bf7a1ec3","bodyHash":"fcbe64ccd7d2e4fb60be2bbf4fff81d513d484686b762cac885f2a6416d2b569"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The JSDoc cache map and each cached Go slice may independently be nil; nested GoPtr types preserve both states.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>>)=>void"}
  *
  * Go source:
  * func (node *SourceFile) SetJSDocCache(cache map[*Node][]*Node) {
  * 	node.jsdocCache = cache
  * }
  */
-export function SourceFile_SetJSDocCache(receiver: GoPtr<SourceFile>, cache: GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>>): void {
+export function SourceFile_SetJSDocCache(receiver: GoPtr<SourceFile>, cache: GoPtr<GoMap<GoPtr<Node>, GoPtr<GoSlice<GoPtr<Node>>>>>): void {
   receiver!.jsdocCache = cache;
 }
 
@@ -5751,6 +5762,7 @@ export function SourceFile_SetHasLazyJSDoc(receiver: GoPtr<SourceFile>, lazy: bo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.resolveJSDoc","kind":"method","status":"implemented","sigHash":"0b0900b712b8fc654369cddb39ce74621004cb090e3312c3d2ed0c0360ca483e","bodyHash":"795db99ad5d3a52abd4379a3f133c6ae959c46ec2752dfd1856beea041464abc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The lazy parser may return a nil JSDoc slice and the cache must retain that value; GoPtr preserves the result while Map.has distinguishes a cached nil from a missing entry.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (node *SourceFile) resolveJSDoc(n *Node) []*Node {
@@ -5780,14 +5792,14 @@ export function SourceFile_SetHasLazyJSDoc(receiver: GoPtr<SourceFile>, lazy: bo
  * 	return jsdocs
  * }
  */
-export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   if (parseJSDocForNode === undefined) {
     throw new globalThis.Error("resolveJSDoc called but parseJSDocForNode is not registered; ensure the parser package is imported");
   }
   // Fast path: check cache under read lock
   receiver!.jsdocMu.RLock();
   if (receiver!.jsdocCache !== undefined && receiver!.jsdocCache.has(n)) {
-    const jsdocs = receiver!.jsdocCache.get(n)!;
+    const jsdocs = receiver!.jsdocCache.get(n);
     receiver!.jsdocMu.RUnlock();
     return jsdocs;
   }
@@ -5798,11 +5810,11 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
   try {
     // Double-check after acquiring write lock
     if (receiver!.jsdocCache !== undefined && receiver!.jsdocCache.has(n)) {
-      return receiver!.jsdocCache.get(n)!;
+      return receiver!.jsdocCache.get(n);
     }
-    const jsdocs = parseJSDocForNode(receiver, n) ?? [];
+    const jsdocs = parseJSDocForNode(receiver, n);
     if (receiver!.jsdocCache === undefined) {
-      receiver!.jsdocCache = new Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
+      receiver!.jsdocCache = new Map<GoPtr<Node>, GoPtr<GoSlice<GoPtr<Node>>>>();
     }
     receiver!.jsdocCache.set(n, jsdocs);
     return jsdocs;

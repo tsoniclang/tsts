@@ -1,115 +1,136 @@
-# tsgo-suite profiling
+# TSTS performance evidence
 
-Two composable tools to measure *where TSTS spends time* and *how it compares to
-the pinned native `tsgo` and official `tsc`* — so the cost of running a Go
-compiler ported to TypeScript-on-Node is quantified, and the recoverable
-JS-emulation overhead (the part a native Tsonic→C# build would erase) is isolated.
+The profiling harness measures a closed TypeScript workload with the current
+prepared TSTS build, the source-pinned TS-Go producer, and the repository's
+exact TypeScript package. It is a provenance-bearing regression verifier, not a
+translator and not a collection of unsealed timing anecdotes.
 
-## `bench.mjs` — cross-compiler benchmark
+## Policy and gate
 
-Runs TSTS, `tsgo`, and `tsc` on the same projects with `--extendedDiagnostics`
-(all three expose it) and reports per-phase time + memory side by side with
-`TSTS÷tsgo` and `TSTS÷tsc` ratios.
+`performance-policy.json` is the versioned measurement and regression policy.
+It fixes the corpus, required metrics, equivalent-work checks, warmup/measured
+round counts, gated metrics, accepted known-good report, and per-metric limits.
+The checked-in policy deliberately starts with `calibration-required`: no
+calibration numbers have been invented, and `npm run profile:gate` fails before
+building or measuring until maintainers bind a measured baseline.
 
-```bash
-node packages/tsts/tools/profiling/bench.mjs --corpus corpus.json [--runs 3] [--profile] [--json]
-```
-
-- **corpus**: `--corpus <file>` or a `corpus.json` next to the harness. See
-  `corpus.example.json`. Each project: `{ name, cwd (abs dir), args }`; the
-  harness appends `--extendedDiagnostics`. Use modern-config projects
-  (`target >= ES2015`, `module esnext/nodenext`) so `tsgo`/TSTS support them.
-- **`--runs N`**: N runs per compiler; the cold first run is dropped, the rest
-  median-aggregated.
-- **`--profile`**: also capture a TSTS CPU + heap profile per project and run the
-  attributor (below) — one command for "compare *and* explain".
-- **Compiler paths**: TSTS dist CLI is computed; override `tsgo` via `TSGO_BIN`
-  (default `/tmp/tsgo`), `tsc` via `TSC_BIN` (default `node_modules/.bin/tsc`).
-  Build `tsgo`: `go build -C packages/tsts/_vendor/typescript-go -o /tmp/tsgo ./cmd/tsgo`.
-
-Memory is captured externally via `/usr/bin/time -v` (maxRSS) — TSTS's own
-`--extendedDiagnostics` reports `Memory used: 0K` because the memory fields live
-in the **porter-tracked** `internal/execute/tsc/statistics.ts` (Go populates them
-from `runtime.MemStats`). Populating them from `process.memoryUsage()` is a
-deliberate host divergence from the Go port and is left for maintainer approval;
-maxRSS gives the comparison in the meantime.
-
-## `self-compile-bench.mjs` — mandatory whole-program benchmark
-
-Runs the built TSTS compiler and official `tsc` against TSTS itself:
+Capture a candidate on the stable host that will run the gate:
 
 ```bash
-npx tsc -p packages/tsts/tsconfig.json
-npm run profile:self
+node packages/tsts/tools/profiling/bench.mjs \
+  --record-baseline packages/tsts/tools/profiling/baselines/<candidate-id>
 ```
 
-The command compiles `packages/tsts/tsconfig.json --noEmit` with
-`--extendedDiagnostics`, drops the cold first run, and reports warm-run median
-phase time, wall time, and maxRSS. This is the mandatory whole-program benchmark
-for changes to compiler hot paths. Popular-project corpus runs remain useful,
-but they depend on machine-local checkout paths and belong in `profile:bench`.
+Review `summary.md`, all raw samples, and each gated metric's coefficient of
+variation. Then set the policy baseline to `calibrated`, using the candidate's
+relative directory, sealed `evidenceDigest`, and `reportId`; set regression and
+dispersion limits from the measured calibration and the intended performance
+budget. The policy loader rejects partial bindings, missing limits, limits below
+1 for regression ratios, and invalid evidence IDs. A maintainer must make this
+acceptance decision; the harness never derives permissive limits from the run it
+is supposed to gate.
 
-## `attribute.mjs` — cost-category attribution
-
-Aggregates a V8 CPU profile (`.cpuprofile`, self-time) and/or heap profile
-(`.heapprofile`, allocation bytes) into named cost buckets and reports the
-**RECOVERABLE** share — the JS-emulation tax a native build erases.
+After calibration:
 
 ```bash
-node --cpu-prof  --cpu-prof-dir=. --cpu-prof-name=p.cpuprofile  <tsts-cli> <args>
-node --heap-prof --heap-prof-dir=. --heap-prof-name=p.heapprofile <tsts-cli> <args>
-node packages/tsts/tools/profiling/attribute.mjs --cpu p.cpuprofile --heap p.heapprofile --label TSTS
+npm run profile:gate
 ```
 
-Categories: `utf8-conv` (Go UTF-8 bytes emulated on UTF-16 JS strings),
-`value-key` (Go struct map keys serialized to strings), `gc`, `ast-build`
-(per-node `{} as T` + 22-closure adapter), `go-runtime`, then phase buckets
-`scanner/parser/binder/checker/emit`, and `other`. The first five are
-`RECOVERABLE` (value structs, `byte[]`/`Span`, `Dictionary<struct,V>` in C#).
+The gate compares current TSTS medians with the sealed known-good TSTS medians.
+TS-Go and `tsc` ratios remain context only. The gate also requires compatible
+host, harness, corpus, sampling policy, and exact TS-Go/`tsc` reference evidence,
+and rejects excessive dispersion in either the current or baseline sample set.
+Gate failures are written as sealed reports before the command exits nonzero.
 
-It runs on **both** TSTS's and `tsgo`'s profiles (Corsa also emits v8 cpuprofiles),
-so you can compare bucket-for-bucket. The **heap** profile matters: the dominant
-cost (per-node allocation) shows up as `gc` in the CPU profile, but as the actual
-allocation *sites* (`ast-build`, arena, tuples) in the heap profile.
-
-## What it shows today (baseline)
-- Per-phase: **Parse ~90–220× tsgo** (UTF-8 conversion), **Check ~45×**, Bind ~14×; maxRSS ~12–16× tsgo.
-- Attribution: **~70–80% of TSTS's time is recoverable JS-emulation tax**
-  (zod: gc 30% + utf8 25% + ast-build 7% + value-key 6%); the real type-checking
-  is ~10–20%. This sizes each native-C# opportunity and is a regression gate.
-
-Outputs go to `.tests/profiling/` (gitignored). `corpus.json` is gitignored
-(machine paths); commit changes to `corpus.example.json` instead.
-
-## `utf8-bench.mjs` — focused source-text benchmark
-
-Measures the exact UTF-8/UTF-16 bridge optimized in the source-text hot path.
-It compares the current built TSTS helpers against legacy-equivalent
-`TextEncoder`/`TextDecoder` implementations on large ASCII and mixed-Unicode
-source strings:
+## Measurement
 
 ```bash
-npx tsc -p packages/tsts/tsconfig.json
-npm run profile:utf8
+node packages/tsts/tools/profiling/bench.mjs [--profile] [--no-build] [--output <new-directory>]
+node packages/tsts/tools/profiling/bench.mjs --verify-report <sealed-directory>
 ```
 
-Cases include repeated byte-length queries, rune decoding by byte offset,
-`SplitLines`, `UTF16Len`, and case-insensitive comparison. This is a stable
-micro-regression gate for the JS/.NET-compatible UTF-16 source-text direction;
-whole-project cost still belongs to `profile:bench --profile`.
+- TSTS is always built through `tools/tsts-build.mjs`; its sealed prepared-build
+  evidence binds the exact current source, build driver, TypeScript producer,
+  runtime, command, environment, and emitted `dist` bytes.
+- TS-Go is always acquired through `tools/pinned-go-producer.mjs` from the
+  verified `schema/tsgo/source-pin.json` revision. Arbitrary compiler overrides
+  are rejected.
+- `tsc` is the exact repository `node_modules/typescript` package. The Node and
+  GNU `time` executable bytes are recorded.
+- Children receive a complete minimal environment with empty `NODE_OPTIONS` and
+  `NODE_PATH`, isolated home/cache/temp directories, fixed locale/time zone, and
+  no ambient environment inheritance. Startup `execArgv` and compiler override
+  variables are rejected.
+- Every invocation is a fresh compiler process. The first policy rounds are
+  explicitly **system-cache warmups**, not claimed JIT warmups. Warmup and
+  measured rounds rotate compiler order to reduce fixed-order bias.
+- Every sample must contain Files, Lines, Parse, Bind, Check, Total,
+  compiler-reported memory, wall/user/system/CPU time, CPU utilization, and
+  maxRSS. Missing metrics fail the run; aggregation never drops missing values.
+  Reports include median, min, max, mean, sample standard deviation, MAD, and CV.
+- Files and Lines must match exactly across all compilers and all rounds. This,
+  the identical read-only staged tree, identical arguments, and successful exit
+  are the equivalent-work receipt.
 
-## `scanner-bench.mjs` — scanner hot-path benchmark
+Measurement/gate outputs are restricted to unique no-overwrite directories
+under `.tests/profiling/runs/`; baseline candidates are restricted to
+`packages/tsts/tools/profiling/baselines/`. Each successful measurement contains `report.json`,
+`summary.md`, optional profiles, full compiler/corpus/harness/host evidence, and
+`COMPLETE.json`. The directory inventory and metadata are sealed and verified
+before atomic publication. `--output` and `--record-baseline` also refuse to
+replace an existing path.
 
-Measures the built scanner directly on large ASCII, mixed-Unicode, and JSX
-source strings:
+## Closed workload
 
-```bash
-npx tsc -p packages/tsts/tsconfig.json
-npm run profile:scanner
+`corpus.default.json` uses schema 2. Inputs are copied into a unique temporary
+tree outside the repository, checked byte-for-byte against their source
+evidence, made read-only, and hashed after every compiler invocation. Corpus
+sources, compiler producers, and harness files are reverified after measurement.
+The default compiler-shaped fixture supplies its own `noLib` declarations and
+replicates independent parser/checker/flow-style modules, so all three compilers
+see the same nontrivial files and no ambient `node_modules` or standard library.
+
+Each project has this shape:
+
+```json
+{
+  "name": "safe-report-name",
+  "cwd": "project",
+  "args": ["-p", "tsconfig.json", "--noEmit", "--incremental", "false"],
+  "inputs": [
+    {
+      "label": "complete-input",
+      "source": "path-relative-to-corpus",
+      "destination": "project",
+      "replicas": 1
+    }
+  ]
+}
 ```
 
-This is the focused gate for scanner-local source-text cache changes. It checks
-token count and checksum stability across runs, then reports median scan time
-and tokens/ms. Whole-program validation still belongs to `profile:self`; this
-microbenchmark exists so a scanner-only optimization is not justified solely by
-helper-level UTF-8 timings.
+Names and paths are traversal-safe. `--noEmit` and `--incremental false` are
+mandatory; watch/build/profile/diagnostic overrides are rejected. `replicas`
+copies a directory into zero-padded child directories and is useful for a
+checked-in deterministic workload template.
+
+## Profiles
+
+`--profile` captures one V8 CPU profile and one heap-allocation profile for each
+project using the same prepared TSTS build, closed tree, arguments, timeout, and
+environment. Paths are unique and derived only from validated project names.
+Attribution output is captured into the report instead of being mixed with JSON
+or timing output. All profile bytes are part of the final evidence seal.
+
+`attribute.mjs` groups CPU self-time and heap allocation into named compiler and
+runtime buckets. Bucket labels are diagnostic hypotheses; only measured profile
+bytes and the sealed attribution output are evidence.
+
+## Other commands
+
+`self-compile-bench.mjs` is now a compatibility entry point for the same default
+closed policy pipeline; it no longer maintains a second threshold architecture.
+`utf8-bench.mjs` and `scanner-bench.mjs` remain exploratory microbenchmarks.
+They acquire the same source-bound prepared TSTS build, reject injected Node
+startup state, reverify build/harness inputs, and report raw samples plus
+dispersion and functional checks. They are not sealed regression gates and do
+not establish preservation of whole-compiler gains.

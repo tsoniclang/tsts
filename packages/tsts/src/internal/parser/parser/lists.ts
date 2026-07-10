@@ -161,7 +161,7 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
  * 	return p.nodeSliceArena.Clone(list)
  * }
  */
-export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>, index: int) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>, index: int) => GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const saveParsingContexts = receiver!.parsingContexts;
   receiver!.parsingContexts |= 1 << kind;
   const outerReparseList = receiver!.reparseList;
@@ -851,7 +851,7 @@ export function Parser_parseArgumentList(receiver: GoPtr<Parser>): GoPtr<NodeLis
  * 	return list
  * }
  */
-export function Parser_newNodeList(receiver: GoPtr<Parser>, loc: TextRange, nodes: GoSlice<GoPtr<Node>>): GoPtr<NodeList> {
+export function Parser_newNodeList(receiver: GoPtr<Parser>, loc: TextRange, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<NodeList> {
   const list = NodeFactory_NewNodeList(receiver!.factory, nodes);
   list!.Loc = loc;
   return list;
@@ -867,7 +867,7 @@ export function Parser_newNodeList(receiver: GoPtr<Parser>, loc: TextRange, node
  * 	return list
  * }
  */
-export function Parser_newModifierList(receiver: GoPtr<Parser>, loc: TextRange, nodes: GoSlice<GoPtr<Node>>): GoPtr<ModifierList> {
+export function Parser_newModifierList(receiver: GoPtr<Parser>, loc: TextRange, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<ModifierList> {
   const list = NodeFactory_NewModifierList(receiver!.factory, nodes);
   list!.Loc = loc;
   return list;

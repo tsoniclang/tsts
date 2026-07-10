@@ -5,11 +5,8 @@ export class Group {
   private err: GoError;
 
   Go(fn: () => GoError): void {
-    if (this.err !== undefined) {
-      return;
-    }
     const err = fn();
-    if (err !== undefined) {
+    if (err !== undefined && this.err === undefined) {
       this.err = err;
     }
   }

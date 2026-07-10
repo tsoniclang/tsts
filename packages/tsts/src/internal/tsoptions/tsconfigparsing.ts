@@ -588,7 +588,7 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
     if (option !== undefined && option !== extendsOptionDeclaration) {
       const [convertedValue, convertErr] = convertJsonOption(option, value, basePath, propertyAssignment, propertyAssignment!.Initializer, sourceFile);
       currentValue = convertedValue;
-      propertySetErrors.push(...convertErr);
+      propertySetErrors.push(...(convertErr ?? []));
     }
     if (parentOption !== undefined && parentOption!.Name !== "undefined" && currentValue !== undefined && currentValue !== null) {
       if (option !== undefined && option!.Name !== "") {
@@ -636,7 +636,7 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
       if (option === extendsOptionDeclaration) {
         const [configPath, err] = getExtendsConfigPathOrArray(currentValue as CompilerOptionsValue, host, basePath, configFileName, propertyAssignment, propertyAssignment!.Initializer, sourceFile);
         extendedConfigPath = configPath;
-        propertySetErrors.push(...err);
+        propertySetErrors.push(...(err ?? []));
       } else if (option === undefined) {
         if (keyText === "excludes") {
           propertySetErrors.push(CreateDiagnosticForNodeInSourceFile(sourceFile, propertyAssignment as unknown as GoPtr<Node>, diagnostics.Unknown_option_excludes_Did_you_mean_exclude));
@@ -991,7 +991,7 @@ export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, va
         expression = elems !== undefined ? elems[index] : undefined;
       }
       const [result, err] = convertJsonOption(CommandLineOption_Elements(option), v, basePath, propertyAssignment, expression as GoPtr<Expression>, sourceFile);
-      errors.push(...err);
+      errors.push(...(err ?? []));
       return result;
     });
     let filteredValues = mappedValues;
@@ -1066,6 +1066,7 @@ export function normalizeNonListOptionValue(option: GoPtr<CommandLineOption>, ba
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertJsonOption","kind":"func","status":"implemented","sigHash":"016694a7f3347b9d2bf950c36a574be0c112f15d18ed130c311e04b383d52d3c","bodyHash":"b40f58d1c089228ea4ae5307406cbf555f47f06619f2dc4e83dd72faed89ccee"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Configuration conversion commonly returns a nil diagnostic slice on success; GoPtr preserves that no-diagnostics result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/commandlineoption.ts::CommandLineOption>,unknown,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::PropertyAssignment>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[unknown,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/commandlineoption.ts::CommandLineOption>,unknown,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::PropertyAssignment>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[unknown,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>]"}
  *
  * Go source:
  * func convertJsonOption(
@@ -1115,7 +1116,7 @@ export function normalizeNonListOptionValue(option: GoPtr<CommandLineOption>, ba
  * 	}
  * }
  */
-export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
+export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoPtr<GoSlice<GoPtr<Diagnostic>>>] {
   if (opt!.IsCommandLineOnly) {
     let nodeValue: GoPtr<Node> = undefined;
     if (propertyAssignment !== undefined) {
@@ -1156,6 +1157,7 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendsConfigPathOrArray","kind":"func","status":"implemented","sigHash":"2c664fce3bd6961044fab9b02fc0aad600aa4acee54f38be3422451956e6e140","bodyHash":"b5fa7a8274483f8ab35e2f6ab779e718788401a04a0d5e13e3bb365ce3b423f0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Extends parsing can return nil path and diagnostic slices on its upstream error and no-result branches; GoPtr preserves each tuple component independently.","goSignature":"func(packages/tsts/src/internal/tsoptions/commandlineoption.ts::CompilerOptionsValue,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::PropertyAssignment>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>]","tsSignature":"func(packages/tsts/src/internal/tsoptions/commandlineoption.ts::CompilerOptionsValue,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::PropertyAssignment>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>]"}
  *
  * Go source:
  * func getExtendsConfigPathOrArray(
@@ -1207,8 +1209,8 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown,
  * 	return extendedConfigPathArray, errors
  * }
  */
-export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: ParseConfigHost, basePath: string, configFileName: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoSlice<string>, GoSlice<GoPtr<Diagnostic>>] {
-  const extendedConfigPathArray: string[] = [];
+export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: ParseConfigHost, basePath: string, configFileName: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [GoPtr<GoSlice<string>>, GoPtr<GoSlice<GoPtr<Diagnostic>>>] {
+  let extendedConfigPathArray: GoPtr<GoSlice<string>> = undefined;
   let newBase = basePath;
   if (configFileName !== "") {
     newBase = directoryOfCombinedPath(configFileName, basePath);
@@ -1220,11 +1222,11 @@ export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: P
   if (typeof value === "string") {
     const [val, err] = getExtendsConfigPath(value, host, newBase, valueExpression, sourceFile);
     if (val !== "") {
-      extendedConfigPathArray.push(val);
+      extendedConfigPathArray = [...(extendedConfigPathArray ?? []), val];
     }
     return [extendedConfigPathArray, err];
   }
-  const errors: GoPtr<Diagnostic>[] = [];
+  let errors: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
   if (Array.isArray(value)) {
     const valueArr = value as unknown[];
     for (let index = 0; index < valueArr.length; index++) {
@@ -1237,17 +1239,17 @@ export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: P
       if (typeof fileName === "string") {
         const [val, err] = getExtendsConfigPath(fileName, host, newBase, expression, sourceFile);
         if (val !== "") {
-          extendedConfigPathArray.push(val);
+          extendedConfigPathArray = [...(extendedConfigPathArray ?? []), val];
         }
-        errors.push(...err);
+        errors = [...(errors ?? []), ...(err ?? [])];
       } else {
         const [, err] = convertJsonOption(CommandLineOption_Elements(extendsOptionDeclaration), value, basePath, propertyAssignment, expression, sourceFile);
-        errors.push(...err);
+        errors = [...(errors ?? []), ...(err ?? [])];
       }
     }
   } else {
     const [, errs] = convertJsonOption(extendsOptionDeclaration, value, basePath, propertyAssignment, valueExpression, sourceFile);
-    errors.push(...errs);
+    errors = errs;
   }
   return [extendedConfigPathArray, errors];
 }
@@ -1485,20 +1487,20 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
       if (typeof value === "string") {
-        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value));
+        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value), () => undefined);
         if (ok) {
           const compilerOptionsErr = result.ParseOption(key, val);
           errors.push(...(compilerOptionsErr ?? []));
         }
       } else {
         const [convertJson, err] = convertJsonOption(opt, value, basePath, undefined, undefined, undefined);
-        errors.push(...err);
+        errors.push(...(err ?? []));
         const compilerOptionsErr = result.ParseOption(key, convertJson);
         errors.push(...(compilerOptionsErr ?? []));
       }
     } else {
       const [convertJson, err] = convertJsonOption(opt, value, basePath, undefined, undefined, undefined);
-      errors.push(...err);
+      errors.push(...(err ?? []));
       const compilerOptionsErr = result.ParseOption(key, convertJson);
       errors.push(...(compilerOptionsErr ?? []));
     }
@@ -2085,18 +2087,18 @@ export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, unknown>>, h
   if (OrderedMap_Has(jsonMap, "excludes")) {
     errors.push(NewCompilerDiagnostic(diagnostics.Unknown_option_excludes_Did_you_mean_exclude));
   }
-  const [options, err] = convertCompilerOptionsFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "compilerOptions"), basePath, configFileName);
-  const [typeAcquisition, err2] = convertTypeAcquisitionFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "typeAcquisition"), basePath, configFileName);
+  const [options, err] = convertCompilerOptionsFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "compilerOptions", () => undefined), basePath, configFileName);
+  const [typeAcquisition, err2] = convertTypeAcquisitionFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "typeAcquisition", () => undefined), basePath, configFileName);
   errors.push(...err);
   errors.push(...err2);
   // watchOptions := convertWatchOptionsFromJsonWorker(json.watchOptions, basePath, errors)
   // json.compileOnSave = convertCompileOnSaveOptionFromJson(json, basePath, errors)
   let extendedConfigPath: unknown = undefined;
-  const extendsVal = OrderedMap_GetOrZero(jsonMap, "extends");
+  const extendsVal = OrderedMap_GetOrZero(jsonMap, "extends", () => undefined);
   if (extendsVal !== undefined && extendsVal !== null && extendsVal !== "") {
     const [configPath, extErr] = getExtendsConfigPathOrArray(extendsVal as CompilerOptionsValue, host, basePath, configFileName, undefined, undefined, undefined);
     extendedConfigPath = configPath;
-    errors.push(...extErr);
+    errors.push(...(extErr ?? []));
   }
   const parsedConfig: parsedTsconfig = {
     raw: json,
@@ -2472,7 +2474,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
         }
         if (propertyName === "include" || propertyName === "exclude" || propertyName === "files") {
           if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName)) {
-            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName);
+            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName, () => undefined);
             if (Array.isArray(sliceVal) && sliceVal !== undefined) {
               const slice = sliceVal as unknown[];
               const value = core.Map(slice, (path: unknown): unknown => {
@@ -2508,7 +2510,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       setPropertyValue("exclude");
       setPropertyValue("files");
       if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave")) {
-        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave");
+        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave", () => undefined);
         if (typeof compileOnSave === "boolean") {
           result!.compileOnSave = compileOnSave;
         }
@@ -2550,7 +2552,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       OrderedMap_Set(ownRawMap, "compileOnSave", result.compileOnSave);
     }
     if (sourceFile !== undefined) {
-      for (const [extendedSourceFile] of Set_Keys(result.extendedSourceFiles)) {
+      for (const [extendedSourceFile] of Set_Keys(result.extendedSourceFiles) ?? []) {
         sourceFile!.ExtendedSourceFiles = core.InsertSorted(sourceFile!.ExtendedSourceFiles, extendedSourceFile as string, cmp.Compare) as GoSlice<string>;
       }
     }
@@ -2570,6 +2572,7 @@ export const defaultIncludeSpec: string = "**/*";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::propOfRaw","kind":"type","status":"implemented","sigHash":"1fbc96d33ad87bcfd3fa6b9eb4275e196711890d1d696c5bfa620720ccdffeeb","bodyHash":"5f50ed1dda71b4b77dcfd5fba9478cb64f8397120b1d14330c38ae08deb54afc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The raw configuration property holds a nil slice until an array-valued option is selected; GoPtr preserves that discriminated storage state.","goSignature":"interface{sliceValue:packages/tsts/src/go/compat.ts::GoSlice<unknown>;wrongValue:string}","tsSignature":"interface{sliceValue:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<unknown>>;wrongValue:string}"}
  *
  * Go source:
  * propOfRaw struct {
@@ -2578,12 +2581,12 @@ export const defaultIncludeSpec: string = "**/*";
  * }
  */
 export interface propOfRaw {
-  sliceValue: GoSlice<unknown>;
+  sliceValue: GoPtr<GoSlice<unknown>>;
   wrongValue: string;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e","bodyHash":"4349650316d909310878709025d63a77949d6fb8eef1a22158759ce135495972"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e","bodyHash":"23e509a422a3f8f7b0daeec8a32ab6c6ab372a8edad481e8f2db7ee911ad3ae5"}
  * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"parseJsonConfigFileContentWorker accepts a nil Go ExtendedConfigCache interface when one-shot config parsing disables extended-config caching; cache access is guarded on that sentinel and TypeScript represents it with undefined.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::TsConfigSourceFile>,packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ParseConfigHost,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,unknown>>,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tspath/path.ts::Path>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::FileExtensionInfo>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tsoptions/parsedcommandline.ts::ParsedCommandLine>"}
  *
  * Go source:
@@ -2600,14 +2603,14 @@ export interface propOfRaw {
  * 	extendedConfigCache ExtendedConfigCache,
  * ) *ParsedCommandLine {
  * 	debug.Assert((json == nil && sourceFile != nil) || (json != nil && sourceFile == nil))
- * 
+ *
  * 	basePathForFileNames := ""
  * 	if configFileName != "" {
  * 		basePathForFileNames = tspath.NormalizePath(directoryOfCombinedPath(configFileName, basePath))
  * 	} else {
  * 		basePathForFileNames = tspath.NormalizePath(basePath)
  * 	}
- * 
+ *
  * 	var errors []*ast.Diagnostic
  * 	parsedConfig, errors := parseConfig(json, sourceFile, host, basePath, configFileName, resolutionStack, extendedConfigCache)
  * 	mergeCompilerOptions(parsedConfig.options, existingOptions, existingOptionsRaw)
@@ -2725,11 +2728,11 @@ export interface propOfRaw {
  * 		validatedIncludeSpecsBeforeSubstitution,
  * 		isDefaultIncludeSpec,
  * 	}
- * 
+ *
  * 	if sourceFile != nil {
  * 		sourceFile.configFileSpecs = &configFileSpecs
  * 	}
- * 
+ *
  * 	getFileNames := func(basePath string) ([]string, int) {
  * 		parsedConfigOptions := parsedConfig.options
  * 		fileNames, literalFileNamesLen := getFileNamesFromConfigSpecs(configFileSpecs, basePath, parsedConfigOptions, host.FS(), extraFileExtensions)
@@ -2746,31 +2749,38 @@ export interface propOfRaw {
  * 		}
  * 		return fileNames, literalFileNamesLen
  * 	}
- * 
+ *
  * 	getProjectReferences := func(basePath string) []*core.ProjectReference {
  * 		var projectReferences []*core.ProjectReference
  * 		newReferencesOfRaw := getPropFromRaw("references", func(element any) bool { return reflect.TypeOf(element) == orderedMapType }, "object")
  * 		if newReferencesOfRaw.sliceValue != nil {
  * 			projectReferences = []*core.ProjectReference{}
- * 			for _, reference := range newReferencesOfRaw.sliceValue {
- * 				for _, ref := range parseProjectReference(reference) {
- * 					if ref.Path == "" {
- * 						if sourceFile == nil {
- * 							errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.path", "string"))
- * 						}
- * 					} else {
- * 						projectReferences = append(projectReferences, &core.ProjectReference{
- * 							Path:         tspath.GetNormalizedAbsolutePath(ref.Path, basePath),
- * 							OriginalPath: ref.Path,
- * 							Circular:     ref.Circular,
- * 						})
- * 					}
+ * 			for index, reference := range newReferencesOfRaw.sliceValue {
+ * 				ref := parseProjectReference(reference)
+ * 				if ref == nil {
+ * 					continue
  * 				}
+ * 				if !ref.hasPath || !ref.pathValid {
+ * 					errors = append(errors, createDiagnosticAtProjectReferenceProperty(sourceFile, index, "path", diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.path", "string"))
+ * 					continue
+ * 				}
+ * 				if ref.reference.Path == "" {
+ * 					errors = append(errors, createDiagnosticAtProjectReferenceProperty(sourceFile, index, "path", diagnostics.Compiler_option_0_cannot_be_given_an_empty_string, "reference.path"))
+ * 					continue
+ * 				}
+ * 				if ref.hasCircular && !ref.circularValid {
+ * 					errors = append(errors, createDiagnosticAtProjectReferenceProperty(sourceFile, index, "circular", diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.circular", "boolean"))
+ * 				}
+ * 				projectReferences = append(projectReferences, &core.ProjectReference{
+ * 					Path:         tspath.GetNormalizedAbsolutePath(ref.reference.Path, basePath),
+ * 					OriginalPath: ref.reference.Path,
+ * 					Circular:     ref.reference.Circular,
+ * 				})
  * 			}
  * 		}
  * 		return projectReferences
  * 	}
- * 
+ *
  * 	fileNames, literalFileNamesLen := getFileNames(basePathForFileNames)
  * 	return &ParsedCommandLine{
  * 		ParsedConfig: &core.ParsedOptions{
@@ -2783,7 +2793,7 @@ export interface propOfRaw {
  * 		ConfigFile: sourceFile,
  * 		Raw:        parsedConfig.raw,
  * 		Errors:     errors,
- * 
+ *
  * 		extraFileExtensions: extraFileExtensions,
  * 		comparePathsOptions: tspath.ComparePathsOptions{
  * 			UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
@@ -2809,10 +2819,10 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
     parsedConfig!.options.ConfigFilePath = NormalizeSlashes(configFileName);
   }
   const getPropFromRaw = (prop: string, validateElement: (value: unknown) => bool, elementTypeName: string): propOfRaw => {
-    const [value, exists] = OrderedMap_Get(rawConfig, prop);
+    const [value, exists] = OrderedMap_Get(rawConfig, prop, () => undefined);
     if (exists && value !== undefined && value !== null) {
       if (Array.isArray(value)) {
-        const result = OrderedMap_GetOrZero(rawConfig, prop);
+        const result = OrderedMap_GetOrZero(rawConfig, prop, () => undefined);
         if (Array.isArray(result)) {
           if (sourceFile === undefined && !core.Every(result, validateElement)) {
             errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, prop, elementTypeName));
@@ -2821,17 +2831,17 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
         return { sliceValue: result as unknown[], wrongValue: "" };
       } else if (sourceFile === undefined) {
         errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, prop, "Array"));
-        return { sliceValue: undefined as unknown as GoSlice<unknown>, wrongValue: "not-array" };
+        return { sliceValue: undefined, wrongValue: "not-array" };
       }
     }
-    return { sliceValue: undefined as unknown as GoSlice<unknown>, wrongValue: "no-prop" };
+    return { sliceValue: undefined, wrongValue: "no-prop" };
   };
   const referencesOfRaw = getPropFromRaw("references", (element: unknown): bool => isOrderedMap(element), "object");
   let fileSpecs = getPropFromRaw("files", (element: unknown): bool => typeof element === "string", "string");
   if ((fileSpecs.sliceValue as unknown) !== undefined || fileSpecs.wrongValue === "") {
     const hasZeroOrNoReferences: bool =
       referencesOfRaw.wrongValue === "no-prop" || referencesOfRaw.wrongValue === "not-array" || ((referencesOfRaw.sliceValue as unknown as unknown[]) ?? []).length === 0;
-    const hasExtends = OrderedMap_GetOrZero(rawConfig, "extends");
+    const hasExtends = OrderedMap_GetOrZero(rawConfig, "extends", () => undefined);
     if (((fileSpecs.sliceValue as unknown as unknown[]) ?? []).length === 0 && hasZeroOrNoReferences && (hasExtends === undefined || hasExtends === null)) {
       if (sourceFile !== undefined) {
         const fileName: string = configFileName !== "" ? configFileName : "tsconfig.json";
@@ -2921,26 +2931,34 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
     }
     return [fileNames, litLen];
   };
-  const getProjectReferences = (_basePath: string): GoSlice<GoPtr<ProjectReference>> => {
+  const getProjectReferences = (_basePath: string): GoPtr<GoSlice<GoPtr<ProjectReference>>> => {
     const newReferencesOfRaw = getPropFromRaw("references", (element: unknown): bool => isOrderedMap(element), "object");
     if ((newReferencesOfRaw.sliceValue as unknown) === undefined) {
-      return undefined as unknown as GoSlice<GoPtr<ProjectReference>>;
+      return undefined;
     }
     const projectReferences: GoPtr<ProjectReference>[] = [];
-    for (const reference of (newReferencesOfRaw.sliceValue as unknown as unknown[])) {
-      for (const ref of parseProjectReference(reference)) {
-        if ((ref!.Path ?? "") === "") {
-          if (sourceFile === undefined) {
-            errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.path", "string"));
-          }
-        } else {
-          projectReferences.push({
-            Path: GetNormalizedAbsolutePath(ref!.Path, _basePath),
-            OriginalPath: ref!.Path,
-            Circular: ref!.Circular,
-          });
-        }
+    const references = newReferencesOfRaw.sliceValue as unknown as unknown[];
+    for (let index = 0; index < references.length; index++) {
+      const ref = parseProjectReference(references[index]);
+      if (ref === undefined) {
+        continue;
       }
+      if (!ref.hasPath || !ref.pathValid) {
+        errors.push(createDiagnosticAtProjectReferenceProperty(sourceFile, index as int, "path", diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.path", "string"));
+        continue;
+      }
+      if (ref.reference.Path === "") {
+        errors.push(createDiagnosticAtProjectReferenceProperty(sourceFile, index as int, "path", diagnostics.Compiler_option_0_cannot_be_given_an_empty_string, "reference.path"));
+        continue;
+      }
+      if (ref.hasCircular && !ref.circularValid) {
+        errors.push(createDiagnosticAtProjectReferenceProperty(sourceFile, index as int, "circular", diagnostics.Compiler_option_0_requires_a_value_of_type_1, "reference.circular", "boolean"));
+      }
+      projectReferences.push({
+        Path: GetNormalizedAbsolutePath(ref.reference.Path, _basePath),
+        OriginalPath: ref.reference.Path,
+        Circular: ref.reference.Circular,
+      });
     }
     return projectReferences;
   };
@@ -3212,6 +3230,62 @@ export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLin
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::createDiagnosticAtProjectReferenceProperty","kind":"func","status":"implemented","sigHash":"89f900ca0cd0ce22b67d1ac9d7cae703edba1328fad0c9aad9436d22a625e898","bodyHash":"fe70c97559c25fc36e19477c8c8146e5b1d9e085e45f204a9aa6894d9061a65c"}
+ *
+ * Go source:
+ * func createDiagnosticAtProjectReferenceProperty(sourceFile *TsConfigSourceFile, index int, propertyName string, message *diagnostics.Message, args ...any) *ast.Diagnostic {
+ * 	var node *ast.Node
+ * 	if sourceFile != nil {
+ * 		node = ForEachTsConfigPropArray(sourceFile.SourceFile, "references", func(property *ast.PropertyAssignment) *ast.Node {
+ * 			if ast.IsArrayLiteralExpression(property.Initializer) {
+ * 				elements := property.Initializer.Elements()
+ * 				if len(elements) > index && ast.IsObjectLiteralExpression(elements[index]) {
+ * 					if propertyNode := ForEachPropertyAssignment(elements[index].AsObjectLiteralExpression(), propertyName, func(property *ast.PropertyAssignment) *ast.Node {
+ * 						return property.Initializer
+ * 					}); propertyNode != nil {
+ * 						return propertyNode
+ * 					}
+ * 					return elements[index]
+ * 				}
+ * 			}
+ * 			return nil
+ * 		})
+ * 	}
+ * 	return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(tsconfigToSourceFile(sourceFile), node, message, args...)
+ * }
+ */
+export function createDiagnosticAtProjectReferenceProperty(
+  sourceFile: GoPtr<TsConfigSourceFile>,
+  index: int,
+  propertyName: string,
+  message: GoPtr<Message>,
+  ...args: Array<unknown>
+): GoPtr<Diagnostic> {
+  let node: GoPtr<Node>;
+  if (sourceFile !== undefined) {
+    node = ForEachTsConfigPropArray(sourceFile.SourceFile, "references", (property: GoPtr<PropertyAssignment>): GoPtr<Node> => {
+      if (IsArrayLiteralExpression(property!.Initializer)) {
+        const elements = Node_Elements(property!.Initializer) ?? [];
+        const element = elements[index];
+        if (element !== undefined && IsObjectLiteralExpression(element)) {
+          const propertyNode = ForEachPropertyAssignment(
+            AsObjectLiteralExpression(element),
+            propertyName,
+            (entry: GoPtr<PropertyAssignment>): GoPtr<Node> => entry!.Initializer,
+          );
+          if (propertyNode !== undefined) {
+            return propertyNode;
+          }
+          return element;
+        }
+      }
+      return undefined;
+    });
+  }
+  return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(tsconfigToSourceFile(sourceFile), node, message, ...args);
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::GetCallbackForFindingPropertyAssignmentByValue","kind":"func","status":"implemented","sigHash":"5c1b80259716905c841ed79253b3f2f27a85f9077cda5623b9c1921f56363f57","bodyHash":"e29084f05acbb8e352e1785d922828adab15ed1b564898ff9f37ff88c80e65c3"}
  *
  * Go source:
@@ -3304,8 +3378,9 @@ export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralE
  * }
  */
 export function getTsConfigObjectLiteralExpression(tsConfigSourceFile: GoPtr<SourceFile>): GoPtr<ObjectLiteralExpression> {
-  if (tsConfigSourceFile !== undefined && tsConfigSourceFile!.Statements !== undefined && tsConfigSourceFile!.Statements.Nodes.length > 0) {
-    const expression = Node_Expression(tsConfigSourceFile!.Statements.Nodes[0]);
+  const statements = tsConfigSourceFile?.Statements?.Nodes;
+  if ((statements?.length ?? 0) > 0) {
+    const expression = Node_Expression(statements![0]);
     if (IsObjectLiteralExpression(expression)) {
       return AsObjectLiteralExpression(expression);
     }
@@ -3576,7 +3651,7 @@ export function removeWildcardFilesWithLowerPriorityExtension(file: string, wild
       return;
     }
     const lowerPriorityPath = keyMapper(ChangeExtension(file, ext!));
-    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath);
+    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath, () => "");
   }
 }
 

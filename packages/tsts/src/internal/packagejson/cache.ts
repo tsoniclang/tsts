@@ -480,7 +480,7 @@ export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames
  */
 export function InfoCache_Get(receiver: GoPtr<InfoCache>, packageJsonPath: string): GoPtr<InfoCacheEntry> {
   const key = ToPath(packageJsonPath, receiver!.currentDirectory, receiver!.useCaseSensitiveFileNames);
-  const [value, ok] = SyncMap_Load<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, key);
+  const [value, ok] = SyncMap_Load<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, key, () => undefined);
   if (ok) {
     return value;
   }

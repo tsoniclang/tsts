@@ -336,7 +336,7 @@ export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<No
   sb += Node_Text(templateExpression.Head);
   let resolvedOtherFiles: bool = false;
   let hasExternalReferences: bool = false;
-  for (const span of templateExpression.TemplateSpans!.Nodes) {
+  for (const span of templateExpression.TemplateSpans!.Nodes ?? []) {
     const templateSpan = AsTemplateSpan(span)!;
     const spanResult: Result = evaluate(templateSpan.Expression, location);
     if (spanResult.Value === undefined) {

@@ -47,7 +47,7 @@ export function referenceMap_storeReferences(receiver: GoPtr<referenceMap>, path
  * }
  */
 export function referenceMap_getReferences(receiver: GoPtr<referenceMap>, path: Path): [GoPtr<Set<Path>>, bool] {
-  const [refs, ok] = SyncMap_Load(receiver!.references, path);
+  const [refs, ok] = SyncMap_Load(receiver!.references, path, (): GoPtr<Set<Path>> => undefined);
   return [refs, ok];
 }
 
@@ -93,8 +93,11 @@ export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path
   receiver!.referenceBy.Do(() => {
     receiver!.referencedBy = new globalThis.Map<Path, GoPtr<Set<Path>>>();
     SyncMap_Range(receiver!.references, (key: Path, value: GoPtr<Set<Path>>): bool => {
-      const valueSet = value;
-      for (const [ref] of Set_Keys(valueSet)) {
+      const references = Set_Keys(value);
+      if (references === undefined) {
+        return true;
+      }
+      for (const [ref] of references) {
         let set = receiver!.referencedBy!.get(ref);
         if (set === undefined) {
           set = { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() };

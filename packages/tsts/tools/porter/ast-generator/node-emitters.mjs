@@ -378,7 +378,7 @@ export function emitNode(schema) {
 
 const GO_ONLY_FIELD_TS_TYPES = new Map([
   ["*Symbol", "GoPtr<Symbol>"],
-  ["SymbolTable", "SymbolTable"],
+  ["SymbolTable", "GoPtr<SymbolTable>"],
   ["*Node", "GoPtr<Node>"],
   ["*FlowNode", "GoPtr<FlowNode>"],
   ["atomic.Uint32", "Uint32"],

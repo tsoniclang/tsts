@@ -314,7 +314,7 @@ export interface lexicalEntry {
   kind: lexicalEntryKind;
   next: GoPtr<lexicalEntry>;
   classInfoData: GoPtr<classInfo>;
-  savedPendingExpressions: GoSlice<GoPtr<Expression>>;
+  savedPendingExpressions: GoPtr<GoSlice<GoPtr<Expression>>>;
   classThisData: GoPtr<IdentifierNode>;
   classSuperData: GoPtr<IdentifierNode>;
   depth: int;
@@ -375,15 +375,15 @@ export interface classInfo {
   memberInfos: OrderedMap<GoPtr<Node>, GoPtr<memberInfo>>;
   instanceMethodExtraInitializersName: GoPtr<IdentifierNode>;
   staticMethodExtraInitializersName: GoPtr<IdentifierNode>;
-  staticNonFieldDecorationStatements: GoSlice<GoPtr<Statement>>;
-  nonStaticNonFieldDecorationStatements: GoSlice<GoPtr<Statement>>;
-  staticFieldDecorationStatements: GoSlice<GoPtr<Statement>>;
-  nonStaticFieldDecorationStatements: GoSlice<GoPtr<Statement>>;
+  staticNonFieldDecorationStatements: GoPtr<GoSlice<GoPtr<Statement>>>;
+  nonStaticNonFieldDecorationStatements: GoPtr<GoSlice<GoPtr<Statement>>>;
+  staticFieldDecorationStatements: GoPtr<GoSlice<GoPtr<Statement>>>;
+  nonStaticFieldDecorationStatements: GoPtr<GoSlice<GoPtr<Statement>>>;
   hasStaticInitializers: bool;
   hasNonAmbientInstanceFields: bool;
   hasStaticPrivateClassElements: bool;
-  pendingStaticInitializers: GoSlice<GoPtr<Expression>>;
-  pendingInstanceInitializers: GoSlice<GoPtr<Expression>>;
+  pendingStaticInitializers: GoPtr<GoSlice<GoPtr<Expression>>>;
+  pendingInstanceInitializers: GoPtr<GoSlice<GoPtr<Expression>>>;
 }
 
 /**
@@ -421,7 +421,7 @@ export interface esDecoratorTransformer {
   classInfoStack: GoPtr<classInfo>;
   classThis: GoPtr<IdentifierNode>;
   classSuper: GoPtr<IdentifierNode>;
-  pendingExpressions: GoSlice<GoPtr<Expression>>;
+  pendingExpressions: GoPtr<GoSlice<GoPtr<Expression>>>;
   outerThis: GoPtr<IdentifierNode>;
   shouldTransformPrivateStaticElementsInFile: bool;
   outerThisVisitor: GoPtr<NodeVisitor>;
@@ -488,7 +488,7 @@ export function newESDecoratorTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     (CompilerOptions_GetEmitScriptTarget(opts!.CompilerOptions) >= ScriptTargetESNext && CompilerOptions_GetUseDefineForClassFields(opts!.CompilerOptions))) {
     return undefined;
   }
-  const tx: esDecoratorTransformer = { __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined }, compilerOptions: opts!.CompilerOptions, top: undefined, classInfoStack: undefined, classThis: undefined, classSuper: undefined, pendingExpressions: [], outerThis: undefined, shouldTransformPrivateStaticElementsInFile: false, outerThisVisitor: undefined, discardedVisitor: undefined, modifierVisitor: undefined, exportStrippingModifierVisitor: undefined, classElementVisitor: undefined, nonConstructorClassElementVisitor: undefined, constructorClassElementVisitor: undefined, arrayAssignmentVisitor: undefined, objectAssignmentVisitor: undefined, staticOnlyModifierVisitor: undefined, asyncOnlyModifierVisitor: undefined, accessorStrippingModifierVisitor: undefined };
+  const tx: esDecoratorTransformer = { __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined }, compilerOptions: opts!.CompilerOptions, top: undefined, classInfoStack: undefined, classThis: undefined, classSuper: undefined, pendingExpressions: undefined, outerThis: undefined, shouldTransformPrivateStaticElementsInFile: false, outerThisVisitor: undefined, discardedVisitor: undefined, modifierVisitor: undefined, exportStrippingModifierVisitor: undefined, classElementVisitor: undefined, nonConstructorClassElementVisitor: undefined, constructorClassElementVisitor: undefined, arrayAssignmentVisitor: undefined, objectAssignmentVisitor: undefined, staticOnlyModifierVisitor: undefined, asyncOnlyModifierVisitor: undefined, accessorStrippingModifierVisitor: undefined };
   const result = Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => esDecoratorTransformer_visit(tx, node), opts!.Context);
   const ec = Transformer_EmitContext(tx.__tsgoEmbedded0);
   tx.outerThisVisitor = EmitContext_NewNodeVisitor(ec, (n) => esDecoratorTransformer_outerThisVisit(tx, n));
@@ -602,7 +602,7 @@ export function esDecoratorTransformer_enterClass(receiver: GoPtr<esDecoratorTra
     classSuperData: undefined,
     depth: 0,
   };
-  receiver!.pendingExpressions = [];
+  receiver!.pendingExpressions = undefined;
   esDecoratorTransformer_updateState(receiver);
 }
 
@@ -647,7 +647,7 @@ export function esDecoratorTransformer_enterClassElement(receiver: GoPtr<esDecor
     kind: lexicalEntryKindClassElement,
     next: receiver!.top,
     classInfoData: undefined,
-    savedPendingExpressions: [],
+    savedPendingExpressions: undefined,
     classThisData: undefined,
     classSuperData: undefined,
     depth: 0,
@@ -695,7 +695,7 @@ export function esDecoratorTransformer_enterName(receiver: GoPtr<esDecoratorTran
     kind: lexicalEntryKindName,
     next: receiver!.top,
     classInfoData: undefined,
-    savedPendingExpressions: [],
+    savedPendingExpressions: undefined,
     classThisData: undefined,
     classSuperData: undefined,
     depth: 0,
@@ -751,7 +751,7 @@ export function esDecoratorTransformer_enterOther(receiver: GoPtr<esDecoratorTra
       classSuperData: undefined,
       depth: 0,
     };
-    tx.pendingExpressions = [];
+    tx.pendingExpressions = undefined;
     esDecoratorTransformer_updateState(tx);
   }
 }
@@ -777,7 +777,7 @@ export function esDecoratorTransformer_exitOther(receiver: GoPtr<esDecoratorTran
   if ((tx.top?.depth ?? 0) > 0) {
     tx.top!.depth = tx.top!.depth! - 1;
   } else {
-    tx.pendingExpressions = tx.top?.savedPendingExpressions ?? [];
+    tx.pendingExpressions = tx.top?.savedPendingExpressions;
     tx.top = tx.top?.next;
     esDecoratorTransformer_updateState(tx);
   }
@@ -1390,15 +1390,15 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
     memberInfos: NewOrderedMapWithSizeHint(0)!,
     instanceMethodExtraInitializersName: undefined,
     staticMethodExtraInitializersName: undefined,
-    staticNonFieldDecorationStatements: [],
-    nonStaticNonFieldDecorationStatements: [],
-    staticFieldDecorationStatements: [],
-    nonStaticFieldDecorationStatements: [],
+    staticNonFieldDecorationStatements: undefined,
+    nonStaticNonFieldDecorationStatements: undefined,
+    staticFieldDecorationStatements: undefined,
+    nonStaticFieldDecorationStatements: undefined,
     hasStaticInitializers: false,
     hasNonAmbientInstanceFields: false,
     hasStaticPrivateClassElements: false,
-    pendingStaticInitializers: [],
-    pendingInstanceInitializers: [],
+    pendingStaticInitializers: undefined,
+    pendingInstanceInitializers: undefined,
   };
 
   if (NodeIsDecorated(false, node, undefined, undefined)) {
@@ -1921,8 +1921,8 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
   let heritageClauses: GoPtr<NodeList> = undefined;
   let shouldTransformPrivateStaticElementsInClass = false;
 
-  const classDecorators = esDecoratorTransformer_transformAllDecoratorsOfDeclaration(tx, Node_Decorators(node) ?? []);
-  if (classDecorators.length > 0) {
+  const classDecorators = esDecoratorTransformer_transformAllDecoratorsOfDeclaration(tx, Node_Decorators(node));
+  if (classDecorators !== undefined && classDecorators.length > 0) {
     ci.classDecoratorsName = NodeFactory_NewUniqueNameEx(f, "_classDecorators", {
       Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
     } as AutoGenerateOptions);
@@ -1959,7 +1959,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
   let extendsElement: GoPtr<Node> = undefined;
   if (extendsClause !== undefined) {
     const hc = AsHeritageClause(extendsClause)!;
-    if (hc.Types !== undefined && hc.Types.Nodes.length > 0) {
+    if (hc.Types !== undefined && hc.Types.Nodes !== undefined && hc.Types.Nodes.length > 0) {
       extendsElement = hc.Types.Nodes[0];
     }
   }
@@ -2011,7 +2011,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
   let members = NodeVisitor_VisitNodes(tx.nonConstructorClassElementVisitor as ConcreteNodeVisitor, Node_MemberList(node) as GoPtr<NodeList>);
   members = NodeVisitor_VisitNodes(tx.constructorClassElementVisitor as ConcreteNodeVisitor, members);
 
-  if (tx.pendingExpressions.length > 0) {
+  if (tx.pendingExpressions !== undefined && tx.pendingExpressions.length > 0) {
     tx.outerThis = undefined;
     for (let expr of tx.pendingExpressions) {
       if ((Node_SubtreeFacts(expr as GoPtr<Node>) & SubtreeContainsLexicalThis) !== 0) {
@@ -2022,13 +2022,13 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     if (tx.outerThis !== undefined) {
       classDefinitionStatements.unshift(esDecoratorTransformer_createLet(tx, tx.outerThis, NodeFactory_NewThisExpression(f)));
     }
-    tx.pendingExpressions = [];
+    tx.pendingExpressions = undefined;
   }
   esDecoratorTransformer_exitClass(tx);
 
-  if (ci.pendingInstanceInitializers.length > 0 && GetFirstConstructorWithBody(node) === undefined) {
+  if (ci.pendingInstanceInitializers !== undefined && ci.pendingInstanceInitializers.length > 0 && GetFirstConstructorWithBody(node) === undefined) {
     const initializerStatements = esDecoratorTransformer_prepareConstructor(tx, ci);
-    if (initializerStatements.length > 0) {
+    if (initializerStatements !== undefined && initializerStatements.length > 0) {
       const isDerivedClass = extendsElement !== undefined &&
         SkipOuterExpressions(AsExpressionWithTypeArguments(extendsElement)!.Expression as GoPtr<Node>, OEKAll)!.Kind !== KindNullKeyword;
       const constructorStatements: GoPtr<Statement>[] = [];
@@ -2071,10 +2071,10 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
     classDefinitionStatements.push(...esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, false));
   }
 
-  leadingBlockStatements.push(...ci.staticNonFieldDecorationStatements);
-  leadingBlockStatements.push(...ci.nonStaticNonFieldDecorationStatements);
-  leadingBlockStatements.push(...ci.staticFieldDecorationStatements);
-  leadingBlockStatements.push(...ci.nonStaticFieldDecorationStatements);
+  leadingBlockStatements.push(...(ci.staticNonFieldDecorationStatements ?? []));
+  leadingBlockStatements.push(...(ci.nonStaticNonFieldDecorationStatements ?? []));
+  leadingBlockStatements.push(...(ci.staticFieldDecorationStatements ?? []));
+  leadingBlockStatements.push(...(ci.nonStaticFieldDecorationStatements ?? []));
 
   if (ci.classDescriptorName !== undefined && ci.classDecoratorsName !== undefined && ci.classExtraInitializersName !== undefined && ci.classThis !== undefined) {
     const valueProperty = NewPropertyAssignment(factory, undefined, NewAstIdentifier(factory, "value"), undefined, undefined, renamedClassThis);
@@ -2104,13 +2104,13 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 
   leadingBlockStatements.push(esDecoratorTransformer_createSymbolMetadata(tx, renamedClassThis, ci.metadataReference));
 
-  if (ci.pendingStaticInitializers.length > 0) {
+  if (ci.pendingStaticInitializers !== undefined && ci.pendingStaticInitializers.length > 0) {
     for (const initializer of ci.pendingStaticInitializers) {
       const initializerStatement = NewExpressionStatement(factory, initializer as unknown as GoPtr<never>) as GoPtr<Statement>;
       EmitContext_SetSourceMapRange(ec, initializerStatement, EmitContext_SourceMapRange(ec, initializer as GoPtr<Node>));
       trailingBlockStatements.push(initializerStatement);
     }
-    ci.pendingStaticInitializers = [];
+    ci.pendingStaticInitializers = undefined;
   }
 
   if (ci.classExtraInitializersName !== undefined) {
@@ -2153,21 +2153,28 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 
   if (leadingStaticBlock !== undefined || syntheticConstructor !== undefined || trailingStaticBlock !== undefined) {
     const newMembers: GoPtr<Node>[] = [];
+    const memberNodes = members!.Nodes;
     let existingNamedEvaluationHelperBlockIndex = -1;
-    for (let i = 0; i < members!.Nodes.length; i++) {
-      const member = members!.Nodes[i];
-      if (isClassNamedEvaluationHelperBlock(ec, member)) {
-        existingNamedEvaluationHelperBlockIndex = i;
-        break;
+    if (memberNodes !== undefined) {
+      for (let i = 0; i < memberNodes.length; i++) {
+        const member = memberNodes[i];
+        if (isClassNamedEvaluationHelperBlock(ec, member)) {
+          existingNamedEvaluationHelperBlockIndex = i;
+          break;
+        }
       }
     }
 
     if (leadingStaticBlock !== undefined) {
-      newMembers.push(...members!.Nodes.slice(0, existingNamedEvaluationHelperBlockIndex + 1));
+      if (memberNodes !== undefined) {
+        newMembers.push(...memberNodes.slice(0, existingNamedEvaluationHelperBlockIndex + 1));
+      }
       newMembers.push(leadingStaticBlock);
-      newMembers.push(...members!.Nodes.slice(existingNamedEvaluationHelperBlockIndex + 1));
-    } else {
-      newMembers.push(...members!.Nodes);
+      if (memberNodes !== undefined) {
+        newMembers.push(...memberNodes.slice(existingNamedEvaluationHelperBlockIndex + 1));
+      }
+    } else if (memberNodes !== undefined) {
+      newMembers.push(...memberNodes);
     }
 
     if (syntheticConstructor !== undefined) {
@@ -2185,7 +2192,7 @@ export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDeco
 
   const lexicalEnvironment = EmitContext_EndVariableEnvironment(ec);
   let classExpression: GoPtr<Node>;
-  if (classDecorators.length > 0) {
+  if (classDecorators !== undefined && classDecorators.length > 0) {
     classExpression = NewClassExpression(factory, undefined, undefined, undefined, heritageClauses as GoPtr<never>, members as GoPtr<never>);
     EmitContext_SetOriginal(ec, classExpression, node);
     if (ci.classThis !== undefined) {
@@ -2491,6 +2498,7 @@ export function esDecoratorTransformer_visitClassExpression(receiver: GoPtr<esDe
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.prepareConstructor","kind":"method","status":"implemented","sigHash":"db4506134c0d2318b6029411fd3dbc1b1ca28c1b6360dc49f6acc9b6790b6f19","bodyHash":"167c0b490c021c53e2a1b21f70cc3a82809301902b97e54912afce5887e41b7c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"prepareConstructor explicitly returns a nil Go slice when there are no pending instance initializers; GoPtr preserves that result and the nil initializer state after consumption.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::classInfo>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::classInfo>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) prepareConstructor(ci *classInfo) []*ast.Statement {
@@ -2509,16 +2517,16 @@ export function esDecoratorTransformer_visitClassExpression(receiver: GoPtr<esDe
  * 	return statements
  * }
  */
-export function esDecoratorTransformer_prepareConstructor(receiver: GoPtr<esDecoratorTransformer>, ci: GoPtr<classInfo>): GoSlice<GoPtr<Statement>> {
+export function esDecoratorTransformer_prepareConstructor(receiver: GoPtr<esDecoratorTransformer>, ci: GoPtr<classInfo>): GoPtr<GoSlice<GoPtr<Statement>>> {
   const tx = receiver!;
   if ((ci!.pendingInstanceInitializers ?? []).length === 0) {
-    return [];
+    return undefined;
   }
   const f = Transformer_Factory(tx.__tsgoEmbedded0!);
   const factory = f!.__tsgoEmbedded0!;
   const inlined = NodeFactory_InlineExpressions(f, ci!.pendingInstanceInitializers!);
   const stmt = NewExpressionStatement(factory, inlined as unknown as GoPtr<never>) as GoPtr<Statement>;
-  ci!.pendingInstanceInitializers = [];
+  ci!.pendingInstanceInitializers = undefined;
   return [stmt];
 }
 
@@ -2673,12 +2681,12 @@ export function esDecoratorTransformer_visitConstructorDeclaration(receiver: GoP
   let body: GoPtr<Node> = undefined;
   if (ctor.Body !== undefined && tx.classInfoStack !== undefined) {
     const initializerStatements = esDecoratorTransformer_prepareConstructor(tx, tx.classInfoStack);
-    if (initializerStatements.length > 0) {
+    if (initializerStatements !== undefined && initializerStatements.length > 0) {
       let stmts: GoSlice<GoPtr<Statement>> = [];
       const [prologue, rest] = NodeFactory_SplitStandardPrologue(f, AsBlock(ctor.Body as GoPtr<Node>)!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
       stmts = [...stmts, ...prologue];
       const superStatementIndices = FindSuperStatementIndexPath(rest as GoSlice<GoPtr<Node>>, 0);
-      if (superStatementIndices.length > 0) {
+      if (superStatementIndices !== undefined) {
         stmts = esDecoratorTransformer_transformConstructorBodyWorker(tx, stmts, rest as GoSlice<GoPtr<Statement>>, 0, superStatementIndices, 0, initializerStatements);
       } else {
         stmts = [...stmts, ...initializerStatements];
@@ -2976,19 +2984,19 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
 
   const savedClassThis = tx.classThis;
   tx.classThis = undefined;
-  const memberDecorators = esDecoratorTransformer_transformAllDecoratorsOfDeclaration(tx, Node_Decorators(member) ?? [] as GoSlice<GoPtr<Node>>);
+  const memberDecorators = esDecoratorTransformer_transformAllDecoratorsOfDeclaration(tx, Node_Decorators(member));
   tx.classThis = savedClassThis;
   const modifiers = NodeVisitor_VisitModifiers(tx.modifierVisitor as ConcreteNodeVisitor, Node_Modifiers(member));
 
   const result: partialResult = { modifiers, referencedName: undefined, name: undefined, initializersName: undefined, extraInitializersName: undefined, descriptorName: undefined, thisArg: undefined };
 
-  if (memberDecorators.length > 0) {
+  if (memberDecorators !== undefined && memberDecorators.length > 0) {
     const memberDecoratorsName = esDecoratorTransformer_createHelperVariable(tx, member, "decorators");
     const memberDecoratorsArray = NewArrayLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, memberDecorators as GoPtr<Node>[]) as GoPtr<never>, false) as GoPtr<Expression>;
     const memberDecoratorsAssignment = NodeFactory_NewAssignmentExpression(f, memberDecoratorsName as GoPtr<Expression>, memberDecoratorsArray);
     const mi: memberInfo = { memberDecoratorsName, memberInitializersName: undefined, memberExtraInitializersName: undefined, memberDescriptorName: undefined };
     OrderedMap_Set(ci!.memberInfos, member!, mi);
-    tx.pendingExpressions = [...tx.pendingExpressions, memberDecoratorsAssignment!];
+    tx.pendingExpressions = [...(tx.pendingExpressions ?? []), memberDecoratorsAssignment!];
 
     let kind: string;
     if (IsGetAccessorDeclaration(member)) {
@@ -3089,7 +3097,7 @@ export function esDecoratorTransformer_partialTransformClassElement(receiver: Go
     esDecoratorTransformer_exitName(tx);
   }
 
-  if ((modifiers === undefined || modifiers!.Nodes.length === 0) && (IsMethodDeclaration(member) || IsPropertyDeclaration(member))) {
+  if ((modifiers === undefined || modifiers.Nodes === undefined || modifiers.Nodes.length === 0) && (IsMethodDeclaration(member) || IsPropertyDeclaration(member))) {
     EmitContext_SetEmitFlags(ec, result.name, EFNoLeadingComments);
   }
 
@@ -3364,7 +3372,7 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
         }
         const body = NewBlock(factory, NodeFactory_NewNodeList(factory, stmts) as unknown as GoPtr<never>, true);
         const staticBlock = NewClassStaticBlockDeclaration(factory, undefined, body as unknown as GoPtr<never>);
-        tx.classInfoStack.pendingStaticInitializers = [];
+        tx.classInfoStack.pendingStaticInitializers = undefined;
         esDecoratorTransformer_exitClassElement(tx);
         return SingleOrMany([staticBlock, result], f);
       }
@@ -4800,6 +4808,7 @@ export function esDecoratorTransformer_visitPartiallyEmittedExpression(receiver:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.prependExpressions","kind":"method","status":"implemented","sigHash":"4b105178398cb2703a7813b9f4f5a61f75520112a7c6fc6933d62f2b364aca33","bodyHash":"cba9e20376065cb7502948f3fc8a1a4cac973bff5e75bbb723767f5654c15bd2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"prependExpressions accepts a nil Go pending-expression slice and treats its length as zero; GoPtr preserves that state while the nonnil path remains unchanged.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) prependExpressions(pending []*ast.Expression, expression *ast.Expression) *ast.Expression {
@@ -4823,11 +4832,11 @@ export function esDecoratorTransformer_visitPartiallyEmittedExpression(receiver:
  * 	return f.InlineExpressions(exprs)
  * }
  */
-export function esDecoratorTransformer_prependExpressions(receiver: GoPtr<esDecoratorTransformer>, pending: GoSlice<GoPtr<Expression>>, expression: GoPtr<Expression>): GoPtr<Expression> {
+export function esDecoratorTransformer_prependExpressions(receiver: GoPtr<esDecoratorTransformer>, pending: GoPtr<GoSlice<GoPtr<Expression>>>, expression: GoPtr<Expression>): GoPtr<Expression> {
   const tx = receiver!;
   const f = Transformer_Factory(tx.__tsgoEmbedded0!);
   const astFactory = f!.__tsgoEmbedded0!;
-  if (pending.length === 0) {
+  if (pending === undefined || pending.length === 0) {
     return expression;
   }
   if (expression === undefined) {
@@ -4859,7 +4868,7 @@ export function esDecoratorTransformer_injectPendingExpressions(receiver: GoPtr<
   const tx = receiver!;
   const result = esDecoratorTransformer_prependExpressions(tx, tx.pendingExpressions, expression);
   if (result !== expression) {
-    tx.pendingExpressions = [];
+    tx.pendingExpressions = undefined;
   }
   return result!;
 }
@@ -4888,9 +4897,9 @@ export function esDecoratorTransformer_injectPendingInitializers(receiver: GoPtr
   const result = esDecoratorTransformer_prependExpressions(tx, pending, expression);
   if (result !== expression) {
     if (isStatic) {
-      ci!.pendingStaticInitializers = [];
+      ci!.pendingStaticInitializers = undefined;
     } else {
-      ci!.pendingInstanceInitializers = [];
+      ci!.pendingInstanceInitializers = undefined;
     }
   }
   return result;
@@ -4898,6 +4907,7 @@ export function esDecoratorTransformer_injectPendingInitializers(receiver: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformAllDecoratorsOfDeclaration","kind":"method","status":"implemented","sigHash":"5fee98380f8d0cca3dc2f35dfb773936ee06b4e309ca8bce73ab95ab55b9f264","bodyHash":"33af8734708a43955cbb03f74920582056d6860a23ba157ffd6af23ebbdacd6d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"transformAllDecoratorsOfDeclaration returns a nil Go slice for nil or allocated-empty decorators; GoPtr preserves that explicit nil result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/esdecorator.ts::esDecoratorTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) transformAllDecoratorsOfDeclaration(decorators []*ast.Node) []*ast.Expression {
@@ -4911,10 +4921,10 @@ export function esDecoratorTransformer_injectPendingInitializers(receiver: GoPtr
  * 	return result
  * }
  */
-export function esDecoratorTransformer_transformAllDecoratorsOfDeclaration(receiver: GoPtr<esDecoratorTransformer>, decorators: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Expression>> {
+export function esDecoratorTransformer_transformAllDecoratorsOfDeclaration(receiver: GoPtr<esDecoratorTransformer>, decorators: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Expression>>> {
   const tx = receiver!;
-  if (decorators.length === 0) {
-    return [];
+  if (decorators === undefined || decorators.length === 0) {
+    return undefined;
   }
   return decorators.map((d) => esDecoratorTransformer_transformDecorator(tx, d));
 }

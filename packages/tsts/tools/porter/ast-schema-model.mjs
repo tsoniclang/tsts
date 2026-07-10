@@ -256,9 +256,9 @@ export class AstSchema {
   formatTsReference(rawType, listKind) {
     if (listKind === "raw") {
       // Go raw lists are []*Node for node elements, []T for scalar elements.
-      if (this._baseKindOf(rawType) === "node") return "GoSlice<GoPtr<Node>>";
+      if (this._baseKindOf(rawType) === "node") return "GoPtr<GoSlice<GoPtr<Node>>>";
       const elem = this._scalarTsRef(rawType);
-      return `GoSlice<${elem.ref}>`;
+      return `GoPtr<GoSlice<${elem.ref}>>`;
     }
     if (listKind === "ModifierList") {
       return "GoPtr<ModifierList>";

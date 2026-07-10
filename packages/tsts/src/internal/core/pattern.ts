@@ -113,6 +113,7 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::FindBestPatternMatch","kind":"func","status":"implemented","sigHash":"ee5f33df4d5e42a42ee65593218eaeb0eefa4c62b87d10f487d894afc491329c","bodyHash":"733cfbb1e35126d494633f02fe8a128cd6f84f0500b2dd5e316ec73e547de4c9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zero for unconstrained T when no pattern matches, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/internal/core/pattern.ts::Pattern,string)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/internal/core/pattern.ts::Pattern,string,()=>T0)=>T0"}
  *
  * Go source:
  * func FindBestPatternMatch[T any](values []T, getPattern func(v T) Pattern, candidate string) T {
@@ -128,15 +129,15 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
  * 	return bestPattern
  * }
  */
-export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: (v: T) => Pattern, candidate: string): T {
-  let bestPattern = undefined as T;
+export function FindBestPatternMatch<T>(values: GoSlice<T>, getPattern: (v: T) => Pattern, candidate: string, zeroValue: () => T): T {
+  let bestPattern: GoPtr<{ value: T }>;
   let longestMatchPrefixLength = -1;
   for (const value of values) {
     const pattern = getPattern(value);
     if ((pattern.StarIndex === -1 || pattern.StarIndex > longestMatchPrefixLength) && Pattern_Matches(pattern, candidate)) {
-      bestPattern = value;
+      bestPattern = { value };
       longestMatchPrefixLength = pattern.StarIndex;
     }
   }
-  return bestPattern;
+  return bestPattern === undefined ? zeroValue() : bestPattern.value;
 }

@@ -265,8 +265,10 @@ export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoPtr<FileInfo> 
  */
 export let limitedWalkDirFuncPool: Pool<limitedWalkDirFunc> = new Pool<limitedWalkDirFunc>();
 limitedWalkDirFuncPool.New = () => {
-  const w: limitedWalkDirFunc = { inner: undefined as never, walk: undefined as never };
-  w.walk = ((path: string, d: DirEntry, err: GoError) => limitedWalkDirFunc_walker(w, path, d, err)) as unknown as WalkDirFunc;
+  const w: limitedWalkDirFunc = {
+    inner: undefined,
+    walk: (path: string, d: GoPtr<DirEntry>, err: GoError): GoError => limitedWalkDirFunc_walker(w, path, d, err),
+  };
   return w;
 };
 
@@ -296,12 +298,13 @@ export function getLimitedWalkDirFunc(walkFn: WalkDirFunc): GoPtr<limitedWalkDir
  * }
  */
 export function putLimitedWalkDirFunc(w: GoPtr<limitedWalkDirFunc>): void {
-  w!.inner = undefined as never;
+  w!.inner = undefined;
   limitedWalkDirFuncPool.Put(w!);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::type::limitedWalkDirFunc","kind":"type","status":"implemented","sigHash":"bb5d5101cf5a9a2ed672d80b8ea774275b528cd7c7395c8b44ec0bc565643714","bodyHash":"78f1411d878844de94436beb425f56c11bf504c8a3e0ddcaaa576a5e82caa2f8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The pooled wrapper clears its inner callback to nil when returned to the pool and reinstalls it for each lease; GoPtr preserves that lifecycle sentinel.","goSignature":"interface{inner:packages/tsts/src/internal/vfs/vfs.ts::WalkDirFunc;walk:packages/tsts/src/internal/vfs/vfs.ts::WalkDirFunc}","tsSignature":"interface{inner:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfs.ts::WalkDirFunc>;walk:packages/tsts/src/internal/vfs/vfs.ts::WalkDirFunc}"}
  *
  * Go source:
  * limitedWalkDirFunc struct {
@@ -310,12 +313,13 @@ export function putLimitedWalkDirFunc(w: GoPtr<limitedWalkDirFunc>): void {
  * }
  */
 export interface limitedWalkDirFunc {
-  inner: WalkDirFunc;
+  inner: GoPtr<WalkDirFunc>;
   walk: WalkDirFunc;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::method::limitedWalkDirFunc.walker","kind":"method","status":"implemented","sigHash":"a95013a36876cac9fefdc79eee32ebe2236522abf21fc9b85529d2de92656a8a","bodyHash":"2d9475a1115d691d56a0674cbdd43727e767ae4d6bee64f53f9f545e68c1b322"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Walk callbacks may receive a nil DirEntry interface when reporting a traversal error; GoPtr preserves that standard fs.WalkDir contract.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/osvfs/os.ts::limitedWalkDirFunc>,string,packages/tsts/src/go/io/fs.ts::DirEntry,packages/tsts/src/go/compat.ts::GoError)=>packages/tsts/src/go/compat.ts::GoError","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/osvfs/os.ts::limitedWalkDirFunc>,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/io/fs.ts::DirEntry>,packages/tsts/src/go/compat.ts::GoError)=>packages/tsts/src/go/compat.ts::GoError"}
  *
  * Go source:
  * func (w *limitedWalkDirFunc) walker(path string, d fs.DirEntry, err error) error {
@@ -323,9 +327,13 @@ export interface limitedWalkDirFunc {
  * 	return w.inner(path, d, err)
  * }
  */
-export function limitedWalkDirFunc_walker(receiver: GoPtr<limitedWalkDirFunc>, path: string, d: DirEntry, err: GoError): GoError {
+export function limitedWalkDirFunc_walker(receiver: GoPtr<limitedWalkDirFunc>, path: string, d: GoPtr<DirEntry>, err: GoError): GoError {
   // defer blockingOpSema.Acquire()() — no-op in single-threaded TS
-  return (receiver!.inner as unknown as (path: string, d: DirEntry, err: GoError) => GoError)(path, d, err);
+  const inner = receiver!.inner;
+  if (inner === undefined) {
+    throw new globalThis.Error("limited walk callback invoked outside its pool lease");
+  }
+  return inner(path, d, err);
 }
 
 /**

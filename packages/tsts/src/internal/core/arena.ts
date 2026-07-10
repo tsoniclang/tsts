@@ -42,7 +42,7 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"implemented","sigHash":"e6e68464be11603146e0ba334fce4d5628033c5389e68c2032220be0b3bef2c3","bodyHash":"607827fa585765652039cf140ef55b5973bd0297db32e1930d30c8e8964be471"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Go arenas retain backing storage for returned slices; JS arrays are heap objects with stable references, so TSTS returns the requested zero-value slice directly and avoids duplicate Arena.data retention."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body","signature"],"reason":"Go arenas retain backing storage for returned slices; JS arrays are heap objects with stable references, so TSTS avoids duplicate Arena.data retention. GoPtr preserves the explicit nil result for a zero-size allocation.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/arena.ts::Arena<T0>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/arena.ts::Arena<T0>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func (a *Arena[T]) NewSlice(size int) []T {
@@ -63,9 +63,9 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
  * 	return slice
  * }
  */
-export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice<T> {
+export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoPtr<GoSlice<T>> {
   if (size === 0) {
-    return [];
+    return undefined;
   }
   ensureArena(receiver);
   return new globalThis.Array<T>(size as number);
@@ -82,14 +82,14 @@ export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice
  * }
  */
 export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> {
-  const slice = Arena_NewSlice(receiver, 1 as int);
+  const slice = Arena_NewSlice(receiver, 1 as int)!;
   slice[0] = t;
   return slice;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone","kind":"method","status":"implemented","sigHash":"27f28fb80bfb60096650cf2a896227f2837f1d4e0e6bda9450442ee99972cd6c","bodyHash":"2a82317a6079eb431f604b475bb86a27c8b3408278a5590d0ead847075f5aa47"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Go arena Clone copies into arena-owned backing storage; JS slices already own stable array storage, so a direct array copy preserves observable slice contents without retaining duplicate entries in Arena.data."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body","signature"],"reason":"Go arena Clone copies into arena-owned backing storage; JS slices already own stable array storage, so a direct array copy avoids duplicate Arena.data retention. GoPtr preserves the explicit nil result for every zero-length input.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/arena.ts::Arena<T0>>,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/arena.ts::Arena<T0>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func (a *Arena[T]) Clone(t []T) []T {
@@ -101,9 +101,9 @@ export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> 
  * 	return slice
  * }
  */
-export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoSlice<T>): GoSlice<T> {
-  if (t.length === 0) {
-    return [];
+export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  if (t === undefined || t.length === 0) {
+    return undefined;
   }
   ensureArena(receiver);
   return t.slice();

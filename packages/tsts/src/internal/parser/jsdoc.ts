@@ -171,6 +171,7 @@ export function init(): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode","kind":"func","status":"implemented","sigHash":"aaa76ebc73eade1cba544f6a0b246a3bb0e95f4bc627a3eff5ac4666ac433093","bodyHash":"17bbecbd63e34176aee3841adcb8a0f816a4476d4f1de3d8b01f67dfac6db430"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Lazy JSDoc parsing explicitly returns a nil slice when no comment ranges exist; GoPtr preserves nil rather than allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func parseJSDocForNode(sourceFile *ast.SourceFile, node *ast.Node) []*ast.Node {
@@ -193,14 +194,14 @@ export function init(): void {
  * 	return jsdoc
  * }
  */
-export function parseJSDocForNode(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function parseJSDocForNode(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const sf = sourceFile as unknown as GoPtr<SourceFile>;
   const p = getParser();
   try {
     Parser_initializeState(p, sf!.parseOptions, sf!.text, sf!.ScriptKind);
     const ranges = GetJSDocCommentRanges(p!.factory, [], node, sf!.text);
     if (ranges.length === 0) {
-      return undefined!;
+      return undefined;
     }
     const jsdoc: GoSlice<GoPtr<Node>> = [];
     let pos = Node_Pos(node);
@@ -266,6 +267,7 @@ export const propertyLikeParseCallbackParameter: propertyLikeParse = 1 << 2;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.withJSDoc","kind":"method","status":"implemented","sigHash":"0f34ce66e38dcebcdffa165bf7113e2875854e913938acb86fed0d0dd8cb89f1","bodyHash":"622962271bc540cda6b499e44af31cae57f21d534af6855a254880c68a7789c2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The parser returns a nil JSDoc slice when scanner evidence says no JSDoc is present; GoPtr preserves that fast-path result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/parser/parser/state.ts::Parser>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/parser/parser/state.ts::jsdocScannerInfo)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/parser/parser/state.ts::Parser>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/parser/parser/state.ts::jsdocScannerInfo)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (p *Parser) withJSDoc(node *ast.Node, info jsdocScannerInfo) []*ast.Node {
@@ -319,9 +321,9 @@ export const propertyLikeParseCallbackParameter: propertyLikeParse = 1 << 2;
  * 	return nil
  * }
  */
-export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, info: jsdocScannerInfo): GoSlice<GoPtr<Node>> {
+export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, info: jsdocScannerInfo): GoPtr<GoSlice<GoPtr<Node>>> {
   if ((info & jsdocScannerInfoHasJSDoc) === 0) {
-    return undefined!;
+    return undefined;
   }
 
   // For TS/TSX files, defer JSDoc parsing to first access, unless the comment
@@ -334,7 +336,7 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
       node!.Flags |= NodeFlagsPossiblyContainsDeprecatedTag;
     }
     if ((info & jsdocScannerInfoHasSeeOrLink) === 0) {
-      return undefined!;
+      return undefined;
     }
     // Fall through to eager parse for @see/@link
   }
@@ -344,17 +346,20 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
 
   // Should only be called once per node
   receiver!.hasDeprecatedTag = false;
-  const jsdoc: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length).slice(0, 0);
+  let jsdoc = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length);
+  if (jsdoc !== undefined) {
+    jsdoc.length = 0;
+  }
   let pos = Node_Pos(node);
   for (const comment of ranges) {
     const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
     if (parsed !== undefined) {
       parsed!.Parent = node;
-      jsdoc.push(parsed);
+      jsdoc = [...(jsdoc ?? []), parsed];
       pos = Node_End(parsed);
     }
   }
-  if (jsdoc.length !== 0) {
+  if (jsdoc !== undefined && jsdoc.length !== 0) {
     if ((node!.Flags & NodeFlagsHasJSDoc) === 0) {
       node!.Flags |= NodeFlagsHasJSDoc;
     }
@@ -368,7 +373,7 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
     receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: node, jsDocs: jsdoc } as JSDocInfo];
     return jsdoc;
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -742,13 +747,13 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
 export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: int, end: int, fullStart: int, indent: int): GoPtr<Node> {
   // Initially we can parse out a tag.  We also have seen a starting asterisk.
   // This is so that /** * @type */ doesn't parse.
-  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1)!.slice(0, 0);
   let tagsPos = -1;
   let tagsEnd = -1;
   let state: jsdocState = jsdocStateSawAsterisk;
   let backtickCount = 0;
   let inFencedCodeBlock = false;
-  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1)!.slice(0, 0);
   let comments: GoSlice<string> = receiver!.jsdocCommentsSpace;
   let commentsPos = -1;
   let linkEnd = start;

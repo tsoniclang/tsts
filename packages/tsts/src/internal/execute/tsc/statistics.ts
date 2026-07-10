@@ -33,6 +33,7 @@ export interface tableRow {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::table","kind":"type","status":"implemented","sigHash":"39b5170ce0714793f1db7661bd29a89e9b3eb03a66e70093ca35ace8e0cb1710","bodyHash":"37f49ebd52921993995cd8a2d67055d186ae9ecb195763c49da5604f59569d81"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type table uses an explicit undefined-capable TypeScript representation at member 'rows' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{rows:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/tsc/statistics.ts::tableRow>}","tsSignature":"interface{rows:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/execute/tsc/statistics.ts::tableRow>>}"}
  *
  * Go source:
  * table struct {
@@ -40,7 +41,7 @@ export interface tableRow {
  * }
  */
 export interface table {
-  rows: GoSlice<tableRow>;
+  rows: GoPtr<GoSlice<tableRow>>;
 }
 
 /**
@@ -56,9 +57,13 @@ export interface table {
  */
 export function table_add(receiver: GoPtr<table>, name: string, value: unknown): void {
   const t = receiver!;
-  // In Go: if d, ok := value.(time.Duration); ok { value = formatDuration(d) }
-  // In TS: Duration = number, cannot do runtime type assertion; use Sprint for all values.
-  t.rows = [...t.rows, { name, value: Sprint(value) }];
+  // Duration is erased to number in TypeScript, so duration call sites format before adding.
+  const row = { name, value: Sprint(value) };
+  if (t.rows === undefined) {
+    t.rows = [row];
+  } else {
+    t.rows.push(row);
+  }
 }
 
 /**
@@ -82,6 +87,9 @@ export function table_print(receiver: GoPtr<table>, w: Writer): void {
   const t = receiver!;
   let nameWidth = 0;
   let valueWidth = 0;
+  if (t.rows === undefined) {
+    return;
+  }
   for (const r of t.rows) {
     nameWidth = Math.max(nameWidth, r.name.length);
     valueWidth = Math.max(valueWidth, r.value.length);
@@ -101,7 +109,7 @@ export function table_print(receiver: GoPtr<table>, w: Writer): void {
  */
 export function formatDuration(d: Duration): string {
   // Duration = long = number in nanoseconds. d.Seconds() in Go = d / 1e9.
-  return Sprintf("%.3fs", (d as number) / 1e9);
+  return Sprintf("%.3fs", d / 1e9);
 }
 
 /**
@@ -179,7 +187,9 @@ export interface Statistics {
  * }
  */
 export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats>): GoPtr<Statistics> {
-  const mem = memStats as GoPtr<MemStats & { Alloc: ulong; Mallocs: ulong }>;
+  if (memStats === undefined) {
+    throw new globalThis.Error("nil runtime.MemStats");
+  }
   return {
     isAggregate: false,
     Projects: 0,
@@ -191,8 +201,8 @@ export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats
     symbols: Program_SymbolCount(input.Program),
     types: Program_TypeCount(input.Program),
     instantiations: Program_InstantiationCount(input.Program),
-    memoryUsed: mem?.Alloc ?? (0n as ulong),
-    memoryAllocs: mem?.Mallocs ?? (0n as ulong),
+    memoryUsed: memStats.Alloc,
+    memoryAllocs: memStats.Mallocs,
     compileTimes: input.CompileTimes,
   };
 }
@@ -253,7 +263,7 @@ export function Statistics_Report(receiver: GoPtr<Statistics>, w: Writer, testin
     testing.OnStatisticsStart(w);
   }
   try {
-    const t: table = { rows: [] };
+    const t: table = { rows: undefined };
     let prefix = "";
     if (s.isAggregate) {
       prefix = "Aggregate ";
@@ -267,28 +277,32 @@ export function Statistics_Report(receiver: GoPtr<Statistics>, w: Writer, testin
     table_add(t, prefix + "Symbols", s.symbols);
     table_add(t, prefix + "Types", s.types);
     table_add(t, prefix + "Instantiations", s.instantiations);
-    table_add(t, prefix + "Memory used", Sprintf("%vK", globalThis.Number(s.memoryUsed) / 1024));
-    table_add(t, prefix + "Memory allocs", FormatUint(s.memoryAllocs as ulong, 10));
-    if (s.compileTimes!.ConfigTime !== 0) {
-      table_add(t, prefix + "Config time", formatDuration(s.compileTimes!.ConfigTime));
+    table_add(t, prefix + "Memory used", Sprintf("%vK", s.memoryUsed / 1024n));
+    table_add(t, prefix + "Memory allocs", FormatUint(s.memoryAllocs, 10));
+    const compileTimes = s.compileTimes;
+    if (compileTimes === undefined) {
+      throw new globalThis.Error("nil Statistics.compileTimes");
     }
-    if (s.compileTimes!.BuildInfoReadTime !== 0) {
-      table_add(t, prefix + "BuildInfo read time", formatDuration(s.compileTimes!.BuildInfoReadTime));
+    if (compileTimes.ConfigTime !== 0) {
+      table_add(t, prefix + "Config time", formatDuration(compileTimes.ConfigTime));
     }
-    table_add(t, prefix + "Parse time", formatDuration(s.compileTimes!.ParseTime));
-    if (s.compileTimes!.bindTime !== 0) {
-      table_add(t, prefix + "Bind time", formatDuration(s.compileTimes!.bindTime));
+    if (compileTimes.BuildInfoReadTime !== 0) {
+      table_add(t, prefix + "BuildInfo read time", formatDuration(compileTimes.BuildInfoReadTime));
     }
-    if (s.compileTimes!.checkTime !== 0) {
-      table_add(t, prefix + "Check time", formatDuration(s.compileTimes!.checkTime));
+    table_add(t, prefix + "Parse time", formatDuration(compileTimes.ParseTime));
+    if (compileTimes.bindTime !== 0) {
+      table_add(t, prefix + "Bind time", formatDuration(compileTimes.bindTime));
     }
-    if (s.compileTimes!.emitTime !== 0) {
-      table_add(t, prefix + "Emit time", formatDuration(s.compileTimes!.emitTime));
+    if (compileTimes.checkTime !== 0) {
+      table_add(t, prefix + "Check time", formatDuration(compileTimes.checkTime));
     }
-    if (s.compileTimes!.ChangesComputeTime !== 0) {
-      table_add(t, prefix + "Changes compute time", formatDuration(s.compileTimes!.ChangesComputeTime));
+    if (compileTimes.emitTime !== 0) {
+      table_add(t, prefix + "Emit time", formatDuration(compileTimes.emitTime));
     }
-    table_add(t, prefix + "Total time", formatDuration(s.compileTimes!.totalTime));
+    if (compileTimes.ChangesComputeTime !== 0) {
+      table_add(t, prefix + "Changes compute time", formatDuration(compileTimes.ChangesComputeTime));
+    }
+    table_add(t, prefix + "Total time", formatDuration(compileTimes.totalTime));
     table_print(t, w);
   } finally {
     if (testing !== undefined) {
@@ -336,15 +350,18 @@ export function Statistics_Aggregate(receiver: GoPtr<Statistics>, stat: GoPtr<St
   s.symbols += stat!.symbols;
   s.types += stat!.types;
   s.instantiations += stat!.instantiations;
-  s.memoryUsed = ((s.memoryUsed as bigint) + (stat!.memoryUsed as bigint)) as ulong;
-  s.memoryAllocs = ((s.memoryAllocs as bigint) + (stat!.memoryAllocs as bigint)) as ulong;
-  s.compileTimes.ConfigTime = ((s.compileTimes.ConfigTime as number) + (stat!.compileTimes!.ConfigTime as number)) as Duration;
-  s.compileTimes.BuildInfoReadTime = ((s.compileTimes.BuildInfoReadTime as number) + (stat!.compileTimes!.BuildInfoReadTime as number)) as Duration;
-  s.compileTimes.ParseTime = ((s.compileTimes.ParseTime as number) + (stat!.compileTimes!.ParseTime as number)) as Duration;
-  s.compileTimes.bindTime = ((s.compileTimes.bindTime as number) + (stat!.compileTimes!.bindTime as number)) as Duration;
-  s.compileTimes.checkTime = ((s.compileTimes.checkTime as number) + (stat!.compileTimes!.checkTime as number)) as Duration;
-  s.compileTimes.emitTime = ((s.compileTimes.emitTime as number) + (stat!.compileTimes!.emitTime as number)) as Duration;
-  s.compileTimes.ChangesComputeTime = ((s.compileTimes.ChangesComputeTime as number) + (stat!.compileTimes!.ChangesComputeTime as number)) as Duration;
+  s.memoryUsed += stat!.memoryUsed;
+  s.memoryAllocs += stat!.memoryAllocs;
+  if (stat!.compileTimes === undefined) {
+    throw new globalThis.Error("nil aggregated Statistics.compileTimes");
+  }
+  s.compileTimes.ConfigTime += stat!.compileTimes.ConfigTime;
+  s.compileTimes.BuildInfoReadTime += stat!.compileTimes.BuildInfoReadTime;
+  s.compileTimes.ParseTime += stat!.compileTimes.ParseTime;
+  s.compileTimes.bindTime += stat!.compileTimes.bindTime;
+  s.compileTimes.checkTime += stat!.compileTimes.checkTime;
+  s.compileTimes.emitTime += stat!.compileTimes.emitTime;
+  s.compileTimes.ChangesComputeTime += stat!.compileTimes.ChangesComputeTime;
 }
 
 /**

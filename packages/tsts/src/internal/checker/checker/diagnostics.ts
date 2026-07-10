@@ -654,13 +654,20 @@ export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: string, checkStatic: bool, isStatic: bool, message: GoPtr<Message>): void {
-  for (const member of Node_Members(node)!) {
+  const members = Node_Members(node);
+  if (members === undefined) {
+    return;
+  }
+  for (const member of members) {
     if (IsConstructorDeclaration(member)) {
-      for (const param of Node_Parameters(member)) {
-        if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
-          const symbol = Checker_getSymbolOfDeclaration(receiver, param);
-          if (symbol!.Name === name) {
-            Checker_error(receiver, Node_Name(param), message, Checker_symbolToString(receiver, symbol));
+      const parameters = Node_Parameters(member);
+      if (parameters !== undefined) {
+        for (const param of parameters) {
+          if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
+            const symbol = Checker_getSymbolOfDeclaration(receiver, param);
+            if (symbol!.Name === name) {
+              Checker_error(receiver, Node_Name(param), message, Checker_symbolToString(receiver, symbol));
+            }
           }
         }
       }
@@ -715,7 +722,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
       const baseProp = Checker_getPropertyOfType(receiver, baseWithThis, declaredProp!.Name);
       if (prop !== undefined && baseProp !== undefined) {
         const diags: GoSlice<GoPtr<Diagnostic>> = [];
-        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member), undefined, diags)) {
+        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member, () => undefined, (left, right) => left === right), undefined, diags)) {
           Checker_addDiagnostic(receiver, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
           issuedMemberError = true;
         }
@@ -723,7 +730,7 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
     }
   }
   if (!issuedMemberError) {
-    Checker_checkTypeAssignableTo(receiver, typeWithThis, baseWithThis, OrElse(Node_Name(node), node), broadDiag);
+    Checker_checkTypeAssignableTo(receiver, typeWithThis, baseWithThis, OrElse(Node_Name(node), node, () => undefined, (left, right) => left === right), broadDiag);
   }
 }
 
@@ -1050,19 +1057,20 @@ export function Checker_getDiagnosticHeadMessageForDecoratorResolution(receiver:
  */
 export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, s: GoPtr<CallState>, signatures: GoSlice<GoPtr<Signature>>, headMessage: GoPtr<Message>): void {
   const c = receiver!;
-  if (s!.candidatesForArgumentError.length !== 0) {
-    const last = s!.candidatesForArgumentError[s!.candidatesForArgumentError.length - 1];
+  const candidatesForArgumentError = s!.candidatesForArgumentError;
+  if (candidatesForArgumentError !== undefined && candidatesForArgumentError.length !== 0) {
+    const last = candidatesForArgumentError[candidatesForArgumentError.length - 1];
     const diags: Array<GoPtr<Diagnostic>> = [];
     Checker_isSignatureApplicable(receiver, s!.node, s!.args, last, c.assignableRelation, CheckModeNormal, true as bool, diags);
     for (let diagnostic of diags) {
-      if (s!.candidatesForArgumentError.length > 1) {
+      if (candidatesForArgumentError.length > 1) {
         diagnostic = NewDiagnosticChain(diagnostic, The_last_overload_gave_the_following_error);
         diagnostic = NewDiagnosticChain(diagnostic, No_overload_matches_this_call);
       }
       if (headMessage !== undefined) {
         diagnostic = NewDiagnosticChain(diagnostic, headMessage);
       }
-      if (last!.declaration !== undefined && s!.candidatesForArgumentError.length > 1) {
+      if (last!.declaration !== undefined && candidatesForArgumentError.length > 1) {
         Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(last!.declaration, The_last_overload_is_declared_here));
       }
       Checker_addImplementationSuccessElaboration(receiver, s, last, diagnostic);
@@ -1085,6 +1093,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getArgumentArityError","kind":"method","status":"implemented","sigHash":"9e7ce0219f8b08877783ae7a37fe95f4e5e7be8d5dc6f7b0b397f6a1b8469a09","bodyHash":"36e6c5b4c20539e0755113da7a5c81a0082a31f2b905e8ed9c7b54b2f91ad008"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>"}
  *
  * Go source:
  * func (c *Checker) getArgumentArityError(node *ast.Node, signatures []*Signature, args []*ast.Node, headMessage *diagnostics.Message) *ast.Diagnostic {
@@ -1205,9 +1214,13 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
  * 	}
  * }
  */
-export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>, args: GoSlice<GoPtr<Node>>, headMessage: GoPtr<Message>): GoPtr<Diagnostic> {
+export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>, args: GoPtr<GoSlice<GoPtr<Node>>>, headMessage: GoPtr<Message>): GoPtr<Diagnostic> {
+  const argumentCount = args === undefined ? 0 : args.length;
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex > -1) {
+    if (args === undefined) {
+      throw new Error("spread argument index requires an argument slice");
+    }
     return NewDiagnosticForNode(args[spreadIndex], A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter);
   }
   let minCount = Number.MAX_SAFE_INTEGER; // smallest parameter count
@@ -1223,10 +1236,10 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
       closestSignature = sig;
     }
     maxCount = Math.max(maxCount, maxParameter);
-    if (minParameter < args.length && minParameter > maxBelow) {
+    if (minParameter < argumentCount && minParameter > maxBelow) {
       maxBelow = minParameter;
     }
-    if (args.length < maxParameter && maxParameter < minAbove) {
+    if (argumentCount < maxParameter && maxParameter < minAbove) {
       minAbove = maxParameter;
     }
   }
@@ -1239,7 +1252,7 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
   } else {
     parameterRange = String(minCount);
   }
-  const isVoidPromiseError = !hasRestParameter && parameterRange === "1" && args.length === 0 && Checker_isPromiseResolveArityError(receiver, node);
+  const isVoidPromiseError = !hasRestParameter && parameterRange === "1" && argumentCount === 0 && Checker_isPromiseResolveArityError(receiver, node);
   const errorNode = getErrorNodeForCallNode(node);
   if (isVoidPromiseError && IsInJSFile(node)) {
     return NewDiagnosticForNode(errorNode, Expected_1_argument_but_got_0_new_Promise_needs_a_JSDoc_hint_to_produce_a_resolve_that_can_be_called_without_arguments);
@@ -1258,22 +1271,23 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
   } else {
     message = Expected_0_arguments_but_got_1;
   }
-  if (minCount < args.length && args.length < maxCount) {
+  if (minCount < argumentCount && argumentCount < maxCount) {
     // between min and max, but with no matching overload
-    let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments, args.length, maxBelow, minAbove);
+    let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments, argumentCount, maxBelow, minAbove);
     if (headMessage !== undefined) {
       diagnostic = NewDiagnosticChain(diagnostic, headMessage);
     }
     return diagnostic;
-  } else if (args.length < minCount) {
+  } else if (argumentCount < minCount) {
     // too short: put the error span on the call expression, not any of the args
-    let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, message, parameterRange, args.length);
+    let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, message, parameterRange, argumentCount);
     if (headMessage !== undefined) {
       diagnostic = NewDiagnosticChain(diagnostic, headMessage);
     }
     let parameter: GoPtr<Node> = undefined;
     if (closestSignature !== undefined && closestSignature!.declaration !== undefined) {
-      parameter = ElementOrNil(Node_Parameters(closestSignature!.declaration) as unknown as GoSlice<GoPtr<Node>>, args.length + IfElse(closestSignature!.thisParameter !== undefined, 1, 0));
+      const parameters = Node_Parameters(closestSignature!.declaration);
+      parameter = parameters === undefined ? undefined : ElementOrNil(parameters, argumentCount + IfElse(closestSignature!.thisParameter !== undefined, 1, 0));
     }
     if (parameter !== undefined) {
       let related: GoPtr<Diagnostic>;
@@ -1289,16 +1303,19 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
     return diagnostic;
   } else {
     // Guard against out-of-bounds access when maxCount >= len(args).
-    if (maxCount >= args.length) {
-      let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, message, parameterRange, args.length);
+    if (maxCount >= argumentCount) {
+      let diagnostic: GoPtr<Diagnostic> = NewDiagnosticForNode(errorNode, message, parameterRange, argumentCount);
       if (headMessage !== undefined) {
         diagnostic = NewDiagnosticChain(diagnostic, headMessage);
       }
       return diagnostic;
     }
+    if (args === undefined) {
+      throw new Error("out-of-range arity diagnostics require an argument slice");
+    }
     const sourceFile = GetSourceFileOfNode(node);
     let pos = Node_Pos(args[maxCount]);
-    let end = Node_End(args[args.length - 1]);
+    let end = Node_End(args[argumentCount - 1]);
     if (end === pos) {
       end++;
     }
@@ -1306,7 +1323,7 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
     if (end < pos) {
       end = pos;
     }
-    let diagnostic: GoPtr<Diagnostic> = NewDiagnostic(sourceFile, NewTextRange(pos, end), message, parameterRange, args.length);
+    let diagnostic: GoPtr<Diagnostic> = NewDiagnostic(sourceFile, NewTextRange(pos, end), message, parameterRange, argumentCount);
     if (headMessage !== undefined) {
       diagnostic = NewDiagnosticChain(diagnostic, headMessage);
     }
@@ -1546,7 +1563,7 @@ export function Checker_invocationErrorDetails(receiver: GoPtr<Checker>, errorTa
   let diagnostic: GoPtr<Diagnostic> = undefined;
   const isCall = kind === SignatureKindCall;
   const awaitedType = Checker_getAwaitedType(receiver, apparentType);
-  const maybeMissingAwait = awaitedType !== undefined && Checker_getSignaturesOfType(receiver, awaitedType, kind).length > 0;
+  const maybeMissingAwait = awaitedType !== undefined && (Checker_getSignaturesOfType(receiver, awaitedType, kind)?.length ?? 0) > 0;
   let target = errorTarget;
   if (IsPropertyAccessExpression(errorTarget) && IsCallExpression(errorTarget!.Parent)) {
     target = Node_Name(errorTarget);
@@ -1556,7 +1573,7 @@ export function Checker_invocationErrorDetails(receiver: GoPtr<Checker>, errorTa
     let hasSignatures = false as bool;
     for (const constituent of types) {
       const signatures = Checker_getSignaturesOfType(receiver, constituent, kind);
-      if (signatures.length !== 0) {
+      if ((signatures?.length ?? 0) !== 0) {
         hasSignatures = true as bool;
         if (diagnostic !== undefined) {
           break;
@@ -1670,7 +1687,7 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
   const importNode = links!.originatingImport;
   if (importNode !== undefined && !IsImportCall(importNode)) {
     const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.target), kind);
-    if (sigs.length === 0) {
+    if ((sigs?.length ?? 0) === 0) {
       return;
     }
     Diagnostic_AddRelatedInfo(
@@ -1887,7 +1904,7 @@ export function Checker_getCannotFindNameDiagnosticForName(receiver: GoPtr<Check
  * 	return c.getDiagnostics(ctx, sourceFile, &c.diagnostics)
  * }
  */
-export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.diagnostics);
 }
 
@@ -1899,7 +1916,7 @@ export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, s
  * 	return c.getDiagnostics(ctx, sourceFile, &c.suggestionDiagnostics)
  * }
  */
-export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.suggestionDiagnostics);
 }
 
@@ -1917,7 +1934,7 @@ export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: 
  * 	return collection.GetDiagnosticsForFile(sourceFile.FileName())
  * }
  */
-export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, collection: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
+export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, collection: GoPtr<DiagnosticsCollection>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const c = receiver!;
   Checker_checkNotCanceled(receiver);
   const checkUnused = (Tristate_IsTrue(c.compilerOptions!.NoUnusedLocals) ||
@@ -1925,7 +1942,7 @@ export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, s
     collection === c.suggestionDiagnostics) as bool;
   Checker_checkSourceFile(receiver, ctx, sourceFile, checkUnused);
   if (c.wasCanceled) {
-    return [];
+    return undefined;
   }
   return DiagnosticsCollection_GetDiagnosticsForFile(collection, SourceFile_FileName(sourceFile));
 }
@@ -2451,9 +2468,9 @@ export function Checker_shouldReportErrorsFromWideningWithContextualSignature(re
   switch (wideningKind) {
     case WideningKindFunctionReturn:
       if ((flags & FunctionFlagsGenerator) !== 0) {
-        returnType = OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, (flags & FunctionFlagsAsync) !== 0), returnType);
+        returnType = OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, (flags & FunctionFlagsAsync) !== 0), returnType, () => undefined, (left, right) => left === right);
       } else if ((flags & FunctionFlagsAsync) !== 0) {
-        returnType = OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), returnType);
+        returnType = OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), returnType, () => undefined, (left, right) => left === right);
       }
       return Checker_isGenericType(receiver, returnType);
     case WideningKindGeneratorYield: {
@@ -2522,11 +2539,18 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
         }
       }
     } else if (Checker_isArrayOrTupleType(receiver, t)) {
-      for (const s of Checker_getTypeArguments(receiver, t)) {
-        errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
+      const typeArguments = Checker_getTypeArguments(receiver, t);
+      if (typeArguments !== undefined) {
+        for (const s of typeArguments) {
+          errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
+        }
       }
     } else if (isObjectLiteralType(t)) {
-      for (const p of Checker_getPropertiesOfObjectType(receiver, t)) {
+      const properties = Checker_getPropertiesOfObjectType(receiver, t);
+      if (properties === undefined) {
+        return errorReported;
+      }
+      for (const p of properties) {
         const s = Checker_getTypeOfSymbol(receiver, p);
         if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
           errorReported = Checker_reportWideningErrorsInType(receiver, s);

@@ -6,32 +6,44 @@ import test from "node:test";
 
 import { sealEvidenceDirectory } from "../sealed-evidence.mjs";
 import { canonicalJson, fingerprint, hashInputRoots } from "../test-provenance.mjs";
-import { corpusBuildRequest, verifyCorpusTstsBuild } from "./tsts-build.mjs";
+import { assertTstsBuildRequestStable, preparedTstsBuildEvidence, tstsBuildRequest, verifyTstsBuild } from "../tsts-build.mjs";
 
 test("corpus build requests are relocation-safe and contain no absolute command paths", () => {
   const first = fixture();
   const second = fixture();
-  const left = corpusBuildRequest(first);
-  const right = corpusBuildRequest(second);
+  const left = tstsBuildRequest(first);
+  const right = tstsBuildRequest(second);
   assert.equal(canonicalJson(left), canonicalJson(right));
   assert.deepEqual(left.command.slice(0, 2), ["<node>", "node_modules/typescript/bin/tsc"]);
   assert.equal(JSON.stringify(left).includes(first.repoRoot), false);
 });
 
+test("prepared builds reject source mutation during compilation", () => {
+  const paths = fixture();
+  const before = tstsBuildRequest(paths);
+  writeFileSync(join(paths.packageRoot, "src/index.ts"), "export const changed = true;\n");
+  const after = tstsBuildRequest(paths);
+  assert.throws(() => assertTstsBuildRequestStable(before, after), /inputs changed during compilation/);
+});
+
 test("corpus build cache verification closes provenance, seal, and output bytes", async () => {
   const paths = fixture();
-  const request = corpusBuildRequest(paths);
-  const buildId = fingerprint(request, "tsts-corpus-build-v2");
+  const request = tstsBuildRequest(paths);
+  const buildId = fingerprint(request, "tsts-prepared-build-v1");
   const cache = mkdtempSync(join(tmpdir(), "tsts-corpus-build-cache-"));
   const dist = join(cache, "dist");
   mkdirSync(dist);
   writeFileSync(join(dist, "index.js"), "export const value = 1;\n");
   const output = hashInputRoots([{ label: "tsts-dist", path: dist }]).roots[0];
-  writeFileSync(join(cache, "provenance.json"), `${JSON.stringify({ schemaVersion: 2, buildId, request, output }, null, 2)}\n`);
-  await sealEvidenceDirectory(cache, { kind: "tsts-corpus-build", buildId });
-  assert.equal(verifyCorpusTstsBuild(cache, request, buildId)?.buildId, buildId);
+  writeFileSync(join(cache, "provenance.json"), `${JSON.stringify({ schemaVersion: 3, buildId, request, output }, null, 2)}\n`);
+  await sealEvidenceDirectory(cache, { kind: "tsts-prepared-build", buildId });
+  const verified = verifyTstsBuild(cache, request, buildId);
+  assert.equal(verified?.buildId, buildId);
+  assert.deepEqual(verified?.evidence, preparedTstsBuildEvidence(verified));
+  assert.deepEqual(verified?.evidence.request.command.slice(0, 2), ["<node>", "node_modules/typescript/bin/tsc"]);
+  assert.equal(JSON.stringify(verified?.evidence).includes(cache), false);
   writeFileSync(join(dist, "index.js"), "export const value = 2;\n");
-  assert.throws(() => verifyCorpusTstsBuild(cache, request, buildId), /inventory mismatch|output digest mismatch/);
+  assert.throws(() => verifyTstsBuild(cache, request, buildId), /inventory mismatch|output digest mismatch/);
 });
 
 function fixture() {

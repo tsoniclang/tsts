@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { Index } from "../../go/slices.js";
 import { FormatUint } from "../../go/strconv.js";
 import { Builder, ToUpper } from "../../go/strings.js";
 import { DecodeRuneInString, DecodeRuneInStringAt, RuneError, StringByteLen, StringByteSlice, StringUtf8Bytes } from "../../go/unicode/utf8.js";
@@ -1093,8 +1094,8 @@ export function siblingNodePositionsAreComparable(emitContext: GoPtr<EmitContext
 
   const parentNodeArray = getContainingNodeArray(previousNode);
   if (parentNodeArray !== undefined) {
-    const prevNodeIndex = parentNodeArray!.Nodes.indexOf(previousNode);
-    return prevNodeIndex >= 0 && parentNodeArray!.Nodes.indexOf(nextNode) === prevNodeIndex + 1;
+    const prevNodeIndex = Index(parentNodeArray.Nodes, previousNode);
+    return prevNodeIndex >= 0 && Index(parentNodeArray.Nodes, nextNode) === prevNodeIndex + 1;
   }
 
   return false;

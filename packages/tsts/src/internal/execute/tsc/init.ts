@@ -367,7 +367,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
         break;
     }
 
-    const [optValue, ok] = OrderedMap_Get(options, setting);
+    const [optValue, ok] = OrderedMap_Get(options, setting, (): unknown => undefined);
     const value = ok ? optValue : defaultValue;
 
     if (comment) {
@@ -392,7 +392,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
   emitOption("module", ModuleKindNodeNext, commentedNever);
   emitOption("target", ScriptTargetESNext, commentedNever);
   emitOption("types", [], commentedNever);
-  const [lib, libOk] = OrderedMap_Get(options, "lib");
+  const [lib, libOk] = OrderedMap_Get(options, "lib", (): unknown => undefined);
   if (libOk) {
     emitOption("lib", lib, commentedNever);
   }
@@ -440,7 +440,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
     newline();
     while (allSetOptions.length > 0) {
       const firstOpt = allSetOptions[0]!;
-      emitOption(firstOpt, OrderedMap_GetOrZero(options, firstOpt), commentedNever);
+      emitOption(firstOpt, OrderedMap_GetOrZero(options, firstOpt, (): unknown => undefined), commentedNever);
     }
   }
 

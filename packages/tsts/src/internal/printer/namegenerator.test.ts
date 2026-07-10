@@ -39,6 +39,18 @@ function parseTypeScript(text: string, jsx: boolean): GoPtr<SourceFile> {
   return ParseSourceFile({ FileName: fileName, Path: fileName } as SourceFileParseOptions, text, GetScriptKindFromFileName(fileName));
 }
 
+function nodeAt(nodes: ReadonlyArray<GoPtr<Node>> | undefined, index: number): Node {
+  assert.ok(nodes !== undefined, "Expected node list to be non-nil");
+  const node = nodes[index];
+  assert.ok(node !== undefined, `Expected node at index ${index}`);
+  return node;
+}
+
+function statementAt(file: GoPtr<SourceFile>, index: number): Node {
+  assert.ok(file !== undefined, "Expected parsed source file");
+  return nodeAt(file.Statements?.Nodes, index);
+}
+
 // Go: &printer.NameGenerator{Context: ec[, GetTextOfNode: (*ast.Node).Text]} —
 // zero values for the remaining fields.
 function newNameGenerator(ec: GoPtr<EmitContext>, getTextOfNode?: (node: GoPtr<Node>) => string): GoPtr<NameGenerator> {
@@ -203,7 +215,7 @@ test("GeneratedNameForIdentifier1", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("function f() {}", false);
   BindSourceFile(file);
-  const n = Node_Name(file!.Statements!.Nodes[0]);
+  const n = Node_Name(statementAt(file, 0));
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "f_1");
@@ -213,7 +225,7 @@ test("GeneratedNameForIdentifier2", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("function f() {}", false);
   BindSourceFile(file);
-  const n = Node_Name(file!.Statements!.Nodes[0]);
+  const n = Node_Name(statementAt(file, 0));
   const name1 = NodeFactory_NewGeneratedNameForNodeEx(ec!.Factory, n, { Prefix: "a", Suffix: "b" } as AutoGenerateOptions);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "afb");
@@ -223,7 +235,7 @@ test("GeneratedNameForIdentifier3", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("function f() {}", false);
   BindSourceFile(file);
-  const n = Node_Name(file!.Statements!.Nodes[0]);
+  const n = Node_Name(statementAt(file, 0));
   const name1 = NodeFactory_NewGeneratedNameForNodeEx(ec!.Factory, n, { Prefix: "a", Suffix: "b" } as AutoGenerateOptions);
   const name2 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, name1);
   const g = newNameGenerator(ec, getText);
@@ -235,7 +247,7 @@ test("GeneratedNameForNamespace1", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("namespace foo { }", false);
   BindSourceFile(file);
-  const ns1 = file!.Statements!.Nodes[0];
+  const ns1 = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "foo");
@@ -246,7 +258,7 @@ test("GeneratedNameForNamespace2", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("namespace foo { var foo; }", false);
   BindSourceFile(file);
-  const ns1 = file!.Statements!.Nodes[0];
+  const ns1 = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "foo_1");
@@ -257,8 +269,8 @@ test("GeneratedNameForNamespace3", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("namespace ns1 { namespace foo { var foo; } } namespace ns2 { namespace foo { var foo; } }", false);
   BindSourceFile(file);
-  const ns1 = Node_Statements(Node_Body(file!.Statements!.Nodes[0]))![0];
-  const ns2 = Node_Statements(Node_Body(file!.Statements!.Nodes[1]))![0];
+  const ns1 = nodeAt(Node_Statements(Node_Body(statementAt(file, 0))), 0);
+  const ns2 = nodeAt(Node_Statements(Node_Body(statementAt(file, 1))), 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const name2 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns2);
   const g = newNameGenerator(ec, getText);
@@ -271,8 +283,8 @@ test("GeneratedNameForNamespace4", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("namespace ns1 { namespace foo { var foo; } } namespace ns2 { namespace foo { var foo; } }", false);
   BindSourceFile(file);
-  const ns1 = Node_Statements(Node_Body(file!.Statements!.Nodes[0]))![0];
-  const ns2 = Node_Statements(Node_Body(file!.Statements!.Nodes[1]))![0];
+  const ns1 = nodeAt(Node_Statements(Node_Body(statementAt(file, 0))), 0);
+  const ns2 = nodeAt(Node_Statements(Node_Body(statementAt(file, 1))), 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const name2 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns2);
   const g = newNameGenerator(ec, getText);
@@ -288,7 +300,7 @@ test("GeneratedNameForNodeCached", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("namespace foo { var foo; }", false);
   BindSourceFile(file);
-  const ns1 = file!.Statements!.Nodes[0];
+  const ns1 = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const name2 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, ns1);
   const g = newNameGenerator(ec, getText);
@@ -300,7 +312,7 @@ test("GeneratedNameForImport", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("import * as foo from 'foo'", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "foo_1");
@@ -310,7 +322,7 @@ test("GeneratedNameForExport", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export * as foo from 'foo'", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "foo_1");
@@ -320,7 +332,7 @@ test("GeneratedNameForFunctionDeclaration1", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export function f() {}", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "f_1");
@@ -330,7 +342,7 @@ test("GeneratedNameForFunctionDeclaration2", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export default function () {}", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "default_1");
@@ -340,7 +352,7 @@ test("GeneratedNameForClassDeclaration1", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export class C {}", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "C_1");
@@ -350,7 +362,7 @@ test("GeneratedNameForClassDeclaration2", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export default class {}", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "default_1");
@@ -360,7 +372,7 @@ test("GeneratedNameForExportAssignment", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("export default 0", false);
   BindSourceFile(file);
-  const n = file!.Statements!.Nodes[0];
+  const n = statementAt(file, 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "default_1");
@@ -370,7 +382,7 @@ test("GeneratedNameForClassExpression", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("(class {})", false);
   BindSourceFile(file);
-  const n = Node_Expression(Node_Expression(file!.Statements!.Nodes[0]));
+  const n = Node_Expression(Node_Expression(statementAt(file, 0)));
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "class_1");
@@ -380,7 +392,7 @@ test("GeneratedNameForMethod1", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("class C { m() {} }", false);
   BindSourceFile(file);
-  const n = Node_Members(file!.Statements!.Nodes[0])![0];
+  const n = nodeAt(Node_Members(statementAt(file, 0)), 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "m_1");
@@ -390,7 +402,7 @@ test("GeneratedNameForMethod2", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("class C { 0() {} }", false);
   BindSourceFile(file);
-  const n = Node_Members(file!.Statements!.Nodes[0])![0];
+  const n = nodeAt(Node_Members(statementAt(file, 0)), 0);
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "_a");
@@ -400,7 +412,7 @@ test("GeneratedPrivateNameForMethod", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("class C { m() {} }", false);
   BindSourceFile(file);
-  const n = Node_Members(file!.Statements!.Nodes[0])![0];
+  const n = nodeAt(Node_Members(statementAt(file, 0)), 0);
   const name1 = NodeFactory_NewGeneratedPrivateNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "#m_1");
@@ -410,7 +422,7 @@ test("GeneratedNameForComputedPropertyName", () => {
   const ec = NewEmitContext();
   const file = parseTypeScript("class C { [x] }", false);
   BindSourceFile(file);
-  const n = Node_Name(Node_Members(file!.Statements!.Nodes[0])![0]);
+  const n = Node_Name(nodeAt(Node_Members(statementAt(file, 0)), 0));
   const name1 = NodeFactory_NewGeneratedNameForNode(ec!.Factory, n);
   const g = newNameGenerator(ec, getText);
   assert.equal(NameGenerator_GenerateName(g, name1), "_a");

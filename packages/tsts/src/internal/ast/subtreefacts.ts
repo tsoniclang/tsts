@@ -265,7 +265,7 @@ export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propaga
     return SubtreeFactsNone;
   }
   let facts = SubtreeFactsNone;
-  for (const child of children.Nodes) {
+  for (const child of children.Nodes ?? []) {
     facts = (facts | propagate(child)) >>> 0;
   }
   return facts;

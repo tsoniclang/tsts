@@ -254,6 +254,8 @@ import {
   LFSpaceAfterList,
   LFSpaceBetweenBraces,
   LFSpaceBetweenSiblings,
+  Printer_MakeFileLevelOptimisticUniqueName,
+  Printer_Writer,
   tefNone,
   tefNoComments,
   tefNoSourceMaps,
@@ -366,7 +368,7 @@ export function Printer_getTextOfNode(receiver: GoPtr<Printer>, node: GoPtr<Node
 export function Printer_writeAs(receiver: GoPtr<Printer>, text: string, writeKind: WriteKind): void {
   switch (writeKind) {
     case WriteKindNone:
-      receiver!.writer.Write(text);
+      Printer_Writer(receiver).Write(text);
       break;
     case WriteKindParameter:
       Printer_writeParameter(receiver, text);
@@ -384,7 +386,7 @@ export function Printer_writeAs(receiver: GoPtr<Printer>, text: string, writeKin
       Printer_writePunctuation(receiver, text);
       break;
     case WriteKindStringLiteral:
-      receiver!.writer.WriteStringLiteral(text);
+      Printer_Writer(receiver).WriteStringLiteral(text);
       break;
     case WriteKindComment:
       Printer_writeComment(receiver, text);
@@ -441,7 +443,7 @@ export function Printer_writeSymbol(receiver: GoPtr<Printer>, text: string, optS
   if (optSymbol === undefined) {
     Printer_write(receiver, text);
   } else {
-    receiver!.writer.WriteSymbol(text, optSymbol);
+    Printer_Writer(receiver).WriteSymbol(text, optSymbol);
   }
 }
 
@@ -454,7 +456,7 @@ export function Printer_writeSymbol(receiver: GoPtr<Printer>, text: string, optS
  * }
  */
 export function Printer_writePunctuation(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WritePunctuation(text);
+  Printer_Writer(receiver).WritePunctuation(text);
 }
 
 /**
@@ -466,7 +468,7 @@ export function Printer_writePunctuation(receiver: GoPtr<Printer>, text: string)
  * }
  */
 export function Printer_writeOperator(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteOperator(text);
+  Printer_Writer(receiver).WriteOperator(text);
 }
 
 /**
@@ -478,7 +480,7 @@ export function Printer_writeOperator(receiver: GoPtr<Printer>, text: string): v
  * }
  */
 export function Printer_writeKeyword(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteKeyword(text);
+  Printer_Writer(receiver).WriteKeyword(text);
 }
 
 /**
@@ -490,7 +492,7 @@ export function Printer_writeKeyword(receiver: GoPtr<Printer>, text: string): vo
  * }
  */
 export function Printer_writeProperty(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteProperty(text);
+  Printer_Writer(receiver).WriteProperty(text);
 }
 
 /**
@@ -502,7 +504,7 @@ export function Printer_writeProperty(receiver: GoPtr<Printer>, text: string): v
  * }
  */
 export function Printer_writeParameter(receiver: GoPtr<Printer>, text: string): void {
-  receiver!.writer.WriteParameter(text);
+  Printer_Writer(receiver).WriteParameter(text);
 }
 
 /**
@@ -514,7 +516,7 @@ export function Printer_writeParameter(receiver: GoPtr<Printer>, text: string): 
  * }
  */
 export function Printer_writeSpace(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteSpace(" ");
+  Printer_Writer(receiver).WriteSpace(" ");
 }
 
 /**
@@ -526,7 +528,7 @@ export function Printer_writeSpace(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_writeTrailingSemicolon(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteTrailingSemicolon(";");
+  Printer_Writer(receiver).WriteTrailingSemicolon(";");
 }
 
 /**
@@ -538,7 +540,7 @@ export function Printer_writeTrailingSemicolon(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_increaseIndent(receiver: GoPtr<Printer>): void {
-  receiver!.writer.IncreaseIndent();
+  Printer_Writer(receiver).IncreaseIndent();
 }
 
 /**
@@ -550,7 +552,7 @@ export function Printer_increaseIndent(receiver: GoPtr<Printer>): void {
  * }
  */
 export function Printer_decreaseIndent(receiver: GoPtr<Printer>): void {
-  receiver!.writer.DecreaseIndent();
+  Printer_Writer(receiver).DecreaseIndent();
 }
 
 /**
@@ -925,7 +927,8 @@ export function Printer_emitIdentifierNameNode(receiver: GoPtr<Printer>, node: G
  * }
  */
 export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: string): GoPtr<IdentifierNode> {
-  const helperName = receiver!.uniqueHelperNames!.get(name);
+  const uniqueHelperNames = receiver!.uniqueHelperNames;
+  const helperName = uniqueHelperNames === undefined ? undefined : uniqueHelperNames.get(name);
   if (helperName === undefined) {
     const newHelperName = NodeFactory_NewUniqueNameEx(
       receiver!.emitContext!.Factory,
@@ -937,7 +940,10 @@ export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: stri
       },
     );
     Printer_generateName(receiver, newHelperName);
-    receiver!.uniqueHelperNames!.set(name, newHelperName);
+    if (uniqueHelperNames === undefined) {
+      throw new globalThis.Error("assignment to entry in nil Printer.uniqueHelperNames");
+    }
+    uniqueHelperNames.set(name, newHelperName);
     return newHelperName;
   }
   return Node_Clone(helperName, receiver!.emitContext!.Factory!) as GoPtr<IdentifierNode>;
@@ -1341,14 +1347,15 @@ export function Printer_emitPropertyName(receiver: GoPtr<Printer>, node: GoPtr<P
  * }
  */
 export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: GoPtr<Node>, modifiers: GoPtr<ModifierList>, allowDecorators: bool): int {
-  if (modifiers === undefined || modifiers!.Nodes.length === 0) {
+  const modifierNodes = modifiers === undefined ? undefined : modifiers.Nodes;
+  if (modifierNodes === undefined || modifierNodes.length === 0) {
     return Node_Pos(parentNode);
   }
 
-  if (Every(modifiers!.Nodes, IsModifier)) {
+  if (Every(modifierNodes, IsModifier)) {
     // if all modifier-likes are `Modifier`, simply emit the list as modifiers.
     Printer_emitList(receiver, Printer_emitKeywordNode, parentNode, modifiers as unknown as GoPtr<NodeList>, LFModifiers);
-  } else if (Every(modifiers!.Nodes, IsDecorator)) {
+  } else if (Every(modifierNodes, IsDecorator)) {
     if (!allowDecorators) {
       return Node_Pos(parentNode);
     }
@@ -1370,9 +1377,9 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
     let start = 0;
     let pos = 0;
 
-    while (start < modifiers!.Nodes.length) {
-      while (pos < modifiers!.Nodes.length) {
-        const lastModifier = modifiers!.Nodes[pos];
+    while (start < modifierNodes.length) {
+      while (pos < modifierNodes.length) {
+        const lastModifier = modifierNodes[pos];
         if (IsDecorator(lastModifier)) {
           mode = ModeDecorators;
         } else {
@@ -1387,14 +1394,14 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
       }
 
       const textRangePos = start === 0 ? NodeList_Pos(modifiers as unknown as GoPtr<NodeList>) : -1;
-      const textRangeEnd = pos === modifiers!.Nodes.length - 1 ? NodeList_End(modifiers as unknown as GoPtr<NodeList>) : -1;
+      const textRangeEnd = pos === modifierNodes.length - 1 ? NodeList_End(modifiers as unknown as GoPtr<NodeList>) : -1;
       const textRange = NewTextRange(textRangePos, textRangeEnd);
       if (allowDecorators || lastMode === ModeModifiers) {
         Printer_emitListItems(
           receiver,
           Printer_emitModifierLike,
           parentNode,
-          modifiers!.Nodes.slice(start, pos),
+          modifierNodes.slice(start, pos),
           IfElse(lastMode === ModeModifiers, LFModifiers, LFDecorators),
           false as bool,
           textRange,
@@ -1410,7 +1417,10 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
     }
   }
 
-  return greatestEnd(Node_Pos(parentNode), LastOrNil(modifiers!.Nodes) as unknown as { End: () => int });
+  const lastModifier = LastOrNil(modifierNodes, (): GoPtr<Node> => undefined);
+  return lastModifier === undefined
+    ? Node_Pos(parentNode)
+    : globalThis.Math.max(Node_Pos(parentNode), Node_End(lastModifier));
 }
 
 /**
@@ -2101,7 +2111,7 @@ export function Printer_emitJsxOpeningElement(receiver: GoPtr<Printer>, node: Go
   Printer_emitJsxTagName(receiver, node!.TagName);
   Printer_emitTypeArguments(receiver, NodeDefault_AsNode(node), node!.TypeArguments as unknown as GoPtr<NodeList>);
   const jsxAttrs = AsJsxAttributes(node!.Attributes);
-  if (jsxAttrs !== undefined && jsxAttrs!.Properties !== undefined && jsxAttrs!.Properties!.Nodes.length > 0) {
+  if (jsxAttrs !== undefined && jsxAttrs.Properties !== undefined && jsxAttrs.Properties.Nodes !== undefined && jsxAttrs.Properties.Nodes.length > 0) {
     Printer_writeSpace(receiver);
   }
   Printer_emitJsxAttributes(receiver, jsxAttrs);
@@ -2576,8 +2586,8 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
   let helpersEmitted = false as bool;
   const sourceFile = receiver!.currentSourceFile;
   const shouldSkip = receiver!.Options.NoEmitHelpers || (sourceFile !== undefined && EmitContext_HasRecordedExternalHelpers(receiver!.emitContext, sourceFile));
-  const helpers = slices.Clone(EmitContext_GetEmitHelpers(receiver!.emitContext, node)) ?? [];
-  if (helpers.length > 0) {
+  const helpers = slices.Clone(EmitContext_GetEmitHelpers(receiver!.emitContext, node));
+  if (helpers !== undefined && helpers.length > 0) {
     slices.SortStableFunc(helpers, compareEmitHelpers);
     for (const helper of helpers) {
       if (helper === undefined) { continue; }
@@ -2587,7 +2597,7 @@ export function Printer_emitHelpers(receiver: GoPtr<Printer>, node: GoPtr<Node>)
         }
       }
       if (helper.TextCallback !== undefined) {
-        Printer_writeLines(receiver, helper.TextCallback(receiver!.makeFileLevelOptimisticUniqueName));
+        Printer_writeLines(receiver, helper.TextCallback((name) => Printer_MakeFileLevelOptimisticUniqueName(receiver, name)));
       } else {
         Printer_writeLines(receiver, helper.Text);
       }
@@ -3057,7 +3067,7 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: (p: GoPtr<
     Printer_decreaseIndent(receiver);
   }
 
-  const closingLineTerminatorCount = Printer_getClosingLineTerminatorCount(receiver, parentNode, LastOrNil(children), format, childrenTextRange);
+  const closingLineTerminatorCount = Printer_getClosingLineTerminatorCount(receiver, parentNode, LastOrNil(children, (): GoPtr<Node> => undefined), format, childrenTextRange);
   if (closingLineTerminatorCount > 0) {
     for (let i = 0; i < closingLineTerminatorCount; i++) {
       Printer_writeLine(receiver);
@@ -3306,6 +3316,14 @@ export function Printer_Emit(receiver: GoPtr<Printer>, node: GoPtr<Node>, source
  * 	p.sourceMapLineCharCache = savedSourceMapLineCharCache
  * }
  */
+interface GrowableEmitTextWriter extends EmitTextWriter {
+  Grow(n: int): void;
+}
+
+function isGrowableEmitTextWriter(writer: EmitTextWriter): writer is GrowableEmitTextWriter {
+  return "Grow" in writer && typeof writer.Grow === "function";
+}
+
 export function Printer_Write(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, writer: EmitTextWriter, sourceMapGenerator: GoPtr<Generator>): void {
   const savedCurrentSourceFile = receiver!.currentSourceFile;
   const savedWriter = receiver!.writer;
@@ -3318,18 +3336,15 @@ export function Printer_Write(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourc
 
   receiver!.sourceMapsDisabled = (sourceMapGenerator === undefined) as unknown as bool;
   receiver!.sourceMapGenerator = sourceMapGenerator;
-  receiver!.sourceMapSource = undefined as never;
+  receiver!.sourceMapSource = undefined;
   receiver!.sourceMapSourceIndex = -1;
   receiver!.sourceMapLineCharCache = undefined;
 
   Printer_setSourceFile(receiver, sourceFile);
   receiver!.writer = writer;
-  receiver!.writer.Clear();
-  if (sourceFile !== undefined) {
-    const w = receiver!.writer as unknown as { Grow?: (n: int) => void };
-    if (w.Grow !== undefined) {
-      w.Grow(Node_Text(NodeDefault_AsNode(sourceFile)).length);
-    }
+  writer.Clear();
+  if (sourceFile !== undefined && isGrowableEmitTextWriter(writer)) {
+    writer.Grow(Node_Text(NodeDefault_AsNode(sourceFile)).length);
   }
 
   switch (node!.Kind) {
@@ -3581,7 +3596,8 @@ export function Printer_emitPos(receiver: GoPtr<Printer>, pos: int): void {
     return;
   }
   const [sourceLine, sourceCharacter] = lineCharacterCache_getLineAndCharacter(receiver!.sourceMapLineCharCache, pos);
-  const err = Generator_AddSourceMapping(receiver!.sourceMapGenerator, receiver!.writer.GetLine(), receiver!.writer.GetColumn(), receiver!.sourceMapSourceIndex, sourceLine, sourceCharacter);
+  const activeWriter = Printer_Writer(receiver);
+  const err = Generator_AddSourceMapping(receiver!.sourceMapGenerator, activeWriter.GetLine(), activeWriter.GetColumn(), receiver!.sourceMapSourceIndex, sourceLine, sourceCharacter);
   if (err !== undefined) {
     throw new globalThis.Error(String(err));
   }
@@ -3628,8 +3644,10 @@ export function Printer_generateAllNames(receiver: GoPtr<Printer>, nodes: GoPtr<
   if (nodes === undefined) {
     return;
   }
-  for (const node of nodes!.Nodes) {
-    Printer_generateNames(receiver, node);
+  if (nodes.Nodes !== undefined) {
+    for (const node of nodes.Nodes) {
+      Printer_generateNames(receiver, node);
+    }
   }
 }
 

@@ -43,7 +43,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   assertNoDiagnostics(commandLine.Errors);
 
   const [rawCustomConditions, rawCustomConditionsExists] =
-    OrderedMap_Get(commandLine.Raw as OrderedMap<string, unknown>, "customConditions");
+    OrderedMap_Get(commandLine.Raw as OrderedMap<string, unknown>, "customConditions", () => undefined);
   assert.equal(rawCustomConditionsExists, true);
   assert.equal(rawCustomConditions, undefined);
 

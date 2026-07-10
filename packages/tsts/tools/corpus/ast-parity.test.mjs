@@ -307,7 +307,7 @@ function makeEvidence(pretty) {
     outputName: "tsgo-dump",
   };
   const tstsRequest = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     inputs: inputRoots(["tsts-source"]),
     runtime: { executable: byteIdentity("6"), version: "v26.0.0", versions: { node: "26.0.0" }, execArgv: [], startupNodeOptions: "" },
     compiler: { logicalPath: "node_modules/typescript/bin/tsc", executable: byteIdentity("e") },
@@ -357,8 +357,8 @@ function makeEvidence(pretty) {
       },
     },
     tstsBuild: {
-      schemaVersion: 2,
-      buildId: fingerprint(tstsRequest, "tsts-corpus-build-v2"),
+      schemaVersion: 3,
+      buildId: fingerprint(tstsRequest, "tsts-prepared-build-v1"),
       evidenceDigest: hex("f"),
       request: tstsRequest,
       output: inputRoot("tsts-dist", "d"),

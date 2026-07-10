@@ -37,8 +37,9 @@ export function isClassThisAssignmentBlock(emitContext: GoPtr<EmitContext>, node
   if (IsClassStaticBlockDeclaration(node)) {
     const n = AsClassStaticBlockDeclaration(node);
     const body = AsBlock(n!.Body);
-    if (body!.Statements!.Nodes.length === 1) {
-      const statement = body!.Statements!.Nodes[0];
+    const statementNodes = body!.Statements!.Nodes;
+    if (statementNodes !== undefined && statementNodes.length === 1) {
+      const statement = statementNodes[0];
       if (IsExpressionStatement(statement)) {
         const expression = Node_Expression(statement);
         if (IsAssignmentExpression(expression, true as bool)) {

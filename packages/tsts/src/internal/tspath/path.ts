@@ -2100,6 +2100,7 @@ export function FileExtensionIs(path: string, extension: string): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryStoppingAtGlobalCache","kind":"func","status":"implemented","sigHash":"0356b04f3dd886a51f1660fe51149012eb4b73b4f58bb64b0a92961be4fab077","bodyHash":"d46ca6690f5d18214dba0c553ee6024f57ff84a44561af9ef15014a6a7ec3340"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zero for unconstrained T when ancestor traversal exhausts, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends unknown>(string,string,(string)=>[T0,packages/tsts/src/go/scalars.ts::bool])=>T0","tsSignature":"func<T0>(string,string,(string)=>[T0,packages/tsts/src/go/scalars.ts::bool],()=>T0)=>T0"}
  *
  * Go source:
  * func ForEachAncestorDirectoryStoppingAtGlobalCache[T any](
@@ -2117,19 +2118,20 @@ export function FileExtensionIs(path: string, extension: string): bool {
  * 	return result
  * }
  */
-export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: (directory: string) => [T, bool]): T {
+export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: (directory: string) => [T, bool], zeroValue: () => T): T {
   const [result] = ForEachAncestorDirectory<T>(directory, (ancestorDirectory: string): [T, bool] => {
     const [result, stop] = callback(ancestorDirectory);
     if (stop || ancestorDirectory === globalCacheLocation) {
       return [result, true];
     }
     return [result, false];
-  });
+  }, zeroValue);
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectory","kind":"func","status":"implemented","sigHash":"6c00ad2499515e2ef162ee822663fd2c811471a883b248d5d0d4bc804bc08aee","bodyHash":"0b47593ec6332f51a66c5e493570a6d67a531eacd66e277ae5cd0e5ef0aa8dd2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zero for unconstrained T when the root is reached, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends unknown>(string,(string)=>[T0,packages/tsts/src/go/scalars.ts::bool])=>[T0,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0>(string,(string)=>[T0,packages/tsts/src/go/scalars.ts::bool],()=>T0)=>[T0,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func ForEachAncestorDirectory[T any](directory string, callback func(directory string) (result T, stop bool)) (result T, ok bool) {
@@ -2149,7 +2151,7 @@ export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLoca
  * 	}
  * }
  */
-export function ForEachAncestorDirectory<T>(directory: string, callback: (directory: string) => [T, bool]): [T, bool] {
+export function ForEachAncestorDirectory<T>(directory: string, callback: (directory: string) => [T, bool], zeroValue: () => T): [T, bool] {
   for (;;) {
     const [result, stop] = callback(directory);
     if (stop) {
@@ -2158,8 +2160,7 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
 
     const parentPath = GetDirectoryPath(directory);
     if (parentPath === directory) {
-      const zero = undefined as T;
-      return [zero, false];
+      return [zeroValue(), false];
     }
 
     directory = parentPath;
@@ -2168,6 +2169,7 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryPath","kind":"func","status":"implemented","sigHash":"4cec0fe3612f19afa164ee3ebd4ba0148e63660e69929d354ae5742cf2cf57d5","bodyHash":"dc2d231bacd797549bf4df38ddb12a2d17b0ed4dd4608f5d775594a4f1c34b9e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zero for unconstrained T when path traversal exhausts, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends unknown>(packages/tsts/src/internal/tspath/path.ts::Path,(packages/tsts/src/internal/tspath/path.ts::Path)=>[T0,packages/tsts/src/go/scalars.ts::bool])=>[T0,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0>(packages/tsts/src/internal/tspath/path.ts::Path,(packages/tsts/src/internal/tspath/path.ts::Path)=>[T0,packages/tsts/src/go/scalars.ts::bool],()=>T0)=>[T0,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func ForEachAncestorDirectoryPath[T any](directory Path, callback func(directory Path) (result T, stop bool)) (result T, ok bool) {
@@ -2176,10 +2178,10 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
  * 	})
  * }
  */
-export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (directory: Path) => [T, bool]): [T, bool] {
+export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (directory: Path) => [T, bool], zeroValue: () => T): [T, bool] {
   return ForEachAncestorDirectory<T>(directory, (directory: string): [T, bool] => {
     return callback(directory);
-  });
+  }, zeroValue);
 }
 
 /**

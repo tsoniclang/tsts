@@ -6,6 +6,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::type::parseCacheEntry","kind":"type","status":"implemented","sigHash":"b0bcf8db74b0a9edfea4d6619cfb9f126f5464766f72635ef88ace7264561f50","bodyHash":"bffde4c74d3e30fc60f0a361ec9fbba6b89a39b761860b3a1b8ca8b48e9257fd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type parseCacheEntry uses an explicit undefined-capable TypeScript representation at member 'value' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface<T0 extends name::comparable>{mu:packages/tsts/src/go/sync.ts::Mutex;value:T0}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable>{mu:packages/tsts/src/go/sync.ts::Mutex;value:packages/tsts/src/go/compat.ts::GoPtr<T0>}"}
  *
  * Go source:
  * parseCacheEntry[V comparable] struct {
@@ -14,7 +15,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
  * }
  */
 export interface parseCacheEntry<V extends GoComparable = unknown> {
-  value: V;
+  value: GoPtr<V>;
   mu: Mutex;
 }
 
@@ -32,6 +33,7 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::method::parseCache.loadOrStore","kind":"method","status":"implemented","sigHash":"687be8bd3c251584c9bd3de8cf5bf2f89bf4feb2ee573b40939cecde954cff19","bodyHash":"0c49ca42b38e6a25b4e81d01c6d5ee09c130a408729f2a2c293bf34e1f61af0c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method parseCache.loadOrStore uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func<T0 extends name::comparable,T1 extends name::comparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/parseCache.ts::parseCache<T0,T1>>,T0,(T0)=>T1,packages/tsts/src/go/scalars.ts::bool)=>T1","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/parseCache.ts::parseCache<T0,T1>>,T0,(T0)=>T1,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<T1>"}
  *
  * Go source:
  * func (c *parseCache[K, V]) loadOrStore(key K, parse func(K) V, allowZero bool) V {
@@ -50,8 +52,8 @@ export interface parseCache<K extends GoComparable = unknown, V extends GoCompar
  * 	return newEntry.value
  * }
  */
-export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: (arg0: K) => V, allowZero: bool): V {
-  let newEntry: parseCacheEntry<V> = { value: undefined as V, mu: new Mutex() };
+export function parseCache_loadOrStore<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, parse: (arg0: K) => V, allowZero: bool): GoPtr<V> {
+  let newEntry: parseCacheEntry<V> = { value: undefined, mu: new Mutex() };
   const [entry, loaded] = SyncMap_LoadOrStore<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, newEntry);
   if (loaded) {
     if (allowZero || entry!.value !== undefined) {

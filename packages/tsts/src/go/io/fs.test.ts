@@ -152,6 +152,7 @@ test("Sub validates paths, preserves root identity, and shortens PathError paths
 
   const [sub, subErr] = Sub(fsys, "dir");
   assert.equal(subErr, undefined);
+  assert.ok(sub !== undefined);
   const [, missingErr] = sub.Open("missing");
   assert.ok(missingErr instanceof PathError);
   assert.equal(missingErr.Path, "missing");

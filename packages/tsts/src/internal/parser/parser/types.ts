@@ -1932,7 +1932,7 @@ export function Parser_unparseExpressionWithTypeArguments(receiver: GoPtr<Parser
     expression.Parent = result;
   }
   if (typeArguments !== undefined) {
-    for (const a of typeArguments.Nodes) {
+    for (const a of typeArguments.Nodes ?? []) {
       a!.Parent = result;
     }
   }

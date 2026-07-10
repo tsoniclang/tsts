@@ -3,11 +3,12 @@ import { spawn, fork } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { cpus, hostname } from "node:os";
 import { basename, dirname, isAbsolute, join, posix as posixPath, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { cp, lstat, mkdir, open, readFile, readdir, readlink, rename, stat, symlink, writeFile } from "node:fs/promises";
 import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
 import { canonicalJson, compareUtf8, executableProvenance, fingerprint, hashInputRoots } from "../test-provenance.mjs";
+import { tstsBuildRequest, verifyTstsBuild } from "../tsts-build.mjs";
 import { loadAndVerifyTsgoSourcePin } from "../tsgo-source-pin.mjs";
 import { publishSealedDirectory, sealEvidenceDirectory, writeDurableFileExclusive } from "../sealed-evidence.mjs";
 import {
@@ -20,19 +21,25 @@ const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = join(dirname(scriptPath), "../../../..");
 const packageRoot = join(repoRoot, "packages/tsts");
 const vendorRoot = join(packageRoot, "_vendor/typescript-go");
+const typeScriptSubmoduleRoot = join(vendorRoot, "_submodules/TypeScript");
 const caseRoot = join(vendorRoot, "testdata/tests/cases");
 const baselineRoot = join(vendorRoot, "testdata/baselines/reference");
-const typeScriptSubmoduleCaseRoot = join(vendorRoot, "_submodules/TypeScript/tests/cases");
-const typeScriptSubmoduleBaselineRoot = join(vendorRoot, "_submodules/TypeScript/tests/baselines/reference");
+const typeScriptSubmoduleCaseRoot = join(typeScriptSubmoduleRoot, "tests/cases");
+const typeScriptSubmoduleBaselineRoot = join(typeScriptSubmoduleRoot, "tests/baselines/reference");
+const typeScriptUnitTestRoot = join(typeScriptSubmoduleRoot, "src/testRunner/unittests");
+const typeScriptUnitTestEntrypoint = join(typeScriptSubmoduleRoot, "src/testRunner/tests.ts");
 const testLibRoot = join(vendorRoot, "_submodules/TypeScript/tests/lib");
 const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api");
 const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
-const cliPath = join(packageRoot, "dist/src/cli/index.js");
-const apiPath = join(packageRoot, "dist/src/index.js");
+const suiteBuildId = process.env.TSTS_SUITE_BUILD_ID ?? "";
+if (suiteBuildId !== "" && !/^[0-9a-f]{64}$/.test(suiteBuildId)) throw new Error("TSTS_SUITE_BUILD_ID must be a SHA-256 digest");
+const preparedBuildRoot = suiteBuildId === "" ? join(packageRoot, "dist") : join(repoRoot, ".temp/tsts-builds/cache", suiteBuildId);
+const distRoot = suiteBuildId === "" ? preparedBuildRoot : join(preparedBuildRoot, "dist");
+const cliPath = join(distRoot, "src/cli/index.js");
+const apiPath = join(distRoot, "src/index.js");
 const tsgoAcceptedRoot = join(dirname(scriptPath), "tsgo-accepted");
 const tsbaselineRoot = join(dirname(scriptPath), "tsbaseline");
 const sourcePinPath = join(packageRoot, "schema/tsgo/source-pin.json");
-const distRoot = join(packageRoot, "dist");
 const bundledSourceRoot = join(packageRoot, "src/internal/bundled/libs");
 const resolvedTypeScriptEntry = fileURLToPath(import.meta.resolve("typescript"));
 const resolvedTypeScriptPackageRoot = dirname(dirname(resolvedTypeScriptEntry));
@@ -50,9 +57,10 @@ const RESULT_VERDICT_SCHEMA_VERSION = 1;
 const EXACT_BASELINE_SCHEMA_VERSION = 1;
 const RESULT_SEGMENT_SEAL_SCHEMA_VERSION = 2;
 const RUN_CONFIG_SCHEMA_VERSION = 1;
-const RUN_MANIFEST_SCHEMA_VERSION = 2;
+const RUN_MANIFEST_SCHEMA_VERSION = 3;
 const REPORT_SCHEMA_VERSION = 3;
 const REPORT_SEAL_METADATA_SCHEMA_VERSION = 1;
+const INVENTORY_SCHEMA_VERSION = 2;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
 const RESULT_SEGMENT_NAME_PATTERN = /^results-(\d{4})\.ndjson$/;
@@ -64,6 +72,7 @@ const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
 const harnessSourceFilePattern = /\.(?:[cm]?tsx?|[cm]?jsx?)$/i;
 const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
+const pinnedTsgoCompilerTestPattern = /\.tsx?$/;
 let tstsApi;
 let activeAcceptedOverlayBinding;
 
@@ -81,15 +90,15 @@ const caseRootByCorpus = new Map([
   ["current", caseRoot],
   ["typescript", typeScriptSubmoduleCaseRoot],
 ]);
-const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile", "unittests"]);
+const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile"]);
 const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
-const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
+const requiredFixtureTypeScriptSuites = new Set(["projects", "unittests"]);
 const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
 const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
 // compiler_runner.go getCompilerVaryByMap: every non-command-line-only boolean/enum
 // option with an Affects* flag varies, plus noEmit and isolatedModules.
-const { OptionsDeclarations: tstsOptionsDeclarations } = await import(new URL("../../dist/src/internal/tsoptions/declscompiler.js", import.meta.url).href);
-const { barebonesLibContent: suiteBarebonesLibContent } = await import(new URL("../../dist/src/index.js", import.meta.url).href);
+const { OptionsDeclarations: tstsOptionsDeclarations } = await import(pathToFileURL(join(distRoot, "src/internal/tsoptions/declscompiler.js")).href);
+const { barebonesLibContent: suiteBarebonesLibContent } = await import(pathToFileURL(apiPath).href);
 const compilerVaryByOptions = new Set([
   ...tstsOptionsDeclarations
     .filter((option) =>
@@ -368,7 +377,7 @@ Options:
   --jobs <n>                          Worker processes (concurrency). Default: all CPU cores. --jobs 1 = serial.
   --fail-fast                         Stop after the first failure.
   --exact-baselines                   Deprecated no-op: exact-baseline comparison is always on (weak mode removed).
-  --verify-on-disk                    Also run the real on-disk CLI compile per case and prove it matches the in-memory harness (error verdict + emitted .js/.d.ts). Full on-disk-coverage gate; default off (fast harness-only path).
+  --verify-on-disk                    For compiler/conformance cases, run the real on-disk CLI and compare its verdict plus every emitted artifact (including declarations) to the in-memory harness. Transpile cases exercise the public API directly and are reported as not applicable.
   --resume <reportRoot>               Resume a suspended run from its validated run-config and append-only result segments. Every source, baseline, build, runtime, option, and case-selection fingerprint must still match. To suspend, stop the process.
   --inventory                         Print the tracked upstream test universe and exit.
 `);
@@ -377,23 +386,24 @@ Options:
 export async function buildTestUniverseInventory() {
   const currentHarness = await countFilesByChild(caseRoot, (file) => harnessSourceFilePattern.test(file));
   const typeScriptCases = await countTypeScriptCaseFilesByChild(typeScriptSubmoduleCaseRoot);
+  const typeScriptUnitTests = await buildTypeScriptUnitTestInventory();
   const baselines = await countFilesByChild(baselineRoot, () => true);
   const goTests = await countGoTestFilesByPackage(vendorRoot);
-  return {
+  return validateInventory({
+    schemaVersion: INVENTORY_SCHEMA_VERSION,
     currentHarness: summarizeNamedCounts(currentHarness, supportedSuitesByCorpus.get("current")),
     typeScriptCases: summarizeTypeScriptCaseCounts(typeScriptCases),
+    typeScriptUnitTests,
     baselines: summarizeNamedCounts(baselines, inScopeBaselineCategories, outOfScopeBaselineCategories),
     goTests,
-  };
+  });
 }
 
 function summarizeTypeScriptCaseCounts(typeScriptCases) {
   const summary = summarizeNamedCounts(typeScriptCases.entries, inScopeTypeScriptSuites, outOfScopeTypeScriptSuites);
   return {
     ...summary,
-    inScope: summary.inScope - typeScriptCases.languageServiceHarnessCases,
-    outOfScope: summary.outOfScope + typeScriptCases.languageServiceHarnessCases,
-    languageServiceHarnessCases: typeScriptCases.languageServiceHarnessCases,
+    requiredFixtureFiles: typeScriptCases.requiredFixtureFiles,
   };
 }
 
@@ -439,36 +449,109 @@ async function countFilesByChild(root, includeFile) {
 
 async function countTypeScriptCaseFilesByChild(root) {
   if (!existsSync(root)) {
-    return { entries: {}, languageServiceHarnessCases: 0 };
+    throw new Error(`TypeScript case root is missing: ${root}`);
   }
   const entries = {};
-  let languageServiceHarnessCases = 0;
-  const children = await readdir(root, { withFileTypes: true });
+  const requiredFixtureFiles = {};
+  const classifiedSuites = new Set([...inScopeTypeScriptSuites, ...outOfScopeTypeScriptSuites, ...requiredFixtureTypeScriptSuites]);
+  const children = (await readdir(root, { withFileTypes: true })).sort((left, right) => compareUtf8(left.name, right.name));
   for (const child of children) {
     const fullPath = join(root, child.name);
-    if (child.isDirectory()) {
-      if (child.name === "project") {
-        entries[child.name] = (await walkFiles(fullPath)).filter((file) => /\.json$/i.test(file)).length;
-        continue;
-      }
-      if (fixtureOnlyTypeScriptSuites.has(child.name)) {
-        entries[child.name] = 0;
-        continue;
-      }
-      const files = (await walkFiles(fullPath)).filter((file) => harnessSourceFilePattern.test(file));
+    if (!child.isDirectory() || !classifiedSuites.has(child.name)) {
+      throw new Error(`Unclassified TypeScript case-root entry '${child.name}'`);
+    }
+    const files = await walkFiles(fullPath);
+    if (requiredFixtureTypeScriptSuites.has(child.name)) {
+      requiredFixtureFiles[child.name] = files.length;
+      continue;
+    }
+    if (child.name === "project") {
+      const invalid = files.filter((file) => !/\.json$/i.test(file));
+      if (invalid.length !== 0) throw new Error(`Unclassified TypeScript project descriptor entry '${relative(root, invalid[0])}'`);
       entries[child.name] = files.length;
-      if (inScopeTypeScriptSuites.has(child.name)) {
-        for (const file of files) {
-          if (isLanguageServiceHarnessCase(await readSourceText(file))) {
-            languageServiceHarnessCases += 1;
-          }
-        }
-      }
-    } else if (child.isFile() && harnessSourceFilePattern.test(fullPath)) {
-      entries["."] = (entries["."] ?? 0) + 1;
+      continue;
+    }
+    const pattern = child.name === "compiler" || child.name === "conformance" ? pinnedTsgoCompilerTestPattern : harnessSourceFilePattern;
+    entries[child.name] = files.filter((file) => pattern.test(file)).length;
+  }
+  for (const suite of classifiedSuites) {
+    const collection = requiredFixtureTypeScriptSuites.has(suite) ? requiredFixtureFiles : entries;
+    if (!Object.hasOwn(collection, suite)) throw new Error(`Required TypeScript case-root entry '${suite}' is missing`);
+  }
+  return { entries, requiredFixtureFiles };
+}
+
+export async function buildTypeScriptUnitTestInventory(options = {}) {
+  const root = resolve(options.root ?? typeScriptUnitTestRoot);
+  const entrypoint = resolve(options.entrypoint ?? typeScriptUnitTestEntrypoint);
+  if (!existsSync(root) || !existsSync(entrypoint)) throw new Error("TypeScript unit-test mirror sources are missing");
+  const allFiles = (await walkFiles(root)).sort(compareUtf8);
+  const sourceFiles = allFiles.filter((file) => file.endsWith(".ts"));
+  if (sourceFiles.length !== allFiles.length) {
+    throw new Error(`Unclassified TypeScript unit-test source entry '${relative(root, allFiles.find((file) => !file.endsWith(".ts")))}'`);
+  }
+  const sourceFileSet = new Set(sourceFiles.map((file) => resolve(file)));
+  const entrypointText = await readSourceText(entrypoint);
+  const entrypointSource = ts.createSourceFile(entrypoint, entrypointText, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
+  if (entrypointSource.parseDiagnostics.length !== 0) throw new Error("TypeScript unit-test entrypoint has parse diagnostics");
+  const exportedRoots = [];
+  for (const statement of entrypointSource.statements) {
+    if (
+      !ts.isExportDeclaration(statement)
+      || statement.exportClause !== undefined
+      || statement.moduleSpecifier === undefined
+      || !ts.isStringLiteral(statement.moduleSpecifier)
+      || !statement.moduleSpecifier.text.startsWith("./unittests/")
+      || !statement.moduleSpecifier.text.endsWith(".js")
+    ) {
+      throw new Error("TypeScript unit-test entrypoint contains an unclassified statement");
+    }
+    const exported = resolve(dirname(entrypoint), statement.moduleSpecifier.text.replace(/\.js$/, ".ts"));
+    if (!sourceFileSet.has(exported)) throw new Error(`TypeScript unit-test export has no source '${statement.moduleSpecifier.text}'`);
+    if (exportedRoots.includes(exported)) throw new Error(`Duplicate TypeScript unit-test export '${statement.moduleSpecifier.text}'`);
+    exportedRoots.push(exported);
+  }
+
+  const reachable = new Set();
+  const pending = [...exportedRoots];
+  while (pending.length !== 0) {
+    const file = pending.pop();
+    if (reachable.has(file)) continue;
+    reachable.add(file);
+    const preprocessed = ts.preProcessFile(await readSourceText(file), true, true);
+    for (const dependency of [...preprocessed.importedFiles, ...preprocessed.referencedFiles]) {
+      const resolvedDependency = resolveTypeScriptUnitTestDependency(root, file, dependency.fileName, sourceFileSet);
+      if (resolvedDependency !== undefined && !reachable.has(resolvedDependency)) pending.push(resolvedDependency);
     }
   }
-  return { entries, languageServiceHarnessCases };
+  const unclassified = sourceFiles.filter((file) => !reachable.has(resolve(file)));
+  if (unclassified.length !== 0) throw new Error(`Unclassified TypeScript unit-test mirror source '${relative(root, unclassified[0])}'`);
+  return {
+    total: sourceFiles.length,
+    inScope: sourceFiles.length,
+    outOfScope: 0,
+    unclassified: 0,
+    entries: {
+      exportedModules: exportedRoots.length,
+      supportModules: sourceFiles.length - exportedRoots.length,
+    },
+  };
+}
+
+function resolveTypeScriptUnitTestDependency(root, containingFile, specifier, sourceFileSet) {
+  if (!specifier.startsWith(".")) return undefined;
+  const unresolved = resolve(dirname(containingFile), specifier);
+  const relativePath = relative(root, unresolved);
+  if (relativePath === ".." || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) return undefined;
+  const candidates = [
+    unresolved,
+    unresolved.replace(/\.js$/, ".ts"),
+    `${unresolved}.ts`,
+    join(unresolved, "index.ts"),
+  ];
+  const source = candidates.find((candidate) => sourceFileSet.has(candidate));
+  if (source === undefined) throw new Error(`TypeScript unit-test dependency has no classified source '${specifier}' from '${relative(root, containingFile)}'`);
+  return source;
 }
 
 async function countGoTestFilesByPackage(root) {
@@ -499,6 +582,9 @@ export async function discoverCases(options) {
   if (supportedSuites === undefined) {
     throw new Error(`Unsupported corpus '${options.corpus}'.`);
   }
+  if (options.suite !== "all" && !supportedSuites.has(options.suite)) {
+    throw new Error(`Unsupported suite '${options.suite}' for corpus '${options.corpus}'.`);
+  }
   const selectedCaseRoot = caseRootByCorpus.get(options.corpus);
   if (selectedCaseRoot === undefined) {
     throw new Error(`No case root registered for corpus '${options.corpus}'.`);
@@ -512,16 +598,15 @@ export async function discoverCases(options) {
     }
     const suiteRoot = join(selectedCaseRoot, suite);
     for (const file of await walkFiles(suiteRoot)) {
-      if (!harnessSourceFilePattern.test(file)) {
+      const followsPinnedCompilerRunner = options.corpus === "typescript" && (suite === "compiler" || suite === "conformance");
+      const sourcePattern = followsPinnedCompilerRunner ? pinnedTsgoCompilerTestPattern : harnessSourceFilePattern;
+      if (!sourcePattern.test(file)) {
         continue;
       }
-      if (isEmittedJavaScriptSibling(file)) {
+      if (!followsPinnedCompilerRunner && isEmittedJavaScriptSibling(file)) {
         continue;
       }
       const { text: sourceText, sha256: sourceSha256 } = await readSourceTextWithHash(file);
-      if (options.corpus === "typescript" && isLanguageServiceHarnessCase(sourceText)) {
-        continue;
-      }
       const parsed = parseFileBasedTest(sourceText, file.split(sep).at(-1));
       const configurations = getFileBasedTestConfigurations(parsed.globalOptions);
       const relativePath = relative(selectedCaseRoot, file).split(sep).join("/");
@@ -529,7 +614,7 @@ export async function discoverCases(options) {
         continue;
       }
       for (const configuration of configurations) {
-        caseFiles.push({
+        const testCase = {
           corpus: options.corpus,
           suite,
           sourcePath: file,
@@ -539,7 +624,9 @@ export async function discoverCases(options) {
           sourceBaseName: relativePath.split("/").at(-1),
           configurationName: configuration.name,
           configuration: configuration.settings,
-        });
+        };
+        testCase.expectedSkipReason = plannedSkipReasonForParsedCase(testCase, parsed);
+        caseFiles.push(testCase);
       }
     }
   }
@@ -563,7 +650,7 @@ async function discoverProjectCases(selectedCaseRoot, options) {
     const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRootRelativeToCaseRoot(descriptor.projectRoot));
     const projectFixture = projectFixtureProvenance(sourceProjectRoot);
     for (const moduleKind of ["commonjs", "amd"]) {
-      cases.push({
+      const testCase = {
         corpus: options.corpus,
         suite: "project",
         kind: "project",
@@ -577,7 +664,9 @@ async function discoverProjectCases(selectedCaseRoot, options) {
         descriptor,
         projectFixture,
         moduleKind,
-      });
+      };
+      testCase.expectedSkipReason = plannedSkipReasonForParsedCase(testCase);
+      cases.push(testCase);
     }
   }
   return cases;
@@ -621,12 +710,6 @@ function assertProjectTestDescriptor(file, descriptor) {
   if (descriptor.project !== undefined && typeof descriptor.project !== "string") {
     throw new Error("descriptor.project must be a string when present");
   }
-}
-
-export function isLanguageServiceHarnessCase(sourceText) {
-  return /\/\/\/\s*<reference\s+path=['"][^'"]*(?:services[\\/]typescriptServices|typescriptServices|formatting)\.ts['"]/i.test(sourceText) ||
-    (/declare\s+var\s+assert\s*:\s*Harness\.Assert\b/.test(sourceText) && /declare\s+var\s+(?:describe|it|run|IO)\b/.test(sourceText)) ||
-    /\b(?:ILineIndenationResolver|ITextSnapshot|Services\.EditorOptions)\b/.test(sourceText);
 }
 
 export function isEmittedJavaScriptSibling(file) {
@@ -1124,7 +1207,7 @@ export function baselineHasErrors(testCase) {
   return false;
 }
 
-const diagnosticHeadlinePattern = /\b(?:error|message) TS\d+:/;
+const diagnosticHeadlinePattern = /\b(?:error|message) TS-?\d+:/;
 
 function projectBaselineHasErrors(testCase) {
   const moduleFolder = testCase.moduleKind === "amd" ? "amd" : "node";
@@ -1597,6 +1680,9 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     actualDiagnostics = diagnosticHeadlineText(formatHarnessDiagnostics("", harnessDiagnostics, vfsCase.compilerOptions?.Pretty === tristateTruePretty));
   }
   const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
+  const expectedPrePostEmitDiagnostic = expectedDiagnosticHeadlines.some((text) => (
+    /(?:^|\n)error TS-1: Pre-emit \(\d+\) and post-emit \(\d+\) diagnostic counts do not match!/.test(text)
+  ));
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
     mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
     const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
@@ -1642,7 +1728,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           }
         }
       } catch (error) {
-        mismatches.push(`Type/symbol baseline generation failed: ${error?.message ?? error}.`);
+        throw baselineInfrastructureFailure("Type/symbol", error);
       }
     }
   }
@@ -1684,7 +1770,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           }
         }
       } catch (error) {
-        mismatches.push(`JS emit baseline generation failed: ${error?.message ?? error}.`);
+        throw baselineInfrastructureFailure("JS emit", error);
       }
     }
   }
@@ -1716,7 +1802,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           }
         }
       } catch (error) {
-        mismatches.push(`Source map baseline generation failed: ${error?.message ?? error}.`);
+        throw baselineInfrastructureFailure("Source map", error);
       }
     }
   }
@@ -1767,7 +1853,17 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     actualErrors: usesVfsHarness ? hasDiagnostics : undefined,
     usedHarness: usesVfsHarness,
     harnessEmitted: sharedVfsCase?.emittedOutputs,
+    // TS-Go's harness deliberately emits TS-1 when pre-emit and post-emit diagnostic
+    // counts differ. The staged CLI has no equivalent diagnostic channel, so retain
+    // this exact upstream distinction for --verify-on-disk instead of classifying it
+    // as an unexplained product/harness divergence.
+    expectedPrePostEmitDiagnostic,
   };
+}
+
+function baselineInfrastructureFailure(kind, error) {
+  const detail = error instanceof Error ? error.stack ?? error.message : String(error);
+  return new Error(`${kind} baseline generation failed:\n${detail}`);
 }
 
 export function diagnosticHeadlineText(text) {
@@ -2646,6 +2742,83 @@ export function getSkipReason(testCase) {
   return getSkipReasonFromConfiguration(testCase.sourceBaseName, testCase.configuration);
 }
 
+export function plannedSkipReasonForParsedCase(testCase, parsed) {
+  if (testCase.kind === "project") {
+    const compilerOptions = compilerOptionsForProjectDescriptor(testCase.descriptor, testCase.moduleKind, ".");
+    return getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
+  }
+  if (parsed === undefined) {
+    throw new Error(`Parsed harness inputs are required to plan skip disposition for ${testCase.relativePath}`);
+  }
+  if (isTranspileCase(testCase)) {
+    return "";
+  }
+
+  const pathOptions = harnessPathOptionsFromSettings(testCase.configuration);
+  const unitRecords = parsed.units.map((unit) => ({
+    filePath: normalizeHarnessPath(unit.fileName, pathOptions),
+    content: rewriteHarnessFileContent(unit.content, normalizeHarnessPath(unit.fileName, pathOptions), pathOptions),
+  }));
+  const writtenFiles = unitRecords.map((record) => record.filePath);
+  const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
+  if (existingConfig !== undefined) {
+    const unitContents = new Map(unitRecords.map((record) => [record.filePath, record.content]));
+    const configText = unitContents.get(existingConfig);
+    if (configText === undefined) {
+      throw new Error(`Planned tsconfig unit '${existingConfig}' has no content`);
+    }
+    const parsedConfig = ts.parseConfigFileTextToJson(existingConfig, configText);
+    if (parsedConfig.error !== undefined) {
+      return getSkipReasonFromCompilerOptions(testCase.sourceBaseName, {});
+    }
+    const mergedConfig = compilerOptionsForExistingProjectConfig(parsedConfig.config ?? {}, testCase.configuration);
+    const inheritedOptions = inheritedConfigCompilerOptionsFromUnits(existingConfig, mergedConfig, unitContents);
+    return getSkipReasonFromCompilerOptions(testCase.sourceBaseName, { ...inheritedOptions, ...mergedConfig.compilerOptions });
+  }
+
+  if (!hasRootPackageJson(writtenFiles)) {
+    writtenFiles.push("package.json");
+  }
+  const inputFiles = selectInputFiles(parsed, writtenFiles, testCase.configuration);
+  const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, inputFiles);
+  return getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
+}
+
+function inheritedConfigCompilerOptionsFromUnits(configPath, rootConfig, unitContents) {
+  let options = {};
+  const visit = (path, config, depth) => {
+    if (depth > 8 || config === undefined) {
+      return;
+    }
+    const extendsList = config.extends === undefined ? [] : Array.isArray(config.extends) ? config.extends : [config.extends];
+    for (const ext of extendsList) {
+      if (typeof ext !== "string" || (!ext.startsWith(".") && !ext.startsWith("/"))) {
+        continue;
+      }
+      let parentPath = posixPath.join(posixPath.dirname(path), ext);
+      if (!unitContents.has(parentPath) && unitContents.has(`${parentPath}.json`)) {
+        parentPath = `${parentPath}.json`;
+      }
+      const parentText = unitContents.get(parentPath);
+      if (parentText === undefined) {
+        continue;
+      }
+      let parentConfig;
+      try {
+        parentConfig = ts.parseConfigFileTextToJson(parentPath, parentText).config;
+      } catch {
+        continue;
+      }
+      if (parentConfig !== undefined) {
+        visit(parentPath, parentConfig, depth + 1);
+        options = { ...options, ...(parentConfig.compilerOptions ?? {}) };
+      }
+    }
+  };
+  visit(configPath, rootConfig, 0);
+  return options;
+}
+
 function getSkipReasonFromConfiguration(sourceBaseName, configuration) {
   return getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptionsFromSettings(configuration ?? new Map()));
 }
@@ -2943,6 +3116,12 @@ async function runTsts(invocation) {
 
 async function runCase(testCase, runRoot, options) {
   const materialized = await materializeCase(testCase, runRoot);
+  if (typeof testCase.expectedSkipReason !== "string") {
+    throw new Error(`Case ${testCase.relativePath} has no sealed skip disposition`);
+  }
+  if (materialized.skipReason !== testCase.expectedSkipReason) {
+    throw new Error(`Materialized skip disposition changed for ${testCase.relativePath}: planned=${JSON.stringify(testCase.expectedSkipReason)} actual=${JSON.stringify(materialized.skipReason)}`);
+  }
   if (materialized.skipReason !== "") {
     return {
       ...testCase,
@@ -3017,7 +3196,10 @@ async function runCase(testCase, runRoot, options) {
   const actualErrors = result.exitCode !== 0;
   const exactBaseline = await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`);
   const expectedErrors = exactBaseline !== undefined ? exactBaseline.expectedDiagnosticsPresent : materialized.expectedErrors;
-  const onDiskVerdictExempt = isHarnessCase && options.verifyOnDisk === true && isHarnessOnlyVersionedConfigCase(testCase, materialized);
+  const onDiskVerdictExempt = isHarnessCase && options.verifyOnDisk === true && (
+    isHarnessOnlyVersionedConfigCase(testCase, materialized)
+    || exactBaseline?.expectedPrePostEmitDiagnostic === true
+  );
   const statusActualErrors = onDiskVerdictExempt ? exactBaseline?.actualErrors === true : actualErrors;
   const onDiskDivergences = isHarnessCase && options.verifyOnDisk === true
     ? await verifyOnDiskMatchesHarness(testCase, materialized, result, exactBaseline)
@@ -3042,10 +3224,9 @@ async function runCase(testCase, runRoot, options) {
 }
 
 // --verify-on-disk proof: confirm the real on-disk CLI compile agrees with the
-// in-memory harness for a case — same error verdict and same emitted JS-side artifacts.
-// Declaration artifacts are excluded from the emit comparison because pinned TS-Go's
-// test harness can intentionally produce stronger declaration output than the staged CLI
-// by running declaration diagnostics before emit.
+// in-memory harness for a case — same error verdict and every emitted artifact, including
+// declaration output. A declaration mismatch is product evidence, not a reason to narrow
+// the verifier's contract.
 // Returns human-readable divergences (empty = the on-disk path is equivalent here).
 // Emit is compared in TS-Go baseline coordinates. Those coordinates intentionally collapse
 // output directories unless @fullEmitPaths is set, so duplicate section names are grouped and
@@ -3053,17 +3234,16 @@ async function runCase(testCase, runRoot, options) {
 async function verifyOnDiskMatchesHarness(testCase, materialized, cliResult, exactBaseline) {
   const divergences = [];
   const cliActualErrors = cliResult.exitCode !== 0;
-  if (exactBaseline.usedHarness === true && exactBaseline.actualErrors !== cliActualErrors && !isHarnessOnlyVersionedConfigCase(testCase, materialized)) {
+  if (
+    exactBaseline.usedHarness === true
+    && exactBaseline.actualErrors !== cliActualErrors
+    && !isHarnessOnlyVersionedConfigCase(testCase, materialized)
+    && exactBaseline.expectedPrePostEmitDiagnostic !== true
+  ) {
     divergences.push(`verdict: on-disk CLI actualErrors=${cliActualErrors} but harness actualErrors=${exactBaseline.actualErrors}`);
   }
   const harnessEmitted = exactBaseline.harnessEmitted;
-  // Erroring harness cases can legitimately have different emitted text between
-  // the TS-Go baseline harness and the staged CLI path. The harness runs every
-  // diagnostic phase before emit so declaration emit can reuse checker links;
-  // the CLI may stop diagnostics earlier after program errors. Exact baselines
-  // already validate the harness output, so on-disk verification compares emit
-  // only for clean cases and always compares the error verdict.
-  if (harnessEmitted !== undefined && cliActualErrors === false && exactBaseline.actualErrors !== true) {
+  if (harnessEmitted !== undefined) {
     const norm = (value) => normalizeEmittedOutputText(String(value ?? ""));
     const onDisk = groupEmittedOutputs(await emittedOutputsForCase(materialized), (key) => upstreamOutputName(materialized, key), norm);
     const harness = groupEmittedOutputs(
@@ -3071,17 +3251,20 @@ async function verifyOnDiskMatchesHarness(testCase, materialized, cliResult, exa
       (key) => upstreamHarnessOutputName(materialized, key),
       (value) => norm(translateHarnessEmittedContentToBaselineCoordinates(value)),
     );
-    for (const key of new Set([...onDisk.keys(), ...harness.keys()])) {
-      if (isDeclarationEmitArtifact(key)) {
-        continue;
-      }
-      const onDiskValues = onDisk.get(key) ?? [];
-      const harnessValues = harness.get(key) ?? [];
-      if (onDiskValues.length !== harnessValues.length) {
-        divergences.push(`emit: '${key}' count differs between on-disk (${onDiskValues.length}) and harness (${harnessValues.length})`);
-      } else if (!sameStringMultiset(onDiskValues, harnessValues)) {
-        divergences.push(`emit: '${key}' content differs between on-disk and harness`);
-      }
+    divergences.push(...compareGroupedEmittedOutputs(onDisk, harness));
+  }
+  return divergences;
+}
+
+export function compareGroupedEmittedOutputs(onDisk, harness) {
+  const divergences = [];
+  for (const key of new Set([...onDisk.keys(), ...harness.keys()])) {
+    const onDiskValues = onDisk.get(key) ?? [];
+    const harnessValues = harness.get(key) ?? [];
+    if (onDiskValues.length !== harnessValues.length) {
+      divergences.push(`emit: '${key}' count differs between on-disk (${onDiskValues.length}) and harness (${harnessValues.length})`);
+    } else if (!sameStringMultiset(onDiskValues, harnessValues)) {
+      divergences.push(`emit: '${key}' content differs between on-disk and harness`);
     }
   }
   return divergences;
@@ -3097,9 +3280,6 @@ function groupEmittedOutputs(outputs, keyOf, normalize) {
   const grouped = new Map();
   for (const [rawKey, rawValue] of outputs) {
     const key = keyOf(String(rawKey));
-    if (isDeclarationEmitArtifact(key)) {
-      continue;
-    }
     const values = grouped.get(key) ?? [];
     values.push(normalize(rawValue));
     grouped.set(key, values);
@@ -3132,10 +3312,6 @@ function sameStringMultiset(left, right) {
     }
   }
   return true;
-}
-
-function isDeclarationEmitArtifact(fileName) {
-  return /\.d\.[cm]?ts(?:\.map)?$/i.test(fileName);
 }
 
 async function runTranspileInvocations(materialized) {
@@ -3273,28 +3449,41 @@ export function hashCaseIds(cases) {
 }
 
 export function inventoryFingerprint(inventory) {
-  return fingerprint(inventory, "tsts-tsgo-suite-inventory-v1");
+  return fingerprint(inventory, "tsts-tsgo-suite-inventory-v2");
 }
 
 export function runManifestFingerprint(manifest) {
-  return fingerprint(manifest, "tsts-tsgo-suite-run-v2");
+  return fingerprint(manifest, "tsts-tsgo-suite-run-v3");
 }
 
 export function buildRunManifest(testCases, options, inventory) {
-  const cases = testCases.map((testCase, index) => ({
-    index,
-    corpus: testCase.corpus,
-    suite: testCase.suite,
-    relativePath: testCase.relativePath,
-    configurationName: testCase.configurationName ?? "",
-    id: caseIdentifier(testCase),
-    sourceSha256: testCase.sourceSha256,
-    projectFixture: testCase.projectFixture ?? null,
-  }));
+  const cases = testCases.map((testCase, index) => {
+    if (typeof testCase.expectedSkipReason !== "string") {
+      throw new Error(`Case ${index} is missing its planned skip disposition`);
+    }
+    return {
+      index,
+      corpus: testCase.corpus,
+      suite: testCase.suite,
+      relativePath: testCase.relativePath,
+      configurationName: testCase.configurationName ?? "",
+      id: caseIdentifier(testCase),
+      sourceSha256: testCase.sourceSha256,
+      projectFixture: testCase.projectFixture ?? null,
+      expectedSkipReason: testCase.expectedSkipReason,
+    };
+  });
   const childEnvironment = suiteChildEnvironment();
   const sourcePin = loadAndVerifyTsgoSourcePin({ repoRoot, packageRoot, vendorRoot });
   const typeScriptSource = sourcePin.nestedSources.find((entry) => entry.name === "TypeScript");
   if (typeScriptSource === undefined) throw new Error("TS-Go source pin is missing the TypeScript nested source");
+  const inputs = hashInputRoots(runInputRoots());
+  if (suiteBuildId !== "") {
+    const request = tstsBuildRequest({ repoRoot, packageRoot });
+    const preparedBuild = verifyTstsBuild(preparedBuildRoot, request, suiteBuildId);
+    if (preparedBuild === undefined) throw new Error(`Prepared TSTS build ${suiteBuildId} is missing`);
+    validatePreparedBuildRunBinding(inputs, preparedBuild);
+  }
   const manifest = {
     schemaVersion: RUN_MANIFEST_SCHEMA_VERSION,
     selection: {
@@ -3339,7 +3528,7 @@ export function buildRunManifest(testCases, options, inventory) {
       tsgo: checkoutEvidence(sourcePin.primary),
       typescript: { name: typeScriptSource.name, path: typeScriptSource.path, ...checkoutEvidence(typeScriptSource.checkout) },
     },
-    inputs: hashInputRoots(runInputRoots()),
+    inputs,
     cases,
     caseIdsHash: hashCaseIds(cases),
     total: testCases.length,
@@ -3347,6 +3536,24 @@ export function buildRunManifest(testCases, options, inventory) {
     inventoryHash: inventoryFingerprint(inventory),
   };
   return { ...manifest, runFingerprint: runManifestFingerprint(manifest) };
+}
+
+export function validatePreparedBuildRunBinding(runInputs, preparedBuild) {
+  if (preparedBuild === undefined || preparedBuild === null || typeof preparedBuild !== "object") throw new Error("prepared TSTS build evidence is invalid");
+  const requestInputs = preparedBuild.provenance?.request?.inputs;
+  const output = preparedBuild.provenance?.output;
+  if (!Array.isArray(runInputs?.roots) || !Array.isArray(requestInputs?.roots) || output === undefined) throw new Error("prepared TSTS build input evidence is invalid");
+  const runByLabel = new Map(runInputs.roots.map((root) => [root.label, root]));
+  let compared = 0;
+  for (const requestRoot of requestInputs.roots) {
+    const runRoot = runByLabel.get(requestRoot.label);
+    if (runRoot === undefined) continue;
+    compared += 1;
+    if (canonicalJson(runRoot) !== canonicalJson(requestRoot)) throw new Error(`Prepared TSTS build input '${requestRoot.label}' does not match the suite run input`);
+  }
+  if (compared === 0) throw new Error("prepared TSTS build has no inputs in common with the suite run");
+  const runDist = runByLabel.get("tsts-dist");
+  if (runDist === undefined || canonicalJson(runDist) !== canonicalJson(output)) throw new Error("Prepared TSTS build output does not match the suite run dist input");
 }
 
 export function validateRunManifest(manifest, expectedManifest) {
@@ -3375,13 +3582,14 @@ export function validateRunManifest(manifest, expectedManifest) {
   let previousCaseSortKey;
   for (let index = 0; index < manifest.cases.length; index += 1) {
     const entry = manifest.cases[index];
-    assertExactKeys(entry, ["configurationName", "corpus", "id", "index", "projectFixture", "relativePath", "sourceSha256", "suite"], `run manifest case ${index}`);
+    assertExactKeys(entry, ["configurationName", "corpus", "expectedSkipReason", "id", "index", "projectFixture", "relativePath", "sourceSha256", "suite"], `run manifest case ${index}`);
     if (entry.index !== index) throw new Error(`run manifest case ${index} has an invalid index`);
     validateCorpusSuite(entry.corpus, entry.suite, `run manifest case ${index}`);
     if (entry.corpus !== manifest.selection.corpus || (manifest.selection.suite !== "all" && entry.suite !== manifest.selection.suite)) throw new Error(`run manifest case ${index} is outside the selected corpus/suite`);
     assertSafeRelativePath(entry.relativePath, `run manifest case ${index}.relativePath`);
     if (manifest.selection.filter !== "" && !entry.relativePath.includes(manifest.selection.filter)) throw new Error(`run manifest case ${index} does not match the selected filter`);
     assertBoundedString(entry.configurationName, `run manifest case ${index}.configurationName`, 10000);
+    assertBoundedString(entry.expectedSkipReason, `run manifest case ${index}.expectedSkipReason`, 10000);
     if (!DIGEST_PATTERN.test(entry.sourceSha256)) throw new Error(`run manifest case ${index} has an invalid source digest`);
     validateProjectFixture(entry.projectFixture, entry.suite, `run manifest case ${index}.projectFixture`);
     const expectedId = caseIdentifier(entry);
@@ -3443,6 +3651,8 @@ function runInputRoots() {
     { label: "accepted-overlay-capture", path: accepted.capture.directory },
     { label: "accepted-overlay-binding", path: accepted.binding.directory },
     { label: "tsts-dist", path: distRoot },
+    { label: "tsts-prepared-build", path: preparedBuildRoot },
+    { label: "tsts-source", path: join(packageRoot, "src") },
     { label: "bundled-source-assets", path: bundledSourceRoot },
     { label: "source-pin", path: sourcePinPath },
     { label: "workspace-package", path: join(repoRoot, "package.json") },
@@ -3468,6 +3678,7 @@ function suiteChildEnvironment() {
   environment.NODE_PATH = "";
   environment.TSGO_CASE_TIMEOUT_MS = String(CASE_TIMEOUT_MS);
   environment.TSGO_POOL_TIMEOUT_MS = String(POOL_CASE_TIMEOUT_MS);
+  if (suiteBuildId !== "") environment.TSTS_SUITE_BUILD_ID = suiteBuildId;
   return environment;
 }
 
@@ -3487,6 +3698,8 @@ const expectedRunInputLabels = [
   "suite-sealed-evidence-helper",
   "suite-source-pin-verifier",
   "tsts-dist",
+  "tsts-prepared-build",
+  "tsts-source",
   "tsts-package",
   "vendored-typescript-lib-fallback",
   "workspace-lock",
@@ -3503,7 +3716,7 @@ function validateRuntimeEvidence(runtime, execution) {
   assertExactKeys(runtime.locale, ["calendar", "locale", "numberingSystem", "timeZone"], "run manifest runtime.locale");
   for (const key of ["calendar", "locale", "numberingSystem", "timeZone"]) assertBoundedString(runtime.locale[key], `run manifest runtime.locale.${key}`, 1000, true);
   if (!Array.isArray(runtime.childEnvironment) || runtime.childEnvironment.length > 32) throw new Error("run manifest runtime.childEnvironment is invalid");
-  const allowedNames = new Set(["ComSpec", "DYLD_LIBRARY_PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH", "NODE_OPTIONS", "NODE_PATH", "PATH", "PATHEXT", "SystemRoot", "TEMP", "TMP", "TMPDIR", "TSGO_CASE_TIMEOUT_MS", "TSGO_POOL_TIMEOUT_MS", "TZ", "USERPROFILE"]);
+  const allowedNames = new Set(["ComSpec", "DYLD_LIBRARY_PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH", "NODE_OPTIONS", "NODE_PATH", "PATH", "PATHEXT", "SystemRoot", "TEMP", "TMP", "TMPDIR", "TSGO_CASE_TIMEOUT_MS", "TSGO_POOL_TIMEOUT_MS", "TSTS_SUITE_BUILD_ID", "TZ", "USERPROFILE"]);
   let previousName = "";
   const environmentByName = new Map();
   for (const [index, entry] of runtime.childEnvironment.entries()) {
@@ -3520,6 +3733,7 @@ function validateRuntimeEvidence(runtime, execution) {
   for (const [name, value] of requiredValues) {
     if (environmentByName.get(name) !== value) throw new Error(`run manifest runtime.childEnvironment.${name} is invalid`);
   }
+  if (suiteBuildId !== "" && environmentByName.get("TSTS_SUITE_BUILD_ID") !== suiteBuildId) throw new Error("run manifest runtime.childEnvironment.TSTS_SUITE_BUILD_ID is invalid");
 }
 
 function validateUpstreamEvidence(upstream) {
@@ -3561,20 +3775,31 @@ function validateInputInventory(inputs) {
 }
 
 export function validateInventory(inventory) {
-  assertExactKeys(inventory, ["baselines", "currentHarness", "goTests", "typeScriptCases"], "test universe inventory");
+  assertExactKeys(inventory, ["baselines", "currentHarness", "goTests", "schemaVersion", "typeScriptCases", "typeScriptUnitTests"], "test universe inventory");
+  if (inventory.schemaVersion !== INVENTORY_SCHEMA_VERSION) throw new Error(`unsupported test universe inventory schemaVersion '${inventory.schemaVersion}'`);
   validateInventoryBucket(inventory.currentHarness, "test universe inventory.currentHarness");
   validateInventoryBucket(inventory.baselines, "test universe inventory.baselines");
   validateInventoryBucket(inventory.goTests, "test universe inventory.goTests");
-  validateInventoryBucket(inventory.typeScriptCases, "test universe inventory.typeScriptCases", true);
+  validateInventoryBucket(inventory.typeScriptCases, "test universe inventory.typeScriptCases", ["requiredFixtureFiles"]);
+  assertExactKeys(inventory.typeScriptCases.entries, ["compiler", "conformance", "fourslash", "project", "transpile"], "test universe inventory.typeScriptCases.entries");
+  assertExactKeys(inventory.typeScriptCases.requiredFixtureFiles, ["projects", "unittests"], "test universe inventory.typeScriptCases.requiredFixtureFiles");
+  for (const [name, count] of Object.entries(inventory.typeScriptCases.requiredFixtureFiles)) assertNonNegativeInteger(count, `test universe inventory.typeScriptCases.requiredFixtureFiles.${name}`);
+  const expectedFileBasedInScope = [...inScopeTypeScriptSuites].reduce((sum, suite) => sum + inventory.typeScriptCases.entries[suite], 0);
+  const expectedFileBasedOutOfScope = [...outOfScopeTypeScriptSuites].reduce((sum, suite) => sum + inventory.typeScriptCases.entries[suite], 0);
+  if (inventory.typeScriptCases.inScope !== expectedFileBasedInScope || inventory.typeScriptCases.outOfScope !== expectedFileBasedOutOfScope) throw new Error("test universe inventory TypeScript case scope classification is invalid");
+  validateInventoryBucket(inventory.typeScriptUnitTests, "test universe inventory.typeScriptUnitTests");
+  assertExactKeys(inventory.typeScriptUnitTests.entries, ["exportedModules", "supportModules"], "test universe inventory.typeScriptUnitTests.entries");
+  if (inventory.typeScriptUnitTests.inScope !== inventory.typeScriptUnitTests.total || inventory.typeScriptUnitTests.outOfScope !== 0) throw new Error("test universe inventory TypeScript unit-test mirror scope is invalid");
   return inventory;
 }
 
-function validateInventoryBucket(bucket, label, hasLanguageServiceCount = false) {
+function validateInventoryBucket(bucket, label, extraKeys = []) {
   const keys = ["entries", "inScope", "outOfScope", "total", "unclassified"];
-  if (hasLanguageServiceCount) keys.push("languageServiceHarnessCases");
+  keys.push(...extraKeys);
   assertExactKeys(bucket, keys, label);
   for (const key of ["inScope", "outOfScope", "total", "unclassified"]) assertNonNegativeInteger(bucket[key], `${label}.${key}`);
   if (bucket.inScope + bucket.outOfScope + bucket.unclassified !== bucket.total) throw new Error(`${label} classification totals do not match`);
+  if (bucket.unclassified !== 0) throw new Error(`${label} contains unclassified entries`);
   assertPlainObject(bucket.entries, `${label}.entries`);
   let entriesTotal = 0;
   for (const [name, count] of Object.entries(bucket.entries)) {
@@ -3584,10 +3809,6 @@ function validateInventoryBucket(bucket, label, hasLanguageServiceCount = false)
     if (!Number.isSafeInteger(entriesTotal)) throw new Error(`${label}.entries total is unsafe`);
   }
   if (entriesTotal !== bucket.total) throw new Error(`${label}.entries do not match total`);
-  if (hasLanguageServiceCount) {
-    assertNonNegativeInteger(bucket.languageServiceHarnessCases, `${label}.languageServiceHarnessCases`);
-    if (bucket.languageServiceHarnessCases > bucket.outOfScope) throw new Error(`${label}.languageServiceHarnessCases exceeds out-of-scope count`);
-  }
 }
 
 function validateProjectFixture(projectFixture, suite, label) {
@@ -3664,7 +3885,7 @@ function assertDigest(value, label) {
 export function caseFingerprint(runManifest, caseIndex) {
   const expected = runManifest.cases[caseIndex];
   if (expected === undefined) throw new Error(`case index ${caseIndex} is outside run manifest`);
-  return fingerprint({ runFingerprint: runManifest.runFingerprint, case: expected }, "tsts-tsgo-suite-case-v2");
+  return fingerprint({ runFingerprint: runManifest.runFingerprint, case: expected }, "tsts-tsgo-suite-case-v3");
 }
 
 export function loadResultLedger(segmentPaths, runManifest) {
@@ -3717,6 +3938,7 @@ export function loadResultLedger(segmentPaths, runManifest) {
       if (record.caseFingerprint !== caseFingerprint(runManifest, record.caseIndex)) throw new Error(`result case fingerprint mismatch in ${segmentPath}:${lineIndex + 1}`);
       if (record.result === null || typeof record.result !== "object" || Array.isArray(record.result)) throw new Error(`result payload must be an object in ${segmentPath}:${lineIndex + 1}`);
       validateResultPayload(record.result, `${segmentPath}:${lineIndex + 1}`);
+      if (record.result.skipReason !== expectedCase.expectedSkipReason) throw new Error(`result skip disposition does not match run manifest in ${segmentPath}:${lineIndex + 1}`);
       if (record.resultFingerprint !== resultFingerprint(record.runFingerprint, record.caseFingerprint, record.result)) throw new Error(`result payload fingerprint mismatch in ${segmentPath}:${lineIndex + 1}`);
       if (caseIdentifier(record.result) !== record.caseId) throw new Error(`result payload identity mismatch in ${segmentPath}:${lineIndex + 1}`);
       const previous = recordsByIndex.get(record.caseIndex);
@@ -3967,6 +4189,7 @@ export function createResultRecord(runManifest, caseIndex, result) {
   const expectedCase = runManifest.cases[caseIndex];
   if (expectedCase === undefined) throw new Error(`case index ${caseIndex} is outside run manifest`);
   if (caseIdentifier(trimmed) !== expectedCase.id) throw new Error(`result identity does not match run manifest case ${caseIndex}`);
+  if (trimmed.skipReason !== expectedCase.expectedSkipReason) throw new Error(`result skip disposition does not match run manifest case ${caseIndex}`);
   const caseFingerprintValue = caseFingerprint(runManifest, caseIndex);
   return {
     schemaVersion: RESULT_SCHEMA_VERSION,
@@ -4052,7 +4275,42 @@ export async function createResultSegmentWriter(reportRoot, runManifest, options
 // busy. --jobs sets the pool size (default = all cores; --jobs 1 = serial).
 // Results stream to a numbered segment tagged with caseIndex, so discovery order is
 // restored on read regardless of completion order.
-async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options, runManifest, doneIndices = new Set()) {
+export function bindWorkerResultMessage(activeAssignment, message) {
+  if (activeAssignment === null || activeAssignment === undefined) {
+    throw new Error("worker returned a result without an active assignment");
+  }
+  if (message === null || typeof message !== "object" || Array.isArray(message)) {
+    throw new Error("worker result message must be an object");
+  }
+  const keys = Object.keys(message).sort();
+  if (JSON.stringify(keys) !== JSON.stringify(["assignmentId", "caseIndex", "result", "type"])) {
+    throw new Error("worker result message has invalid fields");
+  }
+  if (message.type !== "result") {
+    throw new Error(`worker result message has invalid type '${message.type}'`);
+  }
+  if (!Number.isSafeInteger(message.caseIndex) || message.caseIndex < 0) {
+    throw new Error("worker result message has an invalid case index");
+  }
+  if (!UUID_V4_PATTERN.test(message.assignmentId)) {
+    throw new Error("worker result message has an invalid assignment ID");
+  }
+  if (message.caseIndex !== activeAssignment.caseIndex || message.assignmentId !== activeAssignment.assignmentId) {
+    throw new Error(`worker result does not match active assignment case ${activeAssignment.caseIndex}`);
+  }
+  return { assignment: activeAssignment, result: message.result };
+}
+
+export async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options, runManifest, doneIndices = new Set(), workerRuntime = {}) {
+  const forkWorkerProcess = workerRuntime.forkWorkerProcess ?? (() => fork(scriptPath, [], {
+    env: { ...suiteChildEnvironment(), TSGO_SUITE_WORKER: "1" },
+    stdio: ["ignore", "ignore", "inherit", "ipc"],
+    // Advanced (V8 structured-clone) IPC preserves Map/Set/etc. in the case
+    // descriptor (e.g. testCase.settings is a Map); the default JSON IPC
+    // would silently flatten Maps to {} and break materializeCase.
+    serialization: "advanced",
+  }));
+  if (typeof forkWorkerProcess !== "function") throw new Error("worker runtime forkWorkerProcess must be a function");
   const segmentWriter = await createResultSegmentWriter(reportRoot, runManifest);
   const total = testCases.length;
   // Backstop for an in-process hang inside a worker (e.g. an infinite loop in
@@ -4118,6 +4376,16 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
     let done = false;
     const pendingSettlements = new Set();
 
+    const abort = (error) => {
+      if (done) return;
+      done = true;
+      stopped = true;
+      for (const child of children) {
+        try { child.kill("SIGTERM"); } catch {}
+      }
+      reject(error);
+    };
+
     const finish = () => {
       if (done) return;
       done = true;
@@ -4125,7 +4393,7 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
     };
 
     const finishWhenSettled = () => {
-      Promise.all([...pendingSettlements]).then(() => appendChain).then(finish, reject);
+      Promise.all([...pendingSettlements]).then(() => appendChain).then(finish, abort);
     };
 
     const spawnWorker = () => {
@@ -4138,30 +4406,29 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
         return;
       }
       spawnedTotal += 1;
-      const child = fork(scriptPath, [], {
-        env: { ...suiteChildEnvironment(), TSGO_SUITE_WORKER: "1" },
-        stdio: ["ignore", "ignore", "inherit", "ipc"],
-        // Advanced (V8 structured-clone) IPC preserves Map/Set/etc. in the case
-        // descriptor (e.g. testCase.settings is a Map); the default JSON IPC
-        // would silently flatten Maps to {} and break materializeCase.
-        serialization: "advanced",
-      });
+      const child = forkWorkerProcess();
       children.add(child);
       liveWorkers += 1;
-      const state = { current: -1, settled: true, timer: null };
+      const state = { assignment: null, settled: true, timer: null, ready: false, retiring: false, retiredAssignment: null };
 
-      const settle = async (result) => {
+      const settle = async (assignment, result) => {
         if (state.settled) return; // exactly one resolution per assigned case
+        if (
+          state.assignment === null
+          || state.assignment.caseIndex !== assignment.caseIndex
+          || state.assignment.assignmentId !== assignment.assignmentId
+        ) {
+          throw new Error(`worker settlement does not match active assignment case ${assignment.caseIndex}`);
+        }
         state.settled = true;
         if (state.timer) { clearTimeout(state.timer); state.timer = null; }
-        const idx = state.current;
-        state.current = -1;
-        await persist(idx, result);
+        state.assignment = null;
+        await persist(assignment.caseIndex, result);
         if (completed >= total) finish();
       };
 
-      const trackedSettle = (result) => {
-        const pending = settle(result);
+      const trackedSettle = (assignment, result) => {
+        const pending = settle(assignment, result);
         pendingSettlements.add(pending);
         pending.then(
           () => pendingSettlements.delete(pending),
@@ -4180,38 +4447,61 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
           return;
         }
         const idx = cursor++;
-        state.current = idx;
+        const assignment = { caseIndex: idx, assignmentId: randomUUID() };
+        state.assignment = assignment;
         state.settled = false;
         state.timer = setTimeout(() => {
           // In-process hang: kill the worker; settle() records the timeout fail,
           // and the exit handler replaces the worker if work remains.
+          state.retiring = true;
+          state.retiredAssignment = assignment;
           try { child.kill("SIGKILL"); } catch {}
-          trackedSettle(failResult(testCases[idx], `TSTS case exceeded ${POOL_CASE_TIMEOUT_MS}ms in worker (killed).`, "SIGKILL")).catch(reject);
+          trackedSettle(assignment, failResult(testCases[idx], `TSTS case exceeded ${POOL_CASE_TIMEOUT_MS}ms in worker (killed).`, "SIGKILL")).catch(abort);
         }, POOL_CASE_TIMEOUT_MS);
         const attemptRoot = join(runRoot, `${String(idx).padStart(6, "0")}-${caseFingerprint(runManifest, idx).slice(0, 16)}-${randomUUID()}`);
         try {
-          child.send({ type: "case", caseIndex: idx, testCase: testCases[idx], runRoot: attemptRoot, options });
+          child.send({ type: "case", caseIndex: idx, assignmentId: assignment.assignmentId, testCase: testCases[idx], runRoot: attemptRoot, options });
         } catch {
           // Send failed (worker already dead); the exit handler settles + respawns.
         }
       };
 
       child.on("message", (msg) => {
-        if (msg && msg.type === "ready") { assignNext(); return; }
-        if (msg && msg.type === "result") {
-          trackedSettle(msg.result).then(() => {
-            if (!stopped && cursor < total) assignNext();
-            else { try { child.send({ type: "shutdown" }); } catch { try { child.kill(); } catch {} } }
-          }, reject);
+        if (msg && msg.type === "ready") {
+          if (state.ready || state.assignment !== null || state.retiring) {
+            abort(new Error("worker sent an unexpected ready message"));
+            return;
+          }
+          state.ready = true;
+          assignNext();
+          return;
         }
+        if (msg && msg.type === "result") {
+          try {
+            if (state.retiring) {
+              bindWorkerResultMessage(state.retiredAssignment, msg);
+              return;
+            }
+            const bound = bindWorkerResultMessage(state.assignment, msg);
+            trackedSettle(bound.assignment, bound.result).then(() => {
+              if (!stopped && cursor < total) assignNext();
+              else { try { child.send({ type: "shutdown" }); } catch { try { child.kill(); } catch {} } }
+            }, abort);
+          } catch (error) {
+            abort(error);
+          }
+          return;
+        }
+        abort(new Error("worker sent an invalid protocol message"));
       });
 
       child.on("exit", () => {
         children.delete(child);
         liveWorkers -= 1;
         // Crash with an unsettled in-flight case → record a fail for it.
-        if (!state.settled && state.current >= 0) {
-          trackedSettle(failResult(testCases[state.current], "TSTS worker crashed before returning a result.", null)).catch(reject);
+        if (!state.settled && state.assignment !== null) {
+          const assignment = state.assignment;
+          trackedSettle(assignment, failResult(testCases[assignment.caseIndex], "TSTS worker crashed before returning a result.", null)).catch(abort);
         }
         if (!stopped && cursor < total) {
           spawnWorker();
@@ -4224,6 +4514,12 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options,
     for (let i = 0; i < poolSize; i++) spawnWorker();
     });
     await appendChain;
+  } catch (error) {
+    stopped = true;
+    for (const child of children) {
+      try { child.kill("SIGTERM"); } catch {}
+    }
+    throw error;
   } finally {
     process.removeListener("SIGINT", onSigint);
     process.removeListener("SIGTERM", onSigterm);
@@ -4259,7 +4555,7 @@ function runWorkerLoop() {
           infrastructureFailure: true,
         };
       }
-      try { process.send({ type: "result", caseIndex: msg.caseIndex, result }); } catch {}
+      try { process.send({ type: "result", caseIndex: msg.caseIndex, assignmentId: msg.assignmentId, result }); } catch {}
     } else if (msg.type === "shutdown") {
       process.exit(0);
     }
@@ -4387,11 +4683,17 @@ export function validateReportPayload(report, options = {}) {
 export function buildReportSummary(runManifest, results) {
   const completedIds = new Set(results.filter(resultCompletesCase).map(caseIdentifier));
   const missingCaseIndices = runManifest.cases.filter((entry) => !completedIds.has(entry.id)).map((entry) => entry.index);
+  const onDiskEligibleCases = results.filter((result) => result.suite !== "transpile" && result.skipReason === "" && !result.infrastructureFailure).length;
+  const onDiskNotApplicableCases = results.filter((result) => result.suite === "transpile" || result.skipReason !== "").length;
   return {
     ...summarize(results),
     expectedTotal: runManifest.total,
     complete: missingCaseIndices.length === 0,
     missingCaseIndices,
+    onDiskVerificationRequested: runManifest.execution.verifyOnDisk,
+    onDiskEligibleCases,
+    onDiskVerifiedCases: runManifest.execution.verifyOnDisk ? onDiskEligibleCases : 0,
+    onDiskNotApplicableCases,
   };
 }
 
@@ -4605,6 +4907,10 @@ export function renderMarkdown(summary, results, inventory, caseRoot, runManifes
     `- Exact-baseline unsupported artifacts: ${summary.exactBaselineUnsupportedArtifacts}`,
     `- Exact-baseline tsgo-accepted sections: ${summary.exactBaselineTsgoAcceptedSections}`,
     `- Exact-baseline mismatches: ${summary.exactBaselineMismatches}`,
+    `- On-disk verification requested: ${summary.onDiskVerificationRequested}`,
+    `- On-disk eligible cases: ${summary.onDiskEligibleCases}`,
+    `- On-disk verified cases: ${summary.onDiskVerifiedCases}`,
+    `- On-disk not-applicable cases: ${summary.onDiskNotApplicableCases}`,
     "",
     "## Upstream Test Universe",
     "",
@@ -4631,11 +4937,13 @@ export function renderMarkdown(summary, results, inventory, caseRoot, runManifes
 }
 
 function renderInventoryTable(inventory) {
+  const fixtureSummary = Object.entries(inventory.typeScriptCases.requiredFixtureFiles).map(([name, count]) => `${name}=${count}`).join(", ");
   return [
     "| Bucket | Total | In Scope | Excluded | Unclassified | Notes |",
     "|---|---:|---:|---:|---:|---|",
     `| Current TSTS harness | ${inventory.currentHarness.total} | ${inventory.currentHarness.inScope} | ${inventory.currentHarness.outOfScope} | ${inventory.currentHarness.unclassified} | Executed by this runner today |`,
-    `| TypeScript submodule cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile direct cases plus TS harness unit mirrors are in scope; language-service fourslash and LS harness cases excluded |`,
+    `| TypeScript file-based cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile are executable; pinned compiler-runner files are selected without name exclusions; required fixture files: ${fixtureSummary} |`,
+    `| TypeScript unit-test mirror sources | ${inventory.typeScriptUnitTests.total} | ${inventory.typeScriptUnitTests.inScope} | ${inventory.typeScriptUnitTests.outOfScope} | ${inventory.typeScriptUnitTests.unclassified} | Source-derived required mirror graph (${inventory.typeScriptUnitTests.entries.exportedModules} entrypoint exports, ${inventory.typeScriptUnitTests.entries.supportModules} support modules); not file-based cases |`,
     `| TS-Go reference baselines | ${inventory.baselines.total} | ${inventory.baselines.inScope} | ${inventory.baselines.outOfScope} | ${inventory.baselines.unclassified} | Exact baseline comparison is the next acceptance-strength gate |`,
     `| TS-Go Go unit tests | ${inventory.goTests.total} | ${inventory.goTests.inScope} | ${inventory.goTests.outOfScope} | ${inventory.goTests.unclassified} | Go unit coverage to port or mirror, excluding LS packages |`,
   ];
@@ -4651,9 +4959,17 @@ function renderInventoryMarkdown(inventory) {
     "",
     ...renderNamedCounts(inventory.currentHarness.entries),
     "",
-    "## TypeScript Submodule Cases",
+    "## TypeScript File-Based Cases",
     "",
     ...renderNamedCounts(inventory.typeScriptCases.entries),
+    "",
+    "## Required TypeScript Fixture Files",
+    "",
+    ...renderNamedCounts(inventory.typeScriptCases.requiredFixtureFiles),
+    "",
+    "## TypeScript Unit-Test Mirror Sources",
+    "",
+    ...renderNamedCounts(inventory.typeScriptUnitTests.entries),
     "",
     "## TS-Go Reference Baselines",
     "",
@@ -4684,6 +5000,7 @@ function escapeTable(text) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (suiteBuildId === "") throw new Error("Run the TS-Go suite through prepare-run.mjs (or npm run tsgo-suite) so compiler artifacts are bound to their exact source inputs.");
   const inventory = await buildTestUniverseInventory();
   if (options.inventory) {
     console.log(renderInventoryMarkdown(inventory));
@@ -4730,7 +5047,7 @@ async function main() {
     console.log(`TSTS TS-Go suite run${options.resume !== "" ? " (RESUME)" : ""}`);
     console.log(`fingerprint=${currentManifest.runFingerprint}`);
     console.log(`cases=${testCases.length} corpus=${options.corpus} suite=${options.suite} jobs=${options.jobs}${doneIndices.size > 0 ? ` resumeSkip=${doneIndices.size}` : ""}`);
-    console.log(`upstreamInScope=${inventory.typeScriptCases.inScope + inventory.baselines.inScope + inventory.goTests.inScope} upstreamExcluded=${inventory.typeScriptCases.outOfScope + inventory.baselines.outOfScope + inventory.goTests.outOfScope}`);
+    console.log(`upstreamInScope=${inventory.typeScriptCases.inScope + inventory.typeScriptUnitTests.inScope + inventory.baselines.inScope + inventory.goTests.inScope} upstreamExcluded=${inventory.typeScriptCases.outOfScope + inventory.typeScriptUnitTests.outOfScope + inventory.baselines.outOfScope + inventory.goTests.outOfScope}`);
     console.log(`caseRoot=${caseRootForRun}`);
     console.log(`reportRoot=${reportRoot}`);
 

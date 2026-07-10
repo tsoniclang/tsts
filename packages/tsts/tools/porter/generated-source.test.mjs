@@ -30,13 +30,21 @@ test("global generated-artifact registry rejects unknown paths and provider meta
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const tsRoot = path.join(root, "src");
   mkdirSync(path.join(tsRoot, "unknown"), { recursive: true });
+  mkdirSync(path.join(tsRoot, "go"), { recursive: true });
   writeFileSync(path.join(tsRoot, "unknown", "output.ts"), [
     "// Code generated. DO NOT EDIT.",
     '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","path":"unknown/output.ts","contentHash":"x"}',
     "",
   ].join("\n"));
+  writeFileSync(path.join(tsRoot, "go", "compat.ts"), [
+    "// Code generated. DO NOT EDIT.",
+    '// @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","path":"go/compat.ts","contentHash":"x"}',
+    "",
+    "export const hidden = undefined as never;",
+  ].join("\n"));
   const status = buildGlobalGeneratedArtifactStatus(root, { tsRoot: "src" });
   assert.ok(status.issues.some((issue) => issue.reason.includes("no registered provider")));
+  assert.ok(status.issues.some((issue) => issue.provider === "porter:facades" && issue.reason.includes("fix the registered generator")));
 });
 
 function snapshotWithAstUnits(units) {

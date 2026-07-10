@@ -144,7 +144,7 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
     Config: parsed,
     UseSourceOfProjectReference: false as bool,
     SingleThreaded: TSTrue,
-    CreateCheckerPool: undefined!,
+    CreateCheckerPool: undefined,
     TypingsLocation: "",
     ProjectName: "",
     Tracing: undefined,
@@ -174,7 +174,9 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
     EmitOnly: declaration ? EmitOnlyDts : EmitOnlyJs,
     WriteFile: writeFile,
   });
-  appendDiagnostics(diagnostics, emitResult?.Diagnostics ?? []);
+  if (emitResult !== undefined) {
+    appendDiagnostics(diagnostics, emitResult.Diagnostics);
+  }
 
   if (outputText === undefined) {
     // Emit can legitimately produce no output file — e.g. --isolatedDeclarations blocks
@@ -188,13 +190,20 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
   // compiler.SortAndDeduplicateDiagnostics over the combined program+emit diagnostics before
   // reporting (internal/execute/tsc/emit.go). The raw emit pipeline intentionally produces
   // duplicates (recovery boundaries replay deferred reports); the dedup is presentation-level.
-  const presentedDiagnostics = [...SortAndDeduplicateDiagnostics(diagnostics)].filter((diagnostic): diagnostic is Diagnostic => diagnostic !== undefined);
+  const sortedDiagnostics = SortAndDeduplicateDiagnostics(diagnostics);
+  if (sortedDiagnostics === undefined) {
+    throw new globalThis.Error("sorting a nonnil diagnostics slice returned nil");
+  }
+  const presentedDiagnostics = sortedDiagnostics.filter((diagnostic): diagnostic is Diagnostic => diagnostic !== undefined);
   return sourceMapText === undefined
     ? { outputText, diagnostics: presentedDiagnostics }
     : { outputText, diagnostics: presentedDiagnostics, sourceMapText };
 }
 
-function appendDiagnostics(target: Diagnostic[], diagnostics: GoSlice<GoPtr<Diagnostic>>): void {
+function appendDiagnostics(target: Diagnostic[], diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>): void {
+  if (diagnostics === undefined) {
+    return;
+  }
   for (const diagnostic of diagnostics) {
     if (diagnostic !== undefined) {
       target.push(diagnostic);

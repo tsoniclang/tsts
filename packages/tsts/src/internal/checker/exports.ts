@@ -396,13 +396,14 @@ export function Checker_IsArrayLikeType(receiver: GoPtr<Checker>, t: GoPtr<Type>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetPropertiesOfType","kind":"method","status":"implemented","sigHash":"5dadddb3acead50fe38305e9995fd7faaaa1fae8d558c7154f1fc276404a0ea7","bodyHash":"b43cdd1e496fa340e649ccd4d4055e50c7c88ffdb2f357f58c72d05f56fad7b4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>"}
  *
  * Go source:
  * func (c *Checker) GetPropertiesOfType(t *Type) []*ast.Symbol {
  * 	return c.getPropertiesOfType(t)
  * }
  */
-export function Checker_GetPropertiesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
+export function Checker_GetPropertiesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Symbol>>> {
   return Checker_getPropertiesOfType(receiver, t);
 }
 
@@ -480,13 +481,14 @@ export function Checker_WasCanceled(receiver: GoPtr<Checker>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetSignaturesOfType","kind":"method","status":"implemented","sigHash":"2543a3830393dfbc072a81d16ae721c0fc32adb8e54f8e1924c2201365a4cc2c","bodyHash":"d63509615f5621dc00cfc948b631ba83288435f2cd2e34cc66af28ac990a18c3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) GetSignaturesOfType(t *Type, kind SignatureKind) []*Signature {
  * 	return c.getSignaturesOfType(t, kind)
  * }
  */
-export function Checker_GetSignaturesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoSlice<GoPtr<Signature>> {
+export function Checker_GetSignaturesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoPtr<GoSlice<GoPtr<Signature>>> {
   return Checker_getSignaturesOfType(receiver, t, kind);
 }
 
@@ -696,13 +698,14 @@ export function Checker_TypePredicateToString(receiver: GoPtr<Checker>, t: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetExpandedParameters","kind":"method","status":"implemented","sigHash":"995306b4f0b037e2dacc99b33ea7b020594e19e51c5293d40d9ae05ac2bebfad","bodyHash":"a30db15fbda685276419f93fe1a5884e7bfeabee22de467ab12bd850cf3c8513"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>>"}
  *
  * Go source:
  * func (c *Checker) GetExpandedParameters(signature *Signature, skipUnionExpanding bool) [][]*ast.Symbol {
  * 	return c.getExpandedParameters(signature, skipUnionExpanding)
  * }
  */
-export function Checker_GetExpandedParameters(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, skipUnionExpanding: bool): GoSlice<GoSlice<GoPtr<Symbol>>> {
+export function Checker_GetExpandedParameters(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, skipUnionExpanding: bool): GoSlice<GoPtr<GoSlice<GoPtr<Symbol>>>> {
   return Checker_getExpandedParameters(receiver, signature, skipUnionExpanding);
 }
 
@@ -830,7 +833,7 @@ export function Checker_GetSymbolFlags(receiver: GoPtr<Checker>, symbol_: GoPtr<
  * 	return c.getBaseTypes(t)
  * }
  */
-export function Checker_GetBaseTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
+export function Checker_GetBaseTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Type>>> {
   return Checker_getBaseTypes(receiver, t);
 }
 
@@ -872,13 +875,14 @@ export function Checker_GetRestTypeOfSignature(receiver: GoPtr<Checker>, sig: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetTypeArguments","kind":"method","status":"implemented","sigHash":"d85d0a69bb794bf36f7e11babc2b1539fc6f2203db97110a370cab708edcb3df","bodyHash":"917e9b4ed9b46a6e5b96d1cda2d8bf15c5f1468df5be1bf1cd09cd4cd13ea684"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) GetTypeArguments(t *Type) []*Type {
  * 	return c.getTypeArguments(t)
  * }
  */
-export function Checker_GetTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
+export function Checker_GetTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Type>>> {
   return Checker_getTypeArguments(receiver, t);
 }
 
@@ -896,13 +900,14 @@ export function Checker_GetIndexInfoOfType(receiver: GoPtr<Checker>, t: GoPtr<Ty
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetIndexInfosOfType","kind":"method","status":"implemented","sigHash":"8998a315d84ae915a80a9a7ca908a079f98829f653dd03de4bf12dadb92c9e5c","bodyHash":"2e770cba98a8d389e27c050f0820d737596493e7be787728f58ee44edff936f2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>>"}
  *
  * Go source:
  * func (c *Checker) GetIndexInfosOfType(t *Type) []*IndexInfo {
  * 	return c.getIndexInfosOfType(t)
  * }
  */
-export function Checker_GetIndexInfosOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<IndexInfo>> {
+export function Checker_GetIndexInfosOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<IndexInfo>>> {
   return Checker_getIndexInfosOfType(receiver, t);
 }
 
@@ -920,13 +925,14 @@ export function Checker_IsContextSensitive(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.FillMissingTypeArguments","kind":"method","status":"implemented","sigHash":"9838f5c4343e3112344b8d4c4e55c059aa15b9451a6efe47150d20f4bdc445ff","bodyHash":"543a49642179f712012b9085f2e467b74e098fc1de7e6623990e55b4ff8d1065"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) FillMissingTypeArguments(typeArguments []*Type, typeParameters []*Type, minTypeArgumentCount int, isJavaScriptImplicitAny bool) []*Type {
  * 	return c.fillMissingTypeArguments(typeArguments, typeParameters, minTypeArgumentCount, isJavaScriptImplicitAny)
  * }
  */
-export function Checker_FillMissingTypeArguments(receiver: GoPtr<Checker>, typeArguments: GoSlice<GoPtr<Type>>, typeParameters: GoSlice<GoPtr<Type>>, minTypeArgumentCount: int, isJavaScriptImplicitAny: bool): GoSlice<GoPtr<Type>> {
+export function Checker_FillMissingTypeArguments(receiver: GoPtr<Checker>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>, typeParameters: GoPtr<GoSlice<GoPtr<Type>>>, minTypeArgumentCount: int, isJavaScriptImplicitAny: bool): GoPtr<GoSlice<GoPtr<Type>>> {
   return Checker_fillMissingTypeArguments(receiver, typeArguments, typeParameters, minTypeArgumentCount, isJavaScriptImplicitAny);
 }
 

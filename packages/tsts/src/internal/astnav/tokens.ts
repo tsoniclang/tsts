@@ -76,7 +76,7 @@ export function GetTouchingPropertyName(sourceFile: GoPtr<SourceFile>, position:
  * }
  */
 export function GetTouchingToken(sourceFile: GoPtr<SourceFile>, position: int): GoPtr<Node> {
-  return getTokenAtPosition(sourceFile, position, false /*allowPositionInLeadingTrivia*/, undefined!);
+  return getTokenAtPosition(sourceFile, position, false /*allowPositionInLeadingTrivia*/, undefined);
 }
 
 /**
@@ -88,11 +88,12 @@ export function GetTouchingToken(sourceFile: GoPtr<SourceFile>, position: int): 
  * }
  */
 export function GetTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int): GoPtr<Node> {
-  return getTokenAtPosition(sourceFile, position, true /*allowPositionInLeadingTrivia*/, undefined!);
+  return getTokenAtPosition(sourceFile, position, true /*allowPositionInLeadingTrivia*/, undefined);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getTokenAtPosition","kind":"func","status":"implemented","sigHash":"563d8d71be2eae8e3d04988705a3778a857db560c3a2eab99d2113efab2ad4ec","bodyHash":"bb253a90654d4092785f4ced321a4a070df86d68d33f55cfc835f817ff49d315"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Public token lookup entry points pass a nil includePrecedingTokenAtEndPosition callback; GoPtr preserves that optional function value and the implementation guards it before invocation.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/scalars.ts::bool>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func getTokenAtPosition(
@@ -323,7 +324,7 @@ export function GetTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int)
  * 	}
  * }
  */
-export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int, allowPositionInLeadingTrivia: bool, includePrecedingTokenAtEndPosition: (node: GoPtr<Node>) => bool): GoPtr<Node> {
+export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int, allowPositionInLeadingTrivia: bool, includePrecedingTokenAtEndPosition: GoPtr<(node: GoPtr<Node>) => bool>): GoPtr<Node> {
   let next: GoPtr<Node> = undefined;
   let prevSubtree: GoPtr<Node> = undefined;
   let current: GoPtr<Node> = Node_AsNode(sourceFile);
@@ -373,11 +374,15 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
   };
 
   const visitNodeList = (nodeList: GoPtr<NodeList>, _v: GoPtr<NodeVisitor>): GoPtr<NodeList> => {
-    if (nodeList === undefined || nodeList.Nodes.length === 0) {
+    if (nodeList === undefined) {
+      return nodeList;
+    }
+    const nodeListNodes = nodeList.Nodes ?? [];
+    if (nodeListNodes.length === 0) {
       return nodeList;
     }
     if (nodeAfterLeft === undefined) {
-      for (const node of nodeList.Nodes) {
+      for (const node of nodeListNodes) {
         if ((node!.Flags & NodeFlagsReparsed) === 0) {
           nodeAfterLeft = node;
           break;
@@ -388,9 +393,9 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
       if (NodeList_End(nodeList) === position && includePrecedingTokenAtEndPosition !== undefined) {
         left = NodeList_End(nodeList);
         nodeAfterLeft = undefined;
-        for (let i = nodeList.Nodes.length - 1; i >= 0; i--) {
-          if ((nodeList.Nodes[i]!.Flags & NodeFlagsReparsed) === 0) {
-            prevSubtree = nodeList.Nodes[i];
+        for (let i = nodeListNodes.length - 1; i >= 0; i--) {
+          if ((nodeListNodes[i]!.Flags & NodeFlagsReparsed) === 0) {
+            prevSubtree = nodeListNodes[i];
             break;
           }
         }
@@ -398,7 +403,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
         left = NodeList_End(nodeList);
         nodeAfterLeft = undefined;
       } else if (NodeList_Pos(nodeList) <= position) {
-        let nodes = nodeList.Nodes;
+        let nodes = nodeListNodes;
         let [index, match] = BinarySearchUniqueFunc(nodes, (middle: int, node: GoPtr<Node>): int => {
           if ((node!.Flags & NodeFlagsReparsed) !== 0) {
             return 0;
@@ -446,7 +451,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
     VisitEachChildAndJSDoc(current, sourceFile, visitNode, visitNodeList);
     if (prevSubtree !== undefined) {
       const child = FindPrecedingTokenEx(sourceFile, position, prevSubtree, false /*excludeJSDoc*/);
-      if (child !== undefined && Node_End(child) === position && includePrecedingTokenAtEndPosition(child)) {
+      if (child !== undefined && Node_End(child) === position && includePrecedingTokenAtEndPosition !== undefined && includePrecedingTokenAtEndPosition(child)) {
         return child;
       }
       prevSubtree = undefined;
@@ -793,8 +798,8 @@ export function FindPrecedingTokenEx(sourceFile: GoPtr<SourceFile>, position: in
       if (foundChild !== undefined) {
         return nodeList;
       }
-      if (nodeList !== undefined && nodeList.Nodes.length > 0) {
-        const nodes = nodeList.Nodes;
+      const nodes = nodeList?.Nodes ?? [];
+      if (nodes.length > 0) {
         const [index, match] = BinarySearchUniqueFunc(nodes, (middle: int, _node: GoPtr<Node>): int => {
           // synthetic jsdoc nodes should have jsdocNode.End() <= n.Pos()
           if ((nodes[middle]!.Flags & NodeFlagsReparsed) !== 0) {
@@ -1097,9 +1102,10 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
       return node;
     };
     const visitNodesFn = (nodeList: GoPtr<NodeList>, _v: GoPtr<NodeVisitor>): GoPtr<NodeList> => {
-      if (nodeList !== undefined && nodeList.Nodes.length > 0) {
+      const nodes = nodeList?.Nodes ?? [];
+      if (nodes.length > 0) {
         hasChildren = true as bool;
-        const [index, _match] = BinarySearchUniqueFunc(nodeList.Nodes, (_middle: int, node: GoPtr<Node>): int => {
+        const [index, _match] = BinarySearchUniqueFunc(nodes, (_middle: int, node: GoPtr<Node>): int => {
           if (Node_End(node) > ep) {
             return comparisonGreaterThan;
           }
@@ -1107,20 +1113,20 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
         });
         let validIndex = -1;
         for (let i = index - 1; i >= 0; i--) {
-          if (!shouldVisitNode(nodeList.Nodes[i])) {
+          if (!shouldVisitNode(nodes[i])) {
             continue;
           }
-          if (isValidPrecedingNode(nodeList.Nodes[i], sourceFile)) {
+          if (isValidPrecedingNode(nodes[i], sourceFile)) {
             validIndex = i;
-            rightmostValidNode = nodeList.Nodes[i];
+            rightmostValidNode = nodes[i];
             break;
           }
         }
         for (let i = validIndex + 1; i < index; i++) {
-          if (!shouldVisitNode(nodeList.Nodes[i])) {
+          if (!shouldVisitNode(nodes[i])) {
             continue;
           }
-          rightmostVisitedNodes = [...rightmostVisitedNodes, nodeList.Nodes[i]];
+          rightmostVisitedNodes = [...rightmostVisitedNodes, nodes[i]];
         }
       }
       return nodeList;
@@ -1292,8 +1298,8 @@ export function FindNextToken(previousToken: GoPtr<Node>, parent: GoPtr<Node>, f
       return node;
     };
     const visitNodesFn = (nodeList: GoPtr<NodeList>, _v: GoPtr<NodeVisitor>): GoPtr<NodeList> => {
-      if (nodeList !== undefined && nodeList.Nodes.length > 0 && foundNode === undefined) {
-        const nodes = nodeList.Nodes;
+      const nodes = nodeList?.Nodes ?? [];
+      if (nodes.length > 0 && foundNode === undefined) {
         const [index, match] = BinarySearchUniqueFunc(nodes, (_i: int, node: GoPtr<Node>): int => {
           if ((node!.Flags & NodeFlagsReparsed) !== 0) {
             return comparisonLessThan;
@@ -1407,21 +1413,20 @@ export function getNodeVisitor(visitNode: (arg0: GoPtr<Node>, arg1: GoPtr<NodeVi
   }
 
   const hooks: NodeVisitorHooks = {
-    VisitNode: wrappedVisitNode!,
-    VisitToken: wrappedVisitNode!,
-    VisitNodes: wrappedVisitNodes!,
     VisitModifiers: (modifiers: GoPtr<ModifierList>, visitor: GoPtr<NodeVisitor>): GoPtr<ModifierList> => {
       if (modifiers !== undefined && wrappedVisitNodes !== undefined) {
         wrappedVisitNodes(modifiers as unknown as GoPtr<NodeList>, visitor);
       }
       return modifiers;
     },
-    VisitEmbeddedStatement: undefined!,
-    VisitIterationBody: undefined!,
-    VisitParameters: undefined!,
-    VisitFunctionBody: undefined!,
-    VisitTopLevelStatements: undefined!,
   };
+  if (wrappedVisitNode !== undefined) {
+    hooks.VisitNode = wrappedVisitNode;
+    hooks.VisitToken = wrappedVisitNode;
+  }
+  if (wrappedVisitNodes !== undefined) {
+    hooks.VisitNodes = wrappedVisitNodes;
+  }
   return NewNodeVisitor(Identity, undefined, hooks);
 }
 

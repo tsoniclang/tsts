@@ -163,7 +163,7 @@ export function GetTextOfJSDocComment(comment: GoPtr<NodeList>): string {
     return "";
   }
   const b = new Builder();
-  for (const n of comment!.Nodes) {
+  for (const n of comment!.Nodes ?? []) {
     switch (n!.Kind) {
       case KindJSDocText:
         b.WriteString(Node_Text(n));

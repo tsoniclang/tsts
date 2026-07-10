@@ -174,7 +174,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  return generatedVisitNodeBase(v, node);`);
   lines.push(`}`);
   lines.push("");
-  lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {`);
+  lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): [GoPtr<GoSlice<GoPtr<Node>>>, bool] {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
   lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
   lines.push(`    return [nodes, false as bool];`);
@@ -220,7 +220,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  return [nodes, false as bool];`);
   lines.push(`}`);
   lines.push("");
-  lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {`);
+  lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Node>>> {`);
   lines.push(`  if (nodes === undefined) {`);
   lines.push(`    return nodes;`);
   lines.push(`  }`);

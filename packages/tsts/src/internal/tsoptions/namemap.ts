@@ -83,7 +83,7 @@ export interface NameMap {
  */
 export function NameMap_Get(receiver: GoPtr<NameMap>, name: string): GoPtr<CommandLineOption> {
   const nm = receiver!;
-  return OrderedMap_GetOrZero(nm.optionsNames, strings.ToLower(name)) as GoPtr<CommandLineOption>;
+  return OrderedMap_GetOrZero(nm.optionsNames, strings.ToLower(name), () => undefined);
 }
 
 /**

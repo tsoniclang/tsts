@@ -43,6 +43,11 @@ func featureCounts(node ast.Node) map[string]int {
 			counts["forStmt"]++
 		case *ast.SendStmt:
 			counts["sendStmt"]++
+		case *ast.UnaryExpr:
+			expression := current.(*ast.UnaryExpr)
+			if expression.Op == token.ARROW {
+				counts["receiveExpr"]++
+			}
 		case *ast.ChanType:
 			counts["chanType"]++
 		case *ast.FuncLit:
@@ -55,6 +60,14 @@ func featureCounts(node ast.Node) map[string]int {
 				}
 				if ident.Name == "recover" {
 					counts["recoverCall"]++
+				}
+				if ident.Obj == nil && ident.Name == "close" {
+					counts["closeChanCall"]++
+				}
+				if ident.Obj == nil && ident.Name == "make" && len(call.Args) > 0 {
+					if _, ok := unparenthesizedGoExpression(call.Args[0]).(*ast.ChanType); ok {
+						counts["makeChanCall"]++
+					}
 				}
 			}
 		}

@@ -472,7 +472,7 @@ export interface NodeBuilderSymbolLinks {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::type::NodeBuilderContext","kind":"type","status":"implemented","sigHash":"4012a0428038ee5734a8ff96ce9b0f1f45dfaad9789ee658eeefe61d99accb37","bodyHash":"610a5764c48c995dd942afe77bd62c70566c0262afce6ab6ae282f3604dcabae"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"enterContext accepts a nil external SymbolTracker, stores it while constructing NodeBuilderContext, then replaces the field with the live internal SymbolTrackerImpl before serialization; TypeScript uses undefined for that transient no-external-sink interface state.","goSignature":"interface{approximateLength:packages/tsts/src/go/scalars.ts::int;canIncreaseExpansionDepth:packages/tsts/src/go/scalars.ts::bool;depth:packages/tsts/src/go/scalars.ts::int;enclosingDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;enclosingFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;enclosingSymbolTypes:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;encounteredError:packages/tsts/src/go/scalars.ts::bool;expansionTruncated:packages/tsts/src/go/scalars.ts::bool;flags:packages/tsts/src/internal/nodebuilder/types.ts::Flags;host:packages/tsts/src/internal/checker/checker/state.ts::Host;inferTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;internalFlags:packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;maxExpansionDepth:packages/tsts/src/go/scalars.ts::int;maxTruncationLength:packages/tsts/src/go/scalars.ts::int;remappedSymbolReferences:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;reportedDiagnostic:packages/tsts/src/go/scalars.ts::bool;reverseMappedStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;suppressReportInferenceFallback:packages/tsts/src/go/scalars.ts::bool;symbolDepth:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/nodebuilderimpl.ts::CompositeSymbolIdentity,packages/tsts/src/go/scalars.ts::int>;trackedSymbols:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::TrackedSymbolArgs>>;tracker:packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker;truncating:packages/tsts/src/go/scalars.ts::bool;typeParameterNames:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<packages/tsts/src/internal/checker/types.ts::TypeId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::Identifier>>;typeParameterNamesByText:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<string>;typeParameterNamesByTextNextNameCount:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<string,packages/tsts/src/go/scalars.ts::int>;typeParameterSymbolList:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<packages/tsts/src/internal/ast/ids.ts::SymbolId>;typeStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;visitedTypes:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/checker/types.ts::TypeId>}","tsSignature":"interface{approximateLength:packages/tsts/src/go/scalars.ts::int;canIncreaseExpansionDepth:packages/tsts/src/go/scalars.ts::bool;depth:packages/tsts/src/go/scalars.ts::int;enclosingDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;enclosingFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;enclosingSymbolTypes:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;encounteredError:packages/tsts/src/go/scalars.ts::bool;expansionTruncated:packages/tsts/src/go/scalars.ts::bool;flags:packages/tsts/src/internal/nodebuilder/types.ts::Flags;host:packages/tsts/src/internal/checker/checker/state.ts::Host;inferTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;internalFlags:packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;maxExpansionDepth:packages/tsts/src/go/scalars.ts::int;maxTruncationLength:packages/tsts/src/go/scalars.ts::int;remappedSymbolReferences:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;reportedDiagnostic:packages/tsts/src/go/scalars.ts::bool;reverseMappedStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;suppressReportInferenceFallback:packages/tsts/src/go/scalars.ts::bool;symbolDepth:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/nodebuilderimpl.ts::CompositeSymbolIdentity,packages/tsts/src/go/scalars.ts::int>;trackedSymbols:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::TrackedSymbolArgs>>;tracker:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>;truncating:packages/tsts/src/go/scalars.ts::bool;typeParameterNames:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<packages/tsts/src/internal/checker/types.ts::TypeId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::Identifier>>;typeParameterNamesByText:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<string>;typeParameterNamesByTextNextNameCount:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<string,packages/tsts/src/go/scalars.ts::int>;typeParameterSymbolList:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<packages/tsts/src/internal/ast/ids.ts::SymbolId>;typeStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;visitedTypes:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/checker/types.ts::TypeId>}"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"NodeBuilderContext carries both a transient nil external SymbolTracker and a nil infer-type-parameter slice; GoPtr preserves those zero values until TS-Go installs or allocates the corresponding runtime values.","goSignature":"interface{approximateLength:packages/tsts/src/go/scalars.ts::int;canIncreaseExpansionDepth:packages/tsts/src/go/scalars.ts::bool;depth:packages/tsts/src/go/scalars.ts::int;enclosingDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;enclosingFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;enclosingSymbolTypes:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;encounteredError:packages/tsts/src/go/scalars.ts::bool;expansionTruncated:packages/tsts/src/go/scalars.ts::bool;flags:packages/tsts/src/internal/nodebuilder/types.ts::Flags;host:packages/tsts/src/internal/checker/checker/state.ts::Host;inferTypeParameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;internalFlags:packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;maxExpansionDepth:packages/tsts/src/go/scalars.ts::int;maxTruncationLength:packages/tsts/src/go/scalars.ts::int;remappedSymbolReferences:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;reportedDiagnostic:packages/tsts/src/go/scalars.ts::bool;reverseMappedStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;suppressReportInferenceFallback:packages/tsts/src/go/scalars.ts::bool;symbolDepth:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/nodebuilderimpl.ts::CompositeSymbolIdentity,packages/tsts/src/go/scalars.ts::int>;trackedSymbols:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::TrackedSymbolArgs>>;tracker:packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker;truncating:packages/tsts/src/go/scalars.ts::bool;typeParameterNames:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<packages/tsts/src/internal/checker/types.ts::TypeId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::Identifier>>;typeParameterNamesByText:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<string>;typeParameterNamesByTextNextNameCount:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<string,packages/tsts/src/go/scalars.ts::int>;typeParameterSymbolList:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<packages/tsts/src/internal/ast/ids.ts::SymbolId>;typeStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;visitedTypes:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/checker/types.ts::TypeId>}","tsSignature":"interface{approximateLength:packages/tsts/src/go/scalars.ts::int;canIncreaseExpansionDepth:packages/tsts/src/go/scalars.ts::bool;depth:packages/tsts/src/go/scalars.ts::int;enclosingDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;enclosingFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;enclosingSymbolTypes:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;encounteredError:packages/tsts/src/go/scalars.ts::bool;expansionTruncated:packages/tsts/src/go/scalars.ts::bool;flags:packages/tsts/src/internal/nodebuilder/types.ts::Flags;host:packages/tsts/src/internal/checker/checker/state.ts::Host;inferTypeParameters:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>;internalFlags:packages/tsts/src/internal/nodebuilder/types.ts::InternalFlags;mapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>;maxExpansionDepth:packages/tsts/src/go/scalars.ts::int;maxTruncationLength:packages/tsts/src/go/scalars.ts::int;remappedSymbolReferences:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::SymbolId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;reportedDiagnostic:packages/tsts/src/go/scalars.ts::bool;reverseMappedStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>;suppressReportInferenceFallback:packages/tsts/src/go/scalars.ts::bool;symbolDepth:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/checker/nodebuilderimpl.ts::CompositeSymbolIdentity,packages/tsts/src/go/scalars.ts::int>;trackedSymbols:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::TrackedSymbolArgs>>;tracker:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/nodebuilder/types.ts::SymbolTracker>;truncating:packages/tsts/src/go/scalars.ts::bool;typeParameterNames:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<packages/tsts/src/internal/checker/types.ts::TypeId,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::Identifier>>;typeParameterNamesByText:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<string>;typeParameterNamesByTextNextNameCount:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<string,packages/tsts/src/go/scalars.ts::int>;typeParameterSymbolList:packages/tsts/src/internal/collections/cow.ts::CopyOnWriteSet<packages/tsts/src/internal/ast/ids.ts::SymbolId>;typeStack:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>;visitedTypes:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/checker/types.ts::TypeId>}"}
  *
  * Go source:
  * NodeBuilderContext struct {
@@ -526,7 +526,7 @@ export interface NodeBuilderContext {
   expansionTruncated: bool;
   enclosingDeclaration: GoPtr<Node>;
   enclosingFile: GoPtr<SourceFile>;
-  inferTypeParameters: GoSlice<GoPtr<Type>>;
+  inferTypeParameters: GoPtr<GoSlice<GoPtr<Type>>>;
   visitedTypes: Set<TypeId>;
   symbolDepth: GoMap<CompositeSymbolIdentity, int>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
@@ -868,10 +868,12 @@ export function NodeBuilderImpl_checkTypeExpandability(receiver: GoPtr<NodeBuild
   // Recurse into type arguments (e.g., check Apple in Promise<Apple>).
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     const typeArgs = Checker_getTypeArguments(receiver!.ch, t);
-    for (const arg of typeArgs) {
-      NodeBuilderImpl_checkTypeExpandability(receiver, arg);
-      if (receiver!.ctx!.canIncreaseExpansionDepth) {
-        return;
+    if (typeArgs !== undefined) {
+      for (const arg of typeArgs) {
+        NodeBuilderImpl_checkTypeExpandability(receiver, arg);
+        if (receiver!.ctx!.canIncreaseExpansionDepth) {
+          return;
+        }
       }
     }
   }
@@ -947,7 +949,7 @@ export function NodeBuilderImpl_appendReferenceToType(receiver: GoPtr<NodeBuilde
   }
   if (IsTypeReferenceNode(root)) {
     const typeRef = AsTypeReferenceNode(root);
-    if ((receiver!.ctx!.flags & FlagsUseInstantiationExpressions) !== 0 && typeRef!.TypeArguments !== undefined && typeRef!.TypeArguments.Nodes.length !== 0) {
+    if ((receiver!.ctx!.flags & FlagsUseInstantiationExpressions) !== 0 && typeRef!.TypeArguments !== undefined && (typeRef!.TypeArguments.Nodes?.length ?? 0) !== 0) {
       const ids2 = getAccessStack(ref);
       const expr = ids2.reduce<GoPtr<Expression>>(
         (e, id) => NewPropertyAccessExpression(receiver!.f, e, undefined, id, NodeFlagsNone),
@@ -1035,6 +1037,7 @@ export function NodeBuilderImpl_createElidedInformationPlaceholder(receiver: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.mapToTypeNodes","kind":"method","status":"implemented","sigHash":"358c87c81519e49d1ca70ffc89d7fe092a67bf0ebb47d305a2bee61b6fe5baca","bodyHash":"2a303dc32bfb2202a13e0dd996ba99383b3d3578a1558a76b9aeb45478debdd6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) mapToTypeNodes(list []*Type, isBareList bool) *ast.NodeList {
@@ -1130,8 +1133,8 @@ export function NodeBuilderImpl_createElidedInformationPlaceholder(receiver: GoP
  * 	return b.f.NewNodeList(result)
  * }
  */
-export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>, list: GoSlice<GoPtr<Type>>, isBareList: bool): GoPtr<NodeList> {
-  if (list.length === 0) {
+export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>, list: GoPtr<GoSlice<GoPtr<Type>>>, isBareList: bool): GoPtr<NodeList> {
+  if (list === undefined || list.length === 0) {
     return undefined;
   }
   if (NodeBuilderImpl_checkTruncationLength(receiver)) {
@@ -1486,14 +1489,15 @@ export function NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver: G
  */
 export function NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<StructuredType>): GoPtr<Type> {
   const asType = (t as unknown as TypeData).AsType();
-  if (StructuredType_ConstructSignatures(t).length === 0) {
+  const sourceConstructSignatures = StructuredType_ConstructSignatures(t);
+  if (sourceConstructSignatures === undefined || sourceConstructSignatures.length === 0) {
     return asType;
   }
   if (t!.objectTypeWithoutAbstractConstructSignatures !== undefined) {
     return t!.objectTypeWithoutAbstractConstructSignatures;
   }
-  const constructSignatures = Filter(StructuredType_ConstructSignatures(t), (sig) => (sig!.flags & SignatureFlagsAbstract) === 0);
-  if (constructSignatures.length === StructuredType_ConstructSignatures(t).length) {
+  const constructSignatures = Filter(sourceConstructSignatures, (sig) => (sig!.flags & SignatureFlagsAbstract) === 0);
+  if (constructSignatures.length === sourceConstructSignatures.length) {
     t!.objectTypeWithoutAbstractConstructSignatures = asType;
     return asType;
   }
@@ -2050,7 +2054,7 @@ export function NodeBuilderImpl_createAccessFromSymbolChain(receiver: GoPtr<Node
   EmitContext_AddEmitFlags(receiver!.e, identifier, EFNoAsciiEscaping);
   if (index > stopper) {
     const lhs = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, index - 1, stopper, overrideTypeArguments);
-    if ((receiver!.ctx!.flags & FlagsUseInstantiationExpressions) === 0 || (IsEntityName(lhs) && (typeParameterNodes === undefined || typeParameterNodes.Nodes.length === 0))) {
+    if ((receiver!.ctx!.flags & FlagsUseInstantiationExpressions) === 0 || (IsEntityName(lhs) && (typeParameterNodes === undefined || (typeParameterNodes.Nodes?.length ?? 0) === 0))) {
       return NewQualifiedName(receiver!.f, lhs as GoPtr<EntityName>, identifier as GoPtr<IdentifierNode>);
     }
     return NodeBuilderImpl_createExpressionWithTypeArguments(
@@ -2616,7 +2620,7 @@ export interface sortedSymbolNamePair {
  * 	return nil
  * }
  */
-export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, endOfChain: bool, yieldModuleSymbol: bool): GoSlice<GoPtr<Symbol>> {
+export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, endOfChain: bool, yieldModuleSymbol: bool): GoPtr<GoSlice<GoPtr<Symbol>>> {
   let accessibleSymbolChain = Checker_getAccessibleSymbolChain(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration, meaning, ((receiver!.ctx!.flags & FlagsUseOnlyExternalAliasing) !== 0) as bool);
   let qualifierMeaning = meaning;
   if (accessibleSymbolChain !== undefined && accessibleSymbolChain.length > 1) {
@@ -2647,7 +2651,7 @@ export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>,
               break;
             }
           }
-          let nextSyms: GoSlice<GoPtr<Symbol>> = accessibleSymbolChain !== undefined && accessibleSymbolChain.length > 0 ? accessibleSymbolChain : undefined!;
+          let nextSyms: GoPtr<GoSlice<GoPtr<Symbol>>> = accessibleSymbolChain !== undefined && accessibleSymbolChain.length > 0 ? accessibleSymbolChain : undefined;
           if (nextSyms === undefined || nextSyms.length === 0) {
             let fallback = Checker_getAliasForSymbolInContainer(receiver!.ch, parent, symbol_);
             if (fallback === undefined) {
@@ -2666,11 +2670,11 @@ export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>,
   }
   if (endOfChain || (symbol_!.Flags & (SymbolFlagsTypeLiteral | SymbolFlagsObjectLiteral)) === 0) {
     if (!endOfChain && !yieldModuleSymbol && Some(symbol_!.Declarations, hasNonGlobalAugmentationExternalModuleSymbol)) {
-      return [];
+      return undefined;
     }
     return [symbol_];
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -3234,7 +3238,7 @@ export function NodeBuilderImpl_typeParameterShadowsOtherTypeParameterInScope(re
  */
 export function NodeBuilderImpl_typeParameterToName(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>): GoPtr<Identifier> {
   if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0) {
-    const [cached, ok] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNames, typeParameter!.id);
+    const [cached, ok] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNames, typeParameter!.id, (): GoPtr<Identifier> => undefined);
     if (ok) {
       return cached;
     }
@@ -3252,8 +3256,8 @@ export function NodeBuilderImpl_typeParameterToName(receiver: GoPtr<NodeBuilderI
   if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0) {
     const rawText = AsIdentifier(result)!.Text;
     // Go's `i, _ := ...Get(rawText)` yields the zero value (0) when the key is absent.
-    const [prevI] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNamesByTextNextNameCount, rawText);
-    let i = prevI ?? 0;
+    const [prevI] = CopyOnWriteMap_Get(receiver!.ctx!.typeParameterNamesByTextNextNameCount, rawText, () => 0 as int);
+    let i = prevI;
     let text = rawText;
     while (true) {
       if (!CopyOnWriteSet_Has(receiver!.ctx!.typeParameterNamesByText, text) && !NodeBuilderImpl_typeParameterShadowsOtherTypeParameterInScope(receiver, text, typeParameter)) {
@@ -3639,18 +3643,20 @@ export function NodeBuilderImpl_typeParameterToDeclaration(receiver: GoPtr<NodeB
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeParameterDeclarations","kind":"method","status":"implemented","sigHash":"102a8b7c3a89105042ca73b1c21597f6aebabe6af0642683db15661fe32b7721","bodyHash":"e3b04cdef9e22534d331b349359dacf3bed736e4f14a8a43bbcb36854bcd4afa"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) symbolToTypeParameterDeclarations(symbol *ast.Symbol) []*ast.Node {
  * 	return b.typeParametersToTypeParameterDeclarations(symbol)
  * }
  */
-export function NodeBuilderImpl_symbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
+export function NodeBuilderImpl_symbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Node>>> {
   return NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiver, symbol_);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParametersToTypeParameterDeclarations","kind":"method","status":"implemented","sigHash":"54a5f81c6ecb718ee941edad8da0bd611ddc4a954d677d78156813f62b13fc74","bodyHash":"0cad470717b0b4ce5700ca4c4fb3e081db67e0c2fac69772a15151ebdb7cb33a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeParametersToTypeParameterDeclarations(symbol *ast.Symbol) []*ast.Node {
@@ -3672,7 +3678,7 @@ export function NodeBuilderImpl_symbolToTypeParameterDeclarations(receiver: GoPt
  * 	return nil
  * }
  */
-export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
+export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Node>>> {
   const targetSymbol = Checker_getTargetSymbol(receiver!.ch, symbol_);
   if ((targetSymbol!.Flags & (SymbolFlagsClass | SymbolFlagsInterface | SymbolFlagsAlias)) !== 0) {
     const results: GoSlice<GoPtr<Node>> = [];
@@ -3689,7 +3695,7 @@ export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiv
     }
     return results;
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -4126,40 +4132,47 @@ export interface SignatureToSignatureDeclarationOptions {
  * }
  */
 export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>, kind: Kind, options: GoPtr<SignatureToSignatureDeclarationOptions>): GoPtr<Node> {
-  const typeParameters: GoSlice<GoPtr<Node>> = [];
+  let typeParameters: GoPtr<GoSlice<GoPtr<Node>>>;
   const [expandedParams, cleanup] = NodeBuilderImpl_enterSignatureScope(receiver, signature);
-  const signatureParameters = signature!.parameters ?? [];
-  const signatureTypeParameters = signature!.typeParameters ?? [];
   receiver!.ctx!.approximateLength += 3;
   if ((receiver!.ctx!.flags & FlagsWriteTypeArgumentsOfSignature) !== 0 && signature!.target !== undefined && signature!.mapper !== undefined && signature!.target!.typeParameters.length !== 0) {
     for (const parameter of signature!.target!.typeParameters) {
-      typeParameters.push(NodeBuilderImpl_typeToTypeNode(receiver, Checker_instantiateType(receiver!.ch, parameter, signature!.mapper)));
+      const typeParameter = NodeBuilderImpl_typeToTypeNode(receiver, Checker_instantiateType(receiver!.ch, parameter, signature!.mapper));
+      typeParameters = typeParameters === undefined ? [typeParameter] : [...typeParameters, typeParameter];
     }
   } else {
-    for (const parameter of signatureTypeParameters) {
-      typeParameters.push(NodeBuilderImpl_typeParameterToDeclaration(receiver, parameter));
+    for (const parameter of signature!.typeParameters) {
+      const typeParameter = NodeBuilderImpl_typeParameterToDeclaration(receiver, parameter);
+      typeParameters = typeParameters === undefined ? [typeParameter] : [...typeParameters, typeParameter];
     }
   }
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags &= ~FlagsSuppressAnyReturnType;
-  const parameterSource = Some(expandedParams, (p) => p !== expandedParams[expandedParams.length - 1] && (p!.CheckFlags & CheckFlagsRestParameter) !== 0)
-    ? signatureParameters
+  let hasNonTrailingRestParameter = false;
+  if (expandedParams !== undefined) {
+    const lastExpandedParameter = expandedParams.length === 0 ? undefined : expandedParams[expandedParams.length - 1];
+    hasNonTrailingRestParameter = Some(expandedParams, (parameter) => parameter !== lastExpandedParameter && (parameter!.CheckFlags & CheckFlagsRestParameter) !== 0);
+  }
+  const parameterSource = hasNonTrailingRestParameter
+    ? signature!.parameters
     : expandedParams;
-  let parameters: GoSlice<GoPtr<Node>> = parameterSource.map((parameter) => NodeBuilderImpl_symbolToParameterDeclaration(receiver, parameter, kind === KindConstructor));
+  let parameters = parameterSource === undefined
+    ? undefined
+    : parameterSource.map((parameter) => NodeBuilderImpl_symbolToParameterDeclaration(receiver, parameter, kind === KindConstructor));
   const thisParameter = (receiver!.ctx!.flags & FlagsOmitThisParameter) !== 0 ? undefined : NodeBuilderImpl_tryGetThisParameterDeclaration(receiver, signature);
   if (thisParameter !== undefined) {
-    parameters = [thisParameter, ...parameters];
+    parameters = parameters === undefined ? [thisParameter] : [thisParameter, ...parameters];
   }
   restoreFlags();
   let returnTypeNode = NodeBuilderImpl_serializeReturnTypeForSignature(receiver, signature, true);
-  let modifiers: GoSlice<GoPtr<Node>> = options !== undefined ? options!.modifiers : undefined!;
+  let modifiers: GoPtr<GoSlice<GoPtr<Node>>> = options !== undefined ? options!.modifiers : undefined;
   if (kind === KindConstructorType && (signature!.flags & SignatureFlagsAbstract) !== 0) {
     const flags = ModifiersToFlags(modifiers ?? []);
     modifiers = CreateModifiersFromModifierFlags((flags | ModifierFlagsAbstract) >>> 0, (modifierKind) => NodeFactory_NewModifier(receiver!.f, modifierKind));
   }
   const paramList = NodeFactory_NewNodeList(receiver!.f, parameters);
-  const typeParamList = typeParameters.length !== 0 ? NodeFactory_NewNodeList(receiver!.f, typeParameters) : undefined;
-  const modifierList = (modifiers ?? []).length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
+  const typeParamList = typeParameters !== undefined && typeParameters.length !== 0 ? NodeFactory_NewNodeList(receiver!.f, typeParameters) : undefined;
+  const modifierList = modifiers !== undefined && modifiers.length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
   const name = options !== undefined && options!.name !== undefined ? options!.name : NewIdentifier(receiver!.f, "");
   let node: GoPtr<Node>;
   switch (kind) {
@@ -4217,6 +4230,7 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::Checker.getExpandedParameters","kind":"method","status":"implemented","sigHash":"445d61ebc8f61cf773eb825ce8a50af6065b9a63eb2f819395c68bd78621cfd3","bodyHash":"5015e85ef6bae014f29bcd1786dc1eef5e438d4c2b01f80ee713327449c6dd8f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>>"}
  *
  * Go source:
  * func (c *Checker) getExpandedParameters(sig *Signature, skipUnionExpanding bool) [][]*ast.Symbol {
@@ -4307,16 +4321,21 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
  * 	return [][]*ast.Symbol{sig.parameters}
  * }
  */
-export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, skipUnionExpanding: bool): GoSlice<GoSlice<GoPtr<Symbol>>> {
+export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, skipUnionExpanding: bool): GoSlice<GoPtr<GoSlice<GoPtr<Symbol>>>> {
   if (signatureHasRestParameter(sig)) {
     const restIndex = sig!.parameters.length - 1;
     const restSymbol = sig!.parameters[restIndex];
     const restType = Checker_getTypeOfSymbol(receiver, restSymbol);
-    const getUniqAssociatedNamesFromTupleType = (t: GoPtr<Type>, tupleRestSymbol: GoPtr<Symbol>): GoSlice<string> => {
-      const names = Type_Target(t) !== undefined
-        ? Type_AsTupleType(Type_Target(t))!.elementInfos.map((info, index) => Checker_getTupleElementLabel(receiver, info, tupleRestSymbol, index))
-        : [];
-      if (names.length > 0) {
+    const getUniqAssociatedNamesFromTupleType = (t: GoPtr<Type>, tupleRestSymbol: GoPtr<Symbol>): GoPtr<GoSlice<string>> => {
+      const target = Type_Target(t);
+      if (target === undefined) {
+        throw new Error("tuple rest type requires a tuple target");
+      }
+      const elementInfos = Type_AsTupleType(target)!.elementInfos;
+      const names = elementInfos === undefined
+        ? undefined
+        : elementInfos.map((info, index) => Checker_getTupleElementLabel(receiver, info, tupleRestSymbol, index));
+      if (names !== undefined && names.length > 0) {
         const duplicates: GoSlice<int> = [];
         const uniqueNames = new globalThis.Map<string, bool>();
         for (let i = 0; i < names.length; i++) {
@@ -4348,8 +4367,21 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
     const expandSignatureParametersWithTupleMembers = (tupleRestType: GoPtr<Type>, tupleRestIndex: int, tupleRestSymbol: GoPtr<Symbol>): GoSlice<GoPtr<Symbol>> => {
       const elementTypes = Checker_getTypeArguments(receiver, tupleRestType);
       const associatedNames = getUniqAssociatedNamesFromTupleType(tupleRestType, tupleRestSymbol);
-      const targetTuple = Type_AsTupleType(Type_Target(tupleRestType))!;
+      const tupleTarget = Type_Target(tupleRestType);
+      if (tupleTarget === undefined) {
+        throw new Error("expanded tuple rest type requires a tuple target");
+      }
+      const targetTuple = Type_AsTupleType(tupleTarget)!;
+      if (elementTypes === undefined) {
+        return sig!.parameters.slice(0, tupleRestIndex);
+      }
+      if (elementTypes.length !== 0 && (associatedNames === undefined || targetTuple.elementInfos === undefined)) {
+        throw new Error("nonempty tuple rest type requires element metadata");
+      }
       const restParams = elementTypes.map((type_, index) => {
+        if (associatedNames === undefined || targetTuple.elementInfos === undefined) {
+          throw new Error("tuple rest element metadata was not initialized");
+        }
         const name = associatedNames[index]!;
         const flags = targetTuple.elementInfos[index]!.flags;
         let checkFlags: CheckFlags = CheckFlagsNone;
@@ -5575,24 +5607,27 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
   const optionalToken = (propertySymbol!.Flags & SymbolFlagsOptional) !== 0
     ? NewToken(receiver!.f, KindQuestionToken)
     : undefined;
+  const propertyMembers = Checker_getPropertiesOfObjectType(receiver!.ch, propertyType);
   if ((propertySymbol!.Flags & (SymbolFlagsFunction | SymbolFlagsMethod)) !== 0 &&
-    Checker_getPropertiesOfObjectType(receiver!.ch, propertyType).length === 0 &&
+    (propertyMembers === undefined || propertyMembers.length === 0) &&
     !Checker_isReadonlySymbol(receiver!.ch, propertySymbol)) {
     const signatures = Checker_getSignaturesOfType(
       receiver!.ch,
       Checker_filterType(receiver!.ch, propertyType, (type_) => (type_!.flags & TypeFlagsUndefined) === 0),
       SignatureKindCall,
     );
-    for (const signature of signatures) {
-      const methodDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindMethodSignature, {
-        modifiers: [],
-        name: propertyName,
-        questionToken: optionalToken,
-      });
-      NodeBuilderImpl_setCommentRange(receiver, methodDeclaration, signature!.declaration ?? propertySymbol!.ValueDeclaration);
-      typeElements.push(methodDeclaration as GoPtr<TypeElement>);
+    if (signatures !== undefined) {
+      for (const signature of signatures) {
+        const methodDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindMethodSignature, {
+          modifiers: [],
+          name: propertyName,
+          questionToken: optionalToken,
+        });
+        NodeBuilderImpl_setCommentRange(receiver, methodDeclaration, signature!.declaration ?? propertySymbol!.ValueDeclaration);
+        typeElements.push(methodDeclaration as GoPtr<TypeElement>);
+      }
     }
-    if (signatures.length !== 0 || optionalToken === undefined) {
+    if ((signatures !== undefined && signatures.length !== 0) || optionalToken === undefined) {
       return typeElements;
     }
   }
@@ -5701,14 +5736,20 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     return NodeFactory_NewNodeList(receiver!.f, [NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, "..."), undefined, undefined, undefined) as GoPtr<TypeElement>]);
   }
   let typeElements: GoSlice<GoPtr<TypeElement>> = [];
-  for (const signature of StructuredType_CallSignatures(resolvedType)) {
-    typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindCallSignature, undefined) as GoPtr<TypeElement>);
-  }
-  for (const signature of StructuredType_ConstructSignatures(resolvedType)) {
-    if ((signature!.flags & SignatureFlagsAbstract) !== 0) {
-      continue;
+  const callSignatures = StructuredType_CallSignatures(resolvedType);
+  if (callSignatures !== undefined) {
+    for (const signature of callSignatures) {
+      typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindCallSignature, undefined) as GoPtr<TypeElement>);
     }
-    typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>);
+  }
+  const constructSignatures = StructuredType_ConstructSignatures(resolvedType);
+  if (constructSignatures !== undefined) {
+    for (const signature of constructSignatures) {
+      if ((signature!.flags & SignatureFlagsAbstract) !== 0) {
+        continue;
+      }
+      typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>);
+    }
   }
   const resolvedObjectFlags = (resolvedType as unknown as TypeData).AsType()!.objectFlags;
   for (const info of resolvedType!.indexInfos ?? []) {
@@ -5824,27 +5865,40 @@ export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<Nod
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, t);
   const callSigs = StructuredType_CallSignatures(resolved);
   const ctorSigs = StructuredType_ConstructSignatures(resolved);
+  const callSignatureCount = callSigs === undefined ? 0 : callSigs.length;
+  const constructSignatureCount = ctorSigs === undefined ? 0 : ctorSigs.length;
   if ((resolved!.properties ?? []).length === 0 && (resolved!.indexInfos ?? []).length === 0) {
-    if (callSigs.length === 0 && ctorSigs.length === 0) {
+    if (callSignatureCount === 0 && constructSignatureCount === 0) {
       receiver!.ctx!.approximateLength += 2;
       const result = NewTypeLiteralNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []));
       EmitContext_SetEmitFlags(receiver!.e, result, EFSingleLine);
       return result as GoPtr<TypeNode>;
     }
-    if (callSigs.length === 1 && ctorSigs.length === 0) {
+    if (callSignatureCount === 1 && constructSignatureCount === 0) {
+      if (callSigs === undefined) {
+        throw new Error("nonzero call signature count requires a signature slice");
+      }
       return NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, callSigs[0], KindFunctionType, undefined) as GoPtr<TypeNode>;
     }
-    if (ctorSigs.length === 1 && callSigs.length === 0) {
+    if (constructSignatureCount === 1 && callSignatureCount === 0) {
+      if (ctorSigs === undefined) {
+        throw new Error("nonzero construct signature count requires a signature slice");
+      }
       return NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, ctorSigs[0], KindConstructorType, undefined) as GoPtr<TypeNode>;
     }
   }
   const abstractSignatures = Filter(ctorSigs, (signature) => (signature!.flags & SignatureFlagsAbstract) !== 0);
   if (abstractSignatures.length > 0) {
     const types = abstractSignatures.map((signature) => Checker_getOrCreateTypeFromSignature(receiver!.ch, signature));
-    const propertyCount = (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0
-      ? (resolved!.properties ?? []).filter((property) => (property!.Flags & SymbolFlagsPrototype) === 0).length
-      : (resolved!.properties ?? []).length;
-    const typeElementCount = callSigs.length + (ctorSigs.length - abstractSignatures.length) + (resolved!.indexInfos ?? []).length + propertyCount;
+    const resolvedProperties = resolved!.properties;
+    let propertyCount = 0;
+    if (resolvedProperties !== undefined) {
+      propertyCount = (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0
+        ? resolvedProperties.filter((property) => (property!.Flags & SymbolFlagsPrototype) === 0).length
+        : resolvedProperties.length;
+    }
+    const indexInfoCount = resolved!.indexInfos === undefined ? 0 : resolved!.indexInfos.length;
+    const typeElementCount = callSignatureCount + (constructSignatureCount - abstractSignatures.length) + indexInfoCount + propertyCount;
     if (typeElementCount !== 0) {
       types.push(NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver, resolved));
     }
@@ -6486,32 +6540,43 @@ export function NodeBuilderImpl_typeReferenceToTypeNode(receiver: GoPtr<NodeBuil
   }
   if ((target!.objectFlags & ObjectFlagsTuple) !== 0) {
     const tupleTarget = Type_AsTupleType(target);
+    const elementInfos = tupleTarget!.elementInfos;
+    if (typeArguments.length !== 0 && elementInfos === undefined) {
+      throw new Error("nonempty tuple type requires element metadata");
+    }
     typeArguments = typeArguments.map((arg, index) => {
-      const isOptional = index < tupleTarget!.elementInfos.length && (tupleTarget!.elementInfos[index]!.flags & ElementFlagsOptional) !== 0;
+      if (elementInfos === undefined) {
+        throw new Error("tuple element metadata was not initialized");
+      }
+      const isOptional = index < elementInfos.length && (elementInfos[index]!.flags & ElementFlagsOptional) !== 0;
       return Checker_removeMissingType(receiver!.ch, arg, isOptional);
     });
     if (typeArguments.length > 0) {
       const arity = Checker_getTypeReferenceArity(receiver!.ch, t);
       const tupleConstituentNodes = NodeBuilderImpl_mapToTypeNodes(receiver, typeArguments.slice(0, arity), false);
       if (tupleConstituentNodes !== undefined) {
-        for (let index = 0; index < tupleConstituentNodes.Nodes.length; index++) {
-          const flags = tupleTarget!.elementInfos[index]!.flags;
-          const labeledElementDeclaration = tupleTarget!.elementInfos[index]!.labeledDeclaration;
-          const currentNode = tupleConstituentNodes.Nodes[index] as GoPtr<TypeNode>;
+        const constituentNodes = tupleConstituentNodes.Nodes ?? [];
+        for (let index = 0; index < constituentNodes.length; index++) {
+          if (elementInfos === undefined) {
+            throw new Error("tuple constituent metadata was not initialized");
+          }
+          const flags = elementInfos[index]!.flags;
+          const labeledElementDeclaration = elementInfos[index]!.labeledDeclaration;
+          const currentNode = constituentNodes[index] as GoPtr<TypeNode>;
           if (labeledElementDeclaration !== undefined) {
             const elementType = (flags & ElementFlagsRest) !== 0 ? NewArrayTypeNode(receiver!.f, currentNode) as GoPtr<TypeNode> : currentNode;
-            tupleConstituentNodes.Nodes[index] = NewNamedTupleMember(
+            constituentNodes[index] = NewNamedTupleMember(
               receiver!.f,
               (flags & ElementFlagsVariable) !== 0 ? NewToken(receiver!.f, KindDotDotDotToken) as never : undefined,
-              NodeBuilderImpl_newIdentifier(receiver, Checker_getTupleElementLabel(receiver!.ch, tupleTarget!.elementInfos[index]!, undefined, index), undefined),
+              NodeBuilderImpl_newIdentifier(receiver, Checker_getTupleElementLabel(receiver!.ch, elementInfos[index]!, undefined, index), undefined),
               (flags & ElementFlagsOptional) !== 0 ? NewToken(receiver!.f, KindQuestionToken) as never : undefined,
               elementType,
             );
           } else if ((flags & ElementFlagsVariable) !== 0) {
             const restType = (flags & ElementFlagsRest) !== 0 ? NewArrayTypeNode(receiver!.f, currentNode) as GoPtr<TypeNode> : currentNode;
-            tupleConstituentNodes.Nodes[index] = NewRestTypeNode(receiver!.f, restType);
+            constituentNodes[index] = NewRestTypeNode(receiver!.f, restType);
           } else if ((flags & ElementFlagsOptional) !== 0) {
-            tupleConstituentNodes.Nodes[index] = NewOptionalTypeNode(receiver!.f, currentNode);
+            constituentNodes[index] = NewOptionalTypeNode(receiver!.f, currentNode);
           }
         }
         const tupleTypeNode = NewTupleTypeNode(receiver!.f, tupleConstituentNodes as never);
@@ -7237,8 +7302,8 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
         if (isReservedMemberName(sym!.Name) && (sym!.Flags & SymbolFlagsClass) === 0) {
           return NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, ""), typeArgumentNodes) as GoPtr<TypeNode>;
         }
-        if (typeArgumentNodes !== undefined && typeArgumentNodes.Nodes.length === 1 && sym === receiver!.ch!.globalArrayType!.symbol) {
-          return NewArrayTypeNode(receiver!.f, typeArgumentNodes.Nodes[0] as GoPtr<TypeNode>) as GoPtr<TypeNode>;
+        if (typeArgumentNodes !== undefined && (typeArgumentNodes.Nodes?.length ?? 0) === 1 && sym === receiver!.ch!.globalArrayType!.symbol) {
+          return NewArrayTypeNode(receiver!.f, typeArgumentNodes.Nodes?.[0] as GoPtr<TypeNode>) as GoPtr<TypeNode>;
         }
         return NodeBuilderImpl_symbolToTypeNode(receiver, sym, SymbolFlagsType, typeArgumentNodes);
       }
@@ -7307,7 +7372,7 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
         return NodeBuilderImpl_typeToTypeNode(receiver, types[0]);
       }
       const typeNodes = NodeBuilderImpl_mapToTypeNodes(receiver, types, true);
-      if (typeNodes !== undefined && typeNodes.Nodes.length > 0) {
+      if (typeNodes !== undefined && (typeNodes.Nodes?.length ?? 0) > 0) {
         return ((t!.flags & TypeFlagsUnion) !== 0 ? NewUnionTypeNode(receiver!.f, typeNodes) : NewIntersectionTypeNode(receiver!.f, typeNodes)) as GoPtr<TypeNode>;
       }
       if (!receiver!.ctx!.encounteredError && (receiver!.ctx!.flags & FlagsAllowEmptyUnionOrIntersection) === 0) {
@@ -7478,7 +7543,7 @@ export function NodeBuilderImpl_createAccessExpression(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_createExpressionWithTypeArguments(receiver: GoPtr<NodeBuilderImpl>, expr: GoPtr<Expression>, typeArguments: GoPtr<NodeList>): GoPtr<Expression> {
-  if (typeArguments === undefined || typeArguments.Nodes.length === 0) {
+  if (typeArguments === undefined || (typeArguments.Nodes?.length ?? 0) === 0) {
     return expr;
   }
   return NewExpressionWithTypeArguments(receiver!.f, expr, typeArguments);

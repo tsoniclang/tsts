@@ -33,6 +33,9 @@ import {
 // Go: module.ResolvedModule{OriginalPath: ..., ResolvedFileName: ...} — zero
 // values for the remaining fields.
 const zeroPackageId = (): PackageId => ({ Name: "", SubModuleName: "", Version: "", PeerDependencies: "" });
+const zeroKnownDirectoryLink = (): GoPtr<KnownDirectoryLink> => undefined;
+const zeroStringSet = (): GoPtr<SyncSet<string>> => undefined;
+const zeroString = (): string => "";
 const resolvedModule = (originalPath: string, resolvedFileName: string): GoPtr<ResolvedModule> => ({
   ResolutionDiagnostics: [],
   ResolvedFileName: resolvedFileName,
@@ -62,15 +65,18 @@ test("SetDirectory", () => {
   KnownSymlinks_SetDirectory(cache, "/test/symlink", symlinkPath, realDirectory);
 
   // Check that directory was stored
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath, zeroKnownDirectoryLink);
   assert.ok(ok, "Expected directory to be stored");
-  assert.equal((stored as GoPtr<KnownDirectoryLink>)!.Real, realDirectory.Real);
-  assert.equal((stored as GoPtr<KnownDirectoryLink>)!.RealPath, realDirectory.RealPath);
+  assert.ok(stored !== undefined);
+  assert.equal(stored.Real, realDirectory.Real);
+  assert.equal(stored.RealPath, realDirectory.RealPath);
 
   // Check that realpath mapping was created
-  const [set, ok2] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(cache), realDirectory.RealPath);
-  assert.ok(ok2 && SyncSet_Size(set as GoPtr<SyncSet<string>>) !== 0, "Expected realpath mapping to be created");
-  assert.ok(SyncSet_Has(set as GoPtr<SyncSet<string>>, "/test/symlink"), "Expected symlink '/test/symlink' to be in set");
+  const [set, ok2] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(cache), realDirectory.RealPath, zeroStringSet);
+  assert.ok(ok2, "Expected realpath mapping to be created");
+  assert.ok(set !== undefined);
+  assert.notEqual(SyncSet_Size(set), 0, "Expected realpath mapping to be nonempty");
+  assert.ok(SyncSet_Has(set, "/test/symlink"), "Expected symlink '/test/symlink' to be in set");
 });
 
 test("SetFile", () => {
@@ -81,7 +87,7 @@ test("SetFile", () => {
 
   KnownSymlinks_SetFile(cache, symlink, symlinkPath, realpath);
 
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, zeroString);
   assert.ok(ok, "Expected file to be stored");
   assert.equal(stored, realpath);
 });
@@ -101,7 +107,7 @@ test("ProcessResolution", () => {
 
   // Check that file was stored
   const symlinkPath = ToPath(originalPath, "/test/dir", true as bool);
-  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+  const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, zeroString);
   assert.ok(ok, "Expected file to be stored");
   assert.equal(stored, resolvedPath);
 });
@@ -178,7 +184,7 @@ test("SetSymlinksFromResolutions", () => {
   // Check that files were stored
   for (const res of resolvedModules) {
     const symlinkPath = ToPath(res.originalPath, "/test/dir", true as bool);
-    const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath);
+    const [stored, ok] = SyncMap_Load(KnownSymlinks_Files(cache), symlinkPath, zeroString);
     assert.ok(ok, `Expected file '${res.originalPath}' to be stored`);
     assert.equal(stored, res.resolvedPath);
   }
@@ -201,9 +207,10 @@ test("KnownSymlinksThreadSafety", () => {
     KnownSymlinks_SetDirectory(cache, "/test/symlink" + suffix, symlinkPath, realDirectory);
 
     // Read back
-    const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath);
+    const [stored, ok] = SyncMap_Load(KnownSymlinks_Directories(cache), symlinkPath, zeroKnownDirectoryLink);
     assert.ok(ok, `Round ${id}: Expected directory to be stored`);
-    assert.equal((stored as GoPtr<KnownDirectoryLink>)!.Real, realDirectory.Real, `Round ${id}: Real`);
+    assert.ok(stored !== undefined);
+    assert.equal(stored.Real, realDirectory.Real, `Round ${id}: Real`);
   }
 
   // Verify all directories were stored

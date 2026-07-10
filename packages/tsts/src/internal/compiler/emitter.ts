@@ -81,6 +81,7 @@ export const EmitOnlyForcedDts: EmitOnly = 3;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::emitter","kind":"type","status":"implemented","sigHash":"454673fa184afd6cc516ef23c6f14be2056fde32c5285194140584c8d2a3f1d9","bodyHash":"c0c17e1e1093155fed2b36136c3f63b4451e74b2627fb3a8d664b62615e55a2a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type emitter uses an explicit undefined-capable TypeScript representation at member 'host', member 'writer', member 'writeFile' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{emitOnly:packages/tsts/src/internal/compiler/emitter.ts::EmitOnly;emitResult:packages/tsts/src/internal/compiler/program.ts::EmitResult;emitterDiagnostics:packages/tsts/src/internal/ast/diagnostic.ts::DiagnosticsCollection;host:packages/tsts/src/internal/compiler/emitHost.ts::EmitHost;paths:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/outputpaths/outputpaths.ts::OutputPaths>;sourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;tr:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;writeFile:(string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::WriteFileData>)=>packages/tsts/src/go/compat.ts::GoError;writer:packages/tsts/src/internal/printer/emittextwriter.ts::EmitTextWriter}","tsSignature":"interface{emitOnly:packages/tsts/src/internal/compiler/emitter.ts::EmitOnly;emitResult:packages/tsts/src/internal/compiler/program.ts::EmitResult;emitterDiagnostics:packages/tsts/src/internal/ast/diagnostic.ts::DiagnosticsCollection;host:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/emitHost.ts::EmitHost>;paths:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/outputpaths/outputpaths.ts::OutputPaths>;sourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;tr:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/tracing/tracing.ts::Tracing>;writeFile:packages/tsts/src/go/compat.ts::GoPtr<(string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::WriteFileData>)=>packages/tsts/src/go/compat.ts::GoError>;writer:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emittextwriter.ts::EmitTextWriter>}"}
  *
  * Go source:
  * emitter struct {
@@ -96,15 +97,29 @@ export const EmitOnlyForcedDts: EmitOnly = 3;
  * }
  */
 export interface emitter {
-  host: EmitHost;
+  host: GoPtr<EmitHost>;
   emitOnly: EmitOnly;
   emitterDiagnostics: DiagnosticsCollection;
-  writer: EmitTextWriter;
+  writer: GoPtr<EmitTextWriter>;
   paths: GoPtr<OutputPaths>;
   sourceFile: GoPtr<SourceFile>;
   emitResult: EmitResult;
-  writeFile: (fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError;
+  writeFile: GoPtr<(fileName: string, text: string, data: GoPtr<WriteFileData>) => GoError>;
   tr: GoPtr<Tracing>;
+}
+
+function emitterHost(receiver: GoPtr<emitter>): EmitHost {
+  if (receiver === undefined || receiver.host === undefined) {
+    throw new globalThis.Error("nil emitter host");
+  }
+  return receiver.host;
+}
+
+function emitterWriter(receiver: GoPtr<emitter>): EmitTextWriter {
+  if (receiver === undefined || receiver.writer === undefined) {
+    throw new globalThis.Error("nil emitter writer");
+  }
+  return receiver.writer;
 }
 
 /**
@@ -122,16 +137,15 @@ export interface emitter {
  */
 export function emitter_emit(receiver: GoPtr<emitter>): void {
   const e = receiver!;
-  let popTrace: (() => void) | undefined;
-  if (e.tr !== undefined) {
-    const pop = Tracing_Push(e.tr, PhaseEmit, "emit", new globalThis.Map([["path", globalThis.String(SourceFile_Path(e.sourceFile!))]]), true);
-    popTrace = pop;
-  }
-  emitter_emitJSFile(receiver, e.sourceFile, OutputPaths_JsFilePath(e.paths), OutputPaths_SourceMapFilePath(e.paths));
-  emitter_emitDeclarationFile(receiver, e.sourceFile, OutputPaths_DeclarationFilePath(e.paths), OutputPaths_DeclarationMapPath(e.paths));
-  e.emitResult.Diagnostics = DiagnosticsCollection_GetDiagnostics(e.emitterDiagnostics);
-  if (popTrace !== undefined) {
-    popTrace();
+  const popTrace = e.tr === undefined
+    ? undefined
+    : Tracing_Push(e.tr, PhaseEmit, "emit", new globalThis.Map([["path", globalThis.String(SourceFile_Path(e.sourceFile!))]]), true);
+  try {
+    emitter_emitJSFile(receiver, e.sourceFile, OutputPaths_JsFilePath(e.paths), OutputPaths_SourceMapFilePath(e.paths));
+    emitter_emitDeclarationFile(receiver, e.sourceFile, OutputPaths_DeclarationFilePath(e.paths), OutputPaths_DeclarationMapPath(e.paths));
+    e.emitResult.Diagnostics = DiagnosticsCollection_GetDiagnostics(e.emitterDiagnostics);
+  } finally {
+    popTrace?.();
   }
 }
 
@@ -145,8 +159,8 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
  * }
  */
 export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, declarationFilePath: string, declarationMapPath: string): GoSlice<GoPtr<DeclarationTransformer>> {
-  const e = receiver!;
-  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host), emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
+  const host = emitterHost(receiver);
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host), emitContext, host.Options(), declarationFilePath, declarationMapPath);
   return [transform];
 }
 
@@ -166,19 +180,19 @@ export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emi
  */
 export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, sourceFile: GoPtr<SourceFile>): GoPtr<SourceFile> {
   const e = receiver!;
-  let popTrace: (() => void) | undefined;
-  if (e.tr !== undefined) {
-    const pop = Tracing_Push(e.tr, PhaseEmit, "transformNodes", new globalThis.Map([["path", globalThis.String(SourceFile_Path(sourceFile!))]]), false);
-    popTrace = pop;
+  const popTrace = e.tr === undefined
+    ? undefined
+    : Tracing_Push(e.tr, PhaseEmit, "transformNodes", new globalThis.Map([["path", globalThis.String(SourceFile_Path(sourceFile!))]]), false);
+  try {
+    const host = emitterHost(receiver);
+    let sf = sourceFile;
+    for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(host), sf)) {
+      sf = Transformer_TransformSourceFile(transformer, sf);
+    }
+    return sf;
+  } finally {
+    popTrace?.();
   }
-  let sf = sourceFile;
-  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host), sf)) {
-    sf = Transformer_TransformSourceFile(transformer, sf);
-  }
-  if (popTrace !== undefined) {
-    popTrace();
-  }
-  return sf;
 }
 
 /**
@@ -199,21 +213,20 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
  */
 export function emitter_runDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, sourceFile: GoPtr<SourceFile>, declarationFilePath: string, declarationMapPath: string): [GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>] {
   const e = receiver!;
-  let popTrace: (() => void) | undefined;
-  if (e.tr !== undefined) {
-    const pop = Tracing_Push(e.tr, PhaseEmit, "transformNodes", new globalThis.Map([["path", globalThis.String(SourceFile_Path(sourceFile!))]]), false);
-    popTrace = pop;
+  const popTrace = e.tr === undefined
+    ? undefined
+    : Tracing_Push(e.tr, PhaseEmit, "transformNodes", new globalThis.Map([["path", globalThis.String(SourceFile_Path(sourceFile!))]]), false);
+  try {
+    let diags: GoSlice<GoPtr<Diagnostic>> = [];
+    let sf = sourceFile;
+    for (const transformer of emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath)) {
+      sf = Transformer_TransformSourceFile(transformer as GoPtr<Transformer>, sf);
+      diags = [...diags, ...DeclarationTransformer_GetDiagnostics(transformer)];
+    }
+    return [sf, diags];
+  } finally {
+    popTrace?.();
   }
-  let diags: GoSlice<GoPtr<Diagnostic>> = [];
-  let sf = sourceFile;
-  for (const transformer of emitter_getDeclarationTransformers(receiver, emitContext, declarationFilePath, declarationMapPath)) {
-    sf = Transformer_TransformSourceFile(transformer as GoPtr<Transformer>, sf);
-    diags = [...diags, ...DeclarationTransformer_GetDiagnostics(transformer)];
-  }
-  if (popTrace !== undefined) {
-    popTrace();
-  }
-  return [sf, diags];
 }
 
 /**
@@ -452,13 +465,14 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
  */
 export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<SourceFile>, jsFilePath: string, sourceMapFilePath: string): void {
   const e = receiver!;
-  const options = e.host.Options();
+  const host = emitterHost(receiver);
+  const options = host.Options();
 
   if (sourceFile === undefined || (e.emitOnly !== EmitAll && e.emitOnly !== EmitOnlyJs) || jsFilePath.length === 0) {
     return;
   }
 
-  if (options!.NoEmit === TSTrue || e.host.IsEmitBlocked(jsFilePath)) {
+  if (options!.NoEmit === TSTrue || host.IsEmitBlocked(jsFilePath)) {
     e.emitResult.EmitSkipped = true;
     return;
   }
@@ -567,7 +581,8 @@ export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<S
  */
 export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<SourceFile>, declarationFilePath: string, declarationMapPath: string): void {
   const e = receiver!;
-  const options = e.host.Options();
+  const host = emitterHost(receiver);
+  const options = host.Options();
 
   if (sourceFile === undefined || e.emitOnly === EmitOnlyJs || declarationFilePath.length === 0) {
     return;
@@ -588,7 +603,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
       DiagnosticsCollection_Add(e.emitterDiagnostics, elem);
     }
 
-    if (e.emitOnly !== EmitOnlyForcedDts && (options!.NoEmit === TSTrue || e.host.IsEmitBlocked(declarationFilePath))) {
+    if (e.emitOnly !== EmitOnlyForcedDts && (options!.NoEmit === TSTrue || host.IsEmitBlocked(declarationFilePath))) {
       e.emitResult.EmitSkipped = true;
       return;
     }
@@ -721,8 +736,10 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
  */
 export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: string, sourceMapFilePath: string, sourceFile: GoPtr<SourceFile>, printer_: GoPtr<Printer>, mapOptions: GoPtr<CompilerOptions>, shouldEmitSourceMaps: bool): void {
   const e = receiver!;
+  const host = emitterHost(receiver);
+  const writer = emitterWriter(receiver);
   // !!! sourceMapGenerator
-  const options = e.host.Options();
+  const options = host.Options();
   let sourceMapGenerator: GoPtr<Generator> = undefined;
   if (shouldEmitSourceMaps) {
     sourceMapGenerator = NewGenerator(
@@ -730,22 +747,27 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
       getSourceRoot(mapOptions),
       emitter_getSourceMapDirectory(receiver, mapOptions, jsFilePath, sourceFile),
       {
-        UseCaseSensitiveFileNames: e.host.UseCaseSensitiveFileNames(),
-        CurrentDirectory: e.host.GetCurrentDirectory(),
+        UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
+        CurrentDirectory: host.GetCurrentDirectory(),
       } as ComparePathsOptions,
     );
   }
 
-  Printer_Write(printer_, sourceFile as GoPtr<Node>, sourceFile, e.writer, sourceMapGenerator);
+  Printer_Write(printer_, sourceFile as GoPtr<Node>, sourceFile, writer, sourceMapGenerator);
 
   let sourceMapUrlPos = -1;
   if (sourceMapGenerator !== undefined) {
     if (Tristate_IsTrue(mapOptions!.SourceMap) || Tristate_IsTrue(mapOptions!.InlineSourceMap)) {
-      e.emitResult.SourceMaps = [...e.emitResult.SourceMaps, {
+      const sourceMapResult: SourceMapEmitResult = {
         InputSourceFileNames: Generator_Sources(sourceMapGenerator),
         SourceMap: Generator_RawSourceMap(sourceMapGenerator),
         GeneratedFile: jsFilePath,
-      } as SourceMapEmitResult];
+      };
+      if (e.emitResult.SourceMaps === undefined) {
+        e.emitResult.SourceMaps = [sourceMapResult];
+      } else {
+        e.emitResult.SourceMaps.push(sourceMapResult);
+      }
     }
 
     const sourceMappingURL = emitter_getSourceMappingURL(
@@ -758,12 +780,12 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
     );
 
     if (sourceMappingURL.length > 0) {
-      if (!e.writer.IsAtStartOfLine()) {
-        e.writer.RawWrite(IfElse(options!.NewLine === NewLineKindCRLF, "\r\n", "\n"));
+      if (!writer.IsAtStartOfLine()) {
+        writer.RawWrite(IfElse(options!.NewLine === NewLineKindCRLF, "\r\n", "\n"));
       }
-      sourceMapUrlPos = e.writer.GetTextPos();
-      e.writer.WriteComment("//# sourceMappingURL=");
-      e.writer.WriteComment(sourceMappingURL);
+      sourceMapUrlPos = writer.GetTextPos();
+      writer.WriteComment("//# sourceMappingURL=");
+      writer.WriteComment(sourceMappingURL);
     }
 
     // Write the source map
@@ -773,15 +795,19 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
       if (err !== undefined) {
         DiagnosticsCollection_Add(e.emitterDiagnostics, NewCompilerDiagnostic(Could_not_write_file_0_Colon_1, jsFilePath, err.message));
       } else {
-        e.emitResult.EmittedFiles = [...e.emitResult.EmittedFiles, sourceMapFilePath];
+        if (e.emitResult.EmittedFiles === undefined) {
+          e.emitResult.EmittedFiles = [sourceMapFilePath];
+        } else {
+          e.emitResult.EmittedFiles.push(sourceMapFilePath);
+        }
       }
     }
   } else {
-    e.writer.WriteLine();
+    writer.WriteLine();
   }
 
   // Write the output file
-  let text = e.writer.String();
+  let text = writer.String();
   if (Tristate_IsTrue(options!.EmitBOM)) {
     text = AddUTF8ByteOrderMark(text);
   }
@@ -796,11 +822,15 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
   if (err !== undefined) {
     DiagnosticsCollection_Add(e.emitterDiagnostics, NewCompilerDiagnostic(Could_not_write_file_0_Colon_1, jsFilePath, err.message));
   } else if (!skippedDtsWrite) {
-    e.emitResult.EmittedFiles = [...e.emitResult.EmittedFiles, jsFilePath];
+    if (e.emitResult.EmittedFiles === undefined) {
+      e.emitResult.EmittedFiles = [jsFilePath];
+    } else {
+      e.emitResult.EmittedFiles.push(jsFilePath);
+    }
   }
 
   // Reset state
-  e.writer.Clear();
+  writer.Clear();
 }
 
 /**
@@ -819,7 +849,7 @@ export function emitter_writeText(receiver: GoPtr<emitter>, fileName: string, te
   if (e.writeFile !== undefined) {
     return e.writeFile(fileName, text, data);
   }
-  return EmitHost_as_printer_EmitHost(e.host).WriteFile(fileName, text);
+  return EmitHost_as_printer_EmitHost(emitterHost(receiver)).WriteFile(fileName, text);
 }
 
 /**
@@ -891,9 +921,9 @@ export function getSourceRoot(mapOptions: GoPtr<CompilerOptions>): string {
  * }
  */
 export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptions: GoPtr<CompilerOptions>, filePath: string, sourceFile: GoPtr<SourceFile>): string {
-  const e = receiver!;
+  const host = emitterHost(receiver);
   if (mapOptions!.SourceRoot.length > 0) {
-    return e.host.CommonSourceDirectory();
+    return host.CommonSourceDirectory();
   }
   if (mapOptions!.MapRoot.length > 0) {
     let sourceMapDir = NormalizeSlashes(mapOptions!.MapRoot);
@@ -903,14 +933,14 @@ export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptio
       sourceMapDir = GetDirectoryPath(GetSourceFilePathInNewDir(
         SourceFile_FileName(sourceFile),
         sourceMapDir,
-        e.host.GetCurrentDirectory(),
-        e.host.CommonSourceDirectory(),
-        e.host.UseCaseSensitiveFileNames(),
+        host.GetCurrentDirectory(),
+        host.CommonSourceDirectory(),
+        host.UseCaseSensitiveFileNames(),
       ));
     }
     if (GetRootLength(sourceMapDir) === 0) {
       // The relative paths are relative to the common directory
-      sourceMapDir = CombinePaths(e.host.CommonSourceDirectory(), sourceMapDir);
+      sourceMapDir = CombinePaths(host.CommonSourceDirectory(), sourceMapDir);
     }
     return sourceMapDir;
   }
@@ -963,7 +993,7 @@ export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptio
  * }
  */
 export function emitter_getSourceMappingURL(receiver: GoPtr<emitter>, mapOptions: GoPtr<CompilerOptions>, sourceMapGenerator: GoPtr<Generator>, filePath: string, sourceMapFilePath: string, sourceFile: GoPtr<SourceFile>): string {
-  const e = receiver!;
+  const host = emitterHost(receiver);
   if (Tristate_IsTrue(mapOptions!.InlineSourceMap)) {
     // Encode the sourceMap into the sourceMap url
     return Generator_Base64DataURL(sourceMapGenerator);
@@ -978,22 +1008,22 @@ export function emitter_getSourceMappingURL(receiver: GoPtr<emitter>, mapOptions
       sourceMapDir = GetDirectoryPath(GetSourceFilePathInNewDir(
         SourceFile_FileName(sourceFile),
         sourceMapDir,
-        e.host.GetCurrentDirectory(),
-        e.host.CommonSourceDirectory(),
-        e.host.UseCaseSensitiveFileNames(),
+        host.GetCurrentDirectory(),
+        host.CommonSourceDirectory(),
+        host.UseCaseSensitiveFileNames(),
       ));
     }
     if (GetRootLength(sourceMapDir) === 0) {
       // The relative paths are relative to the common directory
-      sourceMapDir = CombinePaths(e.host.CommonSourceDirectory(), sourceMapDir);
+      sourceMapDir = CombinePaths(host.CommonSourceDirectory(), sourceMapDir);
       return EncodeURI(
         GetRelativePathToDirectoryOrUrl(
           GetDirectoryPath(NormalizePath(filePath)), // get the relative sourceMapDir path based on jsFilePath
           CombinePaths(sourceMapDir, sourceMapFile),  // this is where user expects to see sourceMap
           true,
           {
-            UseCaseSensitiveFileNames: e.host.UseCaseSensitiveFileNames(),
-            CurrentDirectory: e.host.GetCurrentDirectory(),
+            UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
+            CurrentDirectory: host.GetCurrentDirectory(),
           } as ComparePathsOptions,
         ),
       );
@@ -1174,9 +1204,13 @@ export function getSourceFilesToEmit(host: SourceFileMayBeEmittedHost, targetSou
   } else {
     sourceFiles = host.SourceFiles();
   }
-  return Filter(sourceFiles, (sourceFile) => {
+  const filtered = Filter(sourceFiles, (sourceFile) => {
     return sourceFileMayBeEmitted(sourceFile, host, forceDtsEmit);
   });
+  if (filtered === undefined) {
+    throw new globalThis.Error("core.Filter returned nil for a non-nil source-file slice");
+  }
+  return filtered;
 }
 
 /**

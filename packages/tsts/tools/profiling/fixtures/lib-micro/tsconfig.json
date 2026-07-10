@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "noEmit": true,
+    "strict": true,
+    "target": "es2022"
+  },
+  "include": ["src/**/*.ts"]
+}

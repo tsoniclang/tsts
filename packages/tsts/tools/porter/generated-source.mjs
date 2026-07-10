@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
+import { collectTypeScriptTextMechanicalRisks } from "./core/asserted-zero-risks.mjs";
 import { matchGlob } from "./path-policy.mjs";
 
 export const generatedSourceMechanisms = Object.freeze([
@@ -209,6 +210,15 @@ export function buildGlobalGeneratedArtifactStatus(repoRoot, config, artifactSta
     if (metadata.generator !== provider.id) issues.push({ path: relative, reason: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'` });
     if (!provider.kinds.includes(metadata.kind)) issues.push({ path: relative, reason: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'` });
     if (metadata.path !== relative) issues.push({ path: relative, reason: `metadata path '${metadata.path}' does not match '${relative}'` });
+    const mechanicalRisks = collectTypeScriptTextMechanicalRisks(file, text);
+    if (mechanicalRisks.length > 0) {
+      const first = mechanicalRisks[0];
+      issues.push({
+        path: relative,
+        provider: provider.id,
+        reason: `generated artifact provider '${provider.id}' emitted ${mechanicalRisks.length} asserted Go zero risk(s), first at ${first.line}:${first.column}; fix the registered generator, not its output`,
+      });
+    }
   }
   return { issues, providerCount: generatedArtifactProviders.length };
 }

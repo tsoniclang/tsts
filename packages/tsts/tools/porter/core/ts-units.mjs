@@ -1,4 +1,11 @@
 import { extractTsgoOverrideJson } from "./local-overrides.mjs";
+import {
+  collectPositionedTypeScriptFileMechanicalRisks,
+  createMechanicalRiskChecker,
+  publicMechanicalRisk,
+} from "./asserted-zero-risks.mjs";
+import { safeIdentifier } from "./names.mjs";
+import { analyzeExceptionSafeCleanup, analyzeTypeScriptReturnSemantics } from "./semantic-risk-analysis.mjs";
 import { fail, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -8,10 +15,23 @@ export function scanTsUnits(root) {
   if (!existsSync(root)) return { fileCount: 0, files: [], units: [] };
 
   const files = walk(root).filter((file) => file.endsWith(".ts"));
+  const sourceRecords = files.map((file) => {
+    const text = readFileSync(file, "utf8");
+    return {
+      file,
+      text,
+      sourceFile: ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS),
+    };
+  });
+  const mechanicalRiskChecker = createMechanicalRiskChecker(sourceRecords.map((record) => record.sourceFile));
+  const statementBySymbol = topLevelStatementIndex(sourceRecords, mechanicalRiskChecker);
+  const positionedRisksByFile = new Map(sourceRecords.map((record) => [
+    record.sourceFile,
+    collectPositionedTypeScriptFileMechanicalRisks(record.sourceFile, mechanicalRiskChecker),
+  ]));
   const fileReports = [];
   const units = [];
-  for (const file of files) {
-    const text = readFileSync(file, "utf8");
+  for (const { file, text, sourceFile } of sourceRecords) {
     const relativeFile = path.relative(repoRoot, file).split(path.sep).join("/");
     const overridesByUnitId = collectFileOverrides(text, relativeFile);
     const textLines = text.split(/\r?\n/);
@@ -19,11 +39,10 @@ export function scanTsUnits(root) {
     if (malformedGoSourceLine >= 0) {
       throw new Error(`inline Go source annotations are forbidden in ${path.relative(repoRoot, file)}:${malformedGoSourceLine + 1}; use 'Port note:' for prose and reserve 'Go source:' for the exact embedded upstream source block`);
     }
-    const sourceFile = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    const importBindings = collectTypeScriptImportBindings(sourceFile);
     const regex = /@tsgo-unit\s+({[^\n\r]+})/g;
     let match;
     let metadataCount = 0;
+    const fileUnits = [];
     while ((match = regex.exec(text)) !== null) {
       metadataCount++;
       try {
@@ -37,7 +56,7 @@ export function scanTsUnits(root) {
         const doc = overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex
           ? text.slice(overrideDocStart, overrideDocEnd)
           : "";
-        units.push({
+        const tsUnit = {
           id: metadata.id,
           kind: metadata.kind,
           status: metadata.status,
@@ -46,7 +65,8 @@ export function scanTsUnits(root) {
           path: relativeFile,
           metadata,
           embeddedGoSource: extractEmbeddedGoSource(doc),
-        });
+        };
+        units.push(tsUnit);
         const override = overridesByUnitId.get(metadata.id);
         if (override !== undefined) units[units.length - 1].override = override;
         const expectedName = expectedTsImplementationName(metadata);
@@ -63,14 +83,29 @@ export function scanTsUnits(root) {
         const hasUnimplThrow = implementationBody.includes("TSGO_UNIMPLEMENTED");
         units[units.length - 1].hasUnimplThrow = hasUnimplThrow;
         units[units.length - 1].implementationBody = implementationBody;
-        units[units.length - 1].implementationAnalysis = analyzeTypeScriptImplementation(implementationBody, importBindings);
+        fileUnits.push({
+          unit: tsUnit,
+          ownerStatements: mechanicalRiskOwnerStatements(sourceFile, metadata, matchingDeclarations),
+        });
       } catch (error) {
         fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
       }
     }
+    const positionedSourceRisks = positionedRisksByFile.get(sourceFile) ?? [];
+    for (const owner of fileUnits) {
+      const reachableStatements = collectReachableTopLevelStatements(owner.ownerStatements, statementBySymbol, mechanicalRiskChecker);
+      owner.unit.mechanicalRisks = mechanicalRisksForStatements(reachableStatements, positionedRisksByFile).map(publicMechanicalRisk);
+      owner.unit.mechanicalRiskBody = reachableStatements
+        .map((statement) => statement.getText(statement.getSourceFile()))
+        .join("\n");
+      owner.unit.implementationAnalysis = analyzeTypeScriptStatements(reachableStatements, mechanicalRiskChecker);
+      owner.unit.returnSemantics = analyzeTypeScriptReturnSemantics(owner.ownerStatements, mechanicalRiskChecker, statementBySymbol);
+      owner.unit.exceptionSafeCleanup = analyzeExceptionSafeCleanup(reachableStatements);
+    }
     fileReports.push({
       path: relativeFile,
       metadataCount,
+      sourceRisks: positionedSourceRisks.map(publicMechanicalRisk),
     });
   }
   return { fileCount: files.length, files: fileReports, units };
@@ -145,15 +180,15 @@ export function collectTypeScriptImportBindings(sourceFile) {
     if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
     const moduleSpecifier = statement.moduleSpecifier.text;
     const clause = statement.importClause;
-    if (clause?.name !== undefined) bindings.set(clause.name.text, { moduleSpecifier, importedName: "default" });
+    if (clause?.name !== undefined) bindings.set(clause.name.text, { declaration: clause.name, moduleSpecifier, importedName: "default" });
     const named = clause?.namedBindings;
     if (named === undefined) continue;
     if (ts.isNamespaceImport(named)) {
-      bindings.set(named.name.text, { moduleSpecifier, importedName: "*" });
+      bindings.set(named.name.text, { declaration: named.name, moduleSpecifier, importedName: "*" });
       continue;
     }
     for (const element of named.elements) {
-      bindings.set(element.name.text, { moduleSpecifier, importedName: element.propertyName?.text ?? element.name.text });
+      bindings.set(element.name.text, { declaration: element.name, moduleSpecifier, importedName: element.propertyName?.text ?? element.name.text });
     }
   }
   return bindings;
@@ -162,10 +197,26 @@ export function collectTypeScriptImportBindings(sourceFile) {
 export function analyzeTypeScriptImplementation(body, importBindings = new Map()) {
   if (body === "") return { calls: [] };
   const sourceFile = ts.createSourceFile("/__tsgo_unit.ts", `function __tsgoUnit() ${body}`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  return analyzeTypeScriptNodes([sourceFile], undefined, () => importBindings);
+}
+
+export function analyzeTypeScriptStatements(statements, checker) {
+  const importBindings = new Map();
+  return analyzeTypeScriptNodes(statements, checker, (sourceFile) => {
+    let bindings = importBindings.get(sourceFile);
+    if (bindings === undefined) {
+      bindings = collectTypeScriptImportBindings(sourceFile);
+      importBindings.set(sourceFile, bindings);
+    }
+    return bindings;
+  });
+}
+
+function analyzeTypeScriptNodes(nodes, checker, bindingsForSourceFile) {
   const calls = [];
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
-      const callee = typeScriptCallee(node.expression, importBindings);
+      const callee = typeScriptCallee(node.expression, bindingsForSourceFile(node.getSourceFile()), checker);
       if (callee !== undefined) {
         const argumentCalls = new Set();
         for (const argument of node.arguments) {
@@ -176,11 +227,11 @@ export function analyzeTypeScriptImplementation(body, importBindings = new Map()
     }
     ts.forEachChild(node, visit);
   };
-  visit(sourceFile);
+  for (const node of nodes) visit(node);
   return { calls };
 }
 
-export function typeScriptCallee(expression, importBindings) {
+export function typeScriptCallee(expression, importBindings, checker = undefined) {
   const segments = [];
   let current = expression;
   while (ts.isPropertyAccessExpression(current)) {
@@ -193,12 +244,26 @@ export function typeScriptCallee(expression, importBindings) {
   }
   segments.unshift(current.text);
   const binding = importBindings.get(current.text);
+  const bindingIsSelected = binding !== undefined && (checker === undefined
+    || checker.getSymbolAtLocation(current) === checker.getSymbolAtLocation(binding.declaration));
+  const importedSymbol = bindingIsSelected && checker !== undefined ? checker.getSymbolAtLocation(importedSymbolNode(expression)) : undefined;
+  const resolvedImportedSymbol = importedSymbol === undefined ? undefined : resolveAliasSymbol(checker, importedSymbol);
   return {
     text: segments.join("."),
     terminal: segments.at(-1),
-    moduleSpecifier: binding?.moduleSpecifier,
-    importedName: binding?.importedName === "*" ? segments[1] : binding?.importedName,
+    moduleSpecifier: bindingIsSelected ? binding.moduleSpecifier : undefined,
+    moduleFile: resolvedImportedSymbol?.declarations?.[0]?.getSourceFile().fileName.split(path.sep).join("/"),
+    importedName: bindingIsSelected ? (binding.importedName === "*" ? segments[1] : binding.importedName) : undefined,
   };
+}
+
+function importedSymbolNode(expression) {
+  let current = expression;
+  while (ts.isPropertyAccessExpression(current)) {
+    if (ts.isIdentifier(current.expression)) return current.name;
+    current = current.expression;
+  }
+  return current;
 }
 
 export function collectTypeScriptCallTerminals(node, out) {
@@ -218,6 +283,106 @@ export function expectedTsImplementationName(metadata) {
   const qualifiedName = segments.at(-1) ?? "";
   const base = metadata.kind === "method" ? qualifiedName.replaceAll(".", "_") : qualifiedName;
   return ordinal === null ? base : `${base}__${ordinal[1]}`;
+}
+
+function mechanicalRiskOwnerStatements(sourceFile, metadata, matchingFunctionDeclarations) {
+  if (metadata.kind === "func" || metadata.kind === "method") return matchingFunctionDeclarations;
+  const expectedNames = expectedTsDeclarationNames(metadata);
+  return sourceFile.statements.filter((statement) =>
+    topLevelDeclarationNames(statement).some((name) => expectedNames.has(name)));
+}
+
+function expectedTsDeclarationNames(metadata) {
+  const segments = String(metadata.id ?? "").split("::");
+  if (/^#\d+$/.test(segments.at(-1) ?? "")) segments.pop();
+  const declaredNames = (segments.at(-1) ?? "").split("+");
+  return new Set(declaredNames.filter((name) => name !== "_").map(safeIdentifier));
+}
+
+function topLevelDeclarationNames(statement) {
+  if (ts.isInterfaceDeclaration(statement)
+    || ts.isTypeAliasDeclaration(statement)
+    || ts.isClassDeclaration(statement)
+    || ts.isEnumDeclaration(statement)
+    || ts.isFunctionDeclaration(statement)) {
+    return statement.name === undefined ? [] : [statement.name.text];
+  }
+  if (!ts.isVariableStatement(statement)) return [];
+  return statement.declarationList.declarations
+    .filter((declaration) => ts.isIdentifier(declaration.name))
+    .map((declaration) => declaration.name.text);
+}
+
+export function topLevelStatementIndex(sourceRecords, checker) {
+  const index = new Map();
+  for (const { sourceFile } of sourceRecords) {
+    for (const statement of sourceFile.statements) {
+      for (const name of topLevelDeclarationNameNodes(statement)) {
+        const symbol = checker.getSymbolAtLocation(name);
+        if (symbol !== undefined) index.set(resolveAliasSymbol(checker, symbol), statement);
+      }
+    }
+  }
+  return index;
+}
+
+export function collectReachableTopLevelStatements(ownerStatements, statementBySymbol, checker) {
+  const reachable = new Set();
+  const pending = [...ownerStatements];
+  while (pending.length > 0) {
+    const statement = pending.pop();
+    if (statement === undefined || reachable.has(statement)) continue;
+    reachable.add(statement);
+    const visit = (node) => {
+      if (ts.isIdentifier(node)) {
+        const symbol = checker.getSymbolAtLocation(node);
+        const dependency = symbol === undefined ? undefined : statementBySymbol.get(resolveAliasSymbol(checker, symbol));
+        if (dependency !== undefined && !reachable.has(dependency)) pending.push(dependency);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(statement);
+  }
+  return [...reachable].sort((left, right) =>
+    left.getSourceFile().fileName.localeCompare(right.getSourceFile().fileName)
+      || left.getStart(left.getSourceFile()) - right.getStart(right.getSourceFile()));
+}
+
+export function mechanicalRisksForStatements(statements, risksByFile) {
+  const output = [];
+  const seen = new Set();
+  for (const statement of statements) {
+    const sourceFile = statement.getSourceFile();
+    for (const risk of risksByFile.get(sourceFile) ?? []) {
+      if (risk.position < statement.getStart(sourceFile) || risk.position >= statement.end) continue;
+      const key = `${sourceFile.fileName}\0${risk.position}\0${risk.kind}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      output.push(risk);
+    }
+  }
+  return output.sort((left, right) => left.position - right.position || left.kind.localeCompare(right.kind));
+}
+
+function topLevelDeclarationNameNodes(statement) {
+  if (ts.isInterfaceDeclaration(statement)
+    || ts.isTypeAliasDeclaration(statement)
+    || ts.isClassDeclaration(statement)
+    || ts.isEnumDeclaration(statement)
+    || ts.isFunctionDeclaration(statement)) {
+    return statement.name === undefined ? [] : [statement.name];
+  }
+  if (!ts.isVariableStatement(statement)) return [];
+  return statement.declarationList.declarations.flatMap((declaration) => bindingNameNodes(declaration.name));
+}
+
+function bindingNameNodes(name) {
+  if (ts.isIdentifier(name)) return [name];
+  return name.elements.flatMap((element) => ts.isOmittedExpression(element) ? [] : bindingNameNodes(element.name));
+}
+
+function resolveAliasSymbol(checker, symbol) {
+  return (symbol.flags & ts.SymbolFlags.Alias) === 0 ? symbol : checker.getAliasedSymbol(symbol);
 }
 
 export function renderGoSourceComment(snippet) {

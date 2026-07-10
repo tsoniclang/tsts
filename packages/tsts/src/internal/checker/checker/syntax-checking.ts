@@ -299,7 +299,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
     receiver!.saveDeferredDiagnostics = true as bool;
     Checker_checkGrammarSourceFile(receiver, sourceFile);
     receiver!.renamedBindingElementsInTypes = [];
-    Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes);
+    Checker_checkSourceElements(receiver, sourceFile!.Statements!.Nodes ?? []);
     Checker_checkDeferredNodes(receiver, sourceFile);
     if (IsExternalOrCommonJSModule(sourceFile)) {
       Checker_checkExternalModuleExports(receiver, Node_AsNode(sourceFile));
@@ -322,7 +322,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
   if (Checker_isCanceled(receiver)) {
     receiver!.wasCanceled = true as bool;
   }
-  receiver!.ctx = undefined as unknown as Context;
+  receiver!.ctx = undefined;
 }
 
 /**
@@ -667,7 +667,7 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   Checker_checkGrammarForInOrForOfStatement(receiver, data);
   const rightType = Checker_getNonNullableTypeIfNeeded(receiver, Checker_checkExpression(receiver, data!.Expression));
   if (IsVariableDeclarationList(data!.Initializer)) {
-    const declarations = AsVariableDeclarationList(data!.Initializer)!.Declarations!.Nodes;
+    const declarations = AsVariableDeclarationList(data!.Initializer)!.Declarations!.Nodes ?? [];
     if (declarations.length !== 0 && IsBindingPattern(Node_Name(declarations[0]))) {
       Checker_error(receiver, Node_Name(declarations[0]), The_left_hand_side_of_a_for_in_statement_cannot_be_a_destructuring_pattern);
     }
@@ -764,14 +764,14 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
   let iteratedType: GoPtr<Type> = undefined;
   if (IsVariableDeclarationList(data!.Initializer)) {
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
-    const firstDeclaration = AsVariableDeclarationList(data!.Initializer)?.Declarations?.Nodes[0];
+    const firstDeclaration = AsVariableDeclarationList(data!.Initializer)?.Declarations?.Nodes?.[0];
     const firstDeclarationSymbol = firstDeclaration === undefined ? undefined : Checker_getSymbolOfDeclaration(receiver, firstDeclaration);
     iteratedType = firstDeclarationSymbol === undefined ? undefined : Checker_getTypeOfSymbol(receiver, firstDeclarationSymbol);
   } else {
     const varExpr = data!.Initializer;
     iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
-      Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false as bool);
+      Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType, () => undefined, (left, right) => left === right), CheckModeNormal, false as bool);
     } else {
       const leftType = Checker_checkExpression(receiver, varExpr);
       Checker_checkReferenceExpression(receiver, varExpr, The_left_hand_side_of_a_for_of_statement_must_be_a_variable_or_a_property_access, The_left_hand_side_of_a_for_of_statement_may_not_be_an_optional_property_access);
@@ -878,7 +878,7 @@ export function Checker_checkReturnStatement(receiver: GoPtr<Checker>, node: GoP
         Checker_error(receiver, node, Return_type_of_constructor_signature_must_be_assignable_to_the_instance_type_of_the_class);
       }
     } else if (Checker_getReturnTypeFromAnnotation(receiver, container) !== undefined) {
-      const unwrappedReturnType = OrElse(Checker_unwrapReturnType(receiver, returnType, functionFlags), returnType);
+      const unwrappedReturnType = OrElse(Checker_unwrapReturnType(receiver, returnType, functionFlags), returnType, () => undefined, (left, right) => left === right);
       Checker_checkReturnExpression(receiver, container, unwrappedReturnType, node, Node_Expression(node), exprType, false as bool);
     }
   } else if (!IsConstructorDeclaration(container) && Tristate_IsTrue(receiver!.compilerOptions!.NoImplicitReturns) && !Checker_isUnwrappedReturnTypeUndefinedVoidOrAny(receiver, container, returnType)) {
@@ -1020,7 +1020,7 @@ export function Checker_checkSwitchStatement(receiver: GoPtr<Checker>, node: GoP
   let hasDuplicateDefaultClause = false as bool;
   const expressionType = Checker_checkExpression(receiver, Node_Expression(node));
   const caseBlock = AsSwitchStatement(node)!.CaseBlock;
-  for (const clause of AsCaseBlock(caseBlock)!.Clauses!.Nodes) {
+  for (const clause of AsCaseBlock(caseBlock)!.Clauses!.Nodes ?? []) {
     if (IsDefaultClause(clause) && !hasDuplicateDefaultClause) {
       if (firstDefaultClause === undefined) {
         firstDefaultClause = clause;
@@ -1186,7 +1186,7 @@ export function Checker_checkCatchClause(receiver: GoPtr<Checker>, node: GoPtr<N
       Checker_grammarErrorOnFirstToken(receiver, Node_Initializer(declaration), Catch_clause_variable_cannot_have_an_initializer);
     } else {
       const blockLocals = Node_Locals(AsCatchClause(node)!.Block);
-      if ((blockLocals?.size ?? 0) !== 0) {
+      if (blockLocals !== undefined) {
         for (const [caughtName] of Node_Locals(node) ?? []) {
           const blockLocal = blockLocals.get(caughtName);
           if (blockLocal !== undefined && blockLocal!.ValueDeclaration !== undefined && (blockLocal!.Flags & SymbolFlagsBlockScopedVariable) !== 0) {
@@ -1278,7 +1278,7 @@ export function Checker_reportUnusedVariable(receiver: GoPtr<Checker>, location:
  * }
  */
 export function Checker_reportUnusedVariables(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  const declarations = AsVariableDeclarationList(node)!.Declarations!.Nodes;
+  const declarations = AsVariableDeclarationList(node)!.Declarations!.Nodes ?? [];
   if (declarations.length > 1 && Every(declarations, (d) => Checker_isUnreferencedVariableDeclaration(receiver, d))) {
     Checker_reportUnusedVariable(receiver, node, NewDiagnosticForNode(node, All_variables_are_unused));
   } else {
@@ -1365,7 +1365,7 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
     receiver!.flowLoopStack = [];
-    receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
+    receiver!.flowTypeCache = undefined;
     links!.resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
     receiver!.flowTypeCache = saveFlowTypeCache;
     receiver!.flowLoopStack = saveFlowLoopStack;
@@ -1935,7 +1935,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
     return Checker_resolveUntypedCall(receiver, node);
   }
   const constructSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindConstruct);
-  if (constructSignatures.length !== 0) {
+  if (constructSignatures !== undefined && constructSignatures.length !== 0) {
     if (!Checker_isConstructorAccessible(receiver, node, constructSignatures[0])) {
       return Checker_resolveErrorCall(receiver, node);
     }
@@ -1953,7 +1953,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
     return Checker_resolveCall(receiver, node, constructSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
   }
   const callSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindCall);
-  if (callSignatures.length !== 0) {
+  if (callSignatures !== undefined && callSignatures.length !== 0) {
     const signature = Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
     if (!receiver!.noImplicitAny) {
       if (signature!.declaration !== undefined && Checker_getReturnTypeOfSignature(receiver, signature) !== receiver!.voidType) {
@@ -2015,10 +2015,10 @@ export function Checker_resolveInstanceofExpression(receiver: GoPtr<Checker>, no
       }
       const callSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindCall);
       const constructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct);
-      if (Checker_isUntypedFunctionCall(receiver, hasInstanceMethodType, apparentType, callSignatures.length, constructSignatures.length)) {
+      if (Checker_isUntypedFunctionCall(receiver, hasInstanceMethodType, apparentType, callSignatures?.length ?? 0, constructSignatures?.length ?? 0)) {
         return Checker_resolveUntypedCall(receiver, node);
       }
-      if (callSignatures.length !== 0) {
+      if (callSignatures !== undefined && callSignatures.length !== 0) {
         return Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
       }
     } else if (!(Checker_typeHasCallOrConstructSignatures(receiver, rightType) || Checker_isTypeSubtypeOf(receiver, rightType, receiver!.globalFunctionType))) {
@@ -2564,21 +2564,21 @@ export function Checker_checkYieldExpression(receiver: GoPtr<Checker>, node: GoP
   if (returnType !== undefined) {
     iterationTypes = Checker_getIterationTypesOfGeneratorFunctionReturnType(receiver, returnType, isAsync);
   }
-  const signatureYieldType = OrElse(iterationTypes.yieldType, receiver!.anyType);
-  const signatureNextType = OrElse(iterationTypes.nextType, receiver!.anyType);
+  const signatureYieldType = OrElse(iterationTypes.yieldType, receiver!.anyType, () => undefined, (left, right) => left === right);
+  const signatureNextType = OrElse(iterationTypes.nextType, receiver!.anyType, () => undefined, (left, right) => left === right);
   const yieldExpr = AsYieldExpression(node)!;
   const expression = Node_Expression(node);
   const yieldExpressionType = expression !== undefined ? Checker_checkExpression(receiver, expression) : receiver!.undefinedWideningType;
   const yieldedType = Checker_getYieldedTypeOfYieldExpression(receiver, node, yieldExpressionType, signatureNextType, isAsync);
   if (returnType !== undefined && yieldedType !== undefined) {
-    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, yieldedType, signatureYieldType, OrElse(expression, node), expression, undefined, undefined);
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, yieldedType, signatureYieldType, OrElse(expression, node, () => undefined, (left, right) => left === right), expression, undefined, undefined);
   }
   if (yieldExpr.AsteriskToken !== undefined) {
     const use = IfElse(isAsync, IterationUseAsyncYieldStar, IterationUseYieldStar);
-    return OrElse(Checker_getIterationTypeOfIterable(receiver, use, IterationTypeKindReturn, yieldExpressionType, expression), receiver!.anyType);
+    return OrElse(Checker_getIterationTypeOfIterable(receiver, use, IterationTypeKindReturn, yieldExpressionType, expression), receiver!.anyType, () => undefined, (left, right) => left === right);
   }
   if (returnType !== undefined) {
-    return OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsync), receiver!.anyType);
+    return OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsync), receiver!.anyType, () => undefined, (left, right) => left === right);
   }
   let t = Checker_getContextualIterationType(receiver, IterationTypeKindNext, fn);
   if (t === undefined) {

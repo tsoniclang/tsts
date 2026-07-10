@@ -41,7 +41,7 @@ export interface ParsedBuildCommandLine {
   Errors: GoSlice<GoPtr<Diagnostic>>;
   Raw: unknown;
   comparePathsOptions: ComparePathsOptions;
-  resolvedProjectPaths: GoSlice<string>;
+  resolvedProjectPaths: GoPtr<GoSlice<string>>;
   resolvedProjectPathsOnce: Once;
   locale: Locale_b0d69dd1;
   localeOnce: Once;
@@ -77,7 +77,7 @@ type parsedBuildCommandLineJsonFields = JsonFieldNamesForGoStructContract<
  * 	return p.resolvedProjectPaths
  * }
  */
-export function ParsedBuildCommandLine_ResolvedProjectPaths(receiver: GoPtr<ParsedBuildCommandLine>): GoSlice<string> {
+export function ParsedBuildCommandLine_ResolvedProjectPaths(receiver: GoPtr<ParsedBuildCommandLine>): GoPtr<GoSlice<string>> {
   const p = receiver!;
   p.resolvedProjectPathsOnce.Do(() => {
     p.resolvedProjectPaths = Map(p.Projects, (project: string): string => {

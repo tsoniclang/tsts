@@ -102,7 +102,7 @@ function fakeProgram(o: fakeProgramOptions): Program {
     GetSourceOfProjectReferenceIfOutputIncluded: (_file: HasFileName): string => "",
     GetProjectReferenceFromSource: (_path: Path): GoPtr<SourceOutputAndProjectReference> => undefined,
     IsSourceFromProjectReference: (_path: Path): bool => false,
-    GetPackagesMap: (): GoMap<string, bool> => undefined as unknown as GoMap<string, bool>,
+    GetPackagesMap: (): GoMap<string, bool> => new globalThis.Map<string, bool>(),
     GetProjectReferenceFromOutputDts: (_path: Path): GoPtr<SourceOutputAndProjectReference> => undefined,
     UseCaseSensitiveFileNames: (): bool => true,
     Options: (): GoPtr<CompilerOptions> => o.compilerOptions,

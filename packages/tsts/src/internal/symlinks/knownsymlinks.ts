@@ -72,7 +72,7 @@ export interface KnownSymlinks {
  * }
  */
 export function KnownSymlinks_HasDirectory(receiver: GoPtr<KnownSymlinks>, symlinkPath: Path): bool {
-  const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, EnsureTrailingDirectorySeparator(symlinkPath));
+  const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, EnsureTrailingDirectorySeparator(symlinkPath), () => undefined);
   return ok;
 }
 
@@ -140,7 +140,7 @@ export function KnownSymlinks_FilesByRealpath(receiver: GoPtr<KnownSymlinks>): G
  */
 export function KnownSymlinks_SetDirectory(receiver: GoPtr<KnownSymlinks>, symlink: string, symlinkPath: Path, realDirectory: GoPtr<KnownDirectoryLink>): void {
   if (realDirectory !== undefined) {
-    const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, symlinkPath);
+    const [, ok] = SyncMap_Load<Path, GoPtr<KnownDirectoryLink>>(receiver!.directories as SyncMap<Path, GoPtr<KnownDirectoryLink>>, symlinkPath, () => undefined);
     if (!ok) {
       const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };
       const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.directoriesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realDirectory!.RealPath, newSet);
@@ -164,7 +164,7 @@ export function KnownSymlinks_SetDirectory(receiver: GoPtr<KnownSymlinks>, symli
  * }
  */
 export function KnownSymlinks_SetFile(receiver: GoPtr<KnownSymlinks>, symlink: string, symlinkPath: Path, realpath: string): void {
-  const [, ok] = SyncMap_Load<Path, string>(receiver!.files as SyncMap<Path, string>, symlinkPath);
+  const [, ok] = SyncMap_Load<Path, string>(receiver!.files as SyncMap<Path, string>, symlinkPath, () => "");
   if (!ok) {
     const realpathPath = ToPath(realpath, receiver!.cwd, receiver!.useCaseSensitiveFileNames);
     const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };

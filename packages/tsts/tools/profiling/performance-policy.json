@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "policyId": "tsts-performance-v1",
+  "corpus": "corpus.default.json",
+  "sampling": {
+    "systemCacheWarmupRounds": 2,
+    "measuredRounds": 7,
+    "timeoutMs": 600000
+  },
+  "requiredMetrics": [
+    "Files",
+    "Lines",
+    "Parse",
+    "Bind",
+    "Check",
+    "Total",
+    "MemReportedKB",
+    "wallSecs",
+    "userSecs",
+    "systemSecs",
+    "cpuSecs",
+    "cpuPercent",
+    "maxRssKB"
+  ],
+  "gatedMetrics": [
+    "Parse",
+    "Bind",
+    "Check",
+    "Total",
+    "MemReportedKB",
+    "wallSecs",
+    "cpuSecs",
+    "maxRssKB"
+  ],
+  "workloadEquivalence": ["Files", "Lines"],
+  "baseline": {
+    "status": "calibration-required",
+    "path": null,
+    "evidenceDigest": null,
+    "acceptedReportId": null
+  },
+  "limits": {
+    "Parse": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "Bind": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "Check": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "Total": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "MemReportedKB": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "wallSecs": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "cpuSecs": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null },
+    "maxRssKB": { "maxRegressionRatio": null, "maxCoefficientOfVariation": null }
+  }
+}

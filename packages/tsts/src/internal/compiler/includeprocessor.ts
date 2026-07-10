@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
-import { SourceFile_FileName } from "../ast/ast.js";
+import { SourceFile_FileName, SourceFile_as_ast_HasFileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
 import { DiagnosticsCollection_Add, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
@@ -19,6 +19,7 @@ import { IsObjectLiteralExpression } from "../ast/generated/predicates.js";
 import { AsObjectLiteralExpression } from "../ast/generated/casts.js";
 import type { ObjectLiteralExpression } from "../ast/generated/data.js";
 import { Program_GetImpliedNodeFormatForEmit, Program_GetSourceFileByPath, Program_GetSourceFileMetaData, Program_GetSourceOfProjectReferenceIfOutputIncluded } from "./program.js";
+import { redirectsFile_as_ast_HasFileName } from "./fileloader.js";
 import type { FileIncludeReason, referenceFileLocation } from "./fileInclude.js";
 import { FileIncludeReason_getReferencedLocation, FileIncludeReason_isReferencedFile, FileIncludeReason_toRelatedInfo } from "./fileInclude.js";
 import { ContainsFunc } from "../../go/slices.js";
@@ -30,6 +31,7 @@ import type { Program } from "./program.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::type::includeProcessor","kind":"type","status":"implemented","sigHash":"47421cd2765ce00a1920cbe94dae00d40ea4fa84c1ec0c9aab767432346ac1ef","bodyHash":"2efafe763ea3a3c2973f6532b40068cec44411815fa26a6fe84b2d6e54e440f3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type includeProcessor uses an explicit undefined-capable TypeScript representation at member 'redirectAndFileFormat' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{compilerOptionsSyntax:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ObjectLiteralExpression>;compilerOptionsSyntaxOnce:packages/tsts/src/go/sync.ts::Once;computedDiagnostics:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::DiagnosticsCollection>;computedDiagnosticsOnce:packages/tsts/src/go/sync.ts::Once;fileIncludeReasons:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>>>;includeReasonToRelatedInfo:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;processingDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>;reasonToReferenceLocation:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::referenceFileLocation>>;redirectAndFileFormat:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>}","tsSignature":"interface{compilerOptionsSyntax:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ObjectLiteralExpression>;compilerOptionsSyntaxOnce:packages/tsts/src/go/sync.ts::Once;computedDiagnostics:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::DiagnosticsCollection>;computedDiagnosticsOnce:packages/tsts/src/go/sync.ts::Once;fileIncludeReasons:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>>>;includeReasonToRelatedInfo:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;processingDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>;reasonToReferenceLocation:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::referenceFileLocation>>;redirectAndFileFormat:packages/tsts/src/internal/collections/syncmap.ts::SyncMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>>}"}
  *
  * Go source:
  * includeProcessor struct {
@@ -50,7 +52,7 @@ export interface includeProcessor {
   processingDiagnostics: GoSlice<GoPtr<processingDiagnostic>>;
   reasonToReferenceLocation: SyncMap<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>;
   includeReasonToRelatedInfo: SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>;
-  redirectAndFileFormat: SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>;
+  redirectAndFileFormat: SyncMap<Path, GoPtr<GoSlice<GoPtr<Diagnostic>>>>;
   computedDiagnostics: GoPtr<DiagnosticsCollection>;
   computedDiagnosticsOnce: Once;
   compilerOptionsSyntax: GoPtr<ObjectLiteralExpression>;
@@ -75,7 +77,7 @@ export function updateFileIncludeProcessor(p: GoPtr<Program>): void {
     processingDiagnostics: old!.processingDiagnostics,
     reasonToReferenceLocation: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>,
     includeReasonToRelatedInfo: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>,
-    redirectAndFileFormat: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>,
+    redirectAndFileFormat: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, GoPtr<GoSlice<GoPtr<Diagnostic>>>>,
     computedDiagnostics: undefined,
     computedDiagnosticsOnce: new Once(),
     compilerOptionsSyntax: undefined,
@@ -230,11 +232,11 @@ export function includeProcessor_addProcessingDiagnosticsForFileCasing(receiver:
  * }
  */
 export function includeProcessor_getReferenceLocation(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<referenceFileLocation> {
-  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>(receiver!.reasonToReferenceLocation as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>, r);
+  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>(receiver!.reasonToReferenceLocation, r, (): GoPtr<referenceFileLocation> => undefined);
   if (ok) {
     return existing;
   }
-  const [loc] = SyncMap_LoadOrStore<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>(receiver!.reasonToReferenceLocation as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>, r, FileIncludeReason_getReferencedLocation(r, program));
+  const [loc] = SyncMap_LoadOrStore<GoPtr<FileIncludeReason>, GoPtr<referenceFileLocation>>(receiver!.reasonToReferenceLocation, r, FileIncludeReason_getReferencedLocation(r, program));
   return loc;
 }
 
@@ -289,16 +291,17 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
  * }
  */
 export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<Diagnostic> {
-  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>(receiver!.includeReasonToRelatedInfo as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>, r);
+  const [existing, ok] = SyncMap_Load<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>(receiver!.includeReasonToRelatedInfo, r, (): GoPtr<Diagnostic> => undefined);
   if (ok) {
     return existing;
   }
-  const [relatedInfo] = SyncMap_LoadOrStore<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>(receiver!.includeReasonToRelatedInfo as unknown as SyncMap<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>, r, FileIncludeReason_toRelatedInfo(r, program));
+  const [relatedInfo] = SyncMap_LoadOrStore<GoPtr<FileIncludeReason>, GoPtr<Diagnostic>>(receiver!.includeReasonToRelatedInfo, r, FileIncludeReason_toRelatedInfo(r, program));
   return relatedInfo;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.explainRedirectAndImpliedFormat","kind":"method","status":"implemented","sigHash":"e202b35c33de1654b2cd84c97131572b8405bf39afe3f60583766fbfb5eadc5c","bodyHash":"f841b15d333cbe0a2fca5f0a30520fb1928e1215c0c395b5e25cd850ca910a2d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method includeProcessor.explainRedirectAndImpliedFormat uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/includeprocessor.ts::includeProcessor>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/internal/tspath/path.ts::Path,(string)=>string)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/includeprocessor.ts::includeProcessor>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/internal/tspath/path.ts::Path,(string)=>string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func (i *includeProcessor) explainRedirectAndImpliedFormat(
@@ -364,8 +367,8 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
  * 	return result
  * }
  */
-export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: (fileName: string) => string): GoSlice<GoPtr<Diagnostic>> {
-  const [existing, ok] = SyncMap_Load<Path, GoSlice<GoPtr<Diagnostic>>>(receiver!.redirectAndFileFormat as unknown as SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>, filePath);
+export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: (fileName: string) => string): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  const [existing, ok] = SyncMap_Load<Path, GoPtr<GoSlice<GoPtr<Diagnostic>>>>(receiver!.redirectAndFileFormat, filePath, (): GoPtr<GoSlice<GoPtr<Diagnostic>>> => undefined);
   if (ok) {
     return existing;
   }
@@ -373,54 +376,64 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
   let sourceFile: GoPtr<SourceFile> = undefined;
   const redirectsFile = program!.__tsgoEmbedded0!.redirectFilesByPath.get(filePath);
   if (redirectsFile !== undefined) {
-    file = redirectsFile as unknown as HasFileName;
+    file = redirectsFile_as_ast_HasFileName(redirectsFile);
   } else {
     sourceFile = Program_GetSourceFileByPath(program, filePath);
     if (sourceFile === undefined) {
-      return [];
+      return undefined;
     }
-    file = sourceFile as unknown as HasFileName;
+    file = SourceFile_as_ast_HasFileName(sourceFile);
   }
-  let result: GoSlice<GoPtr<Diagnostic>> = [];
-  const source = Program_GetSourceOfProjectReferenceIfOutputIncluded(program, file!);
-  if (source !== file!.FileName()) {
-    result = [...result, NewCompilerDiagnostic(
+  if (file === undefined) {
+    throw new globalThis.Error("redirect diagnostics did not resolve a file");
+  }
+  let result: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
+  const addDiagnostic = (diagnostic: GoPtr<Diagnostic>): void => {
+    if (result === undefined) {
+      result = [diagnostic];
+    } else {
+      result.push(diagnostic);
+    }
+  };
+  const source = Program_GetSourceOfProjectReferenceIfOutputIncluded(program, file);
+  if (source !== file.FileName()) {
+    addDiagnostic(NewCompilerDiagnostic(
       File_is_output_of_project_reference_source_0,
       toFileName(source),
-    )];
+    ));
   }
 
   if (redirectsFile !== undefined) {
     const targetFile = Program_GetSourceFileByPath(program, redirectsFile.target);
-    result = [...result, NewCompilerDiagnostic(
+    addDiagnostic(NewCompilerDiagnostic(
       File_redirects_to_file_0,
       toFileName(SourceFile_FileName(targetFile)),
-    )];
+    ));
   }
 
   if (sourceFile !== undefined && IsExternalOrCommonJSModule(sourceFile)) {
-    const metaData = Program_GetSourceFileMetaData(program, file!.Path());
-    const impliedFormat = Program_GetImpliedNodeFormatForEmit(program, file!);
+    const metaData = Program_GetSourceFileMetaData(program, file.Path());
+    const impliedFormat = Program_GetImpliedNodeFormatForEmit(program, file);
     if (impliedFormat === ModuleKindESNext) {
       if (metaData.PackageJsonType === "module") {
-        result = [...result, NewCompilerDiagnostic(
+        addDiagnostic(NewCompilerDiagnostic(
           File_is_ECMAScript_module_because_0_has_field_type_with_value_module,
           toFileName(metaData.PackageJsonDirectory + "/package.json"),
-        )];
+        ));
       }
     } else if (impliedFormat === ModuleKindCommonJS) {
       if (metaData.PackageJsonType !== "") {
-        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName(metaData.PackageJsonDirectory + "/package.json"))];
+        addDiagnostic(NewCompilerDiagnostic(File_is_CommonJS_module_because_0_has_field_type_whose_value_is_not_module, toFileName(metaData.PackageJsonDirectory + "/package.json")));
       } else if (metaData.PackageJsonDirectory !== "") {
         if (metaData.PackageJsonType === "") {
-          result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName(metaData.PackageJsonDirectory + "/package.json"))];
+          addDiagnostic(NewCompilerDiagnostic(File_is_CommonJS_module_because_0_does_not_have_field_type, toFileName(metaData.PackageJsonDirectory + "/package.json")));
         }
       } else {
-        result = [...result, NewCompilerDiagnostic(File_is_CommonJS_module_because_package_json_was_not_found)];
+        addDiagnostic(NewCompilerDiagnostic(File_is_CommonJS_module_because_package_json_was_not_found));
       }
     }
   }
 
-  const [stored] = SyncMap_LoadOrStore<Path, GoSlice<GoPtr<Diagnostic>>>(receiver!.redirectAndFileFormat as unknown as SyncMap<Path, GoSlice<GoPtr<Diagnostic>>>, filePath, result);
+  const [stored] = SyncMap_LoadOrStore<Path, GoPtr<GoSlice<GoPtr<Diagnostic>>>>(receiver!.redirectAndFileFormat, filePath, result);
   return stored;
 }

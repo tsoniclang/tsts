@@ -72,6 +72,7 @@ export interface FileLike {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::Diagnostic","kind":"type","status":"implemented","sigHash":"6400335e13c5640d5feab15f7ba799726dae7af5e3f61bc5e89f4d29d12e8257","bodyHash":"e05d6a1014311d14a01fa12329927e138ec56fe656f3078dd1c05311f4433761"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Diagnostic contract permits File to return a nil interface for global diagnostics; GoPtr on the return type preserves that upstream interface state.","goSignature":"interface{Category:()=>packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;Code:()=>packages/tsts/src/go/scalars.ts::int;End:()=>packages/tsts/src/go/scalars.ts::int;File:()=>packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::FileLike;Len:()=>packages/tsts/src/go/scalars.ts::int;Localize:(packages/tsts/src/internal/locale/locale.ts::Locale)=>string;MessageChain:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::Diagnostic>;Pos:()=>packages/tsts/src/go/scalars.ts::int;RelatedInformation:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::Diagnostic>}","tsSignature":"interface{Category:()=>packages/tsts/src/internal/diagnostics/diagnostics.ts::Category;Code:()=>packages/tsts/src/go/scalars.ts::int;End:()=>packages/tsts/src/go/scalars.ts::int;File:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::FileLike>;Len:()=>packages/tsts/src/go/scalars.ts::int;Localize:(packages/tsts/src/internal/locale/locale.ts::Locale)=>string;MessageChain:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::Diagnostic>;Pos:()=>packages/tsts/src/go/scalars.ts::int;RelatedInformation:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::Diagnostic>}"}
  *
  * Go source:
  * Diagnostic interface {
@@ -87,7 +88,7 @@ export interface FileLike {
  * }
  */
 export interface Diagnostic {
-  File(): FileLike;
+  File(): GoPtr<FileLike>;
   Pos(): int;
   End(): int;
   Len(): int;
@@ -134,6 +135,7 @@ export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::method::ASTDiagnostic.File","kind":"method","status":"implemented","sigHash":"14c8947d0b4e08f8b94b228666cd09043035b1e56805aa1b6b61cabc4d06ad9e","bodyHash":"6760ed0f5167dfcac83bdfe4ec0de38f464ba1cde830aa818e17ff3266b54d43"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The diagnostic adapter explicitly returns a nil FileLike interface for diagnostics without a source file; GoPtr represents that nil interface value.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::ASTDiagnostic>)=>packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::FileLike","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::ASTDiagnostic>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts::FileLike>"}
  *
  * Go source:
  * func (d *ASTDiagnostic) File() FileLike {
@@ -143,12 +145,12 @@ export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>)
  * 	return nil
  * }
  */
-export function ASTDiagnostic_File(receiver: GoPtr<ASTDiagnostic>): FileLike {
+export function ASTDiagnostic_File(receiver: GoPtr<ASTDiagnostic>): GoPtr<FileLike> {
   const file = ASTDiagnostic_File_inner(receiver!.__tsgoEmbedded0);
   if (file !== undefined) {
     return file as unknown as FileLike;
   }
-  return undefined as unknown as FileLike;
+  return undefined;
 }
 
 /**
@@ -185,7 +187,7 @@ export function WrapASTDiagnostic(d: GoPtr<Diagnostic_34a9f76f>): GoPtr<ASTDiagn
   const result = {
     __tsgoEmbedded0: d,
   } as ASTDiagnostic;
-  result.File = (): FileLike => ASTDiagnostic_File(result);
+  result.File = (): GoPtr<FileLike> => ASTDiagnostic_File(result);
   result.Pos = (): int => ASTDiagnostic_Pos(result.__tsgoEmbedded0);
   result.End = (): int => ASTDiagnostic_End(result.__tsgoEmbedded0);
   result.Len = (): int => ASTDiagnostic_Len(result.__tsgoEmbedded0);
@@ -388,8 +390,9 @@ export function FormatDiagnosticsWithColorAndContext(output: Writer, diags: GoSl
  * }
  */
 export function FormatDiagnosticWithColorAndContext(output: Writer, diagnostic: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  if (diagnostic.File() !== undefined) {
-    const file = diagnostic.File();
+  const diagnosticFile = diagnostic.File();
+  if (diagnosticFile !== undefined) {
+    const file = diagnosticFile;
     const pos = diagnostic.Pos();
     WriteLocation(output, file, pos, formatOpts, writeWithStyleAndReset);
     Fprint(output, " - ");
@@ -399,9 +402,9 @@ export function FormatDiagnosticWithColorAndContext(output: Writer, diagnostic: 
   Fprintf(output, "%s TS%d: %s", foregroundColorEscapeGrey, diagnostic.Code(), resetEscapeSequence);
   WriteFlattenedDiagnosticMessage(output, diagnostic, formatOpts!.NewLine, formatOpts!.Locale);
 
-  if (diagnostic.File() !== undefined && diagnostic.Code() !== Message_Code(File_appears_to_be_binary)) {
+  if (diagnosticFile !== undefined && diagnostic.Code() !== Message_Code(File_appears_to_be_binary)) {
     Fprint(output, formatOpts!.NewLine);
-    writeCodeSnippet(output, diagnostic.File(), diagnostic.Pos(), diagnostic.Len(), getCategoryFormat(diagnostic.Category()), "", formatOpts);
+    writeCodeSnippet(output, diagnosticFile, diagnostic.Pos(), diagnostic.Len(), getCategoryFormat(diagnostic.Category()), "", formatOpts);
     Fprint(output, formatOpts!.NewLine);
   }
 
@@ -914,14 +917,15 @@ export function getErrorSummary(diags: GoSlice<Diagnostic>): GoPtr<ErrorSummary>
     }
 
     totalErrorCount++;
-    if (diagnostic.File() === undefined) {
+    const diagnosticFile = diagnostic.File();
+    if (diagnosticFile === undefined) {
       globalErrors = [...globalErrors, diagnostic];
     } else {
       if (errorsByFile === undefined) {
         errorsByFile = new Map<FileLike, GoSlice<Diagnostic>>();
       }
-      const existing = errorsByFile.get(diagnostic.File()) ?? [];
-      errorsByFile.set(diagnostic.File(), [...existing, diagnostic]);
+      const existing = errorsByFile.get(diagnosticFile) ?? [];
+      errorsByFile.set(diagnosticFile, [...existing, diagnostic]);
     }
   }
 
@@ -1076,9 +1080,10 @@ export function WriteFormatDiagnostics(output: Writer, diagnostics: GoSlice<Diag
  * }
  */
 export function WriteFormatDiagnostic(output: Writer, diagnostic: Diagnostic, formatOpts: GoPtr<FormattingOptions>): void {
-  if (diagnostic.File() !== undefined) {
-    const [line, character] = GetECMALineAndUTF16CharacterOfPosition(diagnostic.File(), diagnostic.Pos());
-    const fileName = diagnostic.File().FileName();
+  const diagnosticFile = diagnostic.File();
+  if (diagnosticFile !== undefined) {
+    const [line, character] = GetECMALineAndUTF16CharacterOfPosition(diagnosticFile, diagnostic.Pos());
+    const fileName = diagnosticFile.FileName();
     const relativeFileName = ConvertToRelativePath(fileName, formatOpts!.__tsgoEmbedded0 as ComparePathsOptions);
     Fprintf(output, "%s(%d,%d): ", relativeFileName, line + 1, character + 1);
   }

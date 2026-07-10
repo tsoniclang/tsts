@@ -113,7 +113,7 @@ function packageJsonProgram(
     program: {
       snapshot: state,
       program: compilerProgram,
-      host: undefined!,
+      host: undefined,
       testingData: undefined,
     } as Program,
     state,
@@ -276,7 +276,7 @@ test("build-info write failures return the Go compiler diagnostic", () => {
   const program = {
     snapshot: state,
     program: compilerProgram,
-    host: undefined!,
+    host: undefined,
     testingData: undefined,
   } as Program;
   const emitOptions = {
@@ -287,9 +287,11 @@ test("build-info write failures return the Go compiler diagnostic", () => {
 
   const result = Program_emitBuildInfo(program, Background(), emitOptions);
 
-  assert.equal(result!.EmitSkipped, true);
-  assert.equal(result!.Diagnostics.length, 1);
-  assert.equal(Diagnostic_Code(result!.Diagnostics[0]), Message_Code(diagnostics.Could_not_write_file_0_Colon_1));
-  assert.deepEqual(Diagnostic_MessageArgs(result!.Diagnostics[0]), [buildInfoFileName, "disk full"]);
+  assert.ok(result !== undefined);
+  assert.equal(result.EmitSkipped, true);
+  assert.ok(result.Diagnostics !== undefined);
+  assert.equal(result.Diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(result.Diagnostics[0]), Message_Code(diagnostics.Could_not_write_file_0_Colon_1));
+  assert.deepEqual(Diagnostic_MessageArgs(result.Diagnostics[0]), [buildInfoFileName, "disk full"]);
   assert.equal(buildInfoEmitPending.Load(), true);
 });

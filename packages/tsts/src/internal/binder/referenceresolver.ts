@@ -19,6 +19,7 @@ import type { NameResolver } from "./nameresolver.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d","bodyHash":"23c7bfe98262f5cb06698ba14803aa4c1ecaea7af86f4da690c2c05961d68630"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"ReferenceResolver implementations may return a nil declaration slice when an identifier has no qualifying value declarations; the interface member uses GoPtr so adapters preserve that result.","goSignature":"interface{GetElementAccessExpressionName:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ElementAccessExpression>)=>string;GetReferencedExportContainer:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;GetReferencedImportDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedMemberValueDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedValueDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedValueDeclarations:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>}","tsSignature":"interface{GetElementAccessExpressionName:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ElementAccessExpression>)=>string;GetReferencedExportContainer:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;GetReferencedImportDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedMemberValueDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedValueDeclaration:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>;GetReferencedValueDeclarations:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>>}"}
  *
  * Go source:
  * ReferenceResolver interface {
@@ -34,7 +35,7 @@ export interface ReferenceResolver {
   GetReferencedExportContainer(node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node>;
   GetReferencedImportDeclaration(node: GoPtr<IdentifierNode>): GoPtr<Declaration>;
   GetReferencedValueDeclaration(node: GoPtr<IdentifierNode>): GoPtr<Declaration>;
-  GetReferencedValueDeclarations(node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>>;
+  GetReferencedValueDeclarations(node: GoPtr<IdentifierNode>): GoPtr<GoSlice<GoPtr<Declaration>>>;
   GetElementAccessExpressionName(expression: GoPtr<ElementAccessExpression>): string;
   GetReferencedMemberValueDeclaration(node: GoPtr<Node>): GoPtr<Declaration>;
 }
@@ -112,7 +113,7 @@ function referenceResolver_as_ReferenceResolver(receiver: GoPtr<referenceResolve
       referenceResolver_GetReferencedImportDeclaration(r, node),
     GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> =>
       referenceResolver_GetReferencedValueDeclaration(r, node),
-    GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> =>
+    GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoPtr<GoSlice<GoPtr<Declaration>>> =>
       referenceResolver_GetReferencedValueDeclarations(r, node),
     GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string =>
       referenceResolver_GetElementAccessExpressionName(r, expression),
@@ -503,6 +504,7 @@ export function referenceResolver_GetReferencedValueDeclaration(receiver: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"a3d9679e1913650645bee1fc3f393223b6b2b7ef53262eccab4acb000fc1d613","bodyHash":"45579779989c5cca63af855533dcf26543c398437eac68913efa284337205c79"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The resolver accumulates into a nil declaration slice and returns nil when no referenced value declarations qualify; GoPtr preserves that no-result state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/referenceresolver.ts::referenceResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/referenceresolver.ts::referenceResolver>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>>>"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedValueDeclarations(node *ast.IdentifierNode) []*ast.Declaration {
@@ -536,8 +538,8 @@ export function referenceResolver_GetReferencedValueDeclaration(receiver: GoPtr<
  * 	return declarations
  * }
  */
-export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr<referenceResolver>, node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> {
-  const declarations: GoSlice<GoPtr<Declaration>> = [];
+export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr<referenceResolver>, node: GoPtr<IdentifierNode>): GoPtr<GoSlice<GoPtr<Declaration>>> {
+  let declarations: GoPtr<GoSlice<GoPtr<Declaration>>>;
   let symbol_ = referenceResolver_getReferencedValueSymbol(receiver, node, false);
   if (symbol_ !== undefined) {
     symbol_ = referenceResolver_getExportSymbolOfValueSymbolIfExported(receiver, symbol_);
@@ -561,7 +563,7 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
         case KindGetAccessor:
         case KindSetAccessor:
         case KindModuleDeclaration:
-          declarations.push(declaration);
+          (declarations ??= []).push(declaration);
           break;
       }
     }

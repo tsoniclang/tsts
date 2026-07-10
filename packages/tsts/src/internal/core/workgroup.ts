@@ -74,6 +74,7 @@ export function parallelWorkGroup_as_WorkGroup(receiver: GoPtr<parallelWorkGroup
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.Queue","kind":"method","status":"implemented","sigHash":"3a613e599ba2aa8046b19e5cea538987a132e970ec82b28e8d9dd4448e04b823","bodyHash":"ab0e077af06b04fdf79a20c4f839d7670dd8cd9d253fc427497de91affd5a466"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"JavaScript has no synchronous goroutine primitive. The WaitGroup facade invokes each queued callback immediately, which the WorkGroup contract explicitly permits, while preserving exactly-once execution and the post-RunAndWait Queue panic."}
  *
  * Go source:
  * func (w *parallelWorkGroup) Queue(fn func()) {
@@ -95,6 +96,7 @@ export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.RunAndWait","kind":"method","status":"implemented","sigHash":"704756b7f57ff3271356ab6aed02912229fae08d2e404ad177d526f9a7ec5472","bodyHash":"10b2d6aa54a4fa62fae878f311cff3c7f935b338fc3112d406fb03f95d44a50c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"All JavaScript WorkGroup callbacks have completed synchronously in Queue, so Wait is already satisfied; the done transition remains in a finally block to mirror Go's deferred Store."}
  *
  * Go source:
  * func (w *parallelWorkGroup) RunAndWait() {
@@ -103,8 +105,11 @@ export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: 
  * }
  */
 export function parallelWorkGroup_RunAndWait(receiver: GoPtr<parallelWorkGroup>): void {
-  receiver!.wg.Wait(); // no-op single-threaded; all queued fns ran synchronously in Queue
-  receiver!.done.Store(true as bool);
+  try {
+    receiver!.wg.Wait();
+  } finally {
+    receiver!.done.Store(true as bool);
+  }
 }
 
 /**
@@ -177,15 +182,17 @@ export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWork
  * }
  */
 export function singleThreadedWorkGroup_RunAndWait(receiver: GoPtr<singleThreadedWorkGroup>): void {
-  const drain = (): void => {
-    const fn = singleThreadedWorkGroup_pop(receiver);
-    if (fn !== undefined) {
+  try {
+    while (true) {
+      const fn = singleThreadedWorkGroup_pop(receiver);
+      if (fn === undefined) {
+        return;
+      }
       fn();
-      drain();
     }
-  };
-  drain();
-  receiver!.done.Store(true as bool);
+  } finally {
+    receiver!.done.Store(true as bool);
+  }
 }
 
 /**
@@ -253,6 +260,7 @@ export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __ts
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go","kind":"method","status":"implemented","sigHash":"73f2fd187d8bfc7b8c568b33621ebac6f839fbfa338297906a95f3506bfeb1bd","bodyHash":"baccfb5231d0190a3b01f97e87979cd24b3afbad7b6bb3053af2fdfc7cc037af"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"The single-threaded runtime serializes each errgroup callback, so at most one callback is in flight and a valid positive-capacity throttle is inherently respected. Work still enters the errgroup, preserving execution of every submitted callback and deferring the first error to Wait instead of throwing from Go."}
  *
  * Go source:
  * func (tg *ThrottleGroup) Go(fn func() error) {
@@ -268,11 +276,7 @@ export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __ts
  * }
  */
 export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: () => GoError): void {
-  // Single-threaded: semaphore and errgroup are no-ops; call fn synchronously.
-  const err = fn();
-  if (err !== undefined) {
-    throw err;
-  }
+  receiver!.group!.Go(fn);
 }
 
 /**
@@ -284,5 +288,5 @@ export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: () => GoErr
  * }
  */
 export function ThrottleGroup_Wait(receiver: GoPtr<ThrottleGroup>): GoError {
-  return undefined;
+  return receiver!.group!.Wait();
 }

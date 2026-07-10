@@ -1,5 +1,5 @@
 import type { byte, int } from "./scalars.js";
-import type { GoError, GoSlice } from "./compat.js";
+import type { GoError, GoPtr, GoSlice } from "./compat.js";
 import * as nodeFs from "node:fs";
 import * as nodeOs from "node:os";
 import * as nodePath from "node:path";
@@ -165,19 +165,19 @@ export function MkdirAll(path: string, perm: int): GoError {
   }
 }
 
-export function Open(path: string): [File, GoError] {
+export function Open(path: string): [GoPtr<File>, GoError] {
   return OpenFile(path, nodeFs.constants.O_RDONLY as int, 0 as int);
 }
 
-export function OpenFile(path: string, flag: int, perm: int): [File, GoError] {
+export function OpenFile(path: string, flag: int, perm: int): [GoPtr<File>, GoError] {
   try {
     return [new NodeFile(nodeFs.openSync(path, flag, perm) as int), undefined];
   } catch (error) {
-    return [undefined as unknown as File, normalizeError(error)];
+    return [undefined, normalizeError(error)];
   }
 }
 
-export function Create(path: string): [File, GoError] {
+export function Create(path: string): [GoPtr<File>, GoError] {
   return OpenFile(path, (nodeFs.constants.O_CREAT | nodeFs.constants.O_TRUNC | nodeFs.constants.O_WRONLY) as int, 0o666 as int);
 }
 
@@ -215,7 +215,7 @@ export function RemoveAll(path: string): GoError {
   }
 }
 
-export function Stat(path: string): [FileInfo, GoError] {
+export function Stat(path: string): [GoPtr<FileInfo>, GoError] {
   try {
     const stats = nodeFs.statSync(path);
     return [{
@@ -227,7 +227,7 @@ export function Stat(path: string): [FileInfo, GoError] {
       Sys: () => stats,
     }, undefined];
   } catch (error) {
-    return [undefined as unknown as FileInfo, normalizeError(error)];
+    return [undefined, normalizeError(error)];
   }
 }
 

@@ -1,35 +1,33 @@
 #!/usr/bin/env node
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(here, "../../../..");
-const scannerDist = join(repoRoot, "packages/tsts/dist/src/internal/scanner/scanner.js");
-const kindsDist = join(repoRoot, "packages/tsts/dist/src/internal/ast/generated/kinds.js");
-const languageVariantDist = join(repoRoot, "packages/tsts/dist/src/internal/core/languagevariant.js");
+import { dispersion } from "./benchmark-core.mjs";
+import { prepareTstsMicrobenchmark } from "./microbenchmark-context.mjs";
 
-const requiredDist = [scannerDist, kindsDist, languageVariantDist];
-for (const file of requiredDist) {
-  if (!existsSync(file)) {
-    throw new Error(`Missing built TSTS artifact: ${file}. Run npx tsc -p packages/tsts/tsconfig.json first.`);
-  }
-}
+const driverPath = fileURLToPath(import.meta.url);
+const options = parseArgs(process.argv.slice(2));
+const context = await prepareTstsMicrobenchmark({ driverPath, noBuild: options.noBuild, quiet: options.json });
+const scannerDist = join(context.dist, "src/internal/scanner/scanner.js");
+const kindsDist = join(context.dist, "src/internal/ast/generated/kinds.js");
+const languageVariantDist = join(context.dist, "src/internal/core/languagevariant.js");
 
 const scanner = await import(pathToFileURL(scannerDist).href);
 const kinds = await import(pathToFileURL(kindsDist).href);
 const languageVariant = await import(pathToFileURL(languageVariantDist).href);
 
 function parseArgs(argv) {
-  const options = { runs: 7, json: false };
+  const parsed = { runs: 7, json: false, noBuild: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--runs") options.runs = Math.max(3, Number(argv[++i]));
-    else if (arg === "--json") options.json = true;
+    if (arg === "--runs") parsed.runs = Number(argv[++i]);
+    else if (arg === "--json") parsed.json = true;
+    else if (arg === "--no-build") parsed.noBuild = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  return options;
+  if (!Number.isSafeInteger(parsed.runs) || parsed.runs < 5) throw new Error("--runs must be an integer of at least 5");
+  return parsed;
 }
 
 function median(values) {
@@ -86,6 +84,7 @@ function runCase(name, text, configure, runs) {
   }
 
   const medianMs = median(samples);
+  if (!Number.isFinite(medianMs) || medianMs <= 0) throw new Error(`${name} produced a non-positive timing sample`);
   const [count, checksum] = expected.split(":").map(Number);
   return {
     name,
@@ -94,6 +93,8 @@ function runCase(name, text, configure, runs) {
     medianMs,
     tokensPerMs: count / medianMs,
     checksum,
+    samples,
+    dispersion: dispersion(samples),
   };
 }
 
@@ -124,7 +125,6 @@ function fmt(value, digits = 2) {
   return value.toFixed(digits);
 }
 
-const options = parseArgs(process.argv.slice(2));
 const cases = [
   runCase("ASCII TypeScript source", makeAsciiSource(1_500), undefined, options.runs),
   runCase("mixed Unicode source", makeMixedSource(500), undefined, options.runs),
@@ -136,14 +136,18 @@ const cases = [
   ),
 ];
 
+context.reverify();
+
 if (options.json) {
-  console.log(JSON.stringify({ runs: options.runs, cases }, null, 2));
+  console.log(JSON.stringify({ schemaVersion: 1, classification: "exploratory-not-a-regression-gate", runs: options.runs, evidence: context.evidence, cases }, null, 2));
 } else {
   console.log("# TSTS scanner benchmark");
-  console.log(`runs: ${options.runs} (median, built dist)`);
-  console.log("| case | chars | tokens | median ms | tokens/ms | checksum |");
-  console.log("|---|---:|---:|---:|---:|---:|");
+  console.log("classification: exploratory, not a regression gate");
+  console.log(`prepared TSTS build: ${context.evidence.tstsBuild.buildId}`);
+  console.log(`runs: ${options.runs} (median with dispersion)`);
+  console.log("| case | chars | tokens | median ms | CV | tokens/ms | checksum |");
+  console.log("|---|---:|---:|---:|---:|---:|---:|");
   for (const item of cases) {
-    console.log(`| ${item.name} | ${item.chars} | ${item.tokens} | ${fmt(item.medianMs)} | ${fmt(item.tokensPerMs)} | ${item.checksum} |`);
+    console.log(`| ${item.name} | ${item.chars} | ${item.tokens} | ${fmt(item.medianMs)} | ${fmt(item.dispersion.coefficientOfVariation * 100, 1)}% | ${fmt(item.tokensPerMs)} | ${item.checksum} |`);
   }
 }

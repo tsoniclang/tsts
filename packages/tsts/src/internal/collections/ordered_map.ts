@@ -1,7 +1,10 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
-import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
+import { GoMapGetExisting, GoMapLookup } from "../../go/compat.js";
+import type { TextMarshaler } from "../../go/encoding.js";
+import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Pointer as reflect_Pointer, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, TypeAssert as reflect_TypeAssert, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
+import { StringFromUtf8Bytes } from "../../go/unicode/utf8.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
 import type { Decoder, Encoder, Kind, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
 import * as slices from "../../go/slices.js";
@@ -10,6 +13,7 @@ import * as strconv from "../../go/strconv.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"671bcec921be98d7ca21605a749133736df54c2b4c9e9e08fe72c5ecd5265e1b","bodyHash":"bc8af819f23afd83c888135f21577068246145d683364cf6c276ac62c2caee43"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The zero-value Go struct contains a nil slice and nil map, so both TypeScript fields use GoPtr until the corresponding Go operation allocates them.","goSignature":"interface<T0 extends name::comparable,T1 extends unknown>{__tsgoBlank0?:packages/tsts/src/internal/collections/ordered_map.ts::noCopy;keys:packages/tsts/src/go/compat.ts::GoSlice<T0>;mp:packages/tsts/src/go/compat.ts::GoMap<T0,T1>}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>{__tsgoBlank0?:packages/tsts/src/internal/collections/ordered_map.ts::noCopy;keys:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>;mp:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,T1>>}"}
  *
  * Go source:
  * OrderedMap[K comparable, V any] struct {
@@ -19,9 +23,9 @@ import * as strconv from "../../go/strconv.js";
  * }
  */
 export interface OrderedMap<K extends GoComparable = unknown, V = unknown> {
-  __tsgoBlank0: noCopy;
-  keys: GoSlice<K>;
-  mp: GoMap<K, V>;
+  __tsgoBlank0?: noCopy;
+  keys: GoPtr<GoSlice<K>>;
+  mp: GoPtr<GoMap<K, V>>;
 }
 
 /**
@@ -139,13 +143,14 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
   }
 
   if (!m.mp.has(key)) {
-    m.keys.push(key);
+    (m.keys ??= []).push(key);
   }
   m.mp.set(key, value);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"d32439c79fc90fa79c6ccc0d49a836f88237405347f2c6405ea0dd7bf357813b","bodyHash":"6b618bb159ef64e1be37e77d31053ae6718ce98b9dd4e6753c8a39ae25fb1617"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript map lookup cannot construct the Go zero for unconstrained V, so the caller supplies the exact instantiated zero factory consumed by the shared Go map lookup primitive.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0)=>[T1,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0,()=>T1)=>[T1,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Get(key K) (V, bool) {
@@ -153,28 +158,26 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
  * 	return v, ok
  * }
  */
-export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): [V, bool] {
-  const m = receiver!;
-  const ok = m.mp.has(key);
-  const v = m.mp.get(key) as V;
-  return [v, ok];
+export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: () => V): [V, bool] {
+  return GoMapLookup(receiver!.mp, key, zeroValue);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.GetOrZero","kind":"method","status":"implemented","sigHash":"8ab8a933ca7d7e86a8870543eff284236741ef6c0af43c71f73013d3561f173f","bodyHash":"4a599cfdc1bda6d2e9fdfcf4444897145f784ccd66123fb24c92183d8e5aab97"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript map lookup cannot construct the Go zero for unconstrained V, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0)=>T1","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0,()=>T1)=>T1"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) GetOrZero(key K) V {
  * 	return m.mp[key]
  * }
  */
-export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): V {
-  const m = receiver!;
-  return m.mp.get(key) as V;
+export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: () => V): V {
+  return OrderedMap_Get(receiver, key, zeroValue)[0];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.EntryAt","kind":"method","status":"implemented","sigHash":"57f46ffa42a364a35ede98eb6aecdf235862499af9603ae406ae3e4c032351cd","bodyHash":"9a719db5e191aff7706ec72f71a03884f1740b8901bddb33ae500e33831a1dd2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zeros for unconstrained K and V on an out-of-range lookup, so callers supply both exact instantiated zero factories.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,packages/tsts/src/go/scalars.ts::int)=>[T0,T1,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,packages/tsts/src/go/scalars.ts::int,()=>T0,()=>T1)=>[T0,T1,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) EntryAt(index int) (K, V, bool) {
@@ -189,17 +192,31 @@ export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<
  * 	return key, value, true
  * }
  */
-export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, index: int): [K, V, bool] {
+export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, index: int, zeroKey: () => K, zeroValue: () => V): [K, V, bool] {
   const m = receiver!;
-  if (index < 0 || index >= m.keys.length) {
-    const zero = undefined as K;
-    const zeroV = undefined as V;
-    return [zero, zeroV, false];
+  const keys = m.keys;
+  if (keys === undefined || index < 0 || index >= keys.length) {
+    return [zeroKey(), zeroValue(), false];
   }
 
-  const key = m.keys[index]!;
-  const value = m.mp.get(key) as V;
+  const [key, value] = OrderedMap_EntryAtExisting(m, index);
   return [key, value, true];
+}
+
+export function OrderedMap_EntryAtExisting<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, index: int): [K, V] {
+  if (receiver === undefined) {
+    throw new TypeError("nil OrderedMap receiver");
+  }
+  const m = receiver;
+  const keys = m.keys;
+  if (keys === undefined || index < 0 || index >= keys.length) {
+    throw new RangeError(`OrderedMap index ${index} is not present`);
+  }
+  if (m.mp === undefined) {
+    throw new TypeError("OrderedMap key inventory is inconsistent with its map");
+  }
+  const key = keys[index]!;
+  return [key, GoMapGetExisting(m.mp, key)];
 }
 
 /**
@@ -213,12 +230,13 @@ export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<Or
  */
 export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): bool {
   const m = receiver!;
-  const ok = m.mp.has(key);
+  const ok = m.mp?.has(key) ?? false;
   return ok;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Delete","kind":"method","status":"implemented","sigHash":"c9fe7cf0be22689301b59a2c908bb19938a9b00e5035ef0e6875dd4fb446786e","bodyHash":"23ee11a03728584c4fe88c26cccfbe5352c34ab0a17d27aa9a0f28d08e2385c4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript map deletion cannot construct the Go zero for unconstrained V when the key is absent, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0)=>[T1,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<T0,T1>>,T0,()=>T1)=>[T1,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Delete(key K) (V, bool) {
@@ -246,27 +264,24 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
  * 	return v, true
  * }
  */
-export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): [V, bool] {
+export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: () => V): [V, bool] {
   const m = receiver!;
-  const v = m.mp.get(key) as V;
-  const ok = m.mp.has(key);
-  if (!ok) {
-    const zero = undefined as V;
-    return [zero, false];
+  if (m.mp === undefined || !m.mp.has(key)) {
+    return [zeroValue(), false];
   }
+  const v = GoMapGetExisting(m.mp, key);
 
   m.mp.delete(key);
   const i = slices.Index(m.keys, key);
+  if (m.keys === undefined || i < 0) {
+    throw new TypeError("OrderedMap key inventory is inconsistent with its map");
+  }
   // If we're just removing the first or last element, avoid shifting everything around.
   if (i === 0) {
-    const zero = undefined as K;
-    m.keys[0] = zero;
     m.keys = m.keys.slice(1);
   } else {
     const end = m.keys.length - 1;
     if (i === end) {
-      const zero = undefined as K;
-      m.keys[end] = zero;
       m.keys = m.keys.slice(0, end);
     } else {
       m.keys = slices.Delete(m.keys, i, i + 1);
@@ -305,7 +320,7 @@ export function OrderedMap_Keys<K extends GoComparable, V>(receiver: GoPtr<Order
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
     const iterate = (i: number): void => {
-      if (i < m.keys.length && yield_(m.keys[i]!)) {
+      if (m.keys !== undefined && i < m.keys.length && yield_(m.keys[i]!)) {
         iterate(i + 1);
       }
     };
@@ -342,7 +357,7 @@ export function OrderedMap_Values<K extends GoComparable, V>(receiver: GoPtr<Ord
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
     const iterate = (i: number): void => {
-      if (i < m.keys.length && yield_(m.mp.get(m.keys[i]!) as V)) {
+      if (m.keys !== undefined && m.mp !== undefined && i < m.keys.length && yield_(GoMapGetExisting(m.mp, m.keys[i]!))) {
         iterate(i + 1);
       }
     };
@@ -380,9 +395,12 @@ export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<Or
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
     const iterate = (i: number): void => {
-      if (i < m.keys.length) {
+      if (m.keys !== undefined && i < m.keys.length) {
         const key = m.keys[i]!;
-        if (yield_(key, m.mp.get(key) as V)) {
+        if (m.mp === undefined) {
+          throw new TypeError("OrderedMap key inventory is inconsistent with its map");
+        }
+        if (yield_(key, GoMapGetExisting(m.mp, key))) {
           iterate(i + 1);
         }
       }
@@ -403,9 +421,10 @@ export function OrderedMap_Entries<K extends GoComparable, V>(receiver: GoPtr<Or
  */
 export function OrderedMap_Clear<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): void {
   const m = receiver!;
-  m.keys.length = 0;
-  m.keys = m.keys.slice(0, 0);
-  m.mp.clear();
+  if (m.keys !== undefined) {
+    m.keys.length = 0;
+  }
+  m.mp?.clear();
 }
 
 /**
@@ -426,7 +445,7 @@ export function OrderedMap_Size<K extends GoComparable, V>(receiver: GoPtr<Order
     return 0 as int;
   }
 
-  return m.keys.length as int;
+  return (m.keys?.length ?? 0) as int;
 }
 
 /**
@@ -467,8 +486,8 @@ export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<Orde
   const m = receiver!;
   return {
     __tsgoBlank0: {},
-    keys: slices.Clone(m.keys)!,
-    mp: maps.Clone(m.mp)!,
+    keys: slices.Clone(m.keys),
+    mp: maps.Clone(m.mp),
   };
 }
 
@@ -523,7 +542,7 @@ export function OrderedMap_MarshalJSONTo<K extends GoComparable, V>(receiver: Go
   if (err !== undefined) {
     return err;
   }
-  for (const k of m.keys) {
+  for (const k of m.keys ?? []) {
     const [keyString, keyErr] = resolveKeyName(reflect_ValueOf(k));
     if (keyErr !== undefined) {
       return keyErr;
@@ -532,7 +551,10 @@ export function OrderedMap_MarshalJSONTo<K extends GoComparable, V>(receiver: Go
     if (err !== undefined) {
       return err;
     }
-    err = json_MarshalEncode(enc, m.mp.get(k));
+    if (m.mp === undefined) {
+      throw new TypeError("OrderedMap key inventory is inconsistent with its map");
+    }
+    err = json_MarshalEncode(enc, GoMapGetExisting(m.mp, k));
     if (err !== undefined) {
       return err;
     }
@@ -542,6 +564,7 @@ export function OrderedMap_MarshalJSONTo<K extends GoComparable, V>(receiver: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::resolveKeyName","kind":"func","status":"implemented","sigHash":"9c1bfb11e5032437d999dacf40d5012bb8d493d331cb620a6e34b27ff5d3732e","bodyHash":"1f1e2b72cf6df63d84533b0c10f676c23acd7ffb151f7aa20c9f4f43b600e86d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"Go reflection checks the erased encoding.TextMarshaler interface dynamically. The TypeScript runtime supplies the equivalent structural MarshalText guard explicitly, then preserves the Go nil-pointer branch, tuple error result, and UTF-8 byte-to-string conversion."}
  *
  * Go source:
  * func resolveKeyName(k reflect.Value) (string, error) {
@@ -568,7 +591,14 @@ export function resolveKeyName(k: Value): [string, GoError] {
   if (k.Kind() === reflect_String) {
     return [k.String(), undefined];
   }
-  // reflect.TypeAssert[encoding.TextMarshaler] is not available in TS port - skip
+  const [textMarshaler, textMarshalerOk] = reflect_TypeAssert<TextMarshaler>(k, isTextMarshaler);
+  if (textMarshalerOk) {
+    if (k.Kind() === reflect_Pointer && k.IsNil()) {
+      return ["", undefined];
+    }
+    const [buffer, error] = textMarshaler!.MarshalText();
+    return [StringFromUtf8Bytes(globalThis.Uint8Array.from(buffer)), error];
+  }
   const kind = k.Kind();
   if (kind === reflect_Int || kind === reflect_Int8 || kind === reflect_Int16 || kind === reflect_Int32 || kind === reflect_Int64) {
     return [strconv.FormatInt(k.Int(), 10), undefined];
@@ -577,6 +607,11 @@ export function resolveKeyName(k: Value): [string, GoError] {
     return [strconv.FormatUint(k.Uint(), 10), undefined];
   }
   throw new globalThis.Error("unexpected map key type");
+}
+
+function isTextMarshaler(value: unknown): value is TextMarshaler {
+  return (typeof value === "object" && value !== null || typeof value === "function")
+    && typeof (value as { MarshalText?: unknown }).MarshalText === "function";
 }
 
 /**
@@ -694,15 +729,17 @@ export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(
  */
 export function DiffOrderedMapsFunc<K extends GoComparable, V>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, equalValues: (a: V, b: V) => bool, onAdded: (key: K, value: V) => void, onRemoved: (key: K, value: V) => void, onModified: (key: K, oldValue: V, newValue: V) => void): void {
   OrderedMap_Entries(m2)((k: K, v2: V): bool => {
-    const [, ok] = OrderedMap_Get(m1, k);
-    if (!ok) {
+    if (!OrderedMap_Has(m1, k)) {
       onAdded(k, v2);
     }
     return true;
   });
   OrderedMap_Entries(m1)((k: K, v1: V): bool => {
-    const [v2, ok] = OrderedMap_Get(m2, k);
-    if (ok) {
+    if (OrderedMap_Has(m2, k)) {
+      if (m2?.mp === undefined) {
+        throw new TypeError("OrderedMap key inventory is inconsistent with its map");
+      }
+      const v2 = GoMapGetExisting(m2.mp, k);
       if (!equalValues(v1, v2)) {
         onModified(k, v1, v2);
       }

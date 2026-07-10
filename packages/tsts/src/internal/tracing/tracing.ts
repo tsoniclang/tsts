@@ -138,6 +138,7 @@ export interface Tracer {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TracedType","kind":"type","status":"implemented","sigHash":"76d7900a5e1d198cf1be314683ba5d1ae947c4a7193a93280bddab3babf76b3f","bodyHash":"27ed45c8b7698acf3387f1a4e773ba3e7055d1f4322bd95556f0dcfbcd319e09"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A Go interface value can be nil, including elements of traced-type slices and optional type-specific accessors; the union with undefined preserves that interface zero value while TracedTypeValue carries nonnil implementations.","goSignature":"interface{AliasSymbol:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;AliasTypeArguments:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>;ConditionalCheckType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ConditionalExtendsType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ConditionalFalseType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ConditionalTrueType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;Display:()=>string;EvolvingArrayElementType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;EvolvingArrayFinalType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;FormatFlags:()=>packages/tsts/src/go/compat.ts::GoSlice<string>;Id:()=>packages/tsts/src/go/scalars.ts::uint;IndexType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;IndexedAccessIndexType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;IndexedAccessObjectType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;IntersectionTypes:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>;IntrinsicName:()=>string;IsConditional:()=>packages/tsts/src/go/scalars.ts::bool;IsTuple:()=>packages/tsts/src/go/scalars.ts::bool;Pattern:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;RecursionIdentity:()=>unknown;ReferenceNode:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ReferenceTarget:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ReferenceTypeArguments:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>;ReverseMappedConstraintType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ReverseMappedMappedType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;ReverseMappedSourceType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;SubstitutionBaseType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;SubstitutionConstraintType:()=>packages/tsts/src/internal/tracing/tracing.ts::TracedType;Symbol:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>;UnionTypes:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/tracing/tracing.ts::TracedType>}","tsSignature":"type=packages/tsts/src/internal/tracing/tracing.ts::TracedTypeValue|undefined"}
  *
  * Go source:
  * TracedType interface {
@@ -177,7 +178,9 @@ export interface Tracer {
  * 	Display() string
  * }
  */
-export interface TracedType {
+export type TracedType = TracedTypeValue | undefined;
+
+export interface TracedTypeValue {
   Id(): uint;
   FormatFlags(): GoSlice<string>;
   IsConditional(): bool;
@@ -1220,7 +1223,10 @@ export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
   const recursionIdentityMap: GoMap<unknown, int> = new globalThis.Map<unknown, int>();
 
   for (let i = 0; i < types.length; i++) {
-    const typ = types[i]!;
+    const typ = types[i];
+    if (typ === undefined) {
+      throw new globalThis.Error(`nil traced type recorded at index ${i}`);
+    }
     const descriptor = typeTracer_buildTypeDescriptor(t, typ, recursionIdentityMap);
 
     const err = MarshalWrite(sb, descriptor);
@@ -1489,6 +1495,9 @@ export interface LineAndChar {
  * }
  */
 export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: TracedType, recursionIdentityMap: GoMap<unknown, int>): TypeDescriptor {
+  if (typ === undefined) {
+    throw new globalThis.TypeError("nil TracedType");
+  }
   const symbol = typ.Symbol();
   const aliasSymbol = typ.AliasSymbol();
 

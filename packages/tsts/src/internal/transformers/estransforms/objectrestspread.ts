@@ -29,6 +29,7 @@ import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"bbe05073778a62bda93186b24f160901f4fa35f78b8e08de61bd627c1c896fff","bodyHash":"90b5de35b19b85c86c591b1f38d85961c5b02bbd88058844381230313cabdf4a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type objectRestSpreadTransformer uses an explicit undefined-capable TypeScript representation at member 'parametersWithPrecedingObjectRestOrSpread' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;expressionResultIsUnused:packages/tsts/src/go/scalars.ts::bool;inExportedVariableStatement:packages/tsts/src/go/scalars.ts::bool;parametersWithPrecedingObjectRestOrSpread:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;expressionResultIsUnused:packages/tsts/src/go/scalars.ts::bool;inExportedVariableStatement:packages/tsts/src/go/scalars.ts::bool;parametersWithPrecedingObjectRestOrSpread:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>>}"}
  *
  * Go source:
  * objectRestSpreadTransformer struct {
@@ -46,7 +47,7 @@ export interface objectRestSpreadTransformer {
   compilerOptions: GoPtr<CompilerOptions>;
   inExportedVariableStatement: bool;
   expressionResultIsUnused: bool;
-  parametersWithPrecedingObjectRestOrSpread: GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
+  parametersWithPrecedingObjectRestOrSpread: GoPtr<GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>>;
 }
 
 /**
@@ -252,6 +253,7 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread","kind":"method","status":"implemented","sigHash":"0a5da916bcc5432b50def7216ef06d8c73ee8653aa211f3544ec6143e5c7af9e","bodyHash":"2261f4cefedda8bb72e85f802bbb7e86c24e71b8c39cc836fc403775d6337114"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>>"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) collectParametersWithPrecedingObjectRestOrSpread(node *ast.Node) map[*ast.Node]struct{} {
@@ -266,8 +268,8 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
  * 	return result
  * }
  */
-export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> {
-  let result: GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> = undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
+export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoPtr<GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>> {
+  let result: GoPtr<GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>> = undefined;
   for (const parameter of Node_Parameters(node) ?? []) {
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (result !== undefined) {
@@ -281,11 +283,12 @@ export function objectRestSpreadTransformer_collectParametersWithPrecedingObject
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::oldParamScope","kind":"type","status":"implemented","sigHash":"9b4c34839620e59d8cc882160f7d7cac4ece220cfc51b56f63bf2a50cb6a75d8","bodyHash":"4136d1eac74cc0ec38c279f6295c4e910ac899d1ce6721e2ef7b90e6e3bbe21e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type oldParamScope uses an explicit undefined-capable TypeScript representation at the aliased value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"type=packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>","tsSignature":"type=packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,{__tsgoEmpty?:never}>>"}
  *
  * Go source:
  * oldParamScope map[*ast.Node]struct{}
  */
-export type oldParamScope = GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
+export type oldParamScope = GoPtr<GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext","kind":"method","status":"implemented","sigHash":"c5aa4db999a23612c13ee2bba9da70de79b4e6e67a2c214a0b7d17711a6bb75c","bodyHash":"f57eb7571a9acad994bea403a35fd235e0190b07f097a5400b7ae17bd938e509"}
@@ -1197,7 +1200,7 @@ export function objectRestSpreadTransformer_visitBinaryExpression(receiver: GoPt
     return FlattenDestructuringAssignment(
       receiver!.__tsgoEmbedded0!,
       nodeAsNode, !expressionResultIsUnused,
-      FlattenLevelObjectRest, undefined as unknown as CreateAssignmentCallback,
+      FlattenLevelObjectRest, undefined,
     ) as unknown as GoPtr<Node>;
   }
   if (node!.OperatorToken!.Kind === KindCommaToken) {
@@ -1266,8 +1269,11 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
   let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties);
+  if (objects === undefined) {
+    throw new globalThis.RangeError("object rest/spread transformation produced no object chunks");
+  }
   if (objects.length > 0 && objects[0]!.Kind !== KindObjectLiteralExpression) {
-    objects = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, undefined as unknown as GoSlice<GoPtr<Node>>) as unknown as GoPtr<never>, false), ...objects];
+    objects = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, undefined), false), ...objects];
   }
   let expression = objects[0];
   if (objects.length > 1) {
@@ -1284,6 +1290,7 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.chunkObjectLiteralElements","kind":"method","status":"implemented","sigHash":"14947bb2a31c8a38f4300a21a1c3a1f0ea3020abd7777fedf62f5fd1ac71bea3","bodyHash":"007ca13a18f7c34c16fc53d60005ac97a4252d9476d6e8f475cbfca2e0a43538"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"chunkObjectLiteralElements explicitly returns a nil Go slice for a nil or empty node list; GoPtr preserves that result instead of allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) chunkObjectLiteralElements(list *ast.NodeList) []*ast.Node {
@@ -1317,23 +1324,23 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
  * 	return objects
  * }
  */
-export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver: GoPtr<objectRestSpreadTransformer>, list: GoPtr<NodeList>): GoSlice<GoPtr<Node>> {
+export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver: GoPtr<objectRestSpreadTransformer>, list: GoPtr<NodeList>): GoPtr<GoSlice<GoPtr<Node>>> {
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  if (list === undefined || list!.Nodes.length === 0) {
-    return [];
+  if (list === undefined || list.Nodes === undefined || list.Nodes.length === 0) {
+    return undefined;
   }
   const elements = list!.Nodes as unknown as GoSlice<GoPtr<Node>>;
-  let chunkObject: GoSlice<GoPtr<Node>> = [];
-  let objects: GoSlice<GoPtr<Node>> = [];
+  let chunkObject: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  const objects: GoSlice<GoPtr<Node>> = [];
   for (const e of elements) {
     if (e!.Kind === KindSpreadAssignment) {
-      if (chunkObject.length > 0) {
-        objects = [...objects, NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, chunkObject) as unknown as GoPtr<never>, false)];
-        chunkObject = [];
+      if (chunkObject !== undefined && chunkObject.length > 0) {
+        objects.push(NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, chunkObject) as unknown as GoPtr<never>, false));
+        chunkObject = undefined;
       }
       const target = Node_Expression(e);
-      objects = [...objects, NodeVisitor_VisitNode(visitor, target)!];
+      objects.push(NodeVisitor_VisitNode(visitor, target)!);
     } else {
       let elem: GoPtr<Node>;
       if (e!.Kind === KindPropertyAssignment) {
@@ -1341,11 +1348,11 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
       } else {
         elem = NodeVisitor_VisitNode(visitor, e)!;
       }
-      chunkObject = [...chunkObject, elem];
+      chunkObject = [...(chunkObject ?? []), elem];
     }
   }
-  if (chunkObject.length > 0) {
-    objects = [...objects, NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, chunkObject) as unknown as GoPtr<never>, false)];
+  if (chunkObject !== undefined && chunkObject.length > 0) {
+    objects.push(NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, chunkObject) as unknown as GoPtr<never>, false));
   }
   return objects;
 }
@@ -1366,7 +1373,7 @@ export function newObjectRestSpreadTransformer(opts: GoPtr<TransformOptions>): G
     compilerOptions: opts!.CompilerOptions,
     inExportedVariableStatement: false,
     expressionResultIsUnused: false,
-    parametersWithPrecedingObjectRestOrSpread: undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>,
+    parametersWithPrecedingObjectRestOrSpread: undefined,
   };
   return Transformer_NewTransformer(embedded, (node) => objectRestSpreadTransformer_visit(tx, node), opts!.Context);
 }

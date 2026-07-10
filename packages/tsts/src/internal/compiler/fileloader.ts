@@ -638,6 +638,7 @@ export function redirectsFile_Path(receiver: GoPtr<redirectsFile>): Path_9073472
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::processedFiles","kind":"type","status":"implemented","sigHash":"7943b133480b0774cf9dcb87dcbd11f23c130fb74645e79c839af3bd8c17afbe","bodyHash":"cc8bfc2d42bb25fc775d0d74db74cd221d078e197d83632870b68b149875039e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type processedFiles uses an explicit undefined-capable TypeScript representation at member 'resolvedModules', member 'typeResolutionsInFile' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{duplicateSourceFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::DuplicateSourceFile>>;files:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;filesByPath:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;finishedProcessing:packages/tsts/src/go/scalars.ts::bool;importHelpersImportSpecifiers:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>>;includeProcessor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/includeprocessor.ts::includeProcessor>;jsxRuntimeImportSpecifiers:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::jsxRuntimeImportSpecifier>>;libFiles:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::LibFile>>;missingFiles:packages/tsts/src/go/compat.ts::GoSlice<string>;outputFileToProjectReferenceSource:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,string>;projectReferenceFileMapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/projectreferencefilemapper.ts::projectReferenceFileMapper>;redirectFilesByPath:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::redirectsFile>>;redirectTargetsMap:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<string>>;resolvedModules:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>>;resolver:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>;sourceFileMetaDatas:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/ast/ast.ts::SourceFileMetaData>;sourceFilesFoundSearchingNodeModules:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;typeResolutionsInFile:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>}","tsSignature":"interface{duplicateSourceFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::DuplicateSourceFile>>;files:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;filesByPath:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>;finishedProcessing:packages/tsts/src/go/scalars.ts::bool;importHelpersImportSpecifiers:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>>;includeProcessor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/includeprocessor.ts::includeProcessor>;jsxRuntimeImportSpecifiers:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::jsxRuntimeImportSpecifier>>;libFiles:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::LibFile>>;missingFiles:packages/tsts/src/go/compat.ts::GoSlice<string>;outputFileToProjectReferenceSource:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,string>;projectReferenceFileMapper:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/projectreferencefilemapper.ts::projectReferenceFileMapper>;redirectFilesByPath:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::redirectsFile>>;redirectTargetsMap:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoSlice<string>>;resolvedModules:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>>>;resolver:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/resolver.ts::Resolver>;sourceFileMetaDatas:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/internal/ast/ast.ts::SourceFileMetaData>;sourceFilesFoundSearchingNodeModules:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/internal/tspath/path.ts::Path>;typeResolutionsInFile:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/tspath/path.ts::Path,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>>}"}
  *
  * Go source:
  * processedFiles struct {
@@ -678,8 +679,8 @@ export interface processedFiles {
   filesByPath: GoMap<Path_9073472b, GoPtr<SourceFile>>;
   projectReferenceFileMapper: GoPtr<projectReferenceFileMapper>;
   missingFiles: GoSlice<string>;
-  resolvedModules: GoMap<Path_9073472b, ModeAwareCache<GoPtr<ResolvedModule>>>;
-  typeResolutionsInFile: GoMap<Path_9073472b, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>;
+  resolvedModules: GoMap<Path_9073472b, GoPtr<ModeAwareCache<GoPtr<ResolvedModule>>>>;
+  typeResolutionsInFile: GoMap<Path_9073472b, GoPtr<ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>>;
   sourceFileMetaDatas: GoMap<Path_9073472b, SourceFileMetaData>;
   jsxRuntimeImportSpecifiers: GoMap<Path_9073472b, GoPtr<jsxRuntimeImportSpecifier>>;
   importHelpersImportSpecifiers: GoMap<Path_9073472b, GoPtr<StringLiteralNode>>;
@@ -920,9 +921,9 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       includeReason,
       packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
       metadata: {} as SourceFileMetaData,
-      resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+      resolutionsInFile: undefined,
       resolutionsTrace: [],
-      typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+      typeResolutionsInFile: undefined,
       typeResolutionsTrace: [],
       resolutionDiagnostics: [],
       processingDiagnostics: [],
@@ -988,9 +989,9 @@ export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName
     includeReason,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: undefined,
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: undefined,
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -1056,9 +1057,9 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
     includeReason: undefined,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: undefined,
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: undefined,
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -1073,6 +1074,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveAutomaticTypeDirectives","kind":"method","status":"implemented","sigHash":"d5630a21f4c873881f4d09a4a659e797d51c13879d5787cde8b7fc03204fb7e2","bodyHash":"4c2ad4bce41cf4536367bc81da99da3c94ecf47ceed7318cfd12d0c9d62752a2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method fileLoader.resolveAutomaticTypeDirectives uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::fileLoader>,string)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/compiler/filesparser.ts::resolvedRef>,packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::fileLoader>,string)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/compiler/filesparser.ts::resolvedRef>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>]"}
  *
  * Go source:
  * func (p *fileLoader) resolveAutomaticTypeDirectives(containingFileName string) (
@@ -1128,7 +1130,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
  * 	return toParse, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics
  * }
  */
-export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [GoSlice<resolvedRef>, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, GoSlice<DiagAndArgs>, GoSlice<GoPtr<processingDiagnostic>>] {
+export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [GoSlice<resolvedRef>, GoPtr<ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>, GoSlice<DiagAndArgs>, GoSlice<GoPtr<processingDiagnostic>>] {
   const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
   if (automaticTypeDirectiveNames.length !== 0) {
     let toParse: GoSlice<resolvedRef> = [];
@@ -1184,7 +1186,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
     }
     return [toParse, typeResolutionsInFile as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, typeResolutionsTrace, pDiagnostics];
   }
-  return [[], undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, [], []];
+  return [[], undefined, [], []];
 }
 
 /**
@@ -2009,7 +2011,7 @@ export function fileLoader_createSyntheticImport(receiver: GoPtr<fileLoader>, te
  * }
  */
 export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: string): GoPtr<LibFile> {
-  const [cached, ok] = SyncMap_Load<string, GoPtr<LibFile>>(receiver!.pathForLibFileCache as unknown as GoPtr<SyncMap<string, GoPtr<LibFile>>>, name);
+  const [cached, ok] = SyncMap_Load<string, GoPtr<LibFile>>(receiver!.pathForLibFileCache, name, (): GoPtr<LibFile> => undefined);
   if (ok) {
     return cached;
   }
@@ -2024,13 +2026,13 @@ export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: str
       replaced = true;
     }
     SyncMap_LoadOrStore<Path_9073472b, GoPtr<libResolution>>(
-      receiver!.pathForLibFileResolutions as unknown as GoPtr<SyncMap<Path_9073472b, GoPtr<libResolution>>>,
+      receiver!.pathForLibFileResolutions,
       fileLoader_toPath(receiver, resolveFrom),
       { libraryName, resolution, trace }
     );
   }
   const [libPath] = SyncMap_LoadOrStore<string, GoPtr<LibFile>>(
-    receiver!.pathForLibFileCache as unknown as GoPtr<SyncMap<string, GoPtr<LibFile>>>,
+    receiver!.pathForLibFileCache,
     name,
     { Name: name, path, Replaced: replaced }
   );

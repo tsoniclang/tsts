@@ -846,11 +846,17 @@ export function TypeEraserTransformer_visit(receiver: GoPtr<TypeEraserTransforme
 
       case KindNamedImports: {
         const n: GoPtr<NamedImports> = AsNamedImports(node);
-        if (n!.Elements!.Nodes.length === 0) {
+        if (n === undefined || n.Elements === undefined) {
+          throw new globalThis.TypeError("nil import elements");
+        }
+        if (n.Elements.Nodes === undefined || n.Elements.Nodes.length === 0) {
           return node;
         }
         const elements = NodeVisitor_VisitNodes(visitor, n!.Elements) as GoPtr<ExportSpecifierList>;
-        if (!Tristate_IsTrue(tx.compilerOptions!.VerbatimModuleSyntax) && elements!.Nodes.length === 0) {
+        if (elements === undefined) {
+          throw new globalThis.TypeError("nil visited import elements");
+        }
+        if (!Tristate_IsTrue(tx.compilerOptions!.VerbatimModuleSyntax) && (elements.Nodes === undefined || elements.Nodes.length === 0)) {
           return undefined;
         }
         return NodeFactory_UpdateNamedImports(factory, n, elements);
@@ -881,11 +887,17 @@ export function TypeEraserTransformer_visit(receiver: GoPtr<TypeEraserTransforme
 
       case KindNamedExports: {
         const n: GoPtr<NamedExports> = AsNamedExports(node);
-        if (n!.Elements!.Nodes.length === 0) {
+        if (n === undefined || n.Elements === undefined) {
+          throw new globalThis.TypeError("nil export elements");
+        }
+        if (n.Elements.Nodes === undefined || n.Elements.Nodes.length === 0) {
           return node;
         }
         const elements = NodeVisitor_VisitNodes(visitor, n!.Elements) as GoPtr<ImportSpecifierList>;
-        if (!Tristate_IsTrue(tx.compilerOptions!.VerbatimModuleSyntax) && elements!.Nodes.length === 0) {
+        if (elements === undefined) {
+          throw new globalThis.TypeError("nil visited export elements");
+        }
+        if (!Tristate_IsTrue(tx.compilerOptions!.VerbatimModuleSyntax) && (elements.Nodes === undefined || elements.Nodes.length === 0)) {
           return undefined;
         }
         return NodeFactory_UpdateNamedExports(factory, n, elements);

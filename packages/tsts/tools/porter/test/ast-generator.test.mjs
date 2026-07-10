@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, w
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
 import {
   authoredFacadePathSet,
@@ -240,6 +241,39 @@ test("ast-generator: a schema input content change makes committed output stale"
   }
 });
 
+test("ast-generator preserves nil NodeList slices in generated visitors", async () => {
+  const output = buildAstGeneratedFiles(baseConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
+  const sourceFile = ts.createSourceFile("data.ts", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const declaration = sourceFile.statements.find((statement) =>
+    ts.isFunctionDeclaration(statement) && statement.name?.text === "generatedVisitSlice");
+  assert.ok(declaration !== undefined && ts.isFunctionDeclaration(declaration));
+  const executable = ts.transpileModule(
+    `const generatedVisitor = (visitor) => visitor;\nexport ${declaration.getText(sourceFile)}`,
+    { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 } },
+  ).outputText;
+  const generatedModule = await import(`data:text/javascript;base64,${Buffer.from(executable).toString("base64")}`);
+  const visitor = { Visit: () => { throw new Error("nil and empty slices must not invoke Visit"); } };
+
+  assert.deepEqual(generatedModule.generatedVisitSlice(visitor, undefined), [undefined, false]);
+  const emptyNodes = [];
+  const [emptyResult, emptyChanged] = generatedModule.generatedVisitSlice(visitor, emptyNodes);
+  assert.equal(emptyResult, emptyNodes);
+  assert.equal(emptyChanged, false);
+});
+
+test("ast-generator preserves nil raw slices in fields, factories, and visitors", () => {
+  const generated = buildAstGeneratedFiles(baseConfig, "rev-ast-raw-nil-slice");
+  const nodeOutput = generated.get("internal/ast/generated/node.ts");
+  const factoryOutput = generated.get("internal/ast/generated/factory.ts");
+  const dataOutput = generated.get("internal/ast/generated/data.ts");
+
+  assert.match(nodeOutput, /text: GoPtr<GoSlice<string>>;/);
+  assert.match(factoryOutput, /NewJSDocText\(receiver: GoPtr<NodeFactory>, text: GoPtr<GoSlice<string>>\)/);
+  assert.match(factoryOutput, /data\.text = text;/);
+  assert.doesNotMatch(factoryOutput, /data\.text = text \?\? "";/);
+  assert.match(dataOutput, /generatedVisitRawNodes\(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>\): GoPtr<GoSlice<GoPtr<Node>>>/);
+});
+
 // ───────────────────────────────────────────────────────────────────────────
 // AST node/data/factory/etc emitter tests (free-fn/adapter model).
 // ───────────────────────────────────────────────────────────────────────────
@@ -282,7 +316,7 @@ test("ast-generator maps every schema goOnly compiler-state field without an own
   const data = files.get("internal/ast/generated/data.ts");
 
   assert.match(node, /export interface DeclarationBase[\s\S]*Symbol: GoPtr<Symbol>/);
-  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: SymbolTable;[\s\S]*NextContainer: GoPtr<Node>/);
+  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: GoPtr<SymbolTable>;[\s\S]*NextContainer: GoPtr<Node>/);
   assert.match(node, /export interface FlowNodeBase[\s\S]*FlowNode: GoPtr<FlowNode>/);
   assert.match(node, /export interface CompositeBase[\s\S]*facts: Uint32/);
   assert.match(node, /export interface BodyBase[\s\S]*EndFlowNode: GoPtr<FlowNode>/);

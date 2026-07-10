@@ -776,7 +776,11 @@ export function NodeFactory_RestoreEnclosingLabel(receiver: GoPtr<NodeFactory>, 
 export function NodeFactory_CreateForOfBindingStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, boundValue: GoPtr<Node>): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
   if (IsVariableDeclarationList(node)) {
-    const firstDeclaration = AsVariableDeclarationList(node)!.Declarations!.Nodes[0];
+    const declarations = AsVariableDeclarationList(node)!.Declarations!.Nodes;
+    if (declarations === undefined || declarations.length === 0) {
+      throw new globalThis.RangeError("index out of range");
+    }
+    const firstDeclaration = declarations[0];
     const updatedDeclaration = NodeFactory_UpdateVariableDeclaration(
       f,
       AsVariableDeclaration(firstDeclaration),
@@ -889,6 +893,7 @@ export function NodeFactory_NewGlobalMethodCall(receiver: GoPtr<NodeFactory>, gl
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionCallCall","kind":"method","status":"implemented","sigHash":"bd1019e963afc5048dc8e423c20228f60ef74008c254a64ded70685e797efab4","bodyHash":"cf046faf3f5e6c4d68eb2be95fb664d736591dec31f62a89d9426864ba5830a2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Call argument NodeLists may carry a nil Nodes slice; TypeScript accepts undefined and appends no trailing arguments, exactly matching append of a nil Go slice.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func (f *NodeFactory) NewFunctionCallCall(target *ast.Expression, thisArg *ast.Expression, argumentsList []*ast.Node) *ast.Node {
@@ -899,12 +904,15 @@ export function NodeFactory_NewGlobalMethodCall(receiver: GoPtr<NodeFactory>, gl
  * 	return f.NewMethodCall(target, f.NewIdentifier("call"), args)
  * }
  */
-export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Node> {
+export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
   if (thisArg === undefined) {
     throw new globalThis.Error("Attempted to construct function call call without this argument expression");
   }
-  const args: GoSlice<GoPtr<Node>> = [thisArg, ...argumentsList];
+  const args: GoSlice<GoPtr<Node>> = [thisArg];
+  if (argumentsList !== undefined) {
+    args.push(...argumentsList);
+  }
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "call"), args);
 }
 
@@ -1757,6 +1765,7 @@ export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, ta
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImmediatelyInvokedArrowFunction","kind":"method","status":"implemented","sigHash":"8e73b2aea8d69635da903f7060bd06bebcea32fc76fb92a3358d240e43a85214","bodyHash":"7a6bc9282e46767adef14203a6729021a20e94aa685fefb24536592a25dfcc3a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The statement slice can be nil for an empty transformed static block; TypeScript accepts undefined so NewNodeList preserves that exact nil slice in the synthesized block.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) NewImmediatelyInvokedArrowFunction(statements []*ast.Statement) *ast.Expression {
@@ -1778,7 +1787,7 @@ export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, ta
  * 	)
  * }
  */
-export function NodeFactory_NewImmediatelyInvokedArrowFunction(receiver: GoPtr<NodeFactory>, statements: GoSlice<GoPtr<Statement>>): GoPtr<Expression> {
+export function NodeFactory_NewImmediatelyInvokedArrowFunction(receiver: GoPtr<NodeFactory>, statements: GoPtr<GoSlice<GoPtr<Statement>>>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   const arrow = NewArrowFunction(
     f,
@@ -1845,6 +1854,7 @@ export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attrib
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRestHelper","kind":"method","status":"implemented","sigHash":"9a928547e1de56ea38e37be92f4e72e874087e78064bae6f92b7ce2b86e25153","bodyHash":"323157021063964b424e1cc893759bb39a7cc38c0a9c46d7e5fe0b0383f274a6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method NodeFactory.NewRestHelper uses an explicit undefined-capable TypeScript representation at parameter #2, parameter #3 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/internal/core/text.ts::TextRange)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/internal/core/text.ts::TextRange)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) NewRestHelper(value *ast.Expression, elements []*ast.Node, computedTempVariables []*ast.Node, location core.TextRange) *ast.Expression {
@@ -1888,12 +1898,12 @@ export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attrib
  * 	)
  * }
  */
-export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: GoPtr<Expression>, elements: GoSlice<GoPtr<Node>>, computedTempVariables: GoSlice<GoPtr<Node>>, location: TextRange): GoPtr<Expression> {
+export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: GoPtr<Expression>, elements: GoPtr<GoSlice<GoPtr<Node>>>, computedTempVariables: GoPtr<GoSlice<GoPtr<Node>>>, location: TextRange): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, restHelper);
   let propertyNames: GoSlice<GoPtr<Node>> = [];
   let computedTempVariableOffset = 0;
-  for (let i = 0; i < elements.length; i++) {
+  for (let i = 0; elements !== undefined && i < elements.length; i++) {
     if (i === elements.length - 1) {
       break;
     }
@@ -1901,6 +1911,9 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
     const propertyName = TryGetPropertyNameOfBindingOrAssignmentElement(element);
     if (propertyName !== undefined) {
       if (IsComputedPropertyName(propertyName)) {
+        if (computedTempVariables === undefined) {
+          throw new globalThis.Error("Encountered computed property name but 'computedTempVariables' argument was not provided.");
+        }
         const temp = computedTempVariables[computedTempVariableOffset];
         computedTempVariableOffset++;
         // typeof _tmp === "symbol" ? _tmp : _tmp + ""

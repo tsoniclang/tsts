@@ -160,6 +160,39 @@ test("extractor snapshots reject schema drift, unknown units, parse errors, and 
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, unitCount: 0 } }, config).some((issue) => issue.includes("unitCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, structTagCount: 1 } }, config).some((issue) => issue.includes("structTagCount")));
 
+  for (const key of ["generated", "imports", "metadata", "nodeKindCounts", "sourceHash", "units"]) {
+    const missing = structuredClone(file);
+    delete missing[key];
+    assert.ok(
+      validatePorterSnapshot({ ...snapshot, files: [missing] }, config).some((issue) => issue.includes(`missing required snapshot-schema-3 key '${key}'`)),
+      `missing file field ${key} must fail closed`,
+    );
+  }
+  for (const key of ["exported", "externalRefs", "name", "parameters", "qualifiedName", "signature", "snippet", "typeParameterDetails"]) {
+    const missing = structuredClone(unit);
+    delete missing[key];
+    assert.ok(
+      validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(`missing required snapshot-schema-3 key '${key}'`)),
+      `missing unit field ${key} must fail closed`,
+    );
+  }
+  const method = {
+    ...unit,
+    id: "m::internal/a.go::method::Thing.Run",
+    kind: "method",
+    name: "Run",
+    qualifiedName: "Thing.Run",
+    receiver: "Thing",
+    receiverMode: "value",
+    receiverType: { kind: "ident", text: "Thing", name: "Thing" },
+  };
+  assert.deepEqual(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, unitKindCounts: { method: 1 } }, files: [{ ...file, units: [method] }] }, config), []);
+  for (const key of ["receiver", "receiverMode", "receiverType"]) {
+    const missing = structuredClone(method);
+    delete missing[key];
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(key)));
+  }
+
   const taggedMember = {
     kind: "field",
     name: "Value",

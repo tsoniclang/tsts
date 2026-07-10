@@ -479,7 +479,7 @@ export function Checker_checkAsyncFunctionReturnType(receiver: GoPtr<Checker>, n
       receiver,
       returnTypeNode,
       The_return_type_of_an_async_function_or_method_must_be_the_global_Promise_T_type_Did_you_mean_to_write_Promise_0,
-      Checker_TypeToString(receiver, core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), receiver!.voidType)),
+      Checker_TypeToString(receiver, core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), receiver!.voidType, () => undefined, (left, right) => left === right)),
     );
     return;
   }
@@ -674,7 +674,12 @@ export function Checker_checkTypeArgumentConstraints(receiver: GoPtr<Checker>, n
         typeArguments = Checker_getEffectiveTypeArguments(receiver, node, typeParameters);
         mapper = newTypeMapper(typeParameters, typeArguments);
       }
-      result = result && Checker_checkTypeAssignableTo(receiver, typeArguments[i], Checker_instantiateType(receiver, constraint, mapper), core.ElementOrNil(Node_TypeArguments(node) ?? [], i), Type_0_does_not_satisfy_the_constraint_1);
+      if (typeArguments === undefined) {
+        throw new Error("type parameter constraints require effective type arguments");
+      }
+      const typeArgumentNodes = Node_TypeArguments(node);
+      const errorNode = typeArgumentNodes !== undefined && i < typeArgumentNodes.length ? typeArgumentNodes[i] : undefined;
+      result = result && Checker_checkTypeAssignableTo(receiver, typeArguments[i], Checker_instantiateType(receiver, constraint, mapper), errorNode, Type_0_does_not_satisfy_the_constraint_1);
     }
   }
   return result;
@@ -1003,7 +1008,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
           } else if ((deviationInFile & ModifierFlagsAmbient) !== 0) {
             Checker_error(receiver, GetNameOfDeclaration(overload), Overload_signatures_must_all_be_ambient_or_non_ambient);
           } else if ((deviation & (ModifierFlagsPrivate | ModifierFlagsProtected)) !== 0) {
-            Checker_error(receiver, core.OrElse(GetNameOfDeclaration(overload), overload), Overload_signatures_must_all_be_public_private_or_protected);
+            Checker_error(receiver, core.OrElse(GetNameOfDeclaration(overload), overload, () => undefined, (left, right) => left === right), Overload_signatures_must_all_be_public_private_or_protected);
           } else if ((deviation & ModifierFlagsAbstract) !== 0) {
             Checker_error(receiver, GetNameOfDeclaration(overload), Overload_signatures_must_all_be_abstract_or_non_abstract);
           }
@@ -1034,7 +1039,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
       return;
     }
     let seen = false as bool;
-    const subsequentNode = { node: undefined as GoPtr<Node> };
+    const subsequentNode: { node: GoPtr<Node> } = { node: undefined };
     Node_ForEachChild(node!.Parent, (child: GoPtr<Node>): bool => {
       if (seen) {
         subsequentNode.node = child;
@@ -1046,7 +1051,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
     if (subsequentNode.node !== undefined && Node_Pos(subsequentNode.node) === Node_End(node)) {
       if (subsequentNode.node!.Kind === node!.Kind) {
         const subsequentName = Node_Name(subsequentNode.node);
-        const errorNode = core.OrElse(subsequentName, subsequentNode.node);
+        const errorNode = core.OrElse(subsequentName, subsequentNode.node, () => undefined, (left, right) => left === right);
         if (name !== undefined && subsequentName !== undefined &&
           (
             (IsPrivateIdentifier(name) && IsPrivateIdentifier(subsequentName) && Node_Text(name) === Node_Text(subsequentName)) ||
@@ -1066,7 +1071,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
         }
       }
     }
-    const errorNode = core.OrElse(name, node);
+    const errorNode = core.OrElse(name, node, () => undefined, (left, right) => left === right);
     if (isConstructor) {
       Checker_error(receiver, errorNode, Constructor_implementation_is_missing);
     } else if (HasSyntacticModifier(node, ModifierFlagsAbstract)) {
@@ -1128,7 +1133,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
   }
   if (duplicateFunctionDeclaration) {
     for (const declaration of functionDeclarations) {
-      Checker_error(receiver, core.OrElse(GetNameOfDeclaration(declaration), declaration), Duplicate_function_implementation);
+      Checker_error(receiver, core.OrElse(GetNameOfDeclaration(declaration), declaration, () => undefined, (left, right) => left === right), Duplicate_function_implementation);
     }
   }
   if (hasNonAmbientClass && !isConstructor && (symbol_!.Flags & SymbolFlagsFunction) !== 0 && declarations.length !== 0) {
@@ -1149,7 +1154,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
           break;
       }
       if (diagnostic !== undefined) {
-        const err = Checker_error(receiver, core.OrElse(GetNameOfDeclaration(declaration), declaration), diagnostic, symbol_!.Name);
+        const err = Checker_error(receiver, core.OrElse(GetNameOfDeclaration(declaration), declaration, () => undefined, (left, right) => left === right), diagnostic, symbol_!.Name);
         Diagnostic_SetRelatedInfo(err, relatedDiagnostics);
       }
     }
@@ -1364,7 +1369,7 @@ export function Checker_areTypeParametersIdentical(receiver: GoPtr<Checker>, dec
 export function Checker_getTypeWithoutSignatures(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   if ((t!.flags & TypeFlagsObject) !== 0) {
     const resolved = Checker_resolveStructuredTypeMembers(receiver, t);
-    if (resolved!.signatures.length !== 0) {
+    if ((resolved!.signatures?.length ?? 0) !== 0) {
       const result = Checker_newObjectType(receiver, ObjectFlagsAnonymous, t!.symbol);
       result!.objectFlags |= ObjectFlagsMembersResolved;
       Type_AsObjectType(result)!.__tsgoEmbedded0!.members = resolved!.members;
@@ -1440,7 +1445,7 @@ export function Checker_checkIndexConstraintForIndexSignature(receiver: GoPtr<Ch
     if (info!.declaration !== undefined && Checker_getParentOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, info!.declaration)) === t!.symbol) {
       localIndexDeclaration = info!.declaration;
     }
-    let errorNode = core.OrElse(localCheckDeclaration, localIndexDeclaration);
+    let errorNode = core.OrElse(localCheckDeclaration, localIndexDeclaration, () => undefined, (left, right) => left === right);
     if (errorNode === undefined && interfaceDeclaration !== undefined && !core.Some(Checker_getBaseTypes(receiver, t), (base: GoPtr<Type>): bool =>
       (Checker_getIndexInfoOfType(receiver, base, checkInfo!.keyType) !== undefined && Checker_getIndexTypeOfType(receiver, base, info!.keyType) !== undefined) as bool,
     )) {
@@ -1523,7 +1528,7 @@ export function Checker_checkTypeForDuplicateIndexSignatures(receiver: GoPtr<Che
   for (const declaration of indexDeclarations) {
     if (IsIndexSignatureDeclaration(declaration)) {
       const parameters = Node_Parameters(declaration);
-      if (parameters.length === 1 && Node_Type(parameters[0]) !== undefined) {
+      if (parameters !== undefined && parameters.length === 1 && Node_Type(parameters[0]) !== undefined) {
         for (const t of Type_Distributed(Checker_getTypeFromTypeNode(receiver, Node_Type(parameters[0])))) {
           indexSignatureMap.set(t, [...(indexSignatureMap.get(t) ?? []), declaration]);
         }
@@ -1862,12 +1867,13 @@ export function Checker_checkUnusedTypeParameters(receiver: GoPtr<Checker>, node
   if (typeParameterList === undefined) {
     return;
   }
-  if (typeParameterList.Nodes.length > 1 && core.Every(typeParameterList.Nodes, (typeParameter) => Checker_isUnreferencedTypeParameter(receiver, typeParameter))) {
+  const typeParameterNodes = typeParameterList.Nodes ?? [];
+  if (typeParameterNodes.length > 1 && core.Every(typeParameterNodes, (typeParameter) => Checker_isUnreferencedTypeParameter(receiver, typeParameter))) {
     const file = GetSourceFileOfNode(node);
     const loc = rangeOfTypeParameters(file, typeParameterList);
     Checker_reportUnused(receiver, node, UnusedKindParameter, NewDiagnostic(file, loc, All_type_parameters_are_unused));
   } else {
-    for (const typeParameter of typeParameterList.Nodes) {
+    for (const typeParameter of typeParameterNodes) {
       if (Checker_isUnreferencedTypeParameter(receiver, typeParameter)) {
         Checker_reportUnused(receiver, node, UnusedKindParameter, NewDiagnosticForNode(typeParameter, X_0_is_declared_but_never_used, Node_Text(Node_Name(typeParameter))));
       }
@@ -2015,7 +2021,7 @@ export function Checker_instantiateTypeWithSingleGenericCallSignature(receiver: 
   }
   const callSignature = Checker_getSingleSignature(receiver, t, SignatureKindCall, true);
   const constructSignature = Checker_getSingleSignature(receiver, t, SignatureKindConstruct, true);
-  const signature = core.OrElse(callSignature, constructSignature);
+  const signature = core.OrElse(callSignature, constructSignature, () => undefined, (left, right) => left === right);
   if (signature === undefined || signature!.typeParameters.length === 0) {
     return t;
   }
@@ -2678,14 +2684,15 @@ export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: Go
     return Checker_resolveErrorCall(receiver, node);
   }
   const callSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindCall);
-  const numConstructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct).length;
-  if (Checker_isUntypedFunctionCall(receiver, funcType, apparentType, callSignatures.length as int, numConstructSignatures as int)) {
+  const numConstructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct)?.length ?? 0;
+  const numCallSignatures = callSignatures?.length ?? 0;
+  if (Checker_isUntypedFunctionCall(receiver, funcType, apparentType, numCallSignatures as int, numConstructSignatures as int)) {
     if (!Checker_isErrorType(receiver, funcType) && Node_TypeArguments(node) !== undefined) {
       Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
     }
     return Checker_resolveUntypedCall(receiver, node);
   }
-  if (callSignatures.length === 0) {
+  if (callSignatures === undefined || callSignatures.length === 0) {
     if (numConstructSignatures !== 0) {
       Checker_error(receiver, node, Value_of_type_0_is_not_callable_Did_you_mean_to_include_new, Checker_TypeToString(receiver, funcType));
     } else {
@@ -2910,10 +2917,10 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
   }
   const args = Checker_getEffectiveCallArguments(receiver, node);
   const isSingleNonGenericCandidate = candidates.length === 1 && (candidates[0]!.typeParameters ?? []).length === 0;
-  const argCheckMode = !isDecorator && !isSingleNonGenericCandidate && core.Some(args, (arg) => Checker_isContextSensitive(receiver, arg))
+  const argCheckMode = !isDecorator && !isSingleNonGenericCandidate && args !== undefined && core.Some(args, (arg) => Checker_isContextSensitive(receiver, arg))
     ? CheckModeSkipContextSensitive
     : CheckModeNormal;
-  const callState = {
+  const callState: CallState = {
     node,
     typeArguments,
     candidates,
@@ -2921,7 +2928,10 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     isSingleNonGenericCandidate,
     argCheckMode,
     signatureHelpTrailingComma: ((checkMode & CheckModeIsForSignatureHelp) !== 0 && IsCallExpression(node) && NodeList_HasTrailingComma(Node_ArgumentList(node))) as bool,
-  } as CallState;
+    candidatesForArgumentError: undefined,
+    candidateForArgumentArityError: undefined,
+    candidateForTypeArgumentError: undefined,
+  };
   let result: GoPtr<Signature>;
   if (candidates.length > 1) {
     result = Checker_chooseOverload(receiver, callState, receiver!.subtypeRelation);
@@ -3160,7 +3170,7 @@ export function Checker_getOptionalCallSignature(receiver: GoPtr<Checker>, signa
  * }
  */
 export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallState>, relation: GoPtr<Relation>): GoPtr<Signature> {
-  s!.candidatesForArgumentError = [];
+  s!.candidatesForArgumentError = undefined;
   s!.candidateForArgumentArityError = undefined;
   s!.candidateForTypeArgumentError = undefined;
   if (s!.isSingleNonGenericCandidate) {
@@ -3209,6 +3219,9 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
       checkCandidate = candidate;
     }
     if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
+      if (s!.candidatesForArgumentError === undefined) {
+        s!.candidatesForArgumentError = [];
+      }
       s!.candidatesForArgumentError.push(checkCandidate);
       continue;
     }
@@ -3223,6 +3236,9 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
         }
       }
       if (!Checker_isSignatureApplicable(receiver, s!.node, s!.args, checkCandidate, relation, s!.argCheckMode, false as bool, undefined)) {
+        if (s!.candidatesForArgumentError === undefined) {
+          s!.candidatesForArgumentError = [];
+        }
         s!.candidatesForArgumentError.push(checkCandidate);
         continue;
       }
@@ -3235,6 +3251,7 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasCorrectArity","kind":"method","status":"implemented","sigHash":"30e8b730a6be4f649430cfc5856b8c9a52b7f5b9f94e28ea3cfd7834540d1536","bodyHash":"7534dc397d549151f05d922da8ee58a063fe26622c4dc9fdc00db6cab466b1b2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (c *Checker) hasCorrectArity(node *ast.Node, args []*ast.Node, signature *Signature, signatureHelpTrailingComma bool) bool {
@@ -3309,20 +3326,20 @@ export function Checker_chooseOverload(receiver: GoPtr<Checker>, s: GoPtr<CallSt
  * 	return true
  * }
  */
-export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<Node>, args: GoSlice<GoPtr<Node>>, signature: GoPtr<Signature>, signatureHelpTrailingComma: bool): bool {
+export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<Node>, args: GoPtr<GoSlice<GoPtr<Node>>>, signature: GoPtr<Signature>, signatureHelpTrailingComma: bool): bool {
   if (IsJsxOpeningFragment(node)) {
     return true as bool;
   }
-  const callArgs = args ?? [];
+  const argumentCount = args === undefined ? 0 : args.length;
   let argCount = 0;
   let callIsIncomplete = false;
   let effectiveParameterCount = Checker_getParameterCount(receiver, signature);
   let effectiveMinimumArguments = Checker_getMinArgumentCount(receiver, signature);
   if (IsTaggedTemplateExpression(node)) {
-    argCount = callArgs.length;
+    argCount = argumentCount;
     const template = AsTaggedTemplateExpression(node)!.Template;
     if (IsTemplateExpression(template)) {
-      const lastSpan = core.LastOrNil(AsTemplateExpression(template)!.TemplateSpans!.Nodes);
+      const lastSpan = core.LastOrNil(AsTemplateExpression(template)!.TemplateSpans!.Nodes ?? [], () => undefined);
       const literal = AsTemplateSpan(lastSpan)!.Literal;
       callIsIncomplete = NodeIsMissing(literal) || IsUnterminatedLiteral(literal);
     } else {
@@ -3337,20 +3354,20 @@ export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<No
     if (callIsIncomplete) {
       return true as bool;
     }
-    argCount = core.IfElse(effectiveMinimumArguments === 0, callArgs.length, 1);
-    effectiveParameterCount = core.IfElse(callArgs.length === 0, effectiveParameterCount, 1);
+    argCount = core.IfElse(effectiveMinimumArguments === 0, argumentCount, 1);
+    effectiveParameterCount = core.IfElse(argumentCount === 0, effectiveParameterCount, 1);
     effectiveMinimumArguments = globalThis.Math.min(effectiveMinimumArguments, 1);
   } else if (IsNewExpression(node) && AsNewExpression(node)!.Arguments === undefined) {
     return Checker_getMinArgumentCount(receiver, signature) === 0;
   } else {
     if (signatureHelpTrailingComma) {
-      argCount = callArgs.length + 1;
+      argCount = argumentCount + 1;
     } else {
-      argCount = callArgs.length;
+      argCount = argumentCount;
     }
     const argumentList = Node_ArgumentList(node);
     callIsIncomplete = argumentList !== undefined && NodeList_End(argumentList) === Node_End(node);
-    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, callArgs);
+    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, args);
     if (spreadArgIndex >= 0) {
       return spreadArgIndex >= Checker_getMinArgumentCount(receiver, signature) && (Checker_hasEffectiveRestParameter(receiver, signature) || spreadArgIndex < Checker_getParameterCount(receiver, signature));
     }
@@ -3505,11 +3522,17 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
     Checker_getMinTypeArgumentCount(receiver, typeParameters),
     isJavaScript,
   );
+  if (typeArgumentTypes === undefined) {
+    if (typeArgumentNodes.length !== 0) {
+      throw new Error("type argument nodes require resolved type arguments");
+    }
+    return undefined;
+  }
   let mapper: GoPtr<TypeMapper> = undefined;
   for (let index = 0; index < typeArgumentNodes.length; index++) {
     const constraint = Checker_getConstraintOfTypeParameter(receiver, typeParameters[index]);
     if (constraint !== undefined) {
-      const typeArgumentHeadMessage = core.OrElse(headMessage, Type_0_does_not_satisfy_the_constraint_1);
+      const typeArgumentHeadMessage = core.OrElse(headMessage, Type_0_does_not_satisfy_the_constraint_1, () => undefined, (left, right) => left === right);
       if (mapper === undefined) {
         mapper = newTypeMapper(typeParameters, typeArgumentTypes);
       }
@@ -3540,6 +3563,7 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSignatureApplicable","kind":"method","status":"implemented","sigHash":"5707b58d565ca9504f11871fcfeff062bb8599288f1d09c6e802f1443961906e","bodyHash":"4dd2ef04c249ba264d83a86632ceb3b30973a6df168b9afe28e23359c12d439b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/relater.ts::Relation>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/relater.ts::Relation>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (c *Checker) isSignatureApplicable(node *ast.Node, args []*ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -3617,7 +3641,8 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
  * 	return true
  * }
  */
-export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: GoPtr<Node>, args: GoSlice<GoPtr<Node>>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: GoPtr<Node>, args: GoPtr<GoSlice<GoPtr<Node>>>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
+  const argumentCount = args === undefined ? 0 : args.length;
   if (IsJsxCallLike(node)) {
     return Checker_checkApplicableSignatureForJsxCallLikeElement(receiver, node, signature, relation, checkMode, reportErrors, diagnosticOutput);
   }
@@ -3638,34 +3663,46 @@ export function Checker_isSignatureApplicable(receiver: GoPtr<Checker>, node: Go
   }
   const headMessage = Argument_of_type_0_is_not_assignable_to_parameter_of_type_1;
   const restType = Checker_getNonArrayRestType(receiver, signature);
-  const argCount = restType !== undefined ? globalThis.Math.min(Checker_getParameterCount(receiver, signature) - 1, args.length) : args.length;
-  for (let index = 0; index < argCount; index++) {
-    const arg = args[index];
-    if (!IsOmittedExpression(arg)) {
-      const paramType = Checker_getTypeAtPosition(receiver, signature, index);
-      const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, undefined, checkMode);
-      const checkArgType = (checkMode & CheckModeSkipContextSensitive) !== 0
-        ? Checker_getRegularTypeOfObjectLiteral(receiver, argType)
-        : argType;
-      const effectiveCheckArgumentNode = Checker_getEffectiveCheckNode(receiver, arg);
-      if (!Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, checkArgType, paramType, relation, reportErrors ? effectiveCheckArgumentNode : undefined, effectiveCheckArgumentNode, headMessage, diagnosticOutput)) {
-        Checker_maybeAddMissingAwaitInfo(receiver, arg, checkArgType, paramType, relation, reportErrors, diagnosticOutput);
-        return false as bool;
+  const argCount = restType !== undefined ? globalThis.Math.min(Checker_getParameterCount(receiver, signature) - 1, argumentCount) : argumentCount;
+  if (args === undefined) {
+    if (argCount !== 0) {
+      throw new Error("applicable signature arguments require an argument slice");
+    }
+  } else {
+    for (let index = 0; index < argCount; index++) {
+      const arg = args[index];
+      if (!IsOmittedExpression(arg)) {
+        const paramType = Checker_getTypeAtPosition(receiver, signature, index);
+        const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, undefined, checkMode);
+        const checkArgType = (checkMode & CheckModeSkipContextSensitive) !== 0
+          ? Checker_getRegularTypeOfObjectLiteral(receiver, argType)
+          : argType;
+        const effectiveCheckArgumentNode = Checker_getEffectiveCheckNode(receiver, arg);
+        if (!Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, checkArgType, paramType, relation, reportErrors ? effectiveCheckArgumentNode : undefined, effectiveCheckArgumentNode, headMessage, diagnosticOutput)) {
+          Checker_maybeAddMissingAwaitInfo(receiver, arg, checkArgType, paramType, relation, reportErrors, diagnosticOutput);
+          return false as bool;
+        }
       }
     }
   }
   if (restType !== undefined) {
-    const spreadType = Checker_getSpreadArgumentType(receiver, args, argCount, args.length, restType, undefined, checkMode);
-    const restArgCount = args.length - argCount;
+    const spreadType = Checker_getSpreadArgumentType(receiver, args, argCount, argumentCount, restType, undefined, checkMode);
+    const restArgCount = argumentCount - argCount;
     let errorNode: GoPtr<Node>;
     if (reportErrors) {
       if (restArgCount === 0) {
         errorNode = node;
       } else if (restArgCount === 1) {
+        if (args === undefined) {
+          throw new Error("rest argument diagnostics require an argument slice");
+        }
         errorNode = Checker_getEffectiveCheckNode(receiver, args[argCount]);
       } else {
+        if (args === undefined) {
+          throw new Error("rest argument diagnostics require an argument slice");
+        }
         errorNode = Checker_createSyntheticExpression(receiver, node, spreadType, false as bool, undefined);
-        errorNode!.Loc = NewTextRange(Node_Pos(args[argCount]), Node_End(args[args.length - 1]));
+        errorNode!.Loc = NewTextRange(Node_Pos(args[argCount]), Node_End(args[argumentCount - 1]));
       }
     }
     if (!Checker_checkTypeRelatedToEx(receiver, spreadType, restType, relation, errorNode, headMessage, diagnosticOutput)) {
@@ -3757,6 +3794,7 @@ export function Checker_getThisArgumentType(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.inferTypeArguments","kind":"method","status":"implemented","sigHash":"e5de0a3f508ed64b0fa803c836037202e1ea7e1af1c50646566e8848e36615c2","bodyHash":"5751441525bef82c119b92091786f4654b49d054d44f5bd6580bbed2e75e4473"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>"}
  *
  * Go source:
  * func (c *Checker) inferTypeArguments(node *ast.Node, signature *Signature, args []*ast.Node, checkMode CheckMode, context *InferenceContext) []*Type {
@@ -3866,7 +3904,8 @@ export function Checker_getThisArgumentType(receiver: GoPtr<Checker>, node: GoPt
  * 	return c.getInferredTypes(context)
  * }
  */
-export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, args: GoSlice<GoPtr<Node>>, checkMode: CheckMode, context: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
+export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, args: GoPtr<GoSlice<GoPtr<Node>>>, checkMode: CheckMode, context: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
+  const argumentCount = args === undefined ? 0 : args.length;
   if (IsJsxOpeningLikeElement(node)) {
     return Checker_inferJsxTypeArguments(receiver, node, signature, checkMode, context);
   }
@@ -3906,15 +3945,16 @@ export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr
     }
   }
   const restType = Checker_getNonArrayRestType(receiver, signature);
-  let argCount = args.length;
+  let argCount = argumentCount;
   if (restType !== undefined) {
     argCount = Math.min(Checker_getParameterCount(receiver, signature) - 1, argCount) as int;
   }
   if (restType !== undefined && (restType!.flags & TypeFlagsTypeParameter) !== 0) {
     const info = core.Find(context!.inferences, (inference: GoPtr<InferenceInfo>): bool => inference!.typeParameter === restType);
     if (info !== undefined) {
-      if (core.FindIndex(args.slice(argCount), isSpreadArgument) < 0) {
-        info!.impliedArity = args.length - argCount;
+      const restArguments = args === undefined ? undefined : args.slice(argCount);
+      if (restArguments === undefined || core.FindIndex(restArguments, isSpreadArgument) < 0) {
+        info!.impliedArity = argumentCount - argCount;
       }
     }
   }
@@ -3923,18 +3963,24 @@ export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr
     const thisArgumentNode = Checker_getThisArgumentOfCall(receiver, node);
     Checker_inferTypes(receiver, context!.inferences, Checker_getThisArgumentType(receiver, thisArgumentNode), thisType, InferencePriorityNone, false);
   }
-  for (let index = 0; index < argCount; index++) {
-    const arg = args[index];
-    if (!IsOmittedExpression(arg)) {
-      const paramType = Checker_getTypeAtPosition(receiver, signature, index as int);
-      if (receiver!.couldContainTypeVariables(paramType)) {
-        const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, context, checkMode);
-        Checker_inferTypes(receiver, context!.inferences, argType, paramType, InferencePriorityNone, false);
+  if (args === undefined) {
+    if (argCount !== 0) {
+      throw new Error("type argument inference requires an argument slice");
+    }
+  } else {
+    for (let index = 0; index < argCount; index++) {
+      const arg = args[index];
+      if (!IsOmittedExpression(arg)) {
+        const paramType = Checker_getTypeAtPosition(receiver, signature, index as int);
+        if (receiver!.couldContainTypeVariables(paramType)) {
+          const argType = Checker_checkExpressionWithContextualType(receiver, arg, paramType, context, checkMode);
+          Checker_inferTypes(receiver, context!.inferences, argType, paramType, InferencePriorityNone, false);
+        }
       }
     }
   }
   if (restType !== undefined && receiver!.couldContainTypeVariables(restType)) {
-    const spreadType = Checker_getSpreadArgumentType(receiver, args, argCount, args.length as int, restType, context, checkMode);
+    const spreadType = Checker_getSpreadArgumentType(receiver, args, argCount, argumentCount as int, restType, context, checkMode);
     Checker_inferTypes(receiver, context!.inferences, spreadType, restType, InferencePriorityNone, false);
   }
   return Checker_getInferredTypes(receiver, context);
@@ -3942,6 +3988,7 @@ export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCandidateForOverloadFailure","kind":"method","status":"implemented","sigHash":"ab4486c5b410abb656fce477c7849a44c21d03a5a04afaa78253fa95f1957f1b","bodyHash":"e7e69142739c436659cbd6b79ca4c935036ff3955006de3fe1467b614265749b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) getCandidateForOverloadFailure(node *ast.Node, candidates []*Signature, args []*ast.Node, hasCandidatesOutArray bool, checkMode CheckMode) *Signature {
@@ -3956,7 +4003,7 @@ export function Checker_inferTypeArguments(receiver: GoPtr<Checker>, node: GoPtr
  * 	return c.createUnionOfSignaturesForOverloadFailure(candidates)
  * }
  */
-export function Checker_getCandidateForOverloadFailure(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidates: GoSlice<GoPtr<Signature>>, args: GoSlice<GoPtr<Node>>, hasCandidatesOutArray: bool, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_getCandidateForOverloadFailure(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidates: GoSlice<GoPtr<Signature>>, args: GoPtr<GoSlice<GoPtr<Node>>>, hasCandidatesOutArray: bool, checkMode: CheckMode): GoPtr<Signature> {
   Checker_checkNodeDeferred(receiver, node);
   if (hasCandidatesOutArray || candidates.length === 1 || core.Some(candidates, (s: GoPtr<Signature>) => s!.typeParameters.length !== 0)) {
     return Checker_pickLongestCandidateSignature(receiver, node, candidates, args, checkMode);
@@ -3966,6 +4013,7 @@ export function Checker_getCandidateForOverloadFailure(receiver: GoPtr<Checker>,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.pickLongestCandidateSignature","kind":"method","status":"implemented","sigHash":"c16caa097d4952ada11619bd0659a818746c68e4a934ca13111ea719764b8f88","bodyHash":"dfa000ad854b2fe42d643c9532cc3911720ce53e58670175757d9db31cec6a56"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) pickLongestCandidateSignature(node *ast.Node, candidates []*Signature, args []*ast.Node, checkMode CheckMode) *Signature {
@@ -3999,7 +4047,7 @@ export function Checker_getCandidateForOverloadFailure(receiver: GoPtr<Checker>,
  * 	return instantiated
  * }
  */
-export function Checker_pickLongestCandidateSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidates: GoSlice<GoPtr<Signature>>, args: GoSlice<GoPtr<Node>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_pickLongestCandidateSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidates: GoSlice<GoPtr<Signature>>, args: GoPtr<GoSlice<GoPtr<Node>>>, checkMode: CheckMode): GoPtr<Signature> {
   // Go: len(nil) == 0.
   let argCount = (args ?? []).length;
   if (receiver!.apparentArgumentCount !== undefined) {
@@ -4107,6 +4155,7 @@ export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, type
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.inferSignatureInstantiationForOverloadFailure","kind":"method","status":"implemented","sigHash":"e55d2ffad4c11aab49154f5c16b5187a4fc508c3bfe4e17ba9939e883ea5d3ae","bodyHash":"9b5e151ea3969d20225bfa32cee596de6a504f58d0cab65f9992e15fe4d21711"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) inferSignatureInstantiationForOverloadFailure(node *ast.Node, typeParameters []*Type, candidate *Signature, args []*ast.Node, checkMode CheckMode) *Signature {
@@ -4115,7 +4164,7 @@ export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, type
  * 	return c.createSignatureInstantiation(candidate, typeArgumentTypes)
  * }
  */
-export function Checker_inferSignatureInstantiationForOverloadFailure(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, candidate: GoPtr<Signature>, args: GoSlice<GoPtr<Node>>, checkMode: CheckMode): GoPtr<Signature> {
+export function Checker_inferSignatureInstantiationForOverloadFailure(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, candidate: GoPtr<Signature>, args: GoPtr<GoSlice<GoPtr<Node>>>, checkMode: CheckMode): GoPtr<Signature> {
   const inferenceContext = Checker_newInferenceContext(receiver, typeParameters, candidate, core.IfElse(IsInJSFile(node), InferenceFlagsAnyDefault, InferenceFlagsNone), receiver!.compareTypesAssignable);
   const typeArgumentTypes = Checker_inferTypeArguments(receiver, node, candidate, args, checkMode | CheckModeSkipContextSensitive | CheckModeSkipGenericFunctions, inferenceContext);
   return Checker_createSignatureInstantiation(receiver, candidate, typeArgumentTypes);
@@ -4181,7 +4230,7 @@ export function Checker_createUnionOfSignaturesForOverloadFailure(receiver: GoPt
         if (index < signature!.parameters.length - 1) {
           return signature!.parameters[index];
         }
-        return core.LastOrNil(signature!.parameters);
+        return core.LastOrNil(signature!.parameters, () => undefined);
       }
       if (index < signature!.parameters.length) {
         return signature!.parameters[index];
@@ -4192,7 +4241,7 @@ export function Checker_createUnionOfSignaturesForOverloadFailure(receiver: GoPt
   }
   const restParameterSymbols = core.MapNonNil(candidates, (signature: GoPtr<Signature>) => {
     if (signatureHasRestParameter(signature)) {
-      return core.LastOrNil(signature!.parameters);
+      return core.LastOrNil(signature!.parameters, () => undefined);
     }
     return undefined;
   });
@@ -4230,7 +4279,7 @@ export function Checker_createCombinedSymbolForOverloadFailure(receiver: GoPtr<C
  * }
  */
 export function Checker_getRestTypeOfSignature(receiver: GoPtr<Checker>, signature: GoPtr<Signature>): GoPtr<Type> {
-  return core.OrElse(Checker_tryGetRestTypeOfSignature(receiver, signature), receiver!.anyType);
+  return core.OrElse(Checker_tryGetRestTypeOfSignature(receiver, signature), receiver!.anyType, () => undefined, (left, right) => left === right);
 }
 
 /**
@@ -4544,15 +4593,17 @@ export function Checker_getIntersectedSignatures(receiver: GoPtr<Checker>, signa
 export function Checker_isAritySmaller(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, target: GoPtr<Node>): bool {
   const parameters = Node_Parameters(target);
   let targetParameterCount = 0;
-  while (targetParameterCount < parameters.length) {
-    const param = parameters[targetParameterCount];
-    if (Node_Initializer(param) !== undefined || Node_QuestionToken(param) !== undefined || hasDotDotDotToken(param)) {
-      break;
+  if (parameters !== undefined) {
+    while (targetParameterCount < parameters.length) {
+      const param = parameters[targetParameterCount];
+      if (Node_Initializer(param) !== undefined || Node_QuestionToken(param) !== undefined || hasDotDotDotToken(param)) {
+        break;
+      }
+      targetParameterCount++;
     }
-    targetParameterCount++;
-  }
-  if (parameters.length !== 0 && IsThisParameter(parameters[0])) {
-    targetParameterCount--;
+    if (parameters.length !== 0 && IsThisParameter(parameters[0])) {
+      targetParameterCount--;
+    }
   }
   return !Checker_hasEffectiveRestParameter(receiver, signature) && Checker_getParameterCount(receiver, signature) < targetParameterCount;
 }
@@ -4643,7 +4694,7 @@ export function Checker_assignContextualParameterTypes(receiver: GoPtr<Checker>,
     }
   }
   if (signatureHasRestParameter(sig)) {
-    const parameter = core.LastOrNil(sig!.parameters);
+    const parameter = core.LastOrNil(sig!.parameters, () => undefined);
     if (
       (parameter!.ValueDeclaration !== undefined && Node_Type(parameter!.ValueDeclaration) === undefined) ||
       (parameter!.ValueDeclaration === undefined && (parameter!.CheckFlags & CheckFlagsDeferredType) !== 0)
@@ -5220,7 +5271,7 @@ export function Checker_newParameter(receiver: GoPtr<Checker>, name: string, t: 
  * }
  */
 export function Checker_hasSignatures(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  return Checker_getSignaturesOfStructuredType(receiver, t, SignatureKindCall).length > 0 || Checker_getSignaturesOfStructuredType(receiver, t, SignatureKindConstruct).length > 0;
+  return (Checker_getSignaturesOfStructuredType(receiver, t, SignatureKindCall)?.length ?? 0) > 0 || (Checker_getSignaturesOfStructuredType(receiver, t, SignatureKindConstruct)?.length ?? 0) > 0;
 }
 
 /**
@@ -5558,7 +5609,7 @@ export function Checker_getBaseConstructorTypeOfClass(receiver: GoPtr<Checker>, 
       let ctorReturn: GoPtr<Type> = receiver!.unknownType;
       if (constraint !== undefined) {
         const ctorSigs = Checker_getSignaturesOfType(receiver, constraint, SignatureKindConstruct);
-        if (ctorSigs.length !== 0) {
+        if (ctorSigs !== undefined && ctorSigs.length !== 0) {
           ctorReturn = Checker_getReturnTypeOfSignature(receiver, ctorSigs[0]);
         }
       }
@@ -5601,7 +5652,7 @@ export function Checker_getBaseConstructorTypeOfClass(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_isConstructorType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  if (Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct).length > 0) {
+  if ((Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct)?.length ?? 0) > 0) {
     return true;
   }
   if ((t!.flags & TypeFlagsTypeVariable) !== 0) {
@@ -5629,7 +5680,7 @@ export function Checker_isConstructorType(receiver: GoPtr<Checker>, t: GoPtr<Typ
  */
 export function Checker_isMixinConstructorType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
   const signatures = Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct);
-  if (signatures.length === 1) {
+  if (signatures?.length === 1) {
     const s = signatures[0];
     if (s!.typeParameters.length === 0 && s!.parameters.length === 1 && signatureHasRestParameter(s)) {
       const paramType = Checker_getTypeOfParameter(receiver, s!.parameters[0]);
@@ -5924,7 +5975,7 @@ export function Checker_getInferredTypeParameterConstraint(receiver: GoPtr<Check
  * 	return nil
  * }
  */
-export function Checker_getTypeParametersForTypeReferenceOrImport(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
+export function Checker_getTypeParametersForTypeReferenceOrImport(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Type>>> {
   const t = Checker_getTypeFromTypeNode(receiver, node);
   if (!Checker_isErrorType(receiver, t)) {
     const symbol_ = Checker_getResolvedSymbolOrNil(receiver, node);
@@ -5932,7 +5983,7 @@ export function Checker_getTypeParametersForTypeReferenceOrImport(receiver: GoPt
       return Checker_getTypeParametersForTypeAndSymbol(receiver, t, symbol_);
     }
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -5953,7 +6004,7 @@ export function Checker_getTypeParametersForTypeReferenceOrImport(receiver: GoPt
  * 	return nil
  * }
  */
-export function Checker_getTypeParametersForTypeAndSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
+export function Checker_getTypeParametersForTypeAndSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Type>>> {
   if (!Checker_isErrorType(receiver, t)) {
     if ((symbol_!.Flags & SymbolFlagsTypeAlias) !== 0) {
       const typeParameters = LinkStore_Get<GoPtr<Symbol>, TypeAliasLinks>(receiver!.typeAliasLinks, symbol_)!.typeParameters;
@@ -5965,7 +6016,7 @@ export function Checker_getTypeParametersForTypeAndSymbol(receiver: GoPtr<Checke
       return InterfaceType_LocalTypeParameters(Type_AsInterfaceType(Type_Target(t)));
     }
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -5982,10 +6033,14 @@ export function Checker_getTypeParametersForTypeAndSymbol(receiver: GoPtr<Checke
  */
 export function Checker_getEffectiveTypeArgumentAtIndex(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, index: int): GoPtr<Type> {
   const typeArguments = Node_TypeArguments(node);
-  if (index < (typeArguments ?? []).length) {
-    return Checker_getTypeFromTypeNode(receiver, typeArguments![index]);
+  if (typeArguments !== undefined && index < typeArguments.length) {
+    return Checker_getTypeFromTypeNode(receiver, typeArguments[index]);
   }
-  return Checker_getEffectiveTypeArguments(receiver, node, typeParameters)[index];
+  const effectiveTypeArguments = Checker_getEffectiveTypeArguments(receiver, node, typeParameters);
+  if (effectiveTypeArguments === undefined || index >= effectiveTypeArguments.length) {
+    throw new Error("effective type argument index is out of bounds");
+  }
+  return effectiveTypeArguments[index];
 }
 
 /**
@@ -6047,22 +6102,25 @@ export function Checker_getRestType(receiver: GoPtr<Checker>, source: GoPtr<Type
     return Checker_mapType(receiver, source, (t: GoPtr<Type>): GoPtr<Type> => Checker_getRestType(receiver, t, properties, symbol_));
   }
   let omitKeyType = Checker_getUnionType(receiver, core.Map(properties, (property: GoPtr<Node>): GoPtr<Type> => Checker_getLiteralTypeFromPropertyName(receiver, property)));
-  const spreadableProperties: GoSlice<GoPtr<Symbol>> = [];
-  const unspreadableToRestKeys: GoSlice<GoPtr<Type>> = [];
-  for (const prop of Checker_getPropertiesOfType(receiver, source)) {
-    const literalTypeFromProperty = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false as bool);
-    if (
-      !Checker_isTypeAssignableTo(receiver, literalTypeFromProperty, omitKeyType) &&
-      (getDeclarationModifierFlagsFromSymbol(prop) & (ModifierFlagsPrivate | ModifierFlagsProtected)) === 0 &&
-      Checker_isSpreadableProperty(receiver, prop)
-    ) {
-      spreadableProperties.push(prop);
-    } else {
-      unspreadableToRestKeys.push(literalTypeFromProperty);
+  let spreadableProperties: GoPtr<GoSlice<GoPtr<Symbol>>>;
+  let unspreadableToRestKeys: GoPtr<GoSlice<GoPtr<Type>>>;
+  const sourceProperties = Checker_getPropertiesOfType(receiver, source);
+  if (sourceProperties !== undefined) {
+    for (const prop of sourceProperties) {
+      const literalTypeFromProperty = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false as bool);
+      if (
+        !Checker_isTypeAssignableTo(receiver, literalTypeFromProperty, omitKeyType) &&
+        (getDeclarationModifierFlagsFromSymbol(prop) & (ModifierFlagsPrivate | ModifierFlagsProtected)) === 0 &&
+        Checker_isSpreadableProperty(receiver, prop)
+      ) {
+        spreadableProperties = spreadableProperties === undefined ? [prop] : [...spreadableProperties, prop];
+      } else {
+        unspreadableToRestKeys = unspreadableToRestKeys === undefined ? [literalTypeFromProperty] : [...unspreadableToRestKeys, literalTypeFromProperty];
+      }
     }
   }
   if (Checker_isGenericObjectType(receiver, source) || Checker_isGenericIndexType(receiver, omitKeyType)) {
-    if (unspreadableToRestKeys.length !== 0) {
+    if (unspreadableToRestKeys !== undefined && unspreadableToRestKeys.length !== 0) {
       omitKeyType = Checker_getUnionType(receiver, [omitKeyType, ...unspreadableToRestKeys]);
     }
     if ((omitKeyType!.flags & TypeFlagsNever) !== 0) {
@@ -6075,10 +6133,12 @@ export function Checker_getRestType(receiver: GoPtr<Checker>, source: GoPtr<Type
     return Checker_getTypeAliasInstantiation(receiver, omitTypeAlias, [source, omitKeyType], undefined);
   }
   const members: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
-  for (const prop of spreadableProperties) {
-    members.set(prop!.Name, Checker_getSpreadSymbol(receiver, prop, false as bool));
+  if (spreadableProperties !== undefined) {
+    for (const prop of spreadableProperties) {
+      members.set(prop!.Name, Checker_getSpreadSymbol(receiver, prop, false as bool));
+    }
   }
-  const result = Checker_newAnonymousType(receiver, symbol_, members, [], [], Checker_getIndexInfosOfType(receiver, source));
+  const result = Checker_newAnonymousType(receiver, symbol_, members, undefined, undefined, Checker_getIndexInfosOfType(receiver, source));
   result!.objectFlags = (result!.objectFlags | ObjectFlagsObjectRestType) as ObjectFlags;
   return result;
 }
@@ -6196,18 +6256,20 @@ export function Checker_isGlobalSymbolConstructor(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSignaturesOfType","kind":"method","status":"implemented","sigHash":"50516a040707d550bebf1933c979d6c88fa4c021222a40f2b646811f12db420c","bodyHash":"12d986c5e9e3ef2ff5dc7856d769df85483ccbf123784290e5fb0092e4f04796"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) getSignaturesOfType(t *Type, kind SignatureKind) []*Signature {
  * 	return c.getSignaturesOfStructuredType(c.getReducedApparentType(t), kind)
  * }
  */
-export function Checker_getSignaturesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoSlice<GoPtr<Signature>> {
+export function Checker_getSignaturesOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoPtr<GoSlice<GoPtr<Signature>>> {
   return Checker_getSignaturesOfStructuredType(receiver, Checker_getReducedApparentType(receiver, t), kind);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSignaturesOfStructuredType","kind":"method","status":"implemented","sigHash":"34db2c00f2b9b0f54322d04da591540b9fa3b3749cc98db010353f4a89509b1b","bodyHash":"18dcd71740f8f6b05a249f82c5a09e84577ef060dc3119fe4e4fed876708bb6e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/internal/checker/types.ts::SignatureKind)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) getSignaturesOfStructuredType(t *Type, kind SignatureKind) []*Signature {
@@ -6221,15 +6283,15 @@ export function Checker_getSignaturesOfType(receiver: GoPtr<Checker>, t: GoPtr<T
  * 	return resolved.signatures[resolved.callSignatureCount:]
  * }
  */
-export function Checker_getSignaturesOfStructuredType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoSlice<GoPtr<Signature>> {
+export function Checker_getSignaturesOfStructuredType(receiver: GoPtr<Checker>, t: GoPtr<Type>, kind: SignatureKind): GoPtr<GoSlice<GoPtr<Signature>>> {
   if ((t!.flags & TypeFlagsStructuredType) === 0) {
-    return [];
+    return undefined;
   }
   const resolved = Checker_resolveStructuredTypeMembers(receiver, t);
   if (kind === SignatureKindCall) {
-    return resolved!.signatures.slice(0, resolved!.callSignatureCount) as GoSlice<GoPtr<Signature>>;
+    return resolved!.signatures?.slice(0, resolved!.callSignatureCount);
   }
-  return resolved!.signatures.slice(resolved!.callSignatureCount) as GoSlice<GoPtr<Signature>>;
+  return resolved!.signatures?.slice(resolved!.callSignatureCount);
 }
 
 /**
@@ -6264,6 +6326,7 @@ export function Checker_getApplicableIndexInfoForName(receiver: GoPtr<Checker>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findApplicableIndexInfo","kind":"method","status":"implemented","sigHash":"37bc60135b8c12225c8c34a171d329b3e6487738b1ece89449e5031b10c1bc89","bodyHash":"4e52917d4618344ab781f2e152b016d6f3d3ecc78aa1022d564c1c05e2024c00"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::IndexInfo>"}
  *
  * Go source:
  * func (c *Checker) findApplicableIndexInfo(indexInfos []*IndexInfo, keyType *Type) *IndexInfo {
@@ -6301,7 +6364,7 @@ export function Checker_getApplicableIndexInfoForName(receiver: GoPtr<Checker>, 
  * 	}
  * }
  */
-export function Checker_findApplicableIndexInfo(receiver: GoPtr<Checker>, indexInfos: GoSlice<GoPtr<IndexInfo>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
+export function Checker_findApplicableIndexInfo(receiver: GoPtr<Checker>, indexInfos: GoPtr<GoSlice<GoPtr<IndexInfo>>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
   let stringIndexInfo: GoPtr<IndexInfo> = undefined;
   const applicableInfos: Array<GoPtr<IndexInfo>> = [];
   for (const info of (indexInfos ?? [])) {
@@ -6394,6 +6457,7 @@ export function Checker_getConstructorsForTypeArguments(receiver: GoPtr<Checker>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSignatureInstantiation","kind":"method","status":"implemented","sigHash":"c644227b7797d9527e44f59ac8691746d09a02195ccd36e9d90982c6b7bf87ef","bodyHash":"429e104e3d8a1284190c63812b1d24ff31ea384fe4c98bc5f5daab1b32da0fe7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) getSignatureInstantiation(sig *Signature, typeArguments []*Type, isJavaScript bool, inferredTypeParameters []*Type) *Signature {
@@ -6413,7 +6477,7 @@ export function Checker_getConstructorsForTypeArguments(receiver: GoPtr<Checker>
  * 	return instantiatedSignature
  * }
  */
-export function Checker_getSignatureInstantiation(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoSlice<GoPtr<Type>>, isJavaScript: bool, inferredTypeParameters: GoSlice<GoPtr<Type>>): GoPtr<Signature> {
+export function Checker_getSignatureInstantiation(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>, isJavaScript: bool, inferredTypeParameters: GoSlice<GoPtr<Type>>): GoPtr<Signature> {
   const instantiatedSignature = Checker_getSignatureInstantiationWithoutFillingInTypeArguments(receiver, sig, Checker_fillMissingTypeArguments(receiver, typeArguments, sig!.typeParameters, Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters), isJavaScript));
   if (inferredTypeParameters.length !== 0) {
     const returnSignature = Checker_getSingleCallOrConstructSignature(receiver, Checker_getReturnTypeOfSignature(receiver, instantiatedSignature));
@@ -6452,6 +6516,7 @@ export function Checker_cloneSignature(receiver: GoPtr<Checker>, sig: GoPtr<Sign
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSignatureInstantiationWithoutFillingInTypeArguments","kind":"method","status":"implemented","sigHash":"b17d88b595cefe5cf56615ab4609d0d91cf9f92411ce71cb2241805af9ea4758","bodyHash":"506da85daa36a0c7996586a9dd130fc215b016626a88d5f73d50c810d125d733"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) getSignatureInstantiationWithoutFillingInTypeArguments(sig *Signature, typeArguments []*Type) *Signature {
@@ -6464,7 +6529,7 @@ export function Checker_cloneSignature(receiver: GoPtr<Checker>, sig: GoPtr<Sign
  * 	return instantiation
  * }
  */
-export function Checker_getSignatureInstantiationWithoutFillingInTypeArguments(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoSlice<GoPtr<Type>>): GoPtr<Signature> {
+export function Checker_getSignatureInstantiationWithoutFillingInTypeArguments(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Signature> {
   const key: CachedSignatureKey = { sig, key: getTypeListKey(typeArguments) };
   let instantiation = receiver!.cachedSignatures.get(key as unknown as CachedSignatureKey);
   if (instantiation === undefined) {
@@ -6476,25 +6541,27 @@ export function Checker_getSignatureInstantiationWithoutFillingInTypeArguments(r
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createSignatureInstantiation","kind":"method","status":"implemented","sigHash":"630f00305534cb7148da172e49f25a030b1f38eb2941c2020bc236b3220cc346","bodyHash":"689b9d664e69aa5fe33e582f8d9011c1c63325b7d9d9b636e89a0637c84ffbd1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>"}
  *
  * Go source:
  * func (c *Checker) createSignatureInstantiation(sig *Signature, typeArguments []*Type) *Signature {
  * 	return c.instantiateSignatureEx(sig, c.createSignatureTypeMapper(sig, typeArguments), true /*eraseTypeParameters* /)
  * }
  */
-export function Checker_createSignatureInstantiation(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoSlice<GoPtr<Type>>): GoPtr<Signature> {
+export function Checker_createSignatureInstantiation(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Signature> {
   return Checker_instantiateSignatureEx(receiver, sig, Checker_createSignatureTypeMapper(receiver, sig, typeArguments), true);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createSignatureTypeMapper","kind":"method","status":"implemented","sigHash":"f64f28afca514f4d3a0818c941b3f83f5d96b0d610b5331ac900e9adf458e2f5","bodyHash":"9dae9800aee00a5686035dfa450ab2068ba93af8603d6870c1459726094d5544"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>"}
  *
  * Go source:
  * func (c *Checker) createSignatureTypeMapper(sig *Signature, typeArguments []*Type) *TypeMapper {
  * 	return newTypeMapper(c.getTypeParametersForMapper(sig), typeArguments)
  * }
  */
-export function Checker_createSignatureTypeMapper(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
+export function Checker_createSignatureTypeMapper(receiver: GoPtr<Checker>, sig: GoPtr<Signature>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<TypeMapper> {
   return newTypeMapper(Checker_getTypeParametersForMapper(receiver, sig), typeArguments);
 }
 
@@ -6567,10 +6634,10 @@ export function Checker_getSingleSignature(receiver: GoPtr<Checker>, t: GoPtr<Ty
     const callSignatures = StructuredType_CallSignatures(resolved);
     const constructSignatures = StructuredType_ConstructSignatures(resolved);
     if (allowMembers || ((resolved!.properties ?? []).length === 0 && (resolved!.indexInfos ?? []).length === 0)) {
-      if (kind === SignatureKindCall && callSignatures.length === 1 && constructSignatures.length === 0) {
+      if (kind === SignatureKindCall && callSignatures?.length === 1 && (constructSignatures?.length ?? 0) === 0) {
         return callSignatures[0];
       }
-      if (kind === SignatureKindConstruct && constructSignatures.length === 1 && callSignatures.length === 0) {
+      if (kind === SignatureKindConstruct && constructSignatures?.length === 1 && (callSignatures?.length ?? 0) === 0) {
         return constructSignatures[0];
       }
     }
@@ -6623,9 +6690,9 @@ export function Checker_getOrCreateTypeFromSignature(receiver: GoPtr<Checker>, s
     }
     const t = Checker_newObjectType(receiver, ObjectFlagsAnonymous | ObjectFlagsSingleSignatureType, symbol_);
     if (isConstructor) {
-      Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, [], [sig], []);
+      Checker_setStructuredTypeMembers(receiver, t, undefined, [], [sig], []);
     } else {
-      Checker_setStructuredTypeMembers(receiver, t, undefined as unknown as SymbolTable, [sig], [], []);
+      Checker_setStructuredTypeMembers(receiver, t, undefined, [sig], [], []);
     }
     sig!.isolatedSignatureType = t;
   }
@@ -6764,12 +6831,20 @@ export function Checker_getBaseSignature(receiver: GoPtr<Checker>, signature: Go
   if (cached !== undefined) {
     return cached;
   }
-  const baseConstraintMapper = newTypeMapper(typeParameters, core.Map(typeParameters, (tp: GoPtr<Type>) => core.OrElse(Checker_getConstraintOfTypeParameter(receiver, tp), receiver!.unknownType)));
+  const baseConstraintMapper = newTypeMapper(typeParameters, core.Map(typeParameters, (tp: GoPtr<Type>) => core.OrElse(Checker_getConstraintOfTypeParameter(receiver, tp), receiver!.unknownType, () => undefined, (left, right) => left === right)));
   let baseConstraints = core.Map(typeParameters, (tp: GoPtr<Type>) => Checker_instantiateType(receiver, tp, baseConstraintMapper));
   for (let index = 0; index < typeParameters.length - 1; index++) {
-    baseConstraints = Checker_instantiateTypes(receiver, baseConstraints, baseConstraintMapper);
+    const instantiatedBaseConstraints = Checker_instantiateTypes(receiver, baseConstraints, baseConstraintMapper);
+    if (instantiatedBaseConstraints === undefined) {
+      throw new Error("instantiating non-nil base constraints produced a nil slice");
+    }
+    baseConstraints = instantiatedBaseConstraints;
   }
-  baseConstraints = Checker_instantiateTypes(receiver, baseConstraints, newArrayToSingleTypeMapper(typeParameters, receiver!.anyType));
+  const erasedBaseConstraints = Checker_instantiateTypes(receiver, baseConstraints, newArrayToSingleTypeMapper(typeParameters, receiver!.anyType));
+  if (erasedBaseConstraints === undefined) {
+    throw new Error("erasing non-nil base constraints produced a nil slice");
+  }
+  baseConstraints = erasedBaseConstraints;
   const result = Checker_instantiateSignatureEx(receiver, signature, newTypeMapper(typeParameters, baseConstraints), true);
   receiver!.cachedSignatures.set(key as unknown as CachedSignatureKey, result);
   return result;
@@ -6856,6 +6931,9 @@ export function Checker_areAllOuterTypeParametersApplied(receiver: GoPtr<Checker
   if ((outerTypeParameters ?? []).length !== 0) {
     const last = outerTypeParameters!.length - 1;
     const typeArguments = Checker_getTypeArguments(receiver, t);
+    if (typeArguments === undefined) {
+      throw new Error("applied outer type parameters require type arguments");
+    }
     return outerTypeParameters![last]!.symbol !== typeArguments[last]!.symbol;
   }
   return true;
@@ -6894,8 +6972,9 @@ export function Checker_getTypeWithThisArgument(receiver: GoPtr<Checker>, t: GoP
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     const target = Type_Target(t);
     const typeArguments = Checker_getTypeArguments(receiver, t);
-    if ((InterfaceType_TypeParameters(Type_AsInterfaceType(target)) ?? []).length === typeArguments.length) {
-      const thisArg = core.OrElse(thisArgument, Type_AsInterfaceType(target)!.thisType);
+    const typeArgumentCount = typeArguments === undefined ? 0 : typeArguments.length;
+    if (InterfaceType_TypeParameters(Type_AsInterfaceType(target)).length === typeArgumentCount) {
+      const thisArg = core.OrElse(thisArgument, Type_AsInterfaceType(target)!.thisType, () => undefined, (left, right) => left === right);
       return Checker_createTypeReference(receiver, target, core.Concatenate(typeArguments, [thisArg]));
     }
     return t;
@@ -6947,9 +7026,9 @@ export function Checker_getTypeWithThisArgument(receiver: GoPtr<Checker>, t: GoP
  * 	return result
  * }
  */
-export function Checker_getSignaturesOfSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Signature>> {
+export function Checker_getSignaturesOfSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Signature>>> {
   if (symbol_ === undefined) {
-    return [];
+    return undefined;
   }
   const result: GoPtr<Signature>[] = [];
   const declarations = symbol_!.Declarations ?? [];
@@ -7184,7 +7263,8 @@ export function Checker_getAnnotatedAccessorThisParameter(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getAccessorThisParameter(receiver: GoPtr<Checker>, accessor: GoPtr<Node>): GoPtr<Node> {
-  if (Node_Parameters(accessor).length === core.IfElse(IsGetAccessorDeclaration(accessor), 1, 2)) {
+  const parameters = Node_Parameters(accessor);
+  if (parameters !== undefined && parameters.length === core.IfElse(IsGetAccessorDeclaration(accessor), 1, 2)) {
     return GetThisParameter(accessor);
   }
   return undefined;
@@ -7620,7 +7700,7 @@ export function Checker_getReturnTypeFromBody(receiver: GoPtr<Checker>, fn: GoPt
     const [returnTypes, isNeverReturning] = Checker_checkAndAggregateReturnExpressionTypes(receiver, fn, checkMode);
     if (isNeverReturning) {
       fallbackReturnType = receiver!.neverType;
-    } else if ((returnTypes ?? []).length !== 0) {
+    } else if (returnTypes !== undefined && returnTypes.length !== 0) {
       returnType = Checker_getUnionTypeEx(receiver, returnTypes, UnionReductionSubtype, undefined, undefined);
     }
     const [yieldTypes, nextTypes] = Checker_checkAndAggregateYieldOperandTypes(receiver, fn, checkMode);
@@ -7638,10 +7718,10 @@ export function Checker_getReturnTypeFromBody(receiver: GoPtr<Checker>, fn: GoPt
       }
       return receiver!.neverType;
     }
-    if ((types ?? []).length === 0) {
+    if (types === undefined || types.length === 0) {
       const contextualReturnType = Checker_getContextualReturnType(receiver, fn, ContextFlagsNone);
       const emptyReturnType = contextualReturnType !== undefined &&
-        someType(core.OrElse(Checker_unwrapReturnType(receiver, contextualReturnType, functionFlags), receiver!.voidType), (t: GoPtr<Type>): bool => (t!.flags & TypeFlagsUndefined) !== 0)
+        someType(core.OrElse(Checker_unwrapReturnType(receiver, contextualReturnType, functionFlags), receiver!.voidType, () => undefined, (left, right) => left === right), (t: GoPtr<Type>): bool => (t!.flags & TypeFlagsUndefined) !== 0)
         ? receiver!.undefinedType
         : receiver!.voidType;
       if ((functionFlags & FunctionFlagsAsync) !== 0) {
@@ -7797,7 +7877,7 @@ export function Checker_unwrapReturnType(receiver: GoPtr<Checker>, returnType: G
     return returnIterationType;
   }
   if (isAsync) {
-    return core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), receiver!.errorType);
+    return core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), receiver!.errorType, () => undefined, (left, right) => left === right);
   }
   return returnType;
 }
@@ -7868,15 +7948,17 @@ export function Checker_checkIfExpressionRefinesAnyParameter(receiver: GoPtr<Che
     return undefined;
   }
   const parameters = Node_Parameters(fn);
-  for (let i = 0; i < parameters.length; i++) {
-    const param = parameters[i];
-    const initType = Checker_getTypeOfSymbol(receiver, Node_Symbol(param));
-    if (initType === undefined || (initType!.flags & TypeFlagsBoolean) !== 0 || !IsIdentifier(Node_Name(param)) || Checker_isSymbolAssigned(receiver, Node_Symbol(param)) || isRestParameter(param)) {
-      continue;
-    }
-    const trueType = Checker_checkIfExpressionRefinesParameter(receiver, fn, expr, param, initType);
-    if (trueType !== undefined) {
-      return Checker_newTypePredicate(receiver, TypePredicateKindIdentifier, Node_Text(Node_Name(param)), i, trueType);
+  if (parameters !== undefined) {
+    for (let i = 0; i < parameters.length; i++) {
+      const param = parameters[i];
+      const initType = Checker_getTypeOfSymbol(receiver, Node_Symbol(param));
+      if (initType === undefined || (initType!.flags & TypeFlagsBoolean) !== 0 || !IsIdentifier(Node_Name(param)) || Checker_isSymbolAssigned(receiver, Node_Symbol(param)) || isRestParameter(param)) {
+        continue;
+      }
+      const trueType = Checker_checkIfExpressionRefinesParameter(receiver, fn, expr, param, initType);
+      if (trueType !== undefined) {
+        return Checker_newTypePredicate(receiver, TypePredicateKindIdentifier, Node_Text(Node_Name(param)), i, trueType);
+      }
     }
   }
   return undefined;
@@ -7978,7 +8060,11 @@ export function Checker_instantiateSignatureEx(receiver: GoPtr<Checker>, sig: Go
       Type_AsTypeParameter(typeParameter)!.mapper = m;
     }
   }
-  const result = Checker_newSignature(receiver, (sig!.flags & SignatureFlagsPropagatingFlags) as SignatureFlags, sig!.declaration, freshTypeParameters, Checker_instantiateSymbol(receiver, sig!.thisParameter, m), Checker_instantiateSymbols(receiver, sig!.parameters, m), undefined, undefined, sig!.minArgumentCount);
+  const parameters = Checker_instantiateSymbols(receiver, sig!.parameters, m);
+  if (parameters === undefined) {
+    throw new Error("instantiating a non-nil signature parameter slice produced nil");
+  }
+  const result = Checker_newSignature(receiver, (sig!.flags & SignatureFlagsPropagatingFlags) as SignatureFlags, sig!.declaration, freshTypeParameters, Checker_instantiateSymbol(receiver, sig!.thisParameter, m), parameters, undefined, undefined, sig!.minArgumentCount);
   result!.target = sig;
   result!.mapper = m;
   return result;
@@ -8030,14 +8116,14 @@ export function Checker_getDefaultConstructSignatures(receiver: GoPtr<Checker>, 
   const baseSignatures = Checker_getSignaturesOfType(receiver, baseConstructorType, SignatureKindConstruct);
   const declaration = GetClassLikeDeclarationOfSymbol(classType!.symbol);
   const isAbstract = declaration !== undefined && HasSyntacticModifier(declaration, ModifierFlagsAbstract);
-  if (baseSignatures.length === 0) {
+  if (baseSignatures === undefined || baseSignatures.length === 0) {
     const flags = core.IfElse(isAbstract, SignatureFlagsConstruct | SignatureFlagsAbstract, SignatureFlagsConstruct);
     return [Checker_newSignature(receiver, flags as SignatureFlags, undefined, InterfaceType_LocalTypeParameters(Type_AsInterfaceType(classType)), undefined, [], classType, undefined, 0)];
   }
   const baseTypeNode = getBaseTypeNodeOfClass(classType);
   const isJavaScript = declaration !== undefined && IsInJSFile(declaration);
   const typeArguments = Checker_getTypeArgumentsFromNode(receiver, baseTypeNode);
-  const typeArgCount = typeArguments.length;
+  const typeArgCount = typeArguments === undefined ? 0 : typeArguments.length;
   const result: GoSlice<GoPtr<Signature>> = [];
   for (const baseSig of baseSignatures) {
     const minTypeArgumentCount = Checker_getMinTypeArgumentCount(receiver, baseSig!.typeParameters);
@@ -8064,6 +8150,7 @@ export function Checker_getDefaultConstructSignatures(receiver: GoPtr<Checker>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getArrayMemberCallSignatures","kind":"method","status":"implemented","sigHash":"3210399b2151444fc4a8e6c3f84c8a55440010c73bc0d7b1c8663fb21c9baa5a","bodyHash":"6609d58fec43a2cdbdd01d7b3b366c277893a4a98670b94e29de717e9cb24f81"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) getArrayMemberCallSignatures(t *Type) []*Signature {
@@ -8089,18 +8176,18 @@ export function Checker_getDefaultConstructSignatures(receiver: GoPtr<Checker>, 
  * 	return c.getSignaturesOfType(c.getTypeOfPropertyOfType(arrayType, memberName), SignatureKindCall)
  * }
  */
-export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Signature>> {
+export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Signature>>> {
   let memberName = "";
   const types = Type_Types(t);
   for (let i = 0; i < types.length; i++) {
     const type_ = types[i]!;
     if ((type_!.objectFlags & ObjectFlagsInstantiated) === 0 || type_!.symbol === undefined || type_!.symbol!.Parent === undefined || !Checker_isArrayOrTupleSymbol(receiver, type_!.symbol!.Parent)) {
-      return undefined as unknown as GoSlice<GoPtr<Signature>>;
+      return undefined;
     }
     if (i === 0) {
       memberName = type_!.symbol!.Name;
     } else if (memberName !== type_!.symbol!.Name) {
-      return undefined as unknown as GoSlice<GoPtr<Signature>>;
+      return undefined;
     }
   }
   const arrayArg = Checker_mapType(receiver, t, (type_: GoPtr<Type>): GoPtr<Type> => {
@@ -8113,6 +8200,7 @@ export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionSignatures","kind":"method","status":"implemented","sigHash":"535ccb736d68f4f2c7ebea4cbd7b5cd855001679f3c1f2aaa471b5c7bc246ebb","bodyHash":"815961442bc12f5b8f1d1461295a11d7bdd34eca7712ebfc031eb9acf4e8549a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) getUnionSignatures(signatureLists [][]*Signature) []*Signature {
@@ -8186,21 +8274,22 @@ export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t
  * 	return result
  * }
  */
-export function Checker_getUnionSignatures(receiver: GoPtr<Checker>, signatureLists: GoSlice<GoSlice<GoPtr<Signature>>>): GoSlice<GoPtr<Signature>> {
-  let result: GoSlice<GoPtr<Signature>> = [];
+export function Checker_getUnionSignatures(receiver: GoPtr<Checker>, signatureLists: GoSlice<GoPtr<GoSlice<GoPtr<Signature>>>>): GoPtr<GoSlice<GoPtr<Signature>>> {
+  let result: GoPtr<GoSlice<GoPtr<Signature>>>;
   let indexWithLengthOverOne = 0 as int;
   let countLengthOverOne = 0 as int;
   for (let i = 0; i < signatureLists.length; i++) {
-    if (signatureLists[i]!.length === 0) {
-      return [];
+    const signatureList = signatureLists[i];
+    if (signatureList === undefined || signatureList.length === 0) {
+      return undefined;
     }
-    if (signatureLists[i]!.length > 1) {
+    if (signatureList.length > 1) {
       indexWithLengthOverOne = i as int;
       countLengthOverOne++;
     }
-    for (const signature of signatureLists[i]!) {
+    for (const signature of signatureList) {
       // Only process signatures with parameter lists that aren't already in the result list
-      if (result.length === 0 || Checker_findMatchingSignature(receiver, result, signature, false, false, true) === undefined) {
+      if (result === undefined || Checker_findMatchingSignature(receiver, result, signature, false, false, true) === undefined) {
         const unionSignatures = Checker_findMatchingSignatures(receiver, signatureLists, signature, i as int);
         if (unionSignatures !== undefined && unionSignatures.length !== 0) {
           let s = signature;
@@ -8222,34 +8311,42 @@ export function Checker_getUnionSignatures(receiver: GoPtr<Checker>, signatureLi
             s = Checker_createUnionSignature(receiver, signature, unionSignatures);
             s!.thisParameter = thisParameter;
           }
-          result = [...result, s];
+          result = result === undefined ? [s] : [...result, s];
         }
       }
     }
   }
-  if (result.length === 0 && countLengthOverOne <= 1) {
+  if ((result?.length ?? 0) === 0 && countLengthOverOne <= 1) {
     // No sufficiently similar signature existed to subsume all the other signatures in the union - time to see if we can make a single
     // signature that handles all of them. We only do this when there are overloads in only one constituent. (Overloads are conditional in
     // nature and having overloads in multiple constituents would necessitate making a power set of signatures from the type, whose
     // ordering would be non-obvious)
-    const masterList = signatureLists[indexWithLengthOverOne]!;
-    let results: GoSlice<GoPtr<Signature>> = slices.Clone(masterList) ?? [];
+    const masterList = signatureLists[indexWithLengthOverOne];
+    if (masterList === undefined) {
+      throw new Error("union signature list has no master list");
+    }
+    let results: GoPtr<GoSlice<GoPtr<Signature>>> = slices.Clone(masterList);
     for (const signatures of signatureLists) {
+      if (signatures === undefined) {
+        throw new Error("union signature list became nil after validation");
+      }
       if (!core.Same(signatures, masterList)) {
-        const signature = signatures[0];
+        const signature = signatures?.[0];
         if (signature === undefined) {
           throw new globalThis.Error("getUnionSignatures bails early on empty signature lists and should not have empty lists on second pass");
         }
-        if (signature.typeParameters.length !== 0 && core.Some(results, (s: GoPtr<Signature>): bool => {
+        if (signature.typeParameters.length !== 0 && results !== undefined && core.Some(results, (s: GoPtr<Signature>): bool => {
           return s!.typeParameters.length !== 0 && !Checker_compareTypeParametersIdentical(receiver, signature.typeParameters, s!.typeParameters);
         })) {
-          results = [];
+          results = undefined;
         } else {
-          results = core.Map(results, (sig: GoPtr<Signature>): GoPtr<Signature> => {
-            return Checker_combineUnionOrIntersectionMemberSignatures(receiver, sig, signature, true);
-          });
+          if (results !== undefined) {
+            results = core.Map(results, (sig: GoPtr<Signature>): GoPtr<Signature> => {
+              return Checker_combineUnionOrIntersectionMemberSignatures(receiver, sig, signature, true);
+            });
+          }
         }
-        if (results.length === 0) {
+        if (results === undefined) {
           break;
         }
       }
@@ -8315,7 +8412,7 @@ export function Checker_combineUnionOrIntersectionMemberSignatures(receiver: GoP
   let flags = ((left!.flags | right!.flags) & (SignatureFlagsPropagatingFlags & ~SignatureFlagsHasRestParameter)) as SignatureFlags;
   const declaration = left!.declaration;
   const params = Checker_combineUnionOrIntersectionParameters(receiver, left, right, paramMapper, isUnion);
-  const lastParam = core.LastOrNil(params);
+  const lastParam = core.LastOrNil(params, () => undefined);
   if (lastParam !== undefined && (lastParam!.CheckFlags & CheckFlagsRestParameter) !== 0) {
     flags = (flags | SignatureFlagsHasRestParameter) as SignatureFlags;
   }
@@ -8434,7 +8531,7 @@ export function Checker_combineUnionOrIntersectionParameters(receiver: GoPtr<Che
     if (longest === right) {
       longestParamType = Checker_instantiateType(receiver, longestParamType, mapper);
     }
-    let shorterParamType = core.OrElse(Checker_tryGetTypeAtPosition(receiver, shorter, i as int), receiver!.unknownType);
+    let shorterParamType = core.OrElse(Checker_tryGetTypeAtPosition(receiver, shorter, i as int), receiver!.unknownType, () => undefined, (left, right) => left === right);
     if (shorter === right) {
       shorterParamType = Checker_instantiateType(receiver, shorterParamType, mapper);
     }
@@ -8492,6 +8589,7 @@ export function Checker_combineUnionOrIntersectionParameters(receiver: GoPtr<Che
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.appendSignatures","kind":"method","status":"implemented","sigHash":"5c3fa0c2ecdf16edcebf284c72274319cdda4a79a191179ae327b923d4a4b8ed","bodyHash":"96792b8ff2bfc0529611434531cbc32a79e38f9f8376c2972e6636091a2bdaa8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) appendSignatures(signatures []*Signature, newSignatures []*Signature) []*Signature {
@@ -8505,12 +8603,15 @@ export function Checker_combineUnionOrIntersectionParameters(receiver: GoPtr<Che
  * 	return signatures
  * }
  */
-export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: GoSlice<GoPtr<Signature>>, newSignatures: GoSlice<GoPtr<Signature>>): GoSlice<GoPtr<Signature>> {
-  let result = signatures ?? [] as GoSlice<GoPtr<Signature>>;
-  for (const sig of (newSignatures ?? [])) {
-    if (result.length === 0 || core.Every(result, (s: GoPtr<Signature>) =>
+export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: GoPtr<GoSlice<GoPtr<Signature>>>, newSignatures: GoPtr<GoSlice<GoPtr<Signature>>>): GoPtr<GoSlice<GoPtr<Signature>>> {
+  let result = signatures;
+  if (newSignatures === undefined) {
+    return result;
+  }
+  for (const sig of newSignatures) {
+    if (result === undefined || result.length === 0 || core.Every(result, (s: GoPtr<Signature>) =>
       Checker_compareSignaturesIdentical(receiver, s, sig, false, false, false, (source: GoPtr<Type>, target: GoPtr<Type>) => Checker_compareTypesIdentical(receiver, source, target)) === TernaryFalse)) {
-      result = [...result, sig] as GoSlice<GoPtr<Signature>>;
+      result = result === undefined ? [sig] : [...result, sig];
     }
   }
   return result;
@@ -8518,6 +8619,7 @@ export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeArguments","kind":"method","status":"implemented","sigHash":"3c7691036560484008d07192ef2d8716f3171561be9cfbe8b8c5854121ba87f8","bodyHash":"53f78fa2fb565050154647e8519a80b508e09774a1eed0409ed075f006b4bbb4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) getTypeArguments(t *Type) []*Type {
@@ -8560,25 +8662,36 @@ export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: G
  * 	return d.resolvedTypeArguments
  * }
  */
-export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
+export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Type>>> {
   const d = Type_AsTypeReference(t);
   if (d!.resolvedTypeArguments === undefined) {
     const targetInterface = Type_TargetInterfaceType(t);
     if (!Checker_pushTypeResolution(receiver, t, TypeSystemPropertyNameResolvedTypeArguments)) {
       return slices.Repeat([receiver!.errorType], InterfaceType_TypeParameters(targetInterface).length);
     }
-    let typeArguments: GoSlice<GoPtr<Type>> = [];
+    let typeArguments: GoPtr<GoSlice<GoPtr<Type>>>;
     const node = d!.node;
     if (node !== undefined) {
       switch (node.Kind) {
         case KindTypeReference:
-          typeArguments = [...InterfaceType_OuterTypeParameters(targetInterface), ...Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface))] as GoSlice<GoPtr<Type>>;
+          const outerTypeArguments = InterfaceType_OuterTypeParameters(targetInterface);
+          const localTypeArguments = Checker_getEffectiveTypeArguments(receiver, node, InterfaceType_LocalTypeParameters(targetInterface));
+          if (outerTypeArguments.length === 0) {
+            typeArguments = localTypeArguments;
+          } else if (localTypeArguments === undefined) {
+            typeArguments = outerTypeArguments.slice();
+          } else {
+            typeArguments = [...outerTypeArguments, ...localTypeArguments];
+          }
           break;
         case KindArrayType:
           typeArguments = [Checker_getTypeFromTypeNode(receiver, AsArrayTypeNode(node)!.ElementType)];
           break;
         case KindTupleType:
-          typeArguments = core.Map(Node_Elements(node) ?? [], (element: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, element));
+          const elements = Node_Elements(node);
+          typeArguments = elements === undefined
+            ? undefined
+            : core.Map(elements, (element: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, element));
           break;
         default:
           throw new globalThis.Error("Unhandled case in getTypeArguments");
@@ -8605,18 +8718,24 @@ export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getEffectiveTypeArguments","kind":"method","status":"implemented","sigHash":"02e479812dd0eb4e62a29ee97c7db5885a4135552e5eabdf9afffc3f992557bf","bodyHash":"121f191ca275c57c2d307d55094d11a0bb8f5173a051eef93a06ee44a011af2a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) getEffectiveTypeArguments(node *ast.Node, typeParameters []*Type) []*Type {
  * 	return c.fillMissingTypeArguments(core.Map(node.TypeArguments(), c.getTypeFromTypeNode), typeParameters, c.getMinTypeArgumentCount(typeParameters), ast.IsInJSFile(node))
  * }
  */
-export function Checker_getEffectiveTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
-  return Checker_fillMissingTypeArguments(receiver, core.Map(Node_TypeArguments(node) ?? [], (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n)), typeParameters, Checker_getMinTypeArgumentCount(receiver, typeParameters), IsInJSFile(node));
+export function Checker_getEffectiveTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<GoSlice<GoPtr<Type>>> {
+  const typeArgumentNodes = Node_TypeArguments(node);
+  const typeArguments = typeArgumentNodes === undefined
+    ? undefined
+    : core.Map(typeArgumentNodes, (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n));
+  return Checker_fillMissingTypeArguments(receiver, typeArguments, typeParameters, Checker_getMinTypeArgumentCount(receiver, typeParameters), IsInJSFile(node));
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getMinTypeArgumentCount","kind":"method","status":"implemented","sigHash":"22295ff81bbdde03c306d61cffb97e53d3559006caf1aad8214ace6ec4f01ac8","bodyHash":"7685f119b33062d5b77d9c75846211fbb09d249ef7dffa5cd73cefa47f9e90f8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func (c *Checker) getMinTypeArgumentCount(typeParameters []*Type) int {
@@ -8629,8 +8748,11 @@ export function Checker_getEffectiveTypeArguments(receiver: GoPtr<Checker>, node
  * 	return minTypeArgumentCount
  * }
  */
-export function Checker_getMinTypeArgumentCount(receiver: GoPtr<Checker>, typeParameters: GoSlice<GoPtr<Type>>): int {
+export function Checker_getMinTypeArgumentCount(receiver: GoPtr<Checker>, typeParameters: GoPtr<GoSlice<GoPtr<Type>>>): int {
   let minTypeArgumentCount = 0;
+  if (typeParameters === undefined) {
+    return minTypeArgumentCount;
+  }
   for (let i = 0; i < typeParameters.length; i++) {
     if (!Checker_hasTypeParameterDefault(receiver, typeParameters[i])) {
       minTypeArgumentCount = i + 1;
@@ -8657,6 +8779,7 @@ export function Checker_hasTypeParameterDefault(receiver: GoPtr<Checker>, t: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.fillMissingTypeArguments","kind":"method","status":"implemented","sigHash":"90119f31e42b5b3c6483f74a4486a50d2c36e8e47fd66a2b2a63c01cf4ffbd18","bodyHash":"53094ad900a81ee75d20b4e1e28ec02aebdcae494b0d9096524457dadbc4f47a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) fillMissingTypeArguments(typeArguments []*Type, typeParameters []*Type, minTypeArgumentCount int, isJavaScriptImplicitAny bool) []*Type {
@@ -8691,16 +8814,18 @@ export function Checker_hasTypeParameterDefault(receiver: GoPtr<Checker>, t: GoP
  * 	return typeArguments
  * }
  */
-export function Checker_fillMissingTypeArguments(receiver: GoPtr<Checker>, typeArguments: GoSlice<GoPtr<Type>>, typeParameters: GoSlice<GoPtr<Type>>, minTypeArgumentCount: int, isJavaScriptImplicitAny: bool): GoSlice<GoPtr<Type>> {
-  const numTypeParameters = (typeParameters ?? []).length;
-  if (numTypeParameters === 0) {
-    return [];
+export function Checker_fillMissingTypeArguments(receiver: GoPtr<Checker>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>, typeParameters: GoPtr<GoSlice<GoPtr<Type>>>, minTypeArgumentCount: int, isJavaScriptImplicitAny: bool): GoPtr<GoSlice<GoPtr<Type>>> {
+  if (typeParameters === undefined || typeParameters.length === 0) {
+    return undefined;
   }
-  const numTypeArguments = (typeArguments ?? []).length;
+  const numTypeParameters = typeParameters.length;
+  const numTypeArguments = typeArguments === undefined ? 0 : typeArguments.length;
   if (isJavaScriptImplicitAny || numTypeArguments < numTypeParameters) {
     const result: GoPtr<Type>[] = new Array(numTypeParameters);
-    for (let i = 0; i < numTypeArguments; i++) {
-      result[i] = typeArguments![i];
+    if (typeArguments !== undefined) {
+      for (let i = 0; i < numTypeArguments; i++) {
+        result[i] = typeArguments[i];
+      }
     }
     // Map invalid forward references in default types to the error type
     for (let i = numTypeArguments; i < numTypeParameters; i++) {
@@ -8708,17 +8833,17 @@ export function Checker_fillMissingTypeArguments(receiver: GoPtr<Checker>, typeA
     }
     const baseDefaultType = Checker_getDefaultTypeArgumentType(receiver, isJavaScriptImplicitAny);
     for (let i = numTypeArguments; i < numTypeParameters; i++) {
-      let defaultType = Checker_getDefaultFromTypeParameter(receiver, typeParameters![i]);
+      let defaultType = Checker_getDefaultFromTypeParameter(receiver, typeParameters[i]);
       if (isJavaScriptImplicitAny && defaultType !== undefined && (Checker_isTypeIdenticalTo(receiver, defaultType, receiver!.unknownType) || Checker_isTypeIdenticalTo(receiver, defaultType, receiver!.emptyObjectType))) {
         defaultType = receiver!.anyType;
       }
       if (defaultType !== undefined) {
-        result[i] = Checker_instantiateType(receiver, defaultType, newTypeMapper(typeParameters!, result as GoSlice<GoPtr<Type>>));
+        result[i] = Checker_instantiateType(receiver, defaultType, newTypeMapper(typeParameters, result));
       } else {
         result[i] = baseDefaultType;
       }
     }
-    return result as GoSlice<GoPtr<Type>>;
+    return result;
   }
   return typeArguments;
 }
@@ -9039,15 +9164,21 @@ export function Checker_getTypeParameterFromMappedType(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType(receiver: GoPtr<Checker>, t: GoPtr<Type>, include: TypeFlags, stringsOnly: bool, cb: (keyType: GoPtr<Type>) => void): void {
-  for (const prop of Checker_getPropertiesOfType(receiver, t)) {
-    cb(Checker_getLiteralTypeFromProperty(receiver, prop, include, false));
+  const properties = Checker_getPropertiesOfType(receiver, t);
+  if (properties !== undefined) {
+    for (const prop of properties) {
+      cb(Checker_getLiteralTypeFromProperty(receiver, prop, include, false));
+    }
   }
   if ((t!.flags & TypeFlagsAny) !== 0) {
     cb(receiver!.stringType);
   } else {
-    for (const info of Checker_getIndexInfosOfType(receiver, t)) {
-      if (!stringsOnly || (info!.keyType!.flags & (TypeFlagsString | TypeFlagsTemplateLiteral)) !== 0) {
-        cb(info!.keyType);
+    const indexInfos = Checker_getIndexInfosOfType(receiver, t);
+    if (indexInfos !== undefined) {
+      for (const info of indexInfos) {
+        if (!stringsOnly || (info!.keyType!.flags & (TypeFlagsString | TypeFlagsTemplateLiteral)) !== 0) {
+          cb(info!.keyType);
+        }
       }
     }
   }
@@ -9055,13 +9186,14 @@ export function Checker_forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSignatures","kind":"method","status":"implemented","sigHash":"70ea0024c54c635fbe299ad597b08754a958f150df83d80538bdb6d53ba46dd1","bodyHash":"a83370ffef67d4526bf09a5bb98e35511c05f2e593a26003bf6087d598253dcd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) instantiateSignatures(signatures []*Signature, m *TypeMapper) []*Signature {
  * 	return instantiateList(c, signatures, m, (*Checker).instantiateSignature)
  * }
  */
-export function Checker_instantiateSignatures(receiver: GoPtr<Checker>, signatures: GoSlice<GoPtr<Signature>>, m: GoPtr<TypeMapper>): GoSlice<GoPtr<Signature>> {
+export function Checker_instantiateSignatures(receiver: GoPtr<Checker>, signatures: GoPtr<GoSlice<GoPtr<Signature>>>, m: GoPtr<TypeMapper>): GoPtr<GoSlice<GoPtr<Signature>>> {
   return instantiateList(receiver, signatures, m, Checker_instantiateSignature);
 }
 
@@ -9156,14 +9288,19 @@ export function Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(re
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeArgumentsFromNode","kind":"method","status":"implemented","sigHash":"8fd9ba781c432f0e42c64db4d4bc010029344697e077baa76e577537edfb103b","bodyHash":"1d5dcb6b68175ad65327536d6ab94d56ca8a60205f4d4015cd6928f60003a464"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature","body"],"reason":"Go returns nil when the node has no type-argument slice; TypeScript must branch before mapping because the shared JavaScript core.Map currently normalizes undefined to an allocated empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) getTypeArgumentsFromNode(node *ast.Node) []*Type {
  * 	return core.Map(node.TypeArguments(), c.getTypeFromTypeNode)
  * }
  */
-export function Checker_getTypeArgumentsFromNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
-  return core.Map(Node_TypeArguments(node) ?? [], (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n));
+export function Checker_getTypeArgumentsFromNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Type>>> {
+  const typeArgumentNodes = Node_TypeArguments(node);
+  if (typeArgumentNodes === undefined) {
+    return undefined;
+  }
+  return core.Map(typeArgumentNodes, (n: GoPtr<Node>) => Checker_getTypeFromTypeNode(receiver, n));
 }
 
 /**
@@ -9216,11 +9353,11 @@ export function Checker_getTypeReferenceArity(receiver: GoPtr<Checker>, t: GoPtr
  * 	return nil
  * }
  */
-export function Checker_getTypeArgumentsForAliasSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
+export function Checker_getTypeArgumentsForAliasSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Type>>> {
   if (symbol_ !== undefined) {
     return Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, symbol_);
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -9245,7 +9382,7 @@ export function Checker_getTypeArgumentsForAliasSymbol(receiver: GoPtr<Checker>,
  * 	return c.getOuterTypeParameters(declaration, false /*includeThisTypes* /)
  * }
  */
-export function Checker_getOuterTypeParametersOfClassOrInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
+export function Checker_getOuterTypeParametersOfClassOrInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Type>>> {
   let declaration = symbol_!.ValueDeclaration;
   if ((symbol_!.Flags & (SymbolFlagsClass | SymbolFlagsFunction)) === 0) {
     declaration = core.Find(symbol_!.Declarations ?? [], (d: GoPtr<Node>) => {
@@ -9304,12 +9441,12 @@ export function Checker_getOuterTypeParametersOfClassOrInterface(receiver: GoPtr
  * 	}
  * }
  */
-export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>, includeThisTypes: bool): GoSlice<GoPtr<Type>> {
+export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>, includeThisTypes: bool): GoPtr<GoSlice<GoPtr<Type>>> {
   let cur = node;
   for (;;) {
     cur = cur!.Parent;
     if (cur === undefined) {
-      return [];
+      return undefined;
     }
     const kind = cur!.Kind;
     switch (kind) {
@@ -9331,7 +9468,8 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
       case KindConditionalType: {
         const outerTypeParameters = Checker_getOuterTypeParameters(receiver, cur, includeThisTypes);
         if ((kind === KindFunctionExpression || kind === KindArrowFunction || IsObjectLiteralMethod(cur)) && Checker_isContextSensitive(receiver, cur)) {
-          const signature = core.FirstOrNil(Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, cur)), SignatureKindCall));
+          const signatures = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, cur)), SignatureKindCall);
+          const signature = signatures === undefined ? undefined : core.FirstOrNil(signatures);
           if (signature !== undefined && (signature!.typeParameters ?? []).length !== 0) {
             return [...(outerTypeParameters ?? []), ...signature!.typeParameters!] as GoSlice<GoPtr<Type>>;
           }
@@ -9358,6 +9496,7 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getInferTypeParameters","kind":"method","status":"implemented","sigHash":"ae4a3da196ac2ebc4baa6500b53dd9f982a9c81863dadfdeefbfa7354fd13293","bodyHash":"2f93969eaff0986888500ab889979775692df95ee581fe79f379d07ed215bc02"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>"}
  *
  * Go source:
  * func (c *Checker) getInferTypeParameters(node *ast.Node) []*Type {
@@ -9370,15 +9509,16 @@ export function Checker_getOuterTypeParameters(receiver: GoPtr<Checker>, node: G
  * 	return result
  * }
  */
-export function Checker_getInferTypeParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
-  let result: GoSlice<GoPtr<Type>> = [];
+export function Checker_getInferTypeParameters(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Type>>> {
+  let result: GoPtr<GoSlice<GoPtr<Type>>>;
   const locals = Node_Locals(node);
   if (locals === undefined) {
     return result;
   }
   for (const symbol_ of locals.values()) {
     if ((symbol_!.Flags & SymbolFlagsTypeParameter) !== 0) {
-      result = [...(result ?? []), Checker_getDeclaredTypeOfSymbol(receiver, symbol_)];
+      const typeParameter = Checker_getDeclaredTypeOfSymbol(receiver, symbol_);
+      result = result === undefined ? [typeParameter] : [...result, typeParameter];
     }
   }
   return result;
@@ -9710,8 +9850,8 @@ export function Checker_getDeclaringConstructor(receiver: GoPtr<Checker>, symbol
 export function Checker_isStringIndexSignatureOnlyTypeWorker(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
   return ((t!.flags & TypeFlagsObject) !== 0 &&
     !Checker_isGenericMappedType(receiver, t) &&
-    Checker_getPropertiesOfType(receiver, t).length === 0 &&
-    Checker_getIndexInfosOfType(receiver, t).length === 1 &&
+    (Checker_getPropertiesOfType(receiver, t)?.length ?? 0) === 0 &&
+    Checker_getIndexInfosOfType(receiver, t)?.length === 1 &&
     Checker_getIndexInfoOfType(receiver, t, receiver!.stringType) !== undefined) ||
     ((t!.flags & TypeFlagsUnionOrIntersection) !== 0 && core.Every(Type_Types(t), (type_: GoPtr<Type>) => receiver!.isStringIndexSignatureOnlyType(type_)));
 }
@@ -9750,6 +9890,9 @@ export function Checker_expandSignatureParametersWithTupleMembers(receiver: GoPt
   const restTypeAsType = restType!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0;
   const elementTypes = Checker_getTypeArguments(receiver, restTypeAsType);
   const elementInfos = Type_TargetTupleType(restTypeAsType)!.elementInfos;
+  if (elementTypes === undefined || elementInfos === undefined) {
+    throw new Error("tuple rest type has no element types or information");
+  }
   const associatedNames = Checker_getUniqAssociatedNamesFromTupleType(receiver, restType, restSymbol);
   const expanded = signature!.parameters.slice(0, restIndex) as GoSlice<GoPtr<Symbol>>;
   for (let i = 0; i < elementTypes.length; i++) {
@@ -9782,7 +9925,7 @@ export function Checker_expandSignatureParametersWithTupleMembers(receiver: GoPt
  * }
  */
 export function Checker_typeHasCallOrConstructSignatures(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  return (t!.flags & TypeFlagsStructuredType) !== 0 && Checker_resolveStructuredTypeMembers(receiver, t)!.signatures.length !== 0;
+  return (t!.flags & TypeFlagsStructuredType) !== 0 && (Checker_resolveStructuredTypeMembers(receiver, t)!.signatures?.length ?? 0) !== 0;
 }
 
 /**
@@ -9913,15 +10056,16 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
   const iife = GetImmediatelyInvokedFunctionExpression(fn);
   if (iife !== undefined) {
     const args = Checker_getEffectiveCallArguments(receiver, iife);
+    const argCount = args?.length ?? 0;
     const indexOfParameter = slices.Index(Node_Parameters(fn), parameter);
     if (hasDotDotDotToken(parameter)) {
-      return Checker_getSpreadArgumentType(receiver, args, indexOfParameter, args.length, receiver!.anyType, undefined, CheckModeNormal);
+      return Checker_getSpreadArgumentType(receiver, args, indexOfParameter, argCount, receiver!.anyType, undefined, CheckModeNormal);
     }
     const links = LinkStore_Get(receiver!.signatureLinks, iife) as GoPtr<SignatureLinks>;
     const cached = links!.resolvedSignature;
     links!.resolvedSignature = receiver!.anySignature;
     let t: GoPtr<Type>;
-    if (indexOfParameter < args.length) {
+    if (args !== undefined && indexOfParameter < args.length) {
       t = Checker_getWidenedLiteralType(receiver, Checker_checkExpression(receiver, args[indexOfParameter]));
     } else if (Node_Initializer(parameter) !== undefined) {
       t = undefined;
@@ -9933,8 +10077,11 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
   }
   const contextualSignature = Checker_getContextualSignature(receiver, fn);
   if (contextualSignature !== undefined) {
-    const index = slices.Index(Node_Parameters(fn), parameter) - core.IfElse(GetThisParameter(fn) !== undefined, 1, 0);
-    if (hasDotDotDotToken(parameter) && core.LastOrNil(Node_Parameters(fn)) === parameter) {
+    const parameters = Node_Parameters(fn);
+    const parameterIndex = parameters === undefined ? -1 : slices.Index(parameters, parameter);
+    const index = parameterIndex - core.IfElse(GetThisParameter(fn) !== undefined, 1, 0);
+    const lastParameter = parameters === undefined ? undefined : core.LastOrNil(parameters, () => undefined);
+    if (hasDotDotDotToken(parameter) && lastParameter === parameter) {
       return Checker_getRestTypeAtPosition(receiver, contextualSignature, index, false);
     }
     return Checker_tryGetTypeAtPosition(receiver, contextualSignature, index);
@@ -9944,6 +10091,7 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSpreadArgumentType","kind":"method","status":"implemented","sigHash":"4e8f6dbb44b876df7d02f68dd625421f501897189f1a55fc170732f038c7dcc2","bodyHash":"f209cac7ead6222449a541eff70fe6b43ac12f8a56a043e0557c3c9b84f3be14"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::InferenceContext>,packages/tsts/src/internal/checker/checker/state.ts::CheckMode)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>"}
  *
  * Go source:
  * func (c *Checker) getSpreadArgumentType(args []*ast.Node, index int, argCount int, restType *Type, context *InferenceContext, checkMode CheckMode) *Type {
@@ -10017,8 +10165,14 @@ export function Checker_getContextuallyTypedParameterType(receiver: GoPtr<Checke
  * 	return c.createTupleTypeEx(types, infos, inConstContext && !someType(restType, c.isMutableArrayLikeType))
  * }
  */
-export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: GoSlice<GoPtr<Node>>, index: int, argCount: int, restType: GoPtr<Type>, context: GoPtr<InferenceContext>, checkMode: CheckMode): GoPtr<Type> {
+export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: GoPtr<GoSlice<GoPtr<Node>>>, index: int, argCount: int, restType: GoPtr<Type>, context: GoPtr<InferenceContext>, checkMode: CheckMode): GoPtr<Type> {
   const inConstContext = Checker_isConstTypeVariable(receiver, restType, 0);
+  if (args === undefined) {
+    if (argCount !== 0) {
+      throw new Error("nonempty spread argument range requires an argument slice");
+    }
+    return Checker_createTupleTypeEx(receiver, undefined, undefined, inConstContext && !someType(restType, (t: GoPtr<Type>): bool => Checker_isMutableArrayLikeType(receiver, t)));
+  }
   if (argCount > 0 && index >= argCount - 1) {
     let arg = args[argCount - 1];
     if (isSpreadArgument(arg)) {
@@ -10037,8 +10191,8 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
       return Checker_createArrayTypeEx(receiver, Checker_checkIteratedTypeOrElementType(receiver, IterationUseSpread, spreadType, receiver!.undefinedType, arg), inConstContext);
     }
   }
-  const types: GoSlice<GoPtr<Type>> = [];
-  const infos: GoSlice<TupleElementInfo> = [];
+  let types: GoPtr<GoSlice<GoPtr<Type>>>;
+  let infos: GoPtr<GoSlice<TupleElementInfo>>;
   for (let argIndex = index; argIndex < argCount; argIndex++) {
     let arg = args[argIndex];
     let t: GoPtr<Type>;
@@ -10064,7 +10218,7 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
     } else {
       let contextualType: GoPtr<Type>;
       if (isTupleType(restType)) {
-        contextualType = core.OrElse(Checker_getContextualTypeForElementExpression(receiver, restType, argIndex - index, argCount - index, -1, -1), receiver!.unknownType);
+        contextualType = core.OrElse(Checker_getContextualTypeForElementExpression(receiver, restType, argIndex - index, argCount - index, -1, -1), receiver!.unknownType, () => undefined, (left, right) => left === right);
       } else {
         contextualType = Checker_getIndexedAccessTypeEx(receiver, restType, Checker_getNumberLiteralType(receiver, argIndex - index), AccessFlagsContextual, undefined, undefined);
       }
@@ -10080,8 +10234,8 @@ export function Checker_getSpreadArgumentType(receiver: GoPtr<Checker>, args: Go
     if (IsSyntheticExpression(arg) && AsSyntheticExpression(arg)!.TupleNameSource !== undefined) {
       info.labeledDeclaration = AsSyntheticExpression(arg)!.TupleNameSource;
     }
-    types.push(t);
-    infos.push(info);
+    types = types === undefined ? [t] : [...types, t];
+    infos = infos === undefined ? [info] : [...infos, info];
   }
   return Checker_createTupleTypeEx(receiver, types, infos, inConstContext && !someType(restType, (t: GoPtr<Type>): bool => Checker_isMutableArrayLikeType(receiver, t)));
 }
@@ -10170,9 +10324,9 @@ export function Checker_getContextualReturnType(receiver: GoPtr<Checker>, functi
  */
 export function Checker_checkGeneratorInstantiationAssignabilityToReturnType(receiver: GoPtr<Checker>, returnType: GoPtr<Type>, functionFlags: FunctionFlags, errorNode: GoPtr<Node>): bool {
   const isAsyncGenerator = (functionFlags & FunctionFlagsAsync) !== 0;
-  const generatorYieldType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindYield, returnType, isAsyncGenerator), receiver!.anyType);
-  const generatorReturnType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, isAsyncGenerator), generatorYieldType);
-  const generatorNextType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsyncGenerator), receiver!.unknownType);
+  const generatorYieldType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindYield, returnType, isAsyncGenerator), receiver!.anyType, () => undefined, (left, right) => left === right);
+  const generatorReturnType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, isAsyncGenerator), generatorYieldType, () => undefined, (left, right) => left === right);
+  const generatorNextType = core.OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, isAsyncGenerator), receiver!.unknownType, () => undefined, (left, right) => left === right);
   const generatorInstantiation = Checker_createGeneratorType(receiver, generatorYieldType, generatorReturnType, generatorNextType, isAsyncGenerator);
   return Checker_checkTypeAssignableTo(receiver, generatorInstantiation, returnType, errorNode, undefined);
 }
@@ -10212,6 +10366,9 @@ export function Checker_getContextualSignatureForFunctionLikeDeclaration(receive
  */
 export function Checker_getContextualTypeForArgument(receiver: GoPtr<Checker>, callTarget: GoPtr<Node>, arg: GoPtr<Node>): GoPtr<Type> {
   const args = Checker_getEffectiveCallArguments(receiver, callTarget);
+  if (args === undefined) {
+    return undefined;
+  }
   const argIndex = slices.Index(args, arg);
   if (argIndex === -1) {
     return undefined;
@@ -10280,6 +10437,7 @@ export function Checker_getContextualTypeForArgumentAtIndex(receiver: GoPtr<Chec
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getEffectiveCallArguments","kind":"method","status":"implemented","sigHash":"9572850d74760078277e606e3ca1190dd1ff030be0b6c377f9590082088ceb55","bodyHash":"d818b86f07e456fa22ba6d79ca15d5252643ffc272ca3fb8fff7073be588e37a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (c *Checker) getEffectiveCallArguments(node *ast.Node) []*ast.Node {
@@ -10348,7 +10506,7 @@ export function Checker_getContextualTypeForArgumentAtIndex(receiver: GoPtr<Chec
  * 	}
  * }
  */
-export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   if (IsJsxOpeningFragment(node)) {
     return [Checker_createSyntheticExpression(receiver, node, receiver!.emptyFreshJsxObjectType, false, undefined)];
   }
@@ -10358,7 +10516,7 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
     if (!IsTemplateExpression(template)) {
       return [firstArg];
     }
-    const spans = AsTemplateExpression(template)!.TemplateSpans!.Nodes;
+    const spans = AsTemplateExpression(template)!.TemplateSpans!.Nodes ?? [];
     const args: GoSlice<GoPtr<Node>> = new globalThis.Array(spans.length + 1);
     args[0] = firstArg;
     for (let i = 0; i < spans.length; i++) {
@@ -10373,10 +10531,10 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
     return [AsBinaryExpression(node)!.Left as GoPtr<Node>];
   }
   if (IsJsxOpeningLikeElement(node)) {
-    if ((Node_Properties(Node_Attributes(node))?.length ?? 0) !== 0 || (IsJsxOpeningElement(node) && (Node_Children(node!.Parent)!.Nodes.length !== 0))) {
+    if ((Node_Properties(Node_Attributes(node))?.length ?? 0) !== 0 || (IsJsxOpeningElement(node) && ((Node_Children(node!.Parent)?.Nodes?.length ?? 0) !== 0))) {
       return [Node_Attributes(node)];
     }
-    return undefined as unknown as GoSlice<GoPtr<Node>>;
+    return undefined;
   }
   const args = Node_Arguments(node) ?? [];
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
@@ -10395,6 +10553,9 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
       if (spreadType !== undefined && isTupleType(spreadType)) {
         const elementTypes = Checker_getElementTypes(receiver, spreadType);
         const elementInfos = Type_TargetTupleType(spreadType)!.elementInfos;
+        if (elementTypes === undefined || elementInfos === undefined) {
+          throw new Error("tuple spread type has no element types or information");
+        }
         for (let elementIndex = 0; elementIndex < elementTypes.length; elementIndex++) {
           const flags = elementInfos[elementIndex]!.flags;
           let syntheticType = elementTypes[elementIndex];
@@ -10415,13 +10576,17 @@ export function Checker_getEffectiveCallArguments(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSpreadArgumentIndex","kind":"method","status":"implemented","sigHash":"a67588e206ef1eb54cc01ae81d5144aef4dd2920669d5677b9bed712972038d0","bodyHash":"26f5fc5b7e04105139a782bccba1136a07a58f479dd05c310f15e531c879343b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature","body"],"reason":"A Go nil argument slice has length zero and therefore no spread element; TypeScript branches on undefined to preserve that exact result before indexing because JavaScript cannot range an absent array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func (c *Checker) getSpreadArgumentIndex(args []*ast.Node) int {
  * 	return core.FindIndex(args, isSpreadArgument)
  * }
  */
-export function Checker_getSpreadArgumentIndex(receiver: GoPtr<Checker>, args: GoSlice<GoPtr<Node>>): int {
+export function Checker_getSpreadArgumentIndex(receiver: GoPtr<Checker>, args: GoPtr<GoSlice<GoPtr<Node>>>): int {
+  if (args === undefined) {
+    return -1;
+  }
   return core.FindIndex(args, isSpreadArgument);
 }
 
@@ -11054,7 +11219,7 @@ export function Checker_getThisTypeFromContextualType(receiver: GoPtr<Checker>, 
  */
 export function Checker_getThisTypeArgument(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   if ((t!.objectFlags & ObjectFlagsReference) !== 0 && Type_Target(t) === receiver!.globalThisType) {
-    return Checker_getTypeArguments(receiver, t)[0];
+    return Checker_getTypeArguments(receiver, t)?.[0];
   }
   return undefined;
 }
@@ -11108,21 +11273,24 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
   const info = Checker_getApplicableIndexInfo(receiver, t, keyType);
   if (info !== undefined && info !== receiver!.anyBaseTypeIndexInfo) {
     if (info!.indexSymbol === undefined) {
-      let declarations: GoSlice<GoPtr<Node>> = [];
+      let declarations: GoPtr<GoSlice<GoPtr<Node>>>;
       if (info!.declaration !== undefined) {
-        declarations = [info!.declaration] as GoSlice<GoPtr<Node>>;
+        declarations = [info!.declaration];
       } else {
-        for (const inf of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
-          if (inf!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, inf!.keyType)) {
-            declarations = [...(declarations ?? []), inf!.declaration] as GoSlice<GoPtr<Node>>;
+        const indexInfos = Checker_getIndexInfosOfType(receiver, t);
+        if (indexInfos !== undefined) {
+          for (const inf of indexInfos) {
+            if (inf!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, inf!.keyType)) {
+              declarations = declarations === undefined ? [inf!.declaration] : [...declarations, inf!.declaration];
+            }
           }
         }
       }
-      if ((declarations ?? []).length !== 0) {
+      if (declarations !== undefined && declarations.length !== 0) {
         const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
         symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
         symbol_!.Declarations = declarations;
-        symbol_!.ValueDeclaration = declarations![0];
+        symbol_!.ValueDeclaration = declarations[0];
         symbol_!.Parent = t!["symbol"];
         (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType = info!.valueType;
         info!.indexSymbol = symbol_;

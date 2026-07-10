@@ -263,6 +263,7 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::findInMap","kind":"func","status":"implemented","sigHash":"17bb318d799d271abd20ee5867b8b5d856df62276fe304ece91444a26f84b0f6","bodyHash":"d7f9ce5043735102869f6b640f3bf548585a863df51671661dc775cefef7e5f3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoMap<T0,T1>,(T1)=>packages/tsts/src/go/scalars.ts::bool)=>T1","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,T1>>,(T1)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<T1>"}
  *
  * Go source:
  * func findInMap[K comparable, V any](m map[K]V, predicate func(V) bool) V {
@@ -274,14 +275,14 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
  * 	return *new(V)
  * }
  */
-export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: (arg0: V) => bool): V {
+export function findInMap<K extends GoComparable, V>(m: GoPtr<GoMap<K, V>>, predicate: (arg0: V) => bool): GoPtr<V> {
   // Go ranges over a nil map as a no-op.
   for (const value of m?.values() ?? []) {
     if (predicate(value)) {
       return value;
     }
   }
-  return undefined as V;
+  return undefined;
 }
 
 /**
@@ -532,7 +533,7 @@ export function GetSingleVariableOfVariableStatement(node: GoPtr<Node>): GoPtr<N
   if (!IsVariableStatement(node)) {
     return undefined;
   }
-  return FirstOrNil(AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes);
+  return FirstOrNil(AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes ?? []);
 }
 
 /**
@@ -975,7 +976,8 @@ export function Checker_isOptionalParameter(receiver: GoPtr<Checker>, node: GoPt
   }
   if (Node_Initializer(node) !== undefined) {
     const signature = Checker_getSignatureFromDeclaration(receiver, node!.Parent);
-    const parameterIndex = Node_Parameters(node!.Parent).findIndex((p) => p === node);
+    const nodeParameters = Node_Parameters(node!.Parent);
+    const parameterIndex = nodeParameters === undefined ? -1 : nodeParameters.findIndex((parameter) => parameter === node);
     Assert((parameterIndex >= 0) as bool);
     // Only consider syntactic or instantiated parameters as optional, not `void` parameters as this function is used
     // in grammar checks and checking for `void` too early results in parameter types widening too early
@@ -984,10 +986,11 @@ export function Checker_isOptionalParameter(receiver: GoPtr<Checker>, node: GoPt
   }
   const iife = GetImmediatelyInvokedFunctionExpression(node!.Parent);
   if (iife !== undefined) {
-    const parameterIndex = Node_Parameters(node!.Parent).findIndex((p) => p === node);
+    const nodeParameters = Node_Parameters(node!.Parent);
+    const parameterIndex = nodeParameters === undefined ? -1 : nodeParameters.findIndex((parameter) => parameter === node);
     return (Node_Type(node) === undefined &&
       AsParameterDeclaration(node)!.DotDotDotToken === undefined &&
-      parameterIndex >= Checker_getEffectiveCallArguments(receiver, iife).length) as bool;
+      parameterIndex >= (Checker_getEffectiveCallArguments(receiver, iife)?.length ?? 0)) as bool;
   }
   return false as bool;
 }
@@ -1049,6 +1052,7 @@ export function isTypeAssertion(node: GoPtr<Node>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::createSymbolTable","kind":"func","status":"implemented","sigHash":"c3241e8f79ea5297aa8c56f8b2c032214bc54e288731c22927d251ccb683f954","bodyHash":"38a004dc9b6d5d80e01a05918c9d463b44910b5a26807eb54e62f55313a7d233"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func createSymbolTable(symbols []*ast.Symbol) ast.SymbolTable {
@@ -1062,9 +1066,9 @@ export function isTypeAssertion(node: GoPtr<Node>): bool {
  * 	return result
  * }
  */
-export function createSymbolTable(symbols: GoSlice<GoPtr<Symbol>>): SymbolTable {
-  if (symbols.length === 0) {
-    return undefined as unknown as SymbolTable;
+export function createSymbolTable(symbols: GoPtr<GoSlice<GoPtr<Symbol>>>): GoPtr<SymbolTable> {
+  if (symbols === undefined || symbols.length === 0) {
+    return undefined;
   }
   const result: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
   for (const symbol of symbols) {
@@ -1722,17 +1726,24 @@ export function compareTupleTypes(t1: GoPtr<TupleType>, t2: GoPtr<TupleType>): i
   if (t1!.readonly !== t2!.readonly) {
     return t1!.readonly ? 1 : -1;
   }
-  if (t1!.elementInfos.length !== t2!.elementInfos.length) {
-    return t1!.elementInfos.length - t2!.elementInfos.length;
+  const elementInfos1 = t1!.elementInfos;
+  const elementInfos2 = t2!.elementInfos;
+  const elementCount1 = elementInfos1 === undefined ? 0 : elementInfos1.length;
+  const elementCount2 = elementInfos2 === undefined ? 0 : elementInfos2.length;
+  if (elementCount1 !== elementCount2) {
+    return elementCount1 - elementCount2;
   }
-  for (let i = 0; i < t1!.elementInfos.length; i++) {
-    const flags = t1!.elementInfos[i]!.flags - t2!.elementInfos[i]!.flags;
+  if (elementInfos1 === undefined || elementInfos2 === undefined) {
+    return 0;
+  }
+  for (let i = 0; i < elementInfos1.length; i++) {
+    const flags = elementInfos1[i]!.flags - elementInfos2[i]!.flags;
     if (flags !== 0) {
       return flags;
     }
   }
-  for (let i = 0; i < t1!.elementInfos.length; i++) {
-    const labels = compareElementLabels(t1!.elementInfos[i]!.labeledDeclaration, t2!.elementInfos[i]!.labeledDeclaration);
+  for (let i = 0; i < elementInfos1.length; i++) {
+    const labels = compareElementLabels(elementInfos1[i]!.labeledDeclaration, elementInfos2[i]!.labeledDeclaration);
     if (labels !== 0) {
       return labels;
     }
@@ -1772,6 +1783,7 @@ export function compareElementLabels(n1: GoPtr<Node>, n2: GoPtr<Node>): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::compareTypeLists","kind":"func","status":"implemented","sigHash":"76c69f7a46352298830c1948784250d2a3e4429fac753178387a02d95cad4567","bodyHash":"2d84f8b2b742a8e6dac070b80cc8c9527b580069ea9b376a8244ecaebe9e024b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func compareTypeLists(s1, s2 []*Type) int {
@@ -1786,14 +1798,17 @@ export function compareElementLabels(n1: GoPtr<Node>, n2: GoPtr<Node>): int {
  * 	return 0
  * }
  */
-export function compareTypeLists(s1: GoSlice<GoPtr<Type>>, s2: GoSlice<GoPtr<Type>>): int {
-  const a1 = s1 ?? [];
-  const a2 = s2 ?? [];
-  if (a1.length !== a2.length) {
-    return a1.length - a2.length;
+export function compareTypeLists(s1: GoPtr<GoSlice<GoPtr<Type>>>, s2: GoPtr<GoSlice<GoPtr<Type>>>): int {
+  const length1 = s1 === undefined ? 0 : s1.length;
+  const length2 = s2 === undefined ? 0 : s2.length;
+  if (length1 !== length2) {
+    return length1 - length2;
   }
-  for (let i = 0; i < a1.length; i++) {
-    const c = CompareTypes(a1[i], a2[i]);
+  if (s1 === undefined || s2 === undefined) {
+    return 0;
+  }
+  for (let i = 0; i < s1.length; i++) {
+    const c = CompareTypes(s1[i], s2[i]);
     if (c !== 0) {
       return c;
     }
@@ -2220,6 +2235,7 @@ export const orderedSetMapThreshold: int = 16;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::type::orderedSet","kind":"type","status":"implemented","sigHash":"0b8cbabe0644feba32a9e54af5d9e781c38f6cef14766411376b73b8cfa700ba","bodyHash":"2c7752c6016345bde032fc1f305ae9cc0aeca157c4ea70bbeea23f728cda0636"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface<T0 extends name::comparable>{values:packages/tsts/src/go/compat.ts::GoSlice<T0>;valuesByKey:packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable>{values:packages/tsts/src/go/compat.ts::GoSlice<T0>;valuesByKey:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,{__tsgoEmpty?:never}>>}"}
  *
  * Go source:
  * orderedSet[T comparable] struct {
@@ -2228,7 +2244,7 @@ export const orderedSetMapThreshold: int = 16;
  * }
  */
 export interface orderedSet<T extends GoComparable = unknown> {
-  valuesByKey: GoMap<T, { readonly __tsgoEmpty?: never }>;
+  valuesByKey: GoPtr<GoMap<T, { readonly __tsgoEmpty?: never }>>;
   values: GoSlice<T>;
 }
 
@@ -2870,17 +2886,17 @@ export function isSuperCall(n: GoPtr<Node>): bool {
  * 	return nil
  * }
  */
-export function getMembersOfDeclaration(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function getMembersOfDeclaration(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   switch (node!.Kind) {
     case KindInterfaceDeclaration:
     case KindClassDeclaration:
     case KindClassExpression:
     case KindTypeLiteral:
-      return Node_Members(node) ?? [];
+      return Node_Members(node);
     case KindObjectLiteralExpression:
-      return Node_Properties(node) ?? [];
+      return Node_Properties(node);
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -4108,7 +4124,7 @@ export function Checker_getPackagesMap(receiver: GoPtr<Checker>): GoMap<string, 
     receiver!.packagesMap = new globalThis.Map<string, bool>();
     const resolvedModules = receiver!.program.GetResolvedModules();
     for (const [, resolvedModulesInFile] of resolvedModules) {
-      for (const [, module_] of resolvedModulesInFile) {
+      for (const [, module_] of resolvedModulesInFile ?? []) {
         const module = module_ as GoPtr<ResolvedModule>;
         if (module !== undefined && !ResolvedModule_IsProviderVirtual(module) && module!.PackageId.Name !== "") {
           receiver!.packagesMap.set(
@@ -4252,11 +4268,17 @@ export function Checker_isUncheckedJSSuggestion(receiver: GoPtr<Checker>, node: 
           declarationFile = GetSourceFileOfNode(firstDeclaration);
         }
       }
+      const suggestionDeclaration = suggestion?.ValueDeclaration;
+      let suggestionHasExtends: bool = false;
+      if (suggestionDeclaration !== undefined && IsClassLike(suggestionDeclaration)) {
+        const heritageElements = GetExtendsHeritageClauseElements(suggestionDeclaration);
+        suggestionHasExtends = heritageElements !== undefined && heritageElements.length !== 0;
+      }
       const suggestionHasNoExtendsOrDecorators = suggestion === undefined ||
-        suggestion!.ValueDeclaration === undefined ||
-        !IsClassLike(suggestion!.ValueDeclaration) ||
-        GetExtendsHeritageClauseElements(suggestion!.ValueDeclaration).length !== 0 ||
-        ClassOrConstructorParameterIsDecorated(false as bool, suggestion!.ValueDeclaration);
+        suggestionDeclaration === undefined ||
+        !IsClassLike(suggestionDeclaration) ||
+        suggestionHasExtends ||
+        ClassOrConstructorParameterIsDecorated(false, suggestionDeclaration);
       return (!(file !== declarationFile && declarationFile !== undefined && IsGlobalSourceFile(declarationFile)) &&
         !(excludeClasses && suggestion !== undefined && (suggestion!.Flags & SymbolFlagsClass) !== 0 && suggestionHasNoExtendsOrDecorators) &&
         !(node !== undefined && excludeClasses && IsPropertyAccessExpression(node) && Node_Expression(node)!.Kind === KindThisKeyword && suggestionHasNoExtendsOrDecorators)) as bool;
@@ -4495,7 +4517,7 @@ export function walkUpOuterExpressions(node: GoPtr<Node>): GoPtr<Node> {
  */
 export function GetSetAccessorValueParameter(accessor: GoPtr<Node>): GoPtr<Node> {
   const parameters = Node_Parameters(accessor);
-  if (parameters.length > 0) {
+  if (parameters !== undefined && parameters.length > 0) {
     const hasThis = (parameters.length === 2 && IsThisParameter(parameters[0])) as bool;
     return parameters[hasThis ? 1 : 0];
   }

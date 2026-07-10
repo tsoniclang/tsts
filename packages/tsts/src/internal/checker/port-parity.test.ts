@@ -25,6 +25,7 @@ import { NodeBuilderImpl_getNameOfSymbolAsWritten } from "./nodebuilderimpl.js";
 import { Checker_elaborateError } from "./relater.js";
 import { Checker_newSymbol } from "./checker/symbols.js";
 import { Checker_GetTypeAtLocation, Checker_getBaseTypes } from "./checker/types.js";
+import { Checker_GetBaseTypes as Checker_GetBaseTypesPublic } from "./exports.js";
 
 function createChecker(source: string, compilerOptions: Readonly<Record<string, unknown>>) {
   let fs = FromMap(new Map<string, string>([
@@ -57,13 +58,16 @@ export interface Box<T> {
   value: T;
 }
 export type BoxOfString = Box<string>;
-`, { noLib: true, strict: true });
+  `, { noLib: true, strict: true });
   try {
-    const alias = fixture.sourceFile.Statements?.Nodes.find((node) => node?.Kind === KindTypeAliasDeclaration);
+    const statements = fixture.sourceFile.Statements?.Nodes;
+    assert.ok(statements !== undefined);
+    const alias = statements.find((node) => node?.Kind === KindTypeAliasDeclaration);
     assert.ok(alias !== undefined);
     const aliasType = Checker_GetTypeAtLocation(fixture.checker, alias);
     assert.ok(aliasType !== undefined);
-    assert.deepEqual(Checker_getBaseTypes(fixture.checker, aliasType), []);
+    assert.equal(Checker_getBaseTypes(fixture.checker, aliasType), undefined);
+    assert.equal(Checker_GetBaseTypesPublic(fixture.checker, aliasType), undefined);
   } finally {
     fixture.done();
   }
@@ -91,9 +95,18 @@ test("noCheck disables relation error elaboration", () => {
     noLib: true,
   });
   try {
-    const statement = fixture.sourceFile.Statements?.Nodes[0];
+    const statements = fixture.sourceFile.Statements?.Nodes;
+    assert.ok(statements !== undefined);
+    const statement = statements[0];
     assert.ok(statement !== undefined);
-    const declaration = AsVariableDeclarationList(AsVariableStatement(statement)!.DeclarationList)!.Declarations!.Nodes[0];
+    const variableStatement = AsVariableStatement(statement);
+    assert.ok(variableStatement !== undefined);
+    const declarationList = AsVariableDeclarationList(variableStatement.DeclarationList);
+    assert.ok(declarationList !== undefined);
+    const declarations = declarationList.Declarations?.Nodes;
+    assert.ok(declarations !== undefined);
+    const declaration = declarations[0];
+    assert.ok(declaration !== undefined);
     const initializer = Node_Initializer(declaration);
     const typeNode = Node_Type(declaration);
     assert.ok(initializer !== undefined);

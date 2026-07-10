@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoChan, GoPtr } from "../../go/compat.js";
+import { MakeGoChan } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 
 /**
@@ -75,6 +76,7 @@ export const __1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"6f0f638a52f144421c3246c9abcfb7d73564bb66fef1678b506f56eacc4422bb","bodyHash":"1c887baa2361c1b7920dc8e0bf6029187c7675f621d3a761bea7670a48b7f195"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A synchronous JavaScript call cannot block while another goroutine releases a buffered channel. The TypeScript carrier retains the Go channel and release fields and adds explicit capacity/occupancy state so available acquisitions and releases are exact while would-block paths fail closed.","goSignature":"interface{ch:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;release:()=>void}","tsSignature":"interface{acquired:packages/tsts/src/go/scalars.ts::int;ch:packages/tsts/src/go/compat.ts::GoChan<{__tsgoEmpty?:never},\"bidirectional\">;maxConcurrency:packages/tsts/src/go/scalars.ts::int;release:()=>void}"}
  *
  * Go source:
  * LimitedSemaphore struct {
@@ -85,6 +87,8 @@ export const __1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined);
 export interface LimitedSemaphore {
   ch: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
   release: () => void;
+  maxConcurrency: int;
+  acquired: int;
 }
 
 export function LimitedSemaphore_as_Semaphore(receiver: GoPtr<LimitedSemaphore>): Semaphore {
@@ -96,6 +100,7 @@ export function LimitedSemaphore_as_Semaphore(receiver: GoPtr<LimitedSemaphore>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::func::NewLimitedSemaphore","kind":"func","status":"implemented","sigHash":"04ea60e6edd31c8d707f046528fee535e40e99379fbc42e23567268d23e8f132","bodyHash":"6b62640d18477fb112e0f3753f5c3ee70d38e5b5c192cfcc167f420c15073797"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"The JavaScript runtime materializes the same positive-capacity channel and an explicit occupancy counter; its release closure decrements exactly one acquired slot and fails closed where Go would block on an unmatched receive."}
  *
  * Go source:
  * func NewLimitedSemaphore(maxConcurrency int) *LimitedSemaphore {
@@ -113,15 +118,24 @@ export function NewLimitedSemaphore(maxConcurrency: int): GoPtr<LimitedSemaphore
   if ((maxConcurrency as number) <= 0) {
     throw new globalThis.Error("maxConcurrency must be positive");
   }
-  const s: LimitedSemaphore = {
-    ch: {} as GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">,
-    release: (): void => {},
+  let s: LimitedSemaphore;
+  s = {
+    ch: MakeGoChan(maxConcurrency, () => ({})),
+    maxConcurrency,
+    acquired: 0 as int,
+    release: (): void => {
+      if (s.acquired <= 0) {
+        throw new globalThis.Error("LimitedSemaphore release would block");
+      }
+      s.acquired = (s.acquired - 1) as int;
+    },
   };
   return s;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.Acquire","kind":"method","status":"implemented","sigHash":"b6946d2579c55c04567c62dd8298fcb819eb4ed2f84eecdee53fc9a6cee3e3a4","bodyHash":"83f874bf20143bc4a8548b65a993a7c13b4ba3fa6953c236fed25b5348ab8d88"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"Available capacity is acquired synchronously and released exactly once. Because JavaScript cannot synchronously suspend this stack until another task releases a slot, a full semaphore raises an explicit would-block error instead of silently exceeding the Go capacity."}
  *
  * Go source:
  * func (s *LimitedSemaphore) Acquire() (release func()) {
@@ -130,12 +144,16 @@ export function NewLimitedSemaphore(maxConcurrency: int): GoPtr<LimitedSemaphore
  * }
  */
 export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () => void {
-  // Single-threaded: channel send never blocks; return the stored release function.
+  if (receiver!.acquired >= receiver!.maxConcurrency) {
+    throw new globalThis.Error("LimitedSemaphore.Acquire would block in the single-threaded runtime");
+  }
+  receiver!.acquired = (receiver!.acquired + 1) as int;
   return receiver!.release;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.TryAcquire","kind":"method","status":"implemented","sigHash":"445bd0e58d03cc995179f2b01adc3b80adf8bc693fe894f99c491b0590656a1c","bodyHash":"8450a2a545ce6cf65675f7e300fbb763964a16e9469d9a841358c85d04e7ff66"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"The synchronous runtime deterministically selects an already-canceled context, acquires immediately when capacity is available, and fails closed if neither select arm is ready; it never invents capacity or reports acquisition without owning a release slot."}
  *
  * Go source:
  * func (s *LimitedSemaphore) TryAcquire(ctx context.Context) (release func(), acquired bool) {
@@ -148,6 +166,12 @@ export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () 
  * }
  */
 export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: Context): [() => void, bool] {
-  // Single-threaded: select always takes the acquire branch (no ctx.Done blocking).
+  if (ctx.Err() !== undefined) {
+    return [(): void => {}, false];
+  }
+  if (receiver!.acquired >= receiver!.maxConcurrency) {
+    throw new globalThis.Error("LimitedSemaphore.TryAcquire would block before context cancellation in the single-threaded runtime");
+  }
+  receiver!.acquired = (receiver!.acquired + 1) as int;
   return [receiver!.release, true];
 }

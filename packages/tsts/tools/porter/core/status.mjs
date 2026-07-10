@@ -283,7 +283,10 @@ export function buildStatus(
     if (tsUnit.implementationOwnerIssue !== undefined) {
       implementationOwnerIssues.push({ id: row.id, path: row.tsPath, name: row.name, reason: tsUnit.implementationOwnerIssue });
     }
-    const unitMechanicalRisks = collectMechanicalPortRisks(unit, tsUnit);
+    const unitMechanicalRisks = [
+      ...collectMechanicalPortRisks(unit, tsUnit),
+      ...(tsUnit.mechanicalRisks ?? []),
+    ];
     if (unitMechanicalRisks.length > 0) {
       row.mechanicalRisks = unitMechanicalRisks;
       for (const risk of unitMechanicalRisks) {

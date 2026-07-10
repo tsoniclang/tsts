@@ -1258,7 +1258,7 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
     nodeBuilder!.verbosity = vc;
     try {
       const nodes = NodeBuilder_ExpandSymbolForHover(nodeBuilder, symbol_, meaning);
-      if (nodes.length === 0) {
+      if (nodes === undefined || nodes.length === 0) {
         return "";
       }
       const p = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));

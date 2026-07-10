@@ -1,3 +1,4 @@
+import { GoRequireNonNilAfterSuccess } from "../../go/compat.js";
 import type { GoError, GoPtr } from "../../go/compat.js";
 import type { Writer } from "../../go/io.js";
 import type { File } from "../../go/os.js";
@@ -71,14 +72,15 @@ export function BeginProfiling(profileDir: string, logWriter: Writer): GoPtr<Pro
   if (createErr !== undefined) {
     throw createErr;
   }
-  const startErr = pprof.StartCPUProfile(cpuFile);
+  const openedCPUFile = GoRequireNonNilAfterSuccess(cpuFile, "os.Create");
+  const startErr = pprof.StartCPUProfile(openedCPUFile);
   if (startErr !== undefined) {
     throw startErr;
   }
   return {
     cpuFilePath: cpuProfilePath,
     memFilePath: memProfilePath,
-    cpuFile,
+    cpuFile: openedCPUFile,
     logWriter,
   };
 }
@@ -116,12 +118,13 @@ export function ProfileSession_Stop(receiver: GoPtr<ProfileSession>): void {
     if (createErr !== undefined) {
       throw createErr;
     }
+    const openedMemoryFile = GoRequireNonNilAfterSuccess(memFile, "os.Create");
     const profile = pprof.Lookup("allocs");
-    const writeErr = profile!.WriteTo(memFile, 0);
+    const writeErr = profile!.WriteTo(openedMemoryFile, 0);
     if (writeErr !== undefined) {
       throw writeErr;
     }
-    memFile.Close();
+    openedMemoryFile.Close();
     fmt.Fprintf(p.logWriter, "Memory profile: %v\n", p.memFilePath);
   }
 
@@ -194,16 +197,17 @@ export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profil
     if (createErr !== undefined) {
       return fmt.Errorf("failed to create CPU profile file: %w", createErr);
     }
-    const startErr = pprof.StartCPUProfile(cpuFile);
+    const openedCPUFile = GoRequireNonNilAfterSuccess(cpuFile, "os.Create");
+    const startErr = pprof.StartCPUProfile(openedCPUFile);
     if (startErr !== undefined) {
-      cpuFile.Close();
+      openedCPUFile.Close();
       os.Remove(cpuProfilePath);
       return fmt.Errorf("failed to start CPU profile: %w", startErr);
     }
     c.session = {
       cpuFilePath: cpuProfilePath,
       memFilePath: "",
-      cpuFile,
+      cpuFile: openedCPUFile,
       logWriter: io.Discard,
     };
     return undefined;
@@ -284,17 +288,18 @@ export function SaveHeapProfile(profileDir: string): [string, GoError] {
   if (createErr !== undefined) {
     return ["", fmt.Errorf("failed to create heap profile file: %w", createErr)];
   }
+  const openedHeapFile = GoRequireNonNilAfterSuccess(heapFile, "os.Create");
   try {
     runtime.GC();
     const profile = pprof.Lookup("heap");
-    const writeErr = profile!.WriteTo(heapFile, 0);
+    const writeErr = profile!.WriteTo(openedHeapFile, 0);
     if (writeErr !== undefined) {
       os.Remove(heapProfilePath);
       return ["", fmt.Errorf("failed to write heap profile: %w", writeErr)];
     }
     return [heapProfilePath, undefined];
   } finally {
-    heapFile.Close();
+    openedHeapFile.Close();
   }
 }
 
@@ -332,16 +337,17 @@ export function SaveAllocProfile(profileDir: string): [string, GoError] {
   if (createErr !== undefined) {
     return ["", fmt.Errorf("failed to create alloc profile file: %w", createErr)];
   }
+  const openedAllocFile = GoRequireNonNilAfterSuccess(allocFile, "os.Create");
   try {
     const profile = pprof.Lookup("allocs");
-    const writeErr = profile!.WriteTo(allocFile, 0);
+    const writeErr = profile!.WriteTo(openedAllocFile, 0);
     if (writeErr !== undefined) {
       os.Remove(allocProfilePath);
       return ["", fmt.Errorf("failed to write alloc profile: %w", writeErr)];
     }
     return [allocProfilePath, undefined];
   } finally {
-    allocFile.Close();
+    openedAllocFile.Close();
   }
 }
 

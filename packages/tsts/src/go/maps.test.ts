@@ -20,6 +20,16 @@ test("maps.Clone(undefined) returns undefined", () => {
   assert.equal(Clone<string, number>(undefined), undefined);
 });
 
+test("nil maps preserve Go read, equality, copy, and deletion semantics", () => {
+  const empty = new globalThis.Map<string, number>();
+  assert.equal(Equal(undefined, empty), true);
+  assert.equal(EqualFunc(undefined, empty, (left, right) => left === right), true);
+  assert.doesNotThrow(() => Copy<string, number>(undefined, undefined));
+  assert.doesNotThrow(() => Copy(undefined, empty));
+  assert.throws(() => Copy(undefined, new globalThis.Map([["value", 1]])), /assignment to entry in nil map/);
+  assert.doesNotThrow(() => DeleteFunc<string, number>(undefined, () => true));
+});
+
 test("maps.Copy copies and overwrites entries", () => {
   const dst = new globalThis.Map<string, number>([["a", 1]]);
   const src = new globalThis.Map<string, number>([
@@ -61,6 +71,9 @@ test("maps.EqualFunc uses the provided comparator", () => {
     EqualFunc(m1, m2, (v1, v2) => globalThis.String(v1) !== v2),
     false,
   );
+
+  const undefinedValues = new globalThis.Map<string, undefined>([["present", undefined]]);
+  assert.equal(EqualFunc(undefinedValues, undefinedValues, (left, right) => left === right), true);
 });
 
 test("maps.Keys yields all keys", () => {

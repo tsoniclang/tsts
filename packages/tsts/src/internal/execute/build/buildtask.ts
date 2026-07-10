@@ -536,8 +536,8 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     ChangesComputeTime: 0,
   };
 
-  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
-  compileTimes.ConfigTime = configTime ?? (0 as Duration);
+  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path, (): Duration => 0 as Duration);
+  compileTimes.ConfigTime = configTime;
 
   const buildInfoReadStart = orchestrator!.opts.Sys.Now();
   let oldProgram: GoPtr<Program> = undefined;
@@ -587,19 +587,28 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   receiver!.result!.statistics = statistics;
   receiver!.packageJsons = Program_PackageJsonLookupPaths(receiver!.result!.program) ?? [];
 
-  if ((!Tristate_IsTrue(compiler_Program_Options(program)!.NoEmitOnError) || result.Diagnostics.length === 0) &&
-    (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
-    BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult!.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
+  if (result.EmitResult === undefined) {
+    throw new globalThis.Error("build completed without an emit result");
+  }
+  const emittedFiles = result.EmitResult.EmittedFiles;
+  const hasNoDiagnostics = result.Diagnostics === undefined || result.Diagnostics.length === 0;
+  if ((!Tristate_IsTrue(compiler_Program_Options(program)!.NoEmitOnError) || hasNoDiagnostics) &&
+    ((emittedFiles !== undefined && emittedFiles.length > 0) || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
+    BuildTask_updateTimeStamps(receiver, orchestrator, emittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
   }
   receiver!.result!.buildKind = buildKindProgram;
   if (result.Status === ExitStatusDiagnosticsPresent_OutputsSkipped || result.Status === ExitStatusDiagnosticsPresent_OutputsGenerated) {
     receiver!.status = { kind: upToDateStatusTypeBuildErrors, data: undefined };
   } else {
     let oldestOutputFileName: string;
-    if (result.EmitResult!.EmittedFiles.length > 0) {
-      oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
+    if (emittedFiles !== undefined && emittedFiles.length > 0) {
+      const firstEmittedFile = emittedFiles[0];
+      if (firstEmittedFile === undefined) {
+        throw new globalThis.Error("nonempty emitted-files slice has no first element");
+      }
+      oldestOutputFileName = firstEmittedFile;
     } else {
-      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)) ?? "";
+      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved), (): string => "");
     }
     receiver!.status = { kind: upToDateStatusTypeUpToDate, data: oldestOutputFileName };
   }
@@ -1468,6 +1477,7 @@ export function BuildTask_canUpdateJsDtsOutputTimestamps(receiver: GoPtr<BuildTa
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.updateTimeStamps","kind":"method","status":"implemented","sigHash":"fd2d0c7a27cc644f427d4bff22505e6cdae2b146cd8c3fd72dc1938be5719408","bodyHash":"ee96e0068ac70211f4459244bbee7290bd36a6e93d906a74f95c7fda893d10d0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"method BuildTask.updateTimeStamps uses an explicit undefined-capable TypeScript representation at parameter #2 because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/orchestrator.ts::Orchestrator>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/buildtask.ts::BuildTask>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/build/orchestrator.ts::Orchestrator>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>void"}
  *
  * Go source:
  * func (t *BuildTask) updateTimeStamps(orchestrator *Orchestrator, emittedFiles []string, verboseMessage *diagnostics.Message) {
@@ -1505,8 +1515,10 @@ export function BuildTask_canUpdateJsDtsOutputTimestamps(receiver: GoPtr<BuildTa
  * 	updateTimeStamp(t.resolved.GetBuildInfoFileName())
  * }
  */
-export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, emittedFiles: GoSlice<string>, verboseMessage: GoPtr<Message>): void {
-  const emitted: GoPtr<Set<string>> = NewSetFromItems(...(emittedFiles ?? []));
+export function BuildTask_updateTimeStamps(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, emittedFiles: GoPtr<GoSlice<string>>, verboseMessage: GoPtr<Message>): void {
+  const emitted: GoPtr<Set<string>> = emittedFiles === undefined
+    ? NewSetFromItems<string>()
+    : NewSetFromItems(...emittedFiles);
   let verboseMessageReported = false;
   const buildInfoName = ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved);
   const now = orchestrator!.opts.Sys.Now();

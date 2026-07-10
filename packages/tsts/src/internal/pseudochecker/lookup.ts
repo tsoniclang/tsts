@@ -589,10 +589,11 @@ export function PseudoChecker_getTypeAnnotationFromAccessor(receiver: GoPtr<Pseu
     return AsGetAccessorDeclaration(node)!.Type;
   }
   const set = AsSetAccessorDeclaration(node)!;
-  if (set.Parameters === undefined || set.Parameters!.Nodes.length < 1) {
+  const parameters = set.Parameters?.Nodes ?? [];
+  if (parameters.length < 1) {
     return undefined;
   }
-  const p = set.Parameters!.Nodes[0];
+  const p = parameters[0];
   if (!IsParameterDeclaration(p)) {
     return undefined;
   }
@@ -902,11 +903,12 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
   if (errorNodes.length > 0) {
     return NewPseudoTypeInferredWithErrors(Node_AsNode(node), false, errorNodes);
   }
-  if (node!.Properties === undefined || node!.Properties!.Nodes.length === 0) {
+  const properties = node!.Properties?.Nodes ?? [];
+  if (properties.length === 0) {
     return NewPseudoTypeObjectLiteral([]);
   }
   const results: GoSlice<GoPtr<PseudoObjectElement>> = [];
-  for (const e of node!.Properties!.Nodes) {
+  for (const e of properties) {
     switch (e!.Kind) {
       case KindMethodDeclaration: {
         const optional = AsMethodDeclaration(e)!.PostfixToken !== undefined && AsMethodDeclaration(e)!.PostfixToken!.Kind === KindQuestionToken;
@@ -996,9 +998,10 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
  */
 export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>, name: GoPtr<Node>): GoPtr<PseudoObjectElement> {
   const allAccessors = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations ?? []);
+  const setParameters = allAccessors.SetAccessor?.Parameters?.Nodes ?? [];
 
   if (allAccessors.GetAccessor !== undefined && allAccessors.GetAccessor.Type !== undefined &&
-    allAccessors.SetAccessor !== undefined && allAccessors.SetAccessor.Parameters !== undefined && allAccessors.SetAccessor.Parameters.Nodes.length > 0 && AsParameterDeclaration(allAccessors.SetAccessor.Parameters.Nodes[0])!.Type !== undefined) {
+    allAccessors.SetAccessor !== undefined && setParameters.length > 0 && AsParameterDeclaration(setParameters[0])!.Type !== undefined) {
     if (IsGetAccessorDeclaration(accessor)) {
       return NewPseudoGetAccessor(
         accessor,
@@ -1065,11 +1068,12 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
  * }
  */
 export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ObjectLiteralExpression>): GoSlice<GoPtr<Node>> {
-  if (node!.Properties === undefined || node!.Properties!.Nodes.length === 0) {
+  const properties = node!.Properties?.Nodes ?? [];
+  if (properties.length === 0) {
     return [];
   }
   const errorNodes: GoPtr<Node>[] = [];
-  for (const e of node!.Properties!.Nodes) {
+  for (const e of properties) {
     if ((e!.Flags & NodeFlagsThisNodeHasError) !== 0) {
       errorNodes.push(e);
       continue;
@@ -1125,7 +1129,7 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
     return NewPseudoTypeInferred(Node_AsNode(node), false);
   }
   const results: GoSlice<GoPtr<PseudoType>> = [];
-  for (const e of node!.Elements!.Nodes) {
+  for (const e of node!.Elements!.Nodes ?? []) {
     results.push(PseudoChecker_typeFromExpression(receiver, e));
   }
   return NewPseudoTypeTuple(results);
@@ -1151,7 +1155,7 @@ export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoC
   if (!IsInConstContext(Node_AsNode(node))) {
     return [Node_AsNode(node)];
   }
-  for (const e of node!.Elements!.Nodes) {
+  for (const e of node!.Elements!.Nodes ?? []) {
     if (e!.Kind === KindSpreadElement) {
       return [e];
     }
@@ -1325,11 +1329,12 @@ export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>
   if (nodes === undefined) {
     return [];
   }
-  if (nodes!.Nodes.length === 0) {
+  const nodeSlice = nodes.Nodes ?? [];
+  if (nodeSlice.length === 0) {
     return [];
   }
   const result: GoSlice<GoPtr<TypeParameterDeclaration>> = [];
-  for (const e of nodes!.Nodes) {
+  for (const e of nodeSlice) {
     result.push(AsTypeParameterDeclaration(e));
   }
   return result;
@@ -1470,6 +1475,7 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"f984f8061c687349341f1ae62bfd902ff9ef63da0c0a816a43cbd9ab3d3e7fbd","bodyHash":"241d1f596b7b564eabcf068e47483c5e46d2e3dcc2c898faaee3401f1e207938"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func lastRequiredParamIndex(params []*ast.Node) int {
@@ -1481,7 +1487,10 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
  * 	return 0
  * }
  */
-export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
+export function lastRequiredParamIndex(params: GoPtr<GoSlice<GoPtr<Node>>>): int {
+  if (params === undefined) {
+    return 0;
+  }
   for (let i = params.length - 1; i >= 0; i--) {
     if (!isOptionalInitializedOrRestParameter(params[i])) {
       return i + 1;
@@ -1548,7 +1557,7 @@ export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, 
     return NewPseudoTypeNoResult(Node_AsNode(node));
   }
   const p = Node_Parameters(parent);
-  const selfIdx = p.indexOf(Node_AsNode(node));
+  const selfIdx = p === undefined ? -1 : p.indexOf(Node_AsNode(node));
   const lastRequired = lastRequiredParamIndex(p);
   return PseudoChecker_typeFromParameterWorker(receiver, node, selfIdx, lastRequired);
 }
@@ -1670,13 +1679,14 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
   if (nodes === undefined) {
     return [];
   }
-  if (nodes!.Nodes.length === 0) {
+  const nodeSlice = nodes.Nodes ?? [];
+  if (nodeSlice.length === 0) {
     return [];
   }
-  const lastRequired = lastRequiredParamIndex(nodes!.Nodes);
+  const lastRequired = lastRequiredParamIndex(nodeSlice);
   const result: GoSlice<GoPtr<PseudoParameter>> = [];
-  for (let i = 0; i < nodes!.Nodes.length; i++) {
-    const e = nodes!.Nodes[i];
+  for (let i = 0; i < nodeSlice.length; i++) {
+    const e = nodeSlice[i];
     const p = AsParameterDeclaration(e);
     let optional = p!.QuestionToken !== undefined;
     if (!optional && p!.Initializer !== undefined) {

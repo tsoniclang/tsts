@@ -50,6 +50,17 @@ test("compareFunc: arity, param-type, return-type, param-order", () => {
   assert.equal(compareSignatures(exp, exp, null).length, 0);
 });
 
+test("declaration kind is compared before kind-specific descriptor dispatch", () => {
+  const expected = { kind: "func", typeParams: [], ret: kw("void"), params: [] };
+  for (const actual of [
+    { kind: "interface", typeParams: [], members: [] },
+    { kind: "alias", typeParams: [], type: kw("void") },
+    { kind: "other", nodeKind: "ClassDeclaration" },
+  ]) {
+    assert.deepEqual(compareSignatures(expected, actual, null).map((mismatch) => mismatch.kind), ["declaration-kind"]);
+  }
+});
+
 test("compareInterface: member-type, missing-member, extra-member; method == fn-property", () => {
   const exp = { kind: "interface", typeParams: [], members: [{ name: "x", type: ref("m::A") }, { name: "y", type: kw("string") }] };
   const wrong = { kind: "interface", typeParams: [], members: [{ name: "x", type: ref("m::B") }, { name: "y", type: kw("string") }] };

@@ -238,7 +238,7 @@ export function getExternalModuleIndicator(file: GoPtr<SourceFile>, opts: Extern
  * }
  */
 export function isFileProbablyExternalModule(sourceFile: GoPtr<SourceFile>): GoPtr<Node> {
-  for (const statement of sourceFile!.Statements!.Nodes) {
+  for (const statement of sourceFile!.Statements!.Nodes ?? []) {
     if (isAnExternalModuleIndicatorNode(statement)) {
       return statement;
     }
@@ -299,7 +299,7 @@ export function getImportMetaIfNecessary(sourceFile: GoPtr<SourceFile>): GoPtr<N
  * }
  */
 export function findChildNode(root: GoPtr<Node>, check: (arg0: GoPtr<Node>) => bool): GoPtr<Node> {
-  const container = { result: undefined as GoPtr<Node> };
+  const container: { result: GoPtr<Node> } = { result: undefined };
   const visit: Visitor = (node: GoPtr<Node>): bool => {
     if (check(node)) {
       container.result = node;
@@ -350,7 +350,7 @@ export function isFileModuleFromUsingJSXTag(file: GoPtr<SourceFile>): GoPtr<Node
  * }
  */
 export function walkTreeForJSXTags(node: GoPtr<Node>): GoPtr<Node> {
-  const container = { found: undefined as GoPtr<Node> };
+  const container: { found: GoPtr<Node> } = { found: undefined };
   const visitor: Visitor = (n: GoPtr<Node>): bool => {
     if (container.found !== undefined) {
       return true;

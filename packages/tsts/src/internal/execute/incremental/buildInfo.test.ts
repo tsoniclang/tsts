@@ -1,14 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoError, GoPtr } from "../../../go/compat.js";
 import { OrderedMap_Entries, OrderedMap_Set, NewOrderedMapWithSizeHint } from "../../collections/ordered_map.js";
 import { Version } from "../../core/version.js";
 import { TSFalse, TSTrue } from "../../core/tristate.js";
 import { Unmarshal } from "../../json/json.js";
 import {
+  BuildInfoDiagnosticsOfFile_UnmarshalJSON,
+  BuildInfoEmitSignature_UnmarshalJSON,
   BuildInfoFileInfo_GetFileInfo,
   BuildInfoFileInfo_UnmarshalJSON,
+  BuildInfoFilePendingEmit_UnmarshalJSON,
   BuildInfo_IsValidVersion,
+  BuildInfoReferenceMapEntry_UnmarshalJSON,
+  BuildInfoResolvedRoot_UnmarshalJSON,
+  BuildInfoRoot_UnmarshalJSON,
+  BuildInfoSemanticDiagnostic_UnmarshalJSON,
   IsBuildInfoFileNameDefaultLibrary,
   NewBuildInfo,
   SerializeBuildInfo,
@@ -16,7 +23,14 @@ import {
 import type {
   BuildInfo,
   BuildInfoDiagnostic,
+  BuildInfoDiagnosticsOfFile,
+  BuildInfoEmitSignature,
   BuildInfoFileInfo,
+  BuildInfoFilePendingEmit,
+  BuildInfoReferenceMapEntry,
+  BuildInfoResolvedRoot,
+  BuildInfoRoot,
+  BuildInfoSemanticDiagnostic,
 } from "./buildInfo.js";
 import {
   FileEmitKindDts,
@@ -77,6 +91,15 @@ function emptyBuildInfo(): BuildInfo {
     ResolvedRoot: [],
     SemanticErrors: false,
   };
+}
+
+const encodeJSONText = (text: string): number[] => Array.from(new TextEncoder().encode(text));
+
+function errorMessage(error: GoError): string {
+  if (error === undefined) {
+    assert.fail("expected build-info decoding to fail");
+  }
+  return error.message;
 }
 
 test("BuildInfo serialization matches Go custom encodings", () => {
@@ -337,6 +360,148 @@ test("BuildInfoFileInfo custom decoding accepts every wire encoding", () => {
     }),
     [["hash", "hash"], ["version", ""], ["version", "signature"]],
   );
+});
+
+test("compact build-info decoders preserve Go scalar and nil semantics", () => {
+  const root: BuildInfoRoot = { Start: 0, End: 0, NonIncremental: "" };
+  assert.equal(BuildInfoRoot_UnmarshalJSON(root, encodeJSONText("[1,null]")), undefined);
+  assert.deepEqual(root, { Start: 1, End: 0, NonIncremental: "" });
+  assert.throws(
+    () => BuildInfoRoot_UnmarshalJSON(root, encodeJSONText("null")),
+    /nil \*\[2\]int/,
+  );
+
+  const fileInfo: BuildInfoFileInfo = { signature: "sentinel", noSignature: undefined, fileInfo: undefined };
+  assert.equal(BuildInfoFileInfo_UnmarshalJSON(fileInfo, encodeJSONText("null")), undefined);
+  assert.deepEqual(fileInfo, { signature: "", noSignature: undefined, fileInfo: undefined });
+  assert.equal(BuildInfoFileInfo_UnmarshalJSON(fileInfo, encodeJSONText('{"noSignature":1}')), undefined);
+  assert.notEqual(fileInfo.fileInfo, undefined);
+
+  const reference: BuildInfoReferenceMapEntry = { FileId: 0, FileIdListId: 0 };
+  assert.equal(BuildInfoReferenceMapEntry_UnmarshalJSON(reference, encodeJSONText("[1,null]")), undefined);
+  assert.deepEqual(reference, { FileId: 1, FileIdListId: 0 });
+  assert.throws(
+    () => BuildInfoReferenceMapEntry_UnmarshalJSON(reference, encodeJSONText("null")),
+    /nil \*\[2\]int/,
+  );
+
+  const diagnostics: BuildInfoDiagnosticsOfFile = { FileId: 0, Diagnostics: [] };
+  assert.equal(
+    BuildInfoDiagnosticsOfFile_UnmarshalJSON(
+      diagnostics,
+      encodeJSONText('[1,[{"code":2147483647,"messageArgs":[null]}]]'),
+    ),
+    undefined,
+  );
+  assert.equal(diagnostics.Diagnostics?.[0]?.Code, 2147483647);
+  assert.deepEqual(diagnostics.Diagnostics?.[0]?.MessageArgs, [""]);
+  assert.equal(BuildInfoDiagnosticsOfFile_UnmarshalJSON(diagnostics, encodeJSONText("[1,null]")), undefined);
+  assert.equal(diagnostics.Diagnostics, undefined);
+
+  const semantic: BuildInfoSemanticDiagnostic = { FileId: 9, Diagnostics: diagnostics };
+  assert.equal(BuildInfoSemanticDiagnostic_UnmarshalJSON(semantic, encodeJSONText("null")), undefined);
+  assert.deepEqual(semantic, { FileId: 0, Diagnostics: undefined });
+
+  const pending: BuildInfoFilePendingEmit = { FileId: 0, EmitKind: 0 };
+  assert.equal(BuildInfoFilePendingEmit_UnmarshalJSON(pending, encodeJSONText("[-1,-1]")), undefined);
+  assert.deepEqual(pending, { FileId: -1, EmitKind: 0xffffffff });
+  assert.equal(BuildInfoFilePendingEmit_UnmarshalJSON(pending, encodeJSONText("[1,4294967296]")), undefined);
+  assert.deepEqual(pending, { FileId: 1, EmitKind: 0 });
+
+  const emitSignature: BuildInfoEmitSignature = {
+    FileId: 0,
+    Signature: "",
+    DiffersOnlyInDtsMap: false,
+    DiffersInOptions: false,
+  };
+  assert.equal(BuildInfoEmitSignature_UnmarshalJSON(emitSignature, encodeJSONText('[1.5,"signature"]')), undefined);
+  assert.deepEqual(emitSignature, {
+    FileId: 1,
+    Signature: "signature",
+    DiffersOnlyInDtsMap: false,
+    DiffersInOptions: false,
+  });
+
+  const resolved: BuildInfoResolvedRoot = { Resolved: 9, Root: 9 };
+  assert.equal(BuildInfoResolvedRoot_UnmarshalJSON(resolved, encodeJSONText("null")), undefined);
+  assert.deepEqual(resolved, { Resolved: 0, Root: 0 });
+});
+
+test("every compact build-info decoder rejects malformed scalar, range, and tuple forms", () => {
+  const decoders: Readonly<Record<string, (text: string) => GoError>> = {
+    Root: (text) => BuildInfoRoot_UnmarshalJSON(
+      { Start: 0, End: 0, NonIncremental: "" },
+      encodeJSONText(text),
+    ),
+    FileInfo: (text) => BuildInfoFileInfo_UnmarshalJSON(
+      { signature: "", noSignature: undefined, fileInfo: undefined },
+      encodeJSONText(text),
+    ),
+    Reference: (text) => BuildInfoReferenceMapEntry_UnmarshalJSON(
+      { FileId: 0, FileIdListId: 0 },
+      encodeJSONText(text),
+    ),
+    Diagnostics: (text) => BuildInfoDiagnosticsOfFile_UnmarshalJSON(
+      { FileId: 0, Diagnostics: undefined },
+      encodeJSONText(text),
+    ),
+    Semantic: (text) => BuildInfoSemanticDiagnostic_UnmarshalJSON(
+      { FileId: 0, Diagnostics: undefined },
+      encodeJSONText(text),
+    ),
+    Pending: (text) => BuildInfoFilePendingEmit_UnmarshalJSON(
+      { FileId: 0, EmitKind: 0 },
+      encodeJSONText(text),
+    ),
+    Emit: (text) => BuildInfoEmitSignature_UnmarshalJSON(
+      { FileId: 0, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false },
+      encodeJSONText(text),
+    ),
+    Resolved: (text) => BuildInfoResolvedRoot_UnmarshalJSON(
+      { Resolved: 0, Root: 0 },
+      encodeJSONText(text),
+    ),
+  };
+  const malformed: ReadonlyArray<readonly [string, string, string]> = [
+    ["Root", "1.0", "invalid BuildInfoRoot: 1.0"],
+    ["Root", "9223372036854775808", "invalid BuildInfoRoot: 9223372036854775808"],
+    ["Root", "[1]", "invalid BuildInfoRoot: [1]"],
+    ["FileInfo", '{"impliedNodeFormat":1.0}', 'invalid BuildInfoFileInfo: {"impliedNodeFormat":1.0}'],
+    ["FileInfo", '{"impliedNodeFormat":2147483648}', 'invalid BuildInfoFileInfo: {"impliedNodeFormat":2147483648}'],
+    ["Reference", "[1]", "json: cannot unmarshal JSON array into Go [2]int after offset 2: too few array elements"],
+    ["Reference", "[1,2,3]", "json: cannot unmarshal JSON array into Go [2]int after offset 6: too many array elements"],
+    ["Reference", "[1.0,2]", 'json: cannot unmarshal JSON number 1.0 into Go int within "/0": invalid syntax'],
+    ["Reference", "", "jsontext: unexpected EOF"],
+    ["Reference", "[1,2,]", "jsontext: invalid character ',' at start of value after offset 4"],
+    ["Diagnostics", "null", "invalid BuildInfoDiagnosticsOfFile: expected 2 elements, got 0"],
+    ["Diagnostics", "[1.0,[]]", "invalid fileId in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 1.0 into Go incremental.BuildInfoFileId: invalid syntax"],
+    ["Diagnostics", '[1,[{"code":1.0}]]', 'invalid diagnostics in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 1.0 into Go int32 within "/0/code": invalid syntax'],
+    ["Diagnostics", '[1,[{"code":2147483648}]]', 'invalid diagnostics in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 2147483648 into Go int32 within "/0/code": value out of range'],
+    ["Semantic", "1e0", "invalid BuildInfoSemanticDiagnostic: 1e0"],
+    ["Semantic", "[1]", "invalid BuildInfoSemanticDiagnostic: [1]"],
+    ["Pending", "1.5", "invalid BuildInfoFilePendingEmit: 1.5"],
+    ["Pending", "[1.0,2]", "invalid BuildInfoFilePendingEmit: [1.0,2]"],
+    ["Pending", "[1,2,3]", "invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got 3"],
+    ["Emit", "1.0", "invalid BuildInfoEmitSignature: 1.0"],
+    ["Emit", "[1]", "invalid BuildInfoEmitSignature: expected 2 elements, got 1"],
+    ["Emit", "[1,null]", "invalid signature in BuildInfoEmitSignature: expected string or []string, got <nil>"],
+    ["Emit", "[1,[null]]", "invalid signature in BuildInfoEmitSignature: expected string, got <nil>"],
+    ["Resolved", "[1.0,2]", "invalid BuildInfoResolvedRoot: [1.0,2]"],
+    ["Resolved", "[1,2,3]", "invalid BuildInfoResolvedRoot: [1,2,3]"],
+  ];
+
+  for (const [decoderName, text, expected] of malformed) {
+    assert.equal(errorMessage(decoders[decoderName]!(text)), expected, `${decoderName}: ${text}`);
+  }
+});
+
+test("compact integer bounds follow Go int64 rather than JavaScript safe-integer limits", () => {
+  const maximum: BuildInfoRoot = { Start: 0, End: 0, NonIncremental: "" };
+  const minimum: BuildInfoRoot = { Start: 0, End: 0, NonIncremental: "" };
+  assert.equal(BuildInfoRoot_UnmarshalJSON(maximum, encodeJSONText("9223372036854775807")), undefined);
+  assert.equal(BuildInfoRoot_UnmarshalJSON(minimum, encodeJSONText("-9223372036854775808")), undefined);
+  assert.equal(maximum.Start, Number(9223372036854775807n));
+  assert.equal(minimum.Start, Number(-9223372036854775808n));
 });
 
 test("BuildInfoFileInfo fails hard on an impossible internal zero state", () => {

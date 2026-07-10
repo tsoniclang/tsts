@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Attribute a V8 CPU profile (and optional heap-allocation profile) to named
-// cost categories — turning a raw profile into the "exact losses" breakdown:
+// cost categories for investigation:
 // UTF-8 conversion, GC, value-key serialization, and per-phase scanner / parser
 // / binder / checker / ast-build / emit time.
 //
@@ -8,18 +8,17 @@
 //   node attribute.mjs --cpu <file.cpuprofile> [--heap <file.heapprofile>] [--label NAME] [--json] [--top N]
 //
 // The CPU profile gives self-time per category (where the compiler spends CPU).
-// The heap profile gives allocation bytes per category/site — essential because
-// the dominant cost (per-node object/closure allocation) is charged to "(gc)" in
-// the CPU profile, not to the allocation site. Run both together for the full story.
-import { readFileSync } from "node:fs";
+// The heap profile gives allocation bytes per category/site; allocation pressure
+// can appear as GC CPU time rather than at its allocation site.
+import { readStableRegularFile } from "../test-provenance.mjs";
 
-// Category rules in PRIORITY order. Specific JS-tax functions are matched before
+// Category rules in priority order. Specific runtime functions are matched before
 // the by-file-path phase buckets so e.g. getUtf8ByteInfo (in scanner.ts) counts
 // as utf8-conv, not scanner. `fn` matches the callFrame functionName; `url` the file.
 const RULES = [
   { cat: "gc", fn: /^\(garbage collector\)$/ },
   { cat: "vm-overhead", fn: /^\((program|idle|root|native|garbage|gc)\)?/ },
-  // The JS taxes (recoverable in native C#):
+  // Candidate runtime overhead:
   { cat: "utf8-conv", fn: /getUtf8ByteInfo|byteAt|byteSlice|byteLen|decodeRuneInString|decodeLastRune|encodeUtf8|decodeUTF8|TextEncoder|TextDecoder|^#?encode$|^#?decode$/ },
   { cat: "utf8-conv", url: /\/(encoding|utf8)\.js/ },
   { cat: "value-key", fn: /goValueKey|goStructFieldsKey|goStructMapKey|goObjectId|keyBuilder_|writeByte|writeInt|writeString|Sum128|getRelationKey/ },
@@ -36,9 +35,7 @@ const RULES = [
   { cat: "emit", url: /\/internal\/printer\// },
 ];
 
-// Categories considered "JS-emulation tax" — recoverable by native C#
-// (value structs, byte[]/Span, Dictionary<struct,V>). Reported as the headline.
-const RECOVERABLE = new Set(["utf8-conv", "value-key", "gc", "ast-build", "go-runtime"]);
+const CANDIDATE_OVERHEAD = new Set(["utf8-conv", "value-key", "gc", "ast-build", "go-runtime"]);
 
 function categorize(callFrame) {
   const fn = callFrame.functionName || "";
@@ -55,13 +52,15 @@ function fileBase(callFrame) {
 }
 
 function attributeCpu(path) {
-  const p = JSON.parse(readFileSync(path, "utf8"));
-  const totalMicros = (p.endTime ?? 0) - (p.startTime ?? 0);
+  const p = readProfile(path, "CPU");
+  if (!Array.isArray(p.nodes) || p.nodes.length === 0 || !Number.isFinite(p.startTime) || !Number.isFinite(p.endTime) || p.endTime <= p.startTime) throw new Error("CPU profile has an invalid sampling envelope");
+  const totalMicros = p.endTime - p.startTime;
   const byCat = new Map();
   const byFn = new Map();
   let totalHits = 0;
-  for (const n of p.nodes || []) {
-    const h = n.hitCount || 0;
+  for (const n of p.nodes) {
+    if (n === null || typeof n !== "object" || n.callFrame === null || typeof n.callFrame !== "object" || !Number.isSafeInteger(n.hitCount ?? 0) || (n.hitCount ?? 0) < 0) throw new Error("CPU profile contains an invalid node");
+    const h = n.hitCount ?? 0;
     if (h === 0) continue;
     totalHits += h;
     const cat = categorize(n.callFrame);
@@ -69,19 +68,24 @@ function attributeCpu(path) {
     const key = `${(n.callFrame.functionName || "(anon)")} [${fileBase(n.callFrame)}]`;
     byFn.set(key, (byFn.get(key) || 0) + h);
   }
+  if (totalHits <= 0) throw new Error("CPU profile contains no sampled hits");
   return { kind: "cpu", totalMicros, totalHits, byCat, byFn };
 }
 
 function attributeHeap(path) {
-  const p = JSON.parse(readFileSync(path, "utf8"));
+  const p = readProfile(path, "heap");
+  if (p.head === null || typeof p.head !== "object") throw new Error("heap profile has no root node");
   const byCat = new Map();
   const bySite = new Map();
   let totalBytes = 0;
   const stack = [p.head];
+  const seen = new Set();
   while (stack.length > 0) {
     const node = stack.pop();
     if (node === undefined) continue;
-    const s = node.selfSize || 0;
+    if (node === null || typeof node !== "object" || seen.has(node) || node.callFrame === null || typeof node.callFrame !== "object" || !Number.isFinite(node.selfSize ?? 0) || (node.selfSize ?? 0) < 0 || !Array.isArray(node.children ?? [])) throw new Error("heap profile contains an invalid or cyclic node");
+    seen.add(node);
+    const s = node.selfSize ?? 0;
     if (s > 0) {
       totalBytes += s;
       const cat = categorize(node.callFrame);
@@ -89,8 +93,9 @@ function attributeHeap(path) {
       const key = `${(node.callFrame.functionName || "(anon)")} [${fileBase(node.callFrame)}]`;
       bySite.set(key, (bySite.get(key) || 0) + s);
     }
-    for (const c of node.children || []) stack.push(c);
+    for (const c of node.children ?? []) stack.push(c);
   }
+  if (totalBytes <= 0) throw new Error("heap profile contains no sampled allocation bytes");
   return { kind: "heap", totalBytes, byCat, bySite };
 }
 
@@ -104,13 +109,13 @@ function printCpu(label, r) {
   const secs = r.totalMicros / 1e6;
   console.log(`\n# CPU self-time — ${label}  (total ${secs.toFixed(2)}s, ${r.totalHits} samples)`);
   console.log(`${"category".padEnd(14)} ${"%".padStart(7)} ${"time".padStart(8)}`);
-  let recoverable = 0;
+  let candidateShare = 0;
   for (const { k, v, pct } of pctRows(r.byCat, r.totalHits)) {
-    if (RECOVERABLE.has(k)) recoverable += pct;
+    if (CANDIDATE_OVERHEAD.has(k)) candidateShare += pct;
     console.log(`${k.padEnd(14)} ${pct.toFixed(1).padStart(6)}% ${(secs * v / r.totalHits).toFixed(2).padStart(7)}s`);
   }
   console.log(`${"-".repeat(32)}`);
-  console.log(`${"RECOVERABLE".padEnd(14)} ${recoverable.toFixed(1).padStart(6)}%  (JS-emulation tax: gc + utf8 + value-key + ast-build + go-runtime)`);
+  console.log(`${"CANDIDATE".padEnd(14)} ${candidateShare.toFixed(1).padStart(6)}%  (heuristically tagged; not a proven recoverable fraction)`);
 }
 
 function printHeap(label, r, top) {
@@ -139,10 +144,10 @@ function main() {
   let cpu, heap;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--cpu") cpu = argv[++i];
-    else if (a === "--heap") heap = argv[++i];
-    else if (a === "--label") opt.label = argv[++i];
-    else if (a === "--top") opt.top = Number(argv[++i]);
+    if (a === "--cpu") cpu = requiredValue(argv, ++i, a);
+    else if (a === "--heap") heap = requiredValue(argv, ++i, a);
+    else if (a === "--label") opt.label = requiredValue(argv, ++i, a);
+    else if (a === "--top") opt.top = Number(requiredValue(argv, ++i, a));
     else if (a === "--json") opt.json = true;
     else throw new Error(`Unknown argument: ${a}`);
   }
@@ -150,18 +155,38 @@ function main() {
     console.error("usage: attribute.mjs --cpu <file.cpuprofile> [--heap <file.heapprofile>] [--label NAME] [--top N] [--json]");
     process.exit(1);
   }
+  if (!Number.isSafeInteger(opt.top) || opt.top < 1 || opt.top > 100) throw new Error("--top must be an integer from 1 through 100");
   const out = {};
   let cpuR, heapR;
   if (cpu) cpuR = attributeCpu(cpu);
   if (heap) heapR = attributeHeap(heap);
   if (opt.json) {
-    if (cpuR) out.cpu = { totalMicros: cpuR.totalMicros, byCat: Object.fromEntries(cpuR.byCat) };
+    out.schemaVersion = 1;
+    out.classification = "heuristic-profile-attribution";
+    if (cpuR) out.cpu = { totalMicros: cpuR.totalMicros, totalHits: cpuR.totalHits, byCat: Object.fromEntries(cpuR.byCat) };
     if (heapR) out.heap = { totalBytes: heapR.totalBytes, byCat: Object.fromEntries(heapR.byCat) };
     console.log(JSON.stringify(out, null, 2));
     return;
   }
   if (cpuR) { printCpu(opt.label, cpuR); printTopFns(cpuR, opt.top); }
   if (heapR) printHeap(opt.label, heapR, opt.top);
+}
+
+function readProfile(path, label) {
+  let value;
+  try {
+    value = JSON.parse(readStableRegularFile(path, `${label} profile`).toString("utf8"));
+  } catch (error) {
+    throw new Error(`${label} profile is not valid stable JSON: ${path}`, { cause: error });
+  }
+  if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} profile root must be an object`);
+  return value;
+}
+
+function requiredValue(argv, index, option) {
+  const value = argv[index];
+  if (typeof value !== "string" || value === "") throw new Error(`${option} requires a value`);
+  return value;
 }
 
 main();

@@ -1,4 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
+import { GoRequireNonNilAfterSuccess } from "../../../go/compat.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
@@ -144,7 +145,7 @@ export let ____34464f57_1: WritableFS = MapFS_as_iovfs_WritableFS(undefined);
 
 export function MapFS_as_io_fs_FS(receiver: GoPtr<MapFS>): GoFS {
   return {
-    Open: (name: string): [File, GoError] => MapFS_Open(receiver, name),
+    Open: (name: string): [GoPtr<File>, GoError] => MapFS_Open(receiver, name),
   };
 }
 
@@ -509,13 +510,14 @@ export function MapFS_getCanonicalPath(receiver: GoPtr<MapFS>, p: string): canon
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::method::MapFS.open","kind":"method","status":"implemented","sigHash":"fa415d3349bbf5a6c21c7c294669f0bf3d9d212b756d19056ae997d1750f3b11","bodyHash":"d6be64eb8fbd7dcfa19ef3d28f2b56cc47fa3f68ae01166f42ea34343d4bc222"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The internal fs.File interface result is nil whenever the delegated map filesystem open fails; GoPtr preserves the standard result/error pairing.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfstest/vfstest.ts::MapFS>,packages/tsts/src/internal/vfs/vfstest/vfstest.ts::canonicalPath)=>[packages/tsts/src/go/io/fs.ts::File,packages/tsts/src/go/compat.ts::GoError]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfstest/vfstest.ts::MapFS>,packages/tsts/src/internal/vfs/vfstest/vfstest.ts::canonicalPath)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/io/fs.ts::File>,packages/tsts/src/go/compat.ts::GoError]"}
  *
  * Go source:
  * func (m *MapFS) open(p canonicalPath) (fs.File, error) {
  * 	return m.m.Open(string(p))
  * }
  */
-export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoError] {
+export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [GoPtr<File>, GoError] {
   return fstest_Open(receiver!.m, p);
 }
 
@@ -1080,6 +1082,7 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::method::MapFS.Open","kind":"method","status":"implemented","sigHash":"07b3ba9f92bc1fc7a16b73e29e7a31e1f899074798c70ad11a0de5842973ee72","bodyHash":"27808be6e686a2282e16e72e1e67fd7f23610e05fedc5a12910290dd13b0c504"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The fs.File interface result is nil whenever Open returns an error; GoPtr preserves that nil interface while successful results are validated before use.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfstest/vfstest.ts::MapFS>,string)=>[packages/tsts/src/go/io/fs.ts::File,packages/tsts/src/go/compat.ts::GoError]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/vfs/vfstest/vfstest.ts::MapFS>,string)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/io/fs.ts::File>,packages/tsts/src/go/compat.ts::GoError]"}
  *
  * Go source:
  * func (m *MapFS) Open(name string) (fs.File, error) {
@@ -1124,16 +1127,17 @@ export function readDirFile_ReadDir(receiver: GoPtr<readDirFile>, n: int): [GoSl
  * 	}, nil
  * }
  */
-export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError] {
+export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [GoPtr<File>, GoError] {
   receiver!.mu.RLock();
   try {
     const [, cp] = MapFS_getFollowingSymlinks(receiver, MapFS_getCanonicalPath(receiver, name));
     const [f, err] = MapFS_open(receiver, cp);
     if (err !== undefined) {
-      return [undefined as unknown as File, err];
+      return [undefined, err];
     }
+    const openedFile = GoRequireNonNilAfterSuccess(f, "MapFS.open");
 
-    const internalF = f as unknown as InternalFile;
+    const internalF = openedFile as unknown as InternalFile;
     const [statVal, statErr] = internalF.Stat();
     const info = must(statVal as unknown as FileInfo, statErr as unknown as GoError);
     const infoForConvert = info as unknown as FileInfo;
@@ -1147,36 +1151,36 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
       const internalInfo = info as unknown as InternalFileInfo;
       const fileInfoResult = makeFileInfo(infoForConvert, internalInfo.Sys(), ".");
       const rdfResult: readDirFile & ReadDirFile = {
-        __tsgoEmbedded0: f as unknown as ReadDirFile,
+        __tsgoEmbedded0: openedFile as unknown as ReadDirFile,
         fileInfo: fileInfoResult,
         Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
-        Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
-        Close: (): GoError => (f as unknown as File).Close(),
+        Read: (buffer: GoSlice<number>): [int, GoError] => openedFile.Read(buffer),
+        Close: (): GoError => openedFile.Close(),
         ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
 
     // Check if f is a ReadDirFile (has ReadDir method)
-    const internalRdf = f as unknown as Partial<InternalReadDirFile>;
+    const internalRdf = openedFile as unknown as Partial<InternalReadDirFile>;
     if (typeof internalRdf.ReadDir === "function") {
       const rdfResult: readDirFile & ReadDirFile = {
-        __tsgoEmbedded0: f as unknown as ReadDirFile,
+        __tsgoEmbedded0: openedFile as unknown as ReadDirFile,
         fileInfo: newInfo!,
         Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
-        Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
-        Close: (): GoError => (f as unknown as File).Close(),
+        Read: (buffer: GoSlice<number>): [int, GoError] => openedFile.Read(buffer),
+        Close: (): GoError => openedFile.Close(),
         ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
 
     const fileResult: file & File = {
-      __tsgoEmbedded0: f,
+      __tsgoEmbedded0: openedFile,
       fileInfo: newInfo!,
       Stat: (): [FileInfo, GoError] => file_Stat(fileResult),
-      Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
-      Close: (): GoError => (f as unknown as File).Close(),
+      Read: (buffer: GoSlice<number>): [int, GoError] => openedFile.Read(buffer),
+      Close: (): GoError => openedFile.Close(),
     };
     return [fileResult as unknown as File, undefined];
   } finally {

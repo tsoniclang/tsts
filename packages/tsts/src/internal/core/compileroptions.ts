@@ -994,7 +994,7 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
   ForEachAncestorDirectory<unknown>(baseDir, (dir: string): [unknown, bool] => {
     typeRoots.push(CombinePaths(dir, "node_modules", "@types"));
     return [undefined, false];
-  });
+  }, () => undefined);
   return [typeRoots, false];
 }
 

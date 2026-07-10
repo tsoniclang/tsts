@@ -46,8 +46,8 @@ import type { BuildInfoEmitSignature, BuildInfoFilePendingEmit, BuildInfoResolve
 import { NewBuildInfo, newBuildInfoFileInfo } from "./buildInfo.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
 import { OrderedMap_Set, newMapWithSizeHint } from "../../collections/ordered_map.js";
-import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, snapshot } from "./snapshot.js";
-import { GetFileEmitKind } from "./snapshot.js";
+import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileInfo, snapshot } from "./snapshot.js";
+import { FileEmitKindNone, GetFileEmitKind } from "./snapshot.js";
 import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
 
@@ -538,7 +538,10 @@ export function toBuildInfo_collectRootFiles(receiver: GoPtr<toBuildInfo>): void
  */
 export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuildInfo>): void {
   receiver!.buildInfo!.FileInfos = core.Map(Program_GetSourceFiles(receiver!.program), (file: GoPtr<import("../../ast/ast.js").SourceFile>) => {
-    const [info] = SyncMap_Load(receiver!.snapshot!.fileInfos as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").FileInfo>, SourceFile_Path(file));
+    const [info] = SyncMap_Load(receiver!.snapshot!.fileInfos, SourceFile_Path(file), (): GoPtr<FileInfo> => undefined);
+    if (info === undefined) {
+      throw new globalThis.Error("build-info serialization missing file info");
+    }
     const fileId = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
     if (receiver!.buildInfo!.FileNames![fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
       const libFile = Program_GetDefaultLibFile(receiver!.program, SourceFile_Path(file));
@@ -548,17 +551,19 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
     }
     if (Tristate_IsTrue(receiver!.snapshot!.options!.Composite)) {
       if (!IsJsonSourceFile(file) && Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
-        const [emitSignature, loaded] = SyncMap_Load(receiver!.snapshot!.emitSignatures as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").emitSignature>, SourceFile_Path(file));
+        const [fileEmitSignature, loaded] = SyncMap_Load(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), (): GoPtr<emitSignature> => undefined);
         if (!loaded) {
           (receiver!.buildInfo!.EmitSignatures ??= []).push({ FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
-        } else if (emitSignature!.signature !== info!.signature) {
+        } else if (fileEmitSignature === undefined) {
+          throw new globalThis.Error("incremental emit-signature cache contained nil");
+        } else if (fileEmitSignature.signature !== info.signature) {
           const incrementalEmitSignature: BuildInfoEmitSignature = { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false };
-          if (emitSignature!.signature !== "") {
-            incrementalEmitSignature.Signature = emitSignature!.signature;
-          } else if (emitSignature!.signatureWithDifferentOptions[0] === info!.signature) {
+          if (fileEmitSignature.signature !== "") {
+            incrementalEmitSignature.Signature = fileEmitSignature.signature;
+          } else if (fileEmitSignature.signatureWithDifferentOptions[0] === info.signature) {
             incrementalEmitSignature.DiffersOnlyInDtsMap = true;
           } else {
-            incrementalEmitSignature.Signature = emitSignature!.signatureWithDifferentOptions[0]!;
+            incrementalEmitSignature.Signature = fileEmitSignature.signatureWithDifferentOptions[0]!;
             incrementalEmitSignature.DiffersInOptions = true;
           }
           (receiver!.buildInfo!.EmitSignatures ??= []).push(incrementalEmitSignature);
@@ -745,7 +750,7 @@ export function toBuildInfo_setChangeFileSet(receiver: GoPtr<toBuildInfo>): void
  */
 export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>): void {
   for (const file of Program_GetSourceFiles(receiver!.program)) {
-    const [value, ok] = SyncMap_Load(receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>, SourceFile_Path(file));
+    const [value, ok] = SyncMap_Load(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), (): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> => undefined);
     if (!ok) {
       if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file))) {
         (receiver!.buildInfo!.SemanticDiagnosticsPerFile ??= []).push({ FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
@@ -773,10 +778,10 @@ export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>)
  * }
  */
 export function toBuildInfo_setEmitDiagnostics(receiver: GoPtr<toBuildInfo>): void {
-  const files = slices.Collect(SyncMap_Keys(receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>));
+  const files = slices.Collect(SyncMap_Keys(receiver!.snapshot!.emitDiagnosticsPerFile));
   slices.Sort(files);
   receiver!.buildInfo!.EmitDiagnosticsPerFile = files.length === 0 ? undefined : core.Map(files, (filePath: Path) => {
-    const [value] = SyncMap_Load(receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>, filePath);
+    const [value] = SyncMap_Load(receiver!.snapshot!.emitDiagnosticsPerFile, filePath, (): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> => undefined);
     return toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver, filePath, value);
   });
 }
@@ -811,7 +816,7 @@ export function toBuildInfo_setAffectedFilesPendingEmit(receiver: GoPtr<toBuildI
     if (file === undefined || !Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
       continue;
     }
-    const [pendingEmit] = SyncMap_Load(receiver!.snapshot!.affectedFilesPendingEmit as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").FileEmitKind>, filePath);
+    const [pendingEmit] = SyncMap_Load(receiver!.snapshot!.affectedFilesPendingEmit, filePath, (): import("./snapshot.js").FileEmitKind => FileEmitKindNone);
     (receiver!.buildInfo!.AffectedFilesPendingEmit ??= []).push({
       FileId: toBuildInfo_toFileId(receiver, filePath),
       EmitKind: core.IfElse(pendingEmit === fullEmitKind, 0, pendingEmit),

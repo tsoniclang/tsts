@@ -1,5 +1,6 @@
 import type { int, bool } from "./scalars.js";
 import { GoStructMap, NewGoStructMap } from "./compat.js";
+import type { GoPtr } from "./compat.js";
 
 // Go: package sync
 //
@@ -10,8 +11,8 @@ import { GoStructMap, NewGoStructMap } from "./compat.js";
 //   - Once.Do / OnceFunc / OnceValue / OnceValues run the function exactly once
 //     and memoize the result.
 //   - Map wraps a plain Map (matching sync.Map's (value, ok) and Range contract).
-//   - Pool calls its New factory on Get (since nothing is ever retained across
-//     goroutines, a fresh value is always valid); Put is a no-op.
+//   - Pool returns values retained by Put and calls New only when the pool is
+//     empty, preserving the reuse contract without modeling GC eviction.
 //   - WaitGroup tracks a counter; Wait returns immediately because all "goroutines"
 //     in this single-threaded port run synchronously before Wait is reached.
 //   - Cond's Wait would block forever single-threaded (no other goroutine can
@@ -68,56 +69,77 @@ export class Once {
 // OnceFunc returns a function that invokes f only once. The returned function may
 // be called concurrently in Go; here it is simply memoized.
 export function OnceFunc(f: () => void): () => void {
-  const once = new Once();
+  let result: GoPtr<{ success: true } | { panic: unknown }>;
   return (): void => {
-    once.Do(f);
+    if (result === undefined) {
+      try {
+        f();
+        result = { success: true };
+      } catch (error) {
+        result = { panic: error };
+        throw error;
+      }
+    }
+    if ("panic" in result) {
+      throw result.panic;
+    }
   };
 }
 
 // OnceValue returns a function that invokes f only once and returns the value
 // returned by f. The returned function may be called any number of times.
 export function OnceValue<T>(f: () => T): () => T {
-  let called = false;
-  let value!: T;
+  let result: GoPtr<{ value: T } | { panic: unknown }>;
   return (): T => {
-    if (!called) {
-      called = true;
-      value = f();
+    if (result === undefined) {
+      try {
+        result = { value: f() };
+      } catch (error) {
+        result = { panic: error };
+        throw error;
+      }
     }
-    return value;
+    if ("panic" in result) {
+      throw result.panic;
+    }
+    return result.value;
   };
 }
 
 // OnceValues returns a function that invokes f only once and returns the two
 // values returned by f. Modeled as a tuple return to match Go's (T1, T2).
 export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
-  let called = false;
-  let v1!: T1;
-  let v2!: T2;
+  let result: GoPtr<{ first: T1; second: T2 } | { panic: unknown }>;
   return (): [T1, T2] => {
-    if (!called) {
-      called = true;
-      const result = f();
-      v1 = result[0];
-      v2 = result[1];
+    if (result === undefined) {
+      try {
+        const values = f();
+        result = { first: values[0], second: values[1] };
+      } catch (error) {
+        result = { panic: error };
+        throw error;
+      }
     }
-    return [v1, v2];
+    if ("panic" in result) {
+      throw result.panic;
+    }
+    return [result.first, result.second];
   };
 }
 
 // Map is like a Go sync.Map: a concurrent map of any/any. Single-threaded, it is
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
-  private readonly primitive = new globalThis.Map<K, V>();
+  private readonly primitive = new globalThis.Map<K, { value: V }>();
   private readonly structured: GoStructMap<K, V> = NewGoStructMap<K, V>();
   private readonly nanNumberEntries: [K, V][] = [];
 
   // Load returns the value stored for key, and whether it was present.
-  Load(key: K): [V | undefined, bool] {
+  Load(key: K): [GoPtr<V>, bool] {
     const bucket = mapKeyBucket(key);
     if (bucket === mapKeyBucketPrimitive) {
-      const value = this.primitive.get(key);
-      return [value, value !== undefined || this.primitive.has(key)];
+      const entry = this.primitive.get(key);
+      return entry === undefined ? [undefined, false] : [entry.value, true];
     }
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
@@ -129,7 +151,7 @@ export class Map<K = unknown, V = unknown> {
   Store(key: K, value: V): void {
     const bucket = mapKeyBucket(key);
     if (bucket === mapKeyBucketPrimitive) {
-      this.primitive.set(key, value);
+      this.primitive.set(key, { value });
       return;
     }
     if (bucket === mapKeyBucketNanNumber) {
@@ -145,10 +167,10 @@ export class Map<K = unknown, V = unknown> {
     const bucket = mapKeyBucket(key);
     if (bucket === mapKeyBucketPrimitive) {
       const existing = this.primitive.get(key);
-      if (existing !== undefined || this.primitive.has(key)) {
-        return [existing as V, true];
+      if (existing !== undefined) {
+        return [existing.value, true];
       }
-      this.primitive.set(key, value);
+      this.primitive.set(key, { value });
       return [value, false];
     }
     if (bucket === mapKeyBucketNanNumber) {
@@ -159,13 +181,12 @@ export class Map<K = unknown, V = unknown> {
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
-  LoadAndDelete(key: K): [V | undefined, bool] {
+  LoadAndDelete(key: K): [GoPtr<V>, bool] {
     const bucket = mapKeyBucket(key);
     if (bucket === mapKeyBucketPrimitive) {
       const existing = this.primitive.get(key);
-      const ok = existing !== undefined || this.primitive.has(key);
       this.primitive.delete(key);
-      return [existing, ok];
+      return existing === undefined ? [undefined, false] : [existing.value, true];
     }
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
@@ -199,8 +220,8 @@ export class Map<K = unknown, V = unknown> {
     // Snapshot keys so the callback may safely Store/Delete during iteration,
     // matching sync.Map's "Range does not necessarily correspond to any
     // consistent snapshot" but allowing concurrent mutation.
-    for (const [key, value] of globalThis.Array.from(this.primitive.entries())) {
-      if (!f(key, value)) {
+    for (const [key, entry] of globalThis.Array.from(this.primitive.entries())) {
+      if (!f(key, entry.value)) {
         return;
       }
     }

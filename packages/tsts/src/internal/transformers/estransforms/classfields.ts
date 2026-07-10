@@ -21,7 +21,7 @@ import { NewArrowFunction, NewArrayLiteralExpression, NewBinaryExpression, NewBl
 import * as debug from "../../debug/debug.js";
 import type { ReferenceResolver } from "../../binder/referenceresolver.js";
 import type { Set } from "../../collections/set.js";
-import { Set_Add, Set_Delete, Set_Has } from "../../collections/set.js";
+import { Set_Add, Set_Clear, Set_Delete, Set_Has } from "../../collections/set.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { CompilerOptions_GetEmitScriptTarget, CompilerOptions_GetUseDefineForClassFields, ScriptTargetES2022, ScriptTargetESNext } from "../../core/compileroptions.js";
 import type { Declaration } from "../../ast/generated/unions.js";
@@ -30,7 +30,7 @@ import { LanguageVariantStandard } from "../../core/languagevariant.js";
 import type { TextRange } from "../../core/text.js";
 import { NewTextRange } from "../../core/text.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
-import { EmitContext_AddEmitFlags, EmitContext_AddLexicalDeclaration, EmitContext_AddVariableDeclaration, EmitContext_AssignCommentAndSourceMapRanges, EmitContext_AssignSourceMapRange, EmitContext_AssignedName, EmitContext_ClassThis, EmitContext_EmitFlags, EmitContext_EndAndMergeVariableEnvironment, EmitContext_GetNodeForGeneratedName, EmitContext_HasAutoGenerateInfo, EmitContext_IsCallToHelper, EmitContext_MostOriginal, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetCommentRange, EmitContext_SetOriginal, EmitContext_SetOriginalEx, EmitContext_SetSourceMapRange, EmitContext_SetSyntheticLeadingComments, EmitContext_SetSyntheticTrailingComments, EmitContext_SourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_TextSource, EmitContext_VisitFunctionBody, EmitContext_VisitIterationBody, EmitContext_AddEmitHelper, EmitContext_CommentRange } from "../../printer/emitcontext.js";
+import { EmitContext_AddEmitFlags, EmitContext_AddLexicalDeclaration, EmitContext_AddVariableDeclaration, EmitContext_AssignCommentAndSourceMapRanges, EmitContext_AssignSourceMapRange, EmitContext_AssignedName, EmitContext_ClassThis, EmitContext_EmitFlags, EmitContext_EndAndMergeVariableEnvironment, EmitContext_EndVariableEnvironment, EmitContext_GetNodeForGeneratedName, EmitContext_HasAutoGenerateInfo, EmitContext_IsCallToHelper, EmitContext_MostOriginal, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetCommentRange, EmitContext_SetOriginal, EmitContext_SetOriginalEx, EmitContext_SetSourceMapRange, EmitContext_SetSyntheticLeadingComments, EmitContext_SetSyntheticTrailingComments, EmitContext_SourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_TextSource, EmitContext_VisitFunctionBody, EmitContext_VisitIterationBody, EmitContext_AddEmitHelper, EmitContext_CommentRange } from "../../printer/emitcontext.js";
 import type { NodeFactory, PrivateIdentifierKind } from "../../printer/factory.js";
 import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
 import { NodeFactory_GetLocalName, NodeFactory_InlineExpressions, NodeFactory_NewAssignmentExpression, NodeFactory_NewAssignmentTargetWrapper, NodeFactory_NewClassPrivateFieldGetHelper, NodeFactory_NewClassPrivateFieldInHelper, NodeFactory_NewClassPrivateFieldSetHelper, NodeFactory_NewCommaExpression, NodeFactory_NewFunctionBindCall, NodeFactory_NewFunctionCallCall, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewGeneratedNameForNodeEx, NodeFactory_NewGeneratedPrivateNameForNodeEx, NodeFactory_NewImmediatelyInvokedArrowFunction, NodeFactory_NewMethodCall, NodeFactory_NewObjectDefinePropertyCall, NodeFactory_NewReflectGetCall, NodeFactory_NewReflectSetCall, NodeFactory_NewStringLiteralFromNode, NodeFactory_NewTempVariable, NodeFactory_NewTempVariableEx, NodeFactory_NewThisExpression, NodeFactory_NewTrueExpression, NodeFactory_NewUniqueNameEx, NodeFactory_NewVoidZeroExpression, PrivateIdentifierKindAccessor, PrivateIdentifierKindField, PrivateIdentifierKindMethod, PrivateIdentifierKindUntransformed } from "../../printer/factory.js";
@@ -187,6 +187,7 @@ export interface classLexicalEnv {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFieldsTransformer","kind":"type","status":"implemented","sigHash":"112a3f8c2cfbce0110fdf9c9eb371e7ad8b214b91870630398f947346df2bd8c","bodyHash":"529f481332038f9abf50df6ba790b8a6e3411e0f80c51b77e298091edd6e92f2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type classFieldsTransformer uses an explicit undefined-capable TypeScript representation at member 'isAnonymousClassNeedingAssignedName' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;accessorFieldResultVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;arrayAssignmentElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;assignmentTargetVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;classAliases:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>>;classElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;currentClassContainer:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ClassLikeDeclaration>;currentClassElement:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ClassElement>;currentNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;discardedValueVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;enclosingClassDeclarations:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;heritageClauseVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;inIterationStatement:packages/tsts/src/go/scalars.ts::bool;insideComputedPropertyName:packages/tsts/src/go/scalars.ts::bool;isAnonymousClassNeedingAssignedName:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool;legacyDecorators:packages/tsts/src/go/scalars.ts::bool;lexicalEnvironment:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/classfields.ts::classLexicalEnv>;modifierVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;objectAssignmentElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;parentNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;pendingExpressions:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>;pendingStatements:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>;resolver:packages/tsts/src/internal/binder/referenceresolver.ts::ReferenceResolver;shouldTransformAutoAccessors:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializers:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializersUsingDefine:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializersUsingSet:packages/tsts/src/go/scalars.ts::bool;shouldTransformPrivateElementsOrClassStaticBlocks:packages/tsts/src/go/scalars.ts::bool;shouldTransformPrivateStaticElementsInFile:packages/tsts/src/go/scalars.ts::bool;shouldTransformSuperInStaticInitializers:packages/tsts/src/go/scalars.ts::bool;shouldTransformThisInStaticInitializers:packages/tsts/src/go/scalars.ts::bool;substitutionVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;accessorFieldResultVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;arrayAssignmentElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;assignmentTargetVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;classAliases:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>>;classElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;currentClassContainer:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ClassLikeDeclaration>;currentClassElement:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ClassElement>;currentNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;discardedValueVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;enclosingClassDeclarations:packages/tsts/src/internal/collections/set.ts::Set<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;heritageClauseVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;inIterationStatement:packages/tsts/src/go/scalars.ts::bool;insideComputedPropertyName:packages/tsts/src/go/scalars.ts::bool;isAnonymousClassNeedingAssignedName:packages/tsts/src/go/compat.ts::GoPtr<(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/namedevaluation.ts::anonymousFunctionDefinition>)=>packages/tsts/src/go/scalars.ts::bool>;legacyDecorators:packages/tsts/src/go/scalars.ts::bool;lexicalEnvironment:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/classfields.ts::classLexicalEnv>;modifierVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;objectAssignmentElementVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>;parentNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;pendingExpressions:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>;pendingStatements:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>;resolver:packages/tsts/src/internal/binder/referenceresolver.ts::ReferenceResolver;shouldTransformAutoAccessors:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializers:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializersUsingDefine:packages/tsts/src/go/scalars.ts::bool;shouldTransformInitializersUsingSet:packages/tsts/src/go/scalars.ts::bool;shouldTransformPrivateElementsOrClassStaticBlocks:packages/tsts/src/go/scalars.ts::bool;shouldTransformPrivateStaticElementsInFile:packages/tsts/src/go/scalars.ts::bool;shouldTransformSuperInStaticInitializers:packages/tsts/src/go/scalars.ts::bool;shouldTransformThisInStaticInitializers:packages/tsts/src/go/scalars.ts::bool;substitutionVisitor:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>}"}
  *
  * Go source:
  * classFieldsTransformer struct {
@@ -274,7 +275,7 @@ export interface classFieldsTransformer {
   arrayAssignmentElementVisitor: GoPtr<NodeVisitor>;
   objectAssignmentElementVisitor: GoPtr<NodeVisitor>;
   substitutionVisitor: GoPtr<NodeVisitor>;
-  isAnonymousClassNeedingAssignedName: (arg0: GoPtr<anonymousFunctionDefinition>) => bool;
+  isAnonymousClassNeedingAssignedName: GoPtr<(arg0: GoPtr<anonymousFunctionDefinition>) => bool>;
 }
 
 /**
@@ -377,7 +378,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     arrayAssignmentElementVisitor: undefined,
     objectAssignmentElementVisitor: undefined,
     substitutionVisitor: undefined,
-    isAnonymousClassNeedingAssignedName: undefined!,
+    isAnonymousClassNeedingAssignedName: undefined,
   };
 
   tx.shouldTransformInitializersUsingSet = !useDefineForClassFields;
@@ -471,11 +472,11 @@ export function classFieldsTransformer_visitSourceFile(receiver: GoPtr<classFiel
   receiver!.lexicalEnvironment = undefined;
   receiver!.shouldTransformPrivateStaticElementsInFile = (EmitContext_EmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node) & EFTransformPrivateStaticElements) !== 0;
   receiver!.classAliases = new globalThis.Map();
-  receiver!.enclosingClassDeclarations.M.clear();
+  Set_Clear(receiver!.enclosingClassDeclarations);
   const visited = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
   EmitContext_AddEmitHelper(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), visited, ...EmitContext_ReadEmitHelpers(Transformer_EmitContext(receiver!.__tsgoEmbedded0!)));
   receiver!.classAliases = new globalThis.Map();
-  receiver!.enclosingClassDeclarations.M.clear();
+  Set_Clear(receiver!.enclosingClassDeclarations);
   return visited;
 }
 
@@ -1889,6 +1890,9 @@ export function classFieldsTransformer_transformAutoAccessor(receiver: GoPtr<cla
 
   // Visit the results in a second pass
   const [visited] = NodeVisitor_VisitSlice(receiver!.accessorFieldResultVisitor as ConcreteNodeVisitor, [backingField, getter, setter]);
+  if (visited === undefined) {
+    throw new globalThis.TypeError("nil visit result for non-nil input");
+  }
   return NewSyntaxList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, visited);
 }
 
@@ -2782,7 +2786,10 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
     const visitedTarget = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), target);
     const visitedThisArg = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), thisArg);
     const visitedArgs = NodeVisitor_VisitNodes((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Arguments);
-    const allArgs: GoPtr<Node>[] = [visitedThisArg as GoPtr<Node>, ...(visitedArgs ? visitedArgs.Nodes : [])];
+    const visitedArgNodes = visitedArgs?.Nodes;
+    const allArgs: GoSlice<GoPtr<Node>> = visitedArgNodes === undefined
+      ? [visitedThisArg]
+      : [visitedThisArg, ...visitedArgNodes];
     if ((node!.Flags & NodeFlagsOptionalChain) !== 0) {
       return NodeFactory_UpdateCallExpression(
         Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
@@ -2814,7 +2821,7 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
       Transformer_Factory(receiver!.__tsgoEmbedded0!),
       NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Expression),
       receiver!.lexicalEnvironment.data.classConstructor,
-      NodeVisitor_VisitNodes((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Arguments)?.Nodes ?? [],
+      NodeVisitor_VisitNodes((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Arguments)?.Nodes,
     );
     EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), invocation, node as unknown as GoPtr<Node>);
     invocation!.Loc = node!.Loc;
@@ -2971,7 +2978,11 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
 export function classFieldsTransformer_transformClassStaticBlockDeclaration(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoPtr<Expression> {
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
     if (isClassThisAssignmentBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      const statementNodes = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes;
+      if (statementNodes === undefined || statementNodes.length === 0) {
+        throw new globalThis.RangeError("index out of range");
+      }
+      const firstStatement = statementNodes[0];
       const result = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement));
       if (IsAssignmentExpression(result, true)) {
         const binary = AsBinaryExpression(result);
@@ -2983,7 +2994,11 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
     }
 
     if (isClassNamedEvaluationHelperBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      const statementNodes = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes;
+      if (statementNodes === undefined || statementNodes.length === 0) {
+        throw new globalThis.RangeError("index out of range");
+      }
+      const firstStatement = statementNodes[0];
       return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement)) as GoPtr<Expression>;
     }
 
@@ -2993,7 +3008,12 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
       node,
       AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes,
     );
-    statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), statements);
+    if (statements === undefined) {
+      const environmentStatements = EmitContext_EndVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!));
+      statements = environmentStatements.length === 0 ? undefined : environmentStatements;
+    } else {
+      statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), statements);
+    }
 
     const iife = NodeFactory_NewImmediatelyInvokedArrowFunction(Transformer_Factory(receiver!.__tsgoEmbedded0!), statements);
     const arrowFunction = SkipParentheses(AsCallExpression(iife as unknown as GoPtr<Node>)!.Expression as GoPtr<Expression>);
@@ -3012,6 +3032,7 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setCurrentClassElementAndVisitStatements","kind":"method","status":"implemented","sigHash":"785b1778adced7434fcb56eae76141dbbaa217cd5635241014f213b5b9af4a6f","bodyHash":"5ea742d99d50dcf301875fcbdaec0272cb571aa84b32db03514a50692cf4d8e1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The static-block statement slice may be nil, and VisitSlice returns that same nil slice when no nodes are visited; TypeScript carries the state as undefined through this helper.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/classfields.ts::classFieldsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/classfields.ts::classFieldsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setCurrentClassElementAndVisitStatements(classElement *ast.Node, statements []*ast.Statement) []*ast.Statement {
@@ -3022,7 +3043,7 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
  * 	return result
  * }
  */
-export function classFieldsTransformer_setCurrentClassElementAndVisitStatements(receiver: GoPtr<classFieldsTransformer>, classElement: GoPtr<Node>, statements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
+export function classFieldsTransformer_setCurrentClassElementAndVisitStatements(receiver: GoPtr<classFieldsTransformer>, classElement: GoPtr<Node>, statements: GoPtr<GoSlice<GoPtr<Statement>>>): GoPtr<GoSlice<GoPtr<Statement>>> {
   const savedCurrentClassElement = receiver!.currentClassElement;
   receiver!.currentClassElement = classElement;
   const [result] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statements);
@@ -5299,19 +5320,22 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
 
   if (constructor_ !== undefined && constructor_!.Body !== undefined) {
     const body = AsBlock(constructor_!.Body);
+    const bodyStatementNodes = body!.Statements!.Nodes;
 
     // Copy prologue
-    for (const stmt of body!.Statements!.Nodes) {
-      if (IsPrologueDirective(stmt)) {
-        statements = [...statements, stmt as unknown as GoPtr<Statement>];
-      } else {
-        break;
+    if (bodyStatementNodes !== undefined) {
+      for (const stmt of bodyStatementNodes) {
+        if (IsPrologueDirective(stmt)) {
+          statements = [...statements, stmt as unknown as GoPtr<Statement>];
+        } else {
+          break;
+        }
       }
     }
     let statementOffset = statements.length;
 
     const superPath = FindSuperStatementIndexPath(body!.Statements!.Nodes as unknown as GoSlice<GoPtr<Statement>>, statementOffset);
-    if (superPath.length > 0) {
+    if (superPath !== undefined) {
       statements = classFieldsTransformer_transformConstructorBodyWorker(receiver, statements, body!.Statements!.Nodes as unknown as GoSlice<GoPtr<Statement>>, statementOffset, superPath, 0, initializerStatements, constructor_);
     } else {
       // parameter-property assignments should occur immediately after the prologue and `super()`,
@@ -5361,8 +5385,11 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
   }
 
   let multiLine: bool;
+  const constructorStatementNodes = constructor_ !== undefined && constructor_!.Body !== undefined
+    ? AsBlock(constructor_!.Body)!.Statements!.Nodes
+    : undefined;
   if (constructor_ !== undefined && constructor_!.Body !== undefined &&
-      AsBlock(constructor_!.Body)!.Statements!.Nodes.length >= statements.length) {
+      (constructorStatementNodes === undefined ? 0 : constructorStatementNodes.length) >= statements.length) {
     multiLine = AsBlock(constructor_!.Body)!.MultiLine;
   } else {
     multiLine = statements.length > 0;

@@ -238,6 +238,9 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
   let identical = true;
   for (const base of baseTypes) {
     const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, Type_AsInterfaceType(t)!.thisType, false));
+    if (properties === undefined) {
+      continue;
+    }
     for (const prop of properties) {
       const existing = seen.get(prop!.Name);
       if (existing === undefined) {
@@ -617,10 +620,11 @@ export function Checker_checkDestructuringAssignment(receiver: GoPtr<Checker>, n
  */
 export function Checker_checkObjectLiteralAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, rightIsThis: bool): GoPtr<Type> {
   const properties = Node_PropertyList(node);
-  if (receiver!.strictNullChecks && properties!.Nodes.length === 0) {
+  const propertyNodes = properties!.Nodes ?? [];
+  if (receiver!.strictNullChecks && propertyNodes.length === 0) {
     return Checker_checkNonNullType(receiver, sourceType, node);
   }
-  for (let i = 0; i < properties!.Nodes.length; i++) {
+  for (let i = 0; i < propertyNodes.length; i++) {
     Checker_checkObjectLiteralDestructuringPropertyAssignment(receiver, node, sourceType, i, properties, rightIsThis);
   }
   return sourceType;
@@ -708,8 +712,9 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
     }
     let nonRestNames: GoSlice<GoPtr<Node>> = [];
     if (allProperties !== undefined) {
-      for (let i = 0; i < allProperties.Nodes.length; i++) {
-        const otherProperty = allProperties.Nodes[i];
+      const allPropertyNodes = allProperties.Nodes ?? [];
+      for (let i = 0; i < allPropertyNodes.length; i++) {
+        const otherProperty = allPropertyNodes[i];
         if (!IsSpreadAssignment(otherProperty)) {
           nonRestNames = [...nonRestNames, Node_Name(otherProperty)];
         }
@@ -749,13 +754,13 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
  */
 export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
   const elements = Node_Elements(node);
-  const possiblyOutOfBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, (IterationUseDestructuring | IterationUsePossiblyOutOfBounds) as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+  const possiblyOutOfBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, (IterationUseDestructuring | IterationUsePossiblyOutOfBounds) as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType, () => undefined, (left, right) => left === right);
   let inBoundsType: GoPtr<Type> = IfElse(receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue, undefined, possiblyOutOfBoundsType);
   for (let i = 0; i < elements!.length; i++) {
     let t = possiblyOutOfBoundsType;
     if (elements![i]!.Kind === KindSpreadElement) {
       if (inBoundsType === undefined) {
-        inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+        inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType, () => undefined, (left, right) => left === right);
       }
       t = inBoundsType;
     }
@@ -811,13 +816,14 @@ export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, no
  */
 export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, elementIndex: int, elementType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
   const elements = Node_ElementList(node);
-  const element = elements!.Nodes[elementIndex];
+  const elementNodes = elements!.Nodes ?? [];
+  const element = elementNodes[elementIndex];
   if (!IsOmittedExpression(element)) {
     if (!IsSpreadElement(element)) {
       const indexType = Checker_getNumberLiteralType(receiver, elementIndex);
       if (Checker_isArrayLikeType(receiver, sourceType)) {
         const accessFlags = (AccessFlagsExpressionPosition | (Checker_hasDefaultValue(receiver, element) ? AccessFlagsAllowMissing : 0)) as AccessFlags;
-        let localElementType: GoPtr<Type> = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, sourceType, indexType, accessFlags, Checker_createSyntheticExpression(receiver, element, indexType, false as bool, undefined), undefined), receiver!.errorType);
+        let localElementType: GoPtr<Type> = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, sourceType, indexType, accessFlags, Checker_createSyntheticExpression(receiver, element, indexType, false as bool, undefined), undefined), receiver!.errorType, () => undefined, (left, right) => left === right);
         let assignedType = localElementType;
         if (Checker_hasDefaultValue(receiver, element)) {
           assignedType = Checker_getTypeWithFacts(receiver, localElementType, TypeFactsNEUndefined);
@@ -827,7 +833,7 @@ export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver
       }
       return Checker_checkDestructuringAssignment(receiver, element, elementType, checkMode, false as bool);
     }
-    if (elementIndex < elements!.Nodes.length - 1) {
+    if (elementIndex < elementNodes.length - 1) {
       Checker_error(receiver, element, A_rest_element_must_be_last_in_a_destructuring_pattern, undefined);
     } else {
       const restExpression = Node_Expression(element);
@@ -1377,7 +1383,7 @@ export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<
       let keyProperty: GoPtr<Symbol>;
       let keyPropertyType: GoPtr<Type>;
       if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsInstantiableNonPrimitive)) !== 0) {
-        keyProperty = Checker_getPropertiesOfType(receiver, source).find((p) => isUnitType(Checker_getTypeOfSymbol(receiver, p)));
+        keyProperty = Checker_getPropertiesOfType(receiver, source)?.find((p) => isUnitType(Checker_getTypeOfSymbol(receiver, p)));
       }
       if (keyProperty !== undefined) {
         keyPropertyType = Checker_getRegularTypeOfLiteralType(receiver, Checker_getTypeOfSymbol(receiver, keyProperty));
@@ -1723,10 +1729,13 @@ export function Checker_getSingleBaseForNonAugmentingSubtype(receiver: GoPtr<Che
   if (typeParameters.length === 0) {
     instantiatedBase = bases[0];
   } else {
+    if (typeArguments === undefined) {
+      throw new Error("generic base instantiation requires type arguments");
+    }
     instantiatedBase = Checker_instantiateType(receiver, bases[0], newTypeMapper(typeParameters, typeArguments.slice(0, typeParameters.length)));
   }
-  if (typeArguments.length > typeParameters.length) {
-    instantiatedBase = Checker_getTypeWithThisArgument(receiver, instantiatedBase, LastOrNil(typeArguments), false);
+  if (typeArguments !== undefined && typeArguments.length > typeParameters.length) {
+    instantiatedBase = Checker_getTypeWithThisArgument(receiver, instantiatedBase, LastOrNil(typeArguments, () => undefined), false);
   }
   receiver!.cachedTypes.set(key, instantiatedBase);
   return instantiatedBase;

@@ -139,11 +139,13 @@ export function affectedFilesHandler_getDtsMayChange(receiver: GoPtr<affectedFil
 export function affectedFilesHandler_isChangedSignature(receiver: GoPtr<affectedFilesHandler>, path: Path): bool {
   const [newSignature] = SyncMap_Load<Path, GoPtr<updatedSignature>>(
     receiver!.updatedSignatures as SyncMap<Path, GoPtr<updatedSignature>>,
-    path
+    path,
+    (): GoPtr<updatedSignature> => undefined,
   );
   const [oldInfo] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    path
+    path,
+    (): GoPtr<FileInfo> => undefined,
   );
   return (newSignature!.signature !== oldInfo!.signature) as bool;
 }
@@ -270,7 +272,8 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
 
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    SourceFile_Path(file)
+    SourceFile_Path(file),
+    (): GoPtr<FileInfo> => undefined,
   );
   const prevSignature = info!.signature;
   if (!file!.IsDeclarationFile && !useFileVersionAsSignature) {
@@ -286,6 +289,7 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.getFilesAffectedBy","kind":"method","status":"implemented","sigHash":"63550bf101d9f5bd623f821ada8a72c7b04277d056c6c0be1f582c23b8f95431","bodyHash":"cfe51ec4211f2cec1da72f64de9ac262b8bd5cbbf128b0bafc4a9f95d812f58f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getFilesAffectedBy explicitly returns a nil Go slice when the requested source file is absent and forwards Filter's nil-preserving result; GoPtr preserves those states.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/affectedfileshandler.ts::affectedFilesHandler>,packages/tsts/src/internal/tspath/path.ts::Path)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/affectedfileshandler.ts::affectedFilesHandler>,packages/tsts/src/internal/tspath/path.ts::Path)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>>>"}
  *
  * Go source:
  * func (h *affectedFilesHandler) getFilesAffectedBy(path tspath.Path) []*ast.SourceFile {
@@ -326,10 +330,10 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
  * 	})
  * }
  */
-export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affectedFilesHandler>, path: Path): GoSlice<GoPtr<SourceFile>> {
+export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affectedFilesHandler>, path: Path): GoPtr<GoSlice<GoPtr<SourceFile>>> {
   const file = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
   if (file === undefined) {
-    return [];
+    return undefined;
   }
 
   if (!affectedFilesHandler_updateShapeSignature(receiver, file, false as bool)) {
@@ -338,7 +342,8 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
 
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    SourceFile_Path(file)
+    SourceFile_Path(file),
+    (): GoPtr<FileInfo> => undefined,
   );
   if (info!.affectsGlobalScope) {
     receiver!.hasAllFilesExcludingDefaultLibraryFile.Store(true as bool);
@@ -704,7 +709,8 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
 export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: GoPtr<affectedFilesHandler>, dtsMayChange: dtsMayChange, filePath: Path, invalidateJsFiles: bool): bool {
   const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    filePath
+    filePath,
+    (): GoPtr<FileInfo> => undefined,
   );
   if (!ok || !info!.affectsGlobalScope) {
     return false as bool;
@@ -803,7 +809,8 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
     (filePath: Path, update: GoPtr<updatedSignature>): bool => {
       const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
         receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-        filePath
+        filePath,
+        (): GoPtr<FileInfo> => undefined,
       );
       if (ok) {
         info!.signature = update!.signature;
@@ -900,7 +907,7 @@ export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): 
     program!.snapshot!.changedFilesSet as SyncSet<Path>,
     (file: Path): bool => {
       wg.Queue((): void => {
-        for (const affectedFile of affectedFilesHandler_getFilesAffectedBy(handler, file)) {
+        for (const affectedFile of affectedFilesHandler_getFilesAffectedBy(handler, file) ?? []) {
           SyncSet_Add<GoPtr<SourceFile>>(result, affectedFile);
         }
       });

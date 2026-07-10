@@ -22,5 +22,6 @@ test("Chtimes writes the supplied Time instants", (context) => {
 
   const [fileInfo, statError] = Stat(file);
   assert.equal(statError, undefined);
+  assert.ok(fileInfo !== undefined);
   assert.equal(fileInfo.ModTime().Equal(modificationTime), true);
 });

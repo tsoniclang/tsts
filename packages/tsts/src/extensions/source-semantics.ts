@@ -998,7 +998,7 @@ function isImportBindingShadowed(node: GoPtr<Node>, localName: string): boolean 
   let current = node.Parent;
   while (current !== undefined) {
     if (IsFunctionLike(current)) {
-      if (declarationListContainsName(Node_Parameters(current), localName) || declarationListContainsName(Node_TypeParameters(current) ?? [], localName)) {
+      if (declarationListContainsName(Node_Parameters(current) ?? [], localName) || declarationListContainsName(Node_TypeParameters(current) ?? [], localName)) {
         return true;
       }
     }

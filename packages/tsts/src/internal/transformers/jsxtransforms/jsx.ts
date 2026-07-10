@@ -58,6 +58,7 @@ const byteSlice = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12","bodyHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type JSXTransformer uses an explicit undefined-capable TypeScript representation at member 'utilizedImplicitRuntimeImports' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;currentSourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;emitResolver:packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver;filenameDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;importSpecifier:string;inJsxChild:packages/tsts/src/go/scalars.ts::bool;utilizedImplicitRuntimeImports:packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;compilerOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/compileroptions.ts::CompilerOptions>;currentSourceFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;emitResolver:packages/tsts/src/internal/printer/emitresolver.ts::EmitResolver;filenameDeclaration:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;importSpecifier:string;inJsxChild:packages/tsts/src/go/scalars.ts::bool;utilizedImplicitRuntimeImports:packages/tsts/src/internal/collections/ordered_map.ts::OrderedMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>}"}
  *
  * Go source:
  * JSXTransformer struct {
@@ -79,7 +80,7 @@ export interface JSXTransformer {
   emitResolver: EmitResolver;
   importSpecifier: string;
   filenameDeclaration: GoPtr<Node>;
-  utilizedImplicitRuntimeImports: OrderedMap<string, GoMap<string, GoPtr<Node>>>;
+  utilizedImplicitRuntimeImports: OrderedMap<string, GoPtr<GoMap<string, GoPtr<Node>>>>;
   inJsxChild: bool;
   currentSourceFile: GoPtr<SourceFile>;
 }
@@ -107,7 +108,7 @@ export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transfor
     emitResolver: opts!.EmitResolver,
     importSpecifier: "",
     filenameDeclaration: undefined,
-    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() },
+    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: undefined, mp: undefined },
     inJsxChild: false,
     currentSourceFile: undefined,
   };
@@ -239,14 +240,18 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
   if (name !== "createElement") {
     importSource = GetJSXRuntimeImport(importSource, receiver!.compilerOptions);
   }
-  const [existing, ok] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
+  let [existing, ok] = OrderedMap_Get(receiver!.utilizedImplicitRuntimeImports, importSource, (): GoPtr<GoMap<string, GoPtr<Node>>> => undefined);
   if (ok) {
-    const elem = existing!.get(name);
+    if (existing === undefined) {
+      throw new globalThis.Error("JSX implicit runtime import cache contained a nil map");
+    }
+    const elem = existing.get(name);
     if (elem !== undefined) {
       return AsImportSpecifier(elem)!.name;
     }
   } else {
-    OrderedMap_Set<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource, new globalThis.Map<string, GoPtr<Node>>());
+    existing = new globalThis.Map<string, GoPtr<Node>>();
+    OrderedMap_Set(receiver!.utilizedImplicitRuntimeImports, importSource, existing);
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
@@ -257,8 +262,10 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
   });
   const specifier = NewImportSpecifier(astFactory, false, NewIdentifier(astFactory, name), generatedName);
   receiver!.emitResolver.SetReferencedImportDeclaration(generatedName, specifier);
-  const [existingMap] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
-  existingMap!.set(name, specifier);
+  if (existing === undefined) {
+    throw new globalThis.Error("JSX implicit runtime import cache was not initialized");
+  }
+  existing.set(name, specifier);
   return AsImportSpecifier(specifier)!.name;
 }
 
@@ -578,7 +585,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
   receiver!.currentSourceFile = file;
   receiver!.importSpecifier = GetJSXImplicitImportBase(receiver!.compilerOptions, file);
   receiver!.filenameDeclaration = undefined;
-  OrderedMap_Clear<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>);
+  OrderedMap_Clear(receiver!.utilizedImplicitRuntimeImports);
 
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
@@ -604,11 +611,14 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
     statementsUpdated = true;
   }
 
-  if (OrderedMap_Size<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>) > 0) {
+  if (OrderedMap_Size(receiver!.utilizedImplicitRuntimeImports) > 0) {
     if (IsExternalModule(file)) {
       statementsUpdated = true;
       const newStatements: GoSlice<GoPtr<Node>> = [];
-      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+      OrderedMap_Entries(receiver!.utilizedImplicitRuntimeImports)((importSource, importSpecifiersMap) => {
+        if (importSpecifiersMap === undefined) {
+          throw new globalThis.Error("JSX implicit runtime import cache contained a nil map");
+        }
         const s = NewImportDeclaration(
           astFactory,
           undefined,
@@ -626,7 +636,10 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
     } else if (IsExternalOrCommonJSModule(file)) {
       statementsUpdated = true;
       const newStatements: GoSlice<GoPtr<Node>> = [];
-      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+      OrderedMap_Entries(receiver!.utilizedImplicitRuntimeImports)((importSource, importSpecifiersMap) => {
+        if (importSpecifiersMap === undefined) {
+          throw new globalThis.Error("JSX implicit runtime import cache contained a nil map");
+        }
         const sorted = getSortedSpecifiers(importSpecifiersMap);
         const asBindingElems: GoSlice<GoPtr<Node>> = [];
         for (const elem of sorted) {
@@ -675,7 +688,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
   receiver!.currentSourceFile = undefined;
   receiver!.importSpecifier = "";
   receiver!.filenameDeclaration = undefined;
-  OrderedMap_Clear<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>);
+  OrderedMap_Clear(receiver!.utilizedImplicitRuntimeImports);
 
   return visited;
 }
@@ -947,7 +960,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
   const astFactory = factory!.__tsgoEmbedded0;
   const tagName = JSXTransformer_getTagName(receiver, element);
   let childrenProp: GoPtr<Node> = undefined;
-  if (children !== undefined && children!.Nodes.length > 0) {
+  if (children !== undefined && children.Nodes !== undefined && children.Nodes.length > 0) {
     childrenProp = JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver, children!.Nodes as GoSlice<GoPtr<JsxChild>>);
   }
   let keyAttr: GoPtr<Node> = undefined;
@@ -1149,7 +1162,9 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
   for (const attr of attrs) {
     if (attr!.Kind === KindJsxSpreadAttribute) {
       const res = JSXTransformer_transformJsxSpreadAttributesToProps(receiver, AsJsxSpreadAttribute(attr));
-      props.push(...res);
+      if (res !== undefined) {
+        props.push(...res);
+      }
     } else {
       props.push(JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver, AsJsxAttribute(attr)));
     }
@@ -1174,9 +1189,11 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
  * }
  */
 export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
-  for (const p of obj!.Properties!.Nodes) {
-    if (IsPropertyAssignment(p) && (IsStringLiteral(Node_Name(p)) || IsIdentifier(Node_Name(p))) && Node_Text(Node_Name(p)) === "__proto__") {
-      return true;
+  if (obj!.Properties!.Nodes !== undefined) {
+    for (const p of obj!.Properties!.Nodes) {
+      if (IsPropertyAssignment(p) && (IsStringLiteral(Node_Name(p)) || IsIdentifier(Node_Name(p))) && Node_Text(Node_Name(p)) === "__proto__") {
+        return true;
+      }
     }
   }
   return false;
@@ -1184,6 +1201,7 @@ export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps","kind":"method","status":"implemented","sigHash":"d18800099aa396872b1797984584d6102eef25d9f9c431ab09974a7641256fa5","bodyHash":"c649130bc66ab2a46c97fe5bd8717b11456f94d3851cdb275204b4df47da2cd5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Visiting a spread object with a nil property slice returns the same nil Go slice; TypeScript preserves that result as undefined and callers append it as zero elements.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/jsxtransforms/jsx.ts::JSXTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::JsxSpreadAttribute>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/jsxtransforms/jsx.ts::JSXTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::JsxSpreadAttribute>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxSpreadAttributesToProps(node *ast.JsxSpreadAttribute) []*ast.Node {
@@ -1194,11 +1212,11 @@ export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
  * 	return []*ast.Node{tx.Factory().NewSpreadAssignment(tx.Visitor().Visit(node.Expression))}
  * }
  */
-export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoPtr<JSXTransformer>, node: GoPtr<JsxSpreadAttribute>): GoSlice<GoPtr<Node>> {
+export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoPtr<JSXTransformer>, node: GoPtr<JsxSpreadAttribute>): GoPtr<GoSlice<GoPtr<Node>>> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   if (IsObjectLiteralExpression(node!.Expression) && !hasProto(AsObjectLiteralExpression(node!.Expression))) {
-    const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression) ?? []);
+    const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression));
     return res;
   }
   return [NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node!.Expression))];
@@ -1466,7 +1484,7 @@ export function JSXTransformer_visitJsxOpeningFragmentJSX(receiver: GoPtr<JSXTra
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   let childrenProps: GoPtr<Expression> = undefined;
-  if (children !== undefined && children!.Nodes.length > 0) {
+  if (children !== undefined && children.Nodes !== undefined && children.Nodes.length > 0) {
     const result = JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver, children!.Nodes as GoSlice<GoPtr<JsxChild>>);
     if (result !== undefined) {
       childrenProps = result as unknown as GoPtr<Expression>;
@@ -1703,8 +1721,8 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
   }
 
   const newChildren: GoSlice<GoPtr<Node>> = [];
-  if (children !== undefined && children!.Nodes.length > 0) {
-    for (const c of children!.Nodes) {
+  if (children !== undefined && children.Nodes !== undefined && children.Nodes.length > 0) {
+    for (const c of children.Nodes) {
       const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
       if (res !== undefined) {
         newChildren.push(res);
@@ -1793,8 +1811,8 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
   const callee = JSXTransformer_createJsxFactoryExpression(receiver, fragment as unknown as GoPtr<Node>);
 
   const newChildren: GoSlice<GoPtr<Node>> = [];
-  if (children !== undefined && children!.Nodes.length > 0) {
-    for (const c of children!.Nodes) {
+  if (children !== undefined && children.Nodes !== undefined && children.Nodes.length > 0) {
+    for (const c of children.Nodes) {
       const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
       if (res !== undefined) {
         newChildren.push(res);

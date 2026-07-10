@@ -559,10 +559,20 @@ export function ConvertBindingPatternToAssignmentPattern(emitContext: GoPtr<Emit
 export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPtr<EmitContext>, element: GoPtr<BindingPattern>): GoPtr<Expression> {
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
-  const properties: GoSlice<GoPtr<ObjectLiteralElement>> = element!.Elements!.Nodes.map(
-    (n: GoPtr<Node>): GoPtr<ObjectLiteralElement> => convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(n))
-  );
-  const propertyList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, properties as GoSlice<GoPtr<Node>>);
+  let properties: GoPtr<GoSlice<GoPtr<ObjectLiteralElement>>>;
+  if (element!.Elements!.Nodes !== undefined) {
+    for (const node of element!.Elements!.Nodes) {
+      const property = convertBindingElementToObjectAssignmentElement(emitContext, AsBindingElement(node));
+      if (properties === undefined) {
+        properties = [property];
+      } else {
+        properties.push(property);
+      }
+    }
+  }
+  const propertyList: GoPtr<NodeList> = properties === undefined
+    ? NodeFactory_NewNodeList(af, undefined)
+    : NodeFactory_NewNodeList(af, properties as GoSlice<GoPtr<Node>>);
   propertyList!.Loc = element!.Elements!.Loc;
   const object = NewObjectLiteralExpression(af, propertyList, false);
   EmitContext_SetOriginal(emitContext, object, elementNode);
@@ -590,10 +600,20 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPt
 export function convertBindingElementToArrayAssignmentPattern(emitContext: GoPtr<EmitContext>, element: GoPtr<BindingPattern>): GoPtr<Expression> {
   const af = emitContext!.Factory!.__tsgoEmbedded0!;
   const elementNode = element as unknown as GoPtr<Node>;
-  const elements: GoSlice<GoPtr<Expression>> = element!.Elements!.Nodes.map(
-    (n: GoPtr<Node>): GoPtr<Expression> => convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(n))
-  );
-  const elementList: GoPtr<NodeList> = NodeFactory_NewNodeList(af, elements as GoSlice<GoPtr<Node>>);
+  let elements: GoPtr<GoSlice<GoPtr<Expression>>>;
+  if (element!.Elements!.Nodes !== undefined) {
+    for (const node of element!.Elements!.Nodes) {
+      const expression = convertBindingElementToArrayAssignmentElement(emitContext, AsBindingElement(node));
+      if (elements === undefined) {
+        elements = [expression];
+      } else {
+        elements.push(expression);
+      }
+    }
+  }
+  const elementList: GoPtr<NodeList> = elements === undefined
+    ? NodeFactory_NewNodeList(af, undefined)
+    : NodeFactory_NewNodeList(af, elements as GoSlice<GoPtr<Node>>);
   elementList!.Loc = element!.Elements!.Loc;
   const object = NewArrayLiteralExpression(af, elementList, false);
   EmitContext_SetOriginal(emitContext, object, elementNode);
@@ -743,6 +763,7 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"06a1a964ffba2254943ddd89593d332359c5daba36cd696e67af086050c8f98a","bodyHash":"52d08eedf70f43de9ec227529fb74d1b29765de19c08a616b60e18fff2e42649"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func FindSuperStatementIndexPath uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
  *
  * Go source:
  * func FindSuperStatementIndexPath(statements []*ast.Statement, start int) []int {
@@ -751,14 +772,17 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
  * 	return indices
  * }
  */
-export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoSlice<int> {
-  const indices = findSuperStatementIndexPathWorker(statements, start, []);
-  Reverse(indices);
-  return indices ?? [];
+export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoPtr<GoSlice<int>> {
+  const indices = findSuperStatementIndexPathWorker(statements, start, undefined);
+  if (indices !== undefined) {
+    Reverse(indices);
+  }
+  return indices;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::findSuperStatementIndexPathWorker","kind":"func","status":"implemented","sigHash":"1e6e07707b338822ea858ad0162a92f59155b8854f0f27786ee83fd02282dbac","bodyHash":"5d3c0b9647cb9064c7c2a1df75adf4b18d0c2791e5c0e2d52d85711cc1077e4d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func findSuperStatementIndexPathWorker uses an explicit undefined-capable TypeScript representation at parameter #2, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
  *
  * Go source:
  * func findSuperStatementIndexPathWorker(statements []*ast.Statement, start int, indices []int) []int {
@@ -775,11 +799,11 @@ export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>
  * 	return nil
  * }
  */
-export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Statement>>, start: int, indices: GoSlice<int>): GoSlice<int> {
+export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Statement>>, start: int, indices: GoPtr<GoSlice<int>>): GoPtr<GoSlice<int>> {
   for (let i = start; i < statements.length; i++) {
     const statement = statements[i];
     if (GetSuperCallFromStatement(statement) !== undefined) {
-      return [...indices, i];
+      return indices === undefined ? [i] : [...indices, i];
     } else if (IsTryStatement(statement as unknown as GoPtr<Node>)) {
       const tryStmt = AsTryStatement(statement as unknown as GoPtr<Node>);
       const tryBlockStmts = Node_Statements(tryStmt!.TryBlock);
@@ -791,7 +815,7 @@ export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Stat
       }
     }
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -846,7 +870,10 @@ export function MoveRangePastModifiers(node: GoPtr<Node>): TextRange {
   }
   let lastModifier: GoPtr<Node> = undefined;
   if (CanHaveModifiers(node)) {
-    lastModifier = LastOrNil(Node_ModifierNodes(node) ?? []);
+    const modifiers = Node_ModifierNodes(node);
+    if (modifiers !== undefined) {
+      lastModifier = LastOrNil(modifiers, (): GoPtr<Node> => undefined);
+    }
   }
   if (lastModifier !== undefined && !PositionIsSynthesized(Node_End(lastModifier))) {
     return NewTextRange(Node_End(lastModifier), Node_End(node));

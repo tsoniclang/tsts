@@ -1,6 +1,7 @@
 import { posix as path } from "node:path";
 
-import type { GoError, GoSlice } from "../compat.js";
+import type { GoError, GoPtr, GoSlice } from "../compat.js";
+import { GoRequireNonNilAfterSuccess } from "../compat.js";
 import { EOF } from "../io.js";
 import type { DirEntry, File, FileInfo, FileMode, FS, ReadDirFile } from "../io/fs.js";
 import {
@@ -42,27 +43,27 @@ interface MapFileInfo extends FileInfo, DirEntry {
 
 export function MapFS_as_FS(map: MapFS): FS {
   const base: FS = {
-    Open: (name: string): [File, GoError] => Open(map, name),
+    Open: (name: string): [GoPtr<File>, GoError] => Open(map, name),
     ReadLink: (name: string): [string, GoError] => ReadLink(map, name),
-    Lstat: (name: string): [FileInfo, GoError] => Lstat(map, name),
+    Lstat: (name: string): [GoPtr<FileInfo>, GoError] => Lstat(map, name),
   };
   return {
     ...base,
     ReadFile: (name: string): [Uint8Array, GoError] => fs_ReadFileBytes(base, name),
     ReadDir: (name: string): [GoSlice<DirEntry>, GoError] => fs_ReadDir(base, name),
-    Stat: (name: string): [FileInfo, GoError] => fs_Stat(base, name),
-    Sub: (dir: string): [FS, GoError] => fs_Sub(base, dir),
+    Stat: (name: string): [GoPtr<FileInfo>, GoError] => fs_Stat(base, name),
+    Sub: (dir: string): [GoPtr<FS>, GoError] => fs_Sub(base, dir),
   };
 }
 
-export function Open(map: MapFS, name: string): [File, GoError] {
+export function Open(map: MapFS, name: string): [GoPtr<File>, GoError] {
   if (!ValidPath(name)) {
-    return [undefined as unknown as File, new PathError("open", name, ErrNotExist)];
+    return [undefined, new PathError("open", name, ErrNotExist)];
   }
 
   const [realName, resolved] = resolveSymlinks(map, name);
   if (!resolved) {
-    return [undefined as unknown as File, new PathError("open", name, ErrNotExist)];
+    return [undefined, new PathError("open", name, ErrNotExist)];
   }
 
   let file = map.get(realName);
@@ -98,7 +99,7 @@ export function Open(map: MapFS, name: string): [File, GoError] {
       }
     }
     if (file === undefined && entries.length === 0 && needed.size === 0) {
-      return [undefined as unknown as File, new PathError("open", name, ErrNotExist)];
+      return [undefined, new PathError("open", name, ErrNotExist)];
     }
   }
 
@@ -119,17 +120,18 @@ export function ReadLink(map: MapFS, name: string): [string, GoError] {
   if (err !== undefined) {
     return ["", new PathError("readlink", name, err)];
   }
-  if (FileMode_Type(info.Mode()) !== ModeSymlink) {
+  const fileInfo = GoRequireNonNilAfterSuccess(info, "fstest.lstat");
+  if (FileMode_Type(fileInfo.Mode()) !== ModeSymlink) {
     return ["", new PathError("readlink", name, ErrInvalid)];
   }
   return [dataAsString(map.get(resolveLstatName(map, name))!), undefined];
 }
 
-export function Lstat(map: MapFS, name: string): [FileInfo, GoError] {
+export function Lstat(map: MapFS, name: string): [GoPtr<FileInfo>, GoError] {
   const [info, err] = lstat(map, name);
   return err === undefined
     ? [info, undefined]
-    : [undefined as unknown as FileInfo, new PathError("lstat", name, err)];
+    : [undefined, new PathError("lstat", name, err)];
 }
 
 export function TestFS(fsys: FS, ...expected: GoSlice<string>): GoError {
@@ -149,7 +151,8 @@ export function TestFS(fsys: FS, ...expected: GoSlice<string>): GoError {
     if (subErr !== undefined) {
       return subErr;
     }
-    const nestedErr = testFS(sub, subExpected);
+    const subFS = GoRequireNonNilAfterSuccess(sub, "fs.Sub");
+    const nestedErr = testFS(subFS, subExpected);
     if (nestedErr !== undefined) {
       return new contextualError(`testing fs.Sub(fsys, ${dir}): ${nestedErr.message}`, nestedErr);
     }
@@ -199,12 +202,13 @@ class fsTester {
       this.error(`${dir}: Open: ${err.message}`, err);
       return undefined;
     }
-    if (!isReadDirFile(file)) {
-      file.Close();
+    const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
+    if (!isReadDirFile(openedFile)) {
+      openedFile.Close();
       this.error(`${dir}: Open returned File, not a fs.ReadDirFile`);
       return undefined;
     }
-    return file;
+    return openedFile;
   }
 
   checkDir(dir: string): void {
@@ -317,14 +321,16 @@ class fsTester {
       this.error(`${filePath}: Open: ${openErr.message}`, openErr);
       return;
     }
-    const [info, statErr] = file.Stat();
-    file.Close();
+    const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
+    const [info, statErr] = openedFile.Stat();
+    openedFile.Close();
     if (statErr !== undefined) {
       this.error(`${filePath}: Stat: ${statErr.message}`, statErr);
       return;
     }
+    const fileInfo = GoRequireNonNilAfterSuccess(info, "File.Stat");
 
-    if ((entry.Type() & ModeSymlink) === 0 && formatEntry(entry) !== formatInfoEntry(info)) {
+    if ((entry.Type() & ModeSymlink) === 0 && formatEntry(entry) !== formatInfoEntry(fileInfo)) {
       this.error(`${filePath}: directory entry does not match file.Stat()`);
     }
     const [entryInfo, entryErr] = entry.Info();
@@ -332,27 +338,34 @@ class fsTester {
       this.error(`${filePath}: entry.Info: ${entryErr.message}`, entryErr);
       return;
     }
+    const directoryEntryInfo = GoRequireNonNilAfterSuccess(entryInfo, "DirEntry.Info");
     if ((entry.Type() & ModeSymlink) !== 0) {
-      if (formatEntry(entry) !== formatInfoEntry(entryInfo)) {
+      if (formatEntry(entry) !== formatInfoEntry(directoryEntryInfo)) {
         this.error(`${filePath}: symlink entry does not match entry.Info()`);
       }
-    } else if (!sameFileInfo(entryInfo, info)) {
+    } else if (!sameFileInfo(directoryEntryInfo, fileInfo)) {
       this.error(`${filePath}: entry.Info() does not match file.Stat()`);
     }
 
     const [helperInfo, helperErr] = fs_Stat(this.fsys, filePath);
     if (helperErr !== undefined) {
       this.error(`${filePath}: fs.Stat: ${helperErr.message}`, helperErr);
-    } else if (!sameFileInfo(helperInfo, info)) {
-      this.error(`${filePath}: fs.Stat() does not match file.Stat()`);
+    } else {
+      const statInfo = GoRequireNonNilAfterSuccess(helperInfo, "fs.Stat");
+      if (!sameFileInfo(statInfo, fileInfo)) {
+        this.error(`${filePath}: fs.Stat() does not match file.Stat()`);
+      }
     }
 
     if (typeof this.fsys.Lstat === "function") {
       const [lstatInfo, lstatErr] = fs_Lstat(this.fsys, filePath);
       if (lstatErr !== undefined) {
         this.error(`${filePath}: fsys.Lstat: ${lstatErr.message}`, lstatErr);
-      } else if (!sameFileInfo(lstatInfo, entryInfo)) {
-        this.error(`${filePath}: fsys.Lstat() does not match entry.Info()`);
+      } else {
+        const linkInfo = GoRequireNonNilAfterSuccess(lstatInfo, "fs.Lstat");
+        if (!sameFileInfo(linkInfo, directoryEntryInfo)) {
+          this.error(`${filePath}: fsys.Lstat() does not match entry.Info()`);
+        }
       }
     }
   }
@@ -364,17 +377,18 @@ class fsTester {
       this.error(`${filePath}: Open: ${openErr.message}`, openErr);
       return;
     }
-    const [data, readErr] = readAll(file);
+    const openedFile = GoRequireNonNilAfterSuccess(file, "fs.Open");
+    const [data, readErr] = readAll(openedFile);
     if (readErr !== undefined) {
-      file.Close();
+      openedFile.Close();
       this.error(`${filePath}: Open+ReadAll: ${readErr.message}`, readErr);
       return;
     }
-    const closeErr = file.Close();
+    const closeErr = openedFile.Close();
     if (closeErr !== undefined) {
       this.error(`${filePath}: Close: ${closeErr.message}`, closeErr);
     }
-    file.Close();
+    openedFile.Close();
 
     if (typeof this.fsys.ReadFile === "function") {
       const [direct, directErr] = this.fsys.ReadFile(filePath);
@@ -407,7 +421,7 @@ class fsTester {
     this.checkBadPath(filePath, "Open", (name) => {
       const [file, err] = this.fsys.Open(name);
       if (err === undefined) {
-        file.Close();
+        GoRequireNonNilAfterSuccess(file, "fs.Open").Close();
       }
       return err;
     });
@@ -497,13 +511,13 @@ function resolveLstatName(map: MapFS, name: string): string {
   return path.join(realDirectory, path.basename(name));
 }
 
-function lstat(map: MapFS, name: string): [MapFileInfo, GoError] {
+function lstat(map: MapFS, name: string): [GoPtr<MapFileInfo>, GoError] {
   if (!ValidPath(name)) {
-    return [undefined as unknown as MapFileInfo, ErrNotExist];
+    return [undefined, ErrNotExist];
   }
   const [realDirectory, resolved] = resolveSymlinks(map, path.dirname(name));
   if (!resolved) {
-    return [undefined as unknown as MapFileInfo, ErrNotExist];
+    return [undefined, ErrNotExist];
   }
   const element = path.basename(name);
   const realName = path.join(realDirectory, element);
@@ -520,7 +534,7 @@ function lstat(map: MapFS, name: string): [MapFileInfo, GoError] {
       return [mapFileInfo(element, { Mode: (ModeDir | 0o555) >>> 0 }), undefined];
     }
   }
-  return [undefined as unknown as MapFileInfo, ErrNotExist];
+  return [undefined, ErrNotExist];
 }
 
 function mapFileInfo(name: string, file: MapFile): MapFileInfo {
@@ -631,7 +645,7 @@ function dataAsString(file: MapFile): string {
 }
 
 function isReadDirFile(file: File): file is ReadDirFile {
-  return typeof (file as Partial<ReadDirFile>).ReadDir === "function";
+  return "ReadDir" in file && typeof file.ReadDir === "function";
 }
 
 function readAll(file: File): [Uint8Array, GoError] {

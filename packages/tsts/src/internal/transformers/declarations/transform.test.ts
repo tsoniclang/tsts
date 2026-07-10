@@ -61,7 +61,7 @@ function emitDeclaration(files: Readonly<Record<string, string>>, compilerOption
   const result = Program_Emit(program, Background(), emitOptions);
   assert.ok(result !== undefined);
   assert.equal(result.EmitSkipped, false);
-  assert.deepEqual(result.Diagnostics, []);
+  assert.equal(result.Diagnostics, undefined);
 
   const declarations = [...outputs.entries()].filter(([fileName]) => fileName.endsWith(".d.ts"));
   assert.equal(declarations.length, 1);

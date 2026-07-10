@@ -43,13 +43,14 @@ export const UnlimitedDepth: int = MaxInt;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::ReadDirectory","kind":"func","status":"implemented","sigHash":"d4e3e6106bc8f65e288e603282ad88d4ff63bd888990ec2d2e1136aa420b27e0","bodyHash":"4c8d9a4776bfded31a67d3ea6a7bf82c5e229d06d2efab36d4768b2a7479725f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Extension, exclude, and include filters are independently allowed to be nil Go slices; GoPtr preserves those absent-filter states through file matching.","goSignature":"func(packages/tsts/src/internal/vfs/vfs.ts::FS,string,string,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/compat.ts::GoSlice<string>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/internal/vfs/vfs.ts::FS,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<string>"}
  *
  * Go source:
  * func ReadDirectory(host vfs.FS, currentDir string, path string, extensions []string, excludes []string, includes []string, depth int) []string {
  * 	return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host)
  * }
  */
-export function ReadDirectory(host: FS, currentDir: string, path: string, extensions: GoSlice<string>, excludes: GoSlice<string>, includes: GoSlice<string>, depth: int): GoSlice<string> {
+export function ReadDirectory(host: FS, currentDir: string, path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, depth: int): GoSlice<string> {
   return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host);
 }
 
@@ -325,7 +326,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   const parts = GetNormalizedPathComponents(spec, basePath);
 
   // "src/**" without a filename matches nothing (for include patterns)
-  if (usage !== UsageExclude && LastOrNil(parts) === "**") {
+  if (usage !== UsageExclude && LastOrNil(parts, () => "") === "**") {
     return [{ components: [], isExclude: false, caseSensitive: false, excludeMinJs: false }, false];
   }
 
@@ -333,7 +334,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
   parts[0] = RemoveTrailingDirectorySeparator(parts[0]!);
 
   // Directories implicitly match all files: "src" -> "src/** /*"
-  if (IsImplicitGlob(LastOrNil(parts))) {
+  if (IsImplicitGlob(LastOrNil(parts, () => ""))) {
     parts.push("**", "*");
   }
 

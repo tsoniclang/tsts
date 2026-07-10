@@ -865,17 +865,23 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
       // Map<string, number | string>
       // Group synonyms: es6/es2015
       const enumMap = CommandLineOption_EnumMap(option);
-      const inverted = NewOrderedMapWithSizeHint<unknown, GoSlice<string>>(OrderedMap_Size(enumMap));
+      const inverted = NewOrderedMapWithSizeHint<unknown, GoPtr<GoSlice<string>>>(OrderedMap_Size(enumMap));
       const deprecatedKeys = CommandLineOption_DeprecatedKeys(option);
 
       OrderedMap_Entries(enumMap)((name: unknown, value: unknown): bool => {
-        if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name as string)) {
-          OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value), name as string));
+        if (typeof name !== "string") {
+          throw new globalThis.Error("command-line enum option name is not a string");
+        }
+        if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name)) {
+          OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value, (): GoPtr<GoSlice<string>> => undefined), name));
         }
         return true;
       });
       const syns: string[] = [];
-      OrderedMap_Values(inverted)((synonyms: GoSlice<string>): bool => {
+      OrderedMap_Values(inverted)((synonyms: GoPtr<GoSlice<string>>): bool => {
+        if (synonyms === undefined) {
+          throw new globalThis.Error("command-line enum synonym group is nil");
+        }
         syns.push(strings.Join(synonyms, "/"));
         return true;
       });

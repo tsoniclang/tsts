@@ -287,9 +287,9 @@ export function tracedTypeAdapter_AliasSymbol(receiver: GoPtr<tracedTypeAdapter>
  * 	return wrapTypes(a.t.alias.TypeArguments())
  * }
  */
-export function tracedTypeAdapter_AliasTypeArguments(receiver: GoPtr<tracedTypeAdapter>): GoSlice<TracedType> {
+export function tracedTypeAdapter_AliasTypeArguments(receiver: GoPtr<tracedTypeAdapter>): GoPtr<GoSlice<TracedType>> {
   if (receiver!.t!.alias === undefined) {
-    return [];
+    return undefined;
   }
   return wrapTypes(TypeAlias_TypeArguments(receiver!.t!.alias));
 }
@@ -331,9 +331,9 @@ export function tracedTypeAdapter_IntrinsicName(receiver: GoPtr<tracedTypeAdapte
  * 	return wrapTypes(a.t.AsUnionType().types)
  * }
  */
-export function tracedTypeAdapter_UnionTypes(receiver: GoPtr<tracedTypeAdapter>): GoSlice<TracedType> {
+export function tracedTypeAdapter_UnionTypes(receiver: GoPtr<tracedTypeAdapter>): GoPtr<GoSlice<TracedType>> {
   if ((receiver!.t!.flags & TypeFlagsUnion) === 0) {
-    return [];
+    return undefined;
   }
   return wrapTypes(Type_AsUnionOrIntersectionType(receiver!.t)!.types);
 }
@@ -349,9 +349,9 @@ export function tracedTypeAdapter_UnionTypes(receiver: GoPtr<tracedTypeAdapter>)
  * 	return wrapTypes(a.t.AsIntersectionType().types)
  * }
  */
-export function tracedTypeAdapter_IntersectionTypes(receiver: GoPtr<tracedTypeAdapter>): GoSlice<TracedType> {
+export function tracedTypeAdapter_IntersectionTypes(receiver: GoPtr<tracedTypeAdapter>): GoPtr<GoSlice<TracedType>> {
   if ((receiver!.t!.flags & TypeFlagsIntersection) === 0) {
-    return [];
+    return undefined;
   }
   return wrapTypes(Type_AsUnionOrIntersectionType(receiver!.t)!.types);
 }
@@ -373,11 +373,11 @@ export function tracedTypeAdapter_IntersectionTypes(receiver: GoPtr<tracedTypeAd
  */
 export function tracedTypeAdapter_IndexType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsIndex) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsIndexType(receiver!.t)!.target;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -399,11 +399,11 @@ export function tracedTypeAdapter_IndexType(receiver: GoPtr<tracedTypeAdapter>):
  */
 export function tracedTypeAdapter_IndexedAccessObjectType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsIndexedAccess) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsIndexedAccessType(receiver!.t)!.objectType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -425,11 +425,11 @@ export function tracedTypeAdapter_IndexedAccessObjectType(receiver: GoPtr<traced
  */
 export function tracedTypeAdapter_IndexedAccessIndexType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsIndexedAccess) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsIndexedAccessType(receiver!.t)!.indexType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -451,11 +451,11 @@ export function tracedTypeAdapter_IndexedAccessIndexType(receiver: GoPtr<tracedT
  */
 export function tracedTypeAdapter_ConditionalCheckType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsConditional) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsConditionalType(receiver!.t)!.checkType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -477,11 +477,11 @@ export function tracedTypeAdapter_ConditionalCheckType(receiver: GoPtr<tracedTyp
  */
 export function tracedTypeAdapter_ConditionalExtendsType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsConditional) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsConditionalType(receiver!.t)!.extendsType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -503,11 +503,11 @@ export function tracedTypeAdapter_ConditionalExtendsType(receiver: GoPtr<tracedT
  */
 export function tracedTypeAdapter_ConditionalTrueType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsConditional) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsConditionalType(receiver!.t)!.resolvedTrueType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -529,11 +529,11 @@ export function tracedTypeAdapter_ConditionalTrueType(receiver: GoPtr<tracedType
  */
 export function tracedTypeAdapter_ConditionalFalseType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsConditional) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsConditionalType(receiver!.t)!.resolvedFalseType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -555,11 +555,11 @@ export function tracedTypeAdapter_ConditionalFalseType(receiver: GoPtr<tracedTyp
  */
 export function tracedTypeAdapter_SubstitutionBaseType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsSubstitution) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsSubstitutionType(receiver!.t)!.baseType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -581,11 +581,11 @@ export function tracedTypeAdapter_SubstitutionBaseType(receiver: GoPtr<tracedTyp
  */
 export function tracedTypeAdapter_SubstitutionConstraintType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsSubstitution) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsSubstitutionType(receiver!.t)!.constraint;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -607,11 +607,11 @@ export function tracedTypeAdapter_SubstitutionConstraintType(receiver: GoPtr<tra
  */
 export function tracedTypeAdapter_ReferenceTarget(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReference) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_Target(receiver!.t);
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -627,9 +627,9 @@ export function tracedTypeAdapter_ReferenceTarget(receiver: GoPtr<tracedTypeAdap
  * 	return wrapTypes(a.t.AsTypeReference().resolvedTypeArguments)
  * }
  */
-export function tracedTypeAdapter_ReferenceTypeArguments(receiver: GoPtr<tracedTypeAdapter>): GoSlice<TracedType> {
+export function tracedTypeAdapter_ReferenceTypeArguments(receiver: GoPtr<tracedTypeAdapter>): GoPtr<GoSlice<TracedType>> {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReference) === 0) {
-    return [];
+    return undefined;
   }
   return wrapTypes(Type_AsTypeReference(receiver!.t)!.resolvedTypeArguments);
 }
@@ -669,11 +669,11 @@ export function tracedTypeAdapter_ReferenceNode(receiver: GoPtr<tracedTypeAdapte
  */
 export function tracedTypeAdapter_ReverseMappedSourceType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReverseMapped) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsReverseMappedType(receiver!.t)!.source;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -695,11 +695,11 @@ export function tracedTypeAdapter_ReverseMappedSourceType(receiver: GoPtr<traced
  */
 export function tracedTypeAdapter_ReverseMappedMappedType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReverseMapped) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsReverseMappedType(receiver!.t)!.mappedType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -721,11 +721,11 @@ export function tracedTypeAdapter_ReverseMappedMappedType(receiver: GoPtr<traced
  */
 export function tracedTypeAdapter_ReverseMappedConstraintType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReverseMapped) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsReverseMappedType(receiver!.t)!.constraintType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -747,11 +747,11 @@ export function tracedTypeAdapter_ReverseMappedConstraintType(receiver: GoPtr<tr
  */
 export function tracedTypeAdapter_EvolvingArrayElementType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsEvolvingArray) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsEvolvingArrayType(receiver!.t)!.elementType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -773,11 +773,11 @@ export function tracedTypeAdapter_EvolvingArrayElementType(receiver: GoPtr<trace
  */
 export function tracedTypeAdapter_EvolvingArrayFinalType(receiver: GoPtr<tracedTypeAdapter>): TracedType {
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsEvolvingArray) === 0) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const t = Type_AsEvolvingArrayType(receiver!.t)!.finalArrayType;
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   return wrapType(t);
 }
@@ -878,7 +878,7 @@ export function tracedTypeAdapter_Display(receiver: GoPtr<tracedTypeAdapter>): s
  */
 export function wrapType(t: GoPtr<Type>): TracedType {
   if (t === undefined) {
-    return undefined as unknown as TracedType;
+    return undefined;
   }
   const a: tracedTypeAdapter = { t, checker: t.checker };
   return {
@@ -930,9 +930,9 @@ export function wrapType(t: GoPtr<Type>): TracedType {
  * 	return result
  * }
  */
-export function wrapTypes(types: GoSlice<GoPtr<Type>>): GoSlice<TracedType> {
-  if (types.length === 0) {
-    return [];
+export function wrapTypes(types: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<GoSlice<TracedType>> {
+  if (types === undefined || types.length === 0) {
+    return undefined;
   }
   const result: TracedType[] = new Array(types.length);
   for (let i = 0; i < types.length; i++) {

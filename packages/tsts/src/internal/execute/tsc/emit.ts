@@ -1,9 +1,11 @@
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Background } from "../../../go/context.js";
 import type { Context } from "../../../go/context.js";
 import { Fprint, Fprintln } from "../../../go/fmt.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
+import { GC, ReadMemStats } from "../../../go/runtime.js";
+import type { MemStats } from "../../../go/runtime.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import {
   GetDiagnosticsOfAnyProgram,
@@ -15,6 +17,7 @@ import {
 } from "../../compiler/program.js";
 import type { EmitOptions, EmitResult, Program, ProgramLike, WriteFile } from "../../compiler/program.js";
 import type { SourceFile } from "../../ast/ast.js";
+import type { Diagnostic } from "../../ast/diagnostic.js";
 import { Message_Localize } from "../../diagnostics/diagnostics.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Locale } from "../../locale/locale.js";
@@ -131,21 +134,42 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
   if (result.Status !== ExitStatusSuccess) {
     return [result, undefined];
   }
-  result = { ...result, times: { ...result.times!, totalTime: input.Sys.SinceStart() } };
+  if (result.times === undefined) {
+    throw new globalThis.Error("nil CompileAndEmitResult.times");
+  }
+  result.times.totalTime = input.Sys.SinceStart();
   const options = ParsedCommandLine_CompilerOptions(input.Config);
-  if (Tristate_IsTrue(options!.Diagnostics) || Tristate_IsTrue(options!.ExtendedDiagnostics)) {
-    const memStats = {} as import("../../../go/runtime.js").MemStats;
-    // Note: runtime.GC() and runtime.ReadMemStats() are Go runtime facades not available in TS.
+  if (options === undefined) {
+    throw new globalThis.Error("nil compiler options");
+  }
+  if (Tristate_IsTrue(options.Diagnostics) || Tristate_IsTrue(options.ExtendedDiagnostics)) {
+    const memStats: MemStats = { Alloc: 0n, Mallocs: 0n };
+    GC();
+    GC();
+    ReadMemStats(memStats);
     statistics = statisticsFromProgram(input, memStats);
     Statistics_Report(statistics, input.Writer, input.Testing);
   }
-  let finalResult = result;
-  if (result.EmitResult!.EmitSkipped && result.Diagnostics.length > 0) {
-    finalResult = { ...result, Status: ExitStatusDiagnosticsPresent_OutputsSkipped };
-  } else if (result.Diagnostics.length > 0) {
-    finalResult = { ...result, Status: ExitStatusDiagnosticsPresent_OutputsGenerated };
+  if (result.EmitResult === undefined) {
+    throw new globalThis.Error("nil CompileAndEmitResult.EmitResult");
   }
-  return [finalResult, statistics];
+  const hasDiagnostics = result.Diagnostics !== undefined && result.Diagnostics.length > 0;
+  if (result.EmitResult.EmitSkipped && hasDiagnostics) {
+    result.Status = ExitStatusDiagnosticsPresent_OutputsSkipped;
+  } else if (hasDiagnostics) {
+    result.Status = ExitStatusDiagnosticsPresent_OutputsGenerated;
+  }
+  return [result, statistics];
+}
+
+function appendDiagnosticSlices(left: GoPtr<GoSlice<GoPtr<Diagnostic>>>, right: GoPtr<GoSlice<GoPtr<Diagnostic>>>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  if (right === undefined || right.length === 0) {
+    return left;
+  }
+  if (left === undefined || left.length === 0) {
+    return right;
+  }
+  return [...left, ...right];
 }
 
 /**
@@ -214,12 +238,15 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
  * }
  */
 export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult {
-  type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
+  const compileTimes = input.CompileTimes;
+  if (compileTimes === undefined) {
+    throw new globalThis.Error("nil EmitInput.CompileTimes");
+  }
   const result: CompileAndEmitResult = {
-    Diagnostics: [],
+    Diagnostics: undefined,
     EmitResult: undefined,
     Status: ExitStatusSuccess,
-    times: input.CompileTimes,
+    times: compileTimes,
   };
   const ctx: Context = Background();
 
@@ -234,53 +261,68 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       // early so we can track the time.
       let pop: (() => void) | undefined;
       if (input.Tracing !== undefined) {
-        pop = Tracing_Push(input.Tracing, PhaseBind, "bindSourceFiles", undefined as unknown as Map<string, unknown>, true);
+        pop = Tracing_Push(input.Tracing, PhaseBind, "bindSourceFiles", undefined, true);
       }
       const bindStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetBindDiagnostics(innerCtx, file);
-      result.times!.bindTime = (input.Sys.Now() as TimeWithSub).Sub(bindStart) as import("../../../go/time.js").Duration;
-      if (pop !== undefined) {
-        pop();
+      try {
+        const diags = input.ProgramLike.GetBindDiagnostics(innerCtx, file);
+        compileTimes.bindTime = input.Sys.Now().Sub(bindStart);
+        return diags;
+      } finally {
+        if (pop !== undefined) {
+          pop();
+        }
       }
-      return diags;
     },
     (innerCtx: Context, file: GoPtr<SourceFile>) => {
       let pop: (() => void) | undefined;
       if (input.Tracing !== undefined) {
-        pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined as unknown as Map<string, unknown>, true);
+        pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined, true);
       }
       const checkStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetSemanticDiagnostics(innerCtx, file);
-      result.times!.checkTime = (input.Sys.Now() as TimeWithSub).Sub(checkStart) as import("../../../go/time.js").Duration;
-      if (pop !== undefined) {
-        pop();
+      try {
+        const diags = input.ProgramLike.GetSemanticDiagnostics(innerCtx, file);
+        compileTimes.checkTime = input.Sys.Now().Sub(checkStart);
+        return diags;
+      } finally {
+        if (pop !== undefined) {
+          pop();
+        }
       }
-      return diags;
     },
   );
 
-  let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
-  if (!Tristate_IsTrue(input.ProgramLike.Options()!.ListFilesOnly)) {
+  let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: undefined, SourceMaps: undefined };
+  const programOptions = input.ProgramLike.Options();
+  if (programOptions === undefined) {
+    throw new globalThis.Error("nil program options");
+  }
+  if (!Tristate_IsTrue(programOptions.ListFilesOnly)) {
     const emitStart = input.Sys.Now();
-    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile! });
-    result.times!.emitTime = (input.Sys.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
+    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0, WriteFile: input.WriteFile });
+    compileTimes.emitTime = input.Sys.Now().Sub(emitStart);
   }
   if (emitResult !== undefined) {
-    allDiagnostics = [...allDiagnostics, ...emitResult!.Diagnostics];
+    allDiagnostics = appendDiagnosticSlices(allDiagnostics, emitResult.Diagnostics);
   }
   if (input.Testing !== undefined) {
     input.Testing.OnEmittedFiles(emitResult, input.TestingMTimesCache);
   }
 
   allDiagnostics = SortAndDeduplicateDiagnostics(allDiagnostics);
-  for (const diagnostic of allDiagnostics) {
-    input.ReportDiagnostic(diagnostic);
+  if (allDiagnostics !== undefined) {
+    for (const diagnostic of allDiagnostics) {
+      input.ReportDiagnostic(diagnostic);
+    }
   }
 
   listFiles(input, emitResult);
 
   input.ReportErrorSummary(allDiagnostics);
-  return { ...result, Diagnostics: allDiagnostics, EmitResult: emitResult, Status: ExitStatusSuccess };
+  result.Diagnostics = allDiagnostics;
+  result.EmitResult = emitResult;
+  result.Status = ExitStatusSuccess;
+  return result;
 }
 
 /**
@@ -313,14 +355,22 @@ export function listFiles(input: EmitInput, emitResult: GoPtr<EmitResult>): void
   }
   try {
     const options = Program_Options(input.Program);
-    if (Tristate_IsTrue(options!.ListEmittedFiles)) {
-      for (const file of emitResult!.EmittedFiles) {
-        Fprintln(input.Writer, "TSFILE:", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
+    if (options === undefined) {
+      throw new globalThis.Error("nil program options");
+    }
+    if (Tristate_IsTrue(options.ListEmittedFiles)) {
+      if (emitResult === undefined) {
+        throw new globalThis.Error("nil emit result while listing emitted files");
+      }
+      if (emitResult.EmittedFiles !== undefined) {
+        for (const file of emitResult.EmittedFiles) {
+          Fprintln(input.Writer, "TSFILE:", GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(input.Program)));
+        }
       }
     }
-    if (Tristate_IsTrue(options!.ExplainFiles)) {
+    if (Tristate_IsTrue(options.ExplainFiles)) {
       Program_ExplainFiles(input.Program, input.Writer, ParsedCommandLine_Locale(input.Config));
-    } else if (Tristate_IsTrue(options!.ListFiles) || Tristate_IsTrue(options!.ListFilesOnly)) {
+    } else if (Tristate_IsTrue(options.ListFiles) || Tristate_IsTrue(options.ListFilesOnly)) {
       for (const file of Program_GetSourceFiles(input.Program)) {
         Fprintln(input.Writer, SourceFile_FileName(file));
       }

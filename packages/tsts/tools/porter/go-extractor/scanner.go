@@ -123,6 +123,7 @@ func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, source []byte, rel str
 	unit.NodeKindCounts = nodeCounts(decl)
 	unit.FeatureCounts = featureCounts(decl)
 	unit.ExternalRefs = externalRefsOf(decl, imports)
+	unit.ReturnFacts = returnFactsOf(fileSet, decl.Body)
 	return unit
 }
 
@@ -176,13 +177,21 @@ func baseUnit(fileSet *token.FileSet, node ast.Node, source []byte, rel string, 
 		id = idBase + "::#" + strconv.Itoa(seenIDs[idBase])
 	}
 	return UnitReport{
-		ID:             id,
-		Kind:           kind,
-		Generated:      generated,
-		StartLine:      start.Line,
-		EndLine:        end.Line,
-		NodeKindCounts: make(map[string]int),
-		FeatureCounts:  make(map[string]int),
+		ID:                   id,
+		Kind:                 kind,
+		Generated:            generated,
+		StartLine:            start.Line,
+		EndLine:              end.Line,
+		TypeParameters:       []string{},
+		TypeParameterDetails: []TypeParameterReport{},
+		Parameters:           []ParamReport{},
+		Results:              []ParamReport{},
+		ValueSpecs:           []ValueSpecReport{},
+		Members:              []MemberReport{},
+		ExternalRefs:         []ExternalRefReport{},
+		ReturnFacts:          []ReturnFactReport{},
+		NodeKindCounts:       make(map[string]int),
+		FeatureCounts:        make(map[string]int),
 		Metadata: map[string]string{
 			"goPath": rel,
 		},
@@ -302,7 +311,7 @@ func typeSignature(spec *ast.TypeSpec) string {
 }
 
 func typeMembers(spec *ast.TypeSpec) []MemberReport {
-	var members []MemberReport
+	members := []MemberReport{}
 	switch typed := spec.Type.(type) {
 	case *ast.StructType:
 		if typed.Fields != nil {
@@ -339,7 +348,7 @@ func typeMembers(spec *ast.TypeSpec) []MemberReport {
 
 func paramsOf(fields *ast.FieldList) []ParamReport {
 	if fields == nil {
-		return nil
+		return []ParamReport{}
 	}
 	params := []ParamReport{}
 	for _, field := range fields.List {
@@ -360,7 +369,7 @@ func paramsOf(fields *ast.FieldList) []ParamReport {
 
 func typeParameters(fields *ast.FieldList) []TypeParameterReport {
 	if fields == nil {
-		return nil
+		return []TypeParameterReport{}
 	}
 	params := []TypeParameterReport{}
 	for _, field := range fields.List {
@@ -374,7 +383,7 @@ func typeParameters(fields *ast.FieldList) []TypeParameterReport {
 
 func valueSpecsOf(decl *ast.GenDecl) []ValueSpecReport {
 	if decl.Tok != token.CONST && decl.Tok != token.VAR {
-		return nil
+		return []ValueSpecReport{}
 	}
 	specs := []ValueSpecReport{}
 	var previousConstValues []ast.Expr

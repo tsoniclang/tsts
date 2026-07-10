@@ -457,8 +457,9 @@ export function Parser_parseJSONText(receiver: GoPtr<Parser>): GoPtr<SourceFile>
   }
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts, receiver!.sourceText, statements, eof), pos);
   const result = AsSourceFile(node);
-  if ((result!.Statements!.Nodes ?? []).length > 0) {
-    Parser_validateJsonValue(receiver, result, Node_Expression(result!.Statements!.Nodes[0]));
+  const statementNodes = result!.Statements!.Nodes ?? [];
+  if (statementNodes.length > 0) {
+    Parser_validateJsonValue(receiver, result, Node_Expression(statementNodes[0]));
   }
   Parser_finishSourceFile(receiver, result, false);
   return result;
@@ -603,7 +604,7 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   receiver!.statementHasAwaitIdentifier = false;
   receiver!.hasDeprecatedTag = false;
   receiver!.hasParseError = false;
-  receiver!.identifiers = undefined as unknown as GoMap<string, string>;
+  receiver!.identifiers = undefined;
   receiver!.identifierCount = 0 as int;
   receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int)!;
   receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
@@ -1080,7 +1081,7 @@ export function Parser_parseParameterEx(receiver: GoPtr<Parser>, inOuterAwaitCon
       undefined /*initializer*/,
     );
     if (modifiers !== undefined) {
-      Parser_parseErrorAtRange(receiver, modifiers.Nodes[0]!.Loc, Neither_decorators_nor_modifiers_may_be_applied_to_this_parameters);
+      Parser_parseErrorAtRange(receiver, (modifiers.Nodes ?? [])[0]!.Loc, Neither_decorators_nor_modifiers_may_be_applied_to_this_parameters);
     }
     Parser_withJSDoc(receiver, Parser_finishNode(receiver, thisResult, pos), jsdoc);
     return thisResult;
@@ -1794,6 +1795,7 @@ export function isReservedWord(token: Kind): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::getCommentPragmas","kind":"func","status":"implemented","sigHash":"31fb140c784459eaa7b98325b7f2279a15ed085460fb5b39207cee64f99c057b","bodyHash":"5b2ade4c1195f04a9522f8e0fced7091ad94221bb1cc18a97ec3edbcd43a1b79"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The named Go result starts nil and remains nil when no comment contributes a pragma; GoPtr preserves that accumulator state instead of eagerly allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,string)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>>"}
  *
  * Go source:
  * func getCommentPragmas(f *ast.NodeFactory, sourceText string) (pragmas []ast.Pragma) {
@@ -1804,11 +1806,14 @@ export function isReservedWord(token: Kind): bool {
  * 	return pragmas
  * }
  */
-export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): GoSlice<Pragma> {
-  let pragmas: GoSlice<Pragma> = [];
+export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): GoPtr<GoSlice<Pragma>> {
+  let pragmas: GoPtr<GoSlice<Pragma>> = undefined;
   GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)((commentRange: CommentRange): bool => {
     const comment = byteSlice(sourceText, commentRange.pos, commentRange.end);
-    pragmas = [...pragmas, ...extractPragmas(commentRange, comment)];
+    const extracted = extractPragmas(commentRange, comment);
+    if (extracted !== undefined && extracted.length !== 0) {
+      pragmas = [...(pragmas ?? []), ...extracted];
+    }
     return true;
   });
   return pragmas;
@@ -1816,6 +1821,7 @@ export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::extractPragmas","kind":"func","status":"implemented","sigHash":"35f0aecbddfdf5c151dd825a06917a646a38e20b6fe86e144e646c0931c8e3fe","bodyHash":"aa2fa18fd5591b2db374d33dd69c23fb24f75fe575543c62b343b6630bb375d1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"extractPragmas returns a nil Go slice for non-pragmas and for multiline comments with no recognized pragma; GoPtr preserves those results separately from allocated empty slices.","goSignature":"func(packages/tsts/src/internal/ast/ast.ts::CommentRange,string)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>","tsSignature":"func(packages/tsts/src/internal/ast/ast.ts::CommentRange,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>>"}
  *
  * Go source:
  * func extractPragmas(commentRange ast.CommentRange, text string) []ast.Pragma {
@@ -1922,7 +1928,7 @@ export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): Go
  * 	return nil
  * }
  */
-export function extractPragmas(commentRange: CommentRange, text: string): GoSlice<Pragma> {
+export function extractPragmas(commentRange: CommentRange, text: string): GoPtr<GoSlice<Pragma>> {
   if (commentRange.Kind === KindSingleLineCommentTrivia) {
     let pos = 2;
     const tripleSlash = match(text, pos, "/");
@@ -1933,7 +1939,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
     if (tripleSlash && match(text, pos, "<")) {
       const tagName = extractName(text, pos + 1);
       if (tagName !== "reference") {
-        return [];
+        return undefined;
       }
       pos += 10;
       const args = new globalThis.Map<string, Pragma["Args"] extends GoMap<string, infer T> ? T : never>();
@@ -1975,7 +1981,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
       pos++;
       const pragmaName = extractName(text, pos);
       if (!(pragmaName === "ts-check" || pragmaName === "ts-nocheck")) {
-        return [];
+        return undefined;
       }
       return [{
         ...commentRange,
@@ -1986,7 +1992,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
   if (commentRange.Kind === KindMultiLineCommentTrivia) {
     const trimmed = TrimSuffix(text, "*/");
     let pos = 2;
-    let pragmas: GoSlice<Pragma> = [];
+    let pragmas: GoPtr<GoSlice<Pragma>> = undefined;
     for (;;) {
       pos = skipTo(trimmed, pos, "@");
       if (pos < 0) {
@@ -2019,7 +2025,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
               Name: "factory",
               Value: byteSlice(trimmed, start, argEnd),
             });
-          pragmas = [...pragmas, {
+          pragmas = [...(pragmas ?? []), {
             ...commentRange,
             Name: pragmaName,
             Args: args,
@@ -2030,7 +2036,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
     }
     return pragmas;
   }
-  return [];
+  return undefined;
 }
 
 /**

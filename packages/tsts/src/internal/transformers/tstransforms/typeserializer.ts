@@ -169,11 +169,12 @@ export function metadataSerializer_SerializeReturnTypeOfNode(receiver: GoPtr<met
  * }
  */
 export function GetSetAccessorValueParameter(node: GoPtr<SetAccessorDeclaration>): GoPtr<Node> {
-  if (node !== undefined && node!.Parameters !== undefined && node!.Parameters!.Nodes.length > 0) {
-    if (node!.Parameters!.Nodes.length >= 2 && IsThisParameter(node!.Parameters!.Nodes[0])) {
-      return node!.Parameters!.Nodes[1];
+  const parameterNodes = node === undefined || node.Parameters === undefined ? undefined : node.Parameters.Nodes;
+  if (parameterNodes !== undefined && parameterNodes.length > 0) {
+    if (parameterNodes.length >= 2 && IsThisParameter(parameterNodes[0])) {
+      return parameterNodes[1];
     }
-    return node!.Parameters!.Nodes[0];
+    return parameterNodes[0];
   }
   return undefined;
 }
@@ -301,17 +302,19 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
   }
 
   const parameters = getParametersOfDecoratedDeclaration(valueDeclaration, container);
-  const nodes = parameters !== undefined ? parameters!.Nodes : [];
+  const nodes = parameters === undefined ? undefined : parameters.Nodes;
   const expressions: GoPtr<Node>[] = [];
-  for (let i = 0; i < nodes.length; i++) {
-    const parameter = nodes[i];
-    if (i === 0 && IsIdentifier(Node_Name(parameter) as GoPtr<Node>) && Node_Text(Node_Name(parameter) as GoPtr<Node>) === "this") {
-      continue;
-    }
-    if (AsParameterDeclaration(parameter)!.DotDotDotToken !== undefined) {
-      expressions.push(metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
-    } else {
-      expressions.push(metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
+  if (nodes !== undefined) {
+    for (let i = 0; i < nodes.length; i++) {
+      const parameter = nodes[i];
+      if (i === 0 && IsIdentifier(Node_Name(parameter) as GoPtr<Node>) && Node_Text(Node_Name(parameter) as GoPtr<Node>) === "this") {
+        continue;
+      }
+      if (AsParameterDeclaration(parameter)!.DotDotDotToken !== undefined) {
+        expressions.push(metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
+      } else {
+        expressions.push(metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
+      }
     }
   }
   return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, expressions), false);
@@ -514,6 +517,7 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeUnionOrIntersectionConstituents","kind":"method","status":"implemented","sigHash":"6d66fa056fef90ef201744676bcc1f8e8929dee813d24152c81031991741291f","bodyHash":"a4d77f8b07ccde0002b039c2444aa55d421e36d5feeec1c772efa4fa67b58a00"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A union or intersection NodeList may carry a nil constituent slice; TypeScript accepts undefined and ranges it as zero constituents before producing the same void-zero result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/typeserializer.ts::metadataSerializer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/typeserializer.ts::metadataSerializer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeUnionOrIntersectionConstituents(types []*ast.Node, isIntersection bool) *ast.Node {
@@ -569,9 +573,10 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
  * 	return s.f.NewVoidZeroExpression() // Fallback is only hit if all union constituents are null/undefined/never
  * }
  */
-export function metadataSerializer_serializeUnionOrIntersectionConstituents(receiver: GoPtr<metadataSerializer>, types: GoSlice<GoPtr<Node>>, isIntersection: bool): GoPtr<Node> {
+export function metadataSerializer_serializeUnionOrIntersectionConstituents(receiver: GoPtr<metadataSerializer>, types: GoPtr<GoSlice<GoPtr<Node>>>, isIntersection: bool): GoPtr<Node> {
   const f = receiver!.f!.__tsgoEmbedded0!;
   let serializedType: GoPtr<Node> = undefined;
+  if (types !== undefined) {
   for (const rawTypeNode of types) {
     const typeNode = SkipTypeParentheses(rawTypeNode)!;
     if (typeNode.Kind === KindNeverKeyword) {
@@ -605,6 +610,7 @@ export function metadataSerializer_serializeUnionOrIntersectionConstituents(rece
     } else {
       serializedType = serializedConstituent;
     }
+  }
   }
   if (serializedType !== undefined) {
     return serializedType;

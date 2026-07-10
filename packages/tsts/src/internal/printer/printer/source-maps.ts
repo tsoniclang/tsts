@@ -65,6 +65,8 @@ import {
   LFPreserveLines,
   LFNoTrailingNewLine,
   LFSpaceBetweenBraces,
+  Printer_SourceMapSource,
+  Printer_Writer,
   tefNoSourceMaps,
 } from "./state.js";
 import { OperatorPrecedenceComma } from "../../ast/precedence.js";
@@ -84,7 +86,7 @@ const utf8Decoder: TextDecoder = new globalThis.TextDecoder();
  * }
  */
 export function Printer_writeLine(receiver: GoPtr<Printer>): void {
-  receiver!.writer.WriteLine();
+  Printer_Writer(receiver).WriteLine();
 }
 
 /**
@@ -678,17 +680,22 @@ export function Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver: GoPtr<
     return false as bool;
   }
 
-  if (Printer_getLeadingLineTerminatorCount(receiver, NodeDefault_AsNode(body), FirstOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines) > 0 ||
-    Printer_getClosingLineTerminatorCount(receiver, NodeDefault_AsNode(body), LastOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines, body!.Statements!.Loc) > 0) {
+  const statements = body!.Statements!.Nodes;
+  const firstStatement = statements === undefined || statements.length === 0 ? undefined : statements[0];
+  const lastStatement = statements === undefined || statements.length === 0 ? undefined : statements[statements.length - 1];
+  if (Printer_getLeadingLineTerminatorCount(receiver, NodeDefault_AsNode(body), firstStatement, LFPreserveLines) > 0 ||
+    Printer_getClosingLineTerminatorCount(receiver, NodeDefault_AsNode(body), lastStatement, LFPreserveLines, body!.Statements!.Loc) > 0) {
     return false as bool;
   }
 
   let previousStatement: GoPtr<Node> = undefined;
-  for (const statement of body!.Statements!.Nodes) {
-    if (Printer_getSeparatingLineTerminatorCount(receiver, previousStatement, statement as GoPtr<Node>, LFPreserveLines) > 0) {
-      return false as bool;
+  if (statements !== undefined) {
+    for (const statement of statements) {
+      if (Printer_getSeparatingLineTerminatorCount(receiver, previousStatement, statement as GoPtr<Node>, LFPreserveLines) > 0) {
+        return false as bool;
+      }
+      previousStatement = statement as GoPtr<Node>;
     }
-    previousStatement = statement as GoPtr<Node>;
   }
 
   return true as bool;
@@ -970,7 +977,7 @@ export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<Sou
   if (node!.ScriptKind !== ScriptKindJSON) {
     Printer_emitShebangIfNeeded(receiver, node);
     index = Printer_emitPrologueDirectives(receiver, node!.Statements);
-    if (!receiver!.writer.IsAtStartOfLine()) {
+    if (!Printer_Writer(receiver).IsAtStartOfLine()) {
       Printer_writeLine(receiver);
     }
     state = Printer_emitDetachedCommentsBeforeStatementList(receiver, NodeDefault_AsNode(node), node!.Statements!.Loc);
@@ -1071,8 +1078,9 @@ export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<Sou
  */
 export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: (p: GoPtr<Printer>, node: GoPtr<Node>) => void, parentNode: GoPtr<Node>, children: GoPtr<NodeList>, format: ListFormat, start: int, count: int): void {
   const isNil = children === undefined;
+  const nodes = children === undefined ? undefined : children.Nodes;
 
-  const length = isNil ? 0 : children!.Nodes.length;
+  const length = nodes === undefined ? 0 : nodes.length;
 
   const startResolved = start < 0 ? 0 : start;
 
@@ -1114,9 +1122,12 @@ export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: (p: GoPtr<
       Printer_writeSpace(receiver);
     }
   } else {
+    if (nodes === undefined) {
+      throw new globalThis.RangeError("invalid non-empty NodeList range");
+    }
     const end = Math.min(startResolved + countResolved, length);
 
-    Printer_emitListItems(receiver, emit, parentNode, children!.Nodes.slice(startResolved, end), format, Printer_hasTrailingComma(receiver, parentNode, children), children!.Loc);
+    Printer_emitListItems(receiver, emit, parentNode, nodes.slice(startResolved, end), format, Printer_hasTrailingComma(receiver, parentNode, children), children!.Loc);
   }
 
   if (onAfterEmitNodeList !== undefined) {
@@ -1312,7 +1323,7 @@ export function Printer_emitSourceMapsBeforeNode(receiver: GoPtr<Printer>, node:
     (emitFlags & EFNoLeadingSourceMap) === 0 &&
     receiver!.currentSourceFile !== undefined &&
     !PositionIsSynthesized(TextRange_Pos(loc))) {
-    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), TextRange_Pos(loc)));
+    Printer_emitSourcePos(receiver, Printer_SourceMapSource(receiver), SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), TextRange_Pos(loc)));
   }
 
   if ((emitFlags & EFNoNestedSourceMaps) !== 0) {
@@ -1364,7 +1375,7 @@ export function Printer_emitSourceMapsAfterNode(receiver: GoPtr<Printer>, node: 
   if (!IsNotEmittedStatement(node) &&
     (emitFlags & EFNoTrailingSourceMap) === 0 &&
     !PositionIsSynthesized(TextRange_End(loc))) {
-    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, TextRange_End(loc));
+    Printer_emitSourcePos(receiver, Printer_SourceMapSource(receiver), TextRange_End(loc));
   }
 }
 
@@ -1409,7 +1420,7 @@ export function Printer_emitSourceMapsBeforeToken(receiver: GoPtr<Printer>, toke
     posResolved = SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), posResolved);
   }
   if ((emitFlags & EFNoTokenLeadingSourceMaps) === 0 && posResolved >= 0) {
-    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, posResolved);
+    Printer_emitSourcePos(receiver, Printer_SourceMapSource(receiver), posResolved);
   }
 
   const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
@@ -1452,7 +1463,7 @@ export function Printer_emitSourceMapsAfterToken(receiver: GoPtr<Printer>, token
   if ((emitFlags & EFNoTokenTrailingSourceMaps) === 0) {
     const posResolved = hasLoc ? TextRange_End(loc) : pos;
     if (posResolved >= 0) {
-      Printer_emitSourcePos(receiver, receiver!.sourceMapSource, posResolved);
+      Printer_emitSourcePos(receiver, Printer_SourceMapSource(receiver), posResolved);
     }
   }
 }

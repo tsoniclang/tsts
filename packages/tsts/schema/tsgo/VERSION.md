@@ -5,7 +5,7 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 | Field | Value |
 | --- | --- |
 | Upstream | `microsoft/typescript-go` |
-| Commit | `d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc` |
+| Commit | `168e7015edf98244febc8f4ae450b673b5d195d7` |
 | Git object format | `sha1` |
 | Nested TypeScript commit | `4d4f005c8541e0255a9d8791205fdce326e462bc` |
 | `ast.json` SHA-256 | `8f9117acd1ba332beb8222e4f958346a6846dc0acbcb75d1c20a7bb0eef68689` |
@@ -32,8 +32,10 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 
 Bumped the TS-Go source and schema pin together from
 `c78d39e7075b4fc641b12b1f35d905c54cdc13ef` to
-`d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc`. The nested TypeScript source is
-`4d4f005c8541e0255a9d8791205fdce326e462bc`.
+`168e7015edf98244febc8f4ae450b673b5d195d7`. The nested TypeScript source is
+`4d4f005c8541e0255a9d8791205fdce326e462bc`. The final two upstream commits
+close a concurrent auto-import extraction-cache race and validate malformed
+project-reference fields; neither changes the schema or nested TypeScript pin.
 
 Schema input drift across that range:
 

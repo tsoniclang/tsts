@@ -1386,8 +1386,9 @@ export function createAccessorTypeError(node: GoPtr<Node>): GoPtr<Diagnostic> {
   const getAccessor = allDeclarations.GetAccessor;
   const setAccessor = allDeclarations.SetAccessor;
   let targetNode = node;
-  if (IsSetAccessorDeclaration(node) && Node_Parameters(node).length > 0) {
-    targetNode = Node_Parameters(node)[0];
+  const parameters = Node_Parameters(node);
+  if (IsSetAccessorDeclaration(node) && parameters !== undefined && parameters.length > 0) {
+    targetNode = parameters[0];
   }
   const diag = NewDiagnosticForNode(targetNode, getErrorByDeclarationKind(node!.Kind));
   if (setAccessor !== undefined) {

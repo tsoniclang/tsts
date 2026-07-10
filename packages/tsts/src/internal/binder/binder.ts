@@ -714,8 +714,8 @@ export function getBinder(): GoPtr<Binder> {
     };
   }
   const binder = binderPool.Get() as Binder;
-  binder.classifiableNames = { M: undefined as unknown as GoMap<string, { readonly __tsgoEmpty?: never }> };
-  binder.notConstEnumOnlyModules = { M: undefined as unknown as GoMap<GoPtr<Symbol>, { readonly __tsgoEmpty?: never }> };
+  binder.classifiableNames = { M: undefined };
+  binder.notConstEnumOnlyModules = { M: undefined };
   return binder;
 }
 
@@ -2960,6 +2960,7 @@ export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getThisClassAndSymbolTable","kind":"method","status":"implemented","sigHash":"06497503f0304e19daa53c55a0375d2f901479e5d357f9ae78f00be1bb41a06e","bodyHash":"863dd5c5600228c7ec81533b03ed763bcef88c782285c05af38c191cfa084605"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"When binding outside a class container, the upstream method returns both a nil class symbol and a nil SymbolTable map; GoPtr preserves the second tuple component instead of manufacturing a table.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/binder.ts::Binder>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/internal/ast/symbol.ts::SymbolTable]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/binder.ts::Binder>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>]"}
  *
  * Go source:
  * func (b *Binder) getThisClassAndSymbolTable() (classSymbol *ast.Symbol, symbolTable ast.SymbolTable) {
@@ -2981,9 +2982,9 @@ export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node:
  * 	return classSymbol, symbolTable
  * }
  */
-export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoPtr<Symbol>, SymbolTable] {
+export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoPtr<Symbol>, GoPtr<SymbolTable>] {
   if (receiver!.thisContainer === undefined) {
-    return [undefined, undefined as unknown as SymbolTable];
+    return [undefined, undefined];
   }
   switch (receiver!.thisContainer!.Kind) {
     case KindFunctionDeclaration:
@@ -3001,7 +3002,7 @@ export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoP
       return [classSymbol, symbolTable!];
     }
   }
-  return [undefined, undefined as unknown as SymbolTable];
+  return [undefined, undefined];
 }
 
 /**
@@ -3101,7 +3102,7 @@ export function Binder_bindParameter(receiver: GoPtr<Binder>, node: GoPtr<Node>)
     Binder_checkStrictModeEvalOrArguments(receiver, node, Node_Name(decl));
   }
   if (IsBindingPattern(Node_Name(decl))) {
-    const params = Node_Parameters(node!.Parent);
+    const params = Node_Parameters(node!.Parent) ?? [];
     const index = params.indexOf(node);
     Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsFunctionScopedVariable, "__" + strconv.Itoa(index as int));
   } else {
@@ -3315,7 +3316,7 @@ export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, contain
     const localsMap = localsContainer.Locals;
     const local = localsMap?.get(name);
     if (local !== undefined) {
-      return OrElse(local!.ExportSymbol, local);
+      return OrElse(local!.ExportSymbol, local, () => undefined, (left, right) => left === right);
     }
   }
   const declaration = Node_DeclarationData(container);
@@ -4264,6 +4265,7 @@ export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEach","kind":"method","status":"implemented","sigHash":"0122ba175fe62045dcf33fadfcce9eac2bff0bbe52cf4be3a68a6db76475b2d5","bodyHash":"0a36aebec003fa04adc1efeea72299c46a80b9c6f45f66440b7185477525bf03"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go range over a nil node slice binds nothing; GoPtr accepts the preserved NodeList nil sentinel and nodes ?? [] performs the same zero-iteration range.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/binder.ts::Binder>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/binder/binder.ts::Binder>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>void"}
  *
  * Go source:
  * func (b *Binder) bindEach(nodes []*ast.Node) {
@@ -4272,8 +4274,8 @@ export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>)
  * 	}
  * }
  */
-export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoSlice<GoPtr<Node>>): void {
-  for (const node of nodes) {
+export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): void {
+  for (const node of nodes ?? []) {
     Binder_bind(receiver, node);
   }
 }
@@ -4328,12 +4330,13 @@ export function Binder_bindModifiers(receiver: GoPtr<Binder>, modifiers: GoPtr<M
  * }
  */
 export function Binder_bindEachStatementFunctionsFirst(receiver: GoPtr<Binder>, statements: GoPtr<NodeList>): void {
-  for (const node of statements!.Nodes) {
+  const nodes = statements!.Nodes ?? [];
+  for (const node of nodes) {
     if (node!.Kind === KindFunctionDeclaration) {
       Binder_bind(receiver, node);
     }
   }
-  for (const node of statements!.Nodes) {
+  for (const node of nodes) {
     if (node!.Kind !== KindFunctionDeclaration) {
       Binder_bind(receiver, node);
     }
@@ -5068,7 +5071,7 @@ export function Binder_bindSwitchStatement(receiver: GoPtr<Binder>, node: GoPtr<
  */
 export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   const switchStatement = node!.Parent;
-  const clauses = AsCaseBlock(node)!.Clauses!.Nodes;
+  const clauses = AsCaseBlock(node)!.Clauses!.Nodes ?? [];
   const isNarrowingSwitch = Node_Expression(switchStatement)!.Kind === KindTrueKeyword || isNarrowingExpression(Node_Expression(switchStatement));
   let fallthroughFlow: GoPtr<FlowNode> = receiver!.unreachableFlow;
   let i = 0;
@@ -5810,7 +5813,7 @@ export function Binder_bindCallExpressionFlow(receiver: GoPtr<Binder>, node: GoP
     const expr = SkipParentheses(call!.Expression as unknown as GoPtr<Node>);
     if (expr!.Kind === KindFunctionExpression || expr!.Kind === KindArrowFunction) {
       Binder_bindNodeList(receiver, call!.TypeArguments as unknown as GoPtr<NodeList>);
-      Binder_bindEach(receiver, call!.Arguments!.Nodes ?? []);
+      Binder_bindEach(receiver, call!.Arguments!.Nodes);
       Binder_bind(receiver, call!.Expression as unknown as GoPtr<Node>);
     } else {
       Binder_bindEachChild(receiver, node);
@@ -6336,7 +6339,7 @@ export function isNarrowableReference(node: GoPtr<Node>): bool {
  */
 export function hasNarrowableArgument(expr: GoPtr<Node>): bool {
   const call = AsCallExpression(expr);
-  for (const argument of call!.Arguments!.Nodes) {
+  for (const argument of call!.Arguments!.Nodes ?? []) {
     if (containsNarrowableReference(argument)) {
       return true as bool;
     }

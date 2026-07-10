@@ -41,24 +41,10 @@ import type { CommandLineOptionNameMap } from "./tsconfigparsing.js";
 import {
   CommandLineCompilerOptionsMap,
   CommandLineOptionNameMap_Get,
+  isOrderedMap,
 } from "./tsconfigparsing.js";
 import { BuildNameMap, NameMap_Get } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
-
-// Go's `value.(*collections.OrderedMap[string, any])` type assertion: the JSON
-// parser yields OrderedMap instances, which structurally carry `keys`/`mp`.
-function asOrderedMap(value: unknown): GoPtr<OrderedMap> {
-  if (
-    value !== undefined &&
-    value !== null &&
-    typeof value === "object" &&
-    "keys" in value &&
-    "mp" in value
-  ) {
-    return value as GoPtr<OrderedMap>;
-  }
-  return undefined;
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::ParseTristate","kind":"func","status":"implemented","sigHash":"49c663f5d4d2bfc54d4329d3c33406f6d96155082766b6de7630809dacb0801b","bodyHash":"5c576abd91bbe40ecd51373a6380cc36bcf1cfe3c57c1bf45e846fd8bcd7885f"}
@@ -113,12 +99,9 @@ export function ParseTristate(value: unknown): Tristate {
  * 	return nil
  * }
  */
-export function ParseStringArray(value: unknown): GoSlice<string> {
+export function ParseStringArray(value: unknown): GoPtr<GoSlice<string>> {
   if (globalThis.Array.isArray(value)) {
     const arr = value as unknown[];
-    if (arr === null) {
-      return [];
-    }
     const result: GoSlice<string> = [];
     for (const v of arr) {
       if (typeof v === "string") {
@@ -127,7 +110,7 @@ export function ParseStringArray(value: unknown): GoSlice<string> {
     }
     return result;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -208,42 +191,82 @@ export function parseNumber(value: unknown): GoPtr<int> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::parseProjectReference","kind":"func","status":"implemented","sigHash":"818a4e147f733461a7da20f74182e641116a5c6ae1948c631b811ba9de557c2c","bodyHash":"44f66889a389cd80c1afed083222d24d66affc64f88e6509c7144a41641b00f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::projectReferenceParseResult","kind":"type","status":"implemented","sigHash":"539ddbc5676f2a4d6c4eb53cf7d9e5267971e217e0ca6e81ca122404a489db5d","bodyHash":"9794f991e0b59baa6f2543051806c3aa954b23d93223a7882ea8769c41fc6fcd"}
  *
  * Go source:
- * func parseProjectReference(json any) []*core.ProjectReference {
- * 	var result []*core.ProjectReference
- * 	if v, ok := json.(*collections.OrderedMap[string, any]); ok {
- * 		var reference core.ProjectReference
- * 		if v, ok := v.Get("path"); ok {
- * 			reference.Path = v.(string)
- * 		}
- * 		if v, ok := v.Get("circular"); ok {
- * 			reference.Circular = v.(bool)
- * 		}
- * 		result = append(result, &reference)
- * 	}
- * 	return result
+ * projectReferenceParseResult struct {
+ * 	reference     core.ProjectReference
+ * 	hasPath       bool
+ * 	pathValid     bool
+ * 	hasCircular   bool
+ * 	circularValid bool
  * }
  */
-export function parseProjectReference(json: unknown): GoSlice<GoPtr<ProjectReference>> {
-  const result: GoSlice<GoPtr<ProjectReference>> = [];
-  const v = asOrderedMap(json);
-  if (v !== undefined) {
-    const reference: ProjectReference = { Path: "", OriginalPath: "", Circular: false };
-    {
-      const [pv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "path");
-      if (ok) {
-        reference.Path = pv as string;
+export interface projectReferenceParseResult {
+  reference: ProjectReference;
+  hasPath: bool;
+  pathValid: bool;
+  hasCircular: bool;
+  circularValid: bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::parseProjectReference","kind":"func","status":"implemented","sigHash":"ba560292952792e8b5a6c295f9837e0f11f3ecbf0486473f8f21f3032fc905c2","bodyHash":"98aea41772f6ea945e7ba31aebd3fb6b7af07c4194a10389e03dba1f7d005b01"}
+ *
+ * Go source:
+ * func parseProjectReference(json any) *projectReferenceParseResult {
+ * 	if v, ok := json.(*collections.OrderedMap[string, any]); ok {
+ * 		result := &projectReferenceParseResult{}
+ * 		if value, ok := v.Get("path"); ok {
+ * 			result.hasPath = true
+ * 			if path, ok := value.(string); ok {
+ * 				result.reference.Path = path
+ * 				result.pathValid = true
+ * 			}
+ * 		}
+ * 		if value, ok := v.Get("circular"); ok {
+ * 			result.hasCircular = true
+ * 			if circular, ok := value.(bool); ok {
+ * 				result.reference.Circular = circular
+ * 				result.circularValid = true
+ * 			}
+ * 		}
+ * 		return result
+ * 	}
+ * 	return nil
+ * }
+ */
+export function parseProjectReference(json: unknown): GoPtr<projectReferenceParseResult> {
+  if (!isOrderedMap(json)) {
+    return undefined;
+  }
+  const v = json;
+  const result: projectReferenceParseResult = {
+    reference: { Path: "", OriginalPath: "", Circular: false },
+    hasPath: false as bool,
+    pathValid: false as bool,
+    hasCircular: false as bool,
+    circularValid: false as bool,
+  };
+  {
+    const [value, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "path", () => undefined);
+    if (ok) {
+      result.hasPath = true as bool;
+      if (typeof value === "string") {
+        result.reference.Path = value;
+        result.pathValid = true as bool;
       }
     }
-    {
-      const [cv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "circular");
-      if (ok) {
-        reference.Circular = cv as bool;
+  }
+  {
+    const [value, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "circular", () => undefined);
+    if (ok) {
+      result.hasCircular = true as bool;
+      if (typeof value === "boolean") {
+        result.reference.Circular = value as bool;
+        result.circularValid = true as bool;
       }
     }
-    result.push(reference);
   }
   return result;
 }
@@ -291,31 +314,31 @@ export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, un
   const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
   if (m !== undefined) {
     {
-      const [v, ok] = OrderedMap_Get(m, "include");
+      const [v, ok] = OrderedMap_Get(m, "include", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "include", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "exclude");
+      const [v, ok] = OrderedMap_Get(m, "exclude", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "exclude", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "files");
+      const [v, ok] = OrderedMap_Get(m, "files", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "files", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "references");
+      const [v, ok] = OrderedMap_Get(m, "references", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "references", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "extends");
+      const [v, ok] = OrderedMap_Get(m, "extends", () => undefined);
       if (ok) {
         if (typeof v === "string") {
           const str: string = v;
@@ -325,19 +348,19 @@ export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, un
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "compilerOptions");
+      const [v, ok] = OrderedMap_Get(m, "compilerOptions", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "compilerOptions", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "excludes");
+      const [v, ok] = OrderedMap_Get(m, "excludes", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "excludes", v);
       }
     }
     {
-      const [v, ok] = OrderedMap_Get(m, "typeAcquisition");
+      const [v, ok] = OrderedMap_Get(m, "typeAcquisition", () => undefined);
       if (ok) {
         OrderedMap_Set(result, "typeAcquisition", v);
       }
@@ -605,15 +628,15 @@ export function buildOptionsParser_as_optionParser(receiver: GoPtr<buildOptionsP
  * 	return nil
  * }
  */
-export function ParseCompilerOptions(key: string, value: unknown, allOptions: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseCompilerOptions(key: string, value: unknown, allOptions: GoPtr<CompilerOptions>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (value === undefined) {
-    return [];
+    return undefined;
   }
   if (allOptions === undefined) {
-    return [];
+    return undefined;
   }
   parseCompilerOptions(key, value, allOptions);
-  return [];
+  return undefined;
 }
 
 /**
@@ -1360,9 +1383,9 @@ export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(va
  * 	return nil
  * }
  */
-export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr<WatchOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr<WatchOptions>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (allOptions === undefined) {
-    return [];
+    return undefined;
   }
   const o = allOptions;
   switch (key) {
@@ -1394,7 +1417,7 @@ export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr
       o.ExcludeFiles = ParseStringArray(value);
       break;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -1421,12 +1444,12 @@ export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr
  * 	return nil
  * }
  */
-export function ParseTypeAcquisition(key: string, value: unknown, allOptions: GoPtr<TypeAcquisition>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseTypeAcquisition(key: string, value: unknown, allOptions: GoPtr<TypeAcquisition>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (value === undefined) {
-    return [];
+    return undefined;
   }
   if (allOptions === undefined) {
-    return [];
+    return undefined;
   }
   const o = allOptions;
   switch (key) {
@@ -1443,7 +1466,7 @@ export function ParseTypeAcquisition(key: string, value: unknown, allOptions: Go
       o.DisableFilenameBasedTypeAcquisition = ParseTristate(value);
       break;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -1478,12 +1501,12 @@ export function ParseTypeAcquisition(key: string, value: unknown, allOptions: Go
  * 	return nil
  * }
  */
-export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr<BuildOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr<BuildOptions>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   if (value === undefined) {
-    return [];
+    return undefined;
   }
   if (allOptions === undefined) {
-    return [];
+    return undefined;
   }
   const option = NameMap_Get(BuildNameMap as GoPtr<NameMap>, key);
   const k: string = option !== undefined ? option.Name : key;
@@ -1508,7 +1531,7 @@ export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr
       o.Verbose = ParseTristate(value);
       break;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -1572,7 +1595,7 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
   if (rawSource !== undefined) {
     const rawMap = asOrderedMap(rawSource) as GoPtr<OrderedMap<string, unknown>>;
     if (rawMap !== undefined) {
-      const [compilerOptionsRaw, exists] = OrderedMap_Get(rawMap, "compilerOptions");
+      const [compilerOptionsRaw, exists] = OrderedMap_Get(rawMap, "compilerOptions", () => undefined);
       if (exists) {
         const compilerOptionsMap = asOrderedMap(compilerOptionsRaw) as GoPtr<OrderedMap<string, unknown>>;
         if (compilerOptionsMap !== undefined) {

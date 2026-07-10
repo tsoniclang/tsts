@@ -18,7 +18,7 @@ const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = resolve(dirname(scriptPath), "../../../..");
 const strictUtf8Decoder = new TextDecoder("utf-8", { fatal: true });
 
-export function verifyTsgoSuiteReport(reportPath) {
+export function verifyTsgoSuiteReport(reportPath, options = {}) {
   if (typeof reportPath !== "string" || reportPath === "") throw new Error("TS-Go suite report path is required");
   const directory = isAbsolute(reportPath) ? resolve(reportPath) : resolve(repoRoot, reportPath);
   assertRegularDirectory(directory, "TS-Go suite report directory");
@@ -62,6 +62,9 @@ export function verifyTsgoSuiteReport(reportPath) {
   const markdown = decodeUtf8(summaryBytes, "TS-Go suite summary.md");
   if (markdown !== renderMarkdown(report.summary, report.results, report.inventory, report.caseRoot, report.runManifest)) throw new Error("TS-Go suite summary markdown does not match report data");
   validateReportSealMetadata(seal.metadata, report);
+  if (options.requirePassed === true && seal.metadata.outcome !== "passed") {
+    throw new Error(`TS-Go suite report is not a passing gate: outcome=${seal.metadata.outcome} complete=${report.summary.complete} failed=${report.summary.failed}`);
+  }
   return { directory, reportRoot, seal, report };
 }
 
@@ -144,7 +147,7 @@ function sha256(value) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
-    const verified = verifyTsgoSuiteReport(process.argv[2]);
+    const verified = verifyTsgoSuiteReport(process.argv[2], { requirePassed: true });
     console.log(`verified TS-Go suite report ${verified.report.runFingerprint} outcome=${verified.seal.metadata.outcome} cases=${verified.report.summary.total}`);
   } catch (error) {
     console.error(error instanceof Error ? error.stack : String(error));

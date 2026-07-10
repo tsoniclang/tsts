@@ -419,14 +419,15 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   const statements: GoSlice<GoPtr<Node>> = [];
   const savedParseDiagnostics = receiver!.diagnostics;
   receiver!.diagnostics = [];
+  const sourceStatements = sourceFile!.Statements?.Nodes ?? [];
 
   let afterAwaitStatement = 0;
   for (let i = 0; i < receiver!.possibleAwaitSpans.length; i += 2) {
     const nextAwaitStatement = receiver!.possibleAwaitSpans[i];
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
-    const prevStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement!];
-    statements.push(...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement));
+    const prevStatement = sourceStatements[afterAwaitStatement];
+    const nextStatement = sourceStatements[nextAwaitStatement!];
+    statements.push(...sourceStatements.slice(afterAwaitStatement, nextAwaitStatement));
 
     // append all diagnostics associated with the copied range
     const diagnosticStart = FindIndex(savedParseDiagnostics, (diagnostic) => {
@@ -462,8 +463,8 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
       if (startPos === Scanner_TokenFullStart(receiver!.scanner)) {
         Parser_nextToken(receiver);
       }
-      if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
-        const lastAwaitStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement - 1];
+      if (afterAwaitStatement < sourceStatements.length) {
+        const lastAwaitStatement = sourceStatements[afterAwaitStatement - 1];
         if (Node_End(statement) === Node_End(lastAwaitStatement)) {
           // done reparsing this section
           break;
@@ -474,7 +475,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
           if (i < receiver!.possibleAwaitSpans.length) {
             afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
           } else {
-            afterAwaitStatement = sourceFile!.Statements!.Nodes.length;
+            afterAwaitStatement = sourceStatements.length;
           }
         }
       }
@@ -486,9 +487,9 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
   }
 
   // append all statements between pos and the end of the list
-  if (afterAwaitStatement < sourceFile!.Statements!.Nodes.length) {
-    const prevStatement2 = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    statements.push(...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement));
+  if (afterAwaitStatement < sourceStatements.length) {
+    const prevStatement2 = sourceStatements[afterAwaitStatement];
+    statements.push(...sourceStatements.slice(afterAwaitStatement));
 
     // append all diagnostics associated with the copied range
     const diagnosticStart2 = FindIndex(savedParseDiagnostics, (diagnostic) => {
@@ -749,7 +750,7 @@ export function Parser_parseClassDeclarationOrExpression(receiver: GoPtr<Parser>
   // We don't parse the name here in await context, instead we will report a grammar error in the checker.
   const name = Parser_parseNameOfClassDeclarationOrExpression(receiver);
   const typeParameters = Parser_parseTypeParameters(receiver);
-  if (modifiers !== undefined && Some(modifiers.Nodes, isExportModifier)) {
+  if (modifiers !== undefined && Some(modifiers.Nodes ?? [], isExportModifier)) {
     Parser_setContextFlags(receiver, NodeFlagsAwaitContext, true /*value*/);
   }
   const heritageClauses = Parser_parseHeritageClauses(receiver);
@@ -764,7 +765,7 @@ export function Parser_parseClassDeclarationOrExpression(receiver: GoPtr<Parser>
     return Parser_createMissingList(receiver);
   })();
   receiver!.contextFlags = saveContextFlags;
-  if (modifiers !== undefined && (ModifiersToFlags(modifiers.Nodes) & ModifierFlagsAmbient) !== 0) {
+  if (modifiers !== undefined && (ModifiersToFlags(modifiers.Nodes ?? []) & ModifierFlagsAmbient) !== 0) {
     receiver!.statementHasAwaitIdentifier = saveHasAwaitIdentifier;
   }
   const result =
@@ -776,9 +777,9 @@ export function Parser_parseClassDeclarationOrExpression(receiver: GoPtr<Parser>
   if ((result!.Flags & NodeFlagsJavaScriptFile) !== 0) {
     Parser_checkJSSyntax(receiver, result);
     if (heritageClauses !== undefined) {
-      for (const clause of heritageClauses.Nodes) {
+      for (const clause of heritageClauses.Nodes ?? []) {
         if (AsHeritageClause(clause)!.Token === KindExtendsKeyword) {
-          for (const expr of AsHeritageClause(clause)!.Types!.Nodes) {
+          for (const expr of AsHeritageClause(clause)!.Types!.Nodes ?? []) {
             Parser_checkJSSyntax(receiver, expr);
           }
         }

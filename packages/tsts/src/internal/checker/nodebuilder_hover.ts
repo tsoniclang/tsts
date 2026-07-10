@@ -534,20 +534,26 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   const typeParamDecls = Map(localParams, (p) => NodeBuilderImpl_typeParameterToDeclaration(receiver, p));
   const baseTypes = Checker_getBaseTypes(receiver!.ch, interfaceType);
   let baseType: GoPtr<Type>;
-  if (baseTypes.length > 0) {
+  if (baseTypes !== undefined && baseTypes.length > 0) {
     baseType = Checker_getIntersectionType(receiver!.ch, baseTypes);
   }
   const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, interfaceType);
   let members: GoSlice<GoPtr<Node>> = [];
   members = [...members, ...NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, interfaceType, baseType)];
-  for (const sig of StructuredType_ConstructSignatures(resolved)) {
-    if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
-      continue;
+  const constructSignatures = StructuredType_ConstructSignatures(resolved);
+  if (constructSignatures !== undefined) {
+    for (const sig of constructSignatures) {
+      if ((sig!.flags & SignatureFlagsAbstract) !== 0) {
+        continue;
+      }
+      members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined)];
     }
-    members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructSignature, undefined)];
   }
-  for (const sig of StructuredType_CallSignatures(resolved)) {
-    members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined)];
+  const callSignatures = StructuredType_CallSignatures(resolved);
+  if (callSignatures !== undefined) {
+    for (const sig of callSignatures) {
+      members = [...members, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindCallSignature, undefined)];
+    }
   }
   const filteredProps = NodeBuilderImpl_filterInheritedProperties(receiver, interfaceType, baseTypes, StructuredType_Properties(resolved));
   members = NodeBuilderImpl_serializePropertiesWithTruncation(receiver, filteredProps, members);
@@ -585,11 +591,17 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
   let extendsTypes: GoSlice<GoPtr<Node>> = [];
   let implementsTypes: GoSlice<GoPtr<Node>> = [];
   for (const declaration of declarations) {
-    for (const heritageElement of GetExtendsHeritageClauseElements(declaration)) {
-      extendsTypes = [...extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+    const extendsHeritageElements = GetExtendsHeritageClauseElements(declaration);
+    if (extendsHeritageElements !== undefined) {
+      for (const heritageElement of extendsHeritageElements) {
+        extendsTypes = [...extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+      }
     }
-    for (const heritageElement of GetImplementsHeritageClauseElements(declaration)) {
-      implementsTypes = [...implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+    const implementsHeritageElements = GetImplementsHeritageClauseElements(declaration);
+    if (implementsHeritageElements !== undefined) {
+      for (const heritageElement of implementsHeritageElements) {
+        implementsTypes = [...implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+      }
     }
   }
   let heritageClauses: GoSlice<GoPtr<Node>> = [];
@@ -604,6 +616,7 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializePropertiesWithTruncation","kind":"method","status":"implemented","sigHash":"24195f02a4a59b642d0556cfb545f029f0d8443fbe6a4e9045d9fba0f4248d5d","bodyHash":"489aa119aa2a86e5cc0201f534db8b06a6d1d60b3a087ce408f2b4d262fd83a6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializePropertiesWithTruncation(properties []*ast.Symbol, elements []*ast.Node) []*ast.Node {
@@ -623,7 +636,7 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
  * 	return elements
  * }
  */
-export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPtr<NodeBuilderImpl>, properties: GoSlice<GoPtr<Symbol>>, elements: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
+export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPtr<NodeBuilderImpl>, properties: GoPtr<GoSlice<GoPtr<Symbol>>>, elements: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
   const filtered = Filter(properties, (p) => ((p!.Flags & SymbolFlagsPrototype) === 0) as bool);
   let result = [...elements];
   for (let i = 0; i < filtered.length; i++) {
@@ -695,50 +708,59 @@ export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPt
  * 	return result
  * }
  */
-export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilderImpl>, staticType: GoPtr<Type>, staticBaseType: GoPtr<Type>, isClass: bool, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
+export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilderImpl>, staticType: GoPtr<Type>, staticBaseType: GoPtr<Type>, isClass: bool, symbol_: GoPtr<Symbol>): GoPtr<GoSlice<GoPtr<Node>>> {
+  const signatures = Checker_getSignaturesOfType(receiver!.ch, staticType, SignatureKindConstruct);
   const isNonConstructable = (!isClass &&
     symbol_!.ValueDeclaration !== undefined &&
     IsInJSFile(symbol_!.ValueDeclaration) &&
-    Checker_getSignaturesOfType(receiver!.ch, staticType, SignatureKindConstruct).length === 0) as bool;
+    (signatures === undefined || signatures.length === 0)) as bool;
   if (isNonConstructable) {
     receiver!.ctx!.approximateLength += 21;
     const modifiers = CreateModifiersFromModifierFlags(ModifierFlagsPrivate, (kind) => NodeFactory_NewModifier(receiver!.f, kind));
     return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, modifiers), undefined, NodeFactory_NewNodeList(receiver!.f, []), undefined, undefined, undefined)];
   }
-  const signatures = Checker_getSignaturesOfType(receiver!.ch, staticType, SignatureKindConstruct);
   if (staticBaseType !== undefined) {
     const baseSigs = Checker_getSignaturesOfType(receiver!.ch, staticBaseType, SignatureKindConstruct);
-    if (baseSigs.length === 0 && Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
-      return [];
+    const baseSignatureCount = baseSigs === undefined ? 0 : baseSigs.length;
+    const signatureCount = signatures === undefined ? 0 : signatures.length;
+    if (baseSignatureCount === 0 && Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
+      return undefined;
     }
-    if (baseSigs.length === signatures.length) {
+    if (baseSignatureCount === signatureCount) {
       let allMatch = true;
-      for (let i = 0; i < baseSigs.length; i++) {
+      for (let i = 0; i < baseSignatureCount; i++) {
+        if (signatures === undefined || baseSigs === undefined) {
+          throw new Error("equal nonzero constructor signature counts require both signature slices");
+        }
         if (Checker_compareSignaturesIdentical(receiver!.ch, signatures[i], baseSigs[i], false as bool, false as bool, true as bool, (s, t) => Checker_compareTypesIdentical(receiver!.ch, s, t)) !== TernaryTrue) {
           allMatch = false;
           break;
         }
       }
       if (allMatch) {
-        return [];
+        return undefined;
       }
     }
     let privateProtected: ModifierFlags = 0;
-    for (const sig of signatures) {
-      if (sig!.declaration !== undefined) {
-        privateProtected |= Node_ModifierFlags(sig!.declaration) & (ModifierFlagsPrivate | ModifierFlagsProtected);
+    if (signatures !== undefined) {
+      for (const sig of signatures) {
+        if (sig!.declaration !== undefined) {
+          privateProtected |= Node_ModifierFlags(sig!.declaration) & (ModifierFlagsPrivate | ModifierFlagsProtected);
+        }
       }
     }
     if (privateProtected !== 0) {
       return [NewConstructorDeclaration(receiver!.f, NodeFactory_NewModifierList(receiver!.f, CreateModifiersFromModifierFlags(privateProtected, (kind) => NodeFactory_NewModifier(receiver!.f, kind))), undefined, NodeFactory_NewNodeList(receiver!.f, []), undefined, undefined, undefined)];
     }
   } else if (Every(signatures, (sig) => (sig!.parameters.length === 0) as bool)) {
-    return [];
+    return undefined;
   }
-  let result: GoSlice<GoPtr<Node>> = [];
-  for (const sig of signatures) {
-    receiver!.ctx!.approximateLength++;
-    result = [...result, NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined)];
+  let result: GoPtr<GoSlice<GoPtr<Node>>>;
+  if (signatures !== undefined) {
+    for (const sig of signatures) {
+      receiver!.ctx!.approximateLength++;
+      result = [...(result ?? []), NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindConstructor, undefined)];
+    }
   }
   return result;
 }
@@ -763,14 +785,17 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
  */
 export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<NodeBuilderImpl>, input: GoPtr<Type>, baseType: GoPtr<Type>): GoSlice<GoPtr<Node>> {
   let result: GoSlice<GoPtr<Node>> = [];
-  for (const info of Checker_getIndexInfosOfType(receiver!.ch, input)) {
-    if (baseType !== undefined) {
-      const baseInfo = Checker_getIndexInfoOfType(receiver!.ch, baseType, info!.keyType);
-      if (baseInfo !== undefined && Checker_isTypeIdenticalTo(receiver!.ch, info!.valueType, baseInfo!.valueType)) {
-        continue;
+  const indexInfos = Checker_getIndexInfosOfType(receiver!.ch, input);
+  if (indexInfos !== undefined) {
+    for (const info of indexInfos) {
+      if (baseType !== undefined) {
+        const baseInfo = Checker_getIndexInfoOfType(receiver!.ch, baseType, info!.keyType);
+        if (baseInfo !== undefined && Checker_isTypeIdenticalTo(receiver!.ch, info!.valueType, baseInfo!.valueType)) {
+          continue;
+        }
       }
+      result = [...result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined)];
     }
-    result = [...result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined)];
   }
   return result;
 }
@@ -1054,10 +1079,12 @@ export function NodeBuilderImpl_expandModuleDecl(receiver: GoPtr<NodeBuilderImpl
     if ((resolved!.Flags & (SymbolFlagsFunction | SymbolFlagsMethod)) !== 0) {
       const t = Checker_getTypeOfSymbol(receiver!.ch, resolved);
       const sigs = Checker_getSignaturesOfType(receiver!.ch, t, SignatureKindCall);
-      for (const sig of sigs) {
-        receiver!.ctx!.approximateLength++;
-        const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: [], name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
-        bodyStmts = [...bodyStmts, { node: decl, isLocal: false as bool }];
+      if (sigs !== undefined) {
+        for (const sig of sigs) {
+          receiver!.ctx!.approximateLength++;
+          const decl = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, sig, KindFunctionDeclaration, { modifiers: [], name: NewIdentifier(receiver!.f, m!.Name), questionToken: undefined });
+          bodyStmts = [...bodyStmts, { node: decl, isLocal: false as bool }];
+        }
       }
       const merged = Checker_getMergedSymbol(receiver!.ch, resolved);
       const hasModuleExports = (merged!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0 && merged!.Exports !== undefined && merged!.Exports.size !== 0;
@@ -1128,6 +1155,7 @@ export function NodeBuilderImpl_serializeTypeAliasForNamespace(receiver: GoPtr<N
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.filterInheritedProperties","kind":"method","status":"implemented","sigHash":"fd93479878ce292c0aa5c857ac9dbbbc007af8616acf9652a3b62395ff3af687","bodyHash":"745fc839994e834e20c185d30aca30737d079b5b8dba2c6d6ebd678292161e9d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) filterInheritedProperties(t *Type, baseTypes []*Type, properties []*ast.Symbol) []*ast.Symbol {
@@ -1157,26 +1185,34 @@ export function NodeBuilderImpl_serializeTypeAliasForNamespace(receiver: GoPtr<N
  * 	})
  * }
  */
-export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>, baseTypes: GoSlice<GoPtr<Type>>, properties: GoSlice<GoPtr<Symbol>>): GoSlice<GoPtr<Symbol>> {
-  if (baseTypes.length === 0) {
+export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>, baseTypes: GoPtr<GoSlice<GoPtr<Type>>>, properties: GoPtr<GoSlice<GoPtr<Symbol>>>): GoPtr<GoSlice<GoPtr<Symbol>>> {
+  if (baseTypes === undefined || baseTypes.length === 0) {
     return properties;
   }
   const propsByName = new globalThis.Map<string, GoPtr<Symbol>>();
-  for (const p of properties) {
-    propsByName.set(p!.Name, p);
+  if (properties !== undefined) {
+    for (const p of properties) {
+      propsByName.set(p!.Name, p);
+    }
   }
   const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0);
   for (const base of baseTypes) {
     const baseWithThis = Checker_getTypeWithThisArgument(receiver!.ch, base, Type_AsInterfaceType(Checker_getTargetType(receiver!.ch, t))!.thisType, false as bool);
-    for (const prop of Checker_getPropertiesOfType(receiver!.ch, baseWithThis)) {
-      const existing = propsByName.get(prop!.Name);
-      if (existing !== undefined && prop!.Parent === existing!.Parent) {
-        Set_Add(inherited, prop!.Name);
+    const baseProperties = Checker_getPropertiesOfType(receiver!.ch, baseWithThis);
+    if (baseProperties !== undefined) {
+      for (const prop of baseProperties) {
+        const existing = propsByName.get(prop!.Name);
+        if (existing !== undefined && prop!.Parent === existing!.Parent) {
+          Set_Add(inherited, prop!.Name);
+        }
       }
     }
   }
   if (Set_Len(inherited) === 0) {
     return properties;
+  }
+  if (properties === undefined) {
+    return undefined;
   }
   return properties.filter((p) => !Set_Has(inherited, p!.Name));
 }

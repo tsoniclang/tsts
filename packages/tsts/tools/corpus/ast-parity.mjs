@@ -10,7 +10,7 @@ import { canonicalJson, compareUtf8, executableProvenance, fingerprint, hashInpu
 import { ensurePinnedGoProducer } from "../pinned-go-producer.mjs";
 import { loadAndVerifyTsgoSourcePin } from "../tsgo-source-pin.mjs";
 import { publishSealedDirectory, readVerifiedEvidenceFile, sealEvidenceDirectory, verifyEvidenceDirectory, writeDurableFileExclusive } from "../sealed-evidence.mjs";
-import { ensureCorpusTstsBuild, fixedNodeEnvironment } from "./tsts-build.mjs";
+import { ensureTstsBuild, fixedNodeEnvironment, preparedTstsBuildEvidence } from "../tsts-build.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = resolve(dirname(scriptPath), "../../../..");
@@ -579,7 +579,7 @@ function corpusCompilerPath(project, path) {
   return `/corpus/${corpusCaseId(project, path)}`;
 }
 
-export async function acquireCorpusTstsBuild(noBuild, implementation = ensureCorpusTstsBuild) {
+export async function acquireCorpusTstsBuild(noBuild, implementation = ensureTstsBuild) {
   if (typeof noBuild !== "boolean") throw new Error("corpus TSTS noBuild request must be boolean");
   return implementation({ repoRoot, packageRoot, buildRoot: tstsBuildRoot, noBuild });
 }
@@ -590,19 +590,7 @@ export async function publishCorpusReport(staging, destination) {
 }
 
 function relocationSafeTstsBuildProvenance(build) {
-  const provenance = build?.provenance;
-  assertExactObjectKeys(provenance, ["buildId", "output", "request", "schemaVersion"], "TSTS corpus build provenance");
-  if (provenance.schemaVersion !== 2 || provenance.buildId !== fingerprint(provenance.request, "tsts-corpus-build-v2")) {
-    throw new Error("TSTS corpus build provenance identity mismatch");
-  }
-  assertSha256(build.evidenceDigest, "TSTS corpus build evidenceDigest");
-  assertExactObjectKeys(provenance.request, ["command", "compiler", "environment", "inputs", "runtime", "schemaVersion"], "TSTS corpus build request");
-  if (!Array.isArray(provenance.request.command) || provenance.request.command.length !== 8 || !provenance.request.command.every((value) => typeof value === "string")) {
-    throw new Error("TSTS corpus build command is invalid");
-  }
-  const request = JSON.parse(canonicalJson(provenance.request));
-  if (canonicalJson(request.command.slice(0, 2)) !== canonicalJson(["<node>", "node_modules/typescript/bin/tsc"])) throw new Error("TSTS corpus build command contains an absolute executable path");
-  return { schemaVersion: 2, buildId: provenance.buildId, evidenceDigest: build.evidenceDigest, request, output: JSON.parse(canonicalJson(provenance.output)) };
+  return preparedTstsBuildEvidence(build);
 }
 
 async function ensureTsgoDumpBinary() {
@@ -1239,12 +1227,12 @@ function validateProducerCheckoutProvenance(checkout, label) {
 
 function validateTstsBuildEvidence(build) {
   assertExactObjectKeys(build, ["buildId", "evidenceDigest", "output", "request", "schemaVersion"], "corpus TSTS build");
-  if (build.schemaVersion !== 2) throw new Error("unsupported corpus TSTS build schemaVersion");
+  if (build.schemaVersion !== 3) throw new Error("unsupported corpus TSTS build schemaVersion");
   assertSha256(build.buildId, "corpus TSTS buildId");
   assertSha256(build.evidenceDigest, "corpus TSTS build evidenceDigest");
-  if (build.buildId !== fingerprint(build.request, "tsts-corpus-build-v2")) throw new Error("corpus TSTS buildId mismatch");
+  if (build.buildId !== fingerprint(build.request, "tsts-prepared-build-v1")) throw new Error("corpus TSTS buildId mismatch");
   assertExactObjectKeys(build.request, ["command", "compiler", "environment", "inputs", "runtime", "schemaVersion"], "corpus TSTS build request");
-  if (build.request.schemaVersion !== 2) throw new Error("unsupported corpus TSTS build request schemaVersion");
+  if (build.request.schemaVersion !== 3) throw new Error("unsupported corpus TSTS build request schemaVersion");
   const expectedCommand = ["<node>", "node_modules/typescript/bin/tsc", "-p", "packages/tsts/tsconfig.json", "--outDir", "<dist>", "--pretty", "false"];
   if (canonicalJson(build.request.command) !== canonicalJson(expectedCommand)) throw new Error("corpus TSTS build command is invalid or path-dependent");
   if (canonicalJson(build.request.environment) !== canonicalJson({ LANG: "C.UTF-8", LC_ALL: "C.UTF-8", NODE_OPTIONS: "", NODE_PATH: "", TZ: "UTC" })) throw new Error("corpus TSTS build environment is invalid");

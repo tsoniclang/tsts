@@ -248,7 +248,9 @@ export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compile
 export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModuleInfoCollector>): GoPtr<externalModuleInfo> {
   let hasImportStar = false;
   let hasImportDefault = false;
-  for (const node of receiver!.sourceFile!.Statements!.Nodes) {
+  const statementNodes = receiver!.sourceFile!.Statements!.Nodes;
+  if (statementNodes !== undefined) {
+  for (const node of statementNodes) {
     // Look through NotEmittedStatement to find elided export= declarations
     // (e.g., `declare export = x` is elided by the type eraser but must still be collected)
     if (IsNotEmittedStatement(node)) {
@@ -330,8 +332,11 @@ export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModu
       case KindVariableStatement: {
         const n = AsVariableStatement(node);
         if (HasSyntacticModifier(node, ModifierFlagsExport)) {
-          for (const decl of AsVariableDeclarationList(n!.DeclarationList)!.Declarations!.Nodes) {
-            externalModuleInfoCollector_collectExportedVariableInfo(receiver, decl);
+          const declarationNodes = AsVariableDeclarationList(n!.DeclarationList)!.Declarations!.Nodes;
+          if (declarationNodes !== undefined) {
+            for (const decl of declarationNodes) {
+              externalModuleInfoCollector_collectExportedVariableInfo(receiver, decl);
+            }
           }
         }
         break;
@@ -370,6 +375,7 @@ export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModu
         break;
       }
     }
+  }
   }
 
   return receiver!.output;
@@ -704,7 +710,7 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
 
         const f = emitContext!.Factory!.__tsgoEmbedded0!;
         const importSpecifiers = CoreMap(helperNames, (name: string) => {
-          if (IsFileLevelUniqueName(sourceFile, name, undefined!)) {
+          if (IsFileLevelUniqueName(sourceFile, name, undefined)) {
             return NewImportSpecifier(f, false /*isTypeOnly*/, undefined /*propertyName*/, NewIdentifier(f, name));
           } else {
             return NewImportSpecifier(f, false /*isTypeOnly*/, NewIdentifier(f, name), NodeFactory_NewUnscopedHelperName(emitContext!.Factory, name));
@@ -746,7 +752,7 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
  */
 export function getImportedHelpers(emitContext: GoPtr<EmitContext>, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<EmitHelper>> {
   let helpers: GoSlice<GoPtr<EmitHelper>> = [];
-  for (const helper of EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile))) {
+  for (const helper of EmitContext_GetEmitHelpers(emitContext, Node_AsNode(sourceFile)) ?? []) {
     if (!helper!.Scoped) {
       helpers = [...helpers, helper];
     }
@@ -876,14 +882,18 @@ export function getImportNeedsImportStarHelper(node: GoPtr<ImportDeclaration>): 
     return false;
   }
   const namedImports = AsNamedImports(bindings);
+  const elementNodes = namedImports!.Elements!.Nodes;
   let defaultRefCount = 0;
-  for (const binding of namedImports!.Elements!.Nodes) {
-    if (isNamedDefaultReference(binding)) {
-      defaultRefCount++;
+  if (elementNodes !== undefined) {
+    for (const binding of elementNodes) {
+      if (isNamedDefaultReference(binding)) {
+        defaultRefCount++;
+      }
     }
   }
   // Import star is required if there's default named refs mixed with non-default refs, or if theres non-default refs and it has a default import
-  return (defaultRefCount > 0 && defaultRefCount !== namedImports!.Elements!.Nodes.length) || ((namedImports!.Elements!.Nodes.length - defaultRefCount) !== 0 && IsDefaultImport(Node_AsNode(node)));
+  const elementCount = elementNodes === undefined ? 0 : elementNodes.length;
+  return (defaultRefCount > 0 && defaultRefCount !== elementCount) || ((elementCount - defaultRefCount) !== 0 && IsDefaultImport(Node_AsNode(node)));
 }
 
 /**

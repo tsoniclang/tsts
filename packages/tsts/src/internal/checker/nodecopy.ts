@@ -1835,7 +1835,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsConditionalTypeNode(node)) {
       const conditional = AsConditionalTypeNode(node)!;
       const checkType = visitNode(conditional.CheckType);
-      const dispose = NodeBuilderImpl_enterNewScope(b, node, [], Checker_getInferTypeParameters(b!.ch, node), [], undefined);
+      const dispose = NodeBuilderImpl_enterNewScope(b, node, undefined, Checker_getInferTypeParameters(b!.ch, node), undefined, undefined);
       const extendsType = visitNode(conditional.ExtendsType);
       const trueType = visitNode(conditional.TrueType);
       dispose();
@@ -1875,18 +1875,18 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     const introducesNewScope = IsFunctionLike(node) || IsMappedTypeNode(node);
     let exit: (() => void) | undefined = undefined;
     if (introducesNewScope) {
-      let params: GoSlice<GoPtr<Symbol>> = [];
-      let typeParams: GoSlice<GoPtr<Type>> = [];
+      let params: GoPtr<GoSlice<GoPtr<Symbol>>>;
+      let typeParams: GoPtr<GoSlice<GoPtr<Type>>>;
       if (IsFunctionLike(node)) {
         const signature = Checker_getSignatureFromDeclaration(b!.ch, node);
-        params = signature!.parameters ?? [];
-        typeParams = signature!.typeParameters ?? [];
+        params = signature!.parameters;
+        typeParams = signature!.typeParameters;
       } else if (IsConditionalTypeNode(node)) {
         typeParams = Checker_getInferTypeParameters(b!.ch, node);
       } else if (IsMappedTypeNode(node)) {
         typeParams = [Checker_getDeclaredTypeOfTypeParameter(b!.ch, Checker_getSymbolOfDeclaration(b!.ch, AsMappedTypeNode(node)!.TypeParameter))];
       }
-      exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, [], undefined);
+      exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, undefined, undefined);
     }
     let result = visitExistingNodeTreeSymbolsWorker(node);
     if (exit !== undefined) {

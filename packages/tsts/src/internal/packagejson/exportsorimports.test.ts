@@ -21,11 +21,15 @@ function bytes(text: string): byte[] {
   return Array.from(textEncoder.encode(text)) as byte[];
 }
 
-function parseExportsOrImports(text: string): ExportsOrImports {
-  const value: ExportsOrImports = {
+function zeroExportsOrImports(): ExportsOrImports {
+  return {
     __tsgoEmbedded0: { Type: JSONValueTypeNotPresent, Value: undefined },
     objectKind: objectKindUnknown,
   };
+}
+
+function parseExportsOrImports(text: string): ExportsOrImports {
+  const value = zeroExportsOrImports();
   const error = ExportsOrImports_UnmarshalJSONFrom(value, NewDecoder(bytes(text)));
   assert.equal(error, undefined);
   return value;
@@ -54,24 +58,24 @@ test("ExportsOrImports.UnmarshalJSONFrom mirrors upstream subpaths/imports/condi
   const exportsObject = ExportsOrImports_AsObject(exportsValue);
   assert.equal(OrderedMap_Size(exportsObject), 3);
 
-  const dot = OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, ".");
+  const dot = OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, ".", zeroExportsOrImports);
   assert.equal(ExportsOrImports_IsConditions(dot), true);
   assert.equal(
-    OrderedMap_GetOrZero<string, ExportsOrImports>(ExportsOrImports_AsObject(dot), "import").__tsgoEmbedded0!.Type,
+    OrderedMap_GetOrZero<string, ExportsOrImports>(ExportsOrImports_AsObject(dot), "import", zeroExportsOrImports).__tsgoEmbedded0!.Type,
     JSONValueTypeString,
   );
 
-  const testArray = OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, "./test");
+  const testArray = OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, "./test", zeroExportsOrImports);
   assert.equal(ExportsOrImports_AsArray(testArray)[2]!.__tsgoEmbedded0!.Type, JSONValueTypeNull);
-  assert.equal(OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, "./null").__tsgoEmbedded0!.Type, JSONValueTypeNull);
+  assert.equal(OrderedMap_GetOrZero<string, ExportsOrImports>(exportsObject, "./null", zeroExportsOrImports).__tsgoEmbedded0!.Type, JSONValueTypeNull);
 
   assert.equal(ExportsOrImports_IsImports(importsValue), true);
   const importsObject = ExportsOrImports_AsObject(importsValue);
   assert.equal(OrderedMap_Size(importsObject), 1);
-  const hashFoo = OrderedMap_GetOrZero<string, ExportsOrImports>(importsObject, "#foo");
+  const hashFoo = OrderedMap_GetOrZero<string, ExportsOrImports>(importsObject, "#foo", zeroExportsOrImports);
   assert.equal(ExportsOrImports_IsConditions(hashFoo), true);
   assert.equal(
-    OrderedMap_GetOrZero<string, ExportsOrImports>(ExportsOrImports_AsObject(hashFoo), "import").__tsgoEmbedded0!.Type,
+    OrderedMap_GetOrZero<string, ExportsOrImports>(ExportsOrImports_AsObject(hashFoo), "import", zeroExportsOrImports).__tsgoEmbedded0!.Type,
     JSONValueTypeString,
   );
 });

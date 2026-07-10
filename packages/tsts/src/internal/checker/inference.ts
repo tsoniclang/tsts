@@ -670,15 +670,19 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
     return;
   }
   if (source!.alias !== undefined && target!.alias !== undefined && source!.alias!["symbol"] === target!.alias!["symbol"]) {
-    if (source!.alias!.typeArguments.length !== 0 || target!.alias!.typeArguments.length !== 0) {
+    const sourceAliasTypeArguments = source!.alias!.typeArguments;
+    const targetAliasTypeArguments = target!.alias!.typeArguments;
+    const sourceAliasTypeArgumentCount = sourceAliasTypeArguments === undefined ? 0 : sourceAliasTypeArguments.length;
+    const targetAliasTypeArgumentCount = targetAliasTypeArguments === undefined ? 0 : targetAliasTypeArguments.length;
+    if (sourceAliasTypeArgumentCount !== 0 || targetAliasTypeArgumentCount !== 0) {
       // Source and target are types originating in the same generic type alias declaration.
       // Simply infer from source type arguments to target type arguments, with defaults applied.
       const aliasSymbol = source!.alias!["symbol"] as GoPtr<Symbol>;
       const params = (LinkStore_Get(c.typeAliasLinks, aliasSymbol) as GoPtr<TypeAliasLinks>)!.typeParameters;
       const minParams = Checker_getMinTypeArgumentCount(c, params);
       const nodeIsInJsFile = IsInJSFile(aliasSymbol!.ValueDeclaration);
-      const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
-      const targetTypes = Checker_fillMissingTypeArguments(c, target!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
+      const sourceTypes = Checker_fillMissingTypeArguments(c, sourceAliasTypeArguments, params, minParams, nodeIsInJsFile);
+      const targetTypes = Checker_fillMissingTypeArguments(c, targetAliasTypeArguments, params, minParams, nodeIsInJsFile);
       Checker_inferFromTypeArguments(c, state, sourceTypes, targetTypes, Checker_getAliasVariances(c, aliasSymbol));
     }
     // And if there weren't any type arguments, there's no reason to run inference as the types must be the same.
@@ -762,14 +766,14 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
         return;
       }
       if (!inference.isFixed) {
-        const candidate = core.OrElse(state.propagationType, source);
+        const candidate = core.OrElse(state.propagationType, source, () => undefined, (left, right) => left === right);
         if (candidate === c.blockedStringType) {
           return;
         }
         if (state.priority < inference.priority) {
-          inference.candidates = [];
-          inference.candidateDepths = [];
-          inference.contraCandidates = [];
+          inference.candidates = undefined;
+          inference.candidateDepths = undefined;
+          inference.contraCandidates = undefined;
           inference.topLevel = true;
           inference.priority = state.priority;
         }
@@ -778,25 +782,29 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
           // i.e. only if we have not descended into a bivariant position.
           if (state.contravariant && !state.bivariant) {
             if (!slices.Contains(inference.contraCandidates, candidate)) {
-              inference.contraCandidates = [...inference.contraCandidates, candidate];
+              inference.contraCandidates = [...(inference.contraCandidates ?? []), candidate];
               clearCachedInferences(state.inferences);
             }
           } else {
-            let index = inference.candidates.indexOf(candidate);
-            if (index < 0 || inference.candidateDepths[index]! < state.depth) {
+            const candidates = inference.candidates ?? [];
+            const candidateDepths = inference.candidateDepths ?? [];
+            let index = candidates.indexOf(candidate);
+            if (index < 0 || candidateDepths[index]! < state.depth) {
               if (index >= 0) {
-                inference.candidates = inference.candidates.slice(0, index).concat(inference.candidates.slice(index + 1));
-                inference.candidateDepths = inference.candidateDepths.slice(0, index).concat(inference.candidateDepths.slice(index + 1));
+                inference.candidates = candidates.slice(0, index).concat(candidates.slice(index + 1));
+                inference.candidateDepths = candidateDepths.slice(0, index).concat(candidateDepths.slice(index + 1));
               }
               index = 0;
-              while (index < inference.candidateDepths.length) {
-                if (inference.candidateDepths[index]! < state.depth) {
+              const updatedCandidateDepths = inference.candidateDepths ?? [];
+              while (index < updatedCandidateDepths.length) {
+                if (updatedCandidateDepths[index]! < state.depth) {
                   break;
                 }
                 index++;
               }
-              inference.candidates = inference.candidates.slice(0, index).concat([candidate], inference.candidates.slice(index));
-              inference.candidateDepths = inference.candidateDepths.slice(0, index).concat([state.depth], inference.candidateDepths.slice(index));
+              const updatedCandidates = inference.candidates ?? [];
+              inference.candidates = updatedCandidates.slice(0, index).concat([candidate], updatedCandidates.slice(index));
+              inference.candidateDepths = updatedCandidateDepths.slice(0, index).concat([state.depth], updatedCandidateDepths.slice(index));
               clearCachedInferences(state.inferences);
             }
           }
@@ -884,6 +892,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypeArguments","kind":"method","status":"implemented","sigHash":"dff4bdcf801faef2dda4e9808b8d6fe086f69c941d89e059f4ccb90757928fd4","bodyHash":"65ff7e29e9f67bcde7d41867b4b832a44b3198ecd5ee2db877932d46d659fce4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/inference.ts::InferenceState>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::VarianceFlags>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/inference.ts::InferenceState>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/checker/types.ts::VarianceFlags>>)=>void"}
  *
  * Go source:
  * func (c *Checker) inferFromTypeArguments(n *InferenceState, sourceTypes []*Type, targetTypes []*Type, variances []VarianceFlags) {
@@ -898,15 +907,24 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
  * 	n.depth--
  * }
  */
-export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sourceTypes: GoSlice<GoPtr<Type>>, targetTypes: GoSlice<GoPtr<Type>>, variances: GoSlice<VarianceFlags>): void {
+export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sourceTypes: GoPtr<GoSlice<GoPtr<Type>>>, targetTypes: GoPtr<GoSlice<GoPtr<Type>>>, variances: GoPtr<GoSlice<VarianceFlags>>): void {
   const c = receiver!;
   n!.depth = (n!.depth + 1) as int;
-  const count = Math.min(sourceTypes.length, targetTypes.length);
-  for (let i = 0; i < count; i++) {
-    if (i < variances.length && (variances[i]! & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
-      Checker_inferFromContravariantTypes(c, n, sourceTypes[i], targetTypes[i]);
-    } else {
-      Checker_inferFromTypes(c, n, sourceTypes[i], targetTypes[i]);
+  if (sourceTypes !== undefined && targetTypes !== undefined) {
+    const count = Math.min(sourceTypes.length, targetTypes.length);
+    for (let i = 0; i < count; i++) {
+      let variance: GoPtr<VarianceFlags>;
+      if (variances !== undefined && i < variances.length) {
+        variance = variances[i];
+        if (variance === undefined) {
+          throw new Error("variance slice contains an uninitialized element");
+        }
+      }
+      if (variance !== undefined && (variance & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
+        Checker_inferFromContravariantTypes(c, n, sourceTypes[i], targetTypes[i]);
+      } else {
+        Checker_inferFromTypes(c, n, sourceTypes[i], targetTypes[i]);
+      }
     }
   }
   n!.depth = (n!.depth - 1) as int;
@@ -1844,11 +1862,21 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
       const targetArity = Checker_getTypeReferenceArity(c, target);
       const elementTypes = Checker_getTypeArguments(c, target);
       const elementInfos = Type_TargetTupleType(target)!.elementInfos;
+      const sourceElementTypes = Checker_getTypeArguments(c, source);
+      if (targetArity === 0) {
+        return;
+      }
+      if (elementTypes === undefined || elementInfos === undefined) {
+        throw new Error("nonempty target tuple requires element types and information");
+      }
       // When source and target are tuple types with the same structure (fixed, variadic, and rest are matched
       // to the same kind in each position), simply infer between the element types.
       if (isTupleType(source) && Checker_isTupleTypeStructureMatching(c, source, target)) {
+        if (sourceElementTypes === undefined) {
+          throw new Error("matching nonempty source tuple requires element types");
+        }
         for (let i = 0; i < targetArity; i++) {
-          Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[i], elementTypes[i]);
+          Checker_inferFromTypes(c, state, sourceElementTypes[i], elementTypes[i]);
         }
         return;
       }
@@ -1861,12 +1889,32 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
         }
       }
       // Infer between starting fixed elements.
-      for (let i = 0; i < startLength; i++) {
-        Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[i], elementTypes[i]);
+      if (startLength !== 0) {
+        if (sourceElementTypes === undefined) {
+          throw new Error("fixed source tuple elements require element types");
+        }
+        for (let i = 0; i < startLength; i++) {
+          Checker_inferFromTypes(c, state, sourceElementTypes[i], elementTypes[i]);
+        }
       }
-      if (!isTupleType(source) || (sourceArity - startLength - endLength === 1 && (Type_TargetTupleType(source)!.elementInfos[startLength]!.flags & ElementFlagsRest) !== 0)) {
+      let sourceHasSingleRestElement = false;
+      if (isTupleType(source) && sourceArity - startLength - endLength === 1) {
+        const sourceElementInfos = Type_TargetTupleType(source)!.elementInfos;
+        if (sourceElementInfos === undefined) {
+          throw new Error("source tuple rest element requires element information");
+        }
+        const sourceElementInfo = sourceElementInfos[startLength];
+        if (sourceElementInfo === undefined) {
+          throw new Error("source tuple rest element requires corresponding element information");
+        }
+        sourceHasSingleRestElement = (sourceElementInfo.flags & ElementFlagsRest) !== 0;
+      }
+      if (!isTupleType(source) || sourceHasSingleRestElement) {
         // Single rest element remains in source, infer from that to every element in target
-        const restType = Checker_getTypeArguments(c, source)[startLength];
+        if (sourceElementTypes === undefined) {
+          throw new Error("source rest element requires element types");
+        }
+        const restType = sourceElementTypes[startLength];
         for (let i = startLength; i < targetArity - endLength; i++) {
           let t = restType;
           if ((elementInfos[i]!.flags & ElementFlagsVariadic) !== 0) {
@@ -1911,7 +1959,10 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
                 const endIndex = sourceArity - getEndElementCount(Type_TargetTupleType(target)!, ElementFlagsFixed);
                 const startIndex = endIndex - impliedArity;
                 if (startIndex >= startLength) {
-                  const trailingSlice = Checker_createTupleTypeEx(c, Checker_getTypeArguments(c, source).slice(startIndex, endIndex), Type_TargetTupleType(source)!.elementInfos.slice(startIndex, endIndex), false);
+                  if (sourceElementTypes === undefined) {
+                    throw new Error("trailing source tuple slice requires element types");
+                  }
+                  const trailingSlice = Checker_createTupleTypeEx(c, sourceElementTypes.slice(startIndex, endIndex), Type_TargetTupleType(source)!.elementInfos?.slice(startIndex, endIndex), false);
                   const restType = Checker_getElementTypeOfSliceOfTupleType(c, source, startLength, endLength + impliedArity, false, false);
                   if (restType !== undefined) {
                     Checker_inferFromTypes(c, state, restType, elementTypes[startLength]);
@@ -1936,8 +1987,13 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
         }
       }
       // Infer between ending fixed elements
-      for (let i = 0; i < endLength; i++) {
-        Checker_inferFromTypes(c, state, Checker_getTypeArguments(c, source)[sourceArity - i - 1], elementTypes[targetArity - i - 1]);
+      if (endLength !== 0) {
+        if (sourceElementTypes === undefined) {
+          throw new Error("ending source tuple elements require element types");
+        }
+        for (let i = 0; i < endLength; i++) {
+          Checker_inferFromTypes(c, state, sourceElementTypes[sourceArity - i - 1], elementTypes[targetArity - i - 1]);
+        }
       }
       return;
     }
@@ -1969,10 +2025,12 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
 export function Checker_inferFromProperties(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
   const c = receiver!;
   const properties = Checker_getPropertiesOfObjectType(c, target);
-  for (const targetProp of properties) {
-    const sourceProp = Checker_getPropertyOfType(c, source, targetProp!.Name);
-    if (sourceProp !== undefined && !core.Some(sourceProp!.Declarations, (node: GoPtr<Node>): bool => Checker_isSkipDirectInferenceNode(c, node))) {
-      Checker_inferFromTypes(c, n, Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, sourceProp), (sourceProp!.Flags & SymbolFlagsOptional) !== 0), Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, targetProp), (targetProp!.Flags & SymbolFlagsOptional) !== 0));
+  if (properties !== undefined) {
+    for (const targetProp of properties) {
+      const sourceProp = Checker_getPropertyOfType(c, source, targetProp!.Name);
+      if (sourceProp !== undefined && !core.Some(sourceProp!.Declarations, (node: GoPtr<Node>): bool => Checker_isSkipDirectInferenceNode(c, node))) {
+        Checker_inferFromTypes(c, n, Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, sourceProp), (sourceProp!.Flags & SymbolFlagsOptional) !== 0), Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, targetProp), (targetProp!.Flags & SymbolFlagsOptional) !== 0));
+      }
     }
   }
 }
@@ -2000,15 +2058,17 @@ export function Checker_inferFromSignatures(receiver: GoPtr<Checker>, n: GoPtr<I
   const c = receiver!;
   const state = n!;
   const sourceSignatures = Checker_getSignaturesOfType(c, source, kind);
-  const sourceLen = sourceSignatures.length;
-  if (sourceLen > 0) {
+  const sourceLen = sourceSignatures?.length ?? 0;
+  if (sourceSignatures !== undefined && sourceLen > 0) {
     // We match source and target signatures from the bottom up, and if the source has fewer signatures
     // than the target, we infer from the first source signature to the excess target signatures.
     const targetSignatures = Checker_getSignaturesOfType(c, target, kind);
-    const targetLen = targetSignatures.length;
-    for (let i = 0; i < targetLen; i++) {
-      const sourceIndex = Math.max(sourceLen - targetLen + i, 0);
-      Checker_inferFromSignature(c, state, Checker_getBaseSignature(c, sourceSignatures[sourceIndex]), Checker_getErasedSignature(c, targetSignatures[i]));
+    const targetLen = targetSignatures?.length ?? 0;
+    if (targetSignatures !== undefined) {
+      for (let i = 0; i < targetLen; i++) {
+        const sourceIndex = Math.max(sourceLen - targetLen + i, 0);
+        Checker_inferFromSignature(c, state, Checker_getBaseSignature(c, sourceSignatures[sourceIndex]), Checker_getErasedSignature(c, targetSignatures[i]));
+      }
     }
   }
 }
@@ -2192,21 +2252,27 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
     priority = InferencePriorityHomomorphicMappedType;
   }
   const indexInfos = Checker_getIndexInfosOfType(c, target);
-  if (Checker_isObjectTypeWithInferableIndex(c, source)) {
+  if (Checker_isObjectTypeWithInferableIndex(c, source) && indexInfos !== undefined) {
     for (const targetInfo of indexInfos) {
       let propTypes: GoSlice<GoPtr<Type>> = [];
-      for (const prop of Checker_getPropertiesOfType(c, source)) {
-        if (Checker_isApplicableIndexType(c, Checker_getLiteralTypeFromProperty(c, prop, TypeFlagsStringOrNumberLiteralOrUnique, false), targetInfo!.keyType)) {
-          let propType = Checker_getTypeOfSymbol(c, prop);
-          if ((prop!.Flags & SymbolFlagsOptional) !== 0) {
-            propType = Checker_removeMissingOrUndefinedType(c, propType);
+      const sourceProperties = Checker_getPropertiesOfType(c, source);
+      if (sourceProperties !== undefined) {
+        for (const prop of sourceProperties) {
+          if (Checker_isApplicableIndexType(c, Checker_getLiteralTypeFromProperty(c, prop, TypeFlagsStringOrNumberLiteralOrUnique, false), targetInfo!.keyType)) {
+            let propType = Checker_getTypeOfSymbol(c, prop);
+            if ((prop!.Flags & SymbolFlagsOptional) !== 0) {
+              propType = Checker_removeMissingOrUndefinedType(c, propType);
+            }
+            propTypes = [...propTypes, propType];
           }
-          propTypes = [...propTypes, propType];
         }
       }
-      for (const info of Checker_getIndexInfosOfType(c, source)) {
-        if (Checker_isApplicableIndexType(c, info!.keyType, targetInfo!.keyType)) {
-          propTypes = [...propTypes, info!.valueType];
+      const sourceIndexInfos = Checker_getIndexInfosOfType(c, source);
+      if (sourceIndexInfos !== undefined) {
+        for (const info of sourceIndexInfos) {
+          if (Checker_isApplicableIndexType(c, info!.keyType, targetInfo!.keyType)) {
+            propTypes = [...propTypes, info!.valueType];
+          }
         }
       }
       if (propTypes.length !== 0) {
@@ -2214,10 +2280,12 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
       }
     }
   }
-  for (const targetInfo of indexInfos) {
-    const sourceInfo = Checker_getApplicableIndexInfo(c, source, targetInfo!.keyType);
-    if (sourceInfo !== undefined) {
-      Checker_inferWithPriority(c, n, sourceInfo!.valueType, targetInfo!.valueType, priority);
+  if (indexInfos !== undefined) {
+    for (const targetInfo of indexInfos) {
+      const sourceInfo = Checker_getApplicableIndexInfo(c, source, targetInfo!.keyType);
+      if (sourceInfo !== undefined) {
+        Checker_inferWithPriority(c, n, sourceInfo!.valueType, targetInfo!.valueType, priority);
+      }
     }
   }
 }
@@ -2284,7 +2352,7 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
   if ((constraintType!.flags & TypeFlagsUnion) !== 0 || (constraintType!.flags & TypeFlagsIntersection) !== 0) {
     let result = false;
     for (const t of Type_Types(constraintType)) {
-      result = core.OrElse(Checker_inferToMappedType(c, state, source, target, t), result);
+      result = core.OrElse(Checker_inferToMappedType(c, state, source, target, t), result, (): bool => false, (left, right) => left === right);
     }
     return result;
   }
@@ -2319,14 +2387,26 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
     }
     // If no inferences can be made to K's constraint, infer from a union of the property types
     // in the source to the template type X.
-    const propTypes = core.Map(Checker_getPropertiesOfType(c, source), (prop: GoPtr<Symbol>): GoPtr<Type> => Checker_getTypeOfSymbol(c, prop));
-    const indexTypes = core.Map(Checker_getIndexInfosOfType(c, source), (info: GoPtr<IndexInfo>): GoPtr<Type> => {
+    const properties = Checker_getPropertiesOfType(c, source);
+    const propTypes = properties === undefined
+      ? undefined
+      : core.Map(properties, (prop: GoPtr<Symbol>): GoPtr<Type> => Checker_getTypeOfSymbol(c, prop));
+    const indexInfos = Checker_getIndexInfosOfType(c, source);
+    const indexTypes = indexInfos === undefined ? undefined : core.Map(indexInfos, (info: GoPtr<IndexInfo>): GoPtr<Type> => {
       if (info !== c.enumNumberIndexInfo) {
         return info!.valueType;
       }
       return c.neverType;
     });
-    Checker_inferFromTypes(c, state, Checker_getUnionType(c, core.Concatenate(propTypes, indexTypes)), Checker_getTemplateTypeFromMappedType(c, target));
+    let sourceTypes: GoPtr<GoSlice<GoPtr<Type>>>;
+    if (indexTypes === undefined || indexTypes.length === 0) {
+      sourceTypes = propTypes;
+    } else if (propTypes === undefined || propTypes.length === 0) {
+      sourceTypes = indexTypes;
+    } else {
+      sourceTypes = [...propTypes, ...indexTypes];
+    }
+    Checker_inferFromTypes(c, state, Checker_getUnionType(c, sourceTypes), Checker_getTemplateTypeFromMappedType(c, target));
     return true;
   }
   return false;
@@ -2408,27 +2488,32 @@ export function Checker_createReverseMappedType(receiver: GoPtr<Checker>, source
   const c = receiver!;
   // We consider a source type reverse mappable if it has a string index signature or if
   // it has one or more properties and is of a partially inferable type.
-  if (!(Checker_getIndexInfoOfType(c, source, c.stringType) !== undefined || (Checker_getPropertiesOfType(c, source).length !== 0 && Checker_isPartiallyInferableType(c, source)))) {
+  if (!(Checker_getIndexInfoOfType(c, source, c.stringType) !== undefined || ((Checker_getPropertiesOfType(c, source)?.length ?? 0) !== 0 && Checker_isPartiallyInferableType(c, source)))) {
     return undefined;
   }
   // For arrays and tuples we infer new arrays and tuples where the reverse mapping has been
   // applied to the element type(s).
   if (Checker_isArrayType(c, source)) {
-    const elementType = Checker_inferReverseMappedType(c, Checker_getTypeArguments(c, source)[0], target, constraint);
+    const typeArguments = Checker_getTypeArguments(c, source);
+    if (typeArguments === undefined || typeArguments.length === 0) {
+      throw new Error("array reverse mapping requires an element type");
+    }
+    const elementType = Checker_inferReverseMappedType(c, typeArguments[0], target, constraint);
     if (elementType === undefined) {
       return undefined;
     }
     return Checker_createArrayTypeEx(c, elementType, Checker_isReadonlyArrayType(c, source));
   }
   if (isTupleType(source)) {
-    const elementTypes = core.Map(Checker_getElementTypes(c, source), (t: GoPtr<Type>): GoPtr<Type> => {
-      return Checker_inferReverseMappedType(c, t, target, constraint);
-    });
-    if (!core.Every(elementTypes, (t: GoPtr<Type>): bool => t !== undefined)) {
+    const sourceElementTypes = Checker_getElementTypes(c, source);
+    const elementTypes = sourceElementTypes === undefined
+      ? undefined
+      : core.Map(sourceElementTypes, (t: GoPtr<Type>): GoPtr<Type> => Checker_inferReverseMappedType(c, t, target, constraint));
+    if (elementTypes !== undefined && !core.Every(elementTypes, (t: GoPtr<Type>): bool => t !== undefined)) {
       return undefined;
     }
     let elementInfos = Type_TargetTupleType(source)!.elementInfos;
-    if ((getMappedTypeModifiers(target) & MappedTypeModifiersIncludeOptional) !== 0) {
+    if (elementInfos !== undefined && (getMappedTypeModifiers(target) & MappedTypeModifiersIncludeOptional) !== 0) {
       elementInfos = core.SameMap(elementInfos, (info: TupleElementInfo): TupleElementInfo => {
         if ((info.flags & ElementFlagsOptional) !== 0) {
           return { flags: ElementFlagsRequired, labeledDeclaration: info.labeledDeclaration };
@@ -2502,7 +2587,7 @@ export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source:
   const key: ReverseMappedTypeKey = { sourceId: source!.id, targetId: target!.id, constraintId: constraint!.id };
   const cached = c.reverseMappedCache.get(key);
   if (cached !== undefined) {
-    return core.OrElse(cached, c.unknownType);
+    return core.OrElse(cached, c.unknownType, () => undefined, (left, right) => left === right);
   }
   c.reverseMappedSourceStack = [...c.reverseMappedSourceStack, source];
   c.reverseMappedTargetStack = [...c.reverseMappedTargetStack, target];
@@ -2542,7 +2627,7 @@ export function Checker_inferReverseMappedTypeWorker(receiver: GoPtr<Checker>, s
   const templateType = Checker_getTemplateTypeFromMappedType(c, target);
   const inference = newInferenceInfo(typeParameter);
   Checker_inferTypes(c, [inference], source, templateType, InferencePriorityNone, false);
-  return Checker_getWidenedType(c, core.OrElse(Checker_getTypeFromInference(c, inference), c.unknownType));
+  return Checker_getWidenedType(c, core.OrElse(Checker_getTypeFromInference(c, inference), c.unknownType, () => undefined, (left, right) => left === right));
 }
 
 /**
@@ -2602,38 +2687,41 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
   const modifiers = getMappedTypeModifiers(r.mappedType);
   const readonlyMask = (modifiers & MappedTypeModifiersIncludeReadonly) === 0;
   const optionalMask = (modifiers & MappedTypeModifiersIncludeOptional) !== 0 ? 0 : SymbolFlagsOptional;
-  let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  let indexInfos: GoPtr<GoSlice<GoPtr<IndexInfo>>>;
   if (indexInfo !== undefined) {
-    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType), readonlyMask && indexInfo!.isReadonly, undefined, [])];
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType, () => undefined, (left, right) => left === right), readonlyMask && indexInfo!.isReadonly, undefined, undefined)];
   }
   const members: SymbolTable = new Map();
   const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
-  for (const prop of Checker_getPropertiesOfType(receiver, r.source)) {
-    if (limitedConstraint !== undefined) {
-      const propertyNameType = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false);
-      if (!Checker_isTypeAssignableTo(receiver, propertyNameType, limitedConstraint)) {
-        continue;
+  const sourceProperties = Checker_getPropertiesOfType(receiver, r.source);
+  if (sourceProperties !== undefined) {
+    for (const prop of sourceProperties) {
+      if (limitedConstraint !== undefined) {
+        const propertyNameType = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false);
+        if (!Checker_isTypeAssignableTo(receiver, propertyNameType, limitedConstraint)) {
+          continue;
+        }
       }
+      const checkFlags = CheckFlagsReverseMapped | (readonlyMask && Checker_isReadonlySymbol(receiver, prop) ? CheckFlagsReadonly : 0);
+      const inferredProp = Checker_newSymbolEx(receiver, SymbolFlagsProperty | (prop!.Flags & optionalMask), prop!.Name, checkFlags);
+      inferredProp!.Declarations = prop!.Declarations;
+      (LinkStore_Get(c.valueSymbolLinks, inferredProp) as GoPtr<ValueSymbolLinks>)!.nameType = (LinkStore_Get(c.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.nameType;
+      const links = (LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp) as GoPtr<ReverseMappedSymbolLinks>)!;
+      links.propertyType = Checker_getTypeOfSymbol(receiver, prop);
+      const constraintTarget = Type_AsIndexType(r.constraintType)!.target;
+      if ((constraintTarget!.flags & TypeFlagsIndexedAccess) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.objectType!.flags & TypeFlagsTypeParameter) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.indexType!.flags & TypeFlagsTypeParameter) !== 0) {
+        const newTypeParam = Type_AsIndexedAccessType(constraintTarget)!.objectType;
+        const newMappedType = Checker_replaceIndexedAccess(receiver, r.mappedType, constraintTarget, newTypeParam);
+        links.mappedType = newMappedType;
+        links.constraintType = Checker_getIndexType(receiver, newTypeParam);
+      } else {
+        links.mappedType = r.mappedType;
+        links.constraintType = r.constraintType;
+      }
+      members.set(prop!.Name, inferredProp);
     }
-    const checkFlags = CheckFlagsReverseMapped | (readonlyMask && Checker_isReadonlySymbol(receiver, prop) ? CheckFlagsReadonly : 0);
-    const inferredProp = Checker_newSymbolEx(receiver, SymbolFlagsProperty | (prop!.Flags & optionalMask), prop!.Name, checkFlags);
-    inferredProp!.Declarations = prop!.Declarations;
-    (LinkStore_Get(c.valueSymbolLinks, inferredProp) as GoPtr<ValueSymbolLinks>)!.nameType = (LinkStore_Get(c.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.nameType;
-    const links = (LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp) as GoPtr<ReverseMappedSymbolLinks>)!;
-    links.propertyType = Checker_getTypeOfSymbol(receiver, prop);
-    const constraintTarget = Type_AsIndexType(r.constraintType)!.target;
-    if ((constraintTarget!.flags & TypeFlagsIndexedAccess) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.objectType!.flags & TypeFlagsTypeParameter) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.indexType!.flags & TypeFlagsTypeParameter) !== 0) {
-      const newTypeParam = Type_AsIndexedAccessType(constraintTarget)!.objectType;
-      const newMappedType = Checker_replaceIndexedAccess(receiver, r.mappedType, constraintTarget, newTypeParam);
-      links.mappedType = newMappedType;
-      links.constraintType = Checker_getIndexType(receiver, newTypeParam);
-    } else {
-      links.mappedType = r.mappedType;
-      links.constraintType = r.constraintType;
-    }
-    members.set(prop!.Name, inferredProp);
   }
-  Checker_setStructuredTypeMembers(receiver, t, members, [], [], indexInfos);
+  Checker_setStructuredTypeMembers(receiver, t, members, undefined, undefined, indexInfos);
 }
 
 /**
@@ -2654,7 +2742,7 @@ export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, s
   const links = (LinkStore_Get(c.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!;
   if (links.resolvedType === undefined) {
     const reverseLinks = (LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_) as GoPtr<ReverseMappedSymbolLinks>)!;
-    links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType);
+    links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType, () => undefined, (left, right) => left === right);
   }
   return links.resolvedType;
 }
@@ -2784,9 +2872,22 @@ export function Checker_isTupleTypeStructureMatching(receiver: GoPtr<Checker>, t
   }
   const elementInfos1 = Type_TargetTupleType(t1)!.elementInfos;
   const elementInfos2 = Type_TargetTupleType(t2)!.elementInfos;
-  for (let i = 0; i < elementInfos1.length; i++) {
-    if ((elementInfos1[i]!.flags & ElementFlagsVariable) !== (elementInfos2[i]!.flags & ElementFlagsVariable)) {
-      return false;
+  if (elementInfos1 !== undefined) {
+    if (elementInfos2 === undefined) {
+      throw new Error("matching nonempty tuple arity requires target element information");
+    }
+    for (let i = 0; i < elementInfos1.length; i++) {
+      const elementInfo2 = elementInfos2[i];
+      if (elementInfo2 === undefined) {
+        throw new Error("matching tuple arity requires corresponding element information");
+      }
+      const elementInfo1 = elementInfos1[i];
+      if (elementInfo1 === undefined) {
+        throw new Error("source tuple contains uninitialized element information");
+      }
+      if ((elementInfo1.flags & ElementFlagsVariable) !== (elementInfo2.flags & ElementFlagsVariable)) {
+        return false;
+      }
     }
   }
   return true;
@@ -2826,7 +2927,7 @@ export function Checker_isTypeOrBaseIdenticalTo(receiver: GoPtr<Checker>, s: GoP
  */
 export function Checker_isTypeCloselyMatchedBy(receiver: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>): bool {
   return ((s!.flags & TypeFlagsObject) !== 0 && (t!.flags & TypeFlagsObject) !== 0 && s!.symbol !== undefined && s!.symbol === t!.symbol) ||
-    (s!.alias !== undefined && t!.alias !== undefined && s!.alias!.typeArguments.length !== 0 && s!.alias!["symbol"] === t!.alias!["symbol"]);
+    (s!.alias !== undefined && t!.alias !== undefined && s!.alias!.typeArguments !== undefined && s!.alias!.typeArguments.length !== 0 && s!.alias!["symbol"] === t!.alias!["symbol"]);
 }
 
 /**
@@ -3119,11 +3220,11 @@ export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<Infer
     let fallbackType: GoPtr<Type> = undefined;
     if (n!.signature !== undefined) {
       let inferredCovariantType: GoPtr<Type> = undefined;
-      if (inference!.candidates.length !== 0) {
+      if ((inference!.candidates?.length ?? 0) !== 0) {
         inferredCovariantType = Checker_getCovariantInference(receiver, inference, n!.signature);
       }
       let inferredContravariantType: GoPtr<Type> = undefined;
-      if (inference!.contraCandidates.length !== 0) {
+      if ((inference!.contraCandidates?.length ?? 0) !== 0) {
         inferredContravariantType = Checker_getContravariantInference(receiver, inference);
       }
       if (inferredCovariantType !== undefined || inferredContravariantType !== undefined) {
@@ -3683,7 +3784,7 @@ export function Checker_isSkipDirectInferenceNode(receiver: GoPtr<Checker>, node
  * }
  */
 export function newInferenceInfo(typeParameter: GoPtr<Type>): GoPtr<InferenceInfo> {
-  return { typeParameter, priority: InferencePriorityMaxValue, topLevel: true, impliedArity: -1, candidates: [], candidateDepths: [], contraCandidates: [], inferredType: undefined, isFixed: false };
+  return { typeParameter, priority: InferencePriorityMaxValue, topLevel: true, impliedArity: -1, candidates: undefined, candidateDepths: undefined, contraCandidates: undefined, inferredType: undefined, isFixed: false };
 }
 
 /**
@@ -3707,9 +3808,9 @@ export function newInferenceInfo(typeParameter: GoPtr<Type>): GoPtr<InferenceInf
 export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceInfo> {
   return {
     typeParameter: info!.typeParameter,
-    candidates: (slices.Clone(info!.candidates) ?? []) as GoSlice<GoPtr<Type>>,
-    candidateDepths: (slices.Clone(info!.candidateDepths) ?? []) as GoSlice<int>,
-    contraCandidates: (slices.Clone(info!.contraCandidates) ?? []) as GoSlice<GoPtr<Type>>,
+    candidates: slices.Clone(info!.candidates),
+    candidateDepths: slices.Clone(info!.candidateDepths),
+    contraCandidates: slices.Clone(info!.contraCandidates),
     inferredType: info!.inferredType,
     priority: info!.priority,
     topLevel: info!.topLevel,
@@ -3747,7 +3848,7 @@ export function clearCachedInferences(inferences: GoSlice<GoPtr<InferenceInfo>>)
  * }
  */
 export function hasInferenceCandidates(info: GoPtr<InferenceInfo>): bool {
-  return info!.candidates.length !== 0 || info!.contraCandidates.length !== 0;
+  return (info!.candidates?.length ?? 0) !== 0 || (info!.contraCandidates?.length ?? 0) !== 0;
 }
 
 /**

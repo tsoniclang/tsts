@@ -611,7 +611,7 @@ export function Checker_getContextualTypeForChildJsxExpression(receiver: GoPtr<C
   if (!(attributesType !== undefined && !IsTypeAny(attributesType) && jsxChildrenPropertyName !== InternalSymbolNameMissing && jsxChildrenPropertyName !== "")) {
     return undefined;
   }
-  const realChildren = GetSemanticJsxChildren(Node_Children(node)!.Nodes);
+  const realChildren = GetSemanticJsxChildren(Node_Children(node)!.Nodes ?? []);
   const childIndex = realChildren.indexOf(child);
   const childFieldType = Checker_getTypeOfPropertyOfContextualType(receiver, attributesType, jsxChildrenPropertyName);
   if (childFieldType === undefined) {
@@ -678,16 +678,19 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
     return (initializer === undefined || Checker_isPossiblyDiscriminantValue(receiver, initializer)) && Checker_isDiscriminantProperty(receiver, contextualType, symbol.Name);
   });
   const jsxAttributesSymbol = Node_Symbol(node);
-  const discriminantMembers = Checker_getPropertiesOfType(receiver, contextualType).filter((symbol) => {
-    if ((symbol!.Flags & SymbolFlagsOptional) === 0 || jsxAttributesSymbol === undefined) {
-      return false;
-    }
-    const element = node!.Parent!.Parent;
-    if (symbol!.Name === jsxChildrenPropertyName && IsJsxElement(element) && GetSemanticJsxChildren(Node_Children(element)!.Nodes).length !== 0) {
-      return false;
-    }
-    return jsxAttributesSymbol!.Members?.get(symbol!.Name) === undefined && Checker_isDiscriminantProperty(receiver, contextualType, symbol!.Name);
-  });
+  const contextualProperties = Checker_getPropertiesOfType(receiver, contextualType);
+  const discriminantMembers = contextualProperties === undefined
+    ? undefined
+    : contextualProperties.filter((symbol) => {
+        if ((symbol!.Flags & SymbolFlagsOptional) === 0 || jsxAttributesSymbol === undefined) {
+          return false;
+        }
+        const element = node!.Parent!.Parent;
+        if (symbol!.Name === jsxChildrenPropertyName && IsJsxElement(element) && GetSemanticJsxChildren(Node_Children(element)!.Nodes ?? []).length !== 0) {
+          return false;
+        }
+        return jsxAttributesSymbol!.Members?.get(symbol!.Name) === undefined && Checker_isDiscriminantProperty(receiver, contextualType, symbol!.Name);
+      });
   const discriminatorData: ObjectLiteralDiscriminator = { c: receiver, props: discriminantProperties, members: discriminantMembers };
   const discriminator = {
     len: () => ObjectLiteralDiscriminator_len(discriminatorData),
@@ -794,7 +797,7 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
     }
     const childrenNameType = Checker_getStringLiteralType(receiver, childrenPropName);
     const childrenTargetType = Checker_getIndexedAccessType(receiver, target, childrenNameType);
-    const validChildren = GetSemanticJsxChildren(Node_Children(containingElement)!.Nodes);
+    const validChildren = GetSemanticJsxChildren(Node_Children(containingElement)!.Nodes ?? []);
     if (validChildren.length === 0) {
       return reportedError;
     }
@@ -888,7 +891,7 @@ export interface JsxElaborationElement {
 export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): GoSeq<JsxElaborationElement> {
   return (yieldValue) => {
     let memberOffset = 0;
-    const children = Node_Children(node)!.Nodes;
+    const children = Node_Children(node)!.Nodes ?? [];
     for (let i = 0; i < children.length; i++) {
       const child = children[i]!;
       const nameType = Checker_getNumberLiteralType(receiver, i - memberOffset);
@@ -1079,8 +1082,8 @@ export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: 
           const diagnostic = createDiagnosticForNode(prop, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Checker_TypeToString(receiver, specificSource), Checker_TypeToString(receiver, targetPropType));
           Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
         } else {
-          const targetIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, tupleOrArrayLikeTargetParts, propName), receiver!.unknownSymbol)!.Flags & SymbolFlagsOptional) !== 0;
-          const sourceIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, source, propName), receiver!.unknownSymbol)!.Flags & SymbolFlagsOptional) !== 0;
+          const targetIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, tupleOrArrayLikeTargetParts, propName), receiver!.unknownSymbol, () => undefined, (left, right) => left === right)!.Flags & SymbolFlagsOptional) !== 0;
+          const sourceIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, source, propName), receiver!.unknownSymbol, () => undefined, (left, right) => left === right)!.Flags & SymbolFlagsOptional) !== 0;
           targetPropType = Checker_removeMissingType(receiver, targetPropType, targetIsOptional);
           sourcePropType = Checker_removeMissingType(receiver, sourcePropType, targetIsOptional && sourceIsOptional);
           const result = Checker_checkTypeRelatedToEx(receiver, specificSource, targetPropType, relation, prop, undefined, diagnosticOutput);
@@ -1119,10 +1122,14 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
   let jsxSpecific: GoPtr<Symbol>;
   switch (name) {
     case "for":
-      jsxSpecific = Find(properties, (x) => SymbolName(x) === "htmlFor");
+      if (properties !== undefined) {
+        jsxSpecific = Find(properties, (x) => SymbolName(x) === "htmlFor");
+      }
       break;
     case "class":
-      jsxSpecific = Find(properties, (x) => SymbolName(x) === "className");
+      if (properties !== undefined) {
+        jsxSpecific = Find(properties, (x) => SymbolName(x) === "className");
+      }
       break;
   }
   if (jsxSpecific !== undefined) {
@@ -1303,10 +1310,10 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
     return Checker_resolveErrorCall(receiver, node);
   }
   const signatures = Checker_getUninstantiatedJsxSignaturesOfType(receiver, exprTypes, node);
-  if (Checker_isUntypedFunctionCall(receiver, exprTypes, apparentType, signatures.length, 0)) {
+  if (Checker_isUntypedFunctionCall(receiver, exprTypes, apparentType, signatures?.length ?? 0, 0)) {
     return Checker_resolveUntypedCall(receiver, node);
   }
-  if (signatures.length === 0) {
+  if (signatures === undefined || signatures.length === 0) {
     if (isJsxOpenFragment) {
       Checker_error(receiver, node, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, GetTextOfNode(node));
     } else {
@@ -1454,7 +1461,7 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
       return true;
     }
     const tagCallSignatures = Checker_getSignaturesOfType(receiver, tagType, SignatureKindCall);
-    if (tagCallSignatures.length === 0) {
+    if (tagCallSignatures === undefined || tagCallSignatures.length === 0) {
       return true;
     }
     const factory = Checker_getJsxFactoryEntity(receiver, node);
@@ -1467,7 +1474,7 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
     }
     const factoryType = Checker_getTypeOfSymbol(receiver, factorySymbol);
     const callSignatures = Checker_getSignaturesOfType(receiver, factoryType, SignatureKindCall);
-    if (callSignatures.length === 0) {
+    if (callSignatures === undefined || callSignatures.length === 0) {
       return true;
     }
     let hasFirstParamSignatures = false;
@@ -1475,7 +1482,7 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
     for (const sig of callSignatures) {
       const firstParam = Checker_getTypeAtPosition(receiver, sig, 0);
       const signaturesOfParam = Checker_getSignaturesOfType(receiver, firstParam, SignatureKindCall);
-      if (signaturesOfParam.length === 0) {
+      if (signaturesOfParam === undefined || signaturesOfParam.length === 0) {
         continue;
       }
       for (const paramSig of signaturesOfParam) {
@@ -1799,11 +1806,11 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
     let children: GoSlice<GoPtr<Node>> = [];
     if (IsJsxElement(parent)) {
       if (AsJsxElement(parent)!.OpeningElement === element) {
-        children = Node_Children(parent)!.Nodes;
+        children = Node_Children(parent)!.Nodes ?? [];
       }
     } else if (IsJsxFragment(parent)) {
       if (AsJsxFragment(parent)!.OpeningFragment === element) {
-        children = Node_Children(parent)!.Nodes;
+        children = Node_Children(parent)!.Nodes ?? [];
       }
     }
     return GetSemanticJsxChildren(children).length !== 0;
@@ -1905,7 +1912,7 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
  */
 export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoSlice<GoPtr<Type>> {
   const childTypes: GoSlice<GoPtr<Type>> = [];
-  for (const child of Node_Children(node)!.Nodes) {
+  for (const child of Node_Children(node)!.Nodes ?? []) {
     // In React, JSX text that contains only whitespaces will be ignored so we don't want to type-check that
     // because then type of children property will have constituent of string type.
     if (IsJsxText(child)) {
@@ -1924,6 +1931,7 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType","kind":"method","status":"implemented","sigHash":"b221f9824a63e36f8f29b3b19c401bfd294187381de96d86fe8a192d3ef0f296","bodyHash":"0de4734eee222b49d4a5b6299d2651198c7dc940a76f8a2f67ea20685764a671"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>>>"}
  *
  * Go source:
  * func (c *Checker) getUninstantiatedJsxSignaturesOfType(elementType *Type, caller *ast.Node) []*Signature {
@@ -1955,7 +1963,7 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
  * 	return signatures
  * }
  */
-export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>, caller: GoPtr<Node>): GoSlice<GoPtr<Signature>> {
+export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>, caller: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Signature>>> {
   if ((elementType!.flags & TypeFlagsString) !== 0) {
     return [receiver!.anySignature];
   }
@@ -1963,7 +1971,7 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
     const intrinsicType = Checker_getIntrinsicAttributesTypeFromStringLiteralType(receiver, elementType, caller);
     if (intrinsicType === undefined) {
       Checker_error(receiver, caller, Property_0_does_not_exist_on_type_1, getStringLiteralValue(elementType), `JSX.${JsxNames.IntrinsicElements}`);
-      return [];
+      return undefined;
     }
     const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, caller, intrinsicType);
     return [fakeSignature];
@@ -1971,13 +1979,13 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
   const apparentElemType = Checker_getApparentType(receiver, elementType);
   // Resolve the signatures, preferring constructor
   let signatures = Checker_getSignaturesOfType(receiver, apparentElemType, SignatureKindConstruct);
-  if (signatures.length === 0) {
+  if ((signatures?.length ?? 0) === 0) {
     // No construct signatures, try call signatures
     signatures = Checker_getSignaturesOfType(receiver, apparentElemType, SignatureKindCall);
   }
-  if (signatures.length === 0 && (apparentElemType!.flags & TypeFlagsUnion) !== 0) {
+  if ((signatures?.length ?? 0) === 0 && (apparentElemType!.flags & TypeFlagsUnion) !== 0) {
     // If each member has some combination of new/call signatures; make a union signature list for those
-    signatures = Checker_getUnionSignatures(receiver, Map(Type_Types(apparentElemType), (t: GoPtr<Type>): GoSlice<GoPtr<Signature>> => {
+    signatures = Checker_getUnionSignatures(receiver, Map(Type_Types(apparentElemType), (t: GoPtr<Type>): GoPtr<GoSlice<GoPtr<Signature>>> => {
       return Checker_getUninstantiatedJsxSignaturesOfType(receiver, t, caller);
     }));
   }
@@ -2245,7 +2253,7 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
     // Go len(nil) == 0: a non-generic alias has a nil typeParameters slice.
     if ((params ?? []).length >= typeArguments.length) {
       const args = Checker_fillMissingTypeArguments(receiver, typeArguments, params, typeArguments.length, inJavaScript);
-      if (args.length === 0) {
+      if (args === undefined || args.length === 0) {
         return declaredManagedType;
       }
       return Checker_getTypeAliasInstantiation(receiver, managedSym, args, undefined);
@@ -2485,10 +2493,10 @@ export function Checker_getJsxReferenceKind(receiver: GoPtr<Checker>, node: GoPt
     return JsxReferenceKindMixed;
   }
   const tagType = Checker_getApparentType(receiver, Checker_checkExpression(receiver, Node_TagName(node)));
-  if (Checker_getSignaturesOfType(receiver, tagType, SignatureKindConstruct).length !== 0) {
+  if ((Checker_getSignaturesOfType(receiver, tagType, SignatureKindConstruct)?.length ?? 0) !== 0) {
     return JsxReferenceKindComponent;
   }
-  if (Checker_getSignaturesOfType(receiver, tagType, SignatureKindCall).length !== 0) {
+  if ((Checker_getSignaturesOfType(receiver, tagType, SignatureKindCall)?.length ?? 0) !== 0) {
     return JsxReferenceKindFunction;
   }
   return JsxReferenceKindMixed;
@@ -2562,7 +2570,7 @@ export function Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(rece
   }
   const symbol = Checker_getIntrinsicTagSymbol(receiver, node);
   if (links!.jsxFlags & JsxFlagsIntrinsicNamedElement) {
-    links!.resolvedJsxElementAttributesType = OrElse(Checker_getTypeOfSymbol(receiver, symbol), receiver!.errorType);
+    links!.resolvedJsxElementAttributesType = OrElse(Checker_getTypeOfSymbol(receiver, symbol), receiver!.errorType, () => undefined, (left, right) => left === right);
     return links!.resolvedJsxElementAttributesType;
   }
   if (links!.jsxFlags & JsxFlagsIntrinsicIndexedElement) {
@@ -3150,13 +3158,13 @@ export function Checker_getJsxNamespaceContainerForImplicitImport(receiver: GoPt
     return undefined;
   }
   const errorMessage = This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed;
-  const mod = Checker_resolveExternalModule(receiver, OrElse(specifier, location), moduleReference, errorMessage, location, false as bool);
+  const mod = Checker_resolveExternalModule(receiver, OrElse(specifier, location, () => undefined, (left, right) => left === right), moduleReference, errorMessage, location, false as bool);
   let result: GoPtr<Symbol>;
   if (mod !== undefined && mod !== receiver!.unknownSymbol) {
     result = Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, mod));
   }
   if (links !== undefined) {
-    links!.jsxImplicitImportContainer = OrElse(result, receiver!.unknownSymbol);
+    links!.jsxImplicitImportContainer = OrElse(result, receiver!.unknownSymbol, () => undefined, (left, right) => left === right);
   }
   return result;
 }

@@ -156,6 +156,7 @@ export interface CompileTimes {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CompileAndEmitResult","kind":"type","status":"implemented","sigHash":"9e44889df73aa495b668edc0282e0de265c1c102acd25cbe4fe4491fc8f9be52","bodyHash":"b418faf0039c51a6aad673581b4b115809ad67583506c827ccb4ee9d095b8a0a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type CompileAndEmitResult uses an explicit undefined-capable TypeScript representation at member 'Diagnostics' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;EmitResult:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>;Status:packages/tsts/src/internal/execute/tsc/compile.ts::ExitStatus;times:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>}","tsSignature":"interface{Diagnostics:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>;EmitResult:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>;Status:packages/tsts/src/internal/execute/tsc/compile.ts::ExitStatus;times:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/tsc/compile.ts::CompileTimes>}"}
  *
  * Go source:
  * CompileAndEmitResult struct {
@@ -166,7 +167,7 @@ export interface CompileTimes {
  * }
  */
 export interface CompileAndEmitResult {
-  Diagnostics: GoSlice<GoPtr<Diagnostic>>;
+  Diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   EmitResult: GoPtr<EmitResult>;
   Status: ExitStatus;
   times: GoPtr<CompileTimes>;

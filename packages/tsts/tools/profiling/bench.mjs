@@ -1,196 +1,388 @@
 #!/usr/bin/env node
-// Cross-compiler benchmark harness: run TSTS, the pinned tsgo (native Go), and
-// official tsc on the same projects with --extendedDiagnostics, and report
-// per-phase time + memory side by side with TSTS÷tsgo and TSTS÷tsc ratios.
-//
-// All three expose --extendedDiagnostics (Files/Lines/Parse/Bind/Check/Emit/
-// Memory) and --generateCpuProfile, so this is orchestration over built-ins.
-// Memory is also captured externally via /usr/bin/time -v (maxRSS), since TSTS's
-// own statistics.ts does not yet populate "Memory used" (a porter-tracked unit).
-//
-// Usage:
-//   node bench.mjs [--corpus <corpus.json>] [--runs N] [--profile] [--json]
-//
-// corpus.json: { "projects": [ { "name": "zod", "cwd": "/abs/path", "args": ["-p","tsconfig.json","--noEmit"] }, ... ] }
-// Compiler paths (override via env):
-//   TSTS = node <repo>/packages/tsts/dist/src/cli/index.js   (computed)
-//   TSGO_BIN  (default /tmp/tsgo)        — skipped if missing
-//   TSC_BIN   (default <repo>/node_modules/.bin/tsc)
+import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, mkdirSync } from "node:fs";
-import { dirname, join, isAbsolute } from "node:path";
-import { fileURLToPath } from "node:url";
+
+import { publishSealedDirectory, sealEvidenceDirectory } from "../sealed-evidence.mjs";
+import { canonicalJson, executableProvenance } from "../test-provenance.mjs";
+import {
+  aggregateSamples,
+  assertBaselineCompatibility,
+  buildInterleavedSchedule,
+  evaluatePerformanceGate,
+  exactWorkReceipt,
+  runTimedCompiler,
+} from "./benchmark-core.mjs";
+import {
+  acquireBenchmarkCompilers,
+  assertCanonicalBenchmarkProcess,
+  canonicalBenchmarkEnvironment,
+  collectHarnessEvidence,
+  collectHostEvidence,
+  repositoryPaths,
+} from "./benchmark-evidence.mjs";
+import {
+  assertCorpusSourcesUnchanged,
+  assertStagedWorkloadsUnchanged,
+  loadBenchmarkCorpus,
+  removeBenchmarkStaging,
+  stageBenchmarkCorpus,
+  workloadReportEvidence,
+} from "./benchmark-workload.mjs";
+import { loadPerformancePolicy, requireCalibratedPolicy } from "./performance-policy.mjs";
+import {
+  createPerformanceReport,
+  performanceReportSealMetadata,
+  readVerifiedPerformanceReport,
+  validatePerformanceReport,
+} from "./performance-report.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(here, "../../../..");
-const tstsCli = join(repoRoot, "packages/tsts/dist/src/cli/index.js");
-const tsgoBin = process.env.TSGO_BIN || "/tmp/tsgo";
-const tscBin = process.env.TSC_BIN || join(repoRoot, "node_modules/.bin/tsc");
+const { repoRoot } = repositoryPaths();
+const defaultPolicyPath = join(here, "performance-policy.json");
+const attributePath = join(here, "attribute.mjs");
+const compilerIds = Object.freeze(["tsts", "tsgo", "tsc"]);
 
-const COMPILERS = [
-  { id: "tsts", argv: ["node", tstsCli], available: existsSync(tstsCli) },
-  { id: "tsgo", argv: [tsgoBin], available: existsSync(tsgoBin) },
-  { id: "tsc", argv: [tscBin], available: existsSync(tscBin) },
-];
-
-const PHASES = ["Parse", "Bind", "Check", "Emit"];
-
-function parseArgs(argv) {
-  const o = { corpus: "", runs: 3, profile: false, json: false };
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === "--corpus") o.corpus = argv[++i];
-    else if (a === "--runs") o.runs = Math.max(2, Number(argv[++i]));
-    else if (a === "--profile") o.profile = true;
-    else if (a === "--json") o.json = true;
-    else throw new Error(`Unknown argument: ${a}`);
+export function parseBenchmarkArguments(argv) {
+  const options = { policy: defaultPolicyPath, gate: false, profile: false, noBuild: false, output: null, baselineOutput: null, verifyReport: null };
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === "--policy") options.policy = requiredValue(argv, ++index, argument);
+    else if (argument === "--output") options.output = requiredValue(argv, ++index, argument);
+    else if (argument === "--record-baseline") options.baselineOutput = requiredValue(argv, ++index, argument);
+    else if (argument === "--verify-report") options.verifyReport = requiredValue(argv, ++index, argument);
+    else if (argument === "--gate") options.gate = true;
+    else if (argument === "--profile") options.profile = true;
+    else if (argument === "--no-build") options.noBuild = true;
+    else throw new Error(`unknown performance benchmark argument: ${argument}`);
   }
-  return o;
+  const modes = Number(options.gate) + Number(options.baselineOutput !== null) + Number(options.verifyReport !== null);
+  if (modes > 1) throw new Error("--gate, --record-baseline, and --verify-report are mutually exclusive");
+  if (options.baselineOutput !== null && options.output !== null) throw new Error("--record-baseline supplies its own output and cannot be combined with --output");
+  if (options.verifyReport !== null && (options.profile || options.noBuild || options.output !== null)) throw new Error("--verify-report cannot be combined with measurement options");
+  return options;
 }
 
-function loadCorpus(path) {
-  const resolved = path
-    ? (isAbsolute(path) ? path : join(process.cwd(), path))
-    : join(here, "corpus.json");
-  if (!existsSync(resolved)) {
-    throw new Error(`No corpus file at ${resolved}. Pass --corpus <file> or create corpus.json (see corpus.example.json).`);
+export async function runBenchmarkCli(argv = process.argv.slice(2)) {
+  const options = parseBenchmarkArguments(argv);
+  const policyPath = resolveFromCwd(options.policy);
+  const policyContext = loadPerformancePolicy(policyPath);
+  const contract = reportContract(policyContext);
+
+  if (options.verifyReport !== null) {
+    const verified = readVerifiedPerformanceReport(resolveFromCwd(options.verifyReport), contract);
+    process.stdout.write(`verified performance report ${verified.report.reportId} evidence=${verified.seal.evidenceDigest}\n`);
+    return { destination: resolveFromCwd(options.verifyReport), report: verified.report, seal: verified.seal };
   }
-  const corpus = JSON.parse(readFileSync(resolved, "utf8"));
-  for (const p of corpus.projects) {
-    if (!existsSync(p.cwd)) throw new Error(`Project '${p.name}' cwd does not exist: ${p.cwd}`);
+
+  assertCanonicalBenchmarkProcess();
+  let acceptedBaseline;
+  if (options.gate) {
+    const baselinePath = requireCalibratedPolicy(policyContext);
+    acceptedBaseline = readVerifiedPerformanceReport(baselinePath, contract);
+    if (acceptedBaseline.seal.evidenceDigest !== policyContext.policy.baseline.evidenceDigest) throw new Error("accepted performance baseline seal digest does not match policy");
+    if (acceptedBaseline.report.reportId !== policyContext.policy.baseline.acceptedReportId) throw new Error("accepted performance baseline reportId does not match policy");
+    if (acceptedBaseline.report.role !== "baseline-candidate" || acceptedBaseline.report.outcome !== "measurement-complete") throw new Error("accepted performance baseline is not a complete baseline candidate");
   }
-  return corpus;
+
+  const role = options.gate ? "gate" : options.baselineOutput !== null ? "baseline-candidate" : "measurement";
+  const destination = outputDestination(options, role);
+  assertOutputScope(destination, role, policyContext);
+  if (existsSync(destination)) throw new Error(`refusing to replace existing performance report: ${destination}`);
+  const reportStagingRoot = join(repoRoot, ".temp/profiling/report-staging");
+  await mkdir(reportStagingRoot, { recursive: true, mode: 0o700 });
+  const reportStaging = await mkdtemp(join(reportStagingRoot, "report-"));
+  const workloadRoot = await mkdtemp("/tmp/tsts-performance-workload-");
+  assertDisjointPaths(reportStaging, destination, "report staging and destination");
+  assertDisjointPaths(workloadRoot, destination, "workload staging and report destination");
+  const runtimeRoot = join(workloadRoot, "runtime");
+  let published = false;
+  try {
+    const environment = canonicalBenchmarkEnvironment(runtimeRoot);
+    const hostBefore = collectHostEvidence(environment.recorded);
+    const corpus = loadBenchmarkCorpus(policyContext.corpusPath);
+    const harness = collectHarnessEvidence();
+    const stagedProjects = stageBenchmarkCorpus(corpus, join(workloadRoot, "projects"));
+    const compilerContext = await acquireBenchmarkCompilers({ noBuild: options.noBuild });
+
+    const schedule = buildInterleavedSchedule({
+      projectNames: stagedProjects.map((project) => project.name),
+      compilerIds,
+      ...policyContext.policy.sampling,
+    });
+    const results = initializeResults(stagedProjects);
+    const projectByName = new Map(stagedProjects.map((project) => [project.name, project]));
+    const compilerById = new Map(compilerContext.compilers.map((compiler) => [compiler.id, compiler]));
+    for (const entry of schedule) {
+      const project = projectByName.get(entry.project);
+      const compiler = compilerById.get(entry.compiler);
+      const sample = runTimedCompiler({
+        id: `${entry.project}/${entry.compiler}/${entry.phase}/${entry.round}`,
+        argv: compiler.argv,
+        args: project.args,
+        cwd: project.cwd,
+        environment: environment.actual,
+        requiredMetrics: policyContext.policy.requiredMetrics,
+        timeExecutable: compilerContext.timeExecutable,
+        timeoutMs: policyContext.policy.sampling.timeoutMs,
+      });
+      const compilerResult = results.get(entry.project).byCompiler[entry.compiler];
+      if (entry.phase === "measured") compilerResult.measuredSamples.push(sample);
+      else compilerResult.systemCacheWarmupSamples.push(sample);
+      assertStagedWorkloadsUnchanged(stagedProjects);
+      assertCorpusSourcesUnchanged(corpus);
+    }
+
+    const finalizedResults = finalizeResults(results, policyContext.policy);
+    const profiles = options.profile
+      ? captureProfiles({
+        reportStaging,
+        projects: stagedProjects,
+        tsts: compilerById.get("tsts"),
+        environment: environment.actual,
+        timeoutMs: policyContext.policy.sampling.timeoutMs,
+        assertUnchanged: () => {
+          assertStagedWorkloadsUnchanged(stagedProjects);
+          assertCorpusSourcesUnchanged(corpus);
+        },
+      })
+      : [];
+    assertStagedWorkloadsUnchanged(stagedProjects);
+    assertCorpusSourcesUnchanged(corpus);
+    await compilerContext.reverify();
+    const harnessAfter = collectHarnessEvidence();
+    if (canonicalJson(harnessAfter) !== canonicalJson(harness)) throw new Error("performance harness changed during benchmark execution");
+    const policyAfter = loadPerformancePolicy(policyContext.path);
+    if (canonicalJson(policyAfter.policy) !== canonicalJson(policyContext.policy) || canonicalJson(policyAfter.file) !== canonicalJson(policyContext.file)) throw new Error("performance policy changed during benchmark execution");
+    if (acceptedBaseline !== undefined) {
+      const baselineAfter = readVerifiedPerformanceReport(policyContext.baselinePath, contract);
+      if (canonicalJson(baselineAfter.report) !== canonicalJson(acceptedBaseline.report) || canonicalJson(baselineAfter.seal) !== canonicalJson(acceptedBaseline.seal)) throw new Error("accepted performance baseline changed during benchmark execution");
+    }
+    const hostAfter = collectHostEvidence(environment.recorded);
+    if (canonicalJson(hostAfter.compatibility) !== canonicalJson(hostBefore.compatibility)) throw new Error("benchmark host compatibility evidence changed during execution");
+
+    const body = {
+      role,
+      outcome: role === "gate" ? "pass" : "measurement-complete",
+      createdAt: new Date().toISOString(),
+      policy: policyReportEvidence(policyContext),
+      sampling: policyContext.policy.sampling,
+      corpus: workloadReportEvidence(corpus, stagedProjects),
+      harness,
+      host: {
+        compatibility: hostBefore.compatibility,
+        compatibilityDigest: hostBefore.compatibilityDigest,
+        observedBefore: hostBefore.observed,
+        observedAfter: hostAfter.observed,
+      },
+      compilers: compilerContext.evidence,
+      schedule,
+      results: finalizedResults,
+      profiles,
+      gate: { requested: role === "gate", baselineEvidenceDigest: null, baselineReportId: null, failures: [] },
+    };
+
+    if (role === "gate") {
+      body.gate.baselineEvidenceDigest = acceptedBaseline.seal.evidenceDigest;
+      body.gate.baselineReportId = acceptedBaseline.report.reportId;
+      try {
+        assertBaselineCompatibility(body, acceptedBaseline.report);
+      } catch (error) {
+        body.gate.failures.push(error.message);
+      }
+      if (body.gate.failures.length === 0) body.gate.failures.push(...evaluatePerformanceGate({ currentReport: body, baselineReport: acceptedBaseline.report, policy: policyContext.policy }));
+      body.outcome = body.gate.failures.length === 0 ? "pass" : "fail";
+    }
+
+    const report = createPerformanceReport(body);
+    validatePerformanceReport(report, contract);
+    const summary = renderPerformanceSummary(report);
+    await writeFile(join(reportStaging, "report.json"), `${JSON.stringify(report, null, 2)}\n`, { flag: "wx", mode: 0o644 });
+    await writeFile(join(reportStaging, "summary.md"), summary, { flag: "wx", mode: 0o644 });
+    const seal = await sealEvidenceDirectory(reportStaging, performanceReportSealMetadata(report));
+    await mkdir(dirname(destination), { recursive: true, mode: 0o755 });
+    const publishedSeal = await publishSealedDirectory(reportStaging, destination);
+    if (canonicalJson(publishedSeal) !== canonicalJson(seal)) throw new Error("published performance report seal changed");
+    published = true;
+    process.stdout.write(summary);
+    process.stdout.write(`report: ${destination}\nevidence: ${seal.evidenceDigest}\n`);
+    if (report.outcome === "fail") throw new Error(`performance gate failed; sealed report: ${destination}`);
+    return { destination, report, seal };
+  } finally {
+    await removeBenchmarkStaging(workloadRoot);
+    if (!published) await rm(reportStaging, { recursive: true, force: true });
+  }
 }
 
-function parsePhases(stdout) {
-  const out = {};
-  for (const phase of PHASES) {
-    const m = new RegExp(`${phase} time:\\s+([\\d.]+)s`).exec(stdout);
-    out[phase] = m ? Number(m[1]) : undefined;
+export function renderPerformanceSummary(report) {
+  const lines = [
+    "# TSTS Performance Evidence",
+    "",
+    `- Role: ${report.role}`,
+    `- Outcome: ${report.outcome}`,
+    `- Policy: ${report.policy.policyId}`,
+    `- Measurement contract: ${report.policy.measurementContractDigest}`,
+    `- Workload: ${report.corpus.workloadDigest}`,
+    `- Host: ${report.host.compatibilityDigest}`,
+    `- Sampling: ${report.sampling.systemCacheWarmupRounds} system-cache warmup + ${report.sampling.measuredRounds} measured interleaved rounds`,
+    "",
+  ];
+  for (const result of report.results) {
+    lines.push(`## ${result.name}`, "", `Equivalent work: ${result.work.Files} files / ${result.work.Lines} lines`, "", "| metric | tsgo median | tsc median | TSTS median | TSTS CV | TSTS/tsgo | TSTS/tsc |", "|---|---:|---:|---:|---:|---:|---:|");
+    for (const metric of report.policy.measurementContract.gatedMetrics) {
+      const tsts = result.byCompiler.tsts.aggregate[metric];
+      const tsgo = result.byCompiler.tsgo.aggregate[metric];
+      const tsc = result.byCompiler.tsc.aggregate[metric];
+      lines.push(`| ${metric} | ${formatMetric(tsgo.median)} | ${formatMetric(tsc.median)} | ${formatMetric(tsts.median)} | ${formatPercent(tsts.coefficientOfVariation)} | ${formatRatio(tsts.median, tsgo.median)} | ${formatRatio(tsts.median, tsc.median)} |`);
+    }
+    lines.push("");
   }
-  const files = /Files:\s+(\d+)/.exec(stdout);
-  const lines = /Lines(?: of \w+)?:\s+(\d+)/.exec(stdout);
-  out.Files = files ? Number(files[1]) : undefined;
-  out.Lines = lines ? Number(lines[1]) : undefined;
-  const mem = /Memory used:\s+(\d+)K/.exec(stdout);
-  out.MemReportedKB = mem ? Number(mem[1]) : undefined;
-  return out;
+  if (report.role === "gate") {
+    lines.push("## Regression Gate", "", report.gate.failures.length === 0 ? "PASS" : "FAIL");
+    for (const failure of report.gate.failures) lines.push(`- ${failure}`);
+    lines.push("");
+  }
+  return `${lines.join("\n")}\n`;
 }
 
-function parseTimeV(stderr) {
-  // The label contains colons ("(h:mm:ss or m:ss)"), so match greedily to the last
-  // ": <value>" on the line.
-  const wall = /Elapsed \(wall clock\) time[^\n]*:\s+([\d:.]+)/.exec(stderr);
-  const user = /User time \(seconds\):\s+([\d.]+)/.exec(stderr);
-  const system = /System time \(seconds\):\s+([\d.]+)/.exec(stderr);
-  const cpuPercent = /Percent of CPU this job got:\s+(\d+)%/.exec(stderr);
-  const rss = /Maximum resident set size \(kbytes\):\s+(\d+)/.exec(stderr);
-  let wallSecs;
-  if (wall) {
-    const parts = wall[1].split(":").map(Number);
-    wallSecs = parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2]
-      : parts.length === 2 ? parts[0] * 60 + parts[1] : parts[0];
+function initializeResults(projects) {
+  return new Map(projects.map((project) => [project.name, {
+    name: project.name,
+    byCompiler: Object.fromEntries(compilerIds.map((id) => [id, { systemCacheWarmupSamples: [], measuredSamples: [] }])),
+  }]));
+}
+
+function finalizeResults(results, policy) {
+  return [...results.values()].map((result) => {
+    for (const compiler of compilerIds) result.byCompiler[compiler].aggregate = aggregateSamples(result.byCompiler[compiler].measuredSamples, policy.requiredMetrics);
+    return { ...result, work: exactWorkReceipt(result.byCompiler, policy.workloadEquivalence) };
+  });
+}
+
+function captureProfiles({ reportStaging, projects, tsts, environment, timeoutMs, assertUnchanged }) {
+  const records = [];
+  const [nodeExecutable, ...tstsArgs] = tsts.argv;
+  for (const project of projects) {
+    const directory = join(reportStaging, "profiles", project.name);
+    mkdirSyncChecked(directory);
+    const cpuPath = join(directory, "cpu.cpuprofile");
+    const heapPath = join(directory, "heap.heapprofile");
+    runProfile(nodeExecutable, ["--cpu-prof", `--cpu-prof-dir=${directory}`, "--cpu-prof-name=cpu.cpuprofile", ...tstsArgs, ...project.args, "--pretty", "false"], project.cwd, environment, timeoutMs, `${project.name} CPU`);
+    assertUnchanged();
+    runProfile(nodeExecutable, ["--heap-prof", `--heap-prof-dir=${directory}`, "--heap-prof-name=heap.heapprofile", ...tstsArgs, ...project.args, "--pretty", "false"], project.cwd, environment, timeoutMs, `${project.name} heap`);
+    assertUnchanged();
+    const attribution = spawnSync(process.execPath, [attributePath, "--cpu", cpuPath, "--heap", heapPath, "--label", `TSTS ${project.name}`, "--top", "8"], {
+      cwd: reportStaging,
+      env: environment,
+      encoding: "utf8",
+      maxBuffer: 256 * 1024 * 1024,
+      timeout: timeoutMs,
+      killSignal: "SIGKILL",
+    });
+    if (attribution.error !== undefined || attribution.status !== 0 || attribution.signal !== null) throw new Error(`${project.name} profile attribution failed: ${attribution.error?.message ?? attribution.stderr ?? attribution.signal}`);
+    assertUnchanged();
+    const attributionPath = join(directory, "attribution.txt");
+    writeFileSyncChecked(attributionPath, String(attribution.stdout));
+    records.push({
+      project: project.name,
+      commands: {
+        cpu: ["<node>", "--cpu-prof", `--cpu-prof-dir=<report>/profiles/${project.name}`, "--cpu-prof-name=cpu.cpuprofile", "--expose-gc", "<prepared-tsts>/src/cli/index.js", ...project.args, "--pretty", "false"],
+        heap: ["<node>", "--heap-prof", `--heap-prof-dir=<report>/profiles/${project.name}`, "--heap-prof-name=heap.heapprofile", "--expose-gc", "<prepared-tsts>/src/cli/index.js", ...project.args, "--pretty", "false"],
+        attribution: ["<node>", "profiling/attribute.mjs", "--cpu", `profiles/${project.name}/cpu.cpuprofile`, "--heap", `profiles/${project.name}/heap.heapprofile`, "--label", `TSTS ${project.name}`, "--top", "8"],
+      },
+      cpu: { path: `profiles/${project.name}/cpu.cpuprofile`, ...executableProvenance(cpuPath) },
+      heap: { path: `profiles/${project.name}/heap.heapprofile`, ...executableProvenance(heapPath) },
+      attribution: { path: `profiles/${project.name}/attribution.txt`, ...executableProvenance(attributionPath) },
+    });
   }
-  const userSecs = user ? Number(user[1]) : undefined;
-  const systemSecs = system ? Number(system[1]) : undefined;
-  const cpuSecs = userSecs !== undefined && systemSecs !== undefined ? userSecs + systemSecs : undefined;
+  return records;
+}
+
+function runProfile(command, args, cwd, environment, timeoutMs, label) {
+  const result = spawnSync(command, args, { cwd, env: environment, encoding: "utf8", maxBuffer: 256 * 1024 * 1024, timeout: timeoutMs, killSignal: "SIGKILL" });
+  if (result.error !== undefined || result.status !== 0 || result.signal !== null) throw new Error(`${label} profile failed status=${String(result.status)} signal=${String(result.signal)}: ${result.error?.message ?? result.stderr ?? ""}`);
+}
+
+function policyReportEvidence(context) {
   return {
-    wallSecs,
-    userSecs,
-    systemSecs,
-    cpuSecs,
-    cpuPercent: cpuPercent ? Number(cpuPercent[1]) : undefined,
-    maxRssKB: rss ? Number(rss[1]) : undefined,
+    policyId: context.policy.policyId,
+    file: context.file,
+    measurementContract: context.measurementContract,
+    measurementContractDigest: context.measurementContractDigest,
+    limits: context.policy.limits,
   };
 }
 
-function median(xs) {
-  const s = xs.filter((x) => x !== undefined).sort((a, b) => a - b);
-  if (s.length === 0) return undefined;
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+function reportContract(context) {
+  return {
+    sampling: context.policy.sampling,
+    requiredMetrics: context.policy.requiredMetrics,
+    workloadEquivalence: context.policy.workloadEquivalence,
+    measurementContract: context.measurementContract,
+    measurementContractDigest: context.measurementContractDigest,
+  };
 }
 
-function runOnce(compiler, project) {
-  // /usr/bin/time -v <compiler argv> <project args> --extendedDiagnostics
-  const args = ["-v", ...compiler.argv, ...project.args, "--extendedDiagnostics"];
-  const r = spawnSync("/usr/bin/time", args, { cwd: project.cwd, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
-  const stdout = `${r.stdout || ""}`;
-  const stderr = `${r.stderr || ""}`;
-  return { ...parsePhases(stdout), ...parseTimeV(stderr) };
+function outputDestination(options, role) {
+  if (options.baselineOutput !== null) return resolveFromCwd(options.baselineOutput);
+  if (options.output !== null) return resolveFromCwd(options.output);
+  const timestamp = new Date().toISOString().replaceAll(":", "").replaceAll(".", "-");
+  return join(repoRoot, ".tests/profiling/runs", `${timestamp}-${role}-${process.pid}-${randomUUID()}`);
 }
 
-function benchProject(project, runs) {
-  const result = { name: project.name, byCompiler: {} };
-  for (const c of COMPILERS) {
-    if (!c.available) continue;
-    const samples = [];
-    for (let i = 0; i < runs; i++) samples.push(runOnce(c, project));
-    // Drop the cold first run; aggregate the rest by median.
-    const warm = samples.slice(1);
-    const agg = {};
-    for (const k of [...PHASES, "wallSecs", "userSecs", "systemSecs", "cpuSecs", "cpuPercent", "maxRssKB", "MemReportedKB", "Files", "Lines"]) {
-      agg[k] = median(warm.map((s) => s[k]));
-    }
-    result.byCompiler[c.id] = agg;
-  }
-  return result;
-}
-
-function fmt(v, suffix = "", digits = 2) {
-  return v === undefined ? "—" : `${v.toFixed(digits)}${suffix}`;
-}
-function ratio(a, b) {
-  return a === undefined || b === undefined || b === 0 ? "—" : `${(a / b).toFixed(1)}×`;
-}
-
-function report(results) {
-  console.log(`# tsgo-suite cross-compiler benchmark`);
-  const avail = COMPILERS.filter((c) => c.available).map((c) => c.id).join(", ");
-  console.log(`compilers: ${avail}\n`);
-  for (const r of results) {
-    const t = r.byCompiler;
-    const lines = t.tsts?.Lines ?? t.tsgo?.Lines ?? t.tsc?.Lines;
-    console.log(`## ${r.name}  (${t.tsts?.Files ?? "?"} files, ${lines ?? "?"} lines)`);
-    console.log(`| metric | tsgo | tsc | TSTS | TSTS÷tsgo | TSTS÷tsc |`);
-    console.log(`|---|---:|---:|---:|---:|---:|`);
-    for (const phase of PHASES) {
-      console.log(`| ${phase} | ${fmt(t.tsgo?.[phase], "s")} | ${fmt(t.tsc?.[phase], "s")} | ${fmt(t.tsts?.[phase], "s")} | ${ratio(t.tsts?.[phase], t.tsgo?.[phase])} | ${ratio(t.tsts?.[phase], t.tsc?.[phase])} |`);
-    }
-    console.log(`| **wall** | ${fmt(t.tsgo?.wallSecs, "s")} | ${fmt(t.tsc?.wallSecs, "s")} | ${fmt(t.tsts?.wallSecs, "s")} | ${ratio(t.tsts?.wallSecs, t.tsgo?.wallSecs)} | ${ratio(t.tsts?.wallSecs, t.tsc?.wallSecs)} |`);
-    console.log(`| CPU time | ${fmt(t.tsgo?.cpuSecs, "s")} | ${fmt(t.tsc?.cpuSecs, "s")} | ${fmt(t.tsts?.cpuSecs, "s")} | ${ratio(t.tsts?.cpuSecs, t.tsgo?.cpuSecs)} | ${ratio(t.tsts?.cpuSecs, t.tsc?.cpuSecs)} |`);
-    console.log(`| CPU utilization | ${fmt(t.tsgo?.cpuPercent, "%", 0)} | ${fmt(t.tsc?.cpuPercent, "%", 0)} | ${fmt(t.tsts?.cpuPercent, "%", 0)} | ${ratio(t.tsts?.cpuPercent, t.tsgo?.cpuPercent)} | ${ratio(t.tsts?.cpuPercent, t.tsc?.cpuPercent)} |`);
-    console.log(`| maxRSS (MB) | ${fmt(t.tsgo?.maxRssKB / 1024)} | ${fmt(t.tsc?.maxRssKB / 1024)} | ${fmt(t.tsts?.maxRssKB / 1024)} | ${ratio(t.tsts?.maxRssKB, t.tsgo?.maxRssKB)} | ${ratio(t.tsts?.maxRssKB, t.tsc?.maxRssKB)} |`);
-    console.log();
+function assertOutputScope(destination, role, policyContext) {
+  const allowedRoot = role === "baseline-candidate"
+    ? join(policyContext.directory, "baselines")
+    : join(repoRoot, ".tests/profiling/runs");
+  if (resolve(destination) === resolve(allowedRoot) || !isContainedPath(resolve(allowedRoot), resolve(destination))) {
+    throw new Error(`${role} report destination must be a new child of ${allowedRoot}`);
   }
 }
 
-function main() {
-  const opt = parseArgs(process.argv.slice(2));
-  const corpus = loadCorpus(opt.corpus);
-  for (const c of COMPILERS) if (!c.available) console.error(`note: ${c.id} not found (${c.argv[c.argv.length - 1]}) — skipping`);
-  const results = corpus.projects.map((p) => benchProject(p, opt.runs));
-  if (opt.json) {
-    console.log(JSON.stringify({ compilers: COMPILERS.filter((c) => c.available).map((c) => c.id), results }, null, 2));
-  } else {
-    report(results);
-  }
-  if (opt.profile) {
-    // For each project: capture a TSTS CPU profile (compiler's own --generateCpuProfile)
-    // and a heap-allocation profile (node --heap-prof), then run the attributor so the
-    // per-phase ratios above are explained by the cost-category breakdown.
-    const profDir = join(repoRoot, ".tests/profiling");
-    mkdirSync(profDir, { recursive: true });
-    for (const p of corpus.projects) {
-      const cpuName = `${p.name}.cpuprofile`;
-      const heapName = `${p.name}.heapprofile`;
-      const cpu = join(profDir, cpuName);
-      spawnSync("node", ["--cpu-prof", `--cpu-prof-dir=${profDir}`, `--cpu-prof-name=${cpuName}`, tstsCli, ...p.args], { cwd: p.cwd, stdio: "ignore", maxBuffer: 256 * 1024 * 1024 });
-      spawnSync("node", ["--heap-prof", `--heap-prof-dir=${profDir}`, `--heap-prof-name=${heapName}`, tstsCli, ...p.args], { cwd: p.cwd, stdio: "ignore", maxBuffer: 256 * 1024 * 1024 });
-      const r = spawnSync("node", [join(here, "attribute.mjs"), "--cpu", cpu, "--heap", join(profDir, heapName), "--label", `TSTS ${p.name}`, "--top", "8"], { encoding: "utf8" });
-      console.log(r.stdout || r.stderr || "");
-    }
-  }
+function formatMetric(value) {
+  return Number.isFinite(value) ? value.toFixed(3) : "invalid";
 }
 
-main();
+function formatPercent(value) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "invalid";
+}
+
+function formatRatio(left, right) {
+  return Number.isFinite(left) && Number.isFinite(right) && right > 0 ? `${(left / right).toFixed(2)}x` : "invalid";
+}
+
+function requiredValue(argv, index, option) {
+  const value = argv[index];
+  if (typeof value !== "string" || value === "") throw new Error(`${option} requires a value`);
+  return value;
+}
+
+function resolveFromCwd(value) {
+  return isAbsolute(value) ? resolve(value) : resolve(process.cwd(), value);
+}
+
+function mkdirSyncChecked(path) {
+  if (existsSync(path)) throw new Error(`refusing to reuse profile directory: ${path}`);
+  mkdirSync(path, { recursive: true, mode: 0o700 });
+}
+
+function writeFileSyncChecked(path, contents) {
+  writeFileSync(path, contents, { flag: "wx", mode: 0o644 });
+}
+
+function assertDisjointPaths(left, right, label) {
+  const absoluteLeft = resolve(left);
+  const absoluteRight = resolve(right);
+  if (isContainedPath(absoluteLeft, absoluteRight) || isContainedPath(absoluteRight, absoluteLeft)) throw new Error(`${label} must not overlap`);
+}
+
+function isContainedPath(parent, candidate) {
+  const local = relative(parent, candidate);
+  return local === "" || local !== ".." && !local.startsWith(`..${sep}`) && !isAbsolute(local);
+}
+
+const invokedPath = process.argv[1] === undefined ? null : pathToFileURL(resolve(process.argv[1])).href;
+if (import.meta.url === invokedPath) await runBenchmarkCli();

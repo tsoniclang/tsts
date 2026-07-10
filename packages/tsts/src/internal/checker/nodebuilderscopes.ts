@@ -119,6 +119,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterSignatureScope","kind":"method","status":"implemented","sigHash":"4dd663e272f9787e14fd75df9f7cf5129dca8e1a96a5df4974eeda07ca9c6153","bodyHash":"271e053f57dcfd7b90c0eea2c5b67e8ecb5d2c0cd8535fb118194a9ad1ff5d22"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,()=>void]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Signature>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>,()=>void]"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) enterSignatureScope(signature *Signature) (expandedParams []*ast.Symbol, cleanup func()) {
@@ -127,14 +128,15 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
  * 	return expandedParams, cleanup
  * }
  */
-export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [GoSlice<GoPtr<Symbol>>, () => void] {
-  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? [];
+export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [GoPtr<GoSlice<GoPtr<Symbol>>>, () => void] {
+  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0];
   const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
   return [expandedParams, cleanup];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope","kind":"method","status":"implemented","sigHash":"ad1edc80279b80f281d3d602714e955be116084433c938c9e2907f8b9cbd17d3","bodyHash":"5f9c6f61bda5329939ba73f52edbb1fb6db8329e2423b6778514f3ae7a38f0fe"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil slices and maps have distinct zero values that JavaScript arrays and maps cannot represent; GoPtr preserves nil while allocated empty containers remain allocated.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>()=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/nodebuilderimpl.ts::NodeBuilderImpl>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>()=>void"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) enterNewScope(declaration *ast.Node, expandedParams []*ast.Symbol, typeParameters []*Type, originalParameters []*ast.Symbol, mapper *TypeMapper) func() {
@@ -331,7 +333,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 	}
  * }
  */
-export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, declaration: GoPtr<Node>, expandedParams: GoSlice<GoPtr<Symbol>>, typeParameters: GoSlice<GoPtr<Type>>, originalParameters: GoSlice<GoPtr<Symbol>>, mapper: GoPtr<TypeMapper>): () => void {
+export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, declaration: GoPtr<Node>, expandedParams: GoPtr<GoSlice<GoPtr<Symbol>>>, typeParameters: GoPtr<GoSlice<GoPtr<Type>>>, originalParameters: GoPtr<GoSlice<GoPtr<Symbol>>>, mapper: GoPtr<TypeMapper>): () => void {
   const cleanupContext = cloneNodeBuilderContext(receiver!.ctx);
   let cleanupParams: (() => void) | undefined;
   let cleanupTypeParams: (() => void) | undefined;
@@ -406,7 +408,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         for (let pIndex = 0; pIndex < expandedParams.length; pIndex++) {
           const param = expandedParams[pIndex];
           let originalParam: GoPtr<Symbol>;
-          if (pIndex < (originalParameters?.length ?? 0)) {
+          if (originalParameters !== undefined && pIndex < originalParameters.length) {
             originalParam = originalParameters[pIndex];
           }
           if (originalParameters !== undefined && originalParam !== param) {

@@ -91,13 +91,14 @@ import { Checker_checkClassExpressionExternalHelpers } from "../checker.js";
  * }
  */
 export function Checker_getResolutionModeOverride(receiver: GoPtr<Checker>, node: GoPtr<ImportAttributes>, reportErrors: bool): ResolutionMode {
-  if (node!.Attributes!.Nodes.length !== 1) {
+  const attributes = node!.Attributes!.Nodes ?? [];
+  if (attributes.length !== 1) {
     if (reportErrors) {
       Checker_grammarErrorOnNode(receiver, node, Type_import_attributes_should_have_exactly_one_key_resolution_mode_with_value_import_or_require);
     }
     return ResolutionModeNone;
   }
-  const elem = node!.Attributes!.Nodes[0];
+  const elem = attributes[0];
   if (!IsStringLiteralLike(Node_Name(elem))) {
     return ResolutionModeNone;
   }
@@ -342,7 +343,11 @@ export function Checker_checkThisInStaticClassFieldInitializerInDecoratedClass(r
  * }
  */
 export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: GoPtr<Type>, props: SymbolTable, spread: GoPtr<Node>): void {
-  for (const right of Checker_getPropertiesOfType(receiver, t)) {
+  const properties = Checker_getPropertiesOfType(receiver, t);
+  if (properties === undefined) {
+    return;
+  }
+  for (const right of properties) {
     if ((right!.Flags & SymbolFlagsOptional) === 0 && (right!.CheckFlags & CheckFlagsPartial) === 0) {
       const left = props.get(right!.Name);
       if (left !== undefined) {
@@ -384,11 +389,13 @@ export function Checker_isThislessInterface(receiver: GoPtr<Checker>, symbol_: G
         return false;
       }
       const baseTypeNodes = GetExtendsHeritageClauseElements(declaration);
-      for (const node of baseTypeNodes) {
-        if (IsEntityNameExpression(Node_Expression(node))) {
-          const baseSymbol = Checker_resolveEntityName(receiver, Node_Expression(node), SymbolFlagsType, true, false, undefined);
-          if (baseSymbol === undefined || (baseSymbol!.Flags & SymbolFlagsInterface) === 0 || Type_AsInterfaceType(Checker_getDeclaredTypeOfClassOrInterface(receiver, baseSymbol))!.thisType !== undefined) {
-            return false;
+      if (baseTypeNodes !== undefined) {
+        for (const node of baseTypeNodes) {
+          if (IsEntityNameExpression(Node_Expression(node))) {
+            const baseSymbol = Checker_resolveEntityName(receiver, Node_Expression(node), SymbolFlagsType, true, false, undefined);
+            if (baseSymbol === undefined || (baseSymbol!.Flags & SymbolFlagsInterface) === 0 || Type_AsInterfaceType(Checker_getDeclaredTypeOfClassOrInterface(receiver, baseSymbol))!.thisType !== undefined) {
+              return false;
+            }
           }
         }
       }

@@ -40,6 +40,7 @@ import {
 import type { Program, SignatureUpdateKind } from "./program.js";
 import {
   DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics,
+  FileEmitKindNone,
   FileEmitKindAllDts,
   FileEmitKindAllJs,
   FileEmitKindDtsErrors,
@@ -49,7 +50,7 @@ import {
   snapshot_computeHash,
   snapshot_computeSignatureWithDiagnostics,
 } from "./snapshot.js";
-import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileEmitKind } from "./snapshot.js";
+import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileEmitKind, FileInfo } from "./snapshot.js";
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
 /**
@@ -180,24 +181,25 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
         // Result from cache
         const [diagnostics] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
           receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-          SourceFile_Path(options.TargetSourceFile)
+          SourceFile_Path(options.TargetSourceFile),
+          (): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> => undefined,
         );
         const result: EmitResult = {
           EmitSkipped: true as bool,
           Diagnostics: DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(diagnostics, receiver!.program!.program, options.TargetSourceFile),
-          EmittedFiles: [],
-          SourceMaps: [],
+          EmittedFiles: undefined,
+          SourceMaps: undefined,
         };
         emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
         return result;
       }
-      for (const result of results) {
+      for (const result of results ?? []) {
         emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
       }
-      return CombineEmitResults(results);
+      return CombineEmitResults(results ?? []);
     } else {
       // Combine results and update buildInfo
-      const result = CombineEmitResults(results);
+      const result = CombineEmitResults(results ?? []);
       emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
       emitFilesHandler_emitBuildInfo(receiver, options, result);
       return result;
@@ -212,10 +214,10 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
     const result: EmitResult = {
       EmitSkipped: true as bool,
       Diagnostics: Program_GetDeclarationDiagnostics(receiver!.program!.program, receiver!.ctx, options.TargetSourceFile),
-      EmittedFiles: [],
-      SourceMaps: [],
+      EmittedFiles: undefined,
+      SourceMaps: undefined,
     };
-    if (result.Diagnostics.length !== 0) {
+    if (result.Diagnostics !== undefined && result.Diagnostics.length !== 0) {
       emitFilesHandler_updateHasEmitDiagnostics(receiver, result);
       receiver!.program!.snapshot!.hasEmitDiagnostics = true as bool;
     }
@@ -234,7 +236,7 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
  * }
  */
 export function emitFilesHandler_updateHasEmitDiagnostics(receiver: GoPtr<emitFilesHandler>, result: GoPtr<EmitResult>): void {
-  if (result !== undefined && result.Diagnostics.length !== 0) {
+  if (result !== undefined && result.Diagnostics !== undefined && result.Diagnostics.length !== 0) {
     receiver!.hasEmitDiagnostics.Store(true as bool);
   }
 }
@@ -254,13 +256,27 @@ export function emitFilesHandler_updateHasEmitDiagnostics(receiver: GoPtr<emitFi
 export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>, options: EmitOptions, result: GoPtr<EmitResult>): void {
   const buildInfoResult = Program_emitBuildInfo(receiver!.program, receiver!.ctx, options);
   if (buildInfoResult !== undefined) {
-    result!.Diagnostics = [...result!.Diagnostics, ...buildInfoResult!.Diagnostics];
-    result!.EmittedFiles = [...result!.EmittedFiles, ...buildInfoResult!.EmittedFiles];
+    if (result === undefined) {
+      throw new globalThis.Error("nil emit result while appending build info");
+    }
+    result.Diagnostics = appendEmitSlice(result.Diagnostics, buildInfoResult.Diagnostics);
+    result.EmittedFiles = appendEmitSlice(result.EmittedFiles, buildInfoResult.EmittedFiles);
   }
+}
+
+function appendEmitSlice<T>(left: GoPtr<GoSlice<T>>, right: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  if (right === undefined || right.length === 0) {
+    return left;
+  }
+  if (left === undefined || left.length === 0) {
+    return right;
+  }
+  return [...left, ...right];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitFilesIncremental","kind":"method","status":"implemented","sigHash":"84b023c59ee6b24b6903d5f902f6a8d8418707943db49df2b2165ff38b473ce5","bodyHash":"0cadfad93b339fda2effedbc80aa76c359490bc20a9f9e6fc85a4745e607eca2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"emitFilesIncremental explicitly returns a nil Go slice on cancellation and forwards updateSnapshot's nil result; GoPtr preserves those states without changing work scheduling.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>,packages/tsts/src/internal/compiler/program.ts::EmitOptions)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>,packages/tsts/src/internal/compiler/program.ts::EmitOptions)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>>>"}
  *
  * Go source:
  * func (h *emitFilesHandler) emitFilesIncremental(options compiler.EmitOptions) []*compiler.EmitResult {
@@ -342,10 +358,10 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
  * 	return h.updateSnapshot()
  * }
  */
-export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesHandler>, options: EmitOptions): GoSlice<GoPtr<EmitResult>> {
+export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesHandler>, options: EmitOptions): GoPtr<GoSlice<GoPtr<EmitResult>>> {
   collectAllAffectedFiles(receiver!.ctx, receiver!.program);
   if (receiver!.ctx.Err() !== undefined) {
-    return [];
+    return undefined;
   }
 
   const wg = NewWorkGroup(compiler_Program_SingleThreaded(receiver!.program!.program));
@@ -354,7 +370,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
     (path: Path, emitKind: FileEmitKind): bool => {
       const affectedFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
       if (affectedFile === undefined || !Program_SourceFileMayBeEmitted(receiver!.program!.program, affectedFile, false as bool)) {
-        Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path);
+        Set_Add<Path>(receiver!.deletedPendingKinds, path);
         return true as bool;
       }
       const pendingKind = emitFilesHandler_getPendingEmitKindForEmitOptions(receiver, emitKind, options);
@@ -401,7 +417,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
   );
   wg.RunAndWait();
   if (receiver!.ctx.Err() !== undefined) {
-    return [];
+    return undefined;
   }
 
   SyncMap_Range<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
@@ -409,17 +425,19 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
     (path: Path, diagnostics: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>): bool => {
       const [, ok] = SyncMap_Load<Path, GoPtr<emitUpdate>>(
         receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
-        path
+        path,
+        (): GoPtr<emitUpdate> => undefined,
       );
       if (!ok) {
         const affectedFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
         if (affectedFile === undefined || !Program_SourceFileMayBeEmitted(receiver!.program!.program, affectedFile, false as bool)) {
-          Set_Add<Path>(receiver!.deletedPendingKinds as Set<Path>, path);
+          Set_Add<Path>(receiver!.deletedPendingKinds, path);
           return true as bool;
         }
         const [pendingKind] = SyncMap_Load<Path, FileEmitKind>(
           receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
-          path
+          path,
+          (): FileEmitKind => FileEmitKindNone,
         );
         SyncMap_Store<Path, GoPtr<emitUpdate>>(
           receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
@@ -429,8 +447,8 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
             result: {
               EmitSkipped: true as bool,
               Diagnostics: DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(diagnostics, receiver!.program!.program, affectedFile),
-              EmittedFiles: [],
-              SourceMaps: [],
+              EmittedFiles: undefined,
+              SourceMaps: undefined,
             } as EmitResult,
             dtsErrorsFromCache: true as bool,
           }
@@ -513,16 +531,23 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
       if (IsDeclarationFileName(fileName)) {
         if (canUseIncrementalState) {
           let emitSig = "";
-          const [info] = SyncMap_Load<Path, GoPtr<import("./snapshot.js").FileInfo>>(
-            receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<import("./snapshot.js").FileInfo>>,
-            SourceFile_Path(options.TargetSourceFile)
+          const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+            receiver!.program!.snapshot!.fileInfos,
+            SourceFile_Path(options.TargetSourceFile),
+            (): GoPtr<FileInfo> => undefined,
           );
-          if (info!.signature === info!.version) {
+          if (info === undefined) {
+            throw new globalThis.Error("incremental emit missing file info");
+          }
+          if (info.signature === info.version) {
             const signature = snapshot_computeSignatureWithDiagnostics(receiver!.program!.snapshot, options.TargetSourceFile, text, data);
-            if (data!.Diagnostics.length === 0) {
+            if (data === undefined) {
+              throw new globalThis.Error("declaration write missing WriteFileData");
+            }
+            if (data.Diagnostics === undefined || data.Diagnostics.length === 0) {
               emitSig = signature;
             }
-            if (signature !== info!.version) {
+            if (signature !== info.version) {
               SyncMap_Store<Path, string>(
                 receiver!.signatures as SyncMap<Path, string>,
                 SourceFile_Path(options.TargetSourceFile),
@@ -600,7 +625,8 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   let oldSignature = "";
   const [oldSignatureFormat, ok] = SyncMap_Load<Path, GoPtr<emitSignature>>(
     receiver!.program!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
-    SourceFile_Path(file)
+    SourceFile_Path(file),
+    (): GoPtr<emitSignature> => undefined,
   );
   if (ok) {
     if (oldSignatureFormat!.signature !== "") {
@@ -636,6 +662,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.updateSnapshot","kind":"method","status":"implemented","sigHash":"d746a8744172bdd615efa10298af1a71a60321eb4d38fb478c2e861093f54551","bodyHash":"c16c104bcdb1f2e01fd684c072d2953351f7faa5da996453390ad740f809fca9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"updateSnapshot uses a nil Go result accumulator and returns nil when incremental state produces no emit result or is unavailable; GoPtr preserves those outcomes.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/execute/incremental/emitfileshandler.ts::emitFilesHandler>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::EmitResult>>>"}
  *
  * Go source:
  * func (h *emitFilesHandler) updateSnapshot() []*compiler.EmitResult {
@@ -690,16 +717,20 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
  * 	return nil
  * }
  */
-export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler>): GoSlice<GoPtr<EmitResult>> {
+export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler>): GoPtr<GoSlice<GoPtr<EmitResult>>> {
   if (snapshot_canUseIncrementalState(receiver!.program!.snapshot)) {
     SyncMap_Range<Path, string>(
       receiver!.signatures as SyncMap<Path, string>,
       (file: Path, signature: string): bool => {
-        const [info] = SyncMap_Load<Path, GoPtr<import("./snapshot.js").FileInfo>>(
-          receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<import("./snapshot.js").FileInfo>>,
-          file
+        const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+          receiver!.program!.snapshot!.fileInfos,
+          file,
+          (): GoPtr<FileInfo> => undefined,
         );
-        info!.signature = signature;
+        if (info === undefined) {
+          throw new globalThis.Error("incremental signature update missing file info");
+        }
+        info.signature = signature;
         if (receiver!.program!.testingData !== undefined) {
           receiver!.program!.testingData.UpdatedSignatureKinds.set(file, SignatureUpdateKindStoredAtEmit);
         }
@@ -719,18 +750,22 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
         return true as bool;
       }
     );
-    for (const [file] of Set_Keys<Path>(receiver!.deletedPendingKinds as Set<Path>)) {
-      SyncMap_Delete<Path, FileEmitKind>(
-        receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
-        file
-      );
-      receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
+    const deletedPendingKinds = Set_Keys<Path>(receiver!.deletedPendingKinds);
+    if (deletedPendingKinds !== undefined) {
+      for (const [file] of deletedPendingKinds) {
+        SyncMap_Delete<Path, FileEmitKind>(
+          receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
+          file
+        );
+        receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
+      }
     }
-    const results: GoPtr<EmitResult>[] = [];
+    let results: GoPtr<GoSlice<GoPtr<EmitResult>>> = undefined;
     for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
       const [latestChangedDtsFile, ok1] = SyncMap_Load<Path, string>(
         receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
-        SourceFile_Path(file)
+        SourceFile_Path(file),
+        (): string => "",
       );
       if (ok1) {
         receiver!.program!.snapshot!.latestChangedDtsFile = latestChangedDtsFile;
@@ -739,7 +774,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
       }
       const [update, ok2] = SyncMap_Load<Path, GoPtr<emitUpdate>>(
         receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
-        SourceFile_Path(file)
+        SourceFile_Path(file),
+        (): GoPtr<emitUpdate> => undefined,
       );
       if (ok2) {
         if (!update!.dtsErrorsFromCache) {
@@ -758,8 +794,8 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
           receiver!.program!.snapshot!.buildInfoEmitPending.Store(true as bool);
         }
         if (update!.result !== undefined) {
-          results.push(update!.result);
-          if (update!.result!.Diagnostics.length !== 0) {
+          results = [...(results ?? []), update!.result];
+          if (update!.result!.Diagnostics !== undefined && update!.result!.Diagnostics.length !== 0) {
             SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
               receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
               SourceFile_Path(file),
@@ -773,7 +809,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
   } else if (receiver!.hasEmitDiagnostics.Load()) {
     receiver!.program!.snapshot!.hasEmitDiagnostics = true as bool;
   }
-  return [];
+  return undefined;
 }
 
 /**

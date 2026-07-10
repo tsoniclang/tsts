@@ -756,6 +756,7 @@ export function PositionIsSynthesized(pos: int): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::FindLastVisibleNode","kind":"func","status":"implemented","sigHash":"2dc45a8fae442a8077823fcab728460b8777627caf8a55574fda0a437a189174","bodyHash":"7fdf96a7a0046f475cca6e8bcb0b9342fa65b39bf98bec389e3af0b1871735fb"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go search accepts a nil slice and treats its length as zero; GoPtr preserves nil while values ?? [] mirrors the same length and indexing behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func FindLastVisibleNode(nodes []*Node) *Node {
@@ -769,10 +770,11 @@ export function PositionIsSynthesized(pos: int): bool {
  * 	return nil
  * }
  */
-export function FindLastVisibleNode(nodes: GoSlice<GoPtr<Node>>): GoPtr<Node> {
+export function FindLastVisibleNode(nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<Node> {
+  const values = nodes ?? [];
   const loop = (fromEnd: int): GoPtr<Node> => {
-    if (fromEnd > nodes.length) return undefined;
-    if ((nodes[nodes.length - fromEnd]!.Flags & NodeFlagsReparsed) === 0) return nodes[nodes.length - fromEnd];
+    if (fromEnd > values.length) return undefined;
+    if ((values[values.length - fromEnd]!.Flags & NodeFlagsReparsed) === 0) return values[values.length - fromEnd];
     return loop((fromEnd + 1) as int);
   };
   return loop(1 as int);
@@ -3389,10 +3391,10 @@ export function IsVarUsing(node: GoPtr<Node>): bool {
  * }
  */
 export function GetJSDocDeprecatedTag(node: GoPtr<Node>): GoPtr<Node> {
-  for (const jsdoc of Node_JSDoc(node, undefined)) {
+  for (const jsdoc of Node_JSDoc(node, undefined) ?? []) {
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {
-      for (const tag of tags!.Nodes) {
+      for (const tag of tags!.Nodes ?? []) {
         if (IsJSDocDeprecatedTag(tag)) {
           return tag;
         }
@@ -4606,35 +4608,38 @@ export function GetContainingClass(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function GetExtendsHeritageClauseElement(node: GoPtr<Node>): GoPtr<ExpressionWithTypeArgumentsNode> {
-  return FirstOrNil(GetExtendsHeritageClauseElements(node));
+  return FirstOrNil(GetExtendsHeritageClauseElements(node) ?? []);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetExtendsHeritageClauseElements","kind":"func","status":"implemented","sigHash":"755d42639b42957eb5d04510a846ff99ac6c87b4a46138c66b97504ddef10c00","bodyHash":"2f1d78b4839e017e9e134b780a61e1f637880cb5f3c836412befe1c07991a6ba"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The wrapper forwards GetHeritageElements, whose Go result is nil when no matching clause exists; GoPtr preserves that returned nil slice.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>>"}
  *
  * Go source:
  * func GetExtendsHeritageClauseElements(node *Node) []*ExpressionWithTypeArgumentsNode {
  * 	return GetHeritageElements(node, KindExtendsKeyword)
  * }
  */
-export function GetExtendsHeritageClauseElements(node: GoPtr<Node>): GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>> {
+export function GetExtendsHeritageClauseElements(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>>> {
   return GetHeritageElements(node, KindExtendsKeyword);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetImplementsHeritageClauseElements","kind":"func","status":"implemented","sigHash":"c6e8dbac214883ac45263f375b1a7740bfd64d163c0faba8d82e51c673c8b686","bodyHash":"b4a372a12ad46c5f7799862c6211d5db2fc54768deeaf000b3c30eddedcef051"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The wrapper forwards GetHeritageElements, whose Go result is nil when no matching clause exists; GoPtr preserves that returned nil slice.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>>"}
  *
  * Go source:
  * func GetImplementsHeritageClauseElements(node *Node) []*ExpressionWithTypeArgumentsNode {
  * 	return GetHeritageElements(node, KindImplementsKeyword)
  * }
  */
-export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>> {
+export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>>> {
   return GetHeritageElements(node, KindImplementsKeyword);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements","kind":"func","status":"implemented","sigHash":"67ba33008c49a5e27f901d3c71680837142ebbb329ca49778d9bed1daa744542","bodyHash":"f2021f5553e964f53dab867a2467f5897558610bc9482835dff13adf8d486945"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"GetHeritageElements returns nil when no clause exists and otherwise forwards NodeList.Nodes, which can itself be nil; GoPtr preserves both upstream nil-slice paths.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/ast/generated/kinds.ts::Kind)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/ast/generated/kinds.ts::Kind)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func GetHeritageElements(node *Node, kind Kind) []*Node {
@@ -4645,12 +4650,12 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
  * 	return nil
  * }
  */
-export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
+export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoPtr<GoSlice<GoPtr<Node>>> {
   const clause = GetHeritageClause(node, kind);
   if (clause !== undefined) {
-    return AsHeritageClause(clause)!.Types!.Nodes ?? [];
+    return AsHeritageClause(clause)!.Types!.Nodes;
   }
-  return [];
+  return undefined;
 }
 
 /**
@@ -4672,7 +4677,7 @@ export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPt
 export function GetHeritageClause(node: GoPtr<Node>, kind: Kind): GoPtr<Node> {
   const clauses: GoPtr<NodeList> = getHeritageClauses(node);
   if (clauses !== undefined) {
-    for (const clause of clauses!.Nodes) {
+    for (const clause of clauses!.Nodes ?? []) {
       if (AsHeritageClause(clause)!.Token === kind) {
         return clause;
       }
@@ -6060,19 +6065,21 @@ export function IsBreakOrContinueStatement(node: GoPtr<Node>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::pushAncestor","kind":"func","status":"implemented","sigHash":"32f53e6383ca7dd23d6880ef402a50bd5dd535f7f302fe419cd0aa2f496c5518","bodyHash":"38039ca7978313a06daa651b28deae32f87b9e4a6e294681dbfd1b3e8b4e4ffc"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The virtual-ancestor stack may be a nil Go slice at the public entry point; GoPtr accepts that state and append produces the same newly allocated nonnil result as Go.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>"}
  *
  * Go source:
  * func pushAncestor(ancestors []*Node, parent *Node) []*Node {
  * 	return append(ancestors, parent)
  * }
  */
-export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function pushAncestor(ancestors: GoPtr<GoSlice<GoPtr<Node>>>, parent: GoPtr<Node>): GoSlice<GoPtr<Node>> {
   // Go's `append(nil, parent)` yields a new slice; a nil input slice is treated as empty.
   return [...(ancestors ?? []), parent];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"implemented","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc","bodyHash":"57b2cbd6668f51b9a3db0b138956609013228247447d13fdce9277f92013b0e1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Popping an empty virtual-ancestor stack explicitly returns a nil Go slice, and the input stack may itself be nil; GoPtr preserves both the accepted nil input and exhausted nil result.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>]"}
  *
  * Go source:
  * func popAncestor(ancestors []*Node, node *Node) ([]*Node, *Node) {
@@ -6083,9 +6090,9 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
  * 	return ancestors[:n], ancestors[n]
  * }
  */
-export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>): [GoSlice<GoPtr<Node>>, GoPtr<Node>] {
+export function popAncestor(ancestors: GoPtr<GoSlice<GoPtr<Node>>>, node: GoPtr<Node>): [GoPtr<GoSlice<GoPtr<Node>>>, GoPtr<Node>] {
   if ((ancestors ?? []).length === 0) {
-    return [undefined!, node!.Parent];
+    return [undefined, node!.Parent];
   }
   const n = ancestors!.length - 1;
   return [ancestors!.slice(0, n), ancestors![n]];
@@ -6124,11 +6131,12 @@ export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as Module
  * }
  */
 export function GetModuleInstanceState(node: GoPtr<Node>): ModuleInstanceState {
-  return getModuleInstanceState(node, undefined!, undefined!);
+  return getModuleInstanceState(node, undefined, undefined);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getModuleInstanceState","kind":"func","status":"implemented","sigHash":"8d27ab52a7084936279561e2e338eee5c8671178fbc74f3e0e45456751bfb01c","bodyHash":"453ec688d4048b4b4e3f8e2d1288922b44421263919ad933ea7e465d76a119d5"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The module-state walk deliberately accepts nil virtual-ancestor slices and nil visited maps from its public entry point; GoPtr represents those two Go zero values until the algorithm appends or allocates them.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState"}
  *
  * Go source:
  * func getModuleInstanceState(node *Node, ancestors []*Node, visited map[NodeId]ModuleInstanceState) ModuleInstanceState {
@@ -6140,7 +6148,7 @@ export function GetModuleInstanceState(node: GoPtr<Node>): ModuleInstanceState {
  * 	}
  * }
  */
-export function getModuleInstanceState(node: GoPtr<Node>, ancestors: GoSlice<GoPtr<Node>>, visited: GoMap<NodeId, ModuleInstanceState>): ModuleInstanceState {
+export function getModuleInstanceState(node: GoPtr<Node>, ancestors: GoPtr<GoSlice<GoPtr<Node>>>, visited: GoPtr<GoMap<NodeId, ModuleInstanceState>>): ModuleInstanceState {
   const module_ = AsModuleDeclaration(node);
   if (module_!.Body !== undefined) {
     return getModuleInstanceStateCached(module_!.Body, pushAncestor(ancestors, node), visited);
@@ -6151,6 +6159,7 @@ export function getModuleInstanceState(node: GoPtr<Node>, ancestors: GoSlice<GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getModuleInstanceStateCached","kind":"func","status":"implemented","sigHash":"17eaad3b7e15ec3fc3d6eb720510c5018fa23a5751bdc04d4c4e7f7089f5cd2b","bodyHash":"9c265ba3462c588dd7c3163c2cf3e8a02171ad596f528e4fa5fcf9217c546fc8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The recursive module-state cache accepts a nil ancestor slice and lazily allocates a nil visited map on first use; GoPtr preserves both upstream lifecycle states.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState"}
  *
  * Go source:
  * func getModuleInstanceStateCached(node *Node, ancestors []*Node, visited map[NodeId]ModuleInstanceState) ModuleInstanceState {
@@ -6170,7 +6179,7 @@ export function getModuleInstanceState(node: GoPtr<Node>, ancestors: GoSlice<GoP
  * 	return result
  * }
  */
-export function getModuleInstanceStateCached(node: GoPtr<Node>, ancestors: GoSlice<GoPtr<Node>>, visited: GoMap<NodeId, ModuleInstanceState>): ModuleInstanceState {
+export function getModuleInstanceStateCached(node: GoPtr<Node>, ancestors: GoPtr<GoSlice<GoPtr<Node>>>, visited: GoPtr<GoMap<NodeId, ModuleInstanceState>>): ModuleInstanceState {
   const visitedMap: GoMap<NodeId, ModuleInstanceState> = visited !== undefined ? visited : new globalThis.Map<NodeId, ModuleInstanceState>();
   const nodeId: NodeId = GetNodeId(node);
   if (visitedMap.has(nodeId)) {
@@ -6188,6 +6197,7 @@ export function getModuleInstanceStateCached(node: GoPtr<Node>, ancestors: GoSli
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getModuleInstanceStateWorker","kind":"func","status":"implemented","sigHash":"503805903b71f3cf7c69da9d042910542a5d94ff3309b6c783bf6a23800f10fb","bodyHash":"c4b8103408a343dc6d4b83acac0caf6cad91d54bcb1cdb5b3205f83c44175bc9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The module-state worker receives the possibly nil virtual-ancestor slice and visited map used by the recursive upstream algorithm; GoPtr preserves nil until append or cache allocation occurs.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState"}
  *
  * Go source:
  * func getModuleInstanceStateWorker(node *Node, ancestors []*Node, visited map[NodeId]ModuleInstanceState) ModuleInstanceState {
@@ -6244,7 +6254,7 @@ export function getModuleInstanceStateCached(node: GoPtr<Node>, ancestors: GoSli
  * 	return ModuleInstanceStateInstantiated
  * }
  */
-export function getModuleInstanceStateWorker(node: GoPtr<Node>, ancestors: GoSlice<GoPtr<Node>>, visited: GoMap<NodeId, ModuleInstanceState>): ModuleInstanceState {
+export function getModuleInstanceStateWorker(node: GoPtr<Node>, ancestors: GoPtr<GoSlice<GoPtr<Node>>>, visited: GoPtr<GoMap<NodeId, ModuleInstanceState>>): ModuleInstanceState {
   // A module is uninstantiated if it contains only
   switch (node!.Kind) {
     case KindInterfaceDeclaration:
@@ -6308,6 +6318,7 @@ export function getModuleInstanceStateWorker(node: GoPtr<Node>, ancestors: GoSli
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::getModuleInstanceStateForAliasTarget","kind":"func","status":"implemented","sigHash":"f3dc3b689b92452637cc0ec878ea0bcb97da8e32f25a6395789eadcdc75f1212","bodyHash":"ab30b9f3c9f5f08c02e0c6f18df879133a2d729e86f00632dc9fc7fa6c78edd3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Alias-target state resolution propagates the possibly nil virtual-ancestor slice and lazily allocated visited map through recursive calls; GoPtr preserves those exact upstream states.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ids.ts::NodeId,packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState>>)=>packages/tsts/src/internal/ast/utilities.ts::ModuleInstanceState"}
  *
  * Go source:
  * func getModuleInstanceStateForAliasTarget(node *Node, ancestors []*Node, visited map[NodeId]ModuleInstanceState) ModuleInstanceState {
@@ -6347,14 +6358,14 @@ export function getModuleInstanceStateWorker(node: GoPtr<Node>, ancestors: GoSli
  * 	return ModuleInstanceStateInstantiated
  * }
  */
-export function getModuleInstanceStateForAliasTarget(node: GoPtr<Node>, ancestors: GoSlice<GoPtr<Node>>, visited: GoMap<NodeId, ModuleInstanceState>): ModuleInstanceState {
+export function getModuleInstanceStateForAliasTarget(node: GoPtr<Node>, ancestors: GoPtr<GoSlice<GoPtr<Node>>>, visited: GoPtr<GoMap<NodeId, ModuleInstanceState>>): ModuleInstanceState {
   const name: GoPtr<Node> = Node_PropertyNameOrName(node);
   if (name!.Kind !== KindIdentifier) {
     // Skip for invalid syntax like this: export { "x" }
     return ModuleInstanceStateInstantiated;
   }
   const [initAncestors, initP] = popAncestor(ancestors, node);
-  const outerLoop = (currentAncestors: GoSlice<GoPtr<Node>>, p: GoPtr<Node>): ModuleInstanceState => {
+  const outerLoop = (currentAncestors: GoPtr<GoSlice<GoPtr<Node>>>, p: GoPtr<Node>): ModuleInstanceState => {
     if (p === undefined) return ModuleInstanceStateInstantiated;
     const [nextAncestors, nextP] = popAncestor(currentAncestors, p);
     if (IsBlock(p) || IsModuleBlock(p) || IsSourceFile(p)) {
@@ -6908,14 +6919,14 @@ export function IsParseTreeNode(node: GoPtr<Node>): bool {
 export function GetNodeAtPosition(file: GoPtr<SourceFile>, position: int, includeJSDoc: bool): GoPtr<Node> {
   const loop = (current: GoPtr<Node>): GoPtr<Node> => {
     const jsdocChild: GoPtr<Node> = includeJSDoc ? (() => {
-      const found = { value: undefined as GoPtr<Node> };
-      for (const jsdoc of Node_JSDoc(current, file)) {
+      const found: { value: GoPtr<Node> } = { value: undefined };
+      for (const jsdoc of Node_JSDoc(current, file) ?? []) {
         if (nodeContainsPosition(jsdoc, position)) { found.value = jsdoc; break; }
       }
       return found.value;
     })() : undefined;
     const child: GoPtr<Node> = jsdocChild !== undefined ? jsdocChild : (() => {
-      const found = { value: undefined as GoPtr<Node> };
+      const found: { value: GoPtr<Node> } = { value: undefined };
       Node_ForEachChild(current, (node: GoPtr<Node>): bool => {
         if (nodeContainsPosition(node, position)) { found.value = node; return true as bool; }
         return false as bool;
@@ -7110,10 +7121,11 @@ export function IsRequireCall(node: GoPtr<Node>, requireStringLiteralLikeArgumen
   if (!IsIdentifier(call!.Expression) || Node_Text(call!.Expression) !== "require") {
     return false as bool;
   }
-  if (call!.Arguments!.Nodes.length !== 1) {
+  const argumentsList = call!.Arguments!.Nodes ?? [];
+  if (argumentsList.length !== 1) {
     return false as bool;
   }
-  return (!requireStringLiteralLikeArgument || IsStringLiteralLike(call!.Arguments!.Nodes[0])) as bool;
+  return (!requireStringLiteralLikeArgument || IsStringLiteralLike(argumentsList[0])) as bool;
 }
 
 /**
@@ -7131,7 +7143,7 @@ export function IsRequireCall(node: GoPtr<Node>, requireStringLiteralLikeArgumen
  */
 export function IsRequireVariableStatement(node: GoPtr<Node>): bool {
   if (IsVariableStatement(node)) {
-    const declarations = AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes;
+    const declarations = AsVariableDeclarationList(AsVariableStatement(node)!.DeclarationList)!.Declarations!.Nodes ?? [];
     if (declarations.length > 0) {
       return Every(declarations, IsVariableDeclarationInitializedToRequire);
     }
@@ -7220,7 +7232,13 @@ export function GetJSXRuntimeImport(base: string, options: GoPtr<CompilerOptions
  */
 export function GetPragmaFromSourceFile(file: GoPtr<SourceFile>, name: string): GoPtr<Pragma> {
   if (file === undefined) return undefined;
-  return file!.Pragmas.reduce<GoPtr<Pragma>>((acc, p) => p!.Name === name ? p : acc, undefined);
+  let result: GoPtr<Pragma> = undefined;
+  for (const pragma of file.Pragmas ?? []) {
+    if (pragma.Name === name) {
+      result = pragma;
+    }
+  }
+  return result;
 }
 
 /**
@@ -7954,8 +7972,8 @@ export function IsClassOrTypeElement(node: GoPtr<Node>): bool {
  * }
  */
 export function GetClassExtendsHeritageElement(node: GoPtr<Node>): GoPtr<ExpressionWithTypeArgumentsNode> {
-  const heritageElements: GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>> = GetHeritageElements(node, KindExtendsKeyword);
-  if ((heritageElements?.length ?? 0) > 0) {
+  const heritageElements = GetHeritageElements(node, KindExtendsKeyword);
+  if (heritageElements !== undefined && heritageElements.length > 0) {
     return heritageElements[0];
   }
   return undefined;
@@ -7963,13 +7981,14 @@ export function GetClassExtendsHeritageElement(node: GoPtr<Node>): GoPtr<Express
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetImplementsTypeNodes","kind":"func","status":"implemented","sigHash":"c8e66b4dee8a528a0d3713be6c90841771a7109ef4eea5f7640fe42b6823bd06","bodyHash":"d66ec16ac39a59c3c49fd0d5652b3b9a33322de2fbfb07fe325d36bff72cf204"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The wrapper forwards GetHeritageElements and therefore preserves its nil slice when no implements clause is present.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExpressionWithTypeArgumentsNode>>>"}
  *
  * Go source:
  * func GetImplementsTypeNodes(node *Node) []*ExpressionWithTypeArgumentsNode {
  * 	return GetHeritageElements(node, KindImplementsKeyword)
  * }
  */
-export function GetImplementsTypeNodes(node: GoPtr<Node>): GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>> {
+export function GetImplementsTypeNodes(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<ExpressionWithTypeArgumentsNode>>> {
   return GetHeritageElements(node, KindImplementsKeyword);
 }
 
@@ -8001,10 +8020,14 @@ export function IsTypeKeywordToken(node: GoPtr<Node>): bool {
  * }
  */
 export function IsJSDocSingleCommentNodeList(nodeList: GoPtr<NodeList>): bool {
-  if (nodeList === undefined || nodeList!.Nodes.length === 0) {
+  if (nodeList === undefined) {
     return false as bool;
   }
-  const parent: GoPtr<Node> = nodeList!.Nodes[0]!.Parent;
+  const nodes = nodeList.Nodes ?? [];
+  if (nodes.length === 0) {
+    return false as bool;
+  }
+  const parent: GoPtr<Node> = nodes[0]!.Parent;
   if (parent === undefined) {
     return false as bool;
   }
@@ -8026,7 +8049,14 @@ export function IsJSDocSingleCommentNodeComment(node: GoPtr<Node>): bool {
   if (node === undefined || node!.Parent === undefined) {
     return false as bool;
   }
-  return (IsJSDocSingleCommentNode(node!.Parent) && node === Node_CommentList(node!.Parent)!.Nodes[0]) as bool;
+  if (!IsJSDocSingleCommentNode(node.Parent)) {
+    return false as bool;
+  }
+  const comments = Node_CommentList(node.Parent)!.Nodes;
+  if (comments === undefined || comments.length === 0) {
+    throw new globalThis.Error("single-comment JSDoc node has no comment node");
+  }
+  return (node === comments[0]) as bool;
 }
 
 /**
@@ -8038,7 +8068,7 @@ export function IsJSDocSingleCommentNodeComment(node: GoPtr<Node>): bool {
  * }
  */
 export function IsJSDocSingleCommentNode(node: GoPtr<Node>): bool {
-  return (hasComment(node!.Kind) && Node_CommentList(node) !== undefined && Node_CommentList(node)!.Nodes.length === 1) as bool;
+  return (hasComment(node!.Kind) && Node_CommentList(node) !== undefined && (Node_CommentList(node)!.Nodes ?? []).length === 1) as bool;
 }
 
 /**
@@ -8475,8 +8505,9 @@ export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createMod
  */
 export function GetThisParameter(signature: GoPtr<Node>): GoPtr<Node> {
   // callback tags do not currently support this parameters
-  if (Node_Parameters(signature).length !== 0) {
-    const thisParameter: GoPtr<Node> = Node_Parameters(signature)[0];
+  const parameters = Node_Parameters(signature) ?? [];
+  if (parameters.length !== 0) {
+    const thisParameter: GoPtr<Node> = parameters[0];
     if (IsThisParameter(thisParameter)) {
       return thisParameter;
     }
@@ -9651,7 +9682,7 @@ export function hasFileNameImpl_Path(receiver: GoPtr<hasFileNameImpl>): Path_73a
  * 	})
  * }
  */
-export function GetSemanticJsxChildren(children: GoSlice<GoPtr<JsxChild>>): GoSlice<GoPtr<JsxChild>> {
+export function GetSemanticJsxChildren(children: GoPtr<GoSlice<GoPtr<JsxChild>>>): GoPtr<GoSlice<GoPtr<JsxChild>>> {
   return Filter(children, (i: GoPtr<JsxChild>): bool => {
     switch (i!.Kind) {
       case KindJsxExpression:
@@ -9727,6 +9758,7 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern","kind":"func","status":"implemented","sigHash":"adff8602a7cfe924132398c277c2683ba7feaf5ee75ca7865bbc28b91d25d772","bodyHash":"32aa813868ee0fab12cab76464b1d8c81e61b7914a24d634c63be3cd90dafa28"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The upstream function explicitly returns a nil slice for node kinds that are not binding or assignment patterns; GoPtr preserves that result instead of inventing an allocated empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func GetElementsOfBindingOrAssignmentPattern(name *Node) []*Node {
@@ -9742,7 +9774,7 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
  * 	return nil
  * }
  */
-export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   switch (name!.Kind) {
     case KindObjectBindingPattern:
     case KindArrayBindingPattern:
@@ -9754,7 +9786,7 @@ export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoSl
       // `a` in `{a}`
       return Node_Properties(name)!;
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -10190,10 +10222,16 @@ export function GetNextJSDocCommentLocation(node: GoPtr<Node>): GoPtr<Node> {
       case KindVariableStatement:
       case KindExpressionStatement:
         return parent;
-      case KindVariableDeclarationList:
-        if (AsVariableDeclarationList(parent)!.Declarations!.Nodes[0] === node) {
+      case KindVariableDeclarationList: {
+        const declarations = AsVariableDeclarationList(parent)!.Declarations!.Nodes;
+        if (declarations === undefined || declarations.length === 0) {
+          throw new globalThis.Error("variable declaration list has no declarations");
+        }
+        if (declarations[0] === node) {
           return parent;
         }
+        break;
+      }
     }
   }
   return undefined;
@@ -10527,7 +10565,7 @@ export function HasContextSensitiveParameters(node: GoPtr<Node>): bool {
     if (!IsArrowFunction(node)) {
       // If the first parameter is not an explicit 'this' parameter, then the function has
       // an implicit 'this' parameter which is subject to contextual typing.
-      const parameter: GoPtr<Node> = FirstOrNil(Node_Parameters(node));
+      const parameter: GoPtr<Node> = FirstOrNil(Node_Parameters(node) ?? []);
       if (parameter === undefined || !IsThisParameter(parameter)) {
         return ((node!.Flags & NodeFlagsContainsThis) !== 0) as bool;
       }
@@ -10783,8 +10821,9 @@ export function ClassElementOrClassElementParameterIsDecorated(useLegacyDecorato
   if (NodeIsDecorated(useLegacyDecorators, node, parent, undefined)) {
     return true as bool;
   }
-  if (parameters !== undefined && parameters!.Nodes.length > 0) {
-    for (const parameter of parameters!.Nodes) {
+  const parameterNodes = parameters?.Nodes ?? [];
+  if (parameterNodes.length > 0) {
+    for (const parameter of parameterNodes) {
       if (IsThisParameter(parameter)) {
         continue;
       }
@@ -11039,7 +11078,7 @@ export function GetRestParameterElementType(node: GoPtr<ParameterDeclarationNode
     return AsArrayTypeNode(node)!.ElementType;
   }
   if (node!.Kind === KindTypeReference && AsTypeReferenceNode(node)!.TypeArguments !== undefined) {
-    return FirstOrNil(AsTypeReferenceNode(node)!.TypeArguments!.Nodes);
+    return FirstOrNil(AsTypeReferenceNode(node)!.TypeArguments!.Nodes ?? []);
   }
   return undefined;
 }
@@ -11201,7 +11240,7 @@ export function findCloneInNode(node: GoPtr<Node>, original: GoPtr<Node>): GoPtr
       TextRange_End(current!.Loc) === TextRange_End(original!.Loc)) {
       return current;
     }
-    const container = { next: undefined as GoPtr<Node> };
+    const container: { next: GoPtr<Node> } = { next: undefined };
     const foundContainingChild: bool = Node_ForEachChild(current, (n: GoPtr<Node>): bool => {
       if (TextRange_ContainedBy(original!.Loc, n!.Loc)) {
         container.next = n;

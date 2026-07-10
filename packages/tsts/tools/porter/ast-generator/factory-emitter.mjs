@@ -153,7 +153,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
     const rawValue = m.goParamName();
     const value = m.bitmask
       ? `(${rawValue} & ${m.bitmask}) >>> 0`
-      : !Array.isArray(m.rawType) && m.rawType === "string"
+      : m.listKind === undefined && !Array.isArray(m.rawType) && m.rawType === "string"
         ? `${rawValue} ?? ""`
         : rawValue;
     lines.push(`  data.${m.name} = ${value};`);

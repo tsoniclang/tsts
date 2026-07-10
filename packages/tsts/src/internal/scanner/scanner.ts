@@ -646,7 +646,7 @@ export interface ScannerState {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b","bodyHash":"f6fd857b619c62ca2d342f49ac08ea4f7ca602b12ff8fb316ff65a134cd12715"}
- * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"Scanner.sourceByteView is a TypeScript-runtime cache of the current text's UTF-8 byte view. SetText and Reset refresh or clear it before scanning, every byte-offset helper reads the matching view, and it never participates in scanner semantics or snapshots; the field avoids repeated UTF-16-to-UTF-8 materialization while preserving TS-Go byte behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;text:string}","tsSignature":"interface{__tsgoEmbedded0:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;sourceByteView:packages/tsts/src/go/unicode/utf8.ts::StringByteView;text:string}"}
+ * @tsgo-override {"category":"runtime-correctness-performance","allow":["signature"],"reason":"Scanner error callbacks and numeric caches have genuine nil lifecycle states represented by GoPtr; sourceByteView is an additional runtime cache bound to the exact current text that avoids repeated UTF-8 materialization without changing scanner output.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;text:string}","tsSignature":"interface{__tsgoEmbedded0:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,string>>;hexNumberCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,string>>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,string>>;onError:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback>;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;sourceByteView:packages/tsts/src/go/unicode/utf8.ts::StringByteView;text:string}"}
  *
  * Go source:
  * Scanner struct {
@@ -668,12 +668,12 @@ export interface Scanner {
   end: int;
   languageVariant: LanguageVariant;
   scriptTarget: ScriptTarget;
-  onError: ErrorCallback;
+  onError: GoPtr<ErrorCallback>;
   skipTrivia: bool;
   __tsgoEmbedded0: ScannerState;
-  numberCache: GoMap<string, string>;
-  hexNumberCache: GoMap<string, string>;
-  hexDigitCache: GoMap<string, string>;
+  numberCache: GoPtr<GoMap<string, string>>;
+  hexNumberCache: GoPtr<GoMap<string, string>>;
+  hexDigitCache: GoPtr<GoMap<string, string>>;
   sourceByteView: utf8.StringByteView;
 }
 
@@ -697,12 +697,12 @@ export function defaultScanner(): Scanner {
     end: 0,
     languageVariant: LanguageVariantStandard,
     scriptTarget: ScriptTargetNone,
-    onError: undefined as unknown as ErrorCallback,
+    onError: undefined,
     skipTrivia: true,
     __tsgoEmbedded0: newScannerState(),
-    numberCache: undefined as unknown as GoMap<string, string>,
-    hexNumberCache: undefined as unknown as GoMap<string, string>,
-    hexDigitCache: undefined as unknown as GoMap<string, string>,
+    numberCache: undefined,
+    hexNumberCache: undefined,
+    hexDigitCache: undefined,
     sourceByteView: utf8.GetStringByteView(""),
   };
 }
@@ -773,7 +773,7 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
 
 /**
 * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::cleared","kind":"func","status":"implemented","sigHash":"1bbfef56d8cf46b679e2e91d918ef70872a3ec40711d7e517cb02f3d0ac2c96f","bodyHash":"ace5d48e3d2b43b2444e6f6c612d580a68927f07eb3e48b041a49a8126cdaf20"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A Go type with underlying map[K]V retains its generic named-map result type while using the GoMap<K,V> runtime carrier for clear; the local intersection records that exact representation.","goSignature":"func<T0 extends raw(~map[K]V),T1 extends name::comparable,T2 extends unknown>(T0)=>T0","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoConstraint<\"~map[K]V\">&packages/tsts/src/go/compat.ts::GoMap<T1,T2>,T1 extends packages/tsts/src/go/compat.ts::GoComparable,T2>(T0)=>T0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The helper accepts named map types whose underlying Go map may be nil; GoPtr preserves nil through clear and returns the same nil map state while retaining the named generic result type.","goSignature":"func<T0 extends raw(~map[K]V),T1 extends name::comparable,T2 extends unknown>(T0)=>T0","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoConstraint<\"~map[K]V\">&packages/tsts/src/go/compat.ts::GoMap<T1,T2>,T1 extends packages/tsts/src/go/compat.ts::GoComparable,T2>(packages/tsts/src/go/compat.ts::GoPtr<T0>)=>packages/tsts/src/go/compat.ts::GoPtr<T0>"}
  *
  * Go source:
  * func cleared[M ~map[K]V, K comparable, V any](m M) M {
@@ -781,7 +781,7 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
  * 	return m
  * }
  */
-export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(m: M): M {
+export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(m: GoPtr<M>): GoPtr<M> {
   m?.clear();
   return m;
 }
@@ -1268,13 +1268,14 @@ export function Scanner_SetTextEnd(receiver: GoPtr<Scanner>, text: string, end: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetOnError","kind":"method","status":"implemented","sigHash":"33f9cebd2e8da0068aed6e5b299560100d6ad16e9a316af88af10c492035f3c3","bodyHash":"0ec53962dcc084ae4daa010a4f07ce3faaa6f5d542546bddec182cd9da9597d7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Scanner clients may clear the error callback by passing nil; GoPtr preserves that optional function value and scanning guards it before invocation.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback>)=>void"}
  *
  * Go source:
  * func (s *Scanner) SetOnError(errorCallback ErrorCallback) {
  * 	s.onError = errorCallback
  * }
  */
-export function Scanner_SetOnError(receiver: GoPtr<Scanner>, errorCallback: ErrorCallback): void {
+export function Scanner_SetOnError(receiver: GoPtr<Scanner>, errorCallback: GoPtr<ErrorCallback>): void {
   receiver!.onError = errorCallback;
 }
 
@@ -2256,7 +2257,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
             Scanner_error(s, Hexadecimal_digit_expected);
             digits = "0";
           }
-          if (s.hexNumberCache === (undefined as unknown as GoMap<string, string>)) {
+          if (s.hexNumberCache === undefined) {
             s.hexNumberCache = new globalThis.Map<string, string>();
           }
           const cachedValue = s.hexNumberCache.get(digits);
@@ -5117,7 +5118,7 @@ export function Scanner_scanHexDigits(receiver: GoPtr<Scanner>, minCount: int, s
     return "";
   }
   let digits = scannerByteSlice(s, start, s.__tsgoEmbedded0.pos);
-  if (s.hexDigitCache === (undefined as unknown as GoMap<string, string>)) {
+  if (s.hexDigitCache === undefined) {
     s.hexDigitCache = new globalThis.Map<string, string>();
   }
   const cached = s.hexDigitCache.get(digits);
@@ -5240,7 +5241,7 @@ export function Scanner_scanBigIntSuffix(receiver: GoPtr<Scanner>): Kind {
     s.__tsgoEmbedded0.pos++;
     return KindBigIntLiteral;
   }
-  if (s.numberCache === (undefined as unknown as GoMap<string, string>)) {
+  if (s.numberCache === undefined) {
     s.numberCache = new globalThis.Map<string, string>();
   }
   const cached = s.numberCache.get(s.__tsgoEmbedded0.tokenValue);
@@ -6167,7 +6168,7 @@ export function findOriginatingJSDocSatisfiesTag(sourceFile: GoPtr<SourceFile>, 
     for (const jsDoc of Node_EagerJSDoc(current, sourceFile)) {
       const tags = AsJSDoc(jsDoc)!.Tags;
       if (tags !== undefined) {
-        for (const tag of tags!.Nodes) {
+        for (const tag of tags!.Nodes ?? []) {
           if (!IsJSDocSatisfiesTag(tag)) {
             continue;
           }

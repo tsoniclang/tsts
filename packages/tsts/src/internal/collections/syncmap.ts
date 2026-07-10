@@ -4,6 +4,7 @@ import { Map } from "../../go/sync.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"implemented","sigHash":"4f6f655e995f945c3130474631c32240c46c5dd0b984a67769b1fe2ed69a7fa9","bodyHash":"fdc45c613dbb64f7a1c093e977b4bdb29dd6477913552f974a1aa70ac112fb64"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"An absent TypeScript field represents the usable zero sync.Map and is allocated lazily; the authored runtime carrier is parameterized to preserve K and V without unsafe interface assertions.","goSignature":"interface<T0 extends name::comparable,T1 extends unknown>{__tsgoBlank0?:packages/tsts/src/go/compat.ts::GoArray<T0,\"0\">;__tsgoBlank1?:packages/tsts/src/go/compat.ts::GoArray<T1,\"0\">;m:packages/tsts/src/go/sync.ts::Map}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>{__tsgoBlank0?:packages/tsts/src/go/compat.ts::GoArray<T0,\"0\">;__tsgoBlank1?:packages/tsts/src/go/compat.ts::GoArray<T1,\"0\">;m?:packages/tsts/src/go/sync.ts::Map<T0,T1>}"}
  *
  * Go source:
  * SyncMap[K comparable, V any] struct {
@@ -13,23 +14,21 @@ import { Map } from "../../go/sync.js";
  * }
  */
 export interface SyncMap<K extends GoComparable = unknown, V = unknown> {
-  __tsgoBlank0: GoArray<K, "0">;
-  __tsgoBlank1: GoArray<V, "0">;
-  m: Map;
+  __tsgoBlank0?: GoArray<K, "0">;
+  __tsgoBlank1?: GoArray<V, "0">;
+  m?: Map<K, V>;
 }
 
-function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): Map {
+function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): Map<K, V> {
   if (receiver === undefined) {
-    return new Map();
+    throw new TypeError("nil SyncMap receiver");
   }
-  if (receiver.m === undefined) {
-    receiver.m = new Map();
-  }
-  return receiver.m;
+  return receiver.m ??= new Map<K, V>();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::method::SyncMap.Load","kind":"method","status":"implemented","sigHash":"8742a04ce4355c00eb82c36f8edccdfd8129995ae390641be36caee7a3d59b03","bodyHash":"60b37e9f1fe348dc4008aa59a072a10b28114bfe9fd826a355dda6df6934953a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot construct the Go zero for unconstrained V when sync.Map has no value, so the caller supplies the exact instantiated zero factory.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<T0,T1>>,T0)=>[T1,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/syncmap.ts::SyncMap<T0,T1>>,T0,()=>T1)=>[T1,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (s *SyncMap[K, V]) Load(key K) (value V, ok bool) {
@@ -40,13 +39,12 @@ function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>
  * 	return val.(V), true
  * }
  */
-export function SyncMap_Load<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): [V, bool] {
-  const value = undefined as V;
+export function SyncMap_Load<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, zeroValue: () => V): [V, bool] {
   const [val, ok] = syncMapBacking(receiver).Load(key);
   if (!ok || val === undefined) {
-    return [value, ok];
+    return [zeroValue(), ok];
   }
-  return [val as V, true];
+  return [val, true];
 }
 
 /**
@@ -75,13 +73,8 @@ export function SyncMap_Store<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  * }
  */
 export function SyncMap_LoadOrStore<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, value: V): [V, bool] {
-  const actual = undefined as V;
   const [actualAny, loaded] = syncMapBacking(receiver).LoadOrStore(key, value);
-  if (actualAny === undefined) {
-    return [actual, loaded];
-  }
-
-  return [actualAny as V, loaded];
+  return [actualAny, loaded];
 }
 
 /**
@@ -129,11 +122,7 @@ export function SyncMap_Clear<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  * }
  */
 export function SyncMap_Range<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, value: V) => bool): void {
-  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
-    const k = (key !== undefined ? key as K : undefined as K);
-    const v = (value !== undefined ? value as V : undefined as V);
-    return f(k, v);
-  });
+  syncMapBacking(receiver).Range(f);
 }
 
 /**
@@ -150,12 +139,12 @@ export function SyncMap_Range<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  * }
  */
 export function SyncMap_Size<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): int {
-  const entries: unknown[] = [];
-  syncMapBacking(receiver).Range((key: unknown, _value: unknown): bool => {
-    entries.push(key);
+  let count = 0;
+  syncMapBacking(receiver).Range((_key: K, _value: V): bool => {
+    count += 1;
     return true;
   });
-  return entries.length as int;
+  return count as int;
 }
 
 /**
@@ -173,8 +162,8 @@ export function SyncMap_Size<K extends GoComparable, V>(receiver: GoPtr<SyncMap<
  */
 export function SyncMap_ToMap<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): GoMap<K, V> {
   const m = new globalThis.Map<K, V>();
-  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
-    m.set(key as K, value as V);
+  syncMapBacking(receiver).Range((key: K, value: V): bool => {
+    m.set(key, value);
     return true;
   });
   return m;
@@ -197,8 +186,8 @@ export function SyncMap_ToMap<K extends GoComparable, V>(receiver: GoPtr<SyncMap
  */
 export function SyncMap_Keys<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): GoSeq<K> {
   return (yield_: (value: K) => bool): void => {
-    syncMapBacking(receiver).Range((key: unknown, _value: unknown): bool => {
-      if (!yield_(key as K)) {
+    syncMapBacking(receiver).Range((key: K, _value: V): bool => {
+      if (!yield_(key)) {
         return false;
       }
       return true;
@@ -223,10 +212,10 @@ export function SyncMap_Clone<K extends GoComparable, V>(receiver: GoPtr<SyncMap
   const clone: SyncMap<K, V> = {
     __tsgoBlank0: [],
     __tsgoBlank1: [],
-    m: new Map(),
+    m: new Map<K, V>(),
   };
-  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
-    clone.m.Store(key, value);
+  syncMapBacking(receiver).Range((key: K, value: V): bool => {
+    syncMapBacking(clone).Store(key, value);
     return true;
   });
   return clone;

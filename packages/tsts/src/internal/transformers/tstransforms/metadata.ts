@@ -538,7 +538,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
   const tx = receiver!;
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   const metadata = MetadataTransformer_getTypeMetadata(receiver, node, node);
-  if (metadata.length > 0) {
+  if (metadata !== undefined && metadata.length > 0) {
     let originalNodes: GoSlice<GoPtr<Node>> = [];
     if (list !== undefined) {
       originalNodes = list!.Nodes ?? [];
@@ -559,9 +559,9 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
     }
     const restStart = modifiersArray.length;
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    modifiersArray = [...modifiersArray, ...(decos ?? []), ...metadata];
     const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
-    modifiersArray = [...modifiersArray, ...otherModifiers];
+    modifiersArray = [...modifiersArray, ...(otherModifiers ?? [])];
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -616,7 +616,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
     return list;
   }
   const metadata = MetadataTransformer_getTypeMetadata(receiver, node, container);
-  if (metadata.length > 0) {
+  if (metadata !== undefined && metadata.length > 0) {
     let originalNodes: GoSlice<GoPtr<Node>> = [];
     if (list !== undefined) {
       originalNodes = list!.Nodes ?? [];
@@ -630,9 +630,9 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
     }
     let modifiersArray: GoSlice<GoPtr<Node>> = [];
     const decos = Filter(originalNodes, IsDecorator);
-    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    modifiersArray = [...modifiersArray, ...(decos ?? []), ...metadata];
     const modifiers = Filter(originalNodes, IsModifier);
-    modifiersArray = [...modifiersArray, ...modifiers];
+    modifiersArray = [...modifiersArray, ...(modifiers ?? [])];
     const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
@@ -642,6 +642,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getTypeMetadata","kind":"method","status":"implemented","sigHash":"4df51fcdac33a208c396d34d13aee26c908c7435d1e915666b1c348749044032","bodyHash":"9ff5b83829e4cae1dff0138b0929d067e42826f0fcd64afd3b78082884b623ee"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getTypeMetadata explicitly returns a nil Go slice when legacy decorators are disabled and forwards nil from either metadata format; GoPtr preserves those results.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -655,11 +656,11 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
  * 	return tx.getOldTypeMetadata(node, container)
  * }
  */
-export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const tx = receiver!;
   // Decorator metadata is not yet supported for ES decorators.
   if (!tx.legacyDecorators) {
-    return [];
+    return undefined;
   }
   if (USE_NEW_TYPE_METADATA_FORMAT) {
     return MetadataTransformer_getNewTypeMetadata(tx, node, container);
@@ -669,6 +670,7 @@ export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTran
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getOldTypeMetadata","kind":"method","status":"implemented","sigHash":"fd69259336c3735edfb929389125202f9ca9b1c53c97964128fe841ede873ad8","bodyHash":"49e0e434212378e5e5082c5562613def519a24b714da6b9609dd301bc0268d56"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getOldTypeMetadata uses a nil Go accumulator and returns nil when no metadata decorator is selected; GoPtr preserves that accumulator state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getOldTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -688,9 +690,9 @@ export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTran
  * 	return decorators
  * }
  */
-export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const tx = receiver!;
-  let decorators: GoSlice<GoPtr<Node>> = [];
+  let decorators: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
   if (MetadataTransformer_shouldAddTypeMetadata(tx, node)) {
     const typeMetadata = NodeFactory_NewMetadataHelper(
@@ -703,7 +705,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, typeMetadata)];
+    decorators = [...(decorators ?? []), NewDecorator(factory.__tsgoEmbedded0, typeMetadata)];
   }
   if (MetadataTransformer_shouldAddParamTypesMetadata(tx, node)) {
     const paramTypesMetadata = NodeFactory_NewMetadataHelper(
@@ -716,7 +718,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         container,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata)];
+    decorators = [...(decorators ?? []), NewDecorator(factory.__tsgoEmbedded0, paramTypesMetadata)];
   }
   if (MetadataTransformer_shouldAddReturnTypeMetadata(tx, node)) {
     const returnTypeMetadata = NodeFactory_NewMetadataHelper(
@@ -728,13 +730,14 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
         node,
       ),
     );
-    decorators = [...decorators, NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata)];
+    decorators = [...(decorators ?? []), NewDecorator(factory.__tsgoEmbedded0, returnTypeMetadata)];
   }
   return decorators;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getNewTypeMetadata","kind":"method","status":"implemented","sigHash":"7f1ddab31565ba659f7714542c8a580c1d15074a0fdeb024aeb95f1bc7cc093a","bodyHash":"9351a47d8aacabd8b12ae83f85b1803674fe3eccddd21f5c0eba9cb309f06347"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"getNewTypeMetadata explicitly returns a nil Go slice when no metadata properties are selected; GoPtr preserves that result instead of allocating an empty array.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/metadata.ts::MetadataTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getNewTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -797,7 +800,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
  * 	return nil
  * }
  */
-export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const tx = receiver!;
   let properties: GoSlice<GoPtr<Node>> = [];
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
@@ -890,7 +893,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
     );
     return [NewDecorator(astFactory, typeInfoMetadata)];
   }
-  return [];
+  return undefined;
 }
 
 /**

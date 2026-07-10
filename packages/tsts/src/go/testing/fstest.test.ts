@@ -20,6 +20,10 @@ import { Time } from "../time.js";
 import { Lstat, MapFS_as_FS, Open, ReadLink, TestFS } from "./fstest.js";
 import type { MapFS } from "./fstest.js";
 
+function isReadDirFile(file: File): file is ReadDirFile {
+  return "ReadDir" in file && typeof file.ReadDir === "function";
+}
+
 test("MapFS directory entries preserve explicit file metadata", () => {
   const modTime = new Time(1234);
   const map: MapFS = new Map([
@@ -38,6 +42,7 @@ test("MapFS directory entries preserve explicit file metadata", () => {
   assert.equal(sourceEntries.length, 1);
   const [sourceInfo, sourceInfoError] = sourceEntries[0]!.Info();
   assert.equal(sourceInfoError, undefined);
+  assert.ok(sourceInfo !== undefined);
   assert.equal(sourceInfo.Name(), "index.ts");
   assert.equal(sourceInfo.Size(), 10);
   assert.equal(sourceInfo.Mode(), 0o640);
@@ -49,8 +54,13 @@ test("MapFS always synthesizes an empty root and preserves explicit empty direct
   const empty = MapFS_as_FS(new Map());
   const [root, rootErr] = empty.Open(".");
   assert.equal(rootErr, undefined);
-  assert.equal(root.Stat()[0].IsDir(), true);
-  assert.deepEqual((root as ReadDirFile).ReadDir(-1), [[], undefined]);
+  assert.ok(root !== undefined);
+  const [rootInfo, rootInfoErr] = root.Stat();
+  assert.equal(rootInfoErr, undefined);
+  assert.ok(rootInfo !== undefined);
+  assert.equal(rootInfo.IsDir(), true);
+  assert.ok(isReadDirFile(root));
+  assert.deepEqual(root.ReadDir(-1), [[], undefined]);
   assert.equal(TestFS(empty), undefined);
 
   const map: MapFS = new Map([["empty", { Mode: (ModeDir | 0o700) >>> 0, Sys: "dir" }]]);
@@ -58,6 +68,7 @@ test("MapFS always synthesizes an empty root and preserves explicit empty direct
   assert.equal(entriesErr, undefined);
   const [info, infoErr] = entries[0]!.Info();
   assert.equal(infoErr, undefined);
+  assert.ok(info !== undefined);
   assert.equal(info.Mode(), (ModeDir | 0o700) >>> 0);
   assert.equal(info.Sys(), "dir");
   assert.equal(ReadDir(MapFS_as_FS(map), "empty")[0].length, 0);
@@ -72,7 +83,8 @@ test("MapFS regular files and directories maintain independent read offsets and 
 
   const [directory, directoryErr] = Open(map, "dir");
   assert.equal(directoryErr, undefined);
-  const readDir = directory as ReadDirFile;
+  assert.ok(directory !== undefined && isReadDirFile(directory));
+  const readDir: ReadDirFile = directory;
   assert.deepEqual(readDir.ReadDir(1)[0].map((entry) => entry.Name()), ["a"]);
   assert.deepEqual(readDir.ReadDir(1)[0].map((entry) => entry.Name()), ["b"]);
   assert.deepEqual(readDir.ReadDir(1), [[], EOF]);
@@ -80,6 +92,7 @@ test("MapFS regular files and directories maintain independent read offsets and 
 
   const [file, fileErr] = Open(map, "file");
   assert.equal(fileErr, undefined);
+  assert.ok(file !== undefined);
   const buffer = [0, 0];
   assert.deepEqual(file.Read(buffer), [2, undefined]);
   assert.deepEqual(buffer, [1, 2]);
@@ -99,8 +112,14 @@ test("MapFS resolves file and parent symlinks while Lstat and ReadLink preserve 
   assert.equal(new TextDecoder().decode(ReadFileBytes(fsys, "filelink")[0]), "contents");
   assert.equal(new TextDecoder().decode(ReadFileBytes(fsys, "dirlink/file")[0]), "contents");
   assert.deepEqual(ReadLink(map, "dirlink"), ["target", undefined]);
-  assert.equal(Lstat(map, "dirlink")[0].Mode(), (ModeSymlink | 0o777) >>> 0);
-  assert.equal(Stat(fsys, "dirlink")[0].Mode(), (ModeDir | 0o555) >>> 0);
+  const [linkInfo, linkInfoErr] = Lstat(map, "dirlink");
+  assert.equal(linkInfoErr, undefined);
+  assert.ok(linkInfo !== undefined);
+  assert.equal(linkInfo.Mode(), (ModeSymlink | 0o777) >>> 0);
+  const [targetInfo, targetInfoErr] = Stat(fsys, "dirlink");
+  assert.equal(targetInfoErr, undefined);
+  assert.ok(targetInfo !== undefined);
+  assert.equal(targetInfo.Mode(), (ModeDir | 0o555) >>> 0);
 
   const [walkEntries, walkErr] = ReadDir(fsys, ".");
   assert.equal(walkErr, undefined);
@@ -130,7 +149,9 @@ test("MapFS rejects invalid, absolute, broken, and escaping symlink paths with P
 test("MapFS open files observe MapFile mutations and ReadFile returns independent copies", () => {
   const source = { Data: new Uint8Array([1, 2]) };
   const map: MapFS = new Map([["file", source]]);
-  const [file] = Open(map, "file");
+  const [file, fileErr] = Open(map, "file");
+  assert.equal(fileErr, undefined);
+  assert.ok(file !== undefined);
   source.Data = new Uint8Array([9, 8, 7]);
   const buffer = [0, 0, 0];
   assert.deepEqual(file.Read(buffer), [3, undefined]);
@@ -163,7 +184,7 @@ test("TestFS validates complete trees, empty expectations, missing files, and su
 
 test("TestFS preserves wrapped filesystem errors for errors.Is", () => {
   const permissionFS: FS = {
-    Open: (name) => [undefined as unknown as File, new PathError("open", name, ErrPermission)],
+    Open: (name) => [undefined, new PathError("open", name, ErrPermission)],
   };
   const err = TestFS(permissionFS);
   assert.ok(err instanceof Error);

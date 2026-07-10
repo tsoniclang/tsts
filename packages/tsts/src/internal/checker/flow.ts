@@ -181,6 +181,7 @@ export interface SharedFlow {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowState","kind":"type","status":"implemented","sigHash":"46df3c12b9f8fde1d4d141ef6bbc3c0f644f3dbeaa603ae02f171ee45e35f821","bodyHash":"eb27780cc8668408cbb7dc110659c02ae81fc931fe46785439856c79b8056950"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"interface{declaredType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;depth:packages/tsts/src/go/scalars.ts::int;flowContainer:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;initialType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;next:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/flow.ts::FlowState>;reduceLabels:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowReduceLabelData>>;refKey:packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey;reference:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;sharedFlowStart:packages/tsts/src/go/scalars.ts::int}","tsSignature":"interface{declaredType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;depth:packages/tsts/src/go/scalars.ts::int;flowContainer:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;initialType:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>;next:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/flow.ts::FlowState>;reduceLabels:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowReduceLabelData>>;refKey:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey>;reference:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;sharedFlowStart:packages/tsts/src/go/scalars.ts::int}"}
  *
  * Go source:
  * FlowState struct {
@@ -200,7 +201,7 @@ export interface FlowState {
   declaredType: GoPtr<Type>;
   initialType: GoPtr<Type>;
   flowContainer: GoPtr<Node>;
-  refKey: CacheHashKey;
+  refKey: GoPtr<CacheHashKey>;
   depth: int;
   sharedFlowStart: int;
   reduceLabels: GoSlice<GoPtr<FlowReduceLabelData>>;
@@ -223,13 +224,17 @@ export interface FlowState {
 export function Checker_getFlowState(receiver: GoPtr<Checker>): GoPtr<FlowState> {
   let f = receiver!.freeFlowState;
   if (f === undefined) {
-    f = {} as FlowState;
-    // A fresh FlowState must start at Go zero-values (the recycled path is reset by putFlowState).
-    // Otherwise depth is undefined -> depth++ is NaN so the depth===2000 recursion guard never
-    // fires, and sharedFlowStart is undefined so the shared-flow loop is skipped.
-    f.depth = 0;
-    f.sharedFlowStart = 0;
-    f.reduceLabels = [];
+    f = {
+      reference: undefined,
+      declaredType: undefined,
+      initialType: undefined,
+      flowContainer: undefined,
+      refKey: undefined,
+      depth: 0,
+      sharedFlowStart: 0,
+      reduceLabels: [],
+      next: undefined,
+    };
   }
   receiver!.freeFlowState = f.next;
   return f;
@@ -254,7 +259,7 @@ export function Checker_putFlowState(receiver: GoPtr<Checker>, f: GoPtr<FlowStat
   f!.declaredType = undefined;
   f!.initialType = undefined;
   f!.flowContainer = undefined;
-  f!.refKey = undefined as unknown as CacheHashKey;
+  f!.refKey = undefined;
   f!.depth = 0;
   f!.sharedFlowStart = 0;
   f!.reduceLabels = reduceLabels;
@@ -1752,7 +1757,7 @@ export function Checker_narrowTypeByDiscriminant(receiver: GoPtr<Checker>, t: Go
   }
   const narrowedPropType = narrowType(propType);
   return Checker_filterType(receiver, t, (t) => {
-    const discriminantType = OrElse(Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, t, propName), receiver!.unknownType);
+    const discriminantType = OrElse(Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, t, propName), receiver!.unknownType, () => undefined, (left, right) => left === right);
     return !(discriminantType!.flags & TypeFlagsNever) && !(narrowedPropType!.flags & TypeFlagsNever) && Checker_areTypesComparable(receiver, narrowedPropType, discriminantType);
   });
 }
@@ -2232,7 +2237,7 @@ export function Checker_getInstanceType(receiver: GoPtr<Checker>, constructorTyp
     return prototypePropertyType;
   }
   const constructSignatures = Checker_getSignaturesOfType(receiver, constructorType, SignatureKindConstruct);
-  if (constructSignatures.length !== 0) {
+  if (constructSignatures !== undefined && constructSignatures.length !== 0) {
     return Checker_getUnionType(receiver, core_Map(constructSignatures, (signature) => Checker_getReturnTypeOfSignature(receiver, Checker_getErasedSignature(receiver, signature))));
   }
   // We use the empty object type to indicate we don't know the type of objects created by
@@ -2610,7 +2615,7 @@ export function Checker_narrowTypeBySwitchOnTypeOf(receiver: GoPtr<Checker>, t: 
     return t;
   }
   const switchStmt = AsSwitchStatement(data!.SwitchStatement);
-  const clauses: GoSlice<GoPtr<Node>> = AsCaseBlock(switchStmt!.CaseBlock as GoPtr<Node>)!.Clauses!.Nodes;
+  const clauses: GoSlice<GoPtr<Node>> = AsCaseBlock(switchStmt!.CaseBlock as GoPtr<Node>)!.Clauses!.Nodes ?? [];
   // Equal start and end denotes implicit fallthrough; undefined marks explicit default clause.
   const defaultIndex = FindIndex(clauses, (clause) => clause!.Kind === KindDefaultClause);
   const clauseStart = data!.ClauseStart;
@@ -2672,7 +2677,7 @@ export function Checker_narrowTypeBySwitchOnTypeOf(receiver: GoPtr<Checker>, t: 
  * }
  */
 export function Checker_narrowTypeBySwitchOnTrue(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, t: GoPtr<Type>, data: GoPtr<FlowSwitchClauseData>): GoPtr<Type> {
-  const clauses = AsCaseBlock(AsSwitchStatement(data!.SwitchStatement)!.CaseBlock as GoPtr<Node>)!.Clauses!.Nodes;
+  const clauses = AsCaseBlock(AsSwitchStatement(data!.SwitchStatement)!.CaseBlock as GoPtr<Node>)!.Clauses!.Nodes ?? [];
   const defaultIndex = FindIndex(clauses, (clause) => clause!.Kind === KindDefaultClause);
   const clauseStart = data!.ClauseStart;
   const clauseEnd = data!.ClauseEnd;
@@ -3004,14 +3009,19 @@ export function Checker_getUnionOrEvolvingArrayType(receiver: GoPtr<Checker>, f:
  * }
  */
 export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, flow: GoPtr<FlowNode>): FlowType {
-  if (CacheHashKey_IsZero(f!.refKey)) {
-    f!.refKey = Checker_getFlowReferenceKey(receiver, f);
+  let refKey = f!.refKey;
+  if (CacheHashKey_IsZero(refKey)) {
+    refKey = Checker_getFlowReferenceKey(receiver, f);
+    f!.refKey = refKey;
   }
-  if (f!.refKey === nonDottedNameCacheKey) {
+  if (refKey === nonDottedNameCacheKey) {
     // No cache key is generated when binding patterns are in unnarrowable situations
     return { t: f!.declaredType, incomplete: false };
   }
-  const key = getFlowLoopKey(flow, f!.refKey);
+  if (refKey === undefined) {
+    throw new Error("flow reference key remained zero after initialization");
+  }
+  const key = getFlowLoopKey(flow, refKey);
   // If we have previously computed the control flow type for the reference at
   // this flow loop junction, return the cached type.
   const cached = receiver!.flowLoopCache.get(key);
@@ -3043,7 +3053,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
       // back to the loop junction. We track these on the flow loop stack.
       receiver!.flowLoopStack.push({ key, types: antecedentTypes });
       const saveFlowTypeCache = receiver!.flowTypeCache;
-      receiver!.flowTypeCache = undefined as never;
+      receiver!.flowTypeCache = undefined;
       flowType = Checker_getTypeAtFlowNode(receiver, f, list!.Flow);
       receiver!.flowTypeCache = saveFlowTypeCache;
       receiver!.flowLoopStack.pop();
@@ -3816,7 +3826,7 @@ export function Checker_getAccessedPropertyName(receiver: GoPtr<Checker>, access
   }
   if (IsParameterDeclaration(access)) {
     const params = Node_Parameters(access!.Parent);
-    return [String(params.indexOf(access)), true];
+    return [String(params === undefined ? -1 : params.indexOf(access)), true];
   }
   return ["", false];
 }
@@ -4372,6 +4382,7 @@ export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getSwitchClauseTypeOfWitnesses","kind":"method","status":"implemented","sigHash":"fee9f9536b569c461a61593e508dfd249091668086dd9494d6c7568096751794","bodyHash":"27cd2073cc54e7704ae75dc98c0133bf88136d8e9f61621119d6d35f221bf5ec"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>"}
  *
  * Go source:
  * func (c *Checker) getSwitchClauseTypeOfWitnesses(node *ast.Node) []string {
@@ -4396,10 +4407,10 @@ export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: Go
  * 	return links.witnesses
  * }
  */
-export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<string> {
+export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<GoSlice<string>> {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
   if (!links!.witnessesComputed) {
-    const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
+    const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes ?? [];
     const witnesses: string[] = new Array(clauses.length).fill("");
     let valid = true;
     for (let i = 0; i < clauses.length; i++) {
@@ -4415,7 +4426,7 @@ export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>,
         }
       }
     }
-    links!.witnesses = valid ? witnesses : (undefined as never);
+    links!.witnesses = valid ? witnesses : undefined;
     links!.witnessesComputed = true;
   }
   return links!.witnesses;
@@ -4472,7 +4483,7 @@ export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker
 export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
   if (!links!.switchTypesComputed) {
-    const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
+    const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes ?? [];
     const types: GoPtr<Type>[] = new Array(clauses.length);
     for (let i = 0; i < clauses.length; i++) {
       types[i] = Checker_getTypeOfSwitchClause(receiver, clauses[i]);
@@ -4569,8 +4580,8 @@ export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPt
     if (funcType !== undefined) {
       apparentType = Checker_getApparentType(receiver, funcType);
     }
-    const signatures = Checker_getSignaturesOfType(receiver, OrElse(apparentType, receiver!.unknownType), SignatureKindCall);
-    if (signatures.length === 1 && signatures[0]!.typeParameters === undefined) {
+    const signatures = Checker_getSignaturesOfType(receiver, OrElse(apparentType, receiver!.unknownType, () => undefined, (left, right) => left === right), SignatureKindCall);
+    if (signatures?.length === 1 && signatures[0]!.typeParameters === undefined) {
       signature = signatures[0];
     } else if (Some(signatures, (s) => Checker_hasTypePredicateOrNeverReturnType(receiver, s))) {
       signature = Checker_getResolvedSignature(receiver, node, undefined, CheckModeNormal);
@@ -4610,7 +4621,7 @@ export function Checker_getSymbolHasInstanceMethodOfObjectType(receiver: GoPtr<C
     const hasInstanceProperty = Checker_getPropertyOfType(receiver, t, hasInstancePropertyName);
     if (hasInstanceProperty !== undefined) {
       const hasInstancePropertyType = Checker_getTypeOfSymbol(receiver, hasInstanceProperty);
-      if (hasInstancePropertyType !== undefined && Checker_getSignaturesOfType(receiver, hasInstancePropertyType, SignatureKindCall).length !== 0) {
+      if (hasInstancePropertyType !== undefined && (Checker_getSignaturesOfType(receiver, hasInstancePropertyType, SignatureKindCall)?.length ?? 0) !== 0) {
         return hasInstancePropertyType;
       }
     }
@@ -4838,7 +4849,7 @@ export function Checker_isExpandoPropertyFunctionWithReturnTypeAnnotation(receiv
  * }
  */
 export function Checker_hasTypePredicateOrNeverReturnType(receiver: GoPtr<Checker>, sig: GoPtr<Signature>): bool {
-  return Checker_getTypePredicateOfSignature(receiver, sig) !== undefined || sig!.declaration !== undefined && !!(OrElse(Checker_getReturnTypeFromAnnotation(receiver, sig!.declaration), receiver!.unknownType)!.flags & TypeFlagsNever);
+  return Checker_getTypePredicateOfSignature(receiver, sig) !== undefined || sig!.declaration !== undefined && !!(OrElse(Checker_getReturnTypeFromAnnotation(receiver, sig!.declaration), receiver!.unknownType, () => undefined, (left, right) => left === right)!.flags & TypeFlagsNever);
 }
 
 /**

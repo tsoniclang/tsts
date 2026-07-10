@@ -1,5 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { ContainsFunc } from "../../../go/slices.js";
 import type { Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -103,7 +104,7 @@ import { IsFunctionLikeDeclaration } from "../../ast/utilities.js";
 import { ConvertBindingPatternToAssignmentPattern } from "../utilities.js";
 import { KindDotDotDotToken } from "../../ast/generated/kinds.js";
 import type { Set } from "../../collections/set.js";
-import { Set_Add, Set_Clone, Set_Delete, Set_Has } from "../../collections/set.js";
+import { Set_Add, Set_Clone, Set_Delete, Set_Has, Set_Keys } from "../../collections/set.js";
 import { NewSetWithSizeHint } from "../../collections/set.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
@@ -602,12 +603,15 @@ export function asyncTransformer_visitCatchClauseInAsyncBody(receiver: GoPtr<asy
   }
   // names declared in a catch variable are block scoped
   let catchClauseUnshadowedNames: GoPtr<Set<string>> = undefined;
-  for (const escapedName of catchClauseNames!.M.keys()) {
-    if (receiver!.enclosingFunctionParameterNames !== undefined && Set_Has(receiver!.enclosingFunctionParameterNames, escapedName)) {
-      if (catchClauseUnshadowedNames === undefined) {
-        catchClauseUnshadowedNames = Set_Clone(receiver!.enclosingFunctionParameterNames as GoPtr<Set<string>>);
+  const catchClauseNameKeys = Set_Keys(catchClauseNames);
+  if (catchClauseNameKeys !== undefined) {
+    for (const escapedName of catchClauseNameKeys.keys()) {
+      if (receiver!.enclosingFunctionParameterNames !== undefined && Set_Has(receiver!.enclosingFunctionParameterNames, escapedName)) {
+        if (catchClauseUnshadowedNames === undefined) {
+          catchClauseUnshadowedNames = Set_Clone(receiver!.enclosingFunctionParameterNames);
+        }
+        Set_Delete(catchClauseUnshadowedNames, escapedName);
       }
-      Set_Delete(catchClauseUnshadowedNames, escapedName);
     }
   }
   if (catchClauseUnshadowedNames !== undefined) {
@@ -1220,9 +1224,11 @@ export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTran
     Set_Add(names as GoPtr<Set<string>>, Node_Text(name));
   } else if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
-      if (!IsOmittedExpression(element)) {
-        asyncTransformer_recordDeclarationName(receiver, element, names);
+    if (bp.Elements!.Nodes !== undefined) {
+      for (const element of bp.Elements!.Nodes) {
+        if (!IsOmittedExpression(element)) {
+          asyncTransformer_recordDeclarationName(receiver, element, names);
+        }
       }
     }
   }
@@ -1243,7 +1249,7 @@ export function asyncTransformer_isVariableDeclarationListWithCollidingName(rece
   return node !== undefined &&
     IsVariableDeclarationList(node) &&
     (node.Flags & NodeFlagsBlockScoped) === 0 &&
-    AsVariableDeclarationList(node)!.Declarations!.Nodes.some((n) => asyncTransformer_collidesWithParameterName(receiver, n));
+    ContainsFunc(AsVariableDeclarationList(node)!.Declarations!.Nodes, (n) => asyncTransformer_collidesWithParameterName(receiver, n));
 }
 
 /**
@@ -1283,10 +1289,25 @@ export function asyncTransformer_isVariableDeclarationListWithCollidingName(rece
  */
 export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>, hasReceiver: bool): GoPtr<Node> {
   asyncTransformer_hoistVariableDeclarationList(receiver, node);
-  const variables: GoSlice<GoPtr<Node>> = node!.Declarations!.Nodes.filter((decl) => AsVariableDeclaration(decl)!.Initializer !== undefined);
+  const declarationNodes = node!.Declarations!.Nodes;
+  let variables: GoPtr<GoSlice<GoPtr<Node>>>;
+  if (declarationNodes !== undefined) {
+    for (const declaration of declarationNodes) {
+      if (AsVariableDeclaration(declaration)!.Initializer !== undefined) {
+        if (variables === undefined) {
+          variables = [declaration];
+        } else {
+          variables.push(declaration);
+        }
+      }
+    }
+  }
   if (variables === undefined || variables.length === 0) {
     if (hasReceiver) {
-      const name = Node_Name(node!.Declarations!.Nodes[0]);
+      if (declarationNodes === undefined || declarationNodes.length === 0) {
+        throw new globalThis.RangeError("index out of range");
+      }
+      const name = Node_Name(declarationNodes[0]);
       let target: GoPtr<Node>;
       if (IsBindingPattern(name)) {
         target = ConvertBindingPatternToAssignmentPattern(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), AsBindingPattern(name)!) as unknown as GoPtr<Node>;
@@ -1312,8 +1333,10 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
  * }
  */
 export function asyncTransformer_hoistVariableDeclarationList(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>): void {
-  for (const decl of node!.Declarations!.Nodes) {
-    asyncTransformer_hoistVariable(receiver, decl);
+  if (node!.Declarations!.Nodes !== undefined) {
+    for (const decl of node!.Declarations!.Nodes) {
+      asyncTransformer_hoistVariable(receiver, decl);
+    }
   }
 }
 
@@ -1346,9 +1369,11 @@ export function asyncTransformer_hoistVariable(receiver: GoPtr<asyncTransformer>
     EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name as unknown as GoPtr<never>);
   } else if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
-      if (!IsOmittedExpression(element)) {
-        asyncTransformer_hoistVariable(receiver, element);
+    if (bp.Elements!.Nodes !== undefined) {
+      for (const element of bp.Elements!.Nodes) {
+        if (!IsOmittedExpression(element)) {
+          asyncTransformer_hoistVariable(receiver, element);
+        }
       }
     }
   }
@@ -1415,9 +1440,11 @@ export function asyncTransformer_collidesWithParameterName(receiver: GoPtr<async
   }
   if (IsBindingPattern(name)) {
     const bp = AsBindingPattern(name)!;
-    for (const element of bp.Elements!.Nodes) {
-      if (!IsOmittedExpression(element) && asyncTransformer_collidesWithParameterName(receiver, element)) {
-        return true;
+    if (bp.Elements!.Nodes !== undefined) {
+      for (const element of bp.Elements!.Nodes) {
+        if (!IsOmittedExpression(element) && asyncTransformer_collidesWithParameterName(receiver, element)) {
+          return true;
+        }
       }
     }
   }
@@ -1611,7 +1638,9 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   const newParameters: GoSlice<GoPtr<Node>> = [];
-  for (const parameter of Node_Parameters(node) ?? []) {
+  const parameters = Node_Parameters(node);
+  if (parameters !== undefined) {
+  for (const parameter of parameters) {
     const param = AsParameterDeclaration(parameter)!;
     if (param.Initializer !== undefined || param.DotDotDotToken !== undefined) {
       // for an arrow function, capture the remaining arguments in a rest parameter.
@@ -1642,6 +1671,7 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
       undefined,
     );
     newParameters.push(newParameter);
+  }
   }
   const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
   newParametersArray!.Loc = Node_ParameterList(node)!.Loc;
@@ -1844,17 +1874,20 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
       // `node` does not have a simple parameter list, so `outerParameters` refers to placeholders that are
       // forwarded to `innerParameters`, matching how they are introduced in `transformAsyncFunctionParameterList`.
       const parameterBindings: GoPtr<Node>[] = [];
-      const outerLen = outerParameters!.Nodes.length;
+      const outerParameterNodes = outerParameters!.Nodes;
+      const outerLen = outerParameterNodes === undefined ? 0 : outerParameterNodes.length;
       const params = Node_Parameters(node);
-      for (let i = 0; i < params.length; i++) {
-        if (i >= outerLen) break;
-        const originalParameter = AsParameterDeclaration(params[i])!;
-        const outerParameter = AsParameterDeclaration(outerParameters!.Nodes[i])!;
-        if (originalParameter.Initializer !== undefined || originalParameter.DotDotDotToken !== undefined) {
-          parameterBindings.push(NewSpreadElement(factory, Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<never>) as unknown as GoPtr<Node>);
-          break;
+      if (params !== undefined && outerParameterNodes !== undefined) {
+        for (let i = 0; i < params.length; i++) {
+          if (i >= outerLen) break;
+          const originalParameter = AsParameterDeclaration(params[i])!;
+          const outerParameter = AsParameterDeclaration(outerParameterNodes[i])!;
+          if (originalParameter.Initializer !== undefined || originalParameter.DotDotDotToken !== undefined) {
+            parameterBindings.push(NewSpreadElement(factory, Node_Name(outerParameter) as unknown as GoPtr<never>) as unknown as GoPtr<Node>);
+            break;
+          }
+          parameterBindings.push(Node_Name(outerParameter) as unknown as GoPtr<Node>);
         }
-        parameterBindings.push(Node_Name(outerParameters!.Nodes[i]) as unknown as GoPtr<Node>);
       }
       argumentsExpression = NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, parameterBindings) as unknown as GoPtr<never>, false) as unknown as GoPtr<Node>;
     } else {
@@ -1864,8 +1897,11 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
   // An async function is emit as an outer function that calls an inner generator function.
   const savedEnclosingFunctionParameterNames = receiver!.enclosingFunctionParameterNames;
   receiver!.enclosingFunctionParameterNames = NewSetWithSizeHint<string>(0);
-  for (const parameter of Node_Parameters(node)) {
-    asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames);
+  const parameterNodes = Node_Parameters(node);
+  if (parameterNodes !== undefined) {
+    for (const parameter of parameterNodes) {
+      asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames);
+    }
   }
   const hasLexicalThis = asyncTransformer_inHasLexicalThisContext(receiver);
   let asyncBody = asyncTransformer_transformAsyncFunctionBodyWorker(receiver, Node_Body(node));
@@ -2081,9 +2117,13 @@ export function assignmentTargetContainsSuperProperty(node: GoPtr<Node>): bool {
     case KindParenthesizedExpression:
       return assignmentTargetContainsSuperProperty(AsParenthesizedExpression(node)!.Expression as unknown as GoPtr<Node>);
     case KindArrayLiteralExpression:
-      return AsArrayLiteralExpression(node)!.Elements!.Nodes.some(assignmentTargetContainsSuperProperty);
+      return ContainsFunc(AsArrayLiteralExpression(node)!.Elements!.Nodes, assignmentTargetContainsSuperProperty);
     case KindObjectLiteralExpression: {
-      for (const prop of AsObjectLiteralExpression(node)!.Properties!.Nodes) {
+      const properties = AsObjectLiteralExpression(node)!.Properties!.Nodes;
+      if (properties === undefined) {
+        return false;
+      }
+      for (const prop of properties) {
         switch (prop!.Kind) {
           case KindPropertyAssignment:
             if (assignmentTargetContainsSuperProperty(AsPropertyAssignment(prop)!.Initializer as unknown as GoPtr<Node>)) {
@@ -2160,6 +2200,7 @@ export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<async
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isSimpleParameterList","kind":"func","status":"implemented","sigHash":"aafb3df834aa6d85e376f550bb3c61bfc9e3918a9c9e5cf3e09fbc4b5aabc26c","bodyHash":"a93795926ac598af8707176a01ea63ed7bd8f5155ea0096c72bd00ee62201d14"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A nil parameter slice is a valid empty Go parameter list and therefore simple; TypeScript accepts undefined for that exact nil slice and ranges only populated arrays.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func isSimpleParameterList(params []*ast.Node) bool {
@@ -2172,11 +2213,13 @@ export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<async
  * 	return true
  * }
  */
-export function isSimpleParameterList(params: GoSlice<GoPtr<Node>>): bool {
-  for (const param of params ?? []) {
-    const p = AsParameterDeclaration(param)!;
-    if (p.Initializer !== undefined || !IsIdentifier(p.name)) {
-      return false;
+export function isSimpleParameterList(params: GoPtr<GoSlice<GoPtr<Node>>>): bool {
+  if (params !== undefined) {
+    for (const param of params) {
+      const p = AsParameterDeclaration(param)!;
+      if (p.Initializer !== undefined || !IsIdentifier(p.name)) {
+        return false;
+      }
     }
   }
   return true;

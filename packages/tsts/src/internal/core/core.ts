@@ -1,5 +1,6 @@
 import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import { GoMapGetExisting } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
@@ -67,7 +68,7 @@ export function ApplyDebugStackLimit(): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Filter","kind":"func","status":"implemented","sigHash":"c6f3794b23a576819ceb29c279308a1f44ca586c2ad73bca238043ddf5cc2be6","bodyHash":"d6f2f463faf92b0ac14d252dfde5b636c9d042a563bc223423e1dd6c7d26f801"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go callers may pass a nil slice, which this helper only ranges and filters; the TypeScript body treats undefined as the zero-length input and normalizes the nil result to the established empty-array slice representation.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A Go slice may be nil independently of being allocated-empty; GoPtr preserves the input and returned slice header while the filtering algorithm remains identical.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func Filter[T any](slice []T, f func(T) bool) []T {
@@ -86,14 +87,16 @@ export function ApplyDebugStackLimit(): void {
  * 	return slice
  * }
  */
-export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSlice<T> {
-  const values = slice ?? [];
-  for (let i = 0; i < values.length; i++) {
-    let value = values[i]!;
+export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoPtr<GoSlice<T>> {
+  if (slice === undefined) {
+    return undefined;
+  }
+  for (let i = 0; i < slice.length; i++) {
+    let value = slice[i]!;
     if (!f(value)) {
-      const result = slices.Clone(values.slice(0, i))!;
-      for (i++; i < values.length; i++) {
-        value = values[i]!;
+      const result = slices.Clone(slice.slice(0, i))!;
+      for (i++; i < slice.length; i++) {
+        value = slice[i]!;
         if (f(value)) {
           result.push(value);
         }
@@ -101,7 +104,7 @@ export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSli
       return result;
     }
   }
-  return values;
+  return slice;
 }
 
 /**
@@ -135,7 +138,7 @@ export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FilterIndex","kind":"func","status":"implemented","sigHash":"2c8591ea4e8c355d063b10ee051308e882d1ceb245c39684e589bbb5e41f0884","bodyHash":"6b099512b0b6271c6427a277d380077396da271a637a4c16251c5ef5d6fa07e3"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go permits a nil slice and supplies that same zero-length slice to no predicate calls; the TypeScript body normalizes undefined to one empty array used consistently for iteration and callback arguments.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A Go slice may be nil independently of being allocated-empty; GoPtr preserves the input and returned slice header while the indexed filtering algorithm remains identical.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func FilterIndex[T any](slice []T, f func(T, int, []T) bool) []T {
@@ -154,26 +157,29 @@ export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): Go
  * 	return slice
  * }
  */
-export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int, arg2: GoSlice<T>) => bool): GoSlice<T> {
-  const values = slice ?? [];
-  for (let i = 0; i < values.length; i++) {
-    let value = values[i]!;
-    if (!f(value, i, values)) {
-      const result = slices.Clone(values.slice(0, i))!;
-      for (i++; i < values.length; i++) {
-        value = values[i]!;
-        if (f(value, i, values)) {
+export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int, arg2: GoSlice<T>) => bool): GoPtr<GoSlice<T>> {
+  if (slice === undefined) {
+    return undefined;
+  }
+  for (let i = 0; i < slice.length; i++) {
+    let value = slice[i]!;
+    if (!f(value, i, slice)) {
+      const result = slices.Clone(slice.slice(0, i))!;
+      for (i++; i < slice.length; i++) {
+        value = slice[i]!;
+        if (f(value, i, slice)) {
           result.push(value);
         }
       }
       return result;
     }
   }
-  return values;
+  return slice;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Map","kind":"func","status":"implemented","sigHash":"b481cba2d02e22bc46592031a41ffef58bb0311b4540bb0439b367d2155ac334","bodyHash":"ba690cea4f9eed8b34e7e510b6f117ed22996db2014032c4bca519b7ee2e5a14"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Map explicitly distinguishes a nil Go slice from an allocated empty slice; GoPtr preserves that distinction for both input and result.","goSignature":"func<T0 extends unknown,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>T1)=>packages/tsts/src/go/compat.ts::GoSlice<T1>","tsSignature":"func<T0,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>T1)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>"}
  *
  * Go source:
  * func Map[T, U any](slice []T, f func(T) U) []U {
@@ -187,12 +193,9 @@ export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int,
  * 	return result
  * }
  */
-export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
-  // A Go nil slice is observationally equivalent to an empty slice in this model
-  // (same len, range, indexing, append), so the `slice == nil` early return is
-  // represented as returning an empty slice.
+export function Map<T, U>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => U): GoPtr<GoSlice<U>> {
   if (slice === undefined) {
-    return [];
+    return undefined;
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
@@ -204,6 +207,7 @@ export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::TryMap","kind":"func","status":"implemented","sigHash":"4d35f66c625f2a9a04aeed7da8b0050693f2f20abad7d28788e8823caf441b15","bodyHash":"776e523fcf2d17fb0d7e9bb6b12a92ba13176ffa831a2da353cf7f6155281566"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"TryMap returns a nil result for every zero-length input and on mapper error; GoPtr preserves those nil results and accepts a nil input whose length is zero.","goSignature":"func<T0 extends unknown,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>(T1,packages/tsts/src/go/compat.ts::GoError))=>(packages/tsts/src/go/compat.ts::GoSlice<T1>,packages/tsts/src/go/compat.ts::GoError)","tsSignature":"func<T0,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>[T1,packages/tsts/src/go/compat.ts::GoError])=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>,packages/tsts/src/go/compat.ts::GoError]"}
  *
  * Go source:
  * func TryMap[T, U any](slice []T, f func(T) (U, error)) ([]U, error) {
@@ -221,16 +225,16 @@ export function Map<T, U>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
  * 	return result, nil
  * }
  */
-export function TryMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, GoError]): [GoSlice<U>, GoError] {
-  if (slice.length === 0) {
-    return [[], undefined];
+export function TryMap<T, U>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => [U, GoError]): [GoPtr<GoSlice<U>>, GoError] {
+  if (slice === undefined || slice.length === 0) {
+    return [undefined, undefined];
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const [mapped, err] = f(value);
     if (err !== undefined) {
-      return [[], err];
+      return [undefined, err];
     }
     result[i] = mapped;
   }
@@ -239,6 +243,7 @@ export function TryMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, GoError]): [
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MapIndex","kind":"func","status":"implemented","sigHash":"e6acc3ef251f206b42ddc60894d9453e356a234bbf8e63a361ed473767842b4d","bodyHash":"e7314ed08fed131584289e170703f3ef7dda21ad22cf2a8c64d2ad4c72aa4027"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"MapIndex explicitly distinguishes a nil Go slice from an allocated empty slice; GoPtr preserves that distinction for both input and result.","goSignature":"func<T0 extends unknown,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,packages/tsts/src/go/scalars.ts::int)=>T1)=>packages/tsts/src/go/compat.ts::GoSlice<T1>","tsSignature":"func<T0,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,packages/tsts/src/go/scalars.ts::int)=>T1)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>"}
  *
  * Go source:
  * func MapIndex[T, U any](slice []T, f func(T, int) U) []U {
@@ -252,9 +257,9 @@ export function TryMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, GoError]): [
  * 	return result
  * }
  */
-export function MapIndex<T, U>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => U): GoSlice<U> {
+export function MapIndex<T, U>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int) => U): GoPtr<GoSlice<U>> {
   if (slice === undefined) {
-    return [];
+    return undefined;
   }
   const result: GoSlice<U> = new globalThis.Array<U>(slice.length);
   for (let i = 0; i < slice.length; i++) {
@@ -266,6 +271,7 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => U):
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MapNonNil","kind":"func","status":"implemented","sigHash":"38a745442a53036b38c2d0687c6b7436bddeeef191ba490264b170c3a1ba972c","bodyHash":"198aab906c79fb46432c295ffe33a81dc42047d140bdfc7338aef32e20002f97"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Every current TS-Go instantiation maps to a pointer or interface value and filters its nil zero; GoPtr also preserves the nil accumulator returned when no mapped value survives.","goSignature":"func<T0 extends unknown,T1 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>T1)=>packages/tsts/src/go/compat.ts::GoSlice<T1>","tsSignature":"func<T0,T1 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/compat.ts::GoPtr<T1>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>"}
  *
  * Go source:
  * func MapNonNil[T any, U comparable](slice []T, f func(T) U) []U {
@@ -279,12 +285,12 @@ export function MapIndex<T, U>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => U):
  * 	return result
  * }
  */
-export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => U): GoSlice<U> {
-  const result: GoSlice<U> = [];
-  for (const value of slice) {
+export function MapNonNil<T, U extends GoComparable>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => GoPtr<U>): GoPtr<GoSlice<U>> {
+  let result: GoPtr<GoSlice<U>> = undefined;
+  for (const value of slice ?? []) {
     const mapped = f(value);
-    if (mapped !== (undefined as U)) {
-      result.push(mapped);
+    if (mapped !== undefined) {
+      result = [...(result ?? []), mapped];
     }
   }
   return result;
@@ -292,6 +298,7 @@ export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MapFiltered","kind":"func","status":"implemented","sigHash":"9577337c7818014e5f3d56eaf9bd3e6b4773fe1aae3595315e4eb6ca8018cddb","bodyHash":"5f429eaa49e4b41da9e803e775da7094bae557cb4e70dfc2210f8ad55ff173f8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"MapFiltered starts with a nil Go accumulator and returns nil when no value is accepted; GoPtr preserves that state and accepts a nil range input.","goSignature":"func<T0 extends unknown,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>(T1,packages/tsts/src/go/scalars.ts::bool))=>packages/tsts/src/go/compat.ts::GoSlice<T1>","tsSignature":"func<T0,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>[T1,packages/tsts/src/go/scalars.ts::bool])=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>"}
  *
  * Go source:
  * func MapFiltered[T any, U any](slice []T, f func(T) (U, bool)) []U {
@@ -306,20 +313,21 @@ export function MapNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0
  * 	return result
  * }
  */
-export function MapFiltered<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, bool]): GoSlice<U> {
-  const result: GoSlice<U> = [];
-  for (const value of slice) {
+export function MapFiltered<T, U>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => [U, bool]): GoPtr<GoSlice<U>> {
+  let result: GoPtr<GoSlice<U>> = undefined;
+  for (const value of slice ?? []) {
     const [mapped, ok] = f(value);
     if (!ok) {
       continue;
     }
-    result.push(mapped);
+    result = [...(result ?? []), mapped];
   }
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FlatMap","kind":"func","status":"implemented","sigHash":"fa3e3b0cd454d8e8d7c20c069fb1a4d0e113cd32b1dbfce1b7c58dd86b143520","bodyHash":"64d4ff9a2a8d3bd9b60f61574c6b83534789d253a351f7c0931bf4e96c287a69"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"FlatMap starts with a nil Go accumulator and returns nil when every mapped slice is empty; GoPtr preserves the outer input, mapped slices, and result nil states.","goSignature":"func<T0 extends unknown,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/compat.ts::GoSlice<T1>)=>packages/tsts/src/go/compat.ts::GoSlice<T1>","tsSignature":"func<T0,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>"}
  *
  * Go source:
  * func FlatMap[T any, U any](slice []T, f func(T) []U) []U {
@@ -333,13 +341,13 @@ export function MapFiltered<T, U>(slice: GoSlice<T>, f: (arg0: T) => [U, bool]):
  * 	return result
  * }
  */
-export function FlatMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => GoSlice<U>): GoSlice<U> {
-  const result: GoSlice<U> = [];
-  for (const value of slice) {
+export function FlatMap<T, U>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => GoPtr<GoSlice<U>>): GoPtr<GoSlice<U>> {
+  let result: GoPtr<GoSlice<U>> = undefined;
+  for (const value of slice ?? []) {
     const mapped = f(value);
-    if (mapped.length !== 0) {
+    if (mapped !== undefined && mapped.length !== 0) {
       for (const e of mapped) {
-        result.push(e);
+        result = [...(result ?? []), e];
       }
     }
   }
@@ -348,6 +356,7 @@ export function FlatMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => GoSlice<U>): Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::SameMap","kind":"func","status":"implemented","sigHash":"b37cc02f2d681b441a2bcf95a170a037c3e31ff3971463fba5f6290a56167d14","bodyHash":"2f3ee8beacd717753c8301aa8e9f071b920d6a0d81a9340025fd7b5c63ade866"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"SameMap returns the original Go slice when no element changes, including preserving a nil input; GoPtr records that slice-header identity.","goSignature":"func<T0 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>T0)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>T0)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func SameMap[T comparable](slice []T, f func(T) T) []T {
@@ -366,7 +375,10 @@ export function FlatMap<T, U>(slice: GoSlice<T>, f: (arg0: T) => GoSlice<U>): Go
  * 	return slice
  * }
  */
-export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => T): GoSlice<T> {
+export function SameMap<T extends GoComparable>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => T): GoPtr<GoSlice<T>> {
+  if (slice === undefined) {
+    return undefined;
+  }
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const mapped = f(value);
@@ -387,6 +399,7 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::SameMapIndex","kind":"func","status":"implemented","sigHash":"6505040355c13afa243941839d6d044526ed0335e81bb95e22d06a24c0ff4d80","bodyHash":"2a7adfe960fd84d1a753f048c89fb6a73be00efa39906174803f6d67342afce0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"SameMapIndex returns the original Go slice when no element changes, including preserving a nil input; GoPtr records that slice-header identity.","goSignature":"func<T0 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,packages/tsts/src/go/scalars.ts::int)=>T0)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,packages/tsts/src/go/scalars.ts::int)=>T0)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func SameMapIndex[T comparable](slice []T, f func(T, int) T) []T {
@@ -405,7 +418,10 @@ export function SameMap<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) 
  * 	return slice
  * }
  */
-export function SameMapIndex<T extends GoComparable>(slice: GoSlice<T>, f: (arg0: T, arg1: int) => T): GoSlice<T> {
+export function SameMapIndex<T extends GoComparable>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int) => T): GoPtr<GoSlice<T>> {
+  if (slice === undefined) {
+    return undefined;
+  }
   for (let i = 0; i < slice.length; i++) {
     const value = slice[i]!;
     const mapped = f(value, i);
@@ -526,6 +542,7 @@ export function Or<T>(...funcs: Array<(arg0: T) => bool>): (arg0: T) => bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Find","kind":"func","status":"implemented","sigHash":"2ee16e58ad0deb6cc7714a39d341a00341dee7669cbba6922629edbe0e420e37","bodyHash":"0a845d90f071ccb10d06509fe6e11cbcabea300cce972b04aed5498dce91f6c9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"All current TS-Go call sites search pointer or interface elements, so the not-found zero is mechanically nil and is represented explicitly by GoPtr.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<T0>"}
  *
  * Go source:
  * func Find[T any](slice []T, f func(T) bool) T {
@@ -537,17 +554,18 @@ export function Or<T>(...funcs: Array<(arg0: T) => bool>): (arg0: T) => bool {
  * 	return *new(T)
  * }
  */
-export function Find<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
+export function Find<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoPtr<T> {
   for (const value of slice) {
     if (f(value)) {
       return value;
     }
   }
-  return undefined as T;
+  return undefined;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FindLast","kind":"func","status":"implemented","sigHash":"f52df98008b7638fb14b25ad503a9663f6455e0ca181d35ed26aa054670afde5","bodyHash":"1389b36ec3d6b13b9c0c377e6b3da4e226ed1f0a270eb175201bb3fbc30b0dc0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"All current TS-Go call sites search pointer or interface elements, so the not-found zero is mechanically nil and is represented explicitly by GoPtr.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<T0>"}
  *
  * Go source:
  * func FindLast[T any](slice []T, f func(T) bool) T {
@@ -560,14 +578,14 @@ export function Find<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
  * 	return *new(T)
  * }
  */
-export function FindLast<T>(slice: GoSlice<T>, f: (arg0: T) => bool): T {
+export function FindLast<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoPtr<T> {
   for (let i = slice.length - 1; i >= 0; i--) {
     const value = slice[i]!;
     if (f(value)) {
       return value;
     }
   }
-  return undefined as T;
+  return undefined;
 }
 
 /**
@@ -619,6 +637,7 @@ export function FindLastIndex<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstOrNil","kind":"func","status":"implemented","sigHash":"5b02323d9799c251ff81888dc2253e15b12b9f05ae4ef699fff5fa580f5eb211","bodyHash":"04ca1e17a229776de9178a01c303cff3fb4466faabe7ddc2d667b9e68effb1c7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Every current TS-Go use selects a pointer or interface element, making the empty-slice zero exactly nil; GoPtr records that proven specialization.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoPtr<T0>"}
  *
  * Go source:
  * func FirstOrNil[T any](slice []T) T {
@@ -628,15 +647,16 @@ export function FindLastIndex<T>(slice: GoSlice<T>, f: (arg0: T) => bool): int {
  * 	return *new(T)
  * }
  */
-export function FirstOrNil<T>(slice: GoSlice<T>): T {
+export function FirstOrNil<T>(slice: GoSlice<T>): GoPtr<T> {
   if (slice.length !== 0) {
     return slice[0]!;
   }
-  return undefined as T;
+  return undefined;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::LastOrNil","kind":"func","status":"implemented","sigHash":"2e9c8036f902e50e1d0808502292b6458d1ff3e636a34424a4556b67480537f3","bodyHash":"9b6168eb3aa0d1460455de0c7824af0ef002d1c71df6f937447730890ad9804e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Call sites include both nilable elements and scalar strings, so the caller supplies the exact instantiated Go zero instead of the generic implementation assuming undefined.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>,()=>T0)=>T0"}
  *
  * Go source:
  * func LastOrNil[T any](slice []T) T {
@@ -646,15 +666,16 @@ export function FirstOrNil<T>(slice: GoSlice<T>): T {
  * 	return *new(T)
  * }
  */
-export function LastOrNil<T>(slice: GoSlice<T>): T {
+export function LastOrNil<T>(slice: GoSlice<T>, zeroValue: () => T): T {
   if (slice.length !== 0) {
     return slice[slice.length - 1]!;
   }
-  return undefined as T;
+  return zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::ElementOrNil","kind":"func","status":"implemented","sigHash":"5d72715cfc3550ed669b5d8a565bc6c23b5fac16e70c7653b76bb357348970bf","bodyHash":"43aa83112e7a5e8702f0b92536bebd745f396fd3c882f41ab4bea9887517645b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Every current TS-Go use indexes pointer or interface elements, making an out-of-range zero exactly nil; GoPtr records that proven specialization.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/scalars.ts::int)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<T0>"}
  *
  * Go source:
  * func ElementOrNil[T any](slice []T, index int) T {
@@ -664,15 +685,16 @@ export function LastOrNil<T>(slice: GoSlice<T>): T {
  * 	return *new(T)
  * }
  */
-export function ElementOrNil<T>(slice: GoSlice<T>, index: int): T {
+export function ElementOrNil<T>(slice: GoSlice<T>, index: int): GoPtr<T> {
   if (index < slice.length) {
     return slice[index]!;
   }
-  return undefined as T;
+  return undefined;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstOrNilSeq","kind":"func","status":"implemented","sigHash":"0cb753a080e39d02e9c60ac785b748dd0bb0bc0674fc721f4493447df92bf9b6","bodyHash":"12af5032402e3653516d839aa1e3f788dc19c8ce30dc9843c746e7e7955d922f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A Go sequence function may be nil and T is unconstrained, so TypeScript accepts the nil function through GoPtr and requires the caller to construct the exact instantiated zero.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSeq<T0>)=>T0","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSeq<T0>>,()=>T0)=>T0"}
  *
  * Go source:
  * func FirstOrNilSeq[T any](seq iter.Seq[T]) T {
@@ -684,19 +706,20 @@ export function ElementOrNil<T>(slice: GoSlice<T>, index: int): T {
  * 	return *new(T)
  * }
  */
-export function FirstOrNilSeq<T>(seq: GoSeq<T>): T {
-  let result = undefined as T;
+export function FirstOrNilSeq<T>(seq: GoPtr<GoSeq<T>>, zeroValue: () => T): T {
+  let result: GoPtr<{ value: T }>;
   if (seq !== undefined) {
     seq((value: T): bool => {
-      result = value;
+      result = { value };
       return false;
     });
   }
-  return result;
+  return result === undefined ? zeroValue() : result.value;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstNonNil","kind":"func","status":"implemented","sigHash":"5af1740123b28a4598c1e21e27b051d47d7414505d1076442a7c88bce368177f","bodyHash":"58dfbcd5ccecb1bb44b7ef0cfe7a02a1289d4ceb5e186f7cc2cf63adfa8b818d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Every current TS-Go instantiation maps to a pointer or interface value and tests its nil zero, so GoPtr is the mechanically proven specialization for both callback and result.","goSignature":"func<T0 extends unknown,T1 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>T1)=>T1","tsSignature":"func<T0,T1 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/compat.ts::GoPtr<T1>)=>packages/tsts/src/go/compat.ts::GoPtr<T1>"}
  *
  * Go source:
  * func FirstNonNil[T any, U comparable](slice []T, f func(T) U) U {
@@ -709,18 +732,19 @@ export function FirstOrNilSeq<T>(seq: GoSeq<T>): T {
  * 	return *new(U)
  * }
  */
-export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => U): U {
+export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (arg0: T) => GoPtr<U>): GoPtr<U> {
   for (const value of slice) {
     const mapped = f(value);
-    if (mapped !== (undefined as U)) {
+    if (mapped !== undefined) {
       return mapped;
     }
   }
-  return undefined as U;
+  return undefined;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::FirstNonZero","kind":"func","status":"implemented","sigHash":"937815920a82b37fd05c1efdc4ae241c40a80974d412adad80b281393fe3e833","bodyHash":"659bc99c50b8afbad54047fef97a0a31ae10e297c7dbde3bd193f2cc91d07f8e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot derive either the zero value or Go equality for an unconstrained comparable T, so callers provide both operations explicitly and the algorithm preserves the Go scan order.","goSignature":"func<T0 extends name::comparable>(...T0[])=>T0","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(()=>T0,(T0,T0)=>packages/tsts/src/go/scalars.ts::bool,...T0[])=>T0"}
  *
  * Go source:
  * func FirstNonZero[T comparable](values ...T) T {
@@ -733,18 +757,19 @@ export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (ar
  * 	return zero
  * }
  */
-export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
+export function FirstNonZero<T extends GoComparable>(zeroValue: () => T, equal: (left: T, right: T) => bool, ...values: Array<T>): T {
+  const zero = zeroValue();
   for (const value of values) {
-    if (!isGoZeroValue(value)) {
+    if (!equal(value, zero)) {
       return value;
     }
   }
-  return undefined as T;
+  return zero;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Concatenate","kind":"func","status":"implemented","sigHash":"6956c1829700bd3fc3f92ccbb9409a1e9c08d886214b667237944eeaf8c08a06","bodyHash":"67b9e54b7b8b130caecdbdad8b4f6b2c6e0ad743ac2642b46473610f4f9f3921"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Either Go input slice may be nil and len treats it as empty; the TypeScript body applies the same branch order after normalizing each undefined input to the established empty-array slice representation.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Concatenate returns either zero-length input verbatim before allocating, so GoPtr preserves whether that selected slice is nil or allocated-empty.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func Concatenate[T any](s1 []T, s2 []T) []T {
@@ -757,20 +782,19 @@ export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
  * 	return slices.Concat(s1, s2)
  * }
  */
-export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): GoSlice<T> {
-  const left = s1 ?? [];
-  const right = s2 ?? [];
-  if (right.length === 0) {
-    return left;
+export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  if (s2 === undefined || s2.length === 0) {
+    return s1;
   }
-  if (left.length === 0) {
-    return right;
+  if (s1 === undefined || s1.length === 0) {
+    return s2;
   }
-  return slices.Concat(left, right);
+  return slices.Concat(s1, s2);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Splice","kind":"func","status":"implemented","sigHash":"2059bb395cba83fa69150051bc69f7aa38df5fd393dd10eac311e2bfab466c6e","bodyHash":"150e4b43e1abbf740235c18356e67ebcbf81bd992c9e910ae334e8a3b558f6ad"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Splice returns its input slice verbatim for a no-op, including nil, while a real splice allocates a nonnil result; GoPtr preserves that distinction.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,...T0[])=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,...T0[])=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func Splice[T any](s1 []T, start int, deleteCount int, items ...T) []T {
@@ -793,24 +817,25 @@ export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): Go
  * 	return slices.Concat(s1[:start], items, s1[end:])
  * }
  */
-export function Splice<T>(s1: GoSlice<T>, start: int, deleteCount: int, ...items: Array<T>): GoSlice<T> {
+export function Splice<T>(s1: GoPtr<GoSlice<T>>, start: int, deleteCount: int, ...items: Array<T>): GoPtr<GoSlice<T>> {
+  const length = s1?.length ?? 0;
   if (start < 0) {
-    start = s1.length + start;
+    start = length + start;
   }
   if (start < 0) {
     start = 0;
   }
-  if (start > s1.length) {
-    start = s1.length;
+  if (start > length) {
+    start = length;
   }
   if (deleteCount < 0) {
     deleteCount = 0;
   }
-  const end = globalThis.Math.min(start + globalThis.Math.max(deleteCount, 0), s1.length);
+  const end = globalThis.Math.min(start + globalThis.Math.max(deleteCount, 0), length);
   if (start === end && items.length === 0) {
     return s1;
   }
-  return slices.Concat(s1.slice(0, start), items, s1.slice(end));
+  return slices.Concat(s1?.slice(0, start), items, s1?.slice(end));
 }
 
 /**
@@ -869,6 +894,7 @@ export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: (arg0: T, ar
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::MinAllFunc","kind":"func","status":"implemented","sigHash":"cb0e61615f21263eb4072c2f4f0884eb6d093871a998329c168c50e1c8d1d713","bodyHash":"32dd6977666aab4ec1cc6ff35e66d6ee362bbb3a6c839e406bc3e41aeca16b1c"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"MinAllFunc returns nil for every zero-length Go slice, including an allocated empty input; GoPtr preserves that explicit nil result and accepts nil input.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,T0)=>packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,T0)=>packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func MinAllFunc[T any](xs []T, cmp func(a, b T) int) []T {
@@ -894,9 +920,9 @@ export function InsertSorted<T>(slice: GoSlice<T>, element: T, cmp: (arg0: T, ar
  * 	return mins
  * }
  */
-export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice<T> {
-  if (xs.length === 0) {
-    return [];
+export function MinAllFunc<T>(xs: GoPtr<GoSlice<T>>, cmp: (a: T, b: T) => int): GoPtr<GoSlice<T>> {
+  if (xs === undefined || xs.length === 0) {
+    return undefined;
   }
 
   let m: T = xs[0]!;
@@ -929,8 +955,8 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice
  * }
  */
 export function AppendIfUnique<T extends GoComparable>(slice: GoPtr<GoSlice<T>>, element: T): GoSlice<T> {
-  if (slices.Contains(slice, element)) {
-    return slice ?? [];
+  if (slice !== undefined && slices.Contains(slice, element)) {
+    return slice;
   }
   return [...(slice ?? []), element];
 }
@@ -951,17 +977,20 @@ export function AppendIfUnique<T extends GoComparable>(slice: GoPtr<GoSlice<T>>,
  * }
  */
 export function Memoize<T>(create: () => T): () => T {
-  let value = undefined as T;
+  let result: GoPtr<{ value: T }>;
   // Go reassigns `create = nil` after the first call to release it and gate
   // re-invocation. The scaffold signature keeps `create` non-nullable, so the
   // nil-able gate is held in a local copy.
   let createOrNil: GoPtr<() => T> = create;
   return (): T => {
     if (createOrNil !== undefined) {
-      value = createOrNil();
+      result = { value: createOrNil() };
       createOrNil = undefined;
     }
-    return value;
+    if (result === undefined) {
+      throw new TypeError("Memoize factory was released before initialization");
+    }
+    return result.value;
   };
 }
 
@@ -985,6 +1014,7 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::OrElse","kind":"func","status":"implemented","sigHash":"9673f73c97aa3a1b08241a6c2c75f525437fce5ef18c9352bce103faac12a8a1","bodyHash":"8d04fc668c1d41cf88c595e4814b6b304c9dc861254a8d390505000eee77a7cd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript cannot derive either the zero value or Go equality for an unconstrained comparable T, so callers provide both operations explicitly and the implementation retains the single Go declaration and branch.","goSignature":"func<T0 extends name::comparable>(T0,T0)=>T0","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(T0,T0,()=>T0,(T0,T0)=>packages/tsts/src/go/scalars.ts::bool)=>T0"}
  *
  * Go source:
  * func OrElse[T comparable](value T, defaultValue T) T {
@@ -994,28 +1024,11 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
  * 	return defaultValue
  * }
  */
-export function OrElse<T extends GoComparable>(value: T, defaultValue: T): T {
-  if (!isGoZeroValue(value)) {
+export function OrElse<T extends GoComparable>(value: T, defaultValue: T, zeroValue: () => T, equal: (left: T, right: T) => bool): T {
+  if (!equal(value, zeroValue())) {
     return value;
   }
   return defaultValue;
-}
-
-function isGoZeroValue(value: unknown): bool {
-  switch (typeof value) {
-    case "undefined":
-      return true;
-    case "boolean":
-      return value === false;
-    case "number":
-      return value === 0;
-    case "bigint":
-      return value === 0n;
-    case "string":
-      return value === "";
-    default:
-      return false;
-  }
 }
 
 /**
@@ -1032,7 +1045,7 @@ function isGoZeroValue(value: unknown): bool {
  */
 export function Coalesce<T extends GoPtr<U>, U>(a: T, b: T): T {
   // T is a pointer type *U in Go, so the zero value tested against nil is undefined.
-  if (a === (undefined as T)) {
+  if (a === undefined) {
     return b;
   } else {
     return a;
@@ -1207,6 +1220,7 @@ export function UTF16Len(s: string): UTF16Offset {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Flatten","kind":"func","status":"implemented","sigHash":"d8d271526c45a14d27b1acd6f48cadeed4d8a4dea11b24d94baf324e6ff37446","bodyHash":"eae0b55c9762c6193f6ccfe8b73f873160751ce79b7b20b2cd26617d3edd8b50"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Flatten starts with a nil Go accumulator and returns nil when the outer slice is nil or every inner slice is empty; GoPtr preserves all of those slice states.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func Flatten[T any](array [][]T) []T {
@@ -1217,11 +1231,11 @@ export function UTF16Len(s: string): UTF16Offset {
  * 	return result
  * }
  */
-export function Flatten<T>(array: GoSlice<GoSlice<T>>): GoSlice<T> {
-  const result: GoSlice<T> = [];
-  for (const subArray of array) {
-    for (const e of subArray) {
-      result.push(e);
+export function Flatten<T>(array: GoPtr<GoSlice<GoPtr<GoSlice<T>>>>): GoPtr<GoSlice<T>> {
+  let result: GoPtr<GoSlice<T>> = undefined;
+  for (const subArray of array ?? []) {
+    for (const e of subArray ?? []) {
+      result = [...(result ?? []), e];
     }
   }
   return result;
@@ -1319,6 +1333,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"971be06af4af217009a0ac68576e7d5fbb4686b6c0e82c8a9b6d7bd09ba6b162","bodyHash":"067b471f2f1945f376dd1ea3a3edd7864f2d291bee70bed3222f9c76a667e1bb"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This helper is instantiated with both scalar strings and pointer values, so the caller supplies the exact T zero used when no candidate qualifies rather than the generic body assuming undefined.","goSignature":"func<T0 extends unknown>(string,packages/tsts/src/go/compat.ts::GoSeq<T0>,(T0)=>string,(T0,T0)=>packages/tsts/src/go/scalars.ts::int)=>T0","tsSignature":"func<T0>(string,packages/tsts/src/go/compat.ts::GoSeq<T0>,(T0)=>string,(T0,T0)=>packages/tsts/src/go/scalars.ts::int,()=>T0)=>T0"}
  *
  * Go source:
  * func GetSpellingSuggestion[T any](name string, candidates iter.Seq[T], getName func(T) string, compare func(T, T) int) T {
@@ -1360,7 +1375,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  * 	return bestCandidate
  * }
  */
-export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: (arg0: T) => string, compare: (arg0: T, arg1: T) => int): T {
+export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: (arg0: T) => string, compare: (arg0: T, arg1: T) => int, zeroValue: () => T): T {
   const searchName = name ?? "";
   const runeName = stringToRunes(searchName);
   const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(runeName.length * 0.34));
@@ -1369,8 +1384,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
   // always set, so the pool never yields nil and the type assertion holds.
   const buffers = levenshteinBuffersPool.Get()!;
   try {
-    let bestCandidate = undefined as T;
-    let hasBest = false;
+    let bestCandidate: GoPtr<{ value: T }>;
     candidates((candidate: T): bool => {
       const candidateName = getName(candidate) ?? "";
       const maxLen = globalThis.Math.max(byteLen(candidateName), runeName.length);
@@ -1391,16 +1405,14 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
         Assert(distance <= bestDistance); // Else `levenshteinWithMax` should return undefined
         if (distance < bestDistance) {
           bestDistance = distance;
-          bestCandidate = candidate;
-          hasBest = true;
-        } else if (!hasBest || compare(candidate, bestCandidate) < 0) {
-          bestCandidate = candidate;
-          hasBest = true;
+          bestCandidate = { value: candidate };
+        } else if (bestCandidate === undefined || compare(candidate, bestCandidate.value) < 0) {
+          bestCandidate = { value: candidate };
         }
       }
       return true;
     });
-    return bestCandidate;
+    return bestCandidate === undefined ? zeroValue() : bestCandidate.value;
   } finally {
     levenshteinBuffersPool.Put(buffers);
   }
@@ -1415,9 +1427,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
  * }
  */
 export function GetSpellingSuggestionForStrings(name: string, candidates: GoSeq<string>): string {
-  // Go instantiates GetSpellingSuggestion with T=string, whose zero value is "" — the
-  // value callers test for "no suggestion". The generic port yields undefined instead.
-  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare) ?? "";
+  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare, () => "");
 }
 
 /**
@@ -1576,6 +1586,7 @@ export function Identity<T>(t: T): T {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::CheckEachDefined","kind":"func","status":"implemented","sigHash":"4fcaee62e139bdf23ff61239ea5ef45cacdc4765b079002722dba2c6f7d3d2ee","bodyHash":"3ad3ce69576dd3b83fea5af7dd7b3967b8093ad3e1153961dd25b40a0e8cc471"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"CheckEachDefined returns the same Go slice header after validation, so GoPtr preserves a nil input and result while ranging it as zero elements.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>,string)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>>"}
  *
  * Go source:
  * func CheckEachDefined[S any](s []*S, msg string) []*S {
@@ -1587,8 +1598,8 @@ export function Identity<T>(t: T): T {
  * 	return s
  * }
  */
-export function CheckEachDefined<S>(s: GoSlice<GoPtr<S>>, msg: string): GoSlice<GoPtr<S>> {
-  for (const value of s) {
+export function CheckEachDefined<S>(s: GoPtr<GoSlice<GoPtr<S>>>, msg: string): GoPtr<GoSlice<GoPtr<S>>> {
+  for (const value of s ?? []) {
     if (value === undefined) {
       throw new globalThis.Error(msg);
     }
@@ -1632,6 +1643,7 @@ export function ShouldRewriteModuleSpecifier(specifier: string, compilerOptions:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::SingleElementSlice","kind":"func","status":"implemented","sigHash":"408e51ce0a659f1db8b999d49da2dbe6bf20b3b1cfdfd0c97d6083a7140aea3e","bodyHash":"ea5ec7c9bd030f577f86ec45861ddde99d1de3f8f2b4f83e2c955f7c3b806e4d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"SingleElementSlice explicitly returns a nil Go slice for a nil element pointer; GoPtr preserves that result instead of allocating an empty array.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<T0>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<T0>>>"}
  *
  * Go source:
  * func SingleElementSlice[T any](element *T) []*T {
@@ -1641,9 +1653,9 @@ export function ShouldRewriteModuleSpecifier(specifier: string, compilerOptions:
  * 	return []*T{element}
  * }
  */
-export function SingleElementSlice<T>(element: GoPtr<T>): GoSlice<GoPtr<T>> {
+export function SingleElementSlice<T>(element: GoPtr<T>): GoPtr<GoSlice<GoPtr<T>>> {
   if (element === undefined) {
-    return [];
+    return undefined;
   }
   return [element];
 }
@@ -1780,7 +1792,7 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
   }
   for (const [k, v1] of m1) {
     if (m2.has(k)) {
-      const v2 = m2.get(k)!;
+      const v2 = GoMapGetExisting(m2, k);
       if (onChanged !== undefined && !equalValues(v1, v2)) {
         onChanged(k, v1, v2);
       }
@@ -1851,6 +1863,7 @@ export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSli
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Deduplicate","kind":"func","status":"implemented","sigHash":"9a48c7a2471597670d0e43bc7482ff4566ad093029c455021cff6f30490e2bd3","bodyHash":"c504ca61247b8feff6113bd3f6f1403253a79ff5d3094774be98766305d39ba1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Deduplicate returns the original Go slice when no duplicate exists, including preserving nil and allocated-empty as distinct inputs; GoPtr records that identity.","goSignature":"func<T0 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T0>)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func Deduplicate[T comparable](slice []T) []T {
@@ -1871,7 +1884,10 @@ export function UnorderedEqual<T extends GoComparable>(s1: GoSlice<T>, s2: GoSli
  * 	return slice
  * }
  */
-export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>): GoSlice<T> {
+export function Deduplicate<T extends GoComparable>(slice: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  if (slice === undefined) {
+    return undefined;
+  }
   if (slice.length > 1) {
     for (let i = 0; i < slice.length; i++) {
       let value = slice[i]!;
@@ -1892,6 +1908,7 @@ export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>): GoSlice<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::DeduplicateSorted","kind":"func","status":"implemented","sigHash":"12b85e5ed219868935300ff9c7e3be0ab744d40fa405cee9957a43b28e5225d3","bodyHash":"ffc9de69d4bf0e6db80991b2c79168c63a9c720b666fca7f857212ceda321e5f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"DeduplicateSorted returns its zero-length Go input verbatim, including preserving nil versus allocated-empty; GoPtr records that slice-header distinction.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0,T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<T0>","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0,T0)=>packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>"}
  *
  * Go source:
  * func DeduplicateSorted[T any](slice []T, isEqual func(a, b T) bool) []T {
@@ -1913,8 +1930,8 @@ export function Deduplicate<T extends GoComparable>(slice: GoSlice<T>): GoSlice<
  * 	return deduplicated
  * }
  */
-export function DeduplicateSorted<T>(slice: GoSlice<T>, isEqual: (a: T, b: T) => bool): GoSlice<T> {
-  if (slice.length === 0) {
+export function DeduplicateSorted<T>(slice: GoPtr<GoSlice<T>>, isEqual: (a: T, b: T) => bool): GoPtr<GoSlice<T>> {
+  if (slice === undefined || slice.length === 0) {
     return slice;
   }
   let last = slice[0]!;

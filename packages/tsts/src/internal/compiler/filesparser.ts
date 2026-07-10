@@ -54,6 +54,7 @@ import type { Set as Set_collections } from "../collections/set.js";
 import { Collect, Sort } from "../../go/slices.js";
 import { SyncMap_Keys } from "../collections/syncmap.js";
 import { ModuleKindCommonJS } from "../core/compileroptions.js";
+import { PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import type { ModeAwareCacheKey } from "../module/types.js";
 import {
   includeProcessor_addProcessingDiagnosticsForFileCasing,
@@ -63,6 +64,7 @@ import { getExtensionHost } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5","bodyHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"type parseTask uses an explicit undefined-capable TypeScript representation at member 'resolutionsInFile', member 'typeResolutionsInFile' because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"interface{allIncludeReasons:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>>;elideOnDepth:packages/tsts/src/go/scalars.ts::bool;file:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;importHelpersImportSpecifier:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>;includeReason:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>;increaseDepth:packages/tsts/src/go/scalars.ts::bool;isForAutomaticTypeDirective:packages/tsts/src/go/scalars.ts::bool;jsxRuntimeImportSpecifier:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::jsxRuntimeImportSpecifier>;libFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::LibFile>;loaded:packages/tsts/src/go/scalars.ts::bool;loadedTask:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>;metadata:packages/tsts/src/internal/ast/ast.ts::SourceFileMetaData;normalizedFilePath:string;packageId:packages/tsts/src/internal/module/types.ts::PackageId;path:packages/tsts/src/internal/tspath/path.ts::Path;processingDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>;redirectedParseTask:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>;resolutionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;resolutionsInFile:packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>;resolutionsTrace:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>;startedSubTasks:packages/tsts/src/go/scalars.ts::bool;subTasks:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>>;typeResolutionsInFile:packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>;typeResolutionsTrace:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>}","tsSignature":"interface{allIncludeReasons:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>>;elideOnDepth:packages/tsts/src/go/scalars.ts::bool;file:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>;importHelpersImportSpecifier:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::StringLiteralNode>;includeReason:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileInclude.ts::FileIncludeReason>;increaseDepth:packages/tsts/src/go/scalars.ts::bool;isForAutomaticTypeDirective:packages/tsts/src/go/scalars.ts::bool;jsxRuntimeImportSpecifier:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::jsxRuntimeImportSpecifier>;libFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/fileloader.ts::LibFile>;loaded:packages/tsts/src/go/scalars.ts::bool;loadedTask:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>;metadata:packages/tsts/src/internal/ast/ast.ts::SourceFileMetaData;normalizedFilePath:string;packageId:packages/tsts/src/internal/module/types.ts::PackageId;path:packages/tsts/src/internal/tspath/path.ts::Path;processingDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/processingDiagnostic.ts::processingDiagnostic>>;redirectedParseTask:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>;resolutionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;resolutionsInFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedModule>>>;resolutionsTrace:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>;startedSubTasks:packages/tsts/src/go/scalars.ts::bool;subTasks:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/filesparser.ts::parseTask>>;typeResolutionsInFile:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/cache.ts::ModeAwareCache<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/module/types.ts::ResolvedTypeReferenceDirective>>>;typeResolutionsTrace:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/module/resolver.ts::DiagAndArgs>}"}
  *
  * Go source:
  * parseTask struct {
@@ -108,9 +110,9 @@ export interface parseTask {
   includeReason: GoPtr<FileIncludeReason>;
   packageId: PackageId;
   metadata: SourceFileMetaData;
-  resolutionsInFile: ModeAwareCache<GoPtr<ResolvedModule>>;
+  resolutionsInFile: GoPtr<ModeAwareCache<GoPtr<ResolvedModule>>>;
   resolutionsTrace: GoSlice<DiagAndArgs>;
-  typeResolutionsInFile: ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>;
+  typeResolutionsInFile: GoPtr<ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>;
   typeResolutionsTrace: GoSlice<DiagAndArgs>;
   resolutionDiagnostics: GoSlice<GoPtr<Diagnostic>>;
   processingDiagnostics: GoSlice<GoPtr<processingDiagnostic>>;
@@ -261,7 +263,16 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
     parseTask_loadAutomaticTypeDirectives(receiver, loader);
     return;
   }
-  // loader.opts.Tracing is omitted (single-threaded, tracing is a no-op)
+  const traceDone = loader!.opts.Tracing === undefined
+    ? undefined
+    : Tracing_Push(
+      loader!.opts.Tracing,
+      PhaseProgram,
+      "findSourceFile",
+      new globalThis.Map([["fileName", receiver!.normalizedFilePath]]),
+      false,
+    );
+  try {
   const receiverAsHasFileName: HasFileName = {
     FileName: () => parseTask_FileName(receiver),
     Path: () => parseTask_Path(receiver),
@@ -371,6 +382,9 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
   }
 
   fileLoader_resolveImportsAndModuleAugmentations(loader, receiver);
+  } finally {
+    traceDone?.();
+  }
 }
 
 /**
@@ -401,9 +415,9 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
     includeReason: receiver!.includeReason,
     packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: undefined,
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: undefined,
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -436,13 +450,19 @@ export function parseTask_redirect(receiver: GoPtr<parseTask>, loader: GoPtr<fil
  * }
  */
 export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoader>): void {
-  // loader.opts.Tracing is omitted (single-threaded, tracing is a no-op)
-  const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
-  receiver!.typeResolutionsInFile = typeResolutionsInFile;
-  receiver!.typeResolutionsTrace = typeResolutionsTrace;
-  receiver!.processingDiagnostics = [...(receiver!.processingDiagnostics ?? []), ...(pDiagnostics ?? [])];
-  for (const typeResolution of toParseTypeRefs ?? []) {
-    parseTask_addSubTask(receiver, typeResolution, undefined);
+  const traceDone = loader!.opts.Tracing === undefined
+    ? undefined
+    : Tracing_Push(loader!.opts.Tracing, PhaseProgram, "processTypeReferences", undefined, false);
+  try {
+    const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
+    receiver!.typeResolutionsInFile = typeResolutionsInFile;
+    receiver!.typeResolutionsTrace = typeResolutionsTrace;
+    receiver!.processingDiagnostics = [...(receiver!.processingDiagnostics ?? []), ...(pDiagnostics ?? [])];
+    for (const typeResolution of toParseTypeRefs ?? []) {
+      parseTask_addSubTask(receiver, typeResolution, undefined);
+    }
+  } finally {
+    traceDone?.();
   }
 }
 
@@ -498,9 +518,9 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     includeReason: ref.includeReason,
     packageId: ref.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
-    resolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedModule>>,
+    resolutionsInFile: undefined,
     resolutionsTrace: [],
-    typeResolutionsInFile: undefined as unknown as ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>,
+    typeResolutionsInFile: undefined,
     typeResolutionsTrace: [],
     resolutionDiagnostics: [],
     processingDiagnostics: [],
@@ -1047,8 +1067,8 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     outputFileToProjectReferenceSource = new globalThis.Map<Path_65a900c3, string>();
   }
 
-  const resolvedModules = new globalThis.Map<Path_65a900c3, ModeAwareCache<GoPtr<ResolvedModule>>>();
-  const typeResolutionsInFile = new globalThis.Map<Path_65a900c3, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>();
+  const resolvedModules = new globalThis.Map<Path_65a900c3, GoPtr<ModeAwareCache<GoPtr<ResolvedModule>>>>();
+  const typeResolutionsInFile = new globalThis.Map<Path_65a900c3, GoPtr<ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>>>();
   const sourceFileMetaDatas = new globalThis.Map<Path_65a900c3, SourceFileMetaData>();
   let jsxRuntimeImportSpecifiers: GoMap<Path_65a900c3, GoPtr<jsxRuntimeImportSpecifier>> | undefined = undefined;
   let importHelpersImportSpecifiers: GoMap<Path_65a900c3, GoPtr<StringLiteralNode>> | undefined = undefined;
@@ -1076,6 +1096,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const [data] = SyncMap_Load<Path_65a900c3, GoPtr<parseTaskData>>(
         receiver!.taskDataByPath as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<parseTaskData>>,
         task!.path,
+        (): GoPtr<parseTaskData> => undefined,
       );
       if (!task!.loaded) {
         continue;
@@ -1240,6 +1261,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     const [value] = SyncMap_Load<Path_65a900c3, GoPtr<libResolution>>(
       loader!.pathForLibFileResolutions as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<libResolution>>,
       key,
+      (): GoPtr<libResolution> => undefined,
     );
     const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
     modeAwareCache.set({ Name: value!.libraryName, Mode: ModuleKindCommonJS }, value!.resolution);

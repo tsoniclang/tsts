@@ -74,14 +74,15 @@ type UnitReport struct {
 	SigHash              string                `json:"sigHash"`
 	BodyHash             string                `json:"bodyHash"`
 	Snippet              string                `json:"snippet"`
-	TypeParameters       []string              `json:"typeParameters,omitempty"`
-	TypeParameterDetails []TypeParameterReport `json:"typeParameterDetails,omitempty"`
-	Parameters           []ParamReport         `json:"parameters,omitempty"`
-	Results              []ParamReport         `json:"results,omitempty"`
+	TypeParameters       []string              `json:"typeParameters"`
+	TypeParameterDetails []TypeParameterReport `json:"typeParameterDetails"`
+	Parameters           []ParamReport         `json:"parameters"`
+	Results              []ParamReport         `json:"results"`
 	TypeExpression       *TypeExprReport       `json:"typeExpression,omitempty"`
-	ValueSpecs           []ValueSpecReport     `json:"valueSpecs,omitempty"`
-	Members              []MemberReport        `json:"members,omitempty"`
-	ExternalRefs         []ExternalRefReport   `json:"externalRefs,omitempty"`
+	ValueSpecs           []ValueSpecReport     `json:"valueSpecs"`
+	Members              []MemberReport        `json:"members"`
+	ExternalRefs         []ExternalRefReport   `json:"externalRefs"`
+	ReturnFacts          []ReturnFactReport    `json:"returnFacts"`
 	NodeKindCounts       map[string]int        `json:"nodeKindCounts"`
 	FeatureCounts        map[string]int        `json:"featureCounts"`
 	Metadata             map[string]string     `json:"metadata"`
@@ -92,7 +93,17 @@ type ExternalRefReport struct {
 	Package    string `json:"package"`
 	Name       string `json:"name"`
 	Role       string `json:"role"`
+	Arity      int    `json:"arity"`
 	Count      int    `json:"count"`
+}
+
+type ReturnFactReport struct {
+	Line    int                     `json:"line"`
+	Results []ReturnValueFactReport `json:"results"`
+}
+
+type ReturnValueFactReport struct {
+	Kind string `json:"kind"`
 }
 
 type MemberReport struct {

@@ -156,9 +156,10 @@ export function renderExternalFacadePolicy(policy, context) {
     if (policy.tsInitializer !== undefined && (typeof policy.tsInitializer !== "string" || policy.tsInitializer.trim() === "")) {
       throw new Error(`external value facade ${policy.goName} has an invalid tsInitializer`);
     }
-    const initializer = policy.tsInitializer ?? "undefined as never";
-    const annotation = policy.tsInitializer === undefined ? ": unknown" : "";
-    return `export const ${safeIdentifier(policy.tsName)}${annotation} = ${initializer};`;
+    if (policy.tsInitializer === undefined) {
+      return `export const ${safeIdentifier(policy.tsName)}: unknown = (() => {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}`)});\n})();`;
+    }
+    return `export const ${safeIdentifier(policy.tsName)} = ${policy.tsInitializer};`;
   }
   if (policy.kind === "type") {
     const expression = policy.typeExpression

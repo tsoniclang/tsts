@@ -12,7 +12,14 @@ import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from
  * }
  */
 export interface SyncSet<T extends GoComparable = unknown> {
-  m: SyncMap<T, { readonly __tsgoEmpty?: never }>;
+  m?: SyncMap<T, { readonly __tsgoEmpty?: never }>;
+}
+
+function syncSetBacking<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): SyncMap<T, { readonly __tsgoEmpty?: never }> {
+  if (receiver === undefined) {
+    throw new TypeError("nil SyncSet receiver");
+  }
+  return receiver.m ??= {};
 }
 
 /**
@@ -25,7 +32,7 @@ export interface SyncSet<T extends GoComparable = unknown> {
  * }
  */
 export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): bool {
-  const [, ok] = SyncMap_Load(receiver!.m, key);
+  const [, ok] = SyncMap_Load(syncSetBacking(receiver), key, () => ({}));
   return ok;
 }
 
@@ -51,7 +58,7 @@ export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
  * }
  */
 export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): bool {
-  const [, loaded] = SyncMap_LoadOrStore(receiver!.m, key, {});
+  const [, loaded] = SyncMap_LoadOrStore(syncSetBacking(receiver), key, {});
   return !loaded;
 }
 
@@ -64,7 +71,7 @@ export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Sync
  * }
  */
 export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): void {
-  SyncMap_Delete(receiver!.m, key);
+  SyncMap_Delete(syncSetBacking(receiver), key);
 }
 
 /**
@@ -78,7 +85,7 @@ export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T
  * }
  */
 export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, fn: (key: T) => bool): void {
-  SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
+  SyncMap_Range(syncSetBacking(receiver), (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
     return fn(key);
   });
 }
@@ -98,7 +105,7 @@ export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>
  */
 export function SyncSet_Size<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): int {
   const keys: T[] = [];
-  SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
+  SyncMap_Range(syncSetBacking(receiver), (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
     keys.push(key);
     return true;
   });
@@ -139,7 +146,7 @@ export function SyncSet_IsEmpty<T extends GoComparable>(receiver: GoPtr<SyncSet<
  */
 export function SyncSet_ToSlice<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): GoSlice<T> {
   const arr: GoSlice<T> = [];
-  SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
+  SyncMap_Range(syncSetBacking(receiver), (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
     arr.push(key);
     return true;
   });
@@ -163,7 +170,7 @@ export function SyncSet_ToSlice<T extends GoComparable>(receiver: GoPtr<SyncSet<
  */
 export function SyncSet_Keys<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>): GoSeq<T> {
   return (yield_: (value: T) => bool): void => {
-    SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
+    SyncMap_Range(syncSetBacking(receiver), (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
       if (!yield_(key)) {
         return false;
       }

@@ -132,32 +132,22 @@ export function BuildInfoRoot_MarshalJSON(receiver: GoPtr<BuildInfoRoot>): [GoSl
  */
 export function BuildInfoRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoRoot>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
-  let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    const parsed = parseBuildInfoJSON(str);
+    if (parsed === null) {
+      throw new globalThis.TypeError("nil *[2]int");
+    }
+    const decoded = decodeBuildInfoRoot(parsed);
+    receiver!.Start = decoded.Start;
+    receiver!.End = decoded.End;
+    receiver!.NonIncremental = decoded.NonIncremental;
+    return undefined;
+  } catch (error) {
+    if (error instanceof globalThis.TypeError && error.message === "nil *[2]int") {
+      throw error;
+    }
     return Errorf("invalid BuildInfoRoot: %s", str);
   }
-  if (globalThis.Array.isArray(parsed) && (parsed as unknown[]).length === 2) {
-    const arr = parsed as number[];
-    receiver!.Start = arr[0] as BuildInfoFileId;
-    receiver!.End = arr[1] as BuildInfoFileId;
-    receiver!.NonIncremental = "";
-    return undefined;
-  }
-  if (typeof parsed === "number") {
-    receiver!.Start = parsed as BuildInfoFileId;
-    receiver!.End = 0 as BuildInfoFileId;
-    receiver!.NonIncremental = "";
-    return undefined;
-  }
-  if (typeof parsed === "string") {
-    receiver!.Start = 0 as BuildInfoFileId;
-    receiver!.End = 0 as BuildInfoFileId;
-    receiver!.NonIncremental = parsed;
-    return undefined;
-  }
-  return Errorf("invalid BuildInfoRoot: %s", str);
 }
 
 /**
@@ -409,10 +399,7 @@ export function BuildInfoFileInfo_MarshalJSON(receiver: GoPtr<BuildInfoFileInfo>
 export function BuildInfoFileInfo_UnmarshalJSON(receiver: GoPtr<BuildInfoFileInfo>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
   try {
-    const decoded = decodeBuildInfoFileInfo(globalThis.JSON.parse(str));
-    if (decoded === undefined) {
-      return Errorf("invalid BuildInfoFileInfo: %s", str);
-    }
+    const decoded = decodeBuildInfoFileInfoValue(parseBuildInfoJSON(str));
     receiver!.signature = decoded.signature;
     receiver!.noSignature = decoded.noSignature;
     receiver!.fileInfo = decoded.fileInfo;
@@ -466,19 +453,21 @@ export function BuildInfoReferenceMapEntry_MarshalJSON(receiver: GoPtr<BuildInfo
  */
 export function BuildInfoReferenceMapEntry_UnmarshalJSON(receiver: GoPtr<BuildInfoReferenceMapEntry>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
-  let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
-    return Errorf("invalid BuildInfoReferenceMapEntry: %s", str);
+    const parsed = parseBuildInfoJSON(str);
+    if (parsed === null) {
+      throw new globalThis.TypeError("nil *[2]int");
+    }
+    const tuple = decodeBuildInfoFixedIntTuple(parsed, str);
+    receiver!.FileId = tuple[0] as BuildInfoFileId;
+    receiver!.FileIdListId = tuple[1] as BuildInfoFileIdListId;
+    return undefined;
+  } catch (error) {
+    if (error instanceof globalThis.TypeError && error.message === "nil *[2]int") {
+      throw error;
+    }
+    return buildInfoGoError(error, str);
   }
-  if (!globalThis.Array.isArray(parsed) || (parsed as unknown[]).length !== 2) {
-    return Errorf("invalid BuildInfoReferenceMapEntry: %s", str);
-  }
-  const arr = parsed as number[];
-  receiver!.FileId = arr[0] as BuildInfoFileId;
-  receiver!.FileIdListId = arr[1] as BuildInfoFileIdListId;
-  return undefined;
 }
 
 /**
@@ -635,16 +624,36 @@ export function BuildInfoDiagnosticsOfFile_MarshalJSON(receiver: GoPtr<BuildInfo
  */
 export function BuildInfoDiagnosticsOfFile_UnmarshalJSON(receiver: GoPtr<BuildInfoDiagnosticsOfFile>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
+  let parsed: unknown;
   try {
-    const decoded = decodeBuildInfoDiagnosticsOfFile(globalThis.JSON.parse(str));
-    receiver!.FileId = decoded.FileId;
-    receiver!.Diagnostics = decoded.Diagnostics;
-    return undefined;
-  } catch (error) {
-    return error instanceof BuildInfoJSONError
-      ? Errorf("invalid BuildInfoDiagnosticsOfFile: %s", error.message)
-      : Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
+    parsed = parseBuildInfoJSON(str);
+  } catch {
+    return Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
   }
+  if (parsed === null) {
+    return Errorf("invalid BuildInfoDiagnosticsOfFile: expected 2 elements, got 0");
+  }
+  if (!globalThis.Array.isArray(parsed)) {
+    return Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
+  }
+  if (parsed.length !== 2) {
+    return Errorf("invalid BuildInfoDiagnosticsOfFile: expected 2 elements, got %d", parsed.length);
+  }
+  let fileId: BuildInfoFileId;
+  try {
+    fileId = jsonIntegerValue(parsed[0], "incremental.BuildInfoFileId") as BuildInfoFileId;
+  } catch (error) {
+    return Errorf("invalid fileId in BuildInfoDiagnosticsOfFile: %w", buildInfoGoError(error, str));
+  }
+  let diagnostics: GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined;
+  try {
+    diagnostics = decodeBuildInfoDiagnosticSlice(parsed[1]);
+  } catch (error) {
+    return Errorf("invalid diagnostics in BuildInfoDiagnosticsOfFile: %w", buildInfoGoError(error, str));
+  }
+  receiver!.FileId = fileId;
+  receiver!.Diagnostics = diagnostics;
+  return undefined;
 }
 
 /**
@@ -702,31 +711,24 @@ export function BuildInfoSemanticDiagnostic_UnmarshalJSON(receiver: GoPtr<BuildI
   const str = bytesToString(data);
   let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    parsed = parseBuildInfoJSON(str);
+  } catch {
     return Errorf("invalid BuildInfoSemanticDiagnostic: %s", str);
   }
-  if (typeof parsed === "number") {
-    receiver!.FileId = parsed as BuildInfoFileId;
+  try {
+    receiver!.FileId = jsonIntegerValue(parsed, "incremental.BuildInfoFileId") as BuildInfoFileId;
     receiver!.Diagnostics = undefined;
     return undefined;
-  }
-  // Try to parse as BuildInfoDiagnosticsOfFile (an array [fileId, diagnostics[]])
-  if (globalThis.Array.isArray(parsed)) {
-    const arr = parsed as unknown[];
-    const diagnostics: BuildInfoDiagnosticsOfFile = {
-      FileId: 0 as BuildInfoFileId,
-      Diagnostics: undefined,
-    };
-    const err = BuildInfoDiagnosticsOfFile_UnmarshalJSON(diagnostics, data);
-    if (err !== undefined) {
+  } catch {
+    try {
+      const diagnostics = decodeBuildInfoDiagnosticsOfFile(parsed);
+      receiver!.FileId = 0 as BuildInfoFileId;
+      receiver!.Diagnostics = diagnostics;
+      return undefined;
+    } catch {
       return Errorf("invalid BuildInfoSemanticDiagnostic: %s", str);
     }
-    receiver!.FileId = 0 as BuildInfoFileId;
-    receiver!.Diagnostics = diagnostics;
-    return undefined;
   }
-  return Errorf("invalid BuildInfoSemanticDiagnostic: %s", str);
 }
 
 /**
@@ -807,33 +809,40 @@ export function BuildInfoFilePendingEmit_UnmarshalJSON(receiver: GoPtr<BuildInfo
   const str = bytesToString(data);
   let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    parsed = parseBuildInfoJSON(str);
+  } catch {
     return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
   }
-  if (typeof parsed === "number") {
-    receiver!.FileId = parsed as BuildInfoFileId;
+  try {
+    receiver!.FileId = jsonIntegerValue(parsed, "incremental.BuildInfoFileId") as BuildInfoFileId;
     receiver!.EmitKind = 0 as FileEmitKind;
     return undefined;
+  } catch {
+    // Continue with the compact tuple representation.
   }
-  if (globalThis.Array.isArray(parsed)) {
-    const arr = parsed as number[];
-    if (arr.length === 0) {
-      return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
-    }
-    if (arr.length === 1) {
-      receiver!.FileId = arr[0] as BuildInfoFileId;
-      receiver!.EmitKind = FileEmitKindDts;
-      return undefined;
-    }
-    if (arr.length === 2) {
-      receiver!.FileId = arr[0] as BuildInfoFileId;
-      receiver!.EmitKind = arr[1] as FileEmitKind;
-      return undefined;
-    }
-    return Errorf("invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got %d", arr.length);
+  if (!globalThis.Array.isArray(parsed)) {
+    return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
   }
-  return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
+  let intTuple: GoSlice<bigint>;
+  try {
+    intTuple = parsed.map((value) => jsonIntegerBigInt(value, "int"));
+  } catch {
+    return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
+  }
+  if (intTuple.length === 0) {
+    return Errorf("invalid BuildInfoFilePendingEmit: %s", str);
+  }
+  if (intTuple.length === 1) {
+    receiver!.FileId = globalThis.Number(intTuple[0]) as BuildInfoFileId;
+    receiver!.EmitKind = FileEmitKindDts;
+    return undefined;
+  }
+  if (intTuple.length === 2) {
+    receiver!.FileId = globalThis.Number(intTuple[0]) as BuildInfoFileId;
+    receiver!.EmitKind = globalThis.Number(globalThis.BigInt.asUintN(32, intTuple[1]!)) as FileEmitKind;
+    return undefined;
+  }
+  return Errorf("invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got %d", intTuple.length);
 }
 
 /**
@@ -894,7 +903,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   let signatureWithDifferentOptions: GoSlice<string> | undefined;
   if (receiver!.DiffersOnlyInDtsMap) {
     signatureWithDifferentOptions = [];
-    const [info] = SyncMap_Load(emitSignatures as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<emitSignature>>, path);
+    const [info] = SyncMap_Load(emitSignatures as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<emitSignature>>, path, (): GoPtr<emitSignature> => undefined);
     signatureWithDifferentOptions.push(info!.signature);
   } else if (receiver!.DiffersInOptions) {
     signatureWithDifferentOptions = [receiver!.Signature];
@@ -1006,40 +1015,41 @@ export function BuildInfoEmitSignature_UnmarshalJSON(receiver: GoPtr<BuildInfoEm
   const str = bytesToString(data);
   let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    parsed = parseBuildInfoJSON(str);
+  } catch {
     return Errorf("invalid BuildInfoEmitSignature: %s", str);
   }
-  if (typeof parsed === "number") {
-    receiver!.FileId = parsed as BuildInfoFileId;
+  try {
+    receiver!.FileId = jsonIntegerValue(parsed, "incremental.BuildInfoFileId") as BuildInfoFileId;
     receiver!.Signature = "";
     receiver!.DiffersOnlyInDtsMap = false;
     receiver!.DiffersInOptions = false;
     return undefined;
+  } catch {
+    // Continue with the compact tuple representation.
   }
   if (!globalThis.Array.isArray(parsed)) {
     return Errorf("invalid BuildInfoEmitSignature: %s", str);
   }
-  const arr = parsed as unknown[];
-  if (arr.length !== 2) {
-    return Errorf("invalid BuildInfoEmitSignature: expected 2 elements, got %d", arr.length);
+  if (parsed.length !== 2) {
+    return Errorf("invalid BuildInfoEmitSignature: expected 2 elements, got %d", parsed.length);
   }
-  if (typeof arr[0] !== "number") {
-    return Errorf("invalid fileId in BuildInfoEmitSignature: expected float64, got %s", typeof arr[0]);
+  if (!isBuildInfoJSONNumberValue(parsed[0])) {
+    return Errorf("invalid fileId in BuildInfoEmitSignature: expected float64, got %s", buildInfoJSONDynamicType(parsed[0]));
   }
-  const fileId = arr[0] as BuildInfoFileId;
+  const fileId = jsonFloat64ToGoInt(buildInfoJSONNumberValue(parsed[0])) as BuildInfoFileId;
   let signature = "";
   let differsOnlyInDtsMap = false;
   let differsInOptions = false;
-  if (typeof arr[1] === "string") {
-    signature = arr[1];
-  } else if (globalThis.Array.isArray(arr[1])) {
-    const signatureList = arr[1] as unknown[];
+  if (typeof parsed[1] === "string") {
+    signature = parsed[1];
+  } else if (globalThis.Array.isArray(parsed[1])) {
+    const signatureList = parsed[1];
     if (signatureList.length === 0) {
       differsOnlyInDtsMap = true;
     } else if (signatureList.length === 1) {
       if (typeof signatureList[0] !== "string") {
-        return Errorf("invalid signature in BuildInfoEmitSignature: expected string, got %s", typeof signatureList[0]);
+        return Errorf("invalid signature in BuildInfoEmitSignature: expected string, got %s", buildInfoJSONDynamicType(signatureList[0]));
       }
       signature = signatureList[0];
       differsInOptions = true;
@@ -1047,7 +1057,7 @@ export function BuildInfoEmitSignature_UnmarshalJSON(receiver: GoPtr<BuildInfoEm
       return Errorf("invalid signature in BuildInfoEmitSignature: expected string or []string with 0 or 1 element, got %d elements", signatureList.length);
     }
   } else {
-    return Errorf("invalid signature in BuildInfoEmitSignature: expected string or []string, got %s", typeof arr[1]);
+    return Errorf("invalid signature in BuildInfoEmitSignature: expected string or []string, got %s", buildInfoJSONDynamicType(parsed[1]));
   }
   receiver!.FileId = fileId;
   receiver!.Signature = signature;
@@ -1100,19 +1110,20 @@ export function BuildInfoResolvedRoot_MarshalJSON(receiver: GoPtr<BuildInfoResol
  */
 export function BuildInfoResolvedRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoResolvedRoot>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
-  let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    const parsed = parseBuildInfoJSON(str);
+    if (parsed === null) {
+      receiver!.Resolved = 0 as BuildInfoFileId;
+      receiver!.Root = 0 as BuildInfoFileId;
+      return undefined;
+    }
+    const tuple = decodeBuildInfoFixedIntTuple(parsed, str);
+    receiver!.Resolved = tuple[0] as BuildInfoFileId;
+    receiver!.Root = tuple[1] as BuildInfoFileId;
+    return undefined;
+  } catch {
     return Errorf("invalid BuildInfoResolvedRoot: %s", str);
   }
-  if (!globalThis.Array.isArray(parsed) || (parsed as unknown[]).length !== 2) {
-    return Errorf("invalid BuildInfoResolvedRoot: %s", str);
-  }
-  const arr = parsed as number[];
-  receiver!.Resolved = arr[0] as BuildInfoFileId;
-  receiver!.Root = arr[1] as BuildInfoFileId;
-  return undefined;
 }
 
 /**
@@ -1172,50 +1183,210 @@ export interface BuildInfo {
 
 class BuildInfoJSONError extends globalThis.Error {}
 
+const buildInfoJSONNumberMarker = Symbol("buildInfoJSONNumber");
+
+interface BuildInfoJSONNumber {
+  readonly [buildInfoJSONNumberMarker]: true;
+  readonly source: string;
+  readonly value: number;
+}
+
+interface BuildInfoJSONParseContext {
+  readonly source?: string;
+}
+
+const goIntMinimum = -(1n << 63n);
+const goIntMaximum = (1n << 63n) - 1n;
+const goInt32Minimum = -(1n << 31n);
+const goInt32Maximum = (1n << 31n) - 1n;
+
+function parseBuildInfoJSON(source: string): unknown {
+  return globalThis.JSON.parse(
+    source,
+    (_key: string, value: unknown, context?: BuildInfoJSONParseContext): unknown => {
+      if (typeof value !== "number") {
+        return value;
+      }
+      if (context?.source === undefined || !globalThis.Number.isFinite(value)) {
+        throw new BuildInfoJSONError("JSON number is outside the float64 range");
+      }
+      return {
+        [buildInfoJSONNumberMarker]: true,
+        source: context.source,
+        value,
+      } satisfies BuildInfoJSONNumber;
+    },
+  );
+}
+
+function isBuildInfoJSONNumber(value: unknown): value is BuildInfoJSONNumber {
+  return typeof value === "object" && value !== null && buildInfoJSONNumberMarker in value;
+}
+
+function isBuildInfoJSONNumberValue(value: unknown): value is number | BuildInfoJSONNumber {
+  return typeof value === "number" || isBuildInfoJSONNumber(value);
+}
+
+function buildInfoJSONNumberValue(value: number | BuildInfoJSONNumber): number {
+  return typeof value === "number" ? value : value.value;
+}
+
+function buildInfoJSONDynamicType(value: unknown): string {
+  if (value === null || value === undefined) return "<nil>";
+  if (isBuildInfoJSONNumberValue(value)) return "float64";
+  if (typeof value === "string") return "string";
+  if (typeof value === "boolean") return "bool";
+  if (globalThis.Array.isArray(value)) return "[]interface {}";
+  return "map[string]interface {}";
+}
+
+function buildInfoJSONKind(value: unknown, includeNumberSource: bool): string {
+  if (isBuildInfoJSONNumber(value)) {
+    return includeNumberSource ? `JSON number ${value.source}` : "JSON number";
+  }
+  if (typeof value === "number") {
+    return includeNumberSource ? `JSON number ${globalThis.String(value)}` : "JSON number";
+  }
+  if (typeof value === "string") return "JSON string";
+  if (typeof value === "boolean") return "JSON boolean";
+  if (globalThis.Array.isArray(value)) return "JSON array";
+  if (value === null || value === undefined) return "JSON null";
+  return "JSON object";
+}
+
+function buildInfoJSONPathSuffix(path: string): string {
+  return path === "" ? "" : ` within ${globalThis.JSON.stringify(path)}`;
+}
+
+function buildInfoGoError(error: unknown, source: string): globalThis.Error {
+  if (error instanceof BuildInfoJSONError) {
+    return error;
+  }
+  if (error instanceof globalThis.SyntaxError) {
+    const sourceByteLength = new globalThis.TextEncoder().encode(source).length;
+    if (error.message.includes("end of JSON input")) {
+      return new BuildInfoJSONError(sourceByteLength === 0
+        ? "jsontext: unexpected EOF"
+        : `jsontext: unexpected EOF after offset ${sourceByteLength}`);
+    }
+    const trailingCommaMatch = /,(?=[\t\n\r ]*[\]}])/.exec(source);
+    if (trailingCommaMatch !== null) {
+      const offset = new globalThis.TextEncoder().encode(source.slice(0, trailingCommaMatch.index)).length;
+      return new BuildInfoJSONError(`jsontext: invalid character ',' at start of value after offset ${offset}`);
+    }
+    const positionMatch = /position (\d+)/.exec(error.message);
+    if (positionMatch !== null) {
+      const position = globalThis.Number(positionMatch[1]);
+      const character = source[position];
+      if (character !== undefined) {
+        const offset = new globalThis.TextEncoder().encode(source.slice(0, position)).length;
+        return new BuildInfoJSONError(`jsontext: invalid character '${character}' after top-level value after offset ${offset}`);
+      }
+    }
+  }
+  return error instanceof globalThis.Error ? error : new globalThis.Error(globalThis.String(error));
+}
+
+function jsonIntegerBigInt(value: unknown, goType: string, path = "", bits: 32 | 64 = 64): bigint {
+  if (value === null) {
+    return 0n;
+  }
+  let integerSource: string;
+  if (isBuildInfoJSONNumber(value)) {
+    integerSource = value.source;
+    if (!/^-?(?:0|[1-9][0-9]*)$/.test(integerSource)) {
+      throw new BuildInfoJSONError(
+        `json: cannot unmarshal JSON number ${integerSource} into Go ${goType}${buildInfoJSONPathSuffix(path)}: invalid syntax`,
+      );
+    }
+  } else if (typeof value === "number" && globalThis.Number.isFinite(value) && globalThis.Number.isInteger(value)) {
+    integerSource = globalThis.String(value);
+  } else {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(value, true)} into Go ${goType}${buildInfoJSONPathSuffix(path)}`,
+    );
+  }
+  const integer = globalThis.BigInt(integerSource);
+  const minimum = bits === 32 ? goInt32Minimum : goIntMinimum;
+  const maximum = bits === 32 ? goInt32Maximum : goIntMaximum;
+  if (integer < minimum || integer > maximum) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal JSON number ${integerSource} into Go ${goType}${buildInfoJSONPathSuffix(path)}: value out of range`,
+    );
+  }
+  return integer;
+}
+
+function jsonIntegerValue(value: unknown, goType = "int", path = "", bits: 32 | 64 = 64): int {
+  return globalThis.Number(jsonIntegerBigInt(value, goType, path, bits)) as int;
+}
+
+function jsonFloat64ToGoInt(value: number): int {
+  const minimum = -0x8000000000000000;
+  const maximumExclusive = 0x8000000000000000;
+  if (value <= minimum || value >= maximumExclusive) {
+    return minimum as int;
+  }
+  return globalThis.Math.trunc(value) as int;
+}
+
+function decodeBuildInfoFixedIntTuple(value: unknown, source: string): [int, int] {
+  if (!globalThis.Array.isArray(value)) {
+    throw new BuildInfoJSONError(`json: cannot unmarshal ${buildInfoJSONKind(value, false)} into Go [2]int`);
+  }
+  if (value.length !== 2) {
+    const closingBracket = source.lastIndexOf("]");
+    const offset = closingBracket < 0 ? source.length : closingBracket;
+    const sizeError = value.length < 2 ? "too few array elements" : "too many array elements";
+    throw new BuildInfoJSONError(`json: cannot unmarshal JSON array into Go [2]int after offset ${offset}: ${sizeError}`);
+  }
+  return [
+    jsonIntegerValue(value[0], "int", "/0"),
+    jsonIntegerValue(value[1], "int", "/1"),
+  ];
+}
+
 function marshalBuildInfoJSONValue(value: unknown): [GoSlice<byte>, GoError] {
   return json.Marshal(value);
 }
 
 function isJSONObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !globalThis.Array.isArray(value);
+  return typeof value === "object" && value !== null && !globalThis.Array.isArray(value) && !isBuildInfoJSONNumber(value);
 }
 
 function hasOwn(value: Record<string, unknown>, key: string): bool {
   return globalThis.Object.prototype.hasOwnProperty.call(value, key);
 }
 
-function jsonStringField(value: Record<string, unknown>, key: string): string {
+function jsonStringField(value: Record<string, unknown>, key: string, path = ""): string {
   const field = value[key];
   if (field === undefined || field === null) {
     return "";
   }
   if (typeof field !== "string") {
-    throw new BuildInfoJSONError(`${key} must be a string`);
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(field, false)} into Go string${buildInfoJSONPathSuffix(`${path}/${key}`)}`,
+    );
   }
   return field;
 }
 
-function jsonBooleanField(value: Record<string, unknown>, key: string): bool {
+function jsonBooleanField(value: Record<string, unknown>, key: string, path = ""): bool {
   const field = value[key];
   if (field === undefined || field === null) {
     return false;
   }
   if (typeof field !== "boolean") {
-    throw new BuildInfoJSONError(`${key} must be a boolean`);
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(field, false)} into Go bool${buildInfoJSONPathSuffix(`${path}/${key}`)}`,
+    );
   }
   return field;
 }
 
-function jsonIntegerValue(value: unknown, description: string): int {
-  if (typeof value !== "number" || !globalThis.Number.isSafeInteger(value)) {
-    throw new BuildInfoJSONError(`${description} must be an integer`);
-  }
-  return value as int;
-}
-
-function jsonIntegerField(value: Record<string, unknown>, key: string): int {
+function jsonIntegerField(value: Record<string, unknown>, key: string, path = "", goType = "int", bits: 32 | 64 = 64): int {
   const field = value[key];
-  return field === undefined || field === null ? 0 as int : jsonIntegerValue(field, key);
+  return field === undefined ? 0 as int : jsonIntegerValue(field, goType, `${path}/${key}`, bits);
 }
 
 function decodeOptionalArray<T>(
@@ -1247,17 +1418,17 @@ function decodeBuildInfoRoot(value: unknown): BuildInfoRoot {
   if (typeof value === "string") {
     return { Start: 0 as BuildInfoFileId, End: 0 as BuildInfoFileId, NonIncremental: value };
   }
-  if (typeof value === "number") {
+  if (isBuildInfoJSONNumberValue(value)) {
     return {
-      Start: jsonIntegerValue(value, "BuildInfoRoot") as BuildInfoFileId,
+      Start: jsonIntegerValue(value, "int") as BuildInfoFileId,
       End: 0 as BuildInfoFileId,
       NonIncremental: "",
     };
   }
   if (globalThis.Array.isArray(value) && value.length === 2) {
     return {
-      Start: jsonIntegerValue(value[0], "BuildInfoRoot start") as BuildInfoFileId,
-      End: jsonIntegerValue(value[1], "BuildInfoRoot end") as BuildInfoFileId,
+      Start: jsonIntegerValue(value[0], "int", "/0") as BuildInfoFileId,
+      End: jsonIntegerValue(value[1], "int", "/1") as BuildInfoFileId,
       NonIncremental: "",
     };
   }
@@ -1290,9 +1461,9 @@ function buildInfoFileInfoToJSON(receiver: GoPtr<BuildInfoFileInfo>): unknown {
   return result;
 }
 
-function decodeBuildInfoFileInfo(value: unknown): GoPtr<BuildInfoFileInfo> {
-  if (value === null || value === undefined) {
-    return undefined;
+function decodeBuildInfoFileInfoValue(value: unknown): BuildInfoFileInfo {
+  if (value === null) {
+    return { signature: "", noSignature: undefined, fileInfo: undefined };
   }
   if (typeof value === "string") {
     return { signature: value, noSignature: undefined, fileInfo: undefined };
@@ -1300,27 +1471,248 @@ function decodeBuildInfoFileInfo(value: unknown): GoPtr<BuildInfoFileInfo> {
   if (!isJSONObject(value)) {
     throw new BuildInfoJSONError("invalid BuildInfoFileInfo");
   }
-  if (value["noSignature"] === true) {
+  let noSignature: buildInfoFileInfoNoSignature | undefined;
+  try {
+    noSignature = {
+      Version: jsonStringField(value, "version"),
+      NoSignature: jsonBooleanField(value, "noSignature"),
+      AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
+      ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat", "", "core.ModuleKind", 32) as ResolutionMode,
+    };
+  } catch {
+    noSignature = undefined;
+  }
+  if (noSignature?.NoSignature) {
     return {
       signature: "",
-      noSignature: {
-        Version: jsonStringField(value, "version"),
-        NoSignature: true,
-        AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
-        ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat") as ResolutionMode,
-      },
+      noSignature,
       fileInfo: undefined,
     };
   }
+  try {
+    return {
+      signature: "",
+      noSignature: undefined,
+      fileInfo: {
+        Version: jsonStringField(value, "version"),
+        Signature: jsonStringField(value, "signature"),
+        AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
+        ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat", "", "core.ModuleKind", 32) as ResolutionMode,
+      },
+    };
+  } catch {
+    throw new BuildInfoJSONError("invalid BuildInfoFileInfo");
+  }
+}
+
+function decodeBuildInfoFileInfo(value: unknown): GoPtr<BuildInfoFileInfo> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  return decodeBuildInfoFileInfoValue(value);
+}
+
+function decodeBuildInfoRepopulateInfo(value: unknown, path = ""): GoPtr<BuildInfoRepopulateInfo> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(value, false)} into Go incremental.BuildInfoRepopulateInfo${buildInfoJSONPathSuffix(path)}`,
+    );
+  }
   return {
-    signature: "",
-    noSignature: undefined,
-    fileInfo: {
-      Version: jsonStringField(value, "version"),
-      Signature: jsonStringField(value, "signature"),
-      AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
-      ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat") as ResolutionMode,
-    },
+    Kind: jsonIntegerField(value, "kind", path, "ast.RepopulateDiagnosticKind") as RepopulateDiagnosticKind,
+    ModuleReference: jsonStringField(value, "moduleReference", path),
+    Mode: jsonIntegerField(value, "mode", path, "core.ModuleKind", 32) as ResolutionMode,
+    PackageName: jsonStringField(value, "packageName", path),
+  };
+}
+
+function decodeBuildInfoStringSlice(value: Record<string, unknown>, key: string, path: string): GoSlice<string> | undefined {
+  if (!hasOwn(value, key) || value[key] === null) {
+    return undefined;
+  }
+  const field = value[key];
+  const fieldPath = `${path}/${key}`;
+  if (!globalThis.Array.isArray(field)) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(field, false)} into Go []string${buildInfoJSONPathSuffix(fieldPath)}`,
+    );
+  }
+  return field.map((entry, index) => {
+    if (entry === null) return "";
+    if (typeof entry !== "string") {
+      throw new BuildInfoJSONError(
+        `json: cannot unmarshal ${buildInfoJSONKind(entry, false)} into Go string${buildInfoJSONPathSuffix(`${fieldPath}/${index}`)}`,
+      );
+    }
+    return entry;
+  });
+}
+
+function decodeBuildInfoDiagnosticPointerSlice(value: Record<string, unknown>, key: string, path: string): GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined {
+  if (!hasOwn(value, key) || value[key] === null) {
+    return undefined;
+  }
+  const field = value[key];
+  const fieldPath = `${path}/${key}`;
+  if (!globalThis.Array.isArray(field)) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(field, false)} into Go []*incremental.BuildInfoDiagnostic${buildInfoJSONPathSuffix(fieldPath)}`,
+    );
+  }
+  return field.map((entry, index) => decodeBuildInfoDiagnostic(entry, `${fieldPath}/${index}`));
+}
+
+function decodeBuildInfoDiagnostic(value: unknown, path = ""): GoPtr<BuildInfoDiagnostic> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(value, false)} into Go incremental.BuildInfoDiagnostic${buildInfoJSONPathSuffix(path)}`,
+    );
+  }
+  return {
+    File: jsonIntegerField(value, "file", path, "incremental.BuildInfoFileId") as BuildInfoFileId,
+    NoFile: jsonBooleanField(value, "noFile", path),
+    Pos: jsonIntegerField(value, "pos", path),
+    End: jsonIntegerField(value, "end", path),
+    Code: jsonIntegerField(value, "code", path, "int32", 32),
+    Category: jsonIntegerField(value, "category", path, "diagnostics.Category", 32) as Category,
+    MessageKey: jsonStringField(value, "messageKey", path) as Key,
+    MessageArgs: decodeBuildInfoStringSlice(value, "messageArgs", path),
+    MessageChain: decodeBuildInfoDiagnosticPointerSlice(value, "messageChain", path),
+    RelatedInformation: decodeBuildInfoDiagnosticPointerSlice(value, "relatedInformation", path),
+    ReportsUnnecessary: jsonBooleanField(value, "reportsUnnecessary", path),
+    ReportsDeprecated: jsonBooleanField(value, "reportsDeprecated", path),
+    SkippedOnNoEmit: jsonBooleanField(value, "skippedOnNoEmit", path),
+    RepopulateInfo: decodeBuildInfoRepopulateInfo(value["repopulateInfo"], `${path}/repopulateInfo`),
+  };
+}
+
+function decodeBuildInfoDiagnosticSlice(value: unknown): GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined {
+  if (value === null) {
+    return undefined;
+  }
+  if (!globalThis.Array.isArray(value)) {
+    throw new BuildInfoJSONError(
+      `json: cannot unmarshal ${buildInfoJSONKind(value, false)} into Go []*incremental.BuildInfoDiagnostic`,
+    );
+  }
+  return value.map((entry, index) => decodeBuildInfoDiagnostic(entry, `/${index}`));
+}
+
+function decodeBuildInfoDiagnosticsOfFile(value: unknown): BuildInfoDiagnosticsOfFile {
+  if (value === null) {
+    throw new BuildInfoJSONError("expected 2 elements, got 0");
+  }
+  if (!globalThis.Array.isArray(value)) {
+    throw new BuildInfoJSONError("expected an array");
+  }
+  if (value.length !== 2) {
+    throw new BuildInfoJSONError(`expected 2 elements, got ${value.length}`);
+  }
+  return {
+    FileId: jsonIntegerValue(value[0], "incremental.BuildInfoFileId") as BuildInfoFileId,
+    Diagnostics: decodeBuildInfoDiagnosticSlice(value[1]),
+  };
+}
+
+function decodeBuildInfoSemanticDiagnostic(value: unknown): GoPtr<BuildInfoSemanticDiagnostic> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (isBuildInfoJSONNumberValue(value)) {
+    return {
+      FileId: jsonIntegerValue(value, "incremental.BuildInfoFileId") as BuildInfoFileId,
+      Diagnostics: undefined,
+    };
+  }
+  return {
+    FileId: 0 as BuildInfoFileId,
+    Diagnostics: decodeBuildInfoDiagnosticsOfFile(value),
+  };
+}
+
+function decodeBuildInfoFilePendingEmit(value: unknown): GoPtr<BuildInfoFilePendingEmit> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (isBuildInfoJSONNumberValue(value)) {
+    return { FileId: jsonIntegerValue(value, "incremental.BuildInfoFileId") as BuildInfoFileId, EmitKind: 0 as FileEmitKind };
+  }
+  if (!globalThis.Array.isArray(value) || value.length === 0) {
+    throw new BuildInfoJSONError("invalid BuildInfoFilePendingEmit");
+  }
+  const intTuple = value.map((entry) => jsonIntegerBigInt(entry, "int"));
+  if (intTuple.length === 1) {
+    return { FileId: globalThis.Number(intTuple[0]) as BuildInfoFileId, EmitKind: FileEmitKindDts };
+  }
+  if (intTuple.length === 2) {
+    return {
+      FileId: globalThis.Number(intTuple[0]) as BuildInfoFileId,
+      EmitKind: globalThis.Number(globalThis.BigInt.asUintN(32, intTuple[1]!)) as FileEmitKind,
+    };
+  }
+  throw new BuildInfoJSONError(`invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got ${value.length}`);
+}
+
+function decodeBuildInfoEmitSignature(value: unknown): GoPtr<BuildInfoEmitSignature> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (isBuildInfoJSONNumberValue(value)) {
+    return {
+      FileId: jsonIntegerValue(value, "incremental.BuildInfoFileId") as BuildInfoFileId,
+      Signature: "",
+      DiffersOnlyInDtsMap: false,
+      DiffersInOptions: false,
+    };
+  }
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoEmitSignature");
+  }
+  if (!isBuildInfoJSONNumberValue(value[0])) {
+    throw new BuildInfoJSONError("invalid fileId in BuildInfoEmitSignature");
+  }
+  const fileId = jsonFloat64ToGoInt(buildInfoJSONNumberValue(value[0])) as BuildInfoFileId;
+  const signature = value[1];
+  if (typeof signature === "string") {
+    return { FileId: fileId, Signature: signature, DiffersOnlyInDtsMap: false, DiffersInOptions: false };
+  }
+  if (!globalThis.Array.isArray(signature) || signature.length > 1) {
+    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
+  }
+  if (signature.length === 0) {
+    return { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: true, DiffersInOptions: false };
+  }
+  if (typeof signature[0] !== "string") {
+    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
+  }
+  return { FileId: fileId, Signature: signature[0], DiffersOnlyInDtsMap: false, DiffersInOptions: true };
+}
+
+function decodeBuildInfoReferenceMapEntry(value: unknown): GoPtr<BuildInfoReferenceMapEntry> {
+  if (value === null || value === undefined) return undefined;
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoReferenceMapEntry");
+  }
+  return {
+    FileId: jsonIntegerValue(value[0], "int", "/0") as BuildInfoFileId,
+    FileIdListId: jsonIntegerValue(value[1], "int", "/1") as BuildInfoFileIdListId,
+  };
+}
+
+function decodeBuildInfoResolvedRoot(value: unknown): GoPtr<BuildInfoResolvedRoot> {
+  if (value === null || value === undefined) return undefined;
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoResolvedRoot");
+  }
+  return {
+    Resolved: jsonIntegerValue(value[0], "int", "/0") as BuildInfoFileId,
+    Root: jsonIntegerValue(value[1], "int", "/1") as BuildInfoFileId,
   };
 }
 
@@ -1333,21 +1725,6 @@ function buildInfoRepopulateInfoToJSON(receiver: GoPtr<BuildInfoRepopulateInfo>)
   if (receiver.Mode !== 0) result["mode"] = receiver.Mode;
   if (receiver.PackageName !== "") result["packageName"] = receiver.PackageName;
   return result;
-}
-
-function decodeBuildInfoRepopulateInfo(value: unknown): GoPtr<BuildInfoRepopulateInfo> {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (!isJSONObject(value)) {
-    throw new BuildInfoJSONError("repopulateInfo must be an object");
-  }
-  return {
-    Kind: jsonIntegerField(value, "kind") as RepopulateDiagnosticKind,
-    ModuleReference: jsonStringField(value, "moduleReference"),
-    Mode: jsonIntegerField(value, "mode") as ResolutionMode,
-    PackageName: jsonStringField(value, "packageName"),
-  };
 }
 
 function buildInfoDiagnosticToJSON(receiver: GoPtr<BuildInfoDiagnostic>): unknown {
@@ -1372,34 +1749,6 @@ function buildInfoDiagnosticToJSON(receiver: GoPtr<BuildInfoDiagnostic>): unknow
   return result;
 }
 
-function decodeBuildInfoDiagnostic(value: unknown): GoPtr<BuildInfoDiagnostic> {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (!isJSONObject(value)) {
-    throw new BuildInfoJSONError("diagnostic must be an object");
-  }
-  return {
-    File: jsonIntegerField(value, "file") as BuildInfoFileId,
-    NoFile: jsonBooleanField(value, "noFile"),
-    Pos: jsonIntegerField(value, "pos"),
-    End: jsonIntegerField(value, "end"),
-    Code: jsonIntegerField(value, "code"),
-    Category: jsonIntegerField(value, "category") as Category,
-    MessageKey: jsonStringField(value, "messageKey") as Key,
-    MessageArgs: decodeOptionalArray(value, "messageArgs", (entry) => {
-      if (typeof entry !== "string") throw new BuildInfoJSONError("messageArgs entries must be strings");
-      return entry;
-    }) as GoSlice<string>,
-    MessageChain: decodeOptionalArray(value, "messageChain", decodeBuildInfoDiagnostic) as GoSlice<GoPtr<BuildInfoDiagnostic>>,
-    RelatedInformation: decodeOptionalArray(value, "relatedInformation", decodeBuildInfoDiagnostic) as GoSlice<GoPtr<BuildInfoDiagnostic>>,
-    ReportsUnnecessary: jsonBooleanField(value, "reportsUnnecessary"),
-    ReportsDeprecated: jsonBooleanField(value, "reportsDeprecated"),
-    SkippedOnNoEmit: jsonBooleanField(value, "skippedOnNoEmit"),
-    RepopulateInfo: decodeBuildInfoRepopulateInfo(value["repopulateInfo"]),
-  };
-}
-
 function buildInfoDiagnosticsOfFileToJSON(receiver: GoPtr<BuildInfoDiagnosticsOfFile>): unknown {
   if (receiver === undefined) {
     return null;
@@ -1410,46 +1759,11 @@ function buildInfoDiagnosticsOfFileToJSON(receiver: GoPtr<BuildInfoDiagnosticsOf
   ];
 }
 
-function decodeBuildInfoDiagnosticsOfFile(value: unknown): BuildInfoDiagnosticsOfFile {
-  if (!globalThis.Array.isArray(value)) {
-    throw new BuildInfoJSONError("expected an array");
-  }
-  if (value.length !== 2) {
-    throw new BuildInfoJSONError(`expected 2 elements, got ${value.length}`);
-  }
-  const diagnostics = value[1];
-  if (diagnostics !== null && !globalThis.Array.isArray(diagnostics)) {
-    throw new BuildInfoJSONError("diagnostics must be an array");
-  }
-  return {
-    FileId: jsonIntegerValue(value[0], "fileId") as BuildInfoFileId,
-    Diagnostics: diagnostics === null
-      ? undefined
-      : diagnostics.map(decodeBuildInfoDiagnostic),
-  };
-}
-
 function buildInfoSemanticDiagnosticToJSON(receiver: GoPtr<BuildInfoSemanticDiagnostic>): unknown {
   if (receiver === undefined) {
     return null;
   }
   return receiver.FileId !== 0 ? receiver.FileId : buildInfoDiagnosticsOfFileToJSON(receiver.Diagnostics);
-}
-
-function decodeBuildInfoSemanticDiagnostic(value: unknown): GoPtr<BuildInfoSemanticDiagnostic> {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (typeof value === "number") {
-    return {
-      FileId: jsonIntegerValue(value, "semantic diagnostic fileId") as BuildInfoFileId,
-      Diagnostics: undefined,
-    };
-  }
-  return {
-    FileId: 0 as BuildInfoFileId,
-    Diagnostics: decodeBuildInfoDiagnosticsOfFile(value),
-  };
 }
 
 function buildInfoFilePendingEmitToJSON(receiver: GoPtr<BuildInfoFilePendingEmit>): unknown {
@@ -1459,28 +1773,6 @@ function buildInfoFilePendingEmitToJSON(receiver: GoPtr<BuildInfoFilePendingEmit
   if (receiver.EmitKind === 0) return receiver.FileId;
   if (receiver.EmitKind === FileEmitKindDts) return [receiver.FileId];
   return [receiver.FileId, receiver.EmitKind];
-}
-
-function decodeBuildInfoFilePendingEmit(value: unknown): GoPtr<BuildInfoFilePendingEmit> {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (typeof value === "number") {
-    return { FileId: jsonIntegerValue(value, "pending emit fileId") as BuildInfoFileId, EmitKind: 0 as FileEmitKind };
-  }
-  if (!globalThis.Array.isArray(value) || value.length === 0) {
-    throw new BuildInfoJSONError("invalid BuildInfoFilePendingEmit");
-  }
-  if (value.length === 1) {
-    return { FileId: jsonIntegerValue(value[0], "pending emit fileId") as BuildInfoFileId, EmitKind: FileEmitKindDts };
-  }
-  if (value.length === 2) {
-    return {
-      FileId: jsonIntegerValue(value[0], "pending emit fileId") as BuildInfoFileId,
-      EmitKind: jsonIntegerValue(value[1], "pending emit kind") as FileEmitKind,
-    };
-  }
-  throw new BuildInfoJSONError(`invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got ${value.length}`);
 }
 
 function buildInfoEmitSignatureToJSON(receiver: GoPtr<BuildInfoEmitSignature>): unknown {
@@ -1496,66 +1788,12 @@ function buildInfoEmitSignatureToJSON(receiver: GoPtr<BuildInfoEmitSignature>): 
   return [receiver.FileId, signature];
 }
 
-function decodeBuildInfoEmitSignature(value: unknown): GoPtr<BuildInfoEmitSignature> {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (typeof value === "number") {
-    return {
-      FileId: jsonIntegerValue(value, "emit signature fileId") as BuildInfoFileId,
-      Signature: "",
-      DiffersOnlyInDtsMap: false,
-      DiffersInOptions: false,
-    };
-  }
-  if (!globalThis.Array.isArray(value) || value.length !== 2) {
-    throw new BuildInfoJSONError("invalid BuildInfoEmitSignature");
-  }
-  const fileId = jsonIntegerValue(value[0], "emit signature fileId") as BuildInfoFileId;
-  const signature = value[1];
-  if (typeof signature === "string") {
-    return { FileId: fileId, Signature: signature, DiffersOnlyInDtsMap: false, DiffersInOptions: false };
-  }
-  if (!globalThis.Array.isArray(signature) || signature.length > 1) {
-    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
-  }
-  if (signature.length === 0) {
-    return { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: true, DiffersInOptions: false };
-  }
-  if (typeof signature[0] !== "string") {
-    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
-  }
-  return { FileId: fileId, Signature: signature[0], DiffersOnlyInDtsMap: false, DiffersInOptions: true };
-}
-
 function buildInfoReferenceMapEntryToJSON(receiver: GoPtr<BuildInfoReferenceMapEntry>): unknown {
   return receiver === undefined ? null : [receiver.FileId, receiver.FileIdListId];
 }
 
-function decodeBuildInfoReferenceMapEntry(value: unknown): GoPtr<BuildInfoReferenceMapEntry> {
-  if (value === null || value === undefined) return undefined;
-  if (!globalThis.Array.isArray(value) || value.length !== 2) {
-    throw new BuildInfoJSONError("invalid BuildInfoReferenceMapEntry");
-  }
-  return {
-    FileId: jsonIntegerValue(value[0], "reference fileId") as BuildInfoFileId,
-    FileIdListId: jsonIntegerValue(value[1], "reference fileIdListId") as BuildInfoFileIdListId,
-  };
-}
-
 function buildInfoResolvedRootToJSON(receiver: GoPtr<BuildInfoResolvedRoot>): unknown {
   return receiver === undefined ? null : [receiver.Resolved, receiver.Root];
-}
-
-function decodeBuildInfoResolvedRoot(value: unknown): GoPtr<BuildInfoResolvedRoot> {
-  if (value === null || value === undefined) return undefined;
-  if (!globalThis.Array.isArray(value) || value.length !== 2) {
-    throw new BuildInfoJSONError("invalid BuildInfoResolvedRoot");
-  }
-  return {
-    Resolved: jsonIntegerValue(value[0], "resolved root fileId") as BuildInfoFileId,
-    Root: jsonIntegerValue(value[1], "root fileId") as BuildInfoFileId,
-  };
 }
 
 function compilerOptionValueToJSON(optionName: string, value: unknown): unknown {
@@ -1665,7 +1903,7 @@ const buildInfoJSONFieldNames = json.DefineJsonFieldNamesForGoStruct<BuildInfo>(
     unmarshal: (value) => decodeBuildInfoArray(value, "fileIdsList", (entry) => {
       if (entry === null) return undefined;
       if (!globalThis.Array.isArray(entry)) throw new BuildInfoJSONError("fileIdsList entries must be arrays");
-      return entry.map((fileId) => jsonIntegerValue(fileId, "fileIdsList fileId") as BuildInfoFileId);
+      return entry.map((fileId) => jsonIntegerValue(fileId, "incremental.BuildInfoFileId") as BuildInfoFileId);
     }),
   },
   Options: {
@@ -1700,7 +1938,7 @@ const buildInfoJSONFieldNames = json.DefineJsonFieldNamesForGoStruct<BuildInfo>(
     name: "changeFileSet",
     omitZero: true,
     zero: "nil",
-    unmarshal: (value) => decodeBuildInfoArray(value, "changeFileSet", (entry) => jsonIntegerValue(entry, "changeFileSet fileId") as BuildInfoFileId),
+    unmarshal: (value) => decodeBuildInfoArray(value, "changeFileSet", (entry) => jsonIntegerValue(entry, "incremental.BuildInfoFileId") as BuildInfoFileId),
   },
   AffectedFilesPendingEmit: {
     name: "affectedFilesPendingEmit",
@@ -2115,7 +2353,7 @@ export function BuildInfoRootInfoReader_GetBuildInfoFileInfo(receiver: GoPtr<Bui
   if (info !== undefined) {
     return [info, inputFilePath];
   }
-  const [resolved, ok] = OrderedMap_Get(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>, inputFilePath);
+  const [resolved, ok] = OrderedMap_Get(receiver!.rootToResolved, inputFilePath, (): Path => "");
   if (ok) {
     return [(receiver!.resolvedRootFileInfos as Map<Path, GoPtr<BuildInfoFileInfo>>).get(resolved), resolved];
   }
@@ -2131,5 +2369,5 @@ export function BuildInfoRootInfoReader_GetBuildInfoFileInfo(receiver: GoPtr<Bui
  * }
  */
 export function BuildInfoRootInfoReader_Roots(receiver: GoPtr<BuildInfoRootInfoReader>): GoSeq<Path> {
-  return OrderedMap_Keys(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>);
+  return OrderedMap_Keys(receiver!.rootToResolved);
 }

@@ -239,7 +239,10 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
     case KindNamedImports: {
       const n: GoPtr<NamedImports> = AsNamedImports(node);
       const elements = NodeVisitor_VisitNodes(visitor, n!.Elements);
-      if (elements!.Nodes.length === 0) {
+      if (elements === undefined) {
+        throw new globalThis.TypeError("nil import elements");
+      }
+      if (elements.Nodes === undefined || elements.Nodes.length === 0) {
         // all import specifiers were elided
         return undefined;
       }
@@ -272,7 +275,10 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
     case KindNamedExports: {
       const n: GoPtr<NamedExports> = AsNamedExports(node);
       const elements = NodeVisitor_VisitNodes(visitor, n!.Elements);
-      if (elements!.Nodes.length === 0) {
+      if (elements === undefined) {
+        throw new globalThis.TypeError("nil export elements");
+      }
+      if (elements.Nodes === undefined || elements.Nodes.length === 0) {
         // all export specifiers were elided
         return undefined;
       }

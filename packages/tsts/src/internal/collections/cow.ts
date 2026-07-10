@@ -1,9 +1,11 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
+import { GoMapLookup } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteMap","kind":"type","status":"implemented","sigHash":"03b1be1ac4b9a5a1409fe9912998e5fd6ae9e9c521fb413c59dfb750753eeb50","bodyHash":"8b79aaca4698ef01fe0843f83d39777eddcc15b867531b8d7fe3ef9356ccbc3b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"A zero-value Go map is nil, so the TypeScript field uses GoPtr until ensureOwned allocates the backing map.","goSignature":"interface<T0 extends name::comparable,T1 extends unknown>{m:packages/tsts/src/go/compat.ts::GoMap<T0,T1>;owned:packages/tsts/src/go/scalars.ts::bool}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>{m:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,T1>>;owned:packages/tsts/src/go/scalars.ts::bool}"}
  *
  * Go source:
  * CopyOnWriteMap[K comparable, V any] struct {
@@ -12,12 +14,13 @@ import * as maps from "../../go/maps.js";
  * }
  */
 export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
-  m: GoMap<K, V>;
+  m: GoPtr<GoMap<K, V>>;
   owned: bool;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::method::CopyOnWriteMap.Get","kind":"method","status":"implemented","sigHash":"524fff945dd4c8c999c50f30588706af0cce65c8fc0a20eb0c44639bf22c09f9","bodyHash":"b36a580de9a24569c36c00b07fadf93b4a9b4f19c76c959969d48c5967fe7414"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"JavaScript map lookup cannot construct the Go zero for unconstrained V, so the caller supplies the exact instantiated zero factory consumed by the shared Go map lookup primitive.","goSignature":"func<T0 extends name::comparable,T1 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<T0,T1>>,T0)=>[T1,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/cow.ts::CopyOnWriteMap<T0,T1>>,T0,()=>T1)=>[T1,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (c *CopyOnWriteMap[K, V]) Get(k K) (V, bool) {
@@ -25,9 +28,8 @@ export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
  * 	return v, ok
  * }
  */
-export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): [V, bool] {
-  const ok = receiver!.m?.has(k) ?? false;
-  return [receiver!.m?.get(k) as V, ok];
+export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, zeroValue: () => V): [V, bool] {
+  return GoMapLookup(receiver!.m, k, zeroValue);
 }
 
 /**
@@ -54,7 +56,11 @@ export function CopyOnWriteMap_Has<K extends GoComparable, V>(receiver: GoPtr<Co
  */
 export function CopyOnWriteMap_Set<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, v: V): void {
   CopyOnWriteMap_ensureOwned(receiver);
-  receiver!.m!.set(k, v);
+  const map = receiver!.m;
+  if (map === undefined) {
+    throw new TypeError("CopyOnWriteMap ownership initialization did not create a map");
+  }
+  map.set(k, v);
 }
 
 /**
@@ -80,7 +86,7 @@ export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: 
   if (receiver!.m === undefined) {
     receiver!.m = new globalThis.Map<K, V>();
   } else {
-    receiver!.m = maps.Clone(receiver!.m)!;
+    receiver!.m = maps.Clone(receiver!.m);
   }
   receiver!.owned = true as bool;
 }
@@ -128,8 +134,7 @@ export interface CopyOnWriteSet<K extends GoComparable = unknown> {
  * }
  */
 export function CopyOnWriteSet_Has<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): bool {
-  const [, ok] = CopyOnWriteMap_Get(receiver!.m, k);
-  return ok;
+  return CopyOnWriteMap_Has(receiver!.m, k);
 }
 
 /**

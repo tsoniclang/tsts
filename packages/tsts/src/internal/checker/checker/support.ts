@@ -453,7 +453,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
   receiver!.anyArrayType = Checker_createArrayType(receiver, receiver!.anyType);
   receiver!.autoArrayType = Checker_createArrayType(receiver, receiver!.autoType);
   if (receiver!.autoArrayType === receiver!.emptyObjectType) {
-    receiver!.autoArrayType = Checker_newAnonymousType(receiver, undefined, undefined as unknown as SymbolTable, [], [], []);
+    receiver!.autoArrayType = Checker_newAnonymousType(receiver, undefined, undefined, [], [], []);
   }
   receiver!.globalReadonlyArrayType = Checker_getGlobalType(receiver, "ReadonlyArray", 1, false);
   if (receiver!.globalReadonlyArrayType === receiver!.emptyGenericType) {
@@ -488,6 +488,7 @@ export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElements","kind":"method","status":"implemented","sigHash":"e90c6a3b735d0641fd58be4c7885a93495e07f4e69433afdd1810ec0e95e6d11","bodyHash":"f7f45356a90c2e5e019118f0ec71201a07d6d63f5add6a21b2435deefd0ca792"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>void"}
  *
  * Go source:
  * func (c *Checker) checkSourceElements(nodes []*ast.Node) {
@@ -499,7 +500,10 @@ export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPt
  * 	}
  * }
  */
-export function Checker_checkSourceElements(receiver: GoPtr<Checker>, nodes: GoSlice<GoPtr<Node>>): void {
+export function Checker_checkSourceElements(receiver: GoPtr<Checker>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): void {
+  if (nodes === undefined) {
+    return;
+  }
   for (const node of nodes) {
     if (Checker_isCanceled(receiver)) {
       break;
@@ -685,7 +689,7 @@ export function Checker_checkSourceElementWorker(receiver: GoPtr<Checker>, node:
     Checker_checkJSDocComments(receiver, jsdoc);
     const tags = AsJSDoc(jsdoc)!.Tags;
     if (tags !== undefined) {
-      for (const tag of tags.Nodes) {
+      for (const tag of tags.Nodes ?? []) {
         Checker_checkJSDocComments(receiver, tag);
       }
     }
@@ -1432,13 +1436,14 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero","kind":"method","status":"implemented","sigHash":"ac1a5c1faca99b9a97e6772498eab9bc1349ba8c98bf3dacab2b2f77c66c86ea","bodyHash":"90031db923a48be39fb2e01727e39a91e077521e7bdb81cccad6846cbc82bb37"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::CacheHashKey>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func (k CacheHashKey) IsZero() bool {
  * 	return xxh3.Uint128(k) == xxh3.Uint128{}
  * }
  */
-export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
+export function CacheHashKey_IsZero(receiver: GoPtr<CacheHashKey>): bool {
   return receiver === undefined || receiver.IsZero();
 }
 
@@ -1511,7 +1516,7 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
   let firstMixinIndex = -1;
   for (let i = 0; i < types.length; i++) {
     const t = types[i];
-    if (Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct).length > 0) {
+    if ((Checker_getSignaturesOfType(receiver, t, SignatureKindConstruct)?.length ?? 0) > 0) {
       constructorTypeCount++;
     }
     if (mixinFlags[i]) {

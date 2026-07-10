@@ -233,18 +233,21 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
  */
 export function Checker_checkIndexConstraints(receiver: GoPtr<Checker>, t: GoPtr<Type>, symbol_: GoPtr<Symbol>, isStaticIndex: bool): void {
   const indexInfos = Checker_getIndexInfosOfType(receiver, t);
-  if (indexInfos.length === 0) {
+  if (indexInfos === undefined || indexInfos.length === 0) {
     return;
   }
-  for (const prop of Checker_getPropertiesOfObjectType(receiver, t)) {
-    if (!(isStaticIndex && (prop!.Flags & SymbolFlagsPrototype) !== 0)) {
-      Checker_checkIndexConstraintForProperty(
-        receiver,
-        t,
-        prop,
-        Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, true),
-        Checker_getNonMissingTypeOfSymbol(receiver, prop),
-      );
+  const properties = Checker_getPropertiesOfObjectType(receiver, t);
+  if (properties !== undefined) {
+    for (const prop of properties) {
+      if (!(isStaticIndex && (prop!.Flags & SymbolFlagsPrototype) !== 0)) {
+        Checker_checkIndexConstraintForProperty(
+          receiver,
+          t,
+          prop,
+          Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, true),
+          Checker_getNonMissingTypeOfSymbol(receiver, prop),
+        );
+      }
     }
   }
   const typeDeclaration = symbol_!.ValueDeclaration;
@@ -340,7 +343,7 @@ export function Checker_checkIndexConstraintForProperty(receiver: GoPtr<Checker>
     if (info!.declaration !== undefined && Checker_getParentOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, info!.declaration)) === t!.symbol) {
       localIndexDeclaration = info!.declaration;
     }
-    let errorNode = OrElse(localPropDeclaration, localIndexDeclaration);
+    let errorNode = OrElse(localPropDeclaration, localIndexDeclaration, () => undefined, (left, right) => left === right);
     if (errorNode === undefined && interfaceDeclaration !== undefined && !Some(Checker_getBaseTypes(receiver, t), (base: GoPtr<Type>): bool =>
       (Checker_getPropertyOfObjectType(receiver, base, prop!.Name) !== undefined && Checker_getIndexTypeOfType(receiver, base, info!.keyType) !== undefined) as bool,
     )) {
@@ -461,7 +464,10 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
   const typeArgumentNodes = typeArguments!.Nodes ?? [];
   let hasSomeApplicableSignature = false;
   let nonApplicableType: GoPtr<Type>;
-  const getInstantiatedSignatures = (signatures: GoSlice<GoPtr<Signature>>): GoSlice<GoPtr<Signature>> => {
+  const getInstantiatedSignatures = (signatures: GoPtr<GoSlice<GoPtr<Signature>>>): GoPtr<GoSlice<GoPtr<Signature>>> => {
+    if (signatures === undefined) {
+      return undefined;
+    }
     const applicableSignatures = Filter(signatures, (sig) =>
       (sig!.typeParameters?.length ?? 0) !== 0 && Checker_hasCorrectTypeArgumentArity(receiver, sig, typeArgumentNodes)
     );
@@ -483,15 +489,19 @@ export function Checker_getInstantiationExpressionType(receiver: GoPtr<Checker>,
         const resolvedConstructSignatures = StructuredType_ConstructSignatures(resolved as GoPtr<StructuredType>);
         const callSignatures = getInstantiatedSignatures(resolvedCallSignatures);
         const constructSignatures = getInstantiatedSignatures(resolvedConstructSignatures);
-        hasSignatures = hasSignatures || resolvedCallSignatures.length !== 0 || resolvedConstructSignatures.length !== 0;
-        hasApplicableSignature = hasApplicableSignature || callSignatures.length !== 0 || constructSignatures.length !== 0;
-        if (!Same(callSignatures, resolvedCallSignatures) || !Same(constructSignatures, resolvedConstructSignatures)) {
+        hasSignatures = hasSignatures || (resolvedCallSignatures?.length ?? 0) !== 0 || (resolvedConstructSignatures?.length ?? 0) !== 0;
+        hasApplicableSignature = hasApplicableSignature || (callSignatures?.length ?? 0) !== 0 || (constructSignatures?.length ?? 0) !== 0;
+        const sameCallSignatures = callSignatures === resolvedCallSignatures ||
+          (callSignatures !== undefined && resolvedCallSignatures !== undefined && Same(callSignatures, resolvedCallSignatures));
+        const sameConstructSignatures = constructSignatures === resolvedConstructSignatures ||
+          (constructSignatures !== undefined && resolvedConstructSignatures !== undefined && Same(constructSignatures, resolvedConstructSignatures));
+        if (!sameCallSignatures || !sameConstructSignatures) {
           const result = Checker_newObjectType(
             receiver,
             (ObjectFlagsAnonymous | ObjectFlagsInstantiationExpressionType) as int,
             Checker_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameInstantiationExpression),
           );
-          Checker_setStructuredTypeMembers(receiver, result, resolved!.members, callSignatures, constructSignatures, resolved!.indexInfos ?? []);
+          Checker_setStructuredTypeMembers(receiver, result, resolved!.members, callSignatures, constructSignatures, resolved!.indexInfos);
           Type_AsInstantiationExpressionType(result)!.node = node;
           return result;
         }
@@ -849,7 +859,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"486c2e26964946a849da0f8b1f7476d0be2b7dd56953c591ecec9c1cd890ad1d","bodyHash":"9ce3ce41a9a691160c4874344d6350db66dae40fef9bc308c097546398ac8106"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"When the normalized source-symbol slice is empty, createInstantiatedSymbolTable returns nil instead of allocating a SymbolTable, and anonymous-type resolution carries that resolved-empty table forward. TypeScript uses undefined only for that no-table result; non-empty inputs allocate and populate a Map in source order.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"When the normalized source-symbol slice is empty, createInstantiatedSymbolTable returns nil instead of allocating a SymbolTable, and anonymous-type resolution carries that resolved-empty table forward. TypeScript uses undefined only for that no-table result; non-empty inputs allocate and populate a Map in source order.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/internal/ast/symbol.ts::SymbolTable","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/mapper.ts::TypeMapper>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::SymbolTable>"}
  *
  * Go source:
  * func (c *Checker) createInstantiatedSymbolTable(symbols []*ast.Symbol, m *TypeMapper) ast.SymbolTable {
@@ -863,8 +873,8 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
  * 	return result
  * }
  */
-export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>, m: GoPtr<TypeMapper>): GoPtr<SymbolTable> {
-  if (symbols.length === 0) {
+export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, symbols: GoPtr<GoSlice<GoPtr<Symbol>>>, m: GoPtr<TypeMapper>): GoPtr<SymbolTable> {
+  if (symbols === undefined || symbols.length === 0) {
     return undefined;
   }
   const result: SymbolTable = new globalThis.Map();
@@ -1171,12 +1181,17 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
  */
 export function Checker_getConditionalTypeInstantiation(receiver: GoPtr<Checker>, t: GoPtr<Type>, mapper: GoPtr<TypeMapper>, forConstraint: bool, alias: GoPtr<TypeAlias>): GoPtr<Type> {
   const root = Type_AsConditionalType(t)!.root;
-  if (root!.outerTypeParameters.length !== 0) {
-    const typeArguments = Map(root!.outerTypeParameters, (tp: GoPtr<Type>): GoPtr<Type> => TypeMapper_Map(mapper, tp));
+  const outerTypeParameters = root!.outerTypeParameters;
+  if (outerTypeParameters !== undefined && outerTypeParameters.length !== 0) {
+    const instantiations = root!.instantiations;
+    if (instantiations === undefined) {
+      throw new Error("distributive conditional type has no instantiation map");
+    }
+    const typeArguments = Map(outerTypeParameters, (tp: GoPtr<Type>): GoPtr<Type> => TypeMapper_Map(mapper, tp));
     const key = getConditionalTypeKey(typeArguments, alias, forConstraint);
-    let result = root!.instantiations.get(key);
+    let result = instantiations.get(key);
     if (result === undefined) {
-      const newMapper = newTypeMapper(root!.outerTypeParameters, typeArguments);
+      const newMapper = newTypeMapper(outerTypeParameters, typeArguments);
       const checkType = root!.checkType;
       let distributionType: GoPtr<Type> = undefined;
       if (root!.isDistributive) {
@@ -1189,7 +1204,7 @@ export function Checker_getConditionalTypeInstantiation(receiver: GoPtr<Checker>
       } else {
         result = Checker_getConditionalType(receiver, root, newMapper, forConstraint, alias);
       }
-      root!.instantiations.set(key, result);
+      instantiations.set(key, result);
     }
     return result;
   }
@@ -1225,7 +1240,7 @@ export function Checker_hasArrayOrTypeTypeConstraint(receiver: GoPtr<Checker>, t
 export function Checker_getConstraintTypeFromMappedType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   const m = Type_AsMappedType(t);
   if (m!.constraintType === undefined) {
-    m!.constraintType = OrElse(Checker_getConstraintOfTypeParameter(receiver, Checker_getTypeParameterFromMappedType(receiver, t)), receiver!.errorType);
+    m!.constraintType = OrElse(Checker_getConstraintOfTypeParameter(receiver, Checker_getTypeParameterFromMappedType(receiver, t)), receiver!.errorType, () => undefined, (left, right) => left === right);
   }
   return m!.constraintType;
 }
@@ -1258,6 +1273,7 @@ export function Checker_getConstraintDeclarationForMappedType(receiver: GoPtr<Ch
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeAliasInstantiation","kind":"method","status":"implemented","sigHash":"f6bed79b5fe6c3b11a594664f7e6283bbce7162f58985fb7a9856433761a34d8","bodyHash":"29d45b8fb5ebd9d1a56aa7137cb0fa907b55b3599d7035eceee083124e579c9e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go nil container, callable, interface, or object-backed zero values require an explicit GoPtr carrier because JavaScript has no equivalent nil runtime value; the implementation preserves Go len, range, lookup, and panic behavior without normalization.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/checker/state.ts::Checker>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/symbol.ts::Symbol>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::TypeAlias>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/checker/types.ts::Type>"}
  *
  * Go source:
  * func (c *Checker) getTypeAliasInstantiation(symbol *ast.Symbol, typeArguments []*Type, alias *TypeAlias) *Type {
@@ -1284,11 +1300,11 @@ export function Checker_getConstraintDeclarationForMappedType(receiver: GoPtr<Ch
  * 	return instantiation
  * }
  */
-export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, typeArguments: GoSlice<GoPtr<Type>>, alias: GoPtr<TypeAlias>): GoPtr<Type> {
+export function Checker_getTypeAliasInstantiation(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, typeArguments: GoPtr<GoSlice<GoPtr<Type>>>, alias: GoPtr<TypeAlias>): GoPtr<Type> {
   const t = Checker_getDeclaredTypeOfSymbol(receiver, symbol_);
   if (t === receiver!.intrinsicMarkerType) {
     const typeKindEntry = intrinsicTypeKinds.get(symbol_!.Name);
-    if (typeKindEntry !== undefined && typeArguments.length === 1) {
+    if (typeKindEntry !== undefined && typeArguments !== undefined && typeArguments.length === 1) {
       if (typeKindEntry === IntrinsicTypeKindNoInfer) {
         return Checker_getNoInferType(receiver, typeArguments[0]);
       }

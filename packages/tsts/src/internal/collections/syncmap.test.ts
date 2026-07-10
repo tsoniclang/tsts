@@ -4,15 +4,15 @@ import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range, SyncMap_Store } from 
 import type { SyncMap } from "./syncmap.js";
 
 test("SyncMap mirrors upstream nil value behavior", () => {
-  const map = {} as SyncMap<string, unknown>;
+  const map: SyncMap<string, unknown> = {};
 
-  const [got1, ok1] = SyncMap_Load(map, "foo");
+  const [got1, ok1] = SyncMap_Load(map, "foo", () => undefined);
   assert.equal(ok1, false);
   assert.equal(got1, undefined);
 
   SyncMap_Store(map, "foo", undefined);
 
-  const [got2, ok2] = SyncMap_Load(map, "foo");
+  const [got2, ok2] = SyncMap_Load(map, "foo", () => undefined);
   assert.equal(ok2, true);
   assert.equal(got2, undefined);
 
@@ -26,4 +26,10 @@ test("SyncMap mirrors upstream nil value behavior", () => {
     return true;
   });
   assert.deepEqual(ranged.sort(), ["foo:nil", "too:nil"]);
+});
+
+test("SyncMap uses the supplied concrete Go zero for missing scalar values", () => {
+  const map: SyncMap<string, string> = {};
+  const [value, ok] = SyncMap_Load(map, "missing", () => "");
+  assert.deepEqual([value, ok], ["", false]);
 });

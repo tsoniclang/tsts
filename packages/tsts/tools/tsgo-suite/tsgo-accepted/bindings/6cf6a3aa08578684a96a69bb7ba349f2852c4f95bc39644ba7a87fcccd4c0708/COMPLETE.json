@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "kind": "tsgo-accepted-binding",
+    "bindingId": "6cf6a3aa08578684a96a69bb7ba349f2852c4f95bc39644ba7a87fcccd4c0708"
+  },
+  "inventory": {
+    "schemaVersion": 1,
+    "records": [
+      {
+        "path": "binding.json",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 15083,
+        "sha256": "8a807611e1eb9d751268711f65f4a306ed765fc3db37f3edb1ab6179552c5443"
+      },
+      {
+        "path": "overlays",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "overlays/typescript",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "overlays/typescript/transpile",
+        "kind": "directory",
+        "mode": 493
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationAsyncAndGeneratorFunctions.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 446,
+        "sha256": "c19a70cf3b41d7c3a25d57a96aca107648d28fe1f780a3d45e433e66bc6c3581"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=false).d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 399,
+        "sha256": "174604908703ba0b9502a393c3f536e04fda4e676cef9c3b561d1ea268e28911"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationBasicSyntax(declarationMap=true).d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 494,
+        "sha256": "6b88451363aa42e1a519ec82f90c900d8a61085ae47854328e9fcd1c031439d4"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationComputedPropertyNames.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 4284,
+        "sha256": "0f656d21baef99701e43ec442b6f02f05693a71484d7d8eda0834adee648e964"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationCrossFileInferences.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 740,
+        "sha256": "787a33ace2084db75586919ca9a679a231c546af53988f0100ce5e0882f031e7"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationEmitPartialNodeReuse.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 491,
+        "sha256": "74c63d81c9922f858746672db309533667e9cb07c5a0233abe97811506d769e7"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationFunctionDeclarations.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 1625,
+        "sha256": "3dc30d1b1ad3a5ccb66ffedba42f645ff1e53b3b2d6ffd77f746b3c0b40b37bc"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationNotInScopeTypes.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 407,
+        "sha256": "76e8b759b1c8f4a3be1496dd0977c5d44c64c2980f45fc889323275b7cf83c33"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationPartialNodeReuseTypeOf.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 493,
+        "sha256": "6e56d84d3cde9b6ed62b341b6260ac2db5cdce2bbca82b5cfa419f147536a3a2"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationRestParameters.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 399,
+        "sha256": "d3d70a2612e128789ec6ecd3c4941a855e6dee9a25243b9ef152c07c0ab1b58e"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationSingleFileHasErrors.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 734,
+        "sha256": "48f07bcc2f458d40265488b4fc1a9d24dfcce023a2ebfd60e63b25b76df46685"
+      },
+      {
+        "path": "overlays/typescript/transpile/declarationSingleFileHasErrorsReported.d.ts",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 448,
+        "sha256": "6f972abbc1f6789697775a6a5294d687df0fcc309ba9a77dd7c8b994ae6e798c"
+      },
+      {
+        "path": "overlays/typescript/transpile/jsWithInlineSourceMapBasic(inlineSourceMap=true).js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 4710,
+        "sha256": "696cb6e698700cc7ab4d47976562b104f3c88f6726c714796fc88ae12eaddd17"
+      },
+      {
+        "path": "overlays/typescript/transpile/jsWithSourceMapBasic(sourceMap=true).js",
+        "kind": "file",
+        "mode": 420,
+        "bytes": 1193,
+        "sha256": "43f74ada66796f9ab6fdebface3bbb8930c1800fc2600980a61b50841856b59f"
+      }
+    ],
+    "digest": "336dcc7fd421a56d8d865e4ffc4d531d54e5efa9b73df7bdf7cada41ac7ff716"
+  },
+  "evidenceDigest": "f8e381eb14e39b6e5f92d00ebc9d9e29d2c7bdb06e04641d72b636533f46ee30"
+}

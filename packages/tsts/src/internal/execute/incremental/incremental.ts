@@ -133,7 +133,7 @@ export function ReadBuildInfoProgram(config: GoPtr<ParsedCommandLine>, reader: B
   const incrementalProgram: Program = {
     snapshot: buildInfoToSnapshot(buildInfo, config, host),
     program: undefined,
-    host: undefined as unknown as import("./host.js").Host,
+    host: undefined,
     testingData: undefined,
   };
   return incrementalProgram;

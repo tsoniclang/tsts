@@ -1881,7 +1881,7 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
 
   const superPath = FindSuperStatementIndexPath(rest, 0);
 
-  if (superPath.length > 0) {
+  if (superPath !== undefined) {
     statements = [...statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments)];
   } else {
     statements = [...statements, ...parameterPropertyAssignments];

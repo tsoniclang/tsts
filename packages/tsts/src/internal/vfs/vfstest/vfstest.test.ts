@@ -6,6 +6,7 @@ import { TestFS } from "../../../go/testing/fstest.js";
 import type { MapFile, MapFS as FstestMapFS } from "../../../go/testing/fstest.js";
 import { ModeDir } from "../../../go/io/fs.js";
 import type { Clock } from "./vfstest.js";
+import { Now, Since } from "../../../go/time.js";
 import {
   convertMapFS,
   FromMap,
@@ -27,8 +28,12 @@ function dirEntriesToNames(entries: Array<{ Name(): string }>): string[] {
   return entries.map((entry) => entry.Name());
 }
 
-function nilClock(): Clock {
-  return undefined as unknown as Clock;
+function defaultClock(): Clock {
+  const start = Now();
+  return {
+    Now,
+    SinceStart: () => Since(start),
+  };
 }
 
 test("convertMapFS mirrors TS-Go case-insensitive lookup and realpath behavior", () => {
@@ -38,23 +43,31 @@ test("convertMapFS mirrors TS-Go case-insensitive lookup and realpath behavior",
     ["foo/bar2/baz2", { Data: contents, Sys: 1234 }],
     ["foo/bar3/baz3", { Data: contents, Sys: 1234 }],
   ]) as FstestMapFS;
-  const mapFS = convertMapFS(map, false as bool, nilClock());
+  const mapFS = convertMapFS(map, false as bool, defaultClock());
   const fs = MapFS_as_io_fs_FS(mapFS);
 
   assert.deepEqual(ReadFile(fs, "foo/bar/baz"), ["bar", undefined]);
   const [sensitiveInfo, sensitiveInfoErr] = Stat(fs, "foo/bar/baz");
   assert.equal(sensitiveInfoErr, undefined);
+  assert.ok(sensitiveInfo !== undefined);
   assert.equal(sensitiveInfo.Sys(), 1234);
   assert.deepEqual(MapFS_Realpath(mapFS, "foo/bar/baz"), ["foo/bar/baz", undefined]);
-  assert.deepEqual(dirEntriesToNames(ReadDir(fs, "foo")[0]), ["bar", "bar2", "bar3"]);
+  const [sensitiveEntries, sensitiveEntriesErr] = ReadDir(fs, "foo");
+  assert.equal(sensitiveEntriesErr, undefined);
+  assert.ok(sensitiveEntries !== undefined);
+  assert.deepEqual(dirEntriesToNames(sensitiveEntries), ["bar", "bar2", "bar3"]);
   assert.equal(TestFS(fs, "foo/bar/baz"), undefined);
 
   assert.deepEqual(ReadFile(fs, "Foo/Bar/Baz"), ["bar", undefined]);
   const [insensitiveInfo, insensitiveInfoErr] = Stat(fs, "Foo/Bar/Baz");
   assert.equal(insensitiveInfoErr, undefined);
+  assert.ok(insensitiveInfo !== undefined);
   assert.equal(insensitiveInfo.Sys(), 1234);
   assert.deepEqual(MapFS_Realpath(mapFS, "Foo/Bar/Baz"), ["foo/bar/baz", undefined]);
-  assert.deepEqual(dirEntriesToNames(ReadDir(fs, "Foo")[0]), ["bar", "bar2", "bar3"]);
+  const [insensitiveEntries, insensitiveEntriesErr] = ReadDir(fs, "Foo");
+  assert.equal(insensitiveEntriesErr, undefined);
+  assert.ok(insensitiveEntries !== undefined);
+  assert.deepEqual(dirEntriesToNames(insensitiveEntries), ["bar", "bar2", "bar3"]);
 
   assertErrorContains(MapFS_Realpath(mapFS, "does/not/exist")[1], "file does not exist");
   assertErrorContains(Stat(fs, "does/not/exist")[1], "file does not exist");
@@ -67,10 +80,13 @@ test("convertMapFS mirrors TS-Go case-sensitive lookup behavior", () => {
     ["foo/bar2/baz2", { Data: contents, Sys: 1234 }],
     ["foo/bar3/baz3", { Data: contents, Sys: 1234 }],
   ]) as FstestMapFS;
-  const fs = MapFS_as_io_fs_FS(convertMapFS(map, true as bool, nilClock()));
+  const fs = MapFS_as_io_fs_FS(convertMapFS(map, true as bool, defaultClock()));
 
   assert.deepEqual(ReadFile(fs, "foo/bar/baz"), ["bar", undefined]);
-  assert.equal(Stat(fs, "foo/bar/baz")[0].Sys(), 1234);
+  const [info, infoErr] = Stat(fs, "foo/bar/baz");
+  assert.equal(infoErr, undefined);
+  assert.ok(info !== undefined);
+  assert.equal(info.Sys(), 1234);
   assert.equal(TestFS(fs, "foo/bar/baz"), undefined);
   assertErrorContains(ReadFile(fs, "Foo/Bar/Baz")[1], "file does not exist");
 });
@@ -80,20 +96,20 @@ test("convertMapFS mirrors TS-Go duplicate and parent-file panics", () => {
     () => convertMapFS(new Map<string, MapFile>([
       ["foo", { Data: bytes("bar") }],
       ["Foo", { Data: bytes("baz") }],
-    ]) as FstestMapFS, false as bool, nilClock()),
+    ]) as FstestMapFS, false as bool, defaultClock()),
     /duplicate path: "Foo" and "foo" have the same canonical path/,
   );
 
   assert.doesNotThrow(() => convertMapFS(new Map<string, MapFile>([
     ["foo", { Data: bytes("bar") }],
     ["Foo", { Data: bytes("baz") }],
-  ]) as FstestMapFS, true as bool, nilClock()));
+  ]) as FstestMapFS, true as bool, defaultClock()));
 
   assert.throws(
     () => convertMapFS(new Map<string, MapFile>([
       ["foo", { Data: bytes("bar") }],
       ["foo/oops", { Data: bytes("baz") }],
-    ]) as FstestMapFS, false as bool, nilClock()),
+    ]) as FstestMapFS, false as bool, defaultClock()),
     /failed to create intermediate directories for "foo\/oops": mkdir "foo": path exists but is not a directory/,
   );
 });

@@ -107,7 +107,7 @@ export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<strin
   const commonPathComponents = fileNames.reduce(
     (acc: GoSlice<string> | null | undefined, sourceFile: string) =>
       computeNextComponents(acc, sourceFile, currentDirectory, useCaseSensitiveFileNames),
-    undefined as GoSlice<string> | null | undefined,
+    undefined,
   );
 
   if (commonPathComponents === null) {

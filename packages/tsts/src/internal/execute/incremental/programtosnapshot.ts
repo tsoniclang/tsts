@@ -316,7 +316,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
         referenceMap_storeReferences(receiver!.snapshot!.referencedMap, SourceFile_Path(file), newReferences);
       }
       if (receiver!.oldProgram !== undefined) {
-        const [oldFileInfo, ok] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, SourceFile_Path(file));
+        const [oldFileInfo, ok] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos, SourceFile_Path(file), (): GoPtr<FileInfo> => undefined);
         if (ok) {
           signature = oldFileInfo!.signature;
           if (oldFileInfo!.version !== version || oldFileInfo!.affectsGlobalScope !== affectsGlobalScope || oldFileInfo!.impliedNodeFormat !== impliedNodeFormat) {
@@ -327,13 +327,16 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
               // Referenced files changed
               snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
             } else if (newReferences !== undefined) {
-              for (const [refPath] of Set_Keys(newReferences as GoPtr<Set<Path>>)) {
-                if (Program_GetSourceFileByPath(receiver!.program, refPath) === undefined) {
-                  const [, hadOldInfo] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, refPath);
-                  if (hadOldInfo) {
-                    // Referenced file was deleted in the new program
-                    snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
-                    break;
+              const referencePaths = Set_Keys(newReferences);
+              if (referencePaths !== undefined) {
+                for (const [refPath] of referencePaths) {
+                  if (Program_GetSourceFileByPath(receiver!.program, refPath) === undefined) {
+                    const [, hadOldInfo] = SyncMap_Load(receiver!.oldProgram.snapshot!.fileInfos, refPath, (): GoPtr<FileInfo> => undefined);
+                    if (hadOldInfo) {
+                      // Referenced file was deleted in the new program
+                      snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
+                      break;
+                    }
                   }
                 }
               }
@@ -343,7 +346,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
           snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
         }
         if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file))) {
-          const [emitDiagnostics, hasEmitDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file));
+          const [emitDiagnostics, hasEmitDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitDiagnosticsPerFile, SourceFile_Path(file), (): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> => undefined);
           if (hasEmitDiag) {
             SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file));
           }
@@ -351,7 +354,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
             if ((!file!.IsDeclarationFile || copyDeclarationFileDiagnostics) &&
               (!Program_IsSourceFileDefaultLibrary(receiver!.program, SourceFile_Path(file)) || copyLibFileDiagnostics)) {
               // Unchanged file copy diagnostics
-              const [diagnostics, hasDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file));
+              const [diagnostics, hasDiag] = SyncMap_Load(receiver!.oldProgram.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), (): GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName> => undefined);
               if (hasDiag) {
                 SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file));
               }
@@ -359,7 +362,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
           }
         }
         if (canCopyEmitSignatures) {
-          const [oldEmitSignature, hasOldEmit] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>, SourceFile_Path(file));
+          const [oldEmitSignature, hasOldEmit] = SyncMap_Load(receiver!.oldProgram.snapshot!.emitSignatures, SourceFile_Path(file), (): GoPtr<emitSignature> => undefined);
           if (hasOldEmit) {
             SyncMap_Store(receiver!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options));
           }
@@ -368,7 +371,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
         snapshot_addFileToAffectedFilesPendingEmit(receiver!.snapshot, SourceFile_Path(file), GetFileEmitKind(receiver!.snapshot!.options));
         signature = version;
       }
-      SyncMap_Store(receiver!.snapshot!.fileInfos as SyncMap<Path, FileInfo>, SourceFile_Path(file), {
+      SyncMap_Store(receiver!.snapshot!.fileInfos, SourceFile_Path(file), {
         version: version,
         signature: signature,
         affectsGlobalScope: affectsGlobalScope,
@@ -406,9 +409,12 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
 export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnapshot>): void {
   if (receiver!.oldProgram !== undefined) {
     // If the global file is removed, add all files as changed
-    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos as SyncMap<Path, FileInfo>, (filePath: Path, oldInfo: FileInfo) => {
-      const [, ok] = SyncMap_Load(receiver!.snapshot!.fileInfos as SyncMap<Path, FileInfo>, filePath);
+    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos, (filePath: Path, oldInfo: GoPtr<FileInfo>) => {
+      const [, ok] = SyncMap_Load(receiver!.snapshot!.fileInfos, filePath, (): GoPtr<FileInfo> => undefined);
       if (!ok) {
+        if (oldInfo === undefined) {
+          throw new globalThis.Error("incremental file info cache contained nil");
+        }
         if (oldInfo.affectsGlobalScope) {
           for (const file of snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.snapshot, receiver!.program, undefined)) {
             snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
@@ -719,6 +725,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList","kind":"func","status":"implemented","sigHash":"99be7eb5fce8ead6933f781a010e4798280327a1c220a737374fa538c06cb91d","bodyHash":"a026bca71a69c25b7f1b8c11508baed25078795f4b01652a0bb622fd5fd1d7be"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func repopulateDiagnosticsList uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func repopulateDiagnosticsList(diags []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -741,7 +748,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
  * 	return result
  * }
  */
-export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
+export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   let changed = false;
   const result: GoPtr<Diagnostic>[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
@@ -757,13 +764,14 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
     }
   }
   if (!changed) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return undefined;
   }
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain","kind":"func","status":"implemented","sigHash":"e1527c7a51b0ee2981df52918566e2fc419facbfbab3ad7960203a6cf45a001a","bodyHash":"063591cd51a507f2e92cb5d78a11a6fb01e64b78133aa29713632e3723a14497"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func repopulateDiagnosticMessageChain uses an explicit undefined-capable TypeScript representation at parameter #0, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/compiler/program.ts::Program>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>>"}
  *
  * Go source:
  * func repopulateDiagnosticMessageChain(chain []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -809,9 +817,9 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
  * 	return result
  * }
  */
-export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  if (chain.length === 0) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+export function repopulateDiagnosticMessageChain(chain: GoPtr<GoSlice<GoPtr<Diagnostic>>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  if (chain === undefined || chain.length === 0) {
+    return undefined;
   }
   let changed = false;
   const result: GoPtr<Diagnostic>[] = new Array(chain.length);
@@ -855,7 +863,7 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
     }
   }
   if (!changed) {
-    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+    return undefined;
   }
   return result;
 }

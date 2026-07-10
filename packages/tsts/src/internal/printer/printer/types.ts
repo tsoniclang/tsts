@@ -954,7 +954,7 @@ export function Printer_emitMappedType(receiver: GoPtr<Printer>, node: GoPtr<Map
   Printer_emitTypeNodeOutsideExtends(receiver, node!.Type);
   Printer_writeTrailingSemicolon(receiver);
   if (node!.Members !== undefined) {
-    if (node!.Members!.Nodes.length > 0) {
+    if (node!.Members!.Nodes !== undefined && node!.Members!.Nodes.length > 0) {
       if (singleLine) {
         Printer_writeSpace(receiver);
       } else {

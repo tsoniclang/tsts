@@ -226,9 +226,9 @@ export function processingDiagnostic_toDiagnostic(receiver: GoPtr<processingDiag
  */
 export function processingDiagnostic_createDiagnosticExplainingFile(receiver: GoPtr<processingDiagnostic>, program: GoPtr<Program>): GoPtr<Diagnostic> {
   const diag = processingDiagnostic_asIncludeExplainingDiagnostic(receiver);
-  let includeDetails: GoSlice<GoPtr<Diagnostic>> = [];
-  let relatedInfo: GoSlice<GoPtr<Diagnostic>> = [];
-  let redirectInfo: GoSlice<GoPtr<Diagnostic>> = [];
+  let includeDetails: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
+  let relatedInfo: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
+  let redirectInfo: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
   let preferredLocation: GoPtr<FileIncludeReason> = undefined;
   const seenReasons: Set<GoPtr<FileIncludeReason>> = { M: new globalThis.Map() };
   const includeProcessor = program!.__tsgoEmbedded0!.includeProcessor;
@@ -243,7 +243,11 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     } else if (preferredLocation !== includeReason) {
       const info = includeProcessor_getRelatedInfo(includeProcessor, includeReason, program);
       if (info !== undefined) {
-        relatedInfo = [...relatedInfo, info];
+        if (relatedInfo === undefined) {
+          relatedInfo = [info];
+        } else {
+          relatedInfo.push(info);
+        }
       }
     }
   };
@@ -252,7 +256,12 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     if (!Set_AddIfAbsent(seenReasons, includeReason)) {
       return;
     }
-    includeDetails = [...includeDetails, FileIncludeReason_toDiagnostic(includeReason, program, false)];
+    const diagnostic = FileIncludeReason_toDiagnostic(includeReason, program, false);
+    if (includeDetails === undefined) {
+      includeDetails = [diagnostic];
+    } else {
+      includeDetails.push(diagnostic);
+    }
     processRelatedInfo(includeReason);
   };
 
@@ -272,14 +281,14 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
     processInclude(diag!.diagnosticReason);
   }
 
-  let chain: GoSlice<GoPtr<Diagnostic>> = [];
-  if (includeDetails.length > 0 && (preferredLocation === undefined || Set_Len(seenReasons) !== 1)) {
+  let chain: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
+  if (includeDetails !== undefined && (preferredLocation === undefined || Set_Len(seenReasons) !== 1)) {
     const fileReason = NewCompilerDiagnostic(The_file_is_in_the_program_because_Colon);
     Diagnostic_SetMessageChain(fileReason, includeDetails);
     chain = [fileReason];
   }
-  if (redirectInfo.length > 0) {
-    chain = [...chain, ...redirectInfo];
+  if (redirectInfo !== undefined) {
+    chain = chain === undefined ? [...redirectInfo] : [...chain, ...redirectInfo];
   }
 
   let result: GoPtr<Diagnostic> = undefined;
@@ -289,10 +298,10 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
   if (result === undefined) {
     result = NewCompilerDiagnostic(diag!.message, ...diag!.args);
   }
-  if (chain.length > 0) {
+  if (chain !== undefined) {
     Diagnostic_SetMessageChain(result, chain);
   }
-  if (relatedInfo.length > 0) {
+  if (relatedInfo !== undefined) {
     Diagnostic_SetRelatedInfo(result, relatedInfo);
   }
   return result;

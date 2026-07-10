@@ -108,7 +108,11 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
         if (syntheticLocation) {
           newList!.Loc = syntheticNodeLocation();
           if (NodeList_HasTrailingComma(nodes)) {
-            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+            const newNodes = newList!.Nodes;
+            if (newNodes === undefined || newNodes.length === 0) {
+              throw new globalThis.Error("trailing-comma NodeList clone has no nodes");
+            }
+            newNodes[newNodes.length - 1]!.Loc = trailingCommaLocation();
           }
         }
         return newList;
@@ -122,7 +126,11 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
         if (syntheticLocation) {
           newList!.Loc = syntheticNodeLocation();
           if (NodeList_HasTrailingComma(nodes)) {
-            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+            const newNodes = newList!.Nodes;
+            if (newNodes === undefined || newNodes.length === 0) {
+              throw new globalThis.Error("trailing-comma ModifierList clone has no nodes");
+            }
+            newNodes[newNodes.length - 1]!.Loc = trailingCommaLocation();
           }
         }
         return newList;
