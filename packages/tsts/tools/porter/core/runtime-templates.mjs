@@ -1,0 +1,424 @@
+export function renderGoScalarsModule() {
+  return `export type bool = boolean;
+export type byte = number;
+export type double = number;
+export type float = number;
+export type int = number;
+export type long = number;
+export type nint = number;
+export type nuint = number;
+export type sbyte = number;
+export type short = number;
+export type uint = number;
+export type ulong = bigint;
+export type ushort = number;
+`;
+}
+
+export function renderGoCompatModule() {
+  return `import type { bool, int } from "./scalars.js";
+
+declare const __goBrand: unique symbol;
+
+export type GoPtr<T> = T | undefined;
+export type GoRef<T> = { v: T };
+export type GoSlice<T> = T[];
+export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
+export type GoMap<K, V> = Map<K, V>;
+export type GoChan<T, Direction extends string = "bidirectional"> = {
+  readonly [__goBrand]?: { readonly element: T; readonly direction: Direction };
+  readonly [goChannelState]?: GoChannelState<T>;
+};
+export type GoSeq<T> = (yieldValue: (value: T) => bool) => void;
+export type GoSeq2<K, V> = (yieldValue: (key: K, value: V) => bool) => void;
+export type GoError = Error | undefined;
+export type GoComparable = unknown;
+export type GoOrdered = string | number | bigint | bool;
+export type GoConstraint<Text extends string> = unknown;
+export type GoUnresolved<Name extends string> = { readonly [__goBrand]: { readonly unresolved: Name } };
+export type GoUnsupported<Text extends string> = { readonly [__goBrand]: { readonly unsupported: Text } };
+export type GoComplex64 = { readonly real: number; readonly imag: number };
+export type GoComplex128 = { readonly real: number; readonly imag: number };
+export type GoUnsafePointer = GoPtr<unknown>;
+export type GoRune = int;
+
+type GoChannelReceiver<T> = (value: T, ok: bool) => void;
+
+interface GoChannelWaiter<T> {
+  active: bool;
+  deliver(value: T, ok: bool): bool;
+}
+
+interface GoChannelState<T> {
+  capacity: number;
+  queue: T[];
+  waiters: GoChannelWaiter<T>[];
+  closed: bool;
+  zeroValue(): T;
+}
+
+export interface GoChanSelectCase {
+  readonly channel: GoChan<unknown, string>;
+  readonly receiver: GoChannelReceiver<unknown>;
+}
+
+const goChannelState: unique symbol = Symbol("GoChannel.state");
+
+export function MakeGoChan<T>(capacity = 0, zeroValue: () => T = (): T => undefined as T): GoChan<T> {
+  if (!Number.isSafeInteger(capacity) || capacity < 0) {
+    throw new RangeError("makechan: size out of range");
+  }
+  return {
+    [goChannelState]: {
+      capacity,
+      queue: [],
+      waiters: [],
+      closed: false,
+      zeroValue,
+    },
+  };
+}
+
+export function GoChanAsReceive<T>(channel: GoChan<T>): GoChan<T, "receive"> {
+  return channel as unknown as GoChan<T, "receive">;
+}
+
+export function GoChanAsSend<T>(channel: GoChan<T>): GoChan<T, "send"> {
+  return channel as unknown as GoChan<T, "send">;
+}
+
+export function GoChanTrySend<T>(channel: GoChan<T, string>, value: T): bool {
+  const state = requireGoChannelState(channel);
+  if (state.closed) {
+    throw new Error("send on closed channel");
+  }
+  const waiter = takeGoChannelWaiter(state);
+  if (waiter !== undefined) {
+    return waiter.deliver(value, true as bool);
+  }
+  if (state.queue.length < state.capacity) {
+    state.queue.push(value);
+    return true as bool;
+  }
+  return false as bool;
+}
+
+export function GoChanReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): () => void {
+  const state = requireGoChannelState(channel);
+  if (goChannelReceiveReady(state)) {
+    const [value, ok] = takeGoChannelReadyValue(state);
+    queueMicrotask(() => receiver(value, ok));
+    return () => {};
+  }
+  const waiter: GoChannelWaiter<T> = {
+    active: true,
+    deliver(value, ok) {
+      queueMicrotask(() => receiver(value, ok));
+      return true as bool;
+    },
+  };
+  state.waiters.push(waiter);
+  return () => {
+    waiter.active = false;
+  };
+}
+
+export function GoChanSelectReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): GoChanSelectCase {
+  return {
+    channel: channel as GoChan<unknown, string>,
+    receiver: receiver as GoChannelReceiver<unknown>,
+  };
+}
+
+export function GoChanSelect(cases: readonly GoChanSelectCase[]): () => void {
+  const ready = [] as number[];
+  for (let index = 0; index < cases.length; index++) {
+    if (goChannelReceiveReady(requireGoChannelState(cases[index]!.channel))) ready.push(index);
+  }
+  if (ready.length > 0) {
+    const selectedIndex = ready.length === 1 ? ready[0]! : ready[Math.floor(Math.random() * ready.length)]!;
+    const selected = cases[selectedIndex]!;
+    const [value, ok] = takeGoChannelReadyValue(requireGoChannelState(selected.channel));
+    queueMicrotask(() => selected.receiver(value, ok));
+    return () => {};
+  }
+
+  let active = true;
+  const waiters: Array<GoChannelWaiter<unknown>> = [];
+  const cancel = (): void => {
+    if (!active) return;
+    active = false;
+    for (const waiter of waiters) waiter.active = false;
+  };
+  for (const selectCase of cases) {
+    const waiter: GoChannelWaiter<unknown> = {
+      active: true,
+      deliver(value, ok) {
+        if (!active) return false as bool;
+        active = false;
+        for (const other of waiters) other.active = false;
+        queueMicrotask(() => selectCase.receiver(value, ok));
+        return true as bool;
+      },
+    };
+    waiters.push(waiter);
+    requireGoChannelState(selectCase.channel).waiters.push(waiter);
+  }
+  return cancel;
+}
+
+export function GoChanClose<T>(channel: GoChan<T, string>): void {
+  const state = requireGoChannelState(channel);
+  if (state.closed) {
+    throw new Error("close of closed channel");
+  }
+  state.closed = true;
+  while (state.queue.length > 0) {
+    const waiter = takeGoChannelWaiter(state);
+    if (waiter === undefined) {
+      break;
+    }
+    const value = state.queue.shift()!;
+    waiter.deliver(value, true as bool);
+  }
+  let waiter: GoChannelWaiter<T> | undefined;
+  while ((waiter = takeGoChannelWaiter(state)) !== undefined) {
+    waiter.deliver(state.zeroValue(), false as bool);
+  }
+}
+
+function requireGoChannelState<T>(channel: GoChan<T, string>): GoChannelState<T> {
+  const state = channel[goChannelState];
+  if (state === undefined) {
+    throw new Error("channel has no runtime state");
+  }
+  return state;
+}
+
+function takeGoChannelWaiter<T>(state: GoChannelState<T>): GoChannelWaiter<T> | undefined {
+  while (state.waiters.length > 0) {
+    const waiter = state.waiters.shift()!;
+    if (waiter.active) {
+      waiter.active = false;
+      return waiter;
+    }
+  }
+  return undefined;
+}
+
+function goChannelReceiveReady<T>(state: GoChannelState<T>): bool {
+  return (state.queue.length > 0 || state.closed) as bool;
+}
+
+function takeGoChannelReadyValue<T>(state: GoChannelState<T>): [T, bool] {
+  if (state.queue.length > 0) return [state.queue.shift()!, true as bool];
+  if (state.closed) return [state.zeroValue(), false as bool];
+  throw new Error("receive from channel that is not ready");
+}
+
+const goObjectIds = new WeakMap<object, number>();
+let nextGoObjectId = 1;
+
+export class GoStructMap<K, V> implements Map<K, V> {
+  readonly [Symbol.toStringTag] = "Map";
+  private readonly entriesByKey = new globalThis.Map<string, { key: K; value: V }>();
+
+  get size(): number {
+    return this.entriesByKey.size;
+  }
+
+  clear(): void {
+    this.entriesByKey.clear();
+  }
+
+  delete(key: K): boolean {
+    return this.entriesByKey.delete(goStructMapKey(key));
+  }
+
+  forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: unknown): void {
+    for (const entry of this.entriesByKey.values()) {
+      callbackfn.call(thisArg, entry.value, entry.key, this as unknown as Map<K, V>);
+    }
+  }
+
+  get(key: K): V | undefined {
+    return this.entriesByKey.get(goStructMapKey(key))?.value;
+  }
+
+  getOrInsert(key: K, value: V): V {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return existing.value;
+    }
+    this.entriesByKey.set(keyText, { key, value });
+    return value;
+  }
+
+  getOrInsertComputed(key: K, callbackfn: (key: K) => V): V {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return existing.value;
+    }
+    const value = callbackfn(key);
+    this.entriesByKey.set(keyText, { key, value });
+    return value;
+  }
+
+  has(key: K): boolean {
+    return this.entriesByKey.has(goStructMapKey(key));
+  }
+
+  set(key: K, value: V): this {
+    this.entriesByKey.set(goStructMapKey(key), { key, value });
+    return this;
+  }
+
+  load(key: K): [V | undefined, boolean] {
+    const entry = this.entriesByKey.get(goStructMapKey(key));
+    if (entry === undefined) {
+      return [undefined, false];
+    }
+    return [entry.value, true];
+  }
+
+  loadOrStore(key: K, value: V): [V, boolean] {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return [existing.value, true];
+    }
+    this.entriesByKey.set(keyText, { key, value });
+    return [value, false];
+  }
+
+  loadAndDelete(key: K): [V | undefined, boolean] {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing === undefined) {
+      return [undefined, false];
+    }
+    this.entriesByKey.delete(keyText);
+    return [existing.value, true];
+  }
+
+  *entries(): MapIterator<[K, V]> {
+    for (const entry of this.entriesByKey.values()) {
+      yield [entry.key, entry.value];
+    }
+  }
+
+  *keys(): MapIterator<K> {
+    for (const entry of this.entriesByKey.values()) {
+      yield entry.key;
+    }
+  }
+
+  *values(): MapIterator<V> {
+    for (const entry of this.entriesByKey.values()) {
+      yield entry.value;
+    }
+  }
+
+  [Symbol.iterator](): MapIterator<[K, V]> {
+    return this.entries();
+  }
+}
+
+export function NewGoStructMap<K, V>(): GoStructMap<K, V> {
+  return new GoStructMap<K, V>();
+}
+
+export function GoAppend<T>(slice: GoPtr<GoSlice<T>>, ...items: GoSlice<T>): GoSlice<T> {
+  return [...(slice ?? []), ...items];
+}
+
+function goStructMapKey(value: unknown): string {
+  return goValueKey(value, true);
+}
+
+function goValueKey(value: unknown, topLevelStruct: boolean): string {
+  if (value === undefined || value === null) {
+    return "nil";
+  }
+  const valueType = typeof value;
+  switch (valueType) {
+    case "boolean":
+    case "number":
+    case "bigint":
+    case "string":
+      return \`\${valueType}:\${String(value)}\`;
+    case "symbol":
+      return \`symbol:\${String(value)}\`;
+    case "function":
+      return \`ref:\${goObjectId(value)}\`;
+    case "object":
+      break;
+    default:
+      return \`\${valueType}:\${String(value)}\`;
+  }
+
+  const objectValue = value as Record<PropertyKey, unknown>;
+  if (isUint128Like(objectValue)) {
+    return \`u128:\${objectValue.Hi!.toString()}:\${objectValue.Lo!.toString()}\`;
+  }
+  if (!topLevelStruct) {
+    if (isValueStruct(objectValue)) {
+      return goStructFieldsKey(objectValue);
+    }
+    return \`ref:\${goObjectId(objectValue)}\`;
+  }
+  return goStructFieldsKey(objectValue);
+}
+
+function goStructFieldsKey(value: Record<PropertyKey, unknown>): string {
+  if (globalThis.Array.isArray(value)) {
+    let result = "array:[";
+    for (let index = 0; index < value.length; index++) {
+      if (index > 0) {
+        result += ",";
+      }
+      result += goValueKey(value[index], false);
+    }
+    return result + "]";
+  }
+  const keys = globalThis.Object.keys(value).sort();
+  let result = "struct:{";
+  for (let index = 0; index < keys.length; index++) {
+    if (index > 0) {
+      result += ",";
+    }
+    const key = keys[index]!;
+    result += \`\${key}=\${goValueKey(value[key], false)}\`;
+  }
+  return result + "}";
+}
+
+function isUint128Like(value: Record<PropertyKey, unknown>): boolean {
+  return typeof value.Hi === "bigint" && typeof value.Lo === "bigint";
+}
+
+function isValueStruct(value: Record<PropertyKey, unknown>): boolean {
+  if (isUint128Like(value)) {
+    return true;
+  }
+  if (typeof value.Negative === "boolean" && typeof value.Base10Value === "string") {
+    return true;
+  }
+  if (typeof value.pos === "number" && typeof value.end === "number") {
+    return true;
+  }
+  return false;
+}
+
+function goObjectId(value: object): number {
+  let id = goObjectIds.get(value);
+  if (id === undefined) {
+    id = nextGoObjectId++;
+    goObjectIds.set(value, id);
+  }
+  return id;
+}
+`;
+}
