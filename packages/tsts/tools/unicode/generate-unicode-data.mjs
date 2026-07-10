@@ -29,6 +29,9 @@ const TS_ROOT = "packages/tsts/src";
 const GENERATED_DIR = "internal/stringutil/generated";
 const IDENTIFIER_PATH = `${TS_ROOT}/${GENERATED_DIR}/identifier_parts_generated.ts`;
 const CASE_PATH = `${TS_ROOT}/${GENERATED_DIR}/js_case_generated.ts`;
+const VENDORED_STRINGUTIL_DIR = "packages/tsts/_vendor/typescript-go/internal/stringutil";
+const VENDORED_IDENTIFIER_PATH = `${VENDORED_STRINGUTIL_DIR}/identifier_parts_generated.go`;
+const VENDORED_CASE_PATH = `${VENDORED_STRINGUTIL_DIR}/js_case_generated.go`;
 
 // ── Data loading (async; mirrors the upstream loadCodePoints/loadMapping) ──
 
@@ -38,6 +41,11 @@ async function loadCodePoints(property) {
 }
 
 async function loadMapping(property) {
+  const module = await import(`${PACKAGE}/${property}/code-points.js`);
+  return module.default;
+}
+
+async function loadSimpleMapping(property) {
   const module = await import(`${PACKAGE}/${property}/code-points.js`);
   return module.default;
 }
@@ -75,28 +83,41 @@ function toRangeTable(codePoints) {
   return { r16, r32, latinOffset };
 }
 
-async function buildSpecialCasing() {
+async function buildSpecialCasing(simpleLowercase, simpleUppercase) {
   const lowerMappings = await loadMapping("Special_Casing/Lowercase");
   const upperMappings = await loadMapping("Special_Casing/Uppercase");
   const finalSigmaMappings = await loadMapping("Special_Casing/Lowercase--Final_Sigma");
 
   const entries = [];
-  const codePoints = new Set([...lowerMappings.keys(), ...upperMappings.keys()]);
+  const codePoints = new Set([
+    ...simpleLowercase.keys(),
+    ...simpleUppercase.keys(),
+    ...lowerMappings.keys(),
+    ...upperMappings.keys(),
+  ]);
   for (const codePoint of codePoints) {
     entries.push({
       codePoint,
-      lower: lowerMappings.get(codePoint) ?? [codePoint],
-      upper: upperMappings.get(codePoint) ?? [codePoint],
+      lower: lowerMappings.get(codePoint) ?? [simpleLowercase.get(codePoint) ?? codePoint],
+      upper: upperMappings.get(codePoint) ?? [simpleUppercase.get(codePoint) ?? codePoint],
+      conditionalLower: [],
       condition: "specialCasingConditionNone",
     });
   }
   for (const [codePoint, lower] of finalSigmaMappings) {
-    entries.push({
-      codePoint,
-      lower,
-      upper: upperMappings.get(codePoint) ?? [codePoint],
-      condition: "specialCasingConditionFinalSigma",
-    });
+    const entry = entries.find((candidate) => candidate.codePoint === codePoint);
+    if (entry === undefined) {
+      entries.push({
+        codePoint,
+        lower: [simpleLowercase.get(codePoint) ?? codePoint],
+        upper: upperMappings.get(codePoint) ?? [simpleUppercase.get(codePoint) ?? codePoint],
+        conditionalLower: lower,
+        condition: "specialCasingConditionFinalSigma",
+      });
+    } else {
+      entry.conditionalLower = lower;
+      entry.condition = "specialCasingConditionFinalSigma";
+    }
   }
   entries.sort((a, b) => a.codePoint - b.codePoint);
   return entries;
@@ -131,6 +152,83 @@ ${r32}
 `;
 }
 
+function parseGoEscapedString(literal) {
+  if (!literal.startsWith('"') || !literal.endsWith('"')) {
+    throw new Error(`invalid generated Go string literal ${literal}`);
+  }
+  const content = literal.slice(1, -1);
+  const codePoints = [];
+  let offset = 0;
+  const escape = /\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})/gy;
+  while (offset < content.length) {
+    escape.lastIndex = offset;
+    const match = escape.exec(content);
+    if (match === null) {
+      throw new Error(`unsupported generated Go string escape at offset ${offset} in ${literal}`);
+    }
+    codePoints.push(Number.parseInt(match[1] ?? match[2], 16));
+    offset = escape.lastIndex;
+  }
+  return codePoints;
+}
+
+function parseVendoredCaseMappings(text) {
+  const entries = [];
+  const line = /^\s*(0x[0-9A-Fa-f]+):\s*\{lower:\s*("[^"]*"),\s*upper:\s*("[^"]*")(?:,\s*conditionalLower:\s*("[^"]*"))?,\s*condition:\s*([A-Za-z0-9_]+)\},$/gm;
+  let match;
+  while ((match = line.exec(text)) !== null) {
+    entries.push({
+      codePoint: Number.parseInt(match[1], 16),
+      lower: parseGoEscapedString(match[2]),
+      upper: parseGoEscapedString(match[3]),
+      conditionalLower: match[4] === undefined ? [] : parseGoEscapedString(match[4]),
+      condition: match[5],
+    });
+  }
+  if (entries.length === 0) {
+    throw new Error(`failed to parse ${VENDORED_CASE_PATH}`);
+  }
+  return entries;
+}
+
+function parseVendoredRangeTable(text, name, sourcePath) {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const table = new RegExp(
+    `var ${escapedName} = &unicode\\.RangeTable\\{\\s*R16: \\[\\]unicode\\.Range16\\{([\\s\\S]*?)\\n\\t\\},\\s*R32: \\[\\]unicode\\.Range32\\{([\\s\\S]*?)\\n\\t\\},\\s*LatinOffset: ([0-9]+),\\s*\\}`,
+  ).exec(text);
+  if (table === null) {
+    throw new Error(`failed to parse ${name} from ${sourcePath}`);
+  }
+  const parseRanges = (body) => [...body.matchAll(/\{(0x[0-9A-Fa-f]+), (0x[0-9A-Fa-f]+), ([0-9]+)\}/g)].map((match) => ({
+    lo: Number.parseInt(match[1], 16),
+    hi: Number.parseInt(match[2], 16),
+    stride: Number.parseInt(match[3], 10),
+  }));
+  return {
+    r16: parseRanges(table[1]),
+    r32: parseRanges(table[2]),
+    latinOffset: Number.parseInt(table[3], 10),
+  };
+}
+
+function assertExactModel(label, actual, expected) {
+  const actualJson = JSON.stringify(actual);
+  const expectedJson = JSON.stringify(expected);
+  if (actualJson !== expectedJson) {
+    throw new Error(`${label} diverges from the vendored TS-Go generated Unicode model`);
+  }
+}
+
+function assertVendoredUnicodeParity(entries, casedTable, caseIgnorableTable, startTable, partTable) {
+  const vendoredCase = readFileSync(resolveRepo(VENDORED_CASE_PATH), "utf8");
+  const vendoredIdentifier = readFileSync(resolveRepo(VENDORED_IDENTIFIER_PATH), "utf8");
+  assertExactModel("case mappings", entries, parseVendoredCaseMappings(vendoredCase));
+  assertExactModel("cased ranges", casedTable, parseVendoredRangeTable(vendoredCase, "unicodeCasedRanges", VENDORED_CASE_PATH));
+  assertExactModel("case-ignorable ranges", caseIgnorableTable, parseVendoredRangeTable(vendoredCase, "unicodeCaseIgnorableRanges", VENDORED_CASE_PATH));
+  assertExactModel("identifier-start ranges", startTable, parseVendoredRangeTable(vendoredIdentifier, "unicodeESNextIdentifierStart", VENDORED_IDENTIFIER_PATH));
+  assertExactModel("identifier-part ranges", partTable, parseVendoredRangeTable(vendoredIdentifier, "unicodeESNextIdentifierPart", VENDORED_IDENTIFIER_PATH));
+}
+
 function renderIdentifierBody(startTable, partTable) {
   return `// Based on http://www.unicode.org/reports/tr31/ and
 // https://www.ecma-international.org/ecma-262/6.0/#sec-names-and-keywords:
@@ -147,15 +245,15 @@ function renderCaseBody(entries, casedTable, caseIgnorableTable) {
   const mappings = entries
     .map(
       (entry) =>
-        `  [${hex(entry.codePoint)}, { lower: ${jsStringLiteral(entry.lower)}, upper: ${jsStringLiteral(entry.upper)}, condition: ${entry.condition} }],`,
+        `  [${hex(entry.codePoint)}, { lower: ${jsStringLiteral(entry.lower)}, upper: ${jsStringLiteral(entry.upper)}, conditionalLower: ${entry.condition === "specialCasingConditionFinalSigma" ? jsStringLiteral(entry.conditionalLower) : '""'}, condition: ${entry.condition} }],`,
     )
     .join("\n");
 
-  return `// Includes only the locale-insensitive multi-rune mappings needed for ECMAScript
+  return `// Includes the locale-insensitive simple and multi-rune mappings needed for ECMAScript
 // default casing, plus the Final_Sigma context mapping. String.prototype.toLowerCase
-// applies Final_Sigma, but unicode.ToLower does not, so the caser applies it from this
-// data when in context. unicode.ToLower handles the simple one-rune mappings, so those
-// are omitted here.
+// applies Final_Sigma, but Go's unicode package does not, so the caser applies it from
+// this data when in context. Simple mappings are included so behavior remains pinned to
+// the vendored TS-Go Unicode version rather than the JavaScript runtime's Unicode data.
 
 import type { uint } from "../../../go/scalars.js";
 import type { GoRune } from "../../../go/compat.js";
@@ -168,6 +266,7 @@ export const specialCasingConditionFinalSigma: specialCasingCondition = 1;
 export interface specialCasingMapping {
   lower: string;
   upper: string;
+  conditionalLower: string;
   condition: specialCasingCondition;
 }
 
@@ -234,9 +333,12 @@ export async function buildExpectedUnicodeArtifacts() {
   const startTable = toRangeTable(idStart);
   const partTable = toRangeTable([...idContinue, ...idStart]);
 
-  const entries = await buildSpecialCasing();
+  const simpleLowercase = await loadSimpleMapping("Simple_Case_Mapping/Lowercase");
+  const simpleUppercase = await loadSimpleMapping("Simple_Case_Mapping/Uppercase");
+  const entries = await buildSpecialCasing(simpleLowercase, simpleUppercase);
   const casedTable = toRangeTable(await loadCodePoints("Binary_Property/Cased"));
   const caseIgnorableTable = toRangeTable(await loadCodePoints("Binary_Property/Case_Ignorable"));
+  assertVendoredUnicodeParity(entries, casedTable, caseIgnorableTable, startTable, partTable);
 
   const artifacts = new Map();
   artifacts.set(

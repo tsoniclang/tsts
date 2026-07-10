@@ -11,7 +11,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
-import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
+import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor, nilableTypeRefs } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
@@ -33,7 +33,12 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "extra-member",
   "alias-type",
   "value-annotation-missing",
+  "missing-value",
+  "extra-value",
+  "value-order",
   "value-type",
+  "value-initializer",
+  "value-initializer-unresolved",
   "unresolved-ref",
 ]);
 
@@ -46,24 +51,64 @@ function globToRegExp(glob) {
 
 function resolveOverride(localOverride, id, expected, actual, canon, overrideIssues) {
   const ignore = new Set();
-  if (!localOverride?.allow?.includes?.("signature")) {
-    return { ignore, reason: "" };
-  }
-  const expectedSnapshot = unitSignatureSnapshot(expected, canon);
-  const actualSnapshot = unitSignatureSnapshot(actual, canon);
   const issues = [];
-  if (localOverride.goSignature !== expectedSnapshot) {
-    issues.push(`goSignature snapshot drifted: metadata=${localOverride.goSignature ?? "<missing>"} current=${expectedSnapshot}`);
+  if (localOverride?.allow?.includes?.("signature")) {
+    const expectedSnapshot = unitSignatureSnapshot(expected, canon);
+    const actualSnapshot = unitSignatureSnapshot(actual, canon);
+    if (localOverride.goSignature !== expectedSnapshot) {
+      issues.push(`goSignature snapshot drifted: metadata=${localOverride.goSignature ?? "<missing>"} current=${expectedSnapshot}`);
+    }
+    if (localOverride.tsSignature !== actualSnapshot) {
+      issues.push(`tsSignature snapshot drifted: metadata=${localOverride.tsSignature ?? "<missing>"} current=${actualSnapshot}`);
+    }
   }
-  if (localOverride.tsSignature !== actualSnapshot) {
-    issues.push(`tsSignature snapshot drifted: metadata=${localOverride.tsSignature ?? "<missing>"} current=${actualSnapshot}`);
+  if (localOverride?.allow?.includes?.("initializer")) {
+    const expectedSnapshot = unitInitializerSnapshot(expected);
+    const actualSnapshot = unitInitializerSnapshot(actual);
+    if (localOverride.goInitializer !== expectedSnapshot) {
+      issues.push(`goInitializer snapshot drifted: metadata=${localOverride.goInitializer ?? "<missing>"} current=${expectedSnapshot}`);
+    }
+    if (localOverride.tsInitializer !== actualSnapshot) {
+      issues.push(`tsInitializer snapshot drifted: metadata=${localOverride.tsInitializer ?? "<missing>"} current=${actualSnapshot}`);
+    }
+  }
+  if (localOverride?.allow?.includes?.("value-order")) {
+    const expectedSnapshot = unitValueOrderSnapshot(expected);
+    const actualSnapshot = unitValueOrderSnapshot(actual);
+    if (localOverride.goValueOrder !== expectedSnapshot) {
+      issues.push(`goValueOrder snapshot drifted: metadata=${localOverride.goValueOrder ?? "<missing>"} current=${expectedSnapshot}`);
+    }
+    if (localOverride.tsValueOrder !== actualSnapshot) {
+      issues.push(`tsValueOrder snapshot drifted: metadata=${localOverride.tsValueOrder ?? "<missing>"} current=${actualSnapshot}`);
+    }
   }
   if (issues.length > 0) {
     overrideIssues.push({ id, reason: issues.join("; ") });
     return { ignore, reason: localOverride.reason ?? "" };
   }
-  for (const kind of SIGNATURE_MISMATCH_KINDS) ignore.add(kind);
-  return { ignore, reason: localOverride.reason ?? "" };
+  if (localOverride?.allow?.includes?.("signature")) {
+    for (const kind of SIGNATURE_MISMATCH_KINDS) ignore.add(kind);
+  }
+  if (localOverride?.allow?.includes?.("initializer")) {
+    ignore.add("value-initializer");
+    ignore.add("value-initializer-unresolved");
+  }
+  if (localOverride?.allow?.includes?.("value-order")) {
+    ignore.add("value-order");
+  }
+  return { ignore, reason: localOverride?.reason ?? "" };
+}
+
+function unitInitializerSnapshot(descriptor) {
+  if (descriptor?.kind !== "value") return "<not-value>";
+  return (descriptor.decls ?? []).map((declaration) =>
+    `${declaration.name}=${declaration.valueIssue !== undefined ? `unresolved:${declaration.valueIssue}` : JSON.stringify(declaration.value)}`,
+  ).join(";");
+}
+
+function unitValueOrderSnapshot(descriptor) {
+  if (descriptor?.kind !== "value") return "<not-value>";
+  return (descriptor.decls ?? []).map((declaration) => declaration.name).join(",");
 }
 
 function typeSnapshot(d, canon = (x) => x) {
@@ -281,18 +326,37 @@ function compareInterface(expected, actual, push, eq) {
 }
 
 function compareValue(expected, actual, push, eq) {
-  // Match positionally (Go spec order == TS decl order) so blank-identifier
-  // assertions (Go `var _ T = …` -> TS `export let __hash_0: T = …`) align; fall
-  // back to name when present.
   const ed = expected?.decls ?? [];
-  const byName = new Map(ed.map((d) => [d.name, d]));
   const ad = actual.decls ?? [];
-  for (let i = 0; i < ad.length; i++) {
-    const d = ad[i];
+  const unmatchedActual = new Set(ad.map((_declaration, index) => index));
+  let lastActualIndex = -1;
+  for (let expectedIndex = 0; expectedIndex < ed.length; expectedIndex++) {
+    const e = ed[expectedIndex];
+    const actualIndex = e.name === "_"
+      ? [...unmatchedActual][0]
+      : ad.findIndex((declaration, index) => unmatchedActual.has(index) && declaration.name === e.name);
+    if (actualIndex === undefined || actualIndex < 0) {
+      push("missing-value", `value '${e.name}' present in Go but missing in TS`, e.name);
+      continue;
+    }
+    unmatchedActual.delete(actualIndex);
+    if (actualIndex < lastActualIndex) {
+      push("value-order", `value '${e.name}' is out of declaration order`, expectedIndex, actualIndex);
+    }
+    lastActualIndex = actualIndex;
+    const d = ad[actualIndex];
+    if (e.valueIssue !== undefined) {
+      push("value-initializer-unresolved", `value '${e.name}' initializer could not be resolved from Go: ${e.valueIssue}`, e.valueIssue);
+    }
     if (d.missing) { push("value-annotation-missing", `value '${d.name}' has no explicit type annotation`, undefined, d.name); continue; }
-    const e = byName.get(d.name) ?? ed[i];
-    if (!e || !e.type) { push("value-type-unresolved", `value '${d.name}': expected Go type could not be determined`, undefined, keyOf(d.type)); continue; }
+    if (!e.type) { push("value-type-unresolved", `value '${d.name}': expected Go type could not be determined`, undefined, keyOf(d.type)); continue; }
     if (!eq(e.type, d.type)) push("value-type", `value '${d.name}' type differs`, keyOf(e.type), keyOf(d.type));
+    if (e.value !== undefined && JSON.stringify(e.value) !== JSON.stringify(d.value)) {
+      push("value-initializer", `value '${d.name}' initializer differs`, JSON.stringify(e.value), JSON.stringify(d.value));
+    }
+  }
+  for (const actualIndex of unmatchedActual) {
+    push("extra-value", `value '${ad[actualIndex].name}' present in TS but not in Go`, undefined, ad[actualIndex].name);
   }
 }
 
@@ -358,6 +422,7 @@ function scanTsModules(repoRoot, tsRootRel) {
   const tsDecls = new Map();
   const namedReexport = new Map();
   const starReexport = new Map();
+  const sources = new Map();
   const rootAbs = join(repoRoot, tsRootRel);
   const stack = [rootAbs];
   while (stack.length > 0) {
@@ -371,6 +436,7 @@ function scanTsModules(repoRoot, tsRootRel) {
       let text;
       try { text = readFileSync(p, "utf8"); } catch { continue; }
       const moduleId = `${tsRootRel}/${p.slice(rootAbs.length + 1)}`;
+      sources.set(moduleId, text);
       for (const re of [TYPE_DECL_RE]) {
         re.lastIndex = 0;
         let m;
@@ -401,7 +467,7 @@ function scanTsModules(repoRoot, tsRootRel) {
       }
     }
   }
-  return { tsDecls, namedReexport, starReexport };
+  return { tsDecls, namedReexport, starReexport, sources };
 }
 
 // deps: { config, snapshot, repoRoot, tsFiles:[{path}], tsById:Map<id,{path,metadata}> }
@@ -439,7 +505,8 @@ export async function computeSignatureReport(deps, options = {}) {
 
   // One regex scan over ALL .ts (incl. generated/untracked barrels) for the type
   // declaration index + the re-export graph.
-  const { tsDecls, namedReexport, starReexport } = scanTsModules(deps.repoRoot, deps.config.tsRoot);
+  const { tsDecls, namedReexport, starReexport, sources } = scanTsModules(deps.repoRoot, deps.config.tsRoot);
+  const valueEnvironments = buildModuleValueEnvironments(api, sources, namedReexport, starReexport);
   // A type's actual declaring module is its canonical definition, so re-exports
   // (e.g. the generated barrel) resolve to the same module the expected side picks.
   for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
@@ -457,7 +524,7 @@ export async function computeSignatureReport(deps, options = {}) {
   for (const file of deps.tsFiles) {
     let text;
     try { text = readFileSync(`${deps.repoRoot}/${file.path}`, "utf8"); } catch { continue; }
-    for (const u of extractFileDescriptors(api, file.path, text, profile.annotation)) {
+    for (const u of extractFileDescriptors(api, file.path, text, profile.annotation, valueEnvironments.get(file.path))) {
       if (idRe && !idRe.test(u.id)) continue;
       const go = goById.get(u.id);
       if (!go || !RENDERABLE.has(go.kind)) continue;

@@ -564,7 +564,7 @@ export function ContainsNodeModules(s: string): bool {
  * 	if outputAndReference != nil && outputAndReference.OutputDts != "" {
  * 		referenceRedirect = outputAndReference.OutputDts
  * 	}
- * 
+ *
  * 	redirects := host.GetRedirectTargets(importedPath)
  * 	importedFileNames := make([]string, 0, 2+len(redirects))
  * 	if len(referenceRedirect) > 0 {
@@ -574,7 +574,7 @@ export function ContainsNodeModules(s: string): bool {
  * 	importedFileNames = append(importedFileNames, redirects...)
  * 	targets := core.Map(importedFileNames, func(f string) string { return tspath.GetNormalizedAbsolutePath(f, cwd) })
  * 	shouldFilterIgnoredPaths := !core.Every(targets, containsIgnoredPath)
- * 
+ *
  * 	results := make([]ModulePath, 0, 2)
  * 	if !preferSymlinks {
  * 		for _, p := range targets {
@@ -587,7 +587,7 @@ export function ContainsNodeModules(s: string): bool {
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	symlinkCache := host.GetSymlinkCache()
  * 	fullImportedFileName := tspath.GetNormalizedAbsolutePath(importedFileName, cwd)
  * 	if symlinkCache != nil {
@@ -599,24 +599,25 @@ export function ContainsNodeModules(s: string): bool {
  * 				if !ok {
  * 					return false, false
  * 				} // Continue to ancestor directory
- * 
+ *
  * 				// Don't want to a package to globally import from itself (importNameCodeFix_symlink_own_package.ts)
  * 				if tspath.StartsWithDirectory(importingFileName, realPathDirectory, host.UseCaseSensitiveFileNames()) {
  * 					return false, true // Stop search, each ancestor directory will also hit this condition
  * 				}
- * 
+ *
  * 				for _, target := range targets {
  * 					if !tspath.StartsWithDirectory(target, realPathDirectory, host.UseCaseSensitiveFileNames()) {
  * 						continue
  * 					}
- * 
+ *
  * 					relative := tspath.GetRelativePathFromDirectory(
  * 						realPathDirectory,
  * 						target,
  * 						tspath.ComparePathsOptions{
  * 							UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
  * 							CurrentDirectory:          cwd,
- * 						})
+ * 						},
+ * 					)
  * 					symlinkSet.Range(func(symlinkDirectory string) bool {
  * 						option := tspath.ResolvePath(symlinkDirectory, relative)
  * 						results = append(results, ModulePath{
@@ -628,12 +629,12 @@ export function ContainsNodeModules(s: string): bool {
  * 						return true
  * 					})
  * 				}
- * 
+ *
  * 				return false, false
  * 			},
  * 		)
  * 	}
- * 
+ *
  * 	if preferSymlinks {
  * 		for _, p := range targets {
  * 			if !(shouldFilterIgnoredPaths && containsIgnoredPath(p)) {
@@ -645,7 +646,7 @@ export function ContainsNodeModules(s: string): bool {
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	return results
  * }
  */

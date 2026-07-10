@@ -24,7 +24,7 @@ test("strconv.Atoi parses base-10 integers", () => {
 
 test("strconv.Atoi reports a NumError on invalid syntax", () => {
   const [value, err] = Atoi("12x");
-  assert.equal(value, 0);
+  assert.equal(value, 0n);
   assert.ok(err instanceof NumError);
   assert.equal(Is(err, ErrSyntax), true);
 });
@@ -70,8 +70,9 @@ test("strconv.ParseUint rejects a leading sign", () => {
 });
 
 test("strconv.ParseUint parses unsigned values", () => {
-  assert.deepEqual(ParseUint("4294967295", 10, 32), [4294967295, undefined]);
-  assert.deepEqual(ParseUint("255", 10, 32), [255, undefined]);
+  assert.deepEqual(ParseUint("4294967295", 10, 32), [4294967295n, undefined]);
+  assert.deepEqual(ParseUint("255", 10, 32), [255n, undefined]);
+  assert.deepEqual(ParseUint("18446744073709551615", 10, 64), [18446744073709551615n, undefined]);
 });
 
 test("strconv.ParseFloat parses decimal floats", () => {
@@ -110,8 +111,9 @@ test("strconv.FormatInt formats in the given base", () => {
 });
 
 test("strconv.FormatUint formats unsigned values", () => {
-  assert.equal(FormatUint(255, 16), "ff");
-  assert.equal(FormatUint(8, 10), "8");
+  assert.equal(FormatUint(255n, 16), "ff");
+  assert.equal(FormatUint(8n, 10), "8");
+  assert.equal(FormatUint(18446744073709551615n, 10), "18446744073709551615");
 });
 
 test("strconv NumError unwraps to its sentinel", () => {

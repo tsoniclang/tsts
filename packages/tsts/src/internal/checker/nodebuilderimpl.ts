@@ -67,11 +67,13 @@ import {
   KindUniqueKeyword,
   KindUnknownKeyword,
   KindVariableDeclaration,
+  KindVariableDeclarationList,
+  KindVariableStatement,
   KindVoidKeyword,
   KindWithKeyword,
 } from "../ast/generated/kinds.js";
 import type { Symbol } from "../ast/symbol.js";
-import { InternalSymbolNameDefault, InternalSymbolNameExportEquals, InternalSymbolNameMissing, InternalSymbolNamePrefix, SymbolName } from "../ast/symbol.js";
+import { EscapeInternalSymbolName, InternalSymbolNameDefault, InternalSymbolNameExportEquals, InternalSymbolNamePrefix, SymbolName } from "../ast/symbol.js";
 import type { CheckFlags } from "../ast/checkflags.js";
 import { CheckFlagsInstantiated, CheckFlagsLate, CheckFlagsNone, CheckFlagsOptionalParameter, CheckFlagsRestParameter, CheckFlagsReverseMapped } from "../ast/checkflags.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
@@ -287,6 +289,7 @@ import {
   Checker_getFalseTypeFromConditionalType,
   Checker_getTrueTypeFromConditionalType,
   Checker_getReducedType,
+  Checker_getIntendedTypeFromJSDocTypeReference,
   Checker_getTypeFromTypeNode,
   Checker_getTypeFromTypeReference,
   Checker_getTypeWithFacts,
@@ -321,6 +324,7 @@ import {
 import {
   Checker_getExportsOfSymbol,
   Checker_getMembersOfSymbol,
+  Checker_getMergedSymbol,
   Checker_getDeclaredTypeOfSymbol,
   Checker_getGlobalTypeAliasSymbol,
   Checker_getNameTypeFromMappedType,
@@ -368,7 +372,7 @@ import type { CopyOnWriteMap, CopyOnWriteSet } from "../collections/cow.js";
 import { CopyOnWriteMap_Get, CopyOnWriteMap_Set, CopyOnWriteSet_Add, CopyOnWriteSet_Has } from "../collections/cow.js";
 import { NodeBuilderImpl_pseudoReturnTypeMatchesPredicate, NodeBuilderImpl_pseudoTypeEquivalentToType, NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback, NodeBuilderImpl_pseudoTypeToType } from "./pseudotypenodebuilder.js";
 import { NodeBuilderImpl_addSymbolTypeToContext, NodeBuilderImpl_enterNewScope, NodeBuilderImpl_enterSignatureScope } from "./nodebuilderscopes.js";
-import { PseudoChecker_GetReturnTypeOfSignature, PseudoChecker_GetTypeOfAccessor, PseudoChecker_GetTypeOfDeclaration } from "../pseudochecker/lookup.js";
+import { CouldAlreadyReferToUndefinedType, PseudoChecker_GetReturnTypeOfSignature, PseudoChecker_GetTypeOfAccessor, PseudoChecker_GetTypeOfDeclaration } from "../pseudochecker/lookup.js";
 import type { PseudoType } from "../pseudochecker/type.js";
 import { NewPseudoTypeUnion, PseudoType_AsPseudoTypeInferred, PseudoTypeKindInferred, PseudoTypeKindNoResult, PseudoTypeUndefined } from "../pseudochecker/type.js";
 import { isExpanding } from "./nodebuilder_hover.js";
@@ -1303,53 +1307,6 @@ export function NodeBuilderImpl_setCommentRange(receiver: GoPtr<NodeBuilderImpl>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingTypeNode","kind":"method","status":"implemented","sigHash":"bec5f3d0f12933fd704da0f48a8e64b5ae5eff7000ba54e7143a88797bcd12f7","bodyHash":"e3f784ef0fce391771b04e3e550933148ee70b5e7481e9076577acb7de365cfd"}
- *
- * Go source:
- * func (b *NodeBuilderImpl) tryReuseExistingTypeNode(typeNode *ast.TypeNode, t *Type, host *ast.Node, addUndefined bool) *ast.TypeNode {
- * 	originalType := t
- * 	if addUndefined {
- * 		t = b.ch.getOptionalType(t, !ast.IsParameterDeclaration(host))
- * 	}
- * 	clone := b.tryReuseExistingNonParameterTypeNode(typeNode, t, host, nil)
- * 	if clone != nil {
- * 		// explicitly add `| undefined` if it's missing from the input type nodes and the type contains `undefined` (and not the missing type)
- * 		if addUndefined && containsNonMissingUndefinedType(b.ch, t) && !someType(b.getTypeFromTypeNode(typeNode, false), func(t *Type) bool {
- * 			return t.flags&TypeFlagsUndefined != 0
- * 		}) {
- * 			return b.f.NewUnionTypeNode(b.f.NewNodeList([]*ast.TypeNode{clone, b.f.NewKeywordTypeNode(ast.KindUndefinedKeyword)}))
- * 		}
- * 		return clone
- * 	}
- * 	if addUndefined && originalType != t {
- * 		cloneMissingUndefined := b.tryReuseExistingNonParameterTypeNode(typeNode, originalType, host, nil)
- * 		if cloneMissingUndefined != nil {
- * 			return b.f.NewUnionTypeNode(b.f.NewNodeList([]*ast.TypeNode{cloneMissingUndefined, b.f.NewKeywordTypeNode(ast.KindUndefinedKeyword)}))
- * 		}
- * 	}
- * 	return nil
- * }
- */
-export function NodeBuilderImpl_tryReuseExistingTypeNode(receiver: GoPtr<NodeBuilderImpl>, typeNode: GoPtr<TypeNode>, t: GoPtr<Type>, host: GoPtr<Node>, addUndefined: bool): GoPtr<TypeNode> {
-  const originalType = t;
-  const effectiveT = addUndefined ? Checker_getOptionalType(receiver!.ch, t, !IsParameterDeclaration(host)) : t;
-  const clone = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, effectiveT, host, undefined);
-  if (clone !== undefined) {
-    if (addUndefined && containsNonMissingUndefinedType(receiver!.ch, effectiveT) && !someType(NodeBuilderImpl_getTypeFromTypeNode(receiver, typeNode, false), (inner) => (inner!.flags & TypeFlagsUndefined) !== 0)) {
-      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [clone, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
-    }
-    return clone;
-  }
-  if (addUndefined && originalType !== effectiveT) {
-    const cloneMissingUndefined = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, originalType, host, undefined);
-    if (cloneMissingUndefined !== undefined) {
-      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [cloneMissingUndefined, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
-    }
-  }
-  return undefined;
-}
-
-/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeNodeIsEquivalentToType","kind":"method","status":"implemented","sigHash":"0d5c1b02a402d48a8c358c2531b80e9fe47fdbea6b298db625cbdfcca893ecd2","bodyHash":"a39e12b3178ad6bc67a8f4577b90013f191df57fb67fff35b53bd252a867f8ab"}
  *
  * Go source:
@@ -1382,7 +1339,49 @@ export function NodeBuilderImpl_typeNodeIsEquivalentToType(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount","kind":"method","status":"implemented","sigHash":"f9b4e03cc8196cd733c5d8568b0783ba753c2a35c53b34bea3e08350144ebdab","bodyHash":"7b62e24434cfceaf234d6cbefa6e3113a23008f5fa46ae211858c037eb1685ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.canReuseExistingJSTypeNode","kind":"method","status":"implemented","sigHash":"877f29d5e7610c95ce9b169fc43297736dd4479444463e83bfd359fa6f0c3e42","bodyHash":"f4b6d2c6262ecb52840ddcba156c6d8b3c3fb3dd2153030ff8d7c35c3b819253"}
+ *
+ * Go source:
+ * func (b *NodeBuilderImpl) canReuseExistingJSTypeNode(existing *ast.TypeNode, t *Type) bool {
+ * 	return b.ch.getIntendedTypeFromJSDocTypeReference(existing) == nil && b.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(existing, t)
+ * }
+ */
+export function NodeBuilderImpl_canReuseExistingJSTypeNode(receiver: GoPtr<NodeBuilderImpl>, existing: GoPtr<TypeNode>, t: GoPtr<Type>): bool {
+  return (Checker_getIntendedTypeFromJSDocTypeReference(receiver!.ch, existing) === undefined &&
+    NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(receiver, existing, t)) as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryGetResolvedSymbolFromTypeNode","kind":"method","status":"implemented","sigHash":"9e25f60733c92748aa60e22ff3b7abb9552d44a9c19577a1e9410f918550b20e","bodyHash":"7b9aefbbe5d977458b6fcc5a2fff78641a41ed2eef39e4552ea1df89139fba47"}
+ *
+ * Go source:
+ * func (b *NodeBuilderImpl) tryGetResolvedSymbolFromTypeNode(node *ast.Node) *ast.Symbol {
+ * 	if node == nil {
+ * 		return nil
+ * 	}
+ * 	b.ch.getTypeFromTypeNode(node)
+ * 	// call to ensure symbol is resolved
+ * 	links := b.ch.symbolNodeLinks.TryGet(node)
+ * 	if links == nil {
+ * 		return nil
+ * 	}
+ * 	return links.resolvedSymbol
+ * }
+ */
+export function NodeBuilderImpl_tryGetResolvedSymbolFromTypeNode(receiver: GoPtr<NodeBuilderImpl>, node: GoPtr<Node>): GoPtr<Symbol> {
+  if (node === undefined) {
+    return undefined;
+  }
+  Checker_getTypeFromTypeNode(receiver!.ch, node);
+  const links = LinkStore_TryGet<GoPtr<Node>, SymbolNodeLinks>(receiver!.ch!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, node);
+  if (links === undefined) {
+    return undefined;
+  }
+  return links!.resolvedSymbol;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount","kind":"method","status":"implemented","sigHash":"f9b4e03cc8196cd733c5d8568b0783ba753c2a35c53b34bea3e08350144ebdab","bodyHash":"406064d3c0c343b3ba8a3608b69e58f01feb7ab275def7139e20f5d049efb4e9"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(existing *ast.TypeNode, t *Type) bool {
@@ -1393,18 +1392,15 @@ export function NodeBuilderImpl_typeNodeIsEquivalentToType(receiver: GoPtr<NodeB
  * 	if !ast.IsTypeReferenceNode(existing) {
  * 		return true
  * 	}
- * 	// `type` is a reference type, and `existing` is a type reference node, but we still need to make sure they refer to the _same_ target type
- * 	// before we go comparing their type argument counts.
- * 	b.ch.getTypeFromTypeReference(existing)
- * 	// call to ensure symbol is resolved
- * 	links := b.ch.symbolNodeLinks.TryGet(existing)
- * 	if links == nil {
- * 		return true
- * 	}
- * 	symbol := links.resolvedSymbol
+ *
+ * 	symbol := b.tryGetResolvedSymbolFromTypeNode(existing)
  * 	if symbol == nil {
  * 		return true
  * 	}
+ *
+ * 	// `type` is a reference type, and `existing` is a type reference node, but we still need to make sure they refer to the _same_ target type
+ * 	// before we go comparing their type argument counts.
+ *
  * 	existingTarget := b.ch.getDeclaredTypeOfSymbol(symbol)
  * 	if existingTarget == nil || existingTarget != t.AsTypeReference().target {
  * 		return true
@@ -1419,12 +1415,7 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
   if (!IsTypeReferenceNode(existing)) {
     return true;
   }
-  Checker_getTypeFromTypeReference(receiver!.ch, existing);
-  const links = LinkStore_TryGet<GoPtr<Node>, SymbolNodeLinks>(receiver!.ch!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, existing);
-  if (links === undefined) {
-    return true;
-  }
-  const symbol = links!.resolvedSymbol;
+  const symbol = NodeBuilderImpl_tryGetResolvedSymbolFromTypeNode(receiver, existing);
   if (symbol === undefined) {
     return true;
   }
@@ -1437,7 +1428,7 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingNonParameterTypeNode","kind":"method","status":"implemented","sigHash":"57a8620fdc7b9187bce0c8e3064f8da98436d896dbafae744344a9cbb53f793a","bodyHash":"df0d4822129492849fffe0d515cc11a6fcc6acb13ed744d828643a6f960f44c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingNonParameterTypeNode","kind":"method","status":"implemented","sigHash":"57a8620fdc7b9187bce0c8e3064f8da98436d896dbafae744344a9cbb53f793a","bodyHash":"4e09a0040ac4342311e28fb327991b852618580863da4517937eca31cc5dc2b3"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) tryReuseExistingNonParameterTypeNode(existing *ast.TypeNode, t *Type, host *ast.Node, annotationType *Type) *ast.TypeNode {
@@ -1447,7 +1438,7 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
  * 	if annotationType == nil {
  * 		annotationType = b.getTypeFromTypeNode(existing, true)
  * 	}
- * 	if annotationType != nil && b.typeNodeIsEquivalentToType(host, t, annotationType) && b.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(existing, t) {
+ * 	if annotationType != nil && b.typeNodeIsEquivalentToType(host, t, annotationType) && b.canReuseExistingJSTypeNode(existing, t) {
  * 		result := b.tryReuseExistingNodeHelper(existing)
  * 		if result != nil {
  * 			return result
@@ -1459,7 +1450,7 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
 export function NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver: GoPtr<NodeBuilderImpl>, existing: GoPtr<TypeNode>, t: GoPtr<Type>, host: GoPtr<Node>, annotationType: GoPtr<Type>): GoPtr<TypeNode> {
   const effectiveHost = host !== undefined ? host : receiver!.ctx!.enclosingDeclaration;
   const effectiveAnnotationType = annotationType !== undefined ? annotationType : NodeBuilderImpl_getTypeFromTypeNode(receiver, existing, true);
-  if (effectiveAnnotationType !== undefined && NodeBuilderImpl_typeNodeIsEquivalentToType(receiver, effectiveHost, t, effectiveAnnotationType) && NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(receiver, existing, t)) {
+  if (effectiveAnnotationType !== undefined && NodeBuilderImpl_typeNodeIsEquivalentToType(receiver, effectiveHost, t, effectiveAnnotationType) && NodeBuilderImpl_canReuseExistingJSTypeNode(receiver, existing, t)) {
     const result = NodeBuilderImpl_tryReuseExistingNodeHelper(receiver, existing);
     if (result !== undefined) {
       return result;
@@ -2323,7 +2314,7 @@ export function NodeBuilderImpl_getNameOfSymbolFromNameType(receiver: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getNameOfSymbolAsWritten","kind":"method","status":"implemented","sigHash":"f532bf3f87088e5350a915a95176711d748f624233950ea75cb94bb2f4c13bc6","bodyHash":"28d04ee53f45e4d2290715f25d2f0e389dcfa6ec230221e110342989c01e1c59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getNameOfSymbolAsWritten","kind":"method","status":"implemented","sigHash":"f532bf3f87088e5350a915a95176711d748f624233950ea75cb94bb2f4c13bc6","bodyHash":"200672292ce15cb54c8e2dbd62bdbdf3e7d67a48e532beaa66eca5b58b9b767c"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) getNameOfSymbolAsWritten(symbol *ast.Symbol) string {
@@ -2377,10 +2368,7 @@ export function NodeBuilderImpl_getNameOfSymbolFromNameType(receiver: GoPtr<Node
  * 	if len(name) > 0 {
  * 		return name
  * 	}
- * 	if symbol.Name == ast.InternalSymbolNameMissing {
- * 		return "__missing"
- * 	}
- * 	return symbol.Name
+ * 	return ast.EscapeInternalSymbolName(symbol.Name)
  * }
  */
 export function NodeBuilderImpl_getNameOfSymbolAsWritten(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): string {
@@ -2426,10 +2414,7 @@ export function NodeBuilderImpl_getNameOfSymbolAsWritten(receiver: GoPtr<NodeBui
   if (finalName.length > 0) {
     return finalName;
   }
-  if (sym!.Name === InternalSymbolNameMissing) {
-    return "__missing";
-  }
-  return sym!.Name;
+  return EscapeInternalSymbolName(sym!.Name);
 }
 
 /**
@@ -4721,7 +4706,7 @@ export function hasTypeAnnotation(declaration: GoPtr<Declaration>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeTypeForDeclaration","kind":"method","status":"implemented","sigHash":"0b470c8019e7b8bda5ee206173271b4dbccb11a8d882dc517442fbc69fd6a55a","bodyHash":"f20eede70aea86325699b368d25d3df38579488752649bb957ef154370b7b80d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeTypeForDeclaration","kind":"method","status":"implemented","sigHash":"0b470c8019e7b8bda5ee206173271b4dbccb11a8d882dc517442fbc69fd6a55a","bodyHash":"724fc571837adeeede5510372df42790888eea3b8b6dd314468197a86849d8e1"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeTypeForDeclaration(declaration *ast.Declaration, t *Type, symbol *ast.Symbol, tryReuse bool) *ast.Node {
@@ -4749,14 +4734,14 @@ export function hasTypeAnnotation(declaration: GoPtr<Declaration>): bool {
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	// !!! TODO: JSDoc, getEmitResolver call is unfortunate layering for the helper - hoist it into checker
  * 	requiresAddingUndefined := declaration != nil && (ast.IsParameterDeclaration(declaration) || ast.IsPropertySignatureDeclaration(declaration) || ast.IsPropertyDeclaration(declaration)) && b.ch.GetEmitResolver().requiresAddingImplicitUndefined(declaration, symbol, b.ctx.enclosingDeclaration)
  * 	addUndefinedForParameter := requiresAddingUndefined && (ast.IsParameterDeclaration(declaration) /*|| ast.IsJSDocParameterTag(declaration)* /)
  * 	if addUndefinedForParameter {
  * 		t = b.ch.getOptionalType(t, false)
  * 	}
- * 
+ *
  * 	restoreFlags := b.saveRestoreFlags()
  * 	if t.flags&TypeFlagsUniqueESSymbol != 0 && t.symbol == symbol && (b.ctx.enclosingDeclaration == nil || core.Some(symbol.Declarations, func(d *ast.Declaration) bool {
  * 		return ast.GetSourceFileOfNode(d) == b.ctx.enclosingFile
@@ -4795,7 +4780,15 @@ export function hasTypeAnnotation(declaration: GoPtr<Declaration>): bool {
  * 			// typeToTypeNode serialization (mirroring the suppression that
  * 			// pseudoTypeToNodeWithCheckerFallback provides).
  * 			reportedInferenceFallback = reportErrors && pt.Kind == pseudochecker.PseudoTypeKindInferred && len(pt.AsPseudoTypeInferred().ErrorNodes) > 0
+ * 			shouldAddUndefined := false
  * 			if requiresAddingUndefined {
+ * 				if ptt := b.pseudoTypeToType(pt); ptt != nil {
+ * 					shouldAddUndefined = !containsNonMissingUndefinedType(b.ch, ptt)
+ * 				} else {
+ * 					shouldAddUndefined = !pseudochecker.CouldAlreadyReferToUndefinedType(pt)
+ * 				}
+ * 			}
+ * 			if shouldAddUndefined {
  * 				pt = pseudochecker.NewPseudoTypeUnion([]*pseudochecker.PseudoType{pt, pseudochecker.PseudoTypeUndefined})
  * 				if b.pseudoTypeEquivalentToType(pt, t, false, reportErrors) {
  * 					result = b.pseudoTypeToNodeWithCheckerFallback(pt, t)
@@ -4884,7 +4877,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
       }
     }
     const reportErrors = !receiver!.ctx!.suppressReportInferenceFallback;
-    if (pt !== undefined && NodeBuilderImpl_pseudoTypeEquivalentToType(
+    if (NodeBuilderImpl_pseudoTypeEquivalentToType(
       receiver,
       pt,
       t,
@@ -4899,14 +4892,23 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
         pseudoType = NewPseudoTypeUnion([pt, PseudoTypeUndefined]);
       }
       result = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pseudoType, t);
-    } else if (pt !== undefined) {
+    } else {
       reportedInferenceFallback = reportErrors &&
         pt!.Kind === PseudoTypeKindInferred &&
         PseudoType_AsPseudoTypeInferred(pt)!.ErrorNodes.length > 0;
+      let shouldAddUndefined = false;
       if (requiresAddingUndefined) {
-        const pseudoType = NewPseudoTypeUnion([pt, PseudoTypeUndefined]);
-        if (NodeBuilderImpl_pseudoTypeEquivalentToType(receiver, pseudoType, t, false as bool, reportErrors)) {
-          result = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pseudoType, t);
+        const pseudoTypeType = NodeBuilderImpl_pseudoTypeToType(receiver, pt);
+        if (pseudoTypeType !== undefined) {
+          shouldAddUndefined = !containsNonMissingUndefinedType(receiver!.ch, pseudoTypeType);
+        } else {
+          shouldAddUndefined = !CouldAlreadyReferToUndefinedType(pt);
+        }
+      }
+      if (shouldAddUndefined) {
+        pt = NewPseudoTypeUnion([pt, PseudoTypeUndefined]);
+        if (NodeBuilderImpl_pseudoTypeEquivalentToType(receiver, pt, t, false as bool, reportErrors)) {
+          result = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pt, t);
           reportedInferenceFallback = false;
         }
       }
@@ -5882,14 +5884,15 @@ export function getTypeAliasForTypeLiteral(c: GoPtr<Checker>, t: GoPtr<Type>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldWriteTypeOfFunctionSymbol","kind":"method","status":"implemented","sigHash":"1e53cb0acba9fdb648e90206c92e85ae75009f1b77fdbc69b4903d5fd217e276","bodyHash":"80e0e2dcd7976d5177c05d322d73da49b0ab26348296af53ee335acd27ab5df8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldWriteTypeOfFunctionSymbol","kind":"method","status":"implemented","sigHash":"48a30949ad6fc785ee2facf89cc16c34d8779ac43124caa340d37ac31f690772","bodyHash":"d83dffe30da1e4fa8f1bcc6a7d993860b800ec26d256c7c882e2996030a6cc89"}
  *
  * Go source:
- * func (b *NodeBuilderImpl) shouldWriteTypeOfFunctionSymbol(symbol *ast.Symbol, typeId TypeId) bool {
+ * func (b *NodeBuilderImpl) shouldWriteTypeOfFunctionSymbol(symbol *ast.Symbol, typeId TypeId) (bool, *ast.Symbol) {
  * 	isStaticMethodSymbol := symbol.Flags&ast.SymbolFlagsMethod != 0 && core.Some(symbol.Declarations, func(declaration *ast.Node) bool {
  * 		return ast.IsStatic(declaration) && !b.ch.isLateBindableIndexSignature(ast.GetNameOfDeclaration(declaration))
  * 	})
  * 	isNonLocalFunctionSymbol := false
+ * 	isFunctionExpressionSymbol := false
  * 	if symbol.Flags&ast.SymbolFlagsFunction != 0 {
  * 		if symbol.Parent != nil {
  * 			isNonLocalFunctionSymbol = true
@@ -5899,38 +5902,68 @@ export function getTypeAliasForTypeLiteral(c: GoPtr<Checker>, t: GoPtr<Type>): G
  * 					isNonLocalFunctionSymbol = true
  * 					break
  * 				}
+ * 				if ast.IsFunctionExpressionOrArrowFunction(declaration) && ast.IsVariableDeclaration(declaration.Parent) &&
+ * 					ast.IsVariableDeclarationList(declaration.Parent.Parent) && ast.IsVariableStatement(declaration.Parent.Parent.Parent) &&
+ * 					declaration.Parent.Parent.Parent.Parent != nil &&
+ * 					(declaration.Parent.Parent.Parent.Parent.Kind == ast.KindSourceFile || declaration.Parent.Parent.Parent.Parent.Kind == ast.KindModuleBlock) {
+ * 					isNonLocalFunctionSymbol = true
+ * 					isFunctionExpressionSymbol = true
+ * 					break
+ * 				}
  * 			}
  * 		}
  * 	}
  * 	if isStaticMethodSymbol || isNonLocalFunctionSymbol {
+ * 		if isFunctionExpressionSymbol && symbol.ValueDeclaration != nil && symbol.ValueDeclaration.Parent != nil && symbol.ValueDeclaration.Parent != b.ctx.enclosingDeclaration {
+ * 			symbol = b.ch.getMergedSymbol(symbol.ValueDeclaration.Parent.Symbol())
+ * 		}
  * 		// typeof is allowed only for static/non local functions
  * 		return (b.ctx.flags&nodebuilder.FlagsUseTypeOfFunction != 0 || b.ctx.visitedTypes.Has(typeId)) && // it is type of the symbol uses itself recursively
- * 			(b.ctx.flags&nodebuilder.FlagsUseStructuralFallback == 0 || b.ch.IsValueSymbolAccessible(symbol, b.ctx.enclosingDeclaration)) // And the build is going to succeed without visibility error or there is no structural fallback allowed
+ * 			(b.ctx.flags&nodebuilder.FlagsUseStructuralFallback == 0 || b.ch.IsValueSymbolAccessible(symbol, b.ctx.enclosingDeclaration)), symbol // And the build is going to succeed without visibility error or there is no structural fallback allowed
  * 	}
- * 	return false
+ * 	return false, symbol
  * }
  */
-export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, typeId: TypeId): bool {
-  const isStaticMethodSymbol = (symbol_!.Flags & SymbolFlagsMethod) !== 0 && Some(symbol_!.Declarations, (declaration) =>
+export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, typeId: TypeId): [bool, GoPtr<Symbol>] {
+  let symbol = symbol_;
+  const isStaticMethodSymbol = (symbol!.Flags & SymbolFlagsMethod) !== 0 && Some(symbol!.Declarations, (declaration) =>
     IsStatic(declaration) && !Checker_isLateBindableIndexSignature(receiver!.ch, GetNameOfDeclaration(declaration)));
   let isNonLocalFunctionSymbol = false;
-  if ((symbol_!.Flags & SymbolFlagsFunction) !== 0) {
-    if (symbol_!.Parent !== undefined) {
+  let isFunctionExpressionSymbol = false;
+  if ((symbol!.Flags & SymbolFlagsFunction) !== 0) {
+    if (symbol!.Parent !== undefined) {
       isNonLocalFunctionSymbol = true;
     } else {
-      for (const declaration of symbol_!.Declarations ?? []) {
+      for (const declaration of symbol!.Declarations ?? []) {
         if (declaration!.Parent!.Kind === KindSourceFile || declaration!.Parent!.Kind === KindModuleBlock) {
           isNonLocalFunctionSymbol = true;
+          break;
+        }
+        const variableDeclaration = declaration!.Parent;
+        const variableDeclarationList = variableDeclaration?.Parent;
+        const variableStatement = variableDeclarationList?.Parent;
+        const statementParent = variableStatement?.Parent;
+        if ((declaration!.Kind === KindFunctionExpression || declaration!.Kind === KindArrowFunction) &&
+          variableDeclaration?.Kind === KindVariableDeclaration &&
+          variableDeclarationList?.Kind === KindVariableDeclarationList &&
+          variableStatement?.Kind === KindVariableStatement &&
+          statementParent !== undefined &&
+          (statementParent.Kind === KindSourceFile || statementParent.Kind === KindModuleBlock)) {
+          isNonLocalFunctionSymbol = true;
+          isFunctionExpressionSymbol = true;
           break;
         }
       }
     }
   }
   if (isStaticMethodSymbol || isNonLocalFunctionSymbol) {
-    return ((receiver!.ctx!.flags & FlagsUseTypeOfFunction) !== 0 || Set_Has(receiver!.ctx!.visitedTypes, typeId)) &&
-      ((receiver!.ctx!.flags & FlagsUseStructuralFallback) === 0 || Checker_IsValueSymbolAccessible(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration));
+    if (isFunctionExpressionSymbol && symbol!.ValueDeclaration !== undefined && symbol!.ValueDeclaration.Parent !== undefined && symbol!.ValueDeclaration.Parent !== receiver!.ctx!.enclosingDeclaration) {
+      symbol = Checker_getMergedSymbol(receiver!.ch, Node_Symbol(symbol!.ValueDeclaration.Parent));
+    }
+    return [(((receiver!.ctx!.flags & FlagsUseTypeOfFunction) !== 0 || Set_Has(receiver!.ctx!.visitedTypes, typeId)) &&
+      ((receiver!.ctx!.flags & FlagsUseStructuralFallback) === 0 || Checker_IsValueSymbolAccessible(receiver!.ch, symbol, receiver!.ctx!.enclosingDeclaration))) as bool, symbol];
   }
-  return false;
+  return [false as bool, symbol];
 }
 
 /**
@@ -5946,7 +5979,41 @@ export function NodeBuilderImpl_createAnonymousTypeNode(receiver: GoPtr<NodeBuil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAnonymousTypeNodeEx","kind":"method","status":"implemented","sigHash":"f2bebebe80ca443db938b805e7ceb3358bd919e216ebbd92158f42e37ee64222","bodyHash":"b3a68fac9f8011067d9c483b84a0196d033ccee1b3e472b53380be04eadb0d46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldEmitTypeOfSymbol","kind":"method","status":"implemented","sigHash":"83b8f18e006dc748493770b2727f4e400c273532ba059112ead44f658a30cefd","bodyHash":"a23f2d3dc715caf458bafe3f2161f4da382943f54d5997599c4ea706bdd54034"}
+ *
+ * Go source:
+ * func (b *NodeBuilderImpl) shouldEmitTypeOfSymbol(forceExpansion bool, forceClassExpansion bool, isInstanceType ast.SymbolFlags, symbol *ast.Symbol, typeId TypeId) (bool, *ast.Symbol) {
+ * 	if forceExpansion {
+ * 		return false, symbol
+ * 	}
+ * 	nonFunctionResult := symbol.Flags&ast.SymbolFlagsClass != 0 && !forceClassExpansion && b.ch.getBaseTypeVariableOfClass(symbol) == nil && !(symbol.ValueDeclaration != nil && ast.IsClassLike(symbol.ValueDeclaration) && b.ctx.flags&nodebuilder.FlagsWriteClassExpressionAsTypeLiteral != 0 && (!ast.IsClassDeclaration(symbol.ValueDeclaration) || b.ch.IsSymbolAccessible(symbol, b.ctx.enclosingDeclaration, isInstanceType, false /*shouldComputeAliasesToMakeVisible* /).Accessibility != printer.SymbolAccessibilityAccessible)) || symbol.Flags&(ast.SymbolFlagsEnum|ast.SymbolFlagsValueModule) != 0
+ * 	if nonFunctionResult {
+ * 		return true, symbol
+ * 	}
+ * 	return b.shouldWriteTypeOfFunctionSymbol(symbol, typeId)
+ * }
+ */
+export function NodeBuilderImpl_shouldEmitTypeOfSymbol(receiver: GoPtr<NodeBuilderImpl>, forceExpansion: bool, forceClassExpansion: bool, isInstanceType: SymbolFlags, symbol_: GoPtr<Symbol>, typeId: TypeId): [bool, GoPtr<Symbol>] {
+  if (forceExpansion) {
+    return [false as bool, symbol_];
+  }
+  const nonFunctionResult = (((symbol_!.Flags & SymbolFlagsClass) !== 0 &&
+    !forceClassExpansion &&
+    Checker_getBaseTypeVariableOfClass(receiver!.ch, symbol_) === undefined &&
+    !(symbol_!.ValueDeclaration !== undefined &&
+      IsClassLike(symbol_!.ValueDeclaration) &&
+      (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0 &&
+      (!IsClassDeclaration(symbol_!.ValueDeclaration) ||
+        Checker_IsSymbolAccessible(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration, isInstanceType, false).Accessibility !== SymbolAccessibilityAccessible))) ||
+    (symbol_!.Flags & (SymbolFlagsEnum | SymbolFlagsValueModule)) !== 0) as bool;
+  if (nonFunctionResult) {
+    return [true as bool, symbol_];
+  }
+  return NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver, symbol_, typeId);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAnonymousTypeNodeEx","kind":"method","status":"implemented","sigHash":"f2bebebe80ca443db938b805e7ceb3358bd919e216ebbd92158f42e37ee64222","bodyHash":"21086dfb52d185c8fba486666ac2049315b9a43a6432d59af99beaba99a6cc73"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createAnonymousTypeNodeEx(t *Type, forceClassExpansion bool, forceExpansion bool) *ast.TypeNode {
@@ -5991,14 +6058,13 @@ export function NodeBuilderImpl_createAnonymousTypeNode(receiver: GoPtr<NodeBuil
  * 		} else {
  * 			isInstanceType = ast.SymbolFlagsValue
  * 		}
- * 
+ *
  * 		// !!! JS support
  * 		// if c.isJSConstructor(symbol.ValueDeclaration) {
  * 		// 	// Instance and static types share the same symbol; only add 'typeof' for the static side.
  * 		// 	return b.symbolToTypeNode(symbol, isInstanceType, nil)
  * 		// } else
- * 		if !forceExpansion &&
- * 			(symbol.Flags&ast.SymbolFlagsClass != 0 && !forceClassExpansion && b.ch.getBaseTypeVariableOfClass(symbol) == nil && !(symbol.ValueDeclaration != nil && ast.IsClassLike(symbol.ValueDeclaration) && b.ctx.flags&nodebuilder.FlagsWriteClassExpressionAsTypeLiteral != 0 && (!ast.IsClassDeclaration(symbol.ValueDeclaration) || b.ch.IsSymbolAccessible(symbol, b.ctx.enclosingDeclaration, isInstanceType, false /*shouldComputeAliasesToMakeVisible* /).Accessibility != printer.SymbolAccessibilityAccessible)) || symbol.Flags&(ast.SymbolFlagsEnum|ast.SymbolFlagsValueModule) != 0 || b.shouldWriteTypeOfFunctionSymbol(symbol, typeId)) {
+ * 		if ok, symbol := b.shouldEmitTypeOfSymbol(forceExpansion, forceClassExpansion, isInstanceType, symbol, typeId); ok {
  * 			if b.shouldExpandType(t, false /*isAlias* /) {
  * 				b.ctx.depth++
  * 			} else {
@@ -6053,21 +6119,13 @@ export function NodeBuilderImpl_createAnonymousTypeNodeEx(receiver: GoPtr<NodeBu
       return NodeBuilderImpl_visitAndTransformType(receiver, t, NodeBuilderImpl_createTypeNodeFromObjectType);
     }
     const isInstanceType = isClassInstanceSide(receiver!.ch, t) ? SymbolFlagsType : SymbolFlagsValue;
-    if (!forceExpansion &&
-      (((symbol_!.Flags & SymbolFlagsClass) !== 0 &&
-        !forceClassExpansion &&
-        Checker_getBaseTypeVariableOfClass(receiver!.ch, symbol_) === undefined &&
-        !(symbol_!.ValueDeclaration !== undefined &&
-          IsClassLike(symbol_!.ValueDeclaration) &&
-          (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0 &&
-          (!IsClassDeclaration(symbol_!.ValueDeclaration) ||
-            Checker_IsSymbolAccessible(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration, isInstanceType, false).Accessibility !== SymbolAccessibilityAccessible))) ||
-        (symbol_!.Flags & (SymbolFlagsEnum | SymbolFlagsValueModule)) !== 0 ||
-        NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver, symbol_, typeId))) {
-      if (NodeBuilderImpl_shouldExpandType(receiver, t, false)) {
+    const [emitTypeOf, effectiveSymbol] = NodeBuilderImpl_shouldEmitTypeOfSymbol(receiver, forceExpansion, forceClassExpansion, isInstanceType, symbol_, typeId);
+    if (emitTypeOf) {
+      const shouldExpand = NodeBuilderImpl_shouldExpandType(receiver, t, false);
+      if (shouldExpand) {
         receiver!.ctx!.depth++;
       } else {
-        return NodeBuilderImpl_symbolToTypeNode(receiver, symbol_, isInstanceType, undefined);
+        return NodeBuilderImpl_symbolToTypeNode(receiver, effectiveSymbol, isInstanceType, undefined);
       }
     }
     if (Set_Has(receiver!.ctx!.visitedTypes, typeId)) {
@@ -6641,11 +6699,11 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   const isConstructorObject = (t!.objectFlags & ObjectFlagsAnonymous) !== 0 && t!.symbol !== undefined && (t!.symbol!.Flags & SymbolFlagsClass) !== 0;
   let id: GoPtr<CompositeSymbolIdentity>;
   if ((t!.objectFlags & ObjectFlagsReference) !== 0 && Type_AsTypeReference(t)!.node !== undefined) {
-    id = { isConstructorNode: false, symbolId: 0 as SymbolId, nodeId: GetNodeId(Type_AsTypeReference(t)!.node) };
+    id = { isConstructorNode: false, symbolId: 0n as SymbolId, nodeId: GetNodeId(Type_AsTypeReference(t)!.node) };
   } else if ((t!.flags & TypeFlagsConditional) !== 0) {
-    id = { isConstructorNode: false, symbolId: 0 as SymbolId, nodeId: GetNodeId(Type_AsConditionalType(t)!.root!.node) };
+    id = { isConstructorNode: false, symbolId: 0n as SymbolId, nodeId: GetNodeId(Type_AsConditionalType(t)!.root!.node) };
   } else if (t!.symbol !== undefined) {
-    id = { isConstructorNode: isConstructorObject, symbolId: GetSymbolId(t!.symbol), nodeId: 0 as NodeId };
+    id = { isConstructorNode: isConstructorObject, symbolId: GetSymbolId(t!.symbol), nodeId: 0n as NodeId };
   }
   const key: CompositeTypeCacheIdentity = { typeId: typeId, flags: receiver!.ctx!.flags, internalFlags: receiver!.ctx!.internalFlags };
   // Don't rely on type cache if we're expanding a type, because we need to compute `canIncreaseExpansionDepth`.
@@ -7170,6 +7228,7 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
       receiver!.ctx!.approximateLength += 4;
       return NewThisTypeNode(receiver!.f) as GoPtr<TypeNode>;
     }
+    let restoreAliasDepth = false;
     if (inTypeAlias === 0 && t!.alias !== undefined && ((receiver!.ctx!.flags & FlagsUseAliasDefinedOutsideCurrentScope) !== 0 || Checker_IsTypeSymbolAccessible(receiver!.ch, TypeAlias_Symbol(t!.alias), receiver!.ctx!.enclosingDeclaration))) {
       if (!NodeBuilderImpl_shouldExpandType(receiver, t, true)) {
         const sym = TypeAlias_Symbol(t!.alias);
@@ -7183,12 +7242,9 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
         return NodeBuilderImpl_symbolToTypeNode(receiver, sym, SymbolFlagsType, typeArgumentNodes);
       }
       receiver!.ctx!.depth++;
-      try {
-        return NodeBuilderImpl_typeToTypeNode(receiver, t);
-      } finally {
-        receiver!.ctx!.depth--;
-      }
+      restoreAliasDepth = true;
     }
+    try {
     const objectFlags = t!.objectFlags;
     if ((objectFlags & ObjectFlagsReference) !== 0) {
       if (NodeBuilderImpl_shouldExpandType(receiver, t, false)) {
@@ -7307,6 +7363,11 @@ export function NodeBuilderImpl_typeToTypeNode(receiver: GoPtr<NodeBuilderImpl>,
       return typeNode;
     }
     throw new globalThis.Error("Should be unreachable.");
+    } finally {
+      if (restoreAliasDepth) {
+        receiver!.ctx!.depth--;
+      }
+    }
   } finally {
     if (pushedType) {
       receiver!.ctx!.typeStack.pop();

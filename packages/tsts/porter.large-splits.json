@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedAt": "2026-06-14T00:00:00.000Z",
-  "sourceRevision": "c78d39e7075b4fc641b12b1f35d905c54cdc13ef",
+  "sourceRevision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
   "threshold": 5000,
   "files": {
     "internal/checker/checker.go": {
@@ -791,6 +791,7 @@
           "file": "symbols.ts",
           "description": "Symbol lookup, declarations, names, imports/exports, property/member resolution, and identifier checks.",
           "declarations": [
+            "func::isNotReplacableByMethod",
             "method::Checker.addDeclarationToLateBoundSymbol",
             "method::Checker.addInheritedMembers",
             "method::Checker.addNamedUnions",
@@ -1674,7 +1675,9 @@
           "file": "relater.ts",
           "description": "Assignability, comparability, relation/variance checks, inference from types, template-literal inference, and recursion-identity for the structural relation engine.",
           "matchers": [
-            { "idRegex": "internal/checker/relater\\.go" }
+            {
+              "idRegex": "internal/checker/relater\\.go"
+            }
           ]
         }
       ]

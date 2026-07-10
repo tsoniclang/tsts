@@ -60,7 +60,7 @@ export type GoInterfaceValue<C> = { readonly [goReceiverKey]?: C };
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Visitor","kind":"type","status":"implemented","sigHash":"dd7869ba97de380722453246fae6df0cc0fef854aefc29795374493d0e8ef23c","bodyHash":"34315412c563b2ca587e80bf5a4db9916d69e3fc67193ad8594828a91464a464"}
  *
  * Go source:
- * type Visitor func(*Node) bool
+ * Visitor func(*Node) bool
  */
 export type Visitor = (node: GoPtr<Node>) => bool;
 
@@ -87,7 +87,7 @@ export function visit(v: Visitor, node: GoPtr<Node>): bool {
  *
  * Go source:
  * func visitNodes(v Visitor, nodes []*Node) bool {
- * 	for _, node := range nodes {
+ * 	for _, node := range nodes { //nolint:modernize
  * 		if v(node) {
  * 			return true
  * 		}
@@ -218,13 +218,12 @@ export interface Node {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::nodeData","kind":"type","status":"implemented","sigHash":"917909b9dde382933bf1d3f2d7a85eaed5809b3c52e9e455d41c7f90de91fb0f","bodyHash":"69bea16559e2295ce35ca04e8d779ab24e8ef282ab94a47e5e94979cfd146b60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::nodeData","kind":"type","status":"implemented","sigHash":"917909b9dde382933bf1d3f2d7a85eaed5809b3c52e9e455d41c7f90de91fb0f","bodyHash":"90438737ce2158c096bac11d811e34ebdeaf5933be64e73b1658a184be278dad"}
  *
  * Go source:
  * nodeData interface {
  * 	AsNode() *Node
  * 	ForEachChild(v Visitor) bool
- * 	IterChildren() iter.Seq[*Node]
  * 	VisitEachChild(v *NodeVisitor) *Node
  * 	Clone(v NodeFactoryCoercible) *Node
  * 	Name() *DeclarationName
@@ -248,7 +247,6 @@ export interface Node {
 export interface nodeData extends GoInterfaceValue<unknown> {
   AsNode(): GoPtr<Node>;
   ForEachChild(v: Visitor): bool;
-  IterChildren(): GoSeq<GoPtr<Node>>;
   VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node>;
   Clone(v: NodeFactoryCoercible): GoPtr<Node>;
   Name(): GoPtr<DeclarationName>;
@@ -548,22 +546,6 @@ export function ModifierList_Clone(receiver: GoPtr<ModifierList>, f: GoPtr<NodeF
   return res;
 }
 
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::invert","kind":"func","status":"implemented","sigHash":"f02064413d8da117e4423d366cdf5da0935a1b9b40b1743cf69630efd2b3414f","bodyHash":"c263539bd7a98261d0096bb89756f8f8eb15c2abfa4c1cff80821a5432e341bd"}
- *
- * Go source:
- * func invert(yield func(v *Node) bool) Visitor {
- * 	return func(n *Node) bool {
- * 		return !yield(n)
- * 	}
- * }
- */
-export function invert(yield_: (v: GoPtr<Node>) => bool): Visitor {
-  return (n: GoPtr<Node>): bool => {
-    return (!yield_(n)) as bool;
-  };
-}
-
 // `NewNodeFactory` allocates a fresh generated NodeFactory. The arena fields are
 // lazily-initialized (single-threaded model), so a zero-valued factory is just
 // the hooks plus zero counters.
@@ -601,30 +583,6 @@ export function NodeDefault_AsNode(receiver: GoPtr<NodeDefault>): GoPtr<Node> {
  */
 export function NodeDefault_ForEachChild(receiver: GoPtr<NodeDefault>, v: Visitor): bool {
   return false as bool;
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeDefault.forEachChildIter","kind":"method","status":"implemented","sigHash":"d3ba6855120ecdbbeb21d896c2e37ca92c9b0e9e1e59517a039ed51d00793fac","bodyHash":"2a86409cebcf57f9ed0e9405f0b7437cf640059e0c57aaae4940e259853bead4"}
- *
- * Go source:
- * func (node *NodeDefault) forEachChildIter(yield func(v *Node) bool) {
- * 	node.data.ForEachChild(invert(yield)) // `true` is return early for a ts visitor, `false` is return early for a go iterator yield function
- * }
- */
-export function NodeDefault_forEachChildIter(receiver: GoPtr<NodeDefault>, yield_: (v: GoPtr<Node>) => bool): void {
-  receiver!.data.ForEachChild(invert(yield_));
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeDefault.IterChildren","kind":"method","status":"implemented","sigHash":"2449a405e7364a9b682de3d9ebd8a5b5f7d91164495f95d67f9c55f78a087b44","bodyHash":"353a70ea2b94819855540f33723d38ea4656fffac0d7cbb39becfd85e523f0dc"}
- *
- * Go source:
- * func (node *NodeDefault) IterChildren() iter.Seq[*Node] {
- * 	return node.forEachChildIter
- * }
- */
-export function NodeDefault_IterChildren(receiver: GoPtr<NodeDefault>): GoSeq<GoPtr<Node>> {
-  return (yield_: (v: GoPtr<Node>) => bool): void => NodeDefault_forEachChildIter(receiver, yield_);
 }
 
 /**
@@ -783,6 +741,10 @@ export function NodeDefault_SubtreeFacts(receiver: GoPtr<NodeDefault>): SubtreeF
  *
  * Go source:
  * func (node *NodeDefault) subtreeFactsWorker(self nodeData) SubtreeFacts {
+ * 	// To avoid excessive conditional checks, the default implementation of subtreeFactsWorker directly invokes
+ * 	// computeSubtreeFacts. More complex nodes should implement CompositeNodeBase, which overrides this
+ * 	// method to cache the result. `self` is passed along to ensure we lookup `computeSubtreeFacts` on the
+ * 	// correct type, as `CompositeNodeBase` does not, itself, inherit from `Node`.
  * 	return self.computeSubtreeFacts()
  * }
  */
@@ -823,7 +785,7 @@ export function NodeDefault_propagateSubtreeFacts(receiver: GoPtr<NodeDefault>):
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsNode","kind":"method","status":"implemented","sigHash":"bb2a2d1acc66243e4cb185b7362cb3044a68d70cb707e84defa2a9694652e1e6","bodyHash":"6f8d90c2ec961445caf9509686e116c08b5ead7a69002d5591c1fe9ab15520f9"}
  *
  * Go source:
- * func (n *Node) AsNode() *Node                             { return n }
+ * func (n *Node) AsNode() *Node { return n }
  */
 export function Node_AsNode(receiver: GoPtr<Node>): GoPtr<Node> {
   return receiver;
@@ -833,7 +795,7 @@ export function Node_AsNode(receiver: GoPtr<Node>): GoPtr<Node> {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Pos","kind":"method","status":"implemented","sigHash":"357e8e6b94b0417abc7e87471b45a6cc8b3e46b3517528e08a1b4e2737ff1eb9","bodyHash":"7f0caa654d950f2b27b9d056777552339efed56b7c69fba41f99064728bce91e"}
  *
  * Go source:
- * func (n *Node) Pos() int                                  { return n.Loc.Pos() }
+ * func (n *Node) Pos() int      { return n.Loc.Pos() }
  */
 export function Node_Pos(receiver: GoPtr<Node>): int {
   return TextRange_Pos(receiver!.Loc);
@@ -843,30 +805,39 @@ export function Node_Pos(receiver: GoPtr<Node>): int {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.End","kind":"method","status":"implemented","sigHash":"dc818bcdb0f075ea7a14f6e2d636b69a3e218997ea45552bc394db60a173c0fc","bodyHash":"cd002a1394984f988c22014e4ae358299f742822d789e38086552dbe81b037a3"}
  *
  * Go source:
- * func (n *Node) End() int                                  { return n.Loc.End() }
+ * func (n *Node) End() int      { return n.Loc.End() }
  */
 export function Node_End(receiver: GoPtr<Node>): int {
   return TextRange_End(receiver!.Loc);
 }
 
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ForEachChild","kind":"method","status":"implemented","sigHash":"e0380b6739279a3e7d7824ff6d8dec38951ac238fc98f709b2b3195c9ea429a9","bodyHash":"a843b34ccfb1d08a5b316d8180e3f862cd797b782aba9e76e44e2ad655ae417b"}
- *
- * Go source:
- * func (n *Node) ForEachChild(v Visitor) bool               { return n.data.ForEachChild(v) }
- */
+// Upstream now generates Node.ForEachChild from ast_generated.go; the TS runtime
+// keeps the dispatch helper here next to Node_VisitEachChild and Node_IterChildren.
 export function Node_ForEachChild(receiver: GoPtr<Node>, v: Visitor): bool {
   return receiver!.data.ForEachChild(v);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IterChildren","kind":"method","status":"implemented","sigHash":"0e3b7aae25c5f7fea1728f18835accba2c6f980ecc7dce130d93337cf7abe3da","bodyHash":"3915149c89be6fd80a29d3c9441f5045b8ef99b8e16199f00da810d5cc3644d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IterChildren","kind":"method","status":"implemented","sigHash":"0e3b7aae25c5f7fea1728f18835accba2c6f980ecc7dce130d93337cf7abe3da","bodyHash":"d003bb07b425234e5454e2c01cde232edea5c541ded750427f0b37776861e5a1"}
  *
  * Go source:
- * func (n *Node) IterChildren() iter.Seq[*Node]             { return n.data.IterChildren() }
+ * func (n *Node) IterChildren() iter.Seq[*Node] {
+ * 	// Implemented directly (rather than through the nodeData interface) so that the
+ * 	// returned iterator and the visitor closure it passes to ForEachChild do not
+ * 	// escape: an interface call is opaque to escape analysis. `true` stops a TS
+ * 	// visitor early, whereas `false` stops a Go iterator yield, so the result is
+ * 	// inverted.
+ * 	return func(yield func(*Node) bool) {
+ * 		n.ForEachChild(func(child *Node) bool {
+ * 			return !yield(child)
+ * 		})
+ * 	}
+ * }
  */
 export function Node_IterChildren(receiver: GoPtr<Node>): GoSeq<GoPtr<Node>> {
-  return receiver!.data.IterChildren();
+  return (yield_: (v: GoPtr<Node>) => bool): void => {
+    Node_ForEachChild(receiver, (child: GoPtr<Node>): bool => (!yield_(child)) as bool);
+  };
 }
 
 /**
@@ -1075,7 +1046,7 @@ export function ExportableBase_ExportableData(receiver: GoPtr<ExportableBaseType
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModifiersBase.Modifiers","kind":"method","status":"implemented","sigHash":"adbe8074215f04f93013c578ed428d50414d2db510a8afff9c53504ed9bb242e","bodyHash":"ea1a9598725a01c91e66b03ca85c13675470aed5dfa6e10e236a7c300c1551cb"}
  *
  * Go source:
- * func (node *ModifiersBase) Modifiers() *ModifierList { return node.modifiers }
+ * func (node *ModifiersBase) Modifiers() *ModifierList             { return node.modifiers }
  */
 export function ModifiersBase_Modifiers(receiver: GoPtr<ModifiersBaseType>): GoPtr<ModifierList> {
   return receiver!.modifiers;
@@ -1182,6 +1153,7 @@ export function FlowNodeBase_FlowNodeData(receiver: GoPtr<FlowNodeBaseType>): Go
  *
  * Go source:
  * func (node *CompositeBase) subtreeFactsWorker(self nodeData) SubtreeFacts {
+ * 	// computeSubtreeFacts() is expected to be idempotent, so races will only impact time, not correctness.
  * 	facts := SubtreeFacts(node.facts.Load())
  * 	if facts&SubtreeFactsComputed == 0 {
  * 		facts |= self.computeSubtreeFacts() | SubtreeFactsComputed
@@ -1205,6 +1177,7 @@ export function CompositeBase_subtreeFactsWorker(receiver: GoPtr<CompositeBaseTy
  *
  * Go source:
  * func (node *CompositeBase) computeSubtreeFacts() SubtreeFacts {
+ * 	// This method must be implemented by the concrete node type.
  * 	panic("not implemented")
  * }
  */

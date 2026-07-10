@@ -1588,7 +1588,7 @@ export function createExpressionErrorEx(node: GoPtr<Node>, diagnosticMessage: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::func::createGetIsolatedDeclarationErrors","kind":"func","status":"implemented","sigHash":"5926979ad783d5255841864ef06b176aaeef555f8a8527ddba243fcf0997e09f","bodyHash":"8954135718b1b9667b6f83abc52f944762cdf4e6321694d52c48bcbf6fde88c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/diagnostics.go::func::createGetIsolatedDeclarationErrors","kind":"func","status":"implemented","sigHash":"5926979ad783d5255841864ef06b176aaeef555f8a8527ddba243fcf0997e09f","bodyHash":"29b745b1c4941b53898a5b4da6ccaed6930efeabd228d4fb6d4687c86d7290f0"}
  *
  * Go source:
  * func createGetIsolatedDeclarationErrors(resolver printer.EmitResolver) func(node *ast.Node) *ast.Diagnostic {
@@ -1598,7 +1598,7 @@ export function createExpressionErrorEx(node: GoPtr<Node>, diagnosticMessage: Go
  * 		}
  * 		addUndefined := resolver.RequiresAddingImplicitUndefinedUnsafe(node, nil, nil) // skip checker lock - node builder will already have one
  * 		if !addUndefined && node.Initializer() != nil {
- * 			return createExpressionError(node)
+ * 			return createExpressionError(node.Initializer())
  * 		}
  * 		message := getErrorByDeclarationKind(node.Kind)
  * 		if addUndefined {
@@ -1609,7 +1609,7 @@ export function createExpressionErrorEx(node: GoPtr<Node>, diagnosticMessage: Go
  * 		diag.AddRelatedInfo(createDiagnosticForNode(node, getRelatedSuggestionByDeclarationKind(node.Kind), targetStr))
  * 		return diag
  * 	}
- * 
+ *
  * 	return func(node *ast.Node) *ast.Diagnostic {
  * 		heritageClause := ast.FindAncestor(node, ast.IsHeritageClause)
  * 		if heritageClause != nil {
@@ -1653,7 +1653,7 @@ export function createGetIsolatedDeclarationErrors(resolver: EmitResolver): (nod
     }
     const addUndefined = resolver.RequiresAddingImplicitUndefinedUnsafe(node, undefined, undefined); // skip checker lock - node builder will already have one
     if (!addUndefined && Node_Initializer(node) !== undefined) {
-      return createExpressionError(node);
+      return createExpressionError(Node_Initializer(node));
     }
     let message = getErrorByDeclarationKind(node!.Kind);
     if (addUndefined) {

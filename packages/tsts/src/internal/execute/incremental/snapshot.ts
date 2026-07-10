@@ -172,11 +172,11 @@ export const FileEmitKindJsInlineMap: FileEmitKind = (1 << 2) as FileEmitKind;
 export const FileEmitKindDtsErrors: FileEmitKind = (1 << 3) as FileEmitKind;
 export const FileEmitKindDtsEmit: FileEmitKind = (1 << 4) as FileEmitKind;
 export const FileEmitKindDtsMap: FileEmitKind = (1 << 5) as FileEmitKind;
-export const FileEmitKindDts: int = (FileEmitKindDtsErrors | FileEmitKindDtsEmit) as int;
-export const FileEmitKindAllJs: int = (FileEmitKindJs | FileEmitKindJsMap | FileEmitKindJsInlineMap) as int;
-export const FileEmitKindAllDtsEmit: int = (FileEmitKindDtsEmit | FileEmitKindDtsMap) as int;
-export const FileEmitKindAllDts: int = (FileEmitKindDts | FileEmitKindDtsMap) as int;
-export const FileEmitKindAll: int = (FileEmitKindAllJs | FileEmitKindAllDts) as int;
+export const FileEmitKindDts: FileEmitKind = (FileEmitKindDtsErrors | FileEmitKindDtsEmit) as int;
+export const FileEmitKindAllJs: FileEmitKind = (FileEmitKindJs | FileEmitKindJsMap | FileEmitKindJsInlineMap) as int;
+export const FileEmitKindAllDtsEmit: FileEmitKind = (FileEmitKindDtsEmit | FileEmitKindDtsMap) as int;
+export const FileEmitKindAllDts: FileEmitKind = (FileEmitKindDts | FileEmitKindDtsMap) as int;
+export const FileEmitKindAll: FileEmitKind = (FileEmitKindAllJs | FileEmitKindAllDts) as int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::func::GetFileEmitKind","kind":"func","status":"implemented","sigHash":"2ffd60ee5a17179d3a4aff2c7f8cf173dad0e63a42537c54ad3509d5692f1761","bodyHash":"fccb32e4c8d796ed85e8b0fa51baf56fa803e3155e79bfa23426676d2432641f"}
@@ -370,9 +370,9 @@ export interface buildInfoDiagnosticWithFileName {
   code: int;
   category: Category;
   messageKey: Key;
-  messageArgs: GoSlice<string>;
-  messageChain: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>>;
-  relatedInformation: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>>;
+  messageArgs: GoSlice<string> | undefined;
+  messageChain: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>> | undefined;
+  relatedInformation: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>> | undefined;
   reportsUnnecessary: bool;
   reportsDeprecated: bool;
   skippedOnNoEmit: bool;
@@ -389,8 +389,8 @@ export interface buildInfoDiagnosticWithFileName {
  * }
  */
 export interface DiagnosticsOrBuildInfoDiagnosticsWithFileName {
-  diagnostics: GoSlice<GoPtr<Diagnostic>>;
-  buildInfoDiagnostics: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>>;
+  diagnostics: GoSlice<GoPtr<Diagnostic>> | undefined;
+  buildInfoDiagnostics: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>> | undefined;
 }
 
 /**
@@ -443,11 +443,11 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
     return repopulateDiagnosticChain(receiver, p, fileForDiagnostic);
   }
   const messageChain: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const msg of receiver!.messageChain) {
+  for (const msg of receiver!.messageChain ?? []) {
     messageChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, fileForDiagnostic));
   }
   const relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const info of receiver!.relatedInformation) {
+  for (const info of receiver!.relatedInformation ?? []) {
     relatedInformation.push(buildInfoDiagnosticWithFileName_toDiagnostic(info, p, fileForDiagnostic));
   }
   return NewDiagnosticFromSerialized(
@@ -456,7 +456,7 @@ export function buildInfoDiagnosticWithFileName_toDiagnostic(receiver: GoPtr<bui
     receiver!.code,
     receiver!.category,
     receiver!.messageKey,
-    receiver!.messageArgs,
+    receiver!.messageArgs ?? [],
     messageChain,
     relatedInformation,
     receiver!.reportsUnnecessary,
@@ -525,11 +525,11 @@ export function repopulateDiagnosticChain(b: GoPtr<buildInfoDiagnosticWithFileNa
  */
 export function buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(receiver: GoPtr<buildInfoDiagnosticWithFileName>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoPtr<Diagnostic> {
   const messageChain: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const msg of receiver!.messageChain) {
+  for (const msg of receiver!.messageChain ?? []) {
     messageChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
   const relatedInformation: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const info of receiver!.relatedInformation) {
+  for (const info of receiver!.relatedInformation ?? []) {
     relatedInformation.push(buildInfoDiagnosticWithFileName_toDiagnostic(info, p, file));
   }
   return NewDiagnosticFromSerialized(
@@ -538,7 +538,7 @@ export function buildInfoDiagnosticWithFileName_toDiagnosticWithoutRepopulate(re
     receiver!.code,
     receiver!.category,
     receiver!.messageKey,
-    receiver!.messageArgs,
+    receiver!.messageArgs ?? [],
     messageChain,
     relatedInformation,
     receiver!.reportsUnnecessary,
@@ -584,7 +584,7 @@ export function repopulateModeMismatchChain(b: GoPtr<buildInfoDiagnosticWithFile
   }
   const details = CreateModeMismatchDetails(p! as unknown as import("../../checker/checker/state.js").Program, file);
   const nextChain: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const msg of b!.messageChain) {
+  for (const msg of b!.messageChain ?? []) {
     nextChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
   return NewDiagnosticFromSerialized(
@@ -648,7 +648,7 @@ export function repopulateModuleNotFoundChain(b: GoPtr<buildInfoDiagnosticWithFi
   }
   const details = CreateModuleNotFoundChain(p! as unknown as import("../../checker/checker/state.js").Program, file, info!.ModuleReference, info!.Mode, packageName);
   const nextChain: GoSlice<GoPtr<Diagnostic>> = [];
-  for (const msg of b!.messageChain) {
+  for (const msg of b!.messageChain ?? []) {
     nextChain.push(buildInfoDiagnosticWithFileName_toDiagnostic(msg, p, file));
   }
   return NewDiagnosticFromSerialized(
@@ -686,6 +686,9 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
     return receiver!.diagnostics;
   }
   // Convert and cache the diagnostics
+  if (receiver!.buildInfoDiagnostics === undefined) {
+    return undefined as unknown as GoSlice<GoPtr<Diagnostic>>;
+  }
   receiver!.diagnostics = receiver!.buildInfoDiagnostics.map((diag: GoPtr<buildInfoDiagnosticWithFileName>) =>
     buildInfoDiagnosticWithFileName_toDiagnostic(diag, p, file)
   );
@@ -693,12 +696,12 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::snapshot","kind":"type","status":"implemented","sigHash":"b212cd3cc90f62b68f10e9ecb1dc99a8c26d92f32e39159057ad970f6b7eddef","bodyHash":"af1d695a9987712c92ecbd522d2b7d8749ab9e96beb4899adba43c26e1d58d7b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::snapshot","kind":"type","status":"implemented","sigHash":"b212cd3cc90f62b68f10e9ecb1dc99a8c26d92f32e39159057ad970f6b7eddef","bodyHash":"6cc4c90d701124e42bd93a6ec4cf8f9c7098bc9b0eeca366e3d7b5675b399e3d"}
  *
  * Go source:
  * snapshot struct {
  * 	// These are the fields that get serialized
- * 
+ *
  * 	// Information of the file eg. its version, signature etc
  * 	fileInfos collections.SyncMap[tspath.Path, *FileInfo]
  * 	options   *core.CompilerOptions
@@ -722,19 +725,24 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
  * 	hasSemanticErrors bool
  * 	// If semantic diagnostic check is pending
  * 	checkPending bool
- * 
+ * 	// Looked up package.json files from
+ * 	packageJsons        []string
+ * 	missingPackageJsons []string
+ *
  * 	// Additional fields that are not serialized but needed to track state
- * 
+ *
  * 	// true if build info emit is pending
  * 	buildInfoEmitPending                    atomic.Bool
  * 	hasErrorsFromOldState                   core.Tristate
  * 	hasSemanticErrorsFromOldState           bool
  * 	allFilesExcludingDefaultLibraryFileOnce sync.Once
+ * 	packageJsonsFromOldState                []string
+ * 	missingPackageJsonsFromOldState         []string
  * 	//  Cache of all files excluding default library file for the current program
  * 	allFilesExcludingDefaultLibraryFile []*ast.SourceFile
  * 	hasChangedDtsFile                   bool
  * 	hasEmitDiagnostics                  bool
- * 
+ *
  * 	// Used with testing to add text of hash for better comparison
  * 	hashWithText bool
  * }
@@ -752,10 +760,14 @@ export interface snapshot {
   hasErrors: Tristate;
   hasSemanticErrors: bool;
   checkPending: bool;
+  packageJsons: GoSlice<string> | undefined;
+  missingPackageJsons: GoSlice<string> | undefined;
   buildInfoEmitPending: Bool;
   hasErrorsFromOldState: Tristate;
   hasSemanticErrorsFromOldState: bool;
   allFilesExcludingDefaultLibraryFileOnce: Once;
+  packageJsonsFromOldState: GoSlice<string> | undefined;
+  missingPackageJsonsFromOldState: GoSlice<string> | undefined;
   allFilesExcludingDefaultLibraryFile: GoSlice<GoPtr<SourceFile>>;
   hasChangedDtsFile: bool;
   hasEmitDiagnostics: bool;

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoRune } from "../../go/compat.js";
-import { Is, ToLower, ToUpper } from "../../go/unicode.js";
+import { Is } from "../../go/unicode.js";
 import { EncodeJSStringRune, IsSurrogate, SurrogatePairToCodePoint } from "./util.js";
 import {
   specialCasingConditionFinalSigma,
@@ -33,29 +33,36 @@ const decodeRuneAt = (str: string, i: int): [GoRune, int] => {
 const fromCodePoint = (r: GoRune): string => globalThis.String.fromCodePoint(r);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToLowerJS","kind":"func","status":"implemented","sigHash":"cd8ed802f5c1cfe38864641827bffcede83a8a90ebebfe9f83d5c90dafca3927","bodyHash":"5fbf8e670bae9fe1490b3c26ca1d20167c75d2c401dad1fbd1dcc05a82f60e67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToLowerJS","kind":"func","status":"implemented","sigHash":"cd8ed802f5c1cfe38864641827bffcede83a8a90ebebfe9f83d5c90dafca3927","bodyHash":"5558425087b7b944b7f9d76485befdb4f1a7b15e2ecfac0ed35e12971a77053d"}
  *
  * Go source:
  * func ToLowerJS(str string) string {
  * 	if ascii, ok := toLowerASCII(str); ok {
  * 		return ascii
  * 	}
+ *
  * 	var builder strings.Builder
  * 	builder.Grow(len(str))
+ * 	// casedBefore tracks whether the most recent non-Case_Ignorable code point is
+ * 	// "cased", which is the backward half of the Final_Sigma context. We
+ * 	// accumulate it as we stream so we never have to scan (or decode) backwards.
  * 	casedBefore := false
  * 	for i := 0; i < len(str); {
  * 		r, size := DecodeJSStringRune(str[i:])
  * 		i += size
  * 		if IsSurrogate(r) {
+ * 			// A lone surrogate has no case mapping; preserve it verbatim, matching
+ * 			// String.prototype.toLowerCase. EncodeJSStringRune restores the sentinel
+ * 			// bytes because WriteRune would re-encode the surrogate as U+FFFD.
  * 			builder.WriteString(EncodeJSStringRune(r))
  * 		} else if mapping, ok := specialCasingMappings[r]; ok {
- * 			if mapping.condition == specialCasingConditionFinalSigma && !isFinalSigmaContext(casedBefore, str, i) {
- * 				builder.WriteRune(unicode.ToLower(r))
+ * 			if mapping.condition == specialCasingConditionFinalSigma && isFinalSigmaContext(casedBefore, str, i) {
+ * 				builder.WriteString(mapping.conditionalLower)
  * 			} else {
  * 				builder.WriteString(mapping.lower)
  * 			}
  * 		} else {
- * 			builder.WriteRune(unicode.ToLower(r))
+ * 			builder.WriteRune(r)
  * 		}
  * 		if !isUnicodeCaseIgnorable(r) {
  * 			casedBefore = isSigmaCased(r)
@@ -86,13 +93,13 @@ export function ToLowerJS(str: string): string {
     } else {
       const mapping = specialCasingMappings.get(r);
       if (mapping !== undefined) {
-        if (mapping.condition === specialCasingConditionFinalSigma && !isFinalSigmaContext(casedBefore, str, i)) {
-          builder.push(fromCodePoint(ToLower(r)));
+      if (mapping.condition === specialCasingConditionFinalSigma && isFinalSigmaContext(casedBefore, str, i)) {
+          builder.push(mapping.conditionalLower);
         } else {
           builder.push(mapping.lower);
         }
       } else {
-        builder.push(fromCodePoint(ToLower(r)));
+        builder.push(fromCodePoint(r));
       }
     }
     if (!isUnicodeCaseIgnorable(r)) {
@@ -103,26 +110,31 @@ export function ToLowerJS(str: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToUpperJS","kind":"func","status":"implemented","sigHash":"30f4ab61ad8a8a0201d284e9c8a312b61139335b5d26428bd5f7393da2ec3aa9","bodyHash":"f5a2289ccba23250edd6a31fcfab536be500d291d0a680a2d517b349ed47f8ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToUpperJS","kind":"func","status":"implemented","sigHash":"30f4ab61ad8a8a0201d284e9c8a312b61139335b5d26428bd5f7393da2ec3aa9","bodyHash":"85cd45c8b8f8cbed64f34ae6293cd17f9dd960f3885e9503c7ec8479406fb48f"}
  *
  * Go source:
  * func ToUpperJS(str string) string {
  * 	if ascii, ok := toUpperASCII(str); ok {
  * 		return ascii
  * 	}
+ *
  * 	var builder strings.Builder
  * 	builder.Grow(len(str))
  * 	for i := 0; i < len(str); {
  * 		r, size := DecodeJSStringRune(str[i:])
  * 		if IsSurrogate(r) {
+ * 			// A lone surrogate has no case mapping; preserve it verbatim, matching
+ * 			// String.prototype.toUpperCase. Copy the sentinel bytes directly because
+ * 			// WriteRune would re-encode the surrogate as U+FFFD.
  * 			builder.WriteString(str[i : i+size])
  * 		} else if mapping, ok := specialCasingMappings[r]; ok {
  * 			builder.WriteString(mapping.upper)
  * 		} else {
- * 			builder.WriteRune(unicode.ToUpper(r))
+ * 			builder.WriteRune(r)
  * 		}
  * 		i += size
  * 	}
+ *
  * 	return builder.String()
  * }
  */
@@ -145,7 +157,7 @@ export function ToUpperJS(str: string): string {
       if (mapping !== undefined) {
         builder.push(mapping.upper);
       } else {
-        builder.push(fromCodePoint(ToUpper(r)));
+        builder.push(fromCodePoint(r));
       }
     }
     i += advance;
@@ -169,6 +181,7 @@ export function ToUpperJS(str: string): string {
  * 	if !needsMapping {
  * 		return str, true
  * 	}
+ *
  * 	buf := []byte(str)
  * 	for i, ch := range buf {
  * 		if 'A' <= ch && ch <= 'Z' {
@@ -217,6 +230,7 @@ function toLowerASCII(str: string): [string, bool] {
  * 	if !needsMapping {
  * 		return str, true
  * 	}
+ *
  * 	buf := []byte(str)
  * 	for i, ch := range buf {
  * 		if 'a' <= ch && ch <= 'z' {

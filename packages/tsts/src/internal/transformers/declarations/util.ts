@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Every, Some } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name, Node_SubtreeFacts, NodeDefault_AsNode } from "../../ast/spine.js";
@@ -69,6 +69,7 @@ import {
   IsTypeParameterDeclaration,
   IsVariableDeclaration,
 } from "../../ast/generated/predicates.js";
+import { NodeFlagsReparsed } from "../../ast/generated/flags.js";
 import {
   IsAmbientModule,
   IsAnyImportOrReExport,
@@ -76,6 +77,7 @@ import {
   IsFunctionLike,
   HasSyntacticModifier,
   GetCombinedModifierFlags,
+  IsModifier,
 } from "../../ast/utilities.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
@@ -177,6 +179,28 @@ export function canProduceDiagnostics(node: GoPtr<Node>): bool {
     IsElementAccessExpression(node) ||
     IsBinaryExpression(node) ||
     IsCallExpression(node)) as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::canReuseModifierNodes","kind":"func","status":"implemented","sigHash":"6c06a86870b4611045bf09cf1008b14e1c288e7970d8996c6ab016678293dc83","bodyHash":"c588ff9be434929e25fd55682ca7632e1263f0cfe613616bb46505e32cc22ec7"}
+ *
+ * Go source:
+ * func canReuseModifierNodes(nodes []*ast.Node) bool {
+ * 	for _, node := range nodes {
+ * 		if ast.IsModifier(node) && node.Flags&ast.NodeFlagsReparsed != 0 {
+ * 			return false
+ * 		}
+ * 	}
+ * 	return true
+ * }
+ */
+export function canReuseModifierNodes(nodes: GoSlice<GoPtr<Node>>): bool {
+  for (const node of nodes) {
+    if (IsModifier(node) && (node!.Flags & NodeFlagsReparsed) !== 0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -284,7 +308,7 @@ export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"implemented","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac","bodyHash":"cbf6d472c671faa96578fdd44173e96c18f85f228f8266f4ee8a818d2173b4ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"implemented","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac","bodyHash":"73e37d315c5ad2d7bf0888c6b879807adf97beaae2eafa6b372f76f0ebf041cb"}
  *
  * Go source:
  * func isEnclosingDeclaration(node *ast.Node) bool {
@@ -296,7 +320,8 @@ export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>)
  * 		ast.IsInterfaceDeclaration(node) ||
  * 		ast.IsFunctionLike(node) ||
  * 		ast.IsIndexSignatureDeclaration(node) ||
- * 		ast.IsMappedTypeNode(node)
+ * 		ast.IsMappedTypeNode(node) ||
+ * 		ast.IsVariableDeclaration(node)
  * }
  */
 export function isEnclosingDeclaration(node: GoPtr<Node>): bool {
@@ -308,7 +333,8 @@ export function isEnclosingDeclaration(node: GoPtr<Node>): bool {
     IsInterfaceDeclaration(node) ||
     IsFunctionLike(node) ||
     IsIndexSignatureDeclaration(node) ||
-    IsMappedTypeNode(node)) as bool;
+    IsMappedTypeNode(node) ||
+    IsVariableDeclaration(node)) as bool;
 }
 
 /**

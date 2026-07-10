@@ -101,7 +101,8 @@ export interface orchestratorResult {
  * 				strings.Join(core.Map(b.filesToDelete, func(f string) string {
  * 					return "\r\n * " + f
  * 				}), ""),
- * 			))
+ * 			),
+ * 		)
  * 	}
  * 	if !o.opts.Command.CompilerOptions.Diagnostics.IsTrue() && !o.opts.Command.CompilerOptions.ExtendedDiagnostics.IsTrue() {
  * 		return
@@ -142,14 +143,17 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
  * 	opts                Options
  * 	comparePathsOptions tspath.ComparePathsOptions
  * 	host                *host
- * 
+ *
  * 	// order generation result
  * 	tasks  *collections.SyncMap[tspath.Path, *BuildTask]
  * 	order  []string
  * 	errors []*ast.Diagnostic
- * 
+ *
  * 	errorSummaryReporter tsc.DiagnosticsReporter
  * 	watchStatusReporter  tsc.DiagnosticReporter
+ *
+ * 	// fswatch event-based watching
+ * 	wm *watchmanager.WatchManager
  * }
  */
 export interface Orchestrator {
@@ -561,22 +565,27 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context):
  *
  * Go source:
  * func (o *Orchestrator) Watch(ctx context.Context) {
+ * 	o.wm.Lock()
+ *
+ * 	if o.opts.Testing == nil {
+ * 		if o.opts.Sys.GetEnvironmentVariable("TS_WATCH_DEBUG") != "" {
+ * 			o.wm.DebugLog = o.opts.Sys.Writer()
+ * 		}
+ * 		o.wm.EnsureDefaultBackend()
+ * 	}
+ *
  * 	o.updateWatch()
+ * 	desiredDirs := o.computeDesiredWatches()
+ * 	if err := o.wm.ReconcileWatches(desiredDirs); err != nil {
+ * 		fmt.Fprintf(o.opts.Sys.Writer(), "%v\n", err)
+ * 		o.wm.ForceOverflow()
+ * 	}
  * 	o.resetCaches()
  *
- * 	// Start watching for file changes
+ * 	o.wm.Unlock()
+ *
  * 	if o.opts.Testing == nil {
- * 		watchInterval := o.opts.Command.WatchOptions.WatchInterval()
- * 		ticker := time.NewTicker(watchInterval)
- * 		defer ticker.Stop()
- * 		for {
- * 			select {
- * 			case <-ctx.Done():
- * 				return
- * 			case <-ticker.C:
- * 				o.DoCycle()
- * 			}
- * 		}
+ * 		o.wm.RunLoop(ctx, o.DoCycle)
  * 	}
  * }
  */
@@ -648,7 +657,129 @@ export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.checkTasksForEventChanges","kind":"method","status":"implemented","sigHash":"98d3899517c82e04b947061bc4c4856189d400742c02b9c377d15fb0020a57b7","bodyHash":"ab0d6b12a5f972a62b0a24f10838f6f11fb62af912656802604a2d9b8763d4b0"}
  *
  * Go source:
- * func (o *Orchestrator) checkTasksForEventChanges(changedPaths map[string]fswatch.EventKind, needsConfigUpdate, needsUpdate *atomic.Bool) { ... }
+ * func (o *Orchestrator) checkTasksForEventChanges(changedPaths map[string]fswatch.EventKind, needsConfigUpdate, needsUpdate *atomic.Bool) {
+ * 	normalizedPaths := make(map[tspath.Path]fswatch.EventKind, len(changedPaths))
+ * 	for eventPath, kind := range changedPaths {
+ * 		normalizedPaths[o.toPath(eventPath)] = kind
+ * 	}
+ *
+ * 	for i := range o.order {
+ * 		config := o.order[i]
+ * 		path := o.toPath(config)
+ * 		task := o.getTask(path)
+ *
+ * 		configPath := o.toPath(task.config)
+ * 		if _, changed := normalizedPaths[configPath]; changed {
+ * 			task.resetConfig(o, path)
+ * 			needsConfigUpdate.Store(true)
+ * 			needsUpdate.Store(true)
+ * 			continue
+ * 		}
+ *
+ * 		if task.resolved == nil {
+ * 			continue
+ * 		}
+ *
+ * 		configChanged := false
+ * 		for _, file := range task.resolved.ExtendedSourceFiles() {
+ * 			fp := o.toPath(file)
+ * 			if _, changed := normalizedPaths[fp]; changed {
+ * 				task.resetConfig(o, path)
+ * 				needsConfigUpdate.Store(true)
+ * 				needsUpdate.Store(true)
+ * 				configChanged = true
+ * 				break
+ * 			}
+ * 		}
+ * 		if configChanged {
+ * 			continue
+ * 		}
+ *
+ * 		rootChanged := false
+ * 		fileNames := task.resolved.FileNames()
+ * 		roots := collections.NewSetWithSizeHint[tspath.Path](len(fileNames))
+ * 		for _, file := range fileNames {
+ * 			fp := o.toPath(file)
+ * 			roots.Add(fp)
+ * 			if !rootChanged {
+ * 				if _, changed := normalizedPaths[fp]; changed {
+ * 					task.resetStatus()
+ * 					needsUpdate.Store(true)
+ * 					rootChanged = true
+ * 				}
+ * 			}
+ * 		}
+ *
+ * 		if !rootChanged {
+ * 			task.buildInfoEntryMu.Lock()
+ * 			bi := task.buildInfoEntry
+ * 			task.buildInfoEntryMu.Unlock()
+ * 			if bi != nil && bi.buildInfo != nil {
+ * 				buildInfoDir := tspath.GetDirectoryPath(string(bi.path))
+ * 				for _, fileName := range bi.buildInfo.FileNames {
+ * 					fp := o.toPath(o.resolveBuildInfoFileName(fileName, buildInfoDir))
+ * 					if roots.Has(fp) {
+ * 						continue
+ * 					}
+ * 					if _, changed := normalizedPaths[fp]; changed {
+ * 						task.resetStatus()
+ * 						needsUpdate.Store(true)
+ * 						break
+ * 					}
+ * 				}
+ * 				for packageJson := range bi.buildInfo.GetPackageJsons(buildInfoDir) {
+ * 					if o.packageJsonLookupChanged(packageJson, normalizedPaths) {
+ * 						task.resetStatus()
+ * 						needsUpdate.Store(true)
+ * 						break
+ * 					}
+ * 				}
+ * 				for packageJson := range bi.buildInfo.GetMissingPackageJsons(buildInfoDir) {
+ * 					if o.packageJsonLookupChanged(packageJson, normalizedPaths) {
+ * 						task.resetStatus()
+ * 						needsUpdate.Store(true)
+ * 						break
+ * 					}
+ * 				}
+ * 			}
+ * 			for _, packageJson := range task.packageJsons {
+ * 				if o.packageJsonLookupChanged(packageJson, normalizedPaths) {
+ * 					task.resetStatus()
+ * 					needsUpdate.Store(true)
+ * 					break
+ * 				}
+ * 			}
+ * 		}
+ *
+ * 		task.reportDone = make(chan struct{})
+ * 		task.done = make(chan struct{})
+ *
+ * 		newConfig := task.resolved.ReloadFileNamesOfParsedCommandLine(o.host.FS())
+ * 		if !slices.Equal(task.resolved.FileNames(), newConfig.FileNames()) {
+ * 			o.host.resolvedReferences.store(path, newConfig)
+ * 			task.resolved = newConfig
+ * 			task.resetStatus()
+ * 			needsUpdate.Store(true)
+ * 		}
+ * 	}
+ *
+ * 	if !needsUpdate.Load() {
+ * 		opts := o.comparePathsOptions
+ * 		for eventPath := range changedPaths {
+ * 			if o.host.FS().DirectoryExists(eventPath) {
+ * 				if o.wm.IsPathUnderWatch(eventPath, opts) {
+ * 					o.rangeTask(func(path tspath.Path, task *BuildTask) {
+ * 						task.resetStatus()
+ * 						task.reportDone = make(chan struct{})
+ * 						task.done = make(chan struct{})
+ * 					})
+ * 					needsUpdate.Store(true)
+ * 					break
+ * 				}
+ * 			}
+ * 		}
+ * 	}
+ * }
  */
 export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestrator>, changedPaths: GoMap<string, fswatch.EventKind>, needsConfigUpdate: GoPtr<Bool>, needsUpdate: GoPtr<Bool>): void {
   const normalizedPaths: GoMap<Path, fswatch.EventKind> = new Map<Path, fswatch.EventKind>();
@@ -770,6 +901,20 @@ export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestra
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.packageJsonLookupChanged","kind":"method","status":"implemented","sigHash":"55bc6ba76be9cb87bd31d15ef63f63312d156a83625e9242b9152ac5f60f59b1","bodyHash":"b1a4472d9e7f760e5d2cbb049750baf167bf69d18150816f264b2bafa2df4971"}
+ *
+ * Go source:
+ * func (o *Orchestrator) packageJsonLookupChanged(packageJson string, changedPaths map[tspath.Path]fswatch.EventKind) bool {
+ * 	packageJsonPath := o.toPath(packageJson)
+ * 	if _, changed := changedPaths[packageJsonPath]; changed {
+ * 		return true
+ * 	}
+ * 	for changedPath, kind := range changedPaths {
+ * 		if kind == fswatch.EventDelete && tspath.ContainsPath(string(changedPath), string(packageJsonPath), o.comparePathsOptions) {
+ * 			return true
+ * 		}
+ * 	}
+ * 	return false
+ * }
  */
 export function Orchestrator_packageJsonLookupChanged(receiver: GoPtr<Orchestrator>, packageJson: string, changedPaths: GoMap<Path, fswatch.EventKind>): bool {
   const packageJsonPath = Orchestrator_toPath(receiver, packageJson);
@@ -786,6 +931,91 @@ export function Orchestrator_packageJsonLookupChanged(receiver: GoPtr<Orchestrat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.computeDesiredWatches","kind":"method","status":"implemented","sigHash":"56dc5e6d67c26842bf41668082087ec133e79c46916f2e6fc3442a64689574db","bodyHash":"fc3778314bc5394eccca7003e821533eeff269407dfde1300760b38d36c6499e"}
+ *
+ * Go source:
+ * func (o *Orchestrator) computeDesiredWatches() map[string]bool {
+ * 	desiredDirs := make(map[string]bool)
+ *
+ * 	for i := range o.order {
+ * 		config := o.order[i]
+ * 		path := o.toPath(config)
+ * 		task := o.getTask(path)
+ *
+ * 		// Watch config file directory
+ * 		configDir := tspath.GetDirectoryPath(task.config)
+ * 		realConfigDir := o.host.FS().Realpath(configDir)
+ * 		if _, has := desiredDirs[realConfigDir]; !has {
+ * 			desiredDirs[realConfigDir] = false
+ * 		}
+ *
+ * 		if task.resolved == nil {
+ * 			continue
+ * 		}
+ *
+ * 		// Extended config file directories
+ * 		for _, cfgPath := range task.resolved.ExtendedSourceFiles() {
+ * 			realPath := o.host.FS().Realpath(cfgPath)
+ * 			dir := tspath.GetDirectoryPath(realPath)
+ * 			if _, has := desiredDirs[dir]; !has {
+ * 				desiredDirs[dir] = false
+ * 			}
+ * 		}
+ *
+ * 		// Wildcard directories from tsconfig
+ * 		for dir, recursive := range task.resolved.WildcardDirectories() {
+ * 			realDir := o.host.FS().Realpath(dir)
+ * 			if existing, has := desiredDirs[realDir]; has {
+ * 				desiredDirs[realDir] = existing || recursive
+ * 			} else {
+ * 				desiredDirs[realDir] = recursive
+ * 			}
+ * 		}
+ *
+ * 		// Input file directories not already covered
+ * 		for _, fileName := range task.resolved.FileNames() {
+ * 			absPath := tspath.GetNormalizedAbsolutePath(fileName, o.opts.Sys.GetCurrentDirectory())
+ * 			dir := tspath.GetDirectoryPath(absPath)
+ * 			if !watchmanager.IsDirCoveredByWatch(desiredDirs, dir, o.comparePathsOptions) {
+ * 				if watchmanager.CanWatchDirectory(dir) {
+ * 					desiredDirs[dir] = false
+ * 				}
+ * 			}
+ * 		}
+ *
+ * 		// Non-root dependency directories from buildinfo (e.g. node_modules .d.ts files).
+ * 		task.buildInfoEntryMu.Lock()
+ * 		bi := task.buildInfoEntry
+ * 		task.buildInfoEntryMu.Unlock()
+ * 		if bi != nil && bi.buildInfo != nil {
+ * 			buildInfoDir := tspath.GetDirectoryPath(string(bi.path))
+ * 			roots := collections.NewSetFromItems(core.Map(task.resolved.FileNames(), o.toPath)...)
+ * 			for _, fileName := range bi.buildInfo.FileNames {
+ * 				absPath := o.host.FS().Realpath(o.resolveBuildInfoFileName(fileName, buildInfoDir))
+ * 				fp := o.toPath(absPath)
+ * 				if roots.Has(fp) {
+ * 					continue
+ * 				}
+ * 				dir := tspath.GetDirectoryPath(absPath)
+ * 				if !watchmanager.IsDirCoveredByWatch(desiredDirs, dir, o.comparePathsOptions) {
+ * 					if watchmanager.CanWatchDirectory(dir) {
+ * 						desiredDirs[dir] = false
+ * 					}
+ * 				}
+ * 			}
+ * 			for packageJson := range bi.buildInfo.GetPackageJsons(buildInfoDir) {
+ * 				o.addPackageJsonWatchDirs(desiredDirs, packageJson)
+ * 			}
+ * 			for packageJson := range bi.buildInfo.GetMissingPackageJsons(buildInfoDir) {
+ * 				o.addPackageJsonWatchDirs(desiredDirs, packageJson)
+ * 			}
+ * 		}
+ * 		for _, packageJson := range task.packageJsons {
+ * 			o.addPackageJsonWatchDirs(desiredDirs, packageJson)
+ * 		}
+ * 	}
+ *
+ * 	return o.wm.ResolveDesiredDirs(desiredDirs)
+ * }
  */
 export function Orchestrator_computeDesiredWatches(receiver: GoPtr<Orchestrator>): GoMap<string, bool> {
   const desiredDirs: GoMap<string, bool> = new Map<string, bool>();
@@ -855,6 +1085,13 @@ export function Orchestrator_computeDesiredWatches(receiver: GoPtr<Orchestrator>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.addWatchDir","kind":"method","status":"implemented","sigHash":"c008f571aac188908968f8498da1d2583b30e2909e4461783df006635dd91c99","bodyHash":"27d8a4a9351bbee0db38e0498af50808b2ac5d2b3c1f814684ea85060c1b9c57"}
+ *
+ * Go source:
+ * func (o *Orchestrator) addWatchDir(desiredDirs map[string]bool, dir string) {
+ * 	if !watchmanager.IsDirCoveredByWatch(desiredDirs, dir, o.comparePathsOptions) && watchmanager.CanWatchDirectory(dir) {
+ * 		desiredDirs[dir] = false
+ * 	}
+ * }
  */
 export function Orchestrator_addWatchDir(receiver: GoPtr<Orchestrator>, desiredDirs: GoMap<string, bool>, dir: string): void {
   if (!IsDirCoveredByWatch(desiredDirs, dir, receiver!.comparePathsOptions) && CanWatchDirectory(dir)) {
@@ -864,6 +1101,36 @@ export function Orchestrator_addWatchDir(receiver: GoPtr<Orchestrator>, desiredD
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.addPackageJsonWatchDirs","kind":"method","status":"implemented","sigHash":"a85cb273e52f3f6dee48d8954b8a70b7ec8e73933cb0c13d767fa370e104d966","bodyHash":"d35c0bf34bcc3c0270094472cce299a15edb7de5ae4b769ca0bda14be7fabcd6"}
+ *
+ * Go source:
+ * func (o *Orchestrator) addPackageJsonWatchDirs(desiredDirs map[string]bool, packageJson string) {
+ * 	dir := tspath.GetDirectoryPath(packageJson)
+ * 	dirs := []string{dir}
+ * 	foundNodeModules := false
+ * 	for current := dir; ; {
+ * 		parent := tspath.GetDirectoryPath(current)
+ * 		if parent == "" || parent == current {
+ * 			break
+ * 		}
+ * 		dirs = append(dirs, parent)
+ * 		if tspath.GetBaseFileName(parent) == "node_modules" {
+ * 			foundNodeModules = true
+ * 			if grandparent := tspath.GetDirectoryPath(parent); grandparent != "" && grandparent != parent {
+ * 				dirs = append(dirs, grandparent)
+ * 			}
+ * 			break
+ * 		}
+ * 		current = parent
+ * 	}
+ *
+ * 	if !foundNodeModules {
+ * 		o.addWatchDir(desiredDirs, dir)
+ * 		return
+ * 	}
+ * 	for _, dir := range dirs {
+ * 		o.addWatchDir(desiredDirs, dir)
+ * 	}
+ * }
  */
 export function Orchestrator_addPackageJsonWatchDirs(receiver: GoPtr<Orchestrator>, desiredDirs: GoMap<string, bool>, packageJson: string): void {
   const dir = GetDirectoryPath(packageJson);
@@ -900,20 +1167,37 @@ export function Orchestrator_addPackageJsonWatchDirs(receiver: GoPtr<Orchestrato
  *
  * Go source:
  * func (o *Orchestrator) DoCycle() {
+ * 	o.wm.Lock()
+ * 	defer o.wm.Unlock()
+ *
+ * 	changedPaths, overflow := o.wm.DrainEvents()
+ * 	hasEvents := len(changedPaths) > 0 || overflow
+ *
+ * 	if !hasEvents {
+ * 		if o.wm.DebugLog != nil {
+ * 			fmt.Fprintf(o.wm.DebugLog, "[watch] DoCycle: no events, skipping\n")
+ * 		}
+ * 		return
+ * 	}
+ *
  * 	var needsConfigUpdate atomic.Bool
  * 	var needsUpdate atomic.Bool
- * 	mTimes := o.host.mTimes.Clone()
- * 	o.rangeTask(func(path tspath.Path, task *BuildTask) {
- * 		if updateKind := task.hasUpdate(o, path); updateKind != updateKindNone {
- * 			needsUpdate.Store(true)
- * 			if updateKind == updateKindConfig {
- * 				needsConfigUpdate.Store(true)
- * 			}
- * 		}
- * 	})
+ *
+ * 	if overflow {
+ * 		// Overflow: reset all tasks to force a full rebuild.
+ * 		o.rangeTask(func(path tspath.Path, task *BuildTask) {
+ * 			task.resetConfig(o, path)
+ * 			task.reportDone = make(chan struct{})
+ * 			task.done = make(chan struct{})
+ * 		})
+ * 		needsConfigUpdate.Store(true)
+ * 		needsUpdate.Store(true)
+ * 	} else {
+ * 		// Event-driven: check only tasks affected by changed paths
+ * 		o.checkTasksForEventChanges(changedPaths, &needsConfigUpdate, &needsUpdate)
+ * 	}
  *
  * 	if !needsUpdate.Load() {
- * 		o.host.mTimes = mTimes
  * 		o.resetCaches()
  * 		return
  * 	}
@@ -926,6 +1210,12 @@ export function Orchestrator_addPackageJsonWatchDirs(receiver: GoPtr<Orchestrato
  *
  * 	o.buildOrClean()
  * 	o.updateWatch()
+ * 	desiredDirs := o.computeDesiredWatches()
+ * 	if err := o.wm.ReconcileWatches(desiredDirs); err != nil {
+ * 		fmt.Fprintf(o.opts.Sys.Writer(), "%v\n", err)
+ * 		// Mark overflow so the next event triggers a full rebuild
+ * 		o.wm.ForceOverflow()
+ * 	}
  * 	o.resetCaches()
  * }
  */
@@ -1183,6 +1473,7 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  *
  * Go source:
  * func NewOrchestrator(opts Options) *Orchestrator {
+ * 	wm := watchmanager.NewWatchManager(opts.Sys.Writer(), opts.Sys.FS().DirectoryExists)
  * 	orchestrator := &Orchestrator{
  * 		opts: opts,
  * 		comparePathsOptions: tspath.ComparePathsOptions{
@@ -1190,6 +1481,7 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 			UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
  * 		},
  * 		tasks: &collections.SyncMap[tspath.Path, *BuildTask]{},
+ * 		wm:    wm,
  * 	}
  * 	orchestrator.host = &host{
  * 		orchestrator: orchestrator,
@@ -1204,6 +1496,9 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 	}
  * 	if opts.Command.CompilerOptions.Watch.IsTrue() {
  * 		orchestrator.watchStatusReporter = tsc.CreateWatchStatusReporter(opts.Sys, opts.Command.Locale(), opts.Command.CompilerOptions, opts.Testing)
+ * 		if t, ok := opts.Testing.(watchmanager.CommandLineTestingWithWatchBackend); ok {
+ * 			wm.SetBackend(t.WatchBackend())
+ * 		}
  * 	} else {
  * 		orchestrator.errorSummaryReporter = tsc.CreateReportErrorSummary(opts.Sys, opts.Command.Locale(), opts.Command.CompilerOptions)
  * 	}

@@ -8,6 +8,7 @@ import { IfElse } from "../core/core.js";
 import { TSTrue, TSFalse, TSUnknown } from "../core/tristate.js";
 import type { Tristate } from "../core/tristate.js";
 import type { ResolutionHost } from "../module/types.js";
+import { ParseNodeModuleFromPath } from "../module/util.js";
 import { KnownSymlinks_Directories, KnownSymlinks_Files, KnownSymlinks_SetDirectory, KnownSymlinks_SetFile } from "../symlinks/knownsymlinks.js";
 import type { KnownSymlinks, KnownDirectoryLink } from "../symlinks/knownsymlinks.js";
 import type { SyncMap } from "../collections/syncmap.js";
@@ -421,7 +422,7 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileOrDirectoryExistsUsingSource","kind":"method","status":"implemented","sigHash":"1bf711f3786a780f72535cded662a9497e16a8b70f0cf9ec20baf52f3a4c8449","bodyHash":"8a53d725807e92eb4c163a9f57caa1361bb5f4e0899c617ffe3f1f8afde7aca3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileOrDirectoryExistsUsingSource","kind":"method","status":"implemented","sigHash":"1bf711f3786a780f72535cded662a9497e16a8b70f0cf9ec20baf52f3a4c8449","bodyHash":"7336ec0f116b4688943d32d2307399552acdce77e499af228e7cad583efa2afb"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) fileOrDirectoryExistsUsingSource(fileOrDirectory string, isFile bool) bool {
@@ -431,13 +432,17 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
  * 	if result != core.TSUnknown {
  * 		return result == core.TSTrue
  * 	}
- * 
- * 	knownDirectoryLinks := fs.knownSymlinks.Directories()
- * 	if knownDirectoryLinks.Size() == 0 {
- * 		return false
- * 	}
+ *
  * 	fileOrDirectoryPath := fs.toPath(fileOrDirectory)
  * 	if !strings.Contains(string(fileOrDirectoryPath), "/node_modules/") {
+ * 		return false
+ * 	}
+ * 	// Check if the directory or file is a symlinked package
+ * 	if packageRoot := module.ParseNodeModuleFromPath(fileOrDirectory, true /*isFolder* /); packageRoot != "" {
+ * 		fs.handleDirectoryCouldBeSymlink(packageRoot)
+ * 	}
+ * 	knownDirectoryLinks := fs.knownSymlinks.Directories()
+ * 	if knownDirectoryLinks.Size() == 0 {
  * 		return false
  * 	}
  * 	if isFile {
@@ -446,7 +451,7 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
  * 			return true
  * 		}
  * 	}
- * 
+ *
  * 	// If it contains node_modules check if its one of the symlinked path we know of
  * 	var exists bool
  * 	knownDirectoryLinks.Range(func(directoryPath tspath.Path, knownDirectoryLink *symlinks.KnownDirectoryLink) bool {
@@ -479,12 +484,16 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
     return result === TSTrue;
   }
 
-  const knownDirectoryLinks = KnownSymlinks_Directories(receiver!.knownSymlinks);
-  if (SyncMap_Size<Path, GoPtr<KnownDirectoryLink>>(knownDirectoryLinks as SyncMap<Path, GoPtr<KnownDirectoryLink>>) === 0) {
-    return false;
-  }
   const fileOrDirectoryPath = projectReferenceDtsFakingVfs_toPath(receiver, fileOrDirectory);
   if (!strings.Contains(fileOrDirectoryPath as string, "/node_modules/")) {
+    return false;
+  }
+  const packageRoot = ParseNodeModuleFromPath(fileOrDirectory, true as bool);
+  if (packageRoot !== "") {
+    projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(receiver, packageRoot);
+  }
+  const knownDirectoryLinks = KnownSymlinks_Directories(receiver!.knownSymlinks);
+  if (SyncMap_Size<Path, GoPtr<KnownDirectoryLink>>(knownDirectoryLinks as SyncMap<Path, GoPtr<KnownDirectoryLink>>) === 0) {
     return false;
   }
   if (isFile) {

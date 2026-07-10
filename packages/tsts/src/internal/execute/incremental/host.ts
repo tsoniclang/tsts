@@ -1,17 +1,20 @@
 import type { GoError, GoPtr } from "../../../go/compat.js";
 import { Time } from "../../../go/time.js";
 import type { CompilerHost } from "../../compiler/host.js";
+import type { FS } from "../../vfs/vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895","bodyHash":"31c183fb6ba46cac3beda7d365db28f1eb48f85a81060c6eb4cd886a51127459"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895","bodyHash":"1a7c0a301724281408b7e1b989e025602f37355ba428fe8b2d75bb11f7b9174c"}
  *
  * Go source:
  * Host interface {
+ * 	FS() vfs.FS
  * 	GetMTime(fileName string) time.Time
  * 	SetMTime(fileName string, mTime time.Time) error
  * }
  */
 export interface Host {
+  FS(): FS;
   GetMTime(fileName: string): Time;
   SetMTime(fileName: string, mTime: Time): GoError;
 }
@@ -38,17 +41,30 @@ export let __bbc5d83a_0: Host = host_as_incremental_Host(undefined);
 
 export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
   return {
+    FS: (): FS => host_FS(receiver),
     GetMTime: (fileName: string): Time => host_GetMTime(receiver, fileName),
     SetMTime: (fileName: string, mTime: Time): GoError => host_SetMTime(receiver, fileName, mTime),
   };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.GetMTime","kind":"method","status":"implemented","sigHash":"b440e4ec0f5cf0c0011a054bf20144b8f6cb39805f65ef7903d31c15133fd296","bodyHash":"08fa97fc74a7af6591584229bb467e61b4292a6341e69b46ae07affe8f353a03"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.FS","kind":"method","status":"implemented","sigHash":"d45876671f8945bccb97e542ce2ec67006013d8bab7e6cd3ee77196ea144fb66","bodyHash":"b36a5440d8ae5c318b21bc54eac0bd347d8af98e63f610cfa6e0381ec36d4afc"}
  *
  * Go source:
- * func (b *host) GetMTime(fileName string) time.Time {
- * 	return GetMTime(b.host, fileName)
+ * func (h *host) FS() vfs.FS {
+ * 	return h.host.FS()
+ * }
+ */
+export function host_FS(receiver: GoPtr<host>): FS {
+  return receiver!.host.FS();
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.GetMTime","kind":"method","status":"implemented","sigHash":"3fbe03bb8a4bcccda6812c93d154e1cc28484f37ce07f8162e651519d5a74c3c","bodyHash":"2230f96fdfa019cb941206c9ece545adaf6ecb44621900ef7c91049fcd26dd19"}
+ *
+ * Go source:
+ * func (h *host) GetMTime(fileName string) time.Time {
+ * 	return GetMTime(h.host, fileName)
  * }
  */
 export function host_GetMTime(receiver: GoPtr<host>, fileName: string): Time {
@@ -56,11 +72,11 @@ export function host_GetMTime(receiver: GoPtr<host>, fileName: string): Time {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.SetMTime","kind":"method","status":"implemented","sigHash":"db2611667cf2c2a41c055e88daaa90d49fc4cb5b9dae41ff087c010fc5bc74ac","bodyHash":"6913781d819c86be9dfa8e04c2d9804f800c0cd6faa1b7183e362addfbca2ce3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.SetMTime","kind":"method","status":"implemented","sigHash":"1fb0e3f725dc08e69c77a0d99a131294d611f60f652f9f3974a826e4d7cc28e5","bodyHash":"d9f72e14b9ae458835a1406fb40ddeb0ecf2645b3d8fedf1f09d63bcca07fe6f"}
  *
  * Go source:
- * func (b *host) SetMTime(fileName string, mTime time.Time) error {
- * 	return b.host.FS().Chtimes(fileName, time.Time{}, mTime)
+ * func (h *host) SetMTime(fileName string, mTime time.Time) error {
+ * 	return h.host.FS().Chtimes(fileName, time.Time{}, mTime)
  * }
  */
 export function host_SetMTime(receiver: GoPtr<host>, fileName: string, mTime: Time): GoError {

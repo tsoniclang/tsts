@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { DeepEqual as reflect_DeepEqual } from "../../go/reflect.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -709,14 +710,8 @@ export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, unknown>>,
     const defaultVal = entry.compute(defaultOpts);
 
     // If the implied value equals the default, this option doesn't add useful information.
-    // For primitives (numbers, booleans, strings), === suffices; arrays we stringify-compare.
-    if (implied === defaultVal) {
+    if (reflect_DeepEqual(implied, defaultVal)) {
       continue;
-    }
-    if (globalThis.Array.isArray(implied) && globalThis.Array.isArray(defaultVal)) {
-      if (globalThis.JSON.stringify(implied) === globalThis.JSON.stringify(defaultVal)) {
-        continue;
-      }
     }
 
     // Serialize the implied value and add it to the option map.

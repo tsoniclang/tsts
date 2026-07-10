@@ -220,23 +220,15 @@ export function PseudoChecker_GetReturnTypeOfSignature(receiver: GoPtr<PseudoChe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfAccessor","kind":"method","status":"implemented","sigHash":"4bea194521a8c02987f517cdb427623b0293c12e805e795b0a488007d7dfd100","bodyHash":"0f632c3378a963144a02a6fd090c436b6a187f1414eb268be3072a49f766304d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfAccessor","kind":"method","status":"implemented","sigHash":"4bea194521a8c02987f517cdb427623b0293c12e805e795b0a488007d7dfd100","bodyHash":"4947242d522906958c5e305fe7a29653ff639fb30b7447ce4c0ea68f2e2cec59"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetTypeOfAccessor(accessor *ast.Node) *PseudoType {
- * 	annotated := ch.typeFromAccessor(accessor)
- * 	if annotated.Kind == PseudoTypeKindNoResult {
- * 		return ch.inferAccessorType(accessor)
- * 	}
- * 	return annotated
+ * 	return ch.typeFromAccessor(accessor)
  * }
  */
 export function PseudoChecker_GetTypeOfAccessor(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>): GoPtr<PseudoType> {
-  const annotated = PseudoChecker_typeFromAccessor(receiver, accessor);
-  if (annotated!.Kind === PseudoTypeKindNoResult) {
-    return PseudoChecker_inferAccessorType(receiver, accessor);
-  }
-  return annotated;
+  return PseudoChecker_typeFromAccessor(receiver, accessor);
 }
 
 /**
@@ -495,7 +487,7 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"implemented","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f","bodyHash":"5e9750ed6d3c9d4bf559186063abe94fd4cb2e6c577996bc259218fbcaa74224"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"implemented","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f","bodyHash":"477847cff85964579ecdcf6fe82cb1bd02ae66cd9ddb2bdd6af12e313557b99c"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromAccessor(accessor *ast.Node) *PseudoType {
@@ -505,7 +497,15 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
  * 		return NewPseudoTypeDirect(accessorType)
  * 	}
  * 	if accessorDeclarations.GetAccessor != nil {
- * 		return ch.createReturnFromSignature(accessorDeclarations.GetAccessor.AsNode())
+ * 		res := ch.createReturnFromSignature(accessorDeclarations.GetAccessor.AsNode())
+ * 		if res.Kind == PseudoTypeKindInferred && len(res.AsPseudoTypeInferred().ErrorNodes) == 0 {
+ * 			errorNodes := []*ast.Node{accessorDeclarations.GetAccessor.AsNode()}
+ * 			if accessorDeclarations.SetAccessor != nil {
+ * 				errorNodes = append(errorNodes, accessorDeclarations.SetAccessor.AsNode())
+ * 			}
+ * 			res = NewPseudoTypeInferredWithErrors(res.AsPseudoTypeInferred().Expression, res.AsPseudoTypeInferred().IsSignatureReturn, errorNodes) // Move error up to the accessor
+ * 		}
+ * 		return res
  * 	}
  * 	return NewPseudoTypeNoResult(accessor)
  * }
@@ -517,27 +517,18 @@ export function PseudoChecker_typeFromAccessor(receiver: GoPtr<PseudoChecker>, a
     return NewPseudoTypeDirect(accessorType);
   }
   if (accessorDeclarations.GetAccessor !== undefined) {
-    return PseudoChecker_createReturnFromSignature(receiver, Node_AsNode(accessorDeclarations.GetAccessor));
+    let res = PseudoChecker_createReturnFromSignature(receiver, Node_AsNode(accessorDeclarations.GetAccessor));
+    if (res!.Kind === PseudoTypeKindInferred && PseudoType_AsPseudoTypeInferred(res)!.ErrorNodes.length === 0) {
+      const errorNodes: GoSlice<GoPtr<Node>> = [Node_AsNode(accessorDeclarations.GetAccessor)];
+      if (accessorDeclarations.SetAccessor !== undefined) {
+        errorNodes.push(Node_AsNode(accessorDeclarations.SetAccessor));
+      }
+      const inferred = PseudoType_AsPseudoTypeInferred(res);
+      res = NewPseudoTypeInferredWithErrors(inferred!.Expression, inferred!.IsSignatureReturn, errorNodes);
+    }
+    return res;
   }
   return NewPseudoTypeNoResult(accessor);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.inferAccessorType","kind":"method","status":"implemented","sigHash":"afa707c76198a50ef428945f2e11b22be4c073c12954dc83ee2de8a3246ee4c7","bodyHash":"d7fcda71d0d49239a37fc54f9d493b179dec623dd36a2cbe8f26d9ef10222164"}
- *
- * Go source:
- * func (ch *PseudoChecker) inferAccessorType(node *ast.Node) *PseudoType {
- * 	if node.Kind == ast.KindGetAccessor {
- * 		return ch.createReturnFromSignature(node)
- * 	}
- * 	return NewPseudoTypeNoResult(node)
- * }
- */
-export function PseudoChecker_inferAccessorType(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  if (node!.Kind === KindGetAccessor) {
-    return PseudoChecker_createReturnFromSignature(receiver, node);
-  }
-  return NewPseudoTypeNoResult(node);
 }
 
 /**
@@ -654,7 +645,7 @@ export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoCh
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"implemented","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb","bodyHash":"ab00ff87266414e2212f3014310115a05129356368f5e77262a0da2d6eb8549d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"implemented","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb","bodyHash":"bf5a9924b93efb75a2de2014ca6bb5e5db811991a6aa2f071108819f5c12471a"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromSingleReturnExpression(fn *ast.Node) *PseudoType {
@@ -662,7 +653,7 @@ export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoCh
  * 	if fn != nil && !ast.NodeIsMissing(fn.Body()) {
  * 		flags := ast.GetFunctionFlags(fn)
  * 		if flags&ast.FunctionFlagsAsyncGenerator != 0 {
- * 			return NewPseudoTypeNoResult(fn)
+ * 			return NewPseudoTypeInferred(fn, true)
  * 		}
  * 
  * 		body := fn.Body()
@@ -699,7 +690,7 @@ export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoCh
  * 			return ch.typeFromExpression(candidateExpr)
  * 		}
  * 	}
- * 	return NewPseudoTypeNoResult(fn)
+ * 	return NewPseudoTypeInferred(fn, true)
  * }
  */
 export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<PseudoChecker>, fn: GoPtr<Node>): GoPtr<PseudoType> {
@@ -707,7 +698,7 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
   if (fn !== undefined && !NodeIsMissing(Node_Body(fn))) {
     const flags = GetFunctionFlags(fn);
     if ((flags & FunctionFlagsAsyncGenerator) !== 0) {
-      return NewPseudoTypeNoResult(fn);
+      return NewPseudoTypeInferred(fn, true as bool);
     }
     const body = Node_Body(fn);
     if (IsBlock(body)) {
@@ -743,11 +734,11 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
       return PseudoChecker_typeFromExpression(receiver, candidateExpr);
     }
   }
-  return NewPseudoTypeNoResult(fn);
+  return NewPseudoTypeInferred(fn, true as bool);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8","bodyHash":"813760a61e16b8a6f0be7529e7a35054d6d373beafb963d7d13e767eec12b97f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8","bodyHash":"3cbb5b18c85643964a316af83f60d944676c07e6c7e4c2d1c02e060fc5c19d4e"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpression(node *ast.Node) *PseudoType {
@@ -780,13 +771,13 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
  * 	case ast.KindObjectLiteralExpression:
  * 		return ch.typeFromObjectLiteral(node.AsObjectLiteralExpression())
  * 	case ast.KindClassExpression:
- * 		return NewPseudoTypeInferred(node) // No possible annotation/directly mappable syntax
+ * 		return NewPseudoTypeInferredWithErrors(node, false, []*ast.Node{node}) // No possible annotation/directly mappable syntax
  * 	case ast.KindTemplateExpression:
  * 		// templateLitWithHoles as const, not supported
  * 		if IsInConstContext(node) {
- * 			return NewPseudoTypeInferred(node)
+ * 			return NewPseudoTypeInferred(node, false)
  * 		}
- * 		return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeInferred(node), PseudoTypeString)
+ * 		return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeInferred(node, false), PseudoTypeString)
  * 	case ast.KindNumericLiteral:
  * 		return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeNumericLiteral(node), PseudoTypeNumber)
  * 	case ast.KindNoSubstitutionTemplateLiteral:
@@ -800,7 +791,7 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
  * 	case ast.KindFalseKeyword:
  * 		return NewPseudoTypeMaybeConstLocation(node, PseudoTypeFalse, PseudoTypeBoolean)
  * 	}
- * 	return NewPseudoTypeInferred(node)
+ * 	return NewPseudoTypeInferred(node, false)
  * }
  */
 export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
@@ -833,12 +824,12 @@ export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>,
     case KindObjectLiteralExpression:
       return PseudoChecker_typeFromObjectLiteral(receiver, node as unknown as ObjectLiteralExpression);
     case KindClassExpression:
-      return NewPseudoTypeInferred(node);
+      return NewPseudoTypeInferredWithErrors(node, false, [node]);
     case KindTemplateExpression:
       if (IsInConstContext(node)) {
-        return NewPseudoTypeInferred(node);
+        return NewPseudoTypeInferred(node, false);
       }
-      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeInferred(node), PseudoTypeString);
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeInferred(node, false), PseudoTypeString);
     case KindNumericLiteral:
       return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeNumericLiteral(node), PseudoTypeNumber);
     case KindNoSubstitutionTemplateLiteral:
@@ -852,16 +843,16 @@ export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>,
     case KindFalseKeyword:
       return NewPseudoTypeMaybeConstLocation(node, PseudoTypeFalse, PseudoTypeBoolean);
   }
-  return NewPseudoTypeInferred(node);
+  return NewPseudoTypeInferred(node, false);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8","bodyHash":"6c3221ef20c28151cbcde104d910a0bc07398e95d5e674217cccde16a6e1c4cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8","bodyHash":"0c0f89d597255c0669842592604e989a4373d8d2355c553d2f4d623520e15316"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromObjectLiteral(node *ast.ObjectLiteralExpression) *PseudoType {
  * 	if errorNodes := ch.canGetTypeFromObjectLiteral(node); errorNodes != nil {
- * 		return NewPseudoTypeInferredWithErrors(node.AsNode(), errorNodes)
+ * 		return NewPseudoTypeInferredWithErrors(node.AsNode(), false, errorNodes)
  * 	}
  * 	// we are in a const context producing an object literal type, there are no shorthand or spread assignments
  * 	if node.Properties == nil || len(node.Properties.Nodes) == 0 {
@@ -909,7 +900,7 @@ export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>,
 export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ObjectLiteralExpression>): GoPtr<PseudoType> {
   const errorNodes = PseudoChecker_canGetTypeFromObjectLiteral(receiver, node);
   if (errorNodes.length > 0) {
-    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), errorNodes);
+    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), false, errorNodes);
   }
   if (node!.Properties === undefined || node!.Properties!.Nodes.length === 0) {
     return NewPseudoTypeObjectLiteral([]);
@@ -1107,15 +1098,15 @@ export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<Pseudo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e","bodyHash":"73eca39ca2a5acbd51460d9e55b7df4d46221d1dffcb913439cdccb6fd0cfb02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e","bodyHash":"9138e701c7ae5b13531b88d5268ebbe9f761600cdcc5bcf52c26e491a97c9821"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromArrayLiteral(node *ast.ArrayLiteralExpression) *PseudoType {
  * 	if errorNodes := ch.canGetTypeFromArrayLiteral(node); errorNodes != nil {
- * 		return NewPseudoTypeInferredWithErrors(node.AsNode(), errorNodes)
+ * 		return NewPseudoTypeInferredWithErrors(node.AsNode(), false, errorNodes)
  * 	}
  * 	if IsInConstContext(node.AsNode()) && isContextuallyTyped(node.AsNode()) {
- * 		return NewPseudoTypeInferred(node.AsNode()) // expr in an as const cast with a contextual type has variable readonly state, bail
+ * 		return NewPseudoTypeInferred(node.AsNode(), false) // expr in an as const cast with a contextual type has variable readonly state, bail
  * 	}
  * 	// we are in a const context producing a tuple type, there are no spread elements
  * 	results := make([]*PseudoType, 0, len(node.Elements.Nodes))
@@ -1128,10 +1119,10 @@ export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<Pseudo
 export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ArrayLiteralExpression>): GoPtr<PseudoType> {
   const errorNodes = PseudoChecker_canGetTypeFromArrayLiteral(receiver, node);
   if (errorNodes.length > 0) {
-    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), errorNodes);
+    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), false, errorNodes);
   }
   if (IsInConstContext(Node_AsNode(node)) && isContextuallyTyped(Node_AsNode(node))) {
-    return NewPseudoTypeInferred(Node_AsNode(node));
+    return NewPseudoTypeInferred(Node_AsNode(node), false);
   }
   const results: GoSlice<GoPtr<PseudoType>> = [];
   for (const e of node!.Elements!.Nodes) {
@@ -1279,7 +1270,7 @@ export function PseudoChecker_typeFromTypeAssertion(receiver: GoPtr<PseudoChecke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"implemented","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce","bodyHash":"403a1de86c69032ac88f0e70b9a115f48bcc24c1235f826fe336105ae6fb2820"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"implemented","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce","bodyHash":"543570aa23953bafcb7db839974854f4cfcd40a815603996968ce8a22a3ce30c"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromFunctionLikeExpression(node *ast.Node) *PseudoType {
@@ -1287,10 +1278,6 @@ export function PseudoChecker_typeFromTypeAssertion(receiver: GoPtr<PseudoChecke
  * 		return NewPseudoTypeDirect(node.FunctionLikeData().FullSignature)
  * 	}
  * 	returnType := ch.createReturnFromSignature(node)
- * 	if returnType.Kind == PseudoTypeKindNoResult {
- * 		// no result for the return type can just be an inferred result for the whole expression
- * 		return NewPseudoTypeInferred(node.AsNode())
- * 	}
  * 	typeParameters := ch.cloneTypeParameters(node.FunctionLikeData().TypeParameters)
  * 	parameters := ch.cloneParameters(node.FunctionLikeData().Parameters)
  * 	return NewPseudoTypeSingleCallSignature(
@@ -1306,9 +1293,6 @@ export function PseudoChecker_typeFromFunctionLikeExpression(receiver: GoPtr<Pse
     return NewPseudoTypeDirect(Node_FunctionLikeData(node)!.FullSignature);
   }
   const returnType = PseudoChecker_createReturnFromSignature(receiver, node);
-  if (returnType!.Kind === PseudoTypeKindNoResult) {
-    return NewPseudoTypeInferred(node);
-  }
   const typeParameters = PseudoChecker_cloneTypeParameters(receiver, Node_FunctionLikeData(node)!.TypeParameters as GoPtr<NodeList>);
   const parameters = PseudoChecker_cloneParameters(receiver, Node_FunctionLikeData(node)!.Parameters as GoPtr<NodeList>);
   return NewPseudoTypeSingleCallSignature(
@@ -1424,16 +1408,16 @@ export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187","bodyHash":"3332494dbbc0cd1252628cb3396156696e8febc22605f30eb1abd34bbe7f81bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::CouldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"a5bb1087d878cc3f2abc2d84628393d4ee8387fb933e6e7ec07bb0b8185be3fd","bodyHash":"14499381657fec72afbaceff2ec1e8fad16f4ef0c6bf0b8ed075cba873fb0eae"}
  *
  * Go source:
- * func couldAlreadyReferToUndefinedType(t *PseudoType) bool {
+ * func CouldAlreadyReferToUndefinedType(t *PseudoType) bool {
  * 	if t.Kind == PseudoTypeKindNoResult || t.Kind == PseudoTypeKindInferred || isUndefinedPseudoType(t) {
  * 		return true
  * 	}
  * 	if t.Kind == PseudoTypeKindMaybeConstLocation {
  * 		mc := t.AsPseudoTypeMaybeConstLocation()
- * 		return couldAlreadyReferToUndefinedType(mc.RegularType) // if we're even asking this question, it's not a `const` location
+ * 		return CouldAlreadyReferToUndefinedType(mc.RegularType) // if we're even asking this question, it's not a `const` location
  * 	}
  * 	if t.Kind == PseudoTypeKindDirect {
  * 		// inspect the direct type node
@@ -1441,25 +1425,25 @@ export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
  * 		return typeNodeCouldReferToUndefined(node)
  * 	}
  * 	if t.Kind == PseudoTypeKindUnion {
- * 		return core.Some(t.AsPseudoTypeUnion().Types, couldAlreadyReferToUndefinedType)
+ * 		return core.Some(t.AsPseudoTypeUnion().Types, CouldAlreadyReferToUndefinedType)
  * 	}
  * 	return false
  * }
  */
-export function couldAlreadyReferToUndefinedType(t: GoPtr<PseudoType>): bool {
+export function CouldAlreadyReferToUndefinedType(t: GoPtr<PseudoType>): bool {
   if (t!.Kind === PseudoTypeKindNoResult || t!.Kind === PseudoTypeKindInferred || isUndefinedPseudoType(t)) {
     return true;
   }
   if (t!.Kind === PseudoTypeKindMaybeConstLocation) {
     const mc = PseudoType_AsPseudoTypeMaybeConstLocation(t);
-    return couldAlreadyReferToUndefinedType(mc!.RegularType);
+    return CouldAlreadyReferToUndefinedType(mc!.RegularType);
   }
   if (t!.Kind === PseudoTypeKindDirect) {
     const node = PseudoType_AsPseudoTypeDirect(t)!.TypeNode;
     return typeNodeCouldReferToUndefined(node);
   }
   if (t!.Kind === PseudoTypeKindUnion) {
-    return Some(PseudoType_AsPseudoTypeUnion(t)!.Types, couldAlreadyReferToUndefinedType);
+    return Some(PseudoType_AsPseudoTypeUnion(t)!.Types, CouldAlreadyReferToUndefinedType);
   }
   return false;
 }
@@ -1488,11 +1472,6 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"f984f8061c687349341f1ae62bfd902ff9ef63da0c0a816a43cbd9ab3d3e7fbd","bodyHash":"241d1f596b7b564eabcf068e47483c5e46d2e3dcc2c898faaee3401f1e207938"}
  *
  * Go source:
- * // lastRequiredParamIndex returns the index just past the last required parameter
- * // in the list. A parameter is "required" if it has no question token, no initializer,
- * // and no rest token. This is computed in a single reverse pass so callers can
- * // determine "has required parameter after index i" with `i+1 < lastRequired`
- * // (equivalently, `i < lastRequired-1`) in O(1).
  * func lastRequiredParamIndex(params []*ast.Node) int {
  * 	for i := len(params) - 1; i >= 0; i-- {
  * 		if !isOptionalInitializedOrRestParameter(params[i]) {
@@ -1512,7 +1491,7 @@ export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"implemented","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9","bodyHash":"00b39adb003864d39cfcf739f651c2e7b4c4d93c96f3cfe562ac41818314ee81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"implemented","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9","bodyHash":"477d85754cb04641e9a13c6c6130269b65a2439693fb98285660ec271561ee77"}
  *
  * Go source:
  * func addUndefinedIfDefinitelyRequired(expr *PseudoType) *PseudoType {
@@ -1520,7 +1499,7 @@ export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
  * 	// in Strada, this reached into the checker to see if `undefined` was necessary, using `isRequiredOptionalParameter` from the emit resolver,
  * 	// but that's not required on top of the syntactic checks to get the same behavior. (If we get the type wrong, it'll mismatch later and be discarded
  * 	// for an inference error since corsa actually validates that pseudotypes semantically match the inferred type the checker produces)
- * 	if couldAlreadyReferToUndefinedType(expr) {
+ * 	if CouldAlreadyReferToUndefinedType(expr) {
  * 		return expr // will just error later, more like than not, unless the `undefined` is explicit in the pseudo
  * 	}
  * 	// Explicitly add an `| undefined`
@@ -1528,7 +1507,7 @@ export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
  * }
  */
 export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr<PseudoType> {
-  if (couldAlreadyReferToUndefinedType(expr)) {
+  if (CouldAlreadyReferToUndefinedType(expr)) {
     return expr;
   }
   return NewPseudoTypeUnion([expr, PseudoTypeUndefined]);
@@ -1575,7 +1554,7 @@ export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameterWorker","kind":"method","status":"implemented","sigHash":"448e76d1588c918da3cd18dbfd0e0a02d43196af461b4bb14b9d931b3ace821f","bodyHash":"5886a2f08a1fbb49ed2ee22314064c269aef1b6ce0fdbcebb18970b7e4bf53f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameterWorker","kind":"method","status":"implemented","sigHash":"448e76d1588c918da3cd18dbfd0e0a02d43196af461b4bb14b9d931b3ace821f","bodyHash":"5a0191e5620b0b3bbf29643e2817ad59f382161af3c3d37a2e01bcdb83eedf3d"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromParameterWorker(node *ast.ParameterDeclaration, selfIdx int, lastRequired int) *PseudoType {
@@ -1597,6 +1576,9 @@ export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, 
  * 	}
  * 	if node.Initializer != nil && ast.IsIdentifier(node.Name()) && !isContextuallyTyped(node.AsNode()) {
  * 		expr := ch.typeFromExpression(node.Initializer)
+ * 		if expr != nil && (expr.Kind == PseudoTypeKindInferred && len(expr.AsPseudoTypeInferred().ErrorNodes) == 0) {
+ * 			expr = NewPseudoTypeInferredWithErrors(expr.AsPseudoTypeInferred().Expression, false, []*ast.Node{node.AsNode()}) // Move error up to the parameter
+ * 		}
  * 		if !ch.strictNullChecks {
  * 			return expr
  * 		}
@@ -1631,7 +1613,11 @@ export function PseudoChecker_typeFromParameterWorker(receiver: GoPtr<PseudoChec
     return result;
   }
   if (node!.Initializer !== undefined && IsIdentifier(Node_Name(Node_AsNode(node))) && !isContextuallyTyped(Node_AsNode(node))) {
-    const expr = PseudoChecker_typeFromExpression(receiver, node!.Initializer);
+    let expr = PseudoChecker_typeFromExpression(receiver, node!.Initializer);
+    if (expr !== undefined && (expr!.Kind === PseudoTypeKindInferred && (PseudoType_AsPseudoTypeInferred(expr)!.ErrorNodes ?? []).length === 0)) {
+      const inferred = PseudoType_AsPseudoTypeInferred(expr)!;
+      expr = NewPseudoTypeInferredWithErrors(inferred.Expression, false as bool, [Node_AsNode(node)]);
+    }
     if (!receiver!.strictNullChecks) {
       return expr;
     }

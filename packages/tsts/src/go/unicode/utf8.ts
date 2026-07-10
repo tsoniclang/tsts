@@ -87,9 +87,15 @@ export type StringByteView = { ascii: boolean; bytes?: Uint8Array; hasSurrogate?
 const asciiStringByteView: StringByteView = { ascii: true };
 const stringByteViewCache = new globalThis.Map<string, StringByteView>();
 const stringByteViewCacheBudget = 64 * 1024 * 1024;
+const stringByteViewCacheMinimumLength = 4096;
 const stringByteViewCacheState = { bytes: 0 };
+let lastShortStringByteViewText: string | undefined;
+let lastShortStringByteView: StringByteView | undefined;
 
 export function GetStringByteView(s: string): StringByteView {
+  if (s.length < stringByteViewCacheMinimumLength && s === lastShortStringByteViewText) {
+    return lastShortStringByteView!;
+  }
   const cached = stringByteViewCache.get(s);
   if (cached !== undefined) {
     return cached;
@@ -97,7 +103,7 @@ export function GetStringByteView(s: string): StringByteView {
   const ascii = !nonASCII.test(s);
   const hasSurrogate = !ascii && surrogate.test(s);
   const view: StringByteView = ascii ? asciiStringByteView : { ascii, bytes: encode(s), hasSurrogate };
-  if (s.length >= 4096) {
+  if (s.length >= stringByteViewCacheMinimumLength) {
     const cost = ascii ? s.length : view.bytes!.length;
     if (stringByteViewCacheState.bytes + cost > stringByteViewCacheBudget) {
       stringByteViewCache.clear();
@@ -105,7 +111,14 @@ export function GetStringByteView(s: string): StringByteView {
     }
     stringByteViewCache.set(s, view);
     stringByteViewCacheState.bytes += cost;
+  } else {
+    lastShortStringByteViewText = s;
+    lastShortStringByteView = view;
   }
+  // Most Go ports call len(s), s[i], and decode helpers repeatedly while
+  // scanning one string. A bounded one-entry view retains Go's O(n) loop
+  // shape for short strings without turning the content cache into an
+  // unbounded store of every parser fragment.
   return view;
 }
 

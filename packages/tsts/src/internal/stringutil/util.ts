@@ -8,6 +8,7 @@ import {
   DecodeRuneInBytesAt,
   DecodeRuneInString,
   DecodeRuneInStringAt,
+  RuneSelf,
   StringByteAt,
   StringByteLen,
   StringByteSlice,
@@ -122,10 +123,10 @@ export function IsWhiteSpaceSingleLine(ch: GoRune): bool {
  * 	// The ECMAScript line terminator characters are listed in Table 3.
  * 	//     Table 3: Line Terminator Characters
  * 	//     Code Unit Value     Name                    Formal Name
- * 	//     U+000A              Line Feed               <LF>
- * 	//     U+000D              Carriage Return         <CR>
- * 	//     U+2028              Line separator          <LS>
- * 	//     U+2029              Paragraph separator     <PS>
+ * 	//     \u000A              Line Feed               <LF>
+ * 	//     \u000D              Carriage Return         <CR>
+ * 	//     \u2028              Line separator          <LS>
+ * 	//     \u2029              Paragraph separator     <PS>
  * 	// Only the characters in Table 3 are treated as line terminators. Other new line or line
  * 	// breaking characters are treated as white space but not as line terminators.
  * 	switch ch {
@@ -206,6 +207,29 @@ export function IsHexDigit(ch: GoRune): bool {
  */
 export function IsASCIILetter(ch: GoRune): bool {
   return (ch >= 0x41 && ch <= 0x5a) || (ch >= 0x61 && ch <= 0x7a);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::ContainsNonASCII","kind":"func","status":"implemented","sigHash":"3932b7ea03e226b9c5989b62b58a1c1250cd4ca67b7e34f78b022c6cb075b5b5","bodyHash":"c5518241ac83f22f9952ed3af06ed899bb50859dc7b8bc11165545efbd18e58e"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"A JavaScript UTF-16 code-unit scan is equivalent for this predicate: every non-ASCII Unicode scalar or lone surrogate encodes to at least one UTF-8 byte >= RuneSelf, while every ASCII code unit encodes to one byte below RuneSelf. This avoids repeatedly materializing or looking up UTF-8 byte views on every SourceFile construction."}
+ *
+ * Go source:
+ * func ContainsNonASCII(s string) bool {
+ * 	for i := range len(s) {
+ * 		if s[i] >= utf8.RuneSelf {
+ * 			return true
+ * 		}
+ * 	}
+ * 	return false
+ * }
+ */
+export function ContainsNonASCII(s: string): bool {
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= RuneSelf) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -761,10 +785,34 @@ export function CodePointToSurrogatePair(ch: GoRune): [GoRune, GoRune] {
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::surrogateUTF8Lead+surrogateUTF8LeadBits+utf8ContMarker+utf8ContMax+utf8ContMask+surrogateUTF8Byte1Min+surrogateUTF8Byte1Max","kind":"constGroup","status":"implemented","sigHash":"01744899508cfb5f4c0cf35f7ef8e13aca37b4dd4eb009ad02519f22600bed91","bodyHash":"4da5e8ec178a6659a5f3a4c71fec8982883ced413d37a019041bcc6cb742d205"}
  *
- * Go source: const block describing the CESU-8/WTF-8 byte layout Go uses to encode a lone
+ * Port note: This const block describes the CESU-8/WTF-8 byte layout Go uses to encode a lone
  * surrogate (U+D000–U+DFFF) that valid UTF-8 cannot represent. TSTS keeps lone surrogates as
  * native JS UTF-16 code units instead (see EncodeJSStringRune/DecodeJSStringRune), so these
  * byte-layout constants are carried for fidelity but are not referenced by the JS-native helpers.
+ *
+ * Go source:
+ * const (
+ * 	// A lone surrogate (U+D800–U+DFFF) cannot be represented in valid UTF-8, so
+ * 	// EncodeJSStringRune stores it as the 3-byte CESU-8/WTF-8 sentinel that UTF-8
+ * 	// would use for that code point if surrogates were encodable. unicode/utf8
+ * 	// and unicode/utf16 deliberately refuse to encode or decode surrogates, so
+ * 	// the byte math is spelled out here.
+ * 	//
+ * 	// Byte layout for a code point cp in U+D000–U+DFFF (lead nibble 0xD):
+ * 	//   byte0 = 0xE0 | (cp >> 12)          == 0xED
+ * 	//   byte1 = 0x80 | ((cp >> 6) & 0x3F)
+ * 	//   byte2 = 0x80 | (cp & 0x3F)
+ * 	surrogateUTF8Lead     = 0xED   // byte0, shared by the whole U+D000–U+DFFF block
+ * 	surrogateUTF8LeadBits = 0xD000 // (surrogateUTF8Lead & 0x0F) << 12, byte0's decoded contribution
+ * 	utf8ContMarker        = 0x80   // continuation byte marker / min value (10xxxxxx)
+ * 	utf8ContMax           = 0xBF   // continuation byte max value
+ * 	utf8ContMask          = 0x3F   // data bits carried by a continuation byte
+ *
+ * 	// byte1 bounds that pin the block down to the surrogate range U+D800–U+DFFF:
+ * 	// 0xD800 -> 0xA0, 0xDFFF -> 0xBF.
+ * 	surrogateUTF8Byte1Min = 0xA0
+ * 	surrogateUTF8Byte1Max = 0xBF
+ * )
  */
 const surrogateUTF8Lead: int = 0xed;
 const surrogateUTF8LeadBits: int = 0xd000;
@@ -835,8 +883,26 @@ export function DecodeJSStringRune(s: string): [GoRune, int] {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::CombineSurrogatePairs","kind":"func","status":"implemented","sigHash":"a1bf52fe728f2a9a9fc2f6232cd40647a20590fe3be22823a5c448bd3ddbe38f","bodyHash":"d85a41cbffe933f35dcd2393f6d01037bf949494f67dbbb1852777feb14fc414"}
  *
  * Go source:
- * func CombineSurrogatePairs(s string) string { ... merges adjacent CESU-8 high+low surrogate
- * sentinels into the single supplementary code point's 4-byte UTF-8 form ... }
+ * func CombineSurrogatePairs(s string) string {
+ * 	if strings.IndexByte(s, surrogateUTF8Lead) < 0 {
+ * 		return s
+ * 	}
+ * 	var b strings.Builder
+ * 	b.Grow(len(s))
+ * 	for i := 0; i < len(s); {
+ * 		r, size := DecodeJSStringRune(s[i:])
+ * 		if IsHighSurrogate(r) {
+ * 			if low, lowSize := DecodeJSStringRune(s[i+size:]); IsLowSurrogate(low) {
+ * 				b.WriteRune(SurrogatePairToCodePoint(r, low))
+ * 				i += size + lowSize
+ * 				continue
+ * 			}
+ * 		}
+ * 		b.WriteString(s[i : i+size])
+ * 		i += size
+ * 	}
+ * 	return b.String()
+ * }
  */
 export function CombineSurrogatePairs(s: string): string {
   // In Go (UTF-8) a high+low surrogate written as two separate CESU-8 sentinels

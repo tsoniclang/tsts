@@ -23,15 +23,15 @@ export interface Float64Histogram {
 
 export class Value {
   private readonly kind: ValueKind;
-  private readonly payload: number | Float64Histogram;
+  private readonly payload: number | bigint | Float64Histogram;
 
-  private constructor(kind: ValueKind, payload: number | Float64Histogram) {
+  private constructor(kind: ValueKind, payload: number | bigint | Float64Histogram) {
     this.kind = kind;
     this.payload = payload;
   }
 
   static Uint64(value: ulong): Value {
-    return new Value(KindUint64, value as number);
+    return new Value(KindUint64, value as bigint);
   }
 
   static Float64(value: number): Value {
@@ -47,7 +47,7 @@ export class Value {
   }
 
   Uint64(): ulong {
-    return (this.kind === KindUint64 ? this.payload as number : 0) as ulong;
+    return (this.kind === KindUint64 ? this.payload as bigint : 0n) as ulong;
   }
 
   Float64(): number {
@@ -91,16 +91,16 @@ export function Read(samples: GoSlice<Sample>): void {
   for (const sample of samples) {
     switch (sample.Name) {
       case "/memory/classes/heap/free:bytes":
-        sample.Value = Value.Uint64(nodeOs.freemem() as ulong);
+        sample.Value = Value.Uint64(globalThis.BigInt(nodeOs.freemem()) as ulong);
         break;
       case "/memory/classes/total:bytes":
-        sample.Value = Value.Uint64(nodeOs.totalmem() as ulong);
+        sample.Value = Value.Uint64(globalThis.BigInt(nodeOs.totalmem()) as ulong);
         break;
       case "/sched/goroutines:goroutines":
-        sample.Value = Value.Uint64(1 as ulong);
+        sample.Value = Value.Uint64(1n as ulong);
         break;
       default:
-        sample.Value = Value.Uint64(0 as ulong);
+        sample.Value = Value.Uint64(0n as ulong);
         break;
     }
   }

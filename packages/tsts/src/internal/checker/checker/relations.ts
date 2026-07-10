@@ -177,7 +177,7 @@ import {
 import type { Type, TypeAlias, TypeFlags } from "../types.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
-import { TSTrue } from "../../core/tristate.js";
+import { TSTrue, Tristate_IsTrue } from "../../core/tristate.js";
 import { CompilerOptions_GetIsolatedModules, ModuleKindCommonJS, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindSystem } from "../../core/compileroptions.js";
 import type { SymbolNodeLinks } from "../types.js";
 import type { AssignmentKind } from "../utilities.js";
@@ -406,7 +406,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
   const sourceFile = GetSourceFileOfNode(node);
   const sourceFileName = NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile));
   const compilerOptions = receiver!.compilerOptions!;
-  const isIllegalExportDefaultInCJS = (!isExportEquals && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) as bool;
+  const isIllegalExportDefaultInCJS = (!isExportEquals && (node!.Flags & NodeFlagsAmbient) === 0 && Tristate_IsTrue(compilerOptions.VerbatimModuleSyntax) && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) as bool;
   if (IsIdentifier(Node_Expression(node))) {
     const id = Node_Expression(node);
     const sym = Checker_getExportSymbolOfValueSymbolIfExported(receiver, Checker_resolveEntityName(receiver, id, SymbolFlagsAll, true, true, node));
@@ -415,7 +415,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
       const typeOnlyDeclaration = Checker_getTypeOnlyAliasDeclarationEx(receiver, sym, SymbolFlagsValue);
       if ((Checker_getSymbolFlags(receiver, sym) & SymbolFlagsValue) !== 0) {
         Checker_checkExpressionCached(receiver, id);
-        if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && typeOnlyDeclaration !== undefined) {
+        if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && Tristate_IsTrue(compilerOptions.VerbatimModuleSyntax) && typeOnlyDeclaration !== undefined) {
           const message = IfElse(
             isExportEquals,
             An_export_declaration_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
@@ -423,7 +423,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
           );
           Checker_error(receiver, id, message, Node_Text(id));
         }
-      } else if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue) {
+      } else if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && Tristate_IsTrue(compilerOptions.VerbatimModuleSyntax)) {
         const message = IfElse(
           isExportEquals,
           An_export_declaration_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
@@ -1838,7 +1838,7 @@ export function Checker_markExportAssignmentAliasReferenced(receiver: GoPtr<Chec
  */
 export function Checker_getContextualTypeForAssignmentExpression(receiver: GoPtr<Checker>, binary: GoPtr<BinaryExpression>): GoPtr<Type> {
   const left = binary!.Left as GoPtr<Node>;
-  const binarySymbol = (binary as unknown as { Symbol?: GoPtr<Symbol> }).Symbol;
+  const binarySymbol = binary!.Symbol;
   if (IsAccessExpression(left)) {
     const expr = Node_Expression(left);
     switch (expr!.Kind) {

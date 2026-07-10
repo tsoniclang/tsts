@@ -5,35 +5,52 @@ export type Duration = long;
 const nanosecondsPerMillisecond = 1_000_000;
 const nanosecondsPerSecond = 1_000_000_000;
 const nanosecondsPerMinute = 60 * nanosecondsPerSecond;
+const zeroTimeUnixMilliseconds = -62_135_596_800_000;
 
-export const Millisecond = nanosecondsPerMillisecond as Duration;
+export const Millisecond: Duration = nanosecondsPerMillisecond;
 
-export const Second = nanosecondsPerSecond as Duration;
+export const Second: Duration = nanosecondsPerSecond;
 
-export const Minute = nanosecondsPerMinute as Duration;
+export const Minute: Duration = nanosecondsPerMinute;
 
 export class Time {
-  readonly #date: Date;
+  readonly #unixMilliseconds: long;
 
-  constructor(date: Date | number | string = 0) {
-    this.#date = date instanceof Date ? new Date(date.getTime()) : new Date(date);
+  constructor(unixMilliseconds: long = zeroTimeUnixMilliseconds) {
+    this.#unixMilliseconds = unixMilliseconds;
+  }
+
+  Equal(other: Time): boolean {
+    return this.#unixMilliseconds === other.#unixMilliseconds;
+  }
+
+  Before(other: Time): boolean {
+    return this.#unixMilliseconds < other.#unixMilliseconds;
+  }
+
+  After(other: Time): boolean {
+    return this.#unixMilliseconds > other.#unixMilliseconds;
   }
 
   Sub(other: Time): Duration {
-    return ((this.#date.getTime() - other.#date.getTime()) * nanosecondsPerMillisecond) as Duration;
+    return (this.#unixMilliseconds - other.#unixMilliseconds) * nanosecondsPerMillisecond;
   }
 
   UnixMilli(): long {
-    return this.#date.getTime() as long;
+    return this.#unixMilliseconds;
   }
 
   IsZero(): boolean {
-    return this.#date.getTime() === 0;
+    return this.#unixMilliseconds === zeroTimeUnixMilliseconds;
   }
 
   ToDate(): Date {
-    return new Date(this.#date.getTime());
+    return new Date(this.#unixMilliseconds);
   }
+}
+
+export function FromDate(date: Date): Time {
+  return new Time(date.getTime());
 }
 
 export interface Timer {
@@ -105,7 +122,7 @@ export function NewTimer(duration: Duration): Timer {
 }
 
 export function Now(): Time {
-  return new Time(new Date());
+  return new Time(Date.now());
 }
 
 export function Since(time: Time): Duration {
@@ -119,13 +136,13 @@ export function Sleep(duration: Duration): Promise<void> {
 }
 
 export function Unix(seconds: long, nanoseconds: long): Time {
-  return new Time((seconds as number) * 1000 + Math.floor((nanoseconds as number) / nanosecondsPerMillisecond));
+  return new Time(seconds * 1000 + Math.floor(nanoseconds / nanosecondsPerMillisecond));
 }
 
 export function UnixMilli(milliseconds: long): Time {
-  return new Time(milliseconds as number);
+  return new Time(milliseconds);
 }
 
 const durationToMilliseconds = (duration: Duration): number => {
-  return Math.max(0, Math.floor((duration as number) / nanosecondsPerMillisecond));
+  return Math.max(0, Math.floor(duration / nanosecondsPerMillisecond));
 }

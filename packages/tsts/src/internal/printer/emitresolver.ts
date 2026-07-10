@@ -123,7 +123,7 @@ export const TypeReferenceSerializationKindTypeWithCallSignature: int = 10 as in
 export const TypeReferenceSerializationKindObjectType: int = 11 as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"4af1fb9a8ce053280f08714c5d92ab6205e0e2fd3c425435043c4d61662f7e5d","bodyHash":"20ef9f912a65d513d2bb244fc98d5a80384e58f6ac2a0d2b57b534878931e0f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"4af1fb9a8ce053280f08714c5d92ab6205e0e2fd3c425435043c4d61662f7e5d","bodyHash":"50fc5000f1637bfb886996ab0bc7ab06818234add65aca5c9f85674427b7661a"}
  *
  * Go source:
  * EmitResolver interface {
@@ -135,18 +135,18 @@ export const TypeReferenceSerializationKindObjectType: int = 11 as int;
  * 	GetExternalModuleFileFromDeclaration(node *ast.Node) *ast.SourceFile
  * 	GetEffectiveDeclarationFlags(node *ast.Node, flags ast.ModifierFlags) ast.ModifierFlags
  * 	GetResolutionModeOverride(node *ast.Node) core.ResolutionMode
- * 
+ *
  * 	// decorator metadata
  * 	GetTypeReferenceSerializationKind(name *ast.EntityName, serialScope *ast.Node) TypeReferenceSerializationKind
- * 
+ *
  * 	// const enum inlining
  * 	GetConstantValue(node *ast.Node) any
- * 
+ *
  * 	// JSX Emit
  * 	GetJsxFactoryEntity(location *ast.Node) *ast.Node
  * 	GetJsxFragmentFactoryEntity(location *ast.Node) *ast.Node
  * 	SetReferencedImportDeclaration(node *ast.IdentifierNode, ref *ast.Declaration) // for overriding the reference resolver behavior for generated identifiers
- * 
+ *
  * 	// declaration emit checker functionality projections
  * 	PrecalculateDeclarationEmitVisibility(file *ast.SourceFile)
  * 	IsSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasToMarkVisible bool) SymbolAccessibilityResult
@@ -156,18 +156,20 @@ export const TypeReferenceSerializationKindObjectType: int = 11 as int;
  * 	IsLiteralConstDeclaration(node *ast.Node) bool
  * 	RequiresAddingImplicitUndefined(node *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool
  * 	IsDeclarationVisible(node *ast.Node) bool
+ * 	IsNameResolvable(location *ast.Node, name string) bool
  * 	IsImportRequiredByAugmentation(decl *ast.ImportDeclaration) bool
  * 	IsDefinitelyReferenceToGlobalSymbolObject(node *ast.Node) bool
  * 	IsImplementationOfOverload(node *ast.SignatureDeclaration) bool
  * 	GetEnumMemberValue(node *ast.Node) evaluator.Result
  * 	IsLateBound(node *ast.Node) bool
  * 	IsOptionalParameter(node *ast.Node) bool
- * 	GetBaseDeclarationsForPropertyDeclaration(node *ast.Node) []*ast.Node
+ * 	IsThisPropertyAssignmentDeclarationRedundant(node *ast.Node) bool
  *
  * 	// isolatedDeclarations-specific declaration emit
  * 	GetPropertiesOfContainerFunction(node *ast.Node) []*ast.Symbol
  * 	RequiresAddingImplicitUndefinedUnsafe(node *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool
- * 
+ * 	GetReferencedValueDeclarationUnsafe(node *ast.IdentifierNode) *ast.Declaration
+ *
  * 	// Node construction for declaration emit
  * 	CreateTypeOfDeclaration(emitContext *EmitContext, declaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node
  * 	CreateReturnTypeOfSignatureDeclaration(emitContext *EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node
@@ -191,6 +193,7 @@ export interface EmitResolver extends ReferenceResolver {
   GetJsxFactoryEntity(location: GoPtr<Node>): GoPtr<Node>;
   GetJsxFragmentFactoryEntity(location: GoPtr<Node>): GoPtr<Node>;
   SetReferencedImportDeclaration(node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void;
+  GetReferencedValueDeclarationUnsafe(node: GoPtr<IdentifierNode>): GoPtr<Declaration>;
   PrecalculateDeclarationEmitVisibility(file: GoPtr<SourceFile>): void;
   IsSymbolAccessible(symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult;
   IsEntityNameVisible(entityName: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): SymbolAccessibilityResult;
@@ -205,7 +208,8 @@ export interface EmitResolver extends ReferenceResolver {
   GetEnumMemberValue(node: GoPtr<Node>): Result;
   IsLateBound(node: GoPtr<Node>): bool;
   IsOptionalParameter(node: GoPtr<Node>): bool;
-  GetBaseDeclarationsForPropertyDeclaration(node: GoPtr<Node>): GoSlice<GoPtr<Node>>;
+  IsNameResolvable(location: GoPtr<Node>, name: string): bool;
+  IsThisPropertyAssignmentDeclarationRedundant(node: GoPtr<Node>): bool;
   GetPropertiesOfContainerFunction(node: GoPtr<Node>): GoSlice<GoPtr<Symbol>>;
   RequiresAddingImplicitUndefinedUnsafe(node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool;
   CreateTypeOfDeclaration(emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node>;

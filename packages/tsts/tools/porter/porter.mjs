@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import ts from "typescript";
 import { computeSignatureReport } from "./sig-check.mjs";
 
 import {
@@ -47,6 +48,29 @@ export async function main() {
     const snapshot = runScan(config);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     printScanSummary(config, snapshot);
+    return;
+  }
+
+  if (command === "source-docs") {
+    const snapshot = runScan(config);
+    const result = buildEmbeddedGoSourceUpdates(snapshot, resolveRepo(config.tsRoot));
+    console.log(`embedded Go source docs needing updates: ${result.unitCount} unit(s) in ${result.updates.length} file(s)`);
+    if (options.write === true) {
+      for (const update of result.updates) {
+        const outcome = writeTextSafely(update.path, update.text, {
+          force: options.force === true,
+          label: "ported TypeScript source file",
+        });
+        console.log(`${outcome}: ${path.relative(repoRoot, update.path)}`);
+      }
+      return;
+    }
+    if (options.check === true && result.unitCount > 0) {
+      fail(`${result.unitCount} embedded Go source block(s) differ from pinned TS-Go`);
+    }
+    if (result.unitCount > 0) {
+      console.log("Dry run only. Re-run with --write --force to synchronize source documentation.");
+    }
     return;
   }
 
@@ -175,7 +199,7 @@ export async function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected scan, status, verify, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected scan, status, verify, sig-check, source-docs, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
 }
 
 // Signature/type-equivalence check. Compares each ported @tsgo-unit's actual TS
@@ -258,42 +282,109 @@ export function runScan(config) {
 }
 
 export function emptySchemaSourceSyncStatus() {
-  return { mismatches: [] };
+  return { mismatches: [], policyIssues: [], classifiedFileCount: 0 };
 }
 
-// Some vendored-schema inputs (packages/tsts/schema/tsgo/*) are verbatim copies
-// of TS-Go source files. The AST generator validates artifacts against those
-// COPIES, never against live source, so a real upstream change that wasn't
-// mirrored into the schema dir would sit behind a green `verify`. This check
-// asserts each declared copy is byte-identical (CRLF-normalized) to its live
-// source file under config.sourceRoot, so the schema pin cannot silently lag
-// the source pin. Bias is toward over-reporting: any byte difference fails.
+// Every file in the vendored schema directory must have exactly one explicit
+// policy. Upstream copies are checked byte-for-byte (after CRLF normalization)
+// against the pinned TS-Go source tree; local metadata is classified but never
+// mistaken for an upstream input. An unclassified, duplicate, missing, or
+// out-of-directory policy is a hard failure. This keeps the schema pin and the
+// source pin on one mechanically audited track.
 export function buildSchemaSourceSyncStatus(config) {
-  const checks = config.schemaSourceSyncChecks ?? [];
+  const schemaDirRelative = config.astSchemaDir ?? "packages/tsts/schema/tsgo";
+  const schemaDir = resolveRepo(schemaDirRelative);
+  const policies = config.schemaFilePolicies ?? [];
   const sourceRoot = resolveRepo(config.sourceRoot);
   const mismatches = [];
+  const policyIssues = [];
+  const policyByPath = new Map();
   const normalize = (text) => text.replace(/\r\n/g, "\n");
-  for (const check of checks) {
-    const schemaPath = resolveRepo(check.schema);
-    const sourcePath = path.join(sourceRoot, check.source);
+
+  for (const policy of policies) {
+    if (policy === null || typeof policy !== "object" || Array.isArray(policy)) {
+      policyIssues.push({ path: "<invalid>", reason: "schema file policy must be an object" });
+      continue;
+    }
+    if (typeof policy.path !== "string" || policy.path.trim() === "") {
+      policyIssues.push({ path: "<invalid>", reason: "schema file policy requires a non-empty path" });
+      continue;
+    }
+    const schemaPath = resolveRepo(policy.path);
+    const relativeToSchemaDir = path.relative(schemaDir, schemaPath);
+    if (relativeToSchemaDir.startsWith("..") || path.isAbsolute(relativeToSchemaDir)) {
+      policyIssues.push({ path: policy.path, reason: `schema file policy is outside ${schemaDirRelative}` });
+      continue;
+    }
+    if (policyByPath.has(policy.path)) {
+      policyIssues.push({ path: policy.path, reason: "schema file has duplicate policies" });
+      continue;
+    }
+    if (policy.kind !== "upstream-copy" && policy.kind !== "local-metadata") {
+      policyIssues.push({ path: policy.path, reason: "schema file policy kind must be 'upstream-copy' or 'local-metadata'" });
+      continue;
+    }
+    if (policy.kind === "upstream-copy" && (typeof policy.source !== "string" || policy.source.trim() === "")) {
+      policyIssues.push({ path: policy.path, reason: "upstream-copy schema policy requires a non-empty source" });
+      continue;
+    }
+    if (policy.kind === "local-metadata" && policy.source !== undefined) {
+      policyIssues.push({ path: policy.path, reason: "local-metadata schema policy must not declare an upstream source" });
+      continue;
+    }
+    policyByPath.set(policy.path, policy);
+  }
+
+  const actualSchemaFiles = existsSync(schemaDir)
+    ? walk(schemaDir)
+      .filter((file) => statSync(file).isFile())
+      .map((file) => path.relative(repoRoot, file).split(path.sep).join("/"))
+      .sort()
+    : [];
+  const actualSchemaPaths = new Set(actualSchemaFiles);
+  for (const schemaPath of actualSchemaFiles) {
+    if (!policyByPath.has(schemaPath)) {
+      policyIssues.push({ path: schemaPath, reason: "schema directory file has no explicit policy" });
+    }
+  }
+  for (const policyPath of policyByPath.keys()) {
+    if (!actualSchemaPaths.has(policyPath)) {
+      policyIssues.push({ path: policyPath, reason: "classified schema directory file is missing" });
+    }
+  }
+
+  for (const policy of policyByPath.values()) {
+    if (policy.kind !== "upstream-copy") continue;
+    const schemaPath = resolveRepo(policy.path);
+    const sourcePath = path.join(sourceRoot, policy.source);
     if (!existsSync(schemaPath)) {
-      mismatches.push({ schema: check.schema, source: check.source, reason: "schema-dir copy is missing" });
+      continue;
+    }
+    if (!statSync(schemaPath).isFile()) {
+      policyIssues.push({ path: policy.path, reason: "classified schema path is not a regular file" });
       continue;
     }
     if (!existsSync(sourcePath)) {
-      mismatches.push({ schema: check.schema, source: check.source, reason: "live source file is missing (upstream moved/removed it; refresh the schema pin)" });
+      mismatches.push({ schema: policy.path, source: policy.source, reason: "live source file is missing (upstream moved/removed it; refresh the schema pin)" });
       continue;
     }
     if (normalize(readFileSync(schemaPath, "utf8")) !== normalize(readFileSync(sourcePath, "utf8"))) {
-      mismatches.push({ schema: check.schema, source: check.source, reason: "schema-dir copy differs from live source; refresh the AST schema pin and regenerate" });
+      mismatches.push({ schema: policy.path, source: policy.source, reason: "schema-dir copy differs from live source; refresh the AST schema pin and regenerate" });
     }
   }
-  return { mismatches };
+  return { mismatches, policyIssues, classifiedFileCount: policyByPath.size };
 }
 
 export function collectSchemaSourceSyncFailures(status) {
-  if (status.mismatches.length === 0) return [];
-  return [`${status.mismatches.length} schema/source sync mismatches (${status.mismatches.map((m) => m.schema.split("/").pop()).join(", ")})`];
+  const failures = [];
+  const policyIssues = status.policyIssues ?? [];
+  if (policyIssues.length > 0) {
+    failures.push(`${policyIssues.length} schema file policy issues (${policyIssues.map((issue) => issue.path.split("/").pop()).join(", ")})`);
+  }
+  if (status.mismatches.length > 0) {
+    failures.push(`${status.mismatches.length} schema/source sync mismatches (${status.mismatches.map((m) => m.schema.split("/").pop()).join(", ")})`);
+  }
+  return failures;
 }
 
 export function buildStatus(
@@ -353,6 +444,9 @@ export function buildStatus(
   const implemented = [];
   const stubbed = [];
   const excluded = [];
+  const mechanicalRisks = [];
+  const implementationOwnerIssues = [];
+  const embeddedSourceMismatches = [];
 
   for (const unit of goUnits) {
     if (!unit.portable) continue;
@@ -378,6 +472,20 @@ export function buildStatus(
       tsStatus: "",
     };
 
+    if (tsUnit !== undefined) {
+      const expectedSource = normalizeEmbeddedGoSource(renderGoSourceComment(unit.snippet));
+      if (normalizeEmbeddedGoSource(tsUnit.embeddedGoSource) !== expectedSource) {
+        embeddedSourceMismatches.push({
+          id: row.id,
+          path: tsUnit.path,
+          name: row.name,
+          reason: tsUnit.embeddedGoSource === undefined
+            ? "missing Go source block"
+            : "Go source block differs from pinned TS-Go",
+        });
+      }
+    }
+
     if (!isActivePortPolicy(unit.policy)) {
       row.status = "excluded";
       excluded.push(row);
@@ -395,6 +503,16 @@ export function buildStatus(
     row.tsStatus = tsUnit.status;
     row.hasUnimplThrow = tsUnit.hasUnimplThrow ?? false;
     row.kind = tsUnit.kind;
+    if (tsUnit.implementationOwnerIssue !== undefined) {
+      implementationOwnerIssues.push({ id: row.id, path: row.tsPath, name: row.name, reason: tsUnit.implementationOwnerIssue });
+    }
+    const unitMechanicalRisks = collectMechanicalPortRisks(unit, tsUnit);
+    if (unitMechanicalRisks.length > 0) {
+      row.mechanicalRisks = unitMechanicalRisks;
+      for (const risk of unitMechanicalRisks) {
+        mechanicalRisks.push({ id: row.id, path: row.tsPath, name: row.name, ...risk });
+      }
+    }
     const sigMatches = !tsUnit.sigHash || tsUnit.sigHash === unit.sigHash;
     const bodyMatches = !tsUnit.bodyHash || tsUnit.bodyHash === unit.bodyHash;
     if (!sigMatches || !bodyMatches) {
@@ -502,7 +620,11 @@ export function buildStatus(
       invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
+      schemaFilePolicyIssues: (schemaSourceSync.policyIssues ?? []).length,
       localOverrideIssues: localOverrides.failureCount,
+      mechanicalPortRisks: mechanicalRisks.length,
+      implementationOwnerIssues: implementationOwnerIssues.length,
+      embeddedSourceMismatches: embeddedSourceMismatches.length,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
@@ -522,6 +644,9 @@ export function buildStatus(
     unicodeGeneratedArtifacts,
     schemaSourceSync,
     localOverrides,
+    mechanicalRisks,
+    implementationOwnerIssues,
+    embeddedSourceMismatches,
     largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
@@ -538,6 +663,13 @@ export function scanTsUnits(root) {
   const units = [];
   for (const file of files) {
     const text = readFileSync(file, "utf8");
+    const textLines = text.split(/\r?\n/);
+    const malformedGoSourceLine = textLines.findIndex((line) => /^\s*\*\s+Go source:\s*\S/.test(line));
+    if (malformedGoSourceLine >= 0) {
+      throw new Error(`inline Go source annotations are forbidden in ${path.relative(repoRoot, file)}:${malformedGoSourceLine + 1}; use 'Port note:' for prose and reserve 'Go source:' for the exact embedded upstream source block`);
+    }
+    const sourceFile = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const importBindings = collectTypeScriptImportBindings(sourceFile);
     const regex = /@tsgo-unit\s+({[^\n\r]+})/g;
     let match;
     let metadataCount = 0;
@@ -545,6 +677,11 @@ export function scanTsUnits(root) {
       metadataCount++;
       try {
         const metadata = JSON.parse(match[1]);
+        const overrideDocStart = text.lastIndexOf("/**", match.index);
+        const overrideDocEnd = text.indexOf("*/", regex.lastIndex);
+        const doc = overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex
+          ? text.slice(overrideDocStart, overrideDocEnd)
+          : "";
         units.push({
           id: metadata.id,
           kind: metadata.kind,
@@ -553,11 +690,9 @@ export function scanTsUnits(root) {
           bodyHash: metadata.bodyHash,
           path: path.relative(repoRoot, file).split(path.sep).join("/"),
           metadata,
+          embeddedGoSource: extractEmbeddedGoSource(doc),
         });
-        const overrideDocStart = text.lastIndexOf("/**", match.index);
-        const overrideDocEnd = text.indexOf("*/", regex.lastIndex);
         if (overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex) {
-          const doc = text.slice(overrideDocStart, overrideDocEnd);
           const overrideJson = extractTsgoOverrideJson(doc);
           if (overrideJson !== undefined) {
             try {
@@ -567,29 +702,21 @@ export function scanTsUnits(root) {
             }
           }
         }
-        // Check if the first TS export after the JSDoc block throws TSGO_UNIMPLEMENTED.
-        // We skip the JSDoc body (Go source) and only inspect the first export declaration's body.
-        const afterPos = regex.lastIndex;
-        const bigSnippet = text.slice(afterPos, afterPos + 50000);
-        // Skip JSDoc: find */ then the next "export " keyword
-        const docEnd = bigSnippet.indexOf('*/');
-        const exportStart = docEnd >= 0 ? bigSnippet.indexOf('\nexport ', docEnd) : bigSnippet.indexOf('\nexport ');
-        let hasUnimplThrow = false;
-        if (exportStart >= 0) {
-          // Find the first { that opens the body of this export
-          const afterExport = bigSnippet.slice(exportStart, exportStart + 3000);
-          const braceIdx = afterExport.indexOf('{');
-          if (braceIdx >= 0) {
-            let depth = 0, bodyEnd = -1;
-            for (let j = braceIdx; j < Math.min(braceIdx + 2500, afterExport.length); j++) {
-              if (afterExport[j] === '{') depth++;
-              else if (afterExport[j] === '}') { depth--; if (depth === 0) { bodyEnd = j; break; } }
-            }
-            const body = bodyEnd >= 0 ? afterExport.slice(braceIdx, bodyEnd + 1) : afterExport.slice(braceIdx, braceIdx + 2500);
-            hasUnimplThrow = body.includes('TSGO_UNIMPLEMENTED');
-          }
+        const expectedName = expectedTsImplementationName(metadata);
+        const matchingDeclarations = expectedName === undefined
+          ? []
+          : sourceFile.statements.filter((statement) => ts.isFunctionDeclaration(statement) && statement.name?.text === expectedName);
+        const declaration = matchingDeclarations.length === 1 ? matchingDeclarations[0] : undefined;
+        const implementationBody = declaration?.body?.getText(sourceFile) ?? "";
+        if (expectedName !== undefined && matchingDeclarations.length !== 1) {
+          units[units.length - 1].implementationOwnerIssue = matchingDeclarations.length === 0
+            ? `missing function declaration '${expectedName}'`
+            : `ambiguous function declaration '${expectedName}' (${matchingDeclarations.length} matches)`;
         }
+        const hasUnimplThrow = implementationBody.includes("TSGO_UNIMPLEMENTED");
         units[units.length - 1].hasUnimplThrow = hasUnimplThrow;
+        units[units.length - 1].implementationBody = implementationBody;
+        units[units.length - 1].implementationAnalysis = analyzeTypeScriptImplementation(implementationBody, importBindings);
       } catch (error) {
         fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
       }
@@ -600,6 +727,347 @@ export function scanTsUnits(root) {
     });
   }
   return { fileCount: files.length, files: fileReports, units };
+}
+
+function collectTypeScriptImportBindings(sourceFile) {
+  const bindings = new Map();
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    const moduleSpecifier = statement.moduleSpecifier.text;
+    const clause = statement.importClause;
+    if (clause?.name !== undefined) bindings.set(clause.name.text, { moduleSpecifier, importedName: "default" });
+    const named = clause?.namedBindings;
+    if (named === undefined) continue;
+    if (ts.isNamespaceImport(named)) {
+      bindings.set(named.name.text, { moduleSpecifier, importedName: "*" });
+      continue;
+    }
+    for (const element of named.elements) {
+      bindings.set(element.name.text, { moduleSpecifier, importedName: element.propertyName?.text ?? element.name.text });
+    }
+  }
+  return bindings;
+}
+
+function analyzeTypeScriptImplementation(body, importBindings = new Map()) {
+  if (body === "") return { calls: [] };
+  const sourceFile = ts.createSourceFile("/__tsgo_unit.ts", `function __tsgoUnit() ${body}`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const calls = [];
+  const visit = (node) => {
+    if (ts.isCallExpression(node)) {
+      const callee = typeScriptCallee(node.expression, importBindings);
+      if (callee !== undefined) {
+        const argumentCalls = new Set();
+        for (const argument of node.arguments) {
+          collectTypeScriptCallTerminals(argument, argumentCalls);
+        }
+        calls.push({ ...callee, argumentCalls: [...argumentCalls] });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return { calls };
+}
+
+function typeScriptCallee(expression, importBindings) {
+  const segments = [];
+  let current = expression;
+  while (ts.isPropertyAccessExpression(current)) {
+    segments.unshift(current.name.text);
+    current = current.expression;
+  }
+  if (!ts.isIdentifier(current)) {
+    if (segments.length === 0) return undefined;
+    return { text: segments.join("."), terminal: segments.at(-1), moduleSpecifier: undefined, importedName: undefined };
+  }
+  segments.unshift(current.text);
+  const binding = importBindings.get(current.text);
+  return {
+    text: segments.join("."),
+    terminal: segments.at(-1),
+    moduleSpecifier: binding?.moduleSpecifier,
+    importedName: binding?.importedName === "*" ? segments[1] : binding?.importedName,
+  };
+}
+
+function collectTypeScriptCallTerminals(node, out) {
+  if (ts.isCallExpression(node)) {
+    let expression = node.expression;
+    while (ts.isPropertyAccessExpression(expression)) expression = expression.name;
+    if (ts.isIdentifier(expression)) out.add(expression.text);
+  }
+  ts.forEachChild(node, (child) => collectTypeScriptCallTerminals(child, out));
+}
+
+function expectedTsImplementationName(metadata) {
+  if (metadata.kind !== "func" && metadata.kind !== "method") return undefined;
+  const qualifiedName = String(metadata.id ?? "").split("::").at(-1) ?? "";
+  return metadata.kind === "method" ? qualifiedName.replaceAll(".", "_") : qualifiedName;
+}
+
+function renderGoSourceComment(snippet) {
+  return String(snippet ?? "")
+    .split("\n")
+    .map((line) => line === "" ? " *" : ` * ${line.replaceAll("*/", "* /")}`)
+    .join("\n");
+}
+
+function extractEmbeddedGoSource(doc) {
+  const lines = doc.split(/\r?\n/);
+  const markerIndex = lines.findIndex((line) => /^\s*\*\s+Go source:\s*$/.test(line));
+  if (markerIndex < 0) return undefined;
+  const sourceLines = [];
+  for (let index = markerIndex + 1; index < lines.length; index++) {
+    const line = lines[index];
+    if (/^\s*\*\s+@tsgo-/.test(line)) break;
+    sourceLines.push(line);
+  }
+  while (sourceLines.length > 0 && /^\s*(?:\*)?\s*$/.test(sourceLines[sourceLines.length - 1])) {
+    sourceLines.pop();
+  }
+  return sourceLines.join("\n");
+}
+
+function normalizeEmbeddedGoSource(source) {
+  if (source === undefined) return undefined;
+  return source.split("\n").map((line) => line.trimEnd()).join("\n");
+}
+
+export function buildEmbeddedGoSourceUpdates(snapshot, root) {
+  const goById = new Map(snapshot.files.flatMap((file) => (file.units ?? []).map((unit) => [unit.id, unit])));
+  const tsUnits = scanTsUnits(root);
+  const replacementsByPath = new Map();
+  for (const tsUnit of tsUnits.units) {
+    const goUnit = goById.get(tsUnit.id);
+    if (goUnit === undefined) continue;
+    const expected = renderGoSourceComment(goUnit.snippet);
+    if (normalizeEmbeddedGoSource(tsUnit.embeddedGoSource) === normalizeEmbeddedGoSource(expected)) continue;
+    const replacements = replacementsByPath.get(tsUnit.path) ?? new Map();
+    replacements.set(tsUnit.id, expected);
+    replacementsByPath.set(tsUnit.path, replacements);
+  }
+
+  const updates = [];
+  let unitCount = 0;
+  for (const [relativePath, replacements] of replacementsByPath) {
+    const filePath = resolveRepo(relativePath);
+    const current = readFileSync(filePath, "utf8");
+    const locations = [];
+    const metadataRegex = /@tsgo-unit\s+({[^\n\r]+})/g;
+    let match;
+    while ((match = metadataRegex.exec(current)) !== null) {
+      const metadata = JSON.parse(match[1]);
+      const expected = replacements.get(metadata.id);
+      if (expected === undefined) continue;
+      const docStart = current.lastIndexOf("/**", match.index);
+      const docEnd = current.indexOf("*/", metadataRegex.lastIndex);
+      if (docStart < 0 || docEnd < 0) {
+        fail(`missing JSDoc block for ${metadata.id} in ${relativePath}`);
+      }
+      locations.push({ docStart, docEnd, expected });
+    }
+    if (locations.length !== replacements.size) {
+      fail(`could not locate every stale Go source block in ${relativePath}`);
+    }
+    let next = current;
+    for (const location of locations.sort((left, right) => right.docStart - left.docStart)) {
+      const doc = next.slice(location.docStart, location.docEnd);
+      const updatedDoc = synchronizeEmbeddedGoSourceDoc(doc, location.expected);
+      next = next.slice(0, location.docStart) + updatedDoc + next.slice(location.docEnd);
+    }
+    updates.push({ path: filePath, text: next, unitCount: locations.length });
+    unitCount += locations.length;
+  }
+  return { updates, unitCount };
+}
+
+function synchronizeEmbeddedGoSourceDoc(doc, expected) {
+  const marker = /^\s*\*\s+Go source:\s*$/m.exec(doc);
+  if (marker === null) {
+    return `${doc.trimEnd()}\n *\n * Go source:\n${expected}\n `;
+  }
+  const markerLineStart = doc.lastIndexOf("\n", marker.index) + 1;
+  const afterMarker = marker.index + marker[0].length;
+  const nextTag = /\n\s*\*\s+@tsgo-/.exec(doc.slice(afterMarker));
+  const sourceEnd = nextTag === null ? doc.trimEnd().length : afterMarker + nextTag.index + 1;
+  const sourceBlock = nextTag === null
+    ? ` * Go source:\n${expected}`
+    : ` * Go source:\n${expected}\n *\n`;
+  return doc.slice(0, markerLineStart) + sourceBlock + doc.slice(sourceEnd);
+}
+
+const nontrivialGoStatementKinds = [
+  "AssignStmt",
+  "BranchStmt",
+  "CallExpr",
+  "DeferStmt",
+  "ForStmt",
+  "GoStmt",
+  "IfStmt",
+  "IncDecStmt",
+  "RangeStmt",
+  "ReturnStmt",
+  "SelectStmt",
+  "SendStmt",
+  "SwitchStmt",
+  "TypeSwitchStmt",
+];
+
+export function collectMechanicalPortRisks(goUnit, tsUnit) {
+  if (tsUnit.status !== "implemented") return [];
+  const body = tsUnit.implementationBody ?? "";
+  const analysis = tsUnit.implementationAnalysis ?? analyzeTypeScriptImplementation(body);
+  const bodyOverride = tsUnit.override?.allow?.includes("body") === true;
+  const risks = [];
+  const goHasBehavior = nontrivialGoStatementKinds.some((kind) => (goUnit.nodeKindCounts?.[kind] ?? 0) > 0);
+  if ((goUnit.kind === "func" || goUnit.kind === "method") && goHasBehavior && !bodyOverride && isVoidOnlyImplementation(body)) {
+    risks.push({
+      kind: "implemented-no-op",
+      message: "Go function has executable statements but the implemented TypeScript body is empty or only discards parameters.",
+    });
+  }
+  if (goCalls(goUnit, "encoding/json", "Marshal") && hasTsCall(analysis, "JSON.stringify") && !hasTsFacadeCall(analysis, "Marshal")) {
+    risks.push({
+      kind: "json-marshal-substitution",
+      message: "Go json.Marshal was replaced with raw JSON.stringify, bypassing Go field tags and custom marshalers.",
+    });
+  }
+  if (goCalls(goUnit, "reflect", "DeepEqual") && hasTsCall(analysis, "JSON.stringify") && !hasTsFacadeCall(analysis, "DeepEqual")) {
+    risks.push({
+      kind: "deep-equal-stringify-substitution",
+      message: "Go reflect.DeepEqual was replaced with JSON string comparison, which loses maps and non-JSON state.",
+    });
+  }
+  const missingTristateField = tristateFields(goUnit.snippet ?? "", "IsTrue").find((field) => {
+    const escapedField = escapeRegExp(field);
+    const exactHelper = new RegExp(`Tristate_IsTrue\\([^)]*\\b${escapedField}\\b`);
+    const numericComparison = new RegExp(`\\b${escapedField}\\b\\s*(?:!==|===)\\s*0\\b|\\b0\\s*(?:!==|===)\\s*[^;\\n]{0,40}\\b${escapedField}\\b`);
+    return !exactHelper.test(body) && numericComparison.test(body);
+  });
+  if (missingTristateField !== undefined) {
+    risks.push({
+      kind: "tristate-numeric-truthiness",
+      message: `Go Tristate.${missingTristateField}.IsTrue was replaced with a numeric zero comparison, which treats TSFalse as true.`,
+    });
+  }
+  const goHasBranching = ["IfStmt", "ForStmt", "RangeStmt", "SwitchStmt", "TypeSwitchStmt", "SelectStmt"].some(
+    (kind) => (goUnit.nodeKindCounts?.[kind] ?? 0) > 0,
+  );
+  const tsControlFlow = typeScriptControlFlowStats(body);
+  if (
+    !goHasBranching
+    && (goUnit.nodeKindCounts?.ReturnStmt ?? 0) === 1
+    && !bodyOverride
+    && tsControlFlow.hasControlFlow
+    && tsControlFlow.returnCount > 1
+  ) {
+    risks.push({
+      kind: "unexpected-control-flow",
+      message: "TypeScript adds control flow to a Go unit with no branch or loop; port the direct Go behavior or document a local body override.",
+    });
+  }
+  for (const match of (goUnit.snippet ?? "").matchAll(/\.Update([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)) {
+    const nodeKind = match[1];
+    const manualUpdate = analysis.calls.some((call) => call.terminal === "updateNode" && call.argumentCalls.includes(`New${nodeKind}`));
+    if (manualUpdate && !hasTsFacadeCall(analysis, `NodeFactory_Update${nodeKind}`)) {
+      risks.push({
+        kind: "manual-node-update",
+        message: `Go calls NodeFactory.Update${nodeKind}, but TypeScript manually reconstructs the node instead of using the generated update factory.`,
+      });
+    }
+  }
+  if (goCalls(goUnit, "path", "Split") && hasTsCallTerminal(analysis, "lastIndexOf") && !hasTsFacadeCall(analysis, "Split")) {
+    risks.push({
+      kind: "path-split-reimplementation",
+      message: "Go path.Split was reimplemented with string indexing instead of the authored Go path facade.",
+    });
+  }
+  if (goCalls(goUnit, "slices", "Reverse") && (hasTsCallTerminal(analysis, "reverse") || hasTsCallTerminal(analysis, "toReversed")) && !hasTsFacadeCall(analysis, "Reverse")) {
+    risks.push({
+      kind: "slice-reverse-reimplementation",
+      message: "Go slices.Reverse was replaced with direct JavaScript reverse/copy logic instead of the authored Go slices facade.",
+    });
+  }
+  return risks;
+}
+
+function goCalls(goUnit, importPathSuffix, name) {
+  if ((goUnit.externalRefs ?? []).some((reference) =>
+    reference.role === "call" && reference.name === name &&
+    (reference.importPath === importPathSuffix || reference.importPath.endsWith(`/${importPathSuffix}`)))) {
+    return true;
+  }
+  const packageName = importPathSuffix.slice(importPathSuffix.lastIndexOf("/") + 1);
+  return new RegExp(`\\b${escapeRegExp(packageName)}\\.${escapeRegExp(name)}\\s*\\(`).test(goUnit.snippet ?? "");
+}
+
+function hasTsCall(analysis, text) {
+  return analysis.calls.some((call) => call.text === text);
+}
+
+function hasTsCallTerminal(analysis, terminal) {
+  return analysis.calls.some((call) => call.terminal === terminal);
+}
+
+function hasTsFacadeCall(analysis, exportedName) {
+  return analysis.calls.some((call) =>
+    call.importedName === exportedName || call.terminal === exportedName || call.terminal?.endsWith(`_${exportedName}`));
+}
+
+function typeScriptControlFlowStats(body) {
+  if (body === "") return { hasControlFlow: false, returnCount: 0 };
+  const sourceFile = ts.createSourceFile("porter-risk.ts", `function __ported() ${body}`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const declaration = sourceFile.statements[0];
+  if (!declaration || !ts.isFunctionDeclaration(declaration) || declaration.body === undefined) {
+    return { hasControlFlow: false, returnCount: 0 };
+  }
+  let hasControlFlow = false;
+  let returnCount = 0;
+  const visit = (node) => {
+    if (node !== declaration && ts.isFunctionLike(node)) return;
+    if (ts.isReturnStatement(node)) returnCount++;
+    if (
+      ts.isIfStatement(node)
+      || ts.isForStatement(node)
+      || ts.isForInStatement(node)
+      || ts.isForOfStatement(node)
+      || ts.isWhileStatement(node)
+      || ts.isDoStatement(node)
+      || ts.isSwitchStatement(node)
+      || ts.isTryStatement(node)
+    ) {
+      hasControlFlow = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(declaration.body);
+  return { hasControlFlow, returnCount };
+}
+
+function tristateFields(snippet, method) {
+  const fields = new Set();
+  const pattern = new RegExp(`\\b([A-Za-z_][A-Za-z0-9_]*)\\.${method}\\(\\)`, "g");
+  for (const match of snippet.matchAll(pattern)) {
+    fields.add(match[1]);
+  }
+  return [...fields];
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isVoidOnlyImplementation(body) {
+  if (body === "") return false;
+  const inner = body
+    .replace(/^\s*\{/, "")
+    .replace(/\}\s*$/, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/[^\n\r]*/g, "")
+    .replace(/\bvoid\s+[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*;/g, "")
+    .replace(/[;\s]/g, "");
+  return inner === "";
 }
 
 function extractTsgoOverrideJson(doc) {
@@ -715,9 +1183,9 @@ function validateOverrideShape(value) {
   if (typeof value.reason !== "string" || value.reason.trim() === "") {
     issues.push("reason is required");
   }
-  const allowed = new Set(["body", "signature"]);
+  const allowed = new Set(["body", "signature", "initializer", "value-order"]);
   if (!Array.isArray(value.allow) || value.allow.length === 0 || value.allow.some((item) => !allowed.has(item))) {
-    issues.push("allow must be a non-empty array containing only 'body' or 'signature'");
+    issues.push("allow must be a non-empty array containing only 'body', 'signature', 'initializer', or 'value-order'");
   }
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
     if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
@@ -725,6 +1193,22 @@ function validateOverrideShape(value) {
     }
     if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
       issues.push("signature overrides require tsSignature");
+    }
+  }
+  if (Array.isArray(value.allow) && value.allow.includes("initializer")) {
+    if (typeof value.goInitializer !== "string" || value.goInitializer.trim() === "") {
+      issues.push("initializer overrides require goInitializer");
+    }
+    if (typeof value.tsInitializer !== "string" || value.tsInitializer.trim() === "") {
+      issues.push("initializer overrides require tsInitializer");
+    }
+  }
+  if (Array.isArray(value.allow) && value.allow.includes("value-order")) {
+    if (typeof value.goValueOrder !== "string" || value.goValueOrder.trim() === "") {
+      issues.push("value-order overrides require goValueOrder");
+    }
+    if (typeof value.tsValueOrder !== "string" || value.tsValueOrder.trim() === "") {
+      issues.push("value-order overrides require tsValueOrder");
     }
   }
   return issues;
@@ -1479,10 +1963,7 @@ function renderUnit(unit, context) {
     sigHash: unit.sigHash,
     bodyHash: unit.bodyHash,
   };
-  const goComment = String(unit.snippet ?? "")
-    .split("\n")
-    .map((line) => ` * ${line.replaceAll("*/", "* /")}`)
-    .join("\n");
+  const goComment = renderGoSourceComment(unit.snippet);
   const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n *\n * Go source:\n${goComment}\n */\n`;
   if (unit.kind === "type") return `${header}${renderTypeUnit(unit, context)}\n`;
   if (unit.kind === "func" || unit.kind === "method") return `${header}${renderFunctionUnit(unit, context)}\n`;
@@ -2209,7 +2690,12 @@ function renderExternalFacadePolicy(policy, context) {
     return `export function ${safeIdentifier(policy.tsName)}(...args: Array<unknown>): unknown {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}`)});\n}`;
   }
   if (policy.kind === "value") {
-    return `export const ${safeIdentifier(policy.tsName)}: unknown = undefined as never;`;
+    if (policy.tsInitializer !== undefined && (typeof policy.tsInitializer !== "string" || policy.tsInitializer.trim() === "")) {
+      throw new Error(`external value facade ${policy.goName} has an invalid tsInitializer`);
+    }
+    const initializer = policy.tsInitializer ?? "undefined as never";
+    const annotation = policy.tsInitializer === undefined ? ": unknown" : "";
+    return `export const ${safeIdentifier(policy.tsName)}${annotation} = ${initializer};`;
   }
   if (policy.kind === "type") {
     const expression = policy.typeExpression
@@ -2402,13 +2888,17 @@ function autoExternalRefFacadePolicy(usage) {
 
 function normalizeExternalFacadePolicy(policy) {
   const { importPath, name } = splitExternalGoName(policy.goName);
-  return {
+  const normalized = {
     tsModule: externalFacadeModulePath(importPath),
     tsName: safeIdentifier(name),
     kind: "opaque",
     arity: 0,
     ...policy,
   };
+  if (normalized.tsInitializer !== undefined && normalized.kind !== "value") {
+    throw new Error(`external facade ${normalized.goName} may declare tsInitializer only when kind is 'value'`);
+  }
+  return normalized;
 }
 
 function splitExternalGoName(goName) {
@@ -2498,7 +2988,7 @@ export type nuint = number;
 export type sbyte = number;
 export type short = number;
 export type uint = number;
-export type ulong = number;
+export type ulong = bigint;
 export type ushort = number;
 `;
 }
@@ -2513,7 +3003,10 @@ export type GoRef<T> = { v: T };
 export type GoSlice<T> = T[];
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
 export type GoMap<K, V> = Map<K, V>;
-export type GoChan<T, Direction extends string = "bidirectional"> = { readonly [__goBrand]?: { readonly element: T; readonly direction: Direction } };
+export type GoChan<T, Direction extends string = "bidirectional"> = {
+  readonly [__goBrand]?: { readonly element: T; readonly direction: Direction };
+  readonly [goChannelState]?: GoChannelState<T>;
+};
 export type GoSeq<T> = (yieldValue: (value: T) => bool) => void;
 export type GoSeq2<K, V> = (yieldValue: (key: K, value: V) => bool) => void;
 export type GoError = Error | undefined;
@@ -2526,6 +3019,180 @@ export type GoComplex64 = { readonly real: number; readonly imag: number };
 export type GoComplex128 = { readonly real: number; readonly imag: number };
 export type GoUnsafePointer = GoPtr<unknown>;
 export type GoRune = int;
+
+type GoChannelReceiver<T> = (value: T, ok: bool) => void;
+
+interface GoChannelWaiter<T> {
+  active: bool;
+  deliver(value: T, ok: bool): bool;
+}
+
+interface GoChannelState<T> {
+  capacity: number;
+  queue: T[];
+  waiters: GoChannelWaiter<T>[];
+  closed: bool;
+  zeroValue(): T;
+}
+
+export interface GoChanSelectCase {
+  readonly channel: GoChan<unknown, string>;
+  readonly receiver: GoChannelReceiver<unknown>;
+}
+
+const goChannelState: unique symbol = Symbol("GoChannel.state");
+
+export function MakeGoChan<T>(capacity = 0, zeroValue: () => T = (): T => undefined as T): GoChan<T> {
+  if (!Number.isSafeInteger(capacity) || capacity < 0) {
+    throw new RangeError("makechan: size out of range");
+  }
+  return {
+    [goChannelState]: {
+      capacity,
+      queue: [],
+      waiters: [],
+      closed: false,
+      zeroValue,
+    },
+  };
+}
+
+export function GoChanAsReceive<T>(channel: GoChan<T>): GoChan<T, "receive"> {
+  return channel as unknown as GoChan<T, "receive">;
+}
+
+export function GoChanAsSend<T>(channel: GoChan<T>): GoChan<T, "send"> {
+  return channel as unknown as GoChan<T, "send">;
+}
+
+export function GoChanTrySend<T>(channel: GoChan<T, string>, value: T): bool {
+  const state = requireGoChannelState(channel);
+  if (state.closed) {
+    throw new Error("send on closed channel");
+  }
+  const waiter = takeGoChannelWaiter(state);
+  if (waiter !== undefined) {
+    return waiter.deliver(value, true as bool);
+  }
+  if (state.queue.length < state.capacity) {
+    state.queue.push(value);
+    return true as bool;
+  }
+  return false as bool;
+}
+
+export function GoChanReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): () => void {
+  const state = requireGoChannelState(channel);
+  if (goChannelReceiveReady(state)) {
+    const [value, ok] = takeGoChannelReadyValue(state);
+    queueMicrotask(() => receiver(value, ok));
+    return () => {};
+  }
+  const waiter: GoChannelWaiter<T> = {
+    active: true,
+    deliver(value, ok) {
+      queueMicrotask(() => receiver(value, ok));
+      return true as bool;
+    },
+  };
+  state.waiters.push(waiter);
+  return () => {
+    waiter.active = false;
+  };
+}
+
+export function GoChanSelectReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): GoChanSelectCase {
+  return {
+    channel: channel as GoChan<unknown, string>,
+    receiver: receiver as GoChannelReceiver<unknown>,
+  };
+}
+
+export function GoChanSelect(cases: readonly GoChanSelectCase[]): () => void {
+  const ready = [] as number[];
+  for (let index = 0; index < cases.length; index++) {
+    if (goChannelReceiveReady(requireGoChannelState(cases[index]!.channel))) ready.push(index);
+  }
+  if (ready.length > 0) {
+    const selectedIndex = ready.length === 1 ? ready[0]! : ready[Math.floor(Math.random() * ready.length)]!;
+    const selected = cases[selectedIndex]!;
+    const [value, ok] = takeGoChannelReadyValue(requireGoChannelState(selected.channel));
+    queueMicrotask(() => selected.receiver(value, ok));
+    return () => {};
+  }
+
+  let active = true;
+  const waiters: Array<GoChannelWaiter<unknown>> = [];
+  const cancel = (): void => {
+    if (!active) return;
+    active = false;
+    for (const waiter of waiters) waiter.active = false;
+  };
+  for (const selectCase of cases) {
+    const waiter: GoChannelWaiter<unknown> = {
+      active: true,
+      deliver(value, ok) {
+        if (!active) return false as bool;
+        active = false;
+        for (const other of waiters) other.active = false;
+        queueMicrotask(() => selectCase.receiver(value, ok));
+        return true as bool;
+      },
+    };
+    waiters.push(waiter);
+    requireGoChannelState(selectCase.channel).waiters.push(waiter);
+  }
+  return cancel;
+}
+
+export function GoChanClose<T>(channel: GoChan<T, string>): void {
+  const state = requireGoChannelState(channel);
+  if (state.closed) {
+    throw new Error("close of closed channel");
+  }
+  state.closed = true;
+  while (state.queue.length > 0) {
+    const waiter = takeGoChannelWaiter(state);
+    if (waiter === undefined) {
+      break;
+    }
+    const value = state.queue.shift()!;
+    waiter.deliver(value, true as bool);
+  }
+  let waiter: GoChannelWaiter<T> | undefined;
+  while ((waiter = takeGoChannelWaiter(state)) !== undefined) {
+    waiter.deliver(state.zeroValue(), false as bool);
+  }
+}
+
+function requireGoChannelState<T>(channel: GoChan<T, string>): GoChannelState<T> {
+  const state = channel[goChannelState];
+  if (state === undefined) {
+    throw new Error("channel has no runtime state");
+  }
+  return state;
+}
+
+function takeGoChannelWaiter<T>(state: GoChannelState<T>): GoChannelWaiter<T> | undefined {
+  while (state.waiters.length > 0) {
+    const waiter = state.waiters.shift()!;
+    if (waiter.active) {
+      waiter.active = false;
+      return waiter;
+    }
+  }
+  return undefined;
+}
+
+function goChannelReceiveReady<T>(state: GoChannelState<T>): bool {
+  return (state.queue.length > 0 || state.closed) as bool;
+}
+
+function takeGoChannelReadyValue<T>(state: GoChannelState<T>): [T, bool] {
+  if (state.queue.length > 0) return [state.queue.shift()!, true as bool];
+  if (state.closed) return [state.zeroValue(), false as bool];
+  throw new Error("receive from channel that is not ready");
+}
 
 const goObjectIds = new WeakMap<object, number>();
 let nextGoObjectId = 1;
@@ -2893,6 +3560,17 @@ export function collectVerifyFailures(status, options) {
       .join(", ");
     failures.push(`${status.signatureCheck.mismatches} signature/type mismatches${byKind ? ` (${byKind})` : ""}`);
   }
+  if ((status.counts.mechanicalPortRisks ?? 0) > 0) {
+    const examples = (status.mechanicalRisks ?? []).slice(0, 3).map((risk) => `${risk.name}:${risk.kind}`).join(", ");
+    failures.push(`${status.counts.mechanicalPortRisks} mechanical port risks${examples ? ` (${examples})` : ""}`);
+  }
+  if ((status.counts.implementationOwnerIssues ?? 0) > 0) {
+    failures.push(`${status.counts.implementationOwnerIssues} missing or ambiguous TypeScript implementation owners`);
+  }
+  if ((status.counts.embeddedSourceMismatches ?? 0) > 0) {
+    const examples = (status.embeddedSourceMismatches ?? []).slice(0, 3).map((issue) => issue.name).join(", ");
+    failures.push(`${status.counts.embeddedSourceMismatches} stale or missing embedded Go source blocks${examples ? ` (${examples})` : ""}`);
+  }
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort) {
     const rows = status.rows ?? [];
@@ -2962,6 +3640,10 @@ export function printStatus(config, status) {
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  console.log(`Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
+  console.log(`Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
+  console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
+  console.log(`Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -2996,6 +3678,11 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  lines.push(`- Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
+  lines.push(`- Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
+  lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
+  lines.push(`- Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
+  lines.push(`- Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
   lines.push("");
@@ -3032,6 +3719,36 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
   lines.push(`- Bundled generated artifact defects: ${status.counts.missingBundledArtifacts + status.counts.staleBundledArtifacts + status.counts.orphanBundledArtifacts + status.counts.untrackedBundledArtifacts + status.counts.invalidBundledArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  if ((status.mechanicalRisks?.length ?? 0) > 0) {
+    lines.push("");
+    lines.push("## Mechanical Port Risks");
+    lines.push("");
+    lines.push("| Unit | Risk | TypeScript path | Message |");
+    lines.push("|---|---|---|---|");
+    for (const risk of status.mechanicalRisks.slice(0, 100)) {
+      lines.push(`| ${escapeMd(risk.name)} | ${risk.kind} | ${risk.path} | ${escapeMd(risk.message)} |`);
+    }
+  }
+  if ((status.implementationOwnerIssues?.length ?? 0) > 0) {
+    lines.push("");
+    lines.push("## TypeScript Implementation Owner Issues");
+    lines.push("");
+    lines.push("| Unit | TypeScript path | Reason |");
+    lines.push("|---|---|---|");
+    for (const issue of status.implementationOwnerIssues.slice(0, 100)) {
+      lines.push(`| ${escapeMd(issue.name)} | ${issue.path} | ${escapeMd(issue.reason)} |`);
+    }
+  }
+  if ((status.embeddedSourceMismatches?.length ?? 0) > 0) {
+    lines.push("");
+    lines.push("## Embedded Go Source Mismatches");
+    lines.push("");
+    lines.push("| TS path | Unit | Reason |");
+    lines.push("|---|---|---|");
+    for (const issue of status.embeddedSourceMismatches.slice(0, 100)) {
+      lines.push(`| ${issue.path} | ${escapeMd(issue.name)} | ${issue.reason} |`);
+    }
+  }
   if (status.largeFileSplits?.files?.length > 0) {
     lines.push("");
     lines.push("### Large-File Semantic Split Plans");

@@ -1288,10 +1288,10 @@ export function classFieldsTransformer_visitBindingElement(receiver: GoPtr<class
  * 	//     1. If IsAnonymousFunctionDefinition(|AssignmentExpression|) is *true*, then
  * 	//        a. Let _value_ be ? NamedEvaluation of |AssignmentExpression| with argument `"default"`.
  * 	//     ...
- * 
- * 	// NOTE: Since emit for `export =` translates to `module.exports = ...`, the assigned nameof the class
+ *
+ * 	// NOTE: Since emit for `export =` translates to `module.exports = ...`, the assigned name of the class
  * 	// is `""`.
- * 
+ *
  * 	if isNamedEvaluationAnd(tx.EmitContext(), node.AsNode(), tx.isAnonymousClassNeedingAssignedName) {
  * 		assignedName := ""
  * 		if !node.IsExportEquals {
@@ -5806,12 +5806,13 @@ export function classFieldsTransformer_transformPropertyWorker(receiver: GoPtr<c
  * 	if !tx.shouldTransformPrivateElementsOrClassStaticBlocks || len(methods) == 0 {
  * 		return statements
  * 	}
- * 
+ *
  * 	env := tx.getPrivateIdentifierEnvironment()
  * 	weakSetName := env.data.weakSetName
  * 	debug.Assert(weakSetName != nil, "weakSetName should be set in private identifier environment")
- * 
- * 	return append(statements,
+ *
+ * 	return append(
+ * 		statements,
  * 		tx.Factory().NewExpressionStatement(
  * 			createPrivateInstanceMethodInitializer(tx.Factory(), receiver, weakSetName),
  * 		),
@@ -6632,7 +6633,8 @@ export function classFieldsTransformer_accessPrivateIdentifier(receiver: GoPtr<c
  * 			Flags: printer.GeneratedIdentifierFlagsReservedInNestedScopes,
  * 		})
  * 		tx.EmitContext().AddVariableDeclaration(receiver)
- * 		tx.pendingExpressions = append(tx.pendingExpressions,
+ * 		tx.pendingExpressions = append(
+ * 			tx.pendingExpressions,
  * 			tx.Factory().NewAssignmentExpression(receiver, tx.Visitor().VisitNode(prop.Expression)),
  * 		)
  * 	}

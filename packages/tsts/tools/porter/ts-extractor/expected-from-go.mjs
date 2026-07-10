@@ -413,6 +413,18 @@ function inferValueTypeFromText(text, ctx) {
   const source = (text ?? "").trim();
   if (!source) return null;
 
+  if (source.startsWith("(") && source.endsWith(")")) {
+    const inner = source.slice(1, -1).trim();
+    if (splitTopLevelList(inner).length === 1) {
+      const inferred = inferValueTypeFromText(inner, ctx);
+      if (inferred) return inferred;
+    }
+  }
+  if (/^[+\-^]/.test(source)) {
+    const inferred = inferValueTypeFromText(source.slice(1), ctx);
+    if (inferred) return inferred;
+  }
+
   if (/^len\s*\(/.test(source)) return resolveNamed("int", ctx);
   if (/^diagnostics\.[A-Za-z_]\w*\.Code\s*\(\s*\)$/.test(source)) return resolveNamed("int32", ctx);
 
@@ -437,8 +449,6 @@ function inferValueTypeFromText(text, ctx) {
   if (/^[-+]?\d+(?:_\d+)*$/.test(source)) return resolveNamed("int", ctx);
   if (/^0[xX][0-9a-fA-F_]+$/.test(source)) return resolveNamed("int", ctx);
   if (/^(?:"(?:\\.|[^"\\])*"|`[^`]*`)$/.test(source)) return resolveNamed("string", ctx);
-  if (/(^|[+\s])(?:"(?:\\.|[^"\\])*"|`[^`]*`)([+\s]|$)/.test(source)) return resolveNamed("string", ctx);
-
   for (const op of ["*", "+", "-", "/", "%", "<<", ">>", "&", "|", "^"]) {
     const split = splitTopLevelOperator(source, op);
     if (!split) continue;
@@ -447,6 +457,9 @@ function inferValueTypeFromText(text, ctx) {
     if (!left || !right) continue;
     if (left.t === "ref" && left.id === "packages/tsts/src/go/time.ts::Duration") return left;
     if (right.t === "ref" && right.id === "packages/tsts/src/go/time.ts::Duration") return right;
+    if (JSON.stringify(left) === JSON.stringify(right)) return left;
+    if (left.t === "ref" && terminalNameFromId(left.id) !== "int" && right.t === "ref" && terminalNameFromId(right.id) === "int") return left;
+    if (right.t === "ref" && terminalNameFromId(right.id) !== "int" && left.t === "ref" && terminalNameFromId(left.id) === "int") return right;
     return resolveNamed("int", ctx);
   }
 
@@ -525,11 +538,21 @@ function inferKnownSelectorCallReturn(pkg, name, source, ctx) {
     }
   }
   if (pkg === "collections" && name === "NewSetFromItems" && args.length > 0) {
-    const itemType = inferValueTypeFromText(args[0], ctx);
+    const supplied = args[0].replace(/\.\.\.\s*$/, "");
+    const suppliedType = inferValueTypeFromText(supplied, ctx);
+    const itemType = suppliedType?.t === "ref" && terminalNameFromId(suppliedType.id) === "GoSlice"
+      ? suppliedType.args[0]
+      : suppliedType;
     if (itemType) {
       return ref(`${ctx.index.compat}::${ctx.index.bridge.pointer}`, [
         ref(`${ctx.index.tsRoot}/internal/collections/set.ts::Set`, [itemType]),
       ]);
+    }
+  }
+  if (pkg === "core" && name === "Map" && args.length === 2) {
+    const callback = args[1].match(/^func\s*\([^)]*\)\s+([^\s{]+)\s*\{/);
+    if (callback) {
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.slice}`, [goTypeTextToDescriptor(callback[1], ctx)]);
     }
   }
   return null;
@@ -643,16 +666,30 @@ function goTypeTextToDescriptor(text, ctx) {
 
 function valueSpecType(spec, ctx, ordinal = 0) {
   if (spec.type) return goTypeToDescriptor(spec.type, ctx);
+  const values = spec.values ?? [];
+  const selected = values[ordinal] ?? (values.length === 1 ? values[0] : undefined);
+  if (selected !== undefined && hasResolvableValueReference(selected, ctx)) {
+    const inferredFromReference = inferValueTypeFromText(selected, ctx);
+    if (inferredFromReference) return inferredFromReference;
+  }
   const inferred = (spec.inferredValueTypes ?? [])[ordinal] ?? (spec.inferredValueTypes ?? []).find(Boolean);
   const inferredDescriptor = inferred ? goTypeToDescriptor(inferred, ctx) : null;
   if (inferredDescriptor && !descriptorHasTypeParam(inferredDescriptor)) return inferredDescriptor;
-  const values = spec.values ?? [];
-  const selected = values[ordinal] ?? (values.length === 1 ? values[0] : undefined);
   for (const value of selected ? [selected] : values) {
     const inferredFromValue = inferValueTypeFromText(value, ctx);
     if (inferredFromValue) return inferredFromValue;
   }
   return inferredDescriptor;
+}
+
+function hasResolvableValueReference(source, ctx) {
+  for (const match of String(source).matchAll(/\b([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?\b/g)) {
+    const found = match[2] === undefined
+      ? ctx.index.valueSpecs.has(`${ctx.importPath}::${match[1]}`)
+      : ctx.index.valueSpecs.has(`${resolveImportPath(match[1], ctx)}::${match[2]}`);
+    if (found) return true;
+  }
+  return false;
 }
 
 function descriptorHasTypeParam(desc) {
@@ -832,10 +869,62 @@ export function goUnitDescriptor(unit, index) {
     const ctx = baseCtx;
     const decls = [];
     for (const spec of unit.valueSpecs ?? []) {
-      (spec.names ?? []).forEach((name, ordinal) => decls.push({ name, type: valueSpecType(spec, ctx, ordinal) }));
+      (spec.names ?? []).forEach((name, ordinal) => {
+        const constantValue = spec.constantValues?.[ordinal] ?? (spec.constantValues?.length === 1 ? spec.constantValues[0] : undefined);
+        decls.push({
+          name,
+          type: valueSpecType(spec, ctx, ordinal),
+          value: constantValue?.supported ? canonicalGoConstantValue(constantValue) : simpleGoLiteralValue(spec.values?.[ordinal]),
+          valueIssue: unit.kind === "constGroup" && constantValue !== undefined && !constantValue.supported
+            ? constantValue.reason ?? "unsupported Go constant initializer"
+            : undefined,
+        });
+      });
     }
     return { kind: "value", decls };
   }
 
   return { kind: "other" };
+}
+
+function canonicalGoConstantValue(report) {
+  if (report.kind === "boolean") return { kind: "boolean", value: report.exact === "true" };
+  if (report.kind === "string") return { kind: "string", value: report.exact };
+  if (report.kind === "number") return { kind: "number", value: normalizeRationalText(report.exact) };
+  return { kind: report.kind, value: report.exact };
+}
+
+function normalizeRationalText(text) {
+  const source = String(text);
+  const slash = source.indexOf("/");
+  if (slash < 0) return source;
+  const numerator = BigInt(source.slice(0, slash));
+  const denominator = BigInt(source.slice(slash + 1));
+  const divisor = bigintGcd(numerator, denominator);
+  const normalizedNumerator = numerator / divisor;
+  const normalizedDenominator = denominator / divisor;
+  return normalizedDenominator === 1n ? String(normalizedNumerator) : `${normalizedNumerator}/${normalizedDenominator}`;
+}
+
+function bigintGcd(left, right) {
+  let a = left < 0n ? -left : left;
+  let b = right < 0n ? -right : right;
+  while (b !== 0n) [a, b] = [b, a % b];
+  return a === 0n ? 1n : a;
+}
+
+function simpleGoLiteralValue(value) {
+  if (typeof value !== "string") return undefined;
+  if (value === "true" || value === "false") return { kind: "boolean", value: value === "true" };
+  if (/^(?:0|[1-9][0-9_]*)(?:\.[0-9_]+)?$/.test(value)) {
+    return { kind: "number", value: value.replaceAll("_", "") };
+  }
+  if (/^"(?:[^"\\]|\\.)*"$/.test(value)) {
+    try {
+      return { kind: "string", value: JSON.parse(value) };
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
 }

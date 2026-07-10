@@ -15,7 +15,7 @@ import { JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty } from
 import { CheckFlagsLate } from "../ast/checkflags.js";
 import { ModifierFlagsExport, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsParameterPropertyModifier } from "../ast/modifierflags.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
-import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
+import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsBlockScopedVariable, SymbolFlagsAccessor, SymbolFlagsMethod, SymbolFlagsFunction } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import { NodeFlagsAmbient, NodeFlagsJSDoc } from "../ast/generated/flags.js";
 import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindExportDeclaration, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken, KindStaticKeyword, KindReadonlyKeyword } from "../ast/generated/kinds.js";
@@ -50,13 +50,14 @@ import { Checker_isOptionalParameter } from "./utilities.js";
 import { isDeclarationReadonly, isOptionalDeclaration, containsNonMissingUndefinedType, getAnyImportSyntax, pseudoBigIntToString } from "./utilities.js";
 import { Checker_getSymbolOfDeclaration, Checker_getMergedSymbol, Checker_getExportsOfModule, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getSymbolFlagsEx, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getTypeOnlyAliasDeclaration, Checker_getTypeOnlyAliasDeclarationEx, Checker_resolveEntityName, Checker_getDeclaredTypeOfSymbol, Checker_getReferencedValueOrAliasSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbol, Checker_getGlobalSymbol, Checker_getMembersOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexInfosOfIndexSymbol, Checker_getParentOfSymbol, Checker_resolveExternalModuleSymbol, Checker_hasLateBindableName, Checker_getTargetOfExportSpecifier, Checker_getExternalModuleFileFromDeclaration } from "./checker/symbols.js";
 import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
-import { Checker_getPropertyOfObjectType } from "./checker/symbols.js";
+import { Checker_getPropertyOfType, Checker_isReadonlySymbol } from "./checker/symbols.js";
 import { Checker_computeEnumMemberValues } from "./checker/symbols.js";
 import { Checker_getSignaturesOfSymbol } from "./checker/signatures.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { Checker_getTypeFromTypeNode, Checker_containsUndefinedType, Checker_isFunctionType, Checker_isArrayType, Checker_getPropertiesOfType, Checker_getBaseTypes } from "./checker/types.js";
 import { Checker_isConstructorType } from "./checker/signatures.js";
 import { Checker_isTypeAssignableToKind } from "./checker/relations.js";
+import { Checker_isTypeIdenticalTo } from "./relater.js";
 import { Checker_getCombinedModifierFlagsCached } from "./checker/support-queries.js";
 import { Checker_getThisContainer, Checker_markLinkedReferences } from "./checker/support-queries.js";
 import { ReferenceHintUnspecified } from "./checker/state.js";
@@ -145,6 +146,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
     GetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedImportDeclaration(receiver, node),
     GetReferencedMemberValueDeclaration: (node: GoPtr<Node>): GoPtr<Declaration> => EmitResolver_GetReferencedMemberValueDeclaration(receiver, node),
     GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclaration(receiver, node),
+    GetReferencedValueDeclarationUnsafe: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclarationUnsafe(receiver, node),
     GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> => EmitResolver_GetReferencedValueDeclarations(receiver, node),
     GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string => EmitResolver_GetElementAccessExpressionName(receiver, expression),
     IsReferencedAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsReferencedAliasDeclaration(receiver, node),
@@ -173,7 +175,8 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
     GetEnumMemberValue: (node: GoPtr<Node>): Result => EmitResolver_GetEnumMemberValue(receiver, node),
     IsLateBound: (node: GoPtr<Node>): bool => EmitResolver_IsLateBound(receiver, node),
     IsOptionalParameter: (node: GoPtr<Node>): bool => EmitResolver_IsOptionalParameter(receiver, node),
-    GetBaseDeclarationsForPropertyDeclaration: (node: GoPtr<Node>): GoSlice<GoPtr<Node>> => EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver, node),
+    IsNameResolvable: (location: GoPtr<Node>, name: string): bool => EmitResolver_IsNameResolvable(receiver, location, name),
+    IsThisPropertyAssignmentDeclarationRedundant: (node: GoPtr<Node>): bool => EmitResolver_IsThisPropertyAssignmentDeclarationRedundant(receiver, node),
     GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> => EmitResolver_GetPropertiesOfContainerFunction(receiver, node),
     RequiresAddingImplicitUndefinedUnsafe: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver, node, symbol_, enclosingDeclaration),
     CreateTypeOfDeclaration: (emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfDeclaration(receiver, emitContext, declaration, enclosingDeclaration, flags, internalFlags, tracker),
@@ -272,12 +275,12 @@ export function EmitResolver_IsOptionalParameter(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetBaseDeclarationsForPropertyDeclaration","kind":"method","status":"implemented","sigHash":"615a139be292cc3af844256e43ae6d33a7216a83504b7b5d0a8b64c4e1d64a21","bodyHash":"97d4300010e17b340b886d7cdd8c18f8b437ee4d6827c770fea7a437b575eb67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsThisPropertyAssignmentDeclarationRedundant","kind":"method","status":"implemented","sigHash":"cbb429ff0d3795589289e98fc09275cebb0e457dd522b66be0fa7633da3efa2f","bodyHash":"e9e3b107cf892cb1fbb4c3519397b377c884c8b06f6230b56809d42970ee3f4c"}
  *
  * Go source:
- * func (r *EmitResolver) GetBaseDeclarationsForPropertyDeclaration(node *ast.Node) []*ast.Node {
+ * func (r *EmitResolver) IsThisPropertyAssignmentDeclarationRedundant(node *ast.Node) bool {
  * 	if node == nil {
- * 		return nil
+ * 		return false
  * 	}
  *
  * 	r.checkerMu.Lock()
@@ -285,26 +288,32 @@ export function EmitResolver_IsOptionalParameter(receiver: GoPtr<EmitResolver>, 
  *
  * 	s := r.checker.getSymbolOfDeclaration(node)
  * 	if s == nil || s.Parent == nil {
- * 		return nil
+ * 		return false
  * 	}
  * 	parentType := r.checker.getDeclaredTypeOfSymbol(s.Parent)
  * 	if parentType == nil {
- * 		return nil
+ * 		return false
  * 	}
- * 	bases := r.checker.getBaseTypes(parentType)
- * 	for _, b := range bases {
- * 		baseProp := r.checker.getPropertyOfObjectType(b, s.Name)
- * 		if baseProp != nil {
- * 			return baseProp.Declarations
- * 			// TODO: return base declarations from all base types if any callers actually look at the list
+ * 	for _, base := range r.checker.getBaseTypes(parentType) {
+ * 		baseProp := r.checker.getPropertyOfType(base, s.Name)
+ * 		if baseProp == nil {
+ * 			continue
+ * 		}
+ * 		if baseProp.Flags&(ast.SymbolFlagsAccessor|ast.SymbolFlagsMethod|ast.SymbolFlagsFunction) != 0 {
+ * 			return true
+ * 		}
+ * 		if r.checker.isReadonlySymbol(baseProp) == r.checker.isReadonlySymbol(s) &&
+ * 			(s.Flags&ast.SymbolFlagsOptional) == (baseProp.Flags&ast.SymbolFlagsOptional) &&
+ * 			r.checker.isTypeIdenticalTo(r.checker.getTypeOfSymbol(s), r.checker.getTypeOfSymbol(baseProp)) {
+ * 			return true
  * 		}
  * 	}
- * 	return nil
+ * 	return false
  * }
  */
-export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function EmitResolver_IsThisPropertyAssignmentDeclarationRedundant(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
   if (node === undefined) {
-    return [];
+    return false as bool;
   }
 
   receiver!.checkerMu!.Lock();
@@ -312,24 +321,32 @@ export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver:
   const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
   if (s === undefined || s!.Parent === undefined) {
     receiver!.checkerMu!.Unlock();
-    return [];
+    return false as bool;
   }
   const parentType = Checker_getDeclaredTypeOfSymbol(receiver!.checker, s!.Parent);
   if (parentType === undefined) {
     receiver!.checkerMu!.Unlock();
-    return [];
+    return false as bool;
   }
   const bases = Checker_getBaseTypes(receiver!.checker, parentType);
   for (const b of bases ?? []) {
-    const baseProp = Checker_getPropertyOfObjectType(receiver!.checker, b, s!.Name);
-    if (baseProp !== undefined) {
+    const baseProp = Checker_getPropertyOfType(receiver!.checker, b, s!.Name);
+    if (baseProp === undefined) {
+      continue;
+    }
+    if ((baseProp!.Flags & (SymbolFlagsAccessor | SymbolFlagsMethod | SymbolFlagsFunction)) !== 0) {
       receiver!.checkerMu!.Unlock();
-      return baseProp!.Declarations ?? [];
-      // TODO: return base declarations from all base types if any callers actually look at the list
+      return true as bool;
+    }
+    if (Checker_isReadonlySymbol(receiver!.checker, baseProp) === Checker_isReadonlySymbol(receiver!.checker, s) &&
+      (s!.Flags & SymbolFlagsOptional) === (baseProp!.Flags & SymbolFlagsOptional) &&
+      Checker_isTypeIdenticalTo(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, s), Checker_getTypeOfSymbol(receiver!.checker, baseProp))) {
+      receiver!.checkerMu!.Unlock();
+      return true as bool;
     }
   }
   receiver!.checkerMu!.Unlock();
-  return [];
+  return false as bool;
 }
 
 /**
@@ -375,7 +392,7 @@ export function EmitResolver_IsLateBound(receiver: GoPtr<EmitResolver>, node: Go
  * 	}
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	r.checker.computeEnumMemberValues(node.Parent)
  * 	if !r.checker.enumMemberLinks.Has(node) {
  * 		return evaluator.NewResult(nil, false, false, false)
@@ -429,7 +446,7 @@ export function EmitResolver_IsDeclarationVisible(receiver: GoPtr<EmitResolver>,
  * 	if node == nil {
  * 		return false
  * 	}
- * 
+ *
  * 	links := r.declarationLinks.Get(node)
  * 	if links.isVisible == core.TSUnknown {
  * 		if r.determineIfDeclarationIsVisible(node) {
@@ -499,7 +516,7 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
  * 		}
  * 		// Exported members/ambient module elements (exception import declaration) are visible if parent is visible
  * 		return r.isDeclarationVisible(parent)
- * 
+ *
  * 	case ast.KindPropertyDeclaration,
  * 		ast.KindPropertySignature,
  * 		ast.KindGetAccessor,
@@ -512,7 +529,7 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
  * 		}
  * 		// Public properties/methods are visible if its parents are visible, so:
  * 		return r.isDeclarationVisible(node.Parent)
- * 
+ *
  * 	case ast.KindConstructor,
  * 		ast.KindConstructSignature,
  * 		ast.KindCallSignature,
@@ -530,14 +547,14 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
  * 		ast.KindParenthesizedType,
  * 		ast.KindNamedTupleMember:
  * 		return r.isDeclarationVisible(node.Parent)
- * 
+ *
  * 	// Default binding, import specifier and namespace import is visible
  * 	// only on demand so by default it is not visible
  * 	case ast.KindImportClause,
  * 		ast.KindNamespaceImport,
  * 		ast.KindImportSpecifier:
  * 		return false
- * 
+ *
  * 	// Type parameters are always visible
  * 	case ast.KindTypeParameter:
  * 		return true
@@ -545,7 +562,7 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
  * 	case ast.KindSourceFile,
  * 		ast.KindNamespaceExportDeclaration:
  * 		return true
- * 
+ *
  * 	// Export assignments do not create name bindings outside the module
  * 	case ast.KindExportAssignment:
  * 		return false
@@ -753,7 +770,7 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
  * 	} else if node.Parent.Kind == ast.KindExportSpecifier {
  * 		exportSymbol = r.checker.getTargetOfExportSpecifier(node.Parent, ast.SymbolFlagsValue|ast.SymbolFlagsType|ast.SymbolFlagsNamespace|ast.SymbolFlagsAlias, false)
  * 	}
- * 
+ *
  * 	visited := make(map[ast.SymbolId]struct{}, 2) // guard against circular imports
  * 	for exportSymbol != nil {
  * 		_, seen := visited[ast.GetSymbolId(exportSymbol)]
@@ -761,11 +778,11 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
  * 			break
  * 		}
  * 		visited[ast.GetSymbolId(exportSymbol)] = struct{}{}
- * 
+ *
  * 		var nextSymbol *ast.Symbol
  * 		for _, declaration := range exportSymbol.Declarations {
  * 			r.declarationLinks.Get(declaration).isVisible = core.TSTrue
- * 
+ *
  * 			if ast.IsInternalModuleImportEqualsDeclaration(declaration) {
  * 				// Add the referenced top container visible
  * 				internalModuleReference := declaration.AsImportEqualsDeclaration().ModuleReference
@@ -774,7 +791,7 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
  * 				nextSymbol = importSymbol
  * 			}
  * 		}
- * 
+ *
  * 		exportSymbol = nextSymbol
  * 	}
  * }
@@ -810,7 +827,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::getMeaningOfEntityNameReference","kind":"func","status":"implemented","sigHash":"3729dff87f8b2ea885b02693d35cd230bef54dcbe5652a8ef7517a74e70ff5ef","bodyHash":"0ec8ce458cc2f52786bcb535dda050f7887523f9492887228d0daec2c8af416b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::getMeaningOfEntityNameReference","kind":"func","status":"implemented","sigHash":"3729dff87f8b2ea885b02693d35cd230bef54dcbe5652a8ef7517a74e70ff5ef","bodyHash":"12e787eecc42de3ad6946b92b7688e0b29efa9af2f4567db0a227bdc2277be11"}
  *
  * Go source:
  * func getMeaningOfEntityNameReference(entityName *ast.Node) ast.SymbolFlags {
@@ -818,7 +835,8 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
  * 	if entityName.Parent.Kind == ast.KindTypeQuery ||
  * 		entityName.Parent.Kind == ast.KindExpressionWithTypeArguments && !ast.IsPartOfTypeNode(entityName.Parent) ||
  * 		entityName.Parent.Kind == ast.KindComputedPropertyName ||
- * 		entityName.Parent.Kind == ast.KindTypePredicate && entityName.Parent.AsTypePredicateNode().ParameterName == entityName {
+ * 		entityName.Parent.Kind == ast.KindTypePredicate && entityName.Parent.AsTypePredicateNode().ParameterName == entityName ||
+ * 		entityName.Parent.Kind == ast.KindBinaryExpression {
  * 		// Typeof value
  * 		return ast.SymbolFlagsValue | ast.SymbolFlagsExportValue
  * 	}
@@ -839,7 +857,8 @@ export function getMeaningOfEntityNameReference(entityName: GoPtr<Node>): Symbol
   if (entityName!.Parent!.Kind === KindTypeQuery ||
       (entityName!.Parent!.Kind === KindExpressionWithTypeArguments && !IsPartOfTypeNode(entityName!.Parent)) ||
       entityName!.Parent!.Kind === KindComputedPropertyName ||
-      (entityName!.Parent!.Kind === KindTypePredicate && AsTypePredicateNode(entityName!.Parent)!.ParameterName === entityName)) {
+      (entityName!.Parent!.Kind === KindTypePredicate && AsTypePredicateNode(entityName!.Parent)!.ParameterName === entityName) ||
+      entityName!.Parent!.Kind === KindBinaryExpression) {
     return (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags;
   }
   if (entityName!.Kind === KindQualifiedName || entityName!.Kind === KindPropertyAccessExpression ||
@@ -878,23 +897,23 @@ export function EmitResolver_IsEntityNameVisible(receiver: GoPtr<EmitResolver>, 
  * 	if !ast.IsParseTreeNode(entityName) {
  * 		return printer.SymbolAccessibilityResult{Accessibility: printer.SymbolAccessibilityNotAccessible}
  * 	}
- * 
+ *
  * 	meaning := getMeaningOfEntityNameReference(entityName)
  * 	firstIdentifier := ast.GetFirstIdentifier(entityName)
- * 
+ *
  * 	symbol := r.checker.resolveName(enclosingDeclaration, firstIdentifier.Text(), meaning, nil, false, false)
- * 
+ *
  * 	if symbol != nil && symbol.Flags&ast.SymbolFlagsTypeParameter != 0 && meaning&ast.SymbolFlagsType != 0 {
  * 		return printer.SymbolAccessibilityResult{Accessibility: printer.SymbolAccessibilityAccessible}
  * 	}
- * 
+ *
  * 	if symbol == nil && ast.IsThisIdentifier(firstIdentifier) {
  * 		sym := r.checker.getSymbolOfDeclaration(r.checker.getThisContainer(firstIdentifier, false, false))
  * 		if r.isSymbolAccessible(sym, enclosingDeclaration, meaning, false).Accessibility == printer.SymbolAccessibilityAccessible {
  * 			return printer.SymbolAccessibilityResult{Accessibility: printer.SymbolAccessibilityAccessible}
  * 		}
  * 	}
- * 
+ *
  * 	if symbol == nil {
  * 		return printer.SymbolAccessibilityResult{
  * 			Accessibility:   printer.SymbolAccessibilityNotResolved,
@@ -902,12 +921,12 @@ export function EmitResolver_IsEntityNameVisible(receiver: GoPtr<EmitResolver>, 
  * 			ErrorNode:       firstIdentifier,
  * 		}
  * 	}
- * 
+ *
  * 	visible := r.hasVisibleDeclarations(symbol, shouldComputeAliasToMakeVisible)
  * 	if visible != nil {
  * 		return *visible
  * 	}
- * 
+ *
  * 	return printer.SymbolAccessibilityResult{
  * 		Accessibility:   printer.SymbolAccessibilityNotAccessible,
  * 		ErrorSymbolName: firstIdentifier.Text(),
@@ -961,7 +980,7 @@ export function noopAddVisibleAlias(declaration: GoPtr<Node>, aliasingStatement:
  * Go source:
  * func (r *EmitResolver) hasVisibleDeclarations(symbol *ast.Symbol, shouldComputeAliasToMakeVisible bool) *printer.SymbolAccessibilityResult {
  * 	var aliasesToMakeVisibleSet map[ast.NodeId]*ast.Node
- * 
+ *
  * 	var addVisibleAlias func(declaration *ast.Node, aliasingStatement *ast.Node)
  * 	if shouldComputeAliasToMakeVisible {
  * 		addVisibleAlias = func(declaration *ast.Node, aliasingStatement *ast.Node) {
@@ -974,12 +993,11 @@ export function noopAddVisibleAlias(declaration: GoPtr<Node>, aliasingStatement:
  * 	} else {
  * 		addVisibleAlias = noopAddVisibleAlias
  * 	}
- * 
+ *
  * 	for _, declaration := range symbol.Declarations {
  * 		if ast.IsIdentifier(declaration) {
  * 			continue
  * 		}
- * 
  * 		if !r.isDeclarationVisible(declaration) {
  * 			// Mark the unexported alias as visible if its parent is visible
  * 			// because these kind of aliases can be used to name types in declaration file
@@ -1031,12 +1049,12 @@ export function noopAddVisibleAlias(declaration: GoPtr<Node>, aliasingStatement:
  * 					continue
  * 				}
  * 			}
- * 
+ *
  * 			// Declaration is not visible
  * 			return nil
  * 		}
  * 	}
- * 
+ *
  * 	return &printer.SymbolAccessibilityResult{
  * 		Accessibility:        printer.SymbolAccessibilityAccessible,
  * 		AliasesToMakeVisible: slices.Collect(maps.Values(aliasesToMakeVisibleSet)),
@@ -1806,10 +1824,13 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"ff63d59a057dd43e7f41ad1a872b6fdeada0fa90704228268fd7a5470d38a590"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"7292b5d3381dc3e5fd98e69f0c124f36041dc0dea651cc776ddfea70119112f8"}
  *
  * Go source:
  * func (r *EmitResolver) MarkLinkedReferencesRecursively(file *ast.SourceFile) {
+ * 	if !ast.IsParseTreeNode(file.AsNode()) {
+ * 		return
+ * 	}
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  *
@@ -1831,6 +1852,9 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
  * }
  */
 export function EmitResolver_MarkLinkedReferencesRecursively(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
+  if (!IsParseTreeNode(file as unknown as GoPtr<Node>)) {
+    return;
+  }
   receiver!.checkerMu!.Lock();
   try {
     if (file !== undefined) {
@@ -1977,8 +2001,10 @@ export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<Emit
  * 	if !ast.IsParseTreeNode(node) {
  * 		return nil
  * 	}
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
+ *
  * 	return r.getReferenceResolver().GetReferencedMemberValueDeclaration(node)
  * }
  */
@@ -2050,6 +2076,18 @@ export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitR
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarationUnsafe","kind":"method","status":"implemented","sigHash":"19fa6dc62b8bec4f234551904ce5ae95c54cdddef40e865a1cea4a6f1443d67f","bodyHash":"b55157a027c6aa658abaa71f2f227c3b95716e658d753423e25bfe6c29a2fd35"}
+ *
+ * Go source:
+ * func (r *EmitResolver) GetReferencedValueDeclarationUnsafe(node *ast.IdentifierNode) *ast.Declaration {
+ * 	return r.getReferenceResolver().GetReferencedValueDeclaration(node)
+ * }
+ */
+export function EmitResolver_GetReferencedValueDeclarationUnsafe(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
+  return EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclaration(node);
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa","bodyHash":"5e5adc4ee3583ab55fe00181c683b78596a409630cbafb6c93aa40f111942e1a"}
  *
  * Go source:
@@ -2070,6 +2108,25 @@ export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<Emit
   const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclarations(node);
   receiver!.checkerMu!.Unlock();
   return result;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsNameResolvable","kind":"method","status":"implemented","sigHash":"304290606be5c53a36259c9bb6fa5b149b42e89103787b219b5f966018dfc438","bodyHash":"ede14b38549b8366ce95d6a7f8f6b20859e41b797bfadba97b6413af1016f6dc"}
+ *
+ * Go source:
+ * func (r *EmitResolver) IsNameResolvable(location *ast.Node, name string) bool {
+ * 	r.checkerMu.Lock()
+ * 	defer r.checkerMu.Unlock()
+ *
+ * 	symbol := r.checker.resolveName(location, name, ast.SymbolFlagsValue|ast.SymbolFlagsType|ast.SymbolFlagsNamespace, nil /*nameNotFoundMessage* /, false /*isUse* /, false /*excludeGlobals* /)
+ * 	return symbol != nil
+ * }
+ */
+export function EmitResolver_IsNameResolvable(receiver: GoPtr<EmitResolver>, location: GoPtr<Node>, name: string): bool {
+  receiver!.checkerMu!.Lock();
+  const symbol_ = receiver!.checker!.resolveName(location, name, (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool);
+  receiver!.checkerMu!.Unlock();
+  return (symbol_ !== undefined) as bool;
 }
 
 /**
@@ -2104,7 +2161,7 @@ export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<Emit
  * 	if original == nil {
  * 		return emitContext.Factory.NewKeywordTypeNode(ast.KindAnyKeyword)
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
@@ -2132,7 +2189,7 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
  * 	if original == nil {
  * 		return nil
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
@@ -2160,7 +2217,7 @@ export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver
  * 	if original == nil {
  * 		return emitContext.Factory.NewKeywordTypeNode(ast.KindAnyKeyword)
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
@@ -2194,7 +2251,7 @@ export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolve
  * 	if t == nil {
  * 		return nil // TODO: How!? Maybe this should be a panic. All symbols should have a type.
  * 	}
- * 
+ *
  * 	var enumResult *ast.Node
  * 	if t.flags&TypeFlagsEnumLike != 0 {
  * 		r.checkerMu.Lock()
@@ -2311,7 +2368,7 @@ export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolve
  * 	if expression == nil {
  * 		return emitContext.Factory.NewKeywordTypeNode(ast.KindAnyKeyword)
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
@@ -2338,7 +2395,7 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * 	container = emitContext.ParseNode(container)
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	sym := container.Symbol()
  * 	staticInfos := r.checker.getIndexInfosOfType(r.checker.getTypeOfSymbol(sym))
  * 	instanceIndexSymbol := r.checker.getIndexSymbol(sym)
@@ -2347,9 +2404,9 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * 		siblingSymbols := slices.Collect(maps.Values(r.checker.getMembersOfSymbol(sym)))
  * 		instanceInfos = r.checker.getIndexInfosOfIndexSymbol(instanceIndexSymbol, siblingSymbols)
  * 	}
- * 
+ *
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
- * 
+ *
  * 	var result []*ast.Node
  * 	for i, infoList := range [][]*IndexInfo{staticInfos, instanceInfos} {
  * 		isStatic := true
@@ -2380,18 +2437,18 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * 							// skip late bound props that contribute to the index signature - they'll be preserved via other means
  * 							continue
  * 						}
- * 
+ *
  * 						firstIdentifier := ast.GetFirstIdentifier(c.Name().Expression())
  * 						name := r.checker.resolveName(firstIdentifier, firstIdentifier.Text(), ast.SymbolFlagsValue|ast.SymbolFlagsExportValue, nil /*nameNotFoundMessage* /, true /*isUse* /, false /*excludeGlobals* /)
  * 						if name != nil {
  * 							tracker.TrackSymbol(name, enclosingDeclaration, ast.SymbolFlagsValue)
  * 						}
- * 
+ *
  * 						mods := core.IfElse(isStatic, []*ast.Node{emitContext.Factory.NewModifier(ast.KindStaticKeyword)}, nil)
  * 						if info.isReadonly {
  * 							mods = append(mods, emitContext.Factory.NewModifier(ast.KindReadonlyKeyword))
  * 						}
- * 
+ *
  * 						decl := emitContext.Factory.NewPropertyDeclaration(
  * 							core.IfElse(mods != nil, emitContext.Factory.NewModifierList(mods), nil),
  * 							c.Name(),
@@ -2575,16 +2632,16 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 	// location = emitContext.ParseNode(location)
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	if typeName == nil || location == nil {
  * 		return printer.TypeReferenceSerializationKindUnknown
  * 	}
- * 
+ *
  * 	// Resolve the symbol as a value to ensure the type can be reached at runtime during emit.
  * 	isTypeOnly := false
  * 	if ast.IsQualifiedName(typeName) {
  * 		rootValueSymbol := r.checker.resolveEntityName(ast.GetFirstIdentifier(typeName), ast.SymbolFlagsValue, true, true, location)
- * 
+ *
  * 		if rootValueSymbol != nil && len(rootValueSymbol.Declarations) > 0 {
  * 			isTypeOnly = core.Every(rootValueSymbol.Declarations, ast.IsTypeOnlyImportOrExportDeclaration)
  * 		}
@@ -2594,9 +2651,9 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 	if valueSymbol != nil && valueSymbol.Flags&ast.SymbolFlagsAlias != 0 {
  * 		resolvedValueSymbol = r.checker.resolveAlias(valueSymbol)
  * 	}
- * 
+ *
  * 	isTypeOnly = isTypeOnly || (valueSymbol != nil && r.checker.getTypeOnlyAliasDeclarationEx(valueSymbol, ast.SymbolFlagsValue) != nil)
- * 
+ *
  * 	// Resolve the symbol as a type so that we can provide a more useful hint for the type serializer.
  * 	typeSymbol := r.checker.resolveEntityName(typeName, ast.SymbolFlagsType, true, true, location)
  * 	resolvedTypeSymbol := typeSymbol
@@ -2605,13 +2662,13 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 	}
  * 	// In case the value symbol can't be resolved (e.g. because of missing declarations), use type symbol for reachability check.
  * 	isTypeOnly = isTypeOnly || (typeSymbol != nil && r.checker.getTypeOnlyAliasDeclarationEx(typeSymbol, ast.SymbolFlagsType) != nil)
- * 
+ *
  * 	if resolvedValueSymbol != nil && resolvedValueSymbol == resolvedTypeSymbol {
  * 		globalPromiseSymbol := r.checker.getGlobalPromiseConstructorSymbol()
  * 		if globalPromiseSymbol != nil && resolvedValueSymbol == globalPromiseSymbol {
  * 			return printer.TypeReferenceSerializationKindPromise
  * 		}
- * 
+ *
  * 		constructorType := r.checker.getTypeOfSymbol(resolvedValueSymbol)
  * 		if constructorType != nil && r.checker.isConstructorType(constructorType) {
  * 			if isTypeOnly {
@@ -2620,7 +2677,7 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 			return printer.TypeReferenceSerializationKindTypeWithConstructSignatureAndValue
  * 		}
  * 	}
- * 
+ *
  * 	// We might not be able to resolve type symbol so use unknown type in that case (eg error case)
  * 	if resolvedTypeSymbol == nil {
  * 		if isTypeOnly {
@@ -2628,7 +2685,7 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 		}
  * 		return printer.TypeReferenceSerializationKindUnknown
  * 	}
- * 
+ *
  * 	type_ := r.checker.getDeclaredTypeOfSymbol(resolvedTypeSymbol)
  * 	if r.checker.isErrorType(type_) {
  * 		if isTypeOnly {
@@ -2636,7 +2693,7 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * 		}
  * 		return printer.TypeReferenceSerializationKindUnknown
  * 	}
- * 
+ *
  * 	if type_.flags&TypeFlagsAnyOrUnknown != 0 {
  * 		return printer.TypeReferenceSerializationKindObjectType
  * 	} else if r.checker.isTypeAssignableToKind(type_, TypeFlagsVoid|TypeFlagsNullable|TypeFlagsNever) {
@@ -2791,7 +2848,7 @@ export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<Em
  * 	typeNode = emitContext.ParseNode(typeNode)
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	requestNodeBuilder := NewNodeBuilder(r.checker, emitContext) // TODO: cache per-context
  * 	return requestNodeBuilder.TryJSTypeNodeToTypeNode(typeNode, enclosingDeclaration, flags, internalFlags, tracker)
  * }

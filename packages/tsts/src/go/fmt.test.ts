@@ -26,6 +26,8 @@ class StringWriter {
 
 test("fmt.Sprintf handles %s %d %v", () => {
   assert.equal(Sprintf("%s=%d", "n", 42), "n=42");
+  assert.equal(Sprintf("%s", [0x54, 0x53, 0x2d, 0x47, 0x6f]), "TS-Go");
+  assert.equal(Sprintf("%s", Uint8Array.from([0xe2, 0x9c, 0x93])), "✓");
   assert.equal(Sprintf("%v", 7), "7");
   assert.equal(Sprintf("%v", true), "true");
   assert.equal(Sprintf("%v", "hi"), "hi");

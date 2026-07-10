@@ -125,7 +125,8 @@ export function taggedTemplateTransformer_visit(receiver: GoPtr<taggedTemplateTr
  *
  * 	if len(tx.taggedTemplateStringDeclarations) > 0 {
  * 		visitedSourceFile := visited.AsSourceFile()
- * 		statements := append(visitedSourceFile.Statements.Nodes[:len(visitedSourceFile.Statements.Nodes):len(visitedSourceFile.Statements.Nodes)],
+ * 		statements := append(
+ * 			visitedSourceFile.Statements.Nodes[:len(visitedSourceFile.Statements.Nodes):len(visitedSourceFile.Statements.Nodes)],
  * 			tx.Factory().NewVariableStatement(
  * 				nil, /*modifiers* /
  * 				tx.Factory().NewVariableDeclarationList(
@@ -231,7 +232,8 @@ export function taggedTemplateTransformer_visitTaggedTemplateExpression(receiver
  * 	// variables from outside of the current compilation. In the future, we can revisit this behavior.
  * 	if ast.IsExternalModule(tx.currentSourceFile) {
  * 		tempVar := f.NewUniqueName("templateObject")
- * 		tx.taggedTemplateStringDeclarations = append(tx.taggedTemplateStringDeclarations,
+ * 		tx.taggedTemplateStringDeclarations = append(
+ * 			tx.taggedTemplateStringDeclarations,
  * 			f.NewVariableDeclaration(tempVar, nil, nil, nil),
  * 		)
  * 		templateArguments[0] = f.NewLogicalORExpression(

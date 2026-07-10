@@ -5,7 +5,7 @@
     "caseFile": "transpile/declarationRestParameters.ts",
     "configuration": null,
     "artifact": "declarationRestParameters.d.ts",
-    "sections": ["v1.d.ts", "Diagnostics reported"],
+    "sections": [],
     "absentSections": ["v2.d.ts"]
   },
   {

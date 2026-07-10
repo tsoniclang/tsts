@@ -73,9 +73,9 @@ export const SupportedTSExtensions: GoSlice<GoSlice<string>> = [
 export const SupportedTSExtensionsFlat: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionCts, ExtensionDcts, ExtensionMts, ExtensionDmts];
 export const SupportedJSExtensions: GoSlice<GoSlice<string>> = [[ExtensionJs, ExtensionJsx], [ExtensionMjs], [ExtensionCjs]];
 export const SupportedJSExtensionsFlat: GoSlice<string> = [ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionCjs];
-export const AllSupportedExtensionsWithJson: unknown = slices.Concat<GoSlice<string>>(AllSupportedExtensions, [[ExtensionJson]]);
-export const SupportedTSExtensionsWithJson: unknown = slices.Concat<GoSlice<string>>(SupportedTSExtensions, [[ExtensionJson]]);
-export const SupportedTSExtensionsWithJsonFlat: unknown = slices.Concat<string>(SupportedTSExtensionsFlat, [ExtensionJson]);
+export const AllSupportedExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(AllSupportedExtensions, [[ExtensionJson]]);
+export const SupportedTSExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(SupportedTSExtensions, [[ExtensionJson]]);
+export const SupportedTSExtensionsWithJsonFlat: GoSlice<string> = slices.Concat<string>(SupportedTSExtensionsFlat, [ExtensionJson]);
 export const ExtensionsNotSupportingExtensionlessResolution: GoSlice<string> = [ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs];
 
 /**

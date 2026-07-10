@@ -138,7 +138,130 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * 	visit func(node N) (isResult bool, stop bool),
  * 	options BreadthFirstSearchOptions[K, N],
  * 	getKey func(N) K,
- * ) BreadthFirstSearchResult[N] { ... }
+ * ) BreadthFirstSearchResult[N] {
+ * 	visited := options.Visited
+ * 	if visited == nil {
+ * 		visited = &collections.SyncSet[K]{}
+ * 	}
+ *
+ * 	type result struct {
+ * 		stop bool
+ * 		job  *breadthFirstSearchJob[N]
+ * 		next *collections.OrderedMap[K, *breadthFirstSearchJob[N]]
+ * 	}
+ *
+ * 	var fallback *breadthFirstSearchJob[N]
+ * 	// processLevel processes each node at the current level in parallel.
+ * 	// It produces either a list of jobs to be processed in the next level,
+ * 	// or a result if the visit function returns true for any node.
+ * 	processLevel := func(index int, jobs *collections.OrderedMap[K, *breadthFirstSearchJob[N]]) result {
+ * 		var lowestFallback atomic.Int64
+ * 		var lowestGoal atomic.Int64
+ * 		var nextJobCount atomic.Int64
+ * 		lowestGoal.Store(math.MaxInt64)
+ * 		lowestFallback.Store(math.MaxInt64)
+ * 		if options.PreprocessLevel != nil {
+ * 			options.PreprocessLevel(&BreadthFirstSearchLevel[K, N]{jobs: jobs})
+ * 		}
+ * 		next := make([][]*breadthFirstSearchJob[N], jobs.Size())
+ * 		var wg sync.WaitGroup
+ * 		i := 0
+ * 		for j := range jobs.Values() {
+ * 			wg.Add(1)
+ * 			go func(i int, j *breadthFirstSearchJob[N]) {
+ * 				defer wg.Done()
+ * 				if int64(i) >= lowestGoal.Load() {
+ * 					return // Stop processing if we already found a lower result
+ * 				}
+ *
+ * 				// If we have already visited this node, skip it.
+ * 				if !visited.AddIfAbsent(getKey(j.node)) {
+ * 					// Note that if we are here, we already visited this node at a
+ * 					// previous *level*, which means `visit` must have returned false,
+ * 					// so we don't need to update our result indices. This holds true
+ * 					// because we deduplicated jobs before queuing the level.
+ * 					return
+ * 				}
+ *
+ * 				isResult, stop := visit(j.node)
+ * 				if isResult {
+ * 					// We found a result, so we will stop at this level, but an
+ * 					// earlier job may still find a true result at a lower index.
+ * 					if stop {
+ * 						updateMin(&lowestGoal, int64(i))
+ * 						return
+ * 					}
+ * 					if fallback == nil {
+ * 						updateMin(&lowestFallback, int64(i))
+ * 					}
+ * 				}
+ *
+ * 				if int64(i) >= lowestGoal.Load() {
+ * 					// If `visit` is expensive, it's likely that by the time we get here,
+ * 					// a different job has already found a lower index result, so we
+ * 					// don't even need to collect the next jobs.
+ * 					return
+ * 				}
+ * 				// Add the next level jobs
+ * 				neighborNodes := neighbors(j.node)
+ * 				if len(neighborNodes) > 0 {
+ * 					nextJobCount.Add(int64(len(neighborNodes)))
+ * 					next[i] = Map(neighborNodes, func(child N) *breadthFirstSearchJob[N] {
+ * 						return &breadthFirstSearchJob[N]{node: child, parent: j}
+ * 					})
+ * 				}
+ * 			}(i, j)
+ * 			i++
+ * 		}
+ * 		wg.Wait()
+ * 		if index := lowestGoal.Load(); index != math.MaxInt64 {
+ * 			// If we found a result, return it immediately.
+ * 			_, job, _ := jobs.EntryAt(int(index))
+ * 			return result{stop: true, job: job}
+ * 		}
+ * 		if fallback == nil {
+ * 			if index := lowestFallback.Load(); index != math.MaxInt64 {
+ * 				_, fallback, _ = jobs.EntryAt(int(index))
+ * 			}
+ * 		}
+ * 		nextJobs := collections.NewOrderedMapWithSizeHint[K, *breadthFirstSearchJob[N]](int(nextJobCount.Load()))
+ * 		for _, jobs := range next {
+ * 			for _, j := range jobs {
+ * 				if !nextJobs.Has(getKey(j.node)) {
+ * 					// Deduplicate synchronously to avoid messy locks and spawning
+ * 					// unnecessary goroutines.
+ * 					nextJobs.Set(getKey(j.node), j)
+ * 				}
+ * 			}
+ * 		}
+ * 		return result{next: nextJobs}
+ * 	}
+ *
+ * 	createPath := func(job *breadthFirstSearchJob[N]) []N {
+ * 		var path []N
+ * 		for job != nil {
+ * 			path = append(path, job.node)
+ * 			job = job.parent
+ * 		}
+ * 		return path
+ * 	}
+ *
+ * 	levelIndex := 0
+ * 	level := collections.NewOrderedMapFromList([]collections.MapEntry[K, *breadthFirstSearchJob[N]]{
+ * 		{Key: getKey(start), Value: &breadthFirstSearchJob[N]{node: start}},
+ * 	})
+ * 	for level.Size() > 0 {
+ * 		result := processLevel(levelIndex, level)
+ * 		if result.stop {
+ * 			return BreadthFirstSearchResult[N]{Stopped: true, Path: createPath(result.job)}
+ * 		} else if result.job != nil && fallback == nil {
+ * 			fallback = result.job
+ * 		}
+ * 		level = result.next
+ * 		levelIndex++
+ * 	}
+ * 	return BreadthFirstSearchResult[N]{Stopped: false, Path: createPath(fallback)}
+ * }
  */
 export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: (arg0: N) => GoSlice<N>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: (arg0: N) => K): BreadthFirstSearchResult<N> {
   let visited = options.Visited;

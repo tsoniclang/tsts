@@ -5,8 +5,9 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 | Field | Value |
 | --- | --- |
 | Upstream | `microsoft/typescript-go` |
-| Commit | `c78d39e7075b4fc641b12b1f35d905c54cdc13ef` |
-| `ast.json` SHA-256 | `9259791a628105b1ed375a1a69f2002ad478f10e60ae68e01e5527e0fe619546` |
+| Commit | `d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc` |
+| Nested TypeScript commit | `4d4f005c8541e0255a9d8791205fdce326e462bc` |
+| `ast.json` SHA-256 | `8f9117acd1ba332beb8222e4f958346a6846dc0acbcb75d1c20a7bb0eef68689` |
 | `ast.schema.json` SHA-256 | `c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2` |
 | `protocol.ts` SHA-256 | `02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830` |
 | `nodeflags.go` SHA-256 | `8be5737c5cfe5478fcef3f0b50847d7ca4045157a6d039ffaac658977a181dc2` |
@@ -18,9 +19,25 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 - Schema drift is a hard failure.
 - Updating the schema requires updating this file, regenerating artifacts, and explaining the upstream TS-Go change.
 - The AST schema inputs must not be pinned on a separate track from the source
-  submodule. `porter:verify` compares every schema-directory copy that has a live
-  upstream counterpart against the checked-out source tree and fails on any
+  submodule. `porter:verify` inventories every file in this directory, requires
+  exactly one `upstream-copy` or `local-metadata` policy, compares every upstream
+  copy against the checked-out source tree, and fails on classification or
   byte-level drift.
+
+## Pin bump — 2026-07-10
+
+Bumped the TS-Go source and schema pin together from
+`c78d39e7075b4fc641b12b1f35d905c54cdc13ef` to
+`d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc`. The nested TypeScript source is
+`4d4f005c8541e0255a9d8791205fdce326e462bc`.
+
+Schema input drift across that range:
+
+- `ast.json` — changed; generated node/data infrastructure must be regenerated.
+- `ast.schema.json`, `protocol.ts`, `nodeflags.go`, `symbolflags.go` — unchanged.
+
+The schema inventory is now exhaustive rather than an allowlist of sync checks:
+adding any file to this directory without an explicit policy fails the porter.
 
 ## Pin bump — 2026-06-13
 

@@ -18,12 +18,13 @@
     "packages/tsts/schema/tsgo/symbolflags.go"
   ],
   "astGeneratedStatusOut": ".temp/porter/ast-generated.json",
-  "schemaSourceSyncChecks": [
-    { "schema": "packages/tsts/schema/tsgo/ast.json", "source": "_scripts/ast.json" },
-    { "schema": "packages/tsts/schema/tsgo/ast.schema.json", "source": "_scripts/ast.schema.json" },
-    { "schema": "packages/tsts/schema/tsgo/protocol.ts", "source": "_packages/native-preview/src/api/node/protocol.ts" },
-    { "schema": "packages/tsts/schema/tsgo/nodeflags.go", "source": "internal/ast/nodeflags.go" },
-    { "schema": "packages/tsts/schema/tsgo/symbolflags.go", "source": "internal/ast/symbolflags.go" }
+  "schemaFilePolicies": [
+    { "path": "packages/tsts/schema/tsgo/VERSION.md", "kind": "local-metadata" },
+    { "path": "packages/tsts/schema/tsgo/ast.json", "kind": "upstream-copy", "source": "_scripts/ast.json" },
+    { "path": "packages/tsts/schema/tsgo/ast.schema.json", "kind": "upstream-copy", "source": "_scripts/ast.schema.json" },
+    { "path": "packages/tsts/schema/tsgo/nodeflags.go", "kind": "upstream-copy", "source": "internal/ast/nodeflags.go" },
+    { "path": "packages/tsts/schema/tsgo/protocol.ts", "kind": "upstream-copy", "source": "_packages/native-preview/src/api/node/protocol.ts" },
+    { "path": "packages/tsts/schema/tsgo/symbolflags.go", "kind": "upstream-copy", "source": "internal/ast/symbolflags.go" }
   ],
   "diagnosticsGeneratedDir": "internal/diagnostics/generated",
   "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
@@ -43,6 +44,24 @@
       "category": "out-of-scope",
       "active": false,
       "reason": "fmtMain is the commented formatter command path and depends on internal/format / language-service formatter settings, which are outside the standalone compiler runtime port."
+    }
+  ],
+  "externalFacadePolicies": [
+    {
+      "goName": "syscall.SIGINT",
+      "tsModule": "go/syscall.ts",
+      "tsName": "SIGINT",
+      "kind": "value",
+      "arity": 0,
+      "tsInitializer": "\"SIGINT\""
+    },
+    {
+      "goName": "syscall.SIGTERM",
+      "tsModule": "go/syscall.ts",
+      "tsName": "SIGTERM",
+      "kind": "value",
+      "arity": 0,
+      "tsInitializer": "\"SIGTERM\""
     }
   ],
   "authoredFacadeModules": [
@@ -256,7 +275,7 @@
     {
       "match": "packages/tsts/src/internal/fswatch/**",
       "category": "host-native",
-      "reason": "Authored host-native facade for the upstream internal/fswatch package (out-of-scope OS file-watch internals: fanotify/FSEvents/kqueue/inotify). Exposes the public surface the execute watcher consumes with a stub that throws TSGO_EXTERNAL_FACADE_UNIMPLEMENTED; not a ported TS-Go unit, so it carries no @tsgo-unit metadata."
+      "reason": "Authored Node-backed host boundary for the upstream internal/fswatch package (out-of-scope OS internals: fanotify/FSEvents/kqueue/inotify); not a ported TS-Go unit, so it carries no @tsgo-unit metadata."
     },
     {
       "match": "packages/tsts/src/**/*.ts",
@@ -274,6 +293,11 @@
       "match": "internal/vfs/osvfs/**",
       "category": "host-native",
       "reason": "Operating-system bindings must be implemented through the TypeScript host layer."
+    },
+    {
+      "match": "internal/nativepath/**",
+      "category": "host-native",
+      "reason": "Platform-specific native path syscalls terminate at the TypeScript/Node host boundary."
     },
     {
       "match": "internal/vfs/vfswatch/**",
@@ -356,6 +380,11 @@
       "match": "internal/vfs/osvfs/**",
       "category": "host-native",
       "reason": "OS filesystem bindings must map to the TypeScript/Node host layer, not a literal syscall port."
+    },
+    {
+      "match": "internal/nativepath/**",
+      "category": "host-native",
+      "reason": "Native realpath, symlink, and reparse-point operations must map to the TypeScript/Node host boundary rather than generated syscall facades."
     },
     {
       "match": "internal/vfs/vfswatch/**",

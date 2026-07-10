@@ -14,23 +14,31 @@ import type { EmitResolver, SymbolAccessibilityResult } from "../../printer/emit
 import type { SymbolTracker } from "../../nodebuilder/types.js";
 import { SymbolAccessibilityAccessible, SymbolAccessibilityNotResolved } from "../../printer/emitresolver.js";
 import {
+  IsBlock,
   IsExportAssignment,
+  IsPropertyAccessExpression,
+  IsSourceFile,
   IsVariableDeclaration,
 } from "../../ast/generated/predicates.js";
 import {
+  FindAncestorOrQuit,
+  FindAncestorQuit,
   GetNameOfDeclaration,
   GetSourceFileOfNode,
+  IsExpandoPropertyDeclaration,
+  ToFindAncestorResult,
 } from "../../ast/utilities.js";
+import { GetLeftmostExpression } from "../../ast/precedence.js";
 import { GetTextOfNode, DeclarationNameToString } from "../../scanner/utilities.js";
 import { NewDiagnosticForNode } from "../../checker/utilities.js";
 import { AppendIfUnique } from "../../core/core.js";
 import { Find, Filter } from "../../core/core.js";
-import { AsExportAssignment } from "../../ast/generated/casts.js";
+import { AsBinaryExpression, AsExportAssignment } from "../../ast/generated/casts.js";
 import { createGetIsolatedDeclarationErrors, type GetSymbolAccessibilityDiagnostic } from "./diagnostics.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534","bodyHash":"3d0b1e2bb9b95fe041f24a5d5e940015e3814938b736ed7ca2618eba6fa1b31e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534","bodyHash":"70c9fa9a4daa30da61b795d93de668eb5ad8637bdece57f40cf4ae5b572f4d4f"}
  *
  * Go source:
  * SymbolTrackerImpl struct {
@@ -38,6 +46,11 @@ import type { DeclarationEmitHost } from "./transform.js";
  * 	state         *SymbolTrackerSharedState
  * 	host          DeclarationEmitHost
  * 	fallbackStack []*ast.Node
+ *
+ * 	// For detecting class expression self-references during member serialization.
+ * 	// When set, TrackSymbol will record usage without reporting accessibility errors.
+ * 	watchedClassSymbol *ast.Symbol
+ * 	classSymbolTracked bool
  *
  * 	getIsolatedDeclarationError func(node *ast.Node) *ast.Diagnostic
  * }
@@ -47,6 +60,8 @@ export interface SymbolTrackerImpl {
   state: GoPtr<SymbolTrackerSharedState>;
   host: DeclarationEmitHost;
   fallbackStack: GoSlice<GoPtr<Node>>;
+  watchedClassSymbol: GoPtr<Symbol>;
+  classSymbolTracked: bool;
   getIsolatedDeclarationError: (node: GoPtr<Node>) => GoPtr<Diagnostic>;
 }
 
@@ -129,7 +144,56 @@ export function SymbolTrackerImpl_ReportInaccessibleUniqueSymbolError(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.ReportInferenceFallback","kind":"method","status":"implemented","sigHash":"92bafb5160ac66ce9bd3375d617e051f77766199a8d55bce6a938f3f88f35f9a","bodyHash":"f9bf8eb6ff022ca5258a94818d8b8ea0266bd37802dd69cd866fb88c2298749c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.isBoundExpando","kind":"method","status":"implemented","sigHash":"206944419c68f2c4cbb0eca37c06bbdd48625da05fd55a95be129c0351d9428e","bodyHash":"32729484fdf78c8b941701609480f95cb66dcc2fa7d4b276efa483f953d9ffa3"}
+ *
+ * Go source:
+ * func (s *SymbolTrackerImpl) isBoundExpando(node *ast.Node) bool {
+ * 	if !(ast.IsExpandoPropertyDeclaration(node) && ast.IsPropertyAccessExpression(node.AsBinaryExpression().Left)) {
+ * 		return false
+ * 	}
+ * 	ref := s.resolver.GetReferencedValueDeclarationUnsafe(ast.GetLeftmostExpression(node.AsBinaryExpression().Left, true))
+ * 	if ref == nil {
+ * 		return false
+ * 	}
+ * 	return s.resolver.IsExpandoFunctionDeclarationUnsafe(ref)
+ * }
+ */
+export function SymbolTrackerImpl_isBoundExpando(receiver: GoPtr<SymbolTrackerImpl>, node: GoPtr<Node>): bool {
+  const binary = AsBinaryExpression(node);
+  if (!(IsExpandoPropertyDeclaration(node) && IsPropertyAccessExpression(binary!.Left))) {
+    return false as bool;
+  }
+  const ref = receiver!.resolver.GetReferencedValueDeclarationUnsafe(GetLeftmostExpression(binary!.Left, true as bool));
+  if (ref === undefined) {
+    return false as bool;
+  }
+  return receiver!.resolver.IsExpandoFunctionDeclarationUnsafe(ref);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.isChildOfBoundExpando","kind":"method","status":"implemented","sigHash":"3e20160ee73a0c9aaaba27a6a2c6baf606b61bf12533a49c3914c8ecc407e17a","bodyHash":"8c67d790eb01550754707b9414adbc47835f9a305ce4c33a4f43cfc50a7a3dda"}
+ *
+ * Go source:
+ * func (s *SymbolTrackerImpl) isChildOfBoundExpando(node *ast.Node) bool {
+ * 	return ast.FindAncestorOrQuit(node, func(n *ast.Node) ast.FindAncestorResult {
+ * 		if ast.IsSourceFile(n) || ast.IsBlock(n) {
+ * 			return ast.FindAncestorQuit
+ * 		}
+ * 		return ast.ToFindAncestorResult(s.isBoundExpando(n))
+ * 	}) != nil
+ * }
+ */
+export function SymbolTrackerImpl_isChildOfBoundExpando(receiver: GoPtr<SymbolTrackerImpl>, node: GoPtr<Node>): bool {
+  return (FindAncestorOrQuit(node, (n: GoPtr<Node>) => {
+    if (IsSourceFile(n) || IsBlock(n)) {
+      return FindAncestorQuit;
+    }
+    return ToFindAncestorResult(SymbolTrackerImpl_isBoundExpando(receiver, n));
+  }) !== undefined) as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.ReportInferenceFallback","kind":"method","status":"implemented","sigHash":"92bafb5160ac66ce9bd3375d617e051f77766199a8d55bce6a938f3f88f35f9a","bodyHash":"4f961b4939b8659e74a8769b32cf1003c1dd6708b57bef1c3ae333bc5569ddad"}
  *
  * Go source:
  * func (s *SymbolTrackerImpl) ReportInferenceFallback(node *ast.Node) {
@@ -142,7 +206,9 @@ export function SymbolTrackerImpl_ReportInaccessibleUniqueSymbolError(receiver: 
  * 	if s.state.resolver.IsExpandoFunctionDeclarationUnsafe(node) { // within a node builder call that should already lock the checker, use the unsafe call
  * 		s.state.reportExpandoFunctionErrors(node)
  * 	}
- * 	s.state.addDiagnostic(s.getIsolatedDeclarationError(node))
+ * 	if !s.isChildOfBoundExpando(node) { // expando props get an error when their host is visited by the above, this prevents a follow-on error on a non-inferrable expression
+ * 		s.state.addDiagnostic(s.getIsolatedDeclarationError(node))
+ * 	}
  * }
  */
 export function SymbolTrackerImpl_ReportInferenceFallback(receiver: GoPtr<SymbolTrackerImpl>, node: GoPtr<Node>): void {
@@ -153,9 +219,11 @@ export function SymbolTrackerImpl_ReportInferenceFallback(receiver: GoPtr<Symbol
     return; // Nested error on a declaration in another file - ignore, will be reemitted if file is in the output file set
   }
   if (receiver!.state!.resolver.IsExpandoFunctionDeclarationUnsafe(node)) { // within a node builder call that should already lock the checker, use the unsafe call
-    receiver!.state!.reportExpandoFunctionErrors(node);
+    receiver!.state!.reportExpandoFunctionErrors!(node);
   }
-  SymbolTrackerSharedState_addDiagnostic(receiver!.state, receiver!.getIsolatedDeclarationError(node));
+  if (!SymbolTrackerImpl_isChildOfBoundExpando(receiver, node)) { // expando props get an error when their host is visited by the above, this prevents a follow-on error on a non-inferrable expression
+    SymbolTrackerSharedState_addDiagnostic(receiver!.state, receiver!.getIsolatedDeclarationError(node));
+  }
 }
 
 /**
@@ -354,11 +422,18 @@ export function SymbolTrackerImpl_errorDeclarationNameWithFallback(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"implemented","sigHash":"b3003d43136af9671d50fa576702a4c81e5717b4ce8382934f30711269821b88","bodyHash":"e3e28c3def2f38290f86c84ca3b8d4d16b3be185ac2fe52ef3fe31cea54ecc8d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/tracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"implemented","sigHash":"b3003d43136af9671d50fa576702a4c81e5717b4ce8382934f30711269821b88","bodyHash":"425ec24a14d42ffe6c3edd79b8b1eb568dd134258b8bc770d069eb279d55359d"}
  *
  * Go source:
  * func (s *SymbolTrackerImpl) TrackSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) bool {
  * 	if symbol.Flags&ast.SymbolFlagsTypeParameter != 0 {
+ * 		return false
+ * 	}
+ * 	// When watching for a class expression symbol, record its usage without
+ * 	// reporting accessibility errors — the caller will handle visibility by
+ * 	// wrapping the class in a namespace.
+ * 	if s.watchedClassSymbol != nil && symbol == s.watchedClassSymbol {
+ * 		s.classSymbolTracked = true
  * 		return false
  * 	}
  * 	issuedDiagnostic := s.handleSymbolAccessibilityError(s.resolver.IsSymbolAccessible(symbol, enclosingDeclaration, meaning /*shouldComputeAliasToMarkVisible* /, true))
@@ -367,6 +442,10 @@ export function SymbolTrackerImpl_errorDeclarationNameWithFallback(receiver: GoP
  */
 export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool {
   if ((symbol_!.Flags & SymbolFlagsTypeParameter) !== 0) {
+    return false;
+  }
+  if (receiver!.watchedClassSymbol !== undefined && symbol_ === receiver!.watchedClassSymbol) {
+    receiver!.classSymbolTracked = true;
     return false;
   }
   const issuedDiagnostic = SymbolTrackerImpl_handleSymbolAccessibilityError(receiver, receiver!.resolver.IsSymbolAccessible(symbol_, enclosingDeclaration, meaning, /*shouldComputeAliasToMarkVisible*/ true));
@@ -471,7 +550,7 @@ export interface SymbolTrackerSharedState {
   stripInternal: bool;
   currentSourceFile: GoPtr<SourceFile>;
   resolver: EmitResolver;
-  reportExpandoFunctionErrors: (node: GoPtr<Node>) => void;
+  reportExpandoFunctionErrors: GoPtr<(node: GoPtr<Node>) => void>;
 }
 
 /**
@@ -502,6 +581,8 @@ export function NewSymbolTracker(host: DeclarationEmitHost, resolver: EmitResolv
     state: state,
     fallbackStack: [],
     getIsolatedDeclarationError: createGetIsolatedDeclarationErrors(resolver),
+    watchedClassSymbol: undefined,
+    classSymbolTracked: false,
   };
   return tracker;
 }

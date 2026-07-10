@@ -1224,7 +1224,6 @@ export function Checker_SignatureToSignatureDeclaration(receiver: GoPtr<Checker>
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e","bodyHash":"05039c9db4b9e2b9c3b2fd11116348c34a39578431cda11a7084075998dcbc01"}
  *
  * Go source:
- * // ExpandSymbolForHover produces declaration strings for a symbol with verbosity support for expandable hover.
  * func (c *Checker) ExpandSymbolForHover(symbol *ast.Symbol, meaning ast.SymbolFlags, vc *VerbosityContext) string {
  * 	nodeBuilder, release := c.getNodeBuilder()
  * 	defer release()
@@ -1287,7 +1286,6 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7","bodyHash":"0d7b58082bb95398066b84f4ef1a8ccb995f9d3600f90821d5ecb4da6f05f021"}
  *
  * Go source:
- * // TypeParameterToStringEx renders a type parameter declaration (e.g. "T extends Foo") with optional verbosity support.
  * func (c *Checker) TypeParameterToStringEx(t *Type, enclosingDeclaration *ast.Node, vc *VerbosityContext) string {
  * 	nodeBuilder, release := c.getNodeBuilder()
  * 	defer release()

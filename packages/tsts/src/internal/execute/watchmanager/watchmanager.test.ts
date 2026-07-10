@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { bool } from "../../../go/scalars.js";
 import type { Context } from "../../../go/context.js";
-import { Canceled } from "../../../go/context.js";
+import { Background, WithCancel } from "../../../go/context.js";
 import { Discard } from "../../../go/io.js";
-import { Time } from "../../../go/time.js";
 import {
   NewWatchManager,
   WatchManager_RunLoop,
@@ -12,18 +10,8 @@ import {
 } from "./watchmanager.js";
 
 function cancellableContext(): { ctx: Context; cancel: () => void } {
-  let canceled = false;
-  return {
-    ctx: {
-      Deadline: () => [new Time(), false as bool],
-      Done: () => undefined,
-      Err: () => canceled ? Canceled : undefined,
-      Value: () => undefined,
-    },
-    cancel: () => {
-      canceled = true;
-    },
-  };
+  const [ctx, cancel] = WithCancel(Background());
+  return { ctx, cancel };
 }
 
 async function flushMicrotasks(): Promise<void> {
@@ -31,7 +19,7 @@ async function flushMicrotasks(): Promise<void> {
   await Promise.resolve();
 }
 
-test("WatchManager coalesces pending cycle signals", async () => {
+test("WatchManager coalesces buffered signals and preserves a second signal after a waiting receive", async () => {
   const wm = NewWatchManager(Discard, () => true)!;
   const { ctx } = cancellableContext();
   let cycles = 0;
@@ -49,7 +37,7 @@ test("WatchManager coalesces pending cycle signals", async () => {
   WatchManager_signalDoCycle(wm);
   WatchManager_signalDoCycle(wm);
   await flushMicrotasks();
-  assert.equal(cycles, 2);
+  assert.equal(cycles, 3);
 });
 
 test("WatchManager preserves a signal raised during a cycle", async () => {
@@ -82,14 +70,14 @@ test("WatchManager cancellation closes watches and suppresses queued work", asyn
         return undefined;
       },
     },
-    recursive: false as bool,
+    recursive: false,
   });
 
   WatchManager_RunLoop(wm, ctx, () => {
     cycles++;
   });
-  WatchManager_signalDoCycle(wm);
   cancel();
+  WatchManager_signalDoCycle(wm);
 
   await flushMicrotasks();
   assert.equal(cycles, 0);
@@ -101,13 +89,14 @@ test("WatchManager cancellation closes watches and suppresses queued work", asyn
   assert.equal(cycles, 0);
 });
 
-test("WatchManager rejects a second active run loop", () => {
+test("WatchManager run loop waits until the cycle channel is signaled", async () => {
   const wm = NewWatchManager(Discard, () => true)!;
   const { ctx } = cancellableContext();
-  WatchManager_RunLoop(wm, ctx, () => {});
+  let cycles = 0;
+  WatchManager_RunLoop(wm, ctx, () => {
+    cycles++;
+  });
 
-  assert.throws(
-    () => WatchManager_RunLoop(wm, ctx, () => {}),
-    /run loop already started/,
-  );
+  await flushMicrotasks();
+  assert.equal(cycles, 0);
 });

@@ -52,7 +52,7 @@ import type { Number } from "../../jsnum/jsnum.js";
 import { NaN as JsNumber_NaN, Number_IsInf, Number_IsNaN } from "../../jsnum/jsnum.js";
 import { FromString, Number_String } from "../../jsnum/string.js";
 import type { TypeMapper } from "../mapper.js";
-import { Checker_combineTypeMappers, appendTypeMapping, newTypeMapper, newSimpleTypeMapper } from "../mapper.js";
+import { Checker_combineTypeMappers, TypeMapper_MapsThisOnly, appendTypeMapping, newTypeMapper, newSimpleTypeMapper } from "../mapper.js";
 import type { AccessFlags, AliasSymbolLinks, ContextFlags, DeclaredTypeLinks, DeferredSymbolLinks, IndexedAccessType, IndexFlags, IndexInfo, IndexType, InterfaceType, LateBoundLinks, MembersAndExportsLinks, MembersOrExportsResolutionKind, ModuleSymbolLinks, NodeLinks, ObjectFlags, Signature, SourceFileLinks, StructuredType, SymbolFormatFlags, SymbolReferenceLinks, Type, TypeAlias, TypeAliasLinks, TypeData, TypeFlags, TypeReference, UniqueESSymbolType, ValueSymbolLinks, SymbolNodeLinks, TypeNodeLinks, MappedSymbolLinks } from "../types.js";
 import type { Checker, CheckMode, DeclarationSpaces, DiscriminatedContextualTypeKey, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, NonExistentPropertyKey, ObjectLiteralDiscriminator, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext, CachedTypeKey } from "./state.js";
 import { SymbolFlagsNone, SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsExportValue, SymbolFlagsLateBindingContainer, SymbolFlagsModule, SymbolFlagsModuleMember, SymbolFlagsReplaceableByMethod, SymbolFlagsType, SymbolFlagsValue, SymbolFlagsNamespace, SymbolFlagsTransient, SymbolFlagsBlockScopedVariable, SymbolFlagsClass, SymbolFlagsEnum, SymbolFlagsFunction, SymbolFlagsFunctionScopedVariable, SymbolFlagsAssignment, SymbolFlagsRegularEnum, SymbolFlagsConstEnum, SymbolFlagsVariable, SymbolFlagsInterface, SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, SymbolFlagsGlobalLookup, SymbolFlagsMethod, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsSetAccessor, SymbolFlagsGetAccessor, SymbolFlagsAccessor, SymbolFlagsEnumMember, NodeFlagsAwaitUsing, NodeFlagsConstant, NodeFlagsNone, NodeFlagsOptionalChain, NodeFlagsInWithStatement, SymbolFlagsValueModule, SymbolFlagsNamespaceModule, SymbolFlagsConstEnumOnlyModule, SymbolFlagsObjectLiteral, SymbolFlagsBlockScoped, SymbolFlagsModuleExports, SymbolFlagsTypeLiteral, SymbolFlagsPrototype, SymbolFlagsPropertyOrAccessor } from "../../ast/generated/flags.js";
@@ -2863,7 +2863,7 @@ export function Checker_isPropertyInitializedInStaticBlocks(receiver: GoPtr<Chec
       const reference = NewPropertyAccessExpression(receiver!.factory, NewKeywordExpression(receiver!.factory, KindThisKeyword) as unknown as GoPtr<Expression>, undefined, propName as never, NodeFlagsNone);
       Node_Expression(reference)!.Parent = reference;
       reference!.Parent = staticBlock;
-      (Node_FlowNodeData(reference) as unknown as { FlowNode: unknown }).FlowNode = (AsClassStaticBlockDeclaration(staticBlock) as unknown as Record<string, unknown>)["ReturnFlowNode"];
+      Node_FlowNodeData(reference)!.FlowNode = AsClassStaticBlockDeclaration(staticBlock)!.ReturnFlowNode;
       const flowType = Checker_getFlowTypeOfReferenceEx(receiver, reference, propType, Checker_getOptionalType(receiver, propType, false), undefined, undefined);
       if (!Checker_containsUndefinedType(receiver, flowType)) {
         return true;
@@ -5444,7 +5444,7 @@ export function Checker_checkQualifiedName(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIndexedAccess","kind":"method","status":"implemented","sigHash":"32fa0a002cb05468dc7def68493137d7aedba03aeb689f7a70ba4ca9a71ad6b7","bodyHash":"889b5dc89357c094a4d04e010b1e12026e834b898e2ef917803c8abceca31716"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go element access checking, extension-enabled programs may record provider-selected surface/target indexer facts for consumers; no-extension programs and unowned accesses remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go element access checking, extension-enabled programs record the selected source symbol or the concrete declaration carried by the selected IndexInfo; synthetic and declarationless IndexInfos remain declarationless."}
  *
  * Go source:
  * func (c *Checker) checkIndexedAccess(node *ast.Node, checkMode CheckMode) *Type {
@@ -5458,14 +5458,21 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
   if ((node!.Flags & NodeFlagsOptionalChain) !== 0) {
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
-  const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
+  const objectType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+  const result = Checker_checkElementAccessExpression(receiver, node, objectType, checkMode);
+  recordExtensionCheckedElementAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    result,
+    () => Checker_getSelectedIndexInfoForElementAccess(receiver, node, objectType),
+  );
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkElementAccessChain","kind":"method","status":"implemented","sigHash":"87c91ac1dd6b496bfe2958fdb3dd1e0df6978e08f1f8ab4c9f61519478895348","bodyHash":"16ff9421739abc3918fc26481c0c7b7e280cd0bb97dbb046bbd9febfbfd2f23b"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go optional-chain element access checking, extension-enabled programs record the same selected source evidence exposed for non-optional element access."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go optional-chain element access checking, extension-enabled programs record the same declaration-exact IndexInfo evidence as non-optional element access."}
  *
  * Go source:
  * func (c *Checker) checkElementAccessChain(node *ast.Node, checkMode CheckMode) *Type {
@@ -5477,9 +5484,61 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
 export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const exprType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
-  const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
+  const objectType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+  const result = Checker_checkElementAccessExpression(receiver, node, objectType, checkMode);
+  recordExtensionCheckedElementAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    result,
+    () => Checker_getSelectedIndexInfoForElementAccess(receiver, node, objectType),
+  );
   return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== exprType);
+}
+
+function Checker_getSelectedIndexInfoForElementAccess(receiver: GoPtr<Checker>, node: GoPtr<Node>, objectType: GoPtr<Type>): GoPtr<IndexInfo> {
+  const indexExpression = AsElementAccessExpression(node)?.ArgumentExpression;
+  if (indexExpression === undefined) {
+    return undefined;
+  }
+  if (getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)) {
+    objectType = Checker_getWidenedType(receiver, objectType);
+  }
+  let indexType = Checker_checkExpression(receiver, indexExpression);
+  if (Checker_isErrorType(receiver, objectType) || objectType === receiver!.silentNeverType) {
+    return undefined;
+  }
+  if (Checker_isForInVariableForNumericPropertyNames(receiver, indexExpression)) {
+    indexType = receiver!.numberType;
+  }
+  objectType = Checker_getReducedType(receiver, objectType);
+  if (receiver!.isStringIndexSignatureOnlyType(objectType) && (indexType!.flags & TypeFlagsNullable) === 0 && Checker_isTypeAssignableToKind(receiver, indexType, (TypeFlagsString | TypeFlagsNumber) as TypeFlags)) {
+    indexType = receiver!.stringType;
+  }
+  if (Checker_shouldDeferIndexedAccessType(receiver, objectType, indexType, node) || ((indexType!.flags & TypeFlagsUnion) !== 0 && (indexType!.flags & TypeFlagsBoolean) === 0)) {
+    return undefined;
+  }
+  const apparentObjectType = Checker_getReducedApparentType(receiver, objectType);
+  if ((indexType!.flags & TypeFlagsNullable) !== 0 || !Checker_isTypeAssignableToKind(receiver, indexType, (TypeFlagsStringLike | TypeFlagsNumberLike | TypeFlagsESSymbolLike) as TypeFlags) || (apparentObjectType!.flags & (TypeFlagsAny | TypeFlagsNever)) !== 0) {
+    return undefined;
+  }
+  let info = Checker_getApplicableIndexInfo(receiver, apparentObjectType, indexType);
+  if (info === undefined) {
+    info = Checker_getIndexInfoOfType(receiver, apparentObjectType, receiver!.stringType);
+  }
+  return info === receiver!.anyBaseTypeIndexInfo ? undefined : info;
+}
+
+function Checker_getSelectedIndexInfoForPropertyAccess(receiver: GoPtr<Checker>, node: GoPtr<Node>, objectType: GoPtr<Type>): GoPtr<IndexInfo> {
+  const propertyName = Node_Text(Node_Name(node));
+  if (propertyName === "") {
+    return undefined;
+  }
+  if (getAssignmentTargetKind(node) !== AssignmentKindNone || Checker_isMethodAccessForCall(receiver, node)) {
+    objectType = Checker_getWidenedType(receiver, objectType);
+  }
+  const info = Checker_getApplicableIndexInfoForName(receiver, Checker_getApparentType(receiver, objectType), propertyName);
+  return info === receiver!.anyBaseTypeIndexInfo ? undefined : info;
 }
 
 /**
@@ -6436,7 +6495,7 @@ export function Checker_isSameScopedBindingElement(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"febcba979df4bee97ff9b0d6a44f3b1d8f0f4d8f43952819b5bcda4e8c2e880e","bodyHash":"82b3a1ac1890b83ce90db47cb21a1598249772e581ef1fe94cf9180ba2495e26"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go property access checking, extension-enabled programs may record provider-selected surface/target member facts for consumers; no-extension programs and unowned accesses remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go property access checking, extension-enabled programs record the selected source symbol or the concrete declaration carried by the selected IndexInfo; synthetic and declarationless IndexInfos remain declarationless."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessExpression(node *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
@@ -6452,14 +6511,21 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
     return Checker_checkPropertyAccessChain(receiver, node, checkMode);
   }
   const expr = Node_Expression(node);
-  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, Checker_checkNonNullExpression(receiver, expr), AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
+  const objectType = Checker_checkNonNullExpression(receiver, expr);
+  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, objectType, AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
+  recordExtensionCheckedPropertyAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    result,
+    () => Checker_getSelectedIndexInfoForPropertyAccess(receiver, node, objectType),
+  );
   return result;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessChain","kind":"method","status":"implemented","sigHash":"8fddaeae38c55291a27039fd3e34d4f23b91a1185f6450fd8a87c8ef77aeb85e","bodyHash":"8d099873c74d1d2075853d42ef27cf852f70d2462e0b439c46f9177816bb5aa8"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go optional-chain property access checking, extension-enabled programs record the same selected source evidence exposed for non-optional property access."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After exact TS-Go optional-chain property access checking, extension-enabled programs record the same declaration-exact IndexInfo evidence as non-optional property access."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessChain(node *ast.Node, checkMode CheckMode) *Type {
@@ -6471,14 +6537,20 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
 export function Checker_checkPropertyAccessChain(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
   const leftType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, leftType, Node_Expression(node));
-  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, Node_Expression(node), Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), Node_Name(node), checkMode, false);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
+  const objectType = Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node));
+  const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, Node_Expression(node), objectType, Node_Name(node), checkMode, false);
+  recordExtensionCheckedPropertyAccessMapping(
+    receiver,
+    node,
+    Checker_getResolvedSymbolOrNil(receiver, node),
+    result,
+    () => Checker_getSelectedIndexInfoForPropertyAccess(receiver, node, objectType),
+  );
   return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== leftType);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpressionOrQualifiedName","kind":"method","status":"implemented","sigHash":"9215f415f7607d418e5a3a390b0bf838e9a2f44b6cd177065016f5a85a4714b1","bodyHash":"c9ee642c0561d3b1c6f6fcf3a43fb2def31c2e6dcf98504b1f6a3169813218e3"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for property access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessExpressionOrQualifiedName(node *ast.Node, left *ast.Node, leftType *Type, right *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
@@ -6709,9 +6781,6 @@ export function Checker_checkPropertyAccessExpressionOrQualifiedName(receiver: G
     }
     if (indexInfo!.isReadonly && (IsAssignmentTarget(node) || isDeleteTarget(node))) {
       Checker_error(receiver, node, Index_signature_in_type_0_only_permits_reading, Checker_TypeToString(receiver, apparentType));
-    }
-    if (IsPropertyAccessExpression(node)) {
-      cacheIndexSignatureResolvedSymbol(receiver, node, apparentType, indexInfo);
     }
     propType = indexInfo!.valueType;
     if (receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue && getAssignmentTargetKind(node) !== AssignmentKindDefinite) {
@@ -8040,7 +8109,7 @@ export function Checker_mergeSymbolTable(receiver: GoPtr<Checker>, target: Symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeSymbol","kind":"method","status":"implemented","sigHash":"549d4016720d25406a29634111412e0818b6a366ec376693679996cb899ae475","bodyHash":"4cbf61fd4e80bccd30478a793bb12951fa777d163e99738d5849f70946412b5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeSymbol","kind":"method","status":"implemented","sigHash":"549d4016720d25406a29634111412e0818b6a366ec376693679996cb899ae475","bodyHash":"cdd08b046e4fda0a6bb574e735ff9f583f9629675c755be5bf4c3b7e693c8c2f"}
  *
  * Go source:
  * func (c *Checker) mergeSymbol(target *ast.Symbol, source *ast.Symbol, unidirectional bool) *ast.Symbol {
@@ -8067,7 +8136,11 @@ export function Checker_mergeSymbolTable(receiver: GoPtr<Checker>, target: Symbo
  * 			// reset flag when merging instantiated module into value module that has only const enums
  * 			target.Flags &^= ast.SymbolFlagsConstEnumOnlyModule
  * 		}
- * 		target.Flags |= source.Flags
+ * 		sourceFlags := source.Flags
+ * 		if target.Flags&ast.SymbolFlagsConstEnumOnlyModule == 0 {
+ * 			sourceFlags &^= ast.SymbolFlagsConstEnumOnlyModule
+ * 		}
+ * 		target.Flags |= sourceFlags
  * 		if source.ValueDeclaration != nil {
  * 			binder.SetValueDeclaration(target, source.ValueDeclaration)
  * 		}
@@ -8114,7 +8187,11 @@ export function Checker_mergeSymbol(receiver: GoPtr<Checker>, target: GoPtr<Symb
     if ((source!.Flags & SymbolFlagsValueModule) !== 0 && (target!.Flags & SymbolFlagsValueModule) !== 0 && (target!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0 && (source!.Flags & SymbolFlagsConstEnumOnlyModule) === 0) {
       target!.Flags = (target!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
     }
-    target!.Flags = (target!.Flags | source!.Flags) as SymbolFlags;
+    let sourceFlags = source!.Flags;
+    if ((target!.Flags & SymbolFlagsConstEnumOnlyModule) === 0) {
+      sourceFlags = (sourceFlags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
+    }
+    target!.Flags = (target!.Flags | sourceFlags) as SymbolFlags;
     if (source!.ValueDeclaration !== undefined) {
       SetValueDeclaration(target, source!.ValueDeclaration);
     }
@@ -8226,28 +8303,18 @@ export function Checker_recordMergedSymbol(receiver: GoPtr<Checker>, target: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSymbolIfSameReference","kind":"method","status":"implemented","sigHash":"cbf895c056870f21f0bbc6c4750a6b0fa3957e19ba763f99a46e5a38464ee5d2","bodyHash":"cff34ec3aeab561c7adbe345604ad8dfeb3daed5b38dbbae38dea94e432cf139"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSymbolIfSameReference","kind":"method","status":"implemented","sigHash":"cbf895c056870f21f0bbc6c4750a6b0fa3957e19ba763f99a46e5a38464ee5d2","bodyHash":"fe1e14955f66eed6e860649a14c80978057e89d6742980baf901a6121f1f8334"}
  *
  * Go source:
  * func (c *Checker) getSymbolIfSameReference(s1 *ast.Symbol, s2 *ast.Symbol) *ast.Symbol {
- * 	// An instantiated symbol (e.g. a parameter of a signature instantiated to substitute `this`)
- * 	// refers to the same declaration as its instantiation target. Whether a given context yields the
- * 	// original symbol or an instantiated copy can depend on incidental checker cache state (see
- * 	// instantiateSymbol, whose reuse shortcut is gated on the type already being resolved), so unwrap
- * 	// instantiations here to keep "same reference" answers deterministic.
- * 	if c.getMergedSymbol(c.resolveSymbol(c.getMergedSymbol(c.getTargetSymbol(s1)))) == c.getMergedSymbol(c.resolveSymbol(c.getMergedSymbol(c.getTargetSymbol(s2)))) {
+ * 	if c.getMergedSymbol(c.resolveSymbol(c.getMergedSymbol(s1))) == c.getMergedSymbol(c.resolveSymbol(c.getMergedSymbol(s2))) {
  * 		return s1
  * 	}
  * 	return nil
  * }
  */
 export function Checker_getSymbolIfSameReference(receiver: GoPtr<Checker>, s1: GoPtr<Symbol>, s2: GoPtr<Symbol>): GoPtr<Symbol> {
-  // An instantiated symbol (e.g. a parameter of a signature instantiated to substitute `this`)
-  // refers to the same declaration as its instantiation target. Whether a given context yields the
-  // original symbol or an instantiated copy can depend on incidental checker cache state (see
-  // instantiateSymbol, whose reuse shortcut is gated on the type already being resolved), so unwrap
-  // instantiations here to keep "same reference" answers deterministic.
-  if (Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, Checker_getMergedSymbol(receiver, Checker_getTargetSymbol(receiver, s1)))) === Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, Checker_getMergedSymbol(receiver, Checker_getTargetSymbol(receiver, s2))))) {
+  if (Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, Checker_getMergedSymbol(receiver, s1))) === Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, Checker_getMergedSymbol(receiver, s2)))) {
     return s1;
   }
   return undefined;
@@ -10336,15 +10403,38 @@ export function Checker_lateBindIndexSignature(receiver: GoPtr<Checker>, _parent
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeclarationToLateBoundSymbol","kind":"method","status":"implemented","sigHash":"5528c302c0620ca9291b1629eb75842f708917acc86e12862902a2f10a922a9a","bodyHash":"2f0093186e97c3ef6995c8135967a957dc865d2c5ba75e314983492891b1755f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNotReplacableByMethod","kind":"func","status":"implemented","sigHash":"3ccf36ab406fb2b9640f0f027746d2d52eec8fa21f9975e0d4eaf8f050ba4f72","bodyHash":"12d0aa89149b1a9d6e869532fcf89f0c10ce4bd5db481ff202d55091ecf0e361"}
+ *
+ * Go source:
+ * func isNotReplacableByMethod(decl *ast.Node) bool {
+ * 	return decl.Symbol().Flags&ast.SymbolFlagsReplaceableByMethod == 0
+ * }
+ */
+export function isNotReplacableByMethod(decl: GoPtr<Node>): bool {
+  return ((Node_Symbol(decl)!.Flags & SymbolFlagsReplaceableByMethod) === 0) as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeclarationToLateBoundSymbol","kind":"method","status":"implemented","sigHash":"5528c302c0620ca9291b1629eb75842f708917acc86e12862902a2f10a922a9a","bodyHash":"84b55aabed88ed673c9062261a40ae24011876c37813b3f44b27e1ea9a72ba54"}
  *
  * Go source:
  * func (c *Checker) addDeclarationToLateBoundSymbol(symbol *ast.Symbol, member *ast.Node, symbolFlags ast.SymbolFlags) {
  * 	debug.Assert(symbol.CheckFlags&ast.CheckFlagsLate != 0, "Expected a late-bound symbol.")
- * 	symbol.Flags |= symbolFlags
  * 	c.lateBoundLinks.Get(member.Symbol()).lateSymbol = symbol
  * 	if len(symbol.Declarations) == 0 || member.Symbol().Flags&ast.SymbolFlagsReplaceableByMethod == 0 {
+ * 		symbol.Flags |= symbolFlags
  * 		symbol.Declarations = append(symbol.Declarations, member)
+ * 	} else if symbol.Flags&ast.SymbolFlagsReplaceableByMethod != 0 && member.Symbol().Flags&ast.SymbolFlagsMethod != 0 {
+ * 		// Remove all replacable-by-method members, along with their flags.
+ * 		symbol.Declarations = append(core.Filter(symbol.Declarations, isNotReplacableByMethod), member)
+ * 		oldFlags := symbol.Flags
+ * 		symbol.Flags = ast.SymbolFlagsNone
+ * 		for _, d := range symbol.Declarations {
+ * 			symbol.Flags |= d.Symbol().Flags
+ * 		}
+ * 		if oldFlags&ast.SymbolFlagsAccessor != 0 {
+ * 			symbol.Flags |= ast.SymbolFlagsAccessor
+ * 		}
  * 	}
  * 	if symbolFlags&ast.SymbolFlagsValue != 0 {
  * 		binder.SetValueDeclaration(symbol, member)
@@ -10352,10 +10442,20 @@ export function Checker_lateBindIndexSignature(receiver: GoPtr<Checker>, _parent
  * }
  */
 export function Checker_addDeclarationToLateBoundSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, member: GoPtr<Node>, symbolFlags: SymbolFlags): void {
-  symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
   (LinkStore_Get(receiver!.lateBoundLinks, Node_Symbol(member)) as GoPtr<LateBoundLinks>)!.lateSymbol = symbol_;
   if ((symbol_!.Declarations ?? []).length === 0 || (Node_Symbol(member)!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
+    symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
     symbol_!.Declarations = [...(symbol_!.Declarations ?? []), member] as GoSlice<GoPtr<Node>>;
+  } else if ((symbol_!.Flags & SymbolFlagsReplaceableByMethod) !== 0 && (Node_Symbol(member)!.Flags & SymbolFlagsMethod) !== 0) {
+    symbol_!.Declarations = [...Filter(symbol_!.Declarations ?? [], isNotReplacableByMethod), member] as GoSlice<GoPtr<Node>>;
+    const oldFlags = symbol_!.Flags;
+    symbol_!.Flags = SymbolFlagsNone;
+    for (const declaration of symbol_!.Declarations) {
+      symbol_!.Flags = (symbol_!.Flags | Node_Symbol(declaration)!.Flags) as SymbolFlags;
+    }
+    if ((oldFlags & SymbolFlagsAccessor) !== 0) {
+      symbol_!.Flags = (symbol_!.Flags | SymbolFlagsAccessor) as SymbolFlags;
+    }
   }
   if ((symbolFlags & SymbolFlagsValue) !== 0) {
     SetValueDeclaration(symbol_, member);
@@ -11599,7 +11699,7 @@ export function Checker_getSyntheticElementAccess(receiver: GoPtr<Checker>, node
       if (lhsExpr !== parentAccess) {
         lhsExpr!.Parent = result;
       }
-      (Node_FlowNodeData(result) as unknown as { FlowNode?: GoPtr<unknown> }).FlowNode = parentFlowNode;
+      Node_FlowNodeData(result)!.FlowNode = parentFlowNode;
       return result;
     }
   }
@@ -12424,7 +12524,7 @@ export function Checker_resolveTypeReferenceMembers(receiver: GoPtr<Checker>, t:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveObjectTypeMembers","kind":"method","status":"implemented","sigHash":"e295384186d7b85ac1b326e2459c86f58c814740c1039d61d603883cce5f62aa","bodyHash":"39e69dc06f5f662afc7b58d6bef95adc28144304768dd09944dba3ce3b201cc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveObjectTypeMembers","kind":"method","status":"implemented","sigHash":"e295384186d7b85ac1b326e2459c86f58c814740c1039d61d603883cce5f62aa","bodyHash":"eeafc315a472f91af7e70c9e182dc3127c2ae27f63bc5d573f35eb63fa11b753"}
  *
  * Go source:
  * func (c *Checker) resolveObjectTypeMembers(t *Type, source *Type, typeParameters []*Type, typeArguments []*Type) {
@@ -12443,7 +12543,7 @@ export function Checker_resolveTypeReferenceMembers(receiver: GoPtr<Checker>, t:
  * 	} else {
  * 		instantiated = true
  * 		mapper = newTypeMapper(typeParameters, typeArguments)
- * 		members = c.instantiateSymbolTable(resolved.declaredMembers, mapper, len(typeParameters) == 1 /*mappingThisOnly* /)
+ * 		members = c.instantiateSymbolTable(resolved.declaredMembers, mapper)
  * 		callSignatures = c.instantiateSignatures(resolved.declaredCallSignatures, mapper)
  * 		constructSignatures = c.instantiateSignatures(resolved.declaredConstructSignatures, mapper)
  * 		indexInfos = c.instantiateIndexInfos(resolved.declaredIndexInfos, mapper)
@@ -12496,7 +12596,7 @@ export function Checker_resolveObjectTypeMembers(receiver: GoPtr<Checker>, t: Go
   } else {
     instantiated = true;
     mapper = newTypeMapper(typeParameters, typeArguments);
-    members = Checker_instantiateSymbolTable(receiver, resolved!.declaredMembers, mapper, typeParameters.length === 1);
+    members = Checker_instantiateSymbolTable(receiver, resolved!.declaredMembers, mapper);
     callSignatures = Checker_instantiateSignatures(receiver, resolved!.declaredCallSignatures ?? [], mapper);
     constructSignatures = Checker_instantiateSignatures(receiver, resolved!.declaredConstructSignatures ?? [], mapper);
     indexInfos = Checker_instantiateIndexInfos(receiver, resolved!.declaredIndexInfos ?? [], mapper);
@@ -13231,45 +13331,37 @@ export function Checker_resolveAnonymousTypeMembers(receiver: GoPtr<Checker>, t:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSymbolTable","kind":"method","status":"implemented","sigHash":"45347b4e074582064485f3615ad1c60f068777de80b5b2990e4a0ba7bd7dffc9","bodyHash":"c3dce63e95bc057491a4a80772517aee51a18fdd5b291e0128b8b1bc94222c46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSymbolTable","kind":"method","status":"implemented","sigHash":"451e3ac4defe07d94f67a6e1a8253e0416d0ed97d6b5983f7ca29fabe79f8bb0","bodyHash":"ad6116604ccb969b30eec205ca45b53225003cd43deaa92715af84ea71e1f81e"}
  *
  * Go source:
- * func (c *Checker) instantiateSymbolTable(symbols ast.SymbolTable, m *TypeMapper, mappingThisOnly bool) ast.SymbolTable {
+ * func (c *Checker) instantiateSymbolTable(symbols ast.SymbolTable, m *TypeMapper) ast.SymbolTable {
  * 	if len(symbols) == 0 {
  * 		return nil
  * 	}
  * 	result := make(ast.SymbolTable, len(symbols))
  * 	for id, symbol := range symbols {
  * 		if c.isNamedMember(symbol, id) {
- * 			if mappingThisOnly && isThisless(symbol) {
- * 				result[id] = symbol
- * 			} else {
- * 				result[id] = c.instantiateSymbol(symbol, m)
- * 			}
+ * 			result[id] = c.instantiateSymbol(symbol, m)
  * 		}
  * 	}
  * 	return result
  * }
  */
-export function Checker_instantiateSymbolTable(receiver: GoPtr<Checker>, symbols: SymbolTable, m: GoPtr<TypeMapper>, mappingThisOnly: bool): SymbolTable {
+export function Checker_instantiateSymbolTable(receiver: GoPtr<Checker>, symbols: SymbolTable, m: GoPtr<TypeMapper>): SymbolTable {
   if (symbols.size === 0) {
     return undefined as unknown as SymbolTable;
   }
   const result: SymbolTable = new globalThis.Map();
   for (const [id, symbol_] of symbols) {
     if (Checker_isNamedMember(receiver, symbol_, id)) {
-      if (mappingThisOnly && isThisless(symbol_)) {
-        result.set(id, symbol_);
-      } else {
-        result.set(id, Checker_instantiateSymbol(receiver, symbol_, m));
-      }
+      result.set(id, Checker_instantiateSymbol(receiver, symbol_, m));
     }
   }
   return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSymbol","kind":"method","status":"implemented","sigHash":"1d1e2e5c09271e693c3e4bb2b86a63c150e473b2655cdb9cdf111b4c5f9fdb65","bodyHash":"bd357dd9569d63a922e22667f9aba2de855eab8e4a548e55148313ff669b23a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.instantiateSymbol","kind":"method","status":"implemented","sigHash":"1d1e2e5c09271e693c3e4bb2b86a63c150e473b2655cdb9cdf111b4c5f9fdb65","bodyHash":"52271bc9383c6d518e4ba984d572edb29fb757ae196897202dd246627979a487"}
  *
  * Go source:
  * func (c *Checker) instantiateSymbol(symbol *ast.Symbol, m *TypeMapper) *ast.Symbol {
@@ -13277,6 +13369,9 @@ export function Checker_instantiateSymbolTable(receiver: GoPtr<Checker>, symbols
  * 		return nil
  * 	}
  * 	links := c.valueSymbolLinks.Get(symbol)
+ * 	if m != nil && m.MapsThisOnly() && isThisless(symbol) {
+ * 		return symbol
+ * 	}
  * 	// If the type of the symbol is already resolved, and if that type could not possibly
  * 	// be affected by instantiation, simply return the symbol itself.
  * 	if links.resolvedType != nil && !c.couldContainTypeVariables(links.resolvedType) {
@@ -13314,6 +13409,9 @@ export function Checker_instantiateSymbol(receiver: GoPtr<Checker>, symbol_: GoP
     return undefined;
   }
   let links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>;
+  if (m !== undefined && TypeMapper_MapsThisOnly(m) && isThisless(symbol_)) {
+    return symbol_;
+  }
   if (links!.resolvedType !== undefined && !receiver!.couldContainTypeVariables(links!.resolvedType)) {
     if ((symbol_!.Flags & SymbolFlagsSetAccessor) === 0) {
       return symbol_;
@@ -16660,7 +16758,6 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getPropertyTypeForIndexType","kind":"method","status":"implemented","sigHash":"b165e26df1bd4167798c456fec8881582ad4a6c35f9d23dd470b4c9da80f6f58","bodyHash":"78ac5563270df952a0013017c2c289f27c217028281aef86cf17062c9ee47126"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for element access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
  *
  * Go source:
  * func (c *Checker) getPropertyTypeForIndexType(originalObjectType *Type, objectType *Type, indexType *Type, fullIndexType *Type, accessNode *ast.Node, accessFlags AccessFlags) *Type {
@@ -16988,9 +17085,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
         return indexInfo!.valueType;
       }
       Checker_errorIfWritingToReadonlyIndex(receiver, indexInfo, objectType, accessExpression);
-      if ((accessFlags & AccessFlagsCacheSymbol) !== 0 && accessExpression !== undefined) {
-        cacheIndexSignatureResolvedSymbol(receiver, accessExpression, objectType, indexInfo);
-      }
       if (
         (accessFlags & AccessFlagsIncludeUndefined) !== 0 &&
         !(
@@ -17085,14 +17179,6 @@ export function Checker_getPropertyTypeForIndexType(receiver: GoPtr<Checker>, or
     return indexType;
   }
   return undefined;
-}
-
-function cacheIndexSignatureResolvedSymbol(receiver: GoPtr<Checker>, accessNode: GoPtr<Node>, objectType: GoPtr<Type>, indexInfo: GoPtr<IndexInfo>): void {
-  const indexSymbol = Checker_getApplicableIndexSymbol(receiver, objectType, indexInfo!.keyType);
-  if (indexSymbol === undefined) {
-    return;
-  }
-  LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as GoPtr<LinkStore<Node, SymbolNodeLinks>>, accessNode!)!.resolvedSymbol = indexSymbol;
 }
 
 /**
@@ -18294,7 +18380,8 @@ export function Checker_getContextualImportAttributeType(receiver: GoPtr<Checker
  *
  * Go source:
  * func (c *Checker) getClassMemberDecoratorContextOverrideType(nameType *Type, isPrivate bool, isStatic bool) *Type {
- * 	kind := core.IfElse(isPrivate,
+ * 	kind := core.IfElse(
+ * 		isPrivate,
  * 		core.IfElse(isStatic, CachedTypeKindDecoratorContextPrivateStatic, CachedTypeKindDecoratorContextPrivate),
  * 		core.IfElse(isStatic, CachedTypeKindDecoratorContextStatic, CachedTypeKindDecoratorContext),
  * 	)
@@ -19414,7 +19501,8 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 		success := c.resolveEntityName(
  * 			name,
  * 			/*all meanings* / ast.SymbolFlagsValue|ast.SymbolFlagsType|ast.SymbolFlagsNamespace|ast.SymbolFlagsAlias,
- * 			true /*ignoreErrors* /, false /*dontResolveAlias* /, nil /*location* /)
+ * 			true /*ignoreErrors* /, false /*dontResolveAlias* /, nil, /*location* /
+ * 		)
  * 		if success != nil && success != c.unknownSymbol {
  * 			return success
  * 		}
@@ -19426,7 +19514,7 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 		}
  * 		return c.getSymbolOfPartOfRightHandSideOfImportEquals(name)
  * 	}
- * 
+ *
  * 	if ast.IsEntityName(name) {
  * 		possibleImportNode := isImportTypeQualifierPart(name)
  * 		if possibleImportNode != nil {
@@ -19435,18 +19523,18 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 			return core.IfElse(sym == c.unknownSymbol, nil, sym)
  * 		}
  * 	}
- * 
+ *
  * 	for ast.IsRightSideOfQualifiedNameOrPropertyAccess(name) {
  * 		name = name.Parent
  * 	}
- * 
+ *
  * 	if isInNameOfExpressionWithTypeArguments(name) {
  * 		var meaning ast.SymbolFlags
  * 		if name.Parent.Kind == ast.KindExpressionWithTypeArguments {
  * 			// An 'ExpressionWithTypeArguments' may appear in type space (interface Foo extends Bar<T>),
  * 			// value space (return foo<T>), or both(class Foo extends Bar<T>); ensure the meaning matches.
  * 			meaning = core.IfElse(ast.IsPartOfTypeNode(name), ast.SymbolFlagsType, ast.SymbolFlagsValue)
- * 
+ *
  * 			// In a class 'extends' clause we are also looking for a value.
  * 			if ast.IsExpressionWithTypeArgumentsInClassExtendsClause(name.Parent) {
  * 				meaning = meaning | ast.SymbolFlagsValue
@@ -19454,7 +19542,7 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 		} else {
  * 			meaning = ast.SymbolFlagsNamespace
  * 		}
- * 
+ *
  * 		meaning = meaning | ast.SymbolFlagsAlias
  * 		var entityNameSymbol *ast.Symbol
  * 		if ast.IsEntityNameExpression(name) {
@@ -19464,7 +19552,7 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 			return entityNameSymbol
  * 		}
  * 	}
- * 
+ *
  * 	if ast.IsExpressionNode(name) {
  * 		if ast.NodeIsMissing(name) {
  * 			// Missing entity name.
@@ -19523,7 +19611,7 @@ export function Checker_getSymbolAtLocation(receiver: GoPtr<Checker>, node: GoPt
  * 		}
  * 		return c.getUnresolvedSymbolForEntityName(name)
  * 	}
- * 
+ *
  * 	if name.Parent.Kind == ast.KindTypePredicate {
  * 		return c.resolveEntityName(
  * 			name,

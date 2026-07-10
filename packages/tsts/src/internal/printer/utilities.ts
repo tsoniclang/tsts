@@ -236,7 +236,7 @@ export const escapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune,
  * }
  */
 export function encodeJsxCharacterEntity(b: GoPtr<Builder>, charCode: GoRune): void {
-  const hexCharCode = ToUpper(FormatUint(charCode, 16));
+  const hexCharCode = ToUpper(FormatUint(globalThis.BigInt(charCode), 16));
   b!.WriteString("&#x");
   b!.WriteString(hexCharCode);
   b!.WriteByte(0x3b /* ';' */);
@@ -256,7 +256,7 @@ export function encodeJsxCharacterEntity(b: GoPtr<Builder>, charCode: GoRune): v
  * }
  */
 export function encodeUtf16EscapeSequence(b: GoPtr<Builder>, charCode: GoRune): void {
-  const hexCharCode = ToUpper(FormatUint(charCode, 16));
+  const hexCharCode = ToUpper(FormatUint(globalThis.BigInt(charCode), 16));
   b!.WriteString("\\u");
   for (let i = byteLen(hexCharCode); i < 4; i++) {
     b!.WriteByte(0x30 /* '0' */);

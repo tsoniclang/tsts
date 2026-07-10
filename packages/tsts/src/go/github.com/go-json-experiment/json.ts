@@ -16,6 +16,8 @@ export const JsonFieldNames: unique symbol = Symbol("tsts.jsonFieldNames");
 export interface JsonFieldSpec {
   readonly name: string;
   readonly omitZero?: bool;
+  readonly marshal?: (value: unknown) => unknown;
+  readonly unmarshal?: (value: unknown) => unknown;
 }
 
 export type JsonFieldName = string | JsonFieldSpec;
@@ -105,16 +107,19 @@ const normalizeForJson = (value: unknown): unknown => {
   const fieldNames = getJsonFieldNames(value);
   if (fieldNames !== undefined) {
     const normalized: Record<string, unknown> = {};
-    for (const [key, current] of Object.entries(value as Record<string, unknown>)) {
+    const fields = value as Record<string, unknown>;
+    for (const [key, field] of Object.entries(fieldNames)) {
+      const current = fields[key];
       if (typeof current === "function") {
         continue;
       }
-      const field = fieldNames[key];
-      const name = typeof field === "string" ? field : field?.name ?? key;
+      const name = typeof field === "string" ? field : field.name;
       if (typeof field === "object" && field.omitZero === true && isZeroJsonValue(current)) {
         continue;
       }
-      normalized[name] = current;
+      normalized[name] = typeof field === "object" && field.marshal !== undefined
+        ? field.marshal(current)
+        : current;
     }
     return normalized;
   }
@@ -145,7 +150,14 @@ const decodeFieldNames = (out: object, value: Record<string, unknown>): Record<s
   }
   const decoded: Record<string, unknown> = {};
   for (const [key, current] of Object.entries(value)) {
-    decoded[reverse.get(key) ?? key] = current;
+    const decodedKey = reverse.get(key);
+    if (decodedKey === undefined) {
+      continue;
+    }
+    const field = fieldNames[decodedKey];
+    decoded[decodedKey] = typeof field === "object" && field.unmarshal !== undefined
+      ? field.unmarshal(current)
+      : current;
   }
   return decoded;
 }
@@ -158,7 +170,7 @@ const getJsonFieldNames = (value: unknown): JsonFieldNameMap | undefined => {
 }
 
 const isZeroJsonValue = (value: unknown): bool => {
-  return value === undefined || value === null || value === false || value === 0 || value === "" || (Array.isArray(value) && value.length === 0);
+  return value === undefined || value === null || value === false || value === 0 || value === "";
 }
 
 const isMarshalerTo = (value: unknown): value is MarshalerTo => {

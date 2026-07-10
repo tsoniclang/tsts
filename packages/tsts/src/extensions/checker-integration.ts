@@ -3,13 +3,14 @@ import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Expression, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
+import { CheckFlagsIndexSymbol } from "../internal/ast/checkflags.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
 import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
-import type { Signature, Type } from "../internal/checker/types.js";
+import type { IndexInfo, Signature, Type } from "../internal/checker/types.js";
 import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
@@ -78,7 +79,13 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
   recordExtensionCallArgumentConversions(extensionHost, callExpression, { ...result.value, selectedSignature }, arguments_);
 }
 
-export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Checker>, propertyAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
+export function recordExtensionCheckedPropertyAccessMapping(
+  checker: GoPtr<Checker>,
+  propertyAccessExpression: GoPtr<Node>,
+  resolvedSelectedSymbol?: GoPtr<Symbol>,
+  sourceResultType?: GoPtr<Type>,
+  sourceSelectedIndexInfo?: () => GoPtr<IndexInfo>,
+): void {
   if (checker === undefined || propertyAccessExpression === undefined) {
     return;
   }
@@ -93,8 +100,10 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   if (receiver === undefined || propertyName === "") {
     return;
   }
-  const sourceSelectedSymbol = selectedSourceSymbol(checker, resolvedSelectedSymbol ?? Node_Symbol(Node_Name(propertyAccessExpression)));
-  const sourceSelectedDeclaration = primarySymbolDeclaration(sourceSelectedSymbol);
+  const sourceSelectedSymbol = selectedAccessSourceSymbol(checker, resolvedSelectedSymbol ?? Node_Symbol(Node_Name(propertyAccessExpression)));
+  const sourceSelectedDeclaration = sourceSelectedSymbol === undefined
+    ? sourceSelectedIndexInfo?.()?.declaration
+    : primarySymbolDeclaration(sourceSelectedSymbol);
 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapCheckedPropertyAccess,
@@ -131,7 +140,13 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
+export function recordExtensionCheckedElementAccessMapping(
+  checker: GoPtr<Checker>,
+  elementAccessExpression: GoPtr<Node>,
+  resolvedSelectedSymbol?: GoPtr<Symbol>,
+  sourceResultType?: GoPtr<Type>,
+  sourceSelectedIndexInfo?: () => GoPtr<IndexInfo>,
+): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
@@ -146,8 +161,10 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
   if (receiver === undefined || argument === undefined) {
     return;
   }
-  const sourceSelectedSymbol = selectedSourceSymbol(checker, resolvedSelectedSymbol ?? Node_Symbol(elementAccessExpression));
-  const sourceSelectedDeclaration = primarySymbolDeclaration(sourceSelectedSymbol);
+  const sourceSelectedSymbol = selectedAccessSourceSymbol(checker, resolvedSelectedSymbol ?? Node_Symbol(elementAccessExpression));
+  const sourceSelectedDeclaration = sourceSelectedSymbol === undefined
+    ? sourceSelectedIndexInfo?.()?.declaration
+    : primarySymbolDeclaration(sourceSelectedSymbol);
 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapCheckedElementAccess,
@@ -594,6 +611,11 @@ function definedFactSubjects<T extends object>(subjects: readonly (T | undefined
 
 function selectedSourceSymbol(checker: GoPtr<Checker>, symbol: GoPtr<Symbol>): GoPtr<Symbol> {
   return symbol === undefined || symbol === checker?.unknownSymbol ? undefined : symbol;
+}
+
+function selectedAccessSourceSymbol(checker: GoPtr<Checker>, symbol: GoPtr<Symbol>): GoPtr<Symbol> {
+  const selected = selectedSourceSymbol(checker, symbol);
+  return selected !== undefined && (selected.CheckFlags & CheckFlagsIndexSymbol) === 0 ? selected : undefined;
 }
 
 function primarySymbolDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {

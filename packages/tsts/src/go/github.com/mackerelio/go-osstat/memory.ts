@@ -13,9 +13,9 @@ export function Get(): [Stats, GoError] {
   const total = nodeOs.totalmem();
   const free = nodeOs.freemem();
   return [{
-    Total: total as ulong,
-    Used: (total - free) as ulong,
-    Cached: 0 as ulong,
-    Free: free as ulong,
+    Total: globalThis.BigInt(total) as ulong,
+    Used: globalThis.BigInt(total - free) as ulong,
+    Cached: 0n as ulong,
+    Free: globalThis.BigInt(free) as ulong,
   }, undefined];
 }

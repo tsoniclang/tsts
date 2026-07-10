@@ -1,9 +1,9 @@
-import type { bool, byte, int } from "../../go/scalars.js";
+import type { bool, byte, int, ulong } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
-import { Bool, Uint32 } from "../../go/sync/atomic.js";
+import { Bool, Uint32, Uint64 } from "../../go/sync/atomic.js";
 import type { Set } from "../collections/set.js";
 import { ModuleKindCommonJS, ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
@@ -18,6 +18,7 @@ import * as strings from "../../go/strings.js";
 import { StringByteSlice } from "../../go/unicode/utf8.js";
 import type { Path as Path_79c49227 } from "../tspath/path.js";
 import { GetEncodedRootLength, NormalizePath } from "../tspath/path.js";
+import { ContainsNonASCII } from "../stringutil/util.js";
 import type { AccessorDeclarationBase, ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingElement, BindingPattern, Block, CallExpression, CaseOrDefaultClause, CatchClause, ClassDeclaration, ClassExpression, ClassStaticBlockDeclaration, CompositeBase, ConditionalExpression, ComputedPropertyName, ConstructorDeclaration, ConstructorTypeNode, Declaration, DeclarationBase, Decorator, DoStatement, ElementAccessExpression, EnumDeclaration, EnumMember, ExportAssignment, ExportDeclaration, ExportSpecifier, Expression as Expression_9ab73856, ExpressionStatement, ExpressionWithTypeArguments, ForInOrOfStatement, ForStatement, FunctionDeclaration, FunctionExpression, FunctionOrConstructorTypeNodeBase, GetAccessorDeclaration, HeritageClause, IfStatement, Identifier, ImportAttributesNode, ImportClause as ImportClause_58d51725, ImportDeclaration, ImportEqualsDeclaration, ImportSpecifier, IndexSignatureDeclaration, InterfaceDeclaration, JSDocParameterOrPropertyTag, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxExpression, JsxFragment, JsxNamespacedName, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, KeywordExpression, LabeledStatement, LiteralLikeNode, LocalsContainerBase, MetaProperty, MethodDeclaration, MethodSignatureDeclaration, ModuleDeclaration, ModuleName, NamedExports, NamedImports, NewExpression, NodeFactory, NonNullExpression, NoSubstitutionTemplateLiteral, ObjectLiteralExpression, ParameterDeclaration, ParameterDeclarationNode, ParameterList as ParameterList_5701af3c, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PrivateIdentifier, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, PropertySignatureDeclaration, ReturnStatement, SatisfiesExpression, SetAccessorDeclaration, ShorthandPropertyAssignment, SpreadAssignment, SpreadElement, Statement as Statement_98c7cd47, StatementList as StatementList_3cde134f, SwitchStatement, TaggedTemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, Token, TokenNode, TryStatement, TypeAliasDeclaration, TypeAssertion, TypeParameterDeclaration, TypeSyntaxBase, VariableDeclaration, VariableDeclarationList, VariableStatement, WhileStatement, WithStatement, YieldExpression } from "./generated/index.js";
 import * as casts from "./generated/casts.js";
 import * as predicates from "./generated/predicates.js";
@@ -225,8 +226,8 @@ import {
 } from "./generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsUsing, NodeFlagsHasJSDoc, NodeFlagsReparsed } from "./generated/flags.js";
 import type { NodeFlags } from "./generated/flags.js";
-import { goReceiverKey, NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
-import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
+import { goReceiverKey, NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
+import type { Node, NodeBase, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
 import { ModifierFlagsParameterPropertyModifier } from "./modifierflags.js";
 import type { ModifierFlags as ModifierFlags_d6bd8366 } from "./modifierflags.js";
@@ -398,7 +399,7 @@ export function MutableNode_SetModifiers(receiver: GoPtr<MutableNode>, modifiers
 export function Node_Symbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> {
   const data = Node_DeclarationData(receiver);
   if (data !== undefined) {
-    return (data as unknown as { Symbol?: GoPtr<Symbol_4919c5f0> }).Symbol;
+    return data.Symbol;
   }
   return undefined;
 }
@@ -418,7 +419,7 @@ export function Node_Symbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> {
 export function Node_LocalSymbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> {
   const data = Node_ExportableData(receiver);
   if (data !== undefined) {
-    return (data as unknown as { LocalSymbol?: GoPtr<Symbol_4919c5f0> }).LocalSymbol;
+    return data.LocalSymbol;
   }
   return undefined;
 }
@@ -438,7 +439,7 @@ export function Node_LocalSymbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> 
 export function Node_Locals(receiver: GoPtr<Node>): SymbolTable {
   const data = Node_LocalsContainerData(receiver);
   if (data !== undefined) {
-    return (data as unknown as { Locals?: SymbolTable }).Locals!;
+    return data.Locals;
   }
   return undefined!;
 }
@@ -2749,7 +2750,7 @@ export function GetDeclarationFromName(name: GoPtr<Node>): GoPtr<Declaration> {
  * 	if decl.Flags&NodeFlagsAmbient != 0 {
  * 		return true
  * 	}
- * 
+ *
  * 	switch decl.Kind {
  * 	case KindBinaryExpression,
  * 		KindBindingElement,
@@ -2776,11 +2777,11 @@ export function GetDeclarationFromName(name: GoPtr<Node>): GoPtr<Declaration> {
  * 		KindJSTypeAliasDeclaration,
  * 		KindTypeParameter:
  * 		return true
- * 
+ *
  * 	case KindPropertyAssignment:
  * 		// In `({ x: y } = 0);`, `x` is not a write access.
  * 		return !IsArrayLiteralOrObjectLiteralDestructuringPattern(decl.Parent)
- * 
+ *
  * 	case KindFunctionDeclaration, KindFunctionExpression, KindConstructor, KindMethodDeclaration, KindGetAccessor, KindSetAccessor:
  * 		// functions considered write if they provide a value (have a body)
  * 		switch decl.Kind {
@@ -2799,7 +2800,7 @@ export function GetDeclarationFromName(name: GoPtr<Node>): GoPtr<Declaration> {
  * 			return decl.AsSetAccessorDeclaration().Body != nil
  * 		}
  * 		return false
- * 
+ *
  * 	case KindVariableDeclaration, KindPropertyDeclaration:
  * 		// variable/property write if initializer present or is in catch clause
  * 		var hasInit bool
@@ -2810,10 +2811,10 @@ export function GetDeclarationFromName(name: GoPtr<Node>): GoPtr<Declaration> {
  * 			hasInit = decl.AsPropertyDeclaration().Initializer != nil
  * 		}
  * 		return hasInit || IsCatchClause(decl.Parent)
- * 
+ *
  * 	case KindMethodSignature, KindPropertySignature, KindJSDocPropertyTag, KindJSDocParameterTag:
  * 		return false
- * 
+ *
  * 	default:
  * 		// preserve TS behavior: crash on unexpected kinds
  * 		panic("Unhandled case in declarationIsWriteAccess")
@@ -3251,7 +3252,7 @@ export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>):
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeSyntaxBase.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0a155b6c10c56850bc5c9dee88d60443a23e5bf307e4667470f6ea4dbe8c0623","bodyHash":"c5e668160e6fab60d4ee6aeb7e89f0b677862802fc38edf3fb94209dd89124c8"}
  *
  * Go source:
- * func (node *TypeSyntaxBase) computeSubtreeFacts() SubtreeFacts   { return SubtreeContainsTypeScript }
+ * func (node *TypeSyntaxBase) computeSubtreeFacts() SubtreeFacts { return SubtreeContainsTypeScript }
  */
 export function TypeSyntaxBase_computeSubtreeFacts(receiver: GoPtr<TypeSyntaxBase>): SubtreeFacts {
   return SubtreeContainsTypeScript;
@@ -4741,9 +4742,9 @@ export function ExpressionWithTypeArguments_computeSubtreeFacts(receiver: GoPtr<
  * 	if node == nil {
  * 		return core.ResolutionModeNone, false
  * 	}
- * 
+ *
  * 	attributes := node.AsImportAttributes().Attributes
- * 
+ *
  * 	if len(attributes.Nodes) != 1 {
  * 		// !!!
  * 		// grammarErrorOnNode?.(
@@ -4754,7 +4755,7 @@ export function ExpressionWithTypeArguments_computeSubtreeFacts(receiver: GoPtr<
  * 		// );
  * 		return core.ResolutionModeNone, false
  * 	}
- * 
+ *
  * 	elem := attributes.Nodes[0].AsImportAttribute()
  * 	if !IsStringLiteralLike(elem.Name()) {
  * 		return core.ResolutionModeNone, false
@@ -5147,6 +5148,126 @@ export interface SourceFileMetaData {
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFileDataKey","kind":"type","status":"implemented","sigHash":"ee3df7f8eb47eacdbb1deb0f2c0c6f9edd246a29c916d9532343d6e8efe63473","bodyHash":"d2615b4ee0d47c45c9f5104ab096a522daf79c6d0ebcc064c95333256e7fd35f"}
+ *
+ * Go source:
+ * SourceFileDataKey[T any] struct {
+ * 	key sourceFileDataKey
+ * 	_   [0]T
+ * }
+ */
+export interface SourceFileDataKey<T> {
+  key: sourceFileDataKey;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::sourceFileDataKey","kind":"type","status":"implemented","sigHash":"7ea644e1e95a8f87631d890806e5564c3cb8fdfb99c0ac806403f88825e04283","bodyHash":"6f4e627d5f1923a041906bf4ac993b95cb6cfd1f7fe537efad31fd35fb7e416c"}
+ *
+ * Go source:
+ * sourceFileDataKey uint64
+ */
+export type sourceFileDataKey = ulong;
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::varGroup::sourceFileDataKeyCounter","kind":"varGroup","status":"implemented","sigHash":"9e4c096dee53492124e3635797debf9d5ccb1b5479c5681561e6bb8374972eb4","bodyHash":"093863c85a33ccbdea73c5905c2d6666bb0e0664dbedb7f97292042e2d6ddfb1"}
+ *
+ * Go source:
+ * var sourceFileDataKeyCounter atomic.Uint64
+ */
+export let sourceFileDataKeyCounter: Uint64 = new Uint64();
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::sourceFileDataCell","kind":"type","status":"implemented","sigHash":"a714b6f3fd27705e468ba47ceb1d6f2e551e3943b35c7490818c096fb2f3d8fe","bodyHash":"24302cbe93fdaa84cd027a055c0bb2dba34c4daa4ad89cf0b4bf054733175650"}
+ *
+ * Go source:
+ * sourceFileDataCell[T any] struct {
+ * 	once  sync.Once
+ * 	value T
+ * }
+ */
+export interface sourceFileDataCell<T> {
+  once: Once;
+  value: T;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::NewSourceFileDataKey","kind":"func","status":"implemented","sigHash":"f6135a9ddabf2aac1dcfa4b05f98bfd235ae0bb7a12c5d8d234cef1ef9b9b966","bodyHash":"1ed5ee7b65f4918695fdd30819331343c0152b9f2b8eb33ab8a7a3bbcde22fb2"}
+ *
+ * Go source:
+ * func NewSourceFileDataKey[T any]() *SourceFileDataKey[T] {
+ * 	return &SourceFileDataKey[T]{key: sourceFileDataKey(sourceFileDataKeyCounter.Add(1))}
+ * }
+ */
+export function NewSourceFileDataKey<T>(): GoPtr<SourceFileDataKey<T>> {
+  return { key: sourceFileDataKeyCounter.Add(1n as ulong) as sourceFileDataKey };
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetOrComputeSourceFileData","kind":"func","status":"implemented","sigHash":"35a24d75f38dcbb3d8a77a3240b0241453b1270018646461c2fffadee59c5c8f","bodyHash":"a70b32dc3f310891bc684a5cc6ee578156338c62ef1da02cec45cb461642d993"}
+ *
+ * Go source:
+ * func GetOrComputeSourceFileData[T any](file *SourceFile, key *SourceFileDataKey[T], compute func(*SourceFile) T) T {
+ * 	cell := getSourceFileDataCell(file, key)
+ * 	cell.once.Do(func() {
+ * 		cell.value = compute(file)
+ * 	})
+ * 	return cell.value
+ * }
+ */
+export function GetOrComputeSourceFileData<T>(file: GoPtr<SourceFile>, key: GoPtr<SourceFileDataKey<T>>, compute: (file: GoPtr<SourceFile>) => T): T {
+  const cell = getSourceFileDataCell(file, key);
+  cell!.once.Do(() => {
+    cell!.value = compute(file);
+  });
+  return cell!.value;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::getSourceFileDataCell","kind":"func","status":"implemented","sigHash":"a0d1937e58b7f9d44bcd7e23c3945b33440ff4e2d8704eb6bddd0f7c84e41247","bodyHash":"c7081a352a10ad12d67f62fee698123faf185585eb832a5ec43f73d355898ceb"}
+ *
+ * Go source:
+ * func getSourceFileDataCell[T any](file *SourceFile, key *SourceFileDataKey[T]) *sourceFileDataCell[T] {
+ * 	if key == nil || key.key == 0 {
+ * 		panic("invalid SourceFileDataKey; use NewSourceFileDataKey")
+ * 	}
+ *
+ * 	file.dataMu.Lock()
+ * 	defer file.dataMu.Unlock()
+ *
+ * 	if file.data == nil {
+ * 		file.data = make(map[sourceFileDataKey]any)
+ * 	}
+ * 	if cell, ok := file.data[key.key]; ok {
+ * 		return cell.(*sourceFileDataCell[T])
+ * 	}
+ * 	cell := &sourceFileDataCell[T]{}
+ * 	file.data[key.key] = cell
+ * 	return cell
+ * }
+ */
+export function getSourceFileDataCell<T>(file: GoPtr<SourceFile>, key: GoPtr<SourceFileDataKey<T>>): GoPtr<sourceFileDataCell<T>> {
+  if (key === undefined || key.key === 0n) {
+    throw new globalThis.Error("invalid SourceFileDataKey; use NewSourceFileDataKey");
+  }
+
+  file!.dataMu.Lock();
+  try {
+    if (file!.sourceFileData === undefined) {
+      file!.sourceFileData = new globalThis.Map<sourceFileDataKey, unknown>();
+    }
+    const existing = file!.sourceFileData.get(key.key);
+    if (existing !== undefined) {
+      return existing as sourceFileDataCell<T>;
+    }
+    const cell: sourceFileDataCell<T> = { once: new Once(), value: undefined as T };
+    file!.sourceFileData.set(key.key, cell);
+    return cell;
+  } finally {
+    file!.dataMu.Unlock();
+  }
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CheckJsDirective","kind":"type","status":"implemented","sigHash":"1c0eacfc1e2dedb6f4d82f90d85d0cb6dbb0fc92f34312d8a1d5da547f475dd7","bodyHash":"f0a89880a168deda4cfae67bf54f953c68bf4599463f15640e2b162849e2c078"}
  *
  * Go source:
@@ -5193,22 +5314,27 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9","bodyHash":"1544dafdd77c4d0f387a639475526fd1733904026a2433ebb63bc31804f02f87"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9","bodyHash":"06e136226e880bd03a63dd26c084903969342e5dd7501748424382a75106c3e4"}
  *
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Rename TS-Go SourceFile.data to sourceFileData because the TypeScript runtime object is also the Node envelope and Node.data already carries the nodeData adapter; the SourceFile data map semantics stay TS-Go exact.","goSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindDiagnostics?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;BindOnce?:(()=>void)=>void;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;Clone?:(packages/tsts/src/internal/ast/spine.ts::NodeFactoryCoercible)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;DeclarationData?:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/node.ts::DeclarationBase>;Diagnostics?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ECMALineMap?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;FileName?:()=>string;ForEachChild?:(packages/tsts/src/internal/ast/spine.ts::Visitor)=>packages/tsts/src/go/scalars.ts::bool;GetDeclarationMap?:()=>packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;GetNameTable?:()=>packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;GetOrCreateToken?:(packages/tsts/src/internal/ast/generated/kinds.ts::Kind,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/internal/ast/tokenflags.ts::TokenFlags)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;GetPositionMap?:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoMap<string,string>;Imports?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;IsBound?:()=>packages/tsts/src/go/scalars.ts::bool;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;IsJS?:()=>packages/tsts/src/go/scalars.ts::bool;JSDiagnostics?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;JSDocDiagnostics?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;LocalsContainerData?:()=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/node.ts::LocalsContainerBase>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;ParseOptions?:()=>packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;Path?:()=>packages/tsts/src/internal/tspath/path.ts::Path;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;SetBindDiagnostics?:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void;SetDiagnostics?:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void;SetHasLazyJSDoc?:(packages/tsts/src/go/scalars.ts::bool)=>void;SetJSDiagnostics?:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void;SetJSDocCache?:(packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>void;SetJSDocDiagnostics?:(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>)=>void;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;Text?:()=>string;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;VisitEachChild?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeVisitor>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;__tsgoEmbedded0?:packages/tsts/src/internal/ast/spine.ts::NodeBase;__tsgoEmbedded1?:packages/tsts/src/internal/ast/generated/node.ts::DeclarationBase;__tsgoEmbedded2?:packages/tsts/src/internal/ast/generated/node.ts::LocalsContainerBase;__tsgoEmbedded3?:packages/tsts/src/internal/ast/generated/node.ts::CompositeBase;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;computeDeclarationMap?:()=>packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;computeSubtreeFacts?:()=>packages/tsts/src/internal/ast/subtreefacts.ts::SubtreeFacts;computeSubtreeFacts?:()=>packages/tsts/src/internal/ast/subtreefacts.ts::SubtreeFacts;copyFrom?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::SourceFileNode>)=>void;data:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;resolveJSDoc?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;subtreeFactsWorker?:(packages/tsts/src/internal/ast/spine.ts::nodeData)=>packages/tsts/src/internal/ast/subtreefacts.ts::SubtreeFacts;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}","tsSignature":"interface{AmbientModuleNames:packages/tsts/src/go/compat.ts::GoSlice<string>;BindSuggestionDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;CheckJsDirective:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::CheckJsDirective>;ClassifiableNames:packages/tsts/src/internal/collections/set.ts::Set<string>;CommentDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;CommonJSModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;ContainsNonASCII:packages/tsts/src/go/scalars.ts::bool;ECMALineMap:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;EndFlowNode:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/flow.ts::FlowNode>;EndOfFileToken:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::TokenNode>;ExternalModuleIndicator:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>;FileName:()=>string;GlobalExports:packages/tsts/src/internal/ast/symbol.ts::SymbolTable;Hash:packages/tsts/src/go/github.com/zeebo/xxh3.ts::Uint128;IdentifierCount:packages/tsts/src/go/scalars.ts::int;Identifiers:packages/tsts/src/go/compat.ts::GoMap<string,string>;Imports:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;IsDeclarationFile:packages/tsts/src/go/scalars.ts::bool;IsJS:()=>packages/tsts/src/go/scalars.ts::bool;LanguageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;LibReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ModuleAugmentations:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleName>>;NodeCount:packages/tsts/src/go/scalars.ts::int;Path:()=>packages/tsts/src/internal/tspath/path.ts::Path;PatternAmbientModules:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::PatternAmbientModule>>;Pragmas:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::Pragma>;ReferencedFiles:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;ReparsedClones:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;ScriptKind:packages/tsts/src/internal/core/scriptkind.ts::ScriptKind;Statements:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>;SymbolCount:packages/tsts/src/go/scalars.ts::int;Text:()=>string;TextCount:packages/tsts/src/go/scalars.ts::int;TypeReferenceDirectives:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/ast.ts::FileReference>>;UsesUriStyleNodeCoreModules:packages/tsts/src/internal/core/tristate.ts::Tristate;bindDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;bindOnce:packages/tsts/src/go/sync.ts::Once;dataMu:packages/tsts/src/go/sync.ts::Mutex;declarationMap:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;declarationMapMu:packages/tsts/src/go/sync.ts::Mutex;diagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;ecmaLineMap:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/core/text.ts::TextPos>;ecmaLineMapMu:packages/tsts/src/go/sync.ts::RWMutex;fileName:string;hasLazyJSDoc:packages/tsts/src/go/scalars.ts::bool;imports:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::LiteralLikeNode>>;isBound:packages/tsts/src/go/sync/atomic.ts::Bool;jsDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;jsdocDiagnostics:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/diagnostic.ts::Diagnostic>>;jsdocMu:packages/tsts/src/go/sync.ts::RWMutex;nameTable:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/scalars.ts::int>;nameTableOnce:packages/tsts/src/go/sync.ts::Once;parseOptions:packages/tsts/src/internal/ast/parseoptions.ts::SourceFileParseOptions;positionMap:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/positionmap.ts::PositionMap>;positionMapOnce:packages/tsts/src/go/sync.ts::Once;sourceFileData:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::sourceFileDataKey,unknown>;text:string;tokenCache:packages/tsts/src/go/compat.ts::GoMap<packages/tsts/src/internal/ast/ast.ts::TokenCacheKey,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;tokenCacheMu:packages/tsts/src/go/sync.ts::Mutex;tokenFactory:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>}"}
  * Go source:
  * SourceFile struct {
  * 	NodeBase
  * 	DeclarationBase
  * 	LocalsContainerBase
  * 	CompositeBase
- * 
+ *
  * 	// Fields set by NewSourceFile
  * 	fileName       string // For debugging convenience
  * 	parseOptions   SourceFileParseOptions
  * 	text           string
  * 	Statements     *NodeList  // NodeList[*Statement]
  * 	EndOfFileToken *TokenNode // TokenNode[*EndOfFileToken]
- * 
+ *
+ * 	// Fields for lazily-computed data owned by packages outside ast.
+ * 	dataMu sync.Mutex
+ * 	data   map[sourceFileDataKey]any
+ *
  * 	// Fields set by parser
  * 	diagnostics                 []*Diagnostic
  * 	jsDiagnostics               []*Diagnostic
@@ -5239,9 +5365,9 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
  * 	// If this is the SourceFile itself, then this module was "forced"
  * 	// to be an external module (previously "true").
  * 	ExternalModuleIndicator *Node
- * 
+ *
  * 	// Fields set by binder
- * 
+ *
  * 	isBound                   atomic.Bool
  * 	bindOnce                  sync.Once
  * 	bindDiagnostics           []*Diagnostic
@@ -5250,16 +5376,15 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
  * 	SymbolCount               int
  * 	ClassifiableNames         collections.Set[string]
  * 	PatternAmbientModules     []*PatternAmbientModule
- * 	NestedCJSExports          []*Node
  * 	GlobalExports             SymbolTable
- * 
+ *
  * 	// Fields set by ECMALineMap
- * 
+ *
  * 	ecmaLineMapMu sync.RWMutex
  * 	ecmaLineMap   []core.TextPos
- * 
+ *
  * 	// Fields set by language service
- * 
+ *
  * 	Hash             xxh3.Uint128
  * 	tokenCacheMu     sync.Mutex
  * 	tokenCache       map[TokenCacheKey]*Node
@@ -5268,9 +5393,9 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
  * 	declarationMap   map[string][]*Node
  * 	nameTableOnce    sync.Once
  * 	nameTable        map[string]int
- * 
+ *
  * 	// Fields for UTF-8 to UTF-16 position mapping
- * 
+ *
  * 	positionMapOnce sync.Once
  * 	positionMap     *PositionMap
  * }
@@ -5287,6 +5412,8 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   text: string;
   Statements: GoPtr<NodeList>;
   EndOfFileToken: GoPtr<TokenNode>;
+  dataMu: Mutex;
+  sourceFileData: GoMap<sourceFileDataKey, unknown>;
   diagnostics: GoSlice<GoPtr<Diagnostic>>;
   jsDiagnostics: GoSlice<GoPtr<Diagnostic>>;
   jsdocDiagnostics: GoSlice<GoPtr<Diagnostic>>;
@@ -5322,7 +5449,6 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   SymbolCount: int;
   ClassifiableNames: Set<string>;
   PatternAmbientModules: GoSlice<GoPtr<PatternAmbientModule>>;
-  NestedCJSExports: GoSlice<GoPtr<Node>>;
   GlobalExports: SymbolTable;
   ecmaLineMapMu: RWMutex;
   ecmaLineMap: GoSlice<TextPos>;
@@ -5339,7 +5465,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e","bodyHash":"6892b9b6566cfd7095dd835823697c16146bdc757ce1ffced931ebbad6e391df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e","bodyHash":"3f63420f3f3bb8c7d8873e8199ebdb8e620a298147aa0d05299c1a735362bb3c"}
  *
  * Go source:
  * func (f *NodeFactory) NewSourceFile(opts SourceFileParseOptions, text string, statements *NodeList, endOfFileToken *TokenNode) *Node {
@@ -5350,6 +5476,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
  * 	data.fileName = opts.FileName
  * 	data.parseOptions = opts
  * 	data.text = text
+ * 	data.ContainsNonASCII = stringutil.ContainsNonASCII(text)
  * 	data.Statements = statements
  * 	data.EndOfFileToken = endOfFileToken
  * 	return f.newNode(KindSourceFile, data)
@@ -5372,7 +5499,6 @@ export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
     [goReceiverKey]: receiver,
     AsNode: (): GoPtr<Node> => NodeDefault_AsNode(receiver),
     ForEachChild: (v: Visitor): bool => SourceFile_ForEachChild(receiver, v),
-    IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),
     // The spine `nodeData` interface forward-declares `*NodeVisitor` (a placeholder
     // in spine.ts to break the spine<->visitor cycle); the concrete `NodeVisitor`
     // lives in visitor.ts. In Go these are the same `internal/ast.NodeVisitor`, so we
@@ -5412,8 +5538,10 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.Imports = (): GoSlice<GoPtr<LiteralLikeNode>> => SourceFile_Imports(data);
   data.IsJS = (): bool => SourceFile_IsJS(data);
   data.text = text;
+  data.ContainsNonASCII = ContainsNonASCII(text);
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
+  data.dataMu = new Mutex();
   data.diagnostics = [];
   data.jsDiagnostics = [];
   data.jsdocDiagnostics = [];
@@ -5434,7 +5562,6 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.BindSuggestionDiagnostics = [];
   data.ClassifiableNames = { M: new globalThis.Map() };
   data.PatternAmbientModules = [];
-  data.NestedCJSExports = [];
   data.GlobalExports = new globalThis.Map();
   data.ecmaLineMapMu = new RWMutex();
   data.tokenCacheMu = new Mutex();
@@ -5622,7 +5749,7 @@ export function SourceFile_SetHasLazyJSDoc(receiver: GoPtr<SourceFile>, lazy: bo
  * 		return jsdocs
  * 	}
  * 	node.jsdocMu.RUnlock()
- * 
+ *
  * 	// Slow path: parse and cache under write lock
  * 	node.jsdocMu.Lock()
  * 	defer node.jsdocMu.Unlock()
@@ -5873,7 +6000,7 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
  * func (file *SourceFile) GetNameTable() map[string]int {
  * 	file.nameTableOnce.Do(func() {
  * 		nameTable := make(map[string]int, file.IdentifierCount)
- * 
+ *
  * 		var walk func(node *Node) bool
  * 		walk = func(node *Node) bool {
  * 			if IsIdentifier(node) && !IsTagName(node) && node.Text() != "" ||
@@ -5886,7 +6013,7 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
  * 					nameTable[text] = node.Pos()
  * 				}
  * 			}
- * 
+ *
  * 			node.ForEachChild(walk)
  * 			jsdocNodes := node.JSDoc(file)
  * 			for _, jsdoc := range jsdocNodes {
@@ -5895,7 +6022,7 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
  * 			return false
  * 		}
  * 		file.ForEachChild(walk)
- * 
+ *
  * 		file.nameTable = nameTable
  * 	})
  * 	return file.nameTable
@@ -6154,14 +6281,14 @@ export function SourceFile_GetDeclarationMap(receiver: GoPtr<SourceFile>): GoMap
  * Go source:
  * func (node *SourceFile) computeDeclarationMap() map[string][]*Node {
  * 	result := make(map[string][]*Node)
- * 
+ *
  * 	addDeclaration := func(declaration *Node) {
  * 		name := GetDeclarationName(declaration)
  * 		if name != "" {
  * 			result[name] = append(result[name], declaration)
  * 		}
  * 	}
- * 
+ *
  * 	var visit func(*Node) bool
  * 	visit = func(node *Node) bool {
  * 		switch node.Kind {
@@ -6564,8 +6691,8 @@ export const PragmaKindTripleSlashXML: PragmaKindFlags = 1 << 0;
 export const PragmaKindSingleLine: PragmaKindFlags = 1 << 1;
 export const PragmaKindMultiLine: PragmaKindFlags = 1 << 2;
 export const PragmaKindFlagsNone: PragmaKindFlags = 0;
-export const PragmaKindAll: int = (PragmaKindTripleSlashXML | PragmaKindSingleLine | PragmaKindMultiLine) as int;
-export const PragmaKindDefault: int = PragmaKindAll;
+export const PragmaKindAll: PragmaKindFlags = (PragmaKindTripleSlashXML | PragmaKindSingleLine | PragmaKindMultiLine) as int;
+export const PragmaKindDefault: PragmaKindFlags = PragmaKindAll;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgumentSpecification","kind":"type","status":"implemented","sigHash":"2b3ede31b1a4d191575bdd573254af18d051ccc9918f0c5c0365f2315cbe04a0","bodyHash":"0796d17ee075da388b4a655988d7f19c0f6923607de9a40f1923d3cd0d23fa41"}

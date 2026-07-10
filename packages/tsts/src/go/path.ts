@@ -5,10 +5,6 @@ export function Join(...args: Array<string>): string {
 }
 
 export function Split(pathValue: string): [string, string] {
-  const directory = path.posix.dirname(pathValue);
-  const file = path.posix.basename(pathValue);
-  if (directory === ".") {
-    return ["", file];
-  }
-  return [directory.endsWith("/") ? directory : `${directory}/`, file];
+  const separatorIndex = pathValue.lastIndexOf("/");
+  return [pathValue.slice(0, separatorIndex + 1), pathValue.slice(separatorIndex + 1)];
 }

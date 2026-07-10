@@ -82,8 +82,8 @@ import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing, SymbolFlagsAlias, SymbolFlagsFunction, SymbolFlagsNone, SymbolFlagsValue, SymbolFlagsVariable } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsExportAssignment, IsExportSpecifier, IsIdentifier, IsImportEqualsDeclaration, IsJsxOpeningElement, IsJsxOpeningFragment, IsParenthesizedExpression, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
-import { CanHaveDecorators, GetCombinedModifierFlags, GetDeclarationOfKind, HasDecorators, IsClassElement, IsClassLike, IsConstAssertion, IsExpressionNode, IsFunctionLikeDeclaration, IsJsxOpeningLikeElement, IsPartOfTypeNode, IsPropertyAccessOrQualifiedName, IsRequireCall, NodeCanBeDecorated, NodeIsPresent, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
+import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsExportAssignment, IsExportSpecifier, IsIdentifier, IsImportEqualsDeclaration, IsJsxOpeningElement, IsJsxOpeningFragment, IsMetaProperty, IsParenthesizedExpression, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
+import { CanHaveDecorators, FindAncestor, GetCombinedModifierFlags, GetDeclarationOfKind, HasDecorators, IsClassElement, IsClassLike, IsConstAssertion, IsExpressionNode, IsFunctionLikeDeclaration, IsJsxOpeningLikeElement, IsJsxTagName, IsPartOfTypeNode, IsPropertyAccessOrQualifiedName, IsRequireCall, NodeCanBeDecorated, NodeIsPresent, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
 import { AsBinaryExpression, AsConditionalExpression, AsImportEqualsDeclaration, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import type { ExportSpecifierNode, IdentifierNode } from "../../ast/generated/unions.js";
 import type { Symbol } from "../../ast/symbol.js";
@@ -94,7 +94,7 @@ import { Checker_isTypeAssignableTo } from "../relater.js";
 import type { ArrayLiteralLinks, SymbolReferenceLinks } from "../types.js";
 import { ContextFlagsNone, ObjectFlagsContainsSpread, TypeFlagsConditional, TypeFlagsNever, TypeFlagsUnion, Type_AsConditionalType, Type_Distributed } from "../types.js";
 import type { ConditionalRoot, Signature, Type } from "../types.js";
-import { isObjectLiteralType, CreateModeMismatchDetails, NewDiagnosticForNode } from "../utilities.js";
+import { isObjectLiteralType, CreateModeMismatchDetails, NewDiagnosticForNode, isJsxIntrinsicTagName } from "../utilities.js";
 import { Checker_chooseOverload, Checker_getSignatureFromDeclaration, Checker_isValidConstAssertionArgument } from "./signatures.js";
 import { Checker_getContextualType, Checker_getOptionalType, Checker_getPropertiesOfType, Checker_isConstTypeVariable } from "./types.js";
 import { Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
@@ -750,7 +750,7 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"implemented","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a","bodyHash":"c7ad211d7a4abb12fe7ff041b0fa8aa1c1429c37a1896387180a157094ff3f83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"implemented","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a","bodyHash":"92b9b79ac3df744ba34413490ba2fafc64b701357dabc747919cb70a513cf45f"}
  *
  * Go source:
  * func (c *Checker) markLinkedReferences(location *ast.Node, hint ReferenceHint, propSymbol *ast.Symbol, parentType *Type) {
@@ -778,6 +778,12 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
  * 	case ReferenceHintDecorator:
  * 		c.markDecoratorAliasReferenced(location)
  * 	case ReferenceHintUnspecified:
+ * 		if ast.IsJsxTagName(location) && isJsxIntrinsicTagName(location) {
+ * 			return // builtin JSX tag names aren't real type refs by most metrics, but are expressions, so must be filtered
+ * 		}
+ * 		if ast.FindAncestor(location, func(n *ast.Node) bool { return ast.IsMetaProperty(n) }) != nil {
+ * 			return // identifiers in meta properties shouldn't be resolved, but are expressions, so must be filtered
+ * 		}
  * 		// Identifiers in expression contexts are emitted, so we need to follow their referenced aliases and mark them as used
  * 		// Some non-expression identifiers are also treated as expression identifiers for this purpose, eg, `a` in `b = {a}` or `q` in `import r = q`
  * 		// This is the exception, rather than the rule - most non-expression identifiers are declaration names.
@@ -837,7 +843,7 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
  * 		if !ast.CanHaveDecorators(location) || !ast.HasDecorators(location) || location.Modifiers() == nil || !ast.NodeCanBeDecorated(c.legacyDecorators, location, location.Parent, location.Parent.Parent) {
  * 			return
  * 		}
- * 
+ *
  * 		c.markDecoratorAliasReferenced(location)
  * 		return
  * 	default:
@@ -875,6 +881,12 @@ export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location:
       Checker_markDecoratorAliasReferenced(receiver, location);
       return;
     case ReferenceHintUnspecified:
+      if (IsJsxTagName(location) && isJsxIntrinsicTagName(location)) {
+        return;
+      }
+      if (FindAncestor(location, (n: GoPtr<Node>): bool => IsMetaProperty(n)) !== undefined) {
+        return;
+      }
       if (
         IsIdentifier(location) &&
         (

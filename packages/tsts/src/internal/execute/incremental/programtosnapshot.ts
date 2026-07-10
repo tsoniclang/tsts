@@ -139,11 +139,15 @@ export function programToSnapshot(program: GoPtr<Program>, oldProgram: GoPtr<Pro
     hasErrors: TSUnknown,
     hashWithText: hashWithText,
     checkPending: Tristate_IsTrue(Program_Options(program)!.NoCheck),
+    packageJsons: undefined,
+    missingPackageJsons: undefined,
     buildInfoEmitPending: new Bool(),
     hasErrorsFromOldState: TSUnknown,
     hasSemanticErrors: false,
     hasSemanticErrorsFromOldState: false,
     allFilesExcludingDefaultLibraryFileOnce: new Once(),
+    packageJsonsFromOldState: undefined,
+    missingPackageJsonsFromOldState: undefined,
     allFilesExcludingDefaultLibraryFile: [],
     hasChangedDtsFile: false,
     hasEmitDiagnostics: false,
@@ -183,7 +187,7 @@ export interface toProgramSnapshot {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::method::toProgramSnapshot.reuseFromOldProgram","kind":"method","status":"implemented","sigHash":"113030e4c458c05d170f5d971d5ac312aa8639bbb20f48038ac63881715390f0","bodyHash":"a4fd279d6c0a6eae384a1976ebaf532525b86eb3cf25dc27d082bbbedf5fdd2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::method::toProgramSnapshot.reuseFromOldProgram","kind":"method","status":"implemented","sigHash":"113030e4c458c05d170f5d971d5ac312aa8639bbb20f48038ac63881715390f0","bodyHash":"024ba239e37293e19880a84450772a4cc28bf028e1628ef95c2d28acf9c3ed19"}
  *
  * Go source:
  * func (t *toProgramSnapshot) reuseFromOldProgram() {
@@ -203,6 +207,8 @@ export interface toProgramSnapshot {
  * 		t.snapshot.buildInfoEmitPending.Store(t.oldProgram.snapshot.buildInfoEmitPending.Load())
  * 		t.snapshot.hasErrorsFromOldState = t.oldProgram.snapshot.hasErrors
  * 		t.snapshot.hasSemanticErrorsFromOldState = t.oldProgram.snapshot.hasSemanticErrors
+ * 		t.snapshot.packageJsonsFromOldState = t.oldProgram.snapshot.packageJsons
+ * 		t.snapshot.missingPackageJsonsFromOldState = t.oldProgram.snapshot.missingPackageJsons
  * 	} else {
  * 		t.snapshot.buildInfoEmitPending.Store(t.snapshot.options.IsIncremental())
  * 	}
@@ -225,6 +231,8 @@ export function toProgramSnapshot_reuseFromOldProgram(receiver: GoPtr<toProgramS
     receiver!.snapshot!.buildInfoEmitPending.Store(receiver!.oldProgram.snapshot!.buildInfoEmitPending.Load());
     receiver!.snapshot!.hasErrorsFromOldState = receiver!.oldProgram.snapshot!.hasErrors;
     receiver!.snapshot!.hasSemanticErrorsFromOldState = receiver!.oldProgram.snapshot!.hasSemanticErrors;
+    receiver!.snapshot!.packageJsonsFromOldState = receiver!.oldProgram.snapshot!.packageJsons;
+    receiver!.snapshot!.missingPackageJsonsFromOldState = receiver!.oldProgram.snapshot!.missingPackageJsons;
   } else {
     receiver!.snapshot!.buildInfoEmitPending.Store(CompilerOptions_IsIncremental(receiver!.snapshot!.options));
   }
@@ -237,6 +245,12 @@ export function toProgramSnapshot_reuseFromOldProgram(receiver: GoPtr<toProgramS
  * func (t *toProgramSnapshot) computeProgramFileChanges() {
  * 	canCopySemanticDiagnostics := t.oldProgram != nil &&
  * 		!tsoptions.CompilerOptionsAffectSemanticDiagnostics(t.oldProgram.snapshot.options, t.program.Options())
+ * 	// We can only reuse emit signatures (i.e. .d.ts signatures) if the .d.ts file is unchanged,
+ * 	// which will eg be depedent on change in options like declarationDir and outDir options are unchanged.
+ * 	// We need to look in oldState.compilerOptions, rather than oldCompilerOptions (i.e.we need to disregard useOldState) because
+ * 	// oldCompilerOptions can be undefined if there was change in say module from None to some other option
+ * 	// which would make useOldState as false since we can now use reference maps that are needed to track what to emit, what to check etc
+ * 	// but that option change does not affect d.ts file name so emitSignatures should still be reused.
  * 	canCopyEmitSignatures := t.snapshot.options.Composite.IsTrue() &&
  * 		t.oldProgram != nil &&
  * 		!tsoptions.CompilerOptionsAffectDeclarationPath(t.oldProgram.snapshot.options, t.program.Options())
@@ -249,7 +263,65 @@ export function toProgramSnapshot_reuseFromOldProgram(receiver: GoPtr<toProgramS
  * 	wg := core.NewWorkGroup(t.program.SingleThreaded())
  * 	for _, file := range files {
  * 		wg.Queue(func() {
- * 			...
+ * 			version := t.snapshot.computeHash(file.Text())
+ * 			impliedNodeFormat := t.program.GetSourceFileMetaData(file.Path()).ImpliedNodeFormat
+ * 			affectsGlobalScope := fileAffectsGlobalScope(file)
+ * 			var signature string
+ * 			newReferences := getReferencedFiles(t.program, file)
+ * 			if newReferences != nil {
+ * 				t.snapshot.referencedMap.storeReferences(file.Path(), newReferences)
+ * 			}
+ * 			if t.oldProgram != nil {
+ * 				if oldFileInfo, ok := t.oldProgram.snapshot.fileInfos.Load(file.Path()); ok {
+ * 					signature = oldFileInfo.signature
+ * 					if oldFileInfo.version != version || oldFileInfo.affectsGlobalScope != affectsGlobalScope || oldFileInfo.impliedNodeFormat != impliedNodeFormat {
+ * 						t.snapshot.addFileToChangeSet(file.Path())
+ * 					} else if oldReferences, _ := t.oldProgram.snapshot.referencedMap.getReferences(file.Path()); !newReferences.Equals(oldReferences) {
+ * 						// Referenced files changed
+ * 						t.snapshot.addFileToChangeSet(file.Path())
+ * 					} else if newReferences != nil {
+ * 						for refPath := range newReferences.Keys() {
+ * 							if t.program.GetSourceFileByPath(refPath) == nil {
+ * 								if _, ok := t.oldProgram.snapshot.fileInfos.Load(refPath); ok {
+ * 									// Referenced file was deleted in the new program
+ * 									t.snapshot.addFileToChangeSet(file.Path())
+ * 									break
+ * 								}
+ * 							}
+ * 						}
+ * 					}
+ * 				} else {
+ * 					t.snapshot.addFileToChangeSet(file.Path())
+ * 				}
+ * 				if !t.snapshot.changedFilesSet.Has(file.Path()) {
+ * 					if emitDiagnostics, ok := t.oldProgram.snapshot.emitDiagnosticsPerFile.Load(file.Path()); ok {
+ * 						t.snapshot.emitDiagnosticsPerFile.Store(file.Path(), repopulateDiagnosticsOfFile(emitDiagnostics, t.program, file))
+ * 					}
+ * 					if canCopySemanticDiagnostics {
+ * 						if (!file.IsDeclarationFile || copyDeclarationFileDiagnostics) &&
+ * 							(!t.program.IsSourceFileDefaultLibrary(file.Path()) || copyLibFileDiagnostics) {
+ * 							// Unchanged file copy diagnostics
+ * 							if diagnostics, ok := t.oldProgram.snapshot.semanticDiagnosticsPerFile.Load(file.Path()); ok {
+ * 								t.snapshot.semanticDiagnosticsPerFile.Store(file.Path(), repopulateDiagnosticsOfFile(diagnostics, t.program, file))
+ * 							}
+ * 						}
+ * 					}
+ * 				}
+ * 				if canCopyEmitSignatures {
+ * 					if oldEmitSignature, ok := t.oldProgram.snapshot.emitSignatures.Load(file.Path()); ok {
+ * 						t.snapshot.emitSignatures.Store(file.Path(), oldEmitSignature.getNewEmitSignature(t.oldProgram.snapshot.options, t.snapshot.options))
+ * 					}
+ * 				}
+ * 			} else {
+ * 				t.snapshot.addFileToAffectedFilesPendingEmit(file.Path(), GetFileEmitKind(t.snapshot.options))
+ * 				signature = version
+ * 			}
+ * 			t.snapshot.fileInfos.Store(file.Path(), &FileInfo{
+ * 				version:            version,
+ * 				signature:          signature,
+ * 				affectsGlobalScope: affectsGlobalScope,
+ * 				impliedNodeFormat:  impliedNodeFormat,
+ * 			})
  * 		})
  * 	}
  * 	wg.RunAndWait()
@@ -393,6 +465,8 @@ export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnap
  * Go source:
  * func (t *toProgramSnapshot) handlePendingEmit() {
  * 	if t.oldProgram != nil && !t.globalFileRemoved {
+ * 		// If options affect emit, then we need to do complete emit per compiler options
+ * 		// otherwise only the js or dts that needs to emitted because its different from previously emitted options
  * 		var pendingEmitKind FileEmitKind
  * 		if tsoptions.CompilerOptionsAffectEmit(t.oldProgram.snapshot.options, t.snapshot.options) {
  * 			pendingEmitKind = GetFileEmitKind(t.snapshot.options)
@@ -400,7 +474,9 @@ export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnap
  * 			pendingEmitKind = getPendingEmitKindWithOptions(t.snapshot.options, t.oldProgram.snapshot.options)
  * 		}
  * 		if pendingEmitKind != FileEmitKindNone {
+ * 			// Add all files to affectedFilesPendingEmit since emit changed
  * 			for _, file := range t.program.GetSourceFiles() {
+ * 				// Add to affectedFilesPending emit only if not changed since any changed file will do full emit
  * 				if !t.snapshot.changedFilesSet.Has(file.Path()) {
  * 					t.snapshot.addFileToAffectedFilesPendingEmit(file.Path(), pendingEmitKind)
  * 				}
@@ -457,6 +533,8 @@ export function toProgramSnapshot_handlePendingCheck(receiver: GoPtr<toProgramSn
  * Go source:
  * func fileAffectsGlobalScope(file *ast.SourceFile) bool {
  * 	binder.BindSourceFile(file)
+ * 	// if file contains anything that augments to global scope we need to build them as if
+ * 	// they are global files as well as module
  * 	if core.Some(file.ModuleAugmentations, func(augmentation *ast.ModuleName) bool {
  * 		return ast.IsGlobalScopeAugmentation(augmentation.Parent)
  * 	}) {
@@ -467,6 +545,10 @@ export function toProgramSnapshot_handlePendingCheck(receiver: GoPtr<toProgramSn
  * 		return false
  * 	}
  *
+ * 	// For script files that contains only ambient external modules, although they are not actually external module files,
+ * 	// they can only be consumed via importing elements from them. Regular script files cannot consume them. Therefore,
+ * 	// there are no point to rebuild all script files if these special files have changed. However, if any statement
+ * 	// in the file is not ambient external module, we treat it as a regular script file.
  * 	return file.Statements != nil &&
  * 		file.Statements.Nodes != nil &&
  * 		core.Some(file.Statements.Nodes, func(stmt *ast.Node) bool {
@@ -566,15 +648,23 @@ export function addReferencedFileFromFileName(program: GoPtr<Program>, fileName:
  * Go source:
  * func getReferencedFiles(program *compiler.Program, file *ast.SourceFile) *collections.Set[tspath.Path] {
  * 	referencedFiles := collections.Set[tspath.Path]{}
+ *
+ * 	// We need to use a set here since the code can contain the same import twice,
+ * 	// but that will only be one dependency.
+ * 	// To avoid invernal conversion, the key of the referencedFiles map must be of type Path
  * 	checker, done := program.GetTypeCheckerForFileExclusive(context.TODO(), file)
  * 	defer done()
  * 	for _, importName := range file.Imports() {
  * 		addReferencedFilesFromImportLiteral(file, &referencedFiles, checker, importName)
  * 	}
+ *
  * 	sourceFileDirectory := tspath.GetDirectoryPath(file.FileName())
+ * 	// Handle triple slash references
  * 	for _, referencedFile := range file.ReferencedFiles {
  * 		addReferencedFileFromFileName(program, referencedFile.FileName, &referencedFiles, sourceFileDirectory)
  * 	}
+ *
+ * 	// Handle type reference directives
  * 	if typeRefsInFile, ok := program.GetResolvedTypeReferenceDirectives()[file.Path()]; ok {
  * 		for _, typeRef := range typeRefsInFile {
  * 			if typeRef.ResolvedFileName != "" {
@@ -582,12 +672,16 @@ export function addReferencedFileFromFileName(program: GoPtr<Program>, fileName:
  * 			}
  * 		}
  * 	}
+ *
+ * 	// Add module augmentation as references
  * 	for _, moduleName := range file.ModuleAugmentations {
  * 		if !ast.IsStringLiteral(moduleName) {
  * 			continue
  * 		}
  * 		addReferencedFilesFromImportLiteral(file, &referencedFiles, checker, moduleName)
  * 	}
+ *
+ * 	// From ambient modules
  * 	for _, ambientModule := range checker.GetAmbientModules() {
  * 		addReferencedFilesFromSymbol(file, &referencedFiles, ambientModule)
  * 	}
@@ -652,7 +746,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
     if (repopulated === undefined || repopulated === null) {
       return diags;
     }
-    return { diagnostics: repopulated, buildInfoDiagnostics: [] };
+    return { diagnostics: repopulated, buildInfoDiagnostics: undefined };
   }
   // buildInfoDiagnostics will be repopulated via toDiagnostic's repopulateInfo handling
   return diags;
@@ -715,11 +809,24 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
  * 	result := make([]*ast.Diagnostic, len(chain))
  * 	for i, c := range chain {
  * 		if c.RepopulateInfo() != nil {
- * 			b := &buildInfoDiagnosticWithFileName{...}
- * 			...
+ * 			// Convert to buildInfoDiagnosticWithFileName and repopulate
+ * 			b := &buildInfoDiagnosticWithFileName{
+ * 				pos:            c.Pos(),
+ * 				end:            c.End(),
+ * 				code:           c.Code(),
+ * 				category:       c.Category(),
+ * 				messageKey:     c.MessageKey(),
+ * 				messageArgs:    c.MessageArgs(),
+ * 				repopulateInfo: c.RepopulateInfo(),
+ * 			}
+ * 			// Recursively handle nested chains
+ * 			for _, nested := range c.MessageChain() {
+ * 				b.messageChain = append(b.messageChain, astDiagToBuildInfoDiag(nested))
+ * 			}
  * 			result[i] = repopulateDiagnosticChain(b, p, file)
  * 			changed = true
  * 		} else {
+ * 			// Check nested chains
  * 			nested := repopulateDiagnosticMessageChain(c.MessageChain(), p, file)
  * 			if nested != nil {
  * 				clone := c.Clone()
@@ -757,15 +864,15 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
         messageKey: Diagnostic_MessageKey(c),
         messageArgs: Diagnostic_MessageArgs(c),
         repopulateInfo: Diagnostic_RepopulateInfo(c),
-        messageChain: [],
-        relatedInformation: [],
+        messageChain: undefined,
+        relatedInformation: undefined,
         reportsUnnecessary: false,
         reportsDeprecated: false,
         skippedOnNoEmit: false,
       };
       // Recursively handle nested chains
       for (const nested of Diagnostic_MessageChain(c)) {
-        b.messageChain.push(astDiagToBuildInfoDiag(nested));
+        (b.messageChain ??= []).push(astDiagToBuildInfoDiag(nested));
       }
       result[i] = repopulateDiagnosticChain(b, p, file);
       changed = true;
@@ -793,7 +900,15 @@ export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic
  *
  * Go source:
  * func astDiagToBuildInfoDiag(d *ast.Diagnostic) *buildInfoDiagnosticWithFileName {
- * 	b := &buildInfoDiagnosticWithFileName{...}
+ * 	b := &buildInfoDiagnosticWithFileName{
+ * 		pos:            d.Pos(),
+ * 		end:            d.End(),
+ * 		code:           d.Code(),
+ * 		category:       d.Category(),
+ * 		messageKey:     d.MessageKey(),
+ * 		messageArgs:    d.MessageArgs(),
+ * 		repopulateInfo: d.RepopulateInfo(),
+ * 	}
  * 	for _, nested := range d.MessageChain() {
  * 		b.messageChain = append(b.messageChain, astDiagToBuildInfoDiag(nested))
  * 	}
@@ -811,14 +926,14 @@ export function astDiagToBuildInfoDiag(d: GoPtr<Diagnostic>): GoPtr<buildInfoDia
     messageKey: Diagnostic_MessageKey(d),
     messageArgs: Diagnostic_MessageArgs(d),
     repopulateInfo: Diagnostic_RepopulateInfo(d),
-    messageChain: [],
-    relatedInformation: [],
+    messageChain: undefined,
+    relatedInformation: undefined,
     reportsUnnecessary: false,
     reportsDeprecated: false,
     skippedOnNoEmit: false,
   };
   for (const nested of Diagnostic_MessageChain(d)) {
-    b.messageChain.push(astDiagToBuildInfoDiag(nested));
+    (b.messageChain ??= []).push(astDiagToBuildInfoDiag(nested));
   }
   return b;
 }

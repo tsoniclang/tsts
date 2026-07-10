@@ -17,7 +17,7 @@ import type { Entries, FileInfo, FS as FS_f717df58, WalkDirFunc } from "../vfs.j
  * 	Realpath(path string) (string, error)
  * }
  */
-export interface RealpathFS {
+export interface RealpathFS extends FS {
   readonly __tsgoEmbedded0?: FS;
   Realpath(path: string): [string, GoError];
 }
@@ -36,7 +36,7 @@ export interface RealpathFS {
  * 	Chtimes(path string, aTime time.Time, mTime time.Time) error
  * }
  */
-export interface WritableFS {
+export interface WritableFS extends FS {
   readonly __tsgoEmbedded0?: FS;
   WriteFile(path: string, data: string, perm: FileMode): GoError;
   AppendFile(path: string, data: string, perm: FileMode): GoError;
@@ -157,8 +157,8 @@ export interface FsWithSys extends FS_f717df58 {
  */
 export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
   let realpath: (path: string) => [string, GoError];
-  const realpathFsys = fsys as unknown as RealpathFS;
-  if (realpathFsys.Realpath !== undefined) {
+  if (isRealpathFS(fsys)) {
+    const realpathFsys = fsys;
     realpath = (path: string): [string, GoError] => {
       const hadSlash = path.startsWith("/");
       const rest = hadSlash ? path.slice(1) : path;
@@ -182,19 +182,19 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
   let mkdirAll: (path: string) => GoError;
   let remove: (path: string) => GoError;
   let chtimes: (path: string, aTime: Time, mTime: Time) => GoError;
-  const writableFsys = fsys as unknown as WritableFS;
-  if (writableFsys.WriteFile !== undefined) {
+  if (isWritableFS(fsys)) {
+    const writableFsys = fsys;
     writeFile = (path: string, content: string): GoError => {
       const rest = path.startsWith("/") ? path.slice(1) : path;
-      return writableFsys.WriteFile(rest, content, 0o666 as unknown as FileMode);
+      return writableFsys.WriteFile(rest, content, 0o666);
     };
     appendFile = (path: string, content: string): GoError => {
       const rest = path.startsWith("/") ? path.slice(1) : path;
-      return writableFsys.AppendFile(rest, content, 0o666 as unknown as FileMode);
+      return writableFsys.AppendFile(rest, content, 0o666);
     };
     mkdirAll = (path: string): GoError => {
       const rest = path.startsWith("/") ? path.slice(1) : path;
-      return writableFsys.MkdirAll(rest, 0o777 as unknown as FileMode);
+      return writableFsys.MkdirAll(rest, 0o777);
     };
     remove = (path: string): GoError => {
       const rest = path.startsWith("/") ? path.slice(1) : path;
@@ -224,7 +224,7 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
 
   const result: ioFS = {
     common: {
-      RootFor: (root: string): FS => {
+      RootFor: (root: string): GoPtr<FS> => {
         if (root === "/") {
           return fsys;
         }
@@ -232,13 +232,12 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
         const [sub, err] = fs_Sub(fsys, p);
         if (err !== undefined) {
           if (IsUrl(root)) {
-            return undefined as unknown as FS;
+            return undefined;
           }
           throw new globalThis.Error(`vfs: failed to create sub file system for ${JSON.stringify(p)}: ${err.message}`);
         }
         return sub;
       },
-      IsReparsePoint: undefined as unknown as (path: string) => bool,
     },
     useCaseSensitiveFileNames,
     realpath,
@@ -250,6 +249,19 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
     fsys,
   };
   return ioFS_as_FsWithSys(result);
+}
+
+function isRealpathFS(fsys: FS): fsys is RealpathFS {
+  return typeof (fsys as Partial<RealpathFS>).Realpath === "function";
+}
+
+function isWritableFS(fsys: FS): fsys is WritableFS {
+  const candidate = fsys as Partial<WritableFS>;
+  return typeof candidate.WriteFile === "function"
+    && typeof candidate.AppendFile === "function"
+    && typeof candidate.MkdirAll === "function"
+    && typeof candidate.Remove === "function"
+    && typeof candidate.Chtimes === "function";
 }
 
 /**

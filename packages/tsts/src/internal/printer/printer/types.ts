@@ -497,13 +497,6 @@ export function Printer_emitArrayType(receiver: GoPtr<Printer>, node: GoPtr<Arra
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixTypeOperand","kind":"method","status":"implemented","sigHash":"6b87ec35b5240d571d72503510269e86a4da826cd7f4c87681e5d601286776e9","bodyHash":"925447b6507a051fbfd0d833d131526647d84e448d27c1da66b69e687a64ff67"}
  *
  * Go source:
- * // emitPostfixTypeOperand emits the operand of a postfix type (ArrayType, IndexedAccessType,
- * // OptionalType). It is equivalent to `emitTypeNode(operand, TypePrecedencePostfix)` except
- * // that it preserves a parsed `typeof X` operand without adding parentheses (e.g.,
- * // `typeof C[K]` instead of `(typeof C)[K]`). TypeScript's `parenthesizeNonArrayTypeOfPostfixType`
- * // factory rule wraps `TypeQuery` in `ParenthesizedType` only when a postfix type is constructed
- * // via the factory, so parsed postfix types preserve the source as written during round-trip
- * // emit while synthesized postfix types (e.g., from declaration emit) still get the parentheses.
  * func (p *Printer) emitPostfixTypeOperand(operand *ast.TypeNode, parent *ast.Node) {
  * 	if ast.IsParseTreeNode(parent) && operand.Kind == ast.KindTypeQuery {
  * 		p.emitTypeNode(operand, ast.TypePrecedenceTypeOperator)

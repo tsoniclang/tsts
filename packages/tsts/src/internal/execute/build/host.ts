@@ -89,6 +89,7 @@ export function host_as_incremental_BuildInfoReader(receiver: GoPtr<host>): Buil
 
 export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
   return {
+    FS: (): FS_7f03dc1c => host_FS(receiver),
     GetMTime: (fileName: string): Time => host_GetMTime(receiver, fileName),
     SetMTime: (fileName: string, mTime: Time): GoError => host_SetMTime(receiver, fileName, mTime),
   };

@@ -1,21 +1,48 @@
-import type { bool, int } from "../scalars.js";
-import type { GoError, GoPtr, GoSlice } from "../compat.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
+
+import type { GoError, GoPtr, GoSlice } from "../compat.js";
+import { EOF } from "../io.js";
+import type { bool, int, long } from "../scalars.js";
+import type { Time } from "../time.js";
+import { UnixMilli } from "../time.js";
 
 export type FileMode = number;
 
 export const ModeDir: FileMode = 0x80000000;
+export const ModeAppend: FileMode = 0x40000000;
+export const ModeExclusive: FileMode = 0x20000000;
+export const ModeTemporary: FileMode = 0x10000000;
 export const ModeSymlink: FileMode = 0x08000000;
+export const ModeDevice: FileMode = 0x04000000;
+export const ModeNamedPipe: FileMode = 0x02000000;
+export const ModeSocket: FileMode = 0x01000000;
+export const ModeSetuid: FileMode = 0x00800000;
+export const ModeSetgid: FileMode = 0x00400000;
+export const ModeCharDevice: FileMode = 0x00200000;
+export const ModeSticky: FileMode = 0x00100000;
 export const ModeIrregular: FileMode = 0x00080000;
+export const ModeType: FileMode = (
+  ModeDir
+  | ModeSymlink
+  | ModeNamedPipe
+  | ModeSocket
+  | ModeDevice
+  | ModeCharDevice
+  | ModeIrregular
+) >>> 0;
 export const ModePerm: FileMode = 0o777;
 
+export function FileMode_Type(mode: FileMode): FileMode {
+  return ((mode as number) & (ModeType as number)) >>> 0;
+}
+
 export function FileMode_IsDir(mode: FileMode): bool {
-  return (((mode as unknown as number) & (ModeDir as unknown as number)) !== 0) as bool;
+  return (((mode as number) & (ModeDir as number)) !== 0) as bool;
 }
 
 export function FileMode_IsRegular(mode: FileMode): bool {
-  return (((mode as unknown as number) & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number) | (ModeIrregular as unknown as number))) === 0) as bool;
+  return (FileMode_Type(mode) === 0) as bool;
 }
 
 export const ErrInvalid: Error = new globalThis.Error("invalid argument");
@@ -26,11 +53,29 @@ export const ErrClosed: Error = new globalThis.Error("file already closed");
 export const SkipDir: Error = new globalThis.Error("skip this directory");
 export const SkipAll: Error = new globalThis.Error("skip everything and stop the walk");
 
+export class PathError extends globalThis.Error {
+  readonly Op: string;
+  Path: string;
+  readonly Err: Error;
+
+  constructor(op: string, path: string, err: Error) {
+    super(`${op} ${path}: ${err.message}`);
+    this.name = "PathError";
+    this.Op = op;
+    this.Path = path;
+    this.Err = err;
+  }
+
+  Unwrap(): GoError {
+    return this.Err;
+  }
+}
+
 export interface FileInfo {
   Name(): string;
   Size(): int;
   Mode(): FileMode;
-  ModTime(): Date;
+  ModTime(): Time;
   IsDir(): bool;
   Sys(): unknown;
 }
@@ -53,231 +98,352 @@ export interface ReadDirFile extends File {
 }
 
 export interface FS {
+  Open(name: string): [File, GoError];
+  ReadFile?(name: string): [Uint8Array, GoError];
+  ReadDir?(name: string): [GoSlice<DirEntry>, GoError];
+  Stat?(name: string): [FileInfo, GoError];
+  Sub?(dir: string): [FS, GoError];
+  ReadLink?(name: string): [string, GoError];
+  Lstat?(name: string): [FileInfo, GoError];
   readonly root?: string;
-  Open?(name: string): [File, GoError];
 }
 
-export type WalkDirFunc = (path: string, d: DirEntry, err: GoError) => GoError;
+export type WalkDirFunc = (path: string, d: GoPtr<DirEntry>, err: GoError) => GoError;
 
 interface NodeFsRoot extends FS {
   readonly root: string;
 }
 
 export function NodeFS(root: string): FS {
-  return { root: nodePath.resolve(root) };
+  const resolvedRoot = nodePath.resolve(root);
+  const open = (name: string): [File, GoError] => openNodeFile(resolvedRoot, name);
+  return {
+    root: resolvedRoot,
+    Open: open,
+    ReadFile(name: string): [Uint8Array, GoError] {
+      if (!ValidPath(name)) {
+        return [new Uint8Array(), new PathError("readfile", name, ErrInvalid)];
+      }
+      try {
+        return [new Uint8Array(nodeFs.readFileSync(resolveNodePath(resolvedRoot, name))), undefined];
+      } catch (error) {
+        return [new Uint8Array(), normalizeFsError(error, "readfile", name)];
+      }
+    },
+    ReadDir(name: string): [GoSlice<DirEntry>, GoError] {
+      return readDirFromOpen(open, name);
+    },
+    Stat(name: string): [FileInfo, GoError] {
+      return nodeStat(resolvedRoot, name, false, "stat");
+    },
+    ReadLink(name: string): [string, GoError] {
+      if (!ValidPath(name)) {
+        return ["", new PathError("readlink", name, ErrInvalid)];
+      }
+      try {
+        return [nodeFs.readlinkSync(resolveNodePath(resolvedRoot, name)), undefined];
+      } catch (error) {
+        return ["", normalizeFsError(error, "readlink", name)];
+      }
+    },
+    Lstat(name: string): [FileInfo, GoError] {
+      return nodeStat(resolvedRoot, name, true, "lstat");
+    },
+  };
+}
+
+export function ValidPath(name: string): bool {
+  if (!hasValidUnicode(name)) {
+    return false;
+  }
+  if (name === ".") {
+    return true;
+  }
+  if (name.length === 0 || name.startsWith("/") || name.endsWith("/")) {
+    return false;
+  }
+  for (const element of name.split("/")) {
+    if (element === "" || element === "." || element === "..") {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function FileExists(fsys: FS, name: string): bool {
   const [info, err] = Stat(fsys, name);
-  return err === undefined && info !== undefined && !info.IsDir();
+  return (err === undefined && info !== undefined && !info.IsDir()) as bool;
 }
 
 export function DirectoryExists(fsys: FS, name: string): bool {
   const [info, err] = Stat(fsys, name);
-  return err === undefined && info !== undefined && info.IsDir();
+  return (err === undefined && info !== undefined && info.IsDir()) as bool;
 }
 
-export function GetAccessibleEntries(fsys: FS, name: string): unknown {
+export function GetAccessibleEntries(fsys: FS, name: string): [GoSlice<DirEntry>, GoError] {
   return ReadDir(fsys, name);
 }
 
 export function ReadFile(fsys: FS, name: string): [string, GoError] {
   const [bytes, err] = ReadFileBytes(fsys, name);
-  if (err !== undefined) {
-    return ["", err];
-  }
-  return [bytesToBinaryString(bytes), undefined];
+  return err === undefined ? [bytesToBinaryString(bytes), undefined] : [bytesToBinaryString(bytes), err];
 }
 
 export function ReadFileBytes(fsys: FS, name: string): [Uint8Array, GoError] {
-  if (fsys.Open !== undefined) {
-    const [file, openErr] = fsys.Open(name);
-    if (openErr !== undefined) {
-      return [new Uint8Array(), openErr];
-    }
-    const chunks: number[] = [];
-    const buffer = new globalThis.Array<number>(8192).fill(0);
+  if (typeof fsys.ReadFile === "function") {
+    return fsys.ReadFile(name);
+  }
+
+  const [file, openErr] = fsys.Open(name);
+  if (openErr !== undefined) {
+    return [new Uint8Array(), openErr];
+  }
+
+  const data: number[] = [];
+  const buffer = new globalThis.Array<number>(8192).fill(0);
+  try {
     for (;;) {
       const [count, readErr] = file.Read(buffer);
+      const boundedCount = Math.max(0, Math.min(count as number, buffer.length));
+      for (let index = 0; index < boundedCount; index += 1) {
+        data.push(buffer[index]!);
+      }
       if (readErr !== undefined) {
-        const closeErr = file.Close();
-        return [new Uint8Array(), readErr ?? closeErr];
-      }
-      if (count === 0) {
-        break;
-      }
-      for (let index = 0; index < count; index += 1) {
-        chunks.push(buffer[index]!);
-      }
-      if (count < buffer.length) {
-        break;
+        return [Uint8Array.from(data), readErr === EOF ? undefined : readErr];
       }
     }
-    const closeErr = file.Close();
-    if (closeErr !== undefined) {
-      return [new Uint8Array(), closeErr];
-    }
-    return [Uint8Array.from(chunks), undefined];
-  }
-  try {
-    return [nodeFs.readFileSync(resolveFsPath(fsys, name)), undefined];
-  } catch (error) {
-    return [new Uint8Array(), normalizeFsError(error)];
+  } finally {
+    file.Close();
   }
 }
 
 export function ReadDir(fsys: FS, name: string): [GoSlice<DirEntry>, GoError] {
-  if (fsys.Open !== undefined) {
-    const [file, openErr] = fsys.Open(name);
-    if (openErr !== undefined) {
-      return [[], openErr];
-    }
-    const readDirFile = file as Partial<ReadDirFile>;
-    if (readDirFile.ReadDir === undefined) {
-      const closeErr = file.Close();
-      return [[], closeErr ?? ErrInvalid];
-    }
-    const [entries, readErr] = readDirFile.ReadDir(-1 as int);
-    const closeErr = file.Close();
-    if (readErr !== undefined) {
-      return [[], readErr];
-    }
-    if (closeErr !== undefined) {
-      return [[], closeErr];
-    }
-    return [entries, undefined];
+  if (typeof fsys.ReadDir === "function") {
+    return fsys.ReadDir(name);
+  }
+  return readDirFromOpen((path) => fsys.Open(path), name);
+}
+
+function readDirFromOpen(open: (name: string) => [File, GoError], name: string): [GoSlice<DirEntry>, GoError] {
+  const [file, openErr] = open(name);
+  if (openErr !== undefined) {
+    return [[], openErr];
   }
   try {
-    const dirents = nodeFs.readdirSync(resolveFsPath(fsys, name), { withFileTypes: true });
-    return [dirents.map(dirEntryFromNodeDirent), undefined];
-  } catch (error) {
-    return [[], normalizeFsError(error)];
+    if (!isReadDirFile(file)) {
+      return [[], new PathError("readdir", name, new globalThis.Error("not implemented"))];
+    }
+    const [entries, readErr] = file.ReadDir(-1 as int);
+    entries.sort((left, right) => compareByteStrings(left.Name(), right.Name()));
+    return [entries, readErr];
+  } finally {
+    file.Close();
   }
 }
 
 export function Stat(fsys: FS, name: string): [FileInfo, GoError] {
-  if (fsys.Open !== undefined) {
-    const [file, openErr] = fsys.Open(name);
-    if (openErr !== undefined) {
-      return [undefined as unknown as FileInfo, openErr];
-    }
-    const [info, statErr] = file.Stat();
-    const closeErr = file.Close();
-    if (statErr !== undefined) {
-      return [undefined as unknown as FileInfo, statErr];
-    }
-    if (closeErr !== undefined) {
-      return [undefined as unknown as FileInfo, closeErr];
-    }
-    return [info, undefined];
+  if (typeof fsys.Stat === "function") {
+    return fsys.Stat(name);
+  }
+  const [file, openErr] = fsys.Open(name);
+  if (openErr !== undefined) {
+    return [undefined as unknown as FileInfo, openErr];
   }
   try {
-    const fullPath = resolveFsPath(fsys, name);
-    return [fileInfoFromStats(nodePath.basename(fullPath), nodeFs.statSync(fullPath)), undefined];
-  } catch (error) {
-    return [undefined as unknown as FileInfo, normalizeFsError(error)];
+    return file.Stat();
+  } finally {
+    file.Close();
   }
+}
+
+export function ReadLink(fsys: FS, name: string): [string, GoError] {
+  if (typeof fsys.ReadLink !== "function") {
+    return ["", new PathError("readlink", name, ErrInvalid)];
+  }
+  return fsys.ReadLink(name);
+}
+
+export function Lstat(fsys: FS, name: string): [FileInfo, GoError] {
+  if (typeof fsys.Lstat !== "function") {
+    return Stat(fsys, name);
+  }
+  return fsys.Lstat(name);
 }
 
 export function WalkDir(fsys: FS, root: string, walkFn: WalkDirFunc): GoError {
-  const walkPath = (relativePath: string): GoError => {
-    const [info, statErr] = Stat(fsys, relativePath);
-    if (statErr !== undefined) {
-      return walkFn(relativePath, undefined as unknown as DirEntry, statErr);
-    }
-    const entry = FileInfoToDirEntry(info);
-    const visitErr = walkFn(relativePath, entry, undefined);
-    if (visitErr === SkipAll) {
-      return SkipAll;
-    }
-    if (visitErr === SkipDir) {
-      return undefined;
-    }
-    if (visitErr !== undefined) {
-      return visitErr;
-    }
-    if (!info.IsDir()) {
-      return undefined;
-    }
-    const [entries, readErr] = ReadDir(fsys, relativePath);
-    if (readErr !== undefined) {
-      return walkFn(relativePath, entry, readErr);
-    }
-    for (const child of entries) {
-      const childPath = relativePath === "." || relativePath === "" ? child.Name() : `${relativePath}/${child.Name()}`;
-      const childErr = walkPath(childPath);
-      if (childErr === SkipAll) {
-        return SkipAll;
-      }
-      if (childErr !== undefined) {
-        return childErr;
-      }
-    }
-    return undefined;
-  };
-  const err = walkPath(root === "" ? "." : root);
-  return err === SkipAll ? undefined : err;
+  const [info, statErr] = Stat(fsys, root);
+  let err: GoError;
+  if (statErr !== undefined) {
+    err = walkFn(root, undefined, statErr);
+  } else {
+    err = walkDir(fsys, root, FileInfoToDirEntry(info)!, walkFn);
+  }
+  return err === SkipDir || err === SkipAll ? undefined : err;
 }
 
-export function FileInfoToDirEntry(info: unknown): DirEntry {
-  if (info === undefined) {
-    throw ErrInvalid;
+function walkDir(fsys: FS, name: string, entry: DirEntry, walkFn: WalkDirFunc): GoError {
+  let err = walkFn(name, entry, undefined);
+  if (err !== undefined || !entry.IsDir()) {
+    if (err === SkipDir && entry.IsDir()) {
+      err = undefined;
+    }
+    return err;
   }
-  const fileInfo = info as FileInfo;
+
+  const [entries, readErr] = ReadDir(fsys, name);
+  if (readErr !== undefined) {
+    err = walkFn(name, entry, readErr);
+    if (err !== undefined) {
+      return err === SkipDir && entry.IsDir() ? undefined : err;
+    }
+  }
+
+  for (const child of entries) {
+    const childName = joinPath(name, child.Name());
+    const childErr = walkDir(fsys, childName, child, walkFn);
+    if (childErr === SkipDir) {
+      break;
+    }
+    if (childErr !== undefined) {
+      return childErr;
+    }
+  }
+  return undefined;
+}
+
+export function FileInfoToDirEntry(info: GoPtr<FileInfo>): GoPtr<DirEntry> {
+  if (info === undefined) {
+    return undefined;
+  }
   return {
-    Name: () => fileInfo.Name(),
-    IsDir: () => fileInfo.IsDir(),
-    Type: () => fileInfo.Mode(),
-    Info: () => [fileInfo, undefined],
+    Name: () => info.Name(),
+    IsDir: () => info.IsDir(),
+    Type: () => FileMode_Type(info.Mode()),
+    Info: () => [info, undefined],
   };
 }
 
 export function Sub(fsys: FS, dir: string): [FS, GoError] {
-  if (fsys.Open !== undefined) {
-    const prefix = dir.replace(/\/+$/, "");
-    return [{
-      Open(name: string): [File, GoError] {
-        const childName = name === "." || name === "" ? prefix : `${prefix}/${name}`;
-        return fsys.Open!(childName);
-      },
-    }, undefined];
+  if (!ValidPath(dir)) {
+    return [undefined as unknown as FS, new PathError("sub", dir, ErrInvalid)];
   }
-  try {
-    return [NodeFS(resolveFsPath(fsys, dir)), undefined];
-  } catch (error) {
-    return [undefined as unknown as FS, normalizeFsError(error)];
+  if (dir === ".") {
+    return [fsys, undefined];
   }
+  if (typeof fsys.Sub === "function") {
+    return fsys.Sub(dir);
+  }
+
+  const fullName = (op: string, name: string): [string, GoError] => {
+    if (!ValidPath(name)) {
+      return ["", new PathError(op, name, ErrInvalid)];
+    }
+    return [joinPath(dir, name), undefined];
+  };
+  const fixErr = (err: GoError): GoError => {
+    if (err instanceof PathError) {
+      const shortened = shortenSubPath(dir, err.Path);
+      if (shortened !== undefined) {
+        err.Path = shortened;
+        err.message = `${err.Op} ${err.Path}: ${err.Err.message}`;
+      }
+    }
+    return err;
+  };
+
+  const result: FS = {
+    Open(name: string): [File, GoError] {
+      const [full, nameErr] = fullName("open", name);
+      if (nameErr !== undefined) {
+        return [undefined as unknown as File, nameErr];
+      }
+      const [file, err] = fsys.Open(full);
+      return [file, fixErr(err)];
+    },
+    ReadDir(name: string): [GoSlice<DirEntry>, GoError] {
+      const [full, nameErr] = fullName("read", name);
+      if (nameErr !== undefined) {
+        return [[], nameErr];
+      }
+      const [entries, err] = ReadDir(fsys, full);
+      return [entries, fixErr(err)];
+    },
+    ReadFile(name: string): [Uint8Array, GoError] {
+      const [full, nameErr] = fullName("read", name);
+      if (nameErr !== undefined) {
+        return [new Uint8Array(), nameErr];
+      }
+      const [data, err] = ReadFileBytes(fsys, full);
+      return [data, fixErr(err)];
+    },
+    ReadLink(name: string): [string, GoError] {
+      const [full, nameErr] = fullName("readlink", name);
+      if (nameErr !== undefined) {
+        return ["", nameErr];
+      }
+      const [target, err] = ReadLink(fsys, full);
+      return [target, fixErr(err)];
+    },
+    Lstat(name: string): [FileInfo, GoError] {
+      const [full, nameErr] = fullName("lstat", name);
+      if (nameErr !== undefined) {
+        return [undefined as unknown as FileInfo, nameErr];
+      }
+      const [info, err] = Lstat(fsys, full);
+      return [info, fixErr(err)];
+    },
+    Sub(name: string): [FS, GoError] {
+      if (name === ".") {
+        return [result, undefined];
+      }
+      const [full, nameErr] = fullName("sub", name);
+      if (nameErr !== undefined) {
+        return [undefined as unknown as FS, nameErr];
+      }
+      return Sub(fsys, full);
+    },
+  };
+  return [result, undefined];
 }
 
 export function UseCaseSensitiveFileNames(_fsys: FS): bool {
-  return process.platform !== "win32";
+  return (process.platform !== "win32") as bool;
 }
 
 export function Realpath(fsys: FS, name: string): [string, GoError] {
+  if (!ValidPath(name)) {
+    return ["", new PathError("realpath", name, ErrInvalid)];
+  }
   try {
     return [nodeFs.realpathSync(resolveFsPath(fsys, name)), undefined];
   } catch (error) {
-    return ["", normalizeFsError(error)];
+    return ["", normalizeFsError(error, "realpath", name)];
   }
 }
 
 export function WriteFile(fsys: FS, name: string, data: string, _perm?: FileMode): GoError {
+  if (!ValidPath(name)) {
+    return new PathError("write", name, ErrInvalid);
+  }
   try {
     const fullPath = resolveFsPath(fsys, name);
     nodeFs.mkdirSync(nodePath.dirname(fullPath), { recursive: true });
     nodeFs.writeFileSync(fullPath, data, "utf8");
     return undefined;
   } catch (error) {
-    return normalizeFsError(error);
+    return normalizeFsError(error, "write", name);
   }
 }
 
 export function Remove(fsys: FS, name: string): GoError {
+  if (!ValidPath(name)) {
+    return new PathError("remove", name, ErrInvalid);
+  }
   try {
     nodeFs.rmSync(resolveFsPath(fsys, name), { force: true, recursive: true });
     return undefined;
   } catch (error) {
-    return normalizeFsError(error);
+    return normalizeFsError(error, "remove", name);
   }
 }
 
@@ -285,41 +451,189 @@ export function Outputs(..._args: Array<unknown>): unknown {
   return undefined;
 }
 
-function resolveFsPath(fsys: FS, name: string): string {
-  const root = (fsys as NodeFsRoot).root ?? "/";
-  return name === "." ? root : nodePath.resolve(root, name);
+function hasValidUnicode(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+    if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+      if (index + 1 >= value.length) {
+        return false;
+      }
+      const next = value.charCodeAt(index + 1);
+      if (next < 0xdc00 || next > 0xdfff) {
+        return false;
+      }
+      index += 1;
+    } else if (codeUnit >= 0xdc00 && codeUnit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
 }
 
-function dirEntryFromNodeDirent(dirent: nodeFs.Dirent): DirEntry {
-  const mode = modeFromDirent(dirent);
+function isReadDirFile(file: File): file is ReadDirFile {
+  return typeof (file as Partial<ReadDirFile>).ReadDir === "function";
+}
+
+function joinPath(parent: string, child: string): string {
+  if (child === ".") {
+    return parent;
+  }
+  if (parent === "." || parent === "") {
+    return child;
+  }
+  return `${parent}/${child}`;
+}
+
+function shortenSubPath(dir: string, name: string): string | undefined {
+  if (name === dir) {
+    return ".";
+  }
+  const prefix = `${dir}/`;
+  return name.startsWith(prefix) ? name.slice(prefix.length) : undefined;
+}
+
+const utf8Encoder = new TextEncoder();
+
+function compareByteStrings(left: string, right: string): number {
+  const leftBytes = utf8Encoder.encode(left);
+  const rightBytes = utf8Encoder.encode(right);
+  const length = Math.min(leftBytes.length, rightBytes.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftBytes[index] !== rightBytes[index]) {
+      return leftBytes[index]! < rightBytes[index]! ? -1 : 1;
+    }
+  }
+  return leftBytes.length - rightBytes.length;
+}
+
+function openNodeFile(root: string, name: string): [File, GoError] {
+  if (!ValidPath(name)) {
+    return [undefined as unknown as File, new PathError("open", name, ErrInvalid)];
+  }
+  const fullPath = resolveNodePath(root, name);
+  try {
+    const stats = nodeFs.statSync(fullPath);
+    const info = fileInfoFromStats(name === "." ? "." : nodePath.posix.basename(name), stats);
+    if (stats.isDirectory()) {
+      return [nodeDirectoryFile(name, fullPath, info), undefined];
+    }
+    const descriptor = nodeFs.openSync(fullPath, "r");
+    return [nodeRegularFile(name, descriptor, info), undefined];
+  } catch (error) {
+    return [undefined as unknown as File, normalizeFsError(error, "open", name)];
+  }
+}
+
+function nodeRegularFile(path: string, descriptor: number, info: FileInfo): File {
+  let closed = false;
   return {
-    Name: () => dirent.name,
-    IsDir: () => dirent.isDirectory(),
-    Type: () => mode,
-    Info: () => {
-      const parentlessInfo: FileInfo = {
-        Name: () => dirent.name,
-        Size: () => 0 as int,
-        Mode: () => mode,
-        ModTime: () => new Date(0),
-        IsDir: () => dirent.isDirectory(),
-        Sys: () => dirent,
-      };
-      return [parentlessInfo, undefined];
+    Stat(): [FileInfo, GoError] {
+      return closed ? [undefined as unknown as FileInfo, new PathError("stat", path, ErrClosed)] : [info, undefined];
+    },
+    Read(buffer: GoSlice<number>): [int, GoError] {
+      if (closed) {
+        return [0 as int, new PathError("read", path, ErrClosed)];
+      }
+      try {
+        const bytes = new Uint8Array(buffer.length);
+        const count = nodeFs.readSync(descriptor, bytes, 0, bytes.length, null);
+        for (let index = 0; index < count; index += 1) {
+          buffer[index] = bytes[index]!;
+        }
+        return count === 0 ? [0 as int, EOF] : [count as int, undefined];
+      } catch (error) {
+        return [0 as int, normalizeFsError(error, "read", path)];
+      }
+    },
+    Close(): GoError {
+      if (closed) {
+        return ErrClosed;
+      }
+      closed = true;
+      try {
+        nodeFs.closeSync(descriptor);
+        return undefined;
+      } catch (error) {
+        return normalizeFsError(error, "close", path);
+      }
     },
   };
 }
 
-function fileInfoFromStats(name: string, stats: nodeFs.Stats): FileInfo {
-  const mode = modeFromStats(stats);
+function nodeDirectoryFile(path: string, fullPath: string, info: FileInfo): ReadDirFile {
+  let closed = false;
+  let offset = 0;
+  let entries: DirEntry[] | undefined;
   return {
-    Name: () => name,
-    Size: () => stats.size as int,
-    Mode: () => mode,
-    ModTime: () => stats.mtime,
-    IsDir: () => stats.isDirectory(),
-    Sys: () => stats,
+    Stat(): [FileInfo, GoError] {
+      return closed ? [undefined as unknown as FileInfo, new PathError("stat", path, ErrClosed)] : [info, undefined];
+    },
+    Read(_buffer: GoSlice<number>): [int, GoError] {
+      return [0 as int, new PathError("read", path, closed ? ErrClosed : ErrInvalid)];
+    },
+    ReadDir(count: int): [GoSlice<DirEntry>, GoError] {
+      if (closed) {
+        return [[], new PathError("readdir", path, ErrClosed)];
+      }
+      try {
+        entries ??= nodeFs.readdirSync(fullPath, { withFileTypes: true }).map((dirent) => nodeDirEntry(fullPath, dirent));
+        const remaining = entries.length - offset;
+        if (remaining === 0 && count > 0) {
+          return [[], EOF];
+        }
+        const length = count > 0 ? Math.min(remaining, count as number) : remaining;
+        const result = entries.slice(offset, offset + length);
+        offset += length;
+        return [result, undefined];
+      } catch (error) {
+        return [[], normalizeFsError(error, "readdir", path)];
+      }
+    },
+    Close(): GoError {
+      if (closed) {
+        return ErrClosed;
+      }
+      closed = true;
+      return undefined;
+    },
   };
+}
+
+function nodeDirEntry(parent: string, dirent: nodeFs.Dirent): DirEntry {
+  const mode = modeFromDirent(dirent);
+  return {
+    Name: () => dirent.name,
+    IsDir: () => dirent.isDirectory() as bool,
+    Type: () => FileMode_Type(mode),
+    Info: (): [FileInfo, GoError] => {
+      try {
+        return [fileInfoFromStats(dirent.name, nodeFs.lstatSync(nodePath.join(parent, dirent.name))), undefined];
+      } catch (error) {
+        return [undefined as unknown as FileInfo, normalizeFsError(error, "lstat", dirent.name)];
+      }
+    },
+  };
+}
+
+function nodeStat(root: string, name: string, lstat: boolean, op: string): [FileInfo, GoError] {
+  if (!ValidPath(name)) {
+    return [undefined as unknown as FileInfo, new PathError(op, name, ErrInvalid)];
+  }
+  try {
+    const stats = lstat ? nodeFs.lstatSync(resolveNodePath(root, name)) : nodeFs.statSync(resolveNodePath(root, name));
+    return [fileInfoFromStats(name === "." ? "." : nodePath.posix.basename(name), stats), undefined];
+  } catch (error) {
+    return [undefined as unknown as FileInfo, normalizeFsError(error, op, name)];
+  }
+}
+
+function resolveFsPath(fsys: FS, name: string): string {
+  const root = (fsys as NodeFsRoot).root ?? "/";
+  return resolveNodePath(root, name);
+}
+
+function resolveNodePath(root: string, name: string): string {
+  return name === "." ? root : nodePath.join(root, ...name.split("/"));
 }
 
 function modeFromDirent(dirent: nodeFs.Dirent): FileMode {
@@ -335,24 +649,62 @@ function modeFromDirent(dirent: nodeFs.Dirent): FileMode {
   return ModeIrregular;
 }
 
-function modeFromStats(stats: nodeFs.Stats): FileMode {
-  if (stats.isDirectory()) {
-    return ModeDir;
-  }
-  if (stats.isSymbolicLink()) {
-    return ModeSymlink;
-  }
-  if (stats.isFile()) {
-    return (stats.mode & ModePerm) as FileMode;
-  }
-  return ModeIrregular;
+function fileInfoFromStats(name: string, stats: nodeFs.Stats): FileInfo {
+  const mode = modeFromStats(stats);
+  return {
+    Name: () => name,
+    Size: () => stats.size as int,
+    Mode: () => mode,
+    ModTime: () => UnixMilli(Math.trunc(stats.mtimeMs) as long),
+    IsDir: () => FileMode_IsDir(mode),
+    Sys: () => stats,
+  };
 }
 
-function normalizeFsError(error: unknown): GoError {
-  if (error instanceof globalThis.Error) {
+function modeFromStats(stats: nodeFs.Stats): FileMode {
+  const permissions = stats.mode & ModePerm;
+  if (stats.isDirectory()) {
+    return (ModeDir | permissions) >>> 0;
+  }
+  if (stats.isSymbolicLink()) {
+    return (ModeSymlink | permissions) >>> 0;
+  }
+  if (stats.isFile()) {
+    return permissions;
+  }
+  return (ModeIrregular | permissions) >>> 0;
+}
+
+function normalizeFsError(error: unknown, op: string, path: string): Error {
+  if (error instanceof PathError) {
     return error;
   }
-  return new globalThis.Error(String(error));
+  const candidate = error as NodeJS.ErrnoException;
+  let cause: Error;
+  switch (candidate?.code) {
+    case "ENOENT":
+    case "ENOTDIR":
+      cause = ErrNotExist;
+      break;
+    case "EEXIST":
+      cause = ErrExist;
+      break;
+    case "EACCES":
+    case "EPERM":
+      cause = ErrPermission;
+      break;
+    case "EBADF":
+      cause = ErrClosed;
+      break;
+    case "EINVAL":
+    case "EISDIR":
+      cause = ErrInvalid;
+      break;
+    default:
+      cause = error instanceof globalThis.Error ? error : new globalThis.Error(String(error));
+      break;
+  }
+  return new PathError(op, path, cause);
 }
 
 function bytesToBinaryString(bytes: Uint8Array): string {

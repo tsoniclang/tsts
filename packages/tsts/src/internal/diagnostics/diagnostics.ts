@@ -234,7 +234,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::varGroup::localizedMessagesCache","kind":"varGroup","status":"implemented","sigHash":"906df1cb73699858abcb438c57d96db64425fd2917e44637f6c0fcca821356f7","bodyHash":"093651b41111727927e039b3167bcaf45d52bb87807322a704bec38d3255ae25"}
  *
  * Go source:
- * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
+ * var localizedMessagesCache sync.Map
  */
 export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = new Map<Tag, GoMap<Key, string> | undefined>();
 
@@ -300,7 +300,7 @@ export const placeholderRegexp: regexp.Regexp = regexp.MustCompile("{(\\d+)}");
  *
  * 	// Replace invalid UTF-8 with Unicode replacement character
  * 	args = core.SameMap(args, func(arg string) string {
- * 		return strings.ToValidUTF8(arg, "�")
+ * 		return strings.ToValidUTF8(arg, "\uFFFD")
  * 	})
  *
  * 	return placeholderRegexp.ReplaceAllStringFunc(text, func(match string) string {
@@ -366,6 +366,28 @@ export function StringifyArgs(args: GoSlice<unknown>): GoSlice<string> {
     }
   }
   return result;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::NewAdHocMessage","kind":"func","status":"implemented","sigHash":"0c4833dff01be86a005d3bc1e2088578f65d38634537879c103b15d0d7b218b3","bodyHash":"7218a5f61e8a0868a2f35b3cf5c7c74cff35c384e51b5514beca171f2b9a992f"}
+ *
+ * Go source:
+ * func NewAdHocMessage(message string) *Message {
+ * 	return &Message{
+ * 		code:     -1,
+ * 		category: CategoryError,
+ * 		key:      "-1",
+ * 		text:     message,
+ * 	}
+ * }
+ */
+export function NewAdHocMessage(message: string): GoPtr<Message> {
+  return {
+    code: -1,
+    category: CategoryError,
+    key: "-1",
+    text: message,
+  };
 }
 
 // Go byte-length / byte-slice helpers (mirroring the convention used in

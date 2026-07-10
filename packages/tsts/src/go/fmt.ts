@@ -407,6 +407,9 @@ function applyVerb(spec: Spec, arg: unknown, hasArg: bool): VerbResult {
       if (typeof arg === "string") {
         return { text: padString(arg, spec) };
       }
+      if (globalThis.Array.isArray(arg) || arg instanceof globalThis.Uint8Array) {
+        return { text: padString(new globalThis.TextDecoder("utf-8").decode(globalThis.Uint8Array.from(arg as ArrayLike<number>)), spec) };
+      }
       return { text: padString(defaultString(arg, spec.plus, false), spec) };
     }
     case "q": {

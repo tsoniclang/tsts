@@ -91,6 +91,7 @@ import { Checker_getTypeOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexe
 import { Checker_getBaseConstraintOfType, Checker_getTypeAliasInstantiation, Checker_getConstraintOfType, Checker_getStringMappingType, Checker_getBaseConstraintOrType, Checker_getConstraintTypeFromMappedType, Checker_getSimplifiedTypeOrConstraint, Checker_getPermissiveInstantiation, Checker_getRestrictiveInstantiation, Checker_isMappedTypeWithKeyofConstraintDeclaration, Checker_hasNonCircularBaseConstraint, Checker_getDefaultConstraintOfConditionalType, Checker_getConstraintOfDistributiveConditionalType } from "./checker/inference.js";
 import { Checker_newInferenceContext, Checker_inferTypes } from "./inference.js";
 import { SameMap, Same, CountWhere, Every, Some, OrElse, Find, FirstOrNil } from "../core/core.js";
+import { Tristate_IsTrue } from "../core/tristate.js";
 import { Checker_TypeToString, Checker_TypeToStringEx, Checker_typeToStringEx, Checker_typeToString, Checker_signatureToString, Checker_typePredicateToString, Checker_symbolToString, Checker_valueToString } from "./printer.js";
 import { TypeFormatFlagsUseFullyQualifiedType } from "./types.js";
 import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule, SymbolFlagsPrototype, SymbolFlagsClassMember } from "../ast/symbolflags.js";
@@ -285,7 +286,7 @@ export type RecursionFlags = uint;
 export const RecursionFlagsNone: RecursionFlags = 0;
 export const RecursionFlagsSource: RecursionFlags = 1 << 0;
 export const RecursionFlagsTarget: RecursionFlags = 1 << 1;
-export const RecursionFlagsBoth: int = RecursionFlagsSource | RecursionFlagsTarget;
+export const RecursionFlagsBoth: RecursionFlags = RecursionFlagsSource | RecursionFlagsTarget;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::ExpandingFlags","kind":"type","status":"implemented","sigHash":"5536216ecf64736cd3b789854e16d643bb47b752bb45bec66b6f0bde6fd3e25a","bodyHash":"b9a45ece5eeda1ec67b69d9d1e9f57cc6eca212168cbb7225b47725f73edd850"}
@@ -309,7 +310,7 @@ export type ExpandingFlags = byte;
 export const ExpandingFlagsNone: ExpandingFlags = 0;
 export const ExpandingFlagsSource: ExpandingFlags = 1 << 0;
 export const ExpandingFlagsTarget: ExpandingFlags = 1 << 1;
-export const ExpandingFlagsBoth: int = ExpandingFlagsSource | ExpandingFlagsTarget;
+export const ExpandingFlagsBoth: ExpandingFlags = ExpandingFlagsSource | ExpandingFlagsTarget;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::RelationComparisonResult","kind":"type","status":"implemented","sigHash":"acda68ec8eae2b817f42aa23ea91ff183231b03a3b99bff758ccf12487f95de4","bodyHash":"dc159a52d0eb40150213ff9f6b54d0f839383f7db8c070291cf688456e2e63f7"}
@@ -342,8 +343,8 @@ export const RelationComparisonResultReportsUnmeasurable: RelationComparisonResu
 export const RelationComparisonResultReportsUnreliable: RelationComparisonResult = 1 << 4;
 export const RelationComparisonResultComplexityOverflow: RelationComparisonResult = 1 << 5;
 export const RelationComparisonResultStackDepthOverflow: RelationComparisonResult = 1 << 6;
-export const RelationComparisonResultReportsMask: int = RelationComparisonResultReportsUnmeasurable | RelationComparisonResultReportsUnreliable;
-export const RelationComparisonResultOverflow: int = RelationComparisonResultComplexityOverflow | RelationComparisonResultStackDepthOverflow;
+export const RelationComparisonResultReportsMask: RelationComparisonResult = RelationComparisonResultReportsUnmeasurable | RelationComparisonResultReportsUnreliable;
+export const RelationComparisonResultOverflow: RelationComparisonResult = RelationComparisonResultComplexityOverflow | RelationComparisonResultStackDepthOverflow;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::DiagnosticAndArguments","kind":"type","status":"implemented","sigHash":"1718f0fa121536480425484094f4a54afb0724c4eb5512dc080e451626ede2f5","bodyHash":"3585c49a0087cd18dc85ef80de058b359f9325d2d92dfe7e3690789f62c5e8fe"}
@@ -426,10 +427,7 @@ export interface Relation {
  * }
  */
 export function Relation_get(receiver: GoPtr<Relation>, key: CacheHashKey): RelationComparisonResult {
-  if (receiver!.results === undefined) {
-    return RelationComparisonResultNone;
-  }
-  return receiver!.results.get(key) ?? RelationComparisonResultNone;
+  return receiver!.results?.get(key) ?? RelationComparisonResultNone;
 }
 
 /**
@@ -459,10 +457,7 @@ export function Relation_set(receiver: GoPtr<Relation>, key: CacheHashKey, resul
  * }
  */
 export function Relation_size(receiver: GoPtr<Relation>): int {
-  if (receiver!.results === undefined) {
-    return 0;
-  }
-  return receiver!.results.size;
+  return receiver!.results?.size ?? 0;
 }
 
 /**
@@ -1121,7 +1116,7 @@ export function createDiagnosticChainFromErrorChain(chain: GoPtr<ErrorChain>, er
  * 		if diagnosticOutput != nil {
  * 			*diagnosticOutput = append(*diagnosticOutput, diagnostic)
  * 		} else {
- * 			c.diagnostics.Add(diagnostic)
+ * 			c.addDiagnostic(diagnostic)
  * 		}
  * 	}
  * }
@@ -1178,11 +1173,14 @@ export function Checker_checkTypeRelatedToAndOptionallyElaborate(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateError","kind":"method","status":"implemented","sigHash":"6c2b47e9295305411cca29b88706566c444b2efc2a1459d7fd556e4c1c2b0477","bodyHash":"b678a775715a2fe3f474dccbcb52de8ee94ee5c6429419e845e81944608ee96c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateError","kind":"method","status":"implemented","sigHash":"6c2b47e9295305411cca29b88706566c444b2efc2a1459d7fd556e4c1c2b0477","bodyHash":"8d1af9e3a88e71cfb0919546aa0512e24eb791529cbade44d9061d9c33002941"}
  *
  * Go source:
  * func (c *Checker) elaborateError(node *ast.Node, source *Type, target *Type, relation *Relation, headMessage *diagnostics.Message, diagnosticOutput *[]*ast.Diagnostic) bool {
  * 	if node == nil || c.isOrHasGenericConditional(target) {
+ * 		return false
+ * 	}
+ * 	if c.compilerOptions.NoCheck.IsTrue() {
  * 		return false
  * 	}
  * 	if c.elaborateDidYouMeanToCallOrConstruct(node, source, target, relation, SignatureKindConstruct, headMessage, diagnosticOutput) ||
@@ -1216,6 +1214,9 @@ export function Checker_checkTypeRelatedToAndOptionallyElaborate(receiver: GoPtr
  */
 export function Checker_elaborateError(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, headMessage: GoPtr<Message>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
   if (node === undefined || Checker_isOrHasGenericConditional(receiver, target)) {
+    return false;
+  }
+  if (Tristate_IsTrue(receiver!.compilerOptions!.NoCheck)) {
     return false;
   }
   if (
@@ -6668,6 +6669,8 @@ export function Relater_eachTypeRelatedToSomeType(receiver: GoPtr<Relater>, sour
  * Go source:
  * func (r *Relater) recursiveTypeRelatedTo(source *Type, target *Type, reportErrors bool, intersectionState IntersectionState, recursionFlags RecursionFlags) Ternary {
  * 	if r.overflow {
+ * 		// Note that stack depth overflows can cause _any_ relation involving structured types to become false, so it is
+ * 		// important to have well-defined behavior even in cases that shouldn't normally occur.
  * 		return TernaryFalse
  * 	}
  * 	id, constrained := getRelationKey(source, target, intersectionState, r.relation == r.c.identityRelation, false /*ignoreConstraints* /)
@@ -9710,10 +9713,6 @@ export function Relater_typeRelatedToIndexInfo(receiver: GoPtr<Relater>, source:
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.isObjectTypeWithInferableIndex","kind":"method","status":"implemented","sigHash":"cf4cf863207906133f7219ab26ea02ed69b59ec85cfa841f3f40ed3aca8c5c7d","bodyHash":"95d404039460ce84ef5ac6d3f3e678461268dcd3b8d6773623d6cf4ff1d62062"}
  *
  * Go source:
- * // Return true if the type was inferred from
- * //   - an object literal, object type literal, enum type, or a value module and has no call or construct signatures, or
- * //   - a JS expando object literal or a rest type, or
- * //   - a reverse mapped type with a source for which one of the above is true.
  * func (c *Checker) isObjectTypeWithInferableIndex(t *Type) bool {
  * 	if t.flags&TypeFlagsIntersection != 0 {
  * 		return core.Every(t.Types(), c.isObjectTypeWithInferableIndex)
@@ -10500,5 +10499,23 @@ export function Checker_isDistributionDependent(receiver: GoPtr<Checker>, root: 
  * }
  */
 export function Relater_traceUnionsOrIntersectionsTooLarge(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>): void {
-  // tracing not implemented in TSTS port
+  const tracer = receiver!.c!.tracer;
+  if (tracer === undefined) {
+    return;
+  }
+  if ((source!.flags & TypeFlagsUnionOrIntersection) !== 0 && (target!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+    if ((source!.objectFlags & target!.objectFlags & ObjectFlagsPrimitiveUnion) !== 0) {
+      return;
+    }
+    const sourceSize = Type_Types(source)!.length;
+    const targetSize = Type_Types(target)!.length;
+    if (sourceSize * targetSize > 1_000_000) {
+      Tracer_Instant(tracer, PhaseCheckTypes, "traceUnionsOrIntersectionsTooLarge_DepthLimit", new globalThis.Map<string, unknown>([
+        ["sourceId", source!.id],
+        ["sourceSize", sourceSize],
+        ["targetId", target!.id],
+        ["targetSize", targetSize],
+      ]));
+    }
+  }
 }

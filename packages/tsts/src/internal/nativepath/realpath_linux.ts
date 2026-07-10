@@ -1,9 +1,9 @@
-import type { bool, int } from "../../../go/scalars.js";
-import type { GoError } from "../../../go/compat.js";
-import { EvalSymlinks } from "../../../go/path/filepath.js";
-import { Itoa } from "../../../go/strconv.js";
-import { OnceValue } from "../../../go/sync.js";
-import * as unix from "../../../go/golang.org/x/sys/unix.js";
+import type { bool, int } from "../../go/scalars.js";
+import type { GoError } from "../../go/compat.js";
+import { EvalSymlinks } from "../../go/path/filepath.js";
+import { Itoa } from "../../go/strconv.js";
+import { OnceValue } from "../../go/sync.js";
+import * as unix from "../../go/golang.org/x/sys/unix.js";
 import { ignoringEINTR } from "./eintr_unix.js";
 
 // On Linux, we use the O_PATH + /proc/self/fd trick to resolve the canonical
@@ -27,7 +27,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
 // or chroots without procfs mounted).
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184","bodyHash":"cb954cedd01898122ff5f4e66abd8344cecc872e881ac8aea86612e8fd10c55f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184","bodyHash":"cb954cedd01898122ff5f4e66abd8344cecc872e881ac8aea86612e8fd10c55f"}
  *
  * Go source:
  * const _procSelfFD = "/proc/self/fd/"
@@ -35,7 +35,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
 export const _procSelfFD: string = "/proc/self/fd/";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233","bodyHash":"167bc9acff221338d8a8cf37c697c0655a0006bd54bcd25664f930d0e88922d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233","bodyHash":"167bc9acff221338d8a8cf37c697c0655a0006bd54bcd25664f930d0e88922d5"}
  *
  * Go source:
  * var hasProcSelfFD = sync.OnceValue(func() bool {
@@ -44,15 +44,15 @@ export const _procSelfFD: string = "/proc/self/fd/";
  * })
  */
 export const hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
-  const stat: unknown = {}; // var stat unix.Stat_t
+  const stat: unknown = {};
   return (unix.Stat(_procSelfFD, stat) === undefined) as bool;
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721","bodyHash":"2383a412fe65f7a82fa90d20b62f8ba29b05f1060d405e60a545f1e122358a4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/realpath_linux.go::func::Realpath","kind":"func","status":"implemented","sigHash":"d3268f3d2d02bd7a7b7bb6ec7a50b67fd2d89738798baed9229942884b3db182","bodyHash":"d092d3948623cbf2130a60e40a6c34a898c5515219dfdbf7933f01b044077e63"}
  *
  * Go source:
- * func realpath(path string) (string, error) {
+ * func Realpath(path string) (string, error) {
  * 	if !hasProcSelfFD() {
  * 		return filepath.EvalSymlinks(path)
  * 	}
@@ -85,7 +85,7 @@ export const hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
  * 	}
  * }
  */
-export function realpath(path: string): [string, GoError] {
+export function Realpath(path: string): [string, GoError] {
   if (!hasProcSelfFD()) {
     return EvalSymlinks(path);
   }
@@ -97,10 +97,7 @@ export function realpath(path: string): [string, GoError] {
     return ["", new globalThis.Error(`open ${path}: ${err.message}`)];
   }
   try {
-    // var procBuf [len(_procSelfFD) + 20]byte; n := copy(procBuf[:], _procSelfFD);
-    // n += copy(procBuf[n:], strconv.Itoa(fd)); procPath := string(procBuf[:n])
     const procPath = _procSelfFD + Itoa(fd);
-
     let buf = new Uint8Array(256);
     for (;;) {
       const [nn, readlinkErr] = ignoringEINTR<int>((): [int, GoError] => {

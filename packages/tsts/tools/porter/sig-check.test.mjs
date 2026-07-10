@@ -77,6 +77,25 @@ test("compareValue: value-annotation-missing and value-type", () => {
   assert.ok(kinds(compareSignatures(exp, wrongType, null)).has("value-type"));
 
   assert.equal(compareSignatures(exp, { kind: "value", decls: [{ name: "c", type: ref("core::int") }] }, null).length, 0);
+  assert.deepEqual(
+    compareSignatures(
+      { kind: "value", decls: [{ name: "version", type: kw("string"), value: { kind: "string", value: "7.1.0-dev" } }] },
+      { kind: "value", decls: [{ name: "version", type: kw("string"), value: { kind: "string", value: "7.0.0-dev" } }] },
+      null,
+    ).map((mismatch) => mismatch.kind),
+    ["value-initializer"],
+  );
+
+  const complete = { kind: "value", decls: [{ name: "a", type: kw("number") }, { name: "b", type: kw("string") }] };
+  assert.deepEqual(
+    compareSignatures(complete, { kind: "value", decls: [{ name: "a", type: kw("number") }] }, null).map((mismatch) => mismatch.kind),
+    ["missing-value"],
+  );
+  assert.deepEqual(
+    compareSignatures(complete, { kind: "value", decls: [...complete.decls, { name: "c", type: kw("boolean") }] }, null).map((mismatch) => mismatch.kind),
+    ["extra-value"],
+  );
+  assert.ok(kinds(compareSignatures(complete, { kind: "value", decls: [...complete.decls].reverse() }, null)).has("value-order"));
 });
 
 test("overrides: ignore aspect only", () => {
@@ -123,6 +142,58 @@ test("local signature override captures go and ts snapshots", () => {
     (x) => x,
     staleIssues,
   );
+  assert.equal(stale.ignore.size, 0);
+  assert.equal(staleIssues.length, 1);
+});
+
+test("local initializer override ignores only exact snapshotted initializer drift", () => {
+  const expected = { kind: "value", decls: [{ name: "limit", type: kw("number"), value: { kind: "number", value: "10" } }] };
+  const actual = { kind: "value", decls: [{ name: "limit", type: kw("number"), value: { kind: "number", value: "12" } }] };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["initializer"],
+    reason: "Host limit is intentionally different.",
+    goInitializer: 'limit={"kind":"number","value":"10"}',
+    tsInitializer: 'limit={"kind":"number","value":"12"}',
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  assert.equal(compareSignatures(expected, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride({
+    category: "runtime-representation",
+    allow: ["initializer"],
+    reason: "Host limit is intentionally different.",
+    goInitializer: "stale",
+    tsInitializer: 'limit={"kind":"number","value":"12"}',
+  }, "id", expected, actual, (value) => value, staleIssues);
+  assert.equal(stale.ignore.size, 0);
+  assert.equal(staleIssues.length, 1);
+});
+
+test("local value-order override ignores only exact snapshotted order drift", () => {
+  const expected = { kind: "value", decls: [{ name: "first", type: kw("number") }, { name: "second", type: kw("number") }] };
+  const actual = { kind: "value", decls: [{ name: "second", type: kw("number") }, { name: "first", type: kw("number") }] };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["value-order"],
+    reason: "JavaScript const initialization must place dependencies before consumers.",
+    goValueOrder: "first,second",
+    tsValueOrder: "second,first",
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  assert.equal(compareSignatures(expected, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride({
+    category: "runtime-representation",
+    allow: ["value-order"],
+    reason: "JavaScript const initialization must place dependencies before consumers.",
+    goValueOrder: "stale",
+    tsValueOrder: "second,first",
+  }, "id", expected, actual, (value) => value, staleIssues);
   assert.equal(stale.ignore.size, 0);
   assert.equal(staleIssues.length, 1);
 });

@@ -1,4 +1,4 @@
-import type { bool, int } from "./scalars.js";
+import type { bool, int, ulong } from "./scalars.js";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
 import nodeOs from "node:os";
@@ -15,10 +15,10 @@ export const GOARCH: string =
   process.arch;
 
 export interface MemStats {
-  Alloc?: number;
-  TotalAlloc?: number;
-  Sys?: number;
-  NumGC?: number;
+  Alloc?: ulong;
+  TotalAlloc?: ulong;
+  Sys?: ulong;
+  NumGC?: ulong;
 }
 
 export function Caller(skip: int): [unknown, string, int, bool] {
@@ -50,8 +50,8 @@ export function GOMAXPROCS(_n: int): int {
 
 export function ReadMemStats(stats: MemStats): void {
   const usage = process.memoryUsage();
-  stats.Alloc = usage.heapUsed;
-  stats.TotalAlloc = usage.heapTotal;
-  stats.Sys = usage.rss;
-  stats.NumGC = 0;
+  stats.Alloc = globalThis.BigInt(usage.heapUsed) as ulong;
+  stats.TotalAlloc = globalThis.BigInt(usage.heapTotal) as ulong;
+  stats.Sys = globalThis.BigInt(usage.rss) as ulong;
+  stats.NumGC = 0n as ulong;
 }

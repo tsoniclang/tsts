@@ -913,7 +913,7 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.reparseHosted","kind":"method","status":"implemented","sigHash":"58c0beaf2d77b4b5417d21aa21df5af9e683885ced520fefffc94702c21dffea","bodyHash":"1bddc6b90c90af2ad1fab460f1ba8c89e0366ffe709f13ba5a123fc2bbec02dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.reparseHosted","kind":"method","status":"implemented","sigHash":"58c0beaf2d77b4b5417d21aa21df5af9e683885ced520fefffc94702c21dffea","bodyHash":"603e8bce35756158dc63509c0e0bcf246b01c204606f50cfdaca128d47e5694f"}
  *
  * Go source:
  * func (p *Parser) reparseHosted(tag *ast.Node, parent *ast.Node, jsDoc *ast.Node) {
@@ -957,7 +957,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 				parent.AsMutable().SetExpression(p.makeNewCast(
  * 					p.addDeepCloneReparse(tag.TypeExpression().Type()),
  * 					parent.Expression(),
- * 					true /*isAssertion* /))
+ * 					true, /*isAssertion* /
+ * 				))
  * 				p.finishMutatedNode(parent)
  * 				return
  * 			}
@@ -978,7 +979,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 						declaration.AsMutable().SetInitializer(p.makeNewCast(
  * 							p.addDeepCloneReparse(tag.TypeExpression().Type()),
  * 							declaration.Initializer(),
- * 							false /*isAssertion* /))
+ * 							false, /*isAssertion* /
+ * 						))
  * 						p.finishMutatedNode(declaration)
  * 						break
  * 					}
@@ -989,7 +991,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 				parent.AsMutable().SetInitializer(p.makeNewCast(
  * 					p.addDeepCloneReparse(tag.TypeExpression().Type()),
  * 					parent.Initializer(),
- * 					false /*isAssertion* /))
+ * 					false, /*isAssertion* /
+ * 				))
  * 				p.finishMutatedNode(parent)
  * 			}
  * 		case ast.KindShorthandPropertyAssignment:
@@ -998,7 +1001,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 				shorthand.ObjectAssignmentInitializer = p.makeNewCast(
  * 					p.addDeepCloneReparse(tag.AsJSDocSatisfiesTag().TypeExpression.Type()),
  * 					shorthand.ObjectAssignmentInitializer,
- * 					false /*isAssertion* /)
+ * 					false, /*isAssertion* /
+ * 				)
  * 				p.finishMutatedNode(parent)
  * 			}
  * 		case ast.KindReturnStatement, ast.KindParenthesizedExpression, ast.KindExportAssignment:
@@ -1006,7 +1010,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 				parent.AsMutable().SetExpression(p.makeNewCast(
  * 					p.addDeepCloneReparse(tag.TypeExpression().Type()),
  * 					parent.Expression(),
- * 					false /*isAssertion* /))
+ * 					false, /*isAssertion* /
+ * 				))
  * 				p.finishMutatedNode(parent)
  * 			}
  * 		case ast.KindExpressionStatement:
@@ -1016,7 +1021,8 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 					bin.Right = p.makeNewCast(
  * 						p.addDeepCloneReparse(tag.TypeExpression().Type()),
  * 						bin.Right,
- * 						false /*isAssertion* /)
+ * 						false, /*isAssertion* /
+ * 					)
  * 					p.finishMutatedNode(bin.AsNode())
  * 				}
  * 			}
@@ -1071,13 +1077,13 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 					thisParam.AsParameterDeclaration().Type = p.addDeepCloneReparse(tag.AsJSDocThisTag().TypeExpression.Type())
  * 				}
  * 				p.finishReparsedNode(thisParam, tag.TagName())
- * 
+ *
  * 				newParams := p.nodeSliceArena.NewSlice(len(params) + 1)
  * 				newParams[0] = thisParam
  * 				for i, param := range params {
  * 					newParams[i+1] = param
  * 				}
- * 
+ *
  * 				fun.FunctionLikeData().Parameters = p.newNodeList(fun.ParameterList().Loc, newParams)
  * 				p.finishMutatedNode(fun)
  * 			}
@@ -1094,7 +1100,14 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 			parent = parent.Expression()
  * 		}
  * 		switch parent.Kind {
- * 		case ast.KindPropertyDeclaration, ast.KindMethodDeclaration, ast.KindConstructor, ast.KindGetAccessor, ast.KindSetAccessor, ast.KindBinaryExpression:
+ * 		case ast.KindMethodDeclaration, ast.KindGetAccessor, ast.KindSetAccessor:
+ * 			// In object literals these aren't class-like members, so JSDoc modifiers like @override
+ * 			// or @readonly aren't real modifiers there; reparsing them produces spurious grammar errors (#4437).
+ * 			if p.parsingContexts&(1<<PCObjectLiteralMembers) != 0 {
+ * 				return
+ * 			}
+ * 			fallthrough
+ * 		case ast.KindPropertyDeclaration, ast.KindConstructor, ast.KindBinaryExpression:
  * 			var keyword ast.Kind
  * 			switch tag.Kind {
  * 			case ast.KindJSDocReadonlyTag:
@@ -1127,7 +1140,7 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 	case ast.KindJSDocImplementsTag:
  * 		if class := getClassLikeData(parent); class != nil {
  * 			implementsTag := tag.AsJSDocImplementsTag()
- * 
+ *
  * 			if class.HeritageClauses != nil {
  * 				if implementsClause := core.Find(class.HeritageClauses.Nodes, func(node *ast.Node) bool {
  * 					return node.AsHeritageClause().Token == ast.KindImplementsKeyword
@@ -1138,10 +1151,10 @@ export function Parser_gatherTypeParameters(receiver: GoPtr<Parser>, j: GoPtr<No
  * 				}
  * 			}
  * 			typesList := p.newNodeList(implementsTag.ClassName.Loc, p.nodeSliceArena.NewSlice1(p.addDeepCloneReparse(implementsTag.ClassName)))
- * 
+ *
  * 			heritageClause := p.factory.NewHeritageClause(ast.KindImplementsKeyword, typesList)
  * 			p.finishReparsedNode(heritageClause, implementsTag.ClassName)
- * 
+ *
  * 			if class.HeritageClauses == nil {
  * 				heritageClauses := p.newNodeList(implementsTag.ClassName.Loc, p.nodeSliceArena.NewSlice1(heritageClause))
  * 				class.HeritageClauses = heritageClauses
@@ -1416,11 +1429,17 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         p = Node_Expression(p);
       }
       switch (p!.Kind) {
-        case KindPropertyDeclaration:
         case KindMethodDeclaration:
-        case KindConstructor:
         case KindGetAccessor:
         case KindSetAccessor:
+          // In object literals these aren't class-like members, so JSDoc modifiers like @override
+          // or @readonly aren't real modifiers there; reparsing them produces spurious grammar errors (#4437).
+          if ((receiver!.parsingContexts & (1 << PCObjectLiteralMembers)) !== 0) {
+            return;
+          }
+        // falls through
+        case KindPropertyDeclaration:
+        case KindConstructor:
         case KindBinaryExpression: {
           let keyword: Kind;
           switch (tag!.Kind) {
@@ -1742,9 +1761,6 @@ export function Parser_createExportModifier(receiver: GoPtr<Parser>, locationNod
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.getInnermostNameOfJSDocNamespace","kind":"method","status":"implemented","sigHash":"ac1b9ba70652d045ff6c6e6f9b99e1b2cbb117e9323300ac25e0add5536bb129","bodyHash":"41258fda59e760f5323bfc18738496739710358aeb64a87f6c281ff29e8f2890"}
  *
  * Go source:
- * // getInnermostNameOfJSDocNamespace returns the innermost identifier from a
- * // JSDoc namespace chain (ModuleDeclaration). For a simple identifier, it returns
- * // the identifier itself. For "A.B.C", it returns the identifier "C".
  * func (p *Parser) getInnermostNameOfJSDocNamespace(fullName *ast.Node) *ast.Node {
  * 	if fullName == nil {
  * 		return nil
@@ -1778,14 +1794,6 @@ export function Parser_getInnermostNameOfJSDocNamespace(receiver: GoPtr<Parser>,
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.wrapInJSDocNamespace","kind":"method","status":"implemented","sigHash":"66d23f1be67c8b2184d47d435b7bc7e9e411183490c9ac6a3f118c9f44a656c1","bodyHash":"f1eaf1d3f144a5b3585bd35be8695a77eecd8276f9908089bdcf270671188c70"}
  *
  * Go source:
- * // wrapInJSDocNamespace wraps a statement (typically a type alias) in namespace
- * // declarations corresponding to a JSDoc dotted name. For example, given name
- * // "A.B.C" and a type alias for C, this produces:
- * //
- * //	namespace A { namespace B { type C = ... } }
- * //
- * // If the name is a simple identifier (not a ModuleDeclaration), it returns the
- * // statement as-is.
  * func (p *Parser) wrapInJSDocNamespace(fullName *ast.Node, statement *ast.Node, nested bool) *ast.Node {
  * 	if fullName == nil || !ast.IsModuleDeclaration(fullName) {
  * 		return statement

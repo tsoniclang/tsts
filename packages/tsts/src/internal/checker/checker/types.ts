@@ -5923,11 +5923,11 @@ export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getBaseTypes","kind":"method","status":"implemented","sigHash":"da46159c9b6629014ce54b325b877f2e4fbb41933cf5c0dfdd4fb432fc8fe034","bodyHash":"f3cb5d4de03cdf0aae7f05f7edc7527160508a72418f3b510de88b6d0247d2c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getBaseTypes","kind":"method","status":"implemented","sigHash":"da46159c9b6629014ce54b325b877f2e4fbb41933cf5c0dfdd4fb432fc8fe034","bodyHash":"5de195bc641834d54c9aa056a7dc0a165f6aff53574d9b0e31965ef824d8d7b1"}
  *
  * Go source:
  * func (c *Checker) getBaseTypes(t *Type) []*Type {
- * 	if t.objectFlags&(ObjectFlagsClassOrInterface|ObjectFlagsReference) == 0 {
+ * 	if t.objectFlags&(ObjectFlagsClassOrInterface|ObjectFlagsTuple) == 0 {
  * 		return nil
  * 	}
  * 	data := t.AsInterfaceType()
@@ -5966,7 +5966,7 @@ export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<C
  * }
  */
 export function Checker_getBaseTypes(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
-  if ((t!.objectFlags & (ObjectFlagsClassOrInterface | ObjectFlagsReference)) === 0) {
+  if ((t!.objectFlags & (ObjectFlagsClassOrInterface | ObjectFlagsTuple)) === 0) {
     return [];
   }
   const data = Type_AsInterfaceType(t)!;
@@ -15974,33 +15974,34 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 	if ast.IsSourceFile(node) && !ast.IsExternalOrCommonJSModule(node.AsSourceFile()) {
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if node.Flags&ast.NodeFlagsInWithStatement != 0 {
  * 		// We cannot answer semantic questions within a with block, do not proceed any further
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	classDecl, isImplements := ast.TryGetClassImplementingOrExtendingExpressionWithTypeArguments(node)
  * 	var classType *Type
  * 	if classDecl != nil {
  * 		classType = c.getDeclaredTypeOfClassOrInterface(c.getSymbolOfDeclaration(classDecl))
  * 	}
- * 
+ *
  * 	if ast.IsPartOfTypeNode(node) {
  * 		typeFromTypeNode := c.getTypeFromTypeNode(node)
  * 		if classType != nil {
  * 			return c.getTypeWithThisArgument(
  * 				typeFromTypeNode,
  * 				classType.AsInterfaceType().thisType,
- * 				false /*needApparentType* /)
+ * 				false, /*needApparentType* /
+ * 			)
  * 		}
  * 		return typeFromTypeNode
  * 	}
- * 
+ *
  * 	if ast.IsExpressionNode(node) {
  * 		return c.getRegularTypeOfExpression(node)
  * 	}
- * 
+ *
  * 	if classType != nil && !isImplements {
  * 		// A SyntaxKind.ExpressionWithTypeArguments is considered a type node, except when it occurs in the
  * 		// extends clause of a class. We handle that case here.
@@ -16010,13 +16011,13 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if ast.IsTypeDeclaration(node) {
  * 		// In this case, we call getSymbolOfDeclaration instead of getSymbolAtLocation because it is a declaration
  * 		symbol := c.getSymbolOfDeclaration(node)
  * 		return c.getDeclaredTypeOfSymbol(symbol)
  * 	}
- * 
+ *
  * 	if ast.IsTypeDeclarationName(node) {
  * 		symbol := c.getSymbolAtLocation(node, false /*ignoreErrors* /)
  * 		if symbol != nil {
@@ -16024,7 +16025,7 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if ast.IsBindingElement(node) {
  * 		t := c.getTypeForVariableLikeDeclaration(node, true /*includeOptionality* /, CheckModeNormal)
  * 		if t != nil {
@@ -16032,7 +16033,7 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if ast.IsDeclaration(node) {
  * 		// In this case, we call getSymbolOfDeclaration instead of getSymbolLAtocation because it is a declaration
  * 		symbol := c.getSymbolOfDeclaration(node)
@@ -16041,7 +16042,7 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if ast.IsDeclarationNameOrImportPropertyName(node) {
  * 		symbol := c.getSymbolAtLocation(node, false /*ignoreErrors* /)
  * 		if symbol != nil {
@@ -16049,7 +16050,7 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if ast.IsBindingPattern(node) {
  * 		t := c.getTypeForVariableLikeDeclaration(node.Parent, true /*includeOptionality* /, CheckModeNormal)
  * 		if t != nil {
@@ -16057,7 +16058,7 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 		}
  * 		return c.errorType
  * 	}
- * 
+ *
  * 	if isInRightSideOfImportOrExportAssignment(node) {
  * 		symbol := c.getSymbolAtLocation(node, false /*ignoreErrors* /)
  * 		if symbol != nil {
@@ -16068,15 +16069,15 @@ export function Checker_getActualTypeVariable(receiver: GoPtr<Checker>, t: GoPtr
  * 			return c.getTypeOfSymbol(symbol)
  * 		}
  * 	}
- * 
+ *
  * 	if ast.IsMetaProperty(node.Parent) && node.Parent.AsMetaProperty().KeywordToken == node.Kind {
  * 		return c.checkMetaPropertyKeyword(node.Parent)
  * 	}
- * 
+ *
  * 	if ast.IsImportAttributes(node) {
  * 		return c.getGlobalImportAttributesType()
  * 	}
- * 
+ *
  * 	return c.errorType
  * }
  */

@@ -10,8 +10,6 @@ import * as maps from "../../go/maps.js";
  * 	m     map[K]V
  * 	owned bool
  * }
- *
- * The zero value is an empty map ready to use (m nil/undefined, owned false).
  */
 export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
   m: GoMap<K, V>;

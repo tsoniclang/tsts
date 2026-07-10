@@ -4,6 +4,7 @@ import { BigEndian, LittleEndian } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
 import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFileBytes as fs_ReadFileBytes, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
 import type { FileMode, FS, WalkDirFunc } from "../../../go/io/fs.js";
+import { Decode as utf16_Decode } from "../../../go/unicode/utf16.js";
 import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
 
@@ -28,8 +29,8 @@ interface DirEntryMethods {
  * }
  */
 export interface Common {
-  RootFor: (root: string) => FS;
-  IsReparsePoint: (path: string) => bool;
+  RootFor: (root: string) => GoPtr<FS>;
+  IsReparsePoint?: (path: string) => bool;
 }
 
 /**
@@ -89,7 +90,7 @@ export function SplitPath(p: string): [string, string] {
  * 	return vfs.RootFor(rootName), rootName, rest
  * }
  */
-export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [FS, string, string] {
+export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [GoPtr<FS>, string, string] {
   let [rootName, rest] = SplitPath(path);
   if (rest === "") {
     rest = ".";
@@ -437,10 +438,11 @@ function decodeUtf16Bytes(bytes: Uint8Array, order: ByteOrder): string {
   for (let offset = 0; offset + 1 < bytes.length; offset += 2) {
     codeUnits.push(order.Uint16([bytes[offset]!, bytes[offset + 1]!] as GoSlice<number>) as number);
   }
+  const runes = utf16_Decode(codeUnits);
   let result = "";
   const chunkSize = 8192;
-  for (let offset = 0; offset < codeUnits.length; offset += chunkSize) {
-    result += globalThis.String.fromCharCode(...codeUnits.slice(offset, offset + chunkSize));
+  for (let offset = 0; offset < runes.length; offset += chunkSize) {
+    result += globalThis.String.fromCodePoint(...runes.slice(offset, offset + chunkSize));
   }
   return result;
 }

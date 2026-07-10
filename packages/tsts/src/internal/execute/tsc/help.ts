@@ -233,10 +233,10 @@ export function getHeader(sys: System, message: string): GoSlice<string> {
  * 		}
  * 	}
  *
- * 	output = append(output, generateSectionOptionsOutput(sys, locale, diagnostics.COMMAND_LINE_FLAGS.Localize(locale), cliCommands, false, nil, nil)...)
+ * 	output = append(output, generateSectionOptionsOutput(sys, locale, diagnostics.COMMAND_LINE_FLAGS.Localize(locale), cliCommands /*subCategory* /, false /*beforeOptionsDescription* /, nil /*afterOptionsDescription* /, nil)...)
  *
  * 	after := diagnostics.You_can_learn_about_all_of_the_compiler_options_at_0.Localize(locale, "https://aka.ms/tsc")
- * 	output = append(output, generateSectionOptionsOutput(sys, locale, diagnostics.COMMON_COMPILER_OPTIONS.Localize(locale), configOpts, false, nil, &after)...)
+ * 	output = append(output, generateSectionOptionsOutput(sys, locale, diagnostics.COMMON_COMPILER_OPTIONS.Localize(locale), configOpts /*subCategory* /, false /*beforeOptionsDescription* /, nil, &after)...)
  *
  * 	for _, chunk := range output {
  * 		fmt.Fprint(sys.Writer(), chunk)
@@ -555,15 +555,15 @@ export function generateGroupOptionOutput(sys: System, locale: Locale, optionsLi
  * 		if option.Description != nil {
  * 			description = option.Description.Localize(locale)
  * 		}
- * 		text = append(text, getPrettyOutput(colors, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true)...)
+ * 		text = append(text, getPrettyOutput(colors, name, description, rightAlignOfLeft, leftAlignOfRight, terminalWidth, true /*colorLeft* /)...)
  * 		text = append(text, "\n")
  * 		if showAdditionalInfoOutput(valueCandidates, option) {
  * 			if valueCandidates != nil {
- * 				text = append(text, getPrettyOutput(colors, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false)...)
+ * 				text = append(text, getPrettyOutput(colors, valueCandidates.valueType, valueCandidates.possibleValues, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false /*colorLeft* /)...)
  * 				text = append(text, "\n")
  * 			}
  * 			if defaultValueDescription != "" {
- * 				text = append(text, getPrettyOutput(colors, diagnostics.X_default_Colon.Localize(locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false)...)
+ * 				text = append(text, getPrettyOutput(colors, diagnostics.X_default_Colon.Localize(locale), defaultValueDescription, rightAlignOfLeft, leftAlignOfRight, terminalWidth, false /*colorLeft* /)...)
  * 				text = append(text, "\n")
  * 			}
  * 		}
@@ -753,12 +753,20 @@ export function showAdditionalInfoOutput(valueCandidates: GoPtr<valueCandidate>,
  *
  * Go source:
  * func getValueCandidate(sys System, locale locale.Locale, option *tsoptions.CommandLineOption) *valueCandidate {
+ * 	// option.type might be "string" | "number" | "boolean" | "object" | "list" | Map<string, number | string>
+ * 	// string -- any of: string
+ * 	// number -- any of: number
+ * 	// boolean -- any of: boolean
+ * 	// object -- null
+ * 	// list -- one or more: , content depends on `option.element.type`, the same as others
+ * 	// Map<string, number | string> -- any of: key1, key2, ....
  * 	if option.Kind == tsoptions.CommandLineOptionTypeObject {
  * 		return nil
  * 	}
  *
  * 	res := &valueCandidate{}
  * 	if option.Kind == tsoptions.CommandLineOptionTypeListOrElement {
+ * 		// assert(option.type !== "listOrElement")
  * 		panic("no value candidate for list or element")
  * 	}
  *
@@ -881,6 +889,7 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
  *
  * Go source:
  * func getPrettyOutput(colors *colors, left string, right string, rightAlignOfLeft int, leftAlignOfRight int, terminalWidth int, colorLeft bool) []string {
+ * 	// !!! How does terminalWidth interact with UTF-8 encoding? Strada just assumed UTF-16.
  * 	res := make([]string, 0, 4)
  * 	isFirstLine := true
  * 	remainRight := right

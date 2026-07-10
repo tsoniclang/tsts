@@ -554,7 +554,7 @@ export interface ExpandoAssignmentInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::Binder","kind":"type","status":"implemented","sigHash":"d88cd5c54702ec4c7ebe3ba4c7dafe90cb53ba710d40678602adeeea1b8cc714","bodyHash":"d79dba50e3594bc759b78254714c32fbccc9c1b3b0f7238d807622c8d7e7f2e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::Binder","kind":"type","status":"implemented","sigHash":"d88cd5c54702ec4c7ebe3ba4c7dafe90cb53ba710d40678602adeeea1b8cc714","bodyHash":"ed9175ca9e2812ea33a99a415883131b3c7c5b43bcded49416847bd6d365730b"}
  *
  * Go source:
  * Binder struct {
@@ -589,7 +589,6 @@ export interface ExpandoAssignmentInfo {
  * 	flowListArena           core.Arena[ast.FlowList]
  * 	singleDeclarationsArena core.Arena[*ast.Node]
  * 	expandoAssignments      []ExpandoAssignmentInfo
- * 	nestedCJSExports        []*ast.Node
  * }
  */
 export interface Binder {
@@ -623,7 +622,6 @@ export interface Binder {
   flowListArena: Arena<FlowList>;
   singleDeclarationsArena: Arena<GoPtr<Node>>;
   expandoAssignments: GoSlice<ExpandoAssignmentInfo>;
-  nestedCJSExports: GoSlice<GoPtr<Node>>;
 }
 
 /**
@@ -742,7 +740,7 @@ export function putBinder(b: GoPtr<Binder>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::bindSourceFile","kind":"func","status":"implemented","sigHash":"3bb9f0443f458e9d47307ddda50f20ed23377349dbf4f986d2522d6232efeed5","bodyHash":"152654cc39de357371ef910c53fcd59442f143330ff77b58401c94b1eab83a95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::bindSourceFile","kind":"func","status":"implemented","sigHash":"3bb9f0443f458e9d47307ddda50f20ed23377349dbf4f986d2522d6232efeed5","bodyHash":"9d41c3043daacb1fcfaa5acfa911ece206bff650980e43290a266ff14afd2e36"}
  *
  * Go source:
  * func bindSourceFile(file *ast.SourceFile) {
@@ -755,7 +753,6 @@ export function putBinder(b: GoPtr<Binder>): void {
  * 		b.bindDeferredExpandoAssignments()
  * 		file.SymbolCount = b.symbolCount
  * 		file.ClassifiableNames = b.classifiableNames
- * 		file.NestedCJSExports = b.nestedCJSExports
  * 	})
  * }
  */
@@ -768,7 +765,6 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
     Binder_bindDeferredExpandoAssignments(b);
     file!.SymbolCount = b.symbolCount;
     file!.ClassifiableNames = b.classifiableNames;
-    file!.NestedCJSExports = b.nestedCJSExports ?? [];
     putBinder(b);
   });
 }
@@ -1220,7 +1216,7 @@ export function Binder_getDisplayName(receiver: GoPtr<Binder>, node: GoPtr<Node>
  * }
  */
 export function GetSymbolNameForPrivateIdentifier(containingClassSymbol: GoPtr<Symbol>, description: string): string {
-  return InternalSymbolNamePrefix + "#" + strconv.Itoa(GetSymbolId(containingClassSymbol)) + "@" + description;
+  return InternalSymbolNamePrefix + "#" + strconv.Itoa(globalThis.Number(GetSymbolId(containingClassSymbol)) as int) + "@" + description;
 }
 
 /**
@@ -1284,7 +1280,7 @@ export function Binder_declareModuleMember(receiver: GoPtr<Binder>, node: GoPtr<
     const exportKind: SymbolFlags = (symbolFlags & SymbolFlagsValue) !== 0 ? SymbolFlagsExportValue : SymbolFlagsNone;
     const local = Binder_declareSymbol(receiver, GetLocals(container)!, undefined, node, exportKind, symbolExcludes);
     local!.ExportSymbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, symbolFlags, symbolExcludes);
-    (Node_ExportableData(node) as unknown as { LocalSymbol?: GoPtr<Symbol> }).LocalSymbol = local;
+    Node_ExportableData(node)!.LocalSymbol = local;
     return local;
   }
   return Binder_declareSymbol(receiver, GetLocals(container)!, undefined, node, symbolFlags, symbolExcludes);
@@ -2132,10 +2128,10 @@ export function Binder_bindSourceFileIfExternalModule(receiver: GoPtr<Binder>): 
   } else if (IsJsonSourceFile(receiver!.file)) {
     Binder_bindSourceFileAsExternalModule(receiver);
     const fileDecl = Node_DeclarationData(fileNode);
-    const originalSymbol = (fileDecl as unknown as { Symbol?: GoPtr<Symbol> })?.Symbol;
+    const originalSymbol = fileDecl?.Symbol;
     const fileSymbol = Node_Symbol(fileNode);
     Binder_declareSymbol(receiver, GetExports(fileSymbol), fileSymbol, fileNode, SymbolFlagsProperty, SymbolFlagsAll);
-    (fileDecl as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = originalSymbol;
+    fileDecl!.Symbol = originalSymbol;
   }
 }
 
@@ -2365,22 +2361,6 @@ export function Binder_bindExportAssignment(receiver: GoPtr<Binder>, node: GoPtr
     if (AsExportAssignment(node)!.IsExportEquals) {
       SetValueDeclaration(symbol!, node);
     }
-  }
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.trackNestedCJSExport","kind":"method","status":"implemented","sigHash":"ae4373312218a61507c84c337144eb24728e58fa26d75a0848344beeafb05fdd","bodyHash":"05f0dbac7946e9030e10d6672a41b481d774f46496b9da993d273a7b5af92150"}
- *
- * Go source:
- * func (b *Binder) trackNestedCJSExport(node *ast.Node) {
- * 	if !(ast.IsSourceFile(node.Parent) || ast.IsExpressionStatement(node.Parent) && ast.IsSourceFile(node.Parent.Parent)) {
- * 		b.nestedCJSExports = append(b.nestedCJSExports, node)
- * 	}
- * }
- */
-export function Binder_trackNestedCJSExport(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  if (!(IsSourceFile(node!.Parent) || IsExpressionStatement(node!.Parent) && IsSourceFile(node!.Parent!.Parent))) {
-    receiver!.nestedCJSExports = [...(receiver!.nestedCJSExports ?? []), node!];
   }
 }
 
@@ -2694,12 +2674,11 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleExportsAssignment","kind":"method","status":"implemented","sigHash":"8a872c15798bb09bd3e05fe74dc2a55e50eeef571ec5ab1df5a09a81185b12b5","bodyHash":"e896d83dea0ceba0beac71ba760af1190dc14633470df6e770c438212d99bb62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleExportsAssignment","kind":"method","status":"implemented","sigHash":"8a872c15798bb09bd3e05fe74dc2a55e50eeef571ec5ab1df5a09a81185b12b5","bodyHash":"be81113ef14d91e7537ea05d7fa9dd04555f302aee108b034045f44741ee802c"}
  *
  * Go source:
  * func (b *Binder) bindModuleExportsAssignment(node *ast.Node) {
  * 	if b.setCommonJSModuleIndicator(node) {
- * 		b.trackNestedCJSExport(node)
  * 		container := b.file.AsNode()
  * 		flags := core.IfElse(ast.ExpressionIsAlias(node.AsBinaryExpression().Right), ast.SymbolFlagsAlias, ast.SymbolFlagsProperty)
  * 		symbol := b.declareSymbol(ast.GetExports(container.Symbol()), container.Symbol(), node, flags, 0)
@@ -2709,7 +2688,6 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
  */
 export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   if (Binder_setCommonJSModuleIndicator(receiver, node)) {
-    Binder_trackNestedCJSExport(receiver, node);
     const container = receiver!.file as unknown as GoPtr<Node>;
     const flags = IfElse(ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsProperty) as SymbolFlags;
     const symbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, 0 as SymbolFlags);
@@ -2858,12 +2836,11 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportsOrObjectDefineProperty","kind":"method","status":"implemented","sigHash":"f57ada5e475e7405f5db2d7aa41556cd48662d933d2ae3b60e8232f90f7c5b6b","bodyHash":"297fab573833ba0977c287beca4abb9682c1414fa09e9ae0622c2c350ca120c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportsOrObjectDefineProperty","kind":"method","status":"implemented","sigHash":"f57ada5e475e7405f5db2d7aa41556cd48662d933d2ae3b60e8232f90f7c5b6b","bodyHash":"f15d33463af915f9982ca8be480ac994acff07a78c065f274895b1f239c15c15"}
  *
  * Go source:
  * func (b *Binder) bindExportsOrObjectDefineProperty(node *ast.Node) {
  * 	if b.setCommonJSModuleIndicator(node) {
- * 		b.trackNestedCJSExport(node)
  * 		container := b.file.AsNode()
  * 		flags := core.IfElse(ast.IsBinaryExpression(node) && ast.ExpressionIsAlias(node.AsBinaryExpression().Right), ast.SymbolFlagsAlias, ast.SymbolFlagsFunctionScopedVariable)
  * 		b.declareSymbol(ast.GetExports(container.Symbol()), container.Symbol(), node, flags, ast.SymbolFlagsFunctionScopedVariableExcludes)
@@ -2872,7 +2849,6 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
  */
 export function Binder_bindExportsOrObjectDefineProperty(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
   if (Binder_setCommonJSModuleIndicator(receiver, node)) {
-    Binder_trackNestedCJSExport(receiver, node);
     const container = receiver!.file as unknown as GoPtr<Node>;
     const flags = IfElse(IsBinaryExpression(node) && ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsFunctionScopedVariable) as SymbolFlags;
     Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, SymbolFlagsFunctionScopedVariableExcludes);
@@ -3332,14 +3308,14 @@ export function Binder_lookupEntity(receiver: GoPtr<Binder>, node: GoPtr<Node>, 
 export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, container: GoPtr<Node>): GoPtr<Symbol> {
   const localsContainer = Node_LocalsContainerData(container);
   if (localsContainer !== undefined) {
-    const localsMap = (localsContainer as unknown as { Locals?: SymbolTable }).Locals;
+    const localsMap = localsContainer.Locals;
     const local = localsMap?.get(name);
     if (local !== undefined) {
       return OrElse(local!.ExportSymbol, local);
     }
   }
   const declaration = Node_DeclarationData(container);
-  const declSymbol = (declaration as unknown as { Symbol?: GoPtr<Symbol> })?.Symbol;
+  const declSymbol = declaration?.Symbol;
   if (declaration !== undefined && declSymbol !== undefined) {
     return declSymbol!.Exports?.get(name);
   }
@@ -3931,7 +3907,7 @@ export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>,
         if (receiver!.hasExplicitReturn) {
           node!.Flags = (node!.Flags | NodeFlagsHasExplicitReturn) as NodeFlags;
         }
-        (bodyData as unknown as { EndFlowNode?: GoPtr<FlowNode> }).EndFlowNode = receiver!.currentFlow;
+        bodyData.EndFlowNode = receiver!.currentFlow;
       }
     }
     if (receiver!.seenThisKeyword) {
@@ -4144,7 +4120,7 @@ export function Binder_bindChildren(receiver: GoPtr<Binder>, node: GoPtr<Node>):
   if (receiver!.currentFlow === receiver!.unreachableFlow) {
     const flowNodeData = Node_FlowNodeData(node);
     if (flowNodeData !== undefined) {
-      (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = undefined;
+      flowNodeData.FlowNode = undefined;
     }
     if (IsPotentiallyExecutableNode(node)) {
       node!.Flags = (node!.Flags | NodeFlagsUnreachable) as NodeFlags;
@@ -4156,7 +4132,7 @@ export function Binder_bindChildren(receiver: GoPtr<Binder>, node: GoPtr<Node>):
   if (node!.Kind >= KindFirstStatement && node!.Kind <= KindLastStatement) {
     const flowNodeData = Node_FlowNodeData(node);
     if (flowNodeData !== undefined) {
-      (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = receiver!.currentFlow;
+      flowNodeData.FlowNode = receiver!.currentFlow;
     }
   }
   switch (node!.Kind) {
@@ -5113,7 +5089,7 @@ export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>)
     Binder_bind(receiver, clause);
     fallthroughFlow = receiver!.currentFlow;
     if ((receiver!.currentFlow!.Flags & FlowFlagsUnreachable) === 0 && i !== clauses.length - 1) {
-      (AsCaseOrDefaultClause(clause) as unknown as { FallthroughFlowNode?: GoPtr<FlowNode> }).FallthroughFlowNode = receiver!.currentFlow;
+      AsCaseOrDefaultClause(clause)!.FallthroughFlowNode = receiver!.currentFlow;
     }
     i++;
   }
@@ -5964,7 +5940,7 @@ export function Binder_bindInitializer(receiver: GoPtr<Binder>, node: GoPtr<Node
 export function setFlowNode(node: GoPtr<Node>, flowNode: GoPtr<FlowNode>): void {
   const data = Node_FlowNodeData(node);
   if (data !== undefined) {
-    (data as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = flowNode;
+    data.FlowNode = flowNode;
   }
 }
 
@@ -5988,16 +5964,16 @@ export function setFlowNode(node: GoPtr<Node>, flowNode: GoPtr<FlowNode>): void 
 export function setReturnFlowNode(node: GoPtr<Node>, returnFlowNode: GoPtr<FlowNode>): void {
   switch (node!.Kind) {
     case KindConstructor:
-      (AsConstructorDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      AsConstructorDeclaration(node)!.ReturnFlowNode = returnFlowNode;
       break;
     case KindFunctionDeclaration:
-      (AsFunctionDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      AsFunctionDeclaration(node)!.ReturnFlowNode = returnFlowNode;
       break;
     case KindFunctionExpression:
-      (AsFunctionExpression(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      AsFunctionExpression(node)!.ReturnFlowNode = returnFlowNode;
       break;
     case KindClassStaticBlockDeclaration:
-      (AsClassStaticBlockDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      AsClassStaticBlockDeclaration(node)!.ReturnFlowNode = returnFlowNode;
       break;
   }
 }
@@ -6027,7 +6003,7 @@ export function isGeneratorFunctionExpression(node: GoPtr<Node>): bool {
  */
 export function Binder_addToContainerChain(receiver: GoPtr<Binder>, next: GoPtr<Node>): void {
   if (receiver!.lastContainer !== undefined) {
-    (Node_LocalsContainerData(receiver!.lastContainer) as unknown as { NextContainer?: GoPtr<Node> })!.NextContainer = next;
+    Node_LocalsContainerData(receiver!.lastContainer)!.NextContainer = next;
   }
   receiver!.lastContainer = next;
 }
@@ -6056,7 +6032,7 @@ export function Binder_addToContainerChain(receiver: GoPtr<Binder>, next: GoPtr<
  */
 export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: GoPtr<Symbol>, node: GoPtr<Node>, symbolFlags: SymbolFlags): void {
   symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
-  (Node_DeclarationData(node) as unknown as { Symbol?: GoPtr<Symbol> })!.Symbol = symbol_;
+  Node_DeclarationData(node)!.Symbol = symbol_;
   if (symbol_!.Declarations === undefined || symbol_!.Declarations.length === 0) {
     symbol_!.Declarations = Binder_newSingleDeclaration(receiver, node);
   } else {

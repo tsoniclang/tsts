@@ -571,7 +571,7 @@ export function Checker_isSourceElementUnreachable(receiver: GoPtr<Checker>, nod
   } else {
     const flowNodeData = Node_FlowNodeData(node);
     if (flowNodeData !== undefined) {
-      const flowNode = (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode;
+      const flowNode = flowNodeData.FlowNode;
       if (flowNode !== undefined) {
         return !Checker_isReachableFlowNode(receiver, flowNode);
       }

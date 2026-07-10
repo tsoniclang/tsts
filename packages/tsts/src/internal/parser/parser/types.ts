@@ -1804,13 +1804,19 @@ export function Parser_parseTypeAssertion(receiver: GoPtr<Parser>): GoPtr<Node> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.tryParseTypeArgumentsInExpression","kind":"method","status":"implemented","sigHash":"9b04580cfab0194752ab9a6b573e7be4da14ae1d4e0937eda724306306b4adb8","bodyHash":"960b024e0d34f97103d4479757259933c5356f872d5b6afba628975c00473fe8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.tryParseTypeArgumentsInExpression","kind":"method","status":"implemented","sigHash":"9b04580cfab0194752ab9a6b573e7be4da14ae1d4e0937eda724306306b4adb8","bodyHash":"41325b42509f9dd1d7ee795612f0019dbbcab5bcdd6453054d12e8493c138540"}
  *
  * Go source:
  * func (p *Parser) tryParseTypeArgumentsInExpression() *ast.NodeList {
  * 	// TypeArguments must not be parsed in JavaScript files to avoid ambiguity with binary operators.
+ * 	// Check the cheap preconditions before saving the parser state: unless the current token is `<`
+ * 	// (or `<<`, which reScanLessThanToken would split), there is nothing to speculatively parse and
+ * 	// the mark/rewind would be a no-op.
+ * 	if p.contextFlags&ast.NodeFlagsJavaScriptFile != 0 || (p.token != ast.KindLessThanToken && p.token != ast.KindLessThanLessThanToken) {
+ * 		return nil
+ * 	}
  * 	state := p.mark()
- * 	if p.contextFlags&ast.NodeFlagsJavaScriptFile == 0 && p.reScanLessThanToken() == ast.KindLessThanToken {
+ * 	if p.reScanLessThanToken() == ast.KindLessThanToken {
  * 		p.nextToken()
  * 		typeArguments := p.parseDelimitedList(PCTypeArguments, (*Parser).parseType)
  * 		// If it doesn't have the closing `>` then it's definitely not an type argument list.

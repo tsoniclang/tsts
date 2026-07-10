@@ -11,6 +11,7 @@ import {
   clearCachedInferences,
 } from "./inference.js";
 import type { Type } from "./types.js";
+import { isThisTypeParameter } from "./utilities.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperKind","kind":"type","status":"implemented","sigHash":"3af927afc5f2ac6455d13aa4237799729a777fd4ef0b1bc582578d482edf0cb5","bodyHash":"93afd4209ed7acb0c7063285beb2cccdf1426ddedee7dce25c71f2770bdc60d2"}
@@ -69,17 +70,29 @@ export function TypeMapper_Kind(receiver: GoPtr<TypeMapper>): TypeMapperKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperData","kind":"type","status":"implemented","sigHash":"4649cb141073582297deefb530f542430d796079063ef027818276bd88663ea8","bodyHash":"2eca3e0d6789f5d4a9e42697fc145fec92c7347398a63786f4f7524e6304158a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::TypeMapper.MapsThisOnly","kind":"method","status":"implemented","sigHash":"f6a81fcfc7d34506ac1f2ae0fbef4ef8d0b4f726e8a0c2655f05d9a508c4eea2","bodyHash":"ffc6ff1470b2e3d658badab993cbec927dc54dd21108ef9cdd8940dcbf621b24"}
+ *
+ * Go source:
+ * func (m *TypeMapper) MapsThisOnly() bool   { return m.data.MapsThisOnly() }
+ */
+export function TypeMapper_MapsThisOnly(receiver: GoPtr<TypeMapper>): bool {
+  return receiver!.data.MapsThisOnly();
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::TypeMapperData","kind":"type","status":"implemented","sigHash":"4649cb141073582297deefb530f542430d796079063ef027818276bd88663ea8","bodyHash":"dc1868d223ac29c7708a26c01ae6376cdf535461fe58def8548bf65e685c62b8"}
  *
  * Go source:
  * TypeMapperData interface {
  * 	Map(t *Type) *Type
  * 	Kind() TypeMapperKind
+ * 	MapsThisOnly() bool
  * }
  */
 export interface TypeMapperData extends GoInterfaceValue<unknown> {
   Map(t: GoPtr<Type>): GoPtr<Type>;
   Kind(): TypeMapperKind;
+  MapsThisOnly(): bool;
 }
 
 /**
@@ -225,6 +238,16 @@ export function TypeMapperBase_Kind(receiver: GoPtr<TypeMapperBase>): TypeMapper
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::TypeMapperBase.MapsThisOnly","kind":"method","status":"implemented","sigHash":"31e149bf8af65c781260de282e3c35b967fa5b837785c53c10f1f64831e448ed","bodyHash":"2510447137cd84eb63e55c7294318cdb6fe73e41231541407c7542d17be4743d"}
+ *
+ * Go source:
+ * func (m *TypeMapperBase) MapsThisOnly() bool   { return false }
+ */
+export function TypeMapperBase_MapsThisOnly(receiver: GoPtr<TypeMapperBase>): bool {
+  return false;
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::SimpleTypeMapper","kind":"type","status":"implemented","sigHash":"18f1b0f031cf526f482f5b0052883312586c7d7bc59f979e5beddb717cc022a1","bodyHash":"85cfca898955cc7df26c9dadd16046fe02020f4903f1fca381cf5edfd4f6a23d"}
  *
  * Go source:
@@ -265,6 +288,7 @@ function SimpleTypeMapper_as_TypeMapperData(receiver: GoPtr<SimpleTypeMapper>): 
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => SimpleTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => SimpleTypeMapper_Kind(receiver),
+    MapsThisOnly: (): bool => SimpleTypeMapper_MapsThisOnly(receiver),
   };
 }
 
@@ -296,6 +320,18 @@ export function SimpleTypeMapper_Map(receiver: GoPtr<SimpleTypeMapper>, t: GoPtr
  */
 export function SimpleTypeMapper_Kind(receiver: GoPtr<SimpleTypeMapper>): TypeMapperKind {
   return TypeMapperKindSimple;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::SimpleTypeMapper.MapsThisOnly","kind":"method","status":"implemented","sigHash":"a383ff3667df1b03cf819f11b7c173dc8468448b24e31aa396f3ec51fa43e085","bodyHash":"feca748c25aae1495b6482794fc5c6a8ec7da87aeed32dbe6c51035dfea1a8fc"}
+ *
+ * Go source:
+ * func (m *SimpleTypeMapper) MapsThisOnly() bool {
+ * 	return isThisTypeParameter(m.source)
+ * }
+ */
+export function SimpleTypeMapper_MapsThisOnly(receiver: GoPtr<SimpleTypeMapper>): bool {
+  return isThisTypeParameter(receiver!.source);
 }
 
 /**
@@ -339,6 +375,7 @@ function ArrayTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayTypeMapper>): Ty
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => ArrayTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => ArrayTypeMapper_Kind(receiver),
+    MapsThisOnly: (): bool => ArrayTypeMapper_MapsThisOnly(receiver),
   };
 }
 
@@ -375,6 +412,18 @@ export function ArrayTypeMapper_Map(receiver: GoPtr<ArrayTypeMapper>, t: GoPtr<T
  */
 export function ArrayTypeMapper_Kind(receiver: GoPtr<ArrayTypeMapper>): TypeMapperKind {
   return TypeMapperKindArray;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::ArrayTypeMapper.MapsThisOnly","kind":"method","status":"implemented","sigHash":"060d71a7b988d62ca8e738f52dc57d9798b14cb7e7af5d8bc574bf52ce3b4d6e","bodyHash":"3fd3434fafa8d75912bd44c45cb194785afdacd628fac6dd8030c1896b70b070"}
+ *
+ * Go source:
+ * func (m *ArrayTypeMapper) MapsThisOnly() bool {
+ * 	return len(m.sources) == 1 && isThisTypeParameter(m.sources[0])
+ * }
+ */
+export function ArrayTypeMapper_MapsThisOnly(receiver: GoPtr<ArrayTypeMapper>): bool {
+  return receiver!.sources.length === 1 && isThisTypeParameter(receiver!.sources[0]);
 }
 
 /**
@@ -418,6 +467,7 @@ function ArrayToSingleTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayToSingle
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => ArrayToSingleTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
+    MapsThisOnly: (): bool => ArrayToSingleTypeMapper_MapsThisOnly(receiver),
   };
 }
 
@@ -437,6 +487,18 @@ export function ArrayToSingleTypeMapper_Map(receiver: GoPtr<ArrayToSingleTypeMap
     return receiver!.target;
   }
   return t;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::ArrayToSingleTypeMapper.MapsThisOnly","kind":"method","status":"implemented","sigHash":"bfe88ee633ece5acd69b13f31c3eed1bb84a44163727d5b44288dd337f73ee8c","bodyHash":"28f8f62fb190b7ce415b3551eccf60ad9e083d7b30055e28e8652e75dc9b703b"}
+ *
+ * Go source:
+ * func (m *ArrayToSingleTypeMapper) MapsThisOnly() bool {
+ * 	return len(m.sources) == 1 && isThisTypeParameter(m.sources[0])
+ * }
+ */
+export function ArrayToSingleTypeMapper_MapsThisOnly(receiver: GoPtr<ArrayToSingleTypeMapper>): bool {
+  return receiver!.sources.length === 1 && isThisTypeParameter(receiver!.sources[0]);
 }
 
 /**
@@ -480,6 +542,7 @@ function DeferredTypeMapper_as_TypeMapperData(receiver: GoPtr<DeferredTypeMapper
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => DeferredTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
+    MapsThisOnly: (): bool => DeferredTypeMapper_MapsThisOnly(receiver),
   };
 }
 
@@ -504,6 +567,18 @@ export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: G
     }
   }
   return t;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::DeferredTypeMapper.MapsThisOnly","kind":"method","status":"implemented","sigHash":"b22a5ca14dca70a01d677c116d9a44127e34b479648426223434aa854e267a36","bodyHash":"d47296ed960cc7de28a4038033c3e7a2c16e6d2e92df25006c768f75afcd9c6f"}
+ *
+ * Go source:
+ * func (m *DeferredTypeMapper) MapsThisOnly() bool {
+ * 	return len(m.sources) == 1 && isThisTypeParameter(m.sources[0])
+ * }
+ */
+export function DeferredTypeMapper_MapsThisOnly(receiver: GoPtr<DeferredTypeMapper>): bool {
+  return receiver!.sources.length === 1 && isThisTypeParameter(receiver!.sources[0]);
 }
 
 /**
@@ -543,6 +618,7 @@ function FunctionTypeMapper_as_TypeMapperData(receiver: GoPtr<FunctionTypeMapper
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => FunctionTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
+    MapsThisOnly: (): bool => TypeMapperBase_MapsThisOnly(undefined),
   };
 }
 
@@ -599,6 +675,7 @@ function MergedTypeMapper_as_TypeMapperData(receiver: GoPtr<MergedTypeMapper>): 
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => MergedTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => MergedTypeMapper_Kind(receiver),
+    MapsThisOnly: (): bool => TypeMapperBase_MapsThisOnly(undefined),
   };
 }
 
@@ -671,6 +748,7 @@ function CompositeTypeMapper_as_TypeMapperData(receiver: GoPtr<CompositeTypeMapp
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => CompositeTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
+    MapsThisOnly: (): bool => TypeMapperBase_MapsThisOnly(undefined),
   };
 }
 
@@ -739,6 +817,7 @@ function InferenceTypeMapper_as_TypeMapperData(receiver: GoPtr<InferenceTypeMapp
     [goReceiverKey]: receiver,
     Map: (t: GoPtr<Type>): GoPtr<Type> => InferenceTypeMapper_Map(receiver, t),
     Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
+    MapsThisOnly: (): bool => TypeMapperBase_MapsThisOnly(undefined),
   };
 }
 

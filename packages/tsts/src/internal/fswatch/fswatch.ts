@@ -2,16 +2,12 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoSlice } from "../../go/compat.js";
 import type { Closer } from "../../go/io.js";
 import * as errors from "../../go/errors.js";
+import * as nodeFs from "node:fs";
+import * as nodePath from "node:path";
 
-// Host-native facade for the upstream internal/fswatch package — the vendored
-// fsnotify fork (fanotify / FSEvents / kqueue / inotify / ReadDirectoryChangesW,
-// ~270 units) that replaced internal/vfs/vfswatch upstream. TSTS does not port
-// the OS-level watch internals; file watching is a host concern. This module
-// exposes only the public surface that internal/execute/watcher consumes, with
-// a host stub whose watch operations throw TSGO_EXTERNAL_FACADE_UNIMPLEMENTED.
-// Watch mode is therefore unsupported in the TSTS host until a real Node-backed
-// backend is provided. Classified host-native in porter.config.json; not
-// porter-unit-tracked (no @tsgo-unit headers).
+// Host-native facade for the upstream internal/fswatch package. The OS-specific
+// Go backends terminate at this boundary; Node's fs.watch supplies the same
+// validated, batched subscription contract to the ported watch manager.
 
 // --- event.go ---
 
@@ -57,6 +53,12 @@ export interface WatchOption {
   readonly ignore?: (path: string) => bool;
 }
 
+export interface WatchDirectoryRequest {
+  Dir: string;
+  Callback: WatchCallback;
+  Options: GoSlice<WatchOption>;
+}
+
 // WithIgnore returns a WatchOption that drops events for paths where fn returns
 // true.
 export function WithIgnore(fn: (path: string) => bool): WatchOption {
@@ -82,35 +84,143 @@ export interface Watcher {
   Available(): bool;
   HasFastRecursiveBackend(): bool;
   WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [Watch, GoError];
+  WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Watch>, GoError];
   WatchFile(path: string, fn: WatchCallback): [Watch, GoError];
 }
 
-const TSGO_FSWATCH_UNIMPLEMENTED =
-  "TSGO_EXTERNAL_FACADE_UNIMPLEMENTED internal/fswatch host backend (watch mode is not supported in the TSTS host)";
+interface ParsedWatchOptions {
+  recursive: bool;
+  ignore: ((path: string) => bool) | undefined;
+}
 
-// hostWatcher is the host stub. The introspection methods return inert values so
-// non-watch setup paths (e.g. debug-logging the backend name) do not fault; the
-// actual watch operations throw, since TSTS provides no OS file watching.
-class hostWatcher implements Watcher {
-  Name(): string {
-    return "host";
-  }
-  Available(): bool {
-    return false as bool;
-  }
-  HasFastRecursiveBackend(): bool {
-    return false as bool;
-  }
-  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [Watch, GoError] {
-    throw new globalThis.Error(TSGO_FSWATCH_UNIMPLEMENTED);
-  }
-  WatchFile(path: string, fn: WatchCallback): [Watch, GoError] {
-    throw new globalThis.Error(TSGO_FSWATCH_UNIMPLEMENTED);
+class nodeWatch implements Watch {
+  private closed = false;
+
+  constructor(private readonly watcher: nodeFs.FSWatcher) {}
+
+  Close(): GoError {
+    if (!this.closed) {
+      this.closed = true;
+      this.watcher.close();
+    }
+    return undefined;
   }
 }
 
+class hostWatcher implements Watcher {
+  Name(): string {
+    return "node-fs";
+  }
+  Available(): bool {
+    return true as bool;
+  }
+  HasFastRecursiveBackend(): bool {
+    return (process.platform === "darwin" || process.platform === "win32") as bool;
+  }
+  WatchDirectory(dir: string, fn: WatchCallback, ...opts: GoSlice<WatchOption>): [Watch, GoError] {
+    const [watches, err] = this.WatchDirectories([{ Dir: dir, Callback: fn, Options: opts }]);
+    return err === undefined ? [watches[0]!, undefined] : [undefined as unknown as Watch, err];
+  }
+  WatchDirectories(requests: GoSlice<WatchDirectoryRequest>): [GoSlice<Watch>, GoError] {
+    const validated: Array<{ request: WatchDirectoryRequest; options: ParsedWatchOptions }> = [];
+    for (const request of requests) {
+      const err = validateDirectoryRequest(request);
+      if (err !== undefined) return [[], err];
+      validated.push({ request, options: parseWatchOptions(request.Options) });
+    }
+
+    const watches: GoSlice<Watch> = [];
+    for (const entry of validated) {
+      const [watch, err] = createDirectoryWatch(entry.request.Dir, entry.request.Callback, entry.options);
+      if (err !== undefined) {
+        for (const opened of watches) opened.Close();
+        return [[], err];
+      }
+      watches.push(watch);
+    }
+    return [watches, undefined];
+  }
+  WatchFile(path: string, fn: WatchCallback): [Watch, GoError] {
+    if (!nodePath.isAbsolute(path)) return [undefined as unknown as Watch, new globalThis.Error("fswatch: path must be absolute")];
+    if (typeof fn !== "function") return [undefined as unknown as Watch, new globalThis.Error("fswatch: callback must not be nil")];
+    const parent = nodePath.dirname(path);
+    if (parent === path) return [undefined as unknown as Watch, new globalThis.Error("fswatch: cannot watch a root path")];
+    const expected = nodePath.resolve(path);
+    return createDirectoryWatch(parent, (events, err) => {
+      if (err !== undefined) {
+        fn([], err);
+        return;
+      }
+      const matching = events.filter((event) => nodePath.resolve(event.Path) === expected);
+      if (matching.length > 0) fn(matching, undefined);
+    }, { recursive: false as bool, ignore: undefined });
+  }
+}
+
+function validateDirectoryRequest(request: WatchDirectoryRequest): GoError {
+  if (!nodePath.isAbsolute(request.Dir)) return new globalThis.Error("fswatch: path must be absolute");
+  if (typeof request.Callback !== "function") return new globalThis.Error("fswatch: callback must not be nil");
+  try {
+    if (!nodeFs.statSync(request.Dir).isDirectory()) return new globalThis.Error(`fswatch: not a directory: ${request.Dir}`);
+  } catch (error) {
+    return error instanceof globalThis.Error ? error : new globalThis.Error(String(error));
+  }
+  return undefined;
+}
+
+function parseWatchOptions(options: GoSlice<WatchOption>): ParsedWatchOptions {
+  let recursive = false as bool;
+  let ignore: ((path: string) => bool) | undefined;
+  for (const option of options) {
+    if (option.recursive) recursive = true as bool;
+    if (option.ignore !== undefined) ignore = option.ignore;
+  }
+  return { recursive, ignore };
+}
+
+function createDirectoryWatch(dir: string, callback: WatchCallback, options: ParsedWatchOptions): [Watch, GoError] {
+  const pending = new globalThis.Map<string, EventKind>();
+  let scheduled = false;
+  let terminated = false;
+  const flush = (): void => {
+    scheduled = false;
+    if (terminated || pending.size === 0) return;
+    const events = [...pending].sort(([left], [right]) => compareBytes(left, right)).map(([Path, Kind]) => ({ Path, Kind }));
+    pending.clear();
+    callback(events, undefined);
+  };
+  try {
+    const watcher = nodeFs.watch(dir, { recursive: options.recursive }, (_eventType, fileName) => {
+      if (fileName === null) {
+        callback([], ErrOverflow);
+        return;
+      }
+      const eventPath = nodePath.resolve(dir, fileName.toString());
+      if (options.ignore?.(eventPath)) return;
+      pending.set(eventPath, nodeFs.existsSync(eventPath) ? EventUpdate : EventDelete);
+      if (!scheduled) {
+        scheduled = true;
+        queueMicrotask(flush);
+      }
+    });
+    watcher.on("error", () => {
+      if (terminated) return;
+      terminated = true;
+      pending.clear();
+      callback([], ErrWatchTerminated);
+    });
+    return [new nodeWatch(watcher), undefined];
+  } catch (error) {
+    return [undefined as unknown as Watch, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
+  }
+}
+
+function compareBytes(left: string, right: string): number {
+  return Buffer.compare(Buffer.from(left), Buffer.from(right));
+}
+
 // Default returns the recommended watcher for the current OS. In the TSTS host
-// this is the unimplemented stub.
+// this is the Node host implementation.
 export function Default(): Watcher {
   return new hostWatcher();
 }

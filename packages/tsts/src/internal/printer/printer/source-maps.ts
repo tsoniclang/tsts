@@ -200,7 +200,7 @@ export function Printer_writeLinesAndIndent(receiver: GoPtr<Printer>, lineCount:
  * 	if p.Options.PreserveSourceNewlines {
  * 		leadingNewlines := p.getLeadingLineTerminatorCount(parent, node, LFNone)
  * 		if leadingNewlines > 0 {
- * 			p.writeLinesAndIndent(leadingNewlines, false) // writeSpaceIfNotIndenting=false
+ * 			p.writeLinesAndIndent(leadingNewlines /*writeSpaceIfNotIndenting* /, false)
  * 			return true
  * 		}
  * 	}

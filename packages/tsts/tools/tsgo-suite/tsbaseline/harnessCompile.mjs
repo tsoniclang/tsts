@@ -351,7 +351,7 @@ export function compileHarnessFiles({ toBeCompiled, otherFiles, tsConfigFiles, c
     parsed.ConfigFile = configFile;
     parsed.Errors = configErrors ?? [];
   }
-  const program = NewProgram({
+  const createProgram = () => NewProgram({
     Host: host,
     Config: parsed,
     UseSourceOfProjectReference: false,
@@ -361,7 +361,8 @@ export function compileHarnessFiles({ toBeCompiled, otherFiles, tsConfigFiles, c
     ProjectName: "",
     Tracing: undefined,
   });
-  const compiled = runHarnessCompile(program);
+  const program = createProgram();
+  const compiled = runHarnessCompile(program, createProgram);
   return {
     currentDirectory,
     // The program's own (normalized) options, exactly what its emit/checker consult.
@@ -371,7 +372,7 @@ export function compileHarnessFiles({ toBeCompiled, otherFiles, tsConfigFiles, c
     toBeCompiled,
     otherFiles,
     symlinks: symlinks ?? new Map(),
-    program,
+    program: compiled.program,
     parsed,
     diagnostics: compiled.diagnostics,
     emittedOutputs: compiled.outputs,

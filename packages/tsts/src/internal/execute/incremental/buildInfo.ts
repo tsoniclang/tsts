@@ -14,11 +14,12 @@ import { SyncMap_Load } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import { CompilerOptions_GetEmitDeclarations, ResolutionModeCommonJS } from "../../core/compileroptions.js";
 import type { CompilerOptions, ResolutionMode } from "../../core/compileroptions.js";
-import { Tristate_IsTrue } from "../../core/tristate.js";
+import { TSFalse, TSTrue, TSUnknown, Tristate_IsTrue } from "../../core/tristate.js";
 import { IfElse } from "../../core/core.js";
 import { Version } from "../../core/version.js";
 import type { Category, Key } from "../../diagnostics/diagnostics.js";
 import * as json from "../../json/json.js";
+import { CommandLineOptionTypeBoolean } from "../../tsoptions/commandlineoption.js";
 import { ParsedCommandLine_CompilerOptions } from "../../tsoptions/parsedcommandline.js";
 import {
   ConvertOptionToAbsolutePath,
@@ -26,7 +27,7 @@ import {
 } from "../../tsoptions/parsinghelpers.js";
 import { CommandLineCompilerOptionsMap } from "../../tsoptions/tsconfigparsing.js";
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
-import { ToPath } from "../../tspath/path.js";
+import { GetNormalizedAbsolutePath, PathIsAbsolute, PathIsRelative, ToPath } from "../../tspath/path.js";
 import type { ComparePathsOptions, Path } from "../../tspath/path.js";
 import {
   FileEmitKindDts,
@@ -34,10 +35,6 @@ import {
   getPendingEmitKindWithOptions,
 } from "./snapshot.js";
 import type { emitSignature, FileEmitKind, FileInfo } from "./snapshot.js";
-
-// Go's []byte(string) conversion: the UTF-8 encoding of the string.
-const utf8Encoder = new globalThis.TextEncoder();
-const stringToBytes = (s: string): GoSlice<byte> => globalThis.Array.from(utf8Encoder.encode(s)) as GoSlice<byte>;
 
 // Go's string([]byte) conversion: decode the byte slice as UTF-8.
 const utf8Decoder = new globalThis.TextDecoder();
@@ -94,12 +91,12 @@ export interface BuildInfoRoot {
 export function BuildInfoRoot_MarshalJSON(receiver: GoPtr<BuildInfoRoot>): [GoSlice<byte>, GoError] {
   if (receiver!.Start !== 0) {
     if (receiver!.End !== 0) {
-      return [stringToBytes(globalThis.JSON.stringify([receiver!.Start, receiver!.End])), undefined];
+      return json.Marshal([receiver!.Start, receiver!.End]);
     } else {
-      return [stringToBytes(globalThis.JSON.stringify(receiver!.Start)), undefined];
+      return json.Marshal(receiver!.Start);
     }
   } else {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.NonIncremental)), undefined];
+    return json.Marshal(receiver!.NonIncremental);
   }
 }
 
@@ -319,11 +316,14 @@ export function BuildInfoFileInfo_GetFileInfo(receiver: GoPtr<BuildInfoFileInfo>
       impliedNodeFormat: receiver.noSignature.ImpliedNodeFormat,
     };
   }
+  if (receiver.fileInfo === undefined) {
+    throw new globalThis.Error("invalid BuildInfoFileInfo: missing fileInfo");
+  }
   return {
-    version: receiver.fileInfo!.Version,
-    signature: IfElse(receiver.fileInfo!.Signature === "", receiver.fileInfo!.Version, receiver.fileInfo!.Signature),
-    affectsGlobalScope: receiver.fileInfo!.AffectsGlobalScope,
-    impliedNodeFormat: receiver.fileInfo!.ImpliedNodeFormat,
+    version: receiver.fileInfo.Version,
+    signature: IfElse(receiver.fileInfo.Signature === "", receiver.fileInfo.Version, receiver.fileInfo.Signature),
+    affectsGlobalScope: receiver.fileInfo.AffectsGlobalScope,
+    impliedNodeFormat: receiver.fileInfo.ImpliedNodeFormat,
   };
 }
 
@@ -354,13 +354,7 @@ export function BuildInfoFileInfo_HasSignature(receiver: GoPtr<BuildInfoFileInfo
  * }
  */
 export function BuildInfoFileInfo_MarshalJSON(receiver: GoPtr<BuildInfoFileInfo>): [GoSlice<byte>, GoError] {
-  if (receiver!.signature !== "") {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.signature)), undefined];
-  }
-  if (receiver!.noSignature !== undefined) {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.noSignature)), undefined];
-  }
-  return [stringToBytes(globalThis.JSON.stringify(receiver!.fileInfo)), undefined];
+  return marshalBuildInfoJSONValue(buildInfoFileInfoToJSON(receiver));
 }
 
 /**
@@ -388,43 +382,18 @@ export function BuildInfoFileInfo_MarshalJSON(receiver: GoPtr<BuildInfoFileInfo>
  */
 export function BuildInfoFileInfo_UnmarshalJSON(receiver: GoPtr<BuildInfoFileInfo>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
-  let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
+    const decoded = decodeBuildInfoFileInfo(globalThis.JSON.parse(str));
+    if (decoded === undefined) {
+      return Errorf("invalid BuildInfoFileInfo: %s", str);
+    }
+    receiver!.signature = decoded.signature;
+    receiver!.noSignature = decoded.noSignature;
+    receiver!.fileInfo = decoded.fileInfo;
+    return undefined;
+  } catch {
     return Errorf("invalid BuildInfoFileInfo: %s", str);
   }
-  if (typeof parsed === "string") {
-    receiver!.signature = parsed;
-    receiver!.noSignature = undefined;
-    receiver!.fileInfo = undefined;
-    return undefined;
-  }
-  if (parsed !== null && typeof parsed === "object" && (parsed as Record<string, unknown>)["noSignature"] === true) {
-    const obj = parsed as Record<string, unknown>;
-    receiver!.signature = "";
-    receiver!.noSignature = {
-      Version: (obj["version"] as string) ?? "",
-      NoSignature: true,
-      AffectsGlobalScope: (obj["affectsGlobalScope"] as bool) ?? false,
-      ImpliedNodeFormat: (obj["impliedNodeFormat"] as ResolutionMode) ?? 0,
-    };
-    receiver!.fileInfo = undefined;
-    return undefined;
-  }
-  if (parsed !== null && typeof parsed === "object") {
-    const obj = parsed as Record<string, unknown>;
-    receiver!.signature = "";
-    receiver!.noSignature = undefined;
-    receiver!.fileInfo = {
-      Version: (obj["version"] as string) ?? "",
-      Signature: (obj["signature"] as string) ?? "",
-      AffectsGlobalScope: (obj["affectsGlobalScope"] as bool) ?? false,
-      ImpliedNodeFormat: (obj["impliedNodeFormat"] as ResolutionMode) ?? 0,
-    };
-    return undefined;
-  }
-  return Errorf("invalid BuildInfoFileInfo: %s", str);
 }
 
 /**
@@ -450,7 +419,7 @@ export interface BuildInfoReferenceMapEntry {
  * }
  */
 export function BuildInfoReferenceMapEntry_MarshalJSON(receiver: GoPtr<BuildInfoReferenceMapEntry>): [GoSlice<byte>, GoError] {
-  return [stringToBytes(globalThis.JSON.stringify([receiver!.FileId, receiver!.FileIdListId])), undefined];
+  return json.Marshal([receiver!.FileId, receiver!.FileIdListId]);
 }
 
 /**
@@ -516,9 +485,9 @@ export interface BuildInfoDiagnostic {
   Code: int;
   Category: Category;
   MessageKey: Key;
-  MessageArgs: GoSlice<string>;
-  MessageChain: GoSlice<GoPtr<BuildInfoDiagnostic>>;
-  RelatedInformation: GoSlice<GoPtr<BuildInfoDiagnostic>>;
+  MessageArgs: GoSlice<string> | undefined;
+  MessageChain: GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined;
+  RelatedInformation: GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined;
   ReportsUnnecessary: bool;
   ReportsDeprecated: bool;
   SkippedOnNoEmit: bool;
@@ -554,7 +523,7 @@ export interface BuildInfoRepopulateInfo {
  */
 export interface BuildInfoDiagnosticsOfFile {
   FileId: BuildInfoFileId;
-  Diagnostics: GoSlice<GoPtr<BuildInfoDiagnostic>>;
+  Diagnostics: GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined;
 }
 
 /**
@@ -569,7 +538,7 @@ export interface BuildInfoDiagnosticsOfFile {
  * }
  */
 export function BuildInfoDiagnosticsOfFile_MarshalJSON(receiver: GoPtr<BuildInfoDiagnosticsOfFile>): [GoSlice<byte>, GoError] {
-  return [stringToBytes(globalThis.JSON.stringify([receiver!.FileId, receiver!.Diagnostics])), undefined];
+  return marshalBuildInfoJSONValue(buildInfoDiagnosticsOfFileToJSON(receiver));
 }
 
 /**
@@ -602,25 +571,16 @@ export function BuildInfoDiagnosticsOfFile_MarshalJSON(receiver: GoPtr<BuildInfo
  */
 export function BuildInfoDiagnosticsOfFile_UnmarshalJSON(receiver: GoPtr<BuildInfoDiagnosticsOfFile>, data: GoSlice<byte>): GoError {
   const str = bytesToString(data);
-  let parsed: unknown;
   try {
-    parsed = globalThis.JSON.parse(str);
-  } catch (_) {
-    return Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
+    const decoded = decodeBuildInfoDiagnosticsOfFile(globalThis.JSON.parse(str));
+    receiver!.FileId = decoded.FileId;
+    receiver!.Diagnostics = decoded.Diagnostics;
+    return undefined;
+  } catch (error) {
+    return error instanceof BuildInfoJSONError
+      ? Errorf("invalid BuildInfoDiagnosticsOfFile: %s", error.message)
+      : Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
   }
-  if (!globalThis.Array.isArray(parsed)) {
-    return Errorf("invalid BuildInfoDiagnosticsOfFile: %s", str);
-  }
-  const arr = parsed as unknown[];
-  if (arr.length !== 2) {
-    return Errorf("invalid BuildInfoDiagnosticsOfFile: expected 2 elements, got %d", arr.length);
-  }
-  if (typeof arr[0] !== "number") {
-    return Errorf("invalid fileId in BuildInfoDiagnosticsOfFile: %s", str);
-  }
-  receiver!.FileId = arr[0] as BuildInfoFileId;
-  receiver!.Diagnostics = (arr[1] as GoSlice<GoPtr<BuildInfoDiagnostic>>) ?? [];
-  return undefined;
 }
 
 /**
@@ -649,10 +609,7 @@ export interface BuildInfoSemanticDiagnostic {
  * }
  */
 export function BuildInfoSemanticDiagnostic_MarshalJSON(receiver: GoPtr<BuildInfoSemanticDiagnostic>): [GoSlice<byte>, GoError] {
-  if (receiver!.FileId !== 0) {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.FileId)), undefined];
-  }
-  return [stringToBytes(globalThis.JSON.stringify(receiver!.Diagnostics)), undefined];
+  return marshalBuildInfoJSONValue(buildInfoSemanticDiagnosticToJSON(receiver));
 }
 
 /**
@@ -695,7 +652,7 @@ export function BuildInfoSemanticDiagnostic_UnmarshalJSON(receiver: GoPtr<BuildI
     const arr = parsed as unknown[];
     const diagnostics: BuildInfoDiagnosticsOfFile = {
       FileId: 0 as BuildInfoFileId,
-      Diagnostics: [],
+      Diagnostics: undefined,
     };
     const err = BuildInfoDiagnosticsOfFile_UnmarshalJSON(diagnostics, data);
     if (err !== undefined) {
@@ -740,12 +697,12 @@ export interface BuildInfoFilePendingEmit {
  */
 export function BuildInfoFilePendingEmit_MarshalJSON(receiver: GoPtr<BuildInfoFilePendingEmit>): [GoSlice<byte>, GoError] {
   if (receiver!.EmitKind === 0) {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.FileId)), undefined];
+    return json.Marshal(receiver!.FileId);
   }
   if (receiver!.EmitKind === FileEmitKindDts) {
-    return [stringToBytes(globalThis.JSON.stringify([receiver!.FileId])), undefined];
+    return json.Marshal([receiver!.FileId]);
   }
-  return [stringToBytes(globalThis.JSON.stringify([receiver!.FileId, receiver!.EmitKind])), undefined];
+  return json.Marshal([receiver!.FileId, receiver!.EmitKind]);
 }
 
 /**
@@ -910,7 +867,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
  */
 export function BuildInfoEmitSignature_MarshalJSON(receiver: GoPtr<BuildInfoEmitSignature>): [GoSlice<byte>, GoError] {
   if (BuildInfoEmitSignature_noEmitSignature(receiver)) {
-    return [stringToBytes(globalThis.JSON.stringify(receiver!.FileId)), undefined];
+    return json.Marshal(receiver!.FileId);
   }
   let signature: unknown;
   if (receiver!.DiffersOnlyInDtsMap) {
@@ -920,7 +877,7 @@ export function BuildInfoEmitSignature_MarshalJSON(receiver: GoPtr<BuildInfoEmit
   } else {
     signature = receiver!.Signature;
   }
-  return [stringToBytes(globalThis.JSON.stringify([receiver!.FileId, signature])), undefined];
+  return json.Marshal([receiver!.FileId, signature]);
 }
 
 /**
@@ -1058,7 +1015,7 @@ export interface BuildInfoResolvedRoot {
  * }
  */
 export function BuildInfoResolvedRoot_MarshalJSON(receiver: GoPtr<BuildInfoResolvedRoot>): [GoSlice<byte>, GoError] {
-  return [stringToBytes(globalThis.JSON.stringify([receiver!.Resolved, receiver!.Root])), undefined];
+  return json.Marshal([receiver!.Resolved, receiver!.Root]);
 }
 
 /**
@@ -1095,16 +1052,18 @@ export function BuildInfoResolvedRoot_UnmarshalJSON(receiver: GoPtr<BuildInfoRes
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo","kind":"type","status":"implemented","sigHash":"3047e84be7615e3b3f127ac18cf18d6dd08664a62e46a19d7b153de078e72299","bodyHash":"f4d8c92a4b2495d427c2a4ea4cc65a322281654b917dca432b7fe741e27754b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo","kind":"type","status":"implemented","sigHash":"3047e84be7615e3b3f127ac18cf18d6dd08664a62e46a19d7b153de078e72299","bodyHash":"4ec6d1e9be6b9b1f266ac215bdcb61a28b1a7d248f3fe65a4486291efd76bb50"}
  *
  * Go source:
  * BuildInfo struct {
  * 	Version string `json:"version,omitzero"`
  * 
  * 	// Common between incremental and tsc -b buildinfo for non incremental programs
- * 	Errors       bool             `json:"errors,omitzero"`
- * 	CheckPending bool             `json:"checkPending,omitzero"`
- * 	Root         []*BuildInfoRoot `json:"root,omitzero"`
+ * 	Errors              bool             `json:"errors,omitzero"`
+ * 	CheckPending        bool             `json:"checkPending,omitzero"`
+ * 	Root                []*BuildInfoRoot `json:"root,omitzero"`
+ * 	PackageJsons        []string         `json:"packageJsons,omitzero"`
+ * 	MissingPackageJsons []string         `json:"missingPackageJsons,omitzero"`
  * 
  * 	// IncrementalProgram info
  * 	FileNames                  []string                             `json:"fileNames,omitzero"`
@@ -1128,20 +1087,616 @@ export interface BuildInfo {
   Version: string;
   Errors: bool;
   CheckPending: bool;
-  Root: GoSlice<GoPtr<BuildInfoRoot>>;
-  FileNames: GoSlice<string>;
-  FileInfos: GoSlice<GoPtr<BuildInfoFileInfo>>;
-  FileIdsList: GoSlice<GoSlice<BuildInfoFileId>>;
+  Root: GoSlice<GoPtr<BuildInfoRoot>> | undefined;
+  PackageJsons: GoSlice<string> | undefined;
+  MissingPackageJsons: GoSlice<string> | undefined;
+  FileNames: GoSlice<string> | undefined;
+  FileInfos: GoSlice<GoPtr<BuildInfoFileInfo>> | undefined;
+  FileIdsList: GoSlice<GoSlice<BuildInfoFileId> | undefined> | undefined;
   Options: GoPtr<OrderedMap<string, unknown>>;
-  ReferencedMap: GoSlice<GoPtr<BuildInfoReferenceMapEntry>>;
-  SemanticDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoSemanticDiagnostic>>;
-  EmitDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>>;
-  ChangeFileSet: GoSlice<BuildInfoFileId>;
-  AffectedFilesPendingEmit: GoSlice<GoPtr<BuildInfoFilePendingEmit>>;
+  ReferencedMap: GoSlice<GoPtr<BuildInfoReferenceMapEntry>> | undefined;
+  SemanticDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoSemanticDiagnostic>> | undefined;
+  EmitDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>> | undefined;
+  ChangeFileSet: GoSlice<BuildInfoFileId> | undefined;
+  AffectedFilesPendingEmit: GoSlice<GoPtr<BuildInfoFilePendingEmit>> | undefined;
   LatestChangedDtsFile: string;
-  EmitSignatures: GoSlice<GoPtr<BuildInfoEmitSignature>>;
-  ResolvedRoot: GoSlice<GoPtr<BuildInfoResolvedRoot>>;
+  EmitSignatures: GoSlice<GoPtr<BuildInfoEmitSignature>> | undefined;
+  ResolvedRoot: GoSlice<GoPtr<BuildInfoResolvedRoot>> | undefined;
   SemanticErrors: bool;
+}
+
+class BuildInfoJSONError extends globalThis.Error {}
+
+function marshalBuildInfoJSONValue(value: unknown): [GoSlice<byte>, GoError] {
+  return json.Marshal(value);
+}
+
+function isJSONObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !globalThis.Array.isArray(value);
+}
+
+function hasOwn(value: Record<string, unknown>, key: string): bool {
+  return globalThis.Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function jsonStringField(value: Record<string, unknown>, key: string): string {
+  const field = value[key];
+  if (field === undefined || field === null) {
+    return "";
+  }
+  if (typeof field !== "string") {
+    throw new BuildInfoJSONError(`${key} must be a string`);
+  }
+  return field;
+}
+
+function jsonBooleanField(value: Record<string, unknown>, key: string): bool {
+  const field = value[key];
+  if (field === undefined || field === null) {
+    return false;
+  }
+  if (typeof field !== "boolean") {
+    throw new BuildInfoJSONError(`${key} must be a boolean`);
+  }
+  return field;
+}
+
+function jsonIntegerValue(value: unknown, description: string): int {
+  if (typeof value !== "number" || !globalThis.Number.isSafeInteger(value)) {
+    throw new BuildInfoJSONError(`${description} must be an integer`);
+  }
+  return value as int;
+}
+
+function jsonIntegerField(value: Record<string, unknown>, key: string): int {
+  const field = value[key];
+  return field === undefined || field === null ? 0 as int : jsonIntegerValue(field, key);
+}
+
+function decodeOptionalArray<T>(
+  value: Record<string, unknown>,
+  key: string,
+  decode: (entry: unknown, index: number) => T,
+): GoSlice<T> | undefined {
+  if (!hasOwn(value, key) || value[key] === null) {
+    return undefined;
+  }
+  const field = value[key];
+  if (!globalThis.Array.isArray(field)) {
+    throw new BuildInfoJSONError(`${key} must be an array`);
+  }
+  return field.map(decode);
+}
+
+function encodeBuildInfoRoot(receiver: GoPtr<BuildInfoRoot>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  if (receiver.Start !== 0) {
+    return receiver.End !== 0 ? [receiver.Start, receiver.End] : receiver.Start;
+  }
+  return receiver.NonIncremental;
+}
+
+function decodeBuildInfoRoot(value: unknown): BuildInfoRoot {
+  if (typeof value === "string") {
+    return { Start: 0 as BuildInfoFileId, End: 0 as BuildInfoFileId, NonIncremental: value };
+  }
+  if (typeof value === "number") {
+    return {
+      Start: jsonIntegerValue(value, "BuildInfoRoot") as BuildInfoFileId,
+      End: 0 as BuildInfoFileId,
+      NonIncremental: "",
+    };
+  }
+  if (globalThis.Array.isArray(value) && value.length === 2) {
+    return {
+      Start: jsonIntegerValue(value[0], "BuildInfoRoot start") as BuildInfoFileId,
+      End: jsonIntegerValue(value[1], "BuildInfoRoot end") as BuildInfoFileId,
+      NonIncremental: "",
+    };
+  }
+  throw new BuildInfoJSONError("invalid BuildInfoRoot");
+}
+
+function buildInfoFileInfoToJSON(receiver: GoPtr<BuildInfoFileInfo>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  if (receiver.signature !== "") {
+    return receiver.signature;
+  }
+  if (receiver.noSignature !== undefined) {
+    const result: Record<string, unknown> = {};
+    if (receiver.noSignature.Version !== "") result["version"] = receiver.noSignature.Version;
+    if (receiver.noSignature.NoSignature) result["noSignature"] = true;
+    if (receiver.noSignature.AffectsGlobalScope) result["affectsGlobalScope"] = true;
+    if (receiver.noSignature.ImpliedNodeFormat !== 0) result["impliedNodeFormat"] = receiver.noSignature.ImpliedNodeFormat;
+    return result;
+  }
+  if (receiver.fileInfo === undefined) {
+    return null;
+  }
+  const result: Record<string, unknown> = {};
+  if (receiver.fileInfo.Version !== "") result["version"] = receiver.fileInfo.Version;
+  if (receiver.fileInfo.Signature !== "") result["signature"] = receiver.fileInfo.Signature;
+  if (receiver.fileInfo.AffectsGlobalScope) result["affectsGlobalScope"] = true;
+  if (receiver.fileInfo.ImpliedNodeFormat !== 0) result["impliedNodeFormat"] = receiver.fileInfo.ImpliedNodeFormat;
+  return result;
+}
+
+function decodeBuildInfoFileInfo(value: unknown): GoPtr<BuildInfoFileInfo> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    return { signature: value, noSignature: undefined, fileInfo: undefined };
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError("invalid BuildInfoFileInfo");
+  }
+  if (value["noSignature"] === true) {
+    return {
+      signature: "",
+      noSignature: {
+        Version: jsonStringField(value, "version"),
+        NoSignature: true,
+        AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
+        ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat") as ResolutionMode,
+      },
+      fileInfo: undefined,
+    };
+  }
+  return {
+    signature: "",
+    noSignature: undefined,
+    fileInfo: {
+      Version: jsonStringField(value, "version"),
+      Signature: jsonStringField(value, "signature"),
+      AffectsGlobalScope: jsonBooleanField(value, "affectsGlobalScope"),
+      ImpliedNodeFormat: jsonIntegerField(value, "impliedNodeFormat") as ResolutionMode,
+    },
+  };
+}
+
+function buildInfoRepopulateInfoToJSON(receiver: GoPtr<BuildInfoRepopulateInfo>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  const result: Record<string, unknown> = { kind: receiver.Kind };
+  if (receiver.ModuleReference !== "") result["moduleReference"] = receiver.ModuleReference;
+  if (receiver.Mode !== 0) result["mode"] = receiver.Mode;
+  if (receiver.PackageName !== "") result["packageName"] = receiver.PackageName;
+  return result;
+}
+
+function decodeBuildInfoRepopulateInfo(value: unknown): GoPtr<BuildInfoRepopulateInfo> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError("repopulateInfo must be an object");
+  }
+  return {
+    Kind: jsonIntegerField(value, "kind") as RepopulateDiagnosticKind,
+    ModuleReference: jsonStringField(value, "moduleReference"),
+    Mode: jsonIntegerField(value, "mode") as ResolutionMode,
+    PackageName: jsonStringField(value, "packageName"),
+  };
+}
+
+function buildInfoDiagnosticToJSON(receiver: GoPtr<BuildInfoDiagnostic>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  const result: Record<string, unknown> = {};
+  if (receiver.File !== 0) result["file"] = receiver.File;
+  if (receiver.NoFile) result["noFile"] = true;
+  if (receiver.Pos !== 0) result["pos"] = receiver.Pos;
+  if (receiver.End !== 0) result["end"] = receiver.End;
+  if (receiver.Code !== 0) result["code"] = receiver.Code;
+  if (receiver.Category !== 0) result["category"] = receiver.Category;
+  if (receiver.MessageKey !== "") result["messageKey"] = receiver.MessageKey;
+  if (receiver.MessageArgs !== undefined) result["messageArgs"] = receiver.MessageArgs;
+  if (receiver.MessageChain !== undefined) result["messageChain"] = receiver.MessageChain.map(buildInfoDiagnosticToJSON);
+  if (receiver.RelatedInformation !== undefined) result["relatedInformation"] = receiver.RelatedInformation.map(buildInfoDiagnosticToJSON);
+  if (receiver.ReportsUnnecessary) result["reportsUnnecessary"] = true;
+  if (receiver.ReportsDeprecated) result["reportsDeprecated"] = true;
+  if (receiver.SkippedOnNoEmit) result["skippedOnNoEmit"] = true;
+  if (receiver.RepopulateInfo !== undefined) result["repopulateInfo"] = buildInfoRepopulateInfoToJSON(receiver.RepopulateInfo);
+  return result;
+}
+
+function decodeBuildInfoDiagnostic(value: unknown): GoPtr<BuildInfoDiagnostic> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError("diagnostic must be an object");
+  }
+  return {
+    File: jsonIntegerField(value, "file") as BuildInfoFileId,
+    NoFile: jsonBooleanField(value, "noFile"),
+    Pos: jsonIntegerField(value, "pos"),
+    End: jsonIntegerField(value, "end"),
+    Code: jsonIntegerField(value, "code"),
+    Category: jsonIntegerField(value, "category") as Category,
+    MessageKey: jsonStringField(value, "messageKey") as Key,
+    MessageArgs: decodeOptionalArray(value, "messageArgs", (entry) => {
+      if (typeof entry !== "string") throw new BuildInfoJSONError("messageArgs entries must be strings");
+      return entry;
+    }) as GoSlice<string>,
+    MessageChain: decodeOptionalArray(value, "messageChain", decodeBuildInfoDiagnostic) as GoSlice<GoPtr<BuildInfoDiagnostic>>,
+    RelatedInformation: decodeOptionalArray(value, "relatedInformation", decodeBuildInfoDiagnostic) as GoSlice<GoPtr<BuildInfoDiagnostic>>,
+    ReportsUnnecessary: jsonBooleanField(value, "reportsUnnecessary"),
+    ReportsDeprecated: jsonBooleanField(value, "reportsDeprecated"),
+    SkippedOnNoEmit: jsonBooleanField(value, "skippedOnNoEmit"),
+    RepopulateInfo: decodeBuildInfoRepopulateInfo(value["repopulateInfo"]),
+  };
+}
+
+function buildInfoDiagnosticsOfFileToJSON(receiver: GoPtr<BuildInfoDiagnosticsOfFile>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  return [
+    receiver.FileId,
+    receiver.Diagnostics === undefined ? null : receiver.Diagnostics.map(buildInfoDiagnosticToJSON),
+  ];
+}
+
+function decodeBuildInfoDiagnosticsOfFile(value: unknown): BuildInfoDiagnosticsOfFile {
+  if (!globalThis.Array.isArray(value)) {
+    throw new BuildInfoJSONError("expected an array");
+  }
+  if (value.length !== 2) {
+    throw new BuildInfoJSONError(`expected 2 elements, got ${value.length}`);
+  }
+  const diagnostics = value[1];
+  if (diagnostics !== null && !globalThis.Array.isArray(diagnostics)) {
+    throw new BuildInfoJSONError("diagnostics must be an array");
+  }
+  return {
+    FileId: jsonIntegerValue(value[0], "fileId") as BuildInfoFileId,
+    Diagnostics: diagnostics === null
+      ? undefined
+      : diagnostics.map(decodeBuildInfoDiagnostic),
+  };
+}
+
+function buildInfoSemanticDiagnosticToJSON(receiver: GoPtr<BuildInfoSemanticDiagnostic>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  return receiver.FileId !== 0 ? receiver.FileId : buildInfoDiagnosticsOfFileToJSON(receiver.Diagnostics);
+}
+
+function decodeBuildInfoSemanticDiagnostic(value: unknown): GoPtr<BuildInfoSemanticDiagnostic> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return {
+      FileId: jsonIntegerValue(value, "semantic diagnostic fileId") as BuildInfoFileId,
+      Diagnostics: undefined,
+    };
+  }
+  return {
+    FileId: 0 as BuildInfoFileId,
+    Diagnostics: decodeBuildInfoDiagnosticsOfFile(value),
+  };
+}
+
+function buildInfoFilePendingEmitToJSON(receiver: GoPtr<BuildInfoFilePendingEmit>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  if (receiver.EmitKind === 0) return receiver.FileId;
+  if (receiver.EmitKind === FileEmitKindDts) return [receiver.FileId];
+  return [receiver.FileId, receiver.EmitKind];
+}
+
+function decodeBuildInfoFilePendingEmit(value: unknown): GoPtr<BuildInfoFilePendingEmit> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return { FileId: jsonIntegerValue(value, "pending emit fileId") as BuildInfoFileId, EmitKind: 0 as FileEmitKind };
+  }
+  if (!globalThis.Array.isArray(value) || value.length === 0) {
+    throw new BuildInfoJSONError("invalid BuildInfoFilePendingEmit");
+  }
+  if (value.length === 1) {
+    return { FileId: jsonIntegerValue(value[0], "pending emit fileId") as BuildInfoFileId, EmitKind: FileEmitKindDts };
+  }
+  if (value.length === 2) {
+    return {
+      FileId: jsonIntegerValue(value[0], "pending emit fileId") as BuildInfoFileId,
+      EmitKind: jsonIntegerValue(value[1], "pending emit kind") as FileEmitKind,
+    };
+  }
+  throw new BuildInfoJSONError(`invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got ${value.length}`);
+}
+
+function buildInfoEmitSignatureToJSON(receiver: GoPtr<BuildInfoEmitSignature>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  if (BuildInfoEmitSignature_noEmitSignature(receiver)) return receiver.FileId;
+  const signature = receiver.DiffersOnlyInDtsMap
+    ? []
+    : receiver.DiffersInOptions
+      ? [receiver.Signature]
+      : receiver.Signature;
+  return [receiver.FileId, signature];
+}
+
+function decodeBuildInfoEmitSignature(value: unknown): GoPtr<BuildInfoEmitSignature> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return {
+      FileId: jsonIntegerValue(value, "emit signature fileId") as BuildInfoFileId,
+      Signature: "",
+      DiffersOnlyInDtsMap: false,
+      DiffersInOptions: false,
+    };
+  }
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoEmitSignature");
+  }
+  const fileId = jsonIntegerValue(value[0], "emit signature fileId") as BuildInfoFileId;
+  const signature = value[1];
+  if (typeof signature === "string") {
+    return { FileId: fileId, Signature: signature, DiffersOnlyInDtsMap: false, DiffersInOptions: false };
+  }
+  if (!globalThis.Array.isArray(signature) || signature.length > 1) {
+    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
+  }
+  if (signature.length === 0) {
+    return { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: true, DiffersInOptions: false };
+  }
+  if (typeof signature[0] !== "string") {
+    throw new BuildInfoJSONError("invalid signature in BuildInfoEmitSignature");
+  }
+  return { FileId: fileId, Signature: signature[0], DiffersOnlyInDtsMap: false, DiffersInOptions: true };
+}
+
+function buildInfoReferenceMapEntryToJSON(receiver: GoPtr<BuildInfoReferenceMapEntry>): unknown {
+  return receiver === undefined ? null : [receiver.FileId, receiver.FileIdListId];
+}
+
+function decodeBuildInfoReferenceMapEntry(value: unknown): GoPtr<BuildInfoReferenceMapEntry> {
+  if (value === null || value === undefined) return undefined;
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoReferenceMapEntry");
+  }
+  return {
+    FileId: jsonIntegerValue(value[0], "reference fileId") as BuildInfoFileId,
+    FileIdListId: jsonIntegerValue(value[1], "reference fileIdListId") as BuildInfoFileIdListId,
+  };
+}
+
+function buildInfoResolvedRootToJSON(receiver: GoPtr<BuildInfoResolvedRoot>): unknown {
+  return receiver === undefined ? null : [receiver.Resolved, receiver.Root];
+}
+
+function decodeBuildInfoResolvedRoot(value: unknown): GoPtr<BuildInfoResolvedRoot> {
+  if (value === null || value === undefined) return undefined;
+  if (!globalThis.Array.isArray(value) || value.length !== 2) {
+    throw new BuildInfoJSONError("invalid BuildInfoResolvedRoot");
+  }
+  return {
+    Resolved: jsonIntegerValue(value[0], "resolved root fileId") as BuildInfoFileId,
+    Root: jsonIntegerValue(value[1], "root fileId") as BuildInfoFileId,
+  };
+}
+
+function compilerOptionValueToJSON(optionName: string, value: unknown): unknown {
+  const option = CommandLineCompilerOptionsMap.get(optionName);
+  if (option?.Kind !== CommandLineOptionTypeBoolean || typeof value === "boolean") {
+    return value;
+  }
+  if (value === TSTrue) return true;
+  if (value === TSFalse) return false;
+  if (value === TSUnknown) return null;
+  throw new BuildInfoJSONError(`invalid tristate value for compiler option ${optionName}`);
+}
+
+function buildInfoOptionsToJSON(receiver: GoPtr<OrderedMap<string, unknown>>): unknown {
+  if (receiver === undefined) {
+    return null;
+  }
+  const result: Record<string, unknown> = {};
+  OrderedMap_Entries(receiver)((key, value) => {
+    result[key] = compilerOptionValueToJSON(key, value);
+    return true;
+  });
+  return result;
+}
+
+function decodeBuildInfoOptions(value: unknown): GoPtr<OrderedMap<string, unknown>> {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (!isJSONObject(value)) {
+    throw new BuildInfoJSONError("options must be an object");
+  }
+  const result = NewOrderedMapWithSizeHint<string, unknown>(globalThis.Object.keys(value).length as int);
+  for (const [key, entry] of globalThis.Object.entries(value)) {
+    OrderedMap_Set(result, key, entry);
+  }
+  return result;
+}
+
+function decodeBuildInfoArray<T>(value: unknown, name: string, decode: (entry: unknown, index: number) => T): GoSlice<T> | undefined {
+  return decodeOptionalArray({ [name]: value }, name, decode);
+}
+
+const buildInfoJSONFieldNames: json.JsonFieldNameMap = {
+  Version: {
+    name: "version",
+    omitZero: true,
+    unmarshal: (value) => jsonStringField({ version: value }, "version"),
+  },
+  Errors: {
+    name: "errors",
+    omitZero: true,
+    unmarshal: (value) => jsonBooleanField({ errors: value }, "errors"),
+  },
+  CheckPending: {
+    name: "checkPending",
+    omitZero: true,
+    unmarshal: (value) => jsonBooleanField({ checkPending: value }, "checkPending"),
+  },
+  Root: {
+    name: "root",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoRoot>>).map(encodeBuildInfoRoot),
+    unmarshal: (value) => decodeBuildInfoArray(value, "root", (entry) => entry === null ? undefined : decodeBuildInfoRoot(entry)),
+  },
+  PackageJsons: {
+    name: "packageJsons",
+    omitZero: true,
+    unmarshal: (value) => decodeBuildInfoArray(value, "packageJsons", (entry) => {
+      if (typeof entry !== "string") throw new BuildInfoJSONError("packageJsons entries must be strings");
+      return entry;
+    }),
+  },
+  MissingPackageJsons: {
+    name: "missingPackageJsons",
+    omitZero: true,
+    unmarshal: (value) => decodeBuildInfoArray(value, "missingPackageJsons", (entry) => {
+      if (typeof entry !== "string") throw new BuildInfoJSONError("missingPackageJsons entries must be strings");
+      return entry;
+    }),
+  },
+  FileNames: {
+    name: "fileNames",
+    omitZero: true,
+    unmarshal: (value) => decodeBuildInfoArray(value, "fileNames", (entry) => {
+      if (typeof entry !== "string") throw new BuildInfoJSONError("fileNames entries must be strings");
+      return entry;
+    }),
+  },
+  FileInfos: {
+    name: "fileInfos",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoFileInfo>>).map(buildInfoFileInfoToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "fileInfos", decodeBuildInfoFileInfo),
+  },
+  FileIdsList: {
+    name: "fileIdsList",
+    omitZero: true,
+    unmarshal: (value) => decodeBuildInfoArray(value, "fileIdsList", (entry) => {
+      if (entry === null) return undefined;
+      if (!globalThis.Array.isArray(entry)) throw new BuildInfoJSONError("fileIdsList entries must be arrays");
+      return entry.map((fileId) => jsonIntegerValue(fileId, "fileIdsList fileId") as BuildInfoFileId);
+    }),
+  },
+  Options: {
+    name: "options",
+    omitZero: true,
+    marshal: (value) => buildInfoOptionsToJSON(value as GoPtr<OrderedMap<string, unknown>>),
+    unmarshal: decodeBuildInfoOptions,
+  },
+  ReferencedMap: {
+    name: "referencedMap",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoReferenceMapEntry>>).map(buildInfoReferenceMapEntryToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "referencedMap", decodeBuildInfoReferenceMapEntry),
+  },
+  SemanticDiagnosticsPerFile: {
+    name: "semanticDiagnosticsPerFile",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoSemanticDiagnostic>>).map(buildInfoSemanticDiagnosticToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "semanticDiagnosticsPerFile", decodeBuildInfoSemanticDiagnostic),
+  },
+  EmitDiagnosticsPerFile: {
+    name: "emitDiagnosticsPerFile",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>>).map(buildInfoDiagnosticsOfFileToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "emitDiagnosticsPerFile", (entry) => entry === null ? undefined : decodeBuildInfoDiagnosticsOfFile(entry)),
+  },
+  ChangeFileSet: {
+    name: "changeFileSet",
+    omitZero: true,
+    unmarshal: (value) => decodeBuildInfoArray(value, "changeFileSet", (entry) => jsonIntegerValue(entry, "changeFileSet fileId") as BuildInfoFileId),
+  },
+  AffectedFilesPendingEmit: {
+    name: "affectedFilesPendingEmit",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoFilePendingEmit>>).map(buildInfoFilePendingEmitToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "affectedFilesPendingEmit", decodeBuildInfoFilePendingEmit),
+  },
+  LatestChangedDtsFile: {
+    name: "latestChangedDtsFile",
+    omitZero: true,
+    unmarshal: (value) => jsonStringField({ latestChangedDtsFile: value }, "latestChangedDtsFile"),
+  },
+  EmitSignatures: {
+    name: "emitSignatures",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoEmitSignature>>).map(buildInfoEmitSignatureToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "emitSignatures", decodeBuildInfoEmitSignature),
+  },
+  ResolvedRoot: {
+    name: "resolvedRoot",
+    omitZero: true,
+    marshal: (value) => (value as GoSlice<GoPtr<BuildInfoResolvedRoot>>).map(buildInfoResolvedRootToJSON),
+    unmarshal: (value) => decodeBuildInfoArray(value, "resolvedRoot", decodeBuildInfoResolvedRoot),
+  },
+  SemanticErrors: {
+    name: "semanticErrors",
+    omitZero: true,
+    unmarshal: (value) => jsonBooleanField({ semanticErrors: value }, "semanticErrors"),
+  },
+};
+
+function attachBuildInfoJSONMetadata(receiver: BuildInfo): BuildInfo {
+  globalThis.Object.defineProperty(receiver, json.JsonFieldNames, {
+    configurable: true,
+    value: buildInfoJSONFieldNames,
+  });
+  return receiver;
+}
+
+export function NewBuildInfo(): BuildInfo {
+  return attachBuildInfoJSONMetadata({
+    Version: "",
+    Errors: false,
+    CheckPending: false,
+    Root: undefined,
+    PackageJsons: undefined,
+    MissingPackageJsons: undefined,
+    FileNames: undefined,
+    FileInfos: undefined,
+    FileIdsList: undefined,
+    Options: undefined,
+    ReferencedMap: undefined,
+    SemanticDiagnosticsPerFile: undefined,
+    EmitDiagnosticsPerFile: undefined,
+    ChangeFileSet: undefined,
+    AffectedFilesPendingEmit: undefined,
+    LatestChangedDtsFile: "",
+    EmitSignatures: undefined,
+    ResolvedRoot: undefined,
+    SemanticErrors: false,
+  });
+}
+
+export function SerializeBuildInfo(receiver: GoPtr<BuildInfo>): [string, GoError] {
+  if (receiver === undefined) {
+    return ["", new globalThis.Error("cannot marshal nil BuildInfo")];
+  }
+  attachBuildInfoJSONMetadata(receiver);
+  try {
+    const [data, error] = json.Marshal(receiver);
+    return error === undefined ? [bytesToString(data), undefined] : ["", error];
+  } catch (error) {
+    return ["", error instanceof globalThis.Error ? error : new globalThis.Error(globalThis.String(error))];
+  }
 }
 
 /**
@@ -1165,31 +1720,61 @@ export function BuildInfo_IsValidVersion(receiver: GoPtr<BuildInfo>): bool {
  * }
  */
 export function BuildInfo_IsIncremental(receiver: GoPtr<BuildInfo>): bool {
-  return receiver !== undefined && receiver.FileNames !== undefined && receiver.FileNames.length !== 0;
+  return receiver !== undefined && (receiver.FileNames?.length ?? 0) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.fileName","kind":"method","status":"implemented","sigHash":"a8b9b770e47d758b56760dde2b5761c2329b96dec41bf8a84601b5bb84e59275","bodyHash":"aadcc8c67c418a66cce720f62e24c23b7d8bc9096c3d4acddc6e18e9ca7c5c06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::func::IsBuildInfoFileNameDefaultLibrary","kind":"func","status":"implemented","sigHash":"1b68343cabaf3cdd24e8a4183d4c9ae6609e7036ac6a1dc1caf3adc609aed8de","bodyHash":"0c05e487a208007fb6cd68698a4b0f84cd640b544d5ae0e30bfff95b81043eac"}
+ *
+ * Go source:
+ * func IsBuildInfoFileNameDefaultLibrary(fileName string) bool {
+ * 	return !tspath.PathIsRelative(fileName) && !tspath.PathIsAbsolute(fileName)
+ * }
+ */
+export function IsBuildInfoFileNameDefaultLibrary(fileName: string): bool {
+  return !PathIsRelative(fileName) && !PathIsAbsolute(fileName);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.fileName","kind":"method","status":"implemented","sigHash":"a8b9b770e47d758b56760dde2b5761c2329b96dec41bf8a84601b5bb84e59275","bodyHash":"c18c537ea742a3e51b154695b141d50820db27c379294e5ab2a12c50a93bf65c"}
  *
  * Go source:
  * func (b *BuildInfo) fileName(fileId BuildInfoFileId) string {
+ * 	if fileId < 1 || int(fileId) > len(b.FileNames) {
+ * 		return ""
+ * 	}
  * 	return b.FileNames[fileId-1]
  * }
  */
 export function BuildInfo_fileName(receiver: GoPtr<BuildInfo>, fileId: BuildInfoFileId): string {
-  return receiver!.FileNames[fileId - 1]!;
+  const fileNames = receiver!.FileNames;
+  if (fileNames === undefined || fileId < 1 || fileId > fileNames.length) {
+    return "";
+  }
+  const fileName = fileNames[fileId - 1];
+  if (fileName === undefined) {
+    throw new globalThis.Error("invalid BuildInfo: sparse FileNames");
+  }
+  return fileName;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.fileInfo","kind":"method","status":"implemented","sigHash":"a59f1da707818907b0d5595846866e70a1151a826d4b78a43b4d922d555fe231","bodyHash":"17dc791c73aaf18239aec256fd3d3a03e422f78251f8afd67362d0ff82728f89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.fileInfo","kind":"method","status":"implemented","sigHash":"a59f1da707818907b0d5595846866e70a1151a826d4b78a43b4d922d555fe231","bodyHash":"cf37a7c51ca1df24947bf8f7aa7ead123cdb053f7a38afa594d5e81fae903a47"}
  *
  * Go source:
  * func (b *BuildInfo) fileInfo(fileId BuildInfoFileId) *BuildInfoFileInfo {
+ * 	if fileId < 1 || int(fileId) > len(b.FileInfos) {
+ * 		return nil
+ * 	}
  * 	return b.FileInfos[fileId-1]
  * }
  */
 export function BuildInfo_fileInfo(receiver: GoPtr<BuildInfo>, fileId: BuildInfoFileId): GoPtr<BuildInfoFileInfo> {
-  return receiver!.FileInfos[fileId - 1];
+  const fileInfos = receiver!.FileInfos;
+  if (fileInfos === undefined || fileId < 1 || fileId > fileInfos.length) {
+    return undefined;
+  }
+  return fileInfos[fileId - 1];
 }
 
 /**
@@ -1258,7 +1843,55 @@ export function BuildInfo_IsEmitPending(receiver: GoPtr<BuildInfo>, resolved: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.GetBuildInfoRootInfoReader","kind":"method","status":"implemented","sigHash":"2494d8d0486abcb7864f76a25b5d79f05fbe236179343345a25f5cb2dd961db4","bodyHash":"b259cbff841d3b48c8186898a31f097d2e0e06cb6d6df498846815ec47c0044e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.GetPackageJsons","kind":"method","status":"implemented","sigHash":"cf0233e126d5d4b19a1929ab6955fc967f7b1302c445f449291dcdbd1d98a662","bodyHash":"f30cabcfbf3f9e3280907f9c56763627863b35deb49c2c751ecccad467873c80"}
+ *
+ * Go source:
+ * func (b *BuildInfo) GetPackageJsons(buildInfoDirectory string) iter.Seq[string] {
+ * 	return getNormalizedPaths(b.PackageJsons, buildInfoDirectory)
+ * }
+ */
+export function BuildInfo_GetPackageJsons(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string): GoSeq<string> {
+  return getNormalizedPaths(receiver!.PackageJsons, buildInfoDirectory);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.GetMissingPackageJsons","kind":"method","status":"implemented","sigHash":"9b131b4eacdbb2b0ddb8d00eb3d376752d51ce08627f973fb9d5fe29ab1556e1","bodyHash":"947ec98bbf125a437450845e24dc73c0546fedeadb05dffcf3dd6d881eb5feb7"}
+ *
+ * Go source:
+ * func (b *BuildInfo) GetMissingPackageJsons(buildInfoDirectory string) iter.Seq[string] {
+ * 	return getNormalizedPaths(b.MissingPackageJsons, buildInfoDirectory)
+ * }
+ */
+export function BuildInfo_GetMissingPackageJsons(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string): GoSeq<string> {
+  return getNormalizedPaths(receiver!.MissingPackageJsons, buildInfoDirectory);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::func::getNormalizedPaths","kind":"func","status":"implemented","sigHash":"779c23d3f06fb2f7ab792acd9b2c5014c8e5779a89c86895212ec9af7b706cb5","bodyHash":"c9d3c17305b737fef3dc7b65c7974b49304cfdcb37c0aac201c5967647a8ed05"}
+ *
+ * Go source:
+ * func getNormalizedPaths(paths []string, buildInfoDirectory string) iter.Seq[string] {
+ * 	return func(yield func(string) bool) {
+ * 		for _, path := range paths {
+ * 			if !yield(tspath.GetNormalizedAbsolutePath(path, buildInfoDirectory)) {
+ * 				return
+ * 			}
+ * 		}
+ * 	}
+ * }
+ */
+export function getNormalizedPaths(paths: GoSlice<string> | undefined, buildInfoDirectory: string): GoSeq<string> {
+  return (yieldFn: (value: string) => bool): void => {
+    for (const path of paths ?? []) {
+      if (!yieldFn(GetNormalizedAbsolutePath(path, buildInfoDirectory))) {
+        return;
+      }
+    }
+  };
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::method::BuildInfo.GetBuildInfoRootInfoReader","kind":"method","status":"implemented","sigHash":"2494d8d0486abcb7864f76a25b5d79f05fbe236179343345a25f5cb2dd961db4","bodyHash":"8e3d5498b0c6905f44bf5e99c346711f52d3db1f718dd319e788da8115249f09"}
  *
  * Go source:
  * func (b *BuildInfo) GetBuildInfoRootInfoReader(buildInfoDirectory string, comparePathOptions tspath.ComparePathsOptions) *BuildInfoRootInfoReader {
@@ -1272,10 +1905,17 @@ export function BuildInfo_IsEmitPending(receiver: GoPtr<BuildInfo>, resolved: Go
  *
  * 	// Create map from resolvedRoot to Root
  * 	for _, resolved := range b.ResolvedRoot {
- * 		resolvedToRoot[toPath(b.fileName(resolved.Resolved))] = toPath(b.fileName(resolved.Root))
+ * 		resolvedRoot := b.fileName(resolved.Resolved)
+ * 		root := b.fileName(resolved.Root)
+ * 		if resolvedRoot != "" && root != "" {
+ * 			resolvedToRoot[toPath(resolvedRoot)] = toPath(root)
+ * 		}
  * 	}
  *
  * 	addRoot := func(resolvedRoot string, fileInfo *BuildInfoFileInfo) {
+ * 		if resolvedRoot == "" {
+ * 			return
+ * 		}
  * 		resolvedRootPath := toPath(resolvedRoot)
  * 		if rootPath, ok := resolvedToRoot[resolvedRootPath]; ok {
  * 			rootToResolved.Set(rootPath, resolvedRootPath)
@@ -1311,11 +1951,21 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
   const resolvedToRoot: Map<Path, Path> = new Map<Path, Path>();
   const toPath = (fileName: string): Path => ToPath(fileName, buildInfoDirectory, comparePathOptions.UseCaseSensitiveFileNames);
 
-  for (const resolved of receiver!.ResolvedRoot ?? []) {
-    resolvedToRoot.set(toPath(BuildInfo_fileName(receiver, resolved!.Resolved)), toPath(BuildInfo_fileName(receiver, resolved!.Root)));
+  for (const resolvedOrNil of receiver!.ResolvedRoot ?? []) {
+    if (resolvedOrNil === undefined) {
+      throw new globalThis.Error("invalid BuildInfo: nil ResolvedRoot entry");
+    }
+    const resolvedRoot = BuildInfo_fileName(receiver, resolvedOrNil.Resolved);
+    const root = BuildInfo_fileName(receiver, resolvedOrNil.Root);
+    if (resolvedRoot !== "" && root !== "") {
+      resolvedToRoot.set(toPath(resolvedRoot), toPath(root));
+    }
   }
 
   const addRoot = (resolvedRoot: string, fileInfo: GoPtr<BuildInfoFileInfo>): void => {
+    if (resolvedRoot === "") {
+      return;
+    }
     const resolvedRootPath = toPath(resolvedRoot);
     const rootPath = resolvedToRoot.get(resolvedRootPath);
     if (rootPath !== undefined) {
@@ -1328,13 +1978,16 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
     }
   };
 
-  for (const root of receiver!.Root ?? []) {
-    if (root!.NonIncremental !== "") {
-      addRoot(root!.NonIncremental, undefined);
-    } else if (root!.End === 0) {
-      addRoot(BuildInfo_fileName(receiver, root!.Start), BuildInfo_fileInfo(receiver, root!.Start));
+  for (const rootOrNil of receiver!.Root ?? []) {
+    if (rootOrNil === undefined) {
+      throw new globalThis.Error("invalid BuildInfo: nil Root entry");
+    }
+    if (rootOrNil.NonIncremental !== "") {
+      addRoot(rootOrNil.NonIncremental, undefined);
+    } else if (rootOrNil.End === 0) {
+      addRoot(BuildInfo_fileName(receiver, rootOrNil.Start), BuildInfo_fileInfo(receiver, rootOrNil.Start));
     } else {
-      for (let i = root!.Start; i <= root!.End; i++) {
+      for (let i = rootOrNil.Start; i <= rootOrNil.End; i++) {
         addRoot(BuildInfo_fileName(receiver, i as BuildInfoFileId), BuildInfo_fileInfo(receiver, i as BuildInfoFileId));
       }
     }

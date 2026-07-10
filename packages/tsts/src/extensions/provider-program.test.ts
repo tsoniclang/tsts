@@ -12,7 +12,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -1486,10 +1486,20 @@ test("checker exposes selected source member evidence on checked property access
       interface Array<T> {
         readonly Length: number;
       }
+      interface IndexedProperties {
+        [key: string]: number;
+      }
+      type MappedProperties = {
+        [P in string]: number;
+      };
 
       declare const path: String;
+      declare const indexedProperties: IndexedProperties;
+      declare const mappedProperties: MappedProperties;
       const parts = path.Split(path);
       const n = parts.Length;
+      const indexedValue = indexedProperties.value;
+      const mappedValue = mappedProperties.value;
     `],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
@@ -1531,8 +1541,12 @@ test("checker exposes selected source member evidence on checked property access
 
   const splitRequest = observedRequests.find((request) => request.propertyName === "Split");
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
+  const indexedRequest = observedRequests.find((request) => Node_Text(request.receiver as GoPtr<Node>) === "indexedProperties");
+  const mappedRequest = observedRequests.find((request) => Node_Text(request.receiver as GoPtr<Node>) === "mappedProperties");
   assertSelectedMemberEvidence(splitRequest, "Split");
   assertSelectedMemberEvidence(lengthRequest, "Length");
+  assertSelectedIndexEvidence(indexedRequest);
+  assertDeclarationlessIndexEvidence(mappedRequest);
   assert.ok(splitRequest?.sourceResultType !== undefined);
   assert.ok(lengthRequest?.sourceResultType !== undefined);
   const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
@@ -1552,6 +1566,10 @@ test("checker exposes selected source index-signature evidence on checked elemen
       type Record<K extends string, T> = {
         [P in K]: T;
       };
+      interface MergedIndex {
+        [key: number]: string;
+        [key: \`\${number}\`]: string;
+      }
 
       export function at(value: Text, index: number): string {
         return value[index];
@@ -1560,6 +1578,9 @@ test("checker exposes selected source index-signature evidence on checked elemen
         return r[key];
       }
       export function mapped(r: Record<string, number>, key: string): number {
+        return r[key];
+      }
+      export function merged(r: MergedIndex, key: "1"): string {
         return r[key];
       }
     `],
@@ -1601,10 +1622,11 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
 
-  assert.equal(observedRequests.length, 3);
+  assert.equal(observedRequests.length, 4);
   assertSelectedIndexEvidence(observedRequests[0]);
   assertSelectedIndexEvidence(observedRequests[1]);
-  assertSelectedMappedIndexEvidence(observedRequests[2]);
+  assertDeclarationlessIndexEvidence(observedRequests[2]);
+  assertDeclarationlessIndexEvidence(observedRequests[3]);
   assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
 });
 
@@ -4626,24 +4648,18 @@ function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingReque
   assert.equal(Node_Text(Node_Name(selectedDeclaration)), name);
 }
 
-function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
+function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | CheckedPropertyAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
   const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
+  assert.equal(request.sourceSelectedSymbol, undefined);
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindIndexSignature);
 }
 
-function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
+function assertDeclarationlessIndexEvidence(request: CheckedElementAccessMappingRequest | CheckedPropertyAccessMappingRequest | undefined): void {
   assert.ok(request !== undefined);
-  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
-  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
-  assert.ok(selectedSymbol !== undefined);
-  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
-  assert.ok(selectedDeclaration !== undefined);
-  assert.equal(selectedDeclaration.Kind, KindMappedType);
+  assert.equal(request.sourceSelectedSymbol, undefined);
+  assert.equal(request.sourceSelectedDeclaration, undefined);
 }
 
 function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {

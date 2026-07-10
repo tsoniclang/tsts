@@ -1,4 +1,4 @@
-import type { bool, int, short, ulong } from "../../go/scalars.js";
+import type { bool, int, ushort, ulong } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
@@ -596,10 +596,10 @@ export const nextSymbolId: Uint64 = new Uint64();
 export function GetNodeId(node: GoPtr<Node>): NodeId {
   node!.id ??= new Uint64();
   const id0: ulong = node!.id.Load();
-  if (id0 !== (0 as ulong)) return id0 as NodeId;
+  if (id0 !== (0n as ulong)) return id0 as NodeId;
   // Worst case, we burn a few ids if we have to CAS.
-  const attempted: ulong = nextNodeId.Add(1 as ulong);
-  const id1: ulong = node!.id.CompareAndSwap(0 as ulong, attempted) ? attempted : node!.id.Load();
+  const attempted: ulong = nextNodeId.Add(1n as ulong);
+  const id1: ulong = node!.id.CompareAndSwap(0n as ulong, attempted) ? attempted : node!.id.Load();
   return id1 as NodeId;
 }
 
@@ -622,10 +622,10 @@ export function GetNodeId(node: GoPtr<Node>): NodeId {
 export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
   symbol_!.id ??= new Uint64();
   const id0: ulong = symbol_!.id.Load();
-  if (id0 !== (0 as ulong)) return id0 as SymbolId;
+  if (id0 !== (0n as ulong)) return id0 as SymbolId;
   // Worst case, we burn a few ids if we have to CAS.
-  const attempted: ulong = nextSymbolId.Add(1 as ulong);
-  const id1: ulong = symbol_!.id.CompareAndSwap(0 as ulong, attempted) ? attempted : symbol_!.id.Load();
+  const attempted: ulong = nextSymbolId.Add(1n as ulong);
+  const id1: ulong = symbol_!.id.CompareAndSwap(0n as ulong, attempted) ? attempted : symbol_!.id.Load();
   return id1 as SymbolId;
 }
 
@@ -687,11 +687,10 @@ export function GetExports(symbol_: GoPtr<Symbol>): SymbolTable {
  */
 export function GetLocals(container: GoPtr<Node>): SymbolTable {
   const data = Node_LocalsContainerData(container);
-  const holder = data as unknown as { Locals?: SymbolTable };
-  if (holder.Locals === undefined) {
-    holder.Locals = new Map();
+  if (data!.Locals === undefined) {
+    data!.Locals = new Map();
   }
-  return holder.Locals;
+  return data!.Locals;
 }
 
 /**
@@ -2415,27 +2414,31 @@ export function IsPrologueDirective(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::OuterExpressionKinds","kind":"type","status":"implemented","sigHash":"be6ac37a4b9ed0b36f3f1c1e090fa78b0a36ff9ad1989b831d1a4d5b27541f5f","bodyHash":"3dcb015ebd8d8cd234a7f4403b86e45ba8b55a4b4191a74f02f81e64663247a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::type::OuterExpressionKinds","kind":"type","status":"implemented","sigHash":"be6ac37a4b9ed0b36f3f1c1e090fa78b0a36ff9ad1989b831d1a4d5b27541f5f","bodyHash":"6cc30312d8a29c7e1186956b263871d732ec7ab01cdb796b0a95a2d40b064010"}
  *
  * Go source:
- * OuterExpressionKinds int16
+ * OuterExpressionKinds uint16
  */
-export type OuterExpressionKinds = short;
+export type OuterExpressionKinds = ushort;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::OEKParentheses+OEKTypeAssertions+OEKNonNullAssertions+OEKPartiallyEmittedExpressions+OEKExpressionsWithTypeArguments+OEKSatisfies+OEKExcludeJSDocTypeAssertion+OEKAssertions+OEKAll","kind":"constGroup","status":"implemented","sigHash":"84f9676886cf84a36a3e37e3b0fba08797c926f7eae90b57b089ba15bc3e539e","bodyHash":"ebf57acd4d5ff861de1a8a446f3a91e9a7493bd39ace1dd57df9194cde9756c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::constGroup::OEKParentheses+OEKTypeAssertions+OEKNonNullAssertions+OEKPartiallyEmittedExpressions+OEKExpressionsWithTypeArguments+OEKSatisfies+OEKExcludeJSDocTypeAssertion+OEKAssignments+OEKComma+OEKAssertions+OEKAll+OEKAllExceptAssertionsOrExpressionsWithTypeArguments+OEKExpressionTypePassthrough","kind":"constGroup","status":"implemented","sigHash":"20a2ad387f75ee3644991408436d4fa88cdacbfdcd3c50e216cbf4373d565245","bodyHash":"f3b80f027fca59e0c57cf26206d0de2c36913f0a9a3aaeba02b465f5f003b852"}
  *
  * Go source:
  * const (
- * 	OEKParentheses                  OuterExpressionKinds = 1 << 0
- * 	OEKTypeAssertions               OuterExpressionKinds = 1 << 1
- * 	OEKNonNullAssertions            OuterExpressionKinds = 1 << 2
- * 	OEKPartiallyEmittedExpressions  OuterExpressionKinds = 1 << 3
- * 	OEKExpressionsWithTypeArguments OuterExpressionKinds = 1 << 4
- * 	OEKSatisfies                    OuterExpressionKinds = 1 << 5
- * 	OEKExcludeJSDocTypeAssertion                         = 1 << 6
- * 	OEKAssertions                                        = OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies
- * 	OEKAll                                               = OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments
+ * 	OEKParentheses                                       OuterExpressionKinds = 1 << 0
+ * 	OEKTypeAssertions                                    OuterExpressionKinds = 1 << 1
+ * 	OEKNonNullAssertions                                 OuterExpressionKinds = 1 << 2
+ * 	OEKPartiallyEmittedExpressions                       OuterExpressionKinds = 1 << 3
+ * 	OEKExpressionsWithTypeArguments                      OuterExpressionKinds = 1 << 4
+ * 	OEKSatisfies                                         OuterExpressionKinds = 1 << 5
+ * 	OEKExcludeJSDocTypeAssertion                         OuterExpressionKinds = 1 << 6
+ * 	OEKAssignments                                       OuterExpressionKinds = 1 << 7
+ * 	OEKComma                                             OuterExpressionKinds = 1 << 8
+ * 	OEKAssertions                                                             = OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies
+ * 	OEKAll                                                                    = OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments
+ * 	OEKAllExceptAssertionsOrExpressionsWithTypeArguments                      = OEKAll &^ OEKAssertions &^ OEKExpressionsWithTypeArguments
+ * 	OEKExpressionTypePassthrough                                              = OEKParentheses | OEKAssignments | OEKComma
  * )
  */
 export const OEKParentheses: OuterExpressionKinds = (1 << 0) as OuterExpressionKinds;
@@ -2444,12 +2447,16 @@ export const OEKNonNullAssertions: OuterExpressionKinds = (1 << 2) as OuterExpre
 export const OEKPartiallyEmittedExpressions: OuterExpressionKinds = (1 << 3) as OuterExpressionKinds;
 export const OEKExpressionsWithTypeArguments: OuterExpressionKinds = (1 << 4) as OuterExpressionKinds;
 export const OEKSatisfies: OuterExpressionKinds = (1 << 5) as OuterExpressionKinds;
-export const OEKExcludeJSDocTypeAssertion: int = (1 << 6) as int;
-export const OEKAssertions: int = (OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies) as int;
-export const OEKAll: int = (OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments) as int;
+export const OEKExcludeJSDocTypeAssertion: OuterExpressionKinds = (1 << 6) as OuterExpressionKinds;
+export const OEKAssignments: OuterExpressionKinds = (1 << 7) as OuterExpressionKinds;
+export const OEKComma: OuterExpressionKinds = (1 << 8) as OuterExpressionKinds;
+export const OEKAssertions: OuterExpressionKinds = (OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies) as int;
+export const OEKAll: OuterExpressionKinds = (OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments) as int;
+export const OEKAllExceptAssertionsOrExpressionsWithTypeArguments: OuterExpressionKinds = (OEKAll & ~OEKAssertions & ~OEKExpressionsWithTypeArguments) as int;
+export const OEKExpressionTypePassthrough: OuterExpressionKinds = (OEKParentheses | OEKAssignments | OEKComma) as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOuterExpression","kind":"func","status":"implemented","sigHash":"28b42343fb8505a97d8f6a58ddb129a754951cd4660b560ebc97695d5ae2808b","bodyHash":"a22d786b0e208217f92f631828167a00f8b78e1a87677e5adc8650fad2a9a24f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOuterExpression","kind":"func","status":"implemented","sigHash":"28b42343fb8505a97d8f6a58ddb129a754951cd4660b560ebc97695d5ae2808b","bodyHash":"b914ec3b8453ae964ed4753abc2c91b1f4063b8c1723ca6d2e41a67cfda7e8b2"}
  *
  * Go source:
  * func IsOuterExpression(node *Expression, kinds OuterExpressionKinds) bool {
@@ -2466,6 +2473,13 @@ export const OEKAll: int = (OEKParentheses | OEKAssertions | OEKPartiallyEmitted
  * 		return kinds&OEKNonNullAssertions != 0
  * 	case KindPartiallyEmittedExpression:
  * 		return kinds&OEKPartiallyEmittedExpressions != 0
+ * 	case KindBinaryExpression:
+ * 		switch node.AsBinaryExpression().OperatorToken.Kind {
+ * 		case KindEqualsToken:
+ * 			return kinds&OEKAssignments != 0
+ * 		case KindCommaToken:
+ * 			return kinds&OEKComma != 0
+ * 		}
  * 	}
  * 	return false
  * }
@@ -2486,17 +2500,28 @@ export function IsOuterExpression(node: GoPtr<Expression>, kinds: OuterExpressio
       return ((kinds & OEKNonNullAssertions) !== 0) as bool;
     case KindPartiallyEmittedExpression:
       return ((kinds & OEKPartiallyEmittedExpressions) !== 0) as bool;
+    case KindBinaryExpression:
+      switch (AsBinaryExpression(node)!.OperatorToken!.Kind) {
+        case KindEqualsToken:
+          return ((kinds & OEKAssignments) !== 0) as bool;
+        case KindCommaToken:
+          return ((kinds & OEKComma) !== 0) as bool;
+      }
   }
   return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipOuterExpressions","kind":"func","status":"implemented","sigHash":"a8cd8291154f79b9cd6f1463229677f2fcbb04860a886c86a2fb9f89fba3c386","bodyHash":"d5e0a79382af81594cd5bb544abac30bab768b96399dc6d71e773946d1c9a49e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::SkipOuterExpressions","kind":"func","status":"implemented","sigHash":"a8cd8291154f79b9cd6f1463229677f2fcbb04860a886c86a2fb9f89fba3c386","bodyHash":"c82b09cabbe667315a532adb982e732287ad35547373eef5231bf292b5ed69ff"}
  *
  * Go source:
  * func SkipOuterExpressions(node *Expression, kinds OuterExpressionKinds) *Expression {
  * 	for IsOuterExpression(node, kinds) {
- * 		node = node.Expression()
+ * 		if IsBinaryExpression(node) {
+ * 			node = node.AsBinaryExpression().Right
+ * 		} else {
+ * 			node = node.Expression()
+ * 		}
  * 	}
  * 	return node
  * }
@@ -2504,6 +2529,9 @@ export function IsOuterExpression(node: GoPtr<Expression>, kinds: OuterExpressio
 export function SkipOuterExpressions(node: GoPtr<Expression>, kinds: OuterExpressionKinds): GoPtr<Expression> {
   const loop = (current: GoPtr<Expression>): GoPtr<Expression> => {
     if (!IsOuterExpression(current, kinds)) return current;
+    if (IsBinaryExpression(current)) {
+      return loop(AsBinaryExpression(current)!.Right);
+    }
     return loop(Node_Expression(current));
   };
   return loop(node);
@@ -10129,11 +10157,9 @@ export function GetHostSignatureFromJSDoc(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNextJSDocCommentLocation","kind":"func","status":"implemented","sigHash":"699c4ab4cfcafd1b4e36d930e951e49afacdaa4424d3ea98b3004e94937295db","bodyHash":"a4dec87fb910dbad54128383e2f69de9b055084f93ddf871921bd9f7fb41cec7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNextJSDocCommentLocation","kind":"func","status":"implemented","sigHash":"12d0fb67ba79d31a8f326f0dc8601618723ccc5a798e221002653418bf68c486","bodyHash":"d3e2d0b1c0126c2a0739bb2b1c1989c2d258a54a26fe5d0d0604bc9cfa5f8cc2"}
  *
  * Go source:
- * // Finds the declaration that owns the JSDoc for a function-like node.
- * // Keep these hosts aligned with JSDoc parameter reparsing so unmatched @param diagnostics use the same attachment rules.
  * func GetNextJSDocCommentLocation(node *Node) *Node {
  * 	if parent := node.Parent; parent != nil {
  * 		switch parent.Kind {
@@ -11217,7 +11243,6 @@ export function IsSuperProperty(node: GoPtr<Node>): bool {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsNamedEvaluationSource","kind":"func","status":"implemented","sigHash":"c2427b362f66aa78871e2b40c41162d2f6984b20bf8915782ff39586fee3e9b2","bodyHash":"a2fdaa9bb90b1f6b2ac0ee1267bcc4593a87d471324832340841edd172413008"}
  *
  * Go source:
- * // Indicates whether a node is a potential source of an assigned name for a class, function, or arrow function.
  * func IsNamedEvaluationSource(node *Node) bool {
  * 	switch node.Kind {
  * 	case KindPropertyAssignment:
@@ -11276,10 +11301,6 @@ export function IsNamedEvaluationSource(node: GoPtr<Node>): bool {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsProtoSetter","kind":"func","status":"implemented","sigHash":"4ce8dc880b6c589687b11d14b24979c2b511353db79a7ee61559a9d48ed23a01","bodyHash":"8a8853ef6ea0f298b90b21b9eb14d263ec3d79a37d7b7c4fadcdc2aa5d58b349"}
  *
  * Go source:
- * // Indicates whether a property name is the special `__proto__` property.
- * // Per the ECMA-262 spec, this only matters for property assignments whose name is
- * // the Identifier `__proto__`, or the string literal `"__proto__"`, but not for
- * // computed property names.
  * func IsProtoSetter(node *Node) bool {
  * 	return (IsIdentifier(node) || IsStringLiteral(node)) && node.Text() == "__proto__"
  * }

@@ -1566,7 +1566,7 @@ export function Checker_isPropertyInitializedInConstructor(receiver: GoPtr<Check
   }
   Node_Expression(reference)!.Parent = reference;
   reference!.Parent = constructor_;
-  (Node_FlowNodeData(reference) as unknown as { FlowNode: GoPtr<FlowNode> }).FlowNode = (AsConstructorDeclaration(constructor_) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"];
+  Node_FlowNodeData(reference)!.FlowNode = AsConstructorDeclaration(constructor_)!.ReturnFlowNode;
   const flowType = Checker_getFlowTypeOfReferenceEx(receiver, reference, propType, Checker_getOptionalType(receiver, propType, false), undefined, undefined);
   return !Checker_containsUndefinedType(receiver, flowType);
 }
@@ -9567,11 +9567,13 @@ export function Checker_newTypeParameter(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSignature","kind":"method","status":"implemented","sigHash":"0705401fb9577a843532c59e2aa1c1a769ceeffe13f757fde471312170e710eb","bodyHash":"c1ceb9b79769bfb204097068fee384def9051c14b159f4337db02fc78bcbe454"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSignature","kind":"method","status":"implemented","sigHash":"0705401fb9577a843532c59e2aa1c1a769ceeffe13f757fde471312170e710eb","bodyHash":"81ebc4040477d84787e00d2429e836dcab4e3ab8e1477dfe2e8ce0c339f200e6"}
  *
  * Go source:
  * func (c *Checker) newSignature(flags SignatureFlags, declaration *ast.Node, typeParameters []*Type, thisParameter *ast.Symbol, parameters []*ast.Symbol, resolvedReturnType *Type, resolvedTypePredicate *TypePredicate, minArgumentCount int) *Signature {
+ * 	c.SignatureCount++
  * 	sig := c.signatureArena.New()
+ * 	sig.id = SignatureId(c.SignatureCount)
  * 	sig.flags = flags
  * 	sig.declaration = declaration
  * 	sig.typeParameters = typeParameters
@@ -9585,7 +9587,9 @@ export function Checker_newTypeParameter(receiver: GoPtr<Checker>, symbol_: GoPt
  * }
  */
 export function Checker_newSignature(receiver: GoPtr<Checker>, flags: SignatureFlags, declaration: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, thisParameter: GoPtr<Symbol>, parameters: GoSlice<GoPtr<Symbol>>, resolvedReturnType: GoPtr<Type>, resolvedTypePredicate: GoPtr<TypePredicate>, minArgumentCount: int): GoPtr<Signature> {
+  receiver!.SignatureCount++;
   const sig = Arena_New(receiver!.signatureArena) as GoPtr<Signature>;
+  sig!.id = receiver!.SignatureCount;
   sig!.flags = flags;
   sig!.declaration = declaration;
   sig!.typeParameters = typeParameters;
@@ -11067,7 +11071,6 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol","kind":"method","status":"implemented","sigHash":"a40817fe1af41ea59c2da8e72d9850088ef890ade45f2e789374df947fa9e7c5","bodyHash":"74ac15ed3ed74c01b2426c8687027941d736cb99a64e2c0fab87abd42939938d"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-selected element-access evidence needs a stable synthetic symbol for mapped index signatures, whose TS-Go index infos have no concrete IndexSignatureDeclaration; normal index-type selection and diagnostics remain unchanged."}
  *
  * Go source:
  * func (c *Checker) getApplicableIndexSymbol(t *Type, keyType *Type) *ast.Symbol {
@@ -11113,12 +11116,6 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
           }
         }
       }
-      if ((declarations ?? []).length === 0) {
-        const mappedDeclaration = getMappedIndexEvidenceDeclaration(t);
-        if (mappedDeclaration !== undefined) {
-          declarations = [mappedDeclaration] as GoSlice<GoPtr<Node>>;
-        }
-      }
       if ((declarations ?? []).length !== 0) {
         const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
         symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
@@ -11130,22 +11127,6 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
       }
     }
     return info!.indexSymbol;
-  }
-  return undefined;
-}
-
-function getMappedIndexEvidenceDeclaration(t: GoPtr<Type>): GoPtr<Node> {
-  if (t === undefined || (t!.flags & TypeFlagsObject) === 0) {
-    return undefined;
-  }
-  if ((t!.objectFlags & ObjectFlagsMapped) !== 0) {
-    return Type_AsMappedType(t)!.declaration;
-  }
-  if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
-    const target = Type_Target(t);
-    if (target !== undefined && (target!.objectFlags & ObjectFlagsMapped) !== 0) {
-      return Type_AsMappedType(target)!.declaration;
-    }
   }
   return undefined;
 }

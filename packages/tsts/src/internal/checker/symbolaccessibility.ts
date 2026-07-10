@@ -14,7 +14,7 @@ import { GetDeclarationOfKind, IsGlobalSourceFile, IsExternalModule, IsAmbientMo
 import { IsSourceFile, IsClassExpression, IsModuleBlock, IsVariableDeclaration, IsTypeLiteralNode, IsNamespaceExportDeclaration, IsNamespaceExport, IsObjectLiteralExpression } from "../ast/generated/predicates.js";
 import { FindAncestor } from "../ast/utilities.js";
 import { GetSourceFileOfNode, NodeIsSynthesized } from "../ast/utilities.js";
-import { Node_Locals, Node_Initializer, Node_Type, Node_ModuleSpecifier, AsSourceFile, Node_Expression } from "../ast/ast.js";
+import { Node_Locals, Node_Initializer, Node_Type, Node_ModuleSpecifier, AsSourceFile, Node_Expression, Node_Text } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
 import { SourceFile_Imports } from "../ast/ast.js";
 import type { LinkStore } from "../core/linkstore.js";
@@ -36,7 +36,7 @@ import type { SymbolFormatFlags } from "./types.js";
 import type { SymbolAccessibilityResult, SymbolAccessibility } from "../printer/emitresolver.js";
 import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, SymbolAccessibilityCannotBeNamed } from "../printer/emitresolver.js";
 import { IsBinaryExpression } from "../ast/generated/predicates.js";
-import { AsBinaryExpression } from "../ast/generated/casts.js";
+import { AsBinaryExpression, AsClassExpression } from "../ast/generated/casts.js";
 import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
 
 /**
@@ -881,13 +881,13 @@ export const stKindShift: int = 61;
  * 	stKindMask symbolTableID = (iota - 1) << stKindShift
  * )
  */
-export const stKindLocals: symbolTableID = 0; // 0 << 61
-export const stKindExports: symbolTableID = 0x2000000000000000; // 1 << 61
-export const stKindMembers: symbolTableID = 0x4000000000000000; // 2 << 61
-export const stKindGlobals: symbolTableID = 0x6000000000000000; // 3 << 61
-export const stKindResolvedExports: symbolTableID = 0x8000000000000000; // 4 << 61, resolved/derived exports from getExportsOfSymbol, distinct from raw sym.Exports
+export const stKindLocals: symbolTableID = 0n; // 0 << 61
+export const stKindExports: symbolTableID = 0x2000000000000000n; // 1 << 61
+export const stKindMembers: symbolTableID = 0x4000000000000000n; // 2 << 61
+export const stKindGlobals: symbolTableID = 0x6000000000000000n; // 3 << 61
+export const stKindResolvedExports: symbolTableID = 0x8000000000000000n; // 4 << 61, resolved/derived exports from getExportsOfSymbol, distinct from raw sym.Exports
 // stKindMask extracts the kind bits from a symbolTableID.
-export const stKindMask: symbolTableID = 0x8000000000000000; // (5 - 1) << 61
+export const stKindMask: symbolTableID = 0x8000000000000000n; // (5 - 1) << 61
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromLocals","kind":"func","status":"implemented","sigHash":"ddb7a7e67dd745b636984a46c8f2c498d351cc6dce505161c74f29c31d7e90af","bodyHash":"f1a25251eb4bacfe964a69e28ec6e9fee67838fed9495d42726dce8982ae5366"}
@@ -917,10 +917,6 @@ export function symbolTableIDFromExports(sym: GoPtr<Symbol>): symbolTableID {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromResolvedExports","kind":"func","status":"implemented","sigHash":"af01f8edd325464e56b73d21f8660f40ab679a8ed518ec8aa598b692b85f7282","bodyHash":"26238c84b7ec96be9dc3b1068af2bafa7602ec43b44071e5a9cdca0c3037f984"}
  *
  * Go source:
- * // symbolTableIDFromResolvedExports returns an ID for resolved/derived export tables
- * // (e.g. from getExportsOfSymbol/getExportsOfModule which may include export * resolution
- * // and late-bound members). This is distinct from symbolTableIDFromExports to prevent
- * // cache collisions with raw sym.Exports tables passed by someSymbolTableInScope.
  * func symbolTableIDFromResolvedExports(sym *ast.Symbol) symbolTableID {
  * 	return stKindResolvedExports | symbolTableID(ast.GetSymbolId(sym))
  * }
@@ -1078,10 +1074,6 @@ export function Checker_getAccessibleSymbolChainFromSymbolTable(receiver: GoPtr<
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getSymbolTableAliases","kind":"method","status":"implemented","sigHash":"ebab701bc726232b245be52334ba272304034910b5683009dc8596a0c8f1099c","bodyHash":"aac6f0123a182ff28fa58fcd817adf8f9b21017158261e27d7f17271457549b2"}
  *
  * Go source:
- * // getSymbolTableAliases returns only the alias symbols from a symbol table,
- * // caching the result by tableId to avoid repeated iteration over large tables.
- * // Members tables are skipped entirely since someSymbolTableInScope filters them
- * // to SymbolFlagsType & ^SymbolFlagsAssignment, which never includes aliases.
  * func (c *Checker) getSymbolTableAliases(symbols ast.SymbolTable, tableId symbolTableID) []*ast.Symbol {
  * 	kind := tableId & stKindMask
  * 	// Members tables never contain alias symbols; skip entirely.
@@ -1581,7 +1573,7 @@ export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.someSymbolTableInScope","kind":"method","status":"implemented","sigHash":"104479f1509bdc3a2737399b431fe194d408c34a7e53bcd1929ab4ff7359006b","bodyHash":"3e8d05b11b68ac3412824c2aa51707b8b9036da0718aab8b09b1510845627727"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.someSymbolTableInScope","kind":"method","status":"implemented","sigHash":"104479f1509bdc3a2737399b431fe194d408c34a7e53bcd1929ab4ff7359006b","bodyHash":"580c8a50469c1e40071cbe38bfe58f3d95435fb89553fcbfea7c3895d597d6fe"}
  *
  * Go source:
  * func (c *Checker) someSymbolTableInScope(
@@ -1626,9 +1618,21 @@ export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): boo
  * 			if table != nil && callback(table, symbolTableIDFromMembers(sym), false, false, location) {
  * 				return true
  * 			}
+ * 			// Class expression names (e.g., `B` in `class B {}`) are not stored in any
+ * 			// scope table — the binder uses bindAnonymousDeclaration. Expose the name
+ * 			// binding here so getAccessibleSymbolChain can resolve self-references.
+ * 			// This mirrors the special casing of class expression names in
+ * 			// (*NameResolver).Resolve; if class names are ever bound differently
+ * 			// (e.g., via class-local type aliases), both sites should be updated.
+ * 			if ast.IsClassExpression(location) && location.AsClassExpression().Name() != nil {
+ * 				nameTable := c.getClassExpressionNameTable(location)
+ * 				if nameTable != nil && callback(nameTable, symbolTableIDFromLocals(location.AsNode()), false, true, location) {
+ * 					return true
+ * 				}
+ * 			}
  * 		}
  * 	}
- * 
+ *
  * 	return callback(c.globals, symbolTableIDFromGlobals(), false, true, nil)
  * }
  */
@@ -1670,6 +1674,18 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
       if (table !== undefined && callback(table, symbolTableIDFromMembers(sym), false, false, location)) {
         return true;
       }
+      // Class expression names (e.g. `B` in `class B {}`) are not stored in any
+      // scope table — the binder uses bindAnonymousDeclaration. Expose the name
+      // binding here so getAccessibleSymbolChain can resolve self-references.
+      // This mirrors the special casing of class expression names in
+      // (*NameResolver).Resolve; if class names are ever bound differently
+      // (e.g. via class-local type aliases), both sites should be updated.
+      if (IsClassExpression(location) && AsClassExpression(location)!.name !== undefined) {
+        const nameTable = Checker_getClassExpressionNameTable(receiver, location);
+        if (nameTable !== undefined && callback(nameTable, symbolTableIDFromLocals(location), false, true, location)) {
+          return true;
+        }
+      }
       break;
     }
     }
@@ -1677,6 +1693,52 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
   }
 
   return callback(receiver!.globals, symbolTableIDFromGlobals(), false, true, undefined);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getClassExpressionNameTable","kind":"method","status":"implemented","sigHash":"14c3be2757ece8264b8aeeefc456cc50dc6a882c0b1ea658c728e05efcfdbaf9","bodyHash":"4ae3260d151dafadaa3b8ad724c0c9fdddd07ced9f8a6890b6694fce1139ee87"}
+ *
+ * Go source:
+ * func (c *Checker) getClassExpressionNameTable(location *ast.Node) ast.SymbolTable {
+ * 	nodeId := ast.GetNodeId(location)
+ * 	if c.classExpressionNameTables != nil {
+ * 		if table, ok := c.classExpressionNameTables[nodeId]; ok {
+ * 			return table
+ * 		}
+ * 	}
+ * 	classSymbol := c.getSymbolOfDeclaration(location)
+ * 	nameText := location.AsClassExpression().Name().Text()
+ * 	if len(nameText) == 0 || classSymbol == nil {
+ * 		return nil
+ * 	}
+ * 	table := ast.SymbolTable{nameText: classSymbol}
+ * 	if c.classExpressionNameTables == nil {
+ * 		c.classExpressionNameTables = make(map[ast.NodeId]ast.SymbolTable)
+ * 	}
+ * 	c.classExpressionNameTables[nodeId] = table
+ * 	return table
+ * }
+ */
+export function Checker_getClassExpressionNameTable(receiver: GoPtr<Checker>, location: GoPtr<Node>): GoPtr<SymbolTable> {
+  const nodeId = GetNodeId(location);
+  if (receiver!.classExpressionNameTables !== undefined) {
+    const table = receiver!.classExpressionNameTables.get(nodeId);
+    if (table !== undefined) {
+      return table;
+    }
+  }
+  const classSymbol = Checker_getSymbolOfDeclaration(receiver, location);
+  const nameText = Node_Text(AsClassExpression(location)!.name);
+  if (nameText.length === 0 || classSymbol === undefined) {
+    return undefined;
+  }
+  const table: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
+  table.set(nameText, classSymbol);
+  if (receiver!.classExpressionNameTables === undefined) {
+    receiver!.classExpressionNameTables = new globalThis.Map();
+  }
+  receiver!.classExpressionNameTables.set(nodeId, table);
+  return table;
 }
 
 /**

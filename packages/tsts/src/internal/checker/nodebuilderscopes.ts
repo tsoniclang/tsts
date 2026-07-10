@@ -134,7 +134,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope","kind":"method","status":"implemented","sigHash":"ad1edc80279b80f281d3d602714e955be116084433c938c9e2907f8b9cbd17d3","bodyHash":"c7947b0779ab649989991df42e5526563e78aca33b6d38b7a67fc2c1da8abf4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope","kind":"method","status":"implemented","sigHash":"ad1edc80279b80f281d3d602714e955be116084433c938c9e2907f8b9cbd17d3","bodyHash":"5f9c6f61bda5329939ba73f52edbb1fb6db8329e2423b6778514f3ae7a38f0fe"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) enterNewScope(declaration *ast.Node, expandedParams []*ast.Symbol, typeParameters []*Type, originalParameters []*ast.Symbol, mapper *TypeMapper) func() {
@@ -194,7 +194,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 				}
  * 			}
  * 			debug.Assert(existingFakeScope == nil || ast.IsBlock(existingFakeScope))
- * 
+ *
  * 			var locals ast.SymbolTable
  * 			if existingFakeScope != nil {
  * 				locals = existingFakeScope.Locals()
@@ -216,7 +216,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 				}
  * 				locals[name] = symbol
  * 			})
- * 
+ *
  * 			if existingFakeScope == nil {
  * 				// Use a Block for this; the type of the node doesn't matter so long as it
  * 				// has locals, and this is cheaper/easier than using a function-ish Node.
@@ -240,7 +240,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 				return undo
  * 			}
  * 		}
- * 
+ *
  * 		if expandedParams == nil || !core.Some(expandedParams, func(p *ast.Symbol) bool { return p != nil }) {
  * 			cleanupParams = nil
  * 		} else {
@@ -254,16 +254,14 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 						originalParam = originalParameters[pIndex]
  * 					}
  * 					if originalParameters != nil && originalParam != param {
- * 						// Can't reference parameters that come from an expansion
- * 						add(param.Name, b.ch.unknownSymbol)
- * 						// Can't reference the original expanded parameter either
+ * 						// Can't reference the expanded parameter name, just the original, unless we've expanded the param list for some reason
  * 						if originalParam != nil {
- * 							add(originalParam.Name, b.ch.unknownSymbol)
+ * 							add(originalParam.Name, originalParam)
  * 						}
  * 					} else if !core.Some(param.Declarations, func(d *ast.Node) bool {
  * 						var bindElement func(e *ast.BindingElement)
  * 						var bindPattern func(e *ast.BindingPattern)
- * 
+ *
  * 						bindPatternWorker := func(p *ast.BindingPattern) {
  * 							for _, e := range p.Elements.Nodes {
  * 								switch e.Kind {
@@ -277,7 +275,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 								}
  * 							}
  * 						}
- * 
+ *
  * 						bindElementWorker := func(e *ast.BindingElement) {
  * 							if e.Name() != nil && ast.IsBindingPattern(e.Name()) {
  * 								bindPattern(e.Name().AsBindingPattern())
@@ -290,7 +288,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 						}
  * 						bindElement = bindElementWorker
  * 						bindPattern = bindPatternWorker
- * 
+ *
  * 						if ast.IsParameterDeclaration(d) && d.Name() != nil && ast.IsBindingPattern(d.Name()) {
  * 							bindPattern(d.Name().AsBindingPattern())
  * 							return true
@@ -302,7 +300,7 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 				}
  * 			})
  * 		}
- * 
+ *
  * 		if b.ctx.flags&nodebuilder.FlagsGenerateNamesForShadowedTypeParams != 0 && typeParameters != nil && core.Some(typeParameters, func(p *Type) bool { return p != nil }) {
  * 			cleanupTypeParams = pushFakeScope("typeParams", func(add func(name string, symbol *ast.Symbol)) {
  * 				if typeParameters == nil {
@@ -317,9 +315,9 @@ export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderI
  * 				}
  * 			})
  * 		}
- * 
+ *
  * 	}
- * 
+ *
  * 	return func() {
  * 		if cleanupParams != nil {
  * 			cleanupParams()
@@ -384,7 +382,7 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
         const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
         LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope)!.fakeScopeForSignatureDeclaration = kind;
         const data = Node_LocalsContainerData(fakeScope);
-        (data as unknown as { Locals?: SymbolTable }).Locals = locals;
+        data!.Locals = locals;
         fakeScope!.Parent = receiver!.ctx!.enclosingDeclaration;
         receiver!.ctx!.enclosingDeclaration = fakeScope;
         return undefined;
@@ -412,9 +410,8 @@ export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, 
             originalParam = originalParameters[pIndex];
           }
           if (originalParameters !== undefined && originalParam !== param) {
-            add(param!.Name, receiver!.ch!.unknownSymbol);
             if (originalParam !== undefined) {
-              add(originalParam!.Name, receiver!.ch!.unknownSymbol);
+              add(originalParam!.Name, originalParam);
             }
           } else if (!Some(param!.Declarations, (d: GoPtr<Node>) => {
             const bindElement = (e: GoPtr<Node>): void => {

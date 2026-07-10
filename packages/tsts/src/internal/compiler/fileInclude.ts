@@ -200,6 +200,7 @@ export function FileIncludeReason_asIndex(receiver: GoPtr<FileIncludeReason>): i
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileInclude.go::method::FileIncludeReason.asLibFileIndex","kind":"method","status":"implemented","sigHash":"82725396ff49c519b0ef41a73c386a601c5b4ab3db290f79d6380d3cdeb9897f","bodyHash":"b63ecd7d547a7ad7b3912dc0a392870b7fb2d2ff6afb22eaa657111ad76b9461"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"Go's runtime type assertion returns the zero int and ok=false for non-int interface data; TypeScript performs the same assertion through its number runtime tag and returns the same tuple."}
  *
  * Go source:
  * func (r *FileIncludeReason) asLibFileIndex() (int, bool) {

@@ -17,7 +17,7 @@
 // must carry. A captured section that does NOT differ from the Strada baseline section is an
 // error: the overlay must stay minimal, covering only real divergences.
 import { spawnSync, execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -36,7 +36,8 @@ const vendorRoot = join(packageRoot, "_vendor/typescript-go");
 const typeScriptSubmoduleCaseRoot = join(vendorRoot, "_submodules/TypeScript/tests/cases");
 const typeScriptSubmoduleBaselineRoot = join(vendorRoot, "_submodules/TypeScript/tests/baselines/reference");
 const overlayRoot = join(scriptDir, "tsgo-accepted");
-const captureRoot = join(repoRoot, ".temp/tsgo-accepted-capture");
+mkdirSync(join(repoRoot, ".temp"), { recursive: true });
+const captureRoot = mkdtempSync(join(repoRoot, ".temp/tsgo-accepted-capture-"));
 
 const args = process.argv.slice(2);
 const tsgoIndex = args.indexOf("--tsgo");
@@ -111,7 +112,6 @@ for (const entry of manifest) {
   const invocations = transpileInvocationsForMaterializedCase(compilerOptions, parsed, undefined, settings);
 
   const caseDir = join(captureRoot, entry.artifact.replace(/[^A-Za-z0-9.=()-]/g, "_"));
-  rmSync(caseDir, { recursive: true, force: true });
   mkdirSync(caseDir, { recursive: true });
   for (const unit of parsed.units) {
     if (unit.fileName.includes("/") || unit.fileName.includes("\\")) {

@@ -658,8 +658,8 @@ export function superAccessState_trackSuperAccess(receiver: GoPtr<superAccessSta
  * 		node,
  * 		modifiers,
  * 		f.NewGeneratedPrivateNameForNodeEx(node.Name(), printer.AutoGenerateOptions{Suffix: "_accessor_storage"}),
- * 		nil, // postfixToken
- * 		nil, // typeNode
+ * 		nil, /*postfixToken* /
+ * 		nil, /*typeNode* /
  * 		initializer,
  * 	)
  * }

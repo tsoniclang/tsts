@@ -603,5 +603,5 @@ export function MustParse(text: string): Version {
  */
 export function getUintComponent(text: string): [uint, GoError] {
   const [r, err] = strconv.ParseUint(text, 10, 32);
-  return [(r >>> 0) as uint, err];
+  return [globalThis.Number(globalThis.BigInt.asUintN(32, r as bigint)) as uint, err];
 }

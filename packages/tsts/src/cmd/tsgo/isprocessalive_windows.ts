@@ -14,10 +14,6 @@ export const processAliveSupported: bool = true as bool;
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::func::isProcessAlive","kind":"func","status":"implemented","sigHash":"6392fe1454e58a9159c27a3c8dc29bc5813958a73d2500e11e8c399dd44bca32","bodyHash":"db821ca119a6eeae4a6a18287db6d39849829c1d22da7c441478d88b432eb243"}
  *
  * Go source:
- * // isProcessAlive checks if a process with the given PID is still running.
- * // On Windows, we open the process with SYNCHRONIZE access and use
- * // WaitForSingleObject with a zero timeout. If the wait times out, the
- * // process is still running. If the object is signaled, it has exited.
  * func isProcessAlive(pid int) bool {
  * 	const SYNCHRONIZE = 0x00100000
  * 	handle, err := syscall.OpenProcess(SYNCHRONIZE, false, uint32(pid))

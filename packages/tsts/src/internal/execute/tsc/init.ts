@@ -221,36 +221,36 @@ export function WriteConfigFile(sys: System, locale: Locale, reportDiagnostic: D
  * 	newline()
  *
  * 	emitHeader(diagnostics.Other_Outputs)
- * 	emitOption("sourceMap", true, commentedNever)
- * 	emitOption("declaration", true, commentedNever)
- * 	emitOption("declarationMap", true, commentedNever)
+ * 	emitOption("sourceMap" /*defaultValue* /, true, commentedNever)
+ * 	emitOption("declaration" /*defaultValue* /, true, commentedNever)
+ * 	emitOption("declarationMap" /*defaultValue* /, true, commentedNever)
  *
  * 	newline()
  *
  * 	emitHeader(diagnostics.Stricter_Typechecking_Options)
- * 	emitOption("noUncheckedIndexedAccess", true, commentedNever)
- * 	emitOption("exactOptionalPropertyTypes", true, commentedNever)
+ * 	emitOption("noUncheckedIndexedAccess" /*defaultValue* /, true, commentedNever)
+ * 	emitOption("exactOptionalPropertyTypes" /*defaultValue* /, true, commentedNever)
  *
  * 	newline()
  *
  * 	emitHeader(diagnostics.Style_Options)
- * 	emitOption("noImplicitReturns", true, commentedOptional)
- * 	emitOption("noImplicitOverride", true, commentedOptional)
- * 	emitOption("noUnusedLocals", true, commentedOptional)
- * 	emitOption("noUnusedParameters", true, commentedOptional)
- * 	emitOption("noFallthroughCasesInSwitch", true, commentedOptional)
- * 	emitOption("noPropertyAccessFromIndexSignature", true, commentedOptional)
+ * 	emitOption("noImplicitReturns" /*defaultValue* /, true, commentedOptional)
+ * 	emitOption("noImplicitOverride" /*defaultValue* /, true, commentedOptional)
+ * 	emitOption("noUnusedLocals" /*defaultValue* /, true, commentedOptional)
+ * 	emitOption("noUnusedParameters" /*defaultValue* /, true, commentedOptional)
+ * 	emitOption("noFallthroughCasesInSwitch" /*defaultValue* /, true, commentedOptional)
+ * 	emitOption("noPropertyAccessFromIndexSignature" /*defaultValue* /, true, commentedOptional)
  *
  * 	newline()
  *
  * 	emitHeader(diagnostics.Recommended_Options)
- * 	emitOption("strict", true, commentedNever)
+ * 	emitOption("strict" /*defaultValue* /, true, commentedNever)
  * 	emitOption("jsx", core.JsxEmitReactJSX, commentedNever)
- * 	emitOption("verbatimModuleSyntax", true, commentedNever)
- * 	emitOption("isolatedModules", true, commentedNever)
- * 	emitOption("noUncheckedSideEffectImports", true, commentedNever)
+ * 	emitOption("verbatimModuleSyntax" /*defaultValue* /, true, commentedNever)
+ * 	emitOption("isolatedModules" /*defaultValue* /, true, commentedNever)
+ * 	emitOption("noUncheckedSideEffectImports" /*defaultValue* /, true, commentedNever)
  * 	emitOption("moduleDetection", core.ModuleDetectionKindForce, commentedNever)
- * 	emitOption("skipLibCheck", true, commentedNever)
+ * 	emitOption("skipLibCheck" /*defaultValue* /, true, commentedNever)
  *
  * 	// Write any user-provided options we haven't already
  * 	if len(allSetOptions) > 0 {

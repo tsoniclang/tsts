@@ -110,27 +110,27 @@ export class Uint32 {
 }
 
 export class Uint64 {
-  private value: number = 0;
+  private value: bigint = 0n;
   Load(): ulong {
     return this.value as ulong;
   }
   Store(value: ulong): void {
-    this.value = value as number;
+    this.value = globalThis.BigInt.asUintN(64, value as bigint);
   }
   Swap(newValue: ulong): ulong {
     const old = this.value;
-    this.value = newValue as number;
+    this.value = globalThis.BigInt.asUintN(64, newValue as bigint);
     return old as ulong;
   }
   CompareAndSwap(oldValue: ulong, newValue: ulong): bool {
-    if (this.value === (oldValue as number)) {
-      this.value = newValue as number;
+    if (this.value === globalThis.BigInt.asUintN(64, oldValue as bigint)) {
+      this.value = globalThis.BigInt.asUintN(64, newValue as bigint);
       return true as bool;
     }
     return false as bool;
   }
   Add(delta: ulong): ulong {
-    this.value = this.value + (delta as number);
+    this.value = globalThis.BigInt.asUintN(64, this.value + (delta as bigint));
     return this.value as ulong;
   }
 }

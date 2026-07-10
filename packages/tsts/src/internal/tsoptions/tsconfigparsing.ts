@@ -5,7 +5,7 @@ import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
 import * as strings from "../../go/strings.js";
 import type { Node } from "../ast/spine.js";
-import { Node_Name } from "../ast/spine.js";
+import { Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import { Node_Text, Node_Expression, Node_Elements, Node_QuestionToken, SourceFile_FileName, SourceFile_Diagnostics, SourceFile_SetDiagnostics, NodeFactory_NewSourceFile, AsSourceFile } from "../ast/ast.js";
 import { AsObjectLiteralExpression, AsPropertyAssignment, AsPrefixUnaryExpression, AsStringLiteral } from "../ast/generated/casts.js";
@@ -22,7 +22,7 @@ import { PropertyAssignment_Name } from "../ast/generated/data.js";
 import { NewDiagnostic, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { OrderedMap_Entries, OrderedMap_Has, OrderedMap_Set, OrderedMap_GetOrZero, OrderedMap_Get, OrderedMap_Delete, OrderedMap_Values, OrderedMap_Size, newMapWithSizeHint } from "../collections/ordered_map.js";
+import { OrderedMap_Clone, OrderedMap_Entries, OrderedMap_Has, OrderedMap_Set, OrderedMap_GetOrZero, OrderedMap_Get, OrderedMap_Delete, OrderedMap_Values, OrderedMap_Size, newMapWithSizeHint } from "../collections/ordered_map.js";
 import type { Set } from "../collections/set.js";
 import { Set_Add, Set_Keys } from "../collections/set.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -123,9 +123,6 @@ export interface extendsResult {
  *
  * Go source:
  * var CommandLineCompilerOptionsMap CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations)
- *
- * Note: hoisted above compilerOptionsDeclaration to match Go's package-level
- * initialization order (Go orders var initialization by dependency, not source position).
  */
 export const CommandLineCompilerOptionsMap: CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations);
 
@@ -2109,7 +2106,7 @@ export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, unknown>>, h
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::readJsonConfigFile","kind":"func","status":"implemented","sigHash":"d3506f9374f5e1b996c0d80a4d4c75f9d3850487664c4537639949dcdca48a52","bodyHash":"cdfd503bd3892cc43ed4af260ed730cbfb79deed1f71089e2c44259df0db6c67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::readJsonConfigFile","kind":"func","status":"implemented","sigHash":"d3506f9374f5e1b996c0d80a4d4c75f9d3850487664c4537639949dcdca48a52","bodyHash":"63604d3c112bb0b760c796ad252bb1adb92806aed3410d778aeb2e2e37de11d8"}
  *
  * Go source:
  * func readJsonConfigFile(fileName string, path tspath.Path, readFile func(fileName string) (string, bool)) (*TsConfigSourceFile, []*ast.Diagnostic) {
@@ -2122,8 +2119,9 @@ export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, unknown>>, h
  * 			}, text, core.ScriptKindJSON),
  * 		}, diagnostic
  * 	} else {
+ * 		factory := &ast.NodeFactory{}
  * 		file := &TsConfigSourceFile{
- * 			SourceFile: (&ast.NodeFactory{}).NewSourceFile(ast.SourceFileParseOptions{FileName: fileName, Path: path}, "", nil, (&ast.NodeFactory{}).NewToken(ast.KindEndOfFile)).AsSourceFile(),
+ * 			SourceFile: factory.NewSourceFile(ast.SourceFileParseOptions{FileName: fileName, Path: path}, "", factory.NewNodeList([]*ast.Node{}), factory.NewToken(ast.KindEndOfFile)).AsSourceFile(),
  * 		}
  * 		file.SourceFile.SetDiagnostics(diagnostic)
  * 		return file, diagnostic
@@ -2144,7 +2142,8 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
   } else {
     const factory: NodeFactory = { hooks: {}, nodeCount: 0 as int, textCount: 0 as int } as NodeFactory;
     const endOfFileToken = NodeFactory_NewToken(factory, KindEndOfFile) as GoPtr<TokenNode>;
-    const sourceFileNode = NodeFactory_NewSourceFile(factory, { FileName: fileName, Path: path } as SourceFileParseOptions, "", undefined, endOfFileToken);
+    const statements = NodeFactory_NewNodeList(factory, []);
+    const sourceFileNode = NodeFactory_NewSourceFile(factory, { FileName: fileName, Path: path } as SourceFileParseOptions, "", statements, endOfFileToken);
     const sf = AsSourceFile(sourceFileNode);
     SourceFile_SetDiagnostics(sf, diagnostic);
     const file: TsConfigSourceFile = {
@@ -2285,7 +2284,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"45dfb38c07a9a7d025ff07e892e4089507cb96f59134e822a7cd4969350e0111","bodyHash":"4cf0d88cea179fa53b684d8ed237cbc493859c4b2db0af51fed423bdb5d3dc08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"45dfb38c07a9a7d025ff07e892e4089507cb96f59134e822a7cd4969350e0111","bodyHash":"3d351ff93085587c1c99dfde3305039f37b1ae78211fb71fae8569603a896e6e"}
  *
  * Go source:
  * func parseConfig(
@@ -2312,7 +2311,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 		}
  * 		return result, errors
  * 	}
- * 
+ *
  * 	var ownConfig *parsedTsconfig
  * 	var err []*ast.Diagnostic
  * 	if json != nil {
@@ -2328,7 +2327,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 		// we wouldn't know which directory to use unless we store it here.
  * 		ownConfig.options.PathsBasePath = basePath
  * 	}
- * 
+ *
  * 	applyExtendedConfig := func(result *extendsResult, extendedConfigPath string) {
  * 		extendedConfig, extendedErrors := getExtendedConfig(sourceFile, extendedConfigPath, host, resolutionStack, extendedConfigCache, result)
  * 		errors = append(errors, extendedErrors...)
@@ -2343,8 +2342,12 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 					if rawMap, ok := extendsRaw.(*collections.OrderedMap[string, any]); ok && rawMap.Has(propertyName) {
  * 						if slice, _ := rawMap.GetOrZero(propertyName).([]any); slice != nil {
  * 							value := core.Map(slice, func(path any) any {
- * 								if startsWithConfigDirTemplate(path) || tspath.IsRootedDiskPath(path.(string)) {
- * 									return path.(string)
+ * 								pathStr, isString := path.(string)
+ * 								if !isString {
+ * 									return path
+ * 								}
+ * 								if startsWithConfigDirTemplate(path) || tspath.IsRootedDiskPath(pathStr) {
+ * 									return pathStr
  * 								} else {
  * 									if relativeDifference == "" {
  * 										t := tspath.ComparePathsOptions{
@@ -2353,7 +2356,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 										}
  * 										relativeDifference = tspath.ConvertToRelativePath(tspath.GetDirectoryPath(extendedConfigPath), t)
  * 									}
- * 									return tspath.CombinePaths(relativeDifference, path.(string))
+ * 									return tspath.CombinePaths(relativeDifference, pathStr)
  * 								}
  * 							})
  * 							if propertyName == "include" {
@@ -2367,7 +2370,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 					}
  * 				}
  * 			}
- * 
+ *
  * 			setPropertyValue("include")
  * 			setPropertyValue("exclude")
  * 			setPropertyValue("files")
@@ -2379,7 +2382,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 			mergeCompilerOptions(result.options, extendedConfig.options, extendsRaw)
  * 		}
  * 	}
- * 
+ *
  * 	if ownConfig.extendedConfigPath != nil {
  * 		// copy the resolution stack so it is never reused between branches in potential diamond-problem scenarios.
  * 		resolutionStack = append(resolutionStack, resolvedPath)
@@ -2469,8 +2472,11 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
             if (Array.isArray(sliceVal) && sliceVal !== undefined) {
               const slice = sliceVal as unknown[];
               const value = core.Map(slice, (path: unknown): unknown => {
-                if (startsWithConfigDirTemplate(path) || IsRootedDiskPath((path as string))) {
-                  return path as string;
+                if (typeof path !== "string") {
+                  return path;
+                }
+                if (startsWithConfigDirTemplate(path) || IsRootedDiskPath(path)) {
+                  return path;
                 } else {
                   if (relativeDifference === "") {
                     const t: ComparePathsOptions = {
@@ -2479,7 +2485,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
                     };
                     relativeDifference = ConvertToRelativePath(GetDirectoryPath(extendedConfigPath), t);
                   }
-                  return CombinePaths(relativeDifference, path as string);
+                  return CombinePaths(relativeDifference, path);
                 }
               });
               if (propertyName === "include") {
@@ -3354,22 +3360,27 @@ export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoPtr<GoSli
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::handleOptionConfigDirTemplateSubstitution","kind":"func","status":"implemented","sigHash":"90580d957d6dfc2d3592f354a79aaf23031555a93aca982a0282d1f60c7c7049","bodyHash":"04108c381481f400237c4fa7bbd1509e3fc0e4b46e1df339a024086ada19102d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::handleOptionConfigDirTemplateSubstitution","kind":"func","status":"implemented","sigHash":"90580d957d6dfc2d3592f354a79aaf23031555a93aca982a0282d1f60c7c7049","bodyHash":"7fa119990700a1acf8c1e8e0b8bdad2042f067d319500960b784ac27e56a7594"}
  *
  * Go source:
  * func handleOptionConfigDirTemplateSubstitution(compilerOptions *core.CompilerOptions, basePath string) {
  * 	if compilerOptions == nil {
  * 		return
  * 	}
- * 
+ *
  * 	// !!! don't hardcode this; use options declarations?
- * 
+ *
+ * 	var paths *collections.OrderedMap[string, []string]
  * 	for k, v := range compilerOptions.Paths.Entries() {
  * 		if substitution := getSubstitutedStringArrayWithConfigDirTemplate(v, basePath); substitution != nil {
- * 			compilerOptions.Paths.Set(k, substitution)
+ * 			if paths == nil {
+ * 				paths = compilerOptions.Paths.Clone()
+ * 				compilerOptions.Paths = paths
+ * 			}
+ * 			paths.Set(k, substitution)
  * 		}
  * 	}
- * 
+ *
  * 	if rootDirs := getSubstitutedStringArrayWithConfigDirTemplate(compilerOptions.RootDirs, basePath); rootDirs != nil {
  * 		compilerOptions.RootDirs = rootDirs
  * 	}
@@ -3410,10 +3421,15 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
 
   // !!! don't hardcode this; use options declarations?
 
+  let paths: GoPtr<OrderedMap<string, GoSlice<string>>>;
   OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((k: string, v: GoSlice<string>): bool => {
     const substitution = getSubstitutedStringArrayWithConfigDirTemplate(v, basePath);
     if (substitution !== undefined) {
-      OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution);
+      if (paths === undefined) {
+        paths = OrderedMap_Clone(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>);
+        options.Paths = paths;
+      }
+      OrderedMap_Set(paths, k, substitution);
     }
     return true;
   });

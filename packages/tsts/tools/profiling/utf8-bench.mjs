@@ -105,6 +105,13 @@ function legacyUTF16Len(s) {
   return decoder.decode(encoder.encode(s)).length;
 }
 
+function legacyContainsNonASCII(s) {
+  for (let offset = 0; offset < legacyByteLen(s); offset++) {
+    if (legacyByteAt(s, offset) >= 0x80) return true;
+  }
+  return false;
+}
+
 function legacyDecodeRuneInStringAt(s, offset) {
   const bytes = encoder.encode(s);
   return utf8.DecodeRuneInBytesAt(bytes, offset);
@@ -180,12 +187,62 @@ function checksumStrings(values) {
 
 const asciiSource = makeAsciiSource(2_000);
 const mixedSource = makeMixedSource(300);
+const smallAsciiSource = makeAsciiSource(48);
+const smallMixedSource = makeMixedSource(24);
 const compareLeft = makeMixedSource(40);
 const compareRight = compareLeft.toLocaleUpperCase();
 
 const options = parseArgs(process.argv.slice(2));
 
 const benchmarks = [
+  runPair(
+    "short-string repeated byte indexing",
+    () => {
+      let checksum = 0;
+      const byteLength = legacyByteLen(smallMixedSource);
+      for (let pass = 0; pass < 20; pass++) {
+        for (let offset = 0; offset < byteLength; offset++) checksum = (checksum + legacyByteAt(smallMixedSource, offset)) | 0;
+      }
+      return checksum;
+    },
+    () => {
+      let checksum = 0;
+      const byteLength = utf8.StringByteLen(smallMixedSource);
+      for (let pass = 0; pass < 20; pass++) {
+        for (let offset = 0; offset < byteLength; offset++) checksum = (checksum + utf8.StringByteAt(smallMixedSource, offset)) | 0;
+      }
+      return checksum;
+    },
+    options.runs,
+  ),
+  runPair(
+    "ContainsNonASCII short ASCII source",
+    () => {
+      let checksum = 0;
+      for (let pass = 0; pass < 2; pass++) checksum += legacyContainsNonASCII(smallAsciiSource) ? 1 : 0;
+      return checksum;
+    },
+    () => {
+      let checksum = 0;
+      for (let pass = 0; pass < 2; pass++) checksum += stringutil.ContainsNonASCII(smallAsciiSource) ? 1 : 0;
+      return checksum;
+    },
+    options.runs,
+  ),
+  runPair(
+    "ContainsNonASCII short Unicode source",
+    () => {
+      let checksum = 0;
+      for (let pass = 0; pass < 1_000; pass++) checksum += legacyContainsNonASCII(smallMixedSource) ? 1 : 0;
+      return checksum;
+    },
+    () => {
+      let checksum = 0;
+      for (let pass = 0; pass < 1_000; pass++) checksum += stringutil.ContainsNonASCII(smallMixedSource) ? 1 : 0;
+      return checksum;
+    },
+    options.runs,
+  ),
   runPair(
     "UTF16Len large mixed source",
     () => {

@@ -7,15 +7,24 @@ shipped on this branch, and (5) the real latent incoherence that hardening
 immediately surfaced and this branch reconciles. Policy lens throughout, per maintainer direction:
 **never miss a real change; false positives are free; prefer simplicity.**
 
+> Historical note: the measurements and branch names below describe the
+> `515d036f` → `c78d39e7` review. The porter has since gained signature/type
+> equivalence, implementation-owner, mechanical-risk, exact-source-provenance,
+> constant-evaluation, and exhaustive schema-file policy gates. Current behavior
+> is defined by the checked-in porter code, configuration, and tests—not by the
+> historical capability claims in this report.
+
 ---
 
 ## 0. TL;DR
 
-- The porter is an **airtight completeness ledger** for "am I still in exact sync
-  with the pinned TS-Go source?" — `verify --strict-port` cannot pass with any
+- The porter is a **hard structural drift ledger** for "is every declared port
+  reconciled with the pinned TS-Go source?" — `verify --strict-port` cannot pass with any
   stale / missing / orphan / duplicate / untracked unit or any generated-artifact
-  drift. Behavioural change lives in func/method bodies, type defs, and const
-  values, all of which are SHA-256 hashed per unit; nothing behavioural slips by.
+  drift. Function/method bodies, type definitions, and constant declarations are
+  SHA-256 hashed per unit. Semantic equivalence of their TypeScript translation is
+  a separate obligation enforced by signature checks, mechanical-risk checks,
+  focused parity tests, corpus tests, and review.
 - It is **not** a bump-*planner*: it has no "delta vs a candidate rev" mode, no
   per-unit diff, and no stale re-port / re-stamp assist. Those are ergonomic gaps,
   not completeness gaps — under the policy lens they do not matter and are
@@ -24,7 +33,7 @@ immediately surfaced and this branch reconciles. Policy lens throughout, per mai
   out of ~9,200 in-scope (~6.6%), concentrated in the checker — a normal batched
   bump. The scary raw "463 missing / 45 orphan" is >half phantom (a new
   host-native watch library + moves).
-- There **was** exactly one place a real change could hide behind a green gate:
+- This review identified one place a real change could hide behind a green gate:
   the AST schema dir holds verbatim copies of source files, validated against the
   *copies*, never against live source. This branch closes it with a byte-sync
   check.
@@ -123,7 +132,7 @@ stale / missing (strict) / orphan / duplicate Go|TS ID / untracked|forbidden TS
 file / generated-artifact drift, and enforces stub/throw discipline.
 
 ### Strengths (keep)
-1. **Hard completeness gate** — cannot pass with unaddressed drift.
+1. **Hard structural drift gate** — cannot pass with unaddressed catalog drift.
 2. **Canonical-AST hashing** — pure gofmt/whitespace reflow does not false-flag.
 3. **All-build-tag scan** — platform files tracked, not dropped.
 4. Scope-policy engine; generated-artifact content-hashing; scaffold for new units;
@@ -143,7 +152,7 @@ direction:
   ergonomics + a process rule (verify-clean is never trusted alone; always paired
   with the byte-exact corpus gate).
 
-**Genuine completeness risks** (the only ones that matter under the lens):
+**Completeness risks identified by this historical review:**
 - **(a) Schema-dir copies can silently lag live source.** The AST schema inputs
   (`schema/tsgo/{nodeflags,symbolflags}.go`, `ast.json`, `ast.schema.json`) are
   hand-copied and pinned on a *separate* track; `verify` checks generated artifacts
@@ -155,24 +164,25 @@ direction:
   auto-run byte-exact against their new baselines. New behaviour cannot be silently
   skipped. Must never regress to a static list.
 
-Acknowledged inherent blind spots (not worth fixing): compat-layer/facade drift
-(`go/*.ts` is authored, not ported — surfaces later as a port/compile error); no
-per-unit source-rev provenance; pure behavioural const-value ripple referenced by
-name (rare; caught by baselines).
+Additional blind spots identified at the time included compat-layer/facade drift,
+per-unit source provenance, and constant-value propagation. Subsequent porter
+hardening addresses these classes directly where mechanical proof is available;
+the remaining host-native semantics still require focused tests and review.
 
-**Bottom line:** for completeness the porter is sound — behavioural changes live in
-hashed unit bodies; the strict gate forces every one to be addressed; the corpus
-gate independently re-checks behaviour against dynamically-discovered new baselines.
-The missing half is planning/assist, which the policy lens says not to build.
+**Bottom line for this historical review:** the porter reliably exposed structural
+drift, while semantic port fidelity still required independent validation. Later
+hardening strengthens that validation; no hash ledger alone proves behavior.
 
 ## 5. The hardening shipped (this branch)
 
 `feat/porter-schema-source-sync-check` (commit `d0934b0a`).
 
-`buildSchemaSourceSyncStatus(config)`: for each declared `{schema, source}` pair,
-assert the schema-dir copy is byte-identical (CRLF-normalised) to its live source
-file under `config.sourceRoot`; fail `verify` on any mismatch. Config-driven
-(`schemaSourceSyncChecks`), so new copies are covered without code. Surfaced in
+`buildSchemaSourceSyncStatus(config)` initially checked declared `{schema, source}`
+pairs. It now inventories every file in the schema directory and requires exactly
+one `schemaFilePolicies` entry: `upstream-copy` files are byte-identical
+(CRLF-normalised) to their live source under `config.sourceRoot`, while
+`local-metadata` files are explicitly classified. Unclassified, duplicate,
+out-of-directory, missing, and byte-drift cases all fail. Surfaced in
 `printStatus` and `collectVerifyFailures`. The same check also gates `porter:ast`
 before check or write mode, so generated AST artifacts cannot be trusted or
 rewritten from a schema directory that disagrees with the checked-out source pin.

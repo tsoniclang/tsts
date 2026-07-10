@@ -47,7 +47,7 @@ export interface positionMapEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::func::ComputePositionMap","kind":"func","status":"implemented","sigHash":"fff86f76341e89022ab461dc09de223a2c9e92843e134094017d124b9fd2c221","bodyHash":"0e718a3bcab5bea0b8a36e8348be3f3195be41f2ee72b897913a3f85a5e9ef15"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::func::ComputePositionMap","kind":"func","status":"implemented","sigHash":"fff86f76341e89022ab461dc09de223a2c9e92843e134094017d124b9fd2c221","bodyHash":"7ca984c03651df70b2bb53e0b5b6794b5ae956b4f8f7844f9decde9d0ef721c7"}
  *
  * Go source:
  * func ComputePositionMap(text string) *PositionMap {
@@ -59,7 +59,7 @@ export interface positionMapEntry {
  * 			i++
  * 			continue
  * 		}
- * 		r, size := utf8.DecodeRuneInString(text[i:])
+ * 		r, size := stringutil.DecodeJSStringRune(text[i:])
  * 		utf16Size := 1
  * 		if r >= 0x10000 {
  * 			utf16Size = 2

@@ -1,7 +1,7 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
-import { NodeFactory_NewNodeList, Node_Name, Node_Clone, Node_SubtreeFacts } from "../../ast/spine.js";
+import { NodeFactory_NewNodeList, Node_Name, Node_Clone, Node_SubtreeFacts, Node_Pos } from "../../ast/spine.js";
 import type { TextRange } from "../../core/text.js";
 import { AsSourceFile, Node_Parameters, Node_StatementList, Node_Statements, Node_Body, Node_Initializer, Node_Expression, NodeFactory_UpdateBlock, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateCatchClause, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateFunctionExpression } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -51,7 +51,6 @@ export interface objectRestSpreadTransformer {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visit","kind":"method","status":"implemented","sigHash":"517e37e65a5ecb1af73e2e271f78b6eda94dc219ba3b596f9fcb63dc1080c3fe","bodyHash":"0a1c0192e7f4a59f6cd69f4948d573b09d3be5a5c6763435605ff257c2f9bc23"}
- *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visit(node *ast.Node) *ast.Node {
  * 	if node.SubtreeFacts()&ast.SubtreeContainsESObjectRestOrSpread == 0 && ch.parametersWithPrecedingObjectRestOrSpread == nil {
@@ -717,6 +716,9 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
  * 	for _, parameter := range node.Parameters() {
  * 		if containsPrecedingObjectRestOrSpread {
  * 			if ast.IsBindingPattern(parameter.Name()) {
+ * 				// In cases where a binding pattern is simply '[]' or '{}',
+ * 				// we usually don't want to emit a var declaration; however, in the presence
+ * 				// of an initializer, we must emit that expression to preserve side effects.
  * 				if len(parameter.Name().Elements()) > 0 {
  * 					declarations := transformers.FlattenDestructuringBinding(
  * 						&ch.Transformer,
@@ -741,19 +743,33 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
  * 					statement := ch.Factory().NewExpressionStatement(assignment)
  * 					ch.EmitContext().AddEmitFlags(statement, printer.EFCustomPrologue)
  * 					results = append(results, statement)
+ *
  * 				}
  * 			} else if parameter.Initializer() != nil {
+ * 				// Converts a parameter initializer into a function body statement, i.e.:
+ * 				//
+ * 				//  function f(x = 1) { }
+ * 				//
+ * 				// becomes
+ * 				//
+ * 				//  function f(x) {
+ * 				//    if (typeof x === "undefined") { x = 1; }
+ * 				//  }
  * 				name := parameter.Name().Clone(ch.Factory())
  * 				name.Loc = parameter.Name().Loc
  * 				ch.EmitContext().AddEmitFlags(name, printer.EFNoSourceMap)
+ *
  * 				initializer := ch.Visitor().VisitNode(parameter.Initializer())
  * 				ch.EmitContext().AddEmitFlags(initializer, printer.EFNoSourceMap|printer.EFNoComments)
+ *
  * 				assignment := ch.Factory().NewAssignmentExpression(name, initializer)
  * 				assignment.Loc = parameter.Loc
  * 				ch.EmitContext().AddEmitFlags(assignment, printer.EFNoComments)
+ *
  * 				block := ch.Factory().NewBlock(ch.Factory().NewNodeList([]*ast.Node{ch.Factory().NewExpressionStatement(assignment)}), false)
  * 				block.Loc = parameter.Loc
  * 				ch.EmitContext().AddEmitFlags(block, printer.EFSingleLine|printer.EFNoTrailingSourceMap|printer.EFNoTokenSourceMaps|printer.EFNoComments)
+ *
  * 				typeCheck := ch.Factory().NewTypeCheck(name.Clone(ch.Factory()), "undefined")
  * 				statement := ch.Factory().NewIfStatement(typeCheck, block, nil)
  * 				statement.Loc = parameter.Loc
@@ -1202,6 +1218,28 @@ export function objectRestSpreadTransformer_visitBinaryExpression(receiver: GoPt
  * 	if (node.SubtreeFacts() & ast.SubtreeContainsObjectRestOrSpread) == 0 {
  * 		return ch.Visitor().VisitEachChild(node.AsNode())
  * 	}
+ * 	// spread elements emit like so:
+ * 	// non-spread elements are chunked together into object literals, and then all are passed to __assign:
+ * 	//     { a, ...o, b } => __assign(__assign({a}, o), {b});
+ * 	// If the first element is a spread element, then the first argument to __assign is {}:
+ * 	//     { ...o, a, b, ...o2 } => __assign(__assign(__assign({}, o), {a, b}), o2)
+ * 	//
+ * 	// We cannot call __assign with more than two elements, since any element could cause side effects. For
+ * 	// example:
+ * 	//      var k = { a: 1, b: 2 };
+ * 	//      var o = { a: 3, ...k, b: k.a++ };
+ * 	//      // expected: { a: 1, b: 1 }
+ * 	// If we translate the above to `__assign({ a: 3 }, k, { b: k.a++ })`, the `k.a++` will evaluate before
+ * 	// `k` is spread and we end up with `{ a: 2, b: 1 }`.
+ * 	//
+ * 	// This also occurs for spread elements, not just property assignments:
+ * 	//      var k = { a: 1, get b() { l = { z: 9 }; return 2; } };
+ * 	//      var l = { c: 3 };
+ * 	//      var o = { ...k, ...l };
+ * 	//      // expected: { a: 1, b: 2, z: 9 }
+ * 	// If we translate the above to `__assign({}, k, l)`, the `l` will evaluate before `k` is spread and we
+ * 	// end up with `{ a: 1, b: 2, c: 3 }`
+ *
  * 	objects := ch.chunkObjectLiteralElements(node.Properties)
  * 	if len(objects) > 0 && objects[0].Kind != ast.KindObjectLiteralExpression {
  * 		objects = append([]*ast.Node{ch.Factory().NewObjectLiteralExpression(ch.Factory().NewNodeList(nil), false)}, objects...)

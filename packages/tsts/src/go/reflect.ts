@@ -1,4 +1,4 @@
-import type { int, uint, bool } from "./scalars.js";
+import type { int, uint, ulong, bool } from "./scalars.js";
 import type { GoSlice } from "./compat.js";
 
 // Go: package reflect
@@ -223,12 +223,12 @@ export class Value {
   }
 
   // Uint returns v's underlying value, as a uint64. Valid for the uint kinds.
-  Uint(): uint {
+  Uint(): ulong {
     if (typeof this.v === "number") {
-      return globalThis.Math.trunc(this.v) as uint;
+      return globalThis.BigInt.asUintN(64, globalThis.BigInt(globalThis.Math.trunc(this.v))) as ulong;
     }
     if (typeof this.v === "bigint") {
-      return globalThis.Number(this.v) as uint;
+      return globalThis.BigInt.asUintN(64, this.v) as ulong;
     }
     throw new globalThis.Error("reflect: call of reflect.Value.Uint on " + this.Kind() + " value");
   }

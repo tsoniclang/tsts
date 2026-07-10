@@ -5,9 +5,12 @@ import { Sprintf, Errorf } from "../../../go/fmt.js";
 import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";
 import { ErrNotExist, FileInfoToDirEntry, ModeDir, ModeSymlink } from "../../../go/io/fs.js";
 import { RWMutex } from "../../../go/sync.js";
+import { Open as fstest_Open } from "../../../go/testing/fstest.js";
 import type { MapFile, MapFS as MapFS_5332fda7 } from "../../../go/testing/fstest.js";
 import { Now, Since, Time } from "../../../go/time.js";
 import type { Duration } from "../../../go/time.js";
+import { Split as SplitPath } from "../../../go/path.js";
+import { TrimSuffix } from "../../../go/strings.js";
 import type { RealpathFS, WritableFS } from "../iovfs/iofs.js";
 import { From } from "../iovfs/iofs.js";
 import type { FS } from "../vfs.js";
@@ -513,77 +516,7 @@ export function MapFS_getCanonicalPath(receiver: GoPtr<MapFS>, p: string): canon
  * }
  */
 export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoError] {
-  const internalMap = receiver!.m as unknown as InternalMapFS;
-  let file = internalMap.get(p);
-  if (file === undefined) {
-    // Go's fstest.MapFS synthesizes directories on the fly: opening "." (the root) or
-    // any path that prefixes existing entries yields a directory file even without an
-    // explicit map entry. convertMapFS creates intermediate directories explicitly, but
-    // the root never gets an entry, so synthesize it here like the Go stdlib does.
-    const isRoot = p === "." || p === "";
-    const prefix = isRoot ? "" : `${p}/`;
-    let isSyntheticDir = isRoot && internalMap.size > 0;
-    if (!isSyntheticDir) {
-      for (const key of internalMap.keys()) {
-        if (key.startsWith(prefix)) {
-          isSyntheticDir = true;
-          break;
-        }
-      }
-    }
-    if (!isSyntheticDir) {
-      return [undefined as unknown as File, ErrNotExist as unknown as GoError];
-    }
-    file = { Data: new Uint8Array(0), Mode: ModeDir as unknown as number, ModTime: undefined as never, Sys: undefined };
-  }
-  let offset = 0;
-  const bytes = file.Data;
-  // Build a synthetic fs.File backed by the internal map file.
-  const fi: InternalFileInfo = {
-    Name(): string { return baseName(p); },
-    Sys(): unknown { return file.Sys; },
-    Mode(): number { return file.Mode; },
-    IsDir(): bool { return (file.Mode & (ModeDir as unknown as number)) !== 0; },
-    IsRegular(): bool { return (file.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) === 0; },
-  };
-  const f: InternalReadDirFile = {
-    Stat(): [InternalFileInfo, GoError] { return [fi, undefined]; },
-    Read(buffer: GoSlice<number>): [int, GoError] {
-      const remaining = bytes.length - offset;
-      const count = Math.max(0, Math.min(buffer.length, remaining));
-      for (let index = 0; index < count; index += 1) {
-        buffer[index] = bytes[offset + index]!;
-      }
-      offset += count;
-      return [count as int, undefined];
-    },
-    Close(): GoError {
-      return undefined;
-    },
-    ReadDir(_n: int): [InternalDirEntry[], GoError] {
-      // fstest.MapFS uses "." for the root directory; its children carry bare keys.
-      const prefix = p === "" || p === "." ? "" : p + "/";
-      const entries: InternalDirEntry[] = [];
-      for (const [k, v] of internalMap.entries()) {
-        if (k !== p && k.startsWith(prefix) && k.slice(prefix.length).indexOf("/") < 0) {
-          const entryFile = v;
-          const entryName = k.slice(prefix.length);
-          const entryFi: InternalFileInfo = {
-            Name(): string { return entryName; },
-            Sys(): unknown { return entryFile.Sys; },
-            Mode(): number { return entryFile.Mode; },
-            IsDir(): bool { return (entryFile.Mode & (ModeDir as unknown as number)) !== 0; },
-            IsRegular(): bool { return (entryFile.Mode & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number))) === 0; },
-          };
-          entries.push({
-            Info(): [InternalFileInfo, GoError] { return [entryFi, undefined]; },
-          });
-        }
-      }
-      return [entries, undefined];
-    },
-  };
-  return [f as unknown as File, undefined];
+  return fstest_Open(receiver!.m, p);
 }
 
 /**
@@ -866,13 +799,8 @@ export function splitPath(s: string, offset: int): [string, string] {
  * }
  */
 export function dirName(p: string): string {
-  const lastSlash = p.lastIndexOf("/");
-  if (lastSlash < 0) {
-    return "";
-  }
-  const dir = p.slice(0, lastSlash + 1);
-  // TrimSuffix(dir, "/")
-  return dir.endsWith("/") ? dir.slice(0, dir.length - 1) : dir;
+  const [dir] = SplitPath(p);
+  return TrimSuffix(dir, "/");
 }
 
 /**
@@ -885,11 +813,8 @@ export function dirName(p: string): string {
  * }
  */
 export function baseName(p: string): string {
-  const lastSlash = p.lastIndexOf("/");
-  if (lastSlash < 0) {
-    return p;
-  }
-  return p.slice(lastSlash + 1);
+  const [, file] = SplitPath(p);
+  return file;
 }
 
 /**
@@ -1026,7 +951,7 @@ export interface fileInfo {
   Name(): string;
   Size(): int;
   Mode(): FileMode;
-  ModTime(): Date;
+  ModTime(): Time;
   IsDir(): bool;
   Sys(): unknown;
 }
@@ -1328,7 +1253,7 @@ function makeFileInfo(info: FileInfo, sysValue: unknown, realpath: string): file
     Name: (): string => fileInfo_Name(result),
     Size: (): int => info.Size(),
     Mode: (): FileMode => info.Mode(),
-    ModTime: (): Date => info.ModTime(),
+    ModTime: (): Time => info.ModTime(),
     IsDir: (): bool => info.IsDir(),
     Sys: (): unknown => fileInfo_Sys(result),
   };

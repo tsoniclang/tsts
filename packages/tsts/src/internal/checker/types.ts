@@ -182,7 +182,7 @@ export const TypeFormatFlagsInTypeAlias: TypeFormatFlags = 1 << 23;
  * 	TypeFormatFlagsUseInstantiationExpressions |
  * 	TypeFormatFlagsUseSingleQuotesForStringLiteralType | TypeFormatFlagsNoTypeReduction | TypeFormatFlagsOmitThisParameter
  */
-export const TypeFormatFlagsNodeBuilderFlagsMask: int =
+export const TypeFormatFlagsNodeBuilderFlagsMask: TypeFormatFlags =
   TypeFormatFlagsNoTruncation |
   TypeFormatFlagsWriteArrayAsGenericType |
   TypeFormatFlagsGenerateNamesForShadowedTypeParams |
@@ -313,15 +313,15 @@ export const ExternalEmitHelpersSetFunctionName: ExternalEmitHelpers = 1 << 16; 
 export const ExternalEmitHelpersPropKey: ExternalEmitHelpers = 1 << 17; // __propKey (used by class fields and ECMAScript decorators)
 export const ExternalEmitHelpersAddDisposableResourceAndDisposeResources: ExternalEmitHelpers = 1 << 18; // __addDisposableResource and __disposeResources (used by ESNext transformations)
 export const ExternalEmitHelpersRewriteRelativeImportExtension: ExternalEmitHelpers = 1 << 19; // __rewriteRelativeImportExtension (used by --rewriteRelativeImportExtensions)
-export const ExternalEmitHelpersESDecorateAndRunInitializers: int = ExternalEmitHelpersDecorate; // __esDecorate and __runInitializers (used by ECMAScript decorators transformation)
-export const ExternalEmitHelpersFirstEmitHelper: int = ExternalEmitHelpersRest;
-export const ExternalEmitHelpersLastEmitHelper: int = ExternalEmitHelpersRewriteRelativeImportExtension;
+export const ExternalEmitHelpersESDecorateAndRunInitializers: ExternalEmitHelpers = ExternalEmitHelpersDecorate; // __esDecorate and __runInitializers (used by ECMAScript decorators transformation)
+export const ExternalEmitHelpersFirstEmitHelper: ExternalEmitHelpers = ExternalEmitHelpersRest;
+export const ExternalEmitHelpersLastEmitHelper: ExternalEmitHelpers = ExternalEmitHelpersRewriteRelativeImportExtension;
 // Helpers included by ES2017 for..await..of
-export const ExternalEmitHelpersForAwaitOfIncludes: int = ExternalEmitHelpersAsyncValues;
+export const ExternalEmitHelpersForAwaitOfIncludes: ExternalEmitHelpers = ExternalEmitHelpersAsyncValues;
 // Helpers included by ES2017 async generators
-export const ExternalEmitHelpersAsyncGeneratorIncludes: int = (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncGenerator) >>> 0;
+export const ExternalEmitHelpersAsyncGeneratorIncludes: ExternalEmitHelpers = (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncGenerator) >>> 0;
 // Helpers included by yield* in ES2017 async generators
-export const ExternalEmitHelpersAsyncDelegatorIncludes: int =
+export const ExternalEmitHelpersAsyncDelegatorIncludes: ExternalEmitHelpers =
   (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncDelegator | ExternalEmitHelpersAsyncValues) >>> 0;
 
 /**
@@ -336,9 +336,17 @@ export const externalHelpersModuleNameText: string = "tslib";
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeId","kind":"type","status":"implemented","sigHash":"d668dd6b5968591e5c5613cca2d2be3143ae2409565fe3e7511b04dc47b31a91","bodyHash":"c917c67ee6facc506c65f8fca44f5f54a27d38c4388b43560967f8add59893e5"}
  *
  * Go source:
- * TypeId uint32
+ * TypeId      uint32
  */
 export type TypeId = uint;
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SignatureId","kind":"type","status":"implemented","sigHash":"a672ca5d07e10ab86082d09929271a877a1db4feedcc1e515a3c42c32667216a","bodyHash":"5304443272767cf8042388ffb51e9b441b57069b06ad4f16c27c6000526afea1"}
+ *
+ * Go source:
+ * SignatureId uint32
+ */
+export type SignatureId = uint;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::SymbolReferenceLinks","kind":"type","status":"implemented","sigHash":"63c0b9194c48be0467d0a3aeb8714daae75e2ec3b595bf6d37c35119744da7ee","bodyHash":"df6b2920d00f1f72f3894d1714351bf4d547ba855b1c186ad2d051ce55fffebf"}
@@ -667,7 +675,7 @@ export const VarianceFlagsVarianceMask: VarianceFlags =
   VarianceFlagsInvariant | VarianceFlagsCovariant | VarianceFlagsContravariant | VarianceFlagsIndependent;
 export const VarianceFlagsUnmeasurable: VarianceFlags = 1 << 3;
 export const VarianceFlagsUnreliable: VarianceFlags = 1 << 4;
-export const VarianceFlagsAllowsStructuralFallback: int = VarianceFlagsUnmeasurable | VarianceFlagsUnreliable;
+export const VarianceFlagsAllowsStructuralFallback: VarianceFlags = VarianceFlagsUnmeasurable | VarianceFlagsUnreliable;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MarkedAssignmentSymbolLinks","kind":"type","status":"implemented","sigHash":"a1edd3b0155b4555e9e68c8e58b5045653059808fa1bedde3391c95865d93f23","bodyHash":"62deb588e15217b368c23fa93e1c4dfdcdddd3e846fd10a646a0f5e7e06d143a"}
@@ -1029,17 +1037,17 @@ export const TypeFlagsIntersection: TypeFlags = 1 << 28;
 export const TypeFlagsReserved1: TypeFlags = 1 << 29;
 export const TypeFlagsReserved2: TypeFlags = 1 << 30;
 export const TypeFlagsReserved3: TypeFlags = 2147483648;
-export const TypeFlagsAnyOrUnknown: int = (TypeFlagsAny | TypeFlagsUnknown) >>> 0;
-export const TypeFlagsNullable: int = (TypeFlagsUndefined | TypeFlagsNull) >>> 0;
-export const TypeFlagsLiteral: int =
+export const TypeFlagsAnyOrUnknown: TypeFlags = (TypeFlagsAny | TypeFlagsUnknown) >>> 0;
+export const TypeFlagsNullable: TypeFlags = (TypeFlagsUndefined | TypeFlagsNull) >>> 0;
+export const TypeFlagsLiteral: TypeFlags =
   (TypeFlagsStringLiteral | TypeFlagsNumberLiteral | TypeFlagsBigIntLiteral | TypeFlagsBooleanLiteral) >>> 0;
-export const TypeFlagsUnit: int =
+export const TypeFlagsUnit: TypeFlags =
   (TypeFlagsEnum | TypeFlagsLiteral | TypeFlagsUniqueESSymbol | TypeFlagsNullable) >>> 0;
-export const TypeFlagsFreshable: int = (TypeFlagsEnum | TypeFlagsLiteral) >>> 0;
-export const TypeFlagsStringOrNumberLiteral: int = (TypeFlagsStringLiteral | TypeFlagsNumberLiteral) >>> 0;
-export const TypeFlagsStringOrNumberLiteralOrUnique: int =
+export const TypeFlagsFreshable: TypeFlags = (TypeFlagsEnum | TypeFlagsLiteral) >>> 0;
+export const TypeFlagsStringOrNumberLiteral: TypeFlags = (TypeFlagsStringLiteral | TypeFlagsNumberLiteral) >>> 0;
+export const TypeFlagsStringOrNumberLiteralOrUnique: TypeFlags =
   (TypeFlagsStringLiteral | TypeFlagsNumberLiteral | TypeFlagsUniqueESSymbol) >>> 0;
-export const TypeFlagsDefinitelyFalsy: int =
+export const TypeFlagsDefinitelyFalsy: TypeFlags =
   (TypeFlagsStringLiteral |
     TypeFlagsNumberLiteral |
     TypeFlagsBigIntLiteral |
@@ -1048,14 +1056,14 @@ export const TypeFlagsDefinitelyFalsy: int =
     TypeFlagsUndefined |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsPossiblyFalsy: int =
+export const TypeFlagsPossiblyFalsy: TypeFlags =
   (TypeFlagsDefinitelyFalsy |
     TypeFlagsString |
     TypeFlagsNumber |
     TypeFlagsBigInt |
     TypeFlagsBoolean) >>>
   0;
-export const TypeFlagsIntrinsic: int =
+export const TypeFlagsIntrinsic: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsString |
@@ -1068,15 +1076,15 @@ export const TypeFlagsIntrinsic: int =
     TypeFlagsNever |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsStringLike: int =
+export const TypeFlagsStringLike: TypeFlags =
   (TypeFlagsString | TypeFlagsStringLiteral | TypeFlagsTemplateLiteral | TypeFlagsStringMapping) >>> 0;
-export const TypeFlagsNumberLike: int = (TypeFlagsNumber | TypeFlagsNumberLiteral | TypeFlagsEnum) >>> 0;
-export const TypeFlagsBigIntLike: int = (TypeFlagsBigInt | TypeFlagsBigIntLiteral) >>> 0;
-export const TypeFlagsBooleanLike: int = (TypeFlagsBoolean | TypeFlagsBooleanLiteral) >>> 0;
-export const TypeFlagsEnumLike: int = (TypeFlagsEnum | TypeFlagsEnumLiteral) >>> 0;
-export const TypeFlagsESSymbolLike: int = (TypeFlagsESSymbol | TypeFlagsUniqueESSymbol) >>> 0;
-export const TypeFlagsVoidLike: int = (TypeFlagsVoid | TypeFlagsUndefined) >>> 0;
-export const TypeFlagsPrimitive: int =
+export const TypeFlagsNumberLike: TypeFlags = (TypeFlagsNumber | TypeFlagsNumberLiteral | TypeFlagsEnum) >>> 0;
+export const TypeFlagsBigIntLike: TypeFlags = (TypeFlagsBigInt | TypeFlagsBigIntLiteral) >>> 0;
+export const TypeFlagsBooleanLike: TypeFlags = (TypeFlagsBoolean | TypeFlagsBooleanLiteral) >>> 0;
+export const TypeFlagsEnumLike: TypeFlags = (TypeFlagsEnum | TypeFlagsEnumLiteral) >>> 0;
+export const TypeFlagsESSymbolLike: TypeFlags = (TypeFlagsESSymbol | TypeFlagsUniqueESSymbol) >>> 0;
+export const TypeFlagsVoidLike: TypeFlags = (TypeFlagsVoid | TypeFlagsUndefined) >>> 0;
+export const TypeFlagsPrimitive: TypeFlags =
   (TypeFlagsStringLike |
     TypeFlagsNumberLike |
     TypeFlagsBigIntLike |
@@ -1086,7 +1094,7 @@ export const TypeFlagsPrimitive: int =
     TypeFlagsVoidLike |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsDefinitelyNonNullable: int =
+export const TypeFlagsDefinitelyNonNullable: TypeFlags =
   (TypeFlagsStringLike |
     TypeFlagsNumberLike |
     TypeFlagsBigIntLike |
@@ -1096,7 +1104,7 @@ export const TypeFlagsDefinitelyNonNullable: int =
     TypeFlagsObject |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsDisjointDomains: int =
+export const TypeFlagsDisjointDomains: TypeFlags =
   (TypeFlagsNonPrimitive |
     TypeFlagsStringLike |
     TypeFlagsNumberLike |
@@ -1106,18 +1114,18 @@ export const TypeFlagsDisjointDomains: int =
     TypeFlagsVoidLike |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsUnionOrIntersection: int = (TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
-export const TypeFlagsStructuredType: int = (TypeFlagsObject | TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
-export const TypeFlagsTypeVariable: int = (TypeFlagsTypeParameter | TypeFlagsIndexedAccess) >>> 0;
-export const TypeFlagsInstantiableNonPrimitive: int =
+export const TypeFlagsUnionOrIntersection: TypeFlags = (TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
+export const TypeFlagsStructuredType: TypeFlags = (TypeFlagsObject | TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
+export const TypeFlagsTypeVariable: TypeFlags = (TypeFlagsTypeParameter | TypeFlagsIndexedAccess) >>> 0;
+export const TypeFlagsInstantiableNonPrimitive: TypeFlags =
   (TypeFlagsTypeVariable | TypeFlagsConditional | TypeFlagsSubstitution) >>> 0;
-export const TypeFlagsInstantiablePrimitive: int =
+export const TypeFlagsInstantiablePrimitive: TypeFlags =
   (TypeFlagsIndex | TypeFlagsTemplateLiteral | TypeFlagsStringMapping) >>> 0;
-export const TypeFlagsInstantiable: int =
+export const TypeFlagsInstantiable: TypeFlags =
   (TypeFlagsInstantiableNonPrimitive | TypeFlagsInstantiablePrimitive) >>> 0;
-export const TypeFlagsStructuredOrInstantiable: int =
+export const TypeFlagsStructuredOrInstantiable: TypeFlags =
   (TypeFlagsStructuredType | TypeFlagsInstantiable) >>> 0;
-export const TypeFlagsObjectFlagsType: int =
+export const TypeFlagsObjectFlagsType: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsNullable |
     TypeFlagsNever |
@@ -1125,9 +1133,9 @@ export const TypeFlagsObjectFlagsType: int =
     TypeFlagsUnion |
     TypeFlagsIntersection) >>>
   0;
-export const TypeFlagsSimplifiable: int =
+export const TypeFlagsSimplifiable: TypeFlags =
   (TypeFlagsIndexedAccess | TypeFlagsConditional | TypeFlagsIndex) >>> 0;
-export const TypeFlagsSingleton: int =
+export const TypeFlagsSingleton: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsString |
@@ -1141,7 +1149,7 @@ export const TypeFlagsSingleton: int =
     TypeFlagsNever |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsNarrowable: int =
+export const TypeFlagsNarrowable: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsStructuredOrInstantiable |
@@ -1153,7 +1161,7 @@ export const TypeFlagsNarrowable: int =
     TypeFlagsUniqueESSymbol |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsIncludesMask: int =
+export const TypeFlagsIncludesMask: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsPrimitive |
@@ -1172,7 +1180,7 @@ export const TypeFlagsIncludesEmptyObject: TypeFlags = TypeFlagsConditional;
 export const TypeFlagsIncludesInstantiable: TypeFlags = TypeFlagsSubstitution;
 export const TypeFlagsIncludesConstrainedTypeVariable: TypeFlags = TypeFlagsReserved1;
 export const TypeFlagsIncludesError: TypeFlags = TypeFlagsReserved2;
-export const TypeFlagsNotPrimitiveUnion: int =
+export const TypeFlagsNotPrimitiveUnion: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsVoid |
@@ -1353,6 +1361,7 @@ export type ObjectFlags = uint;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::ObjectFlagsNone+ObjectFlagsClass+ObjectFlagsInterface+ObjectFlagsReference+ObjectFlagsTuple+ObjectFlagsAnonymous+ObjectFlagsMapped+ObjectFlagsInstantiated+ObjectFlagsObjectLiteral+ObjectFlagsEvolvingArray+ObjectFlagsObjectLiteralPatternWithComputedProperties+ObjectFlagsReverseMapped+ObjectFlagsJsxAttributes+ObjectFlagsJSLiteral+ObjectFlagsFreshLiteral+ObjectFlagsArrayLiteral+ObjectFlagsPrimitiveUnion+ObjectFlagsContainsWideningType+ObjectFlagsContainsObjectOrArrayLiteral+ObjectFlagsNonInferrableType+ObjectFlagsCouldContainTypeVariablesComputed+ObjectFlagsCouldContainTypeVariables+ObjectFlagsMembersResolved+ObjectFlagsClassOrInterface+ObjectFlagsRequiresWidening+ObjectFlagsPropagatingFlags+ObjectFlagsInstantiatedMapped+ObjectFlagsObjectTypeKindMask+ObjectFlagsContainsSpread+ObjectFlagsObjectRestType+ObjectFlagsInstantiationExpressionType+ObjectFlagsSingleSignatureType+ObjectFlagsIsClassInstanceClone+ObjectFlagsIdenticalBaseTypeCalculated+ObjectFlagsIdenticalBaseTypeExists+ObjectFlagsUnresolvedMembers+ObjectFlagsFromTypeNode+ObjectFlagsIsGenericTypeComputed+ObjectFlagsIsGenericObjectType+ObjectFlagsIsGenericIndexType+ObjectFlagsIsGenericType+ObjectFlagsContainsIntersections+ObjectFlagsIsUnknownLikeUnionComputed+ObjectFlagsIsUnknownLikeUnion+ObjectFlagsIsNeverIntersectionComputed+ObjectFlagsIsNeverIntersection+ObjectFlagsIsConstrainedTypeVariable","kind":"constGroup","status":"implemented","sigHash":"15558a9d9329127d7ec52195464550b5ede8bdf0deb9040c5fd2a2699a0e7776","bodyHash":"6623b28b3482c1e05e5eb8dd4d8e2b9f4befbf4aff048310cbdf61d27ce5d710"}
+ * @tsgo-override {"category":"runtime-representation","allow":["value-order"],"reason":"Go permits ObjectFlagsObjectTypeKindMask to reference constants declared later in the same const group; JavaScript const bindings are in the temporal dead zone until initialized, so the referenced flag constants must be initialized first while every value and use remains identical.","goValueOrder":"ObjectFlagsNone,ObjectFlagsClass,ObjectFlagsInterface,ObjectFlagsReference,ObjectFlagsTuple,ObjectFlagsAnonymous,ObjectFlagsMapped,ObjectFlagsInstantiated,ObjectFlagsObjectLiteral,ObjectFlagsEvolvingArray,ObjectFlagsObjectLiteralPatternWithComputedProperties,ObjectFlagsReverseMapped,ObjectFlagsJsxAttributes,ObjectFlagsJSLiteral,ObjectFlagsFreshLiteral,ObjectFlagsArrayLiteral,ObjectFlagsPrimitiveUnion,ObjectFlagsContainsWideningType,ObjectFlagsContainsObjectOrArrayLiteral,ObjectFlagsNonInferrableType,ObjectFlagsCouldContainTypeVariablesComputed,ObjectFlagsCouldContainTypeVariables,ObjectFlagsMembersResolved,ObjectFlagsClassOrInterface,ObjectFlagsRequiresWidening,ObjectFlagsPropagatingFlags,ObjectFlagsInstantiatedMapped,ObjectFlagsObjectTypeKindMask,ObjectFlagsContainsSpread,ObjectFlagsObjectRestType,ObjectFlagsInstantiationExpressionType,ObjectFlagsSingleSignatureType,ObjectFlagsIsClassInstanceClone,ObjectFlagsIdenticalBaseTypeCalculated,ObjectFlagsIdenticalBaseTypeExists,ObjectFlagsUnresolvedMembers,ObjectFlagsFromTypeNode,ObjectFlagsIsGenericTypeComputed,ObjectFlagsIsGenericObjectType,ObjectFlagsIsGenericIndexType,ObjectFlagsIsGenericType,ObjectFlagsContainsIntersections,ObjectFlagsIsUnknownLikeUnionComputed,ObjectFlagsIsUnknownLikeUnion,ObjectFlagsIsNeverIntersectionComputed,ObjectFlagsIsNeverIntersection,ObjectFlagsIsConstrainedTypeVariable","tsValueOrder":"ObjectFlagsNone,ObjectFlagsClass,ObjectFlagsInterface,ObjectFlagsReference,ObjectFlagsTuple,ObjectFlagsAnonymous,ObjectFlagsMapped,ObjectFlagsInstantiated,ObjectFlagsObjectLiteral,ObjectFlagsEvolvingArray,ObjectFlagsObjectLiteralPatternWithComputedProperties,ObjectFlagsReverseMapped,ObjectFlagsJsxAttributes,ObjectFlagsJSLiteral,ObjectFlagsFreshLiteral,ObjectFlagsArrayLiteral,ObjectFlagsPrimitiveUnion,ObjectFlagsContainsWideningType,ObjectFlagsContainsObjectOrArrayLiteral,ObjectFlagsNonInferrableType,ObjectFlagsCouldContainTypeVariablesComputed,ObjectFlagsCouldContainTypeVariables,ObjectFlagsMembersResolved,ObjectFlagsClassOrInterface,ObjectFlagsRequiresWidening,ObjectFlagsPropagatingFlags,ObjectFlagsInstantiatedMapped,ObjectFlagsContainsSpread,ObjectFlagsObjectRestType,ObjectFlagsInstantiationExpressionType,ObjectFlagsSingleSignatureType,ObjectFlagsIsClassInstanceClone,ObjectFlagsObjectTypeKindMask,ObjectFlagsIdenticalBaseTypeCalculated,ObjectFlagsIdenticalBaseTypeExists,ObjectFlagsUnresolvedMembers,ObjectFlagsFromTypeNode,ObjectFlagsIsGenericTypeComputed,ObjectFlagsIsGenericObjectType,ObjectFlagsIsGenericIndexType,ObjectFlagsIsGenericType,ObjectFlagsContainsIntersections,ObjectFlagsIsUnknownLikeUnionComputed,ObjectFlagsIsUnknownLikeUnion,ObjectFlagsIsNeverIntersectionComputed,ObjectFlagsIsNeverIntersection,ObjectFlagsIsConstrainedTypeVariable"}
  *
  * Go source:
  * const (
@@ -1435,18 +1444,18 @@ export const ObjectFlagsNonInferrableType: ObjectFlags = 1 << 18;
 export const ObjectFlagsCouldContainTypeVariablesComputed: ObjectFlags = 1 << 19;
 export const ObjectFlagsCouldContainTypeVariables: ObjectFlags = 1 << 20;
 export const ObjectFlagsMembersResolved: ObjectFlags = 1 << 21;
-export const ObjectFlagsClassOrInterface: int = (ObjectFlagsClass | ObjectFlagsInterface) >>> 0;
-export const ObjectFlagsRequiresWidening: int =
+export const ObjectFlagsClassOrInterface: ObjectFlags = (ObjectFlagsClass | ObjectFlagsInterface) >>> 0;
+export const ObjectFlagsRequiresWidening: ObjectFlags =
   (ObjectFlagsContainsWideningType | ObjectFlagsContainsObjectOrArrayLiteral) >>> 0;
-export const ObjectFlagsPropagatingFlags: int =
+export const ObjectFlagsPropagatingFlags: ObjectFlags =
   (ObjectFlagsContainsWideningType | ObjectFlagsContainsObjectOrArrayLiteral | ObjectFlagsNonInferrableType) >>> 0;
-export const ObjectFlagsInstantiatedMapped: int = (ObjectFlagsMapped | ObjectFlagsInstantiated) >>> 0;
+export const ObjectFlagsInstantiatedMapped: ObjectFlags = (ObjectFlagsMapped | ObjectFlagsInstantiated) >>> 0;
 export const ObjectFlagsContainsSpread: int = 1 << 22;
 export const ObjectFlagsObjectRestType: int = 1 << 23;
 export const ObjectFlagsInstantiationExpressionType: int = 1 << 24;
 export const ObjectFlagsSingleSignatureType: int = 1 << 25;
 export const ObjectFlagsIsClassInstanceClone: int = 1 << 26;
-export const ObjectFlagsObjectTypeKindMask: int =
+export const ObjectFlagsObjectTypeKindMask: ObjectFlags =
   (ObjectFlagsClassOrInterface |
     ObjectFlagsReference |
     ObjectFlagsTuple |
@@ -2622,10 +2631,10 @@ export const ElementFlagsRequired: ElementFlags = 1 << 0;
 export const ElementFlagsOptional: ElementFlags = 1 << 1;
 export const ElementFlagsRest: ElementFlags = 1 << 2;
 export const ElementFlagsVariadic: ElementFlags = 1 << 3;
-export const ElementFlagsFixed: int = (ElementFlagsRequired | ElementFlagsOptional) >>> 0;
-export const ElementFlagsVariable: int = (ElementFlagsRest | ElementFlagsVariadic) >>> 0;
-export const ElementFlagsNonRequired: int = (ElementFlagsOptional | ElementFlagsRest | ElementFlagsVariadic) >>> 0;
-export const ElementFlagsNonRest: int = (ElementFlagsRequired | ElementFlagsOptional | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsFixed: ElementFlags = (ElementFlagsRequired | ElementFlagsOptional) >>> 0;
+export const ElementFlagsVariable: ElementFlags = (ElementFlagsRest | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsNonRequired: ElementFlags = (ElementFlagsOptional | ElementFlagsRest | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsNonRest: ElementFlags = (ElementFlagsRequired | ElementFlagsOptional | ElementFlagsVariadic) >>> 0;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleElementInfo","kind":"type","status":"implemented","sigHash":"b0e3725aee7eb05c6512f213d449b4219ef8d185d3f0c7de27323318e7acecc1","bodyHash":"1571113b5527514f78d28f8ff301066429517ca40498bb57d38ce3002c001052"}
@@ -3221,7 +3230,7 @@ export const SignatureFlagsIsOuterCallChain: SignatureFlags = 1 << 5;
 export const SignatureFlagsIsUntypedSignatureInJSFile: SignatureFlags = 1 << 6;
 export const SignatureFlagsIsNonInferrable: SignatureFlags = 1 << 7;
 export const SignatureFlagsIsSignatureCandidateForOverloadFailure: SignatureFlags = 1 << 8;
-export const SignatureFlagsPropagatingFlags: int =
+export const SignatureFlagsPropagatingFlags: SignatureFlags =
   (SignatureFlagsHasRestParameter |
     SignatureFlagsHasLiteralTypes |
     SignatureFlagsConstruct |
@@ -3229,14 +3238,15 @@ export const SignatureFlagsPropagatingFlags: int =
     SignatureFlagsIsUntypedSignatureInJSFile |
     SignatureFlagsIsSignatureCandidateForOverloadFailure) >>>
   0;
-export const SignatureFlagsCallChainFlags: int =
+export const SignatureFlagsCallChainFlags: SignatureFlags =
   (SignatureFlagsIsInnerCallChain | SignatureFlagsIsOuterCallChain) >>> 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Signature","kind":"type","status":"implemented","sigHash":"d3a5a81eee7b1c3e3b367d3032eca4dea84378962d4e3644796db04c13f6e1c7","bodyHash":"2aa635e4411e9fe6132f76a0e64405f097e606ec5723eb3a6914d5e1f8a7c779"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::Signature","kind":"type","status":"implemented","sigHash":"d3a5a81eee7b1c3e3b367d3032eca4dea84378962d4e3644796db04c13f6e1c7","bodyHash":"bf64de33c8d8b936477992c306661f01a52ff3e4bda0fbf7d25797ca457df6f2"}
  *
  * Go source:
  * Signature struct {
+ * 	id                       SignatureId
  * 	flags                    SignatureFlags
  * 	minArgumentCount         int32
  * 	resolvedMinArgumentCount int32
@@ -3253,6 +3263,7 @@ export const SignatureFlagsCallChainFlags: int =
  * }
  */
 export interface Signature {
+  id: SignatureId;
   flags: SignatureFlags;
   minArgumentCount: int;
   resolvedMinArgumentCount: int;
@@ -3266,6 +3277,18 @@ export interface Signature {
   mapper: GoPtr<TypeMapper>;
   isolatedSignatureType: GoPtr<Type>;
   composite: GoPtr<CompositeSignature>;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::Signature.Id","kind":"method","status":"implemented","sigHash":"09d0057c605006d2f67ef4f399bdcdb858bb981caac9097fb3244a47b1075291","bodyHash":"51d19238ace819d68a96530ec7e86dfe1882637a67d45413dcae7e57274377e6"}
+ *
+ * Go source:
+ * func (s *Signature) Id() SignatureId {
+ * 	return s.id
+ * }
+ */
+export function Signature_Id(receiver: GoPtr<Signature>): SignatureId {
+  return receiver!.id;
 }
 
 /**

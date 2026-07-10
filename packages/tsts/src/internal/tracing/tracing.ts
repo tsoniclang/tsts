@@ -276,6 +276,8 @@ export const PhaseSession: Phase = "session";
  * 		configFilePath: configFilePath,
  * 		legend:         []TraceRecord{},
  * 		tracers:        []*typeTracer{},
+ * 		threadIDs:      make(map[traceThreadKey]int),
+ * 		threadKeys:     make(map[int]traceThreadKey),
  * 		deterministic:  deterministic,
  * 		startTime:      time.Now(),
  * 	}
@@ -286,11 +288,12 @@ export const PhaseSession: Phase = "session";
  *
  * 	// Write metadata events (matching TypeScript's format)
  * 	metaTs := tr.timestamp()
- * 	tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "M", Cat: "__metadata", TS: metaTs, Name: "process_name", Args: map[string]any{"name": "tsgo"}})
+ * 	tr.metadataTS = metaTs
+ * 	tr.writeEvent(traceEvent{PID: 1, TID: mainThreadID, PH: "M", Cat: "__metadata", TS: metaTs, Name: "process_name", Args: map[string]any{"name": "tsgo"}})
  * 	tr.traceContent.WriteString(",\n")
- * 	tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "M", Cat: "__metadata", TS: metaTs, Name: "thread_name", Args: map[string]any{"name": "Main"}})
+ * 	tr.writeEvent(traceEvent{PID: 1, TID: mainThreadID, PH: "M", Cat: "__metadata", TS: metaTs, Name: "thread_name", Args: map[string]any{"name": "Main"}})
  * 	tr.traceContent.WriteString(",\n")
- * 	tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser"})
+ * 	tr.writeEvent(traceEvent{PID: 1, TID: mainThreadID, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser"})
  *
  * 	// Truncate any existing trace file with the header so subsequent AppendFile
  * 	// calls extend a clean file.
@@ -318,7 +321,7 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
     threadKeys: new globalThis.Map<int, traceThreadKey>(),
     metadataTS: 0 as double,
     deterministic: deterministic,
-    timestampCounter: 0 as ulong,
+    timestampCounter: 0n as ulong,
     startTime: {} as Time,
     mu: new Mutex(),
     flushErr: undefined,
@@ -363,8 +366,8 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
 export function Tracing_timestamp(receiver: GoPtr<Tracing>): double {
   const tr = receiver!;
   if (tr.deterministic) {
-    tr.timestampCounter = ((tr.timestampCounter as unknown as number) + 1) as ulong;
-    return (tr.timestampCounter as unknown as number) as double;
+    tr.timestampCounter = ((tr.timestampCounter as bigint) + 1n) as ulong;
+    return globalThis.Number(tr.timestampCounter) as double;
   }
   // time.Since(tr.startTime).Nanoseconds() / 1000.0 — performance.now() gives ms, multiply by 1000 for microseconds
   return (globalThis.performance.now() * 1000.0) as double;
@@ -453,8 +456,9 @@ export function Tracing_maybeFlushLocked(receiver: GoPtr<Tracing>): void {
  * 	}
  *
  * 	ts := tr.timestamp()
+ * 	tid := tr.threadIDLocked(args)
  * 	tr.traceContent.WriteString(",\n")
- * 	tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "I", Cat: string(phase), TS: ts, Name: name, S: "g", Args: args})
+ * 	tr.writeEvent(traceEvent{PID: 1, TID: tid, PH: "I", Cat: string(phase), TS: ts, Name: name, S: "g", Args: args})
  * 	tr.maybeFlushLocked()
  * }
  */
@@ -499,8 +503,9 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 			return func() {}
  * 		}
  * 		ts := tr.timestamp()
+ * 		tid := tr.threadIDLocked(args)
  * 		tr.traceContent.WriteString(",\n")
- * 		tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "B", Cat: string(phase), TS: ts, Name: name, Args: args})
+ * 		tr.writeEvent(traceEvent{PID: 1, TID: tid, PH: "B", Cat: string(phase), TS: ts, Name: name, Args: args})
  * 		tr.maybeFlushLocked()
  * 		tr.mu.Unlock()
  *
@@ -512,7 +517,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 			}
  * 			endTs := tr.timestamp()
  * 			tr.traceContent.WriteString(",\n")
- * 			tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "E", Cat: string(phase), TS: endTs, Name: name, Args: args})
+ * 			tr.writeEvent(traceEvent{PID: 1, TID: tid, PH: "E", Cat: string(phase), TS: endTs, Name: name, Args: args})
  * 			tr.maybeFlushLocked()
  * 		}
  * 	}
@@ -537,8 +542,9 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 		if !tr.traceStarted.Load() {
  * 			return
  * 		}
+ * 		tid := tr.threadIDLocked(args)
  * 		tr.traceContent.WriteString(",\n")
- * 		tr.writeEvent(traceEvent{PID: 1, TID: 1, PH: "X", Cat: string(phase), TS: startMicros, Name: name, Dur: &dur, Args: args})
+ * 		tr.writeEvent(traceEvent{PID: 1, TID: tid, PH: "X", Cat: string(phase), TS: startMicros, Name: name, Dur: &dur, Args: args})
  * 		tr.maybeFlushLocked()
  * 	}
  * }
@@ -678,9 +684,11 @@ export interface traceThreadKey {
  * 	if !ok {
  * 		return mainThreadID
  * 	}
+ *
  * 	if tid, ok := tr.threadIDs[key]; ok {
  * 		return tid
  * 	}
+ *
  * 	tid := key.defaultThreadID()
  * 	for {
  * 		if existingKey, ok := tr.threadKeys[tid]; !ok || existingKey == key {
@@ -742,9 +750,11 @@ export function Tracing_writeThreadNameEventLocked(receiver: GoPtr<Tracing>, tid
  * 	if len(args) == 0 {
  * 		return traceThreadKey{}, false
  * 	}
+ *
  * 	if checkerID, ok := args["checkerId"].(int); ok {
  * 		return traceThreadKey{kind: traceThreadKindChecker, index: checkerID, hasIndex: true}, true
  * 	}
+ *
  * 	for _, key := range traceThreadArgKeys {
  * 		if value, ok := args[key]; ok {
  * 			if path, ok := value.(string); ok && path != "" {
@@ -752,6 +762,7 @@ export function Tracing_writeThreadNameEventLocked(receiver: GoPtr<Tracing>, tid
  * 			}
  * 		}
  * 	}
+ *
  * 	return traceThreadKey{}, false
  * }
  */

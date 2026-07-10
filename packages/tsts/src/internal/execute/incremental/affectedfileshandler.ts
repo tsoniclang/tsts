@@ -130,6 +130,8 @@ export function affectedFilesHandler_getDtsMayChange(receiver: GoPtr<affectedFil
  * Go source:
  * func (h *affectedFilesHandler) isChangedSignature(path tspath.Path) bool {
  * 	newSignature, _ := h.updatedSignatures.Load(path)
+ * 	// This method is called after updating signatures of that path, so signature is present in updatedSignatures
+ * 	// And is already calculated, so no need to lock and unlock mutex on the entry
  * 	oldInfo, _ := h.program.snapshot.fileInfos.Load(path)
  * 	return newSignature.signature != oldInfo.signature
  * }
@@ -229,7 +231,9 @@ export function affectedFilesHandler_computeDtsSignature(receiver: GoPtr<affecte
  * 	update := &updatedSignature{}
  * 	update.mu.Lock()
  * 	defer update.mu.Unlock()
+ * 	// If we have cached the result for this file, that means hence forth we should assume file shape is uptodate
  * 	if existing, ok := h.updatedSignatures.LoadOrStore(file.Path(), update); ok {
+ * 		// Ensure calculations for existing ones are complete before using the value
  * 		existing.mu.Lock()
  * 		defer existing.mu.Unlock()
  * 		return false
@@ -240,6 +244,7 @@ export function affectedFilesHandler_computeDtsSignature(receiver: GoPtr<affecte
  * 	if !file.IsDeclarationFile && !useFileVersionAsSignature {
  * 		update.signature = h.computeDtsSignature(file)
  * 	}
+ * 	// Default is to use file version as signature
  * 	if update.signature == "" {
  * 		update.signature = info.version
  * 		update.kind = SignatureUpdateKindUsedVersion
@@ -302,15 +307,20 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
  * 		return []*ast.SourceFile{file}
  * 	}
  *
+ * 	// Now we need to if each file in the referencedBy list has a shape change as well.
+ * 	// Because if so, its own referencedBy files need to be saved as well to make the
+ * 	// emitting result consistent with files on disk.
  * 	seenFileNamesMap := h.forEachFileReferencedBy(
  * 		file,
  * 		func(currentFile *ast.SourceFile, currentPath tspath.Path) (queueForFile bool, fastReturn bool) {
+ * 			// If the current file is not nil and has a shape change, we need to queue it for processing
  * 			if currentFile != nil && h.updateShapeSignature(currentFile, false) {
  * 				return true, false
  * 			}
  * 			return false, false
  * 		},
  * 	)
+ * 	// Return array of values that needs emit
  * 	return core.Filter(slices.Collect(maps.Values(seenFileNamesMap)), func(file *ast.SourceFile) bool {
  * 		return file != nil
  * 	})
@@ -361,7 +371,11 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
  *
  * Go source:
  * func (h *affectedFilesHandler) forEachFileReferencedBy(file *ast.SourceFile, fn func(currentFile *ast.SourceFile, currentPath tspath.Path) (queueForFile bool, fastReturn bool)) map[tspath.Path]*ast.SourceFile {
+ * 	// Now we need to if each file in the referencedBy list has a shape change as well.
+ * 	// Because if so, its own referencedBy files need to be saved as well to make the
+ * 	// emitting result consistent with files on disk.
  * 	seenFileNamesMap := map[tspath.Path]*ast.SourceFile{}
+ * 	// Start with the paths this file was referenced by
  * 	seenFileNamesMap[file.Path()] = file
  * 	queue := slices.Collect(h.program.snapshot.referencedMap.getReferencedBy(file.Path()))
  * 	for len(queue) > 0 {
@@ -426,8 +440,12 @@ export function affectedFilesHandler_forEachFileReferencedBy(
  * func (h *affectedFilesHandler) handleDtsMayChangeOfAffectedFile(dtsMayChange dtsMayChange, affectedFile *ast.SourceFile) {
  * 	h.removeSemanticDiagnosticsOf(affectedFile.Path())
  *
+ * 	// If affected files is everything except default library, then nothing more to do
  * 	if h.hasAllFilesExcludingDefaultLibraryFile.Load() {
  * 		h.removeDiagnosticsOfLibraryFiles()
+ * 		// When a change affects the global scope, all files are considered to be affected without updating their signature
+ * 		// That means when affected file is handled, its signature can be out of date
+ * 		// To avoid this, ensure that we update the signature for any affected file in this scenario.
  * 		h.updateShapeSignature(affectedFile, false)
  * 		return
  * 	}
@@ -436,19 +454,27 @@ export function affectedFilesHandler_forEachFileReferencedBy(
  * 		return
  * 	}
  *
+ * 	// Iterate on referencing modules that export entities from affected file and delete diagnostics and add pending emit
+ * 	// If there was change in signature (dts output) for the changed file,
+ * 	// then only we need to handle pending file emit
  * 	if !h.program.snapshot.changedFilesSet.Has(affectedFile.Path()) ||
  * 		!h.isChangedSignature(affectedFile.Path()) {
  * 		return
  * 	}
  *
+ * 	// At this point affectedFile is actually one of the changed files
+ * 	// that has some change in its .d.ts signature.
+ *
+ * 	// Since isolated modules dont change js files, files affected by change in signature is itself
+ * 	// But we need to cleanup semantic diagnostics and queue dts emit for affected files
  * 	if h.program.snapshot.options.IsolatedModules.IsTrue() {
  * 		h.forEachFileReferencedBy(
  * 			affectedFile,
  * 			func(currentFile *ast.SourceFile, currentPath tspath.Path) (queueForFile bool, fastReturn bool) {
- * 				if h.handleDtsMayChangeOfGlobalScope(dtsMayChange, currentPath, false) {
+ * 				if h.handleDtsMayChangeOfGlobalScope(dtsMayChange, currentPath /*invalidateJsFiles* /, false) {
  * 					return false, true
  * 				}
- * 				h.handleDtsMayChangeOf(dtsMayChange, currentPath, false)
+ * 				h.handleDtsMayChangeOf(dtsMayChange, currentPath /*invalidateJsFiles* /, false)
  * 				if h.isChangedSignature(currentPath) {
  * 					return true, false
  * 				}
@@ -460,6 +486,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
  * 	invalidateJsFiles := false
  * 	var typeChecker *checker.Checker
  * 	var done func()
+ * 	// If exported const enum, we need to ensure that js files are emitted as well since the const enum value changed
  * 	if affectedFile.Symbol != nil {
  * 		for _, exported := range affectedFile.Symbol.Exports {
  * 			if exported.Flags&ast.SymbolFlagsConstEnum != 0 {
@@ -487,10 +514,13 @@ export function affectedFilesHandler_forEachFileReferencedBy(
  * 		done()
  * 	}
  *
+ * 	// Go through files that reference affected file and handle dts emit and semantic diagnostics for them and their references
  * 	for fileReferencingChangedFile := range h.program.snapshot.referencedMap.getReferencedBy(affectedFile.Path()) {
  * 		if h.handleDtsMayChangeOfGlobalScope(dtsMayChange, fileReferencingChangedFile, invalidateJsFiles) {
  * 			return
  * 		}
+ * 		// Since references of changed file = affected files - we would have already handled d.ts emit and semantic diagnostics
+ * 		// for those files. Now we need to handle files referencing those affected files to ensure correctness.
  * 		for fileReferencingAffectedFile := range h.program.snapshot.referencedMap.getReferencedBy(fileReferencingChangedFile) {
  * 			if h.handleDtsMayChangeOfFileAndReferences(dtsMayChange, fileReferencingAffectedFile, invalidateJsFiles) {
  * 				return
@@ -610,6 +640,8 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
  * 	}
  * 	h.handleDtsMayChangeOf(dtsMayChange, filePath, invalidateJsFiles)
  *
+ * 	// Remove the diagnostics of files that import this file and
+ * 	// any files that are referenced by it (directly or indirectly)
  * 	for referencingFilePath := range h.program.snapshot.referencedMap.getReferencedBy(filePath) {
  * 		if h.handleDtsMayChangeOfFileAndReferences(dtsMayChange, referencingFilePath, invalidateJsFiles) {
  * 			return true
@@ -661,6 +693,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
  * 	if info, ok := h.program.snapshot.fileInfos.Load(filePath); !ok || !info.affectsGlobalScope {
  * 		return false
  * 	}
+ * 	// Every file needs to be handled
  * 	for _, file := range h.program.snapshot.getAllFilesExcludingDefaultLibraryFile(h.program.program, nil) {
  * 		h.handleDtsMayChangeOf(dtsMayChange, file.Path(), invalidateJsFiles)
  * 	}
@@ -696,7 +729,13 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
  * 		return
  * 	}
  * 	h.removeSemanticDiagnosticsOf(path)
+ * 	// Even though the js emit doesnt change and we are already handling dts emit and semantic diagnostics
+ * 	// we need to update the signature to reflect correctness of the signature(which is output d.ts emit) of this file
+ * 	// This ensures that we dont later during incremental builds considering wrong signature.
+ * 	// Eg where this also is needed to ensure that .tsbuildinfo generated by incremental build should be same as if it was first fresh build
+ * 	// But we avoid expensive full shape computation, as using file version as shape is enough for correctness.
  * 	h.updateShapeSignature(file, true)
+ * 	// If not dts emit, nothing more to do
  * 	if invalidateJsFiles {
  * 		dtsMayChange.addFileToAffectedFilesPendingEmit(path, GetFileEmitKind(h.program.snapshot.options))
  * 	} else if h.program.snapshot.options.GetEmitDeclarations() {
@@ -820,9 +859,12 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
  * 		return
  * 	}
  *
+ * 	// For all the affected files, get all the files that would need to change their dts or js files,
+ * 	// update their diagnostics
  * 	wg = core.NewWorkGroup(program.program.SingleThreaded())
  * 	emitKind := GetFileEmitKind(program.snapshot.options)
  * 	result.Range(func(file *ast.SourceFile) bool {
+ * 		// remove the cached semantic diagnostics and handle dts emit and js emit if needed
  * 		dtsMayChange := handler.getDtsMayChange(file.Path(), emitKind)
  * 		wg.Queue(func() {
  * 			handler.handleDtsMayChangeOfAffectedFile(dtsMayChange, file)
@@ -831,6 +873,7 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
  * 	})
  * 	wg.RunAndWait()
  *
+ * 	// Update the snapshot with the new state
  * 	handler.updateSnapshot()
  * }
  */

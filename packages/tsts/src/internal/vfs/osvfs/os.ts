@@ -3,16 +3,17 @@ import type { GoError, GoPtr } from "../../../go/compat.js";
 import { Pool } from "../../../go/sync.js";
 import type { DirEntry } from "../../../go/io/fs.js";
 import type { Time } from "../../../go/time.js";
+import * as nodeFs from "node:fs";
 import * as goOs from "../../../go/os.js";
 import * as runtime from "../../../go/runtime.js";
-import { Abs as import_filepath_Abs } from "../../../go/path/filepath.js";
+import { Abs as import_filepath_Abs, FromSlash } from "../../../go/path/filepath.js";
 import { NormalizePath as tspathNormalizePath, GetDirectoryPath, NormalizeSlashes } from "../../tspath/path.js";
 import { NewLimitedSemaphore } from "../../core/semaphore.js";
 import type { LimitedSemaphore } from "../../core/semaphore.js";
 import { Common_ReadFile, Common_DirectoryExists, Common_FileExists, Common_GetAccessibleEntries, Common_Stat, Common_WalkDir, RootLength } from "../internal/internal.js";
 import type { Common } from "../internal/internal.js";
-import { realpath } from "./realpath_other.js";
-import { isReparsePoint } from "./reparsepoint_other.js";
+import { Realpath } from "../../nativepath/realpath_other.js";
+import { IsSymlinkOrReparsePoint } from "../../nativepath/symlink_other.js";
 import { VersionMajorMinor } from "../../core/version.js";
 import { CombinePaths } from "../../tspath/path.js";
 import type { Entries, FileInfo, FS as FS_a37200a9, WalkDirFunc } from "../vfs.js";
@@ -93,6 +94,7 @@ export interface osFS {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::varGroup::isFileSystemCaseSensitive","kind":"varGroup","status":"implemented","sigHash":"1d811db1c8f7dfba5f508c6b54375fed884f4b3d8b1949fe5cb7dece3cafbfe6","bodyHash":"5696eb2cfa4a6aae523ed9c914b8f7631e6f94f40b38ad58587035223a4a7979"}
+ * @tsgo-override {"category":"host-native","allow":["body"],"reason":"The Node host performs TS-Go's executable swap-case probe with fs.statSync and maps ENOENT to a case-sensitive filesystem; it does not infer case sensitivity from the operating-system name."}
  *
  * Go source:
  * var isFileSystemCaseSensitive = func() bool {
@@ -125,7 +127,19 @@ export interface osFS {
  * 	return false
  * }()
  */
-export let isFileSystemCaseSensitive: bool = (process.platform !== "win32" && process.platform !== "darwin") as bool;
+export let isFileSystemCaseSensitive: bool = detectFileSystemCaseSensitivity();
+
+function detectFileSystemCaseSensitivity(): bool {
+  if (process.platform === "win32") return false as bool;
+  const swapped = swapCase(process.execPath);
+  try {
+    nodeFs.statSync(swapped);
+    return false as bool;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return true as bool;
+    throw new globalThis.Error(`vfs: failed to stat ${JSON.stringify(swapped)}: ${String(error)}`);
+  }
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::swapCase","kind":"func","status":"implemented","sigHash":"30c3bfea8c42cbc4344fa0f76aeb35c8940c880093af4577fb5acef5a5365aa9","bodyHash":"3f589bf760347d711d58761cd1e95732503f228c0b6afdff0b7af3c1d2a9905f"}
@@ -346,7 +360,7 @@ export function osFS_Realpath(receiver: GoPtr<osFS>, path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::osFSRealpath","kind":"func","status":"implemented","sigHash":"b19f8c1d4ab8776f6232e1d3e138f311d85bf95f118333df579cdff837e1be6a","bodyHash":"a6d8b295f6b1cc641e13cecb96dbc0c7f7e8800c16ac7e985e7a43e95ebd112f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::osFSRealpath","kind":"func","status":"implemented","sigHash":"b19f8c1d4ab8776f6232e1d3e138f311d85bf95f118333df579cdff837e1be6a","bodyHash":"eec7477b402a15e07475635da0f6c842f1286b35e4974f29305389f860a22d23"}
  *
  * Go source:
  * func osFSRealpath(path string) string {
@@ -354,7 +368,7 @@ export function osFS_Realpath(receiver: GoPtr<osFS>, path: string): string {
  *
  * 	orig := path
  * 	path = filepath.FromSlash(path)
- * 	path, err := realpath(path)
+ * 	path, err := nativepath.Realpath(path)
  * 	if err != nil {
  * 		return orig
  * 	}
@@ -368,8 +382,8 @@ export function osFS_Realpath(receiver: GoPtr<osFS>, path: string): string {
 export function osFSRealpath(path: string): string {
   void RootLength(path); // Assert path is rooted
   const orig = path;
-  // filepath.FromSlash is identity for forward-slash paths
-  const [resolved, realpathErr] = realpath(path);
+  path = FromSlash(path);
+  const [resolved, realpathErr] = Realpath(path);
   if (realpathErr !== undefined) {
     return orig;
   }
@@ -378,6 +392,18 @@ export function osFSRealpath(path: string): string {
     return orig;
   }
   return NormalizeSlashes(absPath);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/os.go::func::isReparsePoint","kind":"func","status":"implemented","sigHash":"d4bef745351fcd4ddf809d58eb14bebafb475ab0154b95d6c3969a6ec92e71bf","bodyHash":"a68f545d4ab503778b27e6ec8d17d050a3457bc85215b05c4b1bfac6c97a8ed8"}
+ *
+ * Go source:
+ * func isReparsePoint(path string) bool {
+ * 	return nativepath.IsSymlinkOrReparsePoint(filepath.FromSlash(path))
+ * }
+ */
+export function isReparsePoint(path: string): bool {
+  return IsSymlinkOrReparsePoint(FromSlash(path));
 }
 
 /**

@@ -43,7 +43,7 @@ import type { int } from "../../../go/scalars.js";
 import type { Value } from "../../../go/reflect.js";
 import type { BuildInfo, BuildInfoDiagnostic, BuildInfoDiagnosticsOfFile, BuildInfoFileId, BuildInfoFileIdListId, BuildInfoRepopulateInfo } from "./buildInfo.js";
 import type { BuildInfoEmitSignature, BuildInfoFilePendingEmit, BuildInfoResolvedRoot, BuildInfoRoot, BuildInfoSemanticDiagnostic, BuildInfoReferenceMapEntry } from "./buildInfo.js";
-import { newBuildInfoFileInfo } from "./buildInfo.js";
+import { NewBuildInfo, newBuildInfoFileInfo } from "./buildInfo.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
 import { OrderedMap_Set, newMapWithSizeHint } from "../../collections/ordered_map.js";
 import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, snapshot } from "./snapshot.js";
@@ -52,7 +52,7 @@ import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::func::snapshotToBuildInfo","kind":"func","status":"implemented","sigHash":"6d176d3df057485735ebe643c8b26bb4e8bdaa0ebe0bc252431ac701006b52f2","bodyHash":"de743fa263f68b0cd9e06c3f2f2dae58a8e4e0eeb1f770ac613a8f76c04a5928"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::func::snapshotToBuildInfo","kind":"func","status":"implemented","sigHash":"6d176d3df057485735ebe643c8b26bb4e8bdaa0ebe0bc252431ac701006b52f2","bodyHash":"eac188d1f97e4ec1a924d3dff927108c5c283d03d69d86cf39ac8b19cf6d9277"}
  *
  * Go source:
  * func snapshotToBuildInfo(snapshot *snapshot, program *compiler.Program, buildInfoFileName string) *BuildInfo {
@@ -72,7 +72,7 @@ import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from 
  * 		fileNamesToFileIdListId: make(map[string]BuildInfoFileIdListId),
  * 		roots:                   make(map[*ast.SourceFile]tspath.Path),
  * 	}
- * 
+ *
  * 	if snapshot.options.IsIncremental() {
  * 		to.collectRootFiles()
  * 		to.setFileInfoAndEmitSignatures()
@@ -92,29 +92,13 @@ import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from 
  * 	buildInfo.Errors = snapshot.hasErrors.IsTrue()
  * 	buildInfo.SemanticErrors = snapshot.hasSemanticErrors
  * 	buildInfo.CheckPending = snapshot.checkPending
+ * 	to.setPackageJsons()
  * 	return buildInfo
  * }
  */
 export function snapshotToBuildInfo(snapshot: GoPtr<snapshot>, program: GoPtr<Program>, buildInfoFileName: string): GoPtr<BuildInfo> {
-  const buildInfo: BuildInfo = {
-    Version: Version(),
-    Errors: false,
-    CheckPending: false,
-    Root: [],
-    FileNames: [],
-    FileInfos: [],
-    FileIdsList: [],
-    Options: undefined,
-    ReferencedMap: [],
-    SemanticDiagnosticsPerFile: [],
-    EmitDiagnosticsPerFile: [],
-    ChangeFileSet: [],
-    AffectedFilesPendingEmit: [],
-    LatestChangedDtsFile: "",
-    EmitSignatures: [],
-    ResolvedRoot: [],
-    SemanticErrors: false,
-  };
+  const buildInfo = NewBuildInfo();
+  buildInfo.Version = Version();
   const to: toBuildInfo = {
     snapshot: snapshot,
     program: program,
@@ -148,6 +132,7 @@ export function snapshotToBuildInfo(snapshot: GoPtr<snapshot>, program: GoPtr<Pr
   buildInfo.Errors = Tristate_IsTrue(snapshot!.hasErrors);
   buildInfo.SemanticErrors = snapshot!.hasSemanticErrors;
   buildInfo.CheckPending = snapshot!.checkPending;
+  toBuildInfo_setPackageJsons(to);
   return buildInfo;
 }
 
@@ -210,13 +195,14 @@ export function toBuildInfo_relativeToBuildInfo(receiver: GoPtr<toBuildInfo>, pa
 export function toBuildInfo_toFileId(receiver: GoPtr<toBuildInfo>, path: Path): BuildInfoFileId {
   let fileId = receiver!.fileNameToFileId.get(path as string);
   if (fileId === undefined || fileId === 0) {
+    const fileNames = receiver!.buildInfo!.FileNames ??= [];
     const libFile = Program_GetDefaultLibFile(receiver!.program, path);
     if (libFile !== undefined && !libFile.Replaced) {
-      receiver!.buildInfo!.FileNames.push(libFile.Name);
+      fileNames.push(libFile.Name);
     } else {
-      receiver!.buildInfo!.FileNames.push(toBuildInfo_relativeToBuildInfo(receiver, path as string));
+      fileNames.push(toBuildInfo_relativeToBuildInfo(receiver, path as string));
     }
-    fileId = receiver!.buildInfo!.FileNames.length as BuildInfoFileId;
+    fileId = fileNames.length as BuildInfoFileId;
     receiver!.fileNameToFileId.set(path as string, fileId);
   }
   return fileId;
@@ -249,8 +235,9 @@ export function toBuildInfo_toFileIdListId(receiver: GoPtr<toBuildInfo>, set_: G
 
   let fileIdListId = receiver!.fileNamesToFileIdListId.get(key);
   if (fileIdListId === undefined || fileIdListId === 0) {
-    receiver!.buildInfo!.FileIdsList.push(fileIds);
-    fileIdListId = receiver!.buildInfo!.FileIdsList.length as BuildInfoFileIdListId;
+    const fileIdsList = receiver!.buildInfo!.FileIdsList ??= [];
+    fileIdsList.push(fileIds);
+    fileIdListId = fileIdsList.length as BuildInfoFileIdListId;
     receiver!.fileNamesToFileIdListId.set(key, fileIdListId);
   }
   return fileIdListId;
@@ -321,7 +308,10 @@ export function toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver: G
  * 	})
  * }
  */
-export function toBuildInfo_toBuildInfoDiagnosticsFromFileNameDiagnostics(receiver: GoPtr<toBuildInfo>, diagnostics: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>>): GoSlice<GoPtr<BuildInfoDiagnostic>> {
+export function toBuildInfo_toBuildInfoDiagnosticsFromFileNameDiagnostics(receiver: GoPtr<toBuildInfo>, diagnostics: GoSlice<GoPtr<buildInfoDiagnosticWithFileName>> | undefined): GoSlice<GoPtr<BuildInfoDiagnostic>> | undefined {
+  if (diagnostics === undefined) {
+    return undefined;
+  }
   return core.Map(diagnostics, (d: GoPtr<buildInfoDiagnosticWithFileName>) => {
     let file: BuildInfoFileId = 0;
     if (d!.file !== "") {
@@ -457,16 +447,16 @@ export function toBuildInfoRepopulateInfo(info: GoPtr<RepopulateDiagnosticInfo>)
  * }
  */
 export function toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver: GoPtr<toBuildInfo>, filePath: Path, diags: GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>): GoPtr<BuildInfoDiagnosticsOfFile> {
-  if (diags!.diagnostics.length > 0) {
+  if ((diags!.diagnostics?.length ?? 0) > 0) {
     return {
       FileId: toBuildInfo_toFileId(receiver, filePath),
-      Diagnostics: toBuildInfo_toBuildInfoDiagnosticsFromDiagnostics(receiver, filePath, diags!.diagnostics),
+      Diagnostics: toBuildInfo_toBuildInfoDiagnosticsFromDiagnostics(receiver, filePath, diags!.diagnostics!),
     };
   }
-  if (diags!.buildInfoDiagnostics.length > 0) {
+  if ((diags!.buildInfoDiagnostics?.length ?? 0) > 0) {
     return {
       FileId: toBuildInfo_toFileId(receiver, filePath),
-      Diagnostics: toBuildInfo_toBuildInfoDiagnosticsFromFileNameDiagnostics(receiver, diags!.buildInfoDiagnostics),
+      Diagnostics: toBuildInfo_toBuildInfoDiagnosticsFromFileNameDiagnostics(receiver, diags!.buildInfoDiagnostics!),
     };
   }
   return undefined;
@@ -549,17 +539,17 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
   receiver!.buildInfo!.FileInfos = core.Map(Program_GetSourceFiles(receiver!.program), (file: GoPtr<import("../../ast/ast.js").SourceFile>) => {
     const [info] = SyncMap_Load(receiver!.snapshot!.fileInfos as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").FileInfo>, SourceFile_Path(file));
     const fileId = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
-    if (receiver!.buildInfo!.FileNames[fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
+    if (receiver!.buildInfo!.FileNames![fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
       const libFile = Program_GetDefaultLibFile(receiver!.program, SourceFile_Path(file));
-      if (libFile === undefined || libFile.Replaced || receiver!.buildInfo!.FileNames[fileId - 1] !== libFile.Name) {
-        throw new globalThis.Error(`File name at index ${fileId - 1} does not match expected relative path or libName: ${receiver!.buildInfo!.FileNames[fileId - 1]} != ${toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)}`);
+      if (libFile === undefined || libFile.Replaced || receiver!.buildInfo!.FileNames![fileId - 1] !== libFile.Name) {
+        throw new globalThis.Error(`File name at index ${fileId - 1} does not match expected relative path or libName: ${receiver!.buildInfo!.FileNames![fileId - 1]} != ${toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)}`);
       }
     }
     if (Tristate_IsTrue(receiver!.snapshot!.options!.Composite)) {
       if (!IsJsonSourceFile(file) && Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
         const [emitSignature, loaded] = SyncMap_Load(receiver!.snapshot!.emitSignatures as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").emitSignature>, SourceFile_Path(file));
         if (!loaded) {
-          receiver!.buildInfo!.EmitSignatures.push({ FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
+          (receiver!.buildInfo!.EmitSignatures ??= []).push({ FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
         } else if (emitSignature!.signature !== info!.signature) {
           const incrementalEmitSignature: BuildInfoEmitSignature = { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false };
           if (emitSignature!.signature !== "") {
@@ -570,7 +560,7 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
             incrementalEmitSignature.Signature = emitSignature!.signatureWithDifferentOptions[0]!;
             incrementalEmitSignature.DiffersInOptions = true;
           }
-          receiver!.buildInfo!.EmitSignatures.push(incrementalEmitSignature);
+          (receiver!.buildInfo!.EmitSignatures ??= []).push(incrementalEmitSignature);
         }
       }
     }
@@ -623,8 +613,8 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
     const rootPath = receiver!.roots.get(file);
     const root = toBuildInfo_toFileId(receiver, rootPath!);
     const resolved = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
-    if (receiver!.buildInfo!.Root.length === 0) {
-      receiver!.buildInfo!.Root.push({ Start: resolved, End: 0, NonIncremental: "" });
+    if (receiver!.buildInfo!.Root === undefined) {
+      receiver!.buildInfo!.Root = [{ Start: resolved, End: 0, NonIncremental: "" }];
     } else {
       const last = receiver!.buildInfo!.Root[receiver!.buildInfo!.Root.length - 1]!;
       if (last.End === resolved - 1) {
@@ -636,7 +626,7 @@ export function toBuildInfo_setRootOfIncrementalProgram(receiver: GoPtr<toBuildI
       }
     }
     if (root !== resolved) {
-      receiver!.buildInfo!.ResolvedRoot.push({ Resolved: resolved, Root: root });
+      (receiver!.buildInfo!.ResolvedRoot ??= []).push({ Resolved: resolved, Root: root });
     }
   }
 }
@@ -701,7 +691,7 @@ export function toBuildInfo_setCompilerOptions(receiver: GoPtr<toBuildInfo>): vo
 export function toBuildInfo_setReferencedMap(receiver: GoPtr<toBuildInfo>): void {
   const keys = referenceMap_getPathsWithReferences(receiver!.snapshot!.referencedMap as GoPtr<import("./referencemap.js").referenceMap>);
   slices.Sort(keys);
-  receiver!.buildInfo!.ReferencedMap = core.Map(keys, (filePath: Path) => {
+  receiver!.buildInfo!.ReferencedMap = keys.length === 0 ? undefined : core.Map(keys, (filePath: Path) => {
     const [references] = referenceMap_getReferences(receiver!.snapshot!.referencedMap as GoPtr<import("./referencemap.js").referenceMap>, filePath);
     return {
       FileId: toBuildInfo_toFileId(receiver, filePath),
@@ -723,7 +713,9 @@ export function toBuildInfo_setReferencedMap(receiver: GoPtr<toBuildInfo>): void
 export function toBuildInfo_setChangeFileSet(receiver: GoPtr<toBuildInfo>): void {
   const files = slices.Collect(SyncSet_Keys(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>));
   slices.Sort(files);
-  receiver!.buildInfo!.ChangeFileSet = core.Map(files, (f: Path) => toBuildInfo_toFileId(receiver, f));
+  receiver!.buildInfo!.ChangeFileSet = files.length === 0
+    ? undefined
+    : core.Map(files, (f: Path) => toBuildInfo_toFileId(receiver, f));
 }
 
 /**
@@ -755,12 +747,12 @@ export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>)
     const [value, ok] = SyncMap_Load(receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>, SourceFile_Path(file));
     if (!ok) {
       if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file))) {
-        receiver!.buildInfo!.SemanticDiagnosticsPerFile.push({ FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
+        (receiver!.buildInfo!.SemanticDiagnosticsPerFile ??= []).push({ FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
       }
     } else {
       const diagnostics = toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver, SourceFile_Path(file), value);
       if (diagnostics !== undefined) {
-        receiver!.buildInfo!.SemanticDiagnosticsPerFile.push({ FileId: 0, Diagnostics: diagnostics });
+        (receiver!.buildInfo!.SemanticDiagnosticsPerFile ??= []).push({ FileId: 0, Diagnostics: diagnostics });
       }
     }
   }
@@ -782,7 +774,7 @@ export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>)
 export function toBuildInfo_setEmitDiagnostics(receiver: GoPtr<toBuildInfo>): void {
   const files = slices.Collect(SyncMap_Keys(receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>));
   slices.Sort(files);
-  receiver!.buildInfo!.EmitDiagnosticsPerFile = core.Map(files, (filePath: Path) => {
+  receiver!.buildInfo!.EmitDiagnosticsPerFile = files.length === 0 ? undefined : core.Map(files, (filePath: Path) => {
     const [value] = SyncMap_Load(receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, DiagnosticsOrBuildInfoDiagnosticsWithFileName>, filePath);
     return toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver, filePath, value);
   });
@@ -819,7 +811,7 @@ export function toBuildInfo_setAffectedFilesPendingEmit(receiver: GoPtr<toBuildI
       continue;
     }
     const [pendingEmit] = SyncMap_Load(receiver!.snapshot!.affectedFilesPendingEmit as import("../../collections/syncmap.js").SyncMap<Path, import("./snapshot.js").FileEmitKind>, filePath);
-    receiver!.buildInfo!.AffectedFilesPendingEmit.push({
+    (receiver!.buildInfo!.AffectedFilesPendingEmit ??= []).push({
       FileId: toBuildInfo_toFileId(receiver, filePath),
       EmitKind: core.IfElse(pendingEmit === fullEmitKind, 0, pendingEmit),
     });
@@ -846,4 +838,26 @@ export function toBuildInfo_setRootOfNonIncrementalProgram(receiver: GoPtr<toBui
       NonIncremental: toBuildInfo_relativeToBuildInfo(receiver, ToPath(fileName, receiver!.comparePathsOptions.CurrentDirectory, receiver!.comparePathsOptions.UseCaseSensitiveFileNames) as string),
     } as BuildInfoRoot;
   });
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshottobuildinfo.go::method::toBuildInfo.setPackageJsons","kind":"method","status":"implemented","sigHash":"df2fe66983ab0ffed751f46b5fcb326e2e171bf5525046f385383f7f1405a07b","bodyHash":"7edcd76b1e4e76c0c1f33a56e581e4242e39f15bf38347a14ba05e4f1d6fbcbc"}
+ *
+ * Go source:
+ * func (t *toBuildInfo) setPackageJsons() {
+ * 	if len(t.snapshot.packageJsons) > 0 {
+ * 		t.buildInfo.PackageJsons = core.Map(t.snapshot.packageJsons, t.relativeToBuildInfo)
+ * 	}
+ * 	if len(t.snapshot.missingPackageJsons) > 0 {
+ * 		t.buildInfo.MissingPackageJsons = core.Map(t.snapshot.missingPackageJsons, t.relativeToBuildInfo)
+ * 	}
+ * }
+ */
+export function toBuildInfo_setPackageJsons(receiver: GoPtr<toBuildInfo>): void {
+  if ((receiver!.snapshot!.packageJsons ?? []).length > 0) {
+    receiver!.buildInfo!.PackageJsons = core.Map(receiver!.snapshot!.packageJsons ?? [], (path: string): string => toBuildInfo_relativeToBuildInfo(receiver, path));
+  }
+  if ((receiver!.snapshot!.missingPackageJsons ?? []).length > 0) {
+    receiver!.buildInfo!.MissingPackageJsons = core.Map(receiver!.snapshot!.missingPackageJsons ?? [], (path: string): string => toBuildInfo_relativeToBuildInfo(receiver, path));
+  }
 }

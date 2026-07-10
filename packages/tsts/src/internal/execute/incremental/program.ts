@@ -4,6 +4,7 @@ import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { SourceFile_Path } from "../../ast/ast.js";
+import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_Size, SyncMap_Store } from "../../collections/syncmap.js";
@@ -22,9 +23,11 @@ import {
   Program_GetSuggestionDiagnostics as compiler_Program_GetSuggestionDiagnostics,
   Program_GetSyntacticDiagnostics as compiler_Program_GetSyntacticDiagnostics,
   Program_Host as compiler_Program_Host,
+  Program_CommandLine as compiler_Program_CommandLine,
   Program_IsEmitBlocked as compiler_Program_IsEmitBlocked,
   Program_IsSourceFileDefaultLibrary as compiler_Program_IsSourceFileDefaultLibrary,
   Program_SkipTypeChecking as compiler_Program_SkipTypeChecking,
+  Program_PackageJsonCacheEntries as compiler_Program_PackageJsonCacheEntries,
   Program_Tracing as compiler_Program_Tracing,
   Program_UseCaseSensitiveFileNames as compiler_Program_UseCaseSensitiveFileNames,
   FilterNoEmitSemanticDiagnostics,
@@ -35,9 +38,15 @@ import type { EmitOptions, EmitResult, Program as Program_22a0a6ce, ProgramLike,
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { CompilerOptions_IsIncremental } from "../../core/compileroptions.js";
 import { TSUnknown, TSTrue, TSFalse, Tristate_IsTrue } from "../../core/tristate.js";
-import { IfElse } from "../../core/core.js";
+import { Deduplicate, IfElse } from "../../core/core.js";
+import * as diagnostics from "../../diagnostics/generated/messages.js";
+import { Marshal as json_Marshal } from "../../json/json.js";
 import { GetBuildInfoFileName } from "../../outputpaths/outputpaths.js";
+import { CombinePaths, GetDirectoryPath } from "../../tspath/path.js";
 import type { Path } from "../../tspath/path.js";
+import type { InfoCacheEntry } from "../../packagejson/cache.js";
+import { InfoCacheEntry_Exists } from "../../packagejson/cache.js";
+import { ParsedCommandLine_ConfigName } from "../../tsoptions/parsedcommandline.js";
 import type { Host } from "./host.js";
 import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, snapshot } from "./snapshot.js";
 import { DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics, snapshot_canUseIncrementalState } from "./snapshot.js";
@@ -657,7 +666,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
       SourceFile_Path(f),
-      { diagnostics: diagnostics, buildInfoDiagnostics: [] }
+      { diagnostics: diagnostics, buildInfoDiagnostics: undefined }
     );
   }
   if (SyncMap_Size<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
@@ -669,7 +678,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.emitBuildInfo","kind":"method","status":"implemented","sigHash":"f6a17a544bb3aa967d2400e4640cb2c328d9c81d195174b3b50ed8af91992f54","bodyHash":"599e8bf3f9582998f7b0dd1198ba5f05531d29e8763fe0f5d2ed12a093586a08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.emitBuildInfo","kind":"method","status":"implemented","sigHash":"f6a17a544bb3aa967d2400e4640cb2c328d9c81d195174b3b50ed8af91992f54","bodyHash":"cd23fd45f2547e17c6a3f45af138bf4278825bfb4813b1224dc27efa55e87659"}
  *
  * Go source:
  * func (p *Program) emitBuildInfo(ctx context.Context, options compiler.EmitOptions) *compiler.EmitResult {
@@ -686,6 +695,13 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
  * 	if p.snapshot.hasErrors == core.TSUnknown {
  * 		p.ensureHasErrorsForState(ctx, p.program)
  * 		if p.snapshot.hasErrors != p.snapshot.hasErrorsFromOldState || p.snapshot.hasSemanticErrors != p.snapshot.hasSemanticErrorsFromOldState {
+ * 			p.snapshot.buildInfoEmitPending.Store(true)
+ * 		}
+ * 	}
+ * 	if p.snapshot.packageJsons == nil {
+ * 		p.ensurePackageJsonsForState()
+ * 		if !slices.Equal(p.snapshot.packageJsons, p.snapshot.packageJsonsFromOldState) ||
+ * 			!slices.Equal(p.snapshot.missingPackageJsons, p.snapshot.missingPackageJsonsFromOldState) {
  * 			p.snapshot.buildInfoEmitPending.Store(true)
  * 		}
  * 	}
@@ -737,6 +753,13 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
       receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
     }
   }
+  if (receiver!.snapshot!.packageJsons === undefined) {
+    Program_ensurePackageJsonsForState(receiver);
+    if (!arrayEqual(receiver!.snapshot!.packageJsons, receiver!.snapshot!.packageJsonsFromOldState) ||
+      !arrayEqual(receiver!.snapshot!.missingPackageJsons, receiver!.snapshot!.missingPackageJsonsFromOldState)) {
+      receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
+    }
+  }
   if (!receiver!.snapshot!.buildInfoEmitPending.Load()) {
     return undefined;
   }
@@ -744,7 +767,11 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
     return undefined;
   }
   const buildInfo = snapshotToBuildInfo(receiver!.snapshot, receiver!.program, buildInfoFileName);
-  const text = JSON.stringify(buildInfo);
+  const [textBytes, marshalError] = json_Marshal(buildInfo);
+  if (marshalError !== undefined) {
+    throw new globalThis.Error(`Failed to marshal build info: ${marshalError.message}`);
+  }
+  const text = new globalThis.TextDecoder().decode(globalThis.Uint8Array.from(textBytes as number[]));
   let err: import("../../../go/compat.js").GoError;
   if (options.WriteFile !== undefined) {
     err = options.WriteFile(buildInfoFileName, text, { BuildInfo: buildInfo } as import("../../compiler/program.js").WriteFileData);
@@ -754,7 +781,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
   if (err !== undefined) {
     return {
       EmitSkipped: true as bool,
-      Diagnostics: [],
+      Diagnostics: [NewCompilerDiagnostic(diagnostics.Could_not_write_file_0_Colon_1, buildInfoFileName, err.message)],
       EmittedFiles: [],
       SourceMaps: [],
     };
@@ -769,7 +796,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.ensureHasErrorsForState","kind":"method","status":"implemented","sigHash":"4b1fffdcb3ef43b93832dc5cc2975492891e15427656da357f84ba13c28f4923","bodyHash":"d0950e067ed06f3f72e3f1607a7f2f9bbf5c2490be3018f9c442a745b3a665da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.ensureHasErrorsForState","kind":"method","status":"implemented","sigHash":"4b1fffdcb3ef43b93832dc5cc2975492891e15427656da357f84ba13c28f4923","bodyHash":"b7674a810e0e7b6ab51917377b68648714eb6eb7d5ded1c6e8745b2db4bc2dbb"}
  *
  * Go source:
  * func (p *Program) ensureHasErrorsForState(ctx context.Context, program *compiler.Program) {
@@ -821,7 +848,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
  *
  * 	p.snapshot.hasErrors = core.TSFalse
  * 	// Check semantic and emit diagnostics first as we dont need to ask program about it
- * 	if slices.ContainsFunc(program.GetSourceFiles(), func(file *ast.SourceFile) bool {
+ * 	if slices.ContainsFunc(p.program.GetSourceFiles(), func(file *ast.SourceFile) bool {
  * 		semanticDiagnostics, ok := p.snapshot.semanticDiagnosticsPerFile.Load(file.Path())
  * 		if !ok {
  * 			// Missing semantic diagnostics in cache will be encoded in incremental buildInfo
@@ -894,7 +921,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
     if (!ok) {
       return CompilerOptions_IsIncremental(receiver!.snapshot!.options) as boolean;
     }
-    if (semanticDiagnostics!.diagnostics.length > 0 || semanticDiagnostics!.buildInfoDiagnostics.length > 0) {
+    if ((semanticDiagnostics!.diagnostics?.length ?? 0) > 0 || (semanticDiagnostics!.buildInfoDiagnostics?.length ?? 0) > 0) {
       return true;
     }
     return false;
@@ -902,4 +929,132 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
   if (hasSemanticErrors) {
     receiver!.snapshot!.hasSemanticErrors = !CompilerOptions_IsIncremental(receiver!.snapshot!.options);
   }
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.ensurePackageJsonsForState","kind":"method","status":"implemented","sigHash":"fee5c82f3ec430b1271493a92b8f13ecd0985e8f26d3927f2b6ad1153f78bfb2","bodyHash":"0300459f06a85ef6208b6218606bf8b1044bf1c85470b75ed60306dc97da93d9"}
+ *
+ * Go source:
+ * func (p *Program) ensurePackageJsonsForState() {
+ * 	config := tspath.GetDirectoryPath(p.program.CommandLine().ConfigName())
+ * 	if config != "" {
+ * 		p.program.PackageJsonCacheEntries(func(key tspath.Path, value *packagejson.InfoCacheEntry) bool {
+ * 			if value == nil {
+ * 				return true
+ * 			}
+ * 			packageJson := tspath.CombinePaths(value.PackageDirectory, "package.json")
+ * 			if value.Exists() || value.DirectoryExists {
+ * 				packageJson = p.program.Host().FS().Realpath(packageJson)
+ * 			}
+ * 			if value.Exists() {
+ * 				p.snapshot.packageJsons = append(p.snapshot.packageJsons, packageJson)
+ * 			} else if strings.Contains(packageJson, "/node_modules/") {
+ * 				p.snapshot.missingPackageJsons = append(p.snapshot.missingPackageJsons, packageJson)
+ * 			}
+ * 			return true
+ * 		})
+ * 	}
+ * 	p.snapshot.packageJsons = normalizePackageJsons(p.snapshot.packageJsons)
+ * 	p.snapshot.missingPackageJsons = normalizePackageJsons(p.snapshot.missingPackageJsons)
+ * }
+ */
+export function Program_ensurePackageJsonsForState(receiver: GoPtr<Program>): void {
+  const packageJsons = receiver!.snapshot!.packageJsons ?? [];
+  const missingPackageJsons = receiver!.snapshot!.missingPackageJsons ?? [];
+  const config = GetDirectoryPath(ParsedCommandLine_ConfigName(compiler_Program_CommandLine(receiver!.program)));
+  if (config !== "") {
+    compiler_Program_PackageJsonCacheEntries(receiver!.program, (_key: Path, value: GoPtr<InfoCacheEntry>): bool => {
+      if (value === undefined) {
+        return true as bool;
+      }
+      let packageJson = CombinePaths(value.PackageDirectory, "package.json");
+      if (InfoCacheEntry_Exists(value) || value.DirectoryExists) {
+        packageJson = compiler_Program_Host(receiver!.program).FS().Realpath(packageJson);
+      }
+      if (InfoCacheEntry_Exists(value)) {
+        packageJsons.push(packageJson);
+      } else if (packageJson.includes("/node_modules/")) {
+        missingPackageJsons.push(packageJson);
+      }
+      return true as bool;
+    });
+  }
+  receiver!.snapshot!.packageJsons = normalizePackageJsons(packageJsons);
+  receiver!.snapshot!.missingPackageJsons = normalizePackageJsons(missingPackageJsons);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::func::normalizePackageJsons","kind":"func","status":"implemented","sigHash":"16d5c17c0afd8838f86c6ee126578bbb46788f6d31e32decbe89e8903b3c6872","bodyHash":"711bce823bc4fc66c9db35b6b2b8ae6614776d110439070e33c3e66087174875"}
+ *
+ * Go source:
+ * func normalizePackageJsons(packageJsons []string) []string {
+ * 	if packageJsons == nil {
+ * 		return make([]string, 0)
+ * 	}
+ * 	slices.Sort(packageJsons)
+ * 	return core.Deduplicate(packageJsons)
+ * }
+ */
+export function normalizePackageJsons(packageJsons: GoSlice<string> | undefined): GoSlice<string> {
+  if (packageJsons === undefined) {
+    return [];
+  }
+  packageJsons.sort();
+  return Deduplicate(packageJsons);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::method::Program.PackageJsonLookupPaths","kind":"method","status":"implemented","sigHash":"277991dcbe2f487e2dd1b192fc0011d0b460c6261319644e0b5985a351c40682","bodyHash":"841f35598e21d0bb056a2d646774699267fa714665d0319e708102c8f31fd4b5"}
+ *
+ * Go source:
+ * func (p *Program) PackageJsonLookupPaths() []string {
+ * 	config := tspath.GetDirectoryPath(p.program.CommandLine().ConfigName())
+ * 	if config == "" {
+ * 		return nil
+ * 	}
+ *
+ * 	var packageJsons []string
+ * 	p.program.PackageJsonCacheEntries(func(key tspath.Path, value *packagejson.InfoCacheEntry) bool {
+ * 		if value == nil {
+ * 			return true
+ * 		}
+ * 		packageJson := tspath.CombinePaths(value.PackageDirectory, "package.json")
+ * 		if value.Exists() || value.DirectoryExists {
+ * 			packageJson = p.program.Host().FS().Realpath(packageJson)
+ * 		}
+ * 		packageJsons = append(packageJsons, packageJson)
+ * 		return true
+ * 	})
+ * 	slices.Sort(packageJsons)
+ * 	return core.Deduplicate(packageJsons)
+ * }
+ */
+export function Program_PackageJsonLookupPaths(receiver: GoPtr<Program>): GoSlice<string> {
+  const config = GetDirectoryPath(ParsedCommandLine_ConfigName(compiler_Program_CommandLine(receiver!.program)));
+  if (config === "") {
+    return undefined!;
+  }
+  let packageJsons: GoSlice<string> = [];
+  compiler_Program_PackageJsonCacheEntries(receiver!.program, (_key: Path, value: GoPtr<InfoCacheEntry>): bool => {
+    if (value === undefined) {
+      return true as bool;
+    }
+    let packageJson = CombinePaths(value.PackageDirectory, "package.json");
+    if (InfoCacheEntry_Exists(value) || value.DirectoryExists) {
+      packageJson = compiler_Program_Host(receiver!.program).FS().Realpath(packageJson);
+    }
+    packageJsons.push(packageJson);
+    return true as bool;
+  });
+  packageJsons.sort();
+  return Deduplicate(packageJsons);
+}
+
+function arrayEqual(left: GoSlice<string> | undefined, right: GoSlice<string> | undefined): boolean {
+  if (left === right) {
+    return true;
+  }
+  const leftArray = left ?? [];
+  const rightArray = right ?? [];
+  return leftArray.length === rightArray.length && leftArray.every((value, index) => value === rightArray[index]);
 }

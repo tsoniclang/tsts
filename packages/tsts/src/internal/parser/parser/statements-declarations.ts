@@ -207,7 +207,6 @@ import {
   Scanner_TokenFullStart,
   Scanner_TokenText,
   Scanner_CommentDirectives,
-  Scanner_ContainsNonASCII,
 } from "../../scanner/scanner.js";
 import { tokenIsIdentifierOrKeyword } from "../utilities.js";
 import type { ParseFlags } from "../types.js";
@@ -496,7 +495,7 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.finishSourceFile","kind":"method","status":"implemented","sigHash":"1eb9204e2181d19cbd13fd97fa97570987ac34936c87b268cee8402807f4c0e5","bodyHash":"27dad47bd9df611fdc2ea8853a0d3b498af7ff22d4ccaab0c36ff9fffe44910f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.finishSourceFile","kind":"method","status":"implemented","sigHash":"1eb9204e2181d19cbd13fd97fa97570987ac34936c87b268cee8402807f4c0e5","bodyHash":"9d8277ec2bc9721b275f0ee2f6f1077c10bfdfc72a9718209378da4c74b3a200"}
  *
  * Go source:
  * func (p *Parser) finishSourceFile(result *ast.SourceFile, isDeclarationFile bool) {
@@ -507,7 +506,6 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
  * 	result.SetJSDocDiagnostics(attachFileToDiagnostics(p.jsdocDiagnostics, result))
  * 	result.CommonJSModuleIndicator = p.commonJSModuleIndicator
  * 	result.IsDeclarationFile = isDeclarationFile
- * 	result.ContainsNonASCII = p.scanner.ContainsNonASCII()
  * 	result.LanguageVariant = p.languageVariant
  * 	result.ScriptKind = p.scriptKind
  * 	result.Flags |= p.sourceFlags
@@ -533,7 +531,6 @@ export function Parser_finishSourceFile(receiver: GoPtr<Parser>, result: GoPtr<S
   SourceFile_SetJSDocDiagnostics(result, attachFileToDiagnostics(receiver!.jsdocDiagnostics, result));
   result!.CommonJSModuleIndicator = receiver!.commonJSModuleIndicator;
   result!.IsDeclarationFile = isDeclarationFile;
-  result!.ContainsNonASCII = Scanner_ContainsNonASCII(receiver!.scanner);
   result!.LanguageVariant = receiver!.languageVariant;
   result!.ScriptKind = receiver!.scriptKind;
   result!.Flags |= receiver!.sourceFlags;

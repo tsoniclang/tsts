@@ -17,13 +17,13 @@ import { AsArrayTypeNode, AsElementAccessExpression, AsExportSpecifier, AsExpres
 import type { NodeFactory } from "../../ast/generated/factory.js";
 import { CheckFlagsContainsPrivate, CheckFlagsReadonly, CheckFlagsSyntheticMethod } from "../../ast/checkflags.js";
 import { GetFunctionFlags, FunctionFlagsAsyncGenerator } from "../../ast/functionflags.js";
-import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBooleanKeyword, KindClassDeclaration, KindComputedPropertyName, KindConstructor, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExpressionWithTypeArguments, KindExternalModuleReference, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindIdentifier, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindIndexedAccessType, KindInterfaceDeclaration, KindJSImportDeclaration, KindLiteralType, KindMethodDeclaration, KindMethodSignature, KindMinusToken, KindNamespaceImport, KindNeverKeyword, KindNumberKeyword, KindObjectKeyword, KindPropertyDeclaration, KindPropertySignature, KindQualifiedName, KindSetAccessor, KindStringKeyword, KindSuperKeyword, KindSymbolKeyword, KindThisKeyword, KindTypeAliasDeclaration, KindTypeReference, KindUndefinedKeyword, KindUnknownKeyword, KindVariableStatement, KindVoidKeyword, KindAnyKeyword } from "../../ast/generated/kinds.js";
+import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBooleanKeyword, KindClassDeclaration, KindComputedPropertyName, KindConstructor, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExpressionWithTypeArguments, KindExternalModuleReference, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindIdentifier, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindIndexedAccessType, KindInterfaceDeclaration, KindJSImportDeclaration, KindLiteralType, KindMethodDeclaration, KindMethodSignature, KindMinusToken, KindNamespaceImport, KindNeverKeyword, KindNumberKeyword, KindObjectKeyword, KindParameter, KindPropertyDeclaration, KindPropertySignature, KindQualifiedName, KindSetAccessor, KindStringKeyword, KindSuperKeyword, KindSymbolKeyword, KindThisKeyword, KindTypeAliasDeclaration, KindTypeReference, KindUndefinedKeyword, KindUnknownKeyword, KindVariableStatement, KindVoidKeyword, KindAnyKeyword } from "../../ast/generated/kinds.js";
 import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
 import type { Declaration, IdentifierNode, TypeNode } from "../../ast/generated/unions.js";
 import { NodeFlagsAmbient } from "../../ast/generated/flags.js";
 import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsModule, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeLiteral, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
+import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsModule, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsReplaceableByMethod, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeLiteral, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import type { FlowNode } from "../../ast/flow.js";
 import type { NodeId, SymbolId } from "../../ast/ids.js";
@@ -624,12 +624,13 @@ export interface InferenceContext {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::InferenceInfo","kind":"type","status":"implemented","sigHash":"26cd4a7719a65569f315eeb5e9419f9438acd6507bb5fc5bb83c295397848d33","bodyHash":"ffab62d929e7f5baf7bba336f34652eac9d064f39e6092bb65418d276ce59c6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::InferenceInfo","kind":"type","status":"implemented","sigHash":"26cd4a7719a65569f315eeb5e9419f9438acd6507bb5fc5bb83c295397848d33","bodyHash":"549c8f66013b2a3d44e55e0946eabe4fbd9c24e11c683cbf6c76bdb6e555172d"}
  *
  * Go source:
  * InferenceInfo struct {
  * 	typeParameter    *Type             // Type parameter for which inferences are being made
- * 	candidates       []*Type           // Candidates in covariant positions
+ * 	candidates       []*Type           // Candidates in covariant positions in decreasing depth order
+ * 	candidateDepths  []int             // Type argument depths of covariant inferences
  * 	contraCandidates []*Type           // Candidates in contravariant positions
  * 	inferredType     *Type             // Cache for resolved inferred type
  * 	priority         InferencePriority // Priority of current inference set
@@ -641,6 +642,7 @@ export interface InferenceContext {
 export interface InferenceInfo {
   typeParameter: GoPtr<Type>;
   candidates: GoSlice<GoPtr<Type>>;
+  candidateDepths: GoSlice<int>;
   contraCandidates: GoSlice<GoPtr<Type>>;
   inferredType: GoPtr<Type>;
   priority: InferencePriority;
@@ -696,7 +698,7 @@ export const InferencePriorityMaxValue: InferencePriority = 1 << 11; // Seed for
 export const InferencePriorityCircularity: InferencePriority = -1; // Inference circularity (value less than all other priorities)
 
 // These priorities imply that the resulting type should be a combination of all candidates
-export const InferencePriorityPriorityImpliesCombination: int =
+export const InferencePriorityPriorityImpliesCombination: InferencePriority =
   InferencePriorityReturnType | InferencePriorityMappedTypeConstraint | InferencePriorityLiteralKeyof;
 
 /**
@@ -740,8 +742,8 @@ export const DeclarationMeaningSetAccessor: DeclarationMeaning = 1 << 1;
 export const DeclarationMeaningPropertyAssignment: DeclarationMeaning = 1 << 2;
 export const DeclarationMeaningMethod: DeclarationMeaning = 1 << 3;
 export const DeclarationMeaningPrivateStatic: DeclarationMeaning = 1 << 4;
-export const DeclarationMeaningGetOrSetAccessor: int = DeclarationMeaningGetAccessor | DeclarationMeaningSetAccessor;
-export const DeclarationMeaningPropertyAssignmentOrMethod: int = DeclarationMeaningPropertyAssignment | DeclarationMeaningMethod;
+export const DeclarationMeaningGetOrSetAccessor: DeclarationMeaning = DeclarationMeaningGetAccessor | DeclarationMeaningSetAccessor;
+export const DeclarationMeaningPropertyAssignmentOrMethod: DeclarationMeaning = DeclarationMeaningPropertyAssignment | DeclarationMeaningMethod;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::DeclarationSpaces","kind":"type","status":"implemented","sigHash":"e0271a9d4adf0b61f79c8ced4962aa6ef43095b2b826e5822d73cd6ccab1362b","bodyHash":"77a7d4d4fb3c22253b83140b95864e61563c2b4f4e60d2564de50cf99b7dac38"}
@@ -1132,15 +1134,15 @@ export const IterationUseDestructuringFlag: IterationUse = 1 << 6;
 export const IterationUsePossiblyOutOfBounds: IterationUse = 1 << 7;
 // Spread, Destructuring, Array element assignment
 export const IterationUseElement: IterationUse = IterationUseAllowsSyncIterablesFlag;
-export const IterationUseSpread: int = IterationUseAllowsSyncIterablesFlag | IterationUseSpreadFlag;
-export const IterationUseDestructuring: int = IterationUseAllowsSyncIterablesFlag | IterationUseDestructuringFlag;
-export const IterationUseForOf: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
-export const IterationUseForAwaitOf: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
-export const IterationUseYieldStar: int = IterationUseAllowsSyncIterablesFlag | IterationUseYieldStarFlag;
-export const IterationUseAsyncYieldStar: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseYieldStarFlag;
+export const IterationUseSpread: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseSpreadFlag;
+export const IterationUseDestructuring: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseDestructuringFlag;
+export const IterationUseForOf: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
+export const IterationUseForAwaitOf: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
+export const IterationUseYieldStar: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseYieldStarFlag;
+export const IterationUseAsyncYieldStar: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseYieldStarFlag;
 export const IterationUseGeneratorReturnType: IterationUse = IterationUseAllowsSyncIterablesFlag;
 export const IterationUseAsyncGeneratorReturnType: IterationUse = IterationUseAllowsAsyncIterablesFlag;
-export const IterationUseCacheFlags: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseForOfFlag;
+export const IterationUseCacheFlags: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseForOfFlag;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::IterationTypes","kind":"type","status":"implemented","sigHash":"5d181dfd9bbb5e27de9315b5d772ee92cf03d9039decc36934b37551c28cf0a3","bodyHash":"0df72a9873639112f79d9a514da280ab2aa858fc94dc43700d3a1e8491fc02f8"}
@@ -1323,7 +1325,7 @@ export interface Host extends ModuleSpecifierGenerationHost {
 export let nextCheckerID: Uint32 = new Uint32();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::Checker","kind":"type","status":"implemented","sigHash":"e4967269fbe71279dee2e723a062b8b622327a2bcc4a9a6ef1d5a2445b4d0a13","bodyHash":"8aab79756b2cdc4b710a0bc8e9882716aa7b86edf09b3586aab083c9e6c9a6d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::Checker","kind":"type","status":"implemented","sigHash":"e4967269fbe71279dee2e723a062b8b622327a2bcc4a9a6ef1d5a2445b4d0a13","bodyHash":"384f4c48f51a05136a733468aed350b2252394e6dcdeb46680d199b3d90df675"}
  *
  * Go source:
  * Checker struct {
@@ -1336,9 +1338,11 @@ export let nextCheckerID: Uint32 = new Uint32();
  * 	compareSymbolChains                         func([]*ast.Symbol, []*ast.Symbol) int
  * 	TypeCount                                   uint32
  * 	SymbolCount                                 uint32
+ * 	SignatureCount                              uint32
  * 	TotalInstantiationCount                     uint32
  * 	instantiationCount                          uint32
  * 	instantiationDepth                          uint32
+ * 	conditionalConstraintDepth                  uint32
  * 	inlineLevel                                 int
  * 	serializationLevel                          int
  * 	currentNode                                 *ast.Node
@@ -1398,6 +1402,7 @@ export let nextCheckerID: Uint32 = new Uint32();
  * 	moduleSymbols                               map[*ast.Node]*ast.Symbol
  * 	globalThisSymbol                            *ast.Symbol
  * 	symbolTableAliasCache                       map[symbolTableID][]*ast.Symbol
+ * 	classExpressionNameTables                   map[ast.NodeId]ast.SymbolTable
  * 	resolveName                                 func(location *ast.Node, name string, meaning ast.SymbolFlags, nameNotFoundMessage *diagnostics.Message, isUse bool, excludeGlobals bool) *ast.Symbol
  * 	resolveNameForSymbolSuggestion              func(location *ast.Node, name string, meaning ast.SymbolFlags, nameNotFoundMessage *diagnostics.Message, isUse bool, excludeGlobals bool) *ast.Symbol
  * 	tupleTypes                                  map[CacheHashKey]*Type
@@ -1654,10 +1659,12 @@ export interface Checker {
   compareSymbols: (arg0: GoPtr<Symbol>, arg1: GoPtr<Symbol>) => int;
   compareSymbolChains: (arg0: GoSlice<GoPtr<Symbol>>, arg1: GoSlice<GoPtr<Symbol>>) => int;
   TypeCount: uint;
+  SignatureCount: uint;
   SymbolCount: uint;
   TotalInstantiationCount: uint;
   instantiationCount: uint;
   instantiationDepth: uint;
+  conditionalConstraintDepth: uint;
   inlineLevel: int;
   serializationLevel: int;
   currentNode: GoPtr<Node>;
@@ -1717,6 +1724,7 @@ export interface Checker {
   moduleSymbols: GoMap<GoPtr<Node>, GoPtr<Symbol>>;
   globalThisSymbol: GoPtr<Symbol>;
   symbolTableAliasCache: GoMap<symbolTableID, GoSlice<GoPtr<Symbol>>>;
+  classExpressionNameTables: GoMap<NodeId, SymbolTable>;
   resolveName: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
   resolveNameForSymbolSuggestion: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
   tupleTypes: GoMap<CacheHashKey, GoPtr<Type>>;
@@ -2224,10 +2232,12 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   const checker = {} as Checker;
   checker.id = nextCheckerID.Add(1);
   checker.TypeCount = 0;
+  checker.SignatureCount = 0;
   checker.SymbolCount = 0;
   checker.TotalInstantiationCount = 0;
   checker.instantiationCount = 0;
   checker.instantiationDepth = 0;
+  checker.conditionalConstraintDepth = 0;
   checker.inlineLevel = 0;
   // Go zero-value for the serializationLevel counter. Without this it is undefined, and
   // `undefined < maxSerializationLevel` is false, so addDiagnostic silently drops every checker
@@ -2254,6 +2264,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.isInferencePartiallyBlocked = false as bool;
   checker.saveDeferredDiagnostics = false as bool;
   checker.lastFlowNodeReachable = false as bool;
+  checker.withinUnreachableCode = false as bool;
   checker.tracer = tracer;
   checker.program = program;
   checker.compilerOptions = program.Options();
@@ -3303,7 +3314,7 @@ export type PredicateSemantics = uint;
 export const PredicateSemanticsNone: PredicateSemantics = 0;
 export const PredicateSemanticsAlways: PredicateSemantics = 1 << 0;
 export const PredicateSemanticsNever: PredicateSemantics = 1 << 1;
-export const PredicateSemanticsSometimes: int = PredicateSemanticsAlways | PredicateSemanticsNever;
+export const PredicateSemanticsSometimes: PredicateSemantics = PredicateSemanticsAlways | PredicateSemanticsNever;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createDiagnosticForNode","kind":"func","status":"implemented","sigHash":"6cf225f51d25f062d9fd1b3c0bb27fe6744e9d928f43e08b3167e655a83fe1b6","bodyHash":"332b0e58fb8f40e54da2b97f929c157b3b9305cba31cbfc93c8cc3105780df18"}
@@ -3356,7 +3367,7 @@ export function getFirstDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getExcludedSymbolFlags","kind":"func","status":"implemented","sigHash":"9ef6cffd25ef95f7a5bd952966c4b8086349c4f0761cefb8a4ec1d6f08cfa73e","bodyHash":"19c481684b3c78a126e9d5dea49ae11d9b946ac46e44f705aebdd51713edebf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getExcludedSymbolFlags","kind":"func","status":"implemented","sigHash":"9ef6cffd25ef95f7a5bd952966c4b8086349c4f0761cefb8a4ec1d6f08cfa73e","bodyHash":"7c813f32ddb708e01ee9e1bdbce7f107f8f6740cb6e7f6677dc231a15a92d9cb"}
  *
  * Go source:
  * func getExcludedSymbolFlags(flags ast.SymbolFlags) ast.SymbolFlags {
@@ -3409,6 +3420,9 @@ export function getFirstDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
  * 	if flags&ast.SymbolFlagsAlias != 0 {
  * 		result |= ast.SymbolFlagsAliasExcludes
  * 	}
+ * 	if flags&ast.SymbolFlagsReplaceableByMethod != 0 {
+ * 		result &^= ast.SymbolFlagsMethod
+ * 	}
  * 	return result
  * }
  */
@@ -3430,6 +3444,7 @@ export function getExcludedSymbolFlags(flags: SymbolFlags): SymbolFlags {
   if (flags & SymbolFlagsTypeParameter) result |= SymbolFlagsTypeParameterExcludes;
   if (flags & SymbolFlagsTypeAlias) result |= SymbolFlagsTypeAliasExcludes;
   if (flags & SymbolFlagsAlias) result |= SymbolFlagsAliasExcludes;
+  if (flags & SymbolFlagsReplaceableByMethod) result &= ~SymbolFlagsMethod;
   return result;
 }
 
@@ -3576,10 +3591,6 @@ export function hashWrite64<T extends GoConstraint<"~int | ~uint | ~int64 | ~uin
  *
  * Go source:
  * CacheHashKey xxh3.Uint128
- *
- * CacheHashKey remains the Go value type. Cache maps that use this key must use
- * GoStructMap/NewGoStructMap so Uint128 keys compare by value rather than JS
- * object identity.
  */
 export type CacheHashKey = Uint128;
 
@@ -4149,7 +4160,7 @@ export function mayReturnNever(fn: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThisless","kind":"func","status":"implemented","sigHash":"bd4191bc89226c2ce154a45a0d2d401db523cef6fa897bf87ea6af216b711ec8","bodyHash":"92f411b3e2bd1e4f20daff6e5e54b967ead36821e1a055277ad8ef06a255b48a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThisless","kind":"func","status":"implemented","sigHash":"9b316e480a0d7940ca02cfbf543b15c45998882c88b684f79427e433f34919d8","bodyHash":"5d5995d582b1732005bacd4b962c44995e6fd23fe01a49f9cd40c820d06fba95"}
  *
  * Go source:
  * func isThisless(symbol *ast.Symbol) bool {
@@ -4157,6 +4168,8 @@ export function mayReturnNever(fn: GoPtr<Node>): bool {
  * 		declaration := symbol.Declarations[0]
  * 		if declaration != nil {
  * 			switch declaration.Kind {
+ * 			case ast.KindParameter:
+ * 				return isThislessVariableLikeDeclaration(declaration)
  * 			case ast.KindPropertyDeclaration, ast.KindPropertySignature:
  * 				return isThislessVariableLikeDeclaration(declaration)
  * 			case ast.KindMethodDeclaration, ast.KindMethodSignature, ast.KindConstructor, ast.KindGetAccessor, ast.KindSetAccessor:
@@ -4172,6 +4185,7 @@ export function isThisless(symbol_: GoPtr<Symbol>): bool {
     const declaration = symbol_!.Declarations[0];
     if (declaration !== undefined) {
       switch (declaration!.Kind) {
+        case KindParameter:
         case KindPropertyDeclaration:
         case KindPropertySignature:
           return isThislessVariableLikeDeclaration(declaration);
@@ -4509,10 +4523,7 @@ export function isGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
-  if (!isGenericTupleType(t)) {
-    return false;
-  }
-  return Type_TargetTupleType(t)!.elementInfos.length === 1;
+  return isGenericTupleType(t) && Type_TargetTupleType(t)!.elementInfos.length === 1;
 }
 
 /**
@@ -4571,10 +4582,7 @@ export function getTypeReferenceName(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isUnaryTupleTypeNode(node: GoPtr<Node>): bool {
-  if (!IsTupleTypeNode(node)) {
-    return false;
-  }
-  return Node_Elements(node)!.length === 1;
+  return IsTupleTypeNode(node) && Node_Elements(node)!.length === 1;
 }
 
 /**

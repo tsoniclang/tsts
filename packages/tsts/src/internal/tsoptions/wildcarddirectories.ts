@@ -6,13 +6,14 @@ import {
   CombinePaths,
   ContainsPath,
   DirectorySeparator,
+  NormalizePath,
   NormalizeSlashes,
   RemoveTrailingDirectorySeparator,
 } from "../tspath/path.js";
 import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude } from "../vfs/vfsmatch/vfsmatch.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectories","kind":"func","status":"implemented","sigHash":"b28e9bda9ec15acd9b0664a3466d8c69e2ffb017497fc37e43d86c9d83e55cc2","bodyHash":"90afd2eb741b92625e581f99a44751a737fc8fdc2e18ec4fd42fdf37abbaef62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectories","kind":"func","status":"implemented","sigHash":"b28e9bda9ec15acd9b0664a3466d8c69e2ffb017497fc37e43d86c9d83e55cc2","bodyHash":"a267774d2e381ddcb0060860b057696531febed1c5cb3a30e835e8c63e0f70c3"}
  *
  * Go source:
  * func getWildcardDirectories(include []string, exclude []string, comparePathsOptions tspath.ComparePathsOptions) map[string]bool {
@@ -41,7 +42,7 @@ import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude }
  * 	var recursiveKeys []string
  *
  * 	for _, file := range include {
- * 		spec := tspath.NormalizeSlashes(tspath.CombinePaths(comparePathsOptions.CurrentDirectory, file))
+ * 		spec := tspath.NormalizePath(tspath.CombinePaths(comparePathsOptions.CurrentDirectory, file))
  * 		if excludeMatcher != nil && excludeMatcher.MatchString(spec) {
  * 			continue
  * 		}
@@ -124,7 +125,7 @@ export function getWildcardDirectories(
   const recursiveKeys: GoSlice<string> = [];
 
   for (const file of include) {
-    const spec = NormalizeSlashes(CombinePaths(comparePathsOptions.CurrentDirectory, file));
+    const spec = NormalizePath(CombinePaths(comparePathsOptions.CurrentDirectory, file));
     if (excludeMatcher !== undefined && SpecMatcher_MatchString(excludeMatcher, spec)) {
       continue;
     }

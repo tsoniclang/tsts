@@ -8,6 +8,7 @@ import type { Writable } from "node:stream";
 import { NodeFS } from "./io/fs.js";
 import type { FileInfo, FS } from "./io/fs.js";
 import type { Writer } from "./io.js";
+import { FromDate, type Time } from "./time.js";
 
 export const Args: GoSlice<string> = [process.argv[1] ?? process.argv[0] ?? "node", ...process.argv.slice(2)];
 export const Interrupt = "SIGINT";
@@ -221,7 +222,7 @@ export function Stat(path: string): [FileInfo, GoError] {
       Name: () => nodePath.basename(path),
       Size: () => stats.size as int,
       Mode: () => (stats.isDirectory() ? 0x80000000 : (stats.mode & 0o777)) as unknown as import("./io/fs.js").FileMode,
-      ModTime: () => stats.mtime,
+      ModTime: () => FromDate(stats.mtime),
       IsDir: () => stats.isDirectory(),
       Sys: () => stats,
     }, undefined];
@@ -261,17 +262,13 @@ export function WriteFile(path: string, data: string, perm: int): GoError {
   }
 }
 
-export function Chtimes(path: string, aTime: unknown, mTime: unknown): GoError {
+export function Chtimes(path: string, aTime: Time, mTime: Time): GoError {
   try {
-    nodeFs.utimesSync(path, toDate(aTime), toDate(mTime));
+    nodeFs.utimesSync(path, aTime.ToDate(), mTime.ToDate());
     return undefined;
   } catch (error) {
     return normalizeError(error);
   }
-}
-
-function toDate(value: unknown): Date {
-  return value instanceof Date ? value : new Date();
 }
 
 function normalizeError(error: unknown): GoError {

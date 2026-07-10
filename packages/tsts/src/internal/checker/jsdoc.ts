@@ -30,15 +30,15 @@ import { entityNameToString } from "./utilities.js";
  * 			jsdocParameters = append(jsdocParameters, tag)
  * 		}
  * 	}
- * 
+ *
  * 	if len(jsdocParameters) == 0 {
  * 		return
  * 	}
- * 
+ *
  * 	isJs := ast.IsInJSFile(node)
  * 	parameters := collections.Set[string]{}
  * 	excludedParameters := collections.Set[int]{}
- * 
+ *
  * 	for i, param := range node.Parameters() {
  * 		name := param.AsParameterDeclaration().Name()
  * 		if ast.IsIdentifier(name) {
@@ -70,21 +70,23 @@ import { entityNameToString } from "./utilities.js";
  * 		for index, tag := range jsdocParameters {
  * 			name := tag.AsJSDocParameterOrPropertyTag().Name()
  * 			isNameFirst := tag.AsJSDocParameterOrPropertyTag().IsNameFirst
- * 
+ *
  * 			if excludedParameters.Has(index) || (ast.IsIdentifier(name) && parameters.Has(name.Text())) {
  * 				continue
  * 			}
- * 
+ *
  * 			if ast.IsQualifiedName(name) {
  * 				if isJs {
- * 					c.error(name, diagnostics.Qualified_name_0_is_not_allowed_without_a_leading_param_object_1,
+ * 					c.error(
+ * 						name, diagnostics.Qualified_name_0_is_not_allowed_without_a_leading_param_object_1,
  * 						entityNameToString(name),
  * 						entityNameToString(name.AsQualifiedName().Left),
  * 					)
  * 				}
  * 			} else {
  * 				if !isNameFirst {
- * 					c.errorOrSuggestion(isJs, name,
+ * 					c.errorOrSuggestion(
+ * 						isJs, name,
  * 						diagnostics.JSDoc_param_tag_has_name_0_but_there_is_no_parameter_with_that_name,
  * 						name.Text(),
  * 					)

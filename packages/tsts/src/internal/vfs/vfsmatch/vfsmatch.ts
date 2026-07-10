@@ -34,6 +34,7 @@ export const UsageExclude: Usage = 2 as Usage;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UnlimitedDepth","kind":"constGroup","status":"implemented","sigHash":"014f91465101a37e9f3d5e3d2269e6189ded89b9430d014ea987228d62bc25f5","bodyHash":"149f35c49dfd7dc3818eb9917c518953feb4f1a3c47b34a53135f2b53bdecfa7"}
+ * @tsgo-override {"category":"runtime-representation","allow":["initializer"],"reason":"Go uses math.MaxInt as an unreachable depth sentinel. The number-backed JavaScript int carrier uses Number.MAX_SAFE_INTEGER, the largest exact host integer; callers still pass the same exported UnlimitedDepth sentinel and all finite path depths remain strictly below it.","goInitializer":"UnlimitedDepth={\"kind\":\"number\",\"value\":\"9223372036854775807\"}","tsInitializer":"UnlimitedDepth={\"kind\":\"number\",\"value\":\"9007199254740991\"}"}
  *
  * Go source:
  * const UnlimitedDepth = math.MaxInt
@@ -1231,10 +1232,6 @@ export interface globVisitor {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globVisitor.visit","kind":"method","status":"implemented","sigHash":"a9acd0b47be9e76092b15613a92f00e01a37e5e4d8a7a9f5bd5bf04a0f320ca1","bodyHash":"03ccf2893b6d8e93933ad3d27f2f18faf45e843d1d918d9cf349ac8ee9f7b037"}
  *
  * Go source:
- * // visit walks a directory tree, collecting files that match the glob patterns.
- * // resolvedRealPath, when non-empty, is the already-resolved real path for this
- * // directory (computed incrementally from the parent). When empty, Realpath is
- * // called to resolve symlinks.
  * func (v *globVisitor) visit(path, absolutePath string, depth int, resolvedRealPath string) {
  * 	// Detect symlink cycles
  * 	var realPath string

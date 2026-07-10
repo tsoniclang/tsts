@@ -268,7 +268,7 @@ export interface InferenceKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974","bodyHash":"3ef6d6ed84b307d9141888f89100d470e9d34ef4d066accda774781214b3ae42"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974","bodyHash":"8ef85c1de611c40f56bee91845833de67f41d0d43830761c1346913f05d793ea"}
  *
  * Go source:
  * InferenceState struct {
@@ -285,6 +285,7 @@ export interface InferenceKey {
  * 	sourceStack       []*Type
  * 	targetStack       []*Type
  * 	next              *InferenceState
+ * 	depth             int
  * }
  */
 export interface InferenceState {
@@ -301,6 +302,7 @@ export interface InferenceState {
   sourceStack: GoSlice<GoPtr<Type>>;
   targetStack: GoSlice<GoPtr<Type>>;
   next: GoPtr<InferenceState>;
+  depth: int;
 }
 
 /**
@@ -332,6 +334,7 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
     sourceStack: [],
     targetStack: [],
     next: undefined,
+    depth: 0 as int,
   };
   c.freeinferenceState = n.next;
   return n;
@@ -374,6 +377,7 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
   state.sourceStack = sourceStack.slice(0, 0);
   state.targetStack = targetStack.slice(0, 0);
   state.next = c.freeinferenceState;
+  state.depth = 0 as int;
   c.freeinferenceState = state;
 }
 
@@ -407,7 +411,7 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypes","kind":"method","status":"implemented","sigHash":"4a180277141dbdbc23e2da739671cff9d0f8148ad64f7fcd366e8a2da725d96a","bodyHash":"beda9ddd49fcf2fefb5b1e4547c74a406ce5a3ca0ccdea8f2c85f9bf19852dbd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypes","kind":"method","status":"implemented","sigHash":"4a180277141dbdbc23e2da739671cff9d0f8148ad64f7fcd366e8a2da725d96a","bodyHash":"35551332062bb03c021d70534aa9a3df8b9537920a1daa8a98fc466610f5e423"}
  *
  * Go source:
  * func (c *Checker) inferFromTypes(n *InferenceState, source *Type, target *Type) {
@@ -535,6 +539,7 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
  * 				}
  * 				if n.priority < inference.priority {
  * 					inference.candidates = nil
+ * 					inference.candidateDepths = nil
  * 					inference.contraCandidates = nil
  * 					inference.topLevel = true
  * 					inference.priority = n.priority
@@ -547,9 +552,28 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
  * 							inference.contraCandidates = append(inference.contraCandidates, candidate)
  * 							clearCachedInferences(n.inferences)
  * 						}
- * 					} else if !slices.Contains(inference.candidates, candidate) {
- * 						inference.candidates = append(inference.candidates, candidate)
- * 						clearCachedInferences(n.inferences)
+ * 					} else {
+ * 						index := slices.Index(inference.candidates, candidate)
+ * 						if index < 0 || inference.candidateDepths[index] < n.depth {
+ * 							// Candidate isn't present or is present with lower depth
+ * 							if index >= 0 {
+ * 								// Remove candidate with lower depth
+ * 								inference.candidates = slices.Delete(inference.candidates, index, index+1)
+ * 								inference.candidateDepths = slices.Delete(inference.candidateDepths, index, index+1)
+ * 							}
+ * 							index = 0
+ * 							for index < len(inference.candidateDepths) {
+ * 								if inference.candidateDepths[index] < n.depth {
+ * 									break
+ * 								}
+ * 								index++
+ * 							}
+ * 							// Insert candidate at end or immediately before first candidate with lower depth.
+ * 							// This ensures candidates with the highest depth are stored first.
+ * 							inference.candidates = slices.Insert(inference.candidates, index, candidate)
+ * 							inference.candidateDepths = slices.Insert(inference.candidateDepths, index, n.depth)
+ * 							clearCachedInferences(n.inferences)
+ * 						}
  * 					}
  * 				}
  * 				if n.priority&InferencePriorityReturnType == 0 && target.flags&TypeFlagsTypeParameter != 0 && inference.topLevel && !c.isTypeParameterAtTopLevel(n.originalTarget, target, 0) {
@@ -744,6 +768,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
         }
         if (state.priority < inference.priority) {
           inference.candidates = [];
+          inference.candidateDepths = [];
           inference.contraCandidates = [];
           inference.topLevel = true;
           inference.priority = state.priority;
@@ -756,9 +781,24 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
               inference.contraCandidates = [...inference.contraCandidates, candidate];
               clearCachedInferences(state.inferences);
             }
-          } else if (!slices.Contains(inference.candidates, candidate)) {
-            inference.candidates = [...inference.candidates, candidate];
-            clearCachedInferences(state.inferences);
+          } else {
+            let index = inference.candidates.indexOf(candidate);
+            if (index < 0 || (inference.candidateDepths[index] ?? 0) < state.depth) {
+              if (index >= 0) {
+                inference.candidates = inference.candidates.slice(0, index).concat(inference.candidates.slice(index + 1));
+                inference.candidateDepths = inference.candidateDepths.slice(0, index).concat(inference.candidateDepths.slice(index + 1));
+              }
+              index = 0;
+              while (index < inference.candidateDepths.length) {
+                if ((inference.candidateDepths[index] ?? 0) < state.depth) {
+                  break;
+                }
+                index++;
+              }
+              inference.candidates = inference.candidates.slice(0, index).concat([candidate], inference.candidates.slice(index));
+              inference.candidateDepths = inference.candidateDepths.slice(0, index).concat([state.depth], inference.candidateDepths.slice(index));
+              clearCachedInferences(state.inferences);
+            }
           }
         }
         if ((state.priority & InferencePriorityReturnType) === 0 && (target!.flags & TypeFlagsTypeParameter) !== 0 && inference.topLevel && !Checker_isTypeParameterAtTopLevel(c, state.originalTarget, target, 0)) {
@@ -843,10 +883,11 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypeArguments","kind":"method","status":"implemented","sigHash":"dff4bdcf801faef2dda4e9808b8d6fe086f69c941d89e059f4ccb90757928fd4","bodyHash":"c961a65625a058c070585881fc7fffcddce644d88241d02d363b69690430e683"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypeArguments","kind":"method","status":"implemented","sigHash":"dff4bdcf801faef2dda4e9808b8d6fe086f69c941d89e059f4ccb90757928fd4","bodyHash":"65ff7e29e9f67bcde7d41867b4b832a44b3198ecd5ee2db877932d46d659fce4"}
  *
  * Go source:
  * func (c *Checker) inferFromTypeArguments(n *InferenceState, sourceTypes []*Type, targetTypes []*Type, variances []VarianceFlags) {
+ * 	n.depth++
  * 	for i := range min(len(sourceTypes), len(targetTypes)) {
  * 		if i < len(variances) && variances[i]&VarianceFlagsVarianceMask == VarianceFlagsContravariant {
  * 			c.inferFromContravariantTypes(n, sourceTypes[i], targetTypes[i])
@@ -854,10 +895,13 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
  * 			c.inferFromTypes(n, sourceTypes[i], targetTypes[i])
  * 		}
  * 	}
+ * 	n.depth--
  * }
  */
 export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sourceTypes: GoSlice<GoPtr<Type>>, targetTypes: GoSlice<GoPtr<Type>>, variances: GoSlice<VarianceFlags>): void {
   const c = receiver!;
+  n!.depth = (n!.depth + 1) as int;
+  try {
   const count = Math.min(sourceTypes.length, targetTypes.length);
   for (let i = 0; i < count; i++) {
     if (i < variances.length && (variances[i]! & VarianceFlagsVarianceMask) === VarianceFlagsContravariant) {
@@ -865,6 +909,9 @@ export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPt
     } else {
       Checker_inferFromTypes(c, n, sourceTypes[i], targetTypes[i]);
     }
+  }
+  } finally {
+    n!.depth = (n!.depth - 1) as int;
   }
 }
 
@@ -3367,14 +3414,14 @@ export function Checker_isTypeParameterAtTopLevelInReturnType(receiver: GoPtr<Ch
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeFromInference","kind":"method","status":"implemented","sigHash":"6527ce679905978335a72c3f6d99fc74e3289921157a6d0d9db84b70752f5f07","bodyHash":"2c43c0ef65a0e72f5e7e5a8bdea04e714d6bbe7147d309e0fed6ba26d57772d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeFromInference","kind":"method","status":"implemented","sigHash":"6527ce679905978335a72c3f6d99fc74e3289921157a6d0d9db84b70752f5f07","bodyHash":"b5d4a4a3757c87f545d29d58f960db60fd9fb9688fd5b9a4fc33051cf8e13c8d"}
  *
  * Go source:
  * func (c *Checker) getTypeFromInference(inference *InferenceInfo) *Type {
  * 	switch {
- * 	case inference.candidates != nil:
+ * 	case len(inference.candidates) != 0:
  * 		return c.getUnionTypeEx(inference.candidates, UnionReductionSubtype, nil, nil)
- * 	case inference.contraCandidates != nil:
+ * 	case len(inference.contraCandidates) != 0:
  * 		return c.getIntersectionType(inference.contraCandidates)
  * 	}
  * 	return nil
@@ -3638,17 +3685,18 @@ export function Checker_isSkipDirectInferenceNode(receiver: GoPtr<Checker>, node
  * }
  */
 export function newInferenceInfo(typeParameter: GoPtr<Type>): GoPtr<InferenceInfo> {
-  return { typeParameter, priority: InferencePriorityMaxValue, topLevel: true, impliedArity: -1, candidates: [], contraCandidates: [], inferredType: undefined, isFixed: false };
+  return { typeParameter, priority: InferencePriorityMaxValue, topLevel: true, impliedArity: -1, candidates: [], candidateDepths: [], contraCandidates: [], inferredType: undefined, isFixed: false };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::cloneInferenceInfo","kind":"func","status":"implemented","sigHash":"f99201cb5ec216c33f77ead613a44bb0f16b000c0ccd516f08ba2b1c76189bd8","bodyHash":"8375c797df0bef3c982c65ca8f664fb2ec99401accf1204d63d2d635b2cf86e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::cloneInferenceInfo","kind":"func","status":"implemented","sigHash":"f99201cb5ec216c33f77ead613a44bb0f16b000c0ccd516f08ba2b1c76189bd8","bodyHash":"13308319e66df6e80b02d4693430b8d6dc38feaa2eccc5892cc5c54c36d874cc"}
  *
  * Go source:
  * func cloneInferenceInfo(info *InferenceInfo) *InferenceInfo {
  * 	return &InferenceInfo{
  * 		typeParameter:    info.typeParameter,
  * 		candidates:       slices.Clone(info.candidates),
+ * 		candidateDepths:  slices.Clone(info.candidateDepths),
  * 		contraCandidates: slices.Clone(info.contraCandidates),
  * 		inferredType:     info.inferredType,
  * 		priority:         info.priority,
@@ -3662,6 +3710,7 @@ export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceI
   return {
     typeParameter: info!.typeParameter,
     candidates: (slices.Clone(info!.candidates) ?? []) as GoSlice<GoPtr<Type>>,
+    candidateDepths: (slices.Clone(info!.candidateDepths) ?? []) as GoSlice<int>,
     contraCandidates: (slices.Clone(info!.contraCandidates) ?? []) as GoSlice<GoPtr<Type>>,
     inferredType: info!.inferredType,
     priority: info!.priority,
@@ -3704,11 +3753,11 @@ export function hasInferenceCandidates(info: GoPtr<InferenceInfo>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidatesOrDefault","kind":"func","status":"implemented","sigHash":"54950d22e067691420244e06a6fbc594c255ded90cb31348fd6eef520aea1e3b","bodyHash":"88fafc288a982269f2771ba59234b217b854457cb5a4303a147d7f1741ed4af7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidatesOrDefault","kind":"func","status":"implemented","sigHash":"54950d22e067691420244e06a6fbc594c255ded90cb31348fd6eef520aea1e3b","bodyHash":"dfb84eb6a982b6d62d50cb01879f34ae8c5ec3d70040e886f9396c7d7e18652b"}
  *
  * Go source:
  * func hasInferenceCandidatesOrDefault(info *InferenceInfo) bool {
- * 	return info.candidates != nil || info.contraCandidates != nil || hasTypeParameterDefault(info.typeParameter)
+ * 	return hasInferenceCandidates(info) || hasTypeParameterDefault(info.typeParameter)
  * }
  */
 export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): bool {

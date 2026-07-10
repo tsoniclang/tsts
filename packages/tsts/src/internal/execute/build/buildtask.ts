@@ -13,12 +13,12 @@ import type { Set } from "../../collections/set.js";
 import { SyncMap_Load, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import type { WriteFileData } from "../../compiler/program.js";
-import { Map as core_Map, IfElse, FirstOrNilSeq } from "../../core/core.js";
+import { Map as core_Map, IfElse, FirstOrNilSeq, Memoize } from "../../core/core.js";
 import { ResolveConfigFileNameOfProjectReference } from "../../core/projectreference.js";
 import { Version as core_Version } from "../../core/version.js";
 import * as diagnostics from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
-import { ParsedCommandLine_ProjectReferences, ParsedCommandLine_ResolvedProjectReferencePaths, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_FileNames, ParsedCommandLine_ExtendedSourceFiles, ParsedCommandLine_GetOutputFileNames, ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics } from "../../tsoptions/parsedcommandline.js";
+import { ParsedCommandLine_ProjectReferences, ParsedCommandLine_ResolvedProjectReferencePaths, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_FileNames, ParsedCommandLine_GetOutputFileNames, ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_ExtendedSourceFiles } from "../../tsoptions/parsedcommandline.js";
 import { ParsedBuildCommandLine_Locale as ParsedBuildCommandLine_Locale_fn } from "../../tsoptions/parsedbuildcommandline.js";
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
 import { GetNormalizedAbsolutePath, GetDirectoryPath } from "../../tspath/path.js";
@@ -29,18 +29,17 @@ import { Tristate_IsTrue } from "../../core/tristate.js";
 import { CompilerOptions_IsIncremental, CompilerOptions_GetEmitDeclarations } from "../../core/compileroptions.js";
 import { NewBuildInfoReader, ReadBuildInfoProgram } from "../incremental/incremental.js";
 import { ComputeHash } from "../incremental/snapshot.js";
-import { BuildInfo_IsValidVersion, BuildInfo_IsIncremental, BuildInfo_IsEmitPending, BuildInfo_GetBuildInfoRootInfoReader } from "../incremental/buildInfo.js";
+import { BuildInfo_IsValidVersion, BuildInfo_IsIncremental, BuildInfo_IsEmitPending, BuildInfo_GetBuildInfoRootInfoReader, BuildInfo_GetPackageJsons, BuildInfo_GetMissingPackageJsons, BuildInfoFileInfo_GetFileInfo, IsBuildInfoFileNameDefaultLibrary } from "../incremental/buildInfo.js";
 import { BuildInfoRootInfoReader_GetBuildInfoFileInfo, BuildInfoRootInfoReader_Roots } from "../incremental/buildInfo.js";
 import type { BuildInfoRootInfoReader } from "../incremental/buildInfo.js";
 import { FileInfo_Version } from "../incremental/snapshot.js";
-import type { FileInfo } from "../incremental/snapshot.js";
-import { NewProgram as incremental_NewProgram, Program_as_compiler_ProgramLike as incremental_Program_as_compiler_ProgramLike } from "../incremental/program.js";
-import { NewProgram as compiler_NewProgram } from "../../compiler/program.js";
+import { NewProgram as incremental_NewProgram, Program_as_compiler_ProgramLike as incremental_Program_as_compiler_ProgramLike, Program_HasChangedDtsFile, Program_PackageJsonLookupPaths } from "../incremental/program.js";
+import { NewProgram as compiler_NewProgram, Program_Options as compiler_Program_Options } from "../../compiler/program.js";
 import { EmitAndReportStatistics, GetTraceWithWriterFromSys } from "../tsc/emit.js";
 import { QuietDiagnosticsReporter } from "../tsc/diagnostics.js";
 import { compilerHost_as_compiler_CompilerHost } from "./compilerHost.js";
 import type { compilerHost } from "./compilerHost.js";
-import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_loadOrStoreMTime, host_storeMTimeFromOldCache } from "./host.js";
+import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_storeMTimeFromOldCache } from "./host.js";
 import type { BuildInfo } from "../incremental/buildInfo.js";
 import type { Program } from "../incremental/program.js";
 import { ExitStatusDiagnosticsPresent_OutputsSkipped, ExitStatusDiagnosticsPresent_OutputsGenerated } from "../tsc/compile.js";
@@ -62,28 +61,6 @@ import {
   upToDateStatusTypeForceBuild, upToDateStatusTypeSolution,
 } from "./uptodatestatus.js";
 import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTime, upstreamErrors as upstreamErrorsType } from "./uptodatestatus.js";
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"implemented","sigHash":"8c03b00054d12667434aa9865344ed51a963464cc953ccc045330af752ae7f64","bodyHash":"bb679ff4d632cbca47e250b78139b0d261ac5dea6fb7c63c797f9312068c508b"}
- *
- * Go source:
- * updateKind uint
- */
-export type updateKind = uint;
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::constGroup::updateKindNone+updateKindConfig+updateKindUpdate","kind":"constGroup","status":"implemented","sigHash":"a5d457b54660f38232795bb983bd57b5b7bce14a61e2f316ad6620ba2b1c262b","bodyHash":"f9a76f53f60a0171cc2dbed0d17a54adc9febffb0980c99c093963bd61577c0c"}
- *
- * Go source:
- * const (
- * 	updateKindNone updateKind = iota
- * 	updateKindConfig
- * 	updateKindUpdate
- * )
- */
-export const updateKindNone: updateKind = 0 as updateKind;
-export const updateKindConfig: updateKind = 1 as updateKind;
-export const updateKindUpdate: updateKind = 2 as updateKind;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildKind","kind":"type","status":"implemented","sigHash":"344994cd5c7b5b4023a9a5209b718b11244bbabd359d09d6df83f09865209774","bodyHash":"ff5be7e5f52df5284afb3fbf58630c5bc89f63dee0247bf307e20e1c5ad8d5b4"}
@@ -166,7 +143,7 @@ export interface taskResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4","bodyHash":"9dd475e2fed102340bfc05a450a05d80a6bd5bafd1641dc23a11889f2eaf04f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4","bodyHash":"f811c0baa1e50e3c578edfa12dc396899bbb7d701f49525b2987afe8def36a8e"}
  *
  * Go source:
  * BuildTask struct {
@@ -182,14 +159,10 @@ export interface taskResult {
  * 	prevReporter *BuildTask
  * 	reportDone   chan struct{}
  * 
- * 	// Watching things
- * 	configTime          time.Time
- * 	extendedConfigTimes []time.Time
- * 	inputFiles          []time.Time
- * 
  * 	buildInfoEntry   *buildInfoEntry
  * 	buildInfoEntryMu sync.Mutex
- * 
+ * 	packageJsons     []string
+ *
  * 	errors             []*ast.Diagnostic
  * 	pending            atomic.Bool
  * 	isInitialCycle     bool
@@ -207,11 +180,9 @@ export interface BuildTask {
   result: GoPtr<taskResult>;
   prevReporter: GoPtr<BuildTask>;
   reportDone: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">;
-  configTime: Time;
-  extendedConfigTimes: GoSlice<Time>;
-  inputFiles: GoSlice<Time>;
   buildInfoEntry: GoPtr<buildInfoEntry>;
   buildInfoEntryMu: Mutex;
+  packageJsons: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
   pending: Bool;
   isInitialCycle: bool;
@@ -447,14 +418,14 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
     if (downStream!.status !== undefined) {
       switch (downStream!.status.kind) {
         case upToDateStatusTypeUpToDate:
-          if (!(receiver!.result!.program as unknown as { HasChangedDtsFile(): bool }).HasChangedDtsFile()) {
+          if (!Program_HasChangedDtsFile(receiver!.result!.program)) {
             downStream!.status = { kind: upToDateStatusTypeUpToDateWithUpstreamTypes, data: downStream!.status.data };
             break;
           }
           // fallthrough
         case upToDateStatusTypeUpToDateWithUpstreamTypes:
         case upToDateStatusTypeUpToDateWithInputFileText:
-          if ((receiver!.result!.program as unknown as { HasChangedDtsFile(): bool }).HasChangedDtsFile()) {
+          if (Program_HasChangedDtsFile(receiver!.result!.program)) {
             downStream!.status = { kind: upToDateStatusTypeInputFileNewer, data: { input: receiver!.config, output: upToDateStatus_oldestOutputFileName(downStream!.status) } as inputOutputName };
           }
           break;
@@ -476,7 +447,7 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"implemented","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"f5584563c40eab2cd5db88a6edf3eee7dd63fbef2cfc3010a4f5ff7df5b2ec7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"implemented","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"86cdbb8bd35e5aef70b96af1c763ff8298925aa839aab2f8b6cdbec5a078a1d3"}
  *
  * Go source:
  * func (t *BuildTask) compileAndEmit(orchestrator *Orchestrator, path tspath.Path) {
@@ -525,6 +496,7 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
  * 	})
  * 	t.result.exitStatus = result.Status
  * 	t.result.statistics = statistics
+ * 	t.packageJsons = t.result.program.PackageJsonLookupPaths()
  * 	if (!program.Options().NoEmitOnError.IsTrue() || len(result.Diagnostics) == 0) &&
  * 		(len(result.EmitResult.EmittedFiles) > 0 || t.status.kind != upToDateStatusTypeOutOfDateBuildInfoWithErrors) {
  * 		// Update time stamps for rest of the outputs
@@ -613,10 +585,9 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   });
   receiver!.result!.exitStatus = result.Status;
   receiver!.result!.statistics = statistics;
+  receiver!.packageJsons = Program_PackageJsonLookupPaths(receiver!.result!.program);
 
-  const programOptions = (program as unknown as { Options(): { NoEmitOnError?: unknown; IsTrue?(): bool } }).Options();
-  const noEmitOnError = programOptions !== undefined && (programOptions.NoEmitOnError as unknown as { IsTrue(): bool } | undefined)?.IsTrue() === true;
-  if ((!noEmitOnError || result.Diagnostics.length === 0) &&
+  if ((!Tristate_IsTrue(compiler_Program_Options(program)!.NoEmitOnError) || result.Diagnostics.length === 0) &&
     (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
     BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult!.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
   }
@@ -741,7 +712,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.getUpToDateStatus","kind":"method","status":"implemented","sigHash":"2cd1159ce54e3529478bf9de91739ac80c8e06310d8bad85abba63836fac4c49","bodyHash":"92ee3d3dc5b4a60fef46d5bd629a3848cda9986be80bbd58d7952d95f30ff9da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.getUpToDateStatus","kind":"method","status":"implemented","sigHash":"2cd1159ce54e3529478bf9de91739ac80c8e06310d8bad85abba63836fac4c49","bodyHash":"b384317f9a17d40ff9b5589d77efe96790c38ca72172569820203afcac7c6f37"}
  *
  * Go source:
  * func (t *BuildTask) getUpToDateStatus(orchestrator *Orchestrator, configPath tspath.Path) *upToDateStatus {
@@ -752,62 +723,65 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 	if t.resolved == nil {
  * 		return &upToDateStatus{kind: upToDateStatusTypeConfigFileNotFound}
  * 	}
- * 
+ *
  * 	// Solution - nothing to build
  * 	if len(t.resolved.FileNames()) == 0 && t.resolved.ProjectReferences() != nil {
  * 		return &upToDateStatus{kind: upToDateStatusTypeSolution}
  * 	}
- * 
+ *
  * 	for _, upstream := range t.upStream {
  * 		if orchestrator.opts.Command.BuildOptions.StopBuildOnErrors.IsTrue() && upstream.task.status.isError() {
  * 			// Upstream project has errors, so we cannot build this project
  * 			return &upToDateStatus{kind: upToDateStatusTypeUpstreamErrors, data: &upstreamErrors{t.resolved.ProjectReferences()[upstream.refIndex].Path, upstream.task.status.kind == upToDateStatusTypeUpstreamErrors}}
  * 		}
  * 	}
- * 
+ *
  * 	if orchestrator.opts.Command.BuildOptions.Force.IsTrue() {
  * 		return &upToDateStatus{kind: upToDateStatusTypeForceBuild}
  * 	}
- * 
+ *
  * 	// Check the build info
  * 	buildInfoPath := t.resolved.GetBuildInfoFileName()
+ * 	getBuildInfoDirectory := core.Memoize(func() string {
+ * 		return tspath.GetDirectoryPath(tspath.GetNormalizedAbsolutePath(buildInfoPath, orchestrator.comparePathsOptions.CurrentDirectory))
+ * 	})
  * 	buildInfo, buildInfoTime := t.loadOrStoreBuildInfo(orchestrator, configPath, buildInfoPath)
  * 	if buildInfo == nil {
  * 		return &upToDateStatus{kind: upToDateStatusTypeOutputMissing, data: buildInfoPath}
  * 	}
- * 
+ *
  * 	// build info version
  * 	if !buildInfo.IsValidVersion() {
  * 		return &upToDateStatus{kind: upToDateStatusTypeTsVersionOutputOfDate, data: buildInfo.Version}
  * 	}
- * 
+ *
  * 	// Report errors if build info indicates errors
  * 	if buildInfo.Errors || // Errors that need to be reported irrespective of "--noCheck"
  * 		(!t.resolved.CompilerOptions().NoCheck.IsTrue() && (buildInfo.SemanticErrors || buildInfo.CheckPending)) { // Errors without --noCheck
  * 		return &upToDateStatus{kind: upToDateStatusTypeOutOfDateBuildInfoWithErrors, data: buildInfoPath}
  * 	}
- * 
+ *
  * 	if t.resolved.CompilerOptions().IsIncremental() {
  * 		if !buildInfo.IsIncremental() {
  * 			// Program options out of date
  * 			return &upToDateStatus{kind: upToDateStatusTypeOutOfDateOptions, data: buildInfoPath}
  * 		}
- * 
+ *
  * 		// Errors need to be reported if build info has errors
  * 		if (t.resolved.CompilerOptions().GetEmitDeclarations() && buildInfo.EmitDiagnosticsPerFile != nil) || // Always reported errors
  * 			(!t.resolved.CompilerOptions().NoCheck.IsTrue() && // Semantic errors if not --noCheck
  * 				(buildInfo.ChangeFileSet != nil || buildInfo.SemanticDiagnosticsPerFile != nil)) {
  * 			return &upToDateStatus{kind: upToDateStatusTypeOutOfDateBuildInfoWithErrors, data: buildInfoPath}
  * 		}
- * 
+ *
  * 		// Pending emit files
  * 		if !t.resolved.CompilerOptions().NoEmit.IsTrue() &&
  * 			(buildInfo.ChangeFileSet != nil || buildInfo.AffectedFilesPendingEmit != nil) {
  * 			return &upToDateStatus{kind: upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit, data: buildInfoPath}
  * 		}
- * 
+ *
  * 		// Some of the emit files like source map or dts etc are not yet done
- * 		if buildInfo.IsEmitPending(t.resolved, tspath.GetDirectoryPath(tspath.GetNormalizedAbsolutePath(buildInfoPath, orchestrator.comparePathsOptions.CurrentDirectory))) {
+ * 		if buildInfo.IsEmitPending(t.resolved, getBuildInfoDirectory()) {
  * 			return &upToDateStatus{kind: upToDateStatusTypeOutOfDateOptions, data: buildInfoPath}
  * 		}
  * 	}
@@ -815,7 +789,9 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 	oldestOutputFileAndTime := fileAndTime{buildInfoPath, buildInfoTime}
  * 	var newestInputFileAndTime fileAndTime
  * 	var seenRoots collections.Set[tspath.Path]
- * 	var buildInfoRootInfoReader *incremental.BuildInfoRootInfoReader
+ * 	getBuildInfoRootInfoReader := core.Memoize(func() *incremental.BuildInfoRootInfoReader {
+ * 		return buildInfo.GetBuildInfoRootInfoReader(getBuildInfoDirectory(), orchestrator.comparePathsOptions)
+ * 	})
  * 	for _, inputFile := range t.resolved.FileNames() {
  * 		inputTime := orchestrator.host.GetMTime(inputFile)
  * 		if inputTime.IsZero() {
@@ -826,10 +802,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 			var version string
  * 			var currentVersion string
  * 			if buildInfo.IsIncremental() {
- * 				if buildInfoRootInfoReader == nil {
- * 					buildInfoRootInfoReader = buildInfo.GetBuildInfoRootInfoReader(tspath.GetDirectoryPath(tspath.GetNormalizedAbsolutePath(buildInfoPath, orchestrator.comparePathsOptions.CurrentDirectory)), orchestrator.comparePathsOptions)
- * 				}
- * 				buildInfoFileInfo, resolvedInputPath := buildInfoRootInfoReader.GetBuildInfoFileInfo(inputPath)
+ * 				buildInfoFileInfo, resolvedInputPath := getBuildInfoRootInfoReader().GetBuildInfoFileInfo(inputPath)
  * 				if fileInfo := buildInfoFileInfo.GetFileInfo(); fileInfo != nil && fileInfo.Version() != "" {
  * 					version = fileInfo.Version()
  * 					if text, ok := orchestrator.host.FS().ReadFile(string(resolvedInputPath)); ok {
@@ -840,7 +813,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 					}
  * 				}
  * 			}
- * 
+ *
  * 			if version == "" || version != currentVersion {
  * 				return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{inputFile, buildInfoPath}}
  * 			}
@@ -850,17 +823,55 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 		}
  * 		seenRoots.Add(inputPath)
  * 	}
- * 
- * 	if buildInfoRootInfoReader == nil {
- * 		buildInfoRootInfoReader = buildInfo.GetBuildInfoRootInfoReader(tspath.GetDirectoryPath(tspath.GetNormalizedAbsolutePath(buildInfoPath, orchestrator.comparePathsOptions.CurrentDirectory)), orchestrator.comparePathsOptions)
- * 	}
- * 	for root := range buildInfoRootInfoReader.Roots() {
+ *
+ * 	for root := range getBuildInfoRootInfoReader().Roots() {
  * 		if !seenRoots.Has(root) {
  * 			// File was root file when project was built but its not any more
  * 			return &upToDateStatus{kind: upToDateStatusTypeOutOfDateRoots, data: &inputOutputName{string(root), buildInfoPath}}
  * 		}
  * 	}
- * 
+ *
+ * 	if buildInfo.IsIncremental() {
+ * 		var resolvedRoots collections.Set[tspath.Path]
+ * 		for root := range getBuildInfoRootInfoReader().Roots() {
+ * 			if _, resolved := getBuildInfoRootInfoReader().GetBuildInfoFileInfo(root); resolved != "" {
+ * 				resolvedRoots.Add(resolved)
+ * 			}
+ * 		}
+ * 		for index, buildInfoFileInfo := range buildInfo.FileInfos {
+ * 			buildInfoFileName := buildInfo.FileNames[index]
+ * 			// Lib files bundled with the compiler can change only with the version of the compiler,
+ * 			// which is already verified with buildInfo.Version
+ * 			if incremental.IsBuildInfoFileNameDefaultLibrary(buildInfoFileName) {
+ * 				continue
+ * 			}
+ * 			inputFile := tspath.GetNormalizedAbsolutePath(buildInfoFileName, getBuildInfoDirectory())
+ * 			inputPath := orchestrator.toPath(inputFile)
+ * 			// Root files are already checked
+ * 			if seenRoots.Has(inputPath) || resolvedRoots.Has(inputPath) {
+ * 				continue
+ * 			}
+ * 			inputTime := orchestrator.host.GetMTime(inputFile)
+ * 			if inputTime.IsZero() {
+ * 				// Input file that was part of the program is missing (eg: dependency was removed)
+ * 				return &upToDateStatus{kind: upToDateStatusTypeInputFileMissing, data: inputFile}
+ * 			}
+ * 			if inputTime.After(oldestOutputFileAndTime.time) {
+ * 				var currentVersion string
+ * 				version := buildInfoFileInfo.GetFileInfo().Version()
+ * 				if version != "" {
+ * 					if text, ok := orchestrator.host.FS().ReadFile(inputFile); ok {
+ * 						currentVersion = incremental.ComputeHash(text, orchestrator.opts.Testing != nil)
+ * 					}
+ * 				}
+ * 				if version == "" || version != currentVersion {
+ * 					return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{inputFile, buildInfoPath}}
+ * 				}
+ * 				inputTextUnchanged = true
+ * 			}
+ * 		}
+ * 	}
+ *
  * 	if !t.resolved.CompilerOptions().IsIncremental() {
  * 		// Check output file stamps
  * 		for outputFile := range t.resolved.GetOutputFileNames() {
@@ -869,18 +880,18 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 				// Output file missing
  * 				return &upToDateStatus{kind: upToDateStatusTypeOutputMissing, data: outputFile}
  * 			}
- * 
+ *
  * 			if outputTime.Before(newestInputFileAndTime.time) {
  * 				// Output file is older than input file
  * 				return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{newestInputFileAndTime.file, outputFile}}
  * 			}
- * 
+ *
  * 			if outputTime.Before(oldestOutputFileAndTime.time) {
  * 				oldestOutputFileAndTime = fileAndTime{outputFile, outputTime}
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	var refDtsUnchanged bool
  * 	for _, upstream := range t.upStream {
  * 		if upstream.task.status.kind == upToDateStatusTypeSolution {
@@ -888,7 +899,7 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 			// (eg: expected cycle was detected and hence skipped, or is solution)
  * 			continue
  * 		}
- * 
+ *
  * 		// If the upstream project's newest file is older than our oldest output,
  * 		// we can't be out of date because of it
  * 		// inputTime will not be present if we just built this project or updated timestamps
@@ -897,13 +908,13 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 		if refInputOutputFileAndTime != nil && !refInputOutputFileAndTime.input.time.IsZero() && refInputOutputFileAndTime.input.time.Before(oldestOutputFileAndTime.time) {
  * 			continue
  * 		}
- * 
+ *
  * 		// Check if tsbuildinfo path is shared, then we need to rebuild
  * 		if t.hasConflictingBuildInfo(orchestrator, upstream.task) {
  * 			// We have an output older than an upstream output - we are out of date
  * 			return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{t.resolved.ProjectReferences()[upstream.refIndex].Path, oldestOutputFileAndTime.file}}
  * 		}
- * 
+ *
  * 		// If the upstream project has only change .d.ts files, and we've built
  * 		// *after* those files, then we're "pseudo up to date" and eligible for a fast rebuild
  * 		newestDtsChangeTime := upstream.task.getLatestChangedDtsMTime(orchestrator)
@@ -911,11 +922,11 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 			refDtsUnchanged = true
  * 			continue
  * 		}
- * 
+ *
  * 		// We have an output older than an upstream output - we are out of date
  * 		return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{t.resolved.ProjectReferences()[upstream.refIndex].Path, oldestOutputFileAndTime.file}}
  * 	}
- * 
+ *
  * 	checkInputFileTime := func(inputFile string) *upToDateStatus {
  * 		inputTime := orchestrator.host.GetMTime(inputFile)
  * 		if inputTime.After(oldestOutputFileAndTime.time) {
@@ -924,28 +935,36 @@ export function BuildTask_handleStatusThatDoesntRequireBuild(receiver: GoPtr<Bui
  * 		}
  * 		return nil
  * 	}
- * 
+ *
  * 	configStatus := checkInputFileTime(t.config)
  * 	if configStatus != nil {
  * 		return configStatus
  * 	}
- * 
+ *
  * 	for _, extendedConfig := range t.resolved.ExtendedSourceFiles() {
  * 		extendedConfigStatus := checkInputFileTime(extendedConfig)
  * 		if extendedConfigStatus != nil {
  * 			return extendedConfigStatus
  * 		}
  * 	}
- * 
- * 	// !!! sheetal TODO : watch??
- * 	// // Check package file time
- * 	// const packageJsonLookups = state.lastCachedPackageJsonLookups.get(resolvedPath);
- * 	// const dependentPackageFileStatus = packageJsonLookups && forEachKey(
- * 	//     packageJsonLookups,
- * 	//     path => checkConfigFileUpToDateStatus(state, path, oldestOutputFileTime, oldestOutputFileName),
- * 	// );
- * 	// if (dependentPackageFileStatus) return dependentPackageFileStatus;
- * 
+ *
+ * 	for packageJson := range buildInfo.GetPackageJsons(getBuildInfoDirectory()) {
+ * 		packageJsonTime := orchestrator.host.GetMTime(packageJson)
+ * 		if packageJsonTime.IsZero() {
+ * 			return &upToDateStatus{kind: upToDateStatusTypeInputFileMissing, data: packageJson}
+ * 		}
+ * 		if packageJsonTime.After(oldestOutputFileAndTime.time) {
+ * 			return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{packageJson, oldestOutputFileAndTime.file}}
+ * 		}
+ * 	}
+ * 	for packageJson := range buildInfo.GetMissingPackageJsons(getBuildInfoDirectory()) {
+ * 		if !orchestrator.host.GetMTime(packageJson).IsZero() {
+ * 			return &upToDateStatus{kind: upToDateStatusTypeInputFileNewer, data: &inputOutputName{packageJson, oldestOutputFileAndTime.file}}
+ * 		}
+ * 	}
+ * 	t.packageJsons = slices.Collect(buildInfo.GetPackageJsons(getBuildInfoDirectory()))
+ * 	t.packageJsons = append(t.packageJsons, slices.Collect(buildInfo.GetMissingPackageJsons(getBuildInfoDirectory()))...)
+ *
  * 	return &upToDateStatus{
  * 		kind: core.IfElse(
  * 			refDtsUnchanged,
@@ -976,6 +995,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   }
 
   const buildInfoPath = ParsedCommandLine_GetBuildInfoFileName(receiver!.resolved);
+  const getBuildInfoDirectory = Memoize(() => GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)));
   const [buildInfo, buildInfoTime] = BuildTask_loadOrStoreBuildInfo(receiver, orchestrator, configPath, buildInfoPath);
   if (buildInfo === undefined) {
     return { kind: upToDateStatusTypeOutputMissing, data: buildInfoPath };
@@ -999,7 +1019,7 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
     if (!Tristate_IsTrue(resolvedCompilerOptions!.NoEmit) && (buildInfo.ChangeFileSet !== undefined || buildInfo.AffectedFilesPendingEmit !== undefined)) {
       return { kind: upToDateStatusTypeOutOfDateBuildInfoWithPendingEmit, data: buildInfoPath };
     }
-    if (BuildInfo_IsEmitPending(buildInfo, receiver!.resolved, GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)))) {
+    if (BuildInfo_IsEmitPending(buildInfo, receiver!.resolved, getBuildInfoDirectory())) {
       return { kind: upToDateStatusTypeOutOfDateOptions, data: buildInfoPath };
     }
   }
@@ -1023,22 +1043,17 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
       let currentVersion = "";
       if (BuildInfo_IsIncremental(buildInfo)) {
         if (buildInfoRootInfoReader === undefined) {
-          buildInfoRootInfoReader = BuildInfo_GetBuildInfoRootInfoReader(buildInfo, GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)), orchestrator!.comparePathsOptions);
+          buildInfoRootInfoReader = BuildInfo_GetBuildInfoRootInfoReader(buildInfo, getBuildInfoDirectory(), orchestrator!.comparePathsOptions);
         }
         const [buildInfoFileInfo, resolvedInputPath] = BuildInfoRootInfoReader_GetBuildInfoFileInfo(buildInfoRootInfoReader, inputPath);
-        const fileInfo = buildInfoFileInfo !== undefined ? buildInfoFileInfo.fileInfo !== undefined ? { version: () => (buildInfoFileInfo as unknown as { version?: string }).version ?? "" } : undefined : undefined;
-        const fi = buildInfoFileInfo !== undefined ? buildInfoFileInfo : undefined;
-        if (fi !== undefined) {
-          const fileInfoObj = (fi as unknown as { fileInfo?: { Version: string } }).fileInfo;
-          if (fileInfoObj !== undefined && fileInfoObj.Version !== "") {
-            version = fileInfoObj.Version;
-            const fsObj = host_FS_fn(orchestrator!.host) as unknown as { ReadFile(path: string): [string, bool] };
-            const [text, ok] = fsObj.ReadFile(String(resolvedInputPath));
-            if (ok) {
-              currentVersion = ComputeHash(text, (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool);
-              if (version === currentVersion) {
-                inputTextUnchanged = true;
-              }
+        const fileInfo = BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo);
+        if (fileInfo !== undefined && FileInfo_Version(fileInfo) !== "") {
+          version = FileInfo_Version(fileInfo);
+          const [text, ok] = host_FS_fn(orchestrator!.host).ReadFile(String(resolvedInputPath));
+          if (ok) {
+            currentVersion = ComputeHash(text, (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool);
+            if (version === currentVersion) {
+              inputTextUnchanged = true;
             }
           }
         }
@@ -1054,11 +1069,63 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
   }
 
   if (buildInfoRootInfoReader === undefined) {
-    buildInfoRootInfoReader = BuildInfo_GetBuildInfoRootInfoReader(buildInfo, GetDirectoryPath(GetNormalizedAbsolutePath(buildInfoPath, orchestrator!.comparePathsOptions.CurrentDirectory)), orchestrator!.comparePathsOptions);
+    buildInfoRootInfoReader = BuildInfo_GetBuildInfoRootInfoReader(buildInfo, getBuildInfoDirectory(), orchestrator!.comparePathsOptions);
   }
   for (const root of slicesCollect(BuildInfoRootInfoReader_Roots(buildInfoRootInfoReader))) {
     if (!Set_Has(seenRoots, root)) {
       return { kind: upToDateStatusTypeOutOfDateRoots, data: { input: String(root), output: buildInfoPath } as inputOutputName };
+    }
+  }
+
+  if (BuildInfo_IsIncremental(buildInfo)) {
+    const resolvedRoots: Set<Path> = {} as Set<Path>;
+    for (const root of slicesCollect(BuildInfoRootInfoReader_Roots(buildInfoRootInfoReader))) {
+      const [, resolved] = BuildInfoRootInfoReader_GetBuildInfoFileInfo(buildInfoRootInfoReader, root);
+      if (resolved !== "") {
+        Set_Add(resolvedRoots, resolved);
+      }
+    }
+    const fileInfos = buildInfo.FileInfos ?? [];
+    const fileNames = buildInfo.FileNames;
+    if (fileInfos.length !== 0 && (fileNames === undefined || fileNames.length < fileInfos.length)) {
+      throw new globalThis.Error("invalid BuildInfo: FileNames does not cover FileInfos");
+    }
+    for (let index = 0; index < fileInfos.length; index++) {
+      const buildInfoFileInfo = fileInfos[index];
+      const buildInfoFileName = fileNames?.[index];
+      if (buildInfoFileName === undefined) {
+        throw new globalThis.Error(`invalid BuildInfo: missing FileNames[${index}]`);
+      }
+      if (IsBuildInfoFileNameDefaultLibrary(buildInfoFileName)) {
+        continue;
+      }
+      const inputFile = GetNormalizedAbsolutePath(buildInfoFileName, getBuildInfoDirectory());
+      const inputPath = Orchestrator_toPath(orchestrator, inputFile);
+      if (Set_Has(seenRoots, inputPath) || Set_Has(resolvedRoots, inputPath)) {
+        continue;
+      }
+      const inputTime = host_GetMTime(orchestrator!.host, inputFile) as TimeWithOps;
+      if (inputTime.IsZero()) {
+        return { kind: upToDateStatusTypeInputFileMissing, data: inputFile };
+      }
+      if (inputTime.After(oldestOutputFileAndTime.time)) {
+        let currentVersion = "";
+        const fileInfo = BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo);
+        if (fileInfo === undefined) {
+          throw new globalThis.Error(`invalid BuildInfo: missing FileInfos[${index}]`);
+        }
+        const version = FileInfo_Version(fileInfo);
+        if (version !== "") {
+          const [text, ok] = host_FS_fn(orchestrator!.host).ReadFile(inputFile);
+          if (ok) {
+            currentVersion = ComputeHash(text, (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool);
+          }
+        }
+        if (version === "" || version !== currentVersion) {
+          return { kind: upToDateStatusTypeInputFileNewer, data: { input: inputFile, output: buildInfoPath } as inputOutputName };
+        }
+        inputTextUnchanged = true;
+      }
     }
   }
 
@@ -1115,6 +1182,22 @@ export function BuildTask_getUpToDateStatus(receiver: GoPtr<BuildTask>, orchestr
       return extendedConfigStatus;
     }
   }
+  for (const packageJson of slicesCollect(BuildInfo_GetPackageJsons(buildInfo, getBuildInfoDirectory()))) {
+    const packageJsonTime = host_GetMTime(orchestrator!.host, packageJson) as TimeWithOps;
+    if (packageJsonTime.IsZero()) {
+      return { kind: upToDateStatusTypeInputFileMissing, data: packageJson };
+    }
+    if (packageJsonTime.After(oldestOutputFileAndTime.time)) {
+      return { kind: upToDateStatusTypeInputFileNewer, data: { input: packageJson, output: oldestOutputFileAndTime.file } as inputOutputName };
+    }
+  }
+  for (const packageJson of slicesCollect(BuildInfo_GetMissingPackageJsons(buildInfo, getBuildInfoDirectory()))) {
+    if (!(host_GetMTime(orchestrator!.host, packageJson) as TimeWithOps).IsZero()) {
+      return { kind: upToDateStatusTypeInputFileNewer, data: { input: packageJson, output: oldestOutputFileAndTime.file } as inputOutputName };
+    }
+  }
+  receiver!.packageJsons = slicesCollect(BuildInfo_GetPackageJsons(buildInfo, getBuildInfoDirectory()));
+  receiver!.packageJsons.push(...slicesCollect(BuildInfo_GetMissingPackageJsons(buildInfo, getBuildInfoDirectory())));
 
   return {
     kind: IfElse(
@@ -1532,18 +1615,11 @@ export function BuildTask_cleanProjectOutput(receiver: GoPtr<BuildTask>, orchest
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.updateWatch","kind":"method","status":"implemented","sigHash":"6647f68924aa0f60f2b47c821905ad2b95d49487702f8fceb8b6ffbe7f8a3ed0","bodyHash":"228f9462d032b117104a78d387fa24e0caab94c6e464b272dc83145a07ad3c77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.updateWatch","kind":"method","status":"implemented","sigHash":"6647f68924aa0f60f2b47c821905ad2b95d49487702f8fceb8b6ffbe7f8a3ed0","bodyHash":"89d50a9a24eb81f10e5f3f029905cd89f1fc56b6f454f85bbb53de9d7a7f23b1"}
  *
  * Go source:
  * func (t *BuildTask) updateWatch(orchestrator *Orchestrator, oldCache *collections.SyncMap[tspath.Path, time.Time]) {
- * 	t.configTime = orchestrator.host.loadOrStoreMTime(t.config, oldCache, false)
  * 	if t.resolved != nil {
- * 		t.extendedConfigTimes = core.Map(t.resolved.ExtendedSourceFiles(), func(p string) time.Time {
- * 			return orchestrator.host.loadOrStoreMTime(p, oldCache, false)
- * 		})
- * 		t.inputFiles = core.Map(t.resolved.FileNames(), func(p string) time.Time {
- * 			return orchestrator.host.loadOrStoreMTime(p, oldCache, false)
- * 		})
  * 		if t.canUpdateJsDtsOutputTimestamps() {
  * 			for outputFile := range t.resolved.GetOutputFileNames() {
  * 				orchestrator.host.storeMTimeFromOldCache(outputFile, oldCache)
@@ -1553,14 +1629,7 @@ export function BuildTask_cleanProjectOutput(receiver: GoPtr<BuildTask>, orchest
  * }
  */
 export function BuildTask_updateWatch(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, oldCache: GoPtr<SyncMap<Path, Time>>): void {
-  receiver!.configTime = host_loadOrStoreMTime(orchestrator!.host, receiver!.config, oldCache, false as bool);
   if (receiver!.resolved !== undefined) {
-    receiver!.extendedConfigTimes = core_Map(ParsedCommandLine_ExtendedSourceFiles(receiver!.resolved), (p: string): Time => {
-      return host_loadOrStoreMTime(orchestrator!.host, p, oldCache, false as bool);
-    });
-    receiver!.inputFiles = core_Map(ParsedCommandLine_FileNames(receiver!.resolved), (p: string): Time => {
-      return host_loadOrStoreMTime(orchestrator!.host, p, oldCache, false as bool);
-    });
     if (BuildTask_canUpdateJsDtsOutputTimestamps(receiver)) {
       for (const outputFile of slicesCollect(ParsedCommandLine_GetOutputFileNames(receiver!.resolved))) {
         host_storeMTimeFromOldCache(orchestrator!.host, outputFile, oldCache);
@@ -1597,97 +1666,6 @@ export function BuildTask_resetStatus(receiver: GoPtr<BuildTask>): void {
 export function BuildTask_resetConfig(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): void {
   receiver!.dirty = true;
   parseCache_delete(orchestrator!.host!.resolvedReferences, path);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.hasUpdate","kind":"method","status":"implemented","sigHash":"3f1978cffe852858f9820591ade9fd39e05462ff2172c33f58daf3bbb2e13a93","bodyHash":"f0307144a8c4c6a77c3697bebc95ed20e3e2a1c9bca8801f336972cdd912d68c"}
- *
- * Go source:
- * func (t *BuildTask) hasUpdate(orchestrator *Orchestrator, path tspath.Path) updateKind {
- * 	var needsConfigUpdate bool
- * 	var needsUpdate bool
- * 	if configTime := orchestrator.host.GetMTime(t.config); configTime != t.configTime {
- * 		t.resetConfig(orchestrator, path)
- * 		needsConfigUpdate = true
- * 	}
- * 	if t.resolved != nil {
- * 		for index, file := range t.resolved.ExtendedSourceFiles() {
- * 			if orchestrator.host.GetMTime(file) != t.extendedConfigTimes[index] {
- * 				t.resetConfig(orchestrator, path)
- * 				needsConfigUpdate = true
- * 			}
- * 		}
- * 		for index, file := range t.resolved.FileNames() {
- * 			if orchestrator.host.GetMTime(file) != t.inputFiles[index] {
- * 				t.resetStatus()
- * 				needsUpdate = true
- * 			}
- * 		}
- * 		if !needsConfigUpdate {
- * 			configStart := orchestrator.opts.Sys.Now()
- * 			newConfig := t.resolved.ReloadFileNamesOfParsedCommandLine(orchestrator.host.FS())
- * 			configTime := orchestrator.opts.Sys.Now().Sub(configStart)
- * 			// Make new channels if needed later
- * 			t.reportDone = make(chan struct{})
- * 			t.done = make(chan struct{})
- * 			if !slices.Equal(t.resolved.FileNames(), newConfig.FileNames()) {
- * 				orchestrator.host.resolvedReferences.store(path, newConfig)
- * 				orchestrator.host.configTimes.Store(path, configTime)
- * 				t.resolved = newConfig
- * 				t.resetStatus()
- * 				needsUpdate = true
- * 			}
- * 		}
- * 	}
- * 	return core.IfElse(needsConfigUpdate, updateKindConfig, core.IfElse(needsUpdate, updateKindUpdate, updateKindNone))
- * }
- */
-export function BuildTask_hasUpdate(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): updateKind {
-  type TimeEqual = Time & { equal(t: Time): bool };
-  let needsConfigUpdate = false;
-  let needsUpdate = false;
-  const configTime = host_GetMTime(orchestrator!.host, receiver!.config);
-  if (configTime !== receiver!.configTime && !(configTime as unknown as { equal?: (t: unknown) => bool }).equal?.(receiver!.configTime)) {
-    BuildTask_resetConfig(receiver, orchestrator, path);
-    needsConfigUpdate = true;
-  }
-  if (receiver!.resolved !== undefined) {
-    const extendedFiles = ParsedCommandLine_ExtendedSourceFiles(receiver!.resolved);
-    for (let idx = 0; idx < extendedFiles.length; idx++) {
-      const file = extendedFiles[idx]!;
-      const mtime = host_GetMTime(orchestrator!.host, file);
-      if (mtime !== receiver!.extendedConfigTimes[idx] && !(mtime as unknown as { equal?: (t: unknown) => bool }).equal?.(receiver!.extendedConfigTimes[idx])) {
-        BuildTask_resetConfig(receiver, orchestrator, path);
-        needsConfigUpdate = true;
-      }
-    }
-    const fileNames = ParsedCommandLine_FileNames(receiver!.resolved);
-    for (let idx = 0; idx < fileNames.length; idx++) {
-      const file = fileNames[idx]!;
-      const mtime = host_GetMTime(orchestrator!.host, file);
-      if (mtime !== receiver!.inputFiles[idx] && !(mtime as unknown as { equal?: (t: unknown) => bool }).equal?.(receiver!.inputFiles[idx])) {
-        BuildTask_resetStatus(receiver);
-        needsUpdate = true;
-      }
-    }
-    if (!needsConfigUpdate) {
-      type TimeWithSub = Time & { Sub(t: Time): number };
-      const configStart = orchestrator!.opts.Sys.Now();
-      const fs = host_FS_fn(orchestrator!.host);
-      const newConfig = (receiver!.resolved as unknown as { ReloadFileNamesOfParsedCommandLine(fs: unknown): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> }).ReloadFileNamesOfParsedCommandLine(fs);
-      const configTime2 = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(configStart);
-      receiver!.reportDone = {} as BuildTask["reportDone"];
-      receiver!.done = {} as BuildTask["done"];
-      if (!slicesEqual(ParsedCommandLine_FileNames(receiver!.resolved), ParsedCommandLine_FileNames(newConfig))) {
-        parseCache_store(orchestrator!.host!.resolvedReferences, path, newConfig);
-        SyncMap_Store(orchestrator!.host!.configTimes, path, configTime2);
-        receiver!.resolved = newConfig;
-        BuildTask_resetStatus(receiver);
-        needsUpdate = true;
-      }
-    }
-  }
-  return IfElse(needsConfigUpdate, updateKindConfig, IfElse(needsUpdate, updateKindUpdate, updateKindNone));
 }
 
 /**
@@ -1863,12 +1841,10 @@ export function BuildTask_storeOutputTimeStamp(receiver: GoPtr<BuildTask>, orche
  * }
  */
 export function BuildTask_writeFile(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, fileName: string, text: string, data: GoPtr<WriteFileData>): GoError {
-  const fs = host_FS_fn(orchestrator!.host) as unknown as { WriteFile(path: string, content: string): GoError };
-  const err = fs.WriteFile(fileName, text);
-  if (err === undefined || err === null) {
-    if (data !== undefined && data !== null && data.BuildInfo !== undefined) {
-      const hasChangedDts = (receiver!.result!.program as unknown as { HasChangedDtsFile(): bool }).HasChangedDtsFile();
-      BuildTask_onBuildInfoEmit(receiver, orchestrator, fileName, data.BuildInfo as unknown as GoPtr<BuildInfo>, hasChangedDts as bool);
+  const err = host_FS_fn(orchestrator!.host).WriteFile(fileName, text);
+  if (err === undefined) {
+    if (data !== undefined && data.BuildInfo !== undefined) {
+      BuildTask_onBuildInfoEmit(receiver, orchestrator, fileName, data.BuildInfo as BuildInfo, Program_HasChangedDtsFile(receiver!.result!.program));
     } else if (BuildTask_storeOutputTimeStamp(receiver, orchestrator)) {
       host_storeMTime(orchestrator!.host, fileName, orchestrator!.opts.Sys.Now());
     }

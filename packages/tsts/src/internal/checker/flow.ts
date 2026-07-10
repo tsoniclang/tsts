@@ -277,7 +277,7 @@ export function Checker_putFlowState(receiver: GoPtr<Checker>, f: GoPtr<FlowStat
 export function getFlowNodeOfNode(node: GoPtr<Node>): GoPtr<FlowNode> {
   const flowNodeData = Node_FlowNodeData(node);
   if (flowNodeData !== undefined) {
-    return (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode;
+    return flowNodeData.FlowNode;
   }
   return undefined;
 }
@@ -541,7 +541,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         !IsElementAccessExpression(f!.reference) &&
         !(f!.reference!.Kind === KindThisKeyword && !IsArrowFunction(container))
       ) {
-        currentFlow = (Node_FlowNodeData(container) as unknown as { FlowNode?: GoPtr<FlowNode> })!.FlowNode;
+        currentFlow = Node_FlowNodeData(container)!.FlowNode;
         continue;
       }
       t = { t: f!.initialType, incomplete: false };
@@ -5419,7 +5419,7 @@ export function Checker_getFlowTypeInConstructor(receiver: GoPtr<Checker>, symbo
   const reference = NewPropertyAccessExpression(receiver!.factory, NewKeywordExpression(receiver!.factory, KindThisKeyword), undefined, accessName as unknown as GoPtr<Node>, NodeFlagsNone);
   Node_Expression(reference)!.Parent = reference;
   reference!.Parent = constructor_;
-  (Node_FlowNodeData(reference) as unknown as { FlowNode: GoPtr<FlowNode> }).FlowNode = (AsConstructorDeclaration(constructor_) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"];
+  Node_FlowNodeData(reference)!.FlowNode = AsConstructorDeclaration(constructor_)!.ReturnFlowNode;
   const flowType = Checker_getFlowTypeOfProperty(receiver, reference, symbol_);
   if (receiver!.noImplicitAny && (flowType === receiver!.autoType || flowType === receiver!.autoArrayType)) {
     Checker_error(receiver, symbol_!.ValueDeclaration, Member_0_implicitly_has_an_1_type, Checker_symbolToString(receiver, symbol_), Checker_TypeToString(receiver, flowType));
@@ -5468,7 +5468,7 @@ export function Checker_getFlowTypeInStaticBlocks(receiver: GoPtr<Checker>, symb
     const reference = NewPropertyAccessExpression(receiver!.factory, NewKeywordExpression(receiver!.factory, KindThisKeyword), undefined, accessName as unknown as GoPtr<Node>, NodeFlagsNone);
     Node_Expression(reference)!.Parent = reference;
     reference!.Parent = staticBlock;
-    (Node_FlowNodeData(reference) as unknown as { FlowNode: GoPtr<FlowNode> }).FlowNode = (AsClassStaticBlockDeclaration(staticBlock) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"];
+    Node_FlowNodeData(reference)!.FlowNode = AsClassStaticBlockDeclaration(staticBlock)!.ReturnFlowNode;
     const flowType = Checker_getFlowTypeOfProperty(receiver, reference, symbol_);
     if (receiver!.noImplicitAny && (flowType === receiver!.autoType || flowType === receiver!.autoArrayType)) {
       Checker_error(receiver, symbol_!.ValueDeclaration, Member_0_implicitly_has_an_1_type, Checker_symbolToString(receiver, symbol_), Checker_TypeToString(receiver, flowType));

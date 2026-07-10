@@ -1037,7 +1037,7 @@ export function Checker_checkSwitchStatement(receiver: GoPtr<Checker>, node: GoP
     }
     Checker_checkSourceElements(receiver, Node_Statements(clause) || []);
     if (Tristate_IsTrue(receiver!.compilerOptions!.NoFallthroughCasesInSwitch)) {
-      const flowNode = (AsCaseOrDefaultClause(clause) as unknown as { FallthroughFlowNode?: GoPtr<FlowNode> }).FallthroughFlowNode;
+      const flowNode = AsCaseOrDefaultClause(clause)!.FallthroughFlowNode;
       if (flowNode !== undefined && Checker_isReachableFlowNode(receiver, flowNode)) {
         Checker_error(receiver, clause, Fallthrough_case_in_switch);
       }
@@ -3639,7 +3639,7 @@ export function Checker_getCombinedNodeFlagsCached(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_functionHasImplicitReturn(receiver: GoPtr<Checker>, fn: GoPtr<Node>): bool {
-  const endFlowNode = (Node_BodyData(fn) as unknown as { EndFlowNode: GoPtr<FlowNode> }).EndFlowNode;
+  const endFlowNode = Node_BodyData(fn)!.EndFlowNode;
   return endFlowNode !== undefined && Checker_isReachableFlowNode(receiver, endFlowNode);
 }
 

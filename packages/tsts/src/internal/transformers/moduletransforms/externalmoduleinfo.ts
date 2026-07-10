@@ -815,11 +815,9 @@ export function isNamedDefaultReference(e: GoPtr<Node>): bool {
  * }
  */
 export function containsDefaultReference(node: GoPtr<Node>): bool {
-  if (node === undefined) return false;
-  if (!IsNamedImports(node) && !IsNamedExports(node)) return false;
-  const elements = Node_Elements(node);
-  if (elements === undefined) return false;
-  return Some(elements, isNamedDefaultReference);
+  return node !== undefined &&
+    (IsNamedImports(node) || IsNamedExports(node)) &&
+    Some(Node_Elements(node)!, isNamedDefaultReference);
 }
 
 /**

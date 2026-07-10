@@ -193,3 +193,45 @@ export function SymbolName(symbol_: GoPtr<Symbol>): string {
 export function EscapeAllInternalSymbolNames(name: string): string {
   return ReplaceAll(name, InternalSymbolNamePrefix, "__");
 }
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::func::EscapeInternalSymbolName","kind":"func","status":"implemented","sigHash":"9f7337bf95b1cbd845dcb209c0333f7bd36e6f14f09a9d5eee4bf441254dcc56","bodyHash":"846fe7a5e146a358afbde6d268140c412f56030b49093acc4d2d72880c1034dc"}
+ *
+ * Go source:
+ * func EscapeInternalSymbolName(name string) string {
+ * 	if rest, ok := strings.CutPrefix(name, InternalSymbolNamePrefix); ok {
+ * 		return "__" + rest
+ * 	}
+ * 	return name
+ * }
+ */
+export function EscapeInternalSymbolName(name: string): string {
+  if (name.startsWith(InternalSymbolNamePrefix)) {
+    return "__" + name.slice(InternalSymbolNamePrefix.length);
+  }
+  return name;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::func::EscapeSymbolName","kind":"func","status":"implemented","sigHash":"d7a8c15e8e802a9c6d95ddd01f703b6e0d1ee39b2736c67a9aa466617c0fcf61","bodyHash":"4e796576ef365126d74140e84cdd39ef02bababaadedfeffd6bdac1c522194fb"}
+ *
+ * Go source:
+ * func EscapeSymbolName(name string) string {
+ * 	if rest, ok := strings.CutPrefix(name, InternalSymbolNamePrefix); ok {
+ * 		return "__" + rest
+ * 	}
+ * 	if len(name) >= 2 && name[0] == '_' && name[1] == '_' {
+ * 		return "_" + name
+ * 	}
+ * 	return name
+ * }
+ */
+export function EscapeSymbolName(name: string): string {
+  if (name.startsWith(InternalSymbolNamePrefix)) {
+    return "__" + name.slice(InternalSymbolNamePrefix.length);
+  }
+  if (name.length >= 2 && name.charCodeAt(0) === "_".charCodeAt(0) && name.charCodeAt(1) === "_".charCodeAt(0)) {
+    return "_" + name;
+  }
+  return name;
+}

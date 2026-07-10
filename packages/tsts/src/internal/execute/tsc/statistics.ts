@@ -191,8 +191,8 @@ export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats
     symbols: Program_SymbolCount(input.Program),
     types: Program_TypeCount(input.Program),
     instantiations: Program_InstantiationCount(input.Program),
-    memoryUsed: mem?.Alloc ?? (0 as ulong),
-    memoryAllocs: mem?.Mallocs ?? (0 as ulong),
+    memoryUsed: mem?.Alloc ?? (0n as ulong),
+    memoryAllocs: mem?.Mallocs ?? (0n as ulong),
     compileTimes: input.CompileTimes,
   };
 }
@@ -266,7 +266,7 @@ export function Statistics_Report(receiver: GoPtr<Statistics>, w: Writer, testin
     table_add(t, prefix + "Symbols", s.symbols);
     table_add(t, prefix + "Types", s.types);
     table_add(t, prefix + "Instantiations", s.instantiations);
-    table_add(t, prefix + "Memory used", Sprintf("%vK", (s.memoryUsed as number) / 1024));
+    table_add(t, prefix + "Memory used", Sprintf("%vK", globalThis.Number(s.memoryUsed) / 1024));
     table_add(t, prefix + "Memory allocs", FormatUint(s.memoryAllocs as ulong, 10));
     if (s.compileTimes!.ConfigTime !== 0) {
       table_add(t, prefix + "Config time", formatDuration(s.compileTimes!.ConfigTime));
@@ -335,8 +335,8 @@ export function Statistics_Aggregate(receiver: GoPtr<Statistics>, stat: GoPtr<St
   s.symbols += stat!.symbols;
   s.types += stat!.types;
   s.instantiations += stat!.instantiations;
-  s.memoryUsed = ((s.memoryUsed as number) + (stat!.memoryUsed as number)) as ulong;
-  s.memoryAllocs = ((s.memoryAllocs as number) + (stat!.memoryAllocs as number)) as ulong;
+  s.memoryUsed = ((s.memoryUsed as bigint) + (stat!.memoryUsed as bigint)) as ulong;
+  s.memoryAllocs = ((s.memoryAllocs as bigint) + (stat!.memoryAllocs as bigint)) as ulong;
   s.compileTimes.ConfigTime = ((s.compileTimes.ConfigTime as number) + (stat!.compileTimes!.ConfigTime as number)) as Duration;
   s.compileTimes.BuildInfoReadTime = ((s.compileTimes.BuildInfoReadTime as number) + (stat!.compileTimes!.BuildInfoReadTime as number)) as Duration;
   s.compileTimes.ParseTime = ((s.compileTimes.ParseTime as number) + (stat!.compileTimes!.ParseTime as number)) as Duration;

@@ -986,7 +986,7 @@ export function Printer_emitTrailingSynthesizedComment(receiver: GoPtr<Printer>,
  * Go source:
  * func formatSynthesizedComment(comment SynthesizedComment) string {
  * 	if comment.Kind == ast.KindMultiLineCommentTrivia {
- * 		return "/*" + comment.Text + "*\/"
+ * 		return "/*" + comment.Text + "* /"
  * 	}
  * 	return "//" + comment.Text
  * }

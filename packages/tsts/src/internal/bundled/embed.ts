@@ -550,7 +550,7 @@ export function fileInfo_as_io_fs_FileInfo(receiver: GoPtr<fileInfo>): FileInfo_
     Name: (): string => fileInfo_Name(receiver),
     Size: (): int => fileInfo_Size(receiver) as unknown as int,
     Mode: (): FileMode => fileInfo_Mode(receiver),
-    ModTime: (): Date => fileInfo_ModTime(receiver) as unknown as Date,
+    ModTime: (): Time => fileInfo_ModTime(receiver),
     IsDir: (): bool => fileInfo_IsDir(receiver),
     Sys: (): unknown => fileInfo_Sys(receiver),
   };

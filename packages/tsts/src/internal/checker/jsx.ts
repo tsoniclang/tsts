@@ -1831,7 +1831,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
       }
       childrenPropSymbol!.ValueDeclaration = NewPropertySignatureDeclaration(receiver!.factory, undefined, NewIdentifier(receiver!.factory, jsxChildrenPropertyName), undefined, undefined, undefined);
       childrenPropSymbol!.ValueDeclaration!.Parent = attributeParent;
-      (Node_DeclarationData(childrenPropSymbol!.ValueDeclaration) as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = childrenPropSymbol;
+      Node_DeclarationData(childrenPropSymbol!.ValueDeclaration)!.Symbol = childrenPropSymbol;
       const childPropMap: SymbolTable = new globalThis.Map();
       childPropMap.set(jsxChildrenPropertyName, childrenPropSymbol);
       spread = Checker_getSpreadType(

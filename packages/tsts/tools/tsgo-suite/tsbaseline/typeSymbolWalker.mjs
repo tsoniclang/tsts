@@ -19,7 +19,8 @@ const [
   {
     NewProgram, Program_GetSourceFile, Program_GetTypeCheckerForFile, Program_Options, Program_Emit,
     Program_GetProgramDiagnostics, Program_GetSyntacticDiagnostics, Program_GetSemanticDiagnostics,
-    Program_GetGlobalDiagnostics, Program_GetDeclarationDiagnostics,
+    Program_GetGlobalDiagnostics, Program_GetDeclarationDiagnostics, Program_GetConfigFileParsingDiagnostics,
+    SortAndDeduplicateDiagnostics,
   },
   { Checker_GetTypeAtLocation },
   { Checker_GetSymbolAtLocation },
@@ -54,6 +55,8 @@ const [
   { TSTrue },
   { CompilerOptions_GetEmitDeclarations },
   { WrapASTDiagnostics, CompareASTDiagnostics, WriteFormatDiagnostic, FormatDiagnosticsWithColorAndContext, ToDiagnostics },
+  { CompareDiagnostics, Diagnostic_AddRelatedInfo, NewCompilerDiagnostic },
+  { NewAdHocMessage },
   { Default: LocaleDefault },
   { Background },
 ] = await Promise.all([
@@ -88,6 +91,8 @@ const [
   dist("internal/core/tristate.js"),
   dist("internal/core/compileroptions.js"),
   dist("internal/diagnosticwriter/diagnosticwriter.js"),
+  dist("internal/ast/diagnostic.js"),
+  dist("internal/diagnostics/diagnostics.js"),
   dist("internal/locale/locale.js"),
   dist("go/context.js"),
 ]);
@@ -198,9 +203,9 @@ export function createProgramForCase(caseDir, args, isHiddenPath) {
 // is captured in memory via the WriteFile override; files the program blocked
 // (blockEmittingOfFile, e.g. would-overwrite-input) never reach it, exactly like the
 // harness vfs.
-export function runHarnessCompile(program) {
-  const ctx = Background();
+function collectHarnessDiagnostics(program, ctx) {
   const diagnostics = [];
+  diagnostics.push(...(Program_GetConfigFileParsingDiagnostics(program) ?? []));
   diagnostics.push(...(Program_GetProgramDiagnostics(program) ?? []));
   diagnostics.push(...(Program_GetSyntacticDiagnostics(program, ctx, undefined) ?? []));
   diagnostics.push(...(Program_GetSemanticDiagnostics(program, ctx, undefined) ?? []));
@@ -208,8 +213,44 @@ export function runHarnessCompile(program) {
   if (CompilerOptions_GetEmitDeclarations(Program_Options(program))) {
     diagnostics.push(...(Program_GetDeclarationDiagnostics(program, ctx, undefined) ?? []));
   }
+  return SortAndDeduplicateDiagnostics(diagnostics);
+}
+
+function reconcilePrePostHarnessDiagnostics(preErrors, postErrors) {
+  if ((postErrors?.length ?? 0) === (preErrors?.length ?? 0)) {
+    return postErrors;
+  }
+  let longerErrors = postErrors;
+  let shorterErrors = preErrors;
+  if ((preErrors?.length ?? 0) > (postErrors?.length ?? 0)) {
+    longerErrors = preErrors;
+    shorterErrors = postErrors;
+  }
+  const diag = NewCompilerDiagnostic(
+    NewAdHocMessage(`Pre-emit (${preErrors?.length ?? 0}) and post-emit (${postErrors?.length ?? 0}) diagnostic counts do not match! This can indicate that a semantic _error_ was added by the emit resolver - such an error may not be reflected on the command line or in the editor, but may be captured in a baseline here!`),
+  );
+  Diagnostic_AddRelatedInfo(diag, NewCompilerDiagnostic(NewAdHocMessage("The excess diagnostics are:")));
+  for (const diagnostic of longerErrors ?? []) {
+    let matched = false;
+    for (const other of shorterErrors ?? []) {
+      if (CompareDiagnostics(diagnostic, other) === 0) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      Diagnostic_AddRelatedInfo(diag, diagnostic);
+    }
+  }
+  return [...(shorterErrors ?? []), diag];
+}
+
+export function runHarnessCompile(program, createPostProgram) {
+  const ctx = Background();
+  const preErrors = collectHarnessDiagnostics(program, ctx);
+  const postProgram = createPostProgram === undefined ? program : createPostProgram();
   const outputs = new Map();
-  const emitResult = Program_Emit(program, ctx, {
+  const emitResult = Program_Emit(postProgram, ctx, {
     TargetSourceFile: undefined,
     EmitOnly: 0,
     WriteFile: (fileName, text, _data) => {
@@ -217,7 +258,9 @@ export function runHarnessCompile(program) {
       return undefined;
     },
   });
-  return { diagnostics, outputs, emitResult };
+  const postErrors = collectHarnessDiagnostics(postProgram, ctx);
+  const diagnostics = reconcilePrePostHarnessDiagnostics(preErrors, postErrors);
+  return { diagnostics, outputs, emitResult, program: postProgram };
 }
 
 // error_baseline.go diagnostics presentation (minimalDiagnosticsToString + the lib

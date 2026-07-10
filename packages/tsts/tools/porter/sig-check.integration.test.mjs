@@ -5,7 +5,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { loadParser, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
-import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
+import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
@@ -64,6 +64,48 @@ export const maxLevel = 2;
   assert.ok(d.decls[0].missing);
 });
 
+test("integration: value groups collect every declaration before the next unit", async (t) => {
+  const api = await tryLoad();
+  if (!api) return t.skip("TSTS dist not built/fresh");
+  const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::first+second","kind":"constGroup"} */
+export const first: number = 1;
+export const second: number = 2;
+/** @tsgo-unit {"id":"m::f.go::func::done","kind":"func"} */
+export function done(): void {}
+`;
+  const units = extractFileDescriptors(api, "pkg/v.ts", src, ANNO);
+  assert.deepEqual(units[0].descriptor.decls.map((declaration) => declaration.name), ["first", "second"]);
+  assert.equal(units[1].descriptor.kind, "func");
+});
+
+test("integration: bigint literals retain their exact uint64 initializer", async (t) => {
+  const api = await tryLoad();
+  if (!api) return t.skip("TSTS dist not built/fresh");
+  const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::mask","kind":"constGroup"} */
+export const mask: bigint = 0x8000000000000000n;
+`;
+  const units = extractFileDescriptors(api, "pkg/v.ts", src, ANNO);
+  assert.deepEqual(units[0].descriptor.decls[0].value, {
+    kind: "number",
+    value: "9223372036854775808",
+  });
+});
+
+test("integration: imported constant expressions resolve mechanically", async (t) => {
+  const api = await tryLoad();
+  if (!api) return t.skip("TSTS dist not built/fresh");
+  const sources = new Map([
+    ["pkg/flags.ts", "export const A: number = 1;\nexport const B: number = 4;\n"],
+    ["pkg/value.ts", `import { A, B as LocalB } from "./flags.js";
+/** @tsgo-unit {"id":"m::v.go::constGroup::value","kind":"constGroup"} */
+export const value: number = A | LocalB;
+`],
+  ]);
+  const environments = buildModuleValueEnvironments(api, sources);
+  const units = extractFileDescriptors(api, "pkg/value.ts", sources.get("pkg/value.ts"), ANNO, environments.get("pkg/value.ts"));
+  assert.deepEqual(units[0].descriptor.decls[0].value, { kind: "number", value: "5" });
+});
+
 test("integration: end-to-end expected(Go-model) vs actual — match and drift", async (t) => {
   const api = await tryLoad();
   if (!api) return t.skip("TSTS dist not built/fresh");
@@ -87,7 +129,7 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   // Matching actual.
   const okSrc = `import { GoPtr } from "./compat.js";
 import { int } from "./scalars.js";
-/** @tsgo-unit {"id":"x","kind":"func"} */
+/** @tsgo-unit {"id":"m::pkg/f.go::func::f","kind":"func"} */
 export function f(a: string, b: GoPtr<int>): void {}
 `;
   const okActual = extractFileDescriptors(api, "pkg/f.ts", okSrc, ANNO)[0].descriptor;
@@ -95,7 +137,7 @@ export function f(a: string, b: GoPtr<int>): void {}
 
   // Drifted actual: second param type wrong (int instead of GoPtr<int>).
   const badSrc = `import { int } from "./scalars.js";
-/** @tsgo-unit {"id":"x","kind":"func"} */
+/** @tsgo-unit {"id":"m::pkg/f.go::func::f","kind":"func"} */
 export function f(a: string, b: int): void {}
 `;
   const badActual = extractFileDescriptors(api, "pkg/f.ts", badSrc, ANNO)[0].descriptor;

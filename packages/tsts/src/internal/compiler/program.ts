@@ -2,6 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
+import { Sprintf } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
@@ -28,7 +29,7 @@ import type { Set } from "../collections/set.js";
 import { Set_Has, Set_Add, Set_AddIfAbsent, Set_Keys, NewSetFromItems } from "../collections/set.js";
 import { SyncMap_Load, SyncMap_LoadOrStore } from "../collections/syncmap.js";
 import type { SyncMap } from "../collections/syncmap.js";
-import { Concatenate, Filter, FindIndex, Map as core_Map, Some, Memoize, IfElse, Find } from "../core/core.js";
+import { Concatenate, Filter, FindIndex, Map as core_Map, Some, Memoize, IfElse, Find, Must } from "../core/core.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, JsxEmit } from "../core/compileroptions.js";
 import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetIsolatedModules, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String, NewLineKind_GetNewLineCharacter } from "../core/compileroptions.js";
 import { ModuleKind_String } from "../core/modulekind_stringer_generated.js";
@@ -42,7 +43,7 @@ import type { Locale } from "../locale/locale.js";
 import type { ModeAwareCache } from "../module/cache.js";
 import type { ModeAwareCacheKey, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { ResolvedModule_IsProviderVirtual, ResolvedModule_IsResolved } from "../module/types.js";
-import { GetCompilerOptionsWithRedirect, Resolver_GetPackageScopeForPath, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
+import { GetCompilerOptionsWithRedirect, Resolver_GetPackageScopeForPath, Resolver_PackageJsonCacheEntries, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
 import type { Resolver } from "../module/resolver.js";
 import { GetPackageNameFromTypesPackageName, GetTypesPackageName, ParsePackageName } from "../module/util.js";
 import type { ModuleSpecifierGenerationHost } from "../modulespecifiers/types.js";
@@ -50,6 +51,7 @@ import { GetPackageNameFromDirectory } from "../modulespecifiers/util.js";
 import type { InfoCacheEntry } from "../packagejson/cache.js";
 import { InfoCacheEntry_Exists, InfoCacheEntry_GetContents } from "../packagejson/cache.js";
 import { JSONValue_IsPresent } from "../packagejson/jsonvalue.js";
+import { Marshal as json_Marshal } from "../json/json.js";
 import type { DependencyFields } from "../packagejson/packagejson.js";
 import { DependencyFields_GetRuntimeDependencyNames } from "../packagejson/packagejson.js";
 import type { Expected } from "../packagejson/expected.js";
@@ -354,6 +356,18 @@ export function Program_GetPackageJsonInfo(receiver: GoPtr<Program>, pkgJsonPath
     return scoped;
   }
   return undefined;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.PackageJsonCacheEntries","kind":"method","status":"implemented","sigHash":"f3a8c98369d2de4981f67ce0f366c89235368e950252de76204f5a62308c4cd4","bodyHash":"1c1519221224305ea707af23f6bec45d9a2436ceb4eb5963aead1c668cf919c5"}
+ *
+ * Go source:
+ * func (p *Program) PackageJsonCacheEntries(f func(key tspath.Path, value *packagejson.InfoCacheEntry) bool) {
+ * 	p.resolver.PackageJsonCacheEntries(f)
+ * }
+ */
+export function Program_PackageJsonCacheEntries(receiver: GoPtr<Program>, f: (key: Path, value: GoPtr<InfoCacheEntry>) => bool): void {
+  Resolver_PackageJsonCacheEntries(receiver!.__tsgoEmbedded0!.resolver, f);
 }
 
 /**
@@ -774,10 +788,6 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"097d85513c9c582286da9c22bc2c9f5b1879006347dc4b6bf85f79c2b301cd05","bodyHash":"81f4986f608f54ad7ae60db8e41b0ad10e4830f66fa0ff27e3e7e829f1fce643"}
  *
  * Go source:
- * // The returned *ast.SourceFile is the changed file as acquired through newHost; it is nil
- * // only if the host cannot locate the file (e.g. it was deleted). Callers that manage
- * // host-side parse caches must release this exact pointer when the old program could not be
- * // reused, since it was acquired speculatively before that decision was made.
  * func (p *Program) UpdateProgram(changedFilePath tspath.Path, newHost CompilerHost, createCheckerPool func(*Program) CheckerPool) (*Program, *ast.SourceFile, bool) {
  * 	newOpts := p.opts
  * 	newOpts.Host = newHost
@@ -927,7 +937,6 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCheckerPool","kind":"method","status":"implemented","sigHash":"366050abc6a31e95bec7998d21cc67dbc0de33075b90f132b3753745b4e78356","bodyHash":"b9be1dff87c3190f592ec2fdc2be9674000b34b0d11856cf858ac8b70b6ede27"}
  *
  * Go source:
- * // GetCheckerPool returns the checker pool associated with this program.
  * func (p *Program) GetCheckerPool() CheckerPool {
  * 	return p.checkerPool
  * }
@@ -2408,7 +2417,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         relative = "./" + relative;
       }
       const suggestion = CombinePaths(relative, "*");
-      useInstead = `"paths": {"*": [${globalThis.JSON.stringify(suggestion)}]}`;
+      const [encodedSuggestion, marshalError] = json_Marshal(suggestion);
+      useInstead = Sprintf(`"paths": {"*": [%s]}`, Must(encodedSuggestion, marshalError));
     }
     createRemovedOptionDiagnostic("baseUrl", "", useInstead);
   }
@@ -3480,18 +3490,10 @@ export function Program_GetSourceFileMetaData(receiver: GoPtr<Program>, path: Pa
  * 	return ast.GetEmitModuleFormatOfFileWorker(sourceFile.FileName(), p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile), p.GetSourceFileMetaData(sourceFile.Path()))
  * }
  */
-function Program_getCompilerOptionsForFile(receiver: GoPtr<Program>, sourceFile: HasFileName): GoPtr<CompilerOptions> {
-  const mapper = receiver!.__tsgoEmbedded0!.projectReferenceFileMapper;
-  if (mapper === undefined) {
-    return Program_Options(receiver);
-  }
-  return projectReferenceFileMapper_getCompilerOptionsForFile(mapper, sourceFile);
-}
-
 export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sourceFile: HasFileName): ModuleKind {
   return GetEmitModuleFormatOfFileWorker(
     sourceFile.FileName(),
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
     Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
   );
 }
@@ -3509,7 +3511,7 @@ export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, 
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
     location,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
   );
 }
 
@@ -3524,7 +3526,7 @@ export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, 
 export function Program_GetImpliedNodeFormatForEmit(receiver: GoPtr<Program>, sourceFile: HasFileName): ResolutionMode {
   return GetImpliedNodeFormatForEmitWorker(
     sourceFile.FileName(),
-    CompilerOptions_GetEmitModuleKind(Program_getCompilerOptionsForFile(receiver, sourceFile)),
+    CompilerOptions_GetEmitModuleKind(projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile)),
     Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
   );
 }
@@ -3542,7 +3544,7 @@ export function Program_GetModeForUsageLocation(receiver: GoPtr<Program>, source
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
     location,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
   );
 }
 
@@ -3558,7 +3560,7 @@ export function Program_GetDefaultResolutionModeForFile(receiver: GoPtr<Program>
   return getDefaultResolutionModeForFile(
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
-    Program_getCompilerOptionsForFile(receiver, sourceFile),
+    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
   );
 }
 
@@ -3618,17 +3620,14 @@ export function Program_GetDefaultLibFile(receiver: GoPtr<Program>, path: Path):
  * Go source:
  * func (p *Program) CommonSourceDirectory() string {
  * 	p.commonSourceDirectoryOnce.Do(func() {
+ * 		files := func() []string {
+ * 			return core.MapFiltered(p.files, func(file *ast.SourceFile) (string, bool) {
+ * 				return file.FileName(), sourceFileMayBeEmitted(file, p, false /*forceDtsEmit* /) && !file.IsDeclarationFile
+ * 			})
+ * 		}
  * 		p.commonSourceDirectory = outputpaths.GetCommonSourceDirectory(
  * 			p.Options(),
- * 			func() []string {
- * 				var files []string
- * 				for _, file := range p.files {
- * 					if sourceFileMayBeEmitted(file, p, false /*forceDtsEmit* /) {
- * 						files = append(files, file.FileName())
- * 					}
- * 				}
- * 				return files
- * 			},
+ * 			files,
  * 			p.GetCurrentDirectory(),
  * 			p.UseCaseSensitiveFileNames(),
  * 			p.checkSourceFilesBelongToPath,

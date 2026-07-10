@@ -8,9 +8,12 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/constant"
+	"go/importer"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"go/types"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -123,10 +126,19 @@ type TypeParameterReport struct {
 }
 
 type ValueSpecReport struct {
-	Names              []string          `json:"names"`
-	Type               *TypeExprReport   `json:"type,omitempty"`
-	Values             []string          `json:"values,omitempty"`
-	InferredValueTypes []*TypeExprReport `json:"inferredValueTypes,omitempty"`
+	Names              []string              `json:"names"`
+	Type               *TypeExprReport       `json:"type,omitempty"`
+	Values             []string              `json:"values,omitempty"`
+	InferredValueTypes []*TypeExprReport     `json:"inferredValueTypes,omitempty"`
+	ConstantValues     []ConstantValueReport `json:"constantValues,omitempty"`
+	ConstIndex         int                   `json:"constIndex,omitempty"`
+}
+
+type ConstantValueReport struct {
+	Supported bool   `json:"supported"`
+	Kind      string `json:"kind,omitempty"`
+	Exact     string `json:"exact"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 type TypeExprReport struct {
@@ -219,6 +231,7 @@ func main() {
 	if err != nil {
 		fatalf("walk root: %v", err)
 	}
+	resolveSnapshotConstantValues(&snapshot)
 
 	sort.Slice(snapshot.Files, func(left, right int) bool {
 		return snapshot.Files[left].Path < snapshot.Files[right].Path
@@ -594,12 +607,14 @@ func valueSpecsOf(decl *ast.GenDecl) []ValueSpecReport {
 	specs := []ValueSpecReport{}
 	var previousConstValues []ast.Expr
 	var previousConstType ast.Expr
-	for _, spec := range decl.Specs {
+	constantEnvironment := map[string]constant.Value{}
+	for specIndex, spec := range decl.Specs {
 		valueSpec, ok := spec.(*ast.ValueSpec)
 		if !ok {
 			continue
 		}
 		report := ValueSpecReport{}
+		report.ConstIndex = specIndex
 		for _, name := range valueSpec.Names {
 			report.Names = append(report.Names, name.Name)
 		}
@@ -621,10 +636,523 @@ func valueSpecsOf(decl *ast.GenDecl) []ValueSpecReport {
 		for _, value := range values {
 			report.Values = append(report.Values, printed(value))
 			report.InferredValueTypes = append(report.InferredValueTypes, inferredValueType(value))
+			resolved, reason := evaluateConstantExpression(value, constant.MakeInt64(int64(specIndex)), constantEnvironment)
+			report.ConstantValues = append(report.ConstantValues, constantValueReport(resolved, reason))
+		}
+		if decl.Tok == token.CONST {
+			for ordinal, name := range report.Names {
+				if name == "_" || len(values) == 0 {
+					continue
+				}
+				valueIndex := ordinal
+				if len(values) == 1 {
+					valueIndex = 0
+				}
+				if valueIndex >= len(values) {
+					continue
+				}
+				resolved, _ := evaluateConstantExpression(values[valueIndex], constant.MakeInt64(int64(specIndex)), constantEnvironment)
+				if resolved != nil && resolved.Kind() != constant.Unknown {
+					constantEnvironment[name] = resolved
+				}
+			}
 		}
 		specs = append(specs, report)
 	}
 	return specs
+}
+
+func constantValueReport(value constant.Value, reason string) ConstantValueReport {
+	if value == nil || value.Kind() == constant.Unknown {
+		return ConstantValueReport{Supported: false, Reason: reason}
+	}
+	switch value.Kind() {
+	case constant.Bool:
+		return ConstantValueReport{Supported: true, Kind: "boolean", Exact: value.ExactString()}
+	case constant.String:
+		return ConstantValueReport{Supported: true, Kind: "string", Exact: constant.StringVal(value)}
+	case constant.Int, constant.Float:
+		return ConstantValueReport{Supported: true, Kind: "number", Exact: value.ExactString()}
+	case constant.Complex:
+		return ConstantValueReport{Supported: true, Kind: "complex", Exact: value.ExactString()}
+	default:
+		return ConstantValueReport{Supported: false, Reason: "unsupported constant kind"}
+	}
+}
+
+func evaluateConstantExpression(expr ast.Expr, iotaValue constant.Value, environment map[string]constant.Value) (value constant.Value, reason string) {
+	if expr == nil {
+		return nil, "missing initializer"
+	}
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			value = nil
+			reason = fmt.Sprintf("constant evaluation failed: %v", recovered)
+		}
+	}()
+	switch typed := expr.(type) {
+	case *ast.BasicLit:
+		value := constant.MakeFromLiteral(typed.Value, typed.Kind, 0)
+		if value.Kind() == constant.Unknown {
+			return nil, "invalid literal"
+		}
+		return value, ""
+	case *ast.Ident:
+		switch typed.Name {
+		case "true":
+			return constant.MakeBool(true), ""
+		case "false":
+			return constant.MakeBool(false), ""
+		case "iota":
+			return iotaValue, ""
+		default:
+			if value, ok := environment[typed.Name]; ok {
+				return value, ""
+			}
+			return nil, "unresolved constant identifier " + typed.Name
+		}
+	case *ast.SelectorExpr:
+		if value, ok := environment[printed(typed)]; ok {
+			return value, ""
+		}
+		return nil, "unresolved constant selector " + printed(typed)
+	case *ast.ParenExpr:
+		return evaluateConstantExpression(typed.X, iotaValue, environment)
+	case *ast.UnaryExpr:
+		operand, reason := evaluateConstantExpression(typed.X, iotaValue, environment)
+		if operand == nil {
+			return nil, reason
+		}
+		return constant.UnaryOp(typed.Op, operand, 0), ""
+	case *ast.BinaryExpr:
+		left, leftReason := evaluateConstantExpression(typed.X, iotaValue, environment)
+		if left == nil {
+			return nil, leftReason
+		}
+		right, rightReason := evaluateConstantExpression(typed.Y, iotaValue, environment)
+		if right == nil {
+			return nil, rightReason
+		}
+		if typed.Op == token.SHL || typed.Op == token.SHR {
+			shift, ok := constant.Uint64Val(constant.ToInt(right))
+			if !ok {
+				return nil, "non-uint constant shift count"
+			}
+			return constant.Shift(left, typed.Op, uint(shift)), ""
+		}
+		if isComparisonOp(typed.Op) {
+			return constant.MakeBool(constant.Compare(left, typed.Op, right)), ""
+		}
+		if typed.Op == token.LAND || typed.Op == token.LOR {
+			if left.Kind() != constant.Bool || right.Kind() != constant.Bool {
+				return nil, "non-boolean logical constant"
+			}
+			if typed.Op == token.LAND {
+				return constant.MakeBool(constant.BoolVal(left) && constant.BoolVal(right)), ""
+			}
+			return constant.MakeBool(constant.BoolVal(left) || constant.BoolVal(right)), ""
+		}
+		return constant.BinaryOp(left, typed.Op, right), ""
+	case *ast.CallExpr:
+		name, ok := typed.Fun.(*ast.Ident)
+		if !ok || len(typed.Args) != 1 {
+			return nil, "unsupported constant call"
+		}
+		operand, reason := evaluateConstantExpression(typed.Args[0], iotaValue, environment)
+		if operand == nil {
+			return nil, reason
+		}
+		switch name.Name {
+		case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "byte", "rune":
+			return constant.ToInt(operand), ""
+		case "float32", "float64":
+			return constant.ToFloat(operand), ""
+		case "complex64", "complex128":
+			return constant.ToComplex(operand), ""
+		case "string":
+			if operand.Kind() == constant.String {
+				return operand, ""
+			}
+			integer, ok := constant.Int64Val(constant.ToInt(operand))
+			if !ok {
+				return nil, "string conversion operand is not an int64"
+			}
+			return constant.MakeString(string(rune(integer))), ""
+		default:
+			return nil, "unsupported constant conversion " + name.Name
+		}
+	default:
+		return nil, "unsupported constant expression " + fmt.Sprintf("%T", expr)
+	}
+}
+
+type constantDefinition struct {
+	fileIndex   int
+	unitIndex   int
+	specIndex   int
+	ordinal     int
+	name        string
+	expression  string
+	constIndex  int
+	parsed      ast.Expr
+	state       uint8
+	value       constant.Value
+	reason      string
+	integerType *integerConstantType
+}
+
+type integerConstantType struct {
+	bits     uint
+	unsigned bool
+}
+
+const (
+	constantUnresolved uint8 = iota
+	constantResolving
+	constantResolved
+)
+
+func resolveSnapshotConstantValues(snapshot *Snapshot) {
+	definitions := []*constantDefinition{}
+	definitionsByName := map[string][]*constantDefinition{}
+	packageNames := map[string]string{}
+	externalConstants := map[string]resolvedExternalConstant{}
+
+	for fileIndex := range snapshot.Files {
+		file := &snapshot.Files[fileIndex]
+		if !strings.HasSuffix(file.PackageName, "_test") {
+			if previous, exists := packageNames[file.ImportPath]; !exists || previous == "main" {
+				packageNames[file.ImportPath] = file.PackageName
+			} else if previous != file.PackageName && file.PackageName != "main" {
+				fatalf("package name drift for %s: %s vs %s", file.ImportPath, previous, file.PackageName)
+			}
+		}
+	}
+	integerTypes := collectIntegerConstantTypes(snapshot, packageNames)
+
+	for fileIndex := range snapshot.Files {
+		file := &snapshot.Files[fileIndex]
+		for unitIndex := range file.Units {
+			unit := &file.Units[unitIndex]
+			if unit.Kind != "constGroup" {
+				continue
+			}
+			for specIndex := range unit.ValueSpecs {
+				spec := &unit.ValueSpecs[specIndex]
+				spec.ConstantValues = make([]ConstantValueReport, len(spec.Names))
+				for ordinal, name := range spec.Names {
+					definition := &constantDefinition{
+						fileIndex:   fileIndex,
+						unitIndex:   unitIndex,
+						specIndex:   specIndex,
+						ordinal:     ordinal,
+						name:        name,
+						constIndex:  spec.ConstIndex,
+						integerType: integerConstantTypeForExpression(spec.Type, file, packageNames, integerTypes),
+					}
+					valueIndex := ordinal
+					if len(spec.Values) == 1 {
+						valueIndex = 0
+					}
+					if valueIndex >= len(spec.Values) {
+						definition.reason = "missing constant initializer"
+					} else {
+						definition.expression = spec.Values[valueIndex]
+						parsed, err := parser.ParseExpr(definition.expression)
+						if err != nil {
+							definition.reason = "parse constant initializer: " + err.Error()
+						} else {
+							definition.parsed = parsed
+						}
+					}
+					definitions = append(definitions, definition)
+					if name != "_" {
+						key := constantScopeKey(file) + "::" + name
+						definitionsByName[key] = append(definitionsByName[key], definition)
+					}
+				}
+			}
+		}
+	}
+
+	var resolveDefinition func(*constantDefinition) (constant.Value, string)
+	resolveDefinition = func(definition *constantDefinition) (constant.Value, string) {
+		switch definition.state {
+		case constantResolved:
+			return definition.value, definition.reason
+		case constantResolving:
+			return nil, "constant dependency cycle through " + definition.name
+		}
+		definition.state = constantResolving
+		if definition.parsed == nil {
+			definition.state = constantResolved
+			return nil, definition.reason
+		}
+
+		file := &snapshot.Files[definition.fileIndex]
+		environment := map[string]constant.Value{}
+		var inferredIntegerType *integerConstantType
+		for _, reference := range constantExpressionReferences(definition.parsed) {
+			importPath, name, ok := resolveConstantReference(file, packageNames, reference)
+			if !ok {
+				definition.reason = "unresolved constant reference " + reference
+				definition.state = constantResolved
+				return nil, definition.reason
+			}
+			candidates := definitionsByName[importPath+"::"+name]
+			if len(candidates) == 0 {
+				value, reason := resolveExternalConstant(importPath, name, externalConstants)
+				if value == nil || value.Kind() == constant.Unknown {
+					definition.reason = "unresolved constant reference " + reference + ": " + reason
+					definition.state = constantResolved
+					return nil, definition.reason
+				}
+				environment[reference] = value
+				continue
+			}
+			var selected constant.Value
+			for _, candidate := range candidates {
+				value, reason := resolveDefinition(candidate)
+				if value == nil || value.Kind() == constant.Unknown {
+					definition.reason = "unresolved constant reference " + reference + ": " + reason
+					definition.state = constantResolved
+					return nil, definition.reason
+				}
+				if selected == nil {
+					selected = value
+				} else if !constantValuesEqual(selected, value) {
+					definition.reason = "build-dependent constant reference " + reference
+					definition.state = constantResolved
+					return nil, definition.reason
+				}
+				if candidate.integerType != nil {
+					if inferredIntegerType == nil {
+						inferredIntegerType = candidate.integerType
+					} else if !integerConstantTypesEqual(inferredIntegerType, candidate.integerType) {
+						inferredIntegerType = nil
+					}
+				}
+			}
+			environment[reference] = selected
+		}
+
+		definition.value, definition.reason = evaluateConstantExpression(
+			definition.parsed,
+			constant.MakeInt64(int64(definition.constIndex)),
+			environment,
+		)
+		if definition.integerType == nil {
+			definition.integerType = inferredIntegerType
+		}
+		if definition.reason == "" && definition.integerType != nil {
+			definition.value, definition.reason = applyIntegerConstantType(definition.value, definition.integerType)
+		}
+		definition.state = constantResolved
+		return definition.value, definition.reason
+	}
+
+	for _, definition := range definitions {
+		value, reason := resolveDefinition(definition)
+		spec := &snapshot.Files[definition.fileIndex].Units[definition.unitIndex].ValueSpecs[definition.specIndex]
+		spec.ConstantValues[definition.ordinal] = constantValueReport(value, reason)
+	}
+}
+
+func collectIntegerConstantTypes(snapshot *Snapshot, packageNames map[string]string) map[string]*integerConstantType {
+	typesByName := map[string]*integerConstantType{}
+	for pass := 0; pass <= len(snapshot.Files); pass++ {
+		progress := false
+		for fileIndex := range snapshot.Files {
+			file := &snapshot.Files[fileIndex]
+			for unitIndex := range file.Units {
+				unit := &file.Units[unitIndex]
+				if unit.Kind != "type" || unit.TypeExpression == nil {
+					continue
+				}
+				key := constantScopeKey(file) + "::" + unit.Name
+				if typesByName[key] != nil {
+					continue
+				}
+				integerType := integerConstantTypeForExpression(unit.TypeExpression, file, packageNames, typesByName)
+				if integerType != nil {
+					typesByName[key] = integerType
+					progress = true
+				}
+			}
+		}
+		if !progress {
+			break
+		}
+	}
+	return typesByName
+}
+
+func integerConstantTypeForExpression(expr *TypeExprReport, file *FileReport, packageNames map[string]string, typesByName map[string]*integerConstantType) *integerConstantType {
+	if expr == nil {
+		return nil
+	}
+	if expr.Kind == "paren" {
+		return integerConstantTypeForExpression(expr.Element, file, packageNames, typesByName)
+	}
+	if expr.Kind == "ident" {
+		if primitive := primitiveIntegerConstantType(expr.Name); primitive != nil {
+			return primitive
+		}
+		return typesByName[constantScopeKey(file)+"::"+expr.Name]
+	}
+	if expr.Kind == "selector" {
+		reference := expr.Package + "." + expr.Name
+		importPath, name, ok := resolveConstantReference(file, packageNames, reference)
+		if ok {
+			return typesByName[importPath+"::"+name]
+		}
+	}
+	return nil
+}
+
+func primitiveIntegerConstantType(name string) *integerConstantType {
+	switch name {
+	case "int8":
+		return &integerConstantType{bits: 8}
+	case "uint8", "byte":
+		return &integerConstantType{bits: 8, unsigned: true}
+	case "int16":
+		return &integerConstantType{bits: 16}
+	case "uint16":
+		return &integerConstantType{bits: 16, unsigned: true}
+	case "int32", "rune":
+		return &integerConstantType{bits: 32}
+	case "uint32":
+		return &integerConstantType{bits: 32, unsigned: true}
+	case "int", "int64":
+		return &integerConstantType{bits: 64}
+	case "uint", "uint64", "uintptr":
+		return &integerConstantType{bits: 64, unsigned: true}
+	default:
+		return nil
+	}
+}
+
+func integerConstantTypesEqual(left *integerConstantType, right *integerConstantType) bool {
+	return left.bits == right.bits && left.unsigned == right.unsigned
+}
+
+func applyIntegerConstantType(value constant.Value, integerType *integerConstantType) (constant.Value, string) {
+	if value == nil || value.Kind() != constant.Int {
+		return value, ""
+	}
+	modulus := constant.Shift(constant.MakeInt64(1), token.SHL, integerType.bits)
+	wrapped := constant.BinaryOp(value, token.REM, modulus)
+	if constant.Sign(wrapped) < 0 {
+		wrapped = constant.BinaryOp(wrapped, token.ADD, modulus)
+	}
+	if !integerType.unsigned {
+		signBoundary := constant.Shift(constant.MakeInt64(1), token.SHL, integerType.bits-1)
+		if constant.Compare(wrapped, token.GEQ, signBoundary) {
+			wrapped = constant.BinaryOp(wrapped, token.SUB, modulus)
+		}
+	}
+	return wrapped, ""
+}
+
+func constantExpressionReferences(expr ast.Expr) []string {
+	seen := map[string]bool{}
+	var collect func(ast.Expr)
+	collect = func(current ast.Expr) {
+		switch typed := current.(type) {
+		case *ast.Ident:
+			if typed.Name != "true" && typed.Name != "false" && typed.Name != "iota" {
+				seen[typed.Name] = true
+			}
+		case *ast.SelectorExpr:
+			seen[printed(typed)] = true
+		case *ast.ParenExpr:
+			collect(typed.X)
+		case *ast.UnaryExpr:
+			collect(typed.X)
+		case *ast.BinaryExpr:
+			collect(typed.X)
+			collect(typed.Y)
+		case *ast.CallExpr:
+			for _, argument := range typed.Args {
+				collect(argument)
+			}
+		}
+	}
+	collect(expr)
+	references := make([]string, 0, len(seen))
+	for reference := range seen {
+		references = append(references, reference)
+	}
+	sort.Strings(references)
+	return references
+}
+
+func resolveConstantReference(file *FileReport, packageNames map[string]string, reference string) (importPath string, name string, ok bool) {
+	separator := strings.IndexByte(reference, '.')
+	if separator < 0 {
+		return constantScopeKey(file), reference, true
+	}
+	packageName := reference[:separator]
+	name = reference[separator+1:]
+	for _, imported := range file.Imports {
+		alias := imported.Name
+		if alias == "_" || alias == "." {
+			continue
+		}
+		if alias == "" {
+			alias = packageNames[imported.Path]
+			if alias == "" {
+				alias = filepath.Base(imported.Path)
+			}
+		}
+		if alias == packageName {
+			targetPackageName := packageNames[imported.Path]
+			if targetPackageName == "" {
+				targetPackageName = "<external>"
+			}
+			return imported.Path + "#" + targetPackageName, name, true
+		}
+	}
+	return "", "", false
+}
+
+func constantScopeKey(file *FileReport) string {
+	return file.ImportPath + "#" + file.PackageName
+}
+
+func constantValuesEqual(left constant.Value, right constant.Value) bool {
+	return left.Kind() == right.Kind() && left.ExactString() == right.ExactString()
+}
+
+type resolvedExternalConstant struct {
+	value  constant.Value
+	reason string
+}
+
+func resolveExternalConstant(scopeKey string, name string, cache map[string]resolvedExternalConstant) (constant.Value, string) {
+	importPath, _, _ := strings.Cut(scopeKey, "#")
+	key := importPath + "::" + name
+	if cached, ok := cache[key]; ok {
+		return cached.value, cached.reason
+	}
+	result := resolvedExternalConstant{}
+	packageInfo, err := importer.Default().Import(importPath)
+	if err != nil {
+		result.reason = "load imported package " + importPath + ": " + err.Error()
+		cache[key] = result
+		return nil, result.reason
+	}
+	object := packageInfo.Scope().Lookup(name)
+	constantObject, ok := object.(*types.Const)
+	if !ok {
+		result.reason = "imported object " + importPath + "." + name + " is not a constant"
+		cache[key] = result
+		return nil, result.reason
+	}
+	result.value = constantObject.Val()
+	cache[key] = result
+	return result.value, ""
 }
 
 func inferredValueType(expr ast.Expr) *TypeExprReport {

@@ -7,6 +7,7 @@ import { embedded, wrapFS, libPath } from "./embed.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"f83bb3a895de36d262628c2ffa89238eeb5aeda78485d347176df8c732d05e94","bodyHash":"c0c88de3f5fa3856e1b5d7df4b38835b244b4e3f4a34b5c6b85ea4276e844d05"}
+ * @tsgo-override {"category":"host-native","allow":["initializer"],"reason":"Upstream Embedded is build-tag dependent through embed.go/noembed.go. The distributed Node package always ships the generated bundled library payload and therefore selects the embedded=true variant explicitly.","goInitializer":"Embedded=unresolved:build-dependent constant reference embedded","tsInitializer":"Embedded={\"kind\":\"boolean\",\"value\":true}"}
  *
  * Go source:
  * const Embedded = embedded

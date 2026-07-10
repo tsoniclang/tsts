@@ -205,6 +205,9 @@ export function ESModuleTransformer_visit(receiver: GoPtr<ESModuleTransformer>, 
  * 		statements := slices.Clone(prologue)
  * 		statements = append(statements, custom...)
  * 		if externalHelpersImportDeclaration != nil {
+ * 			// The helpers import must be visited so that `import x = require("tslib")`
+ * 			// (TypeScript-only syntax) is transformed to `const x = require("tslib")`
+ * 			// for CJS output files via visitImportEqualsDeclaration.
  * 			statements = append(statements, tx.Visitor().VisitNode(externalHelpersImportDeclaration))
  * 		}
  * 		if tx.importRequireStatements != nil {
@@ -331,6 +334,9 @@ export function ESModuleTransformer_visitImportDeclaration(receiver: GoPtr<ESMod
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) *ast.Node {
+ * 	// Though an error in es2020 modules, in node-flavor es2020 modules, we can helpfully transform this to a synthetic `require` call
+ * 	// To give easy access to a synchronous `require` in node-flavor esm. We do the transform even in scenarios where we error, but `import.meta.url`
+ * 	// is available, just because the output is reasonable for a node-like runtime.
  * 	if tx.compilerOptions.GetEmitModuleKind() < core.ModuleKindNode16 {
  * 		return nil
  * 	}
@@ -339,7 +345,20 @@ export function ESModuleTransformer_visitImportDeclaration(receiver: GoPtr<ESMod
  * 		panic("import= for internal module references should be handled in an earlier transformer.")
  * 	}
  *
- * 	varStatement := tx.Factory().NewVariableStatement(...)
+ * 	varStatement := tx.Factory().NewVariableStatement(
+ * 		nil, /*modifiers* /
+ * 		tx.Factory().NewVariableDeclarationList(
+ * 			tx.Factory().NewNodeList([]*ast.Node{
+ * 				tx.Factory().NewVariableDeclaration(
+ * 					node.Name().Clone(tx.Factory()),
+ * 					nil, /*exclamationToken* /
+ * 					nil, /*type* /
+ * 					tx.createRequireCall(node.AsNode()),
+ * 				),
+ * 			}),
+ * 			ast.NodeFlagsConst,
+ * 		),
+ * 	)
  * 	tx.EmitContext().SetOriginal(varStatement, node.AsNode())
  * 	tx.EmitContext().AssignCommentAndSourceMapRanges(varStatement, node.AsNode())
  *
@@ -396,7 +415,19 @@ export function ESModuleTransformer_visitImportEqualsDeclaration(receiver: GoPtr
  * func (tx *ESModuleTransformer) appendExportsOfImportEqualsDeclaration(statements []*ast.Statement, node *ast.ImportEqualsDeclaration) []*ast.Statement {
  * 	if ast.HasSyntacticModifier(node.AsNode(), ast.ModifierFlagsExport) {
  * 		statements = append(statements, tx.Factory().NewExportDeclaration(
- * 			nil, false, tx.Factory().NewNamedExports(...), nil, nil,
+ * 			nil,   /*modifiers* /
+ * 			false, /*isTypeOnly* /
+ * 			tx.Factory().NewNamedExports(
+ * 				tx.Factory().NewNodeList([]*ast.Node{
+ * 					tx.Factory().NewExportSpecifier(
+ * 						false, /*isTypeOnly* /
+ * 						nil,   /*propertyName* /
+ * 						node.Name().Clone(tx.Factory()),
+ * 					),
+ * 				}),
+ * 			),
+ * 			nil, /*moduleSpecifier* /
+ * 			nil, /*attributes* /
  * 		))
  * 	}
  * 	return statements
@@ -440,13 +471,16 @@ export function ESModuleTransformer_appendExportsOfImportEqualsDeclaration(recei
  * 		return tx.Visitor().VisitEachChild(node.AsNode())
  * 	}
  * 	if tx.compilerOptions.GetEmitModuleKind() != core.ModuleKindPreserve {
+ * 		// Elide `export=` as it is not legal with --module ES6
  * 		return nil
  * 	}
  * 	statement := tx.Factory().NewExpressionStatement(
  * 		tx.Factory().NewAssignmentExpression(
  * 			tx.Factory().NewPropertyAccessExpression(
- * 				tx.Factory().NewIdentifier("module"), nil,
- * 				tx.Factory().NewIdentifier("exports"), ast.NodeFlagsNone,
+ * 				tx.Factory().NewIdentifier("module"),
+ * 				nil, /*questionDotToken* /
+ * 				tx.Factory().NewIdentifier("exports"),
+ * 				ast.NodeFlagsNone,
  * 			),
  * 			tx.Visitor().VisitNode(node.Expression),
  * 		),
@@ -490,23 +524,52 @@ export function ESModuleTransformer_visitExportAssignment(receiver: GoPtr<ESModu
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitExportDeclaration(node *ast.ExportDeclaration) *ast.Node {
- * 	if node.ModuleSpecifier == nil { return node.AsNode() }
+ * 	if node.ModuleSpecifier == nil {
+ * 		return node.AsNode()
+ * 	}
  *
- * 	updatedModuleSpecifier := rewriteModuleSpecifier(...)
+ * 	updatedModuleSpecifier := rewriteModuleSpecifier(tx.EmitContext(), node.ModuleSpecifier, tx.compilerOptions)
  * 	if tx.compilerOptions.Module > core.ModuleKindES2015 || node.ExportClause == nil || !ast.IsNamespaceExport(node.ExportClause) {
- * 		return tx.Factory().UpdateExportDeclaration(...)
+ * 		// Either ill-formed or don't need to be transformed.
+ * 		return tx.Factory().UpdateExportDeclaration(
+ * 			node,
+ * 			nil,   /*modifiers* /
+ * 			false, /*isTypeOnly* /
+ * 			node.ExportClause,
+ * 			updatedModuleSpecifier,
+ * 			tx.Visitor().VisitNode(node.Attributes),
+ * 		)
  * 	}
  *
  * 	oldIdentifier := node.ExportClause.Name()
  * 	synthName := tx.Factory().NewGeneratedNameForNode(oldIdentifier)
- * 	importDecl := tx.Factory().NewImportDeclaration(...)
+ * 	importDecl := tx.Factory().NewImportDeclaration(
+ * 		nil, /*modifiers* /
+ * 		tx.Factory().NewImportClause(
+ * 			ast.KindUnknown, /*phaseModifier* /
+ * 			nil,             /*name* /
+ * 			tx.Factory().NewNamespaceImport(synthName),
+ * 		),
+ * 		updatedModuleSpecifier,
+ * 		tx.Visitor().VisitNode(node.Attributes),
+ * 	)
  * 	tx.EmitContext().SetOriginal(importDecl, node.ExportClause)
  *
  * 	var exportDecl *ast.Node
  * 	if ast.IsExportNamespaceAsDefaultDeclaration(node.AsNode()) {
- * 		exportDecl = tx.Factory().NewExportAssignment(nil, false, nil, synthName)
+ * 		exportDecl = tx.Factory().NewExportAssignment(nil /*modifiers* /, false /*isExportEquals* /, nil /*typeNode* /, synthName)
  * 	} else {
- * 		exportDecl = tx.Factory().NewExportDeclaration(...)
+ * 		exportDecl = tx.Factory().NewExportDeclaration(
+ * 			nil,   /*modifiers* /
+ * 			false, /*isTypeOnly* /
+ * 			tx.Factory().NewNamedExports(
+ * 				tx.Factory().NewNodeList([]*ast.Node{
+ * 					tx.Factory().NewExportSpecifier(false /*isTypeOnly* /, synthName, oldIdentifier),
+ * 				}),
+ * 			),
+ * 			nil, /*moduleSpecifier* /
+ * 			nil, /*attributes* /
+ * 		)
  * 	}
  * 	tx.EmitContext().SetOriginal(exportDecl, node.AsNode())
  * 	return transformers.SingleOrMany([]*ast.Statement{importDecl, exportDecl}, tx.Factory())
@@ -592,7 +655,7 @@ export function ESModuleTransformer_visitExportDeclaration(receiver: GoPtr<ESMod
  * func (tx *ESModuleTransformer) visitCallExpression(node *ast.CallExpression) *ast.Node {
  * 	if tx.compilerOptions.RewriteRelativeImportExtensions.IsTrue() {
  * 		if ast.IsImportCall(node.AsNode()) && len(node.Arguments.Nodes) > 0 ||
- * 			ast.IsInJSFile(node.AsNode()) && ast.IsRequireCall(node.AsNode(), false) {
+ * 			ast.IsInJSFile(node.AsNode()) && ast.IsRequireCall(node.AsNode(), false /*requireStringLiteralLikeArgument* /) {
  * 			return tx.visitImportOrRequireCall(node)
  * 		}
  * 	}
@@ -638,7 +701,12 @@ export function ESModuleTransformer_visitCallExpression(receiver: GoPtr<ESModule
  * 	argumentList := tx.Factory().NewNodeList(arguments)
  * 	argumentList.Loc = node.Arguments.Loc
  * 	return tx.Factory().UpdateCallExpression(
- * 		node, expression, node.QuestionDotToken, nil, argumentList, node.Flags,
+ * 		node,
+ * 		expression,
+ * 		node.QuestionDotToken,
+ * 		nil, /*typeArguments* /
+ * 		argumentList,
+ * 		node.Flags,
  * 	)
  * }
  */
@@ -687,8 +755,8 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.createRequireCall","kind":"method","status":"implemented","sigHash":"d16211b5fbb64896681a42fffde5a6838900f6d989e294fa10836aaacc1d7584","bodyHash":"54a8c85d50261ca111892be89647b6327d9b2bf77f01991483a3df8003871abc"}
  *
  * Go source:
- * func (tx *ESModuleTransformer) createRequireCall(node *ast.Node) *ast.Expression {
- * 	moduleName := getExternalModuleNameLiteral(tx.Factory(), node, tx.currentSourceFile, nil, nil, tx.compilerOptions)
+ * func (tx *ESModuleTransformer) createRequireCall(node *ast.Node /*ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration* /) *ast.Expression {
+ * 	moduleName := getExternalModuleNameLiteral(tx.Factory(), node, tx.currentSourceFile, nil /*host* /, nil /*emitResolver* /, tx.compilerOptions)
  *
  * 	var args []*ast.Expression
  * 	if moduleName != nil {
@@ -697,27 +765,77 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
  *
  * 	if tx.compilerOptions.GetEmitModuleKind() == core.ModuleKindPreserve {
  * 		return tx.Factory().NewCallExpression(
- * 			tx.Factory().NewIdentifier("require"), nil, nil,
- * 			tx.Factory().NewNodeList(args), ast.NodeFlagsNone,
+ * 			tx.Factory().NewIdentifier("require"),
+ * 			nil, /*questionDotToken* /
+ * 			nil, /*typeArguments* /
+ * 			tx.Factory().NewNodeList(args),
+ * 			ast.NodeFlagsNone,
  * 		)
  * 	}
  *
  * 	if tx.importRequireStatements == nil {
- * 		createRequireName := tx.Factory().NewUniqueNameEx("_createRequire", {...})
- * 		importStatement := tx.Factory().NewImportDeclaration(...)
+ * 		createRequireName := tx.Factory().NewUniqueNameEx("_createRequire", printer.AutoGenerateOptions{Flags: printer.GeneratedIdentifierFlagsOptimistic | printer.GeneratedIdentifierFlagsFileLevel})
+ * 		importStatement := tx.Factory().NewImportDeclaration(
+ * 			nil, /*modifiers* /
+ * 			tx.Factory().NewImportClause(
+ * 				ast.KindUnknown, /*phaseModifier* /
+ * 				nil,             /*name* /
+ * 				tx.Factory().NewNamedImports(
+ * 					tx.Factory().NewNodeList([]*ast.Node{
+ * 						tx.Factory().NewImportSpecifier(
+ * 							false, /*isTypeOnly* /
+ * 							tx.Factory().NewIdentifier("createRequire"),
+ * 							createRequireName,
+ * 						),
+ * 					}),
+ * 				),
+ * 			),
+ * 			tx.Factory().NewStringLiteral("module", ast.TokenFlagsNone),
+ * 			nil, /*attributes* /
+ * 		)
  * 		tx.EmitContext().AddEmitFlags(importStatement, printer.EFCustomPrologue)
  *
- * 		requireHelperName := tx.Factory().NewUniqueNameEx("__require", {...})
- * 		requireStatement := tx.Factory().NewVariableStatement(...)
+ * 		requireHelperName := tx.Factory().NewUniqueNameEx("__require", printer.AutoGenerateOptions{Flags: printer.GeneratedIdentifierFlagsOptimistic | printer.GeneratedIdentifierFlagsFileLevel})
+ * 		requireStatement := tx.Factory().NewVariableStatement(
+ * 			nil, /*modifiers* /
+ * 			tx.Factory().NewVariableDeclarationList(
+ * 				tx.Factory().NewNodeList([]*ast.Node{
+ * 					tx.Factory().NewVariableDeclaration(
+ * 						requireHelperName,
+ * 						nil, /*exclamationToken* /
+ * 						nil, /*type* /
+ * 						tx.Factory().NewCallExpression(
+ * 							createRequireName.Clone(tx.Factory()),
+ * 							nil, /*questionDotToken* /
+ * 							nil, /*typeArguments* /
+ * 							tx.Factory().NewNodeList([]*ast.Expression{
+ * 								tx.Factory().NewPropertyAccessExpression(
+ * 									tx.Factory().NewMetaProperty(ast.KindImportKeyword, tx.Factory().NewIdentifier("meta")),
+ * 									nil, /*questionDotToken* /
+ * 									tx.Factory().NewIdentifier("url"),
+ * 									ast.NodeFlagsNone,
+ * 								),
+ * 							}),
+ * 							ast.NodeFlagsNone,
+ * 						),
+ * 					),
+ * 				}),
+ * 				ast.NodeFlagsConst,
+ * 			),
+ * 		)
  * 		tx.EmitContext().AddEmitFlags(requireStatement, printer.EFCustomPrologue)
  * 		tx.importRequireStatements = &importRequireStatements{
- * 			statements: [...], requireHelperName: requireHelperName,
+ * 			statements:        []*ast.Statement{importStatement, requireStatement},
+ * 			requireHelperName: requireHelperName,
  * 		}
  * 	}
  *
  * 	return tx.Factory().NewCallExpression(
- * 		tx.importRequireStatements.requireHelperName.Clone(tx.Factory()), nil, nil,
- * 		tx.Factory().NewNodeList(args), ast.NodeFlagsNone,
+ * 		tx.importRequireStatements.requireHelperName.Clone(tx.Factory()),
+ * 		nil, /*questionDotToken* /
+ * 		nil, /*typeArguments* /
+ * 		tx.Factory().NewNodeList(args),
+ * 		ast.NodeFlagsNone,
  * 	)
  * }
  */

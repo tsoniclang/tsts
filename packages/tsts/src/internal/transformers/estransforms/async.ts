@@ -1240,12 +1240,10 @@ export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTran
  * }
  */
 export function asyncTransformer_isVariableDeclarationListWithCollidingName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): bool {
-  if (node === undefined || !IsVariableDeclarationList(node)) {
-    return false;
-  }
-  const vdl = AsVariableDeclarationList(node)!;
-  return (node.Flags & NodeFlagsBlockScoped) === 0 &&
-    vdl.Declarations!.Nodes.some((n) => asyncTransformer_collidesWithParameterName(receiver, n));
+  return node !== undefined &&
+    IsVariableDeclarationList(node) &&
+    (node.Flags & NodeFlagsBlockScoped) === 0 &&
+    AsVariableDeclarationList(node)!.Declarations!.Nodes.some((n) => asyncTransformer_collidesWithParameterName(receiver, n));
 }
 
 /**
@@ -1685,20 +1683,133 @@ export function asyncTransformer_transformAsyncFunctionParameterList(receiver: G
  * 	var argumentsExpression *ast.Expression
  * 	if innerParameters != nil {
  * 		if isArrow {
- * 			...
+ * 			// `node` does not have a simple parameter list, so `outerParameters` refers to placeholders that are
+ * 			// forwarded to `innerParameters`, matching how they are introduced in `transformAsyncFunctionParameterList`.
+ * 			var parameterBindings []*ast.Node
+ * 			outerLen := len(outerParameters.Nodes)
+ * 			for i, param := range node.Parameters() {
+ * 				if i >= outerLen {
+ * 					break
+ * 				}
+ * 				originalParameter := param.AsParameterDeclaration()
+ * 				outerParameter := outerParameters.Nodes[i].AsParameterDeclaration()
+ * 				if originalParameter.Initializer != nil || originalParameter.DotDotDotToken != nil {
+ * 					parameterBindings = append(parameterBindings, tx.Factory().NewSpreadElement(outerParameter.Name()))
+ * 					break
+ * 				}
+ * 				parameterBindings = append(parameterBindings, outerParameter.Name())
+ * 			}
+ * 			argumentsExpression = tx.Factory().NewArrayLiteralExpression(tx.Factory().NewNodeList(parameterBindings), false)
  * 		} else {
  * 			argumentsExpression = tx.Factory().NewIdentifier("arguments")
  * 		}
  * 	}
  *
- * 	...
+ * 	// An async function is emit as an outer function that calls an inner
+ * 	// generator function. To preserve lexical bindings, we pass the current
+ * 	// `this` and `arguments` objects to `__awaiter`. The generator function
+ * 	// passed to `__awaiter` is executed inside of the callback to the
+ * 	// promise constructor.
+ *
+ * 	savedEnclosingFunctionParameterNames := tx.enclosingFunctionParameterNames
+ * 	tx.enclosingFunctionParameterNames = &collections.Set[string]{}
+ * 	for _, parameter := range node.Parameters() {
+ * 		tx.recordDeclarationName(parameter, tx.enclosingFunctionParameterNames)
+ * 	}
+ *
+ * 	hasLexicalThis := tx.inHasLexicalThisContext()
+ *
+ * 	asyncBody := tx.transformAsyncFunctionBodyWorker(node.Body())
+ * 	asyncBody = tx.Factory().UpdateBlock(
+ * 		asyncBody.AsBlock(),
+ * 		tx.EmitContext().EndAndMergeVariableEnvironmentList(asyncBody.StatementList()),
+ * 		asyncBody.AsBlock().MultiLine,
+ * 	)
+ *
+ * 	// Substitute super property accesses with _super/_superIndex helpers
  * 	emitSuperHelpers := tx.capturedSuperProperties != nil &&
  * 		(tx.capturedSuperProperties.Size() > 0 || tx.hasSuperElementAccess)
  * 	if emitSuperHelpers {
  * 		innerParameters = tx.superAccessVisitor.VisitNodes(innerParameters)
  * 		asyncBody = tx.substituteSuperAccessesInBody(asyncBody)
  * 	}
- * 	...
+ *
+ * 	var result *ast.Node
+ * 	if !isArrow {
+ * 		tx.EmitContext().StartVariableEnvironment()
+ *
+ * 		// Minor optimization, emit `_super` helper to capture `super` access in an arrow.
+ * 		if emitSuperHelpers {
+ * 			if tx.capturedSuperProperties.Size() > 0 {
+ * 				tx.EmitContext().AddInitializationStatement(tx.createSuperAccessVariableStatement())
+ * 			}
+ * 		}
+ *
+ * 		if captureLexicalArguments && tx.lexicalArguments.used {
+ * 			tx.EmitContext().AddInitializationStatement(tx.createCaptureArgumentsStatement())
+ * 		}
+ *
+ * 		statements := []*ast.Node{
+ * 			tx.Factory().NewReturnStatement(
+ * 				tx.Factory().NewAwaiterHelper(
+ * 					hasLexicalThis,
+ * 					argumentsExpression,
+ * 					innerParameters,
+ * 					asyncBody,
+ * 				),
+ * 			),
+ * 		}
+ *
+ * 		block := tx.Factory().NewBlock(
+ * 			tx.EmitContext().EndAndMergeVariableEnvironmentList(tx.Factory().NewNodeList(statements)),
+ * 			true,
+ * 		)
+ * 		block.Loc = node.Body().Loc
+ *
+ * 		if emitSuperHelpers && tx.hasSuperElementAccess {
+ * 			if tx.hasSuperPropertyAssignment {
+ * 				tx.EmitContext().AddEmitHelper(block, printer.AdvancedAsyncSuperHelper)
+ * 			} else {
+ * 				tx.EmitContext().AddEmitHelper(block, printer.AsyncSuperHelper)
+ * 			}
+ * 		}
+ *
+ * 		result = block
+ * 	} else {
+ * 		result = tx.Factory().NewAwaiterHelper(
+ * 			hasLexicalThis,
+ * 			argumentsExpression,
+ * 			innerParameters,
+ * 			asyncBody,
+ * 		)
+ *
+ * 		if captureLexicalArguments && tx.lexicalArguments.used {
+ * 			block := tx.convertToFunctionBlock(result)
+ * 			result = tx.Factory().UpdateBlock(
+ * 				block.AsBlock(),
+ * 				tx.EmitContext().MergeEnvironmentList(block.StatementList(), []*ast.Node{tx.createCaptureArgumentsStatement()}),
+ * 				block.AsBlock().MultiLine,
+ * 			)
+ * 		}
+ * 	}
+ *
+ * 	tx.enclosingFunctionParameterNames = savedEnclosingFunctionParameterNames
+ * 	if !isArrow {
+ * 		tx.capturedSuperProperties = savedCapturedSuperProperties
+ * 		tx.hasSuperElementAccess = savedHasSuperElementAccess
+ * 		tx.hasSuperPropertyAssignment = savedHasSuperPropertyAssignment
+ * 		tx.superBinding = savedSuperBinding
+ * 		tx.superIndexBinding = savedSuperIndexBinding
+ * 		tx.lexicalArguments = savedLexicalArguments
+ * 	} else if captureLexicalArguments && !tx.lexicalArguments.used {
+ * 		// If we created a new binding but it wasn't used, restore the previous state.
+ * 		// If it was used, keep the binding alive so sibling arrows can reuse it
+ * 		// (the `var` declaration hoists to the enclosing function scope).
+ * 		tx.lexicalArguments = savedLexicalArguments
+ * 	} else if captureLexicalArguments {
+ * 		// Keep the binding but clear the used flag so siblings don't re-emit the capture statement.
+ * 		tx.lexicalArguments.used = false
+ * 	}
  * 	return result
  * }
  */

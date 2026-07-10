@@ -9,6 +9,7 @@ import { IsInJSFile } from "../../ast/utilities.js";
 import { IsExternalModuleImportEqualsDeclaration } from "../../ast/utilities.js";
 import type { ExportDeclaration, ImportClause, ImportDeclaration, ImportEqualsDeclaration, NamedExports, NamedImports } from "../../ast/generated/data.js";
 import { AsExportDeclaration, AsImportClause, AsImportDeclaration, AsImportEqualsDeclaration, AsNamedExports, AsNamedImports } from "../../ast/generated/casts.js";
+import { IsSourceFile } from "../../ast/generated/predicates.js";
 import {
   KindExportAssignment,
   KindExportDeclaration,
@@ -28,7 +29,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode, NodeVisitor_VisitNod
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
-import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
+import { EmitContext_MostOriginal, EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
@@ -82,10 +83,14 @@ export function NewImportElisionTransformer(opt: GoPtr<TransformOptions>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"implemented","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1","bodyHash":"3192f19d9eca37402d140cfcbae3afcbf32cb595848840ad3d373973e4a64be8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"implemented","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1","bodyHash":"6f0ab90cfbb3b8d4a20dbb1f4521ce803b3b61f67ba1dd329a516b89c2d7dbde"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) visit(node *ast.Node) *ast.Node {
+ * 	if ast.IsSourceFile(node) && tx.emitResolver != nil {
+ * 		tx.emitResolver.MarkLinkedReferencesRecursively(tx.EmitContext().MostOriginal(node).AsSourceFile())
+ * 	}
+ *
  * 	switch node.Kind {
  * 	case ast.KindImportEqualsDeclaration:
  * 		if ast.IsExternalModuleImportEqualsDeclaration(node) {
@@ -187,6 +192,9 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
   const tx = receiver!;
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const factory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  if (IsSourceFile(node) && tx.emitResolver !== undefined) {
+    tx.emitResolver.MarkLinkedReferencesRecursively(AsSourceFile(EmitContext_MostOriginal(Transformer_EmitContext(tx.__tsgoEmbedded0), node)));
+  }
   switch (node!.Kind) {
     case KindImportEqualsDeclaration:
       if (IsExternalModuleImportEqualsDeclaration(node)) {

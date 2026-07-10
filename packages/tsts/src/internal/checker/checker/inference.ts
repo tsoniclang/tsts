@@ -848,7 +848,7 @@ export function Checker_getConstraintOfDistributiveConditionalType(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"d317a703b102fcfdc86d88892fcd28bfad810a3530b04d7906906177fe3138ba","bodyHash":"a82f1d666c82eb03529c861168d2a44b6099a2cb6ad4675aa64d5cef3659cdae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createInstantiatedSymbolTable","kind":"method","status":"implemented","sigHash":"486c2e26964946a849da0f8b1f7476d0be2b7dd56953c591ecec9c1cd890ad1d","bodyHash":"9ce3ce41a9a691160c4874344d6350db66dae40fef9bc308c097546398ac8106"}
  *
  * Go source:
  * func (c *Checker) createInstantiatedSymbolTable(symbols []*ast.Symbol, m *TypeMapper) ast.SymbolTable {
@@ -1790,7 +1790,7 @@ export function Checker_getResolvedBaseConstraint(receiver: GoPtr<Checker>, t: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.computeBaseConstraint","kind":"method","status":"implemented","sigHash":"51d003d5e356976a2b87f8d41c22768f42dcc2e7dd2f22e48b209ab236fd75b5","bodyHash":"c0dbabcbd366e8186a27e4bce59218cf5f193a1c3cc6f5b3ab41fec250b375af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.computeBaseConstraint","kind":"method","status":"implemented","sigHash":"51d003d5e356976a2b87f8d41c22768f42dcc2e7dd2f22e48b209ab236fd75b5","bodyHash":"00253a3814ede923ef731c2a776ef355701eaac5317c2a6f6dee7853791ebd14"}
  *
  * Go source:
  * func (c *Checker) computeBaseConstraint(t *Type, stack []RecursionId) *Type {
@@ -1866,20 +1866,13 @@ export function Checker_getResolvedBaseConstraint(receiver: GoPtr<Checker>, t: G
  * 		}
  * 		return c.getNextBaseConstraint(c.getIndexedAccessTypeOrUndefined(baseObjectType, baseIndexType, t.AsIndexedAccessType().accessFlags, nil, nil), stack)
  * 	case t.flags&TypeFlagsConditional != 0:
- * 		d := t.AsConditionalType()
- * 		if d.root.isDistributive && c.cachedTypes[CachedTypeKey{kind: CachedTypeKindRestrictiveInstantiation, typeId: t.id}] != t {
- * 			constraint := c.getSimplifiedType(d.checkType, false /*writing* /)
- * 			if constraint == d.checkType {
- * 				constraint = c.getNextBaseConstraint(constraint, stack)
- * 			}
- * 			if constraint != nil && constraint != d.checkType {
- * 				instantiated := c.getConditionalTypeInstantiation(t, prependTypeMapping(d.root.checkType, constraint, d.mapper), true /*forConstraint* /, nil)
- * 				if instantiated.flags&TypeFlagsNever == 0 {
- * 					return c.getNextBaseConstraint(instantiated, stack)
- * 				}
- * 			}
+ * 		if c.conditionalConstraintDepth >= 100 {
+ * 			return nil
  * 		}
- * 		return c.getNextBaseConstraint(c.getDefaultConstraintOfConditionalType(t), stack)
+ * 		c.conditionalConstraintDepth++
+ * 		constraint := c.getConstraintFromConditionalType(t)
+ * 		c.conditionalConstraintDepth--
+ * 		return c.getNextBaseConstraint(constraint, stack)
  * 	case t.flags&TypeFlagsSubstitution != 0:
  * 		return c.getNextBaseConstraint(c.getSubstitutionIntersection(t), stack)
  * 	case c.isGenericTupleType(t):
@@ -1979,29 +1972,16 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     return Checker_getNextBaseConstraint(receiver, Checker_getIndexedAccessTypeOrUndefined(receiver, baseObjectType, baseIndexType, Type_AsIndexedAccessType(t)!.accessFlags, undefined, undefined), stack);
   }
   if ((t!.flags & TypeFlagsConditional) !== 0) {
-    const d = Type_AsConditionalType(t);
-    if (d!.root!.isDistributive && receiver!.cachedTypes.get({ kind: CachedTypeKindRestrictiveInstantiation, typeId: t!.id } as CachedTypeKey) !== t) {
-      let constraint = Checker_getSimplifiedType(receiver, d!.checkType, false);
-      if (constraint === d!.checkType) {
-        constraint = Checker_getNextBaseConstraint(receiver, constraint, stack);
-      }
-      if (constraint !== undefined && constraint !== d!.checkType) {
-        const instantiated = Checker_getConditionalTypeInstantiation(receiver, t, prependTypeMapping(d!.root!.checkType, constraint, d!.mapper), true, undefined);
-        if ((instantiated!.flags & TypeFlagsNever) === 0) {
-          return Checker_getNextBaseConstraint(receiver, instantiated, stack);
-        }
-      }
+    if (receiver!.conditionalConstraintDepth >= 100) {
+      return undefined;
     }
-    return Checker_getNextBaseConstraint(receiver, Checker_getDefaultConstraintOfConditionalType(receiver, t), stack);
+    receiver!.conditionalConstraintDepth++;
+    const constraint = Checker_getConstraintFromConditionalType(receiver, t);
+    receiver!.conditionalConstraintDepth--;
+    return Checker_getNextBaseConstraint(receiver, constraint, stack);
   }
   if ((t!.flags & TypeFlagsSubstitution) !== 0) {
-    const substitutionIntersection = Checker_getSubstitutionIntersection(receiver, t);
-    const substitutionConstraint = Type_AsSubstitutionType(t)!.constraint;
-    const intersectionConstraint = Checker_getNextBaseConstraint(receiver, substitutionIntersection, stack);
-    if (intersectionConstraint !== undefined && Checker_isTypeAssignableTo(receiver, intersectionConstraint, substitutionConstraint)) {
-      return intersectionConstraint;
-    }
-    return OrElse(Checker_getNextBaseConstraint(receiver, substitutionConstraint, stack), intersectionConstraint);
+    return Checker_getNextBaseConstraint(receiver, Checker_getSubstitutionIntersection(receiver, t), stack);
   }
   if (Checker_isGenericTupleType(receiver, t)) {
     const elementTypes = Checker_getElementTypes(receiver, t);

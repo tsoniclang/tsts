@@ -107,18 +107,19 @@ test("math.Min (Go semantics: NaN-propagating, -0 < +0)", () => {
 
 test("math.Float64bits known IEEE-754 patterns", () => {
   // Bit patterns whose high bits matter and whose value is exactly representable.
-  assert.equal(Float64bits(1.0), 0x3ff0000000000000);
-  assert.equal(Float64bits(0), 0);
-  assert.equal(Float64bits(2.0), 0x4000000000000000);
+  assert.equal(Float64bits(1.0), 0x3ff0000000000000n);
+  assert.equal(Float64bits(0), 0n);
+  assert.equal(Float64bits(2.0), 0x4000000000000000n);
   // +Inf is all exponent bits set, zero mantissa.
-  assert.equal(Float64bits(Inf(1)), 0x7ff0000000000000);
+  assert.equal(Float64bits(Inf(1)), 0x7ff0000000000000n);
+  assert.equal(Float64bits(globalThis.Number.MIN_VALUE), 1n);
 });
 
 test("math.Float64frombits reconstructs values from exact patterns", () => {
-  assert.equal(Float64frombits(0x3ff0000000000000), 1.0);
-  assert.equal(Float64frombits(0x4000000000000000), 2.0);
-  assert.equal(Float64frombits(0), 0);
-  assert.equal(Float64frombits(0x7ff0000000000000), globalThis.Number.POSITIVE_INFINITY);
+  assert.equal(Float64frombits(0x3ff0000000000000n), 1.0);
+  assert.equal(Float64frombits(0x4000000000000000n), 2.0);
+  assert.equal(Float64frombits(0n), 0);
+  assert.equal(Float64frombits(0x7ff0000000000000n), globalThis.Number.POSITIVE_INFINITY);
 });
 
 test("math.Float64bits supports jsnum.isNonFinite exponent-mask test", () => {
@@ -126,8 +127,8 @@ test("math.Float64bits supports jsnum.isNonFinite exponent-mask test", () => {
   // The mask isolates the high exponent bits, which survive the number boundary.
   const mask = 0x7ff0000000000000;
   // Inf and NaN have all exponent bits set; finite numbers do not.
-  assert.equal(globalThis.Number(globalThis.BigInt(Float64bits(Inf(1))) & globalThis.BigInt(mask)), mask);
-  assert.equal(globalThis.Number(globalThis.BigInt(Float64bits(Inf(-1))) & globalThis.BigInt(mask)), mask);
-  assert.equal(globalThis.Number(globalThis.BigInt(Float64bits(NaN())) & globalThis.BigInt(mask)), mask);
-  assert.notEqual(globalThis.Number(globalThis.BigInt(Float64bits(1.5)) & globalThis.BigInt(mask)), mask);
+  assert.equal(globalThis.Number((Float64bits(Inf(1)) as bigint) & globalThis.BigInt(mask)), mask);
+  assert.equal(globalThis.Number((Float64bits(Inf(-1)) as bigint) & globalThis.BigInt(mask)), mask);
+  assert.equal(globalThis.Number((Float64bits(NaN())) as bigint & globalThis.BigInt(mask)), mask);
+  assert.notEqual(globalThis.Number((Float64bits(1.5) as bigint) & globalThis.BigInt(mask)), mask);
 });

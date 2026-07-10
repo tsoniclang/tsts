@@ -214,18 +214,18 @@ export const ____696f5a2e_0: ResolvedProjectReference = ParsedCommandLine_as_Res
 export const ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"implemented","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888","bodyHash":"43a5be1ed884944707ac2970bf30706ed5cb68b46a0a1e52efb7b495ca41229a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"implemented","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888","bodyHash":"08e7d5dacbc19cfccd7e241a6bd061d9b32d6f4a9f9bd3d6ec4a5a16a65daeb6"}
  *
  * Go source:
  * func (p *ParsedCommandLine) ConfigName() string {
- * 	if p == nil {
+ * 	if p == nil || p.ConfigFile == nil {
  * 		return ""
  * 	}
  * 	return p.ConfigFile.SourceFile.FileName()
  * }
  */
 export function ParsedCommandLine_ConfigName(receiver: GoPtr<ParsedCommandLine>): string {
-  if (receiver === undefined) {
+  if (receiver === undefined || receiver.ConfigFile === undefined) {
     return "";
   }
   return SourceFile_FileName(receiver.ConfigFile!.SourceFile);
@@ -311,16 +311,15 @@ export function ParsedCommandLine_ParseInputOutputNames(receiver: GoPtr<ParsedCo
  * Go source:
  * func (p *ParsedCommandLine) CommonSourceDirectory() string {
  * 	p.commonSourceDirectoryOnce.Do(func() {
+ * 		files := func() []string {
+ * 			return core.Filter(p.ParsedConfig.FileNames, func(file string) bool {
+ * 				return !(p.ParsedConfig.CompilerOptions.NoEmitForJsFiles.IsTrue() && tspath.HasJSFileExtension(file)) && !tspath.IsDeclarationFileName(file)
+ * 			})
+ * 		}
+ *
  * 		p.commonSourceDirectory = outputpaths.GetCommonSourceDirectory(
  * 			p.ParsedConfig.CompilerOptions,
- * 			func() []string {
- * 				return core.Filter(
- * 					p.ParsedConfig.FileNames,
- * 					func(file string) bool {
- * 						return !(p.ParsedConfig.CompilerOptions.NoEmitForJsFiles.IsTrue() && tspath.HasJSFileExtension(file)) &&
- * 							!tspath.IsDeclarationFileName(file)
- * 					})
- * 			},
+ * 			files,
  * 			p.GetCurrentDirectory(),
  * 			p.UseCaseSensitiveFileNames(),
  * 			p.checkSourceFilesBelongToPath,

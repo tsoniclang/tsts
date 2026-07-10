@@ -760,18 +760,18 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::method::filesParser.getProcessedFiles","kind":"method","status":"implemented","sigHash":"c2e51238eff6336f328f007677443bb0ad8f7de5dbabc6a436aefff300edc302","bodyHash":"9345aef10513c9a43308890522ecc220cfeb875670275fef029af29efb317200"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::method::filesParser.getProcessedFiles","kind":"method","status":"implemented","sigHash":"c2e51238eff6336f328f007677443bb0ad8f7de5dbabc6a436aefff300edc302","bodyHash":"801ac8efe74abeae6cf01fa051542340280bfbf7b3bd2b44f785ae7853551852"}
  *
  * Go source:
  * func (w *filesParser) getProcessedFiles(loader *fileLoader) processedFiles {
  * 	totalFileCount := int(loader.totalFileCount.Load())
  * 	libFileCount := int(loader.libFileCount.Load())
- * 
+ *
  * 	var missingFiles []string
  * 	var duplicateSourceFiles []*DuplicateSourceFile
  * 	files := make([]*ast.SourceFile, 0, totalFileCount-libFileCount)
  * 	libFiles := make([]*ast.SourceFile, 0, totalFileCount) // totalFileCount here since we append files to it later to construct the final list
- * 
+ *
  * 	filesByPath := make(map[tspath.Path]*ast.SourceFile, totalFileCount)
  * 	// stores 'filename -> file association' ignoring case
  * 	// used to track cases when two file names differ only in casing
@@ -779,7 +779,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 	if loader.comparePathsOptions.UseCaseSensitiveFileNames {
  * 		tasksSeenByNameIgnoreCase = make(map[string]*parseTask, totalFileCount)
  * 	}
- * 
+ *
  * 	includeProcessor := &includeProcessor{
  * 		fileIncludeReasons: make(map[tspath.Path][]*FileIncludeReason, totalFileCount),
  * 	}
@@ -794,7 +794,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 	var importHelpersImportSpecifiers map[tspath.Path]*ast.StringLiteralNode
  * 	var sourceFilesFoundSearchingNodeModules collections.Set[tspath.Path]
  * 	libFilesMap := make(map[tspath.Path]*LibFile, libFileCount)
- * 
+ *
  * 	var redirectTargetsMap map[tspath.Path][]string
  * 	var redirectFilesByPath map[tspath.Path]*redirectsFile
  * 	var packageIdToSourceFile map[module.PackageId]*ast.SourceFile
@@ -802,8 +802,16 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 		redirectTargetsMap = make(map[tspath.Path][]string)
  * 		packageIdToSourceFile = make(map[module.PackageId]*ast.SourceFile)
  * 	}
- * 
+ *
  * 	var collectFiles func(tasks []*parseTask, seen map[*parseTaskData]string)
+ * 	// recordedDuplicates tracks, per task data, the set of file-name casings that
+ * 	// have already been recorded in duplicateSourceFiles. A file that is reached
+ * 	// from multiple import sites is walked once per site, but each distinct casing
+ * 	// is only parsed and acquired in the parse cache once. Recording the same casing
+ * 	// as a duplicate more than once would cause it to be released more times than it
+ * 	// was acquired when the snapshot is disposed, leaving a dangling cache entry that
+ * 	// panics the next time it is referenced.
+ * 	var recordedDuplicates map[*parseTaskData]*collections.Set[string]
  * 	collectFiles = func(tasks []*parseTask, seen map[*parseTaskData]string) {
  * 		for _, task := range tasks {
  * 			includeReason := task.includeReason
@@ -820,15 +828,25 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 			if !task.loaded {
  * 				continue
  * 			}
- * 
+ *
  * 			// ensure we only walk each task once
  * 			if checkedName, ok := seen[data]; ok {
  * 				if task.file != nil && checkedName != task.normalizedFilePath {
- * 					duplicateSourceFiles = append(duplicateSourceFiles, &DuplicateSourceFile{
- * 						ParseOptions: task.file.ParseOptions(),
- * 						Hash:         task.file.Hash,
- * 						ScriptKind:   task.file.ScriptKind,
- * 					})
+ * 					if recordedDuplicates == nil {
+ * 						recordedDuplicates = make(map[*parseTaskData]*collections.Set[string])
+ * 					}
+ * 					dups := recordedDuplicates[data]
+ * 					if dups == nil {
+ * 						dups = &collections.Set[string]{}
+ * 						recordedDuplicates[data] = dups
+ * 					}
+ * 					if dups.AddIfAbsent(task.normalizedFilePath) {
+ * 						duplicateSourceFiles = append(duplicateSourceFiles, &DuplicateSourceFile{
+ * 							ParseOptions: task.file.ParseOptions(),
+ * 							Hash:         task.file.Hash,
+ * 							ScriptKind:   task.file.ScriptKind,
+ * 						})
+ * 					}
  * 				}
  * 				if !loader.opts.Config.CompilerOptions().ForceConsistentCasingInFileNames.IsFalse() {
  * 					// Check if it differs only in drive letters its ok to ignore that error:
@@ -842,7 +860,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 			} else {
  * 				seen[data] = task.normalizedFilePath
  * 			}
- * 
+ *
  * 			if tasksSeenByNameIgnoreCase != nil {
  * 				pathLowerCase := tspath.ToFileNameLowerCase(string(task.path))
  * 				if taskByIgnoreCase, ok := tasksSeenByNameIgnoreCase[pathLowerCase]; ok {
@@ -851,14 +869,14 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 					tasksSeenByNameIgnoreCase[pathLowerCase] = task
  * 				}
  * 			}
- * 
+ *
  * 			for _, trace := range task.typeResolutionsTrace {
  * 				loader.opts.Host.Trace(trace.Message, trace.Args...)
  * 			}
  * 			for _, trace := range task.resolutionsTrace {
  * 				loader.opts.Host.Trace(trace.Message, trace.Args...)
  * 			}
- * 
+ *
  * 			file := task.file
  * 			if packageIdToSourceFile != nil && data.packageId.Name != "" {
  * 				if packageIdFile, exists := packageIdToSourceFile[data.packageId]; exists {
@@ -891,11 +909,11 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 					packageIdToSourceFile[data.packageId] = file
  * 				}
  * 			}
- * 
+ *
  * 			if subTasks := task.subTasks; len(subTasks) > 0 {
  * 				collectFiles(subTasks, seen)
  * 			}
- * 
+ *
  * 			// Exclude automatic type directive tasks from include reason processing,
  * 			// as these are internal implementation details and should not contribute
  * 			// to the reasons for including files.
@@ -905,7 +923,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 				}
  * 				continue
  * 			}
- * 
+ *
  * 			if task.isForAutomaticTypeDirective {
  * 				typeResolutionsInFile[task.path] = task.typeResolutionsInFile
  * 				if len(task.processingDiagnostics) > 0 {
@@ -913,18 +931,18 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 				}
  * 				continue
  * 			}
- * 
+ *
  * 			path := task.path
- * 
+ *
  * 			if len(task.processingDiagnostics) > 0 {
  * 				includeProcessor.processingDiagnostics = append(includeProcessor.processingDiagnostics, task.processingDiagnostics...)
  * 			}
- * 
+ *
  * 			if file == nil {
  * 				missingFiles = append(missingFiles, task.normalizedFilePath)
  * 				continue
  * 			}
- * 
+ *
  * 			if task.libFile != nil {
  * 				libFiles = append(libFiles, file)
  * 				libFilesMap[path] = task.libFile
@@ -935,7 +953,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 			resolvedModules[path] = task.resolutionsInFile
  * 			typeResolutionsInFile[path] = task.typeResolutionsInFile
  * 			sourceFileMetaDatas[path] = task.metadata
- * 
+ *
  * 			if task.jsxRuntimeImportSpecifier != nil {
  * 				if jsxRuntimeImportSpecifiers == nil {
  * 					jsxRuntimeImportSpecifiers = make(map[tspath.Path]*jsxRuntimeImportSpecifier, totalFileCount)
@@ -953,15 +971,15 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	collectFiles(loader.rootTasks, make(map[*parseTaskData]string, totalFileCount))
  * 	loader.sortLibs(libFiles)
- * 
+ *
  * 	allFiles := append(libFiles, files...)
  * 	for _, redirectFile := range redirectFilesByPath {
  * 		redirectFile.index += len(libFiles)
  * 	}
- * 
+ *
  * 	keys := slices.Collect(loader.pathForLibFileResolutions.Keys())
  * 	slices.Sort(keys)
  * 	for _, key := range keys {
@@ -973,7 +991,7 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
  * 			loader.opts.Host.Trace(trace.Message, trace.Args...)
  * 		}
  * 	}
- * 
+ *
  * 	return processedFiles{
  * 		finishedProcessing:                   true,
  * 		resolver:                             loader.resolver,
@@ -1044,6 +1062,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
     packageIdToSourceFile = new globalThis.Map<string, GoPtr<SourceFile>>();
   }
 
+  let recordedDuplicates: GoMap<GoPtr<parseTaskData>, globalThis.Set<string>> | undefined;
   const collectFiles = (tasks: GoSlice<GoPtr<parseTask>>, seen: GoMap<GoPtr<parseTaskData>, string>): void => {
     for (let task of tasks) {
       const includeReason = task!.includeReason;
@@ -1065,11 +1084,20 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       const checkedName = seen.get(data);
       if (checkedName !== undefined) {
         if (task!.file !== undefined && checkedName !== task!.normalizedFilePath) {
-          duplicateSourceFiles = [...duplicateSourceFiles, {
-            ParseOptions: SourceFile_ParseOptions(task!.file),
-            Hash: task!.file!.Hash,
-            ScriptKind: task!.file!.ScriptKind,
-          }];
+          recordedDuplicates ??= new globalThis.Map();
+          let casings = recordedDuplicates.get(data);
+          if (casings === undefined) {
+            casings = new globalThis.Set();
+            recordedDuplicates.set(data, casings);
+          }
+          if (!casings.has(task!.normalizedFilePath)) {
+            casings.add(task!.normalizedFilePath);
+            duplicateSourceFiles = [...duplicateSourceFiles, {
+              ParseOptions: SourceFile_ParseOptions(task!.file),
+              Hash: task!.file!.Hash,
+              ScriptKind: task!.file!.ScriptKind,
+            }];
+          }
         }
         if (!Tristate_IsFalse(ParsedCommandLine_CompilerOptions(loader!.opts.Config)!.ForceConsistentCasingInFileNames)) {
           const checkedAbsolutePath = GetNormalizedAbsolutePathWithoutRoot(checkedName, loader!.comparePathsOptions.CurrentDirectory);

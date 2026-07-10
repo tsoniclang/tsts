@@ -70,13 +70,13 @@ export const TSTS_PROFILE = {
   allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
   // External Go interface aliases whose zero value is nil and therefore may be
   // represented as GoPtr<Alias> in the TypeScript port.
-  externalNilableTypes: ["io/fs.FileInfo", "io/fs.DirEntry", "io.Writer"],
+  externalNilableTypes: ["io/fs.FS", "io/fs.FileInfo", "io/fs.DirEntry", "io.Writer"],
   externalInterfaceMembers: {
     "io/fs.FileInfo": [
       { name: "Name", type: { t: "fn", params: [], ret: { t: "kw", kw: "string" } } },
       { name: "Size", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::int", args: [] } } },
       { name: "Mode", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/io/fs.ts::FileMode", args: [] } } },
-      { name: "ModTime", type: { t: "fn", params: [], ret: { t: "ref", id: "global::Date", args: [] } } },
+      { name: "ModTime", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/time.ts::Time", args: [] } } },
       { name: "IsDir", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::bool", args: [] } } },
       { name: "Sys", type: { t: "fn", params: [], ret: { t: "kw", kw: "unknown" } } }
     ]

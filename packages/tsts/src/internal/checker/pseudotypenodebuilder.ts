@@ -1,10 +1,10 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Node_Body, NodeFactory_NewModifier, Node_Symbol, Node_Text } from "../ast/ast.js";
-import { AsTypePredicateNode } from "../ast/generated/casts.js";
+import { AsTypePredicateNode, AsUnionTypeNode } from "../ast/generated/casts.js";
 import { NewFunctionTypeNode, NewGetAccessorDeclaration, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewMethodSignatureDeclaration, NewParameterDeclaration, NewPropertySignatureDeclaration, NewSetAccessorDeclaration, NewToken, NewTupleTypeNode, NewTypeLiteralNode, NewTypeOperatorNode, NewUnionTypeNode } from "../ast/generated/factory.js";
 import { KindAnyKeyword, KindBigIntKeyword, KindBooleanKeyword, KindDotDotDotToken, KindFalseKeyword, KindNeverKeyword, KindNullKeyword, KindNumberKeyword, KindQuestionToken, KindReadonlyKeyword, KindStringKeyword, KindTrueKeyword, KindUndefinedKeyword } from "../ast/generated/kinds.js";
-import { IsArrowFunction, IsParameterDeclaration, IsReturnStatement, IsThisTypeNode, IsTypePredicateNode } from "../ast/generated/predicates.js";
+import { IsArrowFunction, IsParameterDeclaration, IsReturnStatement, IsThisTypeNode, IsTypePredicateNode, IsUnionTypeNode } from "../ast/generated/predicates.js";
 import { SymbolFlagsOptional } from "../ast/symbolflags.js";
 import { GetContainingFunction, GetSourceFileOfNode, IsAccessor, IsDeclaration, IsEntityNameExpression, IsFunctionLike, IsThisIdentifier } from "../ast/utilities.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -85,7 +85,7 @@ import {
 } from "./checker/types.js";
 import { Checker_isOptionalParameter } from "./utilities.js";
 import type { NodeBuilderImpl } from "./nodebuilderimpl.js";
-import { Checker_getExpandedParameters, NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount, NodeBuilderImpl_parameterToParameterDeclarationName, NodeBuilderImpl_saveRestoreFlags, NodeBuilderImpl_serializeReturnTypeForSignature, NodeBuilderImpl_serializeTypeForDeclaration, NodeBuilderImpl_setCommentRange, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
+import { Checker_getExpandedParameters, NodeBuilderImpl_canReuseExistingJSTypeNode, NodeBuilderImpl_parameterToParameterDeclarationName, NodeBuilderImpl_saveRestoreFlags, NodeBuilderImpl_serializeReturnTypeForSignature, NodeBuilderImpl_serializeTypeForDeclaration, NodeBuilderImpl_setCommentRange, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
 import { NodeBuilderImpl_enterNewScope } from "./nodebuilderscopes.js";
 import { NodeBuilderImpl_reuseName, NodeBuilderImpl_reuseNode, NodeBuilderImpl_reuseTypeNode } from "./nodecopy.js";
 import { Checker_compareTypesIdentical, Checker_getTypePredicateOfSignature } from "./relater.js";
@@ -94,7 +94,7 @@ import { ContextFlagsNone, ElementFlagsNonRequired, TernaryTrue, Type_TargetTupl
 import { FlagsInObjectTypeLiteral, FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0","bodyHash":"ea437a86880cf12ceefbd487e7d6f5d6df53237efdddaf3a44bc7786370207df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0","bodyHash":"0fe673c79199ab301c4b96739f7c3311200ee0ea2b64ede39c365ad45f87ad41"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToNodeWithCheckerFallback(t *pseudochecker.PseudoType, checkerType *Type) *ast.Node {
@@ -115,7 +115,7 @@ import { FlagsInObjectTypeLiteral, FlagsMultilineObjectLiterals } from "../nodeb
  * 		return result
  * 	} else if t.Kind == pseudochecker.PseudoTypeKindDirect {
  * 		existing := t.AsPseudoTypeDirect().TypeNode
- * 		if !b.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(existing, checkerType) {
+ * 		if !b.canReuseExistingJSTypeNode(existing, checkerType) {
  * 			if !b.ctx.suppressReportInferenceFallback {
  * 				b.ctx.tracker.ReportInferenceFallback(existing)
  * 			}
@@ -149,7 +149,7 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
     return result;
   } else if (t!.Kind === PseudoTypeKindDirect) {
     const existing = PseudoType_AsPseudoTypeDirect(t)!.TypeNode;
-    if (!NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(b, existing, checkerType)) {
+    if (!NodeBuilderImpl_canReuseExistingJSTypeNode(b, existing, checkerType)) {
       if (!b.ctx!.suppressReportInferenceFallback) {
         b.ctx!.tracker!.ReportInferenceFallback(existing);
       }
@@ -164,7 +164,7 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"implemented","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d","bodyHash":"605aba82bf14d054086ddb9fa80b69600449fe16b08b9f60847ce88994628487"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"implemented","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d","bodyHash":"fd027792173686ecb465c7db59b29843935a5296aba5a658188552ffafe24c77"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToNode(t *pseudochecker.PseudoType) *ast.Node {
@@ -183,6 +183,9 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
  * 			b.ctx.tracker.ReportInferenceFallback(node.Parent)
  * 		} else {
  * 			b.ctx.tracker.ReportInferenceFallback(node)
+ * 		}
+ * 		if inferred.IsSignatureReturn {
+ * 			return b.serializeReturnTypeForSignature(b.ch.getSignatureFromDeclaration(node), false)
  * 		}
  * 		// use symbol type from parent declaration to automatically handle expression type widening without duplicating logic
  * 		if ast.IsReturnStatement(node.Parent) {
@@ -232,7 +235,24 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
  * 	case pseudochecker.PseudoTypeKindUnion:
  * 		var res []*ast.Node
  * 		var hasElidedType bool
+ * 		var hasUndefined bool
  * 		members := t.AsPseudoTypeUnion().Types
+ * 		var appendTypeNode func(node *ast.Node)
+ * 		appendTypeNode = func(node *ast.Node) {
+ * 			if ast.IsUnionTypeNode(node) {
+ * 				for _, node := range node.AsUnionTypeNode().Types.Nodes {
+ * 					appendTypeNode(node)
+ * 				}
+ * 				return
+ * 			}
+ * 			if node.Kind == ast.KindUndefinedKeyword {
+ * 				if hasUndefined {
+ * 					return
+ * 				}
+ * 				hasUndefined = true
+ * 			}
+ * 			res = append(res, node)
+ * 		}
  * 		for _, m := range members {
  * 			if !b.ch.strictNullChecks {
  * 				if m.Kind == pseudochecker.PseudoTypeKindUndefined || m.Kind == pseudochecker.PseudoTypeKindNull {
@@ -240,7 +260,7 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
  * 					continue
  * 				}
  * 			}
- * 			res = append(res, b.pseudoTypeToNode(m))
+ * 			appendTypeNode(b.pseudoTypeToNode(m))
  * 		}
  * 		if len(res) == 1 {
  * 			return res[0]
@@ -446,6 +466,9 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
         } else {
           b.ctx!.tracker!.ReportInferenceFallback(node);
         }
+        if (inferred.IsSignatureReturn) {
+          return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, node), false);
+        }
         if (IsReturnStatement(node!.Parent)) {
           const enclosing = GetContainingFunction(node);
           if (IsAccessor(enclosing)) {
@@ -492,7 +515,23 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
       case PseudoTypeKindUnion: {
         const res: GoPtr<Node>[] = [];
         let hasElidedType = false;
+        let hasUndefined = false;
         const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
+        const appendTypeNode = (node: GoPtr<Node>): void => {
+          if (IsUnionTypeNode(node)) {
+            for (const child of AsUnionTypeNode(node)!.Types!.Nodes) {
+              appendTypeNode(child);
+            }
+            return;
+          }
+          if (node!.Kind === KindUndefinedKeyword) {
+            if (hasUndefined) {
+              return;
+            }
+            hasUndefined = true;
+          }
+          res.push(node);
+        };
         for (const member of members) {
           if (!b.ch!.strictNullChecks) {
             if (member!.Kind === PseudoTypeKindUndefined || member!.Kind === PseudoTypeKindNull) {
@@ -500,7 +539,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
               continue;
             }
           }
-          res.push(NodeBuilderImpl_pseudoTypeToNode(b, member));
+          appendTypeNode(NodeBuilderImpl_pseudoTypeToNode(b, member));
         }
         if (res.length === 1) {
           return res[0];
@@ -780,7 +819,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"implemented","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73","bodyHash":"fa2fbe90b13972a8cbdcd2ebd12417ba738ddf6150061dfd08ced96f2aa0b5b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"implemented","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73","bodyHash":"c828cf986b389ebfd8e419bfa2d4b30677da170346a2d815437859446cfc3c12"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeEquivalentToType(t *pseudochecker.PseudoType, type_ *Type, isOptionalAnnotated bool, reportErrors bool) bool {
@@ -793,9 +832,12 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * 	if typeFromPseudo == type_ {
  * 		return true
  * 	}
+ * 	undefinedStripped := type_
+ * 	if isOptionalAnnotated {
+ * 		undefinedStripped = b.ch.getTypeWithFacts(type_, TypeFactsNEUndefined)
+ * 	}
  * 	if typeFromPseudo != nil && type_ != nil {
  * 		if isOptionalAnnotated {
- * 			undefinedStripped := b.ch.getTypeWithFacts(type_, TypeFactsNEUndefined)
  * 			if undefinedStripped == typeFromPseudo {
  * 				return true
  * 			}
@@ -841,7 +883,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * 		if type_ == nil {
  * 			return false
  * 		}
- * 		targetProps := b.ch.getPropertiesOfType(type_)
+ * 		targetProps := b.ch.getPropertiesOfType(undefinedStripped)
  * 		// Count total declarations across all target prop symbols to handle getter/setter pairs,
  * 		// which are two elements in pt.Elements but only one symbol in targetProps.
  * 		targetDeclCount := 0
@@ -855,7 +897,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * 			var targetProp *ast.Symbol
  * 			elemSymbol := e.Name.Parent.Symbol()
  * 			if elemSymbol != nil {
- * 				targetProp = b.ch.getPropertyOfType(type_, elemSymbol.Name)
+ * 				targetProp = b.ch.getPropertyOfType(undefinedStripped, elemSymbol.Name)
  * 			}
  * 			if targetProp == nil {
  * 				// Name lookup failed or returned no result; search target properties
@@ -945,16 +987,16 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * 		return true
  * 	case pseudochecker.PseudoTypeKindTuple:
  * 		pt := t.AsPseudoTypeTuple()
- * 		if type_ == nil || !isTupleType(type_) {
+ * 		if undefinedStripped == nil || !isTupleType(undefinedStripped) {
  * 			return false
  * 		}
- * 		tupleTarget := type_.TargetTupleType()
+ * 		tupleTarget := undefinedStripped.TargetTupleType()
  * 		// Pseudo-tuples come from `as const` array literals, so they only ever have required elements.
  * 		// If the target tuple has optional, rest, or variadic elements, the structures can't match.
  * 		if tupleTarget.combinedFlags&ElementFlagsNonRequired != 0 {
  * 			return false
  * 		}
- * 		elementTypes := b.ch.getTypeArguments(type_)
+ * 		elementTypes := b.ch.getTypeArguments(undefinedStripped)
  * 		if len(pt.Elements) != len(elementTypes) {
  * 			return false
  * 		}
@@ -965,7 +1007,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * 		}
  * 		return true
  * 	case pseudochecker.PseudoTypeKindSingleCallSignature:
- * 		targetSig := b.ch.getSingleCallSignature(type_)
+ * 		targetSig := b.ch.getSingleCallSignature(undefinedStripped)
  * 		if targetSig == nil {
  * 			return false
  * 		}
@@ -1012,9 +1054,12 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
   if (typeFromPseudo === type_) {
     return true;
   }
+  let undefinedStripped = type_;
+  if (isOptionalAnnotated) {
+    undefinedStripped = Checker_getTypeWithFacts(b.ch, type_, TypeFactsNEUndefined);
+  }
   if (typeFromPseudo !== undefined && type_ !== undefined) {
     if (isOptionalAnnotated) {
-      const undefinedStripped = Checker_getTypeWithFacts(b.ch, type_, TypeFactsNEUndefined);
       if (undefinedStripped === typeFromPseudo) {
         return true;
       }
@@ -1053,10 +1098,10 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
     }
     case PseudoTypeKindObjectLiteral: {
       const pt = PseudoType_AsPseudoTypeObjectLiteral(t)!;
-      if (type_ === undefined) {
+      if (undefinedStripped === undefined) {
         return false;
       }
-      const targetProps = Checker_getPropertiesOfType(b.ch, type_) ?? [];
+      const targetProps = Checker_getPropertiesOfType(b.ch, undefinedStripped) ?? [];
       let targetDeclCount = 0;
       for (const prop of targetProps) {
         targetDeclCount += (prop!.Declarations ?? []).length;
@@ -1069,7 +1114,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
         let targetProp = undefined;
         const elemSymbol = Node_Symbol(elementNode.Name!.Parent);
         if (elemSymbol !== undefined) {
-          targetProp = Checker_getPropertyOfType(b.ch, type_, elemSymbol.Name);
+          targetProp = Checker_getPropertyOfType(b.ch, undefinedStripped, elemSymbol.Name);
         }
         if (targetProp === undefined) {
           for (const prop of targetProps) {
@@ -1164,14 +1209,14 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
     }
     case PseudoTypeKindTuple: {
       const pt = PseudoType_AsPseudoTypeTuple(t)!;
-      if (type_ === undefined || !isTupleType(type_)) {
+      if (undefinedStripped === undefined || !isTupleType(undefinedStripped)) {
         return false;
       }
-      const tupleTarget = Type_TargetTupleType(type_);
+      const tupleTarget = Type_TargetTupleType(undefinedStripped);
       if ((tupleTarget!.combinedFlags & ElementFlagsNonRequired) !== 0) {
         return false;
       }
-      const elementTypes = Checker_getTypeArguments(b.ch, type_);
+      const elementTypes = Checker_getTypeArguments(b.ch, undefinedStripped);
       if (pt.Elements.length !== elementTypes.length) {
         return false;
       }
@@ -1183,7 +1228,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
       return true;
     }
     case PseudoTypeKindSingleCallSignature: {
-      const targetSig = Checker_getSingleCallSignature(b.ch, type_);
+      const targetSig = Checker_getSingleCallSignature(b.ch, undefinedStripped);
       if (targetSig === undefined) {
         return false;
       }
@@ -1447,7 +1492,7 @@ export function NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToType","kind":"method","status":"implemented","sigHash":"514ab67c04d4af90f1383d187835e33312acaf16adc0f56bd81a2a78097466cb","bodyHash":"f519a13fa5c0ee58b2c153ae066a85024e464bf4f38db6c091368c97ee472e02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToType","kind":"method","status":"implemented","sigHash":"514ab67c04d4af90f1383d187835e33312acaf16adc0f56bd81a2a78097466cb","bodyHash":"ba3df9a7c2842a84f60712bbbf32b8354e94ebd5bbed1d96af4d021feb4d3fa3"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToType(t *pseudochecker.PseudoType) *Type {
@@ -1459,6 +1504,9 @@ export function NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(receiver: GoPtr
  * 		return b.ch.getTypeFromTypeNode(t.AsPseudoTypeDirect().TypeNode)
  * 	case pseudochecker.PseudoTypeKindInferred:
  * 		node := t.AsPseudoTypeInferred().Expression
+ * 		if t.AsPseudoTypeInferred().IsSignatureReturn {
+ * 			return b.ch.getReturnTypeOfSignature(b.ch.getSignatureFromDeclaration(node))
+ * 		}
  * 		ty := b.ch.getWidenedType(b.ch.getRegularTypeOfExpression(node))
  * 		return ty
  * 	case pseudochecker.PseudoTypeKindNoResult:
@@ -1535,6 +1583,9 @@ export function NodeBuilderImpl_pseudoTypeToType(receiver: GoPtr<NodeBuilderImpl
       return Checker_getTypeFromTypeNode(b.ch, PseudoType_AsPseudoTypeDirect(t)!.TypeNode);
     case PseudoTypeKindInferred: {
       const node = PseudoType_AsPseudoTypeInferred(t)!.Expression;
+      if (PseudoType_AsPseudoTypeInferred(t)!.IsSignatureReturn) {
+        return Checker_getReturnTypeOfSignature(b.ch, Checker_getSignatureFromDeclaration(b.ch, node));
+      }
       const ty = Checker_getWidenedType(b.ch, Checker_getRegularTypeOfExpression(b.ch, node));
       return ty;
     }

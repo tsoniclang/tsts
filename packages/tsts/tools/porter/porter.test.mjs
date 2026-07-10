@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
+  buildEmbeddedGoSourceUpdates,
   buildLocalOverrideStatus,
   buildExternalFacadeMap,
   buildLargeFileSplitStatus,
@@ -14,6 +15,7 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
+  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -34,6 +36,7 @@ import {
   buildAstGeneratedFiles,
   buildGeneratedAstSkips,
   emitKinds,
+  parseGoNodeDataMethods,
   parseGoFlagFile,
   writeAstGenerated,
 } from "./ast-generator.mjs";
@@ -426,7 +429,9 @@ test("buildStatus excludes exact inactive unit policies without counting their T
   assert.equal(status.counts.missing, 0);
   assert.equal(status.rows[0].status, "excluded");
   assert.equal(status.rows[0].reason, "formatter command path excluded");
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
+    "1 stale or missing embedded Go source blocks (fmtMain)",
+  ]);
 });
 
 test("buildStatus excludes generated and Go test units from production scaffold coverage", () => {
@@ -547,10 +552,121 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
   ]);
 });
 
+test("mechanical risk checks reject no-op and lossy standard-library substitutions", () => {
+  const noOp = collectMechanicalPortRisks(
+    unitRecord({
+      kind: "method",
+      snippet: "func (w *Watcher) run() { select { case <-w.ch: w.cycle() } }",
+      nodeKindCounts: { SelectStmt: 1, CallExpr: 1 },
+    }),
+    { status: "implemented", implementationBody: "{ void receiver; void cycle; }" },
+  );
+  assert.deepEqual(noOp.map((risk) => risk.kind), ["implemented-no-op"]);
+
+  const marshal = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func write(v Value) { text, _ := json.Marshal(v) }", nodeKindCounts: { CallExpr: 1 } }),
+    { status: "implemented", implementationBody: "{ const text = JSON.stringify(value); return text; }" },
+  );
+  assert.deepEqual(marshal.map((risk) => risk.kind), ["json-marshal-substitution"]);
+
+  const correctMarshalWithUnrelatedStringify = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func write(v Value) { text, _ := json.Marshal(v) }", nodeKindCounts: { CallExpr: 1 } }),
+    { status: "implemented", implementationBody: "{ const [text] = json_Marshal(value); debug(JSON.stringify(metadata)); return text; }" },
+  );
+  assert.deepEqual(correctMarshalWithUnrelatedStringify, []);
+
+  const aliasedMarshal = collectMechanicalPortRisks(
+    unitRecord({ externalRefs: [{ importPath: "encoding/json", name: "Marshal", role: "call" }], nodeKindCounts: { CallExpr: 1 } }),
+    {
+      status: "implemented",
+      implementationBody: "{ return GoMarshal(value); }",
+      implementationAnalysis: { calls: [{ text: "GoMarshal", terminal: "GoMarshal", importedName: "Marshal", argumentCalls: [] }] },
+    },
+  );
+  assert.deepEqual(aliasedMarshal, []);
+
+  const deepEqual = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func same(a, b Value) bool { return reflect.DeepEqual(a, b) }", nodeKindCounts: { ReturnStmt: 1, CallExpr: 1 } }),
+    { status: "implemented", implementationBody: "{ return JSON.stringify(a) === JSON.stringify(b); }" },
+  );
+  assert.deepEqual(deepEqual.map((risk) => risk.kind), ["deep-equal-stringify-substitution"]);
+
+  const tristate = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func enabled(o Options) bool { return o.Flag.IsTrue() }", nodeKindCounts: { ReturnStmt: 1 } }),
+    { status: "implemented", implementationBody: "{ return options.Flag !== 0; }" },
+  );
+  assert.deepEqual(tristate.map((risk) => risk.kind), ["tristate-numeric-truthiness"]);
+
+  const exactTristate = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func enabled(o Options) bool { return o.Flag.IsTrue() && o.Mask != 0 }", nodeKindCounts: { ReturnStmt: 1 } }),
+    { status: "implemented", implementationBody: "{ return Tristate_IsTrue(options.Flag) && options.Mask !== 0; }" },
+  );
+  assert.deepEqual(exactTristate, []);
+
+  const addedGuard = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func (b *BuildInfo) fileName(id int) string { return b.FileNames[id-1] }", nodeKindCounts: { ReturnStmt: 1 } }),
+    { status: "implemented", implementationBody: "{ if (id < 1) { return \"\"; } return receiver.FileNames[id - 1]; }" },
+  );
+  assert.deepEqual(addedGuard.map((risk) => risk.kind), ["unexpected-control-flow"]);
+
+  const documentedGuard = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func run() { cycle() }", nodeKindCounts: { CallExpr: 1 } }),
+    {
+      status: "implemented",
+      implementationBody: "{ if (singleThreaded) { cycle(); } }",
+      override: { category: "runtime-representation", allow: ["body"], reason: "test" },
+    },
+  );
+  assert.deepEqual(documentedGuard, []);
+
+  const documentedNoOp = collectMechanicalPortRisks(
+    unitRecord({ kind: "func", snippet: "func run() { cycle() }", nodeKindCounts: { CallExpr: 1 } }),
+    {
+      status: "implemented",
+      implementationBody: "{ void cycle; }",
+      override: { category: "runtime-representation", allow: ["body"], reason: "host schedules the cycle externally" },
+    },
+  );
+  assert.deepEqual(documentedNoOp, []);
+
+  const manualUpdate = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func visit(n *Node) *Node { return f.UpdateThing(n, visit(n.Child)) }", nodeKindCounts: { ReturnStmt: 1, CallExpr: 2 } }),
+    { status: "implemented", implementationBody: "{ const child = visit(node.Child); if (child !== node.Child) return updateNode(NewThing(factory, child), node); return node; }" },
+  );
+  assert.deepEqual(manualUpdate.map((risk) => risk.kind), ["unexpected-control-flow", "manual-node-update"]);
+
+  const multilineManualUpdate = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func visit(n *Node) *Node { return f.UpdateThing(n, visit(n.Child)) }", nodeKindCounts: { ReturnStmt: 1, CallExpr: 2 } }),
+    {
+      status: "implemented",
+      implementationBody: `{
+        return updateNode(
+          NewThing(factory, visit(node.Child)),
+          node,
+        );
+      }`,
+    },
+  );
+  assert.deepEqual(multilineManualUpdate.map((risk) => risk.kind), ["manual-node-update"]);
+
+  const pathSplit = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func baseName(p string) string { _, file := path.Split(p); return file }", nodeKindCounts: { ReturnStmt: 1, CallExpr: 1 } }),
+    { status: "implemented", implementationBody: "{ const index = p.lastIndexOf(\"/\"); return index < 0 ? p : p.slice(index + 1); }" },
+  );
+  assert.deepEqual(pathSplit.map((risk) => risk.kind), ["path-split-reimplementation"]);
+
+  const reverseCopy = collectMechanicalPortRisks(
+    unitRecord({ snippet: "func path() []int { values := collect(); slices.Reverse(values); return values }", nodeKindCounts: { ReturnStmt: 1, CallExpr: 2 } }),
+    { status: "implemented", implementationBody: "{ const values = collect(); return [...values].reverse(); }" },
+  );
+  assert.deepEqual(reverseCopy.map((risk) => risk.kind), ["slice-reverse-reimplementation"]);
+});
+
 test("scanTsUnits records files with and without metadata", () => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-"));
   try {
     mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    const longLiteral = "x".repeat(3000);
     writeFileSync(
       path.join(root, "internal/debug/debug.ts"),
       `/**
@@ -560,8 +676,11 @@ test("scanTsUnits records files with and without metadata", () => {
  *   "allow": ["body"],
  *   "reason": "test multiline metadata parsing"
  * }
+ *
+ * Go source:
+ * func Fail() {}
  */
-export {}
+export function Fail(): void { const text = ${JSON.stringify(longLiteral)}; if (text === "}") return; tailMarker(); }
 `,
     );
     writeFileSync(path.join(root, "internal/debug/helper.ts"), "export const helper = true;\n");
@@ -573,8 +692,100 @@ export {}
       allow: ["body"],
       reason: "test multiline metadata parsing",
     });
+    assert.equal(result.units[0].embeddedGoSource, " * func Fail() {}");
+    assert.match(result.units[0].implementationBody, /tailMarker\(\)/);
     assert.equal(result.files.find((file) => file.path.endsWith("debug.ts")).metadataCount, 1);
     assert.equal(result.files.find((file) => file.path.endsWith("helper.ts")).metadataCount, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("scanTsUnits rejects prose disguised as an embedded Go source block", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-source-label-"));
+  try {
+    writeFileSync(
+      path.join(root, "bad.ts"),
+      `/**
+ * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"s","bodyHash":"b"}
+ *
+ * Go source: (uses a helper rather than embedding upstream source)
+ */
+export function Bad(): void {}
+`,
+    );
+    assert.throws(
+      () => scanTsUnits(root),
+      /inline Go source annotations are forbidden.*use 'Port note:'.*exact embedded upstream source block/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("buildStatus rejects stale embedded Go source blocks", () => {
+  const unit = unitRecord({
+    id: "m::internal/debug/debug.go::func::Fail",
+    kind: "func",
+    qualifiedName: "Fail",
+    goPath: "internal/debug/debug.go",
+    sigHash: "sig",
+    bodyHash: "body",
+    snippet: "func Fail() {}",
+  });
+  const status = buildStatus(
+    baseConfig,
+    snapshotWith([fileRecord({ units: [unit] })]),
+    {
+      fileCount: 1,
+      files: [{ path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 }],
+      units: [{
+        id: unit.id,
+        kind: unit.kind,
+        path: "packages/tsts/src/internal/debug/debug.ts",
+        status: "implemented",
+        sigHash: unit.sigHash,
+        bodyHash: unit.bodyHash,
+        embeddedGoSource: " * func OldFail() {}",
+      }],
+    },
+  );
+
+  assert.equal(status.counts.embeddedSourceMismatches, 1);
+  assert.equal(collectVerifyFailures(status, {}).some((failure) => /stale or missing embedded Go source blocks/.test(failure)), true);
+});
+
+test("buildEmbeddedGoSourceUpdates synchronizes docs without disturbing overrides", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-source-docs-"));
+  try {
+    const file = path.join(root, "debug.ts");
+    const unit = unitRecord({
+      id: "m::internal/debug/debug.go::func::Fail",
+      kind: "func",
+      qualifiedName: "Fail",
+      goPath: "internal/debug/debug.go",
+      sigHash: "sig",
+      bodyHash: "body",
+      snippet: "func Fail() {\n\tpanic(\"fail\")\n}",
+    });
+    writeFileSync(file, `/**
+ * @tsgo-unit {"id":"${unit.id}","kind":"func","status":"implemented","sigHash":"sig","bodyHash":"body"}
+ * @tsgo-override {"category":"runtime-representation","allow":["body"],"reason":"test"}
+ *
+ * Go source:
+ * func OldFail() {}
+ */
+export function Fail(): void {}
+`);
+
+    const first = buildEmbeddedGoSourceUpdates(snapshotWith([fileRecord({ units: [unit] })]), root);
+    assert.equal(first.unitCount, 1);
+    assert.equal(first.updates.length, 1);
+    assert.match(first.updates[0].text, /@tsgo-override/);
+    assert.match(first.updates[0].text, /\* func Fail\(\) \{\n \* \tpanic\("fail"\)\n \* \}/);
+
+    writeFileSync(file, first.updates[0].text);
+    assert.equal(buildEmbeddedGoSourceUpdates(snapshotWith([fileRecord({ units: [unit] })]), root).unitCount, 0);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -910,6 +1121,45 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /\/\/ @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","sourceRevision":"abc123","path":"go\/compat\.ts","contentHash":"[a-f0-9]{64}"}/);
   assert.match(compat, /export class GoStructMap<K, V> implements Map<K, V>/);
   assert.match(compat, /export function NewGoStructMap<K, V>\(\): GoStructMap<K, V>/);
+  assert.match(compat, /export function MakeGoChan<T>\(capacity = 0, zeroValue: \(\) => T/);
+  assert.match(compat, /export function GoChanSelect\(cases: readonly GoChanSelectCase\[\]\)/);
+  assert.match(compat, /export function GoChanAsReceive<T>\(channel: GoChan<T>\): GoChan<T, "receive">/);
+  assert.match(compat, /export function GoChanAsSend<T>\(channel: GoChan<T>\): GoChan<T, "send">/);
+  assert.match(compat, /export function GoChanTrySend<T>\(channel: GoChan<T, string>, value: T\): bool/);
+  assert.match(compat, /export function GoChanReceive<T>\(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>\): \(\) => void/);
+  assert.match(compat, /export function GoChanClose<T>\(channel: GoChan<T, string>\): void/);
+});
+
+test("external value facades render explicit host-native initializers from policy", () => {
+  const config = {
+    ...baseConfig,
+    externalFacadePolicies: [
+      {
+        goName: "syscall.SIGINT",
+        tsModule: "go/syscall.ts",
+        tsName: "SIGINT",
+        kind: "value",
+        arity: 0,
+        tsInitializer: '"SIGINT"',
+      },
+    ],
+  };
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "cmd/tool/main.go",
+      importPath: "example/tool",
+      units: [unitRecord({ externalRefs: [{ importPath: "syscall", name: "SIGINT", role: "value", count: 1 }] })],
+    }),
+  ]);
+  assert.match(renderExternalFacadeModules(config, snapshot).get("go/syscall.ts"), /export const SIGINT = "SIGINT";/);
+
+  assert.throws(
+    () => buildExternalFacadeMap({
+      ...baseConfig,
+      externalFacadePolicies: [{ goName: "syscall.Signal", kind: "functionValue", tsInitializer: '"wrong"' }],
+    }, snapshotWith([])),
+    /may declare tsInitializer only when kind is 'value'/,
+  );
 });
 
 test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, and invalid generated files", () => {
@@ -1312,6 +1562,52 @@ test("ast-schema-model: alias derivation matches ast_generated.go (231 node + 72
   assert.equal(Object.keys(schema.listAliases).length, 23);
 });
 
+test("ast-generator maps every schema goOnly compiler-state field without an owner allowlist", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const goOnlyFields = [
+    ...Object.entries(ast.bases).flatMap(([owner, definition]) =>
+      Object.entries(definition.fields ?? {}).filter(([, field]) => field.goOnly).map(([name, field]) => ["base", owner, name, field.type])),
+    ...Object.entries(ast.nodes.definitions).flatMap(([owner, definition]) =>
+      (definition.members ?? []).filter((field) => field.goOnly).map((field) => ["node", owner, field.name, field.type])),
+  ];
+  assert.deepEqual(goOnlyFields, [
+    ["base", "DeclarationBase", "Symbol", "*Symbol"],
+    ["base", "ExportableBase", "LocalSymbol", "*Symbol"],
+    ["base", "LocalsContainerBase", "Locals", "SymbolTable"],
+    ["base", "LocalsContainerBase", "NextContainer", "*Node"],
+    ["base", "FlowNodeBase", "FlowNode", "*FlowNode"],
+    ["base", "CompositeBase", "facts", "atomic.Uint32"],
+    ["base", "BodyBase", "EndFlowNode", "*FlowNode"],
+    ["node", "CaseOrDefaultClause", "FallthroughFlowNode", "*FlowNode"],
+    ["node", "FunctionDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "ConstructorDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "ClassStaticBlockDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "FunctionExpression", "ReturnFlowNode", "*FlowNode"],
+  ]);
+
+  const files = buildAstGeneratedFiles(baseConfig, "abc123");
+  const node = files.get("internal/ast/generated/node.ts");
+  const data = files.get("internal/ast/generated/data.ts");
+
+  assert.match(node, /export interface DeclarationBase[\s\S]*Symbol: GoPtr<Symbol>/);
+  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: SymbolTable;[\s\S]*NextContainer: GoPtr<Node>/);
+  assert.match(node, /export interface FlowNodeBase[\s\S]*FlowNode: GoPtr<FlowNode>/);
+  assert.match(node, /export interface CompositeBase[\s\S]*facts: Uint32/);
+  assert.match(node, /export interface BodyBase[\s\S]*EndFlowNode: GoPtr<FlowNode>/);
+  assert.match(data, /export interface ConstructorDeclaration[\s\S]*ReturnFlowNode: GoPtr<FlowNode>/);
+  assert.match(data, /export interface CaseOrDefaultClause[\s\S]*FallthroughFlowNode: GoPtr<FlowNode>/);
+});
+
+test("ast-generator parses the exact upstream nodeData method order", () => {
+  const source = readFileSync(resolveRepo("packages/tsts/_vendor/typescript-go/internal/ast/ast.go"), "utf8");
+  assert.deepEqual(parseGoNodeDataMethods(source), [
+    "AsNode", "ForEachChild", "VisitEachChild", "Clone", "Name", "Modifiers", "setModifiers",
+    "FlowNodeData", "DeclarationData", "ExportableData", "LocalsContainerData", "FunctionLikeData",
+    "ClassLikeData", "BodyData", "LiteralLikeData", "TemplateLiteralLikeData", "SubtreeFacts",
+    "computeSubtreeFacts", "subtreeFactsWorker", "propagateSubtreeFacts",
+  ]);
+});
+
 test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion, not NodeDefault", () => {
   const files = buildAstGeneratedFiles(baseConfig, "rev-ast-1");
   const data = files.get("internal/ast/generated/data.ts");
@@ -1547,9 +1843,10 @@ test("buildSchemaSourceSyncStatus flags schema-dir copies that drift from live s
     const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
     const config = {
       sourceRoot: relSource,
-      schemaSourceSyncChecks: [
-        { schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" },
-        { schema: `${relSchema}/symbolflags.go`, source: "internal/ast/symbolflags.go" },
+      astSchemaDir: relSchema,
+      schemaFilePolicies: [
+        { path: `${relSchema}/nodeflags.go`, kind: "upstream-copy", source: "internal/ast/nodeflags.go" },
+        { path: `${relSchema}/symbolflags.go`, kind: "upstream-copy", source: "internal/ast/symbolflags.go" },
       ],
     };
     const status = buildSchemaSourceSyncStatus(config);
@@ -1562,18 +1859,22 @@ test("buildSchemaSourceSyncStatus flags schema-dir copies that drift from live s
   }
 });
 
-test("real porter config checks every schema input with a live upstream counterpart", () => {
+test("real porter config classifies every schema file and checks every upstream copy", () => {
   const config = JSON.parse(readFileSync(resolveRepo("packages/tsts/porter.config.json"), "utf8"));
   assert.deepEqual(
-    config.schemaSourceSyncChecks.map((check) => [check.schema, check.source]).sort(),
+    config.schemaFilePolicies.map((policy) => [policy.path, policy.kind, policy.source]).sort(),
     [
-      ["packages/tsts/schema/tsgo/ast.json", "_scripts/ast.json"],
-      ["packages/tsts/schema/tsgo/ast.schema.json", "_scripts/ast.schema.json"],
-      ["packages/tsts/schema/tsgo/nodeflags.go", "internal/ast/nodeflags.go"],
-      ["packages/tsts/schema/tsgo/protocol.ts", "_packages/native-preview/src/api/node/protocol.ts"],
-      ["packages/tsts/schema/tsgo/symbolflags.go", "internal/ast/symbolflags.go"],
+      ["packages/tsts/schema/tsgo/VERSION.md", "local-metadata", undefined],
+      ["packages/tsts/schema/tsgo/ast.json", "upstream-copy", "_scripts/ast.json"],
+      ["packages/tsts/schema/tsgo/ast.schema.json", "upstream-copy", "_scripts/ast.schema.json"],
+      ["packages/tsts/schema/tsgo/nodeflags.go", "upstream-copy", "internal/ast/nodeflags.go"],
+      ["packages/tsts/schema/tsgo/protocol.ts", "upstream-copy", "_packages/native-preview/src/api/node/protocol.ts"],
+      ["packages/tsts/schema/tsgo/symbolflags.go", "upstream-copy", "internal/ast/symbolflags.go"],
     ].sort(),
   );
+  const status = buildSchemaSourceSyncStatus(config);
+  assert.equal(status.classifiedFileCount, 6);
+  assert.deepEqual(status.policyIssues, []);
 });
 
 test("buildSchemaSourceSyncStatus flags a missing live source file (upstream removed it)", () => {
@@ -1585,7 +1886,8 @@ test("buildSchemaSourceSyncStatus flags a missing live source file (upstream rem
     const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
     const config = {
       sourceRoot: path.relative(repoRoot, dir).split(path.sep).join("/"),
-      schemaSourceSyncChecks: [{ schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" }],
+      astSchemaDir: relSchema,
+      schemaFilePolicies: [{ path: `${relSchema}/nodeflags.go`, kind: "upstream-copy", source: "internal/ast/nodeflags.go" }],
     };
     const status = buildSchemaSourceSyncStatus(config);
     assert.equal(status.mismatches.length, 1);
@@ -1607,9 +1909,40 @@ test("buildSchemaSourceSyncStatus passes when copies are byte-identical, and ign
     const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
     const config = {
       sourceRoot: path.relative(repoRoot, sourceRoot).split(path.sep).join("/"),
-      schemaSourceSyncChecks: [{ schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" }],
+      astSchemaDir: relSchema,
+      schemaFilePolicies: [{ path: `${relSchema}/nodeflags.go`, kind: "upstream-copy", source: "internal/ast/nodeflags.go" }],
     };
     assert.equal(buildSchemaSourceSyncStatus(config).mismatches.length, 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("buildSchemaSourceSyncStatus rejects unclassified, duplicate, missing, and out-of-directory schema policies", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "porter-schema-policy-"));
+  try {
+    const schemaDir = path.join(dir, "schema");
+    mkdirSync(schemaDir, { recursive: true });
+    writeFileSync(path.join(schemaDir, "ast.json"), "{}\n");
+    writeFileSync(path.join(schemaDir, "extra.json"), "{}\n");
+    const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
+    const outside = path.relative(repoRoot, path.join(dir, "outside.json")).split(path.sep).join("/");
+    const config = {
+      sourceRoot: path.relative(repoRoot, dir).split(path.sep).join("/"),
+      astSchemaDir: relSchema,
+      schemaFilePolicies: [
+        { path: `${relSchema}/ast.json`, kind: "local-metadata" },
+        { path: `${relSchema}/ast.json`, kind: "local-metadata" },
+        { path: `${relSchema}/missing.json`, kind: "local-metadata" },
+        { path: outside, kind: "local-metadata" },
+      ],
+    };
+    const status = buildSchemaSourceSyncStatus(config);
+    assert.equal(status.policyIssues.some((issue) => /no explicit policy/.test(issue.reason) && issue.path.endsWith("extra.json")), true);
+    assert.equal(status.policyIssues.some((issue) => /duplicate policies/.test(issue.reason)), true);
+    assert.equal(status.policyIssues.some((issue) => /classified schema directory file is missing/.test(issue.reason)), true);
+    assert.equal(status.policyIssues.some((issue) => /is outside/.test(issue.reason)), true);
+    assert.equal(collectSchemaSourceSyncFailures(status).some((failure) => /schema file policy issues/.test(failure)), true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -1678,6 +2011,38 @@ test("buildLocalOverrideStatus accepts local signature overrides with snapshots"
   assert.equal(status.byAllow.body, 1);
   assert.equal(status.byAllow.signature, 1);
   assert.equal(status.signatureUnits.length, 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
+test("buildLocalOverrideStatus accepts local initializer overrides with snapshots", () => {
+  const status = buildLocalOverrideStatus({}, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/version.go::constGroup::Version",
+    path: "packages/tsts/src/internal/core/version.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["initializer"],
+      reason: "Host-specific constant.",
+      goInitializer: 'Version={"kind":"string","value":"7"}',
+      tsInitializer: 'Version={"kind":"string","value":"host"}',
+    },
+  }] });
+  assert.equal(status.byAllow.initializer, 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
+test("buildLocalOverrideStatus accepts local value-order overrides with snapshots", () => {
+  const status = buildLocalOverrideStatus({}, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/checker/types.go::constGroup::A+B",
+    path: "packages/tsts/src/internal/checker/types.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["value-order"],
+      reason: "JavaScript const initialization requires dependency order.",
+      goValueOrder: "A,B",
+      tsValueOrder: "B,A",
+    },
+  }] });
+  assert.equal(status.byAllow["value-order"], 1);
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 

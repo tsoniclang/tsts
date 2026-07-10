@@ -136,7 +136,36 @@ import type { Node } from "./spine.js";
  * 	switch token {
  * 	case KindStaticKeyword:
  * 		return ModifierFlagsStatic
- * 	...
+ * 	case KindPublicKeyword:
+ * 		return ModifierFlagsPublic
+ * 	case KindProtectedKeyword:
+ * 		return ModifierFlagsProtected
+ * 	case KindPrivateKeyword:
+ * 		return ModifierFlagsPrivate
+ * 	case KindAbstractKeyword:
+ * 		return ModifierFlagsAbstract
+ * 	case KindAccessorKeyword:
+ * 		return ModifierFlagsAccessor
+ * 	case KindExportKeyword:
+ * 		return ModifierFlagsExport
+ * 	case KindDeclareKeyword:
+ * 		return ModifierFlagsAmbient
+ * 	case KindConstKeyword:
+ * 		return ModifierFlagsConst
+ * 	case KindDefaultKeyword:
+ * 		return ModifierFlagsDefault
+ * 	case KindAsyncKeyword:
+ * 		return ModifierFlagsAsync
+ * 	case KindReadonlyKeyword:
+ * 		return ModifierFlagsReadonly
+ * 	case KindOverrideKeyword:
+ * 		return ModifierFlagsOverride
+ * 	case KindInKeyword:
+ * 		return ModifierFlagsIn
+ * 	case KindOutKeyword:
+ * 		return ModifierFlagsOut
+ * 	case KindDecorator:
+ * 		return ModifierFlagsDecorator
  * 	}
  * 	return ModifierFlagsNone
  * }

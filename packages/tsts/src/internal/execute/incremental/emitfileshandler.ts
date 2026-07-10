@@ -264,6 +264,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
  *
  * Go source:
  * func (h *emitFilesHandler) emitFilesIncremental(options compiler.EmitOptions) []*compiler.EmitResult {
+ * 	// Get all affected files
  * 	collectAllAffectedFiles(h.ctx, h.program)
  * 	if h.ctx.Err() != nil {
  * 		return nil
@@ -279,6 +280,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
  * 		pendingKind := h.getPendingEmitKindForEmitOptions(emitKind, options)
  * 		if pendingKind != 0 {
  * 			wg.Queue(func() {
+ * 				// Determine if we can do partial emit
  * 				var emitOnly compiler.EmitOnly
  * 				if (pendingKind & FileEmitKindAllJs) != 0 {
  * 					emitOnly = compiler.EmitOnlyJs
@@ -316,6 +318,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
  * 		return nil
  * 	}
  *
+ * 	// Get updated errors that were not included in affected files emit
  * 	h.program.snapshot.emitDiagnosticsPerFile.Range(func(path tspath.Path, diagnostics *DiagnosticsOrBuildInfoDiagnosticsWithFileName) bool {
  * 		if _, ok := h.emitUpdates.Load(path); !ok {
  * 			affectedFile := h.program.program.GetSourceFileByPath(path)
@@ -460,18 +463,24 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
  * 					info, _ := h.program.snapshot.fileInfos.Load(options.TargetSourceFile.Path())
  * 					if info.signature == info.version {
  * 						signature := h.program.snapshot.computeSignatureWithDiagnostics(options.TargetSourceFile, text, data)
+ * 						// With d.ts diagnostics they are also part of the signature so emitSignature will be different from it since its just hash of d.ts
  * 						if len(data.Diagnostics) == 0 {
  * 							emitSignature = signature
  * 						}
- * 						if signature != info.version {
+ * 						if signature != info.version { // Update it
  * 							h.signatures.Store(options.TargetSourceFile.Path(), signature)
  * 						}
  * 					}
+ *
+ * 					// Store d.ts emit hash so later can be compared to check if d.ts has changed.
+ * 					// Currently we do this only for composite projects since these are the only projects that can be referenced by other projects
+ * 					// and would need their d.ts change time in --build mode
  * 					if h.skipDtsOutputOfComposite(options.TargetSourceFile, fileName, text, data, emitSignature, &differsOnlyInMap) {
  * 						return nil
  * 					}
  * 				}
  * 			}
+ *
  * 			var aTime time.Time
  * 			if differsOnlyInMap {
  * 				aTime = h.program.host.GetMTime(fileName)
@@ -483,6 +492,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
  * 				err = h.program.program.Host().FS().WriteFile(fileName, text)
  * 			}
  * 			if err == nil && differsOnlyInMap {
+ * 				// Revert the time to original one
  * 				err = h.program.host.SetMTime(fileName, aTime)
  * 			}
  * 			return err
@@ -564,11 +574,15 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
  * 	if newSignature == "" {
  * 		newSignature = h.program.snapshot.computeHash(getTextHandlingSourceMapForSignature(text, data))
  * 	}
+ * 	// Dont write dts files if they didn't change
  * 	if newSignature == oldSignature {
+ * 		// If the signature was encoded as string the dts map options match so nothing to do
  * 		if oldSignatureFormat != nil && oldSignatureFormat.signature == oldSignature {
  * 			data.SkippedDtsWrite = true
  * 			return true
  * 		} else {
+ * 			// Mark as differsOnlyInMap so that we can reverse the timestamp with --build so that
+ * 			// the downstream projects dont detect this as change in d.ts file
  * 			*differsOnlyInMap = h.program.Options().Build.IsTrue()
  * 		}
  * 	} else {
@@ -643,6 +657,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
  * 			h.program.snapshot.affectedFilesPendingEmit.Delete(file)
  * 			h.program.snapshot.buildInfoEmitPending.Store(true)
  * 		}
+ * 		// Always use correct order when to collect the result
  * 		var results []*compiler.EmitResult
  * 		for _, file := range h.program.GetSourceFiles() {
  * 			if latestChangedDtsFile, ok := h.latestChangedDtsFiles.Load(file.Path()); ok {
@@ -747,7 +762,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
             SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
               receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
               SourceFile_Path(file),
-              { diagnostics: update!.result!.Diagnostics, buildInfoDiagnostics: [] } as DiagnosticsOrBuildInfoDiagnosticsWithFileName
+              { diagnostics: update!.result!.Diagnostics, buildInfoDiagnostics: undefined } as DiagnosticsOrBuildInfoDiagnosticsWithFileName
             );
           }
         }
@@ -778,6 +793,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
  * 		return result
  * 	}
  *
+ * 	// Emit only affected files if using builder for emit
  * 	return emitHandler.emitAllAffectedFiles(options)
  * }
  */

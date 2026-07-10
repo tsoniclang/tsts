@@ -937,7 +937,7 @@ export function NameGenerator_checkUniqueName(receiver: GoPtr<NameGenerator>, na
 export function nextContainer(node: GoPtr<Node>): GoPtr<Node> {
   const data = Node_LocalsContainerData(node);
   if (data !== undefined) {
-    return (data as unknown as { NextContainer?: GoPtr<Node> }).NextContainer;
+    return data.NextContainer;
   }
   return undefined;
 }

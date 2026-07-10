@@ -367,7 +367,7 @@ function emitFlagGroup(lines, typeName, banner, entries) {
 
 const HAND_WRITTEN_BASES = new Set(["NodeBase"]);
 
-// The 20 nodeData methods, in declaration order, with their default targets in
+// The nodeData methods, in declaration order, with their default targets in
 // spine.ts. Methods overridden by hand-written base structs resolve (via Go
 // embedding promotion) to that base's free-fn; the rest fall to NodeDefault_*.
 // Generated per-concrete overrides exist for Clone/ForEachChild/VisitEachChild/
@@ -376,7 +376,6 @@ const HAND_WRITTEN_BASES = new Set(["NodeBase"]);
 const NODE_DATA_METHODS = [
   "AsNode",
   "ForEachChild",
-  "IterChildren",
   "VisitEachChild",
   "Clone",
   "Name",
@@ -396,6 +395,33 @@ const NODE_DATA_METHODS = [
   "subtreeFactsWorker",
   "propagateSubtreeFacts",
 ];
+
+export function parseGoNodeDataMethods(source) {
+  const declaration = /^type\s+nodeData\s+interface\s*\{\s*$/m.exec(source);
+  if (declaration === null) throw new Error("could not find TS-Go nodeData interface");
+  const bodyStart = declaration.index + declaration[0].length;
+  const bodyEnd = source.indexOf("\n}", bodyStart);
+  if (bodyEnd < 0) throw new Error("unterminated TS-Go nodeData interface");
+  const methods = [];
+  for (const rawLine of source.slice(bodyStart, bodyEnd).split(/\r?\n/)) {
+    const line = rawLine.replace(/\/\/.*$/, "").trim();
+    if (line === "") continue;
+    const match = /^([A-Za-z_]\w*)\s*\(/.exec(line);
+    if (match === null) throw new Error(`unsupported TS-Go nodeData member: ${line}`);
+    methods.push(match[1]);
+  }
+  return methods;
+}
+
+function assertNodeDataMethodsMatchUpstream(config) {
+  const sourcePath = resolveRepo(path.join(config.sourceRoot ?? "packages/tsts/_vendor/typescript-go", "internal/ast/ast.go"));
+  const actual = parseGoNodeDataMethods(readFileSync(sourcePath, "utf8"));
+  if (JSON.stringify(actual) !== JSON.stringify(NODE_DATA_METHODS)) {
+    throw new Error(
+      `TS-Go nodeData method set drifted; update the generator from upstream\nexpected: ${NODE_DATA_METHODS.join(", ")}\nactual: ${actual.join(", ")}`,
+    );
+  }
+}
 
 // Hand-written base data-view method providers (ast.go), keyed by method ->
 // ordered list of bases that provide an override. The generator resolves the
@@ -668,14 +694,17 @@ function emitNode(schema) {
   lines.push(`import type { ModifierList, Node, NodeBase, NodeList } from "../spine.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { TokenFlags } from "../tokenflags.js";`);
+  lines.push(`import type { FlowNode } from "../flow.js";`);
+  lines.push(`import type { Symbol, SymbolTable } from "../symbol.js";`);
   lines.push(`import type {`);
   // forward node-union / list references used by base fields
   const unionRefs = collectBaseFieldRefs(schema);
   for (const ref of unionRefs) lines.push(`  ${ref},`);
   lines.push(`} from "./unions.js";`);
   lines.push("");
-  lines.push(`// Symbol/SymbolTable/FlowNode are owned by sibling ast-package files (deferred);`);
-  lines.push(`// they appear only on goOnly base fields, which are excluded from this TS layer.`);
+  lines.push(`// TS-Go stores binder/checker state directly on these embedded bases. The fields`);
+  lines.push(`// remain central here even though the schema marks them goOnly: the TypeScript`);
+  lines.push(`// runtime shares the same Node state rather than maintaining divergent side tables.`);
   lines.push("");
 
   for (const baseName of schema.baseNames()) {
@@ -689,15 +718,9 @@ function emitNode(schema) {
     if (brand) {
       fieldLines.push(`  readonly ${brand}?: never;`);
     }
-    // CompositeBase.facts is goOnly in the schema, but the hand-written
-    // CompositeBase_subtreeFactsWorker (spine.ts) reads/writes it. It is a real
-    // runtime field (atomic.Uint32), so emit it faithfully.
-    if (baseName === "CompositeBase") {
-      fieldLines.push(`  facts: Uint32;`);
-    }
     for (const field of schema.baseFields(baseName)) {
-      if (field.noTS) continue;
-      fieldLines.push(`  ${field.name}: ${baseFieldTsType(schema, field)};`);
+      if (field.noTS && !field.goOnly) continue;
+      fieldLines.push(`  ${field.name}: ${field.goOnly ? goOnlyFieldTsType(field) : field.tsReference()};`);
     }
     const body = fieldLines.length > 0 ? `\n${fieldLines.join("\n")}\n` : "";
     lines.push(`export interface ${baseName}${extendsClause} {${body}}`);
@@ -706,11 +729,24 @@ function emitNode(schema) {
   return lines.join("\n");
 }
 
-// CompositeBase.facts is goOnly in the schema, but the hand-written
-// CompositeBase_subtreeFactsWorker in spine.ts reads/writes `facts`. Provide it
-// as a runtime field typed atomic.Uint32 (faithful to the Go struct).
-function baseFieldTsType(schema, field) {
-  return schema.formatTsReference(field.rawType, field.listKind);
+const GO_ONLY_FIELD_TS_TYPES = new Map([
+  ["*Symbol", "GoPtr<Symbol>"],
+  ["SymbolTable", "SymbolTable"],
+  ["*Node", "GoPtr<Node>"],
+  ["*FlowNode", "GoPtr<FlowNode>"],
+  ["atomic.Uint32", "Uint32"],
+]);
+
+function goOnlyFieldTsType(field) {
+  if (!field.goOnly) throw new Error(`goOnly field mapper received non-goOnly field '${field.name}'`);
+  if (field.listKind !== undefined) {
+    throw new Error(`unsupported list kind '${field.listKind}' on goOnly field '${field.name}'`);
+  }
+  const mapped = GO_ONLY_FIELD_TS_TYPES.get(field.rawType);
+  if (mapped === undefined) {
+    throw new Error(`unsupported goOnly AST field type '${field.rawType}' on '${field.name}'`);
+  }
+  return mapped;
 }
 
 // CompositeBase needs a (non-goOnly-in-TS) facts cell because spine reads it.
@@ -742,10 +778,13 @@ function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
+  lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
   lines.push(`import type { Kind } from "./kinds.js";`);
   lines.push(`import type { TokenFlags } from "../tokenflags.js";`);
+  lines.push(`import type { FlowNode } from "../flow.js";`);
+  lines.push(`import type { Symbol, SymbolTable } from "../symbol.js";`);
   lines.push(`import {`);
   lines.push(`  AsSyntaxList,`);
   lines.push(`} from "./casts.js";`);
@@ -755,7 +794,6 @@ function emitData(schema) {
   lines.push(`import {`);
   lines.push(`  cloneNode,`);
   lines.push(`  goReceiverKey,`);
-  lines.push(`  invert,`);
   lines.push(`  NodeFactory_NewModifierList,`);
   lines.push(`  NodeFactory_NewNodeList,`);
   lines.push(`  visit,`);
@@ -768,7 +806,7 @@ function emitData(schema) {
   // base data-view free-fns referenced by adapters
   for (const fn of baseFreeFnsUsed()) lines.push(`  ${fn},`);
   lines.push(`} from "../spine.js";`);
-  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeIter, NodeList, NodeVisitor, Visitor, nodeData } from "../spine.js";`);
+  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeList, NodeVisitor, Visitor, nodeData } from "../spine.js";`);
   lines.push(`import type { NodeVisitor as ConcreteNodeVisitor } from "../visitor.js";`);
   lines.push(`import type { SubtreeFacts } from "../subtreefacts.js";`);
   lines.push(`import {`);
@@ -1094,12 +1132,12 @@ function emitConcreteInterface(schema, node, lines) {
   const extendsClause = exts.length > 0 ? ` extends ${exts.join(", ")}` : "";
   const fieldLines = [];
   for (const m of schema.members(node)) {
-    if (m.noTS) continue;
+    if (m.noTS && !m.goOnly) continue;
     if (m.isKindParam()) continue;
     if (m.inherited) continue;
     // Go has no optional field marker — pointer fields are nilable (GoPtr) and
     // scalar fields are zero-valued. Mirror that; do not add a TS `?`.
-    fieldLines.push(`  ${m.name}: ${m.tsReference()};`);
+    fieldLines.push(`  ${m.name}: ${m.goOnly ? goOnlyFieldTsType(m) : m.tsReference()};`);
   }
   const body = fieldLines.length > 0 ? `\n${fieldLines.join("\n")}\n` : "";
   lines.push(`export interface ${node}${extendsClause} {${body}}`);
@@ -1267,9 +1305,6 @@ function adapterSlot(node, method, t) {
       return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v as GoPtr<ConcreteNodeVisitor>); },`;
     }
     return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v); },`;
-  }
-  if (method === "IterChildren") {
-    return `IterChildren(): NodeIter { return NodeDefault_IterChildren(${receiver}); },`;
   }
   if (method === "setModifiers") {
     return `setModifiers(modifiers: GoPtr<ModifierList>): void { ${t.fn}(${receiver}, modifiers); },`;
@@ -1749,6 +1784,7 @@ function generatedHeader(relativePath, body, sourceRevision, schemaInputs) {
 
 // Returns Map<tsRootRelativePath, fullFileText>.
 export function buildAstGeneratedFiles(config, sourceRevision) {
+  assertNodeDataMethodsMatchUpstream(config);
   const ac = astConfig(config);
   const schema = loadAstSchema(config);
   const model = new AstSchema(schema.ast);

@@ -12,12 +12,12 @@ const byteSlice = (s: string, start: number, end?: number): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::version","kind":"varGroup","status":"implemented","sigHash":"6f15dc9e15411aaf131338261dfeb142ae032283be7bc55a54627293a6bd499c","bodyHash":"d8937f57191d9a6434c24f04c09ddd1053d5dfadb4b245761eb4c4494785d1dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::varGroup::version","kind":"varGroup","status":"implemented","sigHash":"6f15dc9e15411aaf131338261dfeb142ae032283be7bc55a54627293a6bd499c","bodyHash":"33e8b0080e09539d552f02d153d4d32d54508472adb5773b48ba6867022f8ce4"}
  *
  * Go source:
- * var version = "7.0.0-dev"
+ * var version = "7.1.0-dev"
  */
-export let version: string = "7.0.0-dev";
+export let version: string = "7.1.0-dev";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/version.go::func::Version","kind":"func","status":"implemented","sigHash":"435e58b2449ff60065ece1684ead65c3df1b87879148e0860f1a39af178c5a13","bodyHash":"13b7928d416beeb7d5657b12aec9258b2b090014f1c5485383b894a8d13b90e3"}

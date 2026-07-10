@@ -1483,7 +1483,8 @@ export function CommonJSModuleTransformer_createExportExpression(receiver: GoPtr
  * 		nil, /*questionDotToken* /
  * 		nil, /*typeArguments* /
  * 		tx.Factory().NewNodeList(args),
- * 		ast.NodeFlagsNone)
+ * 		ast.NodeFlagsNone,
+ * 	)
  * }
  */
 export function CommonJSModuleTransformer_createRequireCall(receiver: GoPtr<CommonJSModuleTransformer>, node: GoPtr<Node>): GoPtr<Node> {
@@ -1560,13 +1561,14 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
  * 		tx.EmitContext().AssignCommentAndSourceMapRanges(statement, node.AsNode())
  * 		return statement
  * 	}
- * 
+ *
  * 	var statements []*ast.Statement
  * 	var variables []*ast.VariableDeclarationNode
  * 	namespaceDeclaration := ast.GetNamespaceDeclarationNode(node.AsNode())
  * 	if namespaceDeclaration != nil && !ast.IsDefaultImport(node.AsNode()) {
  * 		// import * as n from "mod";
- * 		variables = append(variables,
+ * 		variables = append(
+ * 			variables,
  * 			tx.Factory().NewVariableDeclaration(
  * 				namespaceDeclaration.Name().Clone(tx.Factory()),
  * 				nil, /*exclamationToken* /
@@ -1579,7 +1581,8 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
  * 		// import { x, y } from "mod";
  * 		// import d, { x, y } from "mod";
  * 		// import d, * as n from "mod";
- * 		variables = append(variables,
+ * 		variables = append(
+ * 			variables,
  * 			tx.Factory().NewVariableDeclaration(
  * 				tx.Factory().NewGeneratedNameForNode(node.AsNode()),
  * 				nil, /*exclamationToken* /
@@ -1587,9 +1590,10 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
  * 				tx.getHelperExpressionForImport(node, tx.createRequireCall(node.AsNode())),
  * 			),
  * 		)
- * 
+ *
  * 		if namespaceDeclaration != nil && ast.IsDefaultImport(node.AsNode()) {
- * 			variables = append(variables,
+ * 			variables = append(
+ * 				variables,
  * 				tx.Factory().NewVariableDeclaration(
  * 					namespaceDeclaration.Name().Clone(tx.Factory()),
  * 					nil, /*exclamationToken* /
@@ -1599,7 +1603,7 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
  * 			)
  * 		}
  * 	}
- * 
+ *
  * 	varStatement := tx.Factory().NewVariableStatement(
  * 		nil, /*modifiers* /
  * 		tx.Factory().NewVariableDeclarationList(
@@ -1607,7 +1611,7 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
  * 			ast.NodeFlagsConst,
  * 		),
  * 	)
- * 
+ *
  * 	tx.EmitContext().SetOriginal(varStatement, node.AsNode())
  * 	tx.EmitContext().AssignCommentAndSourceMapRanges(varStatement, node.AsNode())
  * 	statements = append(statements, varStatement)
@@ -2395,7 +2399,7 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformInitializedVariable","kind":"method","status":"implemented","sigHash":"78eb78c1cdd835f3c0cb10f0e029f1cb6214f5b84486a1ef29b1f3f4a15bf6ec","bodyHash":"1bbbfa0fb36cc1f1fcaff7f32e8efd89bbf7d17dea09c76024e59a96d8629a77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformInitializedVariable","kind":"method","status":"implemented","sigHash":"78eb78c1cdd835f3c0cb10f0e029f1cb6214f5b84486a1ef29b1f3f4a15bf6ec","bodyHash":"00934b6a1a15d58b281ce75b158eab7b0fe8a4967bac54c25d6bc727f24bf2b9"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) transformInitializedVariable(node *ast.VariableDeclaration) *ast.Expression {
@@ -2411,6 +2415,8 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
  * 		// re-aliased or multi-exported names (where native destructuring cannot update all
  * 		// targets) does `visitDestructuringAssignment` fall back to flattening.
  * 		assignment := transformers.ConvertVariableDeclarationToAssignmentExpression(tx.EmitContext(), node)
+ * 		grandparentNode := tx.pushNode(assignment)
+ * 		defer tx.popNode(grandparentNode)
  * 		return tx.visitDestructuringAssignment(assignment.AsBinaryExpression(), true /*valueIsDiscarded* /)
  * 	}
  * 	propertyAccess := tx.Factory().NewPropertyAccessExpression(
@@ -2439,7 +2445,12 @@ export function CommonJSModuleTransformer_transformInitializedVariable(receiver:
     // re-aliased or multi-exported names (where native destructuring cannot update all
     // targets) does `visitDestructuringAssignment` fall back to flattening.
     const assignment = ConvertVariableDeclarationToAssignmentExpression(emitContext, node);
-    return CommonJSModuleTransformer_visitDestructuringAssignment(receiver, AsBinaryExpression(assignment) as GoPtr<BinaryExpression>, true as bool /*valueIsDiscarded*/);
+    const grandparentNode = CommonJSModuleTransformer_pushNode(receiver, assignment);
+    try {
+      return CommonJSModuleTransformer_visitDestructuringAssignment(receiver, AsBinaryExpression(assignment) as GoPtr<BinaryExpression>, true as bool /*valueIsDiscarded*/);
+    } finally {
+      CommonJSModuleTransformer_popNode(receiver, grandparentNode);
+    }
   }
   const propertyAccess = NewPropertyAccessExpression(f,
     NewIdentifier(f, "exports"),
@@ -4341,7 +4352,8 @@ export function CommonJSModuleTransformer_visitTaggedTemplateExpression(receiver
  * 		tx.EmitContext().AssignCommentAndSourceMapRanges(assignment, node.AsNode())
  * 		return assignment
  * 	}
- * 	return tx.Factory().UpdateShorthandPropertyAssignment(node,
+ * 	return tx.Factory().UpdateShorthandPropertyAssignment(
+ * 		node,
  * 		nil, /*modifiers* /
  * 		exportedOrImportedName,
  * 		nil, /*postfixToken* /

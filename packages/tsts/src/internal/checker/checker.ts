@@ -466,6 +466,13 @@ export function Checker_containsSameNamedThisProperty(receiver: GoPtr<Checker>, 
  * 			}
  * 		}
  * 	}
+ * 	// We have optional, rest, or variadic elements that may need normalizing. Normalization ensures that all variadic
+ * 	// elements are generic and that the tuple type has one of the following layouts, disregarding variadic elements:
+ * 	// (1) Zero or more required elements, followed by zero or more optional elements, followed by zero or one rest element.
+ * 	// (2) Zero or more required elements, followed by a rest element, followed by zero or more required elements.
+ * 	// In either layout, zero or more generic variadic elements may be present at any location.
+ * 	// Note that the element types may contain an extra 'this' type argument that we want to ignore during normalization
+ * 	// and then just append to the normalized element types.
  * 	n := &TupleNormalizer{}
  * 	if !n.normalize(c, elementTypes[:len(d.elementInfos)], d.elementInfos) {
  * 		return c.errorType

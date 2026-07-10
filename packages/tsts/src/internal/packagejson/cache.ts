@@ -3,7 +3,7 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { SyncMap_Load, SyncMap_LoadOrStore } from "../collections/syncmap.js";
+import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "../collections/syncmap.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { Version } from "../core/version.js";
 import { VersionMajorMinor } from "../core/version.js";
@@ -372,17 +372,6 @@ export function InfoCacheEntry_Exists(receiver: GoPtr<InfoCacheEntry>): bool {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::method::InfoCacheEntry.WithPackageDirectory","kind":"method","status":"implemented","sigHash":"67a7659d59de1273dd1aa7e9f4bd0f8dda9df4f8ff2fa73c1414608dfedd6671","bodyHash":"c9a953489878ea04215e409ca50cadbb6d4ac7bc3b2418f75ea2d4135745ee6e"}
  *
  * Go source:
- * // WithPackageDirectory returns an entry whose PackageDirectory matches the
- * // caller's value. The package.json info cache is keyed by the canonical
- * // path of the package.json file, but multiple callers may look up the same
- * // package.json using directory paths that differ only by a trailing
- * // separator (e.g. "node_modules/preact/compat" vs
- * // "node_modules/preact/compat/"). Because the cache uses first-writer-wins
- * // semantics, a later caller may receive an entry whose PackageDirectory
- * // doesn't match its own candidate path. Downstream code compares the
- * // candidate against PackageDirectory, so we must return a corrected
- * // shallow copy when they diverge.
- * // See https://github.com/microsoft/TypeScript/pull/50740.
  * func (p *InfoCacheEntry) WithPackageDirectory(packageDirectory string) *InfoCacheEntry {
  * 	if p.PackageDirectory == packageDirectory {
  * 		return p
@@ -512,4 +501,16 @@ export function InfoCache_Set(receiver: GoPtr<InfoCache>, packageJsonPath: strin
   const key = ToPath(packageJsonPath, receiver!.currentDirectory, receiver!.useCaseSensitiveFileNames);
   const [actual] = SyncMap_LoadOrStore<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, key, info);
   return actual;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::method::InfoCache.Range","kind":"method","status":"implemented","sigHash":"174f05a23fab370854a0f6f07ac003575a1cd2326f7abed2c432ad4fd1b80ea1","bodyHash":"c8676ca7de4fedc61d3a9922608cf19fc6e802200bf167ce983b348803f2f674"}
+ *
+ * Go source:
+ * func (p *InfoCache) Range(f func(key tspath.Path, value *InfoCacheEntry) bool) {
+ * 	p.cache.Range(f)
+ * }
+ */
+export function InfoCache_Range(receiver: GoPtr<InfoCache>, f: (key: Path, value: GoPtr<InfoCacheEntry>) => bool): void {
+  SyncMap_Range<Path, GoPtr<InfoCacheEntry>>(receiver!.cache as GoPtr<SyncMap<Path, GoPtr<InfoCacheEntry>>>, f);
 }

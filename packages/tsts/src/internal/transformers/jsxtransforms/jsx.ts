@@ -491,12 +491,12 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * 	if file.IsDeclarationFile {
  * 		return file.AsNode()
  * 	}
- * 
+ *
  * 	tx.currentSourceFile = file
  * 	tx.importSpecifier = ast.GetJSXImplicitImportBase(tx.compilerOptions, file)
  * 	tx.filenameDeclaration = nil
  * 	tx.utilizedImplicitRuntimeImports.Clear()
- * 
+ *
  * 	visited := tx.Visitor().VisitEachChild(file.AsNode())
  * 	tx.EmitContext().AddEmitHelper(visited.AsNode(), tx.EmitContext().ReadEmitHelpers()...)
  * 	statements := visited.Statements()
@@ -508,7 +508,7 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * 		)))
  * 		statementsUpdated = true
  * 	}
- * 
+ *
  * 	if tx.utilizedImplicitRuntimeImports.Size() > 0 {
  * 		if ast.IsExternalModule(file) {
  * 			statementsUpdated = true
@@ -522,7 +522,7 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * 				)
  * 				ast.SetParentInChildren(s)
  * 				newStatements = append(newStatements, s)
- * 
+ *
  * 			}
  * 			for _, e := range newStatements {
  * 				statements = tx.insertStatementAfterCustomPrologue(statements, e)
@@ -544,7 +544,8 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * 						tx.Factory().NewIdentifier("require"),
  * 						nil,
  * 						nil,
- * 						tx.Factory().NewNodeList([]*ast.Node{tx.Factory().NewStringLiteral(importSource, ast.TokenFlagsNone)}), ast.NodeFlagsNone),
+ * 						tx.Factory().NewNodeList([]*ast.Node{tx.Factory().NewStringLiteral(importSource, ast.TokenFlagsNone)}), ast.NodeFlagsNone,
+ * 					),
  * 				)}), ast.NodeFlagsConst))
  * 				ast.SetParentInChildren(s)
  * 				newStatements = append(newStatements, s)
@@ -556,16 +557,16 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * 			// Do nothing (script file) - consider an error in the checker?
  * 		}
  * 	}
- * 
+ *
  * 	if statementsUpdated {
  * 		visited = tx.Factory().UpdateSourceFile(file, tx.Factory().NewNodeList(statements), file.EndOfFileToken)
  * 	}
- * 
+ *
  * 	tx.currentSourceFile = nil
  * 	tx.importSpecifier = ""
  * 	tx.filenameDeclaration = nil
  * 	tx.utilizedImplicitRuntimeImports.Clear()
- * 
+ *
  * 	return visited
  * }
  */

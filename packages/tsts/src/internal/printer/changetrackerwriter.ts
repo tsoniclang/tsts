@@ -293,12 +293,17 @@ export function ChangeTrackerWriter_getEnd(receiver: GoPtr<ChangeTrackerWriter>,
  * func (ct *ChangeTrackerWriter) setLastNonTriviaPosition(s string, force bool) {
  * 	if force || scanner.SkipTrivia(s, 0) != len(s) {
  * 		ct.lastNonTriviaPosition = ct.textWriter.GetTextPos()
- * 		i := 0
- * 		for stringutil.IsWhiteSpaceLike(rune(s[len(s)-i-1])) {
- * 			i++
- * 		}
  * 		// trim trailing whitespaces
- * 		ct.lastNonTriviaPosition -= i
+ * 		pos := len(s)
+ * 		for pos > 0 {
+ * 			r, size := utf8.DecodeLastRuneInString(s[:pos])
+ * 			if stringutil.IsWhiteSpaceLike(r) {
+ * 				pos -= size
+ * 			} else {
+ * 				break
+ * 			}
+ * 		}
+ * 		ct.lastNonTriviaPosition -= len(s) - pos
  * 	}
  * }
  */
@@ -757,7 +762,7 @@ export function ChangeTrackerWriter_IsAtStartOfLine(receiver: GoPtr<ChangeTracke
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.HasTrailingComment","kind":"method","status":"implemented","sigHash":"34db950a0fe5318dcab045ee015a9d2d2c5481c3168df3cb5b613e7c5a238757","bodyHash":"2b73d2695d5e93d20a17a2cd71d91cb618c1ba0c4e4f4b5f9dcd6c939510e0fc"}
  *
  * Go source:
- * func (ct *ChangeTrackerWriter) HasTrailingComment() bool    { return ct.textWriter.HasTrailingComment() }
+ * func (ct *ChangeTrackerWriter) HasTrailingComment() bool { return ct.textWriter.HasTrailingComment() }
  */
 export function ChangeTrackerWriter_HasTrailingComment(receiver: GoPtr<ChangeTrackerWriter>): bool {
   return textWriter_HasTrailingComment(receiver!.__tsgoEmbedded0!);

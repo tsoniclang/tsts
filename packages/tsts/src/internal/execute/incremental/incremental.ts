@@ -3,7 +3,7 @@ import type { CompilerHost } from "../../compiler/host.js";
 import { Unmarshal } from "../../json/json.js";
 import { ParsedCommandLine_GetBuildInfoFileName } from "../../tsoptions/parsedcommandline.js";
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
-import { BuildInfo_IsIncremental, BuildInfo_IsValidVersion } from "./buildInfo.js";
+import { BuildInfo_IsIncremental, BuildInfo_IsValidVersion, NewBuildInfo } from "./buildInfo.js";
 import type { BuildInfo } from "./buildInfo.js";
 import { buildInfoToSnapshot } from "./buildinfotosnapshot.js";
 import type { Program } from "./program.js";
@@ -80,8 +80,9 @@ export function buildInfoReader_ReadBuildInfo(receiver: GoPtr<buildInfoReader>, 
   if (!ok) {
     return undefined;
   }
-  const buildInfo: BuildInfo = {} as BuildInfo;
-  const err = Unmarshal(data as unknown as never, buildInfo);
+  const buildInfo = NewBuildInfo();
+  const bytes = globalThis.Array.from(new globalThis.TextEncoder().encode(data));
+  const err = Unmarshal(bytes, buildInfo);
   if (err !== undefined) {
     return undefined;
   }

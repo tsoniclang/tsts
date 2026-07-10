@@ -290,11 +290,11 @@ export interface FormattingOptions {
  *
  * Go source:
  * const (
- * 	foregroundColorEscapeGrey   = "[90m"
- * 	foregroundColorEscapeRed    = "[91m"
- * 	foregroundColorEscapeYellow = "[93m"
- * 	foregroundColorEscapeBlue   = "[94m"
- * 	foregroundColorEscapeCyan   = "[96m"
+ * 	foregroundColorEscapeGrey   = "\u001b[90m"
+ * 	foregroundColorEscapeRed    = "\u001b[91m"
+ * 	foregroundColorEscapeYellow = "\u001b[93m"
+ * 	foregroundColorEscapeBlue   = "\u001b[94m"
+ * 	foregroundColorEscapeCyan   = "\u001b[96m"
  * )
  */
 export const foregroundColorEscapeGrey: string = "[90m";
@@ -308,9 +308,9 @@ export const foregroundColorEscapeCyan: string = "[96m";
  *
  * Go source:
  * const (
- * 	gutterStyleSequence = "[7m"
+ * 	gutterStyleSequence = "\u001b[7m"
  * 	gutterSeparator     = " "
- * 	resetEscapeSequence = "[0m"
+ * 	resetEscapeSequence = "\u001b[0m"
  * 	ellipsis            = "..."
  * )
  */
@@ -1015,7 +1015,8 @@ export function writeTabularErrorsDisplay(output: Writer, errorSummary: GoPtr<Er
  * 	if tspath.PathIsAbsolute(fileName) && tspath.PathIsAbsolute(formatOpts.CurrentDirectory) {
  * 		fileName = tspath.ConvertToRelativePath(file.FileName(), formatOpts.ComparePathsOptions)
  * 	}
- * 	return fmt.Sprintf("%s%s:%d%s",
+ * 	return fmt.Sprintf(
+ * 		"%s%s:%d%s",
  * 		fileName,
  * 		foregroundColorEscapeGrey,
  * 		line+1,

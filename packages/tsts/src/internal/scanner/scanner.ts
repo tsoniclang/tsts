@@ -645,13 +645,13 @@ export interface ScannerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b","bodyHash":"fa2395147c39a85112b471d4e2826f03161db93c99a6f2e9bef286b7184e4a9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b","bodyHash":"f6fd857b619c62ca2d342f49ac08ea4f7ca602b12ff8fb316ff65a134cd12715"}
  * @tsgo-override {
  *   "category": "runtime-performance",
  *   "allow": ["signature"],
  *   "reason": "Carry one scanner-local source byte view as a runtime cache; this is not TS-Go semantic state and keeps public scanner behavior unchanged.",
- *   "goSignature": "interface{CanFollowJSDocAt?:()=>packages/tsts/src/go/scalars.ts::bool;CommentDirectives?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;ContainsNonASCII?:()=>packages/tsts/src/go/scalars.ts::bool;HasExtendedUnicodeEscape?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocComment?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocLeadingAsterisks?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocWithDeprecatedTag?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocWithSeeOrLink?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingLineBreak?:()=>packages/tsts/src/go/scalars.ts::bool;HasUnicodeEscape?:()=>packages/tsts/src/go/scalars.ts::bool;Mark?:()=>packages/tsts/src/internal/scanner/scanner.ts::ScannerState;ReScanAsteriskEqualsToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanGreaterThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanHashToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanLessThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanQuestionToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanSlashToken?:(...packages/tsts/src/go/scalars.ts::bool[])=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanTemplateToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;Reset?:()=>void;ResetPos?:(packages/tsts/src/go/scalars.ts::int)=>void;ResetTokenState?:(packages/tsts/src/go/scalars.ts::int)=>void;Rewind?:(packages/tsts/src/internal/scanner/scanner.ts::ScannerState)=>void;Scan?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocCommentTextToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxIdentifier?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxTokenEx?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;SetLanguageVariant?:(packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant)=>void;SetOnError?:(packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback)=>void;SetScriptTarget?:(packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget)=>void;SetSkipJSDocLeadingAsterisks?:(packages/tsts/src/go/scalars.ts::bool)=>void;SetSkipTrivia?:(packages/tsts/src/go/scalars.ts::bool)=>void;SetText?:(string)=>void;Text?:()=>string;Token?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;TokenEnd?:()=>packages/tsts/src/go/scalars.ts::int;TokenFlags?:()=>packages/tsts/src/internal/ast/tokenflags.ts::TokenFlags;TokenFullStart?:()=>packages/tsts/src/go/scalars.ts::int;TokenRange?:()=>packages/tsts/src/internal/core/text.ts::TextRange;TokenStart?:()=>packages/tsts/src/go/scalars.ts::int;TokenText?:()=>string;TokenValue?:()=>string;__tsgoEmbedded0?:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;char?:()=>packages/tsts/src/go/compat.ts::GoRune;charAndSize?:()=>[packages/tsts/src/go/compat.ts::GoRune,packages/tsts/src/go/scalars.ts::int];charAt?:(packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoRune;checkRegularExpressionFlagAvailability?:(packages/tsts/src/internal/scanner/regexp.ts::regularExpressionFlags,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int)=>void;containsNonASCII:packages/tsts/src/go/scalars.ts::bool;end:packages/tsts/src/go/scalars.ts::int;error?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>void;errorAt?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,...unknown[])=>void;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;languageVersion?:()=>packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;peekUnicodeEscape?:()=>packages/tsts/src/go/compat.ts::GoRune;processCommentDirective?:(packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>void;reScanGreaterThanTokenInner?:()=>void;scanASCIIWhile?:((packages/tsts/src/go/scalars.ts::byte)=>packages/tsts/src/go/scalars.ts::bool)=>void;scanBigIntSuffix?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanBinaryOrOctalDigits?:(packages/tsts/src/go/scalars.ts::int)=>string;scanDigits?:()=>[string,packages/tsts/src/go/scalars.ts::bool];scanEscapeSequence?:(packages/tsts/src/internal/scanner/scanner.ts::EscapeSequenceScanningFlags)=>string;scanHexDigits?:(packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::bool)=>string;scanIdentifier?:(packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::bool;scanIdentifierParts?:()=>string;scanInvalidCharacter?:()=>void;scanJSDocCommentForTags?:(string)=>void;scanLowSurrogateEscape?:(packages/tsts/src/go/compat.ts::GoRune)=>[packages/tsts/src/go/compat.ts::GoRune,packages/tsts/src/go/scalars.ts::bool];scanNumber?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanNumberFragment?:()=>string;scanString?:(packages/tsts/src/go/scalars.ts::bool)=>string;scanTemplateAndSetTokenValue?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanUnicodeEscape?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoRune;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;text:string}",
- *   "tsSignature": "interface{__tsgoEmbedded0:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;containsNonASCII:packages/tsts/src/go/scalars.ts::bool;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;sourceByteView:packages/tsts/src/go/unicode/utf8.ts::StringByteView;text:string}"
+ *   "goSignature": "interface{CanFollowJSDocAt?:()=>packages/tsts/src/go/scalars.ts::bool;CommentDirectives?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;HasExtendedUnicodeEscape?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocComment?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocLeadingAsterisks?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocWithDeprecatedTag?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingJSDocWithSeeOrLink?:()=>packages/tsts/src/go/scalars.ts::bool;HasPrecedingLineBreak?:()=>packages/tsts/src/go/scalars.ts::bool;HasUnicodeEscape?:()=>packages/tsts/src/go/scalars.ts::bool;Mark?:()=>packages/tsts/src/internal/scanner/scanner.ts::ScannerState;ReScanAsteriskEqualsToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanGreaterThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanHashToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanLessThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanQuestionToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanSlashToken?:(...packages/tsts/src/go/scalars.ts::bool[])=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanTemplateToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;Reset?:()=>void;ResetPos?:(packages/tsts/src/go/scalars.ts::int)=>void;ResetTokenState?:(packages/tsts/src/go/scalars.ts::int)=>void;Rewind?:(packages/tsts/src/internal/scanner/scanner.ts::ScannerState)=>void;Scan?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocCommentTextToken?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxIdentifier?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxTokenEx?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;SetLanguageVariant?:(packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant)=>void;SetOnError?:(packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback)=>void;SetScriptTarget?:(packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget)=>void;SetSkipJSDocLeadingAsterisks?:(packages/tsts/src/go/scalars.ts::bool)=>void;SetSkipTrivia?:(packages/tsts/src/go/scalars.ts::bool)=>void;SetText?:(string)=>void;Text?:()=>string;Token?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;TokenEnd?:()=>packages/tsts/src/go/scalars.ts::int;TokenFlags?:()=>packages/tsts/src/internal/ast/tokenflags.ts::TokenFlags;TokenFullStart?:()=>packages/tsts/src/go/scalars.ts::int;TokenRange?:()=>packages/tsts/src/internal/core/text.ts::TextRange;TokenStart?:()=>packages/tsts/src/go/scalars.ts::int;TokenText?:()=>string;TokenValue?:()=>string;__tsgoEmbedded0?:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;char?:()=>packages/tsts/src/go/compat.ts::GoRune;charAndSize?:()=>[packages/tsts/src/go/compat.ts::GoRune,packages/tsts/src/go/scalars.ts::int];charAt?:(packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoRune;checkRegularExpressionFlagAvailability?:(packages/tsts/src/internal/scanner/regexp.ts::regularExpressionFlags,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int)=>void;end:packages/tsts/src/go/scalars.ts::int;error?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>void;errorAt?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,...unknown[])=>void;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;languageVersion?:()=>packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;peekUnicodeEscape?:()=>packages/tsts/src/go/compat.ts::GoRune;processCommentDirective?:(packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool)=>void;reScanGreaterThanTokenInner?:()=>void;scanASCIIWhile?:((packages/tsts/src/go/scalars.ts::byte)=>packages/tsts/src/go/scalars.ts::bool)=>void;scanBigIntSuffix?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanBinaryOrOctalDigits?:(packages/tsts/src/go/scalars.ts::int)=>string;scanDigits?:()=>[string,packages/tsts/src/go/scalars.ts::bool];scanEscapeSequence?:(packages/tsts/src/internal/scanner/scanner.ts::EscapeSequenceScanningFlags)=>string;scanHexDigits?:(packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::bool)=>string;scanIdentifier?:(packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::bool;scanIdentifierParts?:()=>string;scanInvalidCharacter?:()=>void;scanJSDocCommentForTags?:(string)=>void;scanLowSurrogateEscape?:(packages/tsts/src/go/compat.ts::GoRune)=>[packages/tsts/src/go/compat.ts::GoRune,packages/tsts/src/go/scalars.ts::bool];scanNumber?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanNumberFragment?:()=>string;scanString?:(packages/tsts/src/go/scalars.ts::bool)=>string;scanTemplateAndSetTokenValue?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanUnicodeEscape?:(packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoRune;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;text:string}",
+ *   "tsSignature": "interface{__tsgoEmbedded0:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;end:packages/tsts/src/go/scalars.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:packages/tsts/src/go/scalars.ts::bool;sourceByteView:packages/tsts/src/go/unicode/utf8.ts::StringByteView;text:string}"
  * }
  *
  * Go source:
@@ -663,11 +663,10 @@ export interface ScannerState {
  * 	onError         ErrorCallback
  * 	skipTrivia      bool
  * 	ScannerState
- * 
- * 	containsNonASCII bool
- * 	numberCache      map[string]string
- * 	hexNumberCache   map[string]string
- * 	hexDigitCache    map[string]string
+ *
+ * 	numberCache    map[string]string
+ * 	hexNumberCache map[string]string
+ * 	hexDigitCache  map[string]string
  * }
  */
 export interface Scanner {
@@ -678,7 +677,6 @@ export interface Scanner {
   onError: ErrorCallback;
   skipTrivia: bool;
   __tsgoEmbedded0: ScannerState;
-  containsNonASCII: bool;
   numberCache: GoMap<string, string>;
   hexNumberCache: GoMap<string, string>;
   hexDigitCache: GoMap<string, string>;
@@ -708,7 +706,6 @@ export function defaultScanner(): Scanner {
     onError: undefined as unknown as ErrorCallback,
     skipTrivia: true,
     __tsgoEmbedded0: newScannerState(),
-    containsNonASCII: false,
     numberCache: undefined as unknown as GoMap<string, string>,
     hexNumberCache: undefined as unknown as GoMap<string, string>,
     hexDigitCache: undefined as unknown as GoMap<string, string>,
@@ -775,7 +772,6 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
   s.onError = d.onError;
   s.skipTrivia = d.skipTrivia;
   s.__tsgoEmbedded0 = d.__tsgoEmbedded0;
-  s.containsNonASCII = d.containsNonASCII;
   s.numberCache = numberCache;
   s.hexNumberCache = hexNumberCache;
   s.hexDigitCache = hexDigitCache;
@@ -791,10 +787,7 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
  * }
  */
 export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(m: M): M {
-  if (m === undefined) {
-    return undefined as unknown as M;
-  }
-  m.clear();
+  m?.clear();
   return m;
 }
 
@@ -1050,18 +1043,6 @@ export function Scanner_SetSkipTrivia(receiver: GoPtr<Scanner>, skip: bool): voi
  */
 export function Scanner_HasUnicodeEscape(receiver: GoPtr<Scanner>): bool {
   return (receiver!.__tsgoEmbedded0.tokenFlags & TokenFlagsUnicodeEscape) !== 0;
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ContainsNonASCII","kind":"method","status":"implemented","sigHash":"b04200be91535e223f441fbc251d17ec7598ef5a6b85d85941c11340aa0a04a7","bodyHash":"1110d61df2722e9c33441156bdc07be89a08f97221c20d71ef96a3084ed07f1d"}
- *
- * Go source:
- * func (s *Scanner) ContainsNonASCII() bool {
- * 	return s.containsNonASCII
- * }
- */
-export function Scanner_ContainsNonASCII(receiver: GoPtr<Scanner>): bool {
-  return receiver!.containsNonASCII;
 }
 
 /**
@@ -1416,7 +1397,7 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"53999882a6597734c93b240d0823bd51399ff1732381f6aa94eaff838eee7084"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"4eea6c5167a1a602d12ca6c54b8e16e19fe811baf14210ff9a51b4891a9a2dee"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode from the scanner-local source byte view while preserving TS-Go byte-offset rune size semantics."}
  *
  * Go source:
@@ -1429,11 +1410,7 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
  * 			return rune(b), 1
  * 		}
  * 	}
- * 	r, size := utf8.DecodeRuneInString(s.text[s.pos:])
- * 	if size > 1 {
- * 		s.containsNonASCII = true
- * 	}
- * 	return r, size
+ * 	return utf8.DecodeRuneInString(s.text[s.pos:])
  * }
  */
 export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
@@ -1448,9 +1425,6 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
     }
   }
   const [r, size] = scannerDecodeRuneInStringAt(s, s.__tsgoEmbedded0.pos);
-  if (size > 1) {
-    s.containsNonASCII = true;
-  }
   return [r, size];
 }
 
@@ -1459,9 +1433,6 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan directly over the scanner-local source byte view instead of materializing Go-style string slices; byte advancement remains TS-Go exact."}
  *
  * Go source:
- * // scanASCIIWhile advances s.pos over the longest run of ASCII bytes for which
- * // pred returns true. It stops at end-of-text, the first non-ASCII byte, or the
- * // first byte where pred is false.
  * func (s *Scanner) scanASCIIWhile(pred func(byte) bool) {
  * 	text := s.text[s.pos:s.end]
  * 	i := 0
@@ -4188,7 +4159,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06","bodyHash":"2ccbc32f98cb965c5cdc6211ee737c03a0023357b7748131c63e8269d97ccab1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06","bodyHash":"3750febc82d8cd3cbf0548b7a0edc50373d733d39ba70aeecf8288f2e0b7d3f3"}
  *
  * Go source:
  * func (s *Scanner) scanEscapeSequence(flags EscapeSequenceScanningFlags) string {
@@ -4343,10 +4314,9 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
  * 			var size int
  * 			ch, size = utf8.DecodeRuneInString(s.text[s.pos:])
  * 			s.pos += size
- * 			s.containsNonASCII = true
  * 		}
  * 		// LineContinuation: a backslash followed by a line terminator is "the empty code unit sequence".
- * 		if ch == ' ' || ch == ' ' {
+ * 		if ch == '\u2028' || ch == '\u2029' {
  * 			return ""
  * 		}
  * 		if flags&EscapeSequenceScanningFlagsAnyUnicodeMode != 0 || flags&EscapeSequenceScanningFlagsRegularExpression != 0 && flags&EscapeSequenceScanningFlagsAnnexB == 0 && IsIdentifierPart(ch) {
@@ -4539,7 +4509,6 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
         const [decoded, size] = scannerDecodeRuneInStringAt(s, st.pos);
         chDefault = decoded;
         st.pos += size;
-        s.containsNonASCII = true;
       }
       // LineContinuation: a backslash followed by a line terminator is "the empty code unit sequence".
       if (chDefault === 0x2028 || chDefault === 0x2029) {
@@ -4666,13 +4635,6 @@ export function Scanner_scanUnicodeEscape(receiver: GoPtr<Scanner>, shouldEmitIn
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanLowSurrogateEscape","kind":"method","status":"implemented","sigHash":"1cc0ef6e3a6fda2e3c88bbe9114b88806bc07575d62f0b08ff659e3e4420aaac","bodyHash":"0005d0e7cc211fda4de147fc36afd044b608695c776466939ab77a00c334b01e"}
  *
  * Go source:
- * // scanLowSurrogateEscape attempts to consume a low-surrogate Unicode escape
- * // (either '\uLow' or '\u{Low}') immediately following an already-scanned high
- * // surrogate and combine them into a single supplementary code point. This
- * // mirrors how adjacent UTF-16 code units form a surrogate pair in a JavaScript
- * // string, regardless of which escape syntax produced each half. On success it
- * // returns the combined code point and true; otherwise it restores the scanner
- * // position and returns false.
  * func (s *Scanner) scanLowSurrogateEscape(high rune) (rune, bool) {
  * 	if s.char() != '\\' || s.charAt(1) != 'u' {
  * 		return 0, false

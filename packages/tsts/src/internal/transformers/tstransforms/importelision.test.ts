@@ -196,11 +196,23 @@ for (const rec of data) {
     // port reaches the printer EmitResolver shape via the canonical adapter,
     // which also satisfies binder.ReferenceResolver.
     const emitResolver = EmitResolver_as_printer_EmitResolver(Checker_GetEmitResolver(c));
-    emitResolver.MarkLinkedReferencesRecursively(file);
+    const markedFiles: Array<GoPtr<SourceFile>> = [];
+    const markLinkedReferencesRecursively = emitResolver.MarkLinkedReferencesRecursively;
+    emitResolver.MarkLinkedReferencesRecursively = (sourceFile) => {
+      markedFiles.push(sourceFile);
+      markLinkedReferencesRecursively(sourceFile);
+    };
 
-    const opts = { CompilerOptions: compilerOptions, Context: NewEmitContext(), EmitResolver: emitResolver, Resolver: emitResolver } as unknown as TransformOptions;
+    const opts: TransformOptions = {
+      CompilerOptions: compilerOptions,
+      Context: NewEmitContext(),
+      EmitResolver: emitResolver,
+      Resolver: emitResolver,
+      GetEmitModuleFormatOfFile: () => ModuleKindESNext,
+    };
     let transformed = Transformer_TransformSourceFile(NewTypeEraserTransformer(opts), file);
     transformed = Transformer_TransformSourceFile(NewImportElisionTransformer(opts), transformed);
+    assert.deepEqual(markedFiles, [file]);
     checkEmit(undefined, transformed, rec.output);
   });
 }

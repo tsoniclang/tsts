@@ -7,11 +7,9 @@
 // `errors.Is(err, strconv.ErrRange)` works. Multiple returns map to tuples
 // `[value, GoError]`.
 //
-// Numeric note: every internal Go scalar alias (int/long/uint/ulong/...) is a
-// JavaScript `number`. typescript-go only parses/formats values that comfortably
-// fit in a double (line numbers, char codes, small ids), so we operate on `number`.
-// Range checks honour the requested bitSize using exact integer math where the
-// magnitude is within Number.MAX_SAFE_INTEGER.
+// Numeric note: uint64 is represented by the bigint-backed `ulong` carrier so
+// ParseUint and FormatUint preserve the complete Go range. Narrower and signed
+// scalar carriers remain numbers at the host boundary.
 
 import type { bool, int, long, ulong } from "./scalars.js";
 import type { GoError } from "./compat.js";
@@ -173,12 +171,48 @@ function intMin(bitSize: int): number {
   return -globalThis.Math.pow(2, bits - 1);
 }
 
-function uintMax(bitSize: int): number {
+function uintMax(bitSize: int): bigint {
   const bits = bitSize === 0 ? 64 : bitSize;
-  if (bits >= 53) {
-    return globalThis.Number.MAX_SAFE_INTEGER;
+  return (1n << globalThis.BigInt(bits)) - 1n;
+}
+
+interface UnsignedAccumResult {
+  readonly value: bigint;
+  readonly ok: bool;
+  readonly overflow: bool;
+}
+
+function accumulateUnsigned(digits: string, base: int, max: bigint, underscoreOk: bool): UnsignedAccumResult {
+  if (digits.length === 0) {
+    return { value: 0n, ok: false, overflow: false };
   }
-  return globalThis.Math.pow(2, bits) - 1;
+  let value = 0n;
+  let previousUnderscore = false;
+  let sawDigit = false;
+  let overflow = false;
+  const bigintBase = globalThis.BigInt(base);
+  for (const character of digits) {
+    if (character === "_") {
+      if (!underscoreOk || !sawDigit || previousUnderscore) {
+        return { value, ok: false, overflow };
+      }
+      previousUnderscore = true;
+      continue;
+    }
+    const digit = digitValue(character);
+    if (digit < 0 || digit >= base) {
+      return { value, ok: false, overflow };
+    }
+    value = value * bigintBase + globalThis.BigInt(digit);
+    overflow ||= value > max;
+    previousUnderscore = false;
+    sawDigit = true;
+  }
+  return {
+    value,
+    ok: sawDigit && !previousUnderscore,
+    overflow,
+  };
 }
 
 // strconv.ParseInt interprets a string in the given base (0, or 2 to 36) and bit
@@ -221,24 +255,24 @@ function parseSignedInternal(s: string, base: int, bitSize: int, func: string): 
 export function ParseUint(s: string, base: int, bitSize: int): [ulong, GoError] {
   const func = "ParseUint";
   if (s.length === 0) {
-    return [0, syntaxError(func, s)];
+    return [0n as ulong, syntaxError(func, s)];
   }
   if (s[0] === "-" || s[0] === "+") {
-    return [0, syntaxError(func, s)];
+    return [0n as ulong, syntaxError(func, s)];
   }
   const resolved = resolveBase(s, base);
   if (resolved === undefined) {
-    return [0, syntaxError(func, s)];
+    return [0n as ulong, syntaxError(func, s)];
   }
   const max = uintMax(bitSize);
-  const acc = accumulate(resolved.digits, resolved.base, max, resolved.underscoreOk);
+  const acc = accumulateUnsigned(resolved.digits, resolved.base, max, resolved.underscoreOk);
   if (!acc.ok) {
-    return [0, syntaxError(func, s)];
+    return [0n as ulong, syntaxError(func, s)];
   }
   if (acc.overflow) {
-    return [max, rangeError(func, s)];
+    return [max as ulong, rangeError(func, s)];
   }
-  return [acc.value, undefined];
+  return [acc.value as ulong, undefined];
 }
 
 // strconv.ParseFloat converts the string s to a floating-point number. bitSize is
@@ -331,7 +365,7 @@ export function FormatInt(i: long, base: int): string {
 // in the given base.
 export function FormatUint(i: ulong, base: int): string {
   checkFormatBase(base);
-  return formatMagnitude(i, base);
+  return (i as bigint).toString(base);
 }
 
 function formatMagnitude(value: number, base: int): string {

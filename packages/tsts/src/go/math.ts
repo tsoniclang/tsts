@@ -4,8 +4,8 @@ import type { int, double, ulong } from "./scalars.js";
 //
 // Faithful port of Go's math package surface used by typescript-go.
 // Go float64 -> double (number), Go int -> int (number).
-// Bit-level helpers (Float64bits / Float64frombits) operate on the IEEE-754
-// representation; Go returns uint64 which we model as ulong (number-typed).
+// Bit-level helpers (Float64bits / Float64frombits) operate on the exact IEEE-754
+// representation; Go uint64 maps to the bigint-backed ulong carrier.
 
 // Mathematical constants (Go: math.E, math.Pi).
 export const E: double = 2.71828182845904523536028747135266249775724709369995957496696763 as double;
@@ -16,12 +16,12 @@ export const MaxFloat64: double = 1.7976931348623157e308 as double;
 export const SmallestNonzeroFloat64: double = 5e-324 as double;
 
 // Integer limit values.
-// Go's int is platform-sized (64-bit on the targets we care about); MaxInt/MinInt
-// therefore match the int64 limits. These exceed JS safe-integer range, but Go uses
-// them as sentinels (e.g. math.MaxInt as "unlimited depth"), and comparisons against
-// realistic values still behave correctly.
-export const MaxInt: int = 9223372036854775807 as int;
-export const MinInt: int = -9223372036854775808 as int;
+// Go's int is platform-sized (64-bit on the targets we care about). The number-
+// backed host carrier uses the largest exactly representable integers as its
+// positive/negative sentinels; tracked units that expose these values carry a
+// snapshotted runtime-representation override.
+export const MaxInt: int = 9007199254740991 as int;
+export const MinInt: int = -9007199254740991 as int;
 export const MaxInt32: int = 2147483647 as int;
 export const MinInt32: int = -2147483648 as int;
 export const MaxInt64: int = 9223372036854775807 as int;
@@ -165,28 +165,22 @@ export function Min(x: double, y: double): double {
   return x;
 }
 
-// Shared 8-byte buffer for IEEE-754 bit reinterpretation. A BigUint64Array view
-// extracts the full 64-bit pattern exactly (as a bigint) before it is narrowed to
-// the ulong (number) boundary.
+// Shared 8-byte buffer for exact IEEE-754 bit reinterpretation.
 const float64Buffer = new globalThis.ArrayBuffer(8);
 const float64View = new globalThis.Float64Array(float64Buffer);
 const bigUint64View = new globalThis.BigUint64Array(float64Buffer);
 
 // Float64bits returns the IEEE 754 binary representation of f, with the sign bit of
-// f and the result in the same bit position (Go returns uint64). The 64-bit pattern
-// is computed exactly via BigInt; the ulong return type maps to number, so the low
-// mantissa bits of patterns above 2^53 are rounded at the boundary (the inherent
-// limit of representing uint64 as a JS number). The high-order exponent/sign bits
-// that callers test (e.g. jsnum.isNonFinite's exponent mask) are preserved.
+// f and the result in the same bit position (Go returns uint64).
 export function Float64bits(f: double): ulong {
   float64View[0] = f;
-  return globalThis.Number(bigUint64View[0]) as ulong;
+  return bigUint64View[0] as ulong;
 }
 
 // Float64frombits returns the floating-point number corresponding to the IEEE 754
 // binary representation b, with the sign bit of b and the result in the same bit
 // position.
 export function Float64frombits(b: ulong): double {
-  bigUint64View[0] = globalThis.BigInt(b as number);
+  bigUint64View[0] = b as bigint;
   return float64View[0] as double;
 }

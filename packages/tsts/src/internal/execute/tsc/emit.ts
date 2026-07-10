@@ -282,7 +282,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::listFiles","kind":"func","status":"implemented","sigHash":"c1f5f67217ce85c6c591d40b9ac34c43184044573f9c9b4a988d0f9bcaa411fc","bodyHash":"56b9fcccc04558ed5ee238c6254c1064e649b5471a5c0fcbe2e5b115f88cbc63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::listFiles","kind":"func","status":"implemented","sigHash":"c1f5f67217ce85c6c591d40b9ac34c43184044573f9c9b4a988d0f9bcaa411fc","bodyHash":"fd9d857afbd79c431acb486d466266e0c56bba11de0c545817c4547cb4d5b572"}
  *
  * Go source:
  * func listFiles(input EmitInput, emitResult *compiler.EmitResult) {
@@ -293,7 +293,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
  * 	options := input.Program.Options()
  * 	if options.ListEmittedFiles.IsTrue() {
  * 		for _, file := range emitResult.EmittedFiles {
- * 			fmt.Fprintln(input.Writer, "TSFILE: ", tspath.GetNormalizedAbsolutePath(file, input.Program.GetCurrentDirectory()))
+ * 			fmt.Fprintln(input.Writer, "TSFILE:", tspath.GetNormalizedAbsolutePath(file, input.Program.GetCurrentDirectory()))
  * 		}
  * 	}
  * 	if options.ExplainFiles.IsTrue() {

@@ -212,47 +212,51 @@ export function PseudoType_AsPseudoTypeDirect(receiver: GoPtr<PseudoType>): GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeInferred","kind":"type","status":"implemented","sigHash":"37e28ee286ee7d687a0ff23130871f0e7c04c9c79e37cfa2fe90cd5032dbc1e5","bodyHash":"8f6e78e38102dc0b42e7ca8814462b9541dab0f1c4aab25d1c2644a0dca60f9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeInferred","kind":"type","status":"implemented","sigHash":"37e28ee286ee7d687a0ff23130871f0e7c04c9c79e37cfa2fe90cd5032dbc1e5","bodyHash":"e9b5e01e0f7ec6724cc3f1e34cb8e8bfc3cf1209cbdb474299f50bcbee3d9579"}
  *
  * Go source:
  * PseudoTypeInferred struct {
  * 	PseudoTypeBase
- * 	Expression *ast.Node
- * 	ErrorNodes []*ast.Node
+ * 	Expression        *ast.Node
+ * 	ErrorNodes        []*ast.Node
+ * 	IsSignatureReturn bool
  * }
  */
 export interface PseudoTypeInferred extends PseudoTypeBase {
   Expression: GoPtr<Node>;
   ErrorNodes: GoSlice<GoPtr<Node>>;
+  IsSignatureReturn: bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeInferred","kind":"func","status":"implemented","sigHash":"c308eb2c68531c0b5146a5d93959fcd535c7fcb87a846f23d06292968676ce03","bodyHash":"42d14292a4414bf86816cc4f5d62c8d7472a35e12afbfb19f8108470da5fdadb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeInferred","kind":"func","status":"implemented","sigHash":"3c5580850d8b6e220262a193f45c1276ba9cd8533aa9e691e66887b5a509c280","bodyHash":"aa1e7f12f66fb168d9743ea034955d6138a8e8ce4049e8f3f85efcdf3d27e751"}
  *
  * Go source:
- * func NewPseudoTypeInferred(expr *ast.Node) *PseudoType {
- * 	return newPseudoType(PseudoTypeKindInferred, &PseudoTypeInferred{Expression: expr})
+ * func NewPseudoTypeInferred(expr *ast.Node, isSignatureReturn bool) *PseudoType {
+ * 	return newPseudoType(PseudoTypeKindInferred, &PseudoTypeInferred{Expression: expr, IsSignatureReturn: isSignatureReturn})
  * }
  */
-export function NewPseudoTypeInferred(expr: GoPtr<Node>): GoPtr<PseudoType> {
+export function NewPseudoTypeInferred(expr: GoPtr<Node>, isSignatureReturn: bool): GoPtr<PseudoType> {
   const data: PseudoTypeInferred = {} as PseudoTypeInferred;
   data.Expression = expr;
   data.ErrorNodes = [];
+  data.IsSignatureReturn = isSignatureReturn;
   return newPseudoType(PseudoTypeKindInferred, PseudoTypeBase_as_pseudoTypeData(data));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeInferredWithErrors","kind":"func","status":"implemented","sigHash":"93ffed57eb52ac9810bc587f44aa2b63c8e9b2a857cf5f5bf138343ddc5d5404","bodyHash":"1d2b942e880c3e0c2330d0faf5f783f5825935aacd19af5cf37b4ff22e98458e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeInferredWithErrors","kind":"func","status":"implemented","sigHash":"1f8f25409681bad6d3ae20c9ae37a6e2851b801290f909e828f190c788dca56c","bodyHash":"60b5c7d3fabac9813626547fa4ef85bfb23e8b2270b09627c55df9f684e28fd0"}
  *
  * Go source:
- * func NewPseudoTypeInferredWithErrors(expr *ast.Node, errorNodes []*ast.Node) *PseudoType {
- * 	return newPseudoType(PseudoTypeKindInferred, &PseudoTypeInferred{Expression: expr, ErrorNodes: errorNodes})
+ * func NewPseudoTypeInferredWithErrors(expr *ast.Node, isSignatureReturn bool, errorNodes []*ast.Node) *PseudoType {
+ * 	return newPseudoType(PseudoTypeKindInferred, &PseudoTypeInferred{Expression: expr, ErrorNodes: errorNodes, IsSignatureReturn: isSignatureReturn})
  * }
  */
-export function NewPseudoTypeInferredWithErrors(expr: GoPtr<Node>, errorNodes: GoSlice<GoPtr<Node>>): GoPtr<PseudoType> {
+export function NewPseudoTypeInferredWithErrors(expr: GoPtr<Node>, isSignatureReturn: bool, errorNodes: GoSlice<GoPtr<Node>>): GoPtr<PseudoType> {
   const data: PseudoTypeInferred = {} as PseudoTypeInferred;
   data.Expression = expr;
   data.ErrorNodes = errorNodes;
+  data.IsSignatureReturn = isSignatureReturn;
   return newPseudoType(PseudoTypeKindInferred, PseudoTypeBase_as_pseudoTypeData(data));
 }
 

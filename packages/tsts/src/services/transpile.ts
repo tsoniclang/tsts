@@ -23,7 +23,7 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import type { FS, Entries, FileInfo, WalkDirFunc } from "../internal/vfs/vfs.js";
 import { Default as DefaultLocale } from "../internal/locale/locale.js";
 import { TSTrue } from "../internal/core/tristate.js";
-import type { Time } from "../go/time.js";
+import { Time } from "../go/time.js";
 
 export interface TranspileOptions {
   compilerOptions?: TranspileCompilerOptions;
@@ -378,8 +378,8 @@ class TranspileFileInfo implements FileInfo {
     return this.directory ? 0x80000000 : 0;
   }
 
-  ModTime(): Date {
-    return new Date(0);
+  ModTime(): Time {
+    return new Time();
   }
 
   IsDir(): bool {

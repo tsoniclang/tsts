@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Reverse } from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_End, Node_Pos, Node_Name, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BindingElement, BindingPattern, VariableDeclaration } from "../ast/generated/data.js";
@@ -751,10 +752,8 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
  */
 export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoSlice<int> {
   const indices = findSuperStatementIndexPathWorker(statements, start, []);
-  if (indices === undefined) {
-    return [];
-  }
-  return [...indices].reverse();
+  Reverse(indices);
+  return indices ?? [];
 }
 
 /**

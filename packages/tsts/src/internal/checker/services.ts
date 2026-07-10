@@ -963,7 +963,8 @@ export function Checker_GetMappedTypeSymbolOfProperty(receiver: GoPtr<Checker>, 
  * 			c.valueSymbolLinks.Get(symbol).containingType.Types(),
  * 			func(t *Type) *ast.Symbol {
  * 				return c.getPropertyOfType(t, symbol.Name)
- * 			})
+ * 			},
+ * 		)
  * 	}
  * 	if symbol.Flags&ast.SymbolFlagsTransient != 0 {
  * 		if c.spreadLinks.Has(symbol) {
@@ -1642,28 +1643,28 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	if typeArgumentPosition >= 0 {
  * 		// The node could be a type argument of a call, a `new` expression, a decorator, an
  * 		// instantiation expression, or a generic type instantiation.
- * 
+ *
  * 		if ast.IsCallLikeExpression(node.Parent) {
  * 			return c.getTypeParameterConstraintForPositionAcrossSignatures(
  * 				c.getUninstantiatedSignatures(node.Parent),
  * 				typeArgumentPosition,
  * 			)
  * 		}
- * 
+ *
  * 		if ast.IsDecorator(node.Parent.Parent) {
  * 			return c.getTypeParameterConstraintForPositionAcrossSignatures(
  * 				c.getUninstantiatedSignatures(node.Parent.Parent),
  * 				typeArgumentPosition,
  * 			)
  * 		}
- * 
+ *
  * 		if ast.IsExpressionWithTypeArguments(node.Parent) && ast.IsExpressionStatement(node.Parent.Parent) {
  * 			uninstantiatedType := c.checkExpression(node.Parent.Expression())
- * 
+ *
  * 			callConstraint := c.getTypeParameterConstraintForPositionAcrossSignatures(
  * 				c.getSignaturesOfType(uninstantiatedType, SignatureKindCall),
  * 				typeArgumentPosition,
@@ -1672,7 +1673,7 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
  * 				c.getSignaturesOfType(uninstantiatedType, SignatureKindConstruct),
  * 				typeArgumentPosition,
  * 			)
- * 
+ *
  * 			// An instantiation expression instantiates both call and construct signatures, so
  * 			// if both exist type arguments must be assignable to both constraints.
  * 			if constructConstraint.flags&TypeFlagsNever != 0 {
@@ -1683,7 +1684,7 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
  * 			}
  * 			return c.getIntersectionType([]*Type{callConstraint, constructConstraint})
  * 		}
- * 
+ *
  * 		if ast.IsTypeReferenceType(node.Parent) {
  * 			typeParameters := c.getTypeParametersForTypeReferenceOrImport(node.Parent)
  * 			if len(typeParameters) == 0 {
@@ -1697,7 +1698,8 @@ export function Checker_getTypeParameterConstraintForPositionAcrossSignatures(re
  * 			if constraint != nil {
  * 				return c.instantiateType(
  * 					constraint,
- * 					newTypeMapper(typeParameters, c.getEffectiveTypeArguments(node.Parent, typeParameters)))
+ * 					newTypeMapper(typeParameters, c.getEffectiveTypeArguments(node.Parent, typeParameters)),
+ * 				)
  * 			}
  * 		}
  * 	}
@@ -1915,7 +1917,7 @@ export function Checker_GetContextualTypeForJsxAttribute(receiver: GoPtr<Checker
  * 	if node.Kind == ast.KindEnumMember {
  * 		return c.getEnumMemberValue(node).Value
  * 	}
- * 
+ *
  * 	if c.symbolNodeLinks.Get(node).resolvedSymbol == nil {
  * 		c.checkExpressionCached(node) // ensure cached resolved symbol is set
  * 	}
@@ -1926,7 +1928,8 @@ export function Checker_GetContextualTypeForJsxAttribute(receiver: GoPtr<Checker
  * 			ast.SymbolFlagsValue,
  * 			true,  /*ignoreErrors* /
  * 			false, /*dontResolveAlias* /
- * 			nil /*location* /)
+ * 			nil,   /*location* /
+ * 		)
  * 	}
  * 	if symbol != nil && symbol.Flags&ast.SymbolFlagsEnumMember != 0 {
  * 		// inline property\index accesses only for const enums
@@ -1935,7 +1938,7 @@ export function Checker_GetContextualTypeForJsxAttribute(receiver: GoPtr<Checker
  * 			return c.getEnumMemberValue(member).Value
  * 		}
  * 	}
- * 
+ *
  * 	return nil
  * }
  */

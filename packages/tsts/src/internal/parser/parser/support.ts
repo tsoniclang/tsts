@@ -1035,7 +1035,8 @@ export function Parser_parseParameter(receiver: GoPtr<Parser>): GoPtr<Node> {
  * 			p.createIdentifier(true /*isIdentifier* /),
  * 			nil, /*questionToken* /
  * 			p.parseTypeAnnotation(),
- * 			nil /*initializer* /)
+ * 			nil, /*initializer* /
+ * 		)
  * 		if modifiers != nil {
  * 			p.parseErrorAtRange(modifiers.Nodes[0].Loc, diagnostics.Neither_decorators_nor_modifiers_may_be_applied_to_this_parameters)
  * 		}
@@ -1052,7 +1053,8 @@ export function Parser_parseParameter(receiver: GoPtr<Parser>): GoPtr<Node> {
  * 		p.parseNameOfParameter(modifiers),
  * 		p.parseOptionalToken(ast.KindQuestionToken),
  * 		p.parseTypeAnnotation(),
- * 		p.parseInitializer())
+ * 		p.parseInitializer(),
+ * 	)
  * 	p.withJSDoc(p.finishNode(result, pos), jsdoc)
  * 	return result
  * }

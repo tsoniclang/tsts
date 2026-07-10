@@ -265,7 +265,7 @@ export function getModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Trans
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getScriptTransformers","kind":"func","status":"implemented","sigHash":"6434cac1fca3cba843a83cdc6ecd9d1b1b9b7373f82be41ce7193c133fc01c1e","bodyHash":"09f63cd5016acf0d9166879de5e05b0596a5e50860f14c84916626fefbed9d6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getScriptTransformers","kind":"func","status":"implemented","sigHash":"6434cac1fca3cba843a83cdc6ecd9d1b1b9b7373f82be41ce7193c133fc01c1e","bodyHash":"42da0b7bddf9cf9c645312e16e318cc890ee9b556a1d46f9a0cd6603f3f42848"}
  *
  * Go source:
  * func getScriptTransformers(emitContext *printer.EmitContext, host printer.EmitHost, sourceFile *ast.SourceFile) []*transformers.Transformer {
@@ -280,7 +280,6 @@ export function getModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Trans
  *
  * 	var referenceResolver binder.ReferenceResolver
  * 	if importElisionEnabled || jsxTransformEnabled || !options.GetIsolatedModules() || options.EmitDecoratorMetadata.IsTrue() {
- * 		emitResolver.MarkLinkedReferencesRecursively(sourceFile)
  * 		referenceResolver = emitResolver
  * 	} else {
  * 		referenceResolver = binder.NewReferenceResolver(options, binder.ReferenceResolverHooks{})
@@ -350,7 +349,6 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
 
   let referenceResolver: ReferenceResolver;
   if (importElisionEnabled || jsxTransformEnabled || !CompilerOptions_GetIsolatedModules(options) || Tristate_IsTrue(options!.EmitDecoratorMetadata)) {
-    emitResolver.MarkLinkedReferencesRecursively(sourceFile);
     referenceResolver = emitResolver;
   } else {
     referenceResolver = NewReferenceResolver(options, {} as ReferenceResolverHooks);

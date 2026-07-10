@@ -1487,15 +1487,15 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * func (tx *esDecoratorTransformer) transformClassLike(node *ast.Node) *ast.Expression {
  * 	f := tx.Factory()
  * 	ec := tx.EmitContext()
- * 
+ *
  * 	ec.StartVariableEnvironment()
- * 
+ *
  * 	// When a class has class decorators we end up transforming it into a statement that would otherwise give it an
  * 	// assigned name. If the class doesn't have an assigned name, we'll give it an assigned name of `""`.
  * 	if !classHasDeclaredOrExplicitlyAssignedName(ec, node) && ast.ClassOrConstructorParameterIsDecorated(false, node) {
  * 		node = injectClassNamedEvaluationHelperBlockIfMissing(ec, node, f.NewStringLiteral("", 0), nil)
  * 	}
- * 
+ *
  * 	classReference := f.GetLocalNameEx(node, printer.AssignedNameOptions{})
  * 	ci := tx.createClassInfo(node)
  * 	classDefinitionStatements := []*ast.Statement{}
@@ -1504,7 +1504,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 	var syntheticConstructor *ast.Node
  * 	var heritageClauses *ast.NodeList
  * 	shouldTransformPrivateStaticElementsInClass := false
- * 
+ *
  * 	// 1. Class decorators are evaluated outside the private name scope of the class.
  * 	//
  * 	// - Since class decorators don't have privileged access to private names defined inside the class,
@@ -1516,7 +1516,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 	classDecorators := tx.transformAllDecoratorsOfDeclaration(node.Decorators())
  * 	if len(classDecorators) > 0 {
  * 		debug.Assert(ci.classThis != nil)
- * 
+ *
  * 		ci.classDecoratorsName = f.NewUniqueNameEx("_classDecorators", printer.AutoGenerateOptions{
  * 			Flags: printer.GeneratedIdentifierFlagsOptimistic | printer.GeneratedIdentifierFlagsFileLevel,
  * 		})
@@ -1526,24 +1526,25 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		ci.classExtraInitializersName = f.NewUniqueNameEx("_classExtraInitializers", printer.AutoGenerateOptions{
  * 			Flags: printer.GeneratedIdentifierFlagsOptimistic | printer.GeneratedIdentifierFlagsFileLevel,
  * 		})
- * 
+ *
  * 		decoratorsArray := f.NewArrayLiteralExpression(
  * 			f.NewNodeList(classDecorators),
  * 			false,
  * 		)
- * 		classDefinitionStatements = append(classDefinitionStatements,
+ * 		classDefinitionStatements = append(
+ * 			classDefinitionStatements,
  * 			tx.createLet(ci.classDecoratorsName, decoratorsArray),
  * 			tx.createLet(ci.classDescriptorName, nil),
  * 			tx.createLet(ci.classExtraInitializersName, f.NewArrayLiteralExpression(f.NewNodeList(nil), false)),
  * 			tx.createLet(ci.classThis, nil),
  * 		)
- * 
+ *
  * 		if len(classDecorators) > 0 && ci.hasStaticPrivateClassElements {
  * 			shouldTransformPrivateStaticElementsInClass = true
  * 			tx.shouldTransformPrivateStaticElementsInFile = true
  * 		}
  * 	}
- * 
+ *
  * 	// 2. ClassHeritage clause is evaluated outside of the private name scope of the class.
  * 	extendsClause := ast.GetHeritageClause(node, ast.KindExtendsKeyword)
  * 	var extendsElement *ast.Node
@@ -1557,13 +1558,13 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 	if extendsElement != nil {
  * 		extendsExpression = tx.Visitor().VisitNode(extendsElement.AsExpressionWithTypeArguments().Expression)
  * 	}
- * 
+ *
  * 	if extendsExpression != nil {
  * 		// Rewrite `super` in static initializers so that we can use the correct `this`.
  * 		ci.classSuper = f.NewUniqueNameEx("_classSuper", printer.AutoGenerateOptions{
  * 			Flags: printer.GeneratedIdentifierFlagsOptimistic | printer.GeneratedIdentifierFlagsFileLevel,
  * 		})
- * 
+ *
  * 		// Ensure we do not give the class or function an assigned name due to the variable by prefixing it
  * 		// with `0, `.
  * 		unwrapped := ast.SkipOuterExpressions(extendsExpression, ast.OEKAll)
@@ -1577,25 +1578,25 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 			)
  * 		}
  * 		classDefinitionStatements = append(classDefinitionStatements, tx.createLet(ci.classSuper, safeExtendsExpression))
- * 
+ *
  * 		updatedExtendsElement := f.UpdateExpressionWithTypeArguments(extendsElement.AsExpressionWithTypeArguments(), ci.classSuper, nil)
  * 		hc := extendsClause.AsHeritageClause()
  * 		updatedExtendsClause := f.UpdateHeritageClause(hc, hc.Token, f.NewNodeList([]*ast.Node{updatedExtendsElement}))
  * 		heritageClauses = f.NewNodeList([]*ast.Node{updatedExtendsClause})
  * 	}
- * 
+ *
  * 	var renamedClassThis *ast.Node
  * 	if ci.classThis != nil {
  * 		renamedClassThis = ci.classThis
  * 	} else {
  * 		renamedClassThis = f.NewThisExpression()
  * 	}
- * 
+ *
  * 	// 3. The name of the class is assigned.
  * 	//
  * 	// If the class did not have a name, the caller should have performed injectClassNamedEvaluationHelperBlockIfMissing
  * 	// prior to calling this function if a name was needed.
- * 
+ *
  * 	// 4. For each member:
  * 	//    a. Member Decorators are evaluated
  * 	//    b. Computed Property Name is evaluated, if present
@@ -1606,14 +1607,14 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 	//
  * 	// NOTE: If there are no constructors, but there are instance initializers, a synthetic constructor is added.
  * 	tx.enterClass(ci)
- * 
+ *
  * 	leadingBlockStatements = append(leadingBlockStatements, tx.createMetadata(ci.metadataReference, ci.classSuper))
- * 
+ *
  * 	// Since the constructor can appear anywhere in the class body and its transform depends on other class elements,
  * 	// we must first visit all non-constructor members, then visit the constructor, all while maintaining document order.
  * 	members := tx.nonConstructorClassElementVisitor.VisitNodes(node.MemberList())
  * 	members = tx.constructorClassElementVisitor.VisitNodes(members)
- * 
+ *
  * 	// Handle pending expressions (computed property names and decorator evaluations)
  * 	if len(tx.pendingExpressions) > 0 {
  * 		// If a pending expression contains a lexical `this`, we'll need to capture the lexical `this` of the
@@ -1638,7 +1639,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		tx.pendingExpressions = nil
  * 	}
  * 	tx.exitClass()
- * 
+ *
  * 	// If there are instance initializers but no constructor, synthesize one
  * 	if len(ci.pendingInstanceInitializers) > 0 && ast.GetFirstConstructorWithBody(node) == nil {
  * 		initializerStatements := tx.prepareConstructor(ci)
@@ -1655,40 +1656,42 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 			syntheticConstructor = f.NewConstructorDeclaration(nil, nil, f.NewNodeList(nil), nil, nil, constructorBody)
  * 		}
  * 	}
- * 
+ *
  * 	// Used in class definition steps 5,7,11
  * 	if ci.staticMethodExtraInitializersName != nil {
- * 		classDefinitionStatements = append(classDefinitionStatements,
+ * 		classDefinitionStatements = append(
+ * 			classDefinitionStatements,
  * 			tx.createLet(ci.staticMethodExtraInitializersName, f.NewArrayLiteralExpression(f.NewNodeList(nil), false)),
  * 		)
  * 	}
- * 
+ *
  * 	// Used in class definition steps 6,8, and construction
  * 	if ci.instanceMethodExtraInitializersName != nil {
- * 		classDefinitionStatements = append(classDefinitionStatements,
+ * 		classDefinitionStatements = append(
+ * 			classDefinitionStatements,
  * 			tx.createLet(ci.instanceMethodExtraInitializersName, f.NewArrayLiteralExpression(f.NewNodeList(nil), false)),
  * 		)
  * 	}
- * 
+ *
  * 	// Used in class definition steps 7, 8, 12, and construction.
  * 	// Emit member info variable declarations; the reference implementation emits static member vars first, then non-static.
  * 	if ci.memberInfos.Size() > 0 {
  * 		classDefinitionStatements = append(classDefinitionStatements, tx.emitMemberInfoDeclarations(ci, true /*isStatic* /)...)
  * 		classDefinitionStatements = append(classDefinitionStatements, tx.emitMemberInfoDeclarations(ci, false /*isStatic* /)...)
  * 	}
- * 
+ *
  * 	// 5. Static non-field element decorators are applied
  * 	leadingBlockStatements = append(leadingBlockStatements, ci.staticNonFieldDecorationStatements...)
- * 
+ *
  * 	// 6. Non-static non-field element decorators are applied
  * 	leadingBlockStatements = append(leadingBlockStatements, ci.nonStaticNonFieldDecorationStatements...)
- * 
+ *
  * 	// 7. Static field element decorators are applied
  * 	leadingBlockStatements = append(leadingBlockStatements, ci.staticFieldDecorationStatements...)
- * 
+ *
  * 	// 8. Non-static field element decorators are applied
  * 	leadingBlockStatements = append(leadingBlockStatements, ci.nonStaticFieldDecorationStatements...)
- * 
+ *
  * 	// 9. Class decorators are applied
  * 	// 10. Class binding is initialized
  * 	//
@@ -1699,9 +1702,9 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		classDescriptor := f.NewObjectLiteralExpression(f.NewNodeList([]*ast.Node{valueProperty}), false)
  * 		classDescriptorAssignment := f.NewAssignmentExpression(ci.classDescriptorName, classDescriptor)
  * 		classNameReference := f.NewPropertyAccessExpression(renamedClassThis, nil, f.NewIdentifier("name"), ast.NodeFlagsNone)
- * 
+ *
  * 		contextObj := f.NewESDecorateClassContextObject(classNameReference, ci.metadataReference)
- * 
+ *
  * 		esDecorateHelper := f.NewESDecorateHelper(
  * 			f.NewToken(ast.KindNullKeyword),
  * 			classDescriptorAssignment,
@@ -1713,7 +1716,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		esDecorateStatement := f.NewExpressionStatement(esDecorateHelper)
  * 		ec.SetSourceMapRange(esDecorateStatement, transformers.MoveRangePastDecorators(node))
  * 		leadingBlockStatements = append(leadingBlockStatements, esDecorateStatement)
- * 
+ *
  * 		// produces:
  * 		//   C = _classThis = _classDescriptor.value;
  * 		classDescriptorValueRef := f.NewPropertyAccessExpression(ci.classDescriptorName, nil, f.NewIdentifier("value"), ast.NodeFlagsNone)
@@ -1721,11 +1724,11 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		classReferenceAssignment := f.NewAssignmentExpression(classReference, classThisAssignment)
  * 		leadingBlockStatements = append(leadingBlockStatements, f.NewExpressionStatement(classReferenceAssignment))
  * 	}
- * 
+ *
  * 	// produces:
  * 	//   if (metadata) Object.defineProperty(C, Symbol.metadata, { configurable: true, writable: true, value: metadata });
  * 	leadingBlockStatements = append(leadingBlockStatements, tx.createSymbolMetadata(renamedClassThis, ci.metadataReference))
- * 
+ *
  * 	// 11. Static extra initializers
  * 	// 12. Static fields are initialized
  * 	if len(ci.pendingStaticInitializers) > 0 {
@@ -1736,7 +1739,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		}
  * 		ci.pendingStaticInitializers = nil
  * 	}
- * 
+ *
  * 	// 13. Class extra initializers
  * 	if ci.classExtraInitializersName != nil {
  * 		runClassInitializersHelper := f.NewRunInitializersHelper(renamedClassThis, ci.classExtraInitializersName, nil)
@@ -1748,13 +1751,13 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		}
  * 		trailingBlockStatements = append(trailingBlockStatements, runClassInitializersStatement)
  * 	}
- * 
+ *
  * 	// If there are no other static initializers to run, combine the leading and trailing block statements
  * 	if len(leadingBlockStatements) > 0 && len(trailingBlockStatements) > 0 && !ci.hasStaticInitializers {
  * 		leadingBlockStatements = append(leadingBlockStatements, trailingBlockStatements...)
  * 		trailingBlockStatements = nil
  * 	}
- * 
+ *
  * 	// prepare a leading `static {}` block, if necessary
  * 	//
  * 	// produces:
@@ -1769,14 +1772,14 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 			f.NewBlock(f.NewNodeList(leadingBlockStatements), true),
  * 		)
  * 	}
- * 
+ *
  * 	if leadingStaticBlock != nil && shouldTransformPrivateStaticElementsInClass {
  * 		// We use EFTransformPrivateStaticElements as a marker on a class static block
  * 		// to inform the classFields transform that it shouldn't rename `this` to `_classThis` in the
  * 		// transformed class static block.
  * 		ec.SetEmitFlags(leadingStaticBlock, printer.EFTransformPrivateStaticElements)
  * 	}
- * 
+ *
  * 	// prepare a trailing `static {}` block, if necessary
  * 	//
  * 	// produces:
@@ -1791,11 +1794,11 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 			f.NewBlock(f.NewNodeList(trailingBlockStatements), true),
  * 		)
  * 	}
- * 
+ *
  * 	// Assemble new members list
  * 	if leadingStaticBlock != nil || syntheticConstructor != nil || trailingStaticBlock != nil {
  * 		newMembers := make([]*ast.Node, 0, len(members.Nodes)+3)
- * 
+ *
  * 		// Find the existing NamedEvaluation helper block index
  * 		existingNamedEvaluationHelperBlockIndex := -1
  * 		for i, m := range members.Nodes {
@@ -1804,7 +1807,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 				break
  * 			}
  * 		}
- * 
+ *
  * 		// add the leading `static {}` block
  * 		if leadingStaticBlock != nil {
  * 			// add the `static {}` block after any existing NamedEvaluation helper block, if one exists.
@@ -1814,24 +1817,24 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		} else {
  * 			newMembers = append(newMembers, members.Nodes...)
  * 		}
- * 
+ *
  * 		// append the synthetic constructor, if necessary
  * 		if syntheticConstructor != nil {
  * 			newMembers = append(newMembers, syntheticConstructor)
  * 		}
- * 
+ *
  * 		// append a trailing `static {}` block, if necessary
  * 		if trailingStaticBlock != nil {
  * 			newMembers = append(newMembers, trailingStaticBlock)
  * 		}
- * 
+ *
  * 		membersList := f.NewNodeList(newMembers)
  * 		membersList.Loc = members.Loc
  * 		members = membersList
  * 	}
- * 
+ *
  * 	lexicalEnvironment := ec.EndVariableEnvironment()
- * 
+ *
  * 	var classExpression *ast.Node
  * 	if len(classDecorators) > 0 {
  * 		classExpression = f.NewClassExpression(nil, nil, nil, heritageClauses, members)
@@ -1839,10 +1842,10 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		if ci.classThis != nil {
  * 			classExpression = injectClassThisAssignmentIfMissing(ec, f, classExpression, ci.classThis)
  * 		}
- * 
+ *
  * 		// We use `var` instead of `let` so we can leverage NamedEvaluation to define the class name
  * 		// and still be able to ensure it is initialized prior to any use in `static {}`.
- * 
+ *
  * 		// produces:
  * 		//   (() => {
  * 		//       let _classDecorators = [...];
@@ -1861,7 +1864,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		//       };
  * 		//       return C;
  * 		//   })();
- * 
+ *
  * 		classReferenceDeclaration := f.NewVariableDeclaration(classReference, nil, nil, classExpression)
  * 		classReferenceVarDeclList := f.NewVariableDeclarationList(f.NewNodeList([]*ast.Node{classReferenceDeclaration}), ast.NodeFlagsNone)
  * 		var returnExpr *ast.Expression
@@ -1870,7 +1873,8 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		} else {
  * 			returnExpr = classReference
  * 		}
- * 		classDefinitionStatements = append(classDefinitionStatements,
+ * 		classDefinitionStatements = append(
+ * 			classDefinitionStatements,
  * 			f.NewVariableStatement(nil, classReferenceVarDeclList),
  * 			f.NewReturnStatement(returnExpr),
  * 		)
@@ -1881,7 +1885,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 		ec.SetOriginal(classExpression, node)
  * 		classDefinitionStatements = append(classDefinitionStatements, f.NewReturnStatement(classExpression))
  * 	}
- * 
+ *
  * 	if shouldTransformPrivateStaticElementsInClass {
  * 		ec.AddEmitFlags(classExpression, printer.EFTransformPrivateStaticElements)
  * 		for _, member := range classExpression.Members() {
@@ -1890,7 +1894,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	mergedStatements := ec.MergeEnvironment(classDefinitionStatements, lexicalEnvironment)
  * 	return f.NewImmediatelyInvokedArrowFunction(mergedStatements)
  * }
@@ -3378,32 +3382,32 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 	if isNamedEvaluationAnd(tx.EmitContext(), node, isAnonymousClassNeedingAssignedName) {
  * 		node = transformNamedEvaluation(tx.EmitContext(), node, canIgnoreEmptyStringLiteralInAssignedName(node.Initializer()), "")
  * 	}
- * 
+ *
  * 	tx.enterClassElement(node)
- * 
+ *
  * 	// TODO(rbuckton): We support decorating `declare x` fields with legacyDecorators, but we currently don't
  * 	//                 support them with esDecorators. We need to consider whether we will support them in the
  * 	//                 future, and how. For now, these should be elided by the `ts` transform.
  * 	debug.Assert(!ast.HasSyntacticModifier(node, ast.ModifierFlagsAmbient), "Not yet implemented.")
- * 
+ *
  * 	// 10.2.1.3 RS: EvaluateBody
  * 	//   Initializer : `=` AssignmentExpression
  * 	//     ...
  * 	//     3. If IsAnonymousFunctionDefinition(|AssignmentExpression|) is *true*, then
  * 	//        a. Let _value_ be ? NamedEvaluation of |Initializer| with argument _functionObject_.[[ClassFieldInitializerName]].
  * 	//     ...
- * 
+ *
  * 	f := tx.Factory()
  * 	ec := tx.EmitContext()
- * 
+ *
  * 	var createDescriptor createDescriptorFunc
  * 	if ast.HasAccessorModifier(node) {
  * 		createDescriptor = tx.createAccessorPropertyDescriptorObject
  * 	}
  * 	result := tx.partialTransformClassElement(node, tx.classInfoStack, createDescriptor)
- * 
+ *
  * 	ec.StartVariableEnvironment()
- * 
+ *
  * 	initializer := tx.Visitor().VisitNode(node.Initializer())
  * 	if result.initializersName != nil {
  * 		var thisArg *ast.Node
@@ -3417,11 +3421,11 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 		}
  * 		initializer = f.NewRunInitializersHelper(thisArg, result.initializersName, initializer)
  * 	}
- * 
+ *
  * 	if ast.IsStatic(node) && tx.classInfoStack != nil && initializer != nil {
  * 		tx.classInfoStack.hasStaticInitializers = true
  * 	}
- * 
+ *
  * 	declarations := ec.EndVariableEnvironment()
  * 	if len(declarations) > 0 {
  * 		stmts := make([]*ast.Statement, len(declarations)+1)
@@ -3429,7 +3433,7 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 		stmts[len(declarations)] = f.NewReturnStatement(initializer)
  * 		initializer = f.NewImmediatelyInvokedArrowFunction(stmts)
  * 	}
- * 
+ *
  * 	if tx.classInfoStack != nil {
  * 		if ast.IsStatic(node) {
  * 			initializer = tx.injectPendingInitializers(tx.classInfoStack, true, initializer)
@@ -3440,22 +3444,24 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 				} else {
  * 					thisArg = f.NewThisExpression()
  * 				}
- * 				tx.classInfoStack.pendingStaticInitializers = append(tx.classInfoStack.pendingStaticInitializers,
+ * 				tx.classInfoStack.pendingStaticInitializers = append(
+ * 					tx.classInfoStack.pendingStaticInitializers,
  * 					f.NewRunInitializersHelper(thisArg, result.extraInitializersName, nil),
  * 				)
  * 			}
  * 		} else {
  * 			initializer = tx.injectPendingInitializers(tx.classInfoStack, false, initializer)
  * 			if result.extraInitializersName != nil {
- * 				tx.classInfoStack.pendingInstanceInitializers = append(tx.classInfoStack.pendingInstanceInitializers,
+ * 				tx.classInfoStack.pendingInstanceInitializers = append(
+ * 					tx.classInfoStack.pendingInstanceInitializers,
  * 					f.NewRunInitializersHelper(f.NewThisExpression(), result.extraInitializersName, nil),
  * 				)
  * 			}
  * 		}
  * 	}
- * 
+ *
  * 	tx.exitClassElement()
- * 
+ *
  * 	if ast.HasAccessorModifier(node) && result.descriptorName != nil {
  * 		// given:
  * 		//  accessor #x = 1;
@@ -3468,10 +3474,10 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 		//  #x_1 = 1;
  * 		//  get #x() { return _private_x_descriptor.get.call(this); }
  * 		//  set #x(value) { _private_x_descriptor.set.call(this, value); }
- * 
+ *
  * 		commentRange := ec.CommentRange(node)
  * 		sourceMapRange := ec.SourceMapRange(node)
- * 
+ *
  * 		// Since we're creating two declarations where there was previously one, cache
  * 		// the expression for any computed property names.
  * 		propName := node.Name()
@@ -3493,28 +3499,28 @@ export function esDecoratorTransformer_visitClassStaticBlockDeclaration(receiver
  * 				setterName = f.UpdateComputedPropertyName(propName.AsComputedPropertyName(), temp)
  * 			}
  * 		}
- * 
+ *
  * 		modifiersWithoutAccessor := tx.accessorStrippingModifierVisitor.VisitModifiers(result.modifiers)
- * 
+ *
  * 		backingField := createAccessorPropertyBackingField(f, node.AsPropertyDeclaration(), modifiersWithoutAccessor, initializer)
  * 		ec.SetOriginal(backingField, node)
  * 		ec.SetEmitFlags(backingField, printer.EFNoComments)
  * 		ec.SetSourceMapRange(backingField, sourceMapRange)
  * 		ec.SetSourceMapRange(backingField.AsPropertyDeclaration().Name(), ec.SourceMapRange(node.Name()))
- * 
+ *
  * 		getter := tx.createGetAccessorDescriptorForwarder(modifiersWithoutAccessor, getterName, result.descriptorName)
  * 		ec.SetOriginal(getter, node)
  * 		ec.SetCommentRange(getter, commentRange)
  * 		ec.SetSourceMapRange(getter, sourceMapRange)
- * 
+ *
  * 		setter := tx.createSetAccessorDescriptorForwarder(modifiersWithoutAccessor, setterName, result.descriptorName)
  * 		ec.SetOriginal(setter, node)
  * 		ec.SetEmitFlags(setter, printer.EFNoComments)
  * 		ec.SetSourceMapRange(setter, sourceMapRange)
- * 
+ *
  * 		return transformers.SingleOrMany([]*ast.Node{backingField, getter, setter}, f)
  * 	}
- * 
+ *
  * 	prop := node.AsPropertyDeclaration()
  * 	return tx.finishClassElement(
  * 		f.UpdatePropertyDeclaration(prop, result.modifiers, result.name, nil, nil, initializer),

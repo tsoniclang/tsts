@@ -1,11 +1,11 @@
-import type { bool, int } from "../../../go/scalars.js";
-import * as syscall from "../../../go/syscall.js";
+import type { bool, int } from "../../go/scalars.js";
+import * as syscall from "../../go/syscall.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/reparsepoint_windows.go::func::isReparsePoint","kind":"func","status":"implemented","sigHash":"d4bef745351fcd4ddf809d58eb14bebafb475ab0154b95d6c3969a6ec92e71bf","bodyHash":"dcf9f8c184b13f68d067fdb90b4621efef48f2e8baf886eadb395db347772506"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nativepath/symlink_windows.go::func::IsSymlinkOrReparsePoint","kind":"func","status":"implemented","sigHash":"296ae0ab197f64d4e2c052aa779106c8480671870550027a943702a803f4fdd5","bodyHash":"74a75c2b9c39f068afc56287e2fd330deefc0b50576f9f47a289a99a840591e7"}
  *
  * Go source:
- * func isReparsePoint(path string) bool {
+ * func IsSymlinkOrReparsePoint(path string) bool {
  * 	if len(path) >= 248 {
  * 		path = `\\?\` + path
  * 	}
@@ -28,7 +28,7 @@ import * as syscall from "../../../go/syscall.js";
  * 	return data.FileAttributes&syscall.FILE_ATTRIBUTE_REPARSE_POINT != 0
  * }
  */
-export function isReparsePoint(path: string): bool {
+export function IsSymlinkOrReparsePoint(path: string): bool {
   let p = path;
   if (p.length >= 248) {
     p = "\\\\?\\" + p;

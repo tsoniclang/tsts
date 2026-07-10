@@ -1143,7 +1143,7 @@ export function Checker_compareSymbolsWorker(receiver: GoPtr<Checker>, s1: GoPtr
   }
   // Fall back to symbol IDs. This is a last resort that should happen only when symbols have
   // no declaration and duplicate names.
-  return (GetSymbolId(s1) as int) - (GetSymbolId(s2) as int);
+  return (globalThis.Number(GetSymbolId(s1)) - globalThis.Number(GetSymbolId(s2))) as int;
 }
 
 /**
@@ -2213,8 +2213,6 @@ export function isDeclarationReadonly(declaration: GoPtr<Node>): bool {
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::constGroup::orderedSetMapThreshold","kind":"constGroup","status":"implemented","sigHash":"0a8e7c6dda3a0579ec52981a0cec6db48bd2bbe244db49d9552a9dc2217416af","bodyHash":"4562a3ed8000e6cd8fe18da48f5328aea40f866c9404e0a8006250dbcfa13274"}
  *
  * Go source:
- * // orderedSetMapThreshold is the size at which an orderedSet materializes its dedup map.
- * // Below this, contains() scans the values slice.
  * const orderedSetMapThreshold = 16
  */
 export const orderedSetMapThreshold: int = 16;

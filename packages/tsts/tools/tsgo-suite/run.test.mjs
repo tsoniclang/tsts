@@ -1384,7 +1384,7 @@ test("caseExpectedErrors treats TS-Go removed option diagnostics as expected err
 
 test("buildTestUniverseInventory tracks full compiler scope and excludes language service scope", async () => {
   const inventory = await buildTestUniverseInventory();
-  assert.equal(inventory.currentHarness.inScope, 302);
+  assert.equal(inventory.currentHarness.inScope, 318);
   assert.ok(inventory.typeScriptCases.entries.compiler > inventory.currentHarness.entries.compiler);
   assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
   assert.equal(inventory.typeScriptCases.entries.project, 316);
@@ -1458,12 +1458,13 @@ test("applyTsgoAcceptedOverlay supersedes every Diagnostics reported section of 
 });
 
 test("loadTsgoAcceptedOverlay returns sections for committed overlays and undefined otherwise", async () => {
-  const { loadTsgoAcceptedOverlay } = await import("./run.mjs");
+  const { loadTsgoAcceptedOverlay, TSGO_ACCEPTED_ABSENT_MARKER } = await import("./run.mjs");
   assert.equal(loadTsgoAcceptedOverlay("typescript", "transpile", "no-such-overlay.d.ts"), undefined);
   const sections = loadTsgoAcceptedOverlay("typescript", "transpile", "declarationRestParameters.d.ts");
   assert.ok(Array.isArray(sections));
-  assert.ok(sections.some((section) => section.name === "v1.d.ts"));
-  assert.ok(sections.some((section) => section.name === "Diagnostics reported"));
+  assert.equal(sections.some((section) => section.name === "v1.d.ts"), false);
+  assert.equal(sections.some((section) => section.name === "Diagnostics reported"), false);
+  assert.equal(sections.find((section) => section.name === "v2.d.ts")?.content.trim(), TSGO_ACCEPTED_ABSENT_MARKER);
 });
 
 test("trimResult flattens retained lines, caps them, and passes through already-trimmed records", async () => {
