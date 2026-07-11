@@ -7,6 +7,10 @@ import { loadProfile } from "./profile.mjs";
 test("signature profile uses one exact recursively validated contract", () => {
   const profile = loadProfile({});
   assert.equal(profile.externalInterfaceMembers["io/fs.FileInfo"][0].type.returnTypePolicy, "required");
+  assert.deepEqual(profile.externalValueTypes["jsontext.BeginObject"], {
+    module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
+    name: "Token",
+  });
 
   for (const signatureCheck of [
     { parser: null },
