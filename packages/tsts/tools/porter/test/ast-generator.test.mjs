@@ -45,6 +45,7 @@ import {
   writeAstGenerated,
 } from "../ast-generator.mjs";
 import { AstSchema } from "../ast-schema-model.mjs";
+import { astMemberTsType, lowerAstStorageType } from "../ast-generator/node-emitters.mjs";
 import {
   buildDiagnosticsGeneratedArtifactStatus,
   buildDiagnosticsGeneratedFiles,
@@ -244,7 +245,8 @@ test("ast-generator preserves nil NodeList slices in generated visitors", async 
   const output = buildAstGeneratedFiles(baseConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
   assert.match(output, /if \(nodes === undefined \|\| nodes\.length !== 1\)/);
   assert.match(output, /updated = \[\.\.\.updated, \.\.\.\(AsSyntaxList\(visited\)!\.Children \?\? \[\]\)\]/);
-  assert.match(output, /let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;/);
+  assert.match(output, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
+  assert.doesNotMatch(output, /GoPtr<GoSlice</);
   const sourceFile = ts.createSourceFile("data.ts", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const declaration = sourceFile.statements.find((statement) =>
     ts.isFunctionDeclaration(statement) && statement.name?.text === "generatedVisitSlice");
@@ -269,11 +271,12 @@ test("ast-generator preserves nil raw slices in fields, factories, and visitors"
   const factoryOutput = generated.get("internal/ast/generated/factory.ts");
   const dataOutput = generated.get("internal/ast/generated/data.ts");
 
-  assert.match(nodeOutput, /text: GoPtr<GoSlice<string>>;/);
-  assert.match(factoryOutput, /NewJSDocText\(receiver: GoPtr<NodeFactory>, text: GoPtr<GoSlice<string>>\)/);
+  assert.match(nodeOutput, /text: GoSlice<string>;/);
+  assert.match(factoryOutput, /NewJSDocText\(receiver: GoPtr<NodeFactory>, text: GoSlice<string>\)/);
   assert.match(factoryOutput, /data\.text = text;/);
   assert.doesNotMatch(factoryOutput, /data\.text = text \?\? "";/);
-  assert.match(dataOutput, /generatedVisitRawNodes\(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>\): GoPtr<GoSlice<GoPtr<Node>>>/);
+  assert.match(dataOutput, /generatedVisitRawNodes\(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>\): GoSlice<GoPtr<Node>>/);
+  assert.doesNotMatch(`${nodeOutput}\n${factoryOutput}\n${dataOutput}`, /GoPtr<GoSlice/);
 });
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -318,7 +321,7 @@ test("ast-generator maps every schema goOnly compiler-state field without an own
   const data = files.get("internal/ast/generated/data.ts");
 
   assert.match(node, /export interface DeclarationBase[\s\S]*Symbol: GoPtr<Symbol>/);
-  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: GoPtr<SymbolTable>;[\s\S]*NextContainer: GoPtr<Node>/);
+  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: SymbolTable;[\s\S]*NextContainer: GoPtr<Node>/);
   assert.match(node, /export interface FlowNodeBase[\s\S]*FlowNode: GoPtr<FlowNode>/);
   assert.match(node, /export interface CompositeBase[\s\S]*facts: Uint32/);
   assert.match(node, /export interface BodyBase[\s\S]*EndFlowNode: GoPtr<FlowNode>/);
@@ -377,13 +380,26 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
   assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data\[goReceiverKey\] as GoPtr<Identifier>;/);
 });
 
-test("ast-schema-model: raw string lists are not children; node raw lists are GoPtr<Node>", () => {
+test("ast-generator: raw slices use their intrinsic carrier", () => {
   const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
   const schema = new AstSchema(ast);
   // JSDocText.text is []string (raw) inherited from JSDocCommentBase -> not a child.
   const textField = schema.baseFields("JSDocCommentBase").find((f) => f.name === "text");
   assert.equal(textField.isChild(), false);
-  assert.equal(textField.tsReference(), "GoPtr<GoSlice<string>>");
+  assert.equal(astMemberTsType(textField), "GoSlice<string>");
+});
+
+test("ast-generator: pointer slots preserve reviewed storage representation", () => {
+  assert.equal(lowerAstStorageType("*Node", "NodeSlot"), "GoPtr<Node>");
+  assert.equal(lowerAstStorageType("*[]int", "SliceSlot"), "GoRef<GoSlice<int>>");
+  assert.equal(lowerAstStorageType("**Node", "PointerSlot"), "GoRef<GoPtr<Node>>");
+  assert.throws(() => lowerAstStorageType("*Unreviewed", "UnknownSlot"), /no reviewed representation provenance/);
+  assert.throws(() => astMemberTsType({
+    goOnly: false, listKind: undefined, name: "CollapsedSlot", tsReference: () => "GoPtr<GoPtr<Node>>",
+  }), /without exact representation provenance/);
+  assert.throws(() => astMemberTsType({
+    goOnly: false, listKind: undefined, name: "UnknownPointer", tsReference: () => "GoPtr<Unknown>",
+  }), /no reviewed aggregate-pointer representation provenance/);
 });
 
 test("ast-generator: multi-kind and type-parameter Is functions follow ast_generated.go", () => {

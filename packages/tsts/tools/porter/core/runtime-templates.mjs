@@ -23,18 +23,21 @@ declare const __goBrand: unique symbol;
 export const goReceiverKey: unique symbol = Symbol("GoInterface.receiver");
 const goInterfaceTypeKey: unique symbol = Symbol("GoInterface.type");
 
-export type GoPtr<T> = T | undefined;
-export type GoRef<T> = { v: T };
-export type GoSlice<T> = T[];
+export type GoNilable<T> = T | undefined;
+export type GoPtr<T> = GoNilable<T>;
+export type GoRef<T> = GoNilable<{ v: T }>;
+export type GoSlice<T> = GoNilable<T[]>;
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
-export type GoMap<K, V> = Map<K, V>;
-export type GoChan<T, Direction extends string = "bidirectional"> = {
+export type GoMap<K, V> = GoNilable<Map<K, V>>;
+export type GoChan<T, Direction extends string = "bidirectional"> = GoNilable<{
   readonly [__goBrand]?: { readonly element: T; readonly direction: Direction };
   readonly [goChannelState]?: GoChannelState<T>;
-};
-export type GoSeq<T> = (yieldValue: (value: T) => bool) => void;
-export type GoSeq2<K, V> = (yieldValue: (key: K, value: V) => bool) => void;
-export type GoError = Error | undefined;
+}>;
+export type GoFunc<F> = GoNilable<F>;
+export type GoInterface<I> = GoNilable<I>;
+export type GoSeq<T> = GoFunc<(yieldValue: (value: T) => bool) => void>;
+export type GoSeq2<K, V> = GoFunc<(yieldValue: (key: K, value: V) => bool) => void>;
+export type GoError = GoInterface<Error>;
 export type GoComparable = unknown;
 export type GoOrdered = string | number | bigint | bool;
 export type GoConstraint<Text extends string> = unknown;
@@ -42,7 +45,8 @@ export type GoUnresolved<Name extends string> = { readonly [__goBrand]: { readon
 export type GoUnsupported<Text extends string> = { readonly [__goBrand]: { readonly unsupported: Text } };
 export type GoComplex64 = { readonly real: number; readonly imag: number };
 export type GoComplex128 = { readonly real: number; readonly imag: number };
-export type GoUnsafePointer = GoPtr<unknown>;
+declare const goUnsafePointerBrand: unique symbol;
+export type GoUnsafePointer = GoNilable<{ readonly [goUnsafePointerBrand]: never }>;
 export type GoRune = int;
 
 export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: string): T {
@@ -119,7 +123,7 @@ export interface GoChanSelectCase {
 
 const goChannelState: unique symbol = Symbol("GoChannel.state");
 
-export function MakeGoChan<T>(capacity: number, zeroValue: () => T): GoChan<T> {
+export function MakeGoChan<T>(capacity: number, zeroValue: () => T): NonNullable<GoChan<T>> {
   if (!Number.isSafeInteger(capacity) || capacity < 0) {
     throw new RangeError("makechan: size out of range");
   }
@@ -243,6 +247,9 @@ export function GoChanClose<T>(channel: GoChan<T, string>): void {
 }
 
 function requireGoChannelState<T>(channel: GoChan<T, string>): GoChannelState<T> {
+  if (channel === undefined) {
+    throw new Error("channel is nil");
+  }
   const state = channel[goChannelState];
   if (state === undefined) {
     throw new Error("channel has no runtime state");
@@ -559,7 +566,7 @@ export function NewGoStructMap<K, V>(keyDescriptor: GoMapKeyDescriptor<K>): GoSt
   return new GoStructMap<K, V>(keyDescriptor);
 }
 
-export function GoMapGetExisting<K, V>(map: GoMap<K, V>, key: K): V {
+export function GoMapGetExisting<K, V>(map: NonNullable<GoMap<K, V>>, key: K): V {
   if (map instanceof GoStructMap) {
     const entry = map.lookup(key);
     if (entry !== undefined) {
@@ -571,14 +578,14 @@ export function GoMapGetExisting<K, V>(map: GoMap<K, V>, key: K): V {
   throw new TypeError("map key lookup is inconsistent with its entries");
 }
 
-export function GoMapLookup<K, V>(map: GoPtr<GoMap<K, V>>, key: K, zeroValue: () => V): [V, bool] {
+export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: () => V): [V, bool] {
   if (map === undefined || !map.has(key)) {
     return [zeroValue(), false];
   }
   return [GoMapGetExisting(map, key), true];
 }
 
-export function GoAppend<T>(slice: GoPtr<GoSlice<T>>, ...items: GoSlice<T>): GoSlice<T> {
+export function GoAppend<T>(slice: GoSlice<T>, ...items: T[]): NonNullable<GoSlice<T>> {
   return [...(slice ?? []), ...items];
 }
 

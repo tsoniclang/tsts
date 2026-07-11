@@ -10,6 +10,35 @@ Porter is deliberately not a Go-to-TypeScript translator. It must not infer impl
 
 The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, type-intrinsic nilability, embedding, and struct tags. Nilability is recorded by `go/types` on every canonical type occurrence; it is never inferred from TypeScript optional syntax or carrier spelling. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits them for imports, constants, types, ownership, control flow, classification, or equivalence. A body hash is an opaque upstream-drift fingerprint only.
 
+## Nilability Carriers
+
+Nilability has one declaration contract: `GoNilable<T> = T | undefined`.
+`GoPtr<T>`, `GoSlice<T>`, `GoMap<K, V>`, `GoChan<T, D>`, `GoFunc<F>`,
+and `GoInterface<I>` specialize that carrier for their Go representation;
+`GoError` is `GoInterface<Error>`. Parameters and properties remain required
+syntax. Porter never substitutes a question mark or an extra `GoPtr`.
+
+Direct anonymous `func` and `interface` value types become `GoFunc<F>` and
+`GoInterface<I>`. A declared Go interface remains a TypeScript `interface` so
+its declaration kind, members, and heritage stay exact. At a value occurrence,
+declaration-RHS evidence identifies the named interface and produces
+`GoInterface<DeclaredInterface>`. An alias whose RHS already applies that
+carrier remains a canonical alias reference instead of being wrapped twice.
+Top-level Go function and method declarations are callable declarations, not
+nilable function values, and therefore are never wrapped in `GoFunc`.
+
+Pointer lowering also follows representation evidence. For example, the Go
+parameter `differsOnlyInMap *bool` is a mutable scalar cell and maps to
+`GoRef<bool>`; `GoRef<T>` is itself nilable. A pointer to direct aggregate object
+storage may use `GoPtr<T>`. A pointer to a scalar or replaceable header/reference
+value requires a distinct mutable slot: `*[]int` becomes
+`GoRef<GoSlice<int>>`, and `**Node` becomes `GoRef<GoPtr<Node>>`. Named pointees
+are resolved through the exact profile-specific declared type RHS before the
+carrier is selected. An unconstrained `*T` cannot prove the required storage,
+so Porter reports that design issue instead of guessing. Direct-kind nilability
+contradictions, missing named RHS, and absent explicit facade/profile evidence
+are hard errors.
+
 Expected Go constants and inferred top-level variable types come directly from `go/types` and `go/constant`; Porter never reconstructs them from Go source text. Actual TypeScript declaration initializers use the closed evaluator contract below. Unsupported declaration/type variants fail rather than becoming approximate evidence. Build-profile selection covers every declaration-bearing source file and fails if a profile changes a declaration contract.
 
 Every accepted divergence is local to the affected TypeScript declaration through `@tsgo-override`, names a registered category, gives a durable reason, and snapshots the exact Go and TypeScript contract for the allowed aspect. There is no global waiver and no compatibility fallback.
@@ -248,7 +277,7 @@ The skeleton renderer emits compilable TypeScript for every portable Go unit:
 - Function and method parameters/results are derived from canonical `go/types.Signature` records.
 - Go primitives map to TSTS internal scalar aliases where the port needs fixed-width source-level meaning.
 - Multiple Go return values become TypeScript tuples.
-- Go generic type declarations receive `unknown` defaults so partially specialized Go uses compile as skeletons.
+- Go generic type declarations preserve their exact type-parameter lists and constraints; Porter never fabricates TypeScript defaults for omitted Go arguments.
 - Constants and inferred top-level values use exact `go/types` objects; the renderer never guesses an initializer type from source text.
 - Every generated body throws with `globalThis.Error` so facade symbols named `Error` cannot shadow the runtime constructor.
 

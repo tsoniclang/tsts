@@ -1,4 +1,4 @@
-import { addRefsFromTsType } from "./node-emitters.mjs";
+import { addRefsFromTsType, astMemberTsType } from "./node-emitters.mjs";
 import { compareText } from "../core/deterministic-order.mjs";
 
 // ── factory.ts (NodeFactory struct + New/Clone factories) ────────────────────
@@ -6,7 +6,7 @@ import { compareText } from "../core/deterministic-order.mjs";
 export function emitFactory(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
-  lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
+  lines.push(`import type { ${factoryCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
   lines.push(`import type { Arena } from "../../core/arena.js";`);
   lines.push(`import { NodeDefault_AsNode, NodeFactory_newNode, updateNode } from "../spine.js";`);
   lines.push(`import type { ModifierList, Node, NodeFactoryHooks, NodeList, nodeData } from "../spine.js";`);
@@ -66,6 +66,18 @@ export function emitFactory(schema) {
   return lines.join("\n");
 }
 
+function factoryCompatTypes(schema) {
+  const types = new Set(["GoPtr", "GoSlice"]);
+  for (const node of schema.nodeNames()) {
+    if (schema.definitions[node].handWritten) continue;
+    for (const member of schema.schemaMembers(node)) {
+      if (member.isKindParam()) continue;
+      if (astMemberTsType(member).includes("GoRef<")) types.add("GoRef");
+    }
+  }
+  return [...types].sort();
+}
+
 function emitNodeFactoryStruct(schema, lines) {
   const arenaFields = [];
   for (const node of schema.nodeNames()) {
@@ -119,7 +131,7 @@ function collectFactoryParamRefs(schema) {
     if (schema.definitions[node].handWritten) continue;
     for (const m of schema.schemaMembers(node)) {
       if (m.isKindParam()) continue;
-      addRefsFromTsType(m.tsReference(), refs);
+      addRefsFromTsType(astMemberTsType(m), refs);
     }
   }
   return [...refs].sort();
@@ -144,7 +156,7 @@ function emitNewFactories(schema, node, lines) {
 }
 
 function emitNewFactory(schema, funcName, kindName, node, members, kindMember, nodeFlagsMembers, lines) {
-  const params = members.map((m) => `${m.goParamName()}: ${m.tsReference()}`);
+  const params = members.map((m) => `${m.goParamName()}: ${astMemberTsType(m)}`);
   const paramList = ["receiver: GoPtr<NodeFactory>", ...params].join(", ");
   lines.push(`export function ${funcName}(${paramList}): GoPtr<Node> {`);
   lines.push(`  const data = create${node}Data();`);
@@ -184,7 +196,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
 function emitUpdateFactory(schema, node, lines) {
   const members = schema.schemaMembers(node);
   const updateMembers = members.filter((m) => !m.isKindParam());
-  const params = updateMembers.map((m) => `${m.goParamName()}: ${m.tsReference()}`);
+  const params = updateMembers.map((m) => `${m.goParamName()}: ${astMemberTsType(m)}`);
   const paramList = ["receiver: GoPtr<NodeFactory>", `node: GoPtr<${node}>`, ...params].join(", ");
   lines.push(`export function NodeFactory_Update${node}(${paramList}): GoPtr<Node> {`);
   const comparisons = updateMembers.map((m) => `${m.goParamName()} !== ${updateCompareAccess(m)}`);

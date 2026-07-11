@@ -337,7 +337,8 @@ export function emitUnions(schema) {
 export function emitNode(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
-  lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
+  const compatTypes = baseCompatTypes(schema);
+  lines.push(`import type { ${compatTypes.join(", ")} } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierList, Node, NodeBase, NodeList } from "../spine.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
@@ -368,7 +369,7 @@ export function emitNode(schema) {
     }
     for (const field of schema.baseFields(baseName)) {
       if (field.noTS && !field.goOnly) continue;
-      fieldLines.push(`  ${field.name}: ${field.goOnly ? goOnlyFieldTsType(field) : field.tsReference()};`);
+      fieldLines.push(`  ${field.name}: ${astMemberTsType(field)};`);
     }
     const body = fieldLines.length > 0 ? `\n${fieldLines.join("\n")}\n` : "";
     lines.push(`export interface ${baseName}${extendsClause} {${body}}`);
@@ -377,24 +378,96 @@ export function emitNode(schema) {
   return lines.join("\n");
 }
 
-const GO_ONLY_FIELD_TS_TYPES = new Map([
-  ["*Symbol", "GoPtr<Symbol>"],
-  ["SymbolTable", "GoPtr<SymbolTable>"],
-  ["*Node", "GoPtr<Node>"],
-  ["*FlowNode", "GoPtr<FlowNode>"],
+const AST_VALUE_TS_TYPES = new Map([
+  ["SymbolTable", "SymbolTable"],
   ["atomic.Uint32", "Uint32"],
+  ["bool", "bool"],
+  ["int", "int"],
+  ["string", "string"],
 ]);
+
+const AST_REFERENCE_POINTEES = new Set(["SymbolTable", "bool", "int", "string"]);
+
+const REVIEWED_AGGREGATE_POINTERS = new Map([
+  ["Symbol", "Symbol"],
+  ["Node", "Node"],
+  ["FlowNode", "FlowNode"],
+]);
+
+export function astMemberTsType(field) {
+  if (field.goOnly) return goOnlyFieldTsType(field);
+  if (field.listKind === undefined && typeof field.rawType === "string"
+    && (field.rawType.startsWith("*") || field.rawType.startsWith("[]"))) {
+    return lowerAstStorageType(field.rawType, field.name);
+  }
+  const reference = field.tsReference();
+  if (field.listKind === "raw") {
+    const prefix = "GoPtr<";
+    if (!reference.startsWith(prefix) || !reference.endsWith(">")) {
+      throw new Error(`raw AST list '${field.name}' has no exact direct-slice provenance`);
+    }
+    const slice = reference.slice(prefix.length, -1);
+    if (!slice.startsWith("GoSlice<") || !slice.endsWith(">")) {
+      throw new Error(`raw AST list '${field.name}' did not resolve to the canonical GoSlice carrier`);
+    }
+    assertNoCollapsingGoPtr(slice, field.name);
+    return slice;
+  }
+  assertNoCollapsingGoPtr(reference, field.name);
+  if (reference.startsWith("GoPtr<") && !hasReviewedAggregatePointerProvenance(field)) {
+    throw new Error(`AST field '${field.name}' has no reviewed aggregate-pointer representation provenance: ${reference}`);
+  }
+  return reference;
+}
 
 export function goOnlyFieldTsType(field) {
   if (!field.goOnly) throw new Error(`goOnly field mapper received non-goOnly field '${field.name}'`);
   if (field.listKind !== undefined) {
     throw new Error(`unsupported list kind '${field.listKind}' on goOnly field '${field.name}'`);
   }
-  const mapped = GO_ONLY_FIELD_TS_TYPES.get(field.rawType);
-  if (mapped === undefined) {
-    throw new Error(`unsupported goOnly AST field type '${field.rawType}' on '${field.name}'`);
+  return lowerAstStorageType(field.rawType, field.name);
+}
+
+export function lowerAstStorageType(rawType, fieldName = "<unknown>") {
+  if (typeof rawType !== "string" || rawType === "") {
+    throw new Error(`goOnly AST field '${fieldName}' has no exact Go type provenance`);
   }
-  return mapped;
+  if (rawType.startsWith("*")) return lowerAstPointer(rawType.slice(1), fieldName);
+  if (rawType.startsWith("[]")) return `GoSlice<${lowerAstStorageType(rawType.slice(2), fieldName)}>`;
+  const value = AST_VALUE_TS_TYPES.get(rawType) ?? REVIEWED_AGGREGATE_POINTERS.get(rawType);
+  if (value !== undefined) return value;
+  throw new Error(`goOnly AST field '${fieldName}' type '${rawType}' has no reviewed representation provenance`);
+}
+
+function lowerAstPointer(pointee, fieldName) {
+  const aggregate = REVIEWED_AGGREGATE_POINTERS.get(pointee);
+  if (aggregate !== undefined) return `GoPtr<${aggregate}>`;
+  if (pointee.startsWith("*") || pointee.startsWith("[]") || AST_REFERENCE_POINTEES.has(pointee)) {
+    return `GoRef<${lowerAstStorageType(pointee, fieldName)}>`;
+  }
+  throw new Error(`goOnly AST field '${fieldName}' pointer to '${pointee}' has no reviewed representation provenance`);
+}
+
+function assertNoCollapsingGoPtr(reference, fieldName) {
+  if (/GoPtr<Go(?:Nilable|Ptr|Ref|Slice|Map|Chan|Func|Interface|Seq2?|Error|UnsafePointer)(?:<|>)/.test(reference)) {
+    throw new Error(`AST field '${fieldName}' would collapse a pointer/header slot without exact representation provenance: ${reference}`);
+  }
+}
+
+function hasReviewedAggregatePointerProvenance(field) {
+  if (field.listKind === "ModifierList" || field.listKind === "NodeList") return true;
+  return field.listKind === undefined && typeof field.isChild === "function" && field.isChild();
+}
+
+function baseCompatTypes(schema) {
+  const types = new Set(["GoPtr", "GoSlice"]);
+  for (const baseName of schema.baseNames()) {
+    for (const field of schema.baseFields(baseName)) {
+      if (field.noTS && !field.goOnly) continue;
+      if (astMemberTsType(field).includes("GoRef<")) types.add("GoRef");
+    }
+  }
+  return [...types].sort();
 }
 
 // CompositeBase needs a (non-goOnly-in-TS) facts cell because spine reads it.
@@ -404,7 +477,7 @@ function collectBaseFieldRefs(schema) {
     if (HAND_WRITTEN_BASES.has(baseName)) continue;
     for (const field of schema.baseFields(baseName)) {
       if (field.noTS) continue;
-      addRefsFromTsType(field.tsReference(), refs);
+      addRefsFromTsType(astMemberTsType(field), refs);
     }
   }
   return [...refs].sort();
@@ -414,7 +487,7 @@ function collectBaseFieldRefs(schema) {
 // (e.g. "GoPtr<EntityName>" -> EntityName) so node.ts can import them.
 export function addRefsFromTsType(tsRef, out) {
   const ids = tsRef.match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
-  const skip = new Set(["GoPtr", "GoSlice", "Node", "NodeList", "ModifierList", "bool", "int", "string", "unknown", "Kind", "ModifierFlags", "NodeFlags", "TokenFlags", "Uint32"]);
+  const skip = new Set(["GoPtr", "GoRef", "GoSlice", "Node", "NodeList", "ModifierList", "bool", "int", "string", "unknown", "Kind", "ModifierFlags", "NodeFlags", "TokenFlags", "Uint32"]);
   for (const id of ids) {
     if (!skip.has(id)) out.add(id);
   }

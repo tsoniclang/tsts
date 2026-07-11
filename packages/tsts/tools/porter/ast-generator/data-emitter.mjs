@@ -1,8 +1,8 @@
 import {
   addRefsFromTsType,
+  astMemberTsType,
   BASE_METHOD_PROVIDERS,
   generatedOverrideMethodsFor,
-  goOnlyFieldTsType,
   HAND_WRITTEN_BASES,
   NODE_DATA_METHODS,
   resolveAdapterTarget,
@@ -13,7 +13,7 @@ import {
 export function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
-  lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
+  lines.push(`import type { ${dataCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
   lines.push(`import { goReceiverKey } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
@@ -100,6 +100,18 @@ function baseFreeFnsUsed() {
   return [...out].sort();
 }
 
+function dataCompatTypes(schema) {
+  const types = new Set(["GoPtr", "GoSlice"]);
+  for (const node of schema.nodeNames()) {
+    for (const member of schema.members(node)) {
+      if (member.noTS && !member.goOnly) continue;
+      if (member.isKindParam()) continue;
+      if (astMemberTsType(member).includes("GoRef<")) types.add("GoRef");
+    }
+  }
+  return [...types].sort();
+}
+
 function collectConcreteFieldRefs(schema) {
   const refs = new Set();
   for (const node of schema.nodeNames()) {
@@ -110,7 +122,7 @@ function collectConcreteFieldRefs(schema) {
     for (const m of schema.schemaMembers(node)) {
       if (m.noTS) continue;
       if (m.isKindParam()) continue;
-      addRefsFromTsType(m.tsReference(), refs);
+      addRefsFromTsType(astMemberTsType(m), refs);
     }
   }
   return [...refs].sort();
@@ -174,7 +186,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  return generatedVisitNodeBase(v, node);`);
   lines.push(`}`);
   lines.push("");
-  lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): [GoPtr<GoSlice<GoPtr<Node>>>, bool] {`);
+  lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
   lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
   lines.push(`    return [nodes, false as bool];`);
@@ -220,7 +232,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  return [nodes, false as bool];`);
   lines.push(`}`);
   lines.push("");
-  lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Node>>> {`);
+  lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {`);
   lines.push(`  if (nodes === undefined) {`);
   lines.push(`    return nodes;`);
   lines.push(`  }`);
@@ -287,7 +299,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push("");
   lines.push(`function generatedLiftToBlock(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
-  lines.push(`  let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;`);
+  lines.push(`  let nodes: GoSlice<GoPtr<Node>> = undefined;`);
   lines.push(`  if (node !== undefined) {`);
   lines.push(`    if (node.Kind === KindSyntaxList) {`);
   lines.push(`      nodes = AsSyntaxList(node)!.Children;`);
@@ -373,7 +385,7 @@ function emitConcreteInterface(schema, node, lines) {
     if (m.inherited) continue;
     // Go has no optional field marker — pointer fields are nilable (GoPtr) and
     // scalar fields are zero-valued. Mirror that; do not add a TS `?`.
-    fieldLines.push(`  ${m.name}: ${m.goOnly ? goOnlyFieldTsType(m) : m.tsReference()};`);
+    fieldLines.push(`  ${m.name}: ${astMemberTsType(m)};`);
   }
   const body = fieldLines.length > 0 ? `\n${fieldLines.join("\n")}\n` : "";
   lines.push(`export interface ${node}${extendsClause} {${body}}`);
@@ -462,7 +474,7 @@ function visitEachChildArgList(schema, node) {
 
 function visitEachChildArg(schema, node, m) {
   const access = `receiver!.${m.name}`;
-  const cast = (expr) => `${expr} as ${m.tsReference()}`;
+  const cast = (expr) => `${expr} as ${astMemberTsType(m)}`;
   if (!m.isChild()) {
     if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") return "receiver!.Flags";
     return access;
