@@ -1,108 +1,243 @@
-// Actual-side driver: parse a ported .ts file with TSTS's own parser and produce,
-// per @tsgo-unit id, the structured signature descriptor of the declaration that
-// the annotation introduces. The owning declaration is found by source position
-// (the @tsgo-unit JSDoc is leading trivia of the statement it annotates, so the
-// annotation offset falls inside that statement's [pos, end) range).
+// Parser-backed declaration descriptor extraction for tracked Porter units.
 
 import { readFileSync } from "node:fs";
 import {
-  loadParser, parseSource, buildImportMap, buildLocalTypeNames, declarationDescriptor,
+  declarationDescriptor,
+  loadParser,
 } from "./ast-signatures.mjs";
+import { buildIndexedModuleValueEnvironments as buildConstantEnvironments } from "./constant-environment.mjs";
+import { declarationName, expectedTypeScriptNames } from "./declaration-metadata.mjs";
+import { indexTypeScriptModuleSources, parseTypeScriptModule } from "./module-index.mjs";
 
 const DEFAULT_ANNOTATION = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
-const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const annotationRegExp = (tag) => new RegExp(`${escapeRe(tag)}\\s+({[^\\n\\r]+})`, "g");
 
-// The position of a declaration's NAME — the stable anchor for associating a
-// @tsgo-unit annotation with the declaration it introduces. A declaration's
-// trivia-inclusive Node_Pos can fall INSIDE its leading JSDoc (tsgo attaches the
-// doc as a JSDoc node), so it is unreliable; the name identifier is always in
-// real code after the JSDoc.
-function declAnchor(api, st) {
-  if (st.name) return api.Node_Pos(st.name);
-  if (st.Kind === api.Kinds.KindVariableStatement) {
-    const decls = st.DeclarationList?.Declarations?.Nodes ?? [];
-    if (decls[0]?.name) return api.Node_Pos(decls[0].name);
-  }
-  return api.Node_Pos(st);
-}
-
-function declName(st) {
-  return st.name?.Text;
-}
-
-// The TS declaration name a unit's @tsgo-unit metadata maps to, so the annotation
-// binds to the right declaration even when non-tracked helper functions are
-// interleaved between the JSDoc and the real declaration.
-function expectedTsName(meta, annotation) {
-  const parts = String(meta.id ?? "").split(annotation.idSeparator);
-  const qn = parts[parts.length - 1] ?? "";
-  if (meta.kind === "method") return qn.replace(".", annotation.methodNameJoin); // Receiver.method -> Receiver_method
-  return qn; // func / type use the Go name verbatim
-}
-
-// moduleId: repo-relative posix path of the file (used for module identity).
-// annotation: { tag, idSeparator, methodNameJoin } from the project profile.
-export function extractFileDescriptors(api, moduleId, text, annotation = DEFAULT_ANNOTATION) {
-  const sf = parseSource(api, "/" + moduleId, text);
+export function extractParsedFileDescriptors(api, module, annotation = DEFAULT_ANNOTATION, initialValueEnvironment = new Map()) {
   const base = {
     api,
-    text,
-    imports: buildImportMap(api, sf),
-    localTypes: buildLocalTypeNames(api, sf),
-    moduleId,
+    text: module.text,
+    imports: module.descriptorImports ?? module.structure.imports,
+    localTypes: module.structure.localTypeNames,
+    localNamespaces: module.structure.localNamespaceNames,
+    moduleId: module.moduleId,
+    valueEnvironment: initialValueEnvironment,
   };
-  // Each statement keyed by its name position, ascending.
-  const statements = (sf.Statements?.Nodes ?? [])
-    .map((st) => ({ st, anchor: declAnchor(api, st) }))
-    .sort((a, b) => a.anchor - b.anchor);
-  const out = [];
-  const re = annotationRegExp(annotation.tag);
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    let meta;
-    try {
-      meta = JSON.parse(m[1]);
-    } catch {
-      continue; // malformed metadata is reported by the porter's own scan
-    }
-    const off = m.index;
-    // Bind to the first declaration after the annotation whose name matches the
-    // unit (skipping interleaved non-tracked helpers); fall back to the first
-    // declaration after the annotation for value groups and reserved-word renames.
-    const after = statements.filter((s) => s.anchor > off);
-    const isValueGroup = meta.kind === "constGroup" || meta.kind === "varGroup";
-    const want = expectedTsName(meta, annotation);
-    const owner = isValueGroup
-      ? after.find((s) => s.st.Kind === api.Kinds.KindVariableStatement) ?? after[0]
-      : after.find((s) => declName(s.st) === want) ?? after[0];
-    out.push({
-      id: meta.id,
-      metaKind: meta.kind,
-      metadata: meta,
-      moduleId,
-      descriptor: owner ? declarationDescriptor(api, owner.st, base) : null,
-    });
+  const metadataByStatement = new Map(module.metadata.map((record) => [record.statementIndex, record]));
+  return module.metadata.map((record) => {
+    const names = expectedTypeScriptNames(record.metadata, annotation);
+    const descriptor = isValueGroup(record.metadata.kind) &&
+        (record.statement.Kind === api.Kinds.KindVariableStatement || record.statement.Kind === api.Kinds.KindEnumDeclaration)
+      ? valueGroupDescriptor(api, module, record, names, metadataByStatement, base)
+      : declarationUnitDescriptor(api, module, record, names, base);
+    return {
+      id: record.metadata.id,
+      metaKind: record.metadata.kind,
+      metadata: record.metadata,
+      moduleId: module.moduleId,
+      descriptor,
+    };
+  });
+}
+
+function declarationUnitDescriptor(api, module, record, expectedNames, base) {
+  if (expectedNames.length !== 1 || expectedNames[0].length === 0) {
+    throw new Error(`invalid declaration identity in @tsgo-unit '${record.metadata.id}'`);
   }
-  return out;
+  const expectedName = expectedNames[0];
+  const actualName = declarationName(api, record.statement);
+  const descriptor = groupedDeclarationDescriptor(api, module, record, actualName, base);
+  const metadataIssues = [
+    ...(descriptor.metadataIssues ?? []),
+    ...declarationMetadataIssues(api, record.statement, record.metadata.kind, expectedName, actualName),
+  ];
+  return metadataIssues.length === 0 ? descriptor : { ...descriptor, metadataIssues };
 }
 
-// Convenience: read + extract for a single repo-relative file path.
-export function extractFile(api, repoRoot, relPath) {
-  const text = readFileSync(`${repoRoot}/${relPath}`, "utf8");
-  return extractFileDescriptors(api, relPath, text);
+function groupedDeclarationDescriptor(api, module, record, actualName, base) {
+  const attached = declarationDescriptor(api, record.statement, base);
+  if (actualName === undefined) return attached;
+  if (record.statement.Kind === api.Kinds.KindFunctionDeclaration) {
+    const declarations = sameNamedStatements(api, module, record, actualName, api.Kinds.KindFunctionDeclaration);
+    return {
+      kind: "func",
+      name: actualName,
+      modifiers: declarations.length === 0 ? [] : declarationDescriptor(api, declarations[0], base).modifiers,
+      signatures: declarations.map((statement) => {
+        const descriptor = declarationDescriptor(api, statement, base);
+        return {
+          role: statement.Body === undefined ? "overload" : "implementation",
+          declarationModifiers: descriptor.modifiers,
+          params: descriptor.params,
+          ret: descriptor.ret,
+          missingReturnType: descriptor.missingReturnType,
+          returnTypePolicy: descriptor.returnTypePolicy,
+          typeParams: descriptor.typeParams,
+          signatureModifiers: descriptor.signatureModifiers,
+        };
+      }),
+    };
+  }
+  if (record.statement.Kind === api.Kinds.KindInterfaceDeclaration) {
+    return mergeInterfaceDescriptors(api, sameNamedStatements(api, module, record, actualName, api.Kinds.KindInterfaceDeclaration), base);
+  }
+  if (record.statement.Kind === api.Kinds.KindEnumDeclaration) {
+    return mergeEnumDescriptors(api, sameNamedStatements(api, module, record, actualName, api.Kinds.KindEnumDeclaration), base);
+  }
+  return attached;
 }
 
-// CLI: node extract-signatures.mjs <repo-relative-file.ts> [...]  -> JSON to stdout.
+function sameNamedStatements(api, module, record, name, kind) {
+  const metadataByStatement = new Map(module.metadata.map((item) => [item.statementIndex, item]));
+  const declarations = [];
+  for (const [statementIndex, statement] of (module.sourceFile.Statements?.Nodes ?? []).entries()) {
+    if (statement.Kind !== kind || declarationName(api, statement) !== name) continue;
+    const owner = metadataByStatement.get(statementIndex);
+    if (owner !== undefined && owner !== record) {
+      throw new Error(`declaration '${name}' in '${module.moduleId}' is owned by more than one @tsgo-unit`);
+    }
+    declarations.push(statement);
+  }
+  return declarations;
+}
+
+function mergeInterfaceDescriptors(api, declarations, base) {
+  const fragments = declarations.map((statement) => declarationDescriptor(api, statement, base));
+  if (fragments.length === 0) throw new Error("cannot merge an interface without a declaration fragment");
+  const metadataIssues = fragmentConsistencyIssues(fragments, ["modifiers", "typeParams"], "interface");
+  return {
+    kind: "interface",
+    name: fragments[0].name,
+    modifiers: fragments[0].modifiers,
+    fragments: fragments.map((fragment) => ({ modifiers: fragment.modifiers, typeParams: fragment.typeParams, heritage: fragment.heritage, members: fragment.members })),
+    typeParams: fragments[0].typeParams,
+    heritage: fragments.flatMap((fragment) => fragment.heritage),
+    members: fragments.flatMap((fragment) => fragment.members),
+    ...(metadataIssues.length === 0 ? {} : { metadataIssues }),
+  };
+}
+
+function mergeEnumDescriptors(api, declarations, base) {
+  const fragments = declarations.map((statement) => declarationDescriptor(api, statement, base));
+  if (fragments.length === 0) throw new Error("cannot merge an enum without a declaration fragment");
+  const metadataIssues = fragmentConsistencyIssues(fragments, ["modifiers"], "enum");
+  return {
+    kind: "enum",
+    name: fragments[0].name,
+    fragments: fragments.map((fragment) => ({ modifiers: fragment.modifiers, members: fragment.members })),
+    modifiers: fragments[0].modifiers,
+    members: fragments.flatMap((fragment) => fragment.members),
+    ...(metadataIssues.length === 0 ? {} : { metadataIssues }),
+  };
+}
+
+function fragmentConsistencyIssues(fragments, fields, declarationKind) {
+  if (fragments.length < 2) return [];
+  const issues = [];
+  for (const field of fields) {
+    const expected = JSON.stringify(fragments[0]?.[field]);
+    for (let index = 1; index < fragments.length; index++) {
+      if (JSON.stringify(fragments[index]?.[field]) !== expected) {
+        issues.push(`${declarationKind} fragment #${index} has a different ${field} contract`);
+      }
+    }
+  }
+  return issues;
+}
+
+function valueGroupDescriptor(api, module, record, expectedNames, metadataByStatement, base) {
+  if (expectedNames.length === 0 || expectedNames.some((name) => name.length === 0)) {
+    throw new Error(`invalid value-group identity in @tsgo-unit '${record.metadata.id}'`);
+  }
+  const declarations = [];
+  const metadataIssues = [];
+  let statementIndex = record.statementIndex;
+  while (declarations.length < expectedNames.length) {
+    const statement = module.sourceFile.Statements?.Nodes?.[statementIndex];
+    if (statement === undefined || (statement.Kind !== api.Kinds.KindVariableStatement && statement.Kind !== api.Kinds.KindEnumDeclaration)) {
+      throw new Error(`@tsgo-unit '${record.metadata.id}' does not own ${expectedNames.length} contiguous variable declarations`);
+    }
+    if (statementIndex !== record.statementIndex && metadataByStatement.has(statementIndex)) {
+      throw new Error(`@tsgo-unit '${record.metadata.id}' crosses another tracked declaration`);
+    }
+    const descriptor = declarationDescriptor(api, statement, base);
+    if (descriptor.kind === "value") declarations.push(...descriptor.decls);
+    else if (descriptor.kind === "enum") {
+      const enumType = { t: "ref", id: `${module.moduleId}::${descriptor.name}`, args: [] };
+      declarations.push(...descriptor.members.map((member) => ({
+        name: member.name,
+        declarationKind: "enum",
+        modifiers: descriptor.modifiers,
+        type: enumType,
+        value: member.value,
+        valueIssue: member.valueIssue,
+      })));
+    } else {
+      metadataIssues.push(`value-group metadata is attached to ${descriptor.kind}`);
+      break;
+    }
+    if (declarations.length > expectedNames.length) {
+      throw new Error(`@tsgo-unit '${record.metadata.id}' owns more declarations than its exact value-group identity`);
+    }
+    statementIndex++;
+  }
+  for (let index = 0; index < expectedNames.length; index++) {
+    const expected = expectedNames[index];
+    const actual = declarations[index].name;
+    if (expected !== "_" && actual !== expected) {
+      metadataIssues.push(`declaration ${index + 1} is '${actual ?? "<unsupported>"}', expected '${expected}'`);
+    }
+  }
+  return { kind: "value", decls: declarations, ...(metadataIssues.length === 0 ? {} : { metadataIssues }) };
+}
+
+function declarationMetadataIssues(api, statement, metadataKind, expectedName, actualName) {
+  const issues = [];
+  if (actualName !== expectedName) issues.push(`metadata names '${expectedName}', but declaration name is '${actualName ?? "<anonymous>"}'`);
+  const isFunction = statement.Kind === api.Kinds.KindFunctionDeclaration;
+  const isType = statement.Kind === api.Kinds.KindInterfaceDeclaration ||
+    statement.Kind === api.Kinds.KindTypeAliasDeclaration ||
+    statement.Kind === api.Kinds.KindClassDeclaration ||
+    statement.Kind === api.Kinds.KindEnumDeclaration;
+  if ((metadataKind === "func" || metadataKind === "method") && !isFunction) {
+    issues.push(`metadata kind '${metadataKind}' is attached to ${api.kindName.get(statement.Kind) ?? statement.Kind}`);
+  }
+  if (metadataKind === "type" && !isType) {
+    issues.push(`metadata kind 'type' is attached to ${api.kindName.get(statement.Kind) ?? statement.Kind}`);
+  }
+  if (isValueGroup(metadataKind) && statement.Kind !== api.Kinds.KindVariableStatement && statement.Kind !== api.Kinds.KindEnumDeclaration) {
+    issues.push(`metadata kind '${metadataKind}' is attached to ${api.kindName.get(statement.Kind) ?? statement.Kind}`);
+  }
+  return issues;
+}
+
+function isValueGroup(kind) {
+  return kind === "constGroup" || kind === "varGroup";
+}
+
+export function extractFileDescriptors(api, moduleId, text, annotation = DEFAULT_ANNOTATION, initialValueEnvironment = undefined) {
+  return extractParsedFileDescriptors(api, parseTypeScriptModule(api, moduleId, text), annotation, initialValueEnvironment ?? new Map());
+}
+
+export function buildIndexedModuleValueEnvironments(api, index) {
+  return buildConstantEnvironments(api, index);
+}
+
+export function buildModuleValueEnvironments(api, sources) {
+  return buildConstantEnvironments(api, indexTypeScriptModuleSources(api, sources));
+}
+
+export function extractFile(api, repoRoot, relativePath) {
+  const text = readFileSync(`${repoRoot}/${relativePath}`, "utf8");
+  return extractFileDescriptors(api, relativePath, text);
+}
+
 const invokedDirectly = process.argv[1] && process.argv[1].endsWith("extract-signatures.mjs");
 if (invokedDirectly) {
   const api = await loadParser();
-  const files = process.argv.slice(2);
   const result = {};
-  for (const f of files) {
-    const rel = f.replace(/^\.?\//, "");
-    for (const u of extractFileDescriptors(api, rel, readFileSync(f, "utf8"))) {
-      result[u.id] = { metaKind: u.metaKind, descriptor: u.descriptor };
+  for (const file of process.argv.slice(2)) {
+    const relativePath = file.replace(/^\.?\//, "");
+    for (const unit of extractFileDescriptors(api, relativePath, readFileSync(file, "utf8"))) {
+      result[unit.id] = { metaKind: unit.metaKind, descriptor: unit.descriptor };
     }
   }
   console.log(JSON.stringify(result, null, 2));

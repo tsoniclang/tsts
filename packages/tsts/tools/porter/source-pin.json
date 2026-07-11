@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 2,
+  "upstream": "microsoft/typescript-go",
+  "sourceRoot": "packages/tsts/_vendor/typescript-go",
+  "goModulePath": "github.com/microsoft/typescript-go",
+  "revision": "c78d39e7075b4fc641b12b1f35d905c54cdc13ef",
+  "gitObjectFormat": "sha1",
+  "nestedSources": [
+    {
+      "name": "TypeScript",
+      "path": "_submodules/TypeScript",
+      "revision": "c3bd12d888b86f676718b16e64d7d2abcb423514",
+      "gitObjectFormat": "sha1",
+      "goPolicy": "no-go"
+    }
+  ],
+  "schemaDirectory": "packages/tsts/schema/tsgo",
+  "documentation": "packages/tsts/tools/porter/SOURCE-PIN.md",
+  "schemaMetadata": [
+    "VERSION.md"
+  ],
+  "schemaFiles": [
+    {
+      "path": "ast.json",
+      "source": "_scripts/ast.json",
+      "sha256": "9259791a628105b1ed375a1a69f2002ad478f10e60ae68e01e5527e0fe619546"
+    },
+    {
+      "path": "ast.schema.json",
+      "source": "_scripts/ast.schema.json",
+      "sha256": "c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2"
+    },
+    {
+      "path": "protocol.ts",
+      "source": "_packages/native-preview/src/api/node/protocol.ts",
+      "sha256": "02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830"
+    },
+    {
+      "path": "nodeflags.go",
+      "source": "internal/ast/nodeflags.go",
+      "sha256": "8be5737c5cfe5478fcef3f0b50847d7ca4045157a6d039ffaac658977a181dc2"
+    },
+    {
+      "path": "symbolflags.go",
+      "source": "internal/ast/symbolflags.go",
+      "sha256": "eb2c56aac8513ac676f48313eb5c3fa65ba90990474b7e873ff9ec6cdb35ebca"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "_packages/native-preview/src/api/node/protocol.generated.ts",
+      "sha256": "e22fa883d199c0cb11c6bf5961dbae322e36c3bccb3ef9679555e9d1e3d1acc1",
+      "purpose": "AST child-property and single-child ordering cross-check"
+    }
+  ],
+  "extractor": {
+    "module": "packages/tsts/tools/porter/go-extractor",
+    "goVersion": "go1.26.4",
+    "goos": "linux",
+    "goarch": "amd64",
+    "toolchainExecutableSha256": "86b748c64de0175db601f56805251f3b08cd12bffb927ad5c68ef8497c50c7ba",
+    "goroot": {
+      "contract": "tsts-porter-goroot-tree-v1",
+      "sha256": "97e26a04c728a7dc6b39db3198b9d3b6ae89abb5d97f28e082509c8082205447",
+      "entryCount": 16688,
+      "fileCount": 15022,
+      "directoryCount": 1666,
+      "symlinkCount": 0,
+      "bytes": 232354977
+    }
+  }
+}

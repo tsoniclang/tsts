@@ -1,0 +1,405 @@
+import assert from "node:assert/strict";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import test from "node:test";
+import ts from "typescript";
+
+import {
+  authoredFacadePathSet,
+  buildGeneratedArtifactStatus,
+  buildGeneratedSourcePolicyStatus,
+  buildEmbeddedGoSourceUpdates,
+  buildLocalOverrideStatus,
+  buildExternalFacadeMap,
+  buildLargeFileSplitStatus,
+  buildSchemaSourceSyncStatus,
+  buildStatus,
+  collectSchemaSourceSyncFailures,
+  collectLocalOverrideFailures,
+  collectVerifyFailures,
+  expectedTsPath,
+  matchGlob,
+  policyFor,
+  renderExpectedGeneratedArtifacts,
+  renderExternalFacadeModules,
+  renderStub,
+  renderUnitGroup,
+  renderStatusMarkdown,
+  localTsName,
+  repoRoot,
+  resolveRepo,
+  scanTsUnits,
+  verifyStatus,
+  validateTsgoUnitMetadata,
+  validatePorterSnapshot,
+  writeTextSafely,
+} from "../porter.mjs";
+import {
+  buildAstGeneratedArtifactStatus,
+  buildAstGeneratedFiles,
+  buildGeneratedAstSkips,
+  emitKinds,
+  parseGoNodeDataMethods,
+  parseGoFlagFile,
+  writeAstGenerated,
+} from "../ast-generator.mjs";
+import { AstSchema } from "../ast-schema-model.mjs";
+import {
+  buildDiagnosticsGeneratedArtifactStatus,
+  buildDiagnosticsGeneratedFiles,
+  collectDiagnosticsArtifactFailures,
+  emitLocalizedMessages,
+  emitMessages,
+  parseCatalog,
+  writeDiagnosticsGenerated,
+} from "../diagnostics-generator.mjs";
+import {
+  buildBundledGeneratedArtifactStatus,
+  buildExpectedBundledArtifacts,
+  collectBundledArtifactFailures,
+  writeBundledGenerated,
+} from "../../bundled/generate-bundled.mjs";
+import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
+
+import {
+  baseConfig,
+  channelType,
+  emptyCounts,
+  emptyGeneratedArtifacts,
+  fileRecord,
+  funcType,
+  identType,
+  instantiationType,
+  interfaceType,
+  mapType,
+  pointerType,
+  selectorType,
+  sliceType,
+  snapshotWith,
+  testBodyHash,
+  testSigHash,
+  unitRecord,
+} from "./helpers.mjs";
+
+test("ast-generator: Go flag const evaluation respects Go precedence and complement", () => {
+  const source = [
+    "package ast",
+    "",
+    "type SampleFlags uint32",
+    "",
+    "const (",
+    "\tSampleFlagsNone      SampleFlags = 0",
+    "\tSampleFlagsA         SampleFlags = 1 << 0",
+    "\tSampleFlagsB         SampleFlags = 1 << 1",
+    "\tSampleFlagsC         SampleFlags = 1 << 2",
+    "\tSampleFlagsAll       SampleFlags = 1<<30 - 1 // trailing comment",
+    "\tSampleFlagsAB                    = SampleFlagsA | SampleFlagsB",
+    "\tSampleFlagsExcludesA             = SampleFlagsAll & ^SampleFlagsA",
+    ")",
+  ].join("\n");
+  const consts = parseGoFlagFile(source, "SampleFlags").filter((entry) => entry.kind === "const");
+  const byName = Object.fromEntries(consts.map((entry) => [entry.name, entry.value]));
+  assert.equal(byName.SampleFlagsNone, 0);
+  assert.equal(byName.SampleFlagsA, 1);
+  assert.equal(byName.SampleFlagsC, 4);
+  // Go binds `<<` tighter than `-`, so this is (1<<30)-1, NOT 1<<(30-1).
+  assert.equal(byName.SampleFlagsAll, (1 << 30) - 1);
+  assert.equal(byName.SampleFlagsAB, 3);
+  // `& ^X` is bitwise-AND with the complement of X (uint32).
+  assert.equal(byName.SampleFlagsExcludesA, (((1 << 30) - 1) & ~1) >>> 0);
+});
+
+test("ast-generator: kinds emit sequential values, markers, and a stringer", () => {
+  const schema = {
+    ast: {
+      kinds: {
+        elements: ["Unknown", "EndOfFile", { comment: "A group header" }, "Identifier"],
+        markers: [{ name: "FirstNode", value: "Unknown" }],
+      },
+    },
+  };
+  const out = emitKinds(schema);
+  assert.match(out, /export type Kind = short;/);
+  assert.match(out, /export const KindUnknown: Kind = 0;/);
+  assert.match(out, /export const KindEndOfFile: Kind = 1;/);
+  assert.match(out, /\n\/\/ A group header\n/);
+  // The comment-only element does not consume an enum index.
+  assert.match(out, /export const KindIdentifier: Kind = 2;/);
+  // Markers are aliases of an existing kind, not new values.
+  assert.match(out, /export const KindFirstNode: Kind = KindUnknown;/);
+  assert.match(out, /export function KindString\(kind: Kind\): string \{/);
+});
+
+function astFixtureConfig(root) {
+  const rel = (target) => path.relative(repoRoot, target).split(path.sep).join("/");
+  const schemaDir = path.join(root, "schema");
+  const sourceRoot = path.join(root, "source");
+  mkdirSync(schemaDir, { recursive: true });
+  mkdirSync(path.join(sourceRoot, "_packages/native-preview/src/api/node"), { recursive: true });
+  writeFileSync(
+    path.join(schemaDir, "ast.json"),
+    JSON.stringify({ kinds: { elements: ["Unknown", "EndOfFile"], markers: [] }, bases: {}, nodes: { definitions: {}, aliases: {} } }),
+  );
+  writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\n\ntype NodeFlags uint32\n\nconst (\n\tNodeFlagsNone NodeFlags = 0\n)\n");
+  writeFileSync(path.join(schemaDir, "symbolflags.go"), "package ast\n\ntype SymbolFlags uint32\n\nconst (\n\tSymbolFlagsNone SymbolFlags = 0\n)\n");
+  writeFileSync(
+    path.join(sourceRoot, "_packages/native-preview/src/api/node/protocol.generated.ts"),
+    "export const childProperties = {\n};\nexport const singleChildNodePropertyNames = {\n};\n",
+  );
+  return {
+    protocolGeneratedInput: rel(path.join(sourceRoot, "_packages/native-preview/src/api/node/protocol.generated.ts")),
+    tsRoot: rel(path.join(root, "src")),
+    astSchemaDir: rel(schemaDir),
+    astGeneratedDir: "internal/ast/generated",
+    astSchemaInputs: [
+      rel(path.join(schemaDir, "ast.json")),
+      rel(path.join(schemaDir, "nodeflags.go")),
+      rel(path.join(schemaDir, "symbolflags.go")),
+    ],
+  };
+}
+
+const cleanAstStatus = { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+
+test("porter:ast --check detects missing/stale/orphan/untracked/invalid generated files", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const genDir = path.join(root, "src/internal/ast/generated");
+
+    writeAstGenerated(config, "rev-fixture-1");
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-1"), cleanAstStatus);
+
+    // Missing.
+    unlinkSync(path.join(genDir, "kinds.ts"));
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").missing.length, 1);
+    writeAstGenerated(config, "rev-fixture-1", { force: true });
+
+    // Stale.
+    const kindsPath = path.join(genDir, "kinds.ts");
+    writeFileSync(kindsPath, `${readFileSync(kindsPath, "utf8")}\nexport const sneaky = 1;\n`);
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").stale.length, 1);
+    writeAstGenerated(config, "rev-fixture-1", { force: true });
+
+    // Orphan: well-formed generated file no longer in the expected set.
+    const expected = buildAstGeneratedFiles(config, "rev-fixture-1");
+    writeFileSync(path.join(genDir, "orphan.ts"), expected.get("internal/ast/generated/kinds.ts"));
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").orphan.length, 1);
+    unlinkSync(path.join(genDir, "orphan.ts"));
+
+    // Untracked: file in the generated dir without @tsgo-generated metadata.
+    writeFileSync(path.join(genDir, "loose.ts"), "export const loose = 1;\n");
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").untracked.length, 1);
+    unlinkSync(path.join(genDir, "loose.ts"));
+
+    // Invalid: @tsgo-generated metadata with the wrong kind/generator.
+    writeFileSync(
+      path.join(genDir, "wrongkind.ts"),
+      '// Code generated\n// @tsgo-generated {"schemaVersion":1,"kind":"go-facade","generator":"porter:facades","path":"x","sourceRevision":"r","contentHash":"h"}\n\nexport {}\n',
+    );
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").invalid.length, 1);
+    unlinkSync(path.join(genDir, "wrongkind.ts"));
+
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-1"), cleanAstStatus);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("writeAstGenerated honors the safe-write contract and --force", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const kindsPath = path.join(root, "src/internal/ast/generated/kinds.ts");
+    writeAstGenerated(config, "rev-fixture-2");
+    writeFileSync(kindsPath, `${readFileSync(kindsPath, "utf8")}\n// edited\n`);
+    assert.throws(() => writeAstGenerated(config, "rev-fixture-2"), /refusing to overwrite/);
+    writeAstGenerated(config, "rev-fixture-2", { force: true });
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-2"), cleanAstStatus);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ast-generator: a schema input content change makes committed output stale", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    writeAstGenerated(config, "rev-fixture-3");
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-3").stale.length, 0);
+    // Changing a declared schema input changes the schemaInputs digest in the header.
+    writeFileSync(
+      path.join(root, "schema/nodeflags.go"),
+      "package ast\n\ntype NodeFlags uint32\n\nconst (\n\tNodeFlagsNone NodeFlags = 0\n\tNodeFlagsLet  NodeFlags = 1 << 0\n)\n",
+    );
+    assert.ok(buildAstGeneratedArtifactStatus(config, "rev-fixture-3").stale.length >= 1);
+    assert.ok(existsSync(path.join(root, "src/internal/ast/generated/kinds.ts")));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ast-generator preserves nil NodeList slices in generated visitors", async () => {
+  const output = buildAstGeneratedFiles(baseConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
+  assert.match(output, /if \(nodes === undefined \|\| nodes\.length !== 1\)/);
+  assert.match(output, /updated = \[\.\.\.updated, \.\.\.\(AsSyntaxList\(visited\)!\.Children \?\? \[\]\)\]/);
+  assert.match(output, /let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;/);
+  const sourceFile = ts.createSourceFile("data.ts", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const declaration = sourceFile.statements.find((statement) =>
+    ts.isFunctionDeclaration(statement) && statement.name?.text === "generatedVisitSlice");
+  assert.ok(declaration !== undefined && ts.isFunctionDeclaration(declaration));
+  const executable = ts.transpileModule(
+    `const generatedVisitor = (visitor) => visitor;\nexport ${declaration.getText(sourceFile)}`,
+    { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 } },
+  ).outputText;
+  const generatedModule = await import(`data:text/javascript;base64,${Buffer.from(executable).toString("base64")}`);
+  const visitor = { Visit: () => { throw new Error("nil and empty slices must not invoke Visit"); } };
+
+  assert.deepEqual(generatedModule.generatedVisitSlice(visitor, undefined), [undefined, false]);
+  const emptyNodes = [];
+  const [emptyResult, emptyChanged] = generatedModule.generatedVisitSlice(visitor, emptyNodes);
+  assert.equal(emptyResult, emptyNodes);
+  assert.equal(emptyChanged, false);
+});
+
+test("ast-generator preserves nil raw slices in fields, factories, and visitors", () => {
+  const generated = buildAstGeneratedFiles(baseConfig, "rev-ast-raw-nil-slice");
+  const nodeOutput = generated.get("internal/ast/generated/node.ts");
+  const factoryOutput = generated.get("internal/ast/generated/factory.ts");
+  const dataOutput = generated.get("internal/ast/generated/data.ts");
+
+  assert.match(nodeOutput, /text: GoPtr<GoSlice<string>>;/);
+  assert.match(factoryOutput, /NewJSDocText\(receiver: GoPtr<NodeFactory>, text: GoPtr<GoSlice<string>>\)/);
+  assert.match(factoryOutput, /data\.text = text;/);
+  assert.doesNotMatch(factoryOutput, /data\.text = text \?\? "";/);
+  assert.match(dataOutput, /generatedVisitRawNodes\(v: GoPtr<NodeVisitor>, nodes: GoPtr<GoSlice<GoPtr<Node>>>\): GoPtr<GoSlice<GoPtr<Node>>>/);
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// AST node/data/factory/etc emitter tests (free-fn/adapter model).
+// ───────────────────────────────────────────────────────────────────────────
+
+test("ast-schema-model: alias derivation matches ast_generated.go (231 node + 72 union + 23 list)", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const schema = new AstSchema(ast);
+  const nodeAliasCount = schema.nodeNames().length
+    + schema.nodeNames().reduce((acc, n) => acc + schema.instantiationAliasesOf(n).length, 0);
+  assert.equal(nodeAliasCount, 231);
+  assert.equal(Object.keys(schema.aliases).length, 72);
+  assert.equal(Object.keys(schema.listAliases).length, 23);
+});
+
+test("ast-generator maps every schema goOnly compiler-state field without an owner allowlist", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const goOnlyFields = [
+    ...Object.entries(ast.bases).flatMap(([owner, definition]) =>
+      Object.entries(definition.fields ?? {}).filter(([, field]) => field.goOnly).map(([name, field]) => ["base", owner, name, field.type])),
+    ...Object.entries(ast.nodes.definitions).flatMap(([owner, definition]) =>
+      (definition.members ?? []).filter((field) => field.goOnly).map((field) => ["node", owner, field.name, field.type])),
+  ];
+  assert.deepEqual(goOnlyFields, [
+    ["base", "DeclarationBase", "Symbol", "*Symbol"],
+    ["base", "ExportableBase", "LocalSymbol", "*Symbol"],
+    ["base", "LocalsContainerBase", "Locals", "SymbolTable"],
+    ["base", "LocalsContainerBase", "NextContainer", "*Node"],
+    ["base", "FlowNodeBase", "FlowNode", "*FlowNode"],
+    ["base", "CompositeBase", "facts", "atomic.Uint32"],
+    ["base", "BodyBase", "EndFlowNode", "*FlowNode"],
+    ["node", "CaseOrDefaultClause", "FallthroughFlowNode", "*FlowNode"],
+    ["node", "FunctionDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "ConstructorDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "ClassStaticBlockDeclaration", "ReturnFlowNode", "*FlowNode"],
+    ["node", "FunctionExpression", "ReturnFlowNode", "*FlowNode"],
+  ]);
+
+  const files = buildAstGeneratedFiles(baseConfig, "abc123");
+  const node = files.get("internal/ast/generated/node.ts");
+  const data = files.get("internal/ast/generated/data.ts");
+
+  assert.match(node, /export interface DeclarationBase[\s\S]*Symbol: GoPtr<Symbol>/);
+  assert.match(node, /export interface LocalsContainerBase[\s\S]*Locals: GoPtr<SymbolTable>;[\s\S]*NextContainer: GoPtr<Node>/);
+  assert.match(node, /export interface FlowNodeBase[\s\S]*FlowNode: GoPtr<FlowNode>/);
+  assert.match(node, /export interface CompositeBase[\s\S]*facts: Uint32/);
+  assert.match(node, /export interface BodyBase[\s\S]*EndFlowNode: GoPtr<FlowNode>/);
+  assert.match(data, /export interface ConstructorDeclaration[\s\S]*ReturnFlowNode: GoPtr<FlowNode>/);
+  assert.match(data, /export interface CaseOrDefaultClause[\s\S]*FallthroughFlowNode: GoPtr<FlowNode>/);
+});
+
+test("ast-generator parses the exact upstream nodeData method order", () => {
+  const source = readFileSync(resolveRepo("packages/tsts/_vendor/typescript-go/internal/ast/ast.go"), "utf8");
+  assert.deepEqual(parseGoNodeDataMethods(source), [
+    "AsNode", "ForEachChild", "IterChildren", "VisitEachChild", "Clone", "Name", "Modifiers", "setModifiers",
+    "FlowNodeData", "DeclarationData", "ExportableData", "LocalsContainerData", "FunctionLikeData",
+    "ClassLikeData", "BodyData", "LiteralLikeData", "TemplateLiteralLikeData", "SubtreeFacts",
+    "computeSubtreeFacts", "subtreeFactsWorker", "propagateSubtreeFacts",
+  ]);
+});
+
+test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion, not NodeDefault", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-1");
+  const data = files.get("internal/ast/generated/data.ts");
+  assert.ok(data.includes("export interface Identifier extends PrimaryExpressionBase, FlowNodeBase {"));
+  // Promotion: Identifier embeds FlowNodeBase, so FlowNodeData -> FlowNodeBase_FlowNodeData.
+  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?FlowNodeData\(\) \{ return FlowNodeBase_FlowNodeData\(this\); \},/);
+  // No override -> NodeDefault for DeclarationData (Identifier has no DeclarationBase).
+  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?DeclarationData\(\) \{ return NodeDefault_DeclarationData\(this\); \},/);
+  // Leaf nodes still use NodeDefault for VisitEachChild.
+  assert.match(data, /const Identifier_nodeDataPrototype: nodeData & ThisType<GoPtr<Identifier>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return NodeDefault_VisitEachChild\(this, v\); \},/);
+  // Child-bearing nodes get generated VisitEachChild rewrites.
+  assert.match(data, /export function ExpressionStatement_VisitEachChild\(receiver: GoPtr<ExpressionStatement>, v: GoPtr<NodeVisitor>\): GoPtr<Node> \{\s*return Factory\.NodeFactory_UpdateExpressionStatement\(generatedVisitorFactory\(v\), receiver, generatedVisitNode\(v, receiver!\.Expression\) as GoPtr<Expression>\);\s*\}/);
+  assert.match(data, /const ExpressionStatement_nodeDataPrototype: nodeData & ThisType<GoPtr<ExpressionStatement>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \},/);
+  // The brand carries the concrete receiver.
+  assert.match(data, /import \{ goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.doesNotMatch(data, /import \{ goReceiverKey \} from "\.\.\/spine\.js";/);
+  assert.match(data, /get \[goReceiverKey\]\(\): GoPtr<Identifier> \{ return this; \},/);
+  assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
+  assert.match(data, /export function createIdentifierData\(\): Identifier & nodeData \{\s*return globalThis\.Object\.create\(Identifier_nodeDataPrototype\) as Identifier & nodeData;\s*\}/);
+});
+
+test("ast-generator: named concrete nodes expose their generated Name override", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-name");
+  const data = files.get("internal/ast/generated/data.ts");
+  assert.match(data, /export function ParameterDeclaration_Name\(receiver: GoPtr<ParameterDeclaration>\): GoPtr<Node> \{\s*return receiver!\.name;\s*\}/);
+  assert.match(data, /const ParameterDeclaration_nodeDataPrototype: nodeData & ThisType<GoPtr<ParameterDeclaration>> = \{[\s\S]*?Name\(\) \{ return ParameterDeclaration_Name\(this\); \},/);
+});
+
+test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-2");
+  const factory = files.get("internal/ast/generated/factory.ts");
+  assert.match(factory, /export interface NodeFactory \{[\s\S]*?AsNodeFactory\(\): GoPtr<NodeFactory>;/);
+  assert.match(
+    factory,
+    /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?const data = createIdentifierData\(\);[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, data\);/,
+  );
+  const casts = files.get("internal/ast/generated/casts.ts");
+  assert.match(casts, /import \{ goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data\[goReceiverKey\] as GoPtr<Identifier>;/);
+});
+
+test("ast-schema-model: raw string lists are not children; node raw lists are GoPtr<Node>", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const schema = new AstSchema(ast);
+  // JSDocText.text is []string (raw) inherited from JSDocCommentBase -> not a child.
+  const textField = schema.baseFields("JSDocCommentBase").find((f) => f.name === "text");
+  assert.equal(textField.isChild(), false);
+  assert.equal(textField.tsReference(), "GoPtr<GoSlice<string>>");
+});
+
+test("ast-generator: multi-kind and type-parameter Is functions follow ast_generated.go", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-3");
+  const predicates = files.get("internal/ast/generated/predicates.ts");
+  // ForInOrOfStatement is multi-kind -> per-kind Is functions, no IsForInOrOfStatement.
+  assert.ok(predicates.includes("export function IsForInStatement("));
+  assert.ok(predicates.includes("export function IsForOfStatement("));
+  assert.ok(!predicates.includes("export function IsForInOrOfStatement("));
+  // Token is a type-parameter node -> a single IsToken switching over TokenSyntaxKind.
+  assert.match(predicates, /export function IsToken\(node: GoPtr<Node>\): bool \{\s*switch \(node!\.Kind\)/);
+});
+
+test("ast-generator: generatedAstSkips records handWritten without visitEachChild deferral", () => {
+  const skips = buildGeneratedAstSkips(baseConfig);
+  assert.deepEqual(skips.handWritten, ["SourceFile"]);
+  assert.deepEqual(skips.handWrittenVisitor, ["JSDocParameterOrPropertyTag"]);
+  assert.deepEqual(skips.visitEachChildDeferred, []);
+});

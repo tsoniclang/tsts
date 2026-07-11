@@ -5,13 +5,81 @@ import assert from "node:assert/strict";
 import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
-import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { compareSignatures, resolveOverride, unitSignatureSnapshot } from "./sig-check.mjs";
+import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse, withSignatureOverrideSnapshots } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
+const exactTypeParameter = (parameter = {}, index = 0, depth = 0) => ({
+  name: parameter.name ?? `T${index}`,
+  binding: parameter.binding ?? { depth, index },
+  modifiers: parameter.modifiers ?? { const: false, variance: null, unsupported: [] },
+  constraint: parameter.constraint ?? null,
+  default: parameter.default ?? null,
+  invalidConstraint: parameter.invalidConstraint ?? null,
+});
+const exactParameter = (parameter = {}, index = 0) => ({
+  name: parameter.name ?? `arg${index}`,
+  role: parameter.role ?? "parameter",
+  modifiers: parameter.modifiers ?? [],
+  type: parameter.type,
+  rest: parameter.rest ?? false,
+  optional: parameter.optional ?? false,
+  optionalSyntax: parameter.optionalSyntax ?? "required",
+  question: parameter.question ?? false,
+  missingType: parameter.missingType ?? false,
+  initializerStatus: parameter.initializerStatus ?? "missing",
+  initializer: parameter.initializer,
+  initializerIssue: parameter.initializerIssue,
+});
+const exactSignature = (signature = {}) => ({
+  role: signature.role ?? "implementation",
+  declarationModifiers: signature.declarationModifiers ?? ["export"],
+  params: (signature.params ?? []).map(exactParameter),
+  ret: signature.ret ?? kw("void"),
+  missingReturnType: signature.missingReturnType ?? false,
+  returnTypePolicy: signature.returnTypePolicy ?? "required",
+  typeParams: (signature.typeParams ?? []).map(exactTypeParameter),
+  signatureModifiers: signature.signatureModifiers ?? [],
+});
+const callable = (signature = {}) => {
+  const exact = exactSignature(signature);
+  const { role: _role, declarationModifiers: _declarationModifiers, ...descriptor } = exact;
+  return { t: "fn", ...descriptor };
+};
+const func = (signature) => ({ kind: "func", modifiers: ["export"], signatures: [exactSignature(signature)] });
+const funcSet = (signatures) => ({ kind: "func", modifiers: ["export"], signatures: signatures.map(exactSignature) });
+const member = (name, type, options = {}) => ({ kind: "property", name, modifiers: [], type, ...options });
+const iface = (members, options = {}) => {
+  const descriptor = {
+    kind: "interface",
+    modifiers: ["export"],
+    typeParams: [],
+    heritage: [],
+    members,
+    ...options,
+  };
+  return {
+    ...descriptor,
+    fragments: options.fragments ?? [{
+      modifiers: descriptor.modifiers,
+      typeParams: descriptor.typeParams,
+      heritage: descriptor.heritage,
+      members: descriptor.members,
+    }],
+  };
+};
+const value = (name, type, options = {}) => ({
+  name,
+  type,
+  missing: false,
+  declarationKind: "const",
+  definite: false,
+  modifiers: ["export"],
+  ...options,
+});
 const kinds = (ms) => new Set(ms.map((m) => m.kind));
-const noConv = loadConventions({});
+const conventionBase = { goConstraintId: "packages/tsts/src/go/compat.ts::GoConstraint" };
+const noConv = loadConventions(conventionBase);
 
 test("typesEqual: Array<T> == T[]", () => {
   const arrayGen = ref("global::Array", kw("string"));
@@ -21,8 +89,9 @@ test("typesEqual: Array<T> == T[]", () => {
   assert.equal(canonicalKey(arrayGen) === canonicalKey(arraySugar), false); // pre-canonicalization differ
 });
 
-test("typesEqual: soft id compares by terminal name; hard ids must match fully", () => {
-  assert.ok(typesEqual(ref("name::Node"), ref("a/b.ts::Node"))); // soft vs hard -> by name
+test("typesEqual: unresolved ids never compare by terminal name", () => {
+  assert.ok(!typesEqual(ref("name::Node"), ref("global::Node")));
+  assert.ok(!typesEqual(ref("global::Date"), ref("a/b.ts::Date")));
   assert.ok(!typesEqual(ref("core.ts::Node"), ref("ast.ts::Node"))); // two hard, different module
   assert.ok(typesEqual(ref("ast.ts::Node"), ref("ast.ts::Node")));
 });
@@ -34,62 +103,240 @@ test("typesEqual: re-export canon collapses module aliases", () => {
 });
 
 test("compareFunc: arity, param-type, return-type, param-order", () => {
-  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }, { type: ref("m::B") }] };
-  const dropParam = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
+  const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }, { type: ref("m::B") }] });
+  const dropParam = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
   assert.ok(kinds(compareSignatures(exp, dropParam, null)).has("arity"));
 
-  const wrongType = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }, { type: ref("m::C") }] };
+  const wrongType = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }, { type: ref("m::C") }] });
   assert.ok(kinds(compareSignatures(exp, wrongType, null)).has("param-type"));
 
-  const wrongRet = { kind: "func", typeParams: [], ret: kw("number"), params: exp.params };
+  const wrongRet = func({ typeParams: [], ret: kw("number"), params: exp.signatures[0].params });
   assert.ok(kinds(compareSignatures(exp, wrongRet, null)).has("return-type"));
 
-  const swapped = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }, { type: ref("m::A") }] };
+  const swapped = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }, { type: ref("m::A") }] });
   assert.ok(kinds(compareSignatures(exp, swapped, null)).has("param-order"));
 
   assert.equal(compareSignatures(exp, exp, null).length, 0);
 });
 
+test("missing function annotations fail closed", () => {
+  const expected = func({ typeParams: [], ret: kw("void"), params: [{ type: kw("number") }] });
+  const actual = func({
+    typeParams: [],
+    ret: kw("void"),
+    missingReturnType: true,
+    params: [{ type: kw("number"), missingType: true }],
+  });
+  const mismatches = kinds(compareSignatures(expected, actual, null));
+  assert.ok(mismatches.has("param-annotation-missing"));
+  assert.ok(mismatches.has("return-annotation-missing"));
+});
+
+test("function overload sets compare every ordered declaration signature", () => {
+  const one = func({ typeParams: [], ret: kw("string"), params: [{ type: kw("string") }] });
+  const two = funcSet([
+    { role: "overload", typeParams: [], ret: kw("string"), params: [{ name: "value", type: kw("string") }] },
+    { typeParams: [], ret: kw("number"), params: [{ name: "value", type: kw("number") }] },
+  ]);
+  assert.ok(kinds(compareSignatures(one, two, null)).has("function-signature-count"));
+  assert.equal(compareSignatures(two, structuredClone(two), null).length, 0);
+});
+
+test("exact declarations retain modifier, role, and lexical type-parameter contracts", () => {
+  const expected = func({
+    typeParams: [{
+      name: "T",
+      binding: { depth: 0, index: 0 },
+      modifiers: { const: true, variance: "out", unsupported: [] },
+      constraint: kw("object"),
+      default: kw("unknown"),
+    }],
+    signatureModifiers: ["async"],
+  });
+  const mutations = [
+    [(actual) => { actual.modifiers = []; }, "declaration-modifier"],
+    [(actual) => { actual.signatures[0].role = "overload"; }, "function-signature-role"],
+    [(actual) => { actual.signatures[0].declarationModifiers = ["declare"]; }, "declaration-modifier"],
+    [(actual) => { actual.signatures[0].signatureModifiers = []; }, "function-modifier"],
+    [(actual) => { actual.signatures[0].typeParams[0].name = "U"; }, "type-param-name"],
+    [(actual) => { actual.signatures[0].typeParams[0].binding = { depth: 1, index: 0 }; }, "type-param-binding"],
+    [(actual) => { actual.signatures[0].typeParams[0].modifiers.const = false; }, "type-param-const"],
+    [(actual) => { actual.signatures[0].typeParams[0].modifiers.variance = null; }, "type-param-variance"],
+    [(actual) => { actual.signatures[0].typeParams[0].constraint = kw("string"); }, "type-param-constraint"],
+    [(actual) => { actual.signatures[0].typeParams[0].default = null; }, "type-param-default"],
+  ];
+  for (const [mutate, mismatchKind] of mutations) {
+    const actual = structuredClone(expected);
+    mutate(actual);
+    assert.ok(kinds(compareSignatures(expected, actual, null)).has(mismatchKind), mismatchKind);
+  }
+});
+
+test("exact parameters retain names, this role, rest, question, initializer, and modifiers", () => {
+  const expected = func({ params: [
+    { name: "this", role: "this", type: ref("m::Receiver") },
+    {
+      name: "value",
+      type: kw("number"),
+      modifiers: ["readonly"],
+      optional: true,
+      optionalSyntax: "initializer",
+      initializerStatus: "known",
+      initializer: { kind: "number", value: "1" },
+    },
+    { name: "rest", type: { t: "array", element: kw("string") }, rest: true },
+  ] });
+  const mutations = [
+    [(actual) => { actual.signatures[0].params[0].name = "receiver"; }, "param-name"],
+    [(actual) => { actual.signatures[0].params[0].role = "parameter"; }, "param-role"],
+    [(actual) => { actual.signatures[0].params[1].modifiers = []; }, "param-modifier"],
+    [(actual) => { actual.signatures[0].params[1].optionalSyntax = "question"; }, "param-optional-syntax"],
+    [(actual) => { actual.signatures[0].params[1].question = true; }, "param-question"],
+    [(actual) => { actual.signatures[0].params[1].initializer = { kind: "number", value: "2" }; }, "param-initializer"],
+    [(actual) => { actual.signatures[0].params[2].rest = false; }, "variadic-position"],
+  ];
+  for (const [mutate, mismatchKind] of mutations) {
+    const actual = structuredClone(expected);
+    mutate(actual);
+    assert.ok(kinds(compareSignatures(expected, actual, null)).has(mismatchKind), mismatchKind);
+  }
+});
+
+test("exact member and value state includes declaration-only fields", () => {
+  const property = member("value", kw("number"), { definite: false });
+  const expectedInterface = iface([property]);
+  const definiteMember = structuredClone(expectedInterface);
+  definiteMember.members[0].definite = true;
+  assert.ok(kinds(compareSignatures(expectedInterface, definiteMember, null)).has("member-definite"));
+
+  const expectedValue = { kind: "value", decls: [value("item", kw("number"))] };
+  const changedValue = structuredClone(expectedValue);
+  changedValue.decls[0].definite = true;
+  changedValue.decls[0].modifiers = [];
+  const valueKinds = kinds(compareSignatures(expectedValue, changedValue, null));
+  assert.ok(valueKinds.has("value-definite"));
+  assert.ok(valueKinds.has("value-modifier"));
+});
+
+test("obsolete, hidden, accessor, and non-plain signature fields fail the exact descriptor contract", () => {
+  const expected = func({ params: [{ name: "value", type: kw("number") }] });
+  for (const mutate of [
+    (actual) => { delete actual.modifiers; },
+    (actual) => { delete actual.signatures[0].returnTypePolicy; },
+    (actual) => { actual.legacy = true; },
+    (actual) => { actual.signatures[0].params[0].text = "number"; },
+    (actual) => Object.defineProperty(actual.signatures[0], "returnTypePolicy", { get: () => "required" }),
+    (actual) => { Object.setPrototypeOf(actual.signatures[0].params[0], { inherited: true }); },
+  ]) {
+    const actual = structuredClone(expected);
+    mutate(actual);
+    assert.ok(kinds(compareSignatures(expected, actual, null)).has("invalid-signature-contract"));
+  }
+});
+
+test("declaration kind is compared before kind-specific descriptor dispatch", () => {
+  const expected = func({ typeParams: [], ret: kw("void"), params: [] });
+  for (const actual of [
+    iface([]),
+    { kind: "alias", modifiers: ["export"], typeParams: [], type: kw("void") },
+    { kind: "other", nodeKind: "ClassDeclaration" },
+  ]) {
+    assert.deepEqual(compareSignatures(expected, actual, null).map((mismatch) => mismatch.kind), ["declaration-kind"]);
+  }
+});
+
 test("compareInterface: member-type, missing-member, extra-member; method == fn-property", () => {
-  const exp = { kind: "interface", typeParams: [], members: [{ name: "x", type: ref("m::A") }, { name: "y", type: kw("string") }] };
-  const wrong = { kind: "interface", typeParams: [], members: [{ name: "x", type: ref("m::B") }, { name: "y", type: kw("string") }] };
+  const exp = iface([member("x", ref("m::A")), member("y", kw("string"))]);
+  const wrong = iface([member("x", ref("m::B")), member("y", kw("string"))]);
   assert.ok(kinds(compareSignatures(exp, wrong, null)).has("member-type"));
 
-  const missing = { kind: "interface", typeParams: [], members: [{ name: "x", type: ref("m::A") }] };
+  const missing = iface([member("x", ref("m::A"))]);
   assert.ok(kinds(compareSignatures(exp, missing, null)).has("missing-member"));
 
-  const extra = { kind: "interface", typeParams: [], members: [...exp.members, { name: "z", type: kw("number") }] };
+  const extra = iface([...exp.members, member("z", kw("number"))]);
   assert.ok(kinds(compareSignatures(exp, extra, null)).has("extra-member"));
 
   // method `m(p):R` and property `m: (p)=>R` both arrive as {t:'fn'} members -> equal.
-  const fnType = { t: "fn", params: [{ type: kw("string") }], ret: kw("void") };
-  const ifaceA = { kind: "interface", typeParams: [], members: [{ name: "m", type: fnType }] };
-  const ifaceB = { kind: "interface", typeParams: [], members: [{ name: "m", type: { t: "fn", params: [{ type: kw("string") }], ret: kw("void") } }] };
+  const fnType = callable({ params: [{ name: "value", type: kw("string") }], ret: kw("void") });
+  const ifaceA = iface([member("m", fnType, { kind: "method" })]);
+  const ifaceB = iface([member("m", callable({ params: [{ name: "value", type: kw("string") }], ret: kw("void") }), { kind: "method" })]);
   assert.equal(compareSignatures(ifaceA, ifaceB, null).length, 0);
 });
 
+test("interface heritage and member modifiers compare exactly", () => {
+  const property = member("value", kw("number"));
+  const expected = iface([property]);
+  assert.equal(compareSignatures(expected, { ...expected, members: [{ ...property }] }, null).length, 0);
+  const actual = { ...expected, heritage: [{ token: "extends", types: [ref("m::Base")] }], members: [{ ...property, readonly: true, optional: true }] };
+  const mismatches = kinds(compareSignatures(expected, actual, null));
+  assert.ok(mismatches.has("interface-heritage"));
+  assert.ok(mismatches.has("member-readonly"));
+  assert.ok(mismatches.has("member-optionality"));
+
+  const plain = callable();
+  const generic = callable({ typeParams: [{}] });
+  assert.equal(typesEqual(plain, generic), false);
+});
+
+test("allowed globals cannot hide hard imported identity drift", () => {
+  const expected = func({ typeParams: [], params: [{ type: ref("global::Date") }], ret: kw("void") });
+  const actual = func({ typeParams: [], params: [{ type: ref("pkg/date.ts::Date") }], ret: kw("void") });
+  assert.ok(kinds(compareSignatures(expected, actual, null, (id) => id, noConv, ["Date"])).has("param-type"));
+});
+
 test("compareValue: value-annotation-missing and value-type", () => {
-  const exp = { kind: "value", decls: [{ name: "c", type: ref("core::int") }] };
-  const unannotated = { kind: "value", decls: [{ name: "c", missing: true }] };
+  const exp = { kind: "value", decls: [value("c", ref("core::int"))] };
+  const unannotated = { kind: "value", decls: [value("c", undefined, { missing: true })] };
   assert.ok(kinds(compareSignatures(exp, unannotated, null)).has("value-annotation-missing"));
 
-  const wrongType = { kind: "value", decls: [{ name: "c", type: kw("string") }] };
+  const wrongType = { kind: "value", decls: [value("c", kw("string"))] };
   assert.ok(kinds(compareSignatures(exp, wrongType, null)).has("value-type"));
 
-  assert.equal(compareSignatures(exp, { kind: "value", decls: [{ name: "c", type: ref("core::int") }] }, null).length, 0);
+  assert.equal(compareSignatures(exp, { kind: "value", decls: [value("c", ref("core::int"))] }, null).length, 0);
+  assert.deepEqual(
+    compareSignatures(
+      { kind: "value", decls: [value("version", kw("string"), { initializerStatus: "known", value: { kind: "string", value: "7.1.0-dev" } })] },
+      { kind: "value", decls: [value("version", kw("string"), { initializerStatus: "known", value: { kind: "string", value: "7.0.0-dev" } })] },
+      null,
+    ).map((mismatch) => mismatch.kind),
+    ["value-initializer"],
+  );
+
+  const complete = { kind: "value", decls: [value("a", kw("number")), value("b", kw("string"))] };
+  assert.deepEqual(
+    compareSignatures(complete, { kind: "value", decls: [value("a", kw("number"))] }, null).map((mismatch) => mismatch.kind),
+    ["missing-value"],
+  );
+  assert.deepEqual(
+    compareSignatures(complete, { kind: "value", decls: [...complete.decls, value("c", kw("boolean"))] }, null).map((mismatch) => mismatch.kind),
+    ["extra-value"],
+  );
+  assert.ok(kinds(compareSignatures(complete, { kind: "value", decls: [...complete.decls].reverse() }, null)).has("value-order"));
 });
 
 test("overrides: ignore aspect only", () => {
-  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
-  const wrong = { kind: "func", typeParams: [], ret: kw("number"), params: [{ type: ref("m::B") }] };
+  const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
+  const wrong = func({ typeParams: [], ret: kw("number"), params: [{ type: ref("m::B") }] });
   const ms = compareSignatures(exp, wrong, { ignore: new Set(["return-type"]) });
   assert.ok(!kinds(ms).has("return-type"));
   assert.ok(kinds(ms).has("param-type"));
 });
 
+test("descriptor inventory rejects duplicate and unexpected extracted declarations", () => {
+  const mismatches = descriptorInventoryMismatches(new Set(["expected"]), new Map([
+    ["expected", [{ file: "a.ts" }, { file: "b.ts" }]],
+    ["unexpected", [{ file: "c.ts" }]],
+  ]));
+  assert.deepEqual(mismatches.map((entry) => entry.kind), ["descriptor-duplicate", "descriptor-unexpected"]);
+  assert.ok(kinds(compareSignatures(func({ typeParams: [], ret: kw("void"), params: [] }), undefined, null)).has("actual-missing"));
+});
+
 test("local signature override captures go and ts snapshots", () => {
-  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
-  const actual = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] };
+  const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
+  const actual = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] });
+  actual.signatures[0].params[0].initializerStatus = "known";
+  actual.signatures[0].params[0].initializer = { kind: "number", value: "1" };
+  assert.ok(kinds(compareSignatures(exp, actual, null)).has("param-initializer-status"));
   const issues = [];
   const override = resolveOverride(
     {
@@ -127,17 +374,134 @@ test("local signature override captures go and ts snapshots", () => {
   assert.equal(staleIssues.length, 1);
 });
 
-test("conventions: acceptNullable strips | undefined", () => {
-  const conv = loadConventions({ structural: { acceptNullable: true } });
-  const exp = ref("m::T");
-  const nullable = { t: "union", members: [kw("undefined"), ref("m::T")] };
-  assert.ok(typesEqual(normalizeDescriptor(exp, conv), normalizeDescriptor(nullable, conv)));
-  // off by default -> not equal
-  assert.ok(!typesEqual(normalizeDescriptor(exp, noConv), normalizeDescriptor(nullable, noConv)));
+test("signature mismatches carry exact local-override snapshots", () => {
+  const expected = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
+  const actual = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] });
+  const [mismatch] = withSignatureOverrideSnapshots(compareSignatures(expected, actual, null), expected, actual);
+
+  assert.equal(mismatch.goSignature, unitSignatureSnapshot(expected));
+  assert.equal(mismatch.tsSignature, unitSignatureSnapshot(actual));
+  assert.match(mismatch.goSignature, /optionalSyntax/);
+});
+
+test("signature override cannot waive initializer or value-order drift", () => {
+  const expected = {
+    kind: "value",
+    decls: [
+      value("first", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "1" } }),
+      value("second", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "2" } }),
+    ],
+  };
+  const actual = {
+    kind: "value",
+    decls: [
+      value("second", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "3" } }),
+      value("first", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "1" } }),
+    ],
+  };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["signature"],
+    reason: "The declaration uses an explicitly reviewed target representation.",
+    goSignature: unitSignatureSnapshot(expected),
+    tsSignature: unitSignatureSnapshot(actual),
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  const mismatchKinds = kinds(compareSignatures(expected, actual, override));
+  assert.ok(mismatchKinds.has("value-order"));
+  assert.ok(mismatchKinds.has("value-initializer"));
+});
+
+test("unused exact override allowances are rejected", () => {
+  const issues = [];
+  validateOverrideUse({ allow: ["signature", "initializer", "value-order"] }, [], "id", issues);
+  assert.deepEqual(issues.map((entry) => entry.reason.split(" ")[1]), ["'signature'", "'initializer'", "'value-order'"]);
+});
+
+test("local initializer override ignores only exact snapshotted initializer drift", () => {
+  const expected = { kind: "value", decls: [value("limit", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "10" } })] };
+  const actual = { kind: "value", decls: [value("limit", kw("number"), { initializerStatus: "known", value: { kind: "number", value: "12" } })] };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["initializer"],
+    reason: "Host limit is intentionally different.",
+    goInitializer: 'limit={"kind":"number","value":"10"}',
+    tsInitializer: 'limit={"kind":"number","value":"12"}',
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  assert.equal(compareSignatures(expected, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride({
+    category: "runtime-representation",
+    allow: ["initializer"],
+    reason: "Host limit is intentionally different.",
+    goInitializer: "stale",
+    tsInitializer: 'limit={"kind":"number","value":"12"}',
+  }, "id", expected, actual, (value) => value, staleIssues);
+  assert.equal(stale.ignore.size, 0);
+  assert.equal(staleIssues.length, 1);
+});
+
+test("local value-order override ignores only exact snapshotted order drift", () => {
+  const expected = { kind: "value", decls: [value("first", kw("number")), value("second", kw("number"))] };
+  const actual = { kind: "value", decls: [value("second", kw("number")), value("first", kw("number"))] };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["value-order"],
+    reason: "JavaScript const initialization must place dependencies before consumers.",
+    goValueOrder: "first,second",
+    tsValueOrder: "second,first",
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  assert.equal(compareSignatures(expected, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride({
+    category: "runtime-representation",
+    allow: ["value-order"],
+    reason: "JavaScript const initialization must place dependencies before consumers.",
+    goValueOrder: "stale",
+    tsValueOrder: "second,first",
+  }, "id", expected, actual, (value) => value, staleIssues);
+  assert.equal(stale.ignore.size, 0);
+  assert.equal(staleIssues.length, 1);
+});
+
+test("conventions: global structural waivers are forbidden", () => {
+  for (const structural of [
+    {},
+    { acceptNullable: true },
+    { anyMapKey: true },
+    { unwrapPtrFunc: true },
+    { acceptNilableGoTypes: true },
+    { facadeGenericRefs: ["go/sync.ts::Pool"] },
+  ]) {
+    assert.throws(() => loadConventions({ ...conventionBase, structural }), /unknown current-contract key.*structural/);
+  }
+});
+
+test("signature profile rejects every unknown or retired contract key", () => {
+  assert.throws(() => loadProfile({ signatureCheck: { structural: {} } }), /unknown current-contract key/);
+  assert.throws(() => loadProfile({ signatureCheck: { _doc: "out-of-schema" } }), /unknown current-contract key/);
+  assert.throws(() => loadProfile({ signatureCheck: { conventions: { structural: {} } } }), /unknown current-contract key/);
 });
 
 test("conventions: equivalences are scoped to constraint context", () => {
-  const conv = loadConventions({ equivalences: [{ as: "comparable", scope: "constraint", match: [{ name: "comparable" }, { refName: "GoComparable" }] }] });
+  const conv = loadConventions({
+    ...conventionBase,
+    equivalences: [{
+      as: "comparable",
+      scope: "constraint",
+      match: [
+        { id: "name::comparable" },
+        { id: "packages/tsts/src/go/compat.ts::GoComparable" },
+      ],
+    }],
+  });
   const goComparable = ref("name::comparable");
   const tsComparable = ref("packages/tsts/src/go/compat.ts::GoComparable");
   assert.ok(typesEqual(normalizeDescriptor(goComparable, conv, "constraint"), normalizeDescriptor(tsComparable, conv, "constraint")));
@@ -145,46 +509,71 @@ test("conventions: equivalences are scoped to constraint context", () => {
 });
 
 test("compareTypeParams: non-trivial constraints cannot be erased", () => {
-  const exp = { kind: "func", typeParams: [{ constraint: ref("name::comparable") }], ret: kw("void"), params: [] };
-  const actual = { kind: "func", typeParams: [{ constraint: null }], ret: kw("void"), params: [] };
+  const exp = func({ typeParams: [{ constraint: ref("name::comparable") }], ret: kw("void"), params: [] });
+  const actual = func({ typeParams: [{ constraint: null }], ret: kw("void"), params: [] });
   assert.ok(kinds(compareSignatures(exp, actual, null, (x) => x, noConv)).has("type-param-constraint"));
 });
 
-test("compareTypeParams: exact GoConstraint marker preserves raw tilde constraints", () => {
-  const conv = loadConventions({});
-  const exp = { kind: "func", typeParams: [{ constraint: { t: "raw", text: "~int32 | ~uint32" } }], ret: kw("void"), params: [] };
-  const actual = {
-    kind: "func",
+test("compareTypeParams: current literal descriptors preserve GoConstraint markers and audit runtime carriers", () => {
+  const conv = loadConventions(conventionBase);
+  const marker = ref(
+    "packages/tsts/src/go/compat.ts::GoConstraint",
+    { t: "literal", kind: "string", value: "~int32 | ~uint32" },
+  );
+  const exp = func({ typeParams: [{ constraint: marker }], ret: kw("void"), params: [] });
+  const markerOnly = func({
+    typeParams: [{ constraint: structuredClone(marker) }],
+    ret: kw("void"),
+    params: [],
+  });
+  const markerWithCarrier = func({
     typeParams: [{
       constraint: {
         t: "intersect",
         members: [
-          ref("packages/tsts/src/go/compat.ts::GoConstraint", { t: "lit", text: JSON.stringify("~int32 | ~uint32") }),
+          structuredClone(marker),
           kw("number"),
         ],
       },
     }],
     ret: kw("void"),
     params: [],
-  };
-  assert.equal(compareSignatures(exp, actual, null, (x) => x, conv).length, 0);
+  });
+  assert.equal(compareSignatures(exp, markerOnly, null, (x) => x, conv).length, 0);
+  assert.ok(kinds(compareSignatures(exp, markerWithCarrier, null, (x) => x, conv)).has("type-param-constraint"));
 });
 
 test("compareInterface: unsupported member shapes are reported, not dropped", () => {
-  const exp = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }] };
-  const actual = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }, { name: "<IndexSignature>", unsupported: "IndexSignature" }] };
+  const exp = iface([member("x", kw("string"))]);
+  const actual = iface([member("x", kw("string")), { kind: "unsupported", name: "<IndexSignature>", unsupported: "IndexSignature" }]);
   assert.ok(kinds(compareSignatures(exp, actual, null)).has("unsupported-member"));
 });
 
+test("compareInterface: duplicate members cannot collapse through the comparison map", () => {
+  const expected = iface([member("value", kw("string"))]);
+  const actual = iface([member("value", kw("string")), member("value", kw("string"))]);
+  assert.ok(kinds(compareSignatures(expected, actual, null)).has("duplicate-member"));
+});
+
+test("classes and enums compare exact declaration modifiers, members, order, and values", () => {
+  const classShape = { kind: "class", modifiers: ["abstract"], typeParams: [], heritage: [], members: [member("value", kw("string"))] };
+  assert.equal(compareSignatures(classShape, structuredClone(classShape), null).length, 0);
+  assert.ok(kinds(compareSignatures(classShape, { ...structuredClone(classShape), modifiers: [] }, null)).has("declaration-modifier"));
+
+  const enumShape = { kind: "enum", modifiers: ["const"], members: [{ name: "First", value: { kind: "number", value: "0" } }] };
+  assert.equal(compareSignatures(enumShape, structuredClone(enumShape), null).length, 0);
+  assert.ok(kinds(compareSignatures(enumShape, { ...structuredClone(enumShape), members: [{ name: "First", value: { kind: "number", value: "1" } }] }, null)).has("enum-member-value"));
+});
+
 test("gate: unresolved type identity is surfaced", () => {
-  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] };
-  const act = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] };
+  const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] });
+  const act = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] });
   assert.ok(kinds(compareSignatures(exp, act, null)).has("unresolved-ref"));
 });
 
 test("gate: allowed ambient globals do not produce unresolved-ref", () => {
-  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] };
-  const act = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] };
+  const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] });
+  const act = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] });
   assert.equal(compareSignatures(exp, act, null, (x) => x, noConv, ["Uint8Array"]).length, 0);
 });
 
@@ -201,159 +590,4 @@ test("typesEqual: nested unions are associative", () => {
   const c = ref("m::C");
   assert.ok(typesEqual({ t: "union", members: [a, { t: "union", members: [b, c] }] }, { t: "union", members: [c, a, b] }));
   assert.ok(typesEqual({ t: "intersect", members: [a, { t: "intersect", members: [b, c] }] }, { t: "intersect", members: [b, c, a] }));
-});
-
-test("conventions: anyMapKey makes the map key a wildcard", () => {
-  const conv = loadConventions({ structural: { anyMapKey: true } });
-  const a = ref("c::GoMap", ref("m::StructKey"), kw("string"));
-  const b = ref("c::GoMap", kw("string"), kw("string"));
-  assert.ok(typesEqual(normalizeDescriptor(a, conv), normalizeDescriptor(b, conv)));
-});
-
-test("conventions: unwrapPtrFunc treats GoPtr<fn> as fn", () => {
-  const conv = loadConventions({ structural: { unwrapPtrFunc: true } });
-  const fn = { t: "fn", params: [], ret: kw("void") };
-  const ptrFn = ref("c::GoPtr", fn);
-  assert.ok(typesEqual(normalizeDescriptor(ptrFn, conv), normalizeDescriptor(fn, conv)));
-});
-
-test("conventions: nilable Go carriers accept only carrier/interface undefined forms", () => {
-  const conv = loadConventions({
-    structural: {
-      acceptNilableGoTypes: true,
-      nilableRefs: ["m::Iface"],
-    },
-  });
-  const slice = ref("c::GoSlice", kw("string"));
-  const ptrSlice = ref("c::GoPtr", slice);
-  const nullableSlice = { t: "union", members: [kw("undefined"), slice] };
-  assert.ok(typesEqual(normalizeDescriptor(ptrSlice, conv), normalizeDescriptor(slice, conv)));
-  assert.ok(typesEqual(normalizeDescriptor(nullableSlice, conv), normalizeDescriptor(slice, conv)));
-
-  const iface = ref("m::Iface");
-  assert.ok(typesEqual(normalizeDescriptor(ref("c::GoPtr", iface), conv), normalizeDescriptor(iface, conv)));
-  assert.ok(typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), iface] }, conv), normalizeDescriptor(iface, conv)));
-
-  const intType = ref("core::int");
-  assert.ok(!typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), intType] }, conv), normalizeDescriptor(intType, conv)));
-  assert.ok(!typesEqual(normalizeDescriptor(ref("c::GoPtr", ref("m::Struct")), conv), normalizeDescriptor(ref("m::Struct"), conv)));
-});
-
-test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)", () => {
-  // A completely different project profile: different bridge/module/primitive names.
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
-  // func f(a *int) — pointer-to-int.
-  const unit = {
-    kind: "func",
-    file: { importPath: "example.com/proj/pkg", imports: [] },
-    parameters: [{ names: ["a"], type: { kind: "pointer", element: { kind: "ident", name: "int" } } }],
-    results: [],
-    typeParameterDetails: [],
-  };
-  const desc = goUnitDescriptor(unit, index);
-  assert.equal(canonicalKey(desc.params[0].type), "R:src/rt/bridge.ts::Ptr<R:@acme/prim::i32>");
-  // selector to a stdlib facade uses the configured template.
-  const sel = goUnitDescriptor(
-    { kind: "func", file: { importPath: "example.com/proj/pkg", imports: [{ path: "time" }] }, parameters: [{ names: ["t"], type: { kind: "selector", package: "time", name: "Duration" } }], results: [], typeParameterDetails: [] },
-    index,
-  );
-  assert.equal(canonicalKey(sel.params[0].type), "R:src/rt/time.ts::Duration");
-});
-
-test("expected-from-go: inline struct value types are structural descriptors", () => {
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
-  const unit = {
-    kind: "varGroup",
-    file: { importPath: "example.com/proj/pkg", imports: [] },
-    valueSpecs: [{
-      names: ["table"],
-      inferredValueTypes: [{
-        kind: "array",
-        length: "...",
-        element: {
-          kind: "struct",
-          members: [
-            { kind: "field", name: "flag", typeExpr: { kind: "ident", name: "int" } },
-            { kind: "field", name: "name", typeExpr: { kind: "ident", name: "string" } },
-          ],
-        },
-      }],
-    }],
-  };
-  const desc = goUnitDescriptor(unit, index);
-  assert.equal(canonicalKey(desc.decls[0].type), "R:src/rt/bridge.ts::Arr<O:{flag:R:@acme/prim::i32;name:K:string},L:\"...\">");
-});
-
-test("expected-from-go: embedded receiver methods do not override direct fields", () => {
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: {}, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const baseType = {
-    id: "example.com/proj::pkg/base.go::type::Base",
-    kind: "type",
-    name: "Base",
-    typeKind: "struct",
-    members: [],
-    typeParameterDetails: [],
-  };
-  const baseMethod = {
-    id: "example.com/proj::pkg/base.go::method::Base.Signature",
-    kind: "method",
-    name: "Signature",
-    receiverType: { kind: "pointer", element: { kind: "ident", name: "Base" } },
-    parameters: [],
-    results: [{ type: { kind: "ident", name: "string" } }],
-    typeParameterDetails: [],
-  };
-  const childType = {
-    id: "example.com/proj::pkg/child.go::type::Child",
-    kind: "type",
-    name: "Child",
-    typeKind: "struct",
-    members: [
-      { kind: "embeddedField", typeExpr: { kind: "ident", name: "Base" } },
-      { kind: "field", name: "Signature", typeExpr: { kind: "ident", name: "string" } },
-    ],
-    typeParameterDetails: [],
-  };
-  const file = { importPath: "example.com/proj/pkg", imports: [], units: [baseType, baseMethod, childType] };
-  const profile = loadProfile(config);
-  const tsById = new Map([
-    [baseType.id, { path: "pkg/base.ts" }],
-    [childType.id, { path: "pkg/child.ts" }],
-  ]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, profile);
-  const desc = goUnitDescriptor({ ...childType, file }, index);
-  const signatureMembers = desc.members.filter((member) => member.name === "Signature");
-  assert.equal(signatureMembers.length, 1);
-  assert.equal(canonicalKey(signatureMembers[0].type), "K:string");
 });
