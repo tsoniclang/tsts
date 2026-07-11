@@ -85,7 +85,7 @@ test("external facade policy rejects hand-authored Go semantics and unknown obje
   }
 });
 
-test("generated method storage requires an explicit class adaptation and keeps bodies opaque", () => {
+test("generated method storage requires class adaptation and binds opaque bodies by exact method identity", () => {
   const objectId = "example.com/native::type::Thing";
   const methodId = `${objectId}::method::Use`;
   const receiver = variable(`${methodId}::signature::receiver`, "thing", namedType(objectId, "example.com/native", "Thing"));
@@ -121,13 +121,23 @@ test("generated method storage requires an explicit class adaptation and keeps b
   const source = renderExternalFacadeModules(config, snapshot).get("go/example.com/native.ts");
   assert.match(source, /export class Thing/);
   assert.match(source, /Use\(\): void \{\n    throw new globalThis\.Error\("TSGO_EXTERNAL_FACADE_UNIMPLEMENTED example\.com\/native\.Thing\.Use"\);\n  \}/);
-  assert.throws(
-    () => buildExternalFacadeMap({
-      ...baseConfig,
-      externalFacadePolicies: [{ ...generatedPolicy, memberBodies: { [methodId]: "return;" } }],
-    }, snapshot),
-    /forbidden hand-authored Go semantic field.*memberBodies/,
-  );
+  const implemented = renderExternalFacadeModules({
+    ...baseConfig,
+    externalFacadePolicies: [{
+      ...generatedPolicy,
+      runtimeAdaptation: { representation: "class", pointer: "aggregate" },
+      memberBodies: { [methodId]: "return;" },
+    }],
+  }, snapshot).get("go/example.com/native.ts");
+  assert.match(implemented, /Use\(\): void \{\n    return;\n  \}/);
+  assert.throws(() => buildExternalFacadeMap({
+    ...baseConfig,
+    externalFacadePolicies: [{
+      ...generatedPolicy,
+      runtimeAdaptation: { representation: "class", pointer: "aggregate" },
+      memberBodies: { [`${objectId}::method::Missing`]: "return;" },
+    }],
+  }, snapshot), /body for method.*missing from an active semantic profile/);
 });
 
 test("one generated storage contract rejects profile-dependent external semantics", () => {
@@ -143,9 +153,33 @@ test("one generated storage contract rejects profile-dependent external semantic
     }, snapshot),
     /renders differently across active semantic profiles/,
   );
+  assert.throws(() => buildExternalFacadeMap({
+    ...baseConfig,
+    signatureCheck: { namedTypeMappings: { [objectId]: "packages/tsts/src/native.ts::Word" } },
+  }, snapshot), /profile-dependent go\/types declarations but one profile storage contract/);
 });
 
-function externalSnapshot(externalDeclarations) {
+test("the full authored policy catalog is validated before active facade selection", () => {
+  const used = externalType({ packagePath: "example.com/native", name: "Used", rhs: basic("int") });
+  const unused = externalType({ packagePath: "example.com/native", name: "Unused", rhs: basic("int") });
+  const snapshot = externalSnapshot([used, unused], [used.object.id]);
+  assert.throws(() => buildExternalFacadeMap({
+    ...baseConfig,
+    externalFacadePolicies: [{
+      objectId: unused.object.id,
+      tsModule: "go/example.com/native.ts",
+      tsName: "Unused",
+      storageStrategy: "authored",
+    }],
+  }, snapshot), /authored storage outside config\.authoredFacadeModules/);
+  assert.throws(() => buildExternalFacadeMap({
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts", "go/example.com/native.ts"],
+  }, snapshot), /authoredFacadeModules duplicates/);
+});
+
+function externalSnapshot(externalDeclarations, usedObjectIds = externalDeclarations.map((declaration) => declaration.object.id)) {
+  const used = new Set(usedObjectIds);
   const profileIndexes = [...new Set(externalDeclarations.flatMap((declaration) => declaration.profiles))].sort((left, right) => left - right);
   return {
     gitRevision: "a".repeat(40),
@@ -160,7 +194,7 @@ function externalSnapshot(externalDeclarations) {
         semantic: profileIndexes.map((profileIndex) => ({
           profiles: [profileIndex],
           signature: signature(externalDeclarations
-            .filter((declaration) => declaration.profiles.includes(profileIndex))
+            .filter((declaration) => used.has(declaration.object.id) && declaration.profiles.includes(profileIndex))
             .map((declaration, index) => variable(
               `fixture::func::Use::profile::${profileIndex}::signature::parameters::${index}`,
               `value${index}`,

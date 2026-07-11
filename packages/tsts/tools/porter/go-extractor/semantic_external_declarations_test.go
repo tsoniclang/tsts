@@ -36,6 +36,10 @@ func Use(writer io.Writer, duration time.Duration, cancel context.CancelFunc, in
 	if writeParameter.Kind != "slice" || !writeParameter.Nilable || writeParameter.Element.Basic.Name != "byte" {
 		t.Fatalf("io.Writer.Write parameter = %#v", writeParameter)
 	}
+	writeResults := methods[0].Signature.Results.Variables
+	if len(writeResults) != 2 || writeResults[0].Type.Basic.Name != "int" || writeResults[1].Type.Reference.ObjectID != "builtin::type::error" {
+		t.Fatalf("io.Writer.Write results = %#v", writeResults)
+	}
 
 	duration := requireExternalTypeDeclaration(t, snapshot, "time::type::Duration")
 	if duration.Type == nil || duration.Type.Alias || duration.Type.RHS.Kind != "basic" || duration.Type.RHS.Basic.Name != "int64" || duration.Type.RHS.Nilable {
@@ -60,6 +64,10 @@ func Use(writer io.Writer, duration time.Duration, cancel context.CancelFunc, in
 	}
 	if !methodFound {
 		t.Fatalf("time.Time external declaration has no exact Add method: %#v", instant.Type.Methods)
+	}
+	location := requireExternalTypeDeclaration(t, snapshot, "time::type::Location")
+	if location.Type == nil || location.Type.RHS.Kind != "struct" {
+		t.Fatalf("transitive time.Location declaration = %#v", location.Type)
 	}
 }
 
@@ -105,8 +113,19 @@ type Callback func(prefix string, values ...int) (bool, error)
 	if box.Type.RHS.Kind != "struct" || len(box.Type.RHS.Struct.Fields) != 1 || box.Type.RHS.Struct.Fields[0].Variable.Type.Kind != "typeParameter" {
 		t.Fatalf("dependency.Box RHS = %#v", box.Type.RHS)
 	}
-	if len(box.Type.Methods) != 1 || box.Type.Methods[0].Name != "Set" || box.Type.Methods[0].Signature.Receiver == nil || len(box.Type.Methods[0].Signature.ReceiverTypeParameters) != 1 {
+	if len(box.Type.Methods) != 1 ||
+		box.Type.Methods[0].ID != "example.test/dependency::type::Box::method::Set" ||
+		box.Type.Methods[0].OwnerID != box.Object.ID ||
+		box.Type.Methods[0].Signature.Receiver == nil ||
+		len(box.Type.Methods[0].Signature.ReceiverTypeParameters) != 1 {
 		t.Fatalf("dependency.Box methods = %#v", box.Type.Methods)
+	}
+	setSignature := box.Type.Methods[0].Signature
+	if setSignature.Receiver.Type.Kind != "pointer" ||
+		setSignature.Receiver.Type.Element.Reference.ObjectID != box.Object.ID ||
+		len(setSignature.Parameters.Variables) != 1 ||
+		setSignature.Parameters.Variables[0].Type.Kind != "typeParameter" {
+		t.Fatalf("dependency.Box.Set signature = %#v", setSignature)
 	}
 
 	reader := requireExternalTypeDeclaration(t, snapshot, "example.test/dependency::type::Reader")
@@ -125,8 +144,16 @@ type Callback func(prefix string, values ...int) (bool, error)
 		t.Fatalf("dependency.Callback declaration = %#v", callback.Type)
 	}
 	parameters := callback.Type.RHS.Signature.Parameters.Variables
-	if len(parameters) != 2 || parameters[1].Type.Kind != "slice" || parameters[1].Type.Element.Basic.Name != "int" {
+	results := callback.Type.RHS.Signature.Results.Variables
+	if len(parameters) != 2 ||
+		parameters[0].Name != "prefix" ||
+		parameters[1].Name != "values" ||
+		parameters[1].Type.Kind != "slice" ||
+		parameters[1].Type.Element.Basic.Name != "int" {
 		t.Fatalf("dependency.Callback parameters = %#v", parameters)
+	}
+	if len(results) != 2 || results[0].Type.Basic.Name != "bool" || results[1].Type.Reference.ObjectID != "builtin::type::error" {
+		t.Fatalf("dependency.Callback results = %#v", results)
 	}
 }
 

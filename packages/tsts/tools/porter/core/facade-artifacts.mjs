@@ -4,7 +4,7 @@ import {
   renderCanonicalTypeParameters,
 } from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { buildExternalFacadeMap } from "./external-facades.mjs";
+import { authoredFacadeModuleSet, buildExternalFacadeMap } from "./external-facades.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
@@ -23,7 +23,7 @@ import path from "node:path";
 
 export function authoredFacadePathSet(config) {
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
-  return new Set((config.authoredFacadeModules ?? []).map((entry) => `${sourceRootPrefix}/${entry.replace(/^\/+/, "")}`));
+  return new Set([...authoredFacadeModuleSet(config)].map((entry) => `${sourceRootPrefix}/${entry}`));
 }
 
 export function writeExternalFacades(config, snapshot, options) {
@@ -268,7 +268,8 @@ function renderExternalClass(name, typeParameters, facade, declaration, semantic
     };
     const methodParameters = renderCanonicalTypeParameters(lowered.typeParameters, methodOperations);
     const rendered = renderCanonicalSignature(lowered, methodOperations);
-    const body = `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${facade.goDisplayName}.${method.name}`)});`;
+    const body = facade.memberBodies.get(method.id)
+      ?? `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${facade.goDisplayName}.${method.name}`)});`;
     lines.push(`  ${safePropertyName(method.name)}${methodParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType} {\n    ${body}\n  }`);
   }
   if (lines.length === 0) lines.push("  readonly __tsgoEmpty?: never;");

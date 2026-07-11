@@ -136,8 +136,7 @@ function validateProfile(profile) {
   requireStringArray(profile.constantRepresentations.bigintBasics, "signatureCheck.constantRepresentations.bigintBasics");
   requireStringArray(profile.constantRepresentations.bigintNamedTypes, "signatureCheck.constantRepresentations.bigintNamedTypes");
   validateTypeStorageMappings(profile.stdlibTypes, "signatureCheck.stdlibTypes");
-  requireNonEmptyString(profile.facadeTemplate, "signatureCheck.facadeTemplate");
-  if (!profile.facadeTemplate.includes("{importPath}")) throw new Error("signatureCheck.facadeTemplate must contain {importPath}");
+  validateFacadeTemplate(profile.facadeTemplate);
   requireStringRecord(profile.canonicalTypeAliases, "signatureCheck.canonicalTypeAliases");
   for (const [source, target] of Object.entries(profile.canonicalTypeAliases)) {
     if (!source.includes("::") || !target.includes("::")) throw new Error("signatureCheck.canonicalTypeAliases entries must use full module/name identities");
@@ -148,6 +147,19 @@ function validateProfile(profile) {
   requireStringArray(profile.allowedGlobals, "signatureCheck.allowedGlobals");
   requirePlainRecord(profile.jsonTags, "signatureCheck.jsonTags");
   requireStringArray(profile.jsonTags.contractModules, "signatureCheck.jsonTags.contractModules");
+}
+
+function validateFacadeTemplate(value) {
+  requireNonEmptyString(value, "signatureCheck.facadeTemplate");
+  const placeholder = "{importPath}";
+  const first = value.indexOf(placeholder);
+  if (first < 0 || first !== value.lastIndexOf(placeholder)) {
+    throw new Error("signatureCheck.facadeTemplate must contain exactly one {importPath} placeholder");
+  }
+  const remainder = `${value.slice(0, first)}${value.slice(first + placeholder.length)}`;
+  if (remainder.includes("{") || remainder.includes("}")) {
+    throw new Error("signatureCheck.facadeTemplate contains an unsupported placeholder");
+  }
 }
 
 function validateNamedTypeMappings(value) {
@@ -164,6 +176,7 @@ function validateTypeStorageMappings(value, label) {
 
 function validateStorageAgreement(profile) {
   const storageByObjectId = new Map();
+  const objectIdByStorage = new Map();
   for (const [label, mappings] of [
     ["signatureCheck.stdlibTypes", profile.stdlibTypes],
     ["signatureCheck.namedTypeMappings", profile.namedTypeMappings],
@@ -174,6 +187,11 @@ function validateStorageAgreement(profile) {
         throw new Error(`${label}.${objectId} conflicts with ${existing.label}: '${storage}' versus '${existing.storage}'`);
       }
       storageByObjectId.set(objectId, { storage, label: `${label}.${objectId}` });
+      const storageOwner = objectIdByStorage.get(storage);
+      if (storageOwner !== undefined && storageOwner.objectId !== objectId) {
+        throw new Error(`${label}.${objectId} and ${storageOwner.label} map different Go objects to the same TypeScript storage '${storage}'`);
+      }
+      objectIdByStorage.set(storage, { objectId, label: `${label}.${objectId}` });
     }
   }
 }

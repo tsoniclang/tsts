@@ -1,6 +1,6 @@
 import { buildAuthoredFacadeExportIndex } from "./authored-facade-exports.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { buildExternalFacadeMap, collectExternalTypeUsages } from "./external-facades.mjs";
+import { buildExternalFacadeMap } from "./external-facades.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
@@ -27,11 +27,10 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
 
   const facades = buildExternalFacadeMap(config, snapshot);
   const authoredObligations = [];
-  for (const usage of collectExternalTypeUsages(config, snapshot)) {
-    const facade = facades.get(usage.objectId);
-    if (facade === undefined) continue;
+  for (const facade of facades.values()) {
+    if (facade.storageStrategy !== "authored") continue;
     const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
-    if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath, usage });
+    if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath });
   }
   const authoredExports = buildAuthoredFacadeExportIndex(authoredObligations.map((obligation) => obligation.relativePath));
   const seenAuthoredObligations = new Set();
@@ -44,9 +43,9 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
     if (moduleExports?.error === undefined && exported?.[obligation.namespace] === true) continue;
     unresolved.push({
       path: obligation.relativePath,
-      symbol: obligation.usage.goDisplayName,
+      symbol: obligation.facade.goDisplayName,
       reason: moduleExports?.error
-        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.usage.objectId}'.`,
+        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.facade.objectId}'.`,
     });
   }
 

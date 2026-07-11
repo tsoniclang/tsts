@@ -7,7 +7,6 @@ import (
 )
 
 func semanticExternalTypeDeclarations(modulePath string, checker *declarationPackageChecker, local map[string]SemanticDeclarationReport) map[string]SemanticDeclarationReport {
-	encoder := newExternalSemanticTypeEncoder()
 	pending := map[string]*types.TypeName{}
 	for _, declaration := range local {
 		collectExternalTypeReferences(declaration, modulePath, func(reference SemanticTypeReferenceReport) {
@@ -22,6 +21,7 @@ func semanticExternalTypeDeclarations(modulePath string, checker *declarationPac
 			break
 		}
 		object := pending[objectID]
+		encoder := newExternalSemanticTypeEncoder()
 		report := semanticExternalTypeDeclaration(encoder, object)
 		if report.Object == nil || report.Object.ID != objectID {
 			fatalf("external Go type declaration %s lost its exact object identity", objectID)

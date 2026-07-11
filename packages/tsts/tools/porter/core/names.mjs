@@ -1,38 +1,5 @@
 import { createHash } from "node:crypto";
 
-export const primitiveTypes = new Map([
-  ["any", { source: "inline", name: "unknown" }],
-  ["bool", { source: "core", name: "bool" }],
-  ["byte", { source: "core", name: "byte" }],
-  ["complex64", { source: "compat", name: "GoComplex64" }],
-  ["complex128", { source: "compat", name: "GoComplex128" }],
-  ["error", { source: "compat", name: "GoError" }],
-  ["float32", { source: "core", name: "float" }],
-  ["float64", { source: "core", name: "double" }],
-  ["int", { source: "core", name: "int" }],
-  ["int8", { source: "core", name: "sbyte" }],
-  ["int16", { source: "core", name: "short" }],
-  ["int32", { source: "core", name: "int" }],
-  ["int64", { source: "core", name: "long" }],
-  ["rune", { source: "compat", name: "GoRune" }],
-  ["string", { source: "inline", name: "string" }],
-  ["uint", { source: "core", name: "uint" }],
-  ["uint8", { source: "core", name: "byte" }],
-  ["uint16", { source: "core", name: "ushort" }],
-  ["uint32", { source: "core", name: "uint" }],
-  ["uint64", { source: "core", name: "ulong" }],
-  ["uintptr", { source: "core", name: "nuint" }],
-  ["unsafe.Pointer", { source: "compat", name: "GoUnsafePointer" }],
-]);
-
-export const standardSelectorTypes = new Map([
-  ["cmp.Ordered", "GoOrdered"],
-  ["constraints.Ordered", "GoOrdered"],
-  ["iter.Seq", "GoSeq"],
-  ["iter.Seq2", "GoSeq2"],
-  ["unsafe.Pointer", "GoUnsafePointer"],
-]);
-
 export function localTsName(unit) {
   const ordinal = /::#(\d+)$/.exec(unit.id ?? "");
   const authored = unit.receiver ? `${unit.receiver}_${unit.name}` : unit.name;

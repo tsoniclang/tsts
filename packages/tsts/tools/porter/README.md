@@ -258,8 +258,11 @@ Generated artifacts are not hand-editable. `porter:verify` fails on:
 
 Facade generation has declaration inputs only:
 
-- Type identities in Go signatures produce typed facades where the shape is known, such as `io.Writer`, `io.Reader`, `time.Duration`, and `context.Context`.
+- External type identity, alias state, type parameters and constraints, declaration RHS/underlying type, intrinsic nilability, interface composition, and method signatures come only from the snapshot's `go/types` evidence.
+- External facade policy may choose only the exact Go object ID's TypeScript module/name, authored-versus-generated storage, reviewed runtime adaptation, and opaque generated-class member bodies keyed by exact Go method object ID. It cannot restate Go names, arity, members, embeddings, or types.
+- Type identities in active Go signatures produce typed facades such as `io.Writer`, `io.Reader`, `time.Duration`, and `context.Context`; policy presence is not a usage root.
 - External callable/value facades exist only through explicit reviewed configuration or authored modules. Porter never discovers them by scanning implementation bodies.
+- Authored facade modules are removed from the generation set before rendering. They are never rendered and discarded afterward.
 
 Examples:
 

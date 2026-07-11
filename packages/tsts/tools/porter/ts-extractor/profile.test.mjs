@@ -15,9 +15,15 @@ test("signature profile uses one exact recursively validated contract", () => {
     { parser: { freshnessSrcDirs: ["one", "one"] } },
     { allowedGlobals: ["Date", "Date"] },
     { facadeTemplate: "packages/no-placeholder.ts" },
+    { facadeTemplate: "packages/{importPath}/{importPath}.ts" },
+    { facadeTemplate: "packages/{importPath}/{unknown}.ts" },
     { canonicalTypeAliases: { Short: "also-short" } },
     { namedTypeMappings: { Short: "m.ts::Type" } },
     { namedTypeMappings: { "pkg::type::Type": "short" } },
+    { namedTypeMappings: {
+      "one.example::type::Type": "src/native.ts::HostType",
+      "two.example::type::Type": "src/native.ts::HostType",
+    } },
     { externalFunctionReturns: { "pkg.F": { module: "m.ts", name: "F", extra: true } } },
     { externalInterfaceMembers: { "pkg.I": [{ name: "M", type: { t: "fn", params: [], ret: { t: "kw", kw: "void" } } }] } },
   ]) assert.throws(() => loadProfile({ signatureCheck }));
