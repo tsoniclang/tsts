@@ -4,6 +4,7 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	"sort"
 	"strconv"
 )
 
@@ -85,51 +86,56 @@ func (encoder *semanticTypeEncoder) typeReportAt(value types.Type, ownerPath str
 		if typed.Kind() == types.Invalid {
 			fatalf("cannot encode invalid Go basic type at %s", ownerPath)
 		}
-		return &SemanticTypeReport{Kind: "basic", Basic: &SemanticBasicTypeReport{
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "basic", Basic: &SemanticBasicTypeReport{
 			Name: typed.Name(), Untyped: typed.Info()&types.IsUntyped != 0,
-		}}
+		}})
 	case *types.Named:
-		return &SemanticTypeReport{Kind: "named", Reference: encoder.typeReference(typed.Obj(), typed.TypeArgs(), ownerPath)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "named", Reference: encoder.typeReference(typed.Obj(), typed.TypeArgs(), ownerPath)})
 	case *types.Alias:
-		return &SemanticTypeReport{Kind: "alias", Reference: encoder.typeReference(typed.Obj(), typed.TypeArgs(), ownerPath)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "alias", Reference: encoder.typeReference(typed.Obj(), typed.TypeArgs(), ownerPath)})
 	case *types.TypeParam:
 		reference, ok := encoder.typeParameterOwners[typed]
 		if !ok {
 			fatalf("Go type parameter %s has no declaration owner at %s", typed.Obj().Name(), ownerPath)
 		}
-		return &SemanticTypeReport{Kind: "typeParameter", TypeParameter: &reference}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "typeParameter", TypeParameter: &reference})
 	case *types.Pointer:
-		return &SemanticTypeReport{Kind: "pointer", Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "pointer", Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")})
 	case *types.Slice:
-		return &SemanticTypeReport{Kind: "slice", Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "slice", Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")})
 	case *types.Array:
 		length := strconv.FormatInt(typed.Len(), 10)
-		return &SemanticTypeReport{Kind: "array", Length: &length, Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "array", Length: &length, Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element")})
 	case *types.Map:
-		return &SemanticTypeReport{
+		return semanticTypeReport(value, &SemanticTypeReport{
 			Kind: "map", Key: encoder.typeReportAt(typed.Key(), ownerPath+"::key"),
 			Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element"),
-		}
+		})
 	case *types.Chan:
-		return &SemanticTypeReport{
+		return semanticTypeReport(value, &SemanticTypeReport{
 			Kind: "channel", Direction: semanticChannelDirection(typed.Dir()),
 			Element: encoder.typeReportAt(typed.Elem(), ownerPath+"::element"),
-		}
+		})
 	case *types.Signature:
-		return &SemanticTypeReport{Kind: "signature", Signature: encoder.signatureReportAt(typed, ownerPath, false)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "signature", Signature: encoder.signatureReportAt(typed, ownerPath, false)})
 	case *types.Tuple:
 		tuple := encoder.tupleReportAt(typed, ownerPath)
-		return &SemanticTypeReport{Kind: "tuple", Tuple: &tuple}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "tuple", Tuple: &tuple})
 	case *types.Struct:
-		return &SemanticTypeReport{Kind: "struct", Struct: encoder.structReportAt(typed, ownerPath)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "struct", Struct: encoder.structReportAt(typed, ownerPath)})
 	case *types.Interface:
-		return &SemanticTypeReport{Kind: "interface", Interface: encoder.interfaceReportAt(typed, ownerPath)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "interface", Interface: encoder.interfaceReportAt(typed, ownerPath)})
 	case *types.Union:
-		return &SemanticTypeReport{Kind: "union", Union: encoder.unionReportAt(typed, ownerPath)}
+		return semanticTypeReport(value, &SemanticTypeReport{Kind: "union", Union: encoder.unionReportAt(typed, ownerPath)})
 	default:
 		fatalf("unsupported go/types.Type implementation %T at %s", value, ownerPath)
 		return nil
 	}
+}
+
+func semanticTypeReport(value types.Type, report *SemanticTypeReport) *SemanticTypeReport {
+	report.Nilable = types.AssignableTo(types.Typ[types.UntypedNil], value)
+	return report
 }
 
 func (encoder *semanticTypeEncoder) typeReference(object *types.TypeName, arguments *types.TypeList, ownerPath string) *SemanticTypeReferenceReport {
@@ -220,19 +226,54 @@ func (encoder *semanticTypeEncoder) structReportAt(structure *types.Struct, owne
 func (encoder *semanticTypeEncoder) interfaceReportAt(value *types.Interface, ownerPath string) *SemanticInterfaceReport {
 	value.Complete()
 	report := &SemanticInterfaceReport{
-		ExplicitMethods: []SemanticMethodReport{}, EmbeddedTypes: []*SemanticTypeReport{}, CompleteMethods: []SemanticMethodReport{},
+		ExplicitMethods: []SemanticMethodReport{}, EmbeddedTypes: []*SemanticTypeReport{}, EmbeddedKinds: []string{}, CompleteMethods: []SemanticMethodReport{},
 		Comparable: value.IsComparable(), Implicit: value.IsImplicit(), MethodSetOnly: value.IsMethodSet(),
 	}
-	for index := 0; index < value.NumExplicitMethods(); index++ {
-		report.ExplicitMethods = append(report.ExplicitMethods, encoder.methodReportAt(value.ExplicitMethod(index), ownerPath, "explicitMethod", index))
+	for index, method := range explicitMethodsInDeclarationOrder(value) {
+		report.ExplicitMethods = append(report.ExplicitMethods, encoder.methodReportAt(method, ownerPath, "explicitMethod", index))
 	}
 	for index := 0; index < value.NumEmbeddeds(); index++ {
-		report.EmbeddedTypes = append(report.EmbeddedTypes, encoder.typeReportAt(value.EmbeddedType(index), ownerPath+"::embedded::"+itoa(index)))
+		embedded := value.EmbeddedType(index)
+		report.EmbeddedTypes = append(report.EmbeddedTypes, encoder.typeReportAt(embedded, ownerPath+"::embedded::"+itoa(index)))
+		report.EmbeddedKinds = append(report.EmbeddedKinds, semanticInterfaceEmbeddingKind(embedded))
 	}
 	for index := 0; index < value.NumMethods(); index++ {
 		report.CompleteMethods = append(report.CompleteMethods, encoder.methodReportAt(value.Method(index), ownerPath, "completeMethod", index))
 	}
 	return report
+}
+
+func semanticInterfaceEmbeddingKind(value types.Type) string {
+	switch typed := value.(type) {
+	case *types.Interface:
+		return "interface"
+	case *types.Named:
+		if _, ok := typed.Underlying().(*types.Interface); ok {
+			return "interface"
+		}
+	case *types.Alias:
+		if _, ok := typed.Underlying().(*types.Interface); ok {
+			return "interface"
+		}
+	}
+	return "typeSet"
+}
+
+func explicitMethodsInDeclarationOrder(value *types.Interface) []*types.Func {
+	methods := make([]*types.Func, value.NumExplicitMethods())
+	for index := range methods {
+		methods[index] = value.ExplicitMethod(index)
+		if methods[index].Pos() == token.NoPos {
+			fatalf("Go interface method %s has no syntax declaration position", methods[index].Name())
+		}
+	}
+	sort.Slice(methods, func(left, right int) bool { return methods[left].Pos() < methods[right].Pos() })
+	for index := 1; index < len(methods); index++ {
+		if methods[index-1].Pos() == methods[index].Pos() {
+			fatalf("Go interface methods %s and %s share syntax declaration position %d", methods[index-1].Name(), methods[index].Name(), methods[index].Pos())
+		}
+	}
+	return methods
 }
 
 func (encoder *semanticTypeEncoder) methodReportAt(method *types.Func, ownerPath string, role string, index int) SemanticMethodReport {

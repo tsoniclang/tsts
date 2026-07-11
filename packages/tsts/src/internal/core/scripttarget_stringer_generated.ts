@@ -93,8 +93,8 @@ export const _ScriptTarget_name_1: string = "ESNextJSON";
  * 	_ScriptTarget_index_1 = [...]uint8{0, 6, 10}
  * )
  */
-export let _ScriptTarget_index_0: GoArray<byte, "..."> = [0, 4, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73];
-export let _ScriptTarget_index_1: GoArray<byte, "..."> = [0, 6, 10];
+export let _ScriptTarget_index_0: GoArray<byte, "14"> = [0, 4, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73];
+export let _ScriptTarget_index_1: GoArray<byte, "3"> = [0, 6, 10];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scripttarget_stringer_generated.go::method::ScriptTarget.String","kind":"method","status":"implemented","sigHash":"41a4d4874a348e3d33b91377d73aa247ca1205a90cb390cf81018469cf2f5a74","bodyHash":"f267713df21bf54ce8a4e43a52e4d557b9812f1812defe9dbd88465cd3694c38"}

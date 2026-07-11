@@ -158,7 +158,7 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
           name: "",
           packagePath,
           exported: false,
-          type: { kind: "named", reference: { objectId: `${packagePath}::type::${receiverName}`, packagePath, name: receiverName, typeArgs: [] } },
+          type: { kind: "named", nilable: false, reference: { objectId: `${packagePath}::type::${receiverName}`, packagePath, name: receiverName, typeArgs: [] } },
         },
         ...objectSignature,
       }
@@ -169,15 +169,15 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
     packagePath,
     exported: /^\p{Lu}/u.test(name),
     type: kind === "type"
-      ? { kind: "named", reference: { objectId: `${packagePath}::type::${name}`, packagePath, name, typeArgs: [] } }
-      : { kind: "signature", signature: objectSignature },
+      ? { kind: "named", nilable: false, reference: { objectId: `${packagePath}::type::${name}`, packagePath, name, typeArgs: [] } }
+      : { kind: "signature", nilable: true, signature: objectSignature },
   };
   if (kind === "type") {
     return {
       kind,
       packagePath,
       object,
-      type: { alias: false, object, typeParameters: [], rhs: { kind: "struct", struct: { fields: [] } } },
+      type: { alias: false, object, typeParameters: [], rhs: { kind: "struct", nilable: false, struct: { fields: [] } } },
       profiles: [testSemanticProfileIndex],
     };
   }
@@ -239,7 +239,7 @@ export function semanticFunctionDeclaration({
     name,
     packagePath,
     exported: /^\p{Lu}/u.test(name),
-    type: { kind: "signature", signature: objectSignature },
+    type: { kind: "signature", nilable: true, signature: objectSignature },
   };
   return [{ kind, packagePath, object, signature, profiles: [testSemanticProfileIndex] }];
 }
@@ -263,21 +263,21 @@ function testSemanticSignature(ownerPath, packagePath, parameters, results, pack
 function testSemanticType(type, packagePath, untyped, packages = {}, ownerPath = "test") {
   if (type.kind === "ident") {
     if (new Set(["bool", "byte", "complex128", "complex64", "float32", "float64", "int", "int16", "int32", "int64", "int8", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8", "uintptr"]).has(type.name)) {
-      return { kind: "basic", basic: { name: untyped ? `untyped ${type.name}` : type.name, untyped } };
+      return { kind: "basic", nilable: false, basic: { name: untyped ? `untyped ${type.name}` : type.name, untyped } };
     }
     const referencePackage = type.name === "error" ? "" : packagePath;
     const prefix = referencePackage === "" ? "builtin" : referencePackage;
-    return { kind: "named", reference: { objectId: `${prefix}::type::${type.name}`, packagePath: referencePackage, name: type.name, typeArgs: [] } };
+    return { kind: "named", nilable: type.name === "error", reference: { objectId: `${prefix}::type::${type.name}`, packagePath: referencePackage, name: type.name, typeArgs: [] } };
   }
   if (type.kind === "selector") {
     const referencePackage = packages[type.package] ?? type.package;
-    return { kind: "named", reference: { objectId: `${referencePackage}::type::${type.name}`, packagePath: referencePackage, name: type.name, typeArgs: [] } };
+    return { kind: "named", nilable: false, reference: { objectId: `${referencePackage}::type::${type.name}`, packagePath: referencePackage, name: type.name, typeArgs: [] } };
   }
-  if (type.kind === "pointer" || type.kind === "slice") return { kind: type.kind, element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
-  if (type.kind === "ellipsis") return { kind: "slice", element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
-  if (type.kind === "array") return { kind: "array", length: String(type.length), element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
-  if (type.kind === "map") return { kind: "map", key: testSemanticType(type.key, packagePath, false, packages, `${ownerPath}::key`), element: testSemanticType(type.value, packagePath, false, packages, `${ownerPath}::element`) };
-  if (type.kind === "channel") return { kind: "channel", direction: type.direction ?? "bidirectional", element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
+  if (type.kind === "pointer" || type.kind === "slice") return { kind: type.kind, nilable: true, element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
+  if (type.kind === "ellipsis") return { kind: "slice", nilable: true, element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
+  if (type.kind === "array") return { kind: "array", nilable: false, length: String(type.length), element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
+  if (type.kind === "map") return { kind: "map", nilable: true, key: testSemanticType(type.key, packagePath, false, packages, `${ownerPath}::key`), element: testSemanticType(type.value, packagePath, false, packages, `${ownerPath}::element`) };
+  if (type.kind === "channel") return { kind: "channel", nilable: true, direction: type.direction ?? "bidirectional", element: testSemanticType(type.element, packagePath, false, packages, `${ownerPath}::element`) };
   if (type.kind === "instantiation") {
     const base = testSemanticType(type.element, packagePath, false, packages);
     if (base.kind !== "named" && base.kind !== "alias") throw new Error("test instantiation requires a named or alias base");
@@ -286,6 +286,7 @@ function testSemanticType(type, packagePath, untyped, packages = {}, ownerPath =
   if (type.kind === "func") {
     return {
       kind: "signature",
+      nilable: true,
       signature: testSemanticSignature(ownerPath, packagePath, type.parameters ?? [], type.results ?? [], packages),
     };
   }

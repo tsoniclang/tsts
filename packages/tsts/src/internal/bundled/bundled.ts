@@ -49,7 +49,7 @@ export function LibPath(): string {
  * 	return filepath.Dir(filepath.FromSlash(filename))
  * })
  */
-export const bundledSourceDir: () => string = (() => {
+export let bundledSourceDir: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     if (value === undefined) {
@@ -76,7 +76,7 @@ export const bundledSourceDir: () => string = (() => {
  * 	return tspath.NormalizeSlashes(filepath.Join(bundledSourceDir(), "libs"))
  * })
  */
-export const testingLibPath: () => string = (() => {
+export let testingLibPath: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     value ??= path.join(bundledSourceDir(), "libs").replaceAll(path.sep, "/");

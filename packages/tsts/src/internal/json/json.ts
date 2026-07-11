@@ -20,7 +20,7 @@ import {
   WithIndent as jsontext_WithIndent,
   WithIndentPrefix as jsontext_WithIndentPrefix,
 } from "../../go/github.com/go-json-experiment/json/jsontext.js";
-import type { Decoder as Decoder_d2f8186c, Encoder as Encoder_517f1597, Kind as Kind_c0fe0b38, Value as Value_6b3f2abd } from "../../go/github.com/go-json-experiment/json/jsontext.js";
+import type { Decoder as Decoder_d2f8186c, Encoder as Encoder_517f1597, Kind as Kind_c0fe0b38, Token as Token_b612ce55, Value as Value_6b3f2abd } from "../../go/github.com/go-json-experiment/json/jsontext.js";
 import {
   BeginArray as BeginArray_jsontext,
   BeginObject as BeginObject_jsontext,
@@ -31,13 +31,17 @@ import {
 import type { Reader, Writer } from "../../go/io.js";
 import { Clip } from "../../go/slices.js";
 
+export type JsonFieldNamesForGoStructContract<T, Id extends string, Fields> = T & {
+  readonly __jsonFieldNamesForGoStructContract?: readonly [Id, Fields];
+};
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::varGroup::allowInvalid","kind":"varGroup","status":"implemented","sigHash":"4ca491a9062bcfff59a0c9819d0cecd849aa6ca334c47b7dbcc5fa97d2f6b829","bodyHash":"d8515ff0504a25de75d9ee82de1b3b1b345e5fb7c27ed41617c8b47347b121d2"}
  *
  * Go source:
  * var allowInvalid []json.Options = slices.Clip([]json.Options{jsontext.AllowInvalidUTF8(true)})
  */
-export const allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true) as Options]);
+export let allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true) as Options]);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/json/json.go::func::Marshal","kind":"func","status":"implemented","sigHash":"dae80d7bc275a95555465a2200ab5240a71e863562a537cf8f91a6c5974667fe","bodyHash":"105d86b507d5708bb4b3a2e0bd6722dadb9abac0906e4bdb4458446c8ec2763c"}
@@ -275,8 +279,8 @@ export type Encoder = Encoder_517f1597;
  * 	EndArray    = jsontext.EndArray
  * )
  */
-export const BeginObject: Kind_c0fe0b38 = BeginObject_jsontext;
-export const EndObject: Kind_c0fe0b38 = EndObject_jsontext;
-export const Null: Kind_c0fe0b38 = Null_jsontext;
-export const BeginArray: Kind_c0fe0b38 = BeginArray_jsontext;
-export const EndArray: Kind_c0fe0b38 = EndArray_jsontext;
+export let BeginObject: Token_b612ce55 = BeginObject_jsontext;
+export let EndObject: Token_b612ce55 = EndObject_jsontext;
+export let Null: Token_b612ce55 = Null_jsontext;
+export let BeginArray: Token_b612ce55 = BeginArray_jsontext;
+export let EndArray: Token_b612ce55 = EndArray_jsontext;

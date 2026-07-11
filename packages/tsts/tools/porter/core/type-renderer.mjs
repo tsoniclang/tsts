@@ -146,9 +146,21 @@ export function renderObjectMembers(members, context, unit, ownerKind) {
   let embeddedIndex = 0;
   let blankIndex = 0;
   for (const member of members) {
-    if (member.kind === "embeddedField" || member.kind === "embeddedInterface") {
+    if (member.kind === "embeddedField") {
       const embeddedType = tsType(member.typeExpr, context, scope, unit);
-      lines.push(`  readonly __tsgoEmbedded${embeddedIndex++}?: ${embeddedType};`);
+      lines.push(`  __tsgoEmbedded${embeddedIndex++}: ${embeddedType};`);
+      continue;
+    }
+    if (member.kind === "embeddedInterface") {
+      const kind = semanticEmbeddingKind(unit, embeddedIndex++);
+      const embeddedType = tsType(member.typeExpr, context, scope, unit);
+      if (kind === "interface") {
+        heritage.push(embeddedType);
+      } else if (kind === "typeSet") {
+        lines.push(`  readonly __tsgoEmbedded${embeddedIndex - 1}?: ${embeddedType};`);
+      } else {
+        throw new Error(`unsupported Go interface embedding classification '${kind}'`);
+      }
       continue;
     }
     if (member.kind === "method" && member.typeExpr?.kind === "func") {
@@ -374,21 +386,31 @@ export function tsFunctionType(expr, context, scope, unit) {
 
 export function tsInlineInterface(members, context, scope, unit) {
   if (members.length === 0) return "unknown";
-  const lines = [];
+  const parts = [];
+  const methods = [];
   for (const member of members) {
     if (member.kind === "embeddedInterface") {
-      lines.push(`readonly __tsgoEmbedded?: ${tsType(member.typeExpr, context, scope, unit)}`);
+      parts.push(tsType(member.typeExpr, context, scope, unit));
       continue;
     }
     if (member.kind === "method" && member.typeExpr?.kind === "func") {
       const params = renderParameters(member.typeExpr.parameters ?? [], context, scope, unit);
       const result = tsReturnType(member.typeExpr.results ?? [], context, scope, unit);
-      lines.push(`${safePropertyName(member.name)}: (${params.join(", ")}) => ${result}`);
+      methods.push(`${safePropertyName(member.name)}: (${params.join(", ")}) => ${result}`);
       continue;
     }
-    lines.push(`${safePropertyName(member.name)}: ${tsType(member.typeExpr, context, scope, unit)}`);
+    methods.push(`${safePropertyName(member.name)}: ${tsType(member.typeExpr, context, scope, unit)}`);
   }
-  return `{ ${lines.join("; ")} }`;
+  if (methods.length > 0) parts.unshift(`{ ${methods.join("; ")} }`);
+  return parts.length === 1 ? parts[0] : `{ ${parts.map((part) => `(${part})`).join(" & ")} }`;
+}
+
+function semanticEmbeddingKind(unit, index) {
+  const semantic = invariantSemanticVariant(unit, "rendering embedded Go types");
+  const value = semantic.type?.rhs?.interface;
+  const kind = value?.embeddedKinds?.[index];
+  if (kind === undefined) throw new Error(`Go interface embedding classification is missing for ${unit.id} embedding #${index}`);
+  return kind;
 }
 
 export function tsInlineStruct(members, context, scope, unit) {

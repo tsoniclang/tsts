@@ -303,7 +303,7 @@ export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeD
  * Go source:
  * var parseJSDocForNode func(*SourceFile, *Node) []*Node
  */
-export let parseJSDocForNode: ((arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>) | undefined = undefined;
+export let parseJSDocForNode: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::SetParseJSDocForNode","kind":"func","status":"implemented","sigHash":"5aca890b39fdda6f4899a1aa07e2be2add8bfdb3e21fbf63d0ef1efdeccb0d2a","bodyHash":"42d8f8eca703ba54c171f8255bb5ea33de96b58602e639bc20aa9a826183ce5f"}
@@ -5339,7 +5339,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e","bodyHash":"6892b9b6566cfd7095dd835823697c16146bdc757ce1ffced931ebbad6e391df"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func (f *NodeFactory) NewSourceFile(opts SourceFileParseOptions, text string, statements *NodeList, endOfFileToken *TokenNode) *Node {
@@ -5398,6 +5398,9 @@ export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
   };
 }
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e","bodyHash":"6892b9b6566cfd7095dd835823697c16146bdc757ce1ffced931ebbad6e391df"}
+ */
 export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: SourceFileParseOptions, text: string, statements: GoPtr<NodeList>, endOfFileToken: GoPtr<TokenNode>): GoPtr<Node> {
   if (GetEncodedRootLength(opts.FileName) === 0 || opts.FileName !== NormalizePath(opts.FileName)) {
     throw new globalThis.Error("fileName should be normalized and absolute: " + opts.FileName);
@@ -6564,8 +6567,8 @@ export const PragmaKindTripleSlashXML: PragmaKindFlags = 1 << 0;
 export const PragmaKindSingleLine: PragmaKindFlags = 1 << 1;
 export const PragmaKindMultiLine: PragmaKindFlags = 1 << 2;
 export const PragmaKindFlagsNone: PragmaKindFlags = 0;
-export const PragmaKindAll: int = (PragmaKindTripleSlashXML | PragmaKindSingleLine | PragmaKindMultiLine) as int;
-export const PragmaKindDefault: int = PragmaKindAll;
+export const PragmaKindAll: PragmaKindFlags = (PragmaKindTripleSlashXML | PragmaKindSingleLine | PragmaKindMultiLine) as int;
+export const PragmaKindDefault: PragmaKindFlags = PragmaKindAll;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgumentSpecification","kind":"type","status":"implemented","sigHash":"2b3ede31b1a4d191575bdd573254af18d051ccc9918f0c5c0365f2315cbe04a0","bodyHash":"0796d17ee075da388b4a655988d7f19c0f6923607de9a40f1923d3cd0d23fa41"}

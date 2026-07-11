@@ -376,8 +376,8 @@ export function Diagnostic_Clone(receiver: GoPtr<Diagnostic>): GoPtr<Diagnostic>
  * 	return diagnostics.Localize(locale, d.message, d.messageKey, d.messageArgs...)
  * }
  */
-export function Diagnostic_Localize(receiver: GoPtr<Diagnostic>, locale_: Locale): string {
-  return diagnostics.Localize(locale_, receiver!.message, receiver!.messageKey, ...receiver!.messageArgs);
+export function Diagnostic_Localize(receiver: GoPtr<Diagnostic>, locale: Locale): string {
+  return diagnostics.Localize(locale, receiver!.message, receiver!.messageKey, ...receiver!.messageArgs);
 }
 
 /**

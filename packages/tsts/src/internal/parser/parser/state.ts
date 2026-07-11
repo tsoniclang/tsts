@@ -213,7 +213,7 @@ export interface Parser {
  * Go source:
  * var viableKeywordSuggestions = scanner.GetViableKeywordSuggestions()
  */
-export const viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggestions();
+export let viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggestions();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::missingListNodes","kind":"varGroup","status":"implemented","sigHash":"d1c5395ca57bcb64c4b3e14d6d59605996440705ff57277a51696d4a8f0480be","bodyHash":"024eaa2a7207faca3efc65b264855dcb1504006bb6eaa8a7d7cf14c4f406787c"}
@@ -221,7 +221,7 @@ export const viableKeywordSuggestions: GoSlice<string> = GetViableKeywordSuggest
  * Go source:
  * var missingListNodes = make([]*ast.Node, 0, 1)
  */
-export const missingListNodes: GoSlice<GoPtr<Node>> = [];
+export let missingListNodes: GoSlice<GoPtr<Node>> = [];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::varGroup::parserPool","kind":"varGroup","status":"implemented","sigHash":"3fdc1286c48fa725161e8fd006c829b0d622c73db48a098be9f4f16883c2048e","bodyHash":"85c58e7891de25ca6c28a36cd456c6b0c6075aa9f16595f69f02bfe65b48dae3"}
@@ -233,7 +233,7 @@ export const missingListNodes: GoSlice<GoPtr<Node>> = [];
  * 	},
  * }
  */
-export const parserPool: Pool<Parser> = new Pool<Parser>();
+export let parserPool: Pool = new Pool<Parser>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParserState","kind":"type","status":"implemented","sigHash":"398a9313b037dfc819ac14636817daed6e0ee86b0e916701d82f4cc1a2715093","bodyHash":"98dab43fce32aad622b8188552a07d113352b087ba76d29cfd982ebe28fee5d3"}

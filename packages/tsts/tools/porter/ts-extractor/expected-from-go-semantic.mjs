@@ -1,9 +1,12 @@
-// Declaration-only Go -> TypeScript signature mapping. Every input type comes
-// from go/types; source spelling and function bodies are never consulted.
+// Declaration-only Go -> TypeScript signature mapping. Type structure comes
+// from go/types; exact declaration constraint text is retained only for the
+// GoConstraint marker contract. Function bodies are never consulted.
 
 import { semanticVariants } from "../core/semantic-variants.mjs";
 import { compareText } from "../core/deterministic-order.mjs";
 import { blankValueName, safeIdentifier, safeParamName, uniqueName } from "../core/names.mjs";
+import { canonicalizeGoTypeConstraint } from "./constraint-canonicalization.mjs";
+import { buildDeclaredTypeRhsIndex, semanticConstantUsesBigInt } from "./constant-representation.mjs";
 
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
@@ -40,6 +43,8 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
       bigintBasics: new Set(profile.constantRepresentations?.bigintBasics ?? []),
       bigintNamedTypes: new Set(profile.constantRepresentations?.bigintNamedTypes ?? []),
     },
+    declaredTypeRhsByProfile: buildDeclaredTypeRhsIndex(snapshot),
+    goConstraintId: profile.conventions?.goConstraintId,
     stdlibTypes: profile.stdlibTypes,
     namedTypeMappings: profile.namedTypeMappings,
     facadeTemplate: profile.facadeTemplate,
@@ -94,7 +99,7 @@ function semanticUnitDescriptor(unit, semantic, index, profile) {
     return typeUnitDescriptor(unit, semantic.type, index, profile);
   }
   if ((unit.kind === "constGroup" || unit.kind === "varGroup") && Array.isArray(semantic.valueSpecs)) {
-    return valueUnitDescriptor(unit, semantic.valueSpecs, index);
+    return valueUnitDescriptor(unit, semantic.valueSpecs, index, profile);
   }
   return { kind: "other", issue: `canonical Go declaration kind '${semantic.kind}' does not match unit kind '${unit.kind}'` };
 }
@@ -103,6 +108,7 @@ function functionUnitDescriptor(unit, signature, index) {
   const context = signatureContext(index, signature);
   const descriptor = signatureDescriptor(signature, context, {
     includeReceiver: unit.kind === "method",
+    sourceTypeParameters: unit.typeParameterDetails,
   });
   return {
     kind: "func",
@@ -113,7 +119,10 @@ function functionUnitDescriptor(unit, signature, index) {
 
 function typeUnitDescriptor(unit, declaration, index, profile) {
   const context = typeDeclarationContext(index, declaration);
-  const typeParams = semanticTypeParameters(declaration.typeParameters, context, { defaultUnknown: true });
+  const typeParams = semanticTypeParameters(declaration.typeParameters, context, {
+    defaultUnknown: true,
+    sourceTypeParameters: unit.typeParameterDetails,
+  });
   const rhs = declaration.rhs;
   if (!rhs) return { kind: "other", issue: "Go type declaration has no canonical RHS" };
   if (rhs.kind === "struct") {
@@ -131,8 +140,7 @@ function typeUnitDescriptor(unit, declaration, index, profile) {
   }
   if (rhs.kind === "interface") {
     const modifiers = ["export"];
-    const heritage = [];
-    const members = interfaceMembers(rhs.interface, context);
+    const { heritage, members } = interfaceMembers(rhs.interface, context, unit.members);
     return {
       kind: "interface",
       modifiers,
@@ -145,7 +153,7 @@ function typeUnitDescriptor(unit, declaration, index, profile) {
   return { kind: "alias", modifiers: ["export"], typeParams, type: semanticTypeDescriptor(rhs, context) };
 }
 
-function valueUnitDescriptor(unit, specs, index) {
+function valueUnitDescriptor(unit, specs, index, profile) {
   const declarations = [];
   const usedNames = new Set();
   let blankIndex = 0;
@@ -162,7 +170,7 @@ function valueUnitDescriptor(unit, specs, index) {
         modifiers: ["export"],
       };
       if (unit.kind === "constGroup") {
-        declaration.value = binding.constant ? semanticConstantValue(binding.constant, type, index) : undefined;
+        declaration.value = binding.constant ? semanticConstantValue(binding.constant, type, index, profile) : undefined;
         declaration.valueIssue = binding.constant ? undefined : "go/types did not provide an exact constant value";
         declaration.initializerStatus = binding.constant ? "known" : "unsupported";
       }
@@ -172,13 +180,13 @@ function valueUnitDescriptor(unit, specs, index) {
   return { kind: "value", decls: declarations };
 }
 
-function semanticConstantValue(constant, type, index) {
+function semanticConstantValue(constant, type, index, profile) {
   if (constant.kind === "Bool") return { kind: "boolean", value: constant.exact === "true" };
   if (constant.kind === "String") {
     if (typeof constant.stringValue !== "string") throw new Error("canonical Go String constant has no decoded stringValue");
     return { kind: "string", value: constant.stringValue };
   }
-  if (constant.kind === "Int" && semanticConstantUsesBigInt(type, index)) {
+  if (constant.kind === "Int" && semanticConstantUsesBigInt(type, index, profile)) {
     return { kind: "bigint", value: normalizeRationalText(constant.exact) };
   }
   if (constant.kind === "Int" || constant.kind === "Float") {
@@ -186,15 +194,6 @@ function semanticConstantValue(constant, type, index) {
   }
   if (constant.kind === "Complex") return { kind: "complex", value: constant.exact };
   return { kind: `unsupported:${constant.kind}`, value: constant.exact };
-}
-
-function semanticConstantUsesBigInt(type, index) {
-  const representations = index.constantRepresentations ?? {};
-  if (type?.kind === "basic") return representations.bigintBasics?.has(type.basic?.name) === true;
-  if (type?.kind === "named" || type?.kind === "alias") {
-    return representations.bigintNamedTypes?.has(type.reference?.objectId) === true;
-  }
-  return false;
 }
 
 function normalizeRationalText(text) {
@@ -350,10 +349,10 @@ function signatureDescriptor(signature, context, options) {
     ret: resultDescriptor(signature.results, context),
     missingReturnType: false,
     returnTypePolicy: "required",
-    typeParams: semanticTypeParameters([
-      ...(signature.receiverTypeParameters ?? []),
-      ...(signature.typeParameters ?? []),
-    ], context),
+    typeParams: [
+      ...semanticTypeParameters(signature.receiverTypeParameters, context),
+      ...semanticTypeParameters(signature.typeParameters, context, { sourceTypeParameters: options.sourceTypeParameters }),
+    ],
     signatureModifiers: [],
   };
 }
@@ -388,14 +387,22 @@ function resultDescriptor(tuple, context) {
 }
 
 function semanticTypeParameters(parameters, context, options = {}) {
-  return (parameters ?? []).map((parameter) => {
+  return (parameters ?? []).map((parameter, index) => {
     const binding = context.typeParameters.get(typeParameterKey(parameter.reference));
     if (binding === undefined) throw new Error(`unbound Go type parameter ${typeParameterKey(parameter.reference)}`);
+    const sourceParameter = options.sourceTypeParameters?.[index];
+    if (sourceParameter !== undefined && sourceParameter.name !== parameter.reference.name) {
+      throw new Error(`Go source and semantic type parameter #${index} names differ`);
+    }
     return {
       name: safeIdentifier(parameter.reference.name),
       binding: { depth: binding.depth, index: binding.index },
       modifiers: { const: false, variance: null, unsupported: [] },
-      constraint: semanticTypeDescriptor(parameter.constraint, context),
+      constraint: canonicalizeGoTypeConstraint(
+        semanticTypeDescriptor(parameter.constraint, context),
+        sourceParameter?.constraint,
+        context.index,
+      ),
       default: options.defaultUnknown ? { t: "kw", kw: "unknown" } : null,
       invalidConstraint: null,
     };
@@ -415,31 +422,47 @@ function inlineStructMembers(structure, context, contract) {
     members.push({
       kind: "property",
       name,
-      modifiers: variable.embedded && declarationMember ? ["readonly"] : [],
-      optional: variable.embedded && declarationMember || undefined,
+      modifiers: [],
+      optional: undefined,
       type: semanticTypeDescriptor(variable.type, context),
     });
   }
   return members.length === 0 ? [emptyObjectMember(contract)] : members;
 }
 
-function interfaceMembers(value, context) {
+function interfaceMembers(value, context, sourceMembers) {
+  const methods = value?.explicitMethods ?? [];
+  const embeddedTypes = value?.embeddedTypes ?? [];
+  const embeddedKinds = value?.embeddedKinds ?? [];
+  if (!Array.isArray(sourceMembers)) throw new Error("Go interface declaration has no syntax member sequence");
+  if (embeddedKinds.length !== embeddedTypes.length) throw new Error("Go interface semantic embedding classifications do not match embedded types");
   const members = [];
-  for (const method of value?.explicitMethods ?? []) {
-    members.push({ kind: "method", name: method.name, modifiers: [], type: methodFunctionType(method, context) });
-  }
+  const heritageTypes = [];
+  let methodIndex = 0;
   let embedded = 0;
-  for (const type of value?.embeddedTypes ?? []) {
-    members.push({
-      kind: "property",
-      name: `__tsgoEmbedded${embedded++}`,
-      modifiers: ["readonly"],
-      optional: true,
-      type: semanticTypeDescriptor(type, context),
-    });
+  for (const sourceMember of sourceMembers) {
+    if (sourceMember?.kind === "method") {
+      const method = methods[methodIndex++];
+      if (method === undefined) throw new Error("Go interface syntax has more methods than its semantic explicit method set");
+      if (sourceMember.name !== method.name) throw new Error(`Go interface syntax method '${sourceMember.name}' does not match semantic method '${method.name}' at declaration position ${methodIndex - 1}`);
+      members.push({ kind: "method", name: method.name, modifiers: [], type: methodFunctionType(method, context) });
+      continue;
+    }
+    if (sourceMember?.kind !== "embeddedInterface") throw new Error(`unsupported Go interface syntax member '${sourceMember?.kind}'`);
+    const type = embeddedTypes[embedded];
+    if (type === undefined) throw new Error("Go interface syntax has more embedded types than its semantic embedded type set");
+    const kind = embeddedKinds[embedded++];
+    if (kind === "interface") {
+      heritageTypes.push(semanticTypeDescriptor(type, context));
+    } else if (kind === "typeSet") {
+      members.push({ kind: "property", name: `__tsgoEmbedded${embedded - 1}`, modifiers: ["readonly"], optional: true, type: semanticTypeDescriptor(type, context) });
+    } else {
+      throw new Error(`unsupported Go interface embedding classification '${kind}'`);
+    }
   }
-  if (members.length === 0) return [emptyObjectMember("declaration")];
-  return members;
+  if (methodIndex !== methods.length || embedded !== embeddedTypes.length) throw new Error("Go interface syntax and semantic member counts differ");
+  if (members.length === 0) members.push(emptyObjectMember("declaration"));
+  return { heritage: heritageTypes.length === 0 ? [] : [{ token: "extends", types: heritageTypes }], members };
 }
 
 function methodFunctionType(method, context) {
@@ -459,19 +482,8 @@ function interfaceTypeDescriptor(value, context) {
     type: signatureTypeDescriptor(method.signature, context),
   }));
   if (methodMembers.length > 0) typeSet.push({ t: "object", members: methodMembers });
-  let embeddedIndex = 0;
   for (const embedded of value?.embeddedTypes ?? []) {
-    typeSet.push({
-      t: "object",
-      members: [{
-        kind: "property",
-        name: `__tsgoEmbedded${embeddedIndex++}`,
-        modifiers: [],
-        readonly: true,
-        optional: true,
-        type: semanticTypeDescriptor(embedded, context),
-      }],
-    });
+    typeSet.push(semanticTypeDescriptor(embedded, context));
   }
   if (value?.comparable && typeSet.length === 0) return ref("name::comparable");
   if (typeSet.length === 0) return { t: "kw", kw: "unknown" };

@@ -1,4 +1,5 @@
 import type { bool, byte } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -418,3 +419,38 @@ function jsonValueTypeName(valueType: JSONValueType): string {
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !globalThis.Array.isArray(value);
 }
+
+type HeaderFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  HeaderFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields",
+  {
+    readonly Name: { readonly name: "name"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Version: { readonly name: "version"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Type: { readonly name: "type"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type PathFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  PathFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::PathFields",
+  {
+    readonly TSConfig: { readonly name: "tsconfig"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Main: { readonly name: "main"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Types: { readonly name: "types"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Typings: { readonly name: "typings"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly TypesVersions: { readonly name: "typesVersions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Imports: { readonly name: "imports"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Exports: { readonly name: "exports"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type DependencyFieldsJsonFields = JsonFieldNamesForGoStructContract<
+  DependencyFields,
+  "github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::DependencyFields",
+  {
+    readonly Dependencies: { readonly name: "dependencies"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly DevDependencies: { readonly name: "devDependencies"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly PeerDependencies: { readonly name: "peerDependencies"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly OptionalDependencies: { readonly name: "optionalDependencies"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

@@ -17,6 +17,7 @@ const profile = {
     compat: { rune: "GoRune", error: "GoError", complex128: "GoComplex128" },
   },
   stdlibTypes: { "iter.Seq": "GoSeq" },
+  namedTypeMappings: {},
   facadeTemplate: "src/go/{importPath}.ts",
 };
 const semanticProfile = 0;
@@ -78,7 +79,7 @@ test("canonical semantic types map resolved array lengths, identities, and const
 test("function descriptors use exact go/types parameters, constraints, variadics, and results", () => {
   const owner = "example/p::func::Collect";
   const typeParameter = parameter(owner, 0, { kind: "interface", interface: {
-    explicitMethods: [], embeddedTypes: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: false,
+    explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: false,
   } }, "T");
   const typeRef = { kind: "typeParameter", typeParameter: typeParameter.reference };
   const unit = {

@@ -1,4 +1,5 @@
 import type { int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoPtr } from "../../go/compat.js";
 import type { noCopy } from "./compileroptions.js";
 import type { Tristate } from "./tristate.js";
@@ -31,3 +32,16 @@ export interface BuildOptions {
   StopBuildOnErrors: Tristate;
   Clean: Tristate;
 }
+
+type BuildOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  BuildOptions,
+  "github.com/microsoft/typescript-go::internal/core/buildoptions.go::type::BuildOptions",
+  {
+    readonly Dry: { readonly name: "dry"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Force: { readonly name: "force"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Verbose: { readonly name: "verbose"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Builders: { readonly name: "builders"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StopBuildOnErrors: { readonly name: "stopBuildOnErrors"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Clean: { readonly name: "clean"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

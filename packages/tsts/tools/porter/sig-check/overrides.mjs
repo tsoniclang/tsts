@@ -47,6 +47,9 @@ function requireSnapshot(recorded, current, name, issues) {
 }
 
 function unitInitializerSnapshot(descriptor) {
+  if (descriptor?.kind === "profileVariants") {
+    return profileSnapshot(descriptor, unitInitializerSnapshot, "initializer");
+  }
   if (descriptor?.kind !== "value") return "<not-value>";
   return (descriptor.decls ?? []).map((declaration) =>
     `${declaration.name}=${declaration.valueIssue !== undefined ? `unresolved:${declaration.valueIssue}` : JSON.stringify(declaration.value)}`,
@@ -54,8 +57,23 @@ function unitInitializerSnapshot(descriptor) {
 }
 
 function unitValueOrderSnapshot(descriptor) {
+  if (descriptor?.kind === "profileVariants") {
+    return profileSnapshot(descriptor, unitValueOrderSnapshot, "value-order");
+  }
   if (descriptor?.kind !== "value") return "<not-value>";
   return (descriptor.decls ?? []).map((declaration) => declaration.name).join(",");
+}
+
+function profileSnapshot(descriptor, snapshot, label) {
+  if (!Array.isArray(descriptor.variants) || descriptor.variants.length === 0) {
+    throw new Error(`profile-aware ${label} snapshot requires at least one semantic variant`);
+  }
+  return descriptor.variants.map((variant) => {
+    if (!Array.isArray(variant.profiles) || variant.profiles.length === 0) {
+      throw new Error(`profile-aware ${label} snapshot requires a non-empty profile identity list`);
+    }
+    return `${JSON.stringify(variant.profiles)}=>${snapshot(variant.descriptor)}`;
+  }).join("|");
 }
 
 export function unitSignatureSnapshot(descriptor, canon = (identity) => identity) {
@@ -83,6 +101,8 @@ export function withSignatureOverrideSnapshots(mismatches, expected, actual, can
   const tsSignature = unitSignatureSnapshot(actual, canon);
   return mismatches.map((mismatch) => ({ ...mismatch, goSignature, tsSignature }));
 }
+
+export { unitInitializerSnapshot, unitValueOrderSnapshot };
 
 export function validateOverrideUse(localOverride, mismatches, id, overrideIssues) {
   if (!Array.isArray(localOverride?.allow)) return;

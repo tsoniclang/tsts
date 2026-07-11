@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
-import { generatedTypeDeclarations } from "./sig-check.mjs";
+import { compareSignatures, generatedTypeDeclarations } from "./sig-check.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
@@ -107,6 +107,44 @@ test("expected-from-go: inline struct value types use resolved array lengths", (
   });
 });
 
+test("expected-from-go: named uint64 constants derive exact bigint values through aliases", () => {
+  const config = projectConfig({ keyword: { string: "string" }, core: { int64: "long", uint64: "ulong" } });
+  config.signatureCheck.constantRepresentations = { bigintBasics: ["uint64"], bigintNamedTypes: [] };
+  const symbolTableId = typeUnit("ids.go", "symbolTableID", basicType("uint64"));
+  const symbolTableAlias = typeUnit("ids.go", "symbolTableAlias", namedType(packagePath, "symbolTableID"), [], true);
+  const smallId = typeUnit("ids.go", "smallID", basicType("int64"));
+  const stKindValues = [
+    ["stKindLocals", namedType(packagePath, "symbolTableID"), "0"],
+    ["stKindExports", namedType(packagePath, "symbolTableID"), "2305843009213693952"],
+    ["stKindMembers", namedType(packagePath, "symbolTableID"), "4611686018427387904"],
+    ["stKindGlobals", namedType(packagePath, "symbolTableID"), "6917529027641081856"],
+    ["stKindResolvedExports", namedType(packagePath, "symbolTableID"), "9223372036854775808"],
+    ["stKindMask", namedType(packagePath, "symbolTableID"), "9223372036854775808"],
+    ["aliasMaximum", aliasType(packagePath, "symbolTableAlias"), "18446744073709551615"],
+    ["ordinary", namedType(packagePath, "smallID"), "42"],
+  ];
+  const constants = constantUnit(stKindValues);
+  const file = { importPath: packagePath, imports: [], units: [symbolTableId, symbolTableAlias, smallId, constants] };
+  const tsById = new Map([
+    [symbolTableId.id, { path: "pkg/ids.ts" }],
+    [symbolTableAlias.id, { path: "pkg/ids.ts" }],
+    [smallId.id, { path: "pkg/ids.ts" }],
+  ]);
+  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+
+  assert.deepEqual([...index.constantRepresentations.bigintNamedTypes], []);
+  assert.deepEqual(goUnitDescriptor(constants, index).decls.map((declaration) => declaration.value), [
+    { kind: "bigint", value: "0" },
+    { kind: "bigint", value: "2305843009213693952" },
+    { kind: "bigint", value: "4611686018427387904" },
+    { kind: "bigint", value: "6917529027641081856" },
+    { kind: "bigint", value: "9223372036854775808" },
+    { kind: "bigint", value: "9223372036854775808" },
+    { kind: "bigint", value: "18446744073709551615" },
+    { kind: "number", value: "42" },
+  ]);
+});
+
 test("expected-from-go: receiver methods remain separate from struct data", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
   const base = typeUnit("base.go", "Base", structType([]));
@@ -129,16 +167,22 @@ test("expected-from-go: interface descriptors contain only source-declared membe
   const config = projectConfig({ keyword: { bool: "boolean", string: "string" }, core: {} });
   const read = interfaceMethod("Reader", "Read", [basicType("string")], [basicType("bool")]);
   const close = interfaceMethod("ReadCloser", "Close", [], []);
-  const reader = typeUnit("contracts.go", "Reader", interfaceType([read], [], [read]));
+  const reader = typeUnit("contracts.go", "Reader", interfaceType([read], [], [read]), [
+    { kind: "method", name: "Read" },
+  ]);
   const readerReference = namedType(packagePath, "Reader");
-  const closer = typeUnit("contracts.go", "ReadCloser", interfaceType([close], [readerReference], [close, read]));
+  const closer = typeUnit("contracts.go", "ReadCloser", interfaceType([close], [readerReference], [close, read]), [
+    { kind: "method", name: "Close" },
+    { kind: "embeddedInterface", name: "Reader" },
+  ]);
   const wrapper = typeUnit("contracts.go", "ReaderWrapper", structType([structField("Reader", readerReference, true)]));
   const file = { importPath: packagePath, imports: [], units: [reader, closer, wrapper] };
   const tsById = new Map([reader, closer, wrapper].map((unit) => [unit.id, { path: "pkg/contracts.ts" }]));
   const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
 
   const descriptor = goUnitDescriptor(closer, index);
-  assert.deepEqual(descriptor.members.map((member) => member.name), ["Close", "__tsgoEmbedded0"]);
+  assert.deepEqual(descriptor.members.map((member) => member.name), ["Close"]);
+  assert.deepEqual(descriptor.heritage, [{ token: "extends", types: [{ t: "ref", id: "pkg/contracts.ts::Reader", args: [] }] }]);
   assert.deepEqual(descriptor.members[0].type, {
     t: "fn",
     params: [],
@@ -148,9 +192,93 @@ test("expected-from-go: interface descriptors contain only source-declared membe
     typeParams: [],
     signatureModifiers: [],
   });
-  assert.deepEqual(descriptor.members[1].modifiers, ["readonly"]);
-  assert.equal(descriptor.members[1].optional, true);
+  assert.equal(descriptor.members.length, 1);
+  assert.deepEqual(descriptor.members[0].modifiers, []);
+  assert.equal(descriptor.members[0].optional, undefined);
   assert.deepEqual(goUnitDescriptor(wrapper, index).members.map((member) => member.name), ["__tsgoEmbedded0"]);
+});
+
+test("expected-from-go: interface syntax order survives semantic extraction and real TS reorders fail", () => {
+  const config = projectConfig({ keyword: { bool: "boolean", int: "number", string: "string" }, core: {} });
+  const embeddedMethod = interfaceMethod("Embedded", "EmbeddedOnly", [], [basicType("bool")]);
+  const embedded = typeUnit("contracts.go", "Embedded", interfaceType([embeddedMethod], [], [embeddedMethod]), [
+    { kind: "method", name: "EmbeddedOnly" },
+  ]);
+  const embeddedReference = namedType(packagePath, "Embedded");
+  const zulu = interfaceMethod("Ordered", "Zulu", [basicType("int")], [basicType("string")]);
+  const alpha = interfaceMethod("Ordered", "Alpha", [basicType("bool")], []);
+  const ordered = typeUnit("contracts.go", "Ordered", interfaceType(
+    [zulu, alpha],
+    [embeddedReference],
+    [alpha, embeddedMethod, zulu],
+  ), [
+    { kind: "method", name: "Zulu" },
+    { kind: "embeddedInterface", name: "Embedded" },
+    { kind: "method", name: "Alpha" },
+  ]);
+  const file = { importPath: packagePath, imports: [], units: [embedded, ordered] };
+  const tsById = new Map([[embedded.id, { path: "pkg/contracts.ts" }], [ordered.id, { path: "pkg/contracts.ts" }]]);
+  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+
+  const expected = goUnitDescriptor(ordered, index);
+  assert.deepEqual(expected.members.map((member) => member.name), ["Zulu", "Alpha"]);
+  assert.deepEqual(expected.heritage, [{ token: "extends", types: [{ t: "ref", id: "pkg/contracts.ts::Embedded", args: [] }] }]);
+
+  const reordered = structuredClone(expected);
+  reordered.members = [reordered.members[1], reordered.members[0]];
+  reordered.fragments[0].members = structuredClone(reordered.members);
+  assert.deepEqual(compareSignatures(expected, reordered, null).map((mismatch) => mismatch.kind), ["member-order"]);
+});
+
+test("expected-from-go: interface embeddings use heritage and struct embeddings stay required mutable storage", () => {
+  const config = projectConfig({ keyword: { int: "number" }, core: {} });
+  const base = typeUnit("embedding.go", "Base", interfaceType([], [], []), []);
+  const extra = typeUnit("embedding.go", "Extra", interfaceType([], [], []), []);
+  const baseReference = namedType(packagePath, "Base");
+  const extraReference = namedType(packagePath, "Extra");
+  const multi = typeUnit("embedding.go", "Multi", interfaceType([], [baseReference, extraReference], []), [
+    { kind: "embeddedInterface", name: "Base" },
+    { kind: "embeddedInterface", name: "Extra" },
+  ]);
+  const product = typeUnit("embedding.go", "Product", structType([
+    structField("Base", baseReference, true),
+    structField("Count", basicType("int")),
+  ]));
+  const file = { importPath: packagePath, imports: [], units: [base, extra, multi, product] };
+  const tsById = new Map([base, extra, multi, product].map((unit) => [unit.id, { path: "pkg/embedding.ts" }]));
+  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+
+  const multiExpected = goUnitDescriptor(multi, index);
+  assert.deepEqual(multiExpected.members.map((member) => member.name), ["__tsgoEmpty"]);
+  assert.deepEqual(multiExpected.heritage, [{
+    token: "extends",
+    types: [
+      { t: "ref", id: "pkg/embedding.ts::Base", args: [] },
+      { t: "ref", id: "pkg/embedding.ts::Extra", args: [] },
+    ],
+  }]);
+  assert.deepEqual(compareSignatures(multiExpected, structuredClone(multiExpected), null), []);
+
+  const productExpected = goUnitDescriptor(product, index);
+  assert.deepEqual(productExpected.members.map((member) => member.name), ["__tsgoEmbedded0", "Count"]);
+  assert.deepEqual(productExpected.members[0].modifiers, []);
+  assert.equal(productExpected.members[0].optional, undefined);
+  assert.equal(productExpected.members[0].readonly, undefined);
+
+  const optionalReadonly = structuredClone(productExpected);
+  optionalReadonly.members[0].modifiers = ["readonly"];
+  optionalReadonly.members[0].optional = true;
+  optionalReadonly.fragments[0].members = structuredClone(optionalReadonly.members);
+  const storageMismatchKinds = new Set(compareSignatures(productExpected, optionalReadonly, null).map((mismatch) => mismatch.kind));
+  assert.equal(storageMismatchKinds.has("member-optionality"), true);
+  assert.equal(storageMismatchKinds.has("member-modifier"), true);
+
+  const flattened = structuredClone(productExpected);
+  flattened.members[0] = { ...flattened.members[0], name: "Base" };
+  flattened.fragments[0].members = structuredClone(flattened.members);
+  const mismatchKinds = new Set(compareSignatures(productExpected, flattened, null).map((mismatch) => mismatch.kind));
+  assert.equal(mismatchKinds.has("missing-member"), true);
+  assert.equal(mismatchKinds.has("extra-member"), true);
 });
 
 function projectConfig(primitives) {
@@ -194,14 +322,33 @@ function valueUnit(name, type) {
   };
 }
 
-function typeUnit(file, name, rhs) {
+function typeUnit(file, name, rhs, members = [], alias = false) {
   const objectId = `${packagePath}::type::${name}`;
-  const object = { id: objectId, name, packagePath, exported: true, type: namedType(packagePath, name) };
+  const object = { id: objectId, name, packagePath, exported: true, type: alias ? aliasType(packagePath, name) : namedType(packagePath, name) };
   return {
     id: `${modulePath}::pkg/${file}::type::${name}`,
     kind: "type",
     name,
-    semantic: [{ kind: "type", packagePath, profiles: [0], object, type: { alias: false, object, typeParameters: [], rhs } }],
+    members,
+    semantic: [{ kind: "type", packagePath, profiles: [0], object, type: { alias, object, typeParameters: [], rhs } }],
+  };
+}
+
+function constantUnit(bindings) {
+  const names = bindings.map(([name]) => name);
+  return {
+    id: `${modulePath}::pkg/values.go::constGroup::${names.join("+")}`,
+    kind: "constGroup",
+    name: names.join("+"),
+    semantic: [{
+      kind: "constGroup",
+      packagePath,
+      profiles: [0],
+      valueSpecs: bindings.map(([name, type, exact], specIndex) => ({
+        specIndex,
+        names: [{ name, nameIndex: 0, blank: false, type, constant: { kind: "Int", exact } }],
+      })),
+    }],
   };
 }
 
@@ -233,6 +380,10 @@ function namedType(ownerPackage, name) {
   return { kind: "named", reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
 }
 
+function aliasType(ownerPackage, name) {
+  return { kind: "alias", reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
+}
+
 function pointerType(element) {
   return { kind: "pointer", element };
 }
@@ -242,5 +393,5 @@ function structType(fields) {
 }
 
 function interfaceType(explicitMethods, embeddedTypes, completeMethods) {
-  return { kind: "interface", interface: { explicitMethods, embeddedTypes, completeMethods, comparable: false, implicit: false, methodSetOnly: false } };
+  return { kind: "interface", interface: { explicitMethods, embeddedTypes, embeddedKinds: embeddedTypes.map(() => "interface"), completeMethods, comparable: false, implicit: false, methodSetOnly: false } };
 }

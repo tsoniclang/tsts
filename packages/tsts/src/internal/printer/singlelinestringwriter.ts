@@ -59,7 +59,7 @@ function singleLineStringWriter_as_EmitTextWriter(
  * 	},
  * }
  */
-export const singleLineStringWriterPool: Pool<GoPtr<singleLineStringWriter>> = ((): Pool<
+export let singleLineStringWriterPool: Pool = ((): Pool<
   GoPtr<singleLineStringWriter>
 > => {
   const pool = new Pool<GoPtr<singleLineStringWriter>>();
@@ -76,7 +76,7 @@ export const singleLineStringWriterPool: Pool<GoPtr<singleLineStringWriter>> = (
  * Go source:
  * var _ EmitTextWriter = &singleLineStringWriter{}
  */
-export const __7e0fb603_0: EmitTextWriter = singleLineStringWriter_as_EmitTextWriter({
+export let __7e0fb603_0: EmitTextWriter = singleLineStringWriter_as_EmitTextWriter({
   builder: new Builder(),
   lastWritten: "",
 });
@@ -94,7 +94,7 @@ export const __7e0fb603_0: EmitTextWriter = singleLineStringWriter_as_EmitTextWr
  * }
  */
 export function GetSingleLineStringWriter(): [EmitTextWriter, () => void] {
-  const w: GoPtr<singleLineStringWriter> = singleLineStringWriterPool.Get();
+  const w = singleLineStringWriterPool.Get() as singleLineStringWriter;
   singleLineStringWriter_Clear(w);
   return [
     singleLineStringWriter_as_EmitTextWriter(w),

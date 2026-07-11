@@ -7,6 +7,14 @@
   "statusOut": ".temp/porter/status.json",
   "reportOut": ".temp/porter/status.md",
   "largeFileLineThreshold": 5000,
+  "overrideCategories": [
+    "bundled-asset-mode",
+    "extension-host",
+    "runtime-correctness-performance",
+    "runtime-numeric-representation",
+    "runtime-performance",
+    "runtime-representation"
+  ],
   "largeFileSplitPlanPath": "packages/tsts/porter.large-splits.json",
   "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
   "astSchemaDir": "packages/tsts/schema/tsgo",
@@ -401,26 +409,13 @@
     "varGroup"
   ],
   "signatureCheck": {
-    "_doc": "Project profile for `porter sig-check`. The Go->TS mapping (modules/bridge/primitives/stdlibTypes/facadeTemplate/annotation/parser) defaults to the tsts profile in ts-extractor/profile.mjs and can be overridden here for other projects. Per-unit acceptances are local-only @tsgo-override metadata in source.",
-    "conventions": {
-      "equivalences": [
-        { "as": "go-comparable", "scope": "constraint", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
-        { "as": "go-ordered", "scope": "constraint", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] }
-      ],
-      "structural": {
-        "acceptNullable": false,
-        "unwrapPtrFunc": false,
-        "anyMapKey": false,
-        "ptrValueEquivStruct": false,
-        "acceptNilableGoTypes": true,
-        "acceptErasedConstraints": false,
-        "facadeGenerics": [],
-        "facadeGenericRefs": [
-          "packages/tsts/src/go/sync.ts::Map",
-          "packages/tsts/src/go/sync.ts::OnceValue",
-          "packages/tsts/src/go/sync.ts::Pool"
-        ]
-      }
+    "namedTypeMappings": {
+      "github.com/microsoft/typescript-go/internal/fswatch.Event": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "Event" },
+      "github.com/microsoft/typescript-go/internal/fswatch.EventKind": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "EventKind" },
+      "github.com/microsoft/typescript-go/internal/fswatch.Watch": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "Watch" },
+      "github.com/microsoft/typescript-go/internal/fswatch.WatchCallback": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "WatchCallback" },
+      "github.com/microsoft/typescript-go/internal/fswatch.WatchOption": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "WatchOption" },
+      "github.com/microsoft/typescript-go/internal/fswatch.Watcher": { "module": "packages/tsts/src/internal/fswatch/fswatch.ts", "name": "Watcher" }
     }
   }
 }

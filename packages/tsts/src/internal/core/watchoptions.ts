@@ -1,4 +1,5 @@
 import type { int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Duration } from "../../go/time.js";
 import type { Tristate } from "./tristate.js";
@@ -130,3 +131,17 @@ export function WatchOptions_WatchInterval(receiver: GoPtr<WatchOptions>): Durat
   }
   return defaultInterval;
 }
+
+type WatchOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  WatchOptions,
+  "github.com/microsoft/typescript-go::internal/core/watchoptions.go::type::WatchOptions",
+  {
+    readonly Interval: { readonly name: "watchInterval"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly FileKind: { readonly name: "watchFile"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly DirectoryKind: { readonly name: "watchDirectory"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly FallbackPolling: { readonly name: "fallbackPolling"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly SyncWatchDir: { readonly name: "synchronousWatchDirectory"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExcludeDir: { readonly name: "excludeDirectories"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExcludeFiles: { readonly name: "excludeFiles"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

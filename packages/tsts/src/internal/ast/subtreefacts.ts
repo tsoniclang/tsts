@@ -260,7 +260,7 @@ export function propagateSubtreeFacts(child: GoPtr<Node>): SubtreeFacts {
  * 	return facts
  * }
  */
-export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propagate: (child: GoPtr<Node>) => SubtreeFacts): SubtreeFacts {
+export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propagate: (arg0: GoPtr<Node>) => SubtreeFacts): SubtreeFacts {
   if (children === undefined) {
     return SubtreeFactsNone;
   }

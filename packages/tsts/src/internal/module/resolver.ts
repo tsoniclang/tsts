@@ -50,7 +50,7 @@ import type { Fields as PackageJsonFields } from "../packagejson/packagejson.js"
 import type { TypeValidatedField } from "../packagejson/validated.js";
 import * as stringutil from "../stringutil/compare.js";
 import * as tspath from "../tspath/path.js";
-import * as extension from "../tspath/extension.js";
+import * as tspathExtension from "../tspath/extension.js";
 import * as vfsmatch from "../vfs/vfsmatch/vfsmatch.js";
 import { getRedirectConfigName, moduleResolutionCache_Get, moduleResolutionCache_Set, typeRefDirectiveResolutionCache_Get, typeRefDirectiveResolutionCache_Set, newCaches } from "./cache.js";
 import type { caches, moduleResolutionCacheKey, typeRefDirectiveResolutionCacheKey } from "./cache.js";
@@ -899,7 +899,7 @@ export function Resolver_tryResolveFromTypingsLocation(receiver: GoPtr<Resolver>
   if (
     receiver!.typingsLocation === "" ||
     tspath.IsExternalModuleNameRelative(moduleName) ||
-    (originalResult!.ResolvedFileName !== "" && extension.ExtensionIsOneOf(originalResult!.Extension, extension.SupportedTSExtensionsWithJsonFlat as string[]))
+    (originalResult!.ResolvedFileName !== "" && tspathExtension.ExtensionIsOneOf(originalResult!.Extension, tspathExtension.SupportedTSExtensionsWithJsonFlat as string[]))
   ) {
     return originalResult;
   }
@@ -1661,8 +1661,7 @@ export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolution
  * 	return continueSearching()
  * }
  */
-export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, lookupTableRaw: GoPtr<OrderedMap<string, ExportsOrImports>>, scope: GoPtr<InfoCacheEntry>, isImports: bool): GoPtr<resolved> {
-  const lookupTable = lookupTableRaw;
+export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, lookupTable: GoPtr<OrderedMap<string, ExportsOrImports>>, scope: GoPtr<InfoCacheEntry>, isImports: bool): GoPtr<resolved> {
   if (!strings.HasSuffix(moduleName, "/") && !strings.Contains(moduleName, "*")) {
     const [target, targetOk] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, moduleName);
     if (targetOk) {
@@ -2134,15 +2133,15 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
           pathFragment = finalPath.slice(candidateDir.length + 1);
         }
         const possibleInputBase = tspath.CombinePaths(rootDir, pathFragment);
-        const jsAndDtsExtensions = [extension.ExtensionMjs, extension.ExtensionCjs, extension.ExtensionJs, extension.ExtensionJson, extension.ExtensionDmts, extension.ExtensionDcts, extension.ExtensionDts];
+        const jsAndDtsExtensions = [tspathExtension.ExtensionMjs, tspathExtension.ExtensionCjs, tspathExtension.ExtensionJs, tspathExtension.ExtensionJson, tspathExtension.ExtensionDmts, tspathExtension.ExtensionDcts, tspathExtension.ExtensionDts];
         for (const ext of jsAndDtsExtensions) {
           if (tspath.FileExtensionIs(possibleInputBase, ext)) {
-            const inputExts = extension.GetPossibleOriginalInputExtensionForExtension(possibleInputBase);
+            const inputExts = tspathExtension.GetPossibleOriginalInputExtensionForExtension(possibleInputBase);
             for (const possibleExt of inputExts) {
               if (!extensionIsOk(receiver!.extensions, possibleExt)) {
                 continue;
               }
-              const possibleInputWithInputExtension = extension.ChangeExtension(possibleInputBase, possibleExt);
+              const possibleInputWithInputExtension = tspathExtension.ChangeExtension(possibleInputBase, possibleExt);
               if (receiver!.resolver!.host.FS().FileExists(possibleInputWithInputExtension)) {
                 const result2 = resolutionState_loadFileNameFromPackageJSONField(receiver, receiver!.extensions, possibleInputWithInputExtension, "");
                 if (!resolved_shouldContinueSearching(result2)) {
@@ -2654,7 +2653,7 @@ export function resolutionState_createResolvedTypeReferenceDirective(receiver: G
     IsExternalLibraryImport: false,
   };
   if (resolved_isResolved(resolved)) {
-    if (!extension.ExtensionIsTs(resolved!.extension)) {
+    if (!tspathExtension.ExtensionIsTs(resolved!.extension)) {
       throw new globalThis.Error("expected a TypeScript file extension");
     }
     resolvedTypeReferenceDirective.ResolvedFileName = resolved!.path;
@@ -2859,7 +2858,7 @@ export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resoluti
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Trying_substitution_0_candidate_module_location_Colon_1, subst, path2);
       }
-      const extensionFromSubst = extension.TryGetExtensionFromPath(subst);
+      const extensionFromSubst = tspathExtension.TryGetExtensionFromPath(subst);
       if (extensionFromSubst !== "") {
         const [filePath, fileOk] = resolutionState_tryFile(receiver, candidate);
         if (fileOk) {
@@ -3161,7 +3160,7 @@ export function resolutionState_loadModuleFromFileNoImplicitExtensions(receiver:
   if (!strings.Contains(base, ".")) {
     return continueSearching();
   }
-  let extensionless = extension.RemoveFileExtension(candidate);
+  let extensionless = tspathExtension.RemoveFileExtension(candidate);
   if (extensionless === candidate) {
     extensionless = candidate.slice(0, candidate.lastIndexOf("."));
   }
@@ -3299,99 +3298,99 @@ export function resolutionState_tryAddingExtensions(receiver: GoPtr<resolutionSt
     return continueSearching();
   }
   switch (originalExtension) {
-    case extension.ExtensionMjs:
-    case extension.ExtensionMts:
-    case extension.ExtensionDmts: {
+    case tspathExtension.ExtensionMjs:
+    case tspathExtension.ExtensionMts:
+    case tspathExtension.ExtensionDmts: {
       if ((extensions & extensionsTypeScript) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionMts, extensionless, originalExtension === extension.ExtensionMts || originalExtension === extension.ExtensionDmts);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionMts, extensionless, originalExtension === tspathExtension.ExtensionMts || originalExtension === tspathExtension.ExtensionDmts);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsDeclaration) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionDmts, extensionless, originalExtension === extension.ExtensionMts || originalExtension === extension.ExtensionDmts);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionDmts, extensionless, originalExtension === tspathExtension.ExtensionMts || originalExtension === tspathExtension.ExtensionDmts);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsJavaScript) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionMjs, extensionless, false);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionMjs, extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       return continueSearching();
     }
-    case extension.ExtensionCjs:
-    case extension.ExtensionCts:
-    case extension.ExtensionDcts: {
+    case tspathExtension.ExtensionCjs:
+    case tspathExtension.ExtensionCts:
+    case tspathExtension.ExtensionDcts: {
       if ((extensions & extensionsTypeScript) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionCts, extensionless, originalExtension === extension.ExtensionCts || originalExtension === extension.ExtensionDcts);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionCts, extensionless, originalExtension === tspathExtension.ExtensionCts || originalExtension === tspathExtension.ExtensionDcts);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsDeclaration) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionDcts, extensionless, originalExtension === extension.ExtensionCts || originalExtension === extension.ExtensionDcts);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionDcts, extensionless, originalExtension === tspathExtension.ExtensionCts || originalExtension === tspathExtension.ExtensionDcts);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsJavaScript) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionCjs, extensionless, false);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionCjs, extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       return continueSearching();
     }
-    case extension.ExtensionJson: {
+    case tspathExtension.ExtensionJson: {
       if ((extensions & extensionsDeclaration) !== 0) {
         const r = resolutionState_tryExtension(receiver, ".d.json.ts", extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsJson) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionJson, extensionless, false);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJson, extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       return continueSearching();
     }
-    case extension.ExtensionTsx:
-    case extension.ExtensionJsx: {
+    case tspathExtension.ExtensionTsx:
+    case tspathExtension.ExtensionJsx: {
       if ((extensions & extensionsTypeScript) !== 0) {
-        const r1 = resolutionState_tryExtension(receiver, extension.ExtensionTsx, extensionless, originalExtension === extension.ExtensionTsx);
+        const r1 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionTsx, extensionless, originalExtension === tspathExtension.ExtensionTsx);
         if (!resolved_shouldContinueSearching(r1)) return r1;
-        const r2 = resolutionState_tryExtension(receiver, extension.ExtensionTs, extensionless, originalExtension === extension.ExtensionTsx);
+        const r2 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionTs, extensionless, originalExtension === tspathExtension.ExtensionTsx);
         if (!resolved_shouldContinueSearching(r2)) return r2;
       }
       if ((extensions & extensionsDeclaration) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionDts, extensionless, originalExtension === extension.ExtensionTsx);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionDts, extensionless, originalExtension === tspathExtension.ExtensionTsx);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsJavaScript) !== 0) {
-        const r1 = resolutionState_tryExtension(receiver, extension.ExtensionJsx, extensionless, false);
+        const r1 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJsx, extensionless, false);
         if (!resolved_shouldContinueSearching(r1)) return r1;
-        const r2 = resolutionState_tryExtension(receiver, extension.ExtensionJs, extensionless, false);
+        const r2 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJs, extensionless, false);
         if (!resolved_shouldContinueSearching(r2)) return r2;
       }
       return continueSearching();
     }
-    case extension.ExtensionTs:
-    case extension.ExtensionDts:
-    case extension.ExtensionJs:
+    case tspathExtension.ExtensionTs:
+    case tspathExtension.ExtensionDts:
+    case tspathExtension.ExtensionJs:
     case "": {
       if ((extensions & extensionsTypeScript) !== 0) {
-        const r1 = resolutionState_tryExtension(receiver, extension.ExtensionTs, extensionless, originalExtension === extension.ExtensionTs || originalExtension === extension.ExtensionDts);
+        const r1 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionTs, extensionless, originalExtension === tspathExtension.ExtensionTs || originalExtension === tspathExtension.ExtensionDts);
         if (!resolved_shouldContinueSearching(r1)) return r1;
-        const r2 = resolutionState_tryExtension(receiver, extension.ExtensionTsx, extensionless, originalExtension === extension.ExtensionTs || originalExtension === extension.ExtensionDts);
+        const r2 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionTsx, extensionless, originalExtension === tspathExtension.ExtensionTs || originalExtension === tspathExtension.ExtensionDts);
         if (!resolved_shouldContinueSearching(r2)) return r2;
       }
       if ((extensions & extensionsDeclaration) !== 0) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionDts, extensionless, originalExtension === extension.ExtensionTs || originalExtension === extension.ExtensionDts);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionDts, extensionless, originalExtension === tspathExtension.ExtensionTs || originalExtension === tspathExtension.ExtensionDts);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       if ((extensions & extensionsJavaScript) !== 0) {
-        const r1 = resolutionState_tryExtension(receiver, extension.ExtensionJs, extensionless, false);
+        const r1 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJs, extensionless, false);
         if (!resolved_shouldContinueSearching(r1)) return r1;
-        const r2 = resolutionState_tryExtension(receiver, extension.ExtensionJsx, extensionless, false);
+        const r2 = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJsx, extensionless, false);
         if (!resolved_shouldContinueSearching(r2)) return r2;
       }
       if (receiver!.isConfigLookup) {
-        const r = resolutionState_tryExtension(receiver, extension.ExtensionJson, extensionless, false);
+        const r = resolutionState_tryExtension(receiver, tspathExtension.ExtensionJson, extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
       return continueSearching();
     }
     default: {
-      if ((extensions & extensionsDeclaration) !== 0 && !extension.IsDeclarationFileName(extensionless + originalExtension)) {
+      if ((extensions & extensionsDeclaration) !== 0 && !tspathExtension.IsDeclarationFileName(extensionless + originalExtension)) {
         const r = resolutionState_tryExtension(receiver, ".d" + originalExtension + ".ts", extensionless, false);
         if (!resolved_shouldContinueSearching(r)) return r;
       }
@@ -3455,8 +3454,8 @@ export function resolutionState_tryFile(receiver: GoPtr<resolutionState>, fileNa
   if ((receiver!.compilerOptions!.ModuleSuffixes?.length ?? 0) === 0) {
     return [fileName, resolutionState_tryFileLookup(receiver, fileName)];
   }
-  const ext = extension.TryGetExtensionFromPath(fileName);
-  const fileNameNoExtension = extension.RemoveExtension(fileName, ext);
+  const ext = tspathExtension.TryGetExtensionFromPath(fileName);
+  const fileNameNoExtension = tspathExtension.RemoveExtension(fileName, ext);
   for (const suffix of (receiver!.compilerOptions!.ModuleSuffixes ?? [])) {
     const p = fileNameNoExtension + suffix + ext;
     if (resolutionState_tryFileLookup(receiver, p)) {
@@ -3690,7 +3689,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
  * 		if path, ok := r.tryFile(candidate); ok {
  * 			extension := tspath.TryExtractTSExtension(path)
  * 			// resolvedUsingTsExtension should be true when the pattern ends with * and the
- * 			// candidate file ends in a TS extension. This means the * matched a TS extension
+ * 			// candidate file ends in a TS tspathExtension. This means the * matched a TS extension
  * 			// from the module specifier. For example:
  * 			// - import "pkg/foo.ts" with pattern "./*" -> true
  * 			// - import "pkg/foo.ts.omg" with pattern "./*.omg" -> true (star matched .ts)
@@ -3719,12 +3718,12 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
  */
 export function resolutionState_loadFileNameFromPackageJSONField(receiver: GoPtr<resolutionState>, extensions: extensions, candidate: string, packageJSONValue: string): GoPtr<resolved> {
   if (
-    (extensions & extensionsTypeScript) !== 0 && extension.HasImplementationTSFileExtension(candidate) ||
-    (extensions & extensionsDeclaration) !== 0 && extension.IsDeclarationFileName(candidate)
+    (extensions & extensionsTypeScript) !== 0 && tspathExtension.HasImplementationTSFileExtension(candidate) ||
+    (extensions & extensionsDeclaration) !== 0 && tspathExtension.IsDeclarationFileName(candidate)
   ) {
     const [path, ok] = resolutionState_tryFile(receiver, candidate);
     if (ok) {
-      const ext = extension.TryExtractTSExtension(path);
+      const ext = tspathExtension.TryExtractTSExtension(path);
       const resolvedUsingTsExtension = (strings.HasSuffix(packageJSONValue, "*") && ext !== "") as bool;
       return {
         path: path,
@@ -3737,12 +3736,12 @@ export function resolutionState_loadFileNameFromPackageJSONField(receiver: GoPtr
     return continueSearching();
   }
 
-  if (receiver!.isConfigLookup && (extensions & extensionsJson) !== 0 && tspath.FileExtensionIs(candidate, extension.ExtensionJson)) {
+  if (receiver!.isConfigLookup && (extensions & extensionsJson) !== 0 && tspath.FileExtensionIs(candidate, tspathExtension.ExtensionJson)) {
     const [path, ok] = resolutionState_tryFile(receiver, candidate);
     if (ok) {
       return {
         path: path,
-        extension: extension.ExtensionJson,
+        extension: tspathExtension.ExtensionJson,
         resolvedUsingTsExtension: false as bool,
         packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
         originalPath: "",
@@ -4048,7 +4047,7 @@ export function resolutionState_realPath(receiver: GoPtr<resolutionState>, path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.validatePackageJSONField","kind":"method","status":"implemented","sigHash":"68ade9e57af6b8b0a247eb042ca8cd98fa320a23fa94b7666589e8794711d3f9","bodyHash":"9bad963fb65a63896c6c8564889e6b187a8a1f5a1868bfaea9dc38cee2871b24"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func (r *resolutionState) validatePackageJSONField(fieldName string, field packagejson.TypeValidatedField) bool {
@@ -4075,6 +4074,9 @@ function Expected_as_TypeValidatedField<T>(field: GoPtr<Expected<T>>): TypeValid
   };
 }
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.validatePackageJSONField","kind":"method","status":"implemented","sigHash":"68ade9e57af6b8b0a247eb042ca8cd98fa320a23fa94b7666589e8794711d3f9","bodyHash":"9bad963fb65a63896c6c8564889e6b187a8a1f5a1868bfaea9dc38cee2871b24"}
+ */
 export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolutionState>, fieldName: string, field: TypeValidatedField): bool {
   if (field.IsPresent()) {
     if (field.IsValid()) {
@@ -4498,12 +4500,12 @@ export function matchesPatternWithTrailer(target: string, name: string): bool {
  * 		(extensions&extensionsJson != 0 && extension == tspath.ExtensionJson))
  * }
  */
-export function extensionIsOk(extensions: extensions, ext: string): bool {
+export function extensionIsOk(extensions: extensions, extension: string): bool {
   return (
-    ((extensions & extensionsJavaScript) !== 0 && (ext === extension.ExtensionJs || ext === extension.ExtensionJsx || ext === extension.ExtensionMjs || ext === extension.ExtensionCjs)) ||
-    ((extensions & extensionsTypeScript) !== 0 && (ext === extension.ExtensionTs || ext === extension.ExtensionTsx || ext === extension.ExtensionMts || ext === extension.ExtensionCts)) ||
-    ((extensions & extensionsDeclaration) !== 0 && (ext === extension.ExtensionDts || ext === extension.ExtensionDmts || ext === extension.ExtensionDcts)) ||
-    ((extensions & extensionsJson) !== 0 && ext === extension.ExtensionJson)
+    ((extensions & extensionsJavaScript) !== 0 && (extension === tspathExtension.ExtensionJs || extension === tspathExtension.ExtensionJsx || extension === tspathExtension.ExtensionMjs || extension === tspathExtension.ExtensionCjs)) ||
+    ((extensions & extensionsTypeScript) !== 0 && (extension === tspathExtension.ExtensionTs || extension === tspathExtension.ExtensionTsx || extension === tspathExtension.ExtensionMts || extension === tspathExtension.ExtensionCts)) ||
+    ((extensions & extensionsDeclaration) !== 0 && (extension === tspathExtension.ExtensionDts || extension === tspathExtension.ExtensionDmts || extension === tspathExtension.ExtensionDcts)) ||
+    ((extensions & extensionsJson) !== 0 && extension === tspathExtension.ExtensionJson)
   ) as bool;
 }
 
@@ -5007,7 +5009,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           packageJson!.PackageDirectory,
           extensions_Array(receiver!.extensions),
           undefined as unknown as GoSlice<string>,
-          [extension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*")],
+          [tspathExtension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*")],
           vfsmatch.UnlimitedDepth as int,
         );
         for (const file of files) {
@@ -5125,7 +5127,7 @@ export function resolutionState_getMatchedStarForPatternEntrypoint(receiver: GoP
 
   const jsExtension = TryGetJSExtensionForFile(file, receiver!.compilerOptions);
   if (jsExtension.length > 0) {
-    const swapped = extension.ChangeFullExtension(file, jsExtension);
+    const swapped = tspathExtension.ChangeFullExtension(file, jsExtension);
     if (stringutil.HasPrefixAndSuffixWithoutOverlap(swapped, leadingSlice, trailingSlice, caseSensitive)) {
       return [swapped.slice(leadingSlice.length, swapped.length - trailingSlice.length), true as bool];
     }

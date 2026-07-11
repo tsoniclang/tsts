@@ -44,7 +44,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/vis
  * Go source:
  * var newlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")
  */
-export const newlineNormalizer: strings.Replacer = strings.NewReplacer("\r\n", "\n", "\r", "\n");
+export let newlineNormalizer: GoPtr<strings.Replacer> = strings.NewReplacer("\r\n", "\n", "\r", "\n");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/taggedtemplate.go::type::taggedTemplateTransformer","kind":"type","status":"implemented","sigHash":"033c071f62d37bfdec703b2b6c920f3c638ebc6808bef284e00b7c51ec6f0b5a","bodyHash":"168cf1ebeee90001eec747e1dd2e39dcfc59ebdf19423f85ed3f09dc355b1c6c"}
@@ -357,7 +357,7 @@ export function createTemplateCooked(f: GoPtr<NodeFactory>, template: GoPtr<Temp
 export function getRawLiteral(f: GoPtr<NodeFactory>, node: GoPtr<Node>): GoPtr<Node> {
   let text = Node_TemplateLiteralLikeData(node)!.RawText;
   if (text === "") {
-    text = GetSourceTextOfNodeFromSourceFile(GetSourceFileOfNode(node) as unknown as GoPtr<Node>, node, false as bool);
+    text = GetSourceTextOfNodeFromSourceFile(GetSourceFileOfNode(node), node, false as bool);
     // text contains the original source, it will also contain quotes ("`"), dollar signs and braces ("${" and "}"),
     // thus we need to remove those characters.
     // First template piece starts with "`", others with "}"
@@ -370,7 +370,7 @@ export function getRawLiteral(f: GoPtr<NodeFactory>, node: GoPtr<Node>): GoPtr<N
   // Newline normalization:
   // ES6 Spec 11.8.6.1 - Static Semantics of TV's and TRV's
   // <CR><LF> and <CR> LineTerminatorSequences are normalized to <LF> for both TV and TRV.
-  text = newlineNormalizer.Replace(text);
+  text = newlineNormalizer!.Replace(text);
 
   const result = NewStringLiteral(f!.__tsgoEmbedded0!, text, TokenFlagsNone);
   result!.Loc = node!.Loc;

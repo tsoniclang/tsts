@@ -22,7 +22,7 @@ export interface Semaphore {
  * Go source:
  * var _ Semaphore = UnlimitedSemaphore{}
  */
-export const __c5a93a22_0: Semaphore = UnlimitedSemaphore_as_Semaphore({});
+export let __c5a93a22_0: Semaphore = UnlimitedSemaphore_as_Semaphore({});
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::UnlimitedSemaphore","kind":"type","status":"implemented","sigHash":"eccd0e32b4c71792b14c837a176a34fde532f11d1c1de7a6bc8d6e5ecd893ad6","bodyHash":"9a5249372744aeb917534fe31e743753d15baf0a7b9261dd414c68096c346c9a"}
@@ -71,7 +71,7 @@ export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx:
  * Go source:
  * var _ Semaphore = (*LimitedSemaphore)(nil)
  */
-export const __1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined);
+export let ___2_1cad8911_0: Semaphore = LimitedSemaphore_as_Semaphore(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"6f0f638a52f144421c3246c9abcfb7d73564bb66fef1678b506f56eacc4422bb","bodyHash":"1c887baa2361c1b7920dc8e0bf6029187c7675f621d3a761bea7670a48b7f195"}

@@ -63,7 +63,7 @@ export interface parallelWorkGroup {
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
  */
-export const __7c9694b3_0: WorkGroup = parallelWorkGroup_as_WorkGroup(undefined);
+export let __7c9694b3_0: WorkGroup = parallelWorkGroup_as_WorkGroup(undefined);
 
 export function parallelWorkGroup_as_WorkGroup(receiver: GoPtr<parallelWorkGroup>): WorkGroup {
   return {
@@ -129,7 +129,7 @@ export interface singleThreadedWorkGroup {
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)
  */
-export const __056fa025_0: WorkGroup = singleThreadedWorkGroup_as_WorkGroup(undefined);
+export let ___2_056fa025_0: WorkGroup = singleThreadedWorkGroup_as_WorkGroup(undefined);
 
 export function singleThreadedWorkGroup_as_WorkGroup(receiver: GoPtr<singleThreadedWorkGroup>): WorkGroup {
   return {

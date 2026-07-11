@@ -37,7 +37,7 @@ export function wrapFS(fs: FS): FS {
  * 	return tspath.GetDirectoryPath(exe)
  * })
  */
-export const executableDir: () => string = (() => {
+export let executableDir: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     value ??= GetDirectoryPath(OSFS().Realpath(NormalizeSlashes(process.execPath)));
@@ -63,7 +63,7 @@ export const executableDir: () => string = (() => {
  * 	return dir
  * })
  */
-export const libPath: () => string = (() => {
+export let libPath: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     if (value === undefined) {
@@ -86,6 +86,6 @@ export const libPath: () => string = (() => {
  * 	return false
  * }
  */
-export function IsBundled(_path: string): bool {
+export function IsBundled(path: string): bool {
   return false;
 }

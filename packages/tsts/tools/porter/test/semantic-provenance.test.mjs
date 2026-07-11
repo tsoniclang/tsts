@@ -368,7 +368,7 @@ function genericFunctionSnapshot() {
   const declaration = snapshot.files[0].units[0].semantic[0];
   const reference = { ownerId: declaration.object.id, role: "type", index: 0, name: "T" };
   const typeParameter = { reference, constraint: emptyInterfaceType() };
-  const parameterType = { kind: "typeParameter", typeParameter: reference };
+  const parameterType = { kind: "typeParameter", nilable: false, typeParameter: reference };
   declaration.signature.typeParameters = [typeParameter];
   declaration.signature.parameters.variables = [{ id: `${declaration.object.id}::signature::parameters::0`, name: "value", packagePath: declaration.packagePath, exported: false, type: parameterType }];
   declaration.object.type.signature = structuredClone(declaration.signature);
@@ -397,14 +397,17 @@ function identityRichTypeSnapshot() {
   };
   const interfaceType = {
     kind: "interface",
+    nilable: true,
     interface: {
       explicitMethods: [method("explicitMethod")],
-      embeddedTypes: [{ kind: "named", reference: { objectId: "example.org/api::type::Token", packagePath: "example.org/api", name: "Token", typeArgs: [] } }],
+      embeddedTypes: [{ kind: "named", nilable: true, reference: { objectId: "example.org/api::type::Token", packagePath: "example.org/api", name: "Token", typeArgs: [] } }],
+      embeddedKinds: ["interface"],
       completeMethods: [method("completeMethod")], comparable: false, implicit: false, methodSetOnly: true,
     },
   };
   declaration.type.rhs = {
     kind: "struct",
+    nilable: false,
     struct: { fields: [{ variable: { id: fieldId, name: "Handler", packagePath: declaration.packagePath, exported: true, type: interfaceType }, tag: "", tagValues: [], tagRemainder: "" }] },
   };
   return snapshot;
@@ -571,7 +574,7 @@ function refreshSummary(snapshot) {
 }
 
 function emptyInterfaceType() {
-  return { kind: "interface", interface: { explicitMethods: [], embeddedTypes: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true } };
 }
 
 function mutateClone(value, mutate) {

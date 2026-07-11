@@ -149,7 +149,7 @@ export interface JsxElementLinks {
  * 	LibraryManagedAttributes:               "LibraryManagedAttributes",
  * }
  */
-export const JsxNames: { JSX: string; IntrinsicElements: string; ElementClass: string; ElementAttributesPropertyNameContainer: string; ElementChildrenAttributeNameContainer: string; Element: string; ElementType: string; IntrinsicAttributes: string; IntrinsicClassAttributes: string; LibraryManagedAttributes: string } = {
+export let JsxNames: { JSX: string; IntrinsicElements: string; ElementClass: string; ElementAttributesPropertyNameContainer: string; ElementChildrenAttributeNameContainer: string; Element: string; ElementType: string; IntrinsicAttributes: string; IntrinsicClassAttributes: string; LibraryManagedAttributes: string } = {
   JSX: "JSX",
   IntrinsicElements: "IntrinsicElements",
   ElementClass: "ElementClass",
@@ -172,7 +172,7 @@ export const JsxNames: { JSX: string; IntrinsicElements: string; ElementClass: s
  * 	Fragment: "Fragment",
  * }
  */
-export const ReactNames: { Fragment: string } = {
+export let ReactNames: { Fragment: string } = {
   Fragment: "Fragment",
 };
 

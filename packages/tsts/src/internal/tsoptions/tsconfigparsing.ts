@@ -127,7 +127,7 @@ export interface extendsResult {
  * Note: hoisted above compilerOptionsDeclaration to match Go's package-level
  * initialization order (Go orders var initialization by dependency, not source position).
  */
-export const CommandLineCompilerOptionsMap: CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations);
+export let CommandLineCompilerOptionsMap: CommandLineOptionNameMap = commandLineOptionsToMap(OptionsDeclarations);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::varGroup::compilerOptionsDeclaration","kind":"varGroup","status":"implemented","sigHash":"83cdeb7defd8e48a13dfcfb95ca091bfe9f3e1917639978a4461d29cfea28ffd","bodyHash":"79948a4186f3750d1a31f025dd692a43e081b2aac1df1a82591c937fbbe570d8"}
@@ -139,7 +139,7 @@ export const CommandLineCompilerOptionsMap: CommandLineOptionNameMap = commandLi
  * 	ElementOptions: CommandLineCompilerOptionsMap,
  * }
  */
-export const compilerOptionsDeclaration: GoPtr<CommandLineOption> = newCommandLineOption({
+export let compilerOptionsDeclaration: GoPtr<CommandLineOption> = newCommandLineOption({
   Name: "compilerOptions",
   Kind: CommandLineOptionTypeObject,
   ElementOptions: CommandLineCompilerOptionsMap,
@@ -155,7 +155,7 @@ export const compilerOptionsDeclaration: GoPtr<CommandLineOption> = newCommandLi
  * 	DefaultValueDescription: false,
  * }
  */
-export const compileOnSaveCommandLineOption: GoPtr<CommandLineOption> = newCommandLineOption({
+export let compileOnSaveCommandLineOption: GoPtr<CommandLineOption> = newCommandLineOption({
   Name: "compileOnSave",
   Kind: CommandLineOptionTypeBoolean,
   DefaultValueDescription: false,
@@ -174,7 +174,7 @@ export const compileOnSaveCommandLineOption: GoPtr<CommandLineOption> = newComma
  * 	}),
  * }
  */
-export const extendsOptionDeclaration: GoPtr<CommandLineOption> = newCommandLineOption({
+export let extendsOptionDeclaration: GoPtr<CommandLineOption> = newCommandLineOption({
   Name: "extends",
   Kind: CommandLineOptionTypeListOrElement,
   Category: diagnostics.File_Management,
@@ -221,7 +221,7 @@ export const extendsOptionDeclaration: GoPtr<CommandLineOption> = newCommandLine
  * 	}),
  * }
  */
-export const tsconfigRootOptionsMap: GoPtr<CommandLineOption> = newCommandLineOption({
+export let tsconfigRootOptionsMap: GoPtr<CommandLineOption> = newCommandLineOption({
   Name: "undefined", // should never be needed since this is root
   Kind: CommandLineOptionTypeObject,
   ElementOptions: commandLineOptionsToMap([
@@ -808,7 +808,7 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
  */
 // In Go this is a reflect.Type used to check if a value is *OrderedMap[string, any].
 // In TypeScript we represent this as a sentinel and use isOrderedMap() for the check.
-export const orderedMapType: Type = reflect_TypeFor<GoPtr<OrderedMap<string, unknown>>>();
+export let orderedMapType: Type = reflect_TypeFor<GoPtr<OrderedMap<string, unknown>>>();
 export function isOrderedMap(value: unknown): value is OrderedMap<string, unknown> {
   if (value === undefined || value === null || typeof value !== "object") {
     return false;

@@ -48,8 +48,8 @@ export interface regexPatternCacheKey {
  * 	regexPatternCache   = make(map[regexPatternCacheKey]*regexp.Regexp)
  * )
  */
-export const regexPatternCacheMu: RWMutex = new RWMutex();
-export const regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>();
+export let regexPatternCacheMu: RWMutex = new RWMutex();
+export let regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"fdfc55605498de1fa827e50b1eda9800918b2bab712c7736842daf17ba308196"}
@@ -126,7 +126,7 @@ export function IsExcludedByRegex(moduleSpecifier: string, excludes: GoSlice<str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::stringToRegex","kind":"func","status":"implemented","sigHash":"98e2fa5bb16ffdc03a7579f0c689e066e1489319a37a366d4f1077123e53ed09","bodyHash":"48ec5cf3b473926d08fd0b76e35fa9ca0803f5bac804c3ce984fb77d1735bf01"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func stringToRegex(pattern string) *regexp.Regexp {
@@ -197,6 +197,9 @@ export function IsExcludedByRegex(moduleSpecifier: string, excludes: GoSlice<str
 // Internal string-keyed cache used at runtime (Go uses struct key; TS uses serialized string key)
 const _regexPatternCacheInternal = new Map<string, GoPtr<Regexp>>();
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::stringToRegex","kind":"func","status":"implemented","sigHash":"98e2fa5bb16ffdc03a7579f0c689e066e1489319a37a366d4f1077123e53ed09","bodyHash":"48ec5cf3b473926d08fd0b76e35fa9ca0803f5bac804c3ce984fb77d1735bf01"}
+ */
 export function stringToRegex(pattern: string): GoPtr<Regexp> {
   let caseInsensitive = false;
 

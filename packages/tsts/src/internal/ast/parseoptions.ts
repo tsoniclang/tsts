@@ -133,7 +133,7 @@ export function GetExternalModuleIndicatorOptions(fileName: string, options: GoP
  * Go source:
  * var isFileForcedToBeModuleByFormatExtensions = []string{tspath.ExtensionCjs, tspath.ExtensionCts, tspath.ExtensionMjs, tspath.ExtensionMts}
  */
-export const isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = [ExtensionCjs, ExtensionCts, ExtensionMjs, ExtensionMts];
+export let isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = [ExtensionCjs, ExtensionCts, ExtensionMjs, ExtensionMts];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileForcedToBeModuleByFormat","kind":"func","status":"implemented","sigHash":"963f93612f9d264992fd241122e4739f2dcc96a8bf53731f6ba3521376ee8870","bodyHash":"0efad914924fa06650a053b7e4a3fee6f937dc7a5e0f5a5924430ca8ed0ab5ca"}

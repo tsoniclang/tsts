@@ -279,7 +279,7 @@ export let OptionsDeclarations: GoSlice<GoPtr<CommandLineOption>> = undefined as
  * 	},
  * }
  */
-export const commonOptionsWithBuild: GoSlice<GoPtr<CommandLineOption>> = [
+export let commonOptionsWithBuild: GoSlice<GoPtr<CommandLineOption>> = [
   //******* commonOptionsWithBuild *******
   newCommandLineOption({
     Name: "help",
@@ -1473,7 +1473,7 @@ export const commonOptionsWithBuild: GoSlice<GoPtr<CommandLineOption>> = [
  * 	},
  * }
  */
-export const optionsForCompiler: GoSlice<GoPtr<CommandLineOption>> = [
+export let optionsForCompiler: GoSlice<GoPtr<CommandLineOption>> = [
   //******* compilerOptions not common with --build *******
 
   // CommandLine only options
@@ -2431,7 +2431,7 @@ OptionsDeclarations = Concat(commonOptionsWithBuild, optionsForCompiler);
  * Go source:
  * var optionsType = reflect.TypeFor[core.CompilerOptions]()
  */
-export const optionsType: Type = reflect_TypeFor<CompilerOptions>();
+export let optionsType: Type = reflect_TypeFor<CompilerOptions>();
 const compilerOptionFieldMap: ReadonlyMap<string, GoPtr<CommandLineOption>> = buildCompilerOptionFieldMap();
 
 /**

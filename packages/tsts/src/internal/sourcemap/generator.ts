@@ -1,4 +1,5 @@
 import type { bool, byte, int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { NewEncoder as base64NewEncoder, StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { New as errorsNew } from "../../go/errors.js";
@@ -885,3 +886,17 @@ export function base64FormatEncode(value: int): GoRune {
     throw new globalThis.Error("not a base64 value");
   }
 }
+
+type RawSourceMapJsonFields = JsonFieldNamesForGoStructContract<
+  RawSourceMap,
+  "github.com/microsoft/typescript-go::internal/sourcemap/generator.go::type::RawSourceMap",
+  {
+    readonly Version: { readonly name: "version"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly File: { readonly name: "file"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly SourceRoot: { readonly name: "sourceRoot"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Sources: { readonly name: "sources"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Names: { readonly name: "names"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Mappings: { readonly name: "mappings"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly SourcesContent: { readonly name: "sourcesContent"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

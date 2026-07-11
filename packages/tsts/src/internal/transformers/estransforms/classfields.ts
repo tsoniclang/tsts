@@ -3,11 +3,12 @@ import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_ParameterList, Node_Text } from "../../ast/ast.js";
+import type { SourceFile } from "../../ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_KindString, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import { NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateExpressionStatement, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdatePrefixUnaryExpression, NodeFactory_UpdatePostfixUnaryExpression, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdateCallExpression, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateElementAccessExpression, NodeFactory_UpdateTryStatement } from "../../ast/ast.js";
 import type { BinaryExpression, BindingElement, CallExpression, ClassDeclaration, ClassExpression, ComputedPropertyName, ConstructorDeclaration, ElementAccessExpression, ExportAssignment, ExpressionStatement, ExpressionWithTypeArguments, ForStatement, Identifier, ParameterDeclaration, ParenthesizedExpression, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, TaggedTemplateExpression, VariableDeclaration, VariableStatement } from "../../ast/generated/data.js";
 import { BinaryExpression_as_nodeData, BindingElement_as_nodeData, ExportAssignment_as_nodeData, ParameterDeclaration_as_nodeData, PropertyAssignment_as_nodeData, VariableDeclaration_as_nodeData, VariableStatement_as_nodeData } from "../../ast/generated/data.js";
-import type { ClassElement, ClassLikeDeclaration, Expression, IdentifierNode, PropertyName, SourceFileNode, Statement } from "../../ast/generated/unions.js";
+import type { ClassElement, ClassLikeDeclaration, Expression, IdentifierNode, PropertyName, Statement } from "../../ast/generated/unions.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import { KindAccessorKeyword, KindArrayLiteralExpression, KindBigIntLiteral, KindBindingElement, KindBinaryExpression, KindCallExpression, KindClassDeclaration, KindClassExpression, KindClassStaticBlockDeclaration, KindCommaToken, KindComputedPropertyName, KindConstructor, KindDoStatement, KindElementAccessExpression, KindEqualsGreaterThanToken, KindExportAssignment, KindExpressionStatement, KindExpressionWithTypeArguments, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindHeritageClause, KindIdentifier, KindInKeyword, KindMethodDeclaration, KindNullKeyword, KindNumericLiteral, KindObjectLiteralExpression, KindOmittedExpression, KindParameter, KindParenthesizedExpression, KindPostfixUnaryExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindPropertyAssignment, KindPropertyDeclaration, KindSemicolonClassElement, KindSetAccessor, KindSourceFile, KindStringLiteral, KindSuperKeyword, KindTaggedTemplateExpression, KindThisKeyword, KindVariableDeclaration, KindVariableStatement, KindWhileStatement, KindPlusPlusToken, KindMinusMinusToken, KindEqualsToken } from "../../ast/generated/kinds.js";
 import { IsClassExpression, IsClassStaticBlockDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsGetAccessorDeclaration, IsIdentifier, IsMethodDeclaration, IsNumericLiteral, IsParameterDeclaration, IsParenthesizedExpression, IsPostfixUnaryExpression, IsPrefixUnaryExpression, IsPrivateIdentifier, IsPropertyDeclaration, IsSetAccessorDeclaration, IsShorthandPropertyAssignment, IsSpreadAssignment, IsSpreadElement, IsStringLiteral, IsTryStatement, IsVoidExpression } from "../../ast/generated/predicates.js";
@@ -464,7 +465,7 @@ export function classFieldsTransformer_classExpressionNeedsBlockScopedTemp(recei
  * 	return visited
  * }
  */
-export function classFieldsTransformer_visitSourceFile(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<SourceFileNode>): GoPtr<Node> {
+export function classFieldsTransformer_visitSourceFile(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
   if (AsSourceFile(node)!.IsDeclarationFile) {
     return node;
   }
@@ -648,7 +649,7 @@ export function classFieldsTransformer_visit(receiver: GoPtr<classFieldsTransfor
 
     switch (node!.Kind) {
       case KindSourceFile:
-        return classFieldsTransformer_visitSourceFile(receiver, node);
+        return classFieldsTransformer_visitSourceFile(receiver, AsSourceFile(node));
       case KindClassDeclaration:
         return classFieldsTransformer_visitClassDeclaration(receiver, AsClassDeclaration(node));
       case KindClassExpression:

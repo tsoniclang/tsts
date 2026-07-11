@@ -15,7 +15,7 @@ import type { Set } from "../collections/set.js";
  * 	"scx":               "Script_Extensions",
  * }
  */
-export const nonBinaryUnicodeProperties: GoMap<string, string> = new Map<string, string>([
+export let nonBinaryUnicodeProperties: GoMap<string, string> = new Map<string, string>([
 	["General_Category", "General_Category"],
 	["gc", "General_Category"],
 	["Script", "Script"],
@@ -63,7 +63,7 @@ export const nonBinaryUnicodeProperties: GoMap<string, string> = new Map<string,
  * 	"XID_Continue", "XIDC", "XID_Start", "XIDS",
  * )
  */
-export const binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<string>(
+export let binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<string>(
 	"ASCII", "ASCII_Hex_Digit", "AHex", "Alphabetic", "Alpha", "Any", "Assigned",
 	"Bidi_Control", "Bidi_C", "Bidi_Mirrored", "Bidi_M",
 	"Case_Ignorable", "CI", "Cased",
@@ -108,7 +108,7 @@ export const binaryUnicodeProperties: GoPtr<Set<string>> = NewSetFromItems<strin
  * 	"RGI_Emoji_ZWJ_Sequence", "RGI_Emoji",
  * )
  */
-export const binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromItems<string>(
+export let binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromItems<string>(
 	"Basic_Emoji", "Emoji_Keycap_Sequence", "RGI_Emoji_Modifier_Sequence",
 	"RGI_Emoji_Flag_Sequence", "RGI_Emoji_Tag_Sequence",
 	"RGI_Emoji_ZWJ_Sequence", "RGI_Emoji",
@@ -195,7 +195,7 @@ export const binaryUnicodePropertiesOfStrings: GoPtr<Set<string>> = NewSetFromIt
  * 	"Zzzz", "Unknown",
  * )
  */
-export const scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
+export let scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
 	"Adlm", "Adlam", "Aghb", "Caucasian_Albanian", "Ahom", "Arab", "Arabic",
 	"Armi", "Imperial_Aramaic", "Armn", "Armenian", "Avst", "Avestan",
 	"Bali", "Balinese", "Bamu", "Bamum", "Bass", "Bassa_Vah", "Batk", "Batak",
@@ -301,7 +301,7 @@ export const scriptValues: GoPtr<Set<string>> = NewSetFromItems<string>(
  * 	"Script_Extensions": scriptValues,
  * }
  */
-export const valuesOfNonBinaryUnicodeProperties: GoMap<string, GoPtr<Set<string>>> = new Map<string, GoPtr<Set<string>>>([
+export let valuesOfNonBinaryUnicodeProperties: GoMap<string, GoPtr<Set<string>>> = new Map<string, GoPtr<Set<string>>>([
 	["General_Category", NewSetFromItems<string>(
 		"C", "Other", "Cc", "Control", "cntrl", "Cf", "Format", "Cn", "Unassigned",
 		"Co", "Private_Use", "Cs", "Surrogate",

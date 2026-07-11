@@ -144,7 +144,7 @@ export interface projectReferenceDtsFakingVfs {
  * Go source:
  * var _ vfs.FS = (*projectReferenceDtsFakingVfs)(nil)
  */
-export let __fca3b3b1_0: FS_c26bca9d = projectReferenceDtsFakingVfs_as_vfs_FS(undefined);
+export let ___2_fca3b3b1_0: FS_c26bca9d = projectReferenceDtsFakingVfs_as_vfs_FS(undefined);
 
 export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectReferenceDtsFakingVfs>): FS_c26bca9d {
   return {

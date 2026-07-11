@@ -1,4 +1,5 @@
 import type { bool } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Tristate } from "./tristate.js";
@@ -55,3 +56,14 @@ export function TypeAcquisition_Equals(receiver: GoPtr<TypeAcquisition>, other: 
     ta.DisableFilenameBasedTypeAcquisition === other.DisableFilenameBasedTypeAcquisition
   );
 }
+
+type TypeAcquisitionJsonFields = JsonFieldNamesForGoStructContract<
+  TypeAcquisition,
+  "github.com/microsoft/typescript-go::internal/core/typeacquisition.go::type::TypeAcquisition",
+  {
+    readonly Enable: { readonly name: "enable"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Include: { readonly name: "include"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Exclude: { readonly name: "exclude"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DisableFilenameBasedTypeAcquisition: { readonly name: "disableFilenameBasedTypeAcquisition"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

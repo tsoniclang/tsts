@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { Once } from "../../go/sync.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { BuildOptions } from "../core/buildoptions.js";
@@ -91,3 +92,16 @@ export function ParsedBuildCommandLine_Locale(receiver: GoPtr<ParsedBuildCommand
   });
   return p.locale;
 }
+
+type ParsedBuildCommandLineJsonFields = JsonFieldNamesForGoStructContract<
+  ParsedBuildCommandLine,
+  "github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine",
+  {
+    readonly BuildOptions: { readonly name: "buildOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly CompilerOptions: { readonly name: "compilerOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly WatchOptions: { readonly name: "watchOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Projects: { readonly name: "projects"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Errors: { readonly name: "errors"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Raw: { readonly name: "raw"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

@@ -542,7 +542,7 @@ export interface filesParser {
  * 	},
  * }
  */
-export const parseTaskDataPool: Pool<parseTaskData> = (() => {
+export let parseTaskDataPool: Pool = (() => {
   const pool = new Pool<parseTaskData>();
   pool.New = (): parseTaskData => ({
     tasks: new globalThis.Map<string, GoPtr<parseTask>>(),
@@ -566,7 +566,7 @@ export const parseTaskDataPool: Pool<parseTaskData> = (() => {
  * }
  */
 export function getParseTaskData(task: GoPtr<parseTask>): GoPtr<parseTaskData> {
-  const td = parseTaskDataPool.Get()!;
+  const td = parseTaskDataPool.Get() as parseTaskData;
   td.tasks.set(task!.normalizedFilePath, task);
   td.lowestDepth = MaxInt;
   return td;

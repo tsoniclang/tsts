@@ -8,7 +8,7 @@ Porter is an authoritative **inventory, declaration-contract verifier, and upgra
 
 Porter is deliberately not a Go-to-TypeScript translator. It must not infer implementation bodies, rewrite authored TypeScript, automatically re-stamp stale metadata, accept a scaffold as an implementation, or treat an orphan/missing pair as a rename. `scaffold` is optional, non-authoritative bootstrap output: it creates a traceable throwing/type-only placeholder for human implementation, while strict verification continues to reject the stub.
 
-The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, embedding, and struct tags. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits them for imports, constants, types, ownership, control flow, classification, or equivalence. A body hash is an opaque upstream-drift fingerprint only.
+The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, type-intrinsic nilability, embedding, and struct tags. Nilability is recorded by `go/types` on every canonical type occurrence; it is never inferred from TypeScript optional syntax or carrier spelling. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits them for imports, constants, types, ownership, control flow, classification, or equivalence. A body hash is an opaque upstream-drift fingerprint only.
 
 Expected Go constants and inferred top-level variable types come directly from `go/types` and `go/constant`; Porter never reconstructs them from Go source text. Actual TypeScript declaration initializers use the closed evaluator contract below. Unsupported declaration/type variants fail rather than becoming approximate evidence. Build-profile selection covers every declaration-bearing source file and fails if a profile changes a declaration contract.
 
@@ -143,12 +143,16 @@ drift invalidates the override and fails `porter:verify`.
 
 The comparison follows the mechanical port's declaration boundary:
 
-- A Go struct type unit is its data layout: declared fields plus explicit
-  `__tsgoEmbeddedN` carriers. Receiver methods are independent Go units and are
-  compared with their standalone TypeScript functions; they are never injected
-  into the struct's TypeScript interface.
-- A Go interface's declared and embedded interface methods are structural and
-  remain members of the expected TypeScript interface.
+- A Go struct type unit is its data layout: declared fields plus required,
+  mutable `__tsgoEmbeddedN` storage for embedded fields. Receiver methods are
+  independent Go units and are compared with their standalone TypeScript
+  functions; they are never injected into the struct's TypeScript interface.
+- A Go interface's embedded interface types become exact TypeScript `extends`
+  heritage types, while declared methods remain members of the expected
+  TypeScript interface. Type-set embeddings retain their exact constraint
+  representation instead of being treated as heritage.
+- Inline Go interface type expressions retain embedded types as exact
+  intersections; no name-based flattening or optional carrier is accepted.
 - Method promotion from an embedded struct does not create TypeScript object
   properties. Calls continue through the separately verified method adapters.
 - An embedded interface is different: its method contract is expanded even

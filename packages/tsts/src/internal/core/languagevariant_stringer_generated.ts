@@ -38,7 +38,7 @@ export const _LanguageVariant_name: string = "LanguageVariantStandardLanguageVar
  * Go source:
  * var _LanguageVariant_index = [...]uint8{0, 23, 41}
  */
-export let _LanguageVariant_index: GoArray<byte, "..."> = [0, 23, 41];
+export let _LanguageVariant_index: GoArray<byte, "3"> = [0, 23, 41];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/languagevariant_stringer_generated.go::method::LanguageVariant.String","kind":"method","status":"implemented","sigHash":"4ce505d9da83893055f9726103d7dbce9384e90de63121b28291e5e0cdc306ce","bodyHash":"e8b34ad2c7a0f1dfb0165e4b9610177f4958ce11d95a58a2f46c7a252e42bade"}

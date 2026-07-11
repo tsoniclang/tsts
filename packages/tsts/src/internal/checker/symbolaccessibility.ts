@@ -1,4 +1,4 @@
-import type { bool, int, ulong } from "../../go/scalars.js";
+import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
@@ -856,7 +856,7 @@ export interface accessibleSymbolChainContext {
  * Go source:
  * symbolTableID uint64
  */
-export type symbolTableID = ulong;
+export type symbolTableID = bigint;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"9e80cf047656cb6660929f6a71794e6653a496233ab2dc2d14d96c7ea1b9a77a","bodyHash":"6dfba3df333f612a2ea0c88bc9a87f7584a686189f362c82ea8b3648ff8310de"}
@@ -881,13 +881,13 @@ export const stKindShift: int = 61;
  * 	stKindMask symbolTableID = (iota - 1) << stKindShift
  * )
  */
-export const stKindLocals: symbolTableID = 0; // 0 << 61
-export const stKindExports: symbolTableID = 0x2000000000000000; // 1 << 61
-export const stKindMembers: symbolTableID = 0x4000000000000000; // 2 << 61
-export const stKindGlobals: symbolTableID = 0x6000000000000000; // 3 << 61
-export const stKindResolvedExports: symbolTableID = 0x8000000000000000; // 4 << 61, resolved/derived exports from getExportsOfSymbol, distinct from raw sym.Exports
+export const stKindLocals: symbolTableID = 0n; // 0 << 61
+export const stKindExports: symbolTableID = 0x2000000000000000n; // 1 << 61
+export const stKindMembers: symbolTableID = 0x4000000000000000n; // 2 << 61
+export const stKindGlobals: symbolTableID = 0x6000000000000000n; // 3 << 61
+export const stKindResolvedExports: symbolTableID = 0x8000000000000000n; // 4 << 61, resolved/derived exports from getExportsOfSymbol, distinct from raw sym.Exports
 // stKindMask extracts the kind bits from a symbolTableID.
-export const stKindMask: symbolTableID = 0x8000000000000000; // (5 - 1) << 61
+export const stKindMask: symbolTableID = 0x8000000000000000n; // (5 - 1) << 61
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromLocals","kind":"func","status":"implemented","sigHash":"ddb7a7e67dd745b636984a46c8f2c498d351cc6dce505161c74f29c31d7e90af","bodyHash":"f1a25251eb4bacfe964a69e28ec6e9fee67838fed9495d42726dce8982ae5366"}
@@ -898,7 +898,7 @@ export const stKindMask: symbolTableID = 0x8000000000000000; // (5 - 1) << 61
  * }
  */
 export function symbolTableIDFromLocals(node: GoPtr<Node>): symbolTableID {
-  return stKindLocals | GetNodeId(node);
+  return stKindLocals | BigInt(GetNodeId(node));
 }
 
 /**
@@ -910,7 +910,7 @@ export function symbolTableIDFromLocals(node: GoPtr<Node>): symbolTableID {
  * }
  */
 export function symbolTableIDFromExports(sym: GoPtr<Symbol>): symbolTableID {
-  return stKindExports | GetSymbolId(sym);
+  return stKindExports | BigInt(GetSymbolId(sym));
 }
 
 /**
@@ -926,7 +926,7 @@ export function symbolTableIDFromExports(sym: GoPtr<Symbol>): symbolTableID {
  * }
  */
 export function symbolTableIDFromResolvedExports(sym: GoPtr<Symbol>): symbolTableID {
-  return stKindResolvedExports | GetSymbolId(sym);
+  return stKindResolvedExports | BigInt(GetSymbolId(sym));
 }
 
 /**
@@ -938,7 +938,7 @@ export function symbolTableIDFromResolvedExports(sym: GoPtr<Symbol>): symbolTabl
  * }
  */
 export function symbolTableIDFromMembers(sym: GoPtr<Symbol>): symbolTableID {
-  return stKindMembers | GetSymbolId(sym);
+  return stKindMembers | BigInt(GetSymbolId(sym));
 }
 
 /**

@@ -696,7 +696,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
  * 	},
  * }
  */
-export const binderPool: Pool<Binder> = new Pool<Binder>();
+export let binderPool: Pool = new Pool<Binder>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"implemented","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2","bodyHash":"459fb11735c11ea9e06babc9f1dab3e1df80aca8b93fcd595671fbd375fceddb"}

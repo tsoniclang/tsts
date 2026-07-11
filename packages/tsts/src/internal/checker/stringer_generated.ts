@@ -34,7 +34,7 @@ export const _SignatureKind_name: string = "SignatureKindCallSignatureKindConstr
  * Go source:
  * var _SignatureKind_index = [...]uint8{0, 17, 39}
  */
-export let _SignatureKind_index: GoArray<byte, "..."> = [0, 17, 39] as GoArray<byte, "...">;
+export let _SignatureKind_index: GoArray<byte, "3"> = [0, 17, 39] as GoArray<byte, "3">;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::method::SignatureKind.String","kind":"method","status":"implemented","sigHash":"9c05bce595039d33dc85ac4993e7e65c8e1d135f000e0b65576ddae97eff31f0","bodyHash":"4cf085bcadf3ed1b1d792d8d5122d33338c2d9096e87bc60d210226bd11a2b8c"}

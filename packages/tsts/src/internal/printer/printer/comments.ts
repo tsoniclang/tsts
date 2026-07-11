@@ -624,7 +624,7 @@ export function Printer_emitCommentsAfterNode(receiver: GoPtr<Printer>, node: Go
  * 	return p.commentStateArena.New(), pos
  * }
  */
-export function Printer_emitCommentsBeforeToken(receiver: GoPtr<Printer>, _token: Kind, pos: int, contextNode: GoPtr<Node>, flags: tokenEmitFlags): [GoPtr<commentState>, int] {
+export function Printer_emitCommentsBeforeToken(receiver: GoPtr<Printer>, token: Kind, pos: int, contextNode: GoPtr<Node>, flags: tokenEmitFlags): [GoPtr<commentState>, int] {
   if ((flags & tefNoComments) !== 0 || receiver!.commentsDisabled) {
     // Still skip trivia so that the returned pos correctly identifies the token position.
     // This is needed for trailing source map positions (writeTokenText advances pos by token length).
@@ -647,7 +647,7 @@ export function Printer_emitCommentsBeforeToken(receiver: GoPtr<Printer>, _token
 
   if (Node_Pos(contextNode) !== startPos) {
     const indentLeading = (flags & tefIndentLeadingComments) !== 0;
-    const needsIndent = (indentLeading && receiver!.currentSourceFile !== undefined && !PositionsAreOnSameLine(startPos, pos, receiver!.currentSourceFile as unknown as GoPtr<Node>)) as bool;
+    const needsIndent = (indentLeading && receiver!.currentSourceFile !== undefined && !PositionsAreOnSameLine(startPos, pos, receiver!.currentSourceFile)) as bool;
     Printer_increaseIndentIf(receiver, needsIndent);
     Printer_emitLeadingComments(receiver, startPos, false as bool);
     Printer_decreaseIndentIf(receiver, needsIndent);
@@ -750,7 +750,7 @@ export function Printer_emitDetachedCommentsBeforeStatementList(receiver: GoPtr<
  * 	}
  * }
  */
-export function Printer_emitDetachedCommentsAfterStatementList(receiver: GoPtr<Printer>, _node: GoPtr<Node>, detachedRange: TextRange, state: GoPtr<commentState>): void {
+export function Printer_emitDetachedCommentsAfterStatementList(receiver: GoPtr<Printer>, node: GoPtr<Node>, detachedRange: TextRange, state: GoPtr<commentState>): void {
   if (state === undefined) {
     return;
   }

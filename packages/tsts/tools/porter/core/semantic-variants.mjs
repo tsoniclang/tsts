@@ -135,7 +135,7 @@ function orderStructField(value) {
 }
 
 function orderInterface(value) {
-  return ordered(value, ["explicitMethods", "embeddedTypes", "completeMethods", "comparable", "implicit", "methodSetOnly"], {
+  return ordered(value, ["explicitMethods", "embeddedTypes", "embeddedKinds", "completeMethods", "comparable", "implicit", "methodSetOnly"], {
     explicitMethods: (items) => mapItems(items, orderMethod), embeddedTypes: (items) => mapItems(items, orderType),
     completeMethods: (items) => mapItems(items, orderMethod),
   });

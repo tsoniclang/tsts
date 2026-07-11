@@ -3003,11 +3003,11 @@ export function Program_GetDeclarationDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	})
  * }
  */
-export function FilterNoEmitSemanticDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>, options: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
+export function FilterNoEmitSemanticDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>, options: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (!Tristate_IsTrue(options!.NoEmit)) {
-    return diags;
+    return diagnostics;
   }
-  return Filter(diags, (d) => !Diagnostic_SkippedOnNoEmit(d));
+  return Filter(diagnostics, (d) => !Diagnostic_SkippedOnNoEmit(d));
 }
 
 /**
@@ -3264,8 +3264,8 @@ export function isCommentOrBlankLine(text: string, pos: int): bool {
  * 	return compactAndMergeRelatedInfos(diagnostics)
  * }
  */
-export function SortAndDeduplicateDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  const cloned = slices.Clone(diags) ?? [];
+export function SortAndDeduplicateDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+  const cloned = slices.Clone(diagnostics) ?? [];
   cloned.sort(CompareDiagnostics);
   return compactAndMergeRelatedInfos(cloned);
 }
@@ -3305,22 +3305,22 @@ export function SortAndDeduplicateDiagnostics(diags: GoSlice<GoPtr<Diagnostic>>)
  * 	return diagnostics[:j]
  * }
  */
-export function compactAndMergeRelatedInfos(diags: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
-  if (diags === undefined || diags.length < 2) {
-    return diags;
+export function compactAndMergeRelatedInfos(diagnostics: GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+  if (diagnostics === undefined || diagnostics.length < 2) {
+    return diagnostics;
   }
   const result: GoPtr<Diagnostic>[] = [];
   let i = 0;
-  while (i < diags.length) {
-    let d = diags[i];
+  while (i < diagnostics.length) {
+    let d = diagnostics[i];
     let n = 1;
-    while (i + n < diags.length && EqualDiagnosticsNoRelatedInfo(d, diags[i + n])) {
+    while (i + n < diagnostics.length && EqualDiagnosticsNoRelatedInfo(d, diagnostics[i + n])) {
       n++;
     }
     if (n > 1) {
       let relatedInfos: GoPtr<Diagnostic>[] = [];
       for (let k = 0; k < n; k++) {
-        relatedInfos = [...relatedInfos, ...(Diagnostic_RelatedInformation(diags[i + k]) ?? [])];
+        relatedInfos = [...relatedInfos, ...(Diagnostic_RelatedInformation(diagnostics[i + k]) ?? [])];
       }
       if (relatedInfos.length > 0) {
         relatedInfos.sort(CompareDiagnostics);
@@ -3473,7 +3473,7 @@ export function Program_GetSourceFileMetaData(receiver: GoPtr<Program>, path: Pa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetEmitModuleFormatOfFile","kind":"method","status":"implemented","sigHash":"73eecf33ce88657b0b60f119379740a50fa2d8705d9599b6ea26251190d848ff","bodyHash":"75abb1e5928ce6d20faba4e1beb763622d2880515ce6d812cc458acf4e9148fe"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func (p *Program) GetEmitModuleFormatOfFile(sourceFile ast.HasFileName) core.ModuleKind {
@@ -3488,6 +3488,9 @@ function Program_getCompilerOptionsForFile(receiver: GoPtr<Program>, sourceFile:
   return projectReferenceFileMapper_getCompilerOptionsForFile(mapper, sourceFile);
 }
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetEmitModuleFormatOfFile","kind":"method","status":"implemented","sigHash":"73eecf33ce88657b0b60f119379740a50fa2d8705d9599b6ea26251190d848ff","bodyHash":"75abb1e5928ce6d20faba4e1beb763622d2880515ce6d812cc458acf4e9148fe"}
+ */
 export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sourceFile: HasFileName): ModuleKind {
   return GetEmitModuleFormatOfFileWorker(
     sourceFile.FileName(),
@@ -4851,7 +4854,7 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead","bodyHash":"329c0952e7574a74184dd36045f61ffd8bccce2f84c7b9402d1423c207ea0735"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func forEachResolution[T any](resolutionCache map[tspath.Path]module.ModeAwareCache[T], callback func(resolution T, moduleName string, mode core.ResolutionMode, filePath tspath.Path), file *ast.SourceFile) {
@@ -4882,6 +4885,9 @@ const resolutionCacheEntries = <T>(resolutionCache: GoMap<Path, ModeAwareCache<T
 const modeAwareCacheEntries = <T>(modeAwareCache: ModeAwareCache<T> | undefined): Iterable<[ModeAwareCacheKey, T]> =>
   goMapEntries(modeAwareCache, emptyModeAwareCache as ModeAwareCache<T>);
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::forEachResolution","kind":"func","status":"implemented","sigHash":"81ad1e76a1bc9f4c9a1cfccfabf6ff831d6183bed38698ac95e80a7c0786dead","bodyHash":"329c0952e7574a74184dd36045f61ffd8bccce2f84c7b9402d1423c207ea0735"}
+ */
 export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {
     const resolutions = resolutionCache.get(SourceFile_Path(file));
@@ -4998,7 +5004,7 @@ export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache
  * 	diagnostics.This_condition_will_always_return_0_since_JavaScript_compares_objects_by_reference_not_value.Code(),
  * )
  */
-export const plainJSErrors: GoPtr<Set<int>> = NewSetFromItems<int>(
+export let plainJSErrors: GoPtr<Set<int>> = NewSetFromItems<int>(
   // binder errors
   diagnostics.Cannot_redeclare_block_scoped_variable_0.code,
   diagnostics.A_module_cannot_have_multiple_default_exports.code,

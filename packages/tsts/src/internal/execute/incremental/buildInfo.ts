@@ -1,4 +1,5 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
 import type { GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
@@ -1397,3 +1398,81 @@ export function BuildInfoRootInfoReader_GetBuildInfoFileInfo(receiver: GoPtr<Bui
 export function BuildInfoRootInfoReader_Roots(receiver: GoPtr<BuildInfoRootInfoReader>): GoSeq<Path> {
   return OrderedMap_Keys(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>);
 }
+
+type buildInfoFileInfoNoSignatureJsonFields = JsonFieldNamesForGoStructContract<
+  buildInfoFileInfoNoSignature,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoNoSignature",
+  {
+    readonly Version: { readonly name: "version"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoSignature: { readonly name: "noSignature"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AffectsGlobalScope: { readonly name: "affectsGlobalScope"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ImpliedNodeFormat: { readonly name: "impliedNodeFormat"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type buildInfoFileInfoWithSignatureJsonFields = JsonFieldNamesForGoStructContract<
+  buildInfoFileInfoWithSignature,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::buildInfoFileInfoWithSignature",
+  {
+    readonly Version: { readonly name: "version"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Signature: { readonly name: "signature"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AffectsGlobalScope: { readonly name: "affectsGlobalScope"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ImpliedNodeFormat: { readonly name: "impliedNodeFormat"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type BuildInfoDiagnosticJsonFields = JsonFieldNamesForGoStructContract<
+  BuildInfoDiagnostic,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoDiagnostic",
+  {
+    readonly File: { readonly name: "file"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoFile: { readonly name: "noFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Pos: { readonly name: "pos"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly End: { readonly name: "end"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Code: { readonly name: "code"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Category: { readonly name: "category"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly MessageKey: { readonly name: "messageKey"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly MessageArgs: { readonly name: "messageArgs"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly MessageChain: { readonly name: "messageChain"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RelatedInformation: { readonly name: "relatedInformation"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReportsUnnecessary: { readonly name: "reportsUnnecessary"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReportsDeprecated: { readonly name: "reportsDeprecated"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SkippedOnNoEmit: { readonly name: "skippedOnNoEmit"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RepopulateInfo: { readonly name: "repopulateInfo"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type BuildInfoRepopulateInfoJsonFields = JsonFieldNamesForGoStructContract<
+  BuildInfoRepopulateInfo,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfoRepopulateInfo",
+  {
+    readonly Kind: { readonly name: "kind"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ModuleReference: { readonly name: "moduleReference"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Mode: { readonly name: "mode"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PackageName: { readonly name: "packageName"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type BuildInfoJsonFields = JsonFieldNamesForGoStructContract<
+  BuildInfo,
+  "github.com/microsoft/typescript-go::internal/execute/incremental/buildInfo.go::type::BuildInfo",
+  {
+    readonly Version: { readonly name: "version"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Errors: { readonly name: "errors"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly CheckPending: { readonly name: "checkPending"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Root: { readonly name: "root"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly FileNames: { readonly name: "fileNames"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly FileInfos: { readonly name: "fileInfos"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly FileIdsList: { readonly name: "fileIdsList"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Options: { readonly name: "options"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReferencedMap: { readonly name: "referencedMap"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SemanticDiagnosticsPerFile: { readonly name: "semanticDiagnosticsPerFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EmitDiagnosticsPerFile: { readonly name: "emitDiagnosticsPerFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ChangeFileSet: { readonly name: "changeFileSet"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AffectedFilesPendingEmit: { readonly name: "affectedFilesPendingEmit"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly LatestChangedDtsFile: { readonly name: "latestChangedDtsFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EmitSignatures: { readonly name: "emitSignatures"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ResolvedRoot: { readonly name: "resolvedRoot"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SemanticErrors: { readonly name: "semanticErrors"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

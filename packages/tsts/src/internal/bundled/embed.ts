@@ -158,8 +158,8 @@ export function wrappedFS_as_vfs_FS(receiver: GoPtr<wrappedFS>): FS {
  * 	return &wrappedFS{fs: fs}
  * }
  */
-export function wrapFS(fsArg: FS): FS {
-  return wrappedFS_as_vfs_FS({ fs: fsArg });
+export function wrapFS(fs: FS): FS {
+  return wrappedFS_as_vfs_FS({ fs });
 }
 
 /**
@@ -585,7 +585,7 @@ export function fileInfo_IsDir(receiver: GoPtr<fileInfo>): bool {
  * 	return time.Time{}
  * }
  */
-export function fileInfo_ModTime(_receiver: GoPtr<fileInfo>): Time {
+export function fileInfo_ModTime(receiver: GoPtr<fileInfo>): Time {
   return new Time();
 }
 
@@ -633,7 +633,7 @@ export function fileInfo_Size(receiver: GoPtr<fileInfo>): long {
  * 	return nil
  * }
  */
-export function fileInfo_Sys(_receiver: GoPtr<fileInfo>): unknown {
+export function fileInfo_Sys(receiver: GoPtr<fileInfo>): unknown {
   return undefined;
 }
 

@@ -57,26 +57,26 @@ export const ExtensionDcts: string = ".d.cts";
  * 	ExtensionsNotSupportingExtensionlessResolution = []string{ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs}
  * )
  */
-export const SupportedDeclarationExtensions: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts];
-export const SupportedTSImplementationExtensions: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
-export const supportedTSExtensionsForExtractExtension: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts, ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
-export const AllSupportedExtensions: GoSlice<GoSlice<string>> = [
+export let SupportedDeclarationExtensions: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts];
+export let SupportedTSImplementationExtensions: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
+export let supportedTSExtensionsForExtractExtension: GoSlice<string> = [ExtensionDts, ExtensionDcts, ExtensionDmts, ExtensionTs, ExtensionTsx, ExtensionMts, ExtensionCts];
+export let AllSupportedExtensions: GoSlice<GoSlice<string>> = [
   [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionJs, ExtensionJsx],
   [ExtensionCts, ExtensionDcts, ExtensionCjs],
   [ExtensionMts, ExtensionDmts, ExtensionMjs],
 ];
-export const SupportedTSExtensions: GoSlice<GoSlice<string>> = [
+export let SupportedTSExtensions: GoSlice<GoSlice<string>> = [
   [ExtensionTs, ExtensionTsx, ExtensionDts],
   [ExtensionCts, ExtensionDcts],
   [ExtensionMts, ExtensionDmts],
 ];
-export const SupportedTSExtensionsFlat: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionCts, ExtensionDcts, ExtensionMts, ExtensionDmts];
-export const SupportedJSExtensions: GoSlice<GoSlice<string>> = [[ExtensionJs, ExtensionJsx], [ExtensionMjs], [ExtensionCjs]];
-export const SupportedJSExtensionsFlat: GoSlice<string> = [ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionCjs];
-export const AllSupportedExtensionsWithJson: unknown = slices.Concat<GoSlice<string>>(AllSupportedExtensions, [[ExtensionJson]]);
-export const SupportedTSExtensionsWithJson: unknown = slices.Concat<GoSlice<string>>(SupportedTSExtensions, [[ExtensionJson]]);
-export const SupportedTSExtensionsWithJsonFlat: unknown = slices.Concat<string>(SupportedTSExtensionsFlat, [ExtensionJson]);
-export const ExtensionsNotSupportingExtensionlessResolution: GoSlice<string> = [ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs];
+export let SupportedTSExtensionsFlat: GoSlice<string> = [ExtensionTs, ExtensionTsx, ExtensionDts, ExtensionCts, ExtensionDcts, ExtensionMts, ExtensionDmts];
+export let SupportedJSExtensions: GoSlice<GoSlice<string>> = [[ExtensionJs, ExtensionJsx], [ExtensionMjs], [ExtensionCjs]];
+export let SupportedJSExtensionsFlat: GoSlice<string> = [ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionCjs];
+export let AllSupportedExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(AllSupportedExtensions, [[ExtensionJson]]);
+export let SupportedTSExtensionsWithJson: GoSlice<GoSlice<string>> = slices.Concat<GoSlice<string>>(SupportedTSExtensions, [[ExtensionJson]]);
+export let SupportedTSExtensionsWithJsonFlat: GoSlice<string> = slices.Concat<string>(SupportedTSExtensionsFlat, [ExtensionJson]);
+export let ExtensionsNotSupportingExtensionlessResolution: GoSlice<string> = [ExtensionMts, ExtensionDmts, ExtensionMjs, ExtensionCts, ExtensionDcts, ExtensionCjs];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::ExtensionIsTs","kind":"func","status":"implemented","sigHash":"3049c81c8f6456f7757c391bee3802bf890d1107e6df4f7dc063f58fdcaed34d","bodyHash":"50b565e1a9c531553e2ba18ee6224e16965998e90c6cbde103f2208a0b994852"}
@@ -96,7 +96,7 @@ export function ExtensionIsTs(ext: string): bool {
  * Go source:
  * var extensionsToRemove = []string{ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson}
  */
-export const extensionsToRemove: GoSlice<string> = [ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson];
+export let extensionsToRemove: GoSlice<string> = [ExtensionDts, ExtensionDmts, ExtensionDcts, ExtensionMjs, ExtensionMts, ExtensionCjs, ExtensionCts, ExtensionTs, ExtensionJs, ExtensionTsx, ExtensionJsx, ExtensionJson];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/extension.go::func::RemoveFileExtension","kind":"func","status":"implemented","sigHash":"fed8cdfe80d8331bfc6071432f6e12a2bb014ce39de271c868f4dd34ff0c61dd","bodyHash":"d65e1ad848a5c080238c90609643c2ca72fd16298ef7c89bc799c4ee3129fa0e"}

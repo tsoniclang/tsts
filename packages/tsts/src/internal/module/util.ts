@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { AsSourceFile } from "../ast/ast.js";
-import type { SourceFileNode } from "../ast/generated/unions.js";
+import type { SourceFile } from "../ast/ast.js";
 import {
   CompilerOptions_GetAllowJS,
   CompilerOptions_GetResolveJsonModule,
@@ -50,7 +50,7 @@ const CHAR_AT: int = 0x40; // '@'
  * Go source:
  * var typeScriptVersion = semver.MustParse(core.Version())
  */
-export const typeScriptVersion: Version = MustParse(coreVersion());
+export let typeScriptVersion: Version = MustParse(coreVersion());
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::constGroup::InferredTypesContainingFile","kind":"constGroup","status":"implemented","sigHash":"790fc9de65ca101c9bd4211b78852b0004daadae356d0d4b52059031fe9c7794","bodyHash":"00d9a0f6ea98e4e42c4b78d7268602902626944ee6c71c2d51762522fbad8303"}
@@ -357,7 +357,7 @@ export function ComparePatternKeys(a: string, b: string): int {
  * 	}
  * }
  */
-export function GetResolutionDiagnostic(options: GoPtr<CompilerOptions>, resolvedModule: GoPtr<ResolvedModule>, file: GoPtr<SourceFileNode>): GoPtr<Message> {
+export function GetResolutionDiagnostic(options: GoPtr<CompilerOptions>, resolvedModule: GoPtr<ResolvedModule>, file: GoPtr<SourceFile>): GoPtr<Message> {
   if (ResolvedModule_IsProviderVirtual(resolvedModule)) {
     return undefined;
   }

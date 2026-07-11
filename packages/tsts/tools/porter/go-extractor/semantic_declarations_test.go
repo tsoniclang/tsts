@@ -196,6 +196,115 @@ func TestBuildVariantUnitsRemainDistinctWhileLogicalObjectsStayCanonical(t *test
 	}
 }
 
+func TestInterfaceDeclarationOrderUsesSyntaxAcrossProfiles(t *testing.T) {
+	root := t.TempDir()
+	modulePath := "example.test/interfaceorder"
+	writeTestFile(t, filepath.Join(root, "go.mod"), "module "+modulePath+"\n\ngo 1.26\n")
+	writeTestFile(t, filepath.Join(root, "contracts.go"), `package interfaceorder
+type Embedded interface {
+	EmbeddedOnly(value byte) bool
+}
+type Ordered interface {
+	Zulu(input int) string
+	Embedded
+	Alpha(flag bool) error
+}
+`)
+	writeTestFile(t, filepath.Join(root, "platform_linux.go"), "package interfaceorder\nvar Platform = \"linux\"\n")
+	writeTestFile(t, filepath.Join(root, "platform_windows.go"), "package interfaceorder\nvar Platform = \"windows\"\n")
+
+	snapshot := declarationSnapshot(t, root, modulePath)
+	unit := requireSemanticUnit(t, snapshot, "type", "Ordered")
+	report := singleSemanticVariant(t, unit)
+	if len(report.Profiles) != len(snapshot.Semantic.Profiles) || len(report.Profiles) < 2 {
+		t.Fatalf("common interface did not merge deterministically across profiles: interface=%v all=%d", report.Profiles, len(snapshot.Semantic.Profiles))
+	}
+	for index, profile := range report.Profiles {
+		if profile != index {
+			t.Fatalf("interface profile indexes are not deterministic: %v", report.Profiles)
+		}
+	}
+
+	wantSyntax := [][2]string{{"method", "Zulu"}, {"embeddedInterface", "Embedded"}, {"method", "Alpha"}}
+	if len(unit.Members) != len(wantSyntax) {
+		t.Fatalf("interface syntax members = %#v", unit.Members)
+	}
+	for index, want := range wantSyntax {
+		if unit.Members[index].Kind != want[0] || unit.Members[index].Name != want[1] {
+			t.Fatalf("interface syntax member %d = %#v, want %v", index, unit.Members[index], want)
+		}
+	}
+
+	semantic := report.Type.RHS.Interface
+	if semantic == nil || len(semantic.ExplicitMethods) != 2 || semantic.ExplicitMethods[0].Name != "Zulu" || semantic.ExplicitMethods[1].Name != "Alpha" {
+		t.Fatalf("explicit interface methods lost syntax order: %#v", semantic)
+	}
+	if len(semantic.EmbeddedTypes) != 1 || semantic.EmbeddedTypes[0].Reference == nil || semantic.EmbeddedTypes[0].Reference.Name != "Embedded" {
+		t.Fatalf("embedded interface type = %#v", semantic.EmbeddedTypes)
+	}
+	if len(semantic.EmbeddedKinds) != 1 || semantic.EmbeddedKinds[0] != "interface" {
+		t.Fatalf("embedded interface classification = %#v", semantic.EmbeddedKinds)
+	}
+	complete := map[string]bool{}
+	for _, method := range semantic.CompleteMethods {
+		complete[method.Name] = true
+	}
+	if len(complete) != 3 || !complete["Zulu"] || !complete["Alpha"] || !complete["EmbeddedOnly"] {
+		t.Fatalf("complete interface method set lost embedded methods: %#v", semantic.CompleteMethods)
+	}
+	zulu := semantic.ExplicitMethods[0]
+	if len(zulu.Signature.Parameters.Variables) != 1 || zulu.Signature.Parameters.Variables[0].Name != "input" || zulu.Signature.Parameters.Variables[0].Type.Basic.Name != "int" || zulu.Signature.Results.Variables[0].Type.Basic.Name != "string" {
+		t.Fatalf("syntax ordering did not retain the go/types method signature: %#v", zulu.Signature)
+	}
+}
+
+func TestEmbeddingClassificationUsesGoTypesAndSyntaxEvidence(t *testing.T) {
+	root := t.TempDir()
+	modulePath := "example.test/embedding"
+	writeTestFile(t, filepath.Join(root, "go.mod"), "module "+modulePath+"\n\ngo 1.26\n")
+	writeTestFile(t, filepath.Join(root, "embedding.go"), `package embedding
+type Base interface { BaseMethod() }
+type Extra interface { ExtraMethod() }
+type Multi interface {
+	Base
+	Extra
+	OwnMethod()
+}
+type Product struct {
+	Base
+	Count int
+}
+type Constraint interface { ~int }
+`)
+	snapshot := declarationSnapshot(t, root, modulePath)
+
+	multi := requireSemanticUnit(t, snapshot, "type", "Multi")
+	multiSemantic := singleSemanticVariant(t, multi).Type.RHS.Interface
+	if multiSemantic == nil || len(multiSemantic.EmbeddedTypes) != 2 || len(multiSemantic.EmbeddedKinds) != 2 {
+		t.Fatalf("multiple interface embeddings = %#v", multiSemantic)
+	}
+	if multiSemantic.EmbeddedKinds[0] != "interface" || multiSemantic.EmbeddedKinds[1] != "interface" {
+		t.Fatalf("multiple interface embedding classifications = %#v", multiSemantic.EmbeddedKinds)
+	}
+	if len(multi.Members) != 3 || multi.Members[0].Kind != "embeddedInterface" || multi.Members[1].Kind != "embeddedInterface" || multi.Members[2].Kind != "method" {
+		t.Fatalf("multiple interface syntax evidence = %#v", multi.Members)
+	}
+
+	product := requireSemanticUnit(t, snapshot, "type", "Product")
+	productSemantic := singleSemanticVariant(t, product).Type.RHS.Struct
+	if productSemantic == nil || len(productSemantic.Fields) != 2 || !productSemantic.Fields[0].Variable.Embedded {
+		t.Fatalf("embedded struct field evidence = %#v", productSemantic)
+	}
+	if product.Members[0].Kind != "embeddedField" || product.Members[0].TypeExpr == nil || product.Members[0].TypeExpr.Kind != "ident" {
+		t.Fatalf("embedded struct syntax evidence = %#v", product.Members)
+	}
+
+	constraint := singleSemanticVariant(t, requireSemanticUnit(t, snapshot, "type", "Constraint")).Type.RHS.Interface
+	if constraint == nil || len(constraint.EmbeddedKinds) != 1 || constraint.EmbeddedKinds[0] != "typeSet" {
+		t.Fatalf("type-set embedding classification = %#v", constraint)
+	}
+}
+
 func TestDeclarationOnlyImporterRecursesLocallyAndUsesExternalExportData(t *testing.T) {
 	root := t.TempDir()
 	modulePath := "example.test/imports"

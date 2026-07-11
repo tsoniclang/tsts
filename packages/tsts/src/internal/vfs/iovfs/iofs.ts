@@ -287,7 +287,7 @@ export interface ioFS {
  * Go source:
  * var _ FsWithSys = (*ioFS)(nil)
  */
-export const __90decee0_0: FsWithSys = ioFS_as_FsWithSys(undefined);
+export let __90decee0_0: FsWithSys = ioFS_as_FsWithSys(undefined);
 
 export function ioFS_as_vfs_FS(receiver: GoPtr<ioFS>): FS_f717df58 {
   return {

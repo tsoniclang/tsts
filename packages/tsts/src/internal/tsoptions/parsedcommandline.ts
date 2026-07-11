@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import * as fmt from "../../go/fmt.js";
 import * as strings from "../../go/strings.js";
 import type { GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
@@ -210,8 +211,8 @@ export interface SourceOutputAndProjectReference {
  * 	_ outputpaths.OutputPathsHost     = (*ParsedCommandLine)(nil)
  * )
  */
-export const ____696f5a2e_0: ResolvedProjectReference = ParsedCommandLine_as_ResolvedProjectReference(undefined);
-export const ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
+export let ____696f5a2e_0: ResolvedProjectReference = ParsedCommandLine_as_ResolvedProjectReference(undefined);
+export let ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"implemented","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888","bodyHash":"43a5be1ed884944707ac2970bf30706ed5cb68b46a0a1e52efb7b495ca41229a"}
@@ -1042,3 +1043,15 @@ export function ParsedCommandLine_Locale(receiver: GoPtr<ParsedCommandLine>): Lo
   });
   return p.locale;
 }
+
+type ParsedCommandLineJsonFields = JsonFieldNamesForGoStructContract<
+  ParsedCommandLine,
+  "github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::type::ParsedCommandLine",
+  {
+    readonly ParsedConfig: { readonly name: "parsedConfig"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConfigFile: { readonly name: "configFile"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Errors: { readonly name: "errors"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Raw: { readonly name: "raw"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly CompileOnSave: { readonly name: "compileOnSave"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

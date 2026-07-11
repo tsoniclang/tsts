@@ -1152,9 +1152,6 @@ export function Checker_getIterationTypesOfIterableFast(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIterationTypesOfIteratorFast",
-
-/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::IterationTypesResolver.getResolvedIterationTypes","kind":"method","status":"implemented","sigHash":"9bb6856e2dea3a0c5d3cad1ec3a291d20f13c4d6530dbcbfb9de129c60f46093","bodyHash":"34c58e2aceac4a724e8a045c7bfe1585949930bab6b830dd828a403a518b8a1f"}
  *
  * Go source:

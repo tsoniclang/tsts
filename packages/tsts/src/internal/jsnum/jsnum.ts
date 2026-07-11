@@ -295,7 +295,7 @@ export function Number_Abs(receiver: Number): Number {
  * Go source:
  * var negativeZero = Number(math.Copysign(0, -1))
  */
-export const negativeZero: Number = math.Copysign(0, -1) as Number;
+export let negativeZero: Number = math.Copysign(0, -1) as Number;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Remainder","kind":"method","status":"implemented","sigHash":"f9622ca1c6207c341cfd19c4568786ffbd5f8d91763bd8d71063441a4a482de6","bodyHash":"593adc70856ec82537da33fde2831f046fe13a16000ba74fe631c27b882105e6"}

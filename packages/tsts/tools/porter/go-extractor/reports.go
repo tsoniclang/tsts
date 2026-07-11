@@ -237,6 +237,7 @@ type SemanticConstantReport struct {
 
 type SemanticTypeReport struct {
 	Kind          string                       `json:"kind"`
+	Nilable       bool                         `json:"nilable"`
 	Basic         *SemanticBasicTypeReport     `json:"basic,omitempty"`
 	Reference     *SemanticTypeReferenceReport `json:"reference,omitempty"`
 	TypeParameter *SemanticTypeParameterRef    `json:"typeParameter,omitempty"`
@@ -311,6 +312,7 @@ type SemanticStructFieldReport struct {
 type SemanticInterfaceReport struct {
 	ExplicitMethods []SemanticMethodReport `json:"explicitMethods"`
 	EmbeddedTypes   []*SemanticTypeReport  `json:"embeddedTypes"`
+	EmbeddedKinds   []string               `json:"embeddedKinds"`
 	CompleteMethods []SemanticMethodReport `json:"completeMethods"`
 	Comparable      bool                   `json:"comparable"`
 	Implicit        bool                   `json:"implicit"`

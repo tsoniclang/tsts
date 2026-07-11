@@ -59,7 +59,7 @@ export const _ScriptKind_name: string = "ScriptKindUnknownScriptKindJSScriptKind
  * Go source:
  * var _ScriptKind_index = [...]uint8{0, 17, 29, 42, 54, 67, 85, 99, 117}
  */
-export let _ScriptKind_index: GoArray<byte, "..."> = [0, 17, 29, 42, 54, 67, 85, 99, 117];
+export let _ScriptKind_index: GoArray<byte, "9"> = [0, 17, 29, 42, 54, 67, 85, 99, 117];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/scriptkind_stringer_generated.go::method::ScriptKind.String","kind":"method","status":"implemented","sigHash":"4bb4d86ed4f76384f3cc2e5106476df4e622c15b4243be4cba22c999d481ecc2","bodyHash":"8729464a71b5f36b0efdac2c0a40c65b07383cfa148db20d25972a8ed5ff6ec5"}

@@ -309,12 +309,13 @@ function validateType(type, label, issues, scope, ownerPath = "unowned") {
     issues.push(`${label}.kind '${type.kind}' is unknown`);
     return;
   }
-  const expectedKeys = ["kind", payload];
+  const expectedKeys = ["kind", "nilable", payload];
   if (type.kind === "array") expectedKeys.push("length");
   if (type.kind === "channel") expectedKeys.push("direction");
   if (type.kind === "map") expectedKeys.push("key");
   expectedKeys.sort();
   compareExactKeys(type, expectedKeys, label, issues);
+  if (typeof type.nilable !== "boolean") issues.push(`${label}.nilable must be boolean`);
   if (type.kind === "basic") validateBasic(type.basic, `${label}.basic`, issues);
   else if (type.kind === "named" || type.kind === "alias") validateTypeReference(type.reference, `${label}.reference`, issues, scope, ownerPath);
   else if (type.kind === "typeParameter") validateTypeParameterReference(type.typeParameter, `${label}.typeParameter`, issues, scope);
@@ -467,7 +468,7 @@ function validateStruct(structure, label, issues, scope, ownerPath) {
 }
 
 function validateInterface(value, label, issues, scope, ownerPath) {
-  const keys = new Set(["comparable", "completeMethods", "embeddedTypes", "explicitMethods", "implicit", "methodSetOnly"]);
+  const keys = new Set(["comparable", "completeMethods", "embeddedKinds", "embeddedTypes", "explicitMethods", "implicit", "methodSetOnly"]);
   validateSnapshotObject(value, keys, label, issues, keys);
   if (!isObject(value)) return;
   for (const key of ["comparable", "implicit", "methodSetOnly"]) if (typeof value[key] !== "boolean") issues.push(`${label}.${key} must be boolean`);
@@ -477,6 +478,13 @@ function validateInterface(value, label, issues, scope, ownerPath) {
     for (const [index, method] of (Array.isArray(value[key]) ? value[key] : []).entries()) validateMethod(method, `${label}.${key}[${index}]`, issues, scope, ownerPath, role, index);
   }
   if (!Array.isArray(value.embeddedTypes)) issues.push(`${label}.embeddedTypes must be an array`);
+  if (!Array.isArray(value.embeddedKinds)) issues.push(`${label}.embeddedKinds must be an array`);
+  if (Array.isArray(value.embeddedTypes) && Array.isArray(value.embeddedKinds) && value.embeddedTypes.length !== value.embeddedKinds.length) {
+    issues.push(`${label}.embeddedKinds must have one entry per embedded type`);
+  }
+  for (const [index, kind] of (Array.isArray(value.embeddedKinds) ? value.embeddedKinds : []).entries()) {
+    if (kind !== "interface" && kind !== "typeSet") issues.push(`${label}.embeddedKinds[${index}] must be 'interface' or 'typeSet'`);
+  }
   for (const [index, embedded] of (Array.isArray(value.embeddedTypes) ? value.embeddedTypes : []).entries()) validateType(embedded, `${label}.embeddedTypes[${index}]`, issues, scope, `${ownerPath}::embedded::${index}`);
 }
 
