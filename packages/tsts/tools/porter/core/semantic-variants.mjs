@@ -76,8 +76,9 @@ function orderObject(value) {
 }
 
 function orderTypeDeclaration(value) {
-  return ordered(value, ["alias", "object", "typeParameters", "rhs"], {
+  return ordered(value, ["alias", "object", "typeParameters", "rhs", "methods"], {
     object: orderObject, typeParameters: (items) => mapItems(items, orderTypeParameter), rhs: orderType,
+    methods: (items) => mapItems(items, orderMethod),
   });
 }
 
@@ -92,7 +93,7 @@ function orderValueBinding(value) {
 }
 
 function orderType(value) {
-  return ordered(value, ["kind", "basic", "reference", "typeParameter", "element", "key", "length", "direction", "signature", "tuple", "struct", "interface", "union"], {
+  return ordered(value, ["kind", "nilable", "basic", "reference", "typeParameter", "element", "key", "length", "direction", "signature", "tuple", "struct", "interface", "union"], {
     basic: (item) => ordered(item, ["name", "untyped"]), reference: orderTypeReference, typeParameter: orderTypeParameterReference,
     element: orderType, key: orderType, signature: orderSignature, tuple: orderTuple,
     struct: (item) => ordered(item, ["fields"], { fields: (items) => mapItems(items, orderStructField) }),

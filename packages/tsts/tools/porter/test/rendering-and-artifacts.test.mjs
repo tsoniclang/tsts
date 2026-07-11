@@ -21,7 +21,6 @@ import {
   matchGlob,
   policyFor,
   renderExpectedGeneratedArtifacts,
-  renderExternalFacadeModules,
   renderStub,
   renderUnitGroup,
   renderStatusMarkdown,
@@ -69,10 +68,7 @@ import {
   fileRecord,
   funcType,
   identType,
-  instantiationType,
   interfaceType,
-  mapType,
-  pointerType,
   semanticFunctionDeclaration,
   selectorType,
   sliceType,
@@ -83,6 +79,13 @@ import {
 } from "./helpers.mjs";
 
 test("renderUnitGroup emits higher-order function and inline interface signatures", () => {
+  const config = { ...baseConfig, goModulePath: "m" };
+  const debugPackage = "m/internal/debug";
+  const debugOwner = `${debugPackage}::func::FailBadSyntaxKind`;
+  const kindOwner = `${debugOwner}::signature::parameters::0::type`;
+  const kindInterface = semanticInterfaceType([
+    semanticMethod(`${kindOwner}::explicitMethod::0::KindString`, kindOwner, "KindString", [], [{ name: "", type: semanticBasicType("string") }]),
+  ]);
   const nodeAssert = unitRecord({
     id: "m::internal/debug/debug.go::func::FailBadSyntaxKind",
     kind: "func",
@@ -98,7 +101,17 @@ test("renderUnitGroup emits higher-order function and inline interface signature
       },
       { names: ["message"], type: identType("any"), variadic: true },
     ],
+    semantic: semanticFunctionFixture(debugPackage, "FailBadSyntaxKind", [
+      { name: "node", type: kindInterface },
+      { name: "message", type: semanticSliceType(semanticAnyType()) },
+    ], { variadic: true }),
   });
+  const collectionsPackage = "m/internal/collections";
+  const diffOwner = `${collectionsPackage}::func::DiffOrderedMapsFunc`;
+  const keyParameter = semanticTypeParameter(diffOwner, 0, "K", semanticConstraintType(true));
+  const valueParameter = semanticTypeParameter(diffOwner, 1, "V");
+  const keyType = semanticTypeParameterType(keyParameter.reference);
+  const valueType = semanticTypeParameterType(valueParameter.reference);
   const diffFunc = unitRecord({
     id: "m::internal/collections/ordered_map.go::func::DiffOrderedMapsFunc",
     kind: "func",
@@ -109,32 +122,40 @@ test("renderUnitGroup emits higher-order function and inline interface signature
       { name: "K", constraint: identType("comparable") },
       { name: "V", constraint: identType("any") },
     ],
+    typeParameters: ["K", "V"],
     parameters: [
       { names: ["equalValues"], type: funcType([{ names: ["a"], type: identType("V") }, { names: ["b"], type: identType("V") }], [{ type: identType("bool") }]) },
       { names: ["onAdded"], type: funcType([{ names: ["key"], type: identType("K") }, { names: ["value"], type: identType("V") }], []) },
     ],
+    semantic: semanticFunctionFixture(collectionsPackage, "DiffOrderedMapsFunc", [
+      { name: "equalValues", type: semanticFunctionType(`${diffOwner}::signature::parameters::0::type`, collectionsPackage, [{ name: "a", type: valueType }, { name: "b", type: valueType }], [{ name: "", type: semanticBasicType("bool") }]) },
+      { name: "onAdded", type: semanticFunctionType(`${diffOwner}::signature::parameters::1::type`, collectionsPackage, [{ name: "key", type: keyType }, { name: "value", type: valueType }], []) },
+    ], { typeParameters: [keyParameter, valueParameter] }),
   });
   const debugText = renderUnitGroup(
-    baseConfig,
-    snapshotWith([fileRecord({ path: "internal/debug/debug.go", units: [nodeAssert] })]),
+    config,
+    snapshotWith([fileRecord({ path: "internal/debug/debug.go", importPath: debugPackage, units: [nodeAssert] })]),
     "packages/tsts/src/internal/debug/debug.ts",
     [nodeAssert],
   );
   const diffText = renderUnitGroup(
-    baseConfig,
-    snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", units: [diffFunc] })]),
+    config,
+    snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", importPath: collectionsPackage, units: [diffFunc] })]),
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [diffFunc],
   );
-  assert.match(debugText, /node: \{ KindString: \(\) => string \}, \.\.\.message: Array<unknown>/);
-  assert.match(diffText, /equalValues: \(a: V, b: V\) => bool/);
-  assert.match(diffText, /onAdded: \(key: K, value: V\) => void/);
+  assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, \.\.\.message: GoInterface<unknown>\[\]/);
+  assert.match(diffText, /equalValues: GoFunc<\(a: V, b: V\) => bool>/);
+  assert.match(diffText, /onAdded: GoFunc<\(key: K, value: V\) => void>/);
 });
 
 test("renderUnitGroup resolves Go external types through generated facades", () => {
+  const config = { ...baseConfig, goModulePath: "m" };
+  const packagePath = "m/internal/diagnosticwriter";
+  const optionsPackage = "example.com/options";
   const parameters = [
     { names: ["writer"], type: selectorType("io", "Writer") },
-    { names: ["opts"], type: sliceType(selectorType("json", "Options")), variadic: true },
+    { names: ["opts"], type: sliceType(selectorType("options", "Options")), variadic: true },
   ];
   const diagnosticWriter = unitRecord({
     id: "m::internal/diagnosticwriter/diagnosticwriter.go::func::WriteFlattenedDiagnosticMessage",
@@ -143,39 +164,42 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
     qualifiedName: "WriteFlattenedDiagnosticMessage",
     goPath: "internal/diagnosticwriter/diagnosticwriter.go",
     parameters,
-    semantic: semanticFunctionDeclaration({
-      name: "WriteFlattenedDiagnosticMessage",
-      packagePath: "github.com/microsoft/typescript-go/internal/diagnosticwriter",
-      parameters,
-      packages: { io: "io", json: "github.com/go-json-experiment/json" },
-    }),
+    semantic: semanticFunctionFixture(packagePath, "WriteFlattenedDiagnosticMessage", [
+      { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
+      { name: "opts", type: semanticSliceType(semanticNamedType(`${optionsPackage}::type::Options`, optionsPackage, "Options")) },
+    ], { variadic: true }),
   });
   const snapshot = snapshotWith([
     fileRecord({
       path: "internal/diagnosticwriter/diagnosticwriter.go",
-      importPath: "github.com/microsoft/typescript-go/internal/diagnosticwriter",
+      importPath: packagePath,
       imports: [
         { path: "io" },
-        { name: "json", path: "github.com/go-json-experiment/json" },
+        { name: "options", path: optionsPackage },
       ],
       units: [diagnosticWriter],
     }),
   ]);
+  snapshot.semantic.externalDeclarations = [
+    writerTypeFixture(),
+    semanticTypeFixture(optionsPackage, "Options", semanticStructType([])),
+  ];
   const text = renderUnitGroup(
-    baseConfig,
+    config,
     snapshot,
     "packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts",
     [diagnosticWriter],
   );
 
   assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
-  assert.match(text, /import type \{ Options \} from "\.\.\/\.\.\/go\/github\.com\/go-json-experiment\/json\.js";/);
-  assert.match(text, /writer: Writer/);
+  assert.match(text, /import type \{ Options \} from "\.\.\/\.\.\/go\/example\.com\/options\.js";/);
+  assert.match(text, /writer: GoInterface<Writer>/);
   assert.match(text, /\.\.\.opts: Options\[\]/);
   assert.doesNotMatch(text, /GoExternal/);
 });
 
 test("renderUnitGroup imports symbols from semantic split targets", () => {
+  const packagePath = "m/internal/checker";
   const checkerType = unitRecord({
     id: "m::internal/checker/checker.go::type::Checker",
     kind: "type",
@@ -193,9 +217,13 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
     parameters: [
       { names: ["checker"], type: selectorType("checker", "Checker") },
     ],
+    semantic: semanticFunctionFixture(packagePath, "NewEmitResolver", [
+      { name: "checker", type: semanticNamedType(`${packagePath}::type::Checker`, packagePath, "Checker") },
+    ]),
   });
   const config = {
     ...baseConfig,
+    goModulePath: "m",
     largeFileSplitPlan: {
       schemaVersion: 1,
       files: {
@@ -215,14 +243,14 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
   const snapshot = snapshotWith([
     fileRecord({
       path: "internal/checker/checker.go",
-      importPath: "github.com/microsoft/typescript-go/internal/checker",
+      importPath: packagePath,
       lineCount: 6000,
       units: [checkerType],
     }),
     fileRecord({
       path: "internal/checker/emitresolver.go",
-      importPath: "github.com/microsoft/typescript-go/internal/checker",
-      imports: [{ name: "checker", path: "github.com/microsoft/typescript-go/internal/checker" }],
+      importPath: packagePath,
+      imports: [{ name: "checker", path: packagePath }],
       units: [emitResolverFactory],
     }),
   ]);
@@ -249,13 +277,14 @@ test("renderUnitGroup uses canonical declaration value types", () => {
     goPath: "internal/ast/kind_generated.go",
     typeKind: "named",
     typeExpression: identType("int32"),
+    semantic: [semanticTypeFixture("m/internal/ast", "Kind", semanticBasicType("int32"))],
   });
   const values = withoutSyntacticValueTypes(unitRecord({
-    id: "m::internal/api/proto.go::constGroup::handlePrefixProject+limit",
+    id: "m::internal/ast/kind_generated.go::constGroup::handlePrefixProject+limit",
     kind: "constGroup",
     name: "handlePrefixProject+limit",
     qualifiedName: "handlePrefixProject+limit",
-    goPath: "internal/api/proto.go",
+    goPath: "internal/ast/kind_generated.go",
     valueSpecs: [
       { names: ["handlePrefixProject"], type: identType("rune") },
       { names: ["limit"], type: identType("int") },
@@ -273,11 +302,11 @@ test("renderUnitGroup uses canonical declaration value types", () => {
     ],
   }));
   const channels = withoutSyntacticValueTypes(unitRecord({
-    id: "m::internal/scanner/scanner.go::varGroup::done+factory+err",
+    id: "m::internal/ast/kind_generated.go::varGroup::done+factory+err",
     kind: "varGroup",
     name: "done+factory+err",
     qualifiedName: "done+factory+err",
-    goPath: "internal/scanner/scanner.go",
+    goPath: "internal/ast/kind_generated.go",
     valueSpecs: [
       { names: ["done"], type: channelType(identType("int")) },
       { names: ["factory"], type: funcType([{ names: ["x"], type: identType("int") }], [{ type: identType("string") }]) },
@@ -296,7 +325,7 @@ test("renderUnitGroup uses canonical declaration value types", () => {
   assert.match(text, /export const KindEqualsToken: Kind = undefined as never;/);
   assert.match(text, /export const KindFirstAssignment: Kind = undefined as never;/);
   assert.match(text, /export let done: GoChan<int, "bidirectional"> = undefined as never;/);
-  assert.match(text, /export let factory: \(x: int\) => string = undefined as never;/);
+  assert.match(text, /export let factory: GoFunc<\(x: int\) => string> = undefined as never;/);
   assert.match(text, /export let err: GoError = undefined as never;/);
 });
 
@@ -306,62 +335,6 @@ function withoutSyntacticValueTypes(unit) {
     valueSpecs: unit.valueSpecs.map(({ type: _type, ...specification }) => specification),
   };
 }
-
-test("renderExternalFacadeModules generates canonical facade modules for observed externals", () => {
-  const parameters = [
-    { names: ["writer"], type: selectorType("io", "Writer") },
-    { names: ["option"], type: selectorType("json", "Options") },
-    { names: ["marshaler"], type: selectorType("encoding", "TextMarshaler") },
-    { names: ["sequence"], type: instantiationType(selectorType("iter", "Seq"), [identType("string")]) },
-  ];
-  const unit = unitRecord({
-    id: "m::internal/json/json.go::func::MarshalWrite",
-    kind: "func",
-    name: "MarshalWrite",
-    qualifiedName: "MarshalWrite",
-    goPath: "internal/json/json.go",
-    parameters,
-    semantic: semanticFunctionDeclaration({
-      name: "MarshalWrite",
-      packagePath: "github.com/microsoft/typescript-go/internal/json",
-      parameters,
-      packages: { encoding: "encoding", io: "io", iter: "iter", json: "github.com/go-json-experiment/json" },
-    }),
-  });
-  const snapshot = snapshotWith([
-    fileRecord({
-      path: "internal/json/json.go",
-      importPath: "github.com/microsoft/typescript-go/internal/json",
-      imports: [
-        { path: "io", packageName: "io" },
-        { path: "encoding", packageName: "encoding" },
-        { path: "iter", packageName: "iter" },
-        { name: "json", path: "github.com/go-json-experiment/json", packageName: "json" },
-      ],
-      units: [unit],
-    }),
-  ]);
-
-  const facades = buildExternalFacadeMap(baseConfig, snapshot);
-  assert.equal(facades.get("io.Writer").tsModule, "go/io.ts");
-  assert.equal(facades.get("github.com/go-json-experiment/json.Options").tsModule, "go/github.com/go-json-experiment/json.ts");
-  assert.equal(facades.get("encoding.TextMarshaler").kind, "interface");
-  assert.ok(!facades.has("iter.Seq"), "standard Go sequence types map to GoSeq instead of runtime facades");
-  assert.ok(!facades.has("path/filepath.Join"));
-  assert.ok(!facades.has("os.PathSeparator"));
-
-  const modules = renderExternalFacadeModules(baseConfig, snapshot);
-  assert.match(modules.get("go/io.ts"), /export interface Writer/);
-  assert.match(modules.get("go/io.ts"), /Write\(p: GoSlice<byte>\): \[int, GoError\]/);
-  assert.match(modules.get("go/time.ts"), /export type Duration = long;/);
-  assert.match(modules.get("go/github.com/go-json-experiment/json.ts"), /export interface Options/);
-  assert.match(modules.get("go/encoding.ts"), /export interface TextMarshaler/);
-  assert.match(modules.get("go/encoding.ts"), /MarshalText\(\): \[GoSlice<byte>, GoError\]/);
-  assert.equal(modules.has("go/iter.ts"), false);
-  assert.equal(modules.has("go/path/filepath.ts"), false);
-  assert.equal(modules.has("go/os.ts"), false);
-  assert.doesNotMatch(modules.get("go/github.com/go-json-experiment/json.ts"), /GoExternal/);
-});
 
 test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata", () => {
   const snapshot = snapshotWith([]);
@@ -383,7 +356,7 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
   assert.match(compat, /export function GoInterfaceTryAssert<T>/);
   assert.match(compat, /export function GoInterfaceAssert<T>/);
-  assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T/);
+  assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): NonNullable<GoChan<T>>/);
   assert.match(compat, /export function GoRequireNonNilAfterSuccess<T>/);
   assert.match(compat, /export function GoMapLookup<K, V>/);
   assert.match(compat, /export function GoChanSelect\(cases: readonly GoChanSelectCase\[\]\)/);
@@ -394,60 +367,44 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function GoChanClose<T>\(channel: GoChan<T, string>\): void/);
 });
 
-test("external value facades render explicit host-native initializers from policy", () => {
-  const config = {
-    ...baseConfig,
-    externalFacadePolicies: [
-      {
-        goName: "syscall.SIGINT",
-        tsModule: "go/syscall.ts",
-        tsName: "SIGINT",
-        kind: "value",
-        arity: 0,
-        tsInitializer: '"SIGINT"',
-      },
-    ],
-  };
-  const snapshot = snapshotWith([]);
-  assert.match(renderExternalFacadeModules(config, snapshot).get("go/syscall.ts"), /export const SIGINT = "SIGINT";/);
-
-  assert.throws(
-    () => buildExternalFacadeMap({
-      ...baseConfig,
-      externalFacadePolicies: [{ goName: "syscall.Signal", kind: "functionValue", tsInitializer: '"wrong"' }],
-    }, snapshotWith([])),
-    /may declare tsInitializer only when kind is 'value'/,
-  );
-});
-
 test("host-native source signatures create only declaration-level facade obligations", () => {
+  const packagePath = "example.com/main/internal/native";
   const config = {
     ...baseConfig,
+    goModulePath: "example.com/main",
     policies: [
       { match: "internal/native/**", category: "host-native", reason: "Node host boundary" },
       ...baseConfig.policies,
     ],
+    externalFacadePolicies: [{
+      objectId: "example.com/syscall::type::Handle",
+      tsModule: "go/example.com/syscall.ts",
+      tsName: "Handle",
+      storageStrategy: "generated",
+    }],
   };
   const snapshot = snapshotWith([
     fileRecord({
       path: "internal/native/path.go",
-      importPath: "example/native",
+      importPath: packagePath,
       imports: [{ path: "example.com/syscall", packageName: "syscall" }],
       units: [unitRecord({
+        id: "example.com/main::internal/native/path.go::func::Fail",
         goPath: "internal/native/path.go",
         parameters: [{ names: ["handle"], type: selectorType("syscall", "Handle") }],
         semantic: semanticFunctionDeclaration({
           name: "Fail",
-          packagePath: "example/native",
+          packagePath,
           parameters: [{ names: ["handle"], type: selectorType("syscall", "Handle") }],
           packages: { syscall: "example.com/syscall" },
         }),
       })],
     }),
   ]);
+  snapshot.semantic.externalDeclarations = [semanticTypeFixture("example.com/syscall", "Handle", semanticBasicType("uintptr"))];
 
   const facades = buildExternalFacadeMap(config, snapshot);
-  assert.ok(facades.has("example.com/syscall.Handle"), "host-native source signatures remain facade obligations");
+  assert.ok(facades.has("example.com/syscall::type::Handle"), "host-native source signatures remain exact facade obligations");
 });
 
 test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, and invalid generated files", () => {
@@ -473,7 +430,7 @@ test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, an
     writeFileSync(path.join(generatedRoot, "bad.ts"), "// Code generated by TSTS porter. DO NOT EDIT.\n// @tsgo-generated {bad-json}\n\nexport {}\n");
     const orphan = renderExpectedGeneratedArtifacts(config, snapshot).get(`${config.tsRoot}/go/compat.ts`).replace('"path":"go/compat.ts"', '"path":"go/orphan.ts"');
     writeFileSync(path.join(generatedRoot, "orphan.ts"), orphan);
-    rmSync(path.join(generatedRoot, "io.ts"), { force: true });
+    rmSync(path.join(generatedRoot, "scalars.ts"), { force: true });
 
     const broken = buildGeneratedArtifactStatus(config, snapshot);
     assert.equal(broken.missing.length, 1);
@@ -546,19 +503,19 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
       ...baseConfig,
       tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
       authoredFacadeModules: ["go/io.ts"],
+      externalFacadePolicies: [{ objectId: "io::type::Writer", tsModule: "go/io.ts", tsName: "Writer", storageStrategy: "authored" }],
     };
     const snapshot = snapshotWith([fileRecord({
       imports: [{ path: "io" }],
       units: [unitRecord({
+        id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail",
         parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
-        semantic: semanticFunctionDeclaration({
-          name: "Fail",
-          packagePath: "github.com/microsoft/typescript-go/internal/debug",
-          parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
-          packages: { io: "io" },
-        }),
+        semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "Fail", [
+          { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
+        ]),
       })],
     })]);
+    snapshot.semantic.externalDeclarations = [writerTypeFixture()];
     const generatedRoot = path.join(root, "src/go");
     mkdirSync(generatedRoot, { recursive: true });
 
@@ -581,7 +538,7 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     assert.deepEqual(missingSymbol.unresolved.map((entry) => entry.symbol), ["io.Writer"]);
     assert.match(missingSymbol.unresolved[0].reason, /exact type symbol 'Writer'/);
 
-    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\n");
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: GoSlice<byte>): [int, GoError]; }\n");
     assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot), { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] });
 
     // An authored module that still carries @tsgo-generated metadata is invalid (never both).
@@ -596,3 +553,43 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+function semanticFunctionFixture(packagePath, name, parameters, { typeParameters = [], variadic = false } = {}) {
+  const objectId = `${packagePath}::func::${name}`;
+  const signature = semanticSignature(`${objectId}::signature`, packagePath, parameters, [], typeParameters, variadic);
+  const objectSignature = semanticSignature(`${objectId}::type`, packagePath, parameters, [], typeParameters, variadic);
+  const object = { id: objectId, name, packagePath, exported: true, type: { kind: "signature", nilable: true, signature: objectSignature } };
+  return [{ kind: "func", packagePath, object, signature, profiles: [0] }];
+}
+function semanticFunctionType(ownerId, packagePath, parameters, results) { return { kind: "signature", nilable: true, signature: semanticSignature(ownerId, packagePath, parameters, results) }; }
+function semanticSignature(ownerId, packagePath, parameters, results, typeParameters = [], variadic = false) {
+  const variables = (entries, role) => ({ variables: entries.map((entry, index) => ({ id: `${ownerId}::${role}::${index}`, name: entry.name, packagePath, exported: false, type: entry.type })) });
+  return { receiverTypeParameters: [], typeParameters, parameters: variables(parameters, "parameters"), results: variables(results, "results"), variadic };
+}
+function semanticTypeParameter(ownerId, index, name, constraint = semanticAnyType()) { return { reference: { ownerId, role: "type", index, name }, constraint }; }
+function semanticTypeParameterType(reference) { return { kind: "typeParameter", nilable: false, typeParameter: reference }; }
+function semanticTypeFixture(packagePath, name, rhs) {
+  const objectId = `${packagePath}::type::${name}`;
+  const object = { id: objectId, name, packagePath, exported: true, type: semanticNamedType(objectId, packagePath, name, rhs.nilable) };
+  return { kind: "type", packagePath, object, type: { alias: false, object, typeParameters: [], rhs, methods: [] }, profiles: [0] };
+}
+function writerTypeFixture() {
+  const ownerId = "io::type::Writer::rhs";
+  return semanticTypeFixture("io", "Writer", semanticInterfaceType([
+    semanticMethod(`${ownerId}::explicitMethod::0::Write`, ownerId, "Write", [{ name: "p", type: semanticSliceType(semanticBasicType("byte")) }], [
+      { name: "", type: semanticBasicType("int") },
+      { name: "", type: semanticNamedType("builtin::type::error", "", "error", true) },
+    ]),
+  ]));
+}
+function semanticMethod(id, ownerId, name, parameters, results) {
+  const packagePath = id.slice(0, id.indexOf("::"));
+  return { id, ownerId, name, packagePath, exported: true, signature: semanticSignature(`${id}::signature`, packagePath, parameters, results) };
+}
+function semanticInterfaceType(explicitMethods) { return { kind: "interface", nilable: true, interface: { explicitMethods, embeddedTypes: [], embeddedKinds: [], completeMethods: explicitMethods, comparable: false, implicit: false, methodSetOnly: true } }; }
+function semanticConstraintType(comparable) { return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable, implicit: true, methodSetOnly: false } }; }
+const semanticAnyType = () => semanticConstraintType(false);
+const semanticBasicType = (name) => ({ kind: "basic", nilable: false, basic: { name, untyped: false } });
+const semanticNamedType = (objectId, packagePath, name, nilable = false) => ({ kind: "named", nilable, reference: { objectId, packagePath, name, typeArgs: [] } });
+const semanticSliceType = (element) => ({ kind: "slice", nilable: true, element });
+const semanticStructType = (fields) => ({ kind: "struct", nilable: false, struct: { fields } });

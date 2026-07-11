@@ -114,17 +114,20 @@ test("semantic expected signatures canonicalize source type-set evidence", () =>
           reference,
           constraint: {
             kind: "interface",
+            nilable: true,
             interface: {
               explicitMethods: [],
               embeddedTypes: [{
                 kind: "union",
+                nilable: false,
                 union: {
                   terms: [
-                    { tilde: true, type: { kind: "basic", basic: { name: "int32", untyped: false } } },
-                    { tilde: true, type: { kind: "basic", basic: { name: "uint32", untyped: false } } },
+                    { tilde: true, type: { kind: "basic", nilable: false, basic: { name: "int32", untyped: false } } },
+                    { tilde: true, type: { kind: "basic", nilable: false, basic: { name: "uint32", untyped: false } } },
                   ],
                 },
               }],
+              embeddedKinds: ["typeSet"],
               completeMethods: [],
               comparable: true,
               implicit: true,

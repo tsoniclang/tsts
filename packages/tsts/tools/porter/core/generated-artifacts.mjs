@@ -28,7 +28,7 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
   const facades = buildExternalFacadeMap(config, snapshot);
   const authoredObligations = [];
   for (const usage of collectExternalTypeUsages(config, snapshot)) {
-    const facade = facades.get(usage.goName);
+    const facade = facades.get(usage.objectId);
     if (facade === undefined) continue;
     const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
     if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath, usage });
@@ -44,9 +44,9 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
     if (moduleExports?.error === undefined && exported?.[obligation.namespace] === true) continue;
     unresolved.push({
       path: obligation.relativePath,
-      symbol: obligation.usage.goName,
+      symbol: obligation.usage.goDisplayName,
       reason: moduleExports?.error
-        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.usage.goName}'.`,
+        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.usage.objectId}'.`,
     });
   }
 

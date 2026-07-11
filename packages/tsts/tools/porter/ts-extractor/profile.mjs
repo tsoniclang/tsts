@@ -7,7 +7,6 @@
 // parser supplies a parser adapter. Everything else below is config.)
 
 import { loadConventions } from "./conventions.mjs";
-import { descriptorShapeIssue, typeDescriptorChildren } from "./type-descriptors.mjs";
 
 export const TSTS_PROFILE = {
   annotation: { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" },
@@ -24,8 +23,11 @@ export const TSTS_PROFILE = {
     core: "packages/tsts/src/go/scalars.ts",
     compat: "packages/tsts/src/go/compat.ts",
   },
-  // Go composite kinds -> bridge generic name (resolved in `modules.compat`).
-  bridge: { pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray", map: "GoMap", chan: "GoChan" },
+  // Go representation carriers -> exact generic name (resolved in `modules.compat`).
+  bridge: {
+    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+    map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface", unsafePointer: "GoUnsafePointer",
+  },
   primitives: {
     keyword: { string: "string", any: "unknown" },
     core: {
@@ -39,11 +41,11 @@ export const TSTS_PROFILE = {
     bigintBasics: ["uint64"],
     bigintNamedTypes: [],
   },
-  // Qualified Go stdlib types that map to compat helpers (pkg.Name -> compat name).
+  // Exact Go stdlib type object identity -> exact TypeScript storage identity.
   stdlibTypes: {
-    "iter.Seq": "GoSeq", "iter.Seq2": "GoSeq2",
-    "cmp.Ordered": "GoOrdered", "constraints.Ordered": "GoOrdered",
-    "unsafe.Pointer": "GoUnsafePointer",
+    "iter::type::Seq": "packages/tsts/src/go/compat.ts::GoSeq",
+    "iter::type::Seq2": "packages/tsts/src/go/compat.ts::GoSeq2",
+    "cmp::type::Ordered": "packages/tsts/src/go/compat.ts::GoOrdered",
   },
   // Stdlib/runtime package -> facade module path. {importPath} is the full Go
   // import path (e.g. sync/atomic -> packages/tsts/src/go/sync/atomic.ts).
@@ -56,8 +58,7 @@ export const TSTS_PROFILE = {
     "packages/tsts/src/internal/ast/visitor.ts::NodeVisitor": "packages/tsts/src/internal/ast/spine.ts::NodeVisitor",
     "packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache",
   },
-  // Exact Go named-type identities supplied by authored internal host-native
-  // modules rather than tracked or generated mechanical-port declarations.
+  // Exact Go type object identity -> exact authored TypeScript storage identity.
   namedTypeMappings: {},
   conventions: {
     goConstraintId: "packages/tsts/src/go/compat.ts::GoConstraint",
@@ -79,55 +80,7 @@ export const TSTS_PROFILE = {
   jsonTags: {
     contractModules: ["packages/tsts/src/internal/json/json.ts"],
   },
-  // External Go interface aliases whose zero value is nil and therefore may be
-  // represented as GoPtr<Alias> in the TypeScript port.
-  externalInterfaceMembers: {
-    "io/fs.FileInfo": [
-      { name: "Name", type: exactFunctionType({ t: "kw", kw: "string" }) },
-      { name: "Size", type: exactFunctionType({ t: "ref", id: "packages/tsts/src/go/scalars.ts::int", args: [] }) },
-      { name: "Mode", type: exactFunctionType({ t: "ref", id: "packages/tsts/src/go/io/fs.ts::FileMode", args: [] }) },
-      { name: "ModTime", type: exactFunctionType({ t: "ref", id: "packages/tsts/src/go/time.ts::Time", args: [] }) },
-      { name: "IsDir", type: exactFunctionType({ t: "ref", id: "packages/tsts/src/go/scalars.ts::bool", args: [] }) },
-      { name: "Sys", type: exactFunctionType({ t: "kw", kw: "unknown" }) }
-    ]
-  },
-  // Exact return/value types for authored Go facades. These are explicit
-  // facade contracts, not name guesses; internal TS-Go symbols still resolve
-  // from the Go snapshot.
-  externalFunctionReturns: {
-    "regexp.MustCompile": { module: "packages/tsts/src/go/regexp.ts", name: "Regexp" },
-    "strings.NewReplacer": { module: "packages/tsts/src/go/strings.ts", name: "Replacer" },
-    "reflect.TypeFor": { module: "packages/tsts/src/go/reflect.ts", name: "Type" },
-  },
-  externalValueTypes: {
-    "fs.ErrInvalid": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrPermission": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrNotExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrClosed": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.SkipAll": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.SkipDir": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "jsontext.BeginArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Token" },
-    "jsontext.BeginObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Token" },
-    "jsontext.EndArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Token" },
-    "jsontext.EndObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Token" },
-    "jsontext.Null": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Token" },
-    "math.MaxInt": { module: "packages/tsts/src/go/scalars.ts", name: "int" },
-    "time.Millisecond": { module: "packages/tsts/src/go/time.ts", name: "Duration" },
-  },
 };
-
-function exactFunctionType(ret) {
-  return {
-    t: "fn",
-    params: [],
-    ret,
-    missingReturnType: false,
-    returnTypePolicy: "required",
-    typeParams: [],
-    signatureModifiers: [],
-  };
-}
 
 function isPlainObject(v) {
   return v && typeof v === "object" && !Array.isArray(v) && [Object.prototype, null].includes(Object.getPrototypeOf(v));
@@ -150,7 +103,7 @@ export function loadProfile(config) {
     ["annotation", ["tag", "idSeparator", "methodNameJoin"]],
     ["parser", ["distRoot", "freshnessSrcDirs"]],
     ["modules", ["core", "compat"]],
-    ["bridge", ["pointer", "ref", "slice", "array", "map", "chan"]],
+    ["bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
     ["primitives", ["keyword", "core", "compat"]],
     ["constantRepresentations", ["bigintBasics", "bigintNamedTypes"]],
     ["conventions", ["goConstraintId", "equivalences"]],
@@ -173,7 +126,7 @@ function validateProfile(profile) {
   requireKnownKeys(profile, new Set(Object.keys(TSTS_PROFILE)), "signatureCheck");
   requireStringRecord(profile.annotation, "signatureCheck.annotation", ["tag", "idSeparator", "methodNameJoin"]);
   requireStringRecord(profile.modules, "signatureCheck.modules", ["core", "compat"]);
-  requireStringRecord(profile.bridge, "signatureCheck.bridge", ["pointer", "ref", "slice", "array", "map", "chan"]);
+  requireStringRecord(profile.bridge, "signatureCheck.bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]);
   requirePlainRecord(profile.parser, "signatureCheck.parser");
   requireNonEmptyString(profile.parser.distRoot, "signatureCheck.parser.distRoot");
   requireStringArray(profile.parser.freshnessSrcDirs, "signatureCheck.parser.freshnessSrcDirs");
@@ -182,7 +135,7 @@ function validateProfile(profile) {
   requirePlainRecord(profile.constantRepresentations, "signatureCheck.constantRepresentations");
   requireStringArray(profile.constantRepresentations.bigintBasics, "signatureCheck.constantRepresentations.bigintBasics");
   requireStringArray(profile.constantRepresentations.bigintNamedTypes, "signatureCheck.constantRepresentations.bigintNamedTypes");
-  requireStringRecord(profile.stdlibTypes, "signatureCheck.stdlibTypes");
+  validateTypeStorageMappings(profile.stdlibTypes, "signatureCheck.stdlibTypes");
   requireNonEmptyString(profile.facadeTemplate, "signatureCheck.facadeTemplate");
   if (!profile.facadeTemplate.includes("{importPath}")) throw new Error("signatureCheck.facadeTemplate must contain {importPath}");
   requireStringRecord(profile.canonicalTypeAliases, "signatureCheck.canonicalTypeAliases");
@@ -190,51 +143,51 @@ function validateProfile(profile) {
     if (!source.includes("::") || !target.includes("::")) throw new Error("signatureCheck.canonicalTypeAliases entries must use full module/name identities");
   }
   validateNamedTypeMappings(profile.namedTypeMappings);
+  validateStorageAgreement(profile);
   loadConventions(profile.conventions);
   requireStringArray(profile.allowedGlobals, "signatureCheck.allowedGlobals");
   requirePlainRecord(profile.jsonTags, "signatureCheck.jsonTags");
   requireStringArray(profile.jsonTags.contractModules, "signatureCheck.jsonTags.contractModules");
-  validateExternalInterfaceMembers(profile.externalInterfaceMembers);
-  validateExternalReferences(profile.externalFunctionReturns, "signatureCheck.externalFunctionReturns");
-  validateExternalReferences(profile.externalValueTypes, "signatureCheck.externalValueTypes");
 }
 
 function validateNamedTypeMappings(value) {
-  requirePlainRecord(value, "signatureCheck.namedTypeMappings");
-  for (const [identity, reference] of Object.entries(value)) {
-    const separator = identity.lastIndexOf(".");
-    if (separator <= 0 || separator === identity.length - 1 || /\s/.test(identity)) {
-      throw new Error(`signatureCheck.namedTypeMappings key '${identity}' must be one full Go package.Type identity`);
-    }
-    requireStringRecord(reference, `signatureCheck.namedTypeMappings.${identity}`, ["module", "name"]);
-  }
+  validateTypeStorageMappings(value, "signatureCheck.namedTypeMappings");
 }
 
-function validateExternalInterfaceMembers(value) {
-  requirePlainRecord(value, "signatureCheck.externalInterfaceMembers");
-  for (const [identity, members] of Object.entries(value)) {
-    if (!Array.isArray(members)) throw new Error(`signatureCheck.externalInterfaceMembers.${identity} must be an array`);
-    for (const [index, member] of members.entries()) {
-      const label = `signatureCheck.externalInterfaceMembers.${identity}[${index}]`;
-      requireKnownKeys(member, new Set(["name", "type"]), label);
-      requireNonEmptyString(member.name, `${label}.name`);
-      requireExactTypeDescriptor(member.type, `${label}.type`);
-    }
-  }
-}
-
-function validateExternalReferences(value, label) {
+function validateTypeStorageMappings(value, label) {
   requirePlainRecord(value, label);
-  for (const [identity, reference] of Object.entries(value)) {
-    const entryLabel = `${label}.${identity}`;
-    requireStringRecord(reference, entryLabel, ["module", "name"]);
+  for (const [objectId, storage] of Object.entries(value)) {
+    requireGoTypeObjectIdentity(objectId, `${label} key '${objectId}'`);
+    requireStorageIdentity(storage, `${label}.${objectId}`);
   }
 }
 
-function requireExactTypeDescriptor(value, label) {
-  const issue = descriptorShapeIssue(value);
-  if (issue !== undefined || value.t === "unsupported") throw new Error(`${label} is not an exact current type descriptor: ${issue ?? "unsupported descriptor"}`);
-  for (const child of typeDescriptorChildren(value)) requireExactTypeDescriptor(child, label);
+function validateStorageAgreement(profile) {
+  const storageByObjectId = new Map();
+  for (const [label, mappings] of [
+    ["signatureCheck.stdlibTypes", profile.stdlibTypes],
+    ["signatureCheck.namedTypeMappings", profile.namedTypeMappings],
+  ]) {
+    for (const [objectId, storage] of Object.entries(mappings)) {
+      const existing = storageByObjectId.get(objectId);
+      if (existing !== undefined && existing.storage !== storage) {
+        throw new Error(`${label}.${objectId} conflicts with ${existing.label}: '${storage}' versus '${existing.storage}'`);
+      }
+      storageByObjectId.set(objectId, { storage, label: `${label}.${objectId}` });
+    }
+  }
+}
+
+function requireGoTypeObjectIdentity(value, label) {
+  if (typeof value !== "string" || !/^(?:builtin|[^:\s]+)::type::[^:\s]+$/.test(value)) {
+    throw new Error(`${label} must be one exact Go type object identity`);
+  }
+}
+
+function requireStorageIdentity(value, label) {
+  if (typeof value !== "string" || !/^[^:\s]+::[^:\s]+$/.test(value)) {
+    throw new Error(`${label} must be one exact module/name storage identity`);
+  }
 }
 
 function requireStringRecord(value, label, exactKeys = undefined) {

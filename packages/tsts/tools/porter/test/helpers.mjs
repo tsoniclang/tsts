@@ -47,6 +47,22 @@ export function testSemanticEnvironment({ architecture = "GOAMD64=v1", cgoEnable
   }
   return Object.entries(values).map(([key, value]) => `${key}=${value}`).sort();
 }
+export function testSemanticProfile({ coveredFiles = [], packageIds = [] } = {}) {
+  return {
+    goos: "linux",
+    goarch: "amd64",
+    cgoEnabled: false,
+    architecture: "GOAMD64=v1",
+    experiments: "",
+    goexperiment: "",
+    buildTags: [],
+    buildFlags: ["-mod=readonly"],
+    toolTags: ["amd64.v1"],
+    environment: testSemanticEnvironment(),
+    packageIds: [...new Set(packageIds)].sort(),
+    coveredFiles: [...new Set(coveredFiles)].sort(),
+  };
+}
 export function snapshotWith(files) {
   return {
     sourceRoot: "/tmp/tsgo",
@@ -55,6 +71,13 @@ export function snapshotWith(files) {
       goFileCount: files.length,
       lineCount: files.reduce((sum, file) => sum + file.lineCount, 0),
       unitCount: files.reduce((sum, file) => sum + file.units.length, 0),
+    },
+    semantic: {
+      externalDeclarations: [],
+      profiles: [testSemanticProfile({
+        coveredFiles: files.map((file) => file.path),
+        packageIds: files.map((file) => file.importPath),
+      })],
     },
     files,
   };

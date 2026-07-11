@@ -6,6 +6,7 @@ import {
   validateSnapshotObject,
   validateStructTagContract,
 } from "./snapshot-validation.mjs";
+import { semanticNilabilityIssue } from "./semantic-type-nilability.mjs";
 
 const semanticBasicNames = new Set([
   "Pointer", "bool", "byte", "complex128", "complex64", "float32", "float64", "int", "int16", "int32", "int64", "int8",
@@ -55,6 +56,41 @@ export function validateSemanticDeclaration(semantic, label, issues, unit, expec
     for (const profile of [...expectedProfiles].sort((left, right) => left - right)) {
       if (!seenProfiles.has(profile)) issues.push(`${label} is missing ${profileDescription(profile, expectation?.profileLabels)} required by its file`);
     }
+  }
+}
+
+export function validateExternalSemanticDeclarations(declarations, profileCount, modulePath, issues) {
+  const label = "snapshot.semantic.externalDeclarations";
+  if (!Array.isArray(declarations)) {
+    issues.push(`${label} must be an array`);
+    return;
+  }
+  const profilesByObject = new Map();
+  let previousKey = "";
+  for (const [index, semantic] of declarations.entries()) {
+    const itemLabel = `${label}[${index}]`;
+    if (!isObject(semantic)) {
+      issues.push(`${itemLabel} must be an object`);
+      continue;
+    }
+    compareExactKeys(semantic, ["kind", "object", "packagePath", "profiles", "type"], itemLabel, issues);
+    if (semantic.kind !== "type") issues.push(`${itemLabel}.kind must be 'type'`);
+    if (typeof semantic.packagePath !== "string" || semantic.packagePath === "") issues.push(`${itemLabel}.packagePath must be non-empty`);
+    if (semantic.packagePath === modulePath || semantic.packagePath?.startsWith(`${modulePath}/`)) issues.push(`${itemLabel} must describe an external Go package`);
+    const expectedId = objectId(semantic.packagePath, "type", semantic.object?.name);
+    validateObject(semantic.object, `${itemLabel}.object`, issues, expectedId);
+    if (semantic.object?.packagePath !== semantic.packagePath) issues.push(`${itemLabel}.object.packagePath must equal declaration packagePath`);
+    validateTypeDeclaration(semantic.type, `${itemLabel}.type`, issues, semantic.object, { externalMethods: true });
+    validateProfileIndexes(semantic.profiles, `${itemLabel}.profiles`, issues, profileCount);
+    const objectProfiles = profilesByObject.get(expectedId) ?? new Set();
+    for (const profile of Array.isArray(semantic.profiles) ? semantic.profiles : []) {
+      if (objectProfiles.has(profile)) issues.push(`${itemLabel}.profiles duplicates external type '${expectedId}' profile ${profile}`);
+      objectProfiles.add(profile);
+    }
+    profilesByObject.set(expectedId, objectProfiles);
+    const key = `${expectedId}\0${canonicalSemanticDeclaration(semantic)}`;
+    if (previousKey !== "" && previousKey >= key) issues.push(`${label} must be sorted by object identity and canonical profile variant`);
+    previousKey = key;
   }
 }
 
@@ -136,9 +172,9 @@ function validateObject(object, label, issues, expectedId) {
   validateType(object.type, `${label}.type`, issues, undefined, `${object.id}::type`);
 }
 
-function validateTypeDeclaration(declaration, label, issues, topLevelObject) {
-  const keys = new Set(["alias", "object", "rhs", "typeParameters"]);
-  validateSnapshotObject(declaration, keys, label, issues, keys);
+function validateTypeDeclaration(declaration, label, issues, topLevelObject, options = {}) {
+  const keys = new Set(["alias", "object", "rhs", "typeParameters", ...(options.externalMethods ? ["methods"] : [])]);
+  validateSnapshotObject(declaration, keys, label, issues, new Set(["alias", "object", "rhs", "typeParameters"]));
   if (!isObject(declaration)) return;
   if (typeof declaration.alias !== "boolean") issues.push(`${label}.alias must be boolean`);
   validateObject(declaration.object, `${label}.object`, issues, topLevelObject?.id);
@@ -148,6 +184,36 @@ function validateTypeDeclaration(declaration, label, issues, topLevelObject) {
     role: "type",
   });
   validateType(declaration.rhs, `${label}.rhs`, issues, scope, `${topLevelObject?.id}::rhs`);
+  if (options.externalMethods) {
+    if (declaration.methods !== undefined && !Array.isArray(declaration.methods)) issues.push(`${label}.methods must be an array when present`);
+    let previousMethodId = "";
+    for (const [index, method] of (Array.isArray(declaration.methods) ? declaration.methods : []).entries()) {
+      validateExternalDeclaredMethod(method, `${label}.methods[${index}]`, issues, scope, topLevelObject?.id);
+      if (typeof method?.id === "string" && previousMethodId !== "" && previousMethodId >= method.id) {
+        issues.push(`${label}.methods must be sorted by exact Go method object identity with no duplicates`);
+      }
+      previousMethodId = typeof method?.id === "string" ? method.id : previousMethodId;
+    }
+  }
+}
+
+function validateExternalDeclaredMethod(method, label, issues, scope, ownerId) {
+  const keys = new Set(["exported", "id", "name", "ownerId", "packagePath", "signature"]);
+  validateSnapshotObject(method, keys, label, issues, keys);
+  if (!isObject(method)) return;
+  if (typeof method.name !== "string" || method.name === "") issues.push(`${label}.name must be non-empty`);
+  if (method.ownerId !== ownerId) issues.push(`${label}.ownerId must equal '${ownerId}'`);
+  if (method.id !== `${ownerId}::method::${method.name}`) issues.push(`${label}.id must identify the exact declared receiver method`);
+  if (typeof method.packagePath !== "string") issues.push(`${label}.packagePath must be a string`);
+  if (typeof method.exported !== "boolean" || method.exported !== isGoExported(method.name)) issues.push(`${label}.exported must match the Go method name`);
+  validateSignature(method.signature, `${label}.signature`, issues, {
+    declarationKind: "method",
+    ownerId: method.id,
+    ownerPath: `${method.id}::signature`,
+    outerScope: scope ?? new Map(),
+  });
+  if (method.signature?.receiver === undefined) issues.push(`${label}.signature.receiver is required`);
+  if (receiverTypeReference(method.signature?.receiver?.type)?.objectId !== ownerId) issues.push(`${label}.signature.receiver must identify '${ownerId}'`);
 }
 
 function validateValueSpec(specification, label, issues, unitKind, expectedSpecIndex, packagePath, unit) {
@@ -315,7 +381,8 @@ function validateType(type, label, issues, scope, ownerPath = "unowned") {
   if (type.kind === "map") expectedKeys.push("key");
   expectedKeys.sort();
   compareExactKeys(type, expectedKeys, label, issues);
-  if (typeof type.nilable !== "boolean") issues.push(`${label}.nilable must be boolean`);
+  const nilabilityIssue = semanticNilabilityIssue(type);
+  if (nilabilityIssue !== undefined) issues.push(`${label}.nilable ${nilabilityIssue}`);
   if (type.kind === "basic") validateBasic(type.basic, `${label}.basic`, issues);
   else if (type.kind === "named" || type.kind === "alias") validateTypeReference(type.reference, `${label}.reference`, issues, scope, ownerPath);
   else if (type.kind === "typeParameter") validateTypeParameterReference(type.typeParameter, `${label}.typeParameter`, issues, scope);

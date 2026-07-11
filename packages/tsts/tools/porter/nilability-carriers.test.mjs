@@ -88,6 +88,8 @@ test("compat declares one exact family of nilability carriers", () => {
 
 test("direct nilable kinds use their exact carriers", () => {
   const index = indexWith();
+  index.namedTypeStorage.set("builtin::type::error", `${compat}::GoError`);
+  index.knownStorageIdentities.add(`${compat}::GoError`);
   assert.deepEqual(semanticTypeDescriptor({ kind: "slice", nilable: true, element: basic("int") }, context(index)), {
     t: "ref", id: `${compat}::GoSlice`, args: [{ t: "ref", id: `${core}::int`, args: [] }],
   });
@@ -109,6 +111,11 @@ test("direct nilable kinds use their exact carriers", () => {
   assert.deepEqual(semanticTypeDescriptor({
     kind: "basic", nilable: true, basic: { name: "Pointer", untyped: false },
   }, context(index)), { t: "ref", id: `${compat}::GoUnsafePointer`, args: [] });
+  assert.deepEqual(semanticTypeDescriptor({
+    kind: "named",
+    nilable: true,
+    reference: { objectId: "builtin::type::error", packagePath: "", name: "error", typeArgs: [] },
+  }, context(index)), { t: "ref", id: `${compat}::GoError`, args: [] });
 });
 
 test("pointer lowering selects GoRef only from scalar representation evidence", () => {
@@ -124,7 +131,10 @@ test("pointer lowering selects GoRef only from scalar representation evidence", 
     kind: "pointer", nilable: true,
     element: { kind: "typeParameter", nilable: false, typeParameter: { ownerId: "owner", role: "type", index: 0, name: "T" } },
   };
-  const polymorphic = semanticTypeDescriptor(typeParameter, context(index));
+  const polymorphic = semanticTypeDescriptor(typeParameter, {
+    ...context(index),
+    typeParameters: new Map([["owner::type::0", { depth: 0, index: 0 }]]),
+  });
   assert.equal(polymorphic.t, "unsupported");
   assert.match(polymorphic.reason, /representation-polymorphic Go pointer/);
 });
@@ -228,7 +238,7 @@ test("nilability evidence and profile carrier dispositions fail closed", () => {
   );
   assert.throws(() => loadProfile({ signatureCheck: {
     namedNilabilityEvidence: { "example::type::Value": "pointer" },
-  } }), /storage identity/);
+  } }), /unknown current-contract key\(s\): namedNilabilityEvidence/);
   const index = indexWith();
   index.pkgType.set(`${packagePath}::Carrier`, "src/p/types.ts");
   const storage = "src/p/carrier.ts::CarrierStorage";
@@ -242,7 +252,7 @@ test("nilability evidence and profile carrier dispositions fail closed", () => {
   index.pkgType.set(`${packagePath}::Unproven`, "src/p/types.ts");
   assert.throws(
     () => semanticTypeDescriptor(named("Unproven", true), context(index)),
-    /has no declaration or facade carrier evidence/,
+    /has no exact semantic lowering contract/,
   );
   assert.equal(loadProfile({}).bridge.nilable, "GoNilable");
 });

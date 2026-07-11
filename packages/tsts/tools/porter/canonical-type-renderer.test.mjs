@@ -64,6 +64,29 @@ test("canonical carrier rendering uses intrinsic nilability with no synthetic bo
     element: { kind: "basic", name: "int" },
   }, operations), "GoRef<basic:int>");
   assert.equal(renderCanonicalType({
+    kind: "pointer",
+    representation: "reference",
+    element: {
+      kind: "carrier",
+      carrier: "slice",
+      arguments: [{ kind: "basic", name: "int" }],
+      metadataArguments: [],
+    },
+  }, operations), "GoRef<GoSlice<basic:int>>");
+  assert.equal(renderCanonicalType({
+    kind: "pointer",
+    representation: "reference",
+    element: {
+      kind: "pointer",
+      representation: "aggregate",
+      element: {
+        kind: "reference",
+        reference: { packagePath: "example/p", name: "Node", objectId: "example/p::type::Node" },
+        typeArguments: [],
+      },
+    },
+  }, operations), "GoRef<GoPtr<example/p::Node>>");
+  assert.equal(renderCanonicalType({
     kind: "carrier",
     carrier: "unsafePointer",
     arguments: [],

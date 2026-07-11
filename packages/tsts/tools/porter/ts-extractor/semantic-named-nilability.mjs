@@ -73,12 +73,26 @@ export function semanticNamedNilabilityDisposition(type, context) {
   }
   assertSemanticNilability(type);
   const reference = requireReference(type.reference);
+  if (reference.objectId === "builtin::type::any") {
+    requireNilabilityMatch(type, true, reference.objectId, "go/types builtin interface");
+    return { kind: "rawInterface" };
+  }
+  if (reference.objectId === "builtin::type::error") {
+    requireNilabilityMatch(type, true, reference.objectId, "go/types builtin error interface");
+    return { kind: "plain" };
+  }
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
   if (declaration !== undefined) {
     if (reference.typeArgs.length !== declaration.typeParameterCount) {
       throw new Error(`Go type '${reference.objectId}' expected ${declaration.typeParameterCount} canonical type argument(s), got ${reference.typeArgs.length}`);
     }
     requireNilabilityMatch(type, declaration.nilable, reference.objectId, "declaration");
+  }
+
+  const storageIdentity = context.index.namedTypeStorage?.get(reference.objectId);
+  if (storageIdentity !== undefined) return storageDisposition(type, reference, storageIdentity, context);
+
+  if (declaration !== undefined) {
     if (usesRawInterfaceStorage(declaration.rhs, context, new Set([reference.objectId]))) return { kind: "rawInterface" };
     return { kind: "plain" };
   }
@@ -88,20 +102,19 @@ export function semanticNamedNilabilityDisposition(type, context) {
     return { kind: "rawInterface" };
   }
 
-  const storageIdentity = context.index.namedTypeStorage?.get(reference.objectId);
-  if (storageIdentity !== undefined) return storageDisposition(type, reference, storageIdentity, context.index);
-
-  const external = context.index.externalTypeContracts?.get(reference.objectId);
+  const external = context.index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
   if (external !== undefined) return externalDisposition(type, reference, external);
   return { kind: "unresolved" };
 }
 
-function storageDisposition(type, reference, storageIdentity, index) {
+function storageDisposition(type, reference, storageIdentity, context) {
+  const index = context.index;
   const builtinStorage = builtinStorageIdentity(reference, index);
   if (builtinStorage !== undefined && builtinStorage !== storageIdentity) {
     throw new Error(`builtin Go type '${reference.objectId}' storage '${storageIdentity}' does not equal profile primitive storage '${builtinStorage}'`);
   }
-  const external = index.externalTypeContracts?.get(reference.objectId);
+  const external = index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId)
+    ?? index.externalTypeContracts?.get(reference.objectId);
   if (external !== undefined) {
     if (external.storageIdentity !== storageIdentity) {
       throw new Error(`external Go type '${reference.objectId}' storage '${storageIdentity}' does not equal facade storage '${external.storageIdentity}'`);
@@ -122,7 +135,13 @@ function storageDisposition(type, reference, storageIdentity, index) {
     if (carrier === "nilable") return { kind: "carrier", carrier };
     return { kind: "plain" };
   }
-  if (index.knownStorageIdentities?.has(storageIdentity) === true) return { kind: "plain" };
+  if (index.knownStorageIdentities?.has(storageIdentity) === true) {
+    if (builtinStorage !== undefined) {
+      const expected = reference.objectId === "builtin::type::error";
+      requireNilabilityMatch(type, expected, reference.objectId, "profile primitive storage");
+    }
+    return { kind: "plain" };
+  }
   throw new Error(`Go type '${reference.objectId}' storage evidence '${storageIdentity}' does not equal its exact configured TypeScript storage identity`);
 }
 
@@ -134,7 +153,10 @@ function builtinStorageIdentity(reference, index) {
 }
 
 function externalDisposition(type, reference, external) {
-  requireNilabilityMatch(type, external.nilable, reference.objectId, "external semantic facade");
+  if (reference.typeArgs.length !== external.arity) {
+    throw new Error(`Go type '${reference.objectId}' expected ${external.arity} canonical type argument(s), got ${reference.typeArgs.length}`);
+  }
+  requireNilabilityMatch(type, external.intrinsicNilable, reference.objectId, "external go/types declaration");
   if (external.rawInterface) return { kind: "rawInterface" };
   return { kind: "plain" };
 }
@@ -144,7 +166,7 @@ function usesRawInterfaceStorage(type, context, resolving) {
   if (type?.kind !== "named" && type?.kind !== "alias") return false;
   const reference = requireReference(type.reference);
   if (context.index.rawInterfaceObjects?.has(reference.objectId) === true) return true;
-  const external = context.index.externalTypeContracts?.get(reference.objectId);
+  const external = context.index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
   if (external?.rawInterface === true) return true;
   const storageIdentity = context.index.namedTypeStorage?.get(reference.objectId);
   if (storageIdentity !== undefined && context.index.storageCarrierByIdentity?.get(storageIdentity) === "interface") return true;

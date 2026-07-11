@@ -1,12 +1,27 @@
+import { createHash } from "node:crypto";
+
 import { buildExternalFacadeMap } from "./external-facades.mjs";
-import { renderCanonicalType } from "./canonical-type-renderer.mjs";
+import {
+  renderCanonicalSignature,
+  renderCanonicalType,
+  renderCanonicalTypeParameters,
+} from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
 import { buildLargeFileSplitStatus } from "./large-files.mjs";
-import { blankValueName, localTsName, primitiveTypes, safeIdentifier, safeParamName, safePropertyName, standardSelectorTypes, uniqueName } from "./names.mjs";
+import { blankValueName, localTsName, safeIdentifier, safePropertyName, uniqueName } from "./names.mjs";
 import { buildSymbolIndex, fileFromUnit, importAliasMap, relativeImportPath } from "./render-indexes.mjs";
 import { invariantSemanticVariant } from "./semantic-variants.mjs";
+import { semanticTypeContexts } from "./semantic-type-nilability.mjs";
 import { renderGoSourceComment } from "./ts-units.mjs";
-import { createHash } from "node:crypto";
+import {
+  invariantSemanticDeclarationContext,
+  invariantSemanticSignatureContract,
+  invariantSemanticTypeContract,
+} from "../ts-extractor/semantic-carrier-rendering.mjs";
+import { semanticTypeDeclarationContract } from "../ts-extractor/semantic-named-nilability.mjs";
+import { addProfileSemanticStorageEvidence, buildTypeRepresentationEvidence } from "../ts-extractor/semantic-pointer-lowering.mjs";
+import { semanticContractContainsApproximation, semanticTypeParameterKey } from "../ts-extractor/semantic-type-contract.mjs";
+import { loadProfile } from "../ts-extractor/profile.mjs";
 
 export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
   for (const unit of units) {
@@ -16,28 +31,43 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
   }
   const context = rendererContext(config, snapshot, relativeTargetPath, units, options);
   const body = units.map((unit) => renderUnit(unit, context)).join("\n");
-  const imports = renderImports(context);
-  return `${imports}${body}`.replace(/\s*$/, "\n");
+  return `${renderImports(context)}${body}`.replace(/\s*$/, "\n");
 }
 
 export function rendererContext(config, snapshot, relativeTargetPath, units, options) {
   const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = options.largeFileSplits ?? buildLargeFileSplitStatus(config, snapshot);
-  // The symbol/value/facade indexes are expensive global builds over the whole
-  // snapshot; callers that render many units in a loop may inject pre-built ones.
   const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
-  const goPath = firstUnit?.metadata?.goPath ?? "";
-  const file = filesByPath.get(goPath) ?? fileFromUnit(firstUnit);
-  const localTypeNames = new Set(
-    units
-      .filter((unit) => unit.kind === "type")
-      .map((unit) => unit.name),
+  const file = filesByPath.get(firstUnit?.metadata?.goPath ?? "") ?? fileFromUnit(firstUnit);
+  const externalFacades = options.externalFacades ?? buildExternalFacadeMap(config, snapshot);
+  const profile = loadProfile(config);
+  const evidence = addProfileSemanticStorageEvidence(
+    buildTypeRepresentationEvidence(config, snapshot, externalFacades),
+    profile,
   );
-  const localTopLevelNames = new Set(units.flatMap((unit) => topLevelNamesForUnit(unit)));
+  const semanticIndex = {
+    goModule: config.goModulePath,
+    core: profile.modules.core,
+    compat: profile.modules.compat,
+    bridge: profile.bridge,
+    primKeyword: profile.primitives.keyword,
+    primCore: profile.primitives.core,
+    primCompat: profile.primitives.compat,
+    declaredTypeContractsByProfile: evidence.declaredTypeContractsByProfile,
+    externalTypeContracts: evidence.externalTypeContracts,
+    externalTypeContractsByProfile: evidence.externalTypeContractsByProfile,
+    externalPointerTerminalsByProfile: evidence.externalPointerTerminalsByProfile,
+    externalFacadeArities: evidence.externalFacadeArities,
+    namedTypeStorage: evidence.namedTypeStorage,
+    rawInterfaceObjects: evidence.rawInterfaceObjects,
+    storageCarrierByIdentity: evidence.storageCarrierByIdentity,
+    knownStorageIdentities: evidence.knownStorageIdentities,
+  };
   return {
     config,
     snapshot,
+    semanticIndex,
     symbolIndex,
     file,
     relativeTargetPath,
@@ -45,16 +75,13 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
     coreImports: new Set(),
     compatImports: new Set(),
     diagnostics: options.diagnostics ?? [],
-    localTypeNames,
-    localTopLevelNames,
+    localTopLevelNames: new Set(units.flatMap((unit) => topLevelNamesForUnit(unit))),
     importAliases: rendererImportAliases(file.imports ?? []),
-    externalFacades: options.externalFacades ?? buildExternalFacadeMap(config, snapshot),
+    externalFacades,
+    bridge: profile.bridge,
   };
 }
 
-// Builds the expensive whole-snapshot indexes once, for callers that render many
-// units in a loop (e.g. the signature checker). Pass the result as renderUnitGroup
-// `options` so rendererContext reuses them instead of rebuilding per call.
 export function buildRenderIndexes(config, snapshot) {
   const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
@@ -67,15 +94,8 @@ export function buildRenderIndexes(config, snapshot) {
 }
 
 export function renderUnit(unit, context) {
-  const metadata = {
-    id: unit.id,
-    kind: unit.kind,
-    status: "stub",
-    sigHash: unit.sigHash,
-    bodyHash: unit.bodyHash,
-  };
-  const goComment = renderGoSourceComment(unit.snippet);
-  const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n *\n * Go source:\n${goComment}\n */\n`;
+  const metadata = { id: unit.id, kind: unit.kind, status: "stub", sigHash: unit.sigHash, bodyHash: unit.bodyHash };
+  const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n *\n * Go source:\n${renderGoSourceComment(unit.snippet)}\n */\n`;
   if (unit.kind === "type") return `${header}${renderTypeUnit(unit, context)}\n`;
   if (unit.kind === "func" || unit.kind === "method") return `${header}${renderFunctionUnit(unit, context)}\n`;
   if (unit.kind === "constGroup") return `${header}${renderValueGroup(unit, context, "const")}\n`;
@@ -84,427 +104,262 @@ export function renderUnit(unit, context) {
 }
 
 export function renderTypeUnit(unit, context) {
-  const typeParameters = renderTypeParameterList(unit.typeParameterDetails ?? [], context, unit, { defaultUnknown: true });
-  if (unit.typeKind === "struct") {
-    const { heritage, members } = renderObjectMembers(unit.members ?? [], context, unit, "struct");
-    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
-    return `export interface ${safeIdentifier(unit.name)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+  const semantic = invariantSemanticVariant(unit, "rendered as one TypeScript type declaration");
+  const declaration = semantic.type;
+  if (declaration === undefined) throw new Error(`canonical Go type declaration semantics are missing for ${unit.id}`);
+  semanticTypeDeclarationContract(declaration, `Go type unit '${unit.id}'`);
+  const declarationContext = invariantSemanticDeclarationContext(declaration, context, unit);
+  const constraints = new Map(declarationContext.typeParameterConstraints);
+  const typeParameters = renderDeclarationTypeParameters(
+    declarationContext.parameters,
+    unit.typeParameterDetails,
+    context,
+    unit,
+  );
+  const name = safeIdentifier(unit.name);
+
+  if (declaration.alias === true) {
+    const rhs = invariantSemanticTypeContract(declaration.rhs, context, unit, semanticTypeContexts.declarationShape, {
+      typeParameterConstraints: constraints,
+    });
+    return `export type ${name}${typeParameters} = ${renderSemanticContract(rhs, context, unit)};`;
   }
-  if (unit.typeKind === "interface") {
-    const { heritage, members } = renderObjectMembers(unit.members ?? [], context, unit, "interface");
-    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
-    return `export interface ${safeIdentifier(unit.name)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+  if (declaration.rhs.kind === "struct") {
+    const shape = invariantSemanticTypeContract(declaration.rhs, context, unit, semanticTypeContexts.declarationShape, {
+      typeParameterConstraints: constraints,
+    });
+    const members = renderStructDeclaration(shape, unit.members, context, unit);
+    return `export interface ${name}${typeParameters} {\n${members.join("\n")}\n}`;
   }
-  const expression = tsType(unit.typeExpression, context, scopeForUnit(unit), unit);
-  return `export type ${safeIdentifier(unit.name)}${typeParameters} = ${expression};`;
+  if (declaration.rhs.kind === "interface") {
+    const shape = invariantSemanticTypeContract(declaration.rhs, context, unit, semanticTypeContexts.constraint, {
+      typeParameterConstraints: constraints,
+    });
+    const { heritage, members } = renderInterfaceDeclaration(shape, unit.members, context, unit);
+    const extendsClause = heritage.length === 0 ? "" : ` extends ${heritage.join(", ")}`;
+    return `export interface ${name}${typeParameters}${extendsClause} {\n${members.join("\n")}\n}`;
+  }
+  const rhs = invariantSemanticTypeContract(declaration.rhs, context, unit, semanticTypeContexts.declarationShape, {
+    typeParameterConstraints: constraints,
+  });
+  return `export type ${name}${typeParameters} = ${renderSemanticContract(rhs, context, unit)};`;
 }
 
 export function renderFunctionUnit(unit, context) {
-  const scope = scopeForUnit(unit);
-  const receiverTypeParameters = receiverTypeParameterDetails(unit.receiverType);
-  const typeParameters = renderTypeParameterList([...(receiverTypeParameters ?? []), ...(unit.typeParameterDetails ?? [])], context, unit);
-  const params = [];
-  const usedParamNames = new Set();
-  if (unit.kind === "method") {
-    const receiverName = uniqueName("receiver", usedParamNames);
-    params.push(`${receiverName}: ${tsType(unit.receiverType, context, scope, unit)}`);
-  }
-  params.push(...renderParameters(unit.parameters ?? [], context, scope, unit, usedParamNames));
-  const returnType = tsReturnType(unit.results ?? [], context, scope, unit);
-  return `export function ${localTsName(unit)}${typeParameters}(${params.join(", ")}): ${returnType} {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_UNIMPLEMENTED ${unit.id}`)});\n}`;
+  const semantic = invariantSemanticVariant(unit, "rendered as one TypeScript callable declaration");
+  if (semantic.signature === undefined) throw new Error(`canonical Go callable semantics are missing for ${unit.id}`);
+  const signature = invariantSemanticSignatureContract(semantic.signature, context, unit, { includeReceiver: unit.kind === "method" });
+  const typeParameters = renderSignatureTypeParameters(signature, unit.typeParameterDetails, context, unit);
+  const operations = semanticRendererOperations(context, unit);
+  const { parameters, returnType } = renderCanonicalSignature(signature, operations, { includeReceiver: unit.kind === "method" });
+  return `export function ${localTsName(unit)}${typeParameters}(${parameters.join(", ")}): ${returnType} {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_UNIMPLEMENTED ${unit.id}`)});\n}`;
 }
 
 export function renderValueGroup(unit, context, declarationKind) {
+  const semantic = invariantSemanticVariant(unit, "rendered as one TypeScript value declaration");
   const lines = [];
   let blankIndex = 0;
-  const used = new Set();
-  const semantic = invariantSemanticVariant(unit, "rendered as one TypeScript value declaration");
+  const usedNames = new Set();
   for (const [specIndex, spec] of (unit.valueSpecs ?? []).entries()) {
     const semanticSpec = semantic.valueSpecs?.[specIndex];
     if (semanticSpec === undefined) throw new Error(`canonical Go value declaration semantics are missing for ${unit.id} spec ${specIndex}`);
     const names = spec.names ?? [];
     if (names.length === 0) throw new Error(`Go value declaration ${unit.id} spec ${specIndex} has no bindings`);
-    for (const [index, name] of names.entries()) {
-      const semanticBinding = semanticSpec.names?.[index];
-      if (semanticBinding === undefined || semanticBinding.name !== name) {
-        throw new Error(`canonical Go value binding ${unit.id} spec ${specIndex} name ${index} does not match '${name}'`);
+    for (const [nameIndex, name] of names.entries()) {
+      const binding = semanticSpec.names?.[nameIndex];
+      if (binding === undefined || binding.name !== name || binding.type === undefined) {
+        throw new Error(`canonical Go value binding ${unit.id} spec ${specIndex} name ${nameIndex} is incomplete`);
       }
       const baseName = name === "_" ? blankValueName(unit, blankIndex++) : safeIdentifier(name);
-      const localName = uniqueName(baseName, used);
-      const valueType = tsCanonicalType(semanticBinding.type, context, scopeForUnit(unit), unit);
-      lines.push(`export ${declarationKind} ${localName}: ${valueType} = undefined as never;`);
+      const localName = uniqueName(baseName, usedNames);
+      const contract = invariantSemanticTypeContract(binding.type, context, unit, semanticTypeContexts.value);
+      lines.push(`export ${declarationKind} ${localName}: ${renderSemanticContract(contract, context, unit)} = undefined as never;`);
     }
   }
   if (lines.length === 0) throw new Error(`Go value declaration ${unit.id} has no value specifications`);
   return lines.join("\n");
 }
 
-export function renderObjectMembers(members, context, unit, ownerKind) {
-  const scope = scopeForUnit(unit);
-  const heritage = [];
-  const lines = [];
-  let embeddedIndex = 0;
-  let blankIndex = 0;
-  for (const member of members) {
-    if (member.kind === "embeddedField") {
-      const embeddedType = tsType(member.typeExpr, context, scope, unit);
-      lines.push(`  __tsgoEmbedded${embeddedIndex++}: ${embeddedType};`);
-      continue;
-    }
-    if (member.kind === "embeddedInterface") {
-      const kind = semanticEmbeddingKind(unit, embeddedIndex++);
-      const embeddedType = tsType(member.typeExpr, context, scope, unit);
-      if (kind === "interface") {
-        heritage.push(embeddedType);
-      } else if (kind === "typeSet") {
-        lines.push(`  readonly __tsgoEmbedded${embeddedIndex - 1}?: ${embeddedType};`);
-      } else {
-        throw new Error(`unsupported Go interface embedding classification '${kind}'`);
-      }
-      continue;
-    }
-    if (member.kind === "method" && member.typeExpr?.kind === "func") {
-      const params = renderParameters(member.typeExpr.parameters ?? [], context, scope, unit);
-      const result = tsReturnType(member.typeExpr.results ?? [], context, scope, unit);
-      lines.push(`  ${safePropertyName(member.name)}(${params.join(", ")}): ${result};`);
-      continue;
-    }
-    const propertyName = member.name === "_" ? `__tsgoBlank${blankIndex++}` : member.name;
-    const readonly = ownerKind === "struct" ? "" : "readonly ";
-    lines.push(`  ${readonly}${safePropertyName(propertyName)}: ${tsType(member.typeExpr, context, scope, unit)};`);
-  }
-  return { heritage, members: lines };
+export function tsCanonicalType(type, context, _scope, unit, options = {}) {
+  const contract = invariantSemanticTypeContract(type, context, unit, options.typeContext ?? semanticTypeContexts.value, {
+    typeParameterConstraints: options.typeParameterConstraints,
+  });
+  return renderSemanticContract(contract, context, unit);
 }
 
-export function renderParameters(params, context, scope, unit, used = new Set()) {
-  const output = [];
-  let syntheticIndex = 0;
-  for (const param of params) {
-    const names = (param.names ?? []).length > 0 ? param.names : [`arg${syntheticIndex++}`];
-    for (const name of names) {
-      const paramName = uniqueName(safeParamName(name), used);
-      const paramType = tsType(param.type, context, scope, unit);
-      if (param.variadic) {
-        output.push(`...${paramName}: ${restType(paramType)}`);
-      } else {
-        output.push(`${paramName}: ${paramType}`);
-      }
+function renderStructDeclaration(shape, sourceMembers, context, unit) {
+  if (shape.kind !== "struct") throw new Error(`Go struct unit '${unit.id}' did not lower to a struct shape`);
+  if (!Array.isArray(sourceMembers) || sourceMembers.length !== shape.fields.length) throw new Error(`Go struct unit '${unit.id}' syntax/semantic field counts differ`);
+  let embeddedIndex = 0;
+  let blankIndex = 0;
+  const members = shape.fields.map((field, index) => {
+    const source = sourceMembers[index];
+    const expectedKind = field.embedded ? "embeddedField" : "field";
+    if (source?.kind !== expectedKind || (!field.embedded && source.name !== field.name)) throw new Error(`Go struct unit '${unit.id}' syntax/semantic field #${index} differs`);
+    const name = field.embedded ? `__tsgoEmbedded${embeddedIndex++}` : field.name === "_" ? `__tsgoBlank${blankIndex++}` : source.name;
+    return `  ${safePropertyName(name)}: ${renderSemanticContract(field.type, context, unit)};`;
+  });
+  return members.length === 0 ? ["  readonly __tsgoEmpty?: never;"] : members;
+}
+
+function renderInterfaceDeclaration(shape, sourceMembers, context, unit) {
+  if (shape.kind !== "interfaceShape") throw new Error(`Go interface unit '${unit.id}' did not lower to an interface shape`);
+  if (!Array.isArray(sourceMembers)) throw new Error(`Go interface unit '${unit.id}' has no syntax member order`);
+  const heritage = [];
+  const members = [];
+  let methodIndex = 0;
+  let embeddedIndex = 0;
+  for (const source of sourceMembers) {
+    if (source?.kind === "method") {
+      const method = shape.methods[methodIndex++];
+      if (method === undefined || method.name !== source.name) throw new Error(`Go interface unit '${unit.id}' syntax/semantic method order differs`);
+      const typeParameters = renderSignatureTypeParameters(method.signature, [], context, unit);
+      const rendered = renderCanonicalSignature(method.signature, semanticRendererOperations(context, unit));
+      members.push(`  ${safePropertyName(method.name)}${typeParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType};`);
+      continue;
     }
+    if (source?.kind !== "embeddedInterface") throw new Error(`Go interface unit '${unit.id}' has unsupported syntax member '${source?.kind}'`);
+    const embedded = shape.embedded[embeddedIndex++];
+    if (embedded === undefined) throw new Error(`Go interface unit '${unit.id}' has more syntax embeddings than semantic embeddings`);
+    const rendered = renderSemanticContract(embedded.type, context, unit);
+    if (embedded.embeddingKind === "interface") heritage.push(rendered);
+    else members.push(`  readonly __tsgoEmbedded${embeddedIndex - 1}?: ${rendered};`);
+  }
+  if (methodIndex !== shape.methods.length || embeddedIndex !== shape.embedded.length) throw new Error(`Go interface unit '${unit.id}' syntax/semantic member counts differ`);
+  if (members.length === 0) members.push("  readonly __tsgoEmpty?: never;");
+  return { heritage, members };
+}
+
+function renderDeclarationTypeParameters(parameters, sourceParameters, context, unit) {
+  const sourceByName = sourceConstraintMap(parameters, sourceParameters, unit);
+  return renderCanonicalTypeParameters(parameters, constraintOperations(context, unit, sourceByName));
+}
+
+function renderSignatureTypeParameters(signature, sourceParameters, context, unit) {
+  const parameters = [...signature.receiverTypeParameters, ...signature.typeParameters];
+  const sourceByName = sourceConstraintMap(signature.typeParameters, sourceParameters, unit);
+  return renderCanonicalTypeParameters(parameters, constraintOperations(context, unit, sourceByName));
+}
+
+function sourceConstraintMap(parameters, sourceParameters, unit) {
+  const output = new Map();
+  for (const [index, parameter] of parameters.entries()) {
+    const source = sourceParameters?.[index];
+    if (source !== undefined && source.name !== parameter.reference.name) throw new Error(`Go source and semantic type parameter #${index} names differ for ${unit.id}`);
+    if (source?.constraint !== undefined) output.set(semanticTypeParameterKey(parameter.reference), source.constraint);
   }
   return output;
 }
 
-export function tsReturnType(results, context, scope, unit) {
-  const flattened = [];
-  for (const result of results) {
-    const names = (result.names ?? []).length > 0 ? result.names : [""];
-    for (const _name of names) {
-      flattened.push(tsType(result.type, context, scope, unit));
-    }
-  }
-  if (flattened.length === 0) return "void";
-  if (flattened.length === 1) return flattened[0];
-  return `[${flattened.join(", ")}]`;
+function constraintOperations(context, unit, sourceByName) {
+  const operations = semanticRendererOperations(context, unit);
+  return {
+    ...operations,
+    constraint: (contract, parameter) => renderConstraint(contract, sourceByName.get(semanticTypeParameterKey(parameter.reference)), operations, context),
+  };
 }
 
-export function restType(paramType) {
-  const sliceMatch = /^GoSlice<(.+)>$/.exec(paramType);
-  if (sliceMatch) return `${sliceMatch[1]}[]`;
-  return `Array<${paramType}>`;
+function renderConstraint(contract, sourceConstraint, operations, context) {
+  const rendered = renderCanonicalType(contract, operations);
+  if (!semanticContractContainsApproximation(contract)) return rendered;
+  if (typeof sourceConstraint?.text !== "string" || sourceConstraint.text === "") throw new Error("canonical Go approximation constraint has no exact source text provenance");
+  return `${useCompat(context, "GoConstraint")}<${JSON.stringify(sourceConstraint.text)}> & ${rendered}`;
 }
 
-export function renderTypeParameterList(typeParameters, context, unit, options = {}) {
-  const seen = new Set();
-  const rendered = [];
-  for (const param of typeParameters) {
-    if (!param?.name || seen.has(param.name)) continue;
-    seen.add(param.name);
-    const constraint = renderTypeParameterConstraint(param.constraint, context, unit);
-    const defaultType = options.defaultUnknown ? " = unknown" : "";
-    rendered.push(`${safeIdentifier(param.name)}${constraint}${defaultType}`);
-  }
-  return rendered.length > 0 ? `<${rendered.join(", ")}>` : "";
+function renderSemanticContract(contract, context, unit) {
+  return renderCanonicalType(contract, semanticRendererOperations(context, unit));
 }
 
-export function renderTypeParameterConstraint(constraint, context, unit) {
-  if (!constraint || constraint.text === "any") return "";
-  if (constraint.text === "comparable") return ` extends ${useCompat(context, "GoComparable")}`;
-  useCompat(context, "GoConstraint");
-  return "";
-}
-
-export function tsType(expr, context, scope, unit) {
-  if (!expr) return "unknown";
-  switch (expr.kind) {
-    case "ident":
-      return tsIdentType(expr.name, context, scope, unit);
-    case "selector":
-      return tsSelectorType(expr, context, scope, unit);
-    case "pointer":
-      return `${useCompat(context, "GoPtr")}<${tsType(expr.element, context, scope, unit)}>`;
-    case "slice":
-      return `${useCompat(context, "GoSlice")}<${tsType(expr.element, context, scope, unit)}>`;
-    case "array":
-      return `${useCompat(context, "GoArray")}<${tsType(expr.element, context, scope, unit)}, ${JSON.stringify(expr.length ?? "")}>`;
-    case "map":
-      return `${useCompat(context, "GoMap")}<${tsType(expr.key, context, scope, unit)}, ${tsType(expr.value, context, scope, unit)}>`;
-    case "func":
-      return tsFunctionType(expr, context, scope, unit);
-    case "interface":
-      return tsInlineInterface(expr.members ?? [], context, scope, unit);
-    case "struct":
-      return tsInlineStruct(expr.members ?? [], context, scope, unit);
-    case "ellipsis":
-      return `${useCompat(context, "GoSlice")}<${tsType(expr.element, context, scope, unit)}>`;
-    case "instantiation":
-      return tsInstantiationType(expr, context, scope, unit);
-    case "paren":
-      return tsType(expr.element, context, scope, unit);
-    case "channel":
-      return `${useCompat(context, "GoChan")}<${tsType(expr.element, context, scope, unit)}, ${JSON.stringify(expr.direction ?? "bidirectional")}>`;
-    case "unary":
-    case "binary":
-      return `${useCompat(context, "GoConstraint")}<${JSON.stringify(expr.text)}>`;
-    default:
-      context.diagnostics.push({
-        severity: "error",
-        unitID: unit?.id ?? "",
-        message: `unsupported Go type expression '${expr.kind}' (${expr.text})`,
-      });
-      return `${useCompat(context, "GoUnsupported")}<${JSON.stringify(expr.text ?? expr.kind)}>`;
-  }
-}
-
-export function tsCanonicalType(type, context, scope, unit) {
-  return renderCanonicalType(type, {
-    basic: (name) => tsIdentType(name, context, scope, unit),
-    compat: (name) => useCompat(context, name),
-    reference: (reference, typeArguments) => {
-      if (reference.packagePath === "") {
-        const base = tsIdentType(reference.name, context, scope, unit);
-        return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
+export function semanticRendererOperations(context, unit) {
+  return {
+    basic: (name) => renderBasic(name, context),
+    carrier: (key) => useCompat(context, requireBridge(context, key)),
+    pointerCarrier: (representation) => {
+      if (representation === "polymorphic") {
+        throw new Error(`cannot render representation-polymorphic Go pointer in scaffold '${unit.id}': no exact runtime carrier is configured; use a narrow local representation override`);
       }
-      const standard = standardSelectorTypes.get(`${reference.packagePath}.${reference.name}`);
-      if (standard !== undefined) {
-        const base = useCompat(context, standard);
-        return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
-      }
-      if (reference.packagePath.startsWith(context.config.goModulePath)) {
-        const base = resolvePackageSymbol(context, reference.packagePath, reference.name, unit);
-        if (base !== undefined) return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
-        context.diagnostics.push({
-          severity: "error",
-          unitID: unit?.id ?? "",
-          message: `unresolved canonical TS-Go type '${reference.name}' from ${reference.packagePath}`,
-        });
-        return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${reference.packagePath}.${reference.name}`)}>`;
-      }
-      return tsExternalType(context, `${reference.packagePath}.${reference.name}`, typeArguments, unit);
+      return useCompat(context, requireBridge(context, pointerBridgeKey(representation)));
     },
-  });
+    compat: (name) => useCompat(context, name),
+    reference: (reference, argumentsList) => renderReference(reference, argumentsList, context, unit),
+    approximation: (contract, rendered) => primitiveApproximation(contract) ?? rendered,
+  };
 }
 
-export function tsIdentType(name, context, scope, unit) {
-  if (!name) return "unknown";
-  if (scope.typeParameters.has(name)) return safeIdentifier(name);
-  const primitive = primitiveTypes.get(name);
-  if (primitive) {
-    if (primitive.source === "core") return useCore(context, primitive.name);
-    if (primitive.source === "compat") return useCompat(context, primitive.name);
-    return primitive.name;
-  }
-  if (context.localTypeNames.has(name)) return safeIdentifier(name);
-  const resolved = resolvePackageSymbol(context, context.file.importPath, name, unit);
-  if (resolved) return resolved;
-  context.diagnostics.push({
-    severity: "error",
-    unitID: unit?.id ?? "",
-    message: `unresolved package-local type '${name}' in ${context.file.path}`,
-  });
-  return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${context.file.importPath}.${name}`)}>`;
+function renderBasic(name, context) {
+  const index = context.semanticIndex;
+  if (Object.hasOwn(index.primKeyword, name)) return index.primKeyword[name];
+  if (Object.hasOwn(index.primCore, name)) return useCore(context, index.primCore[name]);
+  if (Object.hasOwn(index.primCompat, name)) return useCompat(context, index.primCompat[name]);
+  throw new Error(`unmapped canonical Go basic type '${name}'`);
 }
 
-export function tsSelectorType(expr, context, _scope, unit, typeArgs = []) {
-  const importPath = context.importAliases.get(expr.package);
-  if (!importPath) {
-    const externalName = `${expr.package}.${expr.name}`;
-    return tsExternalType(context, externalName, typeArgs, unit);
-  }
-  const standard = standardSelectorTypes.get(`${importPath}.${expr.name}`);
-  if (standard) return useCompat(context, standard);
-  if (importPath.startsWith(context.config.goModulePath)) {
-    const resolved = resolvePackageSymbol(context, importPath, expr.name, unit);
-    if (resolved) return resolved;
-    context.diagnostics.push({
-      severity: "error",
-      unitID: unit?.id ?? "",
-      message: `unresolved imported TS-Go type '${expr.name}' from ${importPath}`,
-    });
-    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${importPath}.${expr.name}`)}>`;
-  }
-  return tsExternalType(context, `${importPath}.${expr.name}`, typeArgs, unit);
-}
-
-export function tsInstantiationType(expr, context, scope, unit) {
-  const args = (expr.typeArgs ?? []).map((arg) => tsType(arg, context, scope, unit));
-  if (expr.element?.kind === "selector") {
-    const selector = expr.element;
-    const importPath = context.importAliases.get(selector.package);
-    const standard = importPath ? standardSelectorTypes.get(`${importPath}.${selector.name}`) : undefined;
-    if (!standard) return tsSelectorType(selector, context, scope, unit, args);
-  }
-  const base = tsType(expr.element, context, scope, unit);
-  return `${base}<${args.join(", ")}>`;
-}
-
-export function tsExternalType(context, goName, typeArgs, unit) {
-  const facade = context.externalFacades.get(goName);
-  if (!facade) {
-    context.diagnostics.push({
-      severity: "error",
-      unitID: unit?.id ?? "",
-      message: `external Go type '${goName}' was not assigned a generated facade`,
-    });
-    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(goName)}>`;
-  }
-  if (facade.arity !== typeArgs.length) {
-    context.diagnostics.push({
-      severity: "error",
-      unitID: unit?.id ?? "",
-      message: `external Go type '${goName}' expected ${facade.arity} type argument(s), got ${typeArgs.length}`,
-    });
-  }
-  const name = importExternalFacadeName(context, facade, unit);
-  return typeArgs.length > 0 ? `${name}<${typeArgs.join(", ")}>` : name;
-}
-
-export function tsFunctionType(expr, context, scope, unit) {
-  const params = renderParameters(expr.parameters ?? [], context, scope, unit);
-  const result = tsReturnType(expr.results ?? [], context, scope, unit);
-  return `(${params.join(", ")}) => ${result}`;
-}
-
-export function tsInlineInterface(members, context, scope, unit) {
-  if (members.length === 0) return "unknown";
-  const parts = [];
-  const methods = [];
-  for (const member of members) {
-    if (member.kind === "embeddedInterface") {
-      parts.push(tsType(member.typeExpr, context, scope, unit));
-      continue;
+function renderReference(reference, argumentsList, context, unit) {
+  let base;
+  if (reference.packagePath === "") {
+    base = renderBasic(reference.name, context);
+  } else {
+    if (isInternal(reference.packagePath, context.config.goModulePath)) {
+      base = resolvePackageSymbol(context, reference.packagePath, reference.name, unit);
+      if (base === undefined) throw new Error(`internal canonical Go type '${reference.objectId}' has no exact scaffold symbol`);
+    } else {
+      if (context.semanticIndex.externalTypeContracts.has(reference.objectId)) return tsExternalType(context, reference, argumentsList, unit);
+      const storageIdentity = context.semanticIndex.namedTypeStorage.get(reference.objectId);
+      if (storageIdentity === undefined) throw new Error(`canonical Go type '${reference.objectId}' has no exact profile storage identity`);
+      base = renderStorageIdentity(storageIdentity, context, unit);
     }
-    if (member.kind === "method" && member.typeExpr?.kind === "func") {
-      const params = renderParameters(member.typeExpr.parameters ?? [], context, scope, unit);
-      const result = tsReturnType(member.typeExpr.results ?? [], context, scope, unit);
-      methods.push(`${safePropertyName(member.name)}: (${params.join(", ")}) => ${result}`);
-      continue;
-    }
-    methods.push(`${safePropertyName(member.name)}: ${tsType(member.typeExpr, context, scope, unit)}`);
   }
-  if (methods.length > 0) parts.unshift(`{ ${methods.join("; ")} }`);
-  return parts.length === 1 ? parts[0] : `{ ${parts.map((part) => `(${part})`).join(" & ")} }`;
+  return argumentsList.length === 0 ? base : `${base}<${argumentsList.join(", ")}>`;
 }
 
-function semanticEmbeddingKind(unit, index) {
-  const semantic = invariantSemanticVariant(unit, "rendering embedded Go types");
-  const value = semantic.type?.rhs?.interface;
-  const kind = value?.embeddedKinds?.[index];
-  if (kind === undefined) throw new Error(`Go interface embedding classification is missing for ${unit.id} embedding #${index}`);
-  return kind;
+function renderStorageIdentity(identity, context, unit) {
+  const separator = identity.lastIndexOf("::");
+  if (separator <= 0 || separator === identity.length - 2) throw new Error(`invalid exact TypeScript storage identity '${identity}'`);
+  const moduleId = identity.slice(0, separator);
+  const name = identity.slice(separator + 2);
+  if (moduleId === context.semanticIndex.core) return useCore(context, name);
+  if (moduleId === context.semanticIndex.compat) return useCompat(context, name);
+  if (moduleId === context.relativeTargetPath) return safeIdentifier(name);
+  return importTypeName(context, moduleId, name, unit);
 }
 
-export function tsInlineStruct(members, context, scope, unit) {
-  if (members.length === 0) return "{ readonly __tsgoEmpty?: never }";
-  return `{ ${members.map((member, index) => {
-    const name = member.kind === "embeddedField" ? `__tsgoEmbedded${index}` : member.name;
-    return `${safePropertyName(name)}: ${tsType(member.typeExpr, context, scope, unit)}`;
-  }).join("; ")} }`;
+export function tsExternalType(context, reference, typeArguments, unit) {
+  const objectId = reference?.objectId;
+  if (typeof objectId !== "string" || objectId === "") throw new Error("external Go type has no exact object identity");
+  if (!Array.isArray(typeArguments)) throw new Error(`external Go type '${objectId}' requires one exact rendered type-argument list`);
+  const facade = context.externalFacades.get(objectId);
+  if (facade === undefined) throw new Error(`external Go type '${objectId}' has no exact facade storage`);
+  const expectedArity = context.semanticIndex.externalFacadeArities.get(objectId);
+  if (expectedArity === undefined || typeArguments.length !== expectedArity) {
+    throw new Error(`external Go type '${objectId}' expected exact facade arity '${expectedArity ?? "missing"}', got ${typeArguments.length}`);
+  }
+  const base = importExternalFacadeName(context, facade, unit);
+  return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
+}
+
+function primitiveApproximation(contract) {
+  if (contract?.kind !== "basic") return undefined;
+  if (contract.name === "bool") return "boolean";
+  if (contract.name === "string") return "string";
+  if (new Set(["int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "float32", "float64"]).has(contract.name)) return "number";
+  return undefined;
 }
 
 export function topLevelNamesForUnit(unit) {
   if (unit.kind === "type" || unit.kind === "func" || unit.kind === "method") return [localTsName(unit), safeIdentifier(unit.name)];
   if (unit.kind === "constGroup" || unit.kind === "varGroup") {
-    const names = [];
-    for (const spec of unit.valueSpecs ?? []) {
-      for (const name of spec.names ?? []) {
-        if (name !== "_") names.push(safeIdentifier(name));
-      }
-    }
+    const names = (unit.valueSpecs ?? []).flatMap((spec) => (spec.names ?? []).filter((name) => name !== "_").map(safeIdentifier));
     return names.length > 0 ? names : [localTsName(unit)];
   }
   return [localTsName(unit)];
 }
 
-function rendererImportAliases(imports) {
-  const aliases = importAliasMap(imports);
-  for (const imported of imports) {
-    if (typeof imported.path === "string" && imported.path !== "") aliases.set(imported.path, imported.path);
-  }
-  return aliases;
-}
-
-export function uniqueImportAlias(exportName, unit, targetPath = "") {
-  const hash = createHash("sha256").update(`${unit?.id ?? ""}:${targetPath}:${exportName}`).digest("hex").slice(0, 8);
-  return `${exportName}_${hash}`;
-}
-
-export function isImportAliasUsed(context, alias) {
-  for (const names of context.imports.values()) {
-    for (const existing of names.values()) {
-      if (existing === alias) return true;
-    }
-  }
-  return false;
-}
-
-export function scopeForUnit(unit) {
-  return {
-    typeParameters: new Set([
-      ...(unit.typeParameters ?? []),
-      ...(unit.typeParameterDetails ?? []).map((param) => param.name),
-      ...receiverTypeParameterDetails(unit.receiverType).map((param) => param.name),
-    ]),
-  };
-}
-
-export function receiverTypeParameterDetails(receiverType) {
-  const details = [];
-  const seen = new Set();
-  for (const name of collectReceiverTypeParameterNames(receiverType)) {
-    if (primitiveTypes.has(name) || seen.has(name)) continue;
-    seen.add(name);
-    details.push({ name });
-  }
-  return details;
-}
-
-export function collectReceiverTypeParameterNames(expr) {
-  if (!expr) return [];
-  if (expr.kind === "pointer") return collectReceiverTypeParameterNames(expr.element);
-  if (expr.kind === "instantiation") return (expr.typeArgs ?? []).flatMap((arg) => collectTypeIdentifiers(arg));
-  return [];
-}
-
-export function collectTypeIdentifiers(expr) {
-  if (!expr) return [];
-  if (expr.kind === "ident") return [expr.name];
-  return [
-    ...collectTypeIdentifiers(expr.element),
-    ...collectTypeIdentifiers(expr.key),
-    ...collectTypeIdentifiers(expr.value),
-    ...collectTypeIdentifiers(expr.left),
-    ...collectTypeIdentifiers(expr.right),
-    ...(expr.typeArgs ?? []).flatMap((arg) => collectTypeIdentifiers(arg)),
-  ];
-}
-
 export function resolvePackageSymbol(context, importPath, name, unit) {
   const symbol = context.symbolIndex.get(`${importPath}::${name}`);
-  if (!symbol) return undefined;
-  if (!symbol.active) return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(symbol.goName)}>`;
+  if (symbol === undefined) return undefined;
+  if (!symbol.active) throw new Error(`internal Go type '${symbol.goName}' is excluded and has no active semantic scaffold declaration`);
   if (symbol.targetPath === context.relativeTargetPath) return safeIdentifier(symbol.exportName);
-  const alias = importTypeName(context, symbol.targetPath, symbol.exportName, unit);
-  return alias;
+  return importTypeName(context, symbol.targetPath, symbol.exportName, unit);
 }
 
 export function importTypeName(context, targetPath, exportName, unit) {
@@ -513,30 +368,23 @@ export function importTypeName(context, targetPath, exportName, unit) {
   context.imports.set(source, names);
   const safeExport = safeIdentifier(exportName);
   const existing = names.get(safeExport);
-  if (existing) return existing;
+  if (existing !== undefined) return existing;
   const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
-    ? uniqueImportAlias(safeExport, unit, targetPath)
-    : safeExport;
+    ? uniqueImportAlias(safeExport, unit, targetPath) : safeExport;
   names.set(safeExport, alias);
   return alias;
 }
 
 export function renderImports(context) {
   const lines = [];
-  if (context.coreImports.size > 0) {
-    lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/scalars.ts`)}";`);
-  }
-  if (context.compatImports.size > 0) {
-    lines.push(`import type { ${[...context.compatImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/compat.ts`)}";`);
-  }
+  if (context.coreImports.size > 0) lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/scalars.ts`)}";`);
+  if (context.compatImports.size > 0) lines.push(`import type { ${[...context.compatImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/compat.ts`)}";`);
   for (const [source, names] of [...context.imports.entries()].sort()) {
-    const specifiers = [...names.entries()]
-      .sort(([left], [right]) => compareText(left, right))
-      .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`)
-      .join(", ");
+    const specifiers = [...names.entries()].sort(([left], [right]) => compareText(left, right))
+      .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`).join(", ");
     lines.push(`import type { ${specifiers} } from "${source}";`);
   }
-  return lines.length > 0 ? `${lines.join("\n")}\n\n` : "";
+  return lines.length === 0 ? "" : `${lines.join("\n")}\n\n`;
 }
 
 export function useCore(context, name) {
@@ -550,14 +398,38 @@ export function useCompat(context, name) {
 }
 
 export function importExternalFacadeName(context, policy, unit) {
-  if (!policy.tsModule || !policy.tsName) {
-    context.diagnostics.push({
-      severity: "error",
-      unitID: unit?.id ?? "",
-      message: `external type policy for '${policy.goName}' must specify tsModule and tsName`,
-    });
-    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(policy.goName)}>`;
-  }
+  if (!policy.tsModule || !policy.tsName) throw new Error(`external type policy for '${policy.objectId}' must specify tsModule and tsName`);
   if (`${context.config.tsRoot}/${policy.tsModule}` === context.relativeTargetPath) return safeIdentifier(policy.tsName);
   return importTypeName(context, `${context.config.tsRoot}/${policy.tsModule}`, policy.tsName, unit);
+}
+
+export function uniqueImportAlias(exportName, unit, targetPath = "") {
+  const hash = createHash("sha256").update(`${unit?.id ?? ""}:${targetPath}:${exportName}`).digest("hex").slice(0, 8);
+  return `${exportName}_${hash}`;
+}
+
+export function isImportAliasUsed(context, alias) {
+  return [...context.imports.values()].some((names) => [...names.values()].includes(alias));
+}
+
+function rendererImportAliases(imports) {
+  const aliases = importAliasMap(imports);
+  for (const imported of imports) if (typeof imported.path === "string" && imported.path !== "") aliases.set(imported.path, imported.path);
+  return aliases;
+}
+
+function requireBridge(context, key) {
+  const carrier = context.bridge[key];
+  if (typeof carrier !== "string" || carrier === "") throw new Error(`canonical semantic carrier '${key}' has no exact bridge identity`);
+  return carrier;
+}
+
+function pointerBridgeKey(representation) {
+  if (representation === "aggregate") return "pointer";
+  if (representation === "reference") return "ref";
+  throw new Error(`canonical semantic pointer has unknown representation '${representation}'`);
+}
+
+function isInternal(importPath, goModule) {
+  return importPath === goModule || importPath.startsWith(`${goModule}/`);
 }

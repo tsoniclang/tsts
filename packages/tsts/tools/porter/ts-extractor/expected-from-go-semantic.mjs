@@ -61,7 +61,8 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
     declaredTypeRhsByProfile: buildDeclaredTypeRhsIndex(snapshot),
     declaredTypeContractsByProfile: evidence.declaredTypeContractsByProfile,
     externalTypeContracts: evidence.externalTypeContracts,
-    externalPointerTerminals: evidence.externalPointerTerminals,
+    externalTypeContractsByProfile: evidence.externalTypeContractsByProfile,
+    externalPointerTerminalsByProfile: evidence.externalPointerTerminalsByProfile,
     externalFacadeArities: evidence.externalFacadeArities,
     namedTypeStorage: evidence.namedTypeStorage,
     rawInterfaceObjects: evidence.rawInterfaceObjects,
@@ -299,6 +300,8 @@ function referenceDescriptor(reference, argumentsList, index) {
     throw new Error(`builtin Go type '${reference.objectId}' has no exact TypeScript mapping`);
   }
   const goName = `${packagePath}.${name}`;
+  const storageIdentity = index.namedTypeStorage.get(reference.objectId);
+  if (storageIdentity !== undefined) return ref(storageIdentity, argumentsList);
   if (isInternal(packagePath, index.goModule)) {
     const target = index.pkgType.get(objectKey(packagePath, name));
     if (target === undefined) throw new Error(`internal Go type '${goName}' has no exact @tsgo-unit declaration identity`);
@@ -306,14 +309,12 @@ function referenceDescriptor(reference, argumentsList, index) {
   }
   const external = index.externalTypeContracts.get(reference.objectId);
   if (external !== undefined) {
-    const exactArity = index.externalFacadeArities.get(goName);
+    const exactArity = index.externalFacadeArities.get(reference.objectId);
     if (exactArity === undefined || argumentsList.length !== exactArity) {
       throw new Error(`external Go type '${reference.objectId}' expected exact facade arity '${exactArity ?? "missing"}', got ${argumentsList.length}`);
     }
     return ref(external.storageIdentity, argumentsList);
   }
-  const storageIdentity = index.namedTypeStorage.get(reference.objectId);
-  if (storageIdentity !== undefined) return ref(storageIdentity, argumentsList);
   throw new Error(`Go type '${reference.objectId}' has no exact declaration or profile storage identity`);
 }
 

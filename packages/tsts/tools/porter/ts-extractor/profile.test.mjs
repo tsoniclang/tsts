@@ -6,11 +6,9 @@ import { loadProfile } from "./profile.mjs";
 
 test("signature profile uses one exact recursively validated contract", () => {
   const profile = loadProfile({});
-  assert.equal(profile.externalInterfaceMembers["io/fs.FileInfo"][0].type.returnTypePolicy, "required");
-  assert.deepEqual(profile.externalValueTypes["jsontext.BeginObject"], {
-    module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts",
-    name: "Token",
-  });
+  assert.equal(profile.stdlibTypes["iter::type::Seq"], "packages/tsts/src/go/compat.ts::GoSeq");
+  assert.equal(profile.bridge.pointer, "GoPtr");
+  assert.equal(profile.bridge.nilable, "GoNilable");
 
   for (const signatureCheck of [
     { parser: null },
@@ -18,15 +16,15 @@ test("signature profile uses one exact recursively validated contract", () => {
     { allowedGlobals: ["Date", "Date"] },
     { facadeTemplate: "packages/no-placeholder.ts" },
     { canonicalTypeAliases: { Short: "also-short" } },
-    { namedTypeMappings: { Short: { module: "m.ts", name: "Type" } } },
-    { namedTypeMappings: { "pkg.Type": { module: "m.ts", name: "Type", extra: true } } },
+    { namedTypeMappings: { Short: "m.ts::Type" } },
+    { namedTypeMappings: { "pkg::type::Type": "short" } },
     { externalFunctionReturns: { "pkg.F": { module: "m.ts", name: "F", extra: true } } },
     { externalInterfaceMembers: { "pkg.I": [{ name: "M", type: { t: "fn", params: [], ret: { t: "kw", kw: "void" } } }] } },
   ]) assert.throws(() => loadProfile({ signatureCheck }));
 
   assert.deepEqual(loadProfile({ signatureCheck: {
-    namedTypeMappings: { "example.com/native.Type": { module: "src/native.ts", name: "HostType" } },
-  } }).namedTypeMappings["example.com/native.Type"], { module: "src/native.ts", name: "HostType" });
+    namedTypeMappings: { "example.com/native::type::Type": "src/native.ts::HostType" },
+  } }).namedTypeMappings["example.com/native::type::Type"], "src/native.ts::HostType");
 });
 
 test("convention rules require explicit scope and exact fields", () => {

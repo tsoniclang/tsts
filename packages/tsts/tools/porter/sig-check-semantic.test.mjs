@@ -4,6 +4,7 @@ import test from "node:test";
 import { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures, generatedTypeDeclarations } from "./sig-check.mjs";
+import { testSemanticProfile } from "./test/helpers.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
@@ -12,7 +13,7 @@ test("expected type index ignores non-type units without semantic variants", () 
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
   const importGroup = { id: `${modulePath}::pkg/file.go::importGroup::fmt`, kind: "importGroup" };
   const unportedType = { id: `${modulePath}::pkg/file.go::type::Hidden`, kind: "type", name: "Hidden" };
-  const snapshot = { files: [{ importPath: packagePath, units: [importGroup, unportedType] }] };
+  const snapshot = semanticSnapshot([{ importPath: packagePath, units: [importGroup, unportedType] }]);
   assert.doesNotThrow(() => buildExpectedIndex(config, snapshot, new Map(), loadProfile(config)));
   const generatedIndex = buildExpectedIndex(config, snapshot, new Map(), loadProfile(config),
     new Map([["Hidden", new Set(["src/pkg/generated.ts"])]]));
@@ -24,7 +25,7 @@ test("expected type index ignores non-type units without semantic variants", () 
 test("expected type index resolves one exact generated declaration and rejects ambiguity", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
   const generated = typeUnit("generated.go", "Generated", structType([]));
-  const snapshot = { files: [{ importPath: packagePath, units: [generated] }] };
+  const snapshot = semanticSnapshot([{ importPath: packagePath, units: [generated] }]);
   const profile = loadProfile(config);
   const exact = new Map([["Generated", new Set(["src/pkg/generated/types.ts"])] ]);
   const index = buildExpectedIndex(config, snapshot, new Map(), profile, exact);
@@ -55,42 +56,55 @@ test("generated type identities require registered generated-artifact ownership"
 
 test("portability: a non-tsts profile drives canonical Go-to-TS mapping", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: { int: "i32" } });
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), loadProfile(config));
   const pointer = functionUnit("pointer", [pointerType(basicType("int"))]);
+  const duration = functionUnit("duration", [namedType("time", "Duration")]);
+  const source = functionUnit("source", [namedType("math/rand/v2", "Source", true)]);
+  const snapshot = semanticSnapshot([{ importPath: packagePath, units: [pointer, duration, source] }], [
+    externalType("time", "Duration", basicType("int64")),
+    externalType("math/rand/v2", "Source", interfaceType([], [], [])),
+  ]);
+  const index = buildExpectedIndex(config, snapshot, new Map(), loadProfile(config));
   assert.deepEqual(goUnitDescriptor(pointer, index).signatures[0].params[0].type, {
     t: "ref",
-    id: "src/rt/bridge.ts::Ptr",
+    id: "src/rt/bridge.ts::Ref",
     args: [{ t: "ref", id: "@acme/prim::i32", args: [] }],
   });
 
-  const duration = functionUnit("duration", [namedType("time", "Duration")]);
   assert.deepEqual(goUnitDescriptor(duration, index).signatures[0].params[0].type, {
     t: "ref", id: "src/rt/time.ts::Duration", args: [],
   });
 
-  const source = functionUnit("source", [namedType("math/rand/v2", "Source")]);
   assert.deepEqual(goUnitDescriptor(source, index).signatures[0].params[0].type, {
-    t: "ref", id: "src/rt/math/rand/v2.ts::Source", args: [],
+    t: "ref",
+    id: "src/rt/bridge.ts::Iface",
+    args: [{ t: "ref", id: "src/rt/math/rand/v2.ts::Source", args: [] }],
   });
 });
 
 test("expected types use only explicit full-identity host-native mappings", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
   config.signatureCheck.namedTypeMappings = {
-    "example.com/native.Event": { module: "src/native/events.ts", name: "HostEvent" },
+    "example.com/native::type::Event": "src/native/events.ts::HostEvent",
   };
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), loadProfile(config));
-  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Event"), { index, typeParameters: new Map() }),
+  const event = functionUnit("event", [namedType("example.com/native", "Event")]);
+  const other = functionUnit("other", [namedType("example.com/native", "Other")]);
+  const snapshot = semanticSnapshot([{ importPath: packagePath, units: [event, other] }], [
+    externalType("example.com/native", "Event", structType([])),
+    externalType("example.com/native", "Other", structType([])),
+  ]);
+  const index = buildExpectedIndex(config, snapshot, new Map(), loadProfile(config));
+  const context = { index, profile: 0, typeParameters: new Map() };
+  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Event"), context),
     { t: "ref", id: "src/native/events.ts::HostEvent", args: [] });
-  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Other"), { index, typeParameters: new Map() }),
+  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Other"), context),
     { t: "ref", id: "src/rt/example.com/native.ts::Other", args: [] });
 });
 
 test("expected-from-go: inline struct value types use resolved array lengths", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: { int: "i32" } });
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot(), new Map(), loadProfile(config));
   const fields = [structField("flag", basicType("int")), structField("name", basicType("string"))];
-  const unit = valueUnit("table", { kind: "array", length: "2", element: { kind: "struct", struct: { fields } } });
+  const unit = valueUnit("table", { kind: "array", nilable: false, length: "2", element: { kind: "struct", nilable: false, struct: { fields } } });
   assert.deepEqual(goUnitDescriptor(unit, index).decls[0].type, {
     t: "ref",
     id: "src/rt/bridge.ts::Arr",
@@ -130,7 +144,7 @@ test("expected-from-go: named uint64 constants derive exact bigint values throug
     [symbolTableAlias.id, { path: "pkg/ids.ts" }],
     [smallId.id, { path: "pkg/ids.ts" }],
   ]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot([file]), tsById, loadProfile(config));
 
   assert.deepEqual([...index.constantRepresentations.bigintNamedTypes], []);
   assert.deepEqual(goUnitDescriptor(constants, index).decls.map((declaration) => declaration.value), [
@@ -151,11 +165,14 @@ test("expected-from-go: receiver methods remain separate from struct data", () =
   const child = typeUnit("child.go", "Child", structType([
     structField("Signature", basicType("string")),
     structField("Base", namedType(packagePath, "Base"), true),
-  ]));
+  ]), [
+    { kind: "field", name: "Signature" },
+    { kind: "embeddedField", name: "Base" },
+  ]);
   const method = methodUnit("base.go", "Base", "Signature", [], [basicType("string")]);
   const file = { importPath: packagePath, imports: [], units: [base, method, child] };
   const tsById = new Map([[base.id, { path: "pkg/base.ts" }], [child.id, { path: "pkg/child.ts" }]]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot([file]), tsById, loadProfile(config));
 
   const descriptor = goUnitDescriptor(child, index);
   assert.deepEqual(descriptor.members.map((member) => member.name), ["Signature", "__tsgoEmbedded0"]);
@@ -170,15 +187,17 @@ test("expected-from-go: interface descriptors contain only source-declared membe
   const reader = typeUnit("contracts.go", "Reader", interfaceType([read], [], [read]), [
     { kind: "method", name: "Read" },
   ]);
-  const readerReference = namedType(packagePath, "Reader");
+  const readerReference = namedType(packagePath, "Reader", true);
   const closer = typeUnit("contracts.go", "ReadCloser", interfaceType([close], [readerReference], [close, read]), [
     { kind: "method", name: "Close" },
     { kind: "embeddedInterface", name: "Reader" },
   ]);
-  const wrapper = typeUnit("contracts.go", "ReaderWrapper", structType([structField("Reader", readerReference, true)]));
+  const wrapper = typeUnit("contracts.go", "ReaderWrapper", structType([structField("Reader", readerReference, true)]), [
+    { kind: "embeddedField", name: "Reader" },
+  ]);
   const file = { importPath: packagePath, imports: [], units: [reader, closer, wrapper] };
   const tsById = new Map([reader, closer, wrapper].map((unit) => [unit.id, { path: "pkg/contracts.ts" }]));
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot([file]), tsById, loadProfile(config));
 
   const descriptor = goUnitDescriptor(closer, index);
   assert.deepEqual(descriptor.members.map((member) => member.name), ["Close"]);
@@ -204,7 +223,7 @@ test("expected-from-go: interface syntax order survives semantic extraction and 
   const embedded = typeUnit("contracts.go", "Embedded", interfaceType([embeddedMethod], [], [embeddedMethod]), [
     { kind: "method", name: "EmbeddedOnly" },
   ]);
-  const embeddedReference = namedType(packagePath, "Embedded");
+  const embeddedReference = namedType(packagePath, "Embedded", true);
   const zulu = interfaceMethod("Ordered", "Zulu", [basicType("int")], [basicType("string")]);
   const alpha = interfaceMethod("Ordered", "Alpha", [basicType("bool")], []);
   const ordered = typeUnit("contracts.go", "Ordered", interfaceType(
@@ -218,7 +237,7 @@ test("expected-from-go: interface syntax order survives semantic extraction and 
   ]);
   const file = { importPath: packagePath, imports: [], units: [embedded, ordered] };
   const tsById = new Map([[embedded.id, { path: "pkg/contracts.ts" }], [ordered.id, { path: "pkg/contracts.ts" }]]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot([file]), tsById, loadProfile(config));
 
   const expected = goUnitDescriptor(ordered, index);
   assert.deepEqual(expected.members.map((member) => member.name), ["Zulu", "Alpha"]);
@@ -234,8 +253,8 @@ test("expected-from-go: interface embeddings use heritage and struct embeddings 
   const config = projectConfig({ keyword: { int: "number" }, core: {} });
   const base = typeUnit("embedding.go", "Base", interfaceType([], [], []), []);
   const extra = typeUnit("embedding.go", "Extra", interfaceType([], [], []), []);
-  const baseReference = namedType(packagePath, "Base");
-  const extraReference = namedType(packagePath, "Extra");
+  const baseReference = namedType(packagePath, "Base", true);
+  const extraReference = namedType(packagePath, "Extra", true);
   const multi = typeUnit("embedding.go", "Multi", interfaceType([], [baseReference, extraReference], []), [
     { kind: "embeddedInterface", name: "Base" },
     { kind: "embeddedInterface", name: "Extra" },
@@ -243,10 +262,13 @@ test("expected-from-go: interface embeddings use heritage and struct embeddings 
   const product = typeUnit("embedding.go", "Product", structType([
     structField("Base", baseReference, true),
     structField("Count", basicType("int")),
-  ]));
+  ]), [
+    { kind: "embeddedField", name: "Base" },
+    { kind: "field", name: "Count" },
+  ]);
   const file = { importPath: packagePath, imports: [], units: [base, extra, multi, product] };
   const tsById = new Map([base, extra, multi, product].map((unit) => [unit.id, { path: "pkg/embedding.ts" }]));
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, loadProfile(config));
+  const index = buildExpectedIndex(config, semanticSnapshot([file]), tsById, loadProfile(config));
 
   const multiExpected = goUnitDescriptor(multi, index);
   assert.deepEqual(multiExpected.members.map((member) => member.name), ["__tsgoEmpty"]);
@@ -287,11 +309,36 @@ function projectConfig(primitives) {
     tsRoot: "src",
     signatureCheck: {
       modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
+      bridge: {
+        nilable: "Maybe", pointer: "Ptr", ref: "Ref", slice: "Slc", array: "Arr",
+        map: "Dict", chan: "Ch", func: "Fn", interface: "Iface",
+      },
       primitives: { ...primitives, compat: {} },
       stdlibTypes: {},
       facadeTemplate: "src/rt/{importPath}.ts",
     },
+  };
+}
+
+function semanticSnapshot(files = [], externalDeclarations = []) {
+  const normalizedFiles = files.map((file, fileIndex) => {
+    const goPath = file.path ?? `fixture/file-${fileIndex}.go`;
+    return {
+      ...file,
+      path: goPath,
+      generated: file.generated ?? false,
+      units: (file.units ?? []).map((unit) => ({ ...unit, metadata: unit.metadata ?? { goPath } })),
+    };
+  });
+  return {
+    semantic: {
+      externalDeclarations,
+      profiles: [testSemanticProfile({
+        coveredFiles: normalizedFiles.map((file) => file.path),
+        packageIds: normalizedFiles.map((file) => file.importPath),
+      })],
+    },
+    files: normalizedFiles,
   };
 }
 
@@ -324,13 +371,34 @@ function valueUnit(name, type) {
 
 function typeUnit(file, name, rhs, members = [], alias = false) {
   const objectId = `${packagePath}::type::${name}`;
-  const object = { id: objectId, name, packagePath, exported: true, type: alias ? aliasType(packagePath, name) : namedType(packagePath, name) };
+  const object = {
+    id: objectId, name, packagePath, exported: true,
+    type: alias ? aliasType(packagePath, name, rhs.nilable) : namedType(packagePath, name, rhs.nilable),
+  };
   return {
     id: `${modulePath}::pkg/${file}::type::${name}`,
     kind: "type",
     name,
     members,
     semantic: [{ kind: "type", packagePath, profiles: [0], object, type: { alias, object, typeParameters: [], rhs } }],
+  };
+}
+
+function externalType(ownerPackage, name, rhs, alias = false) {
+  const objectId = `${ownerPackage}::type::${name}`;
+  const object = {
+    id: objectId,
+    name,
+    packagePath: ownerPackage,
+    exported: true,
+    type: alias ? aliasType(ownerPackage, name, rhs.nilable) : namedType(ownerPackage, name, rhs.nilable),
+  };
+  return {
+    kind: "type",
+    packagePath: ownerPackage,
+    object,
+    type: { alias, object, typeParameters: [], rhs, methods: [] },
+    profiles: [0],
   };
 }
 
@@ -373,25 +441,25 @@ function structField(name, type, embedded = false) {
 }
 
 function basicType(name) {
-  return { kind: "basic", basic: { name, untyped: false } };
+  return { kind: "basic", nilable: false, basic: { name, untyped: false } };
 }
 
-function namedType(ownerPackage, name) {
-  return { kind: "named", reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
+function namedType(ownerPackage, name, nilable = false) {
+  return { kind: "named", nilable, reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
 }
 
-function aliasType(ownerPackage, name) {
-  return { kind: "alias", reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
+function aliasType(ownerPackage, name, nilable = false) {
+  return { kind: "alias", nilable, reference: { objectId: `${ownerPackage}::type::${name}`, packagePath: ownerPackage, name, typeArgs: [] } };
 }
 
 function pointerType(element) {
-  return { kind: "pointer", element };
+  return { kind: "pointer", nilable: true, element };
 }
 
 function structType(fields) {
-  return { kind: "struct", struct: { fields } };
+  return { kind: "struct", nilable: false, struct: { fields } };
 }
 
 function interfaceType(explicitMethods, embeddedTypes, completeMethods) {
-  return { kind: "interface", interface: { explicitMethods, embeddedTypes, embeddedKinds: embeddedTypes.map(() => "interface"), completeMethods, comparable: false, implicit: false, methodSetOnly: false } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods, embeddedTypes, embeddedKinds: embeddedTypes.map(() => "interface"), completeMethods, comparable: false, implicit: false, methodSetOnly: false } };
 }

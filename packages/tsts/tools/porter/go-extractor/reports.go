@@ -38,6 +38,7 @@ type SemanticEvidenceReport struct {
 	Profiles             []SemanticProfileReport          `json:"profiles"`
 	UnsupportedProfiles  []SemanticProfileRejectionReport `json:"unsupportedProfiles"`
 	ModuleGraph          []SemanticModuleReport           `json:"moduleGraph"`
+	ExternalDeclarations []SemanticDeclarationReport      `json:"externalDeclarations"`
 }
 
 type SemanticProfileReport struct {
@@ -213,6 +214,7 @@ type SemanticTypeDeclaration struct {
 	Object         SemanticObjectReport          `json:"object"`
 	TypeParameters []SemanticTypeParameterReport `json:"typeParameters"`
 	RHS            *SemanticTypeReport           `json:"rhs"`
+	Methods        []SemanticMethodReport         `json:"methods,omitempty"`
 }
 
 type SemanticValueSpecReport struct {

@@ -135,7 +135,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     units: [unit],
   });
   const snapshot = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     sourceRoot,
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -158,6 +158,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
       requiredFiles: ["internal/a.go"],
       coveredFiles: ["internal/a.go"],
       excludedFiles: [],
+      externalDeclarations: [],
       profiles: [{
         goos: "linux",
         goarch: "amd64",

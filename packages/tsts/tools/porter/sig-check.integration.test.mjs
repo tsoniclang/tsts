@@ -9,6 +9,7 @@ import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extra
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
+import { testSemanticProfile } from "./test/helpers.mjs";
 import "./ts-extractor/declaration-metadata.test.mjs";
 import "./ts-extractor/module-index.test.mjs";
 
@@ -17,6 +18,13 @@ async function tryLoad() {
 }
 
 const ANNO = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
+const EMPTY_SEMANTIC_SNAPSHOT = {
+  files: [],
+  semantic: {
+    externalDeclarations: [],
+    profiles: [testSemanticProfile()],
+  },
+};
 
 test("integration: extract a function signature (rest + generics + import-resolved types)", async (t) => {
   const api = await tryLoad();
@@ -141,7 +149,7 @@ export const mask: bigint = 0x8000000000000000n;
     value: "9223372036854775808",
   });
   const profile = loadProfile({});
-  const index = buildExpectedIndex({ goModulePath: "m", tsRoot: "pkg" }, { files: [] }, new Map(), profile, new Map());
+  const index = buildExpectedIndex({ goModulePath: "m", tsRoot: "pkg" }, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map());
   const expected = goUnitDescriptor({
     id: "m::v.go::constGroup::mask",
     kind: "constGroup",
@@ -155,7 +163,7 @@ export const mask: bigint = 0x8000000000000000n;
           name: "mask",
           nameIndex: 0,
           blank: false,
-          type: { kind: "basic", basic: { name: "uint64", untyped: false } },
+          type: { kind: "basic", nilable: false, basic: { name: "uint64", untyped: false } },
           constant: { kind: "Int", exact: "9223372036854775808" },
         }],
       }],
@@ -198,23 +206,23 @@ export const value: number = A | LocalB;
 test("integration: end-to-end expected(Go-model) vs actual — match and drift", async (t) => {
   const api = await tryLoad();
   if (!api) return t.skip("TSTS dist not built/fresh");
-  // Self-consistent profile: GoPtr lives in the same module the fixture imports it from.
+  // Self-consistent profile: GoRef lives in the same module the fixture imports it from.
   const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile, new Map());
-  // Go: func f(a string, b *int) — expected [string, GoPtr<int>].
+  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map());
+  // Go: func f(a string, b *int) — expected [string, GoRef<int>].
   const goUnit = {
     id: "m::pkg/f.go::func::f",
     kind: "func",
     semantic: [{
       kind: "func",
-      profiles: ["linux/amd64:cgo=0:tags="],
+      profiles: [0],
       signature: {
         receiverTypeParameters: [],
         typeParameters: [],
         parameters: { variables: [
-          { name: "a", type: { kind: "basic", basic: { name: "string", untyped: false } } },
-          { name: "b", type: { kind: "pointer", element: { kind: "basic", basic: { name: "int", untyped: false } } } },
+          { name: "a", type: { kind: "basic", nilable: false, basic: { name: "string", untyped: false } } },
+          { name: "b", type: { kind: "pointer", nilable: true, element: { kind: "basic", nilable: false, basic: { name: "int", untyped: false } } } },
         ] },
         results: { variables: [] },
         variadic: false,
@@ -224,15 +232,15 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   const expected = goUnitDescriptor(goUnit, index);
 
   // Matching actual.
-  const okSrc = `import { GoPtr } from "./compat.js";
+  const okSrc = `import { GoRef } from "./compat.js";
 import { int } from "./scalars.js";
 /** @tsgo-unit {"id":"m::pkg/f.go::func::f","kind":"func"} */
-export function f(a: string, b: GoPtr<int>): void {}
+export function f(a: string, b: GoRef<int>): void {}
 `;
   const okActual = extractFileDescriptors(api, "pkg/f.ts", okSrc, ANNO)[0].descriptor;
   assert.equal(compareSignatures(expected, okActual, null).length, 0);
 
-  // Drifted actual: second param type wrong (int instead of GoPtr<int>).
+  // Drifted actual: second param type wrong (int instead of GoRef<int>).
   const badSrc = `import { int } from "./scalars.js";
 /** @tsgo-unit {"id":"m::pkg/f.go::func::f","kind":"func"} */
 export function f(a: string, b: int): void {}

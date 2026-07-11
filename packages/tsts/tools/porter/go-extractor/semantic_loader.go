@@ -28,10 +28,11 @@ type semanticVariantEvidence struct {
 }
 
 type semanticProfileLoad struct {
-	declarations map[string]SemanticDeclarationReport
-	importNames  []semanticImportNameEvidence
-	report       SemanticProfileReport
-	modules      []SemanticModuleReport
+	declarations         map[string]SemanticDeclarationReport
+	externalDeclarations map[string]SemanticDeclarationReport
+	importNames          []semanticImportNameEvidence
+	report               SemanticProfileReport
+	modules              []SemanticModuleReport
 }
 
 type declarationCheckedPackage struct {
@@ -54,6 +55,7 @@ type declarationPackageChecker struct {
 	checkingByID     map[string]bool
 	importNames      map[string]string
 	externalImporter types.ImporterFrom
+	externalByPath   map[string]*types.Package
 }
 
 func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot, semanticFiles map[string]bool) {
@@ -62,6 +64,7 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 	requiredFiles := stringSet(plan.RequiredFiles)
 	requiredUnits := requiredSemanticUnitIDs(snapshot, requiredFiles)
 	merged := map[string]semanticUnitEvidence{}
+	externalMerged := map[string]semanticUnitEvidence{}
 	resolvedImportNames := map[string]map[string]string{}
 	coveredFiles := map[string]bool{}
 	moduleGraph := map[string]SemanticModuleReport{}
@@ -91,6 +94,20 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 			variant.profiles[profileIndex] = true
 			evidence.variants[canonical] = variant
 			merged[unitID] = evidence
+		}
+		for objectID, report := range loaded.externalDeclarations {
+			canonical := canonicalSemanticDeclaration(report)
+			evidence := externalMerged[objectID]
+			if evidence.variants == nil {
+				evidence.variants = map[string]semanticVariantEvidence{}
+			}
+			variant, ok := evidence.variants[canonical]
+			if !ok {
+				variant = semanticVariantEvidence{report: report, profiles: map[int]bool{}}
+			}
+			variant.profiles[profileIndex] = true
+			evidence.variants[canonical] = variant
+			externalMerged[objectID] = evidence
 		}
 	}
 	if missing := setDifference(requiredFiles, coveredFiles); len(missing) > 0 {
@@ -136,6 +153,7 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 		return canonicalSemanticModule(modules[left]) < canonicalSemanticModule(modules[right])
 	})
 	toolchain := exactSemanticToolchain()
+	externalDeclarations := mergedExternalSemanticDeclarations(externalMerged)
 	snapshot.Semantic = SemanticEvidenceReport{
 		Toolchain: toolchain.goVersion, ToolchainExecutable: toolchain.executable, ToolchainHash: toolchain.executableHash,
 		GOROOT: toolchain.goRoot, GOROOTHash: toolchain.goRootSeal.SHA256,
@@ -145,6 +163,7 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 		Compiler: toolchain.compiler, ReleaseTags: append([]string{}, toolchain.releaseTags...), ModulePath: modulePath,
 		RequiredFiles: plan.RequiredFiles, CoveredFiles: sortedBoolKeys(coveredFiles), ExcludedFiles: plan.ExcludedFiles,
 		Profiles: profileReports, UnsupportedProfiles: plan.UnsupportedProfiles, ModuleGraph: modules,
+		ExternalDeclarations: externalDeclarations,
 	}
 }
 
@@ -167,9 +186,11 @@ func loadSemanticProfile(root string, modulePath string, profile semanticBuildPr
 	checker := newDeclarationPackageChecker(root, modulePath, profile, graph)
 	checked := checker.checkRequiredPackages(requiredFiles)
 	declarations, covered := semanticDeclarations(root, modulePath, checked, locations, requiredFiles)
+	externalDeclarations := semanticExternalTypeDeclarations(modulePath, checker, declarations)
 	return semanticProfileLoad{
-		declarations: declarations,
-		importNames:  semanticProfileImportNames(root, graph),
+		declarations:         declarations,
+		externalDeclarations: externalDeclarations,
+		importNames:          semanticProfileImportNames(root, graph),
 		report: SemanticProfileReport{
 			GOOS: profile.GOOS, GOARCH: profile.GOARCH, CgoEnabled: profile.CgoEnabled,
 			Architecture:      semanticArchitectureSetting(profile),
@@ -189,6 +210,7 @@ func newDeclarationPackageChecker(root string, modulePath string, profile semant
 		root: root, modulePath: modulePath, profile: profile, fileSet: token.NewFileSet(),
 		localByID:   map[string]*packages.Package{},
 		exportFiles: map[string]string{}, checkedByID: map[string]*declarationCheckedPackage{}, checkingByID: map[string]bool{}, importNames: map[string]string{},
+		externalByPath: map[string]*types.Package{},
 	}
 	for _, metadata := range graph {
 		if metadata == nil {
@@ -353,7 +375,25 @@ func (importer declarationPackageImporter) ImportFrom(path string, directory str
 		}
 		return importer.checker.check(local).types, nil
 	}
-	return importer.checker.externalImporter.ImportFrom(path, directory, mode)
+	return importer.checker.importExternalPackage(path, directory, mode)
+}
+
+func (checker *declarationPackageChecker) importExternalPackage(path string, directory string, mode types.ImportMode) (*types.Package, error) {
+	if path == "unsafe" {
+		return types.Unsafe, nil
+	}
+	if loaded := checker.externalByPath[path]; loaded != nil {
+		return loaded, nil
+	}
+	loaded, err := checker.externalImporter.ImportFrom(path, directory, mode)
+	if err != nil {
+		return nil, err
+	}
+	if loaded == nil || loaded.Path() != path {
+		return nil, fmt.Errorf("external Go import %s resolved to package %v", path, loaded)
+	}
+	checker.externalByPath[path] = loaded
+	return loaded, nil
 }
 
 func renameBlankValueDeclarations(files []*ast.File, metadata *packages.Package) map[*ast.Ident]bool {

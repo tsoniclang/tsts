@@ -1,18 +1,29 @@
-import { buildExternalFacadeMap } from "./external-facades.mjs";
+import {
+  renderCanonicalSignature,
+  renderCanonicalType,
+  renderCanonicalTypeParameters,
+} from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
+import { buildExternalFacadeMap } from "./external-facades.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
-import { fail, hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
-import { importExternalFacadeName, renderImports, renderParameters, tsReturnType, tsType, useCompat } from "./type-renderer.mjs";
+import { hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
+import { semanticTypeContexts } from "./semantic-type-nilability.mjs";
+import { renderImports, semanticRendererOperations } from "./type-renderer.mjs";
+import { addProfileSemanticStorageEvidence, buildTypeRepresentationEvidence } from "../ts-extractor/semantic-pointer-lowering.mjs";
+import { loadProfile } from "../ts-extractor/profile.mjs";
+import {
+  lowerSemanticSignature,
+  lowerSemanticType,
+  lowerSemanticTypeParameters,
+  semanticContextWithTypeParameters,
+  semanticTypeParameterKey,
+} from "../ts-extractor/semantic-type-contract.mjs";
 import path from "node:path";
 
 export function authoredFacadePathSet(config) {
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
-  const set = new Set();
-  for (const entry of config.authoredFacadeModules ?? []) {
-    set.add(`${sourceRootPrefix}/${entry.replace(/^\/+/, "")}`);
-  }
-  return set;
+  return new Set((config.authoredFacadeModules ?? []).map((entry) => `${sourceRootPrefix}/${entry.replace(/^\/+/, "")}`));
 }
 
 export function writeExternalFacades(config, snapshot, options) {
@@ -21,9 +32,7 @@ export function writeExternalFacades(config, snapshot, options) {
   const sourceRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
   let count = 0;
   for (const [repoRelativePath, text] of artifacts) {
-    const relativeUnderSource = repoRelativePath.startsWith(sourceRootPrefix)
-      ? repoRelativePath.slice(sourceRootPrefix.length)
-      : repoRelativePath;
+    const relativeUnderSource = repoRelativePath.startsWith(sourceRootPrefix) ? repoRelativePath.slice(sourceRootPrefix.length) : repoRelativePath;
     writeTextSafely(path.join(outRoot, relativeUnderSource), text, {
       force: options.force === true,
       label: "generated Go facade",
@@ -36,27 +45,16 @@ export function writeExternalFacades(config, snapshot, options) {
 export function renderExpectedGeneratedArtifacts(config, snapshot) {
   const artifacts = new Map();
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
-  const scalarsBody = renderGoScalarsModule();
   artifacts.set(
     `${sourceRootPrefix}/go/scalars.ts`,
-    renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", scalarsBody),
+    renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", renderGoScalarsModule()),
   );
-  const compatBody = renderGoCompatModule();
   artifacts.set(
     `${sourceRootPrefix}/go/compat.ts`,
-    renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", compatBody),
+    renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", renderGoCompatModule()),
   );
   for (const [relativePath, body] of renderExternalFacadeModules(config, snapshot)) {
-    artifacts.set(
-      `${sourceRootPrefix}/${relativePath}`,
-      renderGeneratedArtifact(snapshot, relativePath, "go-facade", body),
-    );
-  }
-  // Authored facade modules are excluded from the generated set: porter:facades must
-  // not regenerate or overwrite them, and they are not checked against deterministic
-  // generated output. Their faithful Go-semantics bodies are hand-authored.
-  for (const authoredPath of authoredFacadePathSet(config)) {
-    artifacts.delete(authoredPath);
+    artifacts.set(`${sourceRootPrefix}/${relativePath}`, renderGeneratedArtifact(snapshot, relativePath, "go-facade", body));
   }
   return new Map([...artifacts.entries()].sort(([left], [right]) => compareText(left, right)));
 }
@@ -87,30 +85,29 @@ export function renderExternalFacadeModules(config, snapshot) {
   const facades = buildExternalFacadeMap(config, snapshot);
   const groups = new Map();
   for (const facade of facades.values()) {
-    if (!facade.tsModule || !facade.tsName) fail(`external facade for ${facade.goName} must include tsModule and tsName`);
+    if (facade.storageStrategy !== "generated") continue;
     const group = groups.get(facade.tsModule) ?? [];
     group.push(facade);
     groups.set(facade.tsModule, group);
   }
-
+  const profile = loadProfile(config);
+  const evidence = addProfileSemanticStorageEvidence(buildTypeRepresentationEvidence(config, snapshot, facades), profile);
   const output = new Map();
-  for (const [tsModule, policies] of [...groups.entries()].sort(([left], [right]) => compareText(left, right))) {
-    const relativeTargetPath = `${config.tsRoot}/${tsModule}`;
-    const context = facadeRendererContext(config, relativeTargetPath, policies, facades);
-    const body = policies
-      .slice()
-      .sort((left, right) => compareText(left.tsName, right.tsName))
-      .map((policy) => renderExternalFacadePolicy(policy, context))
-      .join("\n\n");
-    output.set(tsModule, `${renderImports(context)}${body}\n`);
+  for (const [tsModule, moduleFacades] of [...groups.entries()].sort(([left], [right]) => compareText(left, right))) {
+    const sorted = moduleFacades.slice().sort((left, right) => compareText(left.tsName, right.tsName));
+    const relativeTargetPath = `${config.tsRoot.replace(/\/+$/, "")}/${tsModule}`;
+    const context = facadeRendererContext(config, snapshot, relativeTargetPath, sorted, facades, profile, evidence);
+    const bodies = sorted.map((facade) => renderInvariantExternalFacade(facade, context, config, snapshot, sorted, facades, profile, evidence));
+    output.set(tsModule, `${renderImports(context)}${bodies.join("\n\n")}\n`);
   }
   return output;
 }
 
-export function facadeRendererContext(config, relativeTargetPath, policies, facades) {
+export function facadeRendererContext(config, snapshot, relativeTargetPath, policies, facades, profile, evidence) {
   return {
     config,
-    snapshot: { files: [] },
+    snapshot,
+    semanticIndex: semanticFacadeIndex(config, profile, evidence),
     symbolIndex: new Map(),
     valueTypeIndex: new Map(),
     file: { path: relativeTargetPath, importPath: "", imports: [] },
@@ -123,76 +120,203 @@ export function facadeRendererContext(config, relativeTargetPath, policies, faca
     localTopLevelNames: new Set(policies.map((policy) => policy.tsName)),
     importAliases: new Map(),
     externalFacades: facades,
+    bridge: profile.bridge,
   };
 }
 
-export function renderExternalFacadePolicy(policy, context) {
-  const typeParameters = renderExternalTypeParameters(facadeTypeParameters(policy));
-  if (policy.kind === "class") {
-    const members = renderExternalMembers(policy, context);
-    return `export class ${safeIdentifier(policy.tsName)}${typeParameters} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+export function renderExternalFacadePolicy(facade, declaration, profileIndex, context) {
+  const unit = { id: `external-facade:${facade.objectId}`, semantic: [{ profiles: [profileIndex] }] };
+  const semanticContext = semanticContextWithTypeParameters({ index: context.semanticIndex, profile: profileIndex }, declaration.typeParameters);
+  const operations = semanticRendererOperations(context, unit);
+  const parameters = lowerSemanticTypeParameters(declaration.typeParameters, semanticContext);
+  const typeParameters = renderCanonicalTypeParameters(parameters, operations);
+  const name = safeIdentifier(facade.tsName);
+  if (!declaration.alias && declaration.rhs.kind === "interface" && externalInterfaceCanUseDeclaration(declaration.rhs)) {
+    return renderExternalInterfaceDeclaration(name, typeParameters, declaration.rhs, semanticContext, operations);
   }
-  if (policy.kind === "interface" || policy.kind === "opaque") {
-    const heritage = (policy.extends ?? []).map((goName) => {
-      const parent = context.externalFacades.get(goName);
-      if (!parent) fail(`external type policy ${policy.goName} extends unknown facade ${goName}`);
-      return importExternalFacadeName(context, parent, { id: `external-facade:${policy.goName}` });
-    });
-    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
-    const members = renderExternalMembers(policy, context);
-    const emptyMember = policy.kind === "opaque"
-      ? `  readonly __goFacadeName: ${JSON.stringify(policy.goName)};`
-      : "  readonly __tsgoEmpty?: never;";
-    return `export interface ${safeIdentifier(policy.tsName)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : emptyMember}\n}`;
-  }
-  if (policy.kind === "function") {
-    const params = renderParameters(policy.parameters ?? [], context, facadeScope(policy), { id: `external-facade:${policy.goName}` });
-    const result = tsReturnType(policy.results ?? [], context, facadeScope(policy), { id: `external-facade:${policy.goName}` });
-    return `export type ${safeIdentifier(policy.tsName)}${typeParameters} = (${params.join(", ")}) => ${result};`;
-  }
-  if (policy.kind === "functionValue") {
-    return `export function ${safeIdentifier(policy.tsName)}(...args: Array<unknown>): unknown {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}`)});\n}`;
-  }
-  if (policy.kind === "value") {
-    if (policy.tsInitializer !== undefined && (typeof policy.tsInitializer !== "string" || policy.tsInitializer.trim() === "")) {
-      throw new Error(`external value facade ${policy.goName} has an invalid tsInitializer`);
+  if (facade.runtimeAdaptation?.representation === "class") {
+    if (declaration.rhs.kind !== "struct" || declaration.alias) {
+      throw new Error(`external facade ${facade.objectId} can use class runtime adaptation only for a defined Go struct`);
     }
-    if (policy.tsInitializer === undefined) {
-      return `export const ${safeIdentifier(policy.tsName)}: unknown = (() => {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}`)});\n})();`;
-    }
-    return `export const ${safeIdentifier(policy.tsName)} = ${policy.tsInitializer};`;
+    return renderExternalClass(name, typeParameters, facade, declaration, semanticContext, operations);
   }
-  if (policy.kind === "type") {
-    const expression = policy.typeExpression
-      ? tsType(policy.typeExpression, context, facadeScope(policy), { id: `external-facade:${policy.goName}` })
-      : `${useCompat(context, "GoUnresolved")}<${JSON.stringify(policy.goName)}>`;
-    return `export type ${safeIdentifier(policy.tsName)}${typeParameters} = ${expression};`;
+  if (declaration.methods.length > 0) {
+    throw new Error(`external facade ${facade.objectId} has declared Go methods but no generated class runtime adaptation`);
   }
-  fail(`unsupported external facade kind '${policy.kind}' for ${policy.goName}`);
+  const body = renderExternalDeclarationBody(declaration, semanticContext, operations);
+  return `export type ${name}${typeParameters} = ${body};`;
 }
 
-export function renderExternalMembers(policy, context) {
-  const scope = facadeScope(policy);
-  return (policy.members ?? []).map((member) => {
-    if (member.kind !== "method") fail(`unsupported external facade member kind '${member.kind}' for ${policy.goName}`);
-    const params = renderParameters(member.parameters ?? [], context, scope, { id: `external-facade:${policy.goName}` });
-    const result = tsReturnType(member.results ?? [], context, scope, { id: `external-facade:${policy.goName}` });
-    if (policy.kind === "class") {
-      return `  ${safePropertyName(member.name)}(${params.join(", ")}): ${result} {\n    throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}.${member.name}`)});\n  }`;
+function renderInvariantExternalFacade(facade, sharedContext, config, snapshot, policies, facades, profile, evidence) {
+  const outputs = new Map();
+  for (const { declaration, profiles } of facade.variants) {
+    for (const profileIndex of profiles) {
+      const isolated = facadeRendererContext(config, snapshot, sharedContext.relativeTargetPath, policies, facades, profile, evidence);
+      const body = renderExternalFacadePolicy(facade, declaration, profileIndex, isolated);
+      const complete = `${renderImports(isolated)}${body}`;
+      outputs.set(complete, { body, declaration, profileIndex });
     }
-    return `  ${safePropertyName(member.name)}(${params.join(", ")}): ${result};`;
-  });
+  }
+  if (outputs.size !== 1) throw new Error(`external facade '${facade.objectId}' renders differently across active semantic profiles`);
+  const selected = outputs.values().next().value;
+  return renderExternalFacadePolicy(facade, selected.declaration, selected.profileIndex, sharedContext);
 }
 
-export function renderExternalTypeParameters(typeParameters) {
-  return typeParameters.length > 0 ? `<${typeParameters.map((param) => safeIdentifier(param)).join(", ")}>` : "";
+function renderExternalDeclarationBody(declaration, semanticContext, operations) {
+  return declaration.rhs.kind === "struct"
+    ? renderExternalStruct(declaration.rhs, semanticContext, operations)
+    : declaration.rhs.kind === "interface"
+      ? renderExternalInterface(declaration.rhs, semanticContext, operations)
+      : renderExternalType(declaration.rhs, semanticContext, semanticTypeContexts.declarationShape, operations);
 }
 
-export function facadeScope(policy) {
-  return { typeParameters: new Set(facadeTypeParameters(policy)) };
+function renderExternalStruct(type, semanticContext, operations) {
+  const members = [];
+  let hidden = 0;
+  for (const field of type.struct?.fields ?? []) {
+    const variable = field.variable;
+    const rendered = renderExternalType(variable.type, semanticContext, semanticTypeContexts.value, operations);
+    if (variable.exported) members.push(`${safePropertyName(variable.name)}: ${rendered}`);
+    else members.push(`readonly ${unexportedFieldProperty(variable, hidden++)}: never`);
+  }
+  return members.length === 0 ? "{ readonly __tsgoEmpty?: never }" : `{ ${members.join("; ")} }`;
 }
 
-export function facadeTypeParameters(policy) {
-  if (policy.typeParameters?.length) return policy.typeParameters;
-  return Array.from({ length: policy.arity ?? 0 }, (_value, index) => `T${index}`);
+function renderExternalInterface(type, semanticContext, operations) {
+  const members = [];
+  let hidden = 0;
+  for (const method of type.interface?.explicitMethods ?? []) {
+    if (method.exported) members.push(renderMethodSignature(method.name, method.signature, semanticContext, operations));
+    else members.push(`readonly ${unexportedMethodProperty(method, hidden++)}: never`);
+  }
+  const parts = [];
+  if (members.length > 0) parts.push(`{ ${members.join("; ")} }`);
+  const embeddedTypes = type.interface?.embeddedTypes ?? [];
+  const embeddedKinds = type.interface?.embeddedKinds ?? [];
+  if (embeddedTypes.length !== embeddedKinds.length) throw new Error("external Go interface has inconsistent embedding evidence");
+  for (const [index, embedded] of embeddedTypes.entries()) {
+    const kind = embeddedKinds[index];
+    if (kind !== "interface" && kind !== "typeSet") throw new Error(`external Go interface embedding has no exact classification '${kind}'`);
+    parts.push(renderExternalType(embedded, semanticContext, kind === "interface" ? semanticTypeContexts.heritage : semanticTypeContexts.constraint, operations));
+  }
+  if (parts.length === 0) return type.interface?.comparable ? operations.compat("GoComparable") : "unknown";
+  return parts.length === 1 ? parts[0] : parts.map((part) => `(${part})`).join(" & ");
+}
+
+function externalInterfaceCanUseDeclaration(type) {
+  return type.interface?.methodSetOnly === true && (type.interface.embeddedKinds ?? []).every((kind) => kind === "interface");
+}
+
+function renderExternalInterfaceDeclaration(name, typeParameters, type, semanticContext, operations) {
+  const heritage = (type.interface?.embeddedTypes ?? []).map((embedded) => renderExternalType(
+    embedded,
+    semanticContext,
+    semanticTypeContexts.heritage,
+    operations,
+  ));
+  const members = [];
+  let hidden = 0;
+  for (const method of type.interface?.explicitMethods ?? []) {
+    if (method.exported) members.push(`  ${renderMethodSignature(method.name, method.signature, semanticContext, operations)};`);
+    else members.push(`  readonly ${unexportedMethodProperty(method, hidden++)}: never;`);
+  }
+  if (members.length === 0) members.push("  readonly __tsgoEmpty?: never;");
+  const extendsClause = heritage.length === 0 ? "" : ` extends ${heritage.join(", ")}`;
+  return `export interface ${name}${typeParameters}${extendsClause} {\n${members.join("\n")}\n}`;
+}
+
+function renderMethodSignature(name, signature, semanticContext, operations, aliases = new Map()) {
+  const lowered = lowerSemanticSignature(signature, semanticContext, { includeReceiver: false });
+  const methodOperations = {
+    ...operations,
+    typeParameter: (reference) => aliases.get(semanticTypeParameterKey(reference)) ?? safeIdentifier(reference.name),
+  };
+  const typeParameters = renderCanonicalTypeParameters(lowered.typeParameters, methodOperations);
+  const rendered = renderCanonicalSignature(lowered, methodOperations);
+  return `${safePropertyName(name)}${typeParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType}`;
+}
+
+function unexportedFieldProperty(variable, index) {
+  const identity = variable.name === "_" ? `${variable.packagePath}::_::${index}` : `${variable.packagePath}::${variable.name}`;
+  return safePropertyName(`__goUnexportedField::${identity}`);
+}
+
+function unexportedMethodProperty(method, index) {
+  const identity = method.name === "_" ? `${method.packagePath}::_::${index}` : `${method.packagePath}::${method.name}`;
+  return safePropertyName(`__goUnexportedMethod::${identity}`);
+}
+
+function renderExternalClass(name, typeParameters, facade, declaration, semanticContext, operations) {
+  const lines = [];
+  let hidden = 0;
+  for (const field of declaration.rhs.struct?.fields ?? []) {
+    const variable = field.variable;
+    const rendered = renderExternalType(variable.type, semanticContext, semanticTypeContexts.value, operations);
+    if (variable.exported) lines.push(`  ${safePropertyName(variable.name)}!: ${rendered};`);
+    else lines.push(`  private readonly ${safeIdentifier(`__goUnexportedField${hidden++}`)}!: never;`);
+  }
+  for (const method of declaration.methods) {
+    if (!method.exported) {
+      lines.push(`  private readonly ${safeIdentifier(`__goUnexportedMethod${hidden++}`)}!: never;`);
+      continue;
+    }
+    const aliases = receiverTypeParameterAliases(declaration, method);
+    const lowered = lowerSemanticSignature(method.signature, semanticContext, { includeReceiver: false });
+    const methodOperations = {
+      ...operations,
+      typeParameter: (reference) => aliases.get(semanticTypeParameterKey(reference)) ?? safeIdentifier(reference.name),
+    };
+    const methodParameters = renderCanonicalTypeParameters(lowered.typeParameters, methodOperations);
+    const rendered = renderCanonicalSignature(lowered, methodOperations);
+    const body = `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${facade.goDisplayName}.${method.name}`)});`;
+    lines.push(`  ${safePropertyName(method.name)}${methodParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType} {\n    ${body}\n  }`);
+  }
+  if (lines.length === 0) lines.push("  readonly __tsgoEmpty?: never;");
+  return `export class ${name}${typeParameters} {\n${lines.join("\n")}\n}`;
+}
+
+function receiverTypeParameterAliases(declaration, method) {
+  const receiverParameters = method.signature?.receiverTypeParameters;
+  if (!Array.isArray(receiverParameters)) throw new Error(`external Go method '${method.id}' has no exact receiver type-parameter list`);
+  if (receiverParameters.length !== declaration.typeParameters.length) {
+    throw new Error(`external Go method '${method.id}' receiver arity does not match '${declaration.object.id}'`);
+  }
+  const receiver = method.signature?.receiver?.type;
+  const receiverReference = receiver?.kind === "pointer" ? receiver.element?.reference : receiver?.reference;
+  if (receiverReference?.objectId !== declaration.object.id || receiverReference.typeArgs?.length !== receiverParameters.length) {
+    throw new Error(`external Go method '${method.id}' receiver does not identify its exact declared type`);
+  }
+  const aliases = new Map();
+  for (const [index, parameter] of receiverParameters.entries()) {
+    const argument = receiverReference.typeArgs[index];
+    if (argument?.kind !== "typeParameter" || semanticTypeParameterKey(argument.typeParameter) !== semanticTypeParameterKey(parameter.reference)) {
+      throw new Error(`external Go method '${method.id}' receiver type argument #${index} does not identify its receiver parameter`);
+    }
+    aliases.set(semanticTypeParameterKey(parameter.reference), safeIdentifier(declaration.typeParameters[index].reference.name));
+  }
+  return aliases;
+}
+
+function renderExternalType(type, semanticContext, typeContext, operations) {
+  return renderCanonicalType(lowerSemanticType(type, semanticContext, typeContext), operations);
+}
+
+function semanticFacadeIndex(config, profile, evidence) {
+  return {
+    goModule: config.goModulePath,
+    core: profile.modules.core,
+    compat: profile.modules.compat,
+    bridge: profile.bridge,
+    primKeyword: profile.primitives.keyword,
+    primCore: profile.primitives.core,
+    primCompat: profile.primitives.compat,
+    declaredTypeContractsByProfile: evidence.declaredTypeContractsByProfile,
+    externalTypeContracts: evidence.externalTypeContracts,
+    externalTypeContractsByProfile: evidence.externalTypeContractsByProfile,
+    externalPointerTerminalsByProfile: evidence.externalPointerTerminalsByProfile,
+    externalFacadeArities: evidence.externalFacadeArities,
+    namedTypeStorage: evidence.namedTypeStorage,
+    rawInterfaceObjects: evidence.rawInterfaceObjects,
+    storageCarrierByIdentity: evidence.storageCarrierByIdentity,
+  };
 }

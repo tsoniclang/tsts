@@ -2,35 +2,62 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { renderValueGroup } from "./core/type-renderer.mjs";
+import { semanticTypeContexts } from "./core/semantic-type-nilability.mjs";
 import {
   buildExpectedIndex,
   goUnitDescriptor,
   semanticTypeDescriptor,
 } from "./ts-extractor/expected-from-go-semantic.mjs";
+import { testSemanticProfile } from "./test/helpers.mjs";
 
 const profile = {
   modules: { core: "src/go/scalars.ts", compat: "src/go/compat.ts" },
-  bridge: { pointer: "GoPtr", slice: "GoSlice", array: "GoArray", map: "GoMap", chan: "GoChan" },
+  bridge: {
+    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+    map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface",
+  },
   primitives: {
     keyword: { string: "string", any: "unknown" },
     core: { bool: "bool", int: "int", int32: "int", float64: "double" },
     compat: { rune: "GoRune", error: "GoError", complex128: "GoComplex128" },
   },
-  stdlibTypes: { "iter.Seq": "GoSeq" },
+  stdlibTypes: { "iter::type::Seq": "src/go/compat.ts::GoSeq" },
   namedTypeMappings: {},
   facadeTemplate: "src/go/{importPath}.ts",
 };
 const semanticProfile = 0;
 
 function indexFor(units = []) {
-  const snapshot = { files: [{ importPath: "example/p", units }] };
+  const snapshot = semanticSnapshot([{ importPath: "example/p", units }]);
   const tsById = new Map(units.map((unit) => [unit.id, { path: `src/p/${unit.name}.ts` }]));
   return buildExpectedIndex({ goModulePath: "example", tsRoot: "src" }, snapshot, tsById, profile);
 }
 
-const basic = (name, untyped = false) => ({ kind: "basic", basic: { name, untyped } });
-const named = (packagePath, name, objectId = `${packagePath}::type::${name}`, typeArgs = []) => ({
-  kind: "named",
+function semanticSnapshot(files) {
+  const normalizedFiles = files.map((file, fileIndex) => {
+    const goPath = file.path ?? `fixture/file-${fileIndex}.go`;
+    return {
+      ...file,
+      path: goPath,
+      generated: file.generated ?? false,
+      units: (file.units ?? []).map((unit) => ({ ...unit, metadata: unit.metadata ?? { goPath } })),
+    };
+  });
+  return {
+    semantic: {
+      externalDeclarations: [],
+      profiles: [testSemanticProfile({
+        coveredFiles: normalizedFiles.map((file) => file.path),
+        packageIds: normalizedFiles.map((file) => file.importPath),
+      })],
+    },
+    files: normalizedFiles,
+  };
+}
+
+const basic = (name, untyped = false) => ({ kind: "basic", nilable: name === "untyped nil", basic: { name, untyped } });
+const named = (packagePath, name, objectId = `${packagePath}::type::${name}`, typeArgs = [], nilable = false) => ({
+  kind: "named", nilable,
   reference: { packagePath, name, objectId, typeArgs },
 });
 const parameterRef = (ownerId, index, name = `T${index}`) => ({ ownerId, role: "type", index, name });
@@ -38,16 +65,31 @@ const parameter = (ownerId, index, constraint, name) => ({ reference: parameterR
 const variants = (semantic, profiles = [semanticProfile]) => [{ ...semantic, profiles }];
 
 test("canonical semantic types map resolved array lengths, identities, and constraints", () => {
+  const boxObject = {
+    id: "example/p::type::Box",
+    packagePath: "example/p",
+    name: "Box",
+    exported: true,
+    type: named("example/p", "Box"),
+  };
   const typeUnit = {
     id: "example::p.go::type::Box",
     kind: "type",
     name: "Box",
-    semantic: variants({ type: { object: { id: "example/p::type::Box", packagePath: "example/p", name: "Box" } } }),
+    semantic: variants({
+      object: boxObject,
+      type: {
+        alias: false,
+        object: boxObject,
+        typeParameters: [],
+        rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+      },
+    }),
   };
   const index = indexFor([typeUnit]);
-  const context = { index, typeParameters: new Map() };
+  const context = { index, profile: semanticProfile, typeParameters: new Map() };
   assert.deepEqual(
-    semanticTypeDescriptor({ kind: "array", length: "4", element: basic("int") }, context),
+    semanticTypeDescriptor({ kind: "array", nilable: false, length: "4", element: basic("int") }, context),
     {
       t: "ref",
       id: "src/go/compat.ts::GoArray",
@@ -62,10 +104,10 @@ test("canonical semantic types map resolved array lengths, identities, and const
     { t: "ref", id: "src/p/Box.ts::Box", args: [] },
   );
   assert.deepEqual(
-    semanticTypeDescriptor({ kind: "union", union: { terms: [
+    semanticTypeDescriptor({ kind: "union", nilable: false, union: { terms: [
       { tilde: true, type: basic("int32") },
       { tilde: false, type: basic("string") },
-    ] } }, context),
+    ] } }, context, { typeContext: semanticTypeContexts.constraint }),
     {
       t: "union",
       members: [
@@ -78,10 +120,10 @@ test("canonical semantic types map resolved array lengths, identities, and const
 
 test("function descriptors use exact go/types parameters, constraints, variadics, and results", () => {
   const owner = "example/p::func::Collect";
-  const typeParameter = parameter(owner, 0, { kind: "interface", interface: {
+  const typeParameter = parameter(owner, 0, { kind: "interface", nilable: true, interface: {
     explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: false,
   } }, "T");
-  const typeRef = { kind: "typeParameter", typeParameter: typeParameter.reference };
+  const typeRef = { kind: "typeParameter", nilable: false, typeParameter: typeParameter.reference };
   const unit = {
     id: "example::p.go::func::Collect",
     kind: "func",
@@ -91,8 +133,8 @@ test("function descriptors use exact go/types parameters, constraints, variadics
       signature: {
         receiverTypeParameters: [],
         typeParameters: [typeParameter],
-        parameters: { variables: [{ name: "values", type: { kind: "slice", element: typeRef } }] },
-        results: { variables: [{ name: "", type: { kind: "map", key: basic("string"), element: typeRef } }] },
+        parameters: { variables: [{ name: "values", type: { kind: "slice", nilable: true, element: typeRef } }] },
+        results: { variables: [{ name: "", type: { kind: "map", nilable: true, key: basic("string"), element: typeRef } }] },
         variadic: true,
       },
       valueSpecs: [],
@@ -129,7 +171,7 @@ test("function descriptors use exact go/types parameters, constraints, variadics
         name: "T",
         binding: { depth: 0, index: 0 },
         modifiers: { const: false, variance: null, unsupported: [] },
-        constraint: { t: "ref", id: "name::comparable", args: [] },
+        constraint: { t: "ref", id: "src/go/compat.ts::GoComparable", args: [] },
         default: null,
         invalidConstraint: null,
       }],
@@ -154,8 +196,11 @@ test("value declarations use exact go/constant values and retain blank binding t
     }),
   };
   const descriptor = goUnitDescriptor(unit, indexFor());
+  const semanticIndex = indexFor();
   const rendered = renderValueGroup(unit, {
     config: { goModulePath: "example" },
+    semanticIndex,
+    bridge: semanticIndex.bridge,
     coreImports: new Set(),
     compatImports: new Set(),
     imports: new Map(),
@@ -241,7 +286,7 @@ test("profile-dependent declarations remain explicit instead of selecting one ta
 
 test("semantic mapping fails hard for unsupported or incomplete canonical types", () => {
   const context = { index: indexFor(), typeParameters: new Map() };
-  assert.throws(() => semanticTypeDescriptor({ kind: "mystery" }, context), /unsupported canonical go\/types descriptor/);
-  assert.throws(() => semanticTypeDescriptor({ kind: "array", length: "Width", element: basic("int") }, context), /invalid canonical Go array length/);
-  assert.throws(() => semanticTypeDescriptor({ kind: "typeParameter", typeParameter: parameterRef("missing", 0) }, context), /unbound Go type parameter/);
+  assert.throws(() => semanticTypeDescriptor({ kind: "mystery", nilable: false }, context), /unsupported canonical go\/types descriptor/);
+  assert.throws(() => semanticTypeDescriptor({ kind: "array", nilable: false, length: "Width", element: basic("int") }, context), /not an exact decimal string/);
+  assert.throws(() => semanticTypeDescriptor({ kind: "typeParameter", nilable: false, typeParameter: parameterRef("missing", 0) }, context), /unbound Go type parameter/);
 });

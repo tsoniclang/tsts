@@ -509,7 +509,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -532,6 +532,7 @@ function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
       requiredFiles: [...requiredFiles].sort(),
       coveredFiles: [...requiredFiles].sort(),
       excludedFiles: [...excludedFiles].sort(),
+      externalDeclarations: [],
       profiles: [...profiles].sort((left, right) => semanticProfileKey(left).localeCompare(semanticProfileKey(right))),
       unsupportedProfiles: [],
       moduleGraph: [{ path: "m", version: "", sum: "", replacePath: "", replaceVersion: "", replaceSum: "" }],

@@ -9,12 +9,25 @@ import (
 )
 
 type semanticTypeEncoder struct {
-	typeParameterOwners map[*types.TypeParam]SemanticTypeParameterRef
-	objectIDs           map[types.Object]string
+	typeParameterOwners                map[*types.TypeParam]SemanticTypeParameterRef
+	objectIDs                          map[types.Object]string
+	referencedTypes                    map[string]*types.TypeName
+	preserveInterfaceDeclarationOrder bool
 }
 
 func newSemanticTypeEncoder() *semanticTypeEncoder {
-	return &semanticTypeEncoder{typeParameterOwners: map[*types.TypeParam]SemanticTypeParameterRef{}, objectIDs: map[types.Object]string{}}
+	return &semanticTypeEncoder{
+		typeParameterOwners:                map[*types.TypeParam]SemanticTypeParameterRef{},
+		objectIDs:                          map[types.Object]string{},
+		referencedTypes:                    map[string]*types.TypeName{},
+		preserveInterfaceDeclarationOrder: true,
+	}
+}
+
+func newExternalSemanticTypeEncoder() *semanticTypeEncoder {
+	encoder := newSemanticTypeEncoder()
+	encoder.preserveInterfaceDeclarationOrder = false
+	return encoder
 }
 
 func (encoder *semanticTypeEncoder) registerObjectID(object types.Object, id string) {
@@ -142,8 +155,13 @@ func (encoder *semanticTypeEncoder) typeReference(object *types.TypeName, argume
 	if object == nil {
 		fatalf("Go named/alias type has no TypeName object at %s", ownerPath)
 	}
+	objectID := encoder.objectID(object)
+	if previous := encoder.referencedTypes[objectID]; previous != nil && previous != object {
+		fatalf("Go type object identity %s resolves to multiple go/types objects", objectID)
+	}
+	encoder.referencedTypes[objectID] = object
 	report := &SemanticTypeReferenceReport{
-		ObjectID: encoder.objectID(object), PackagePath: semanticPackagePath(object.Pkg()), Name: object.Name(), TypeArgs: []*SemanticTypeReport{},
+		ObjectID: objectID, PackagePath: semanticPackagePath(object.Pkg()), Name: object.Name(), TypeArgs: []*SemanticTypeReport{},
 	}
 	if arguments != nil {
 		for index := 0; index < arguments.Len(); index++ {
@@ -229,7 +247,7 @@ func (encoder *semanticTypeEncoder) interfaceReportAt(value *types.Interface, ow
 		ExplicitMethods: []SemanticMethodReport{}, EmbeddedTypes: []*SemanticTypeReport{}, EmbeddedKinds: []string{}, CompleteMethods: []SemanticMethodReport{},
 		Comparable: value.IsComparable(), Implicit: value.IsImplicit(), MethodSetOnly: value.IsMethodSet(),
 	}
-	for index, method := range explicitMethodsInDeclarationOrder(value) {
+	for index, method := range encoder.explicitInterfaceMethods(value) {
 		report.ExplicitMethods = append(report.ExplicitMethods, encoder.methodReportAt(method, ownerPath, "explicitMethod", index))
 	}
 	for index := 0; index < value.NumEmbeddeds(); index++ {
@@ -259,10 +277,18 @@ func semanticInterfaceEmbeddingKind(value types.Type) string {
 	return "typeSet"
 }
 
-func explicitMethodsInDeclarationOrder(value *types.Interface) []*types.Func {
+func (encoder *semanticTypeEncoder) explicitInterfaceMethods(value *types.Interface) []*types.Func {
 	methods := make([]*types.Func, value.NumExplicitMethods())
 	for index := range methods {
 		methods[index] = value.ExplicitMethod(index)
+	}
+	if !encoder.preserveInterfaceDeclarationOrder {
+		sort.Slice(methods, func(left, right int) bool {
+			return types.Id(methods[left].Pkg(), methods[left].Name()) < types.Id(methods[right].Pkg(), methods[right].Name())
+		})
+		return methods
+	}
+	for index := range methods {
 		if methods[index].Pos() == token.NoPos {
 			fatalf("Go interface method %s has no syntax declaration position", methods[index].Name())
 		}

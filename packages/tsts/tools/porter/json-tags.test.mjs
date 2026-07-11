@@ -17,7 +17,7 @@ const collectJsonTagMismatches = (snapshotValue, sources, tsById, activeIds, opt
 
 const id = "example.com/project::event.go::type::Event";
 
-const basicType = (name) => ({ kind: "basic", basic: { name, untyped: false } });
+const basicType = (name) => ({ kind: "basic", nilable: false, basic: { name, untyped: false } });
 const field = (name, type, tagValues = [], options = {}) => ({
   variable: { name, exported: options.exported ?? true, embedded: options.embedded || undefined, type },
   tag: "",
@@ -27,7 +27,7 @@ const structUnit = (unitId, name, fields) => ({
   id: unitId,
   kind: "type",
   name,
-  semantic: [{ type: { rhs: { kind: "struct", struct: { fields } } } }],
+  semantic: [{ type: { rhs: { kind: "struct", nilable: false, struct: { fields } } } }],
 });
 
 function taggedUnit() {
@@ -84,8 +84,8 @@ test("Go JSON tags preserve default names, ignores, and distinct omission option
 test("JSON declaration metadata is independent of field runtime representation", () => {
   const unit = structUnit("example::type::ZeroModes", "ZeroModes", [
     field("Scalar", basicType("int"), [{ key: "json", value: "scalar,omitzero" }]),
-    field("Pointer", { kind: "pointer", element: basicType("int") }, [{ key: "json", value: "pointer,omitzero" }]),
-    field("Slice", { kind: "slice", element: basicType("string") }, [{ key: "json", value: "slice,omitzero" }]),
+    field("Pointer", { kind: "pointer", nilable: true, element: basicType("int") }, [{ key: "json", value: "pointer,omitzero" }]),
+    field("Slice", { kind: "slice", nilable: true, element: basicType("string") }, [{ key: "json", value: "slice,omitzero" }]),
   ]);
   assert.deepEqual([...expectedJsonFields(unit)].map(([name, value]) => [name, value.options]), [
     ["Scalar", ["omitzero"]],
@@ -118,8 +118,8 @@ test("active local and nested anonymous JSON structs cannot escape the declarati
       members: [{ kind: "field", name: "Nested", exported: true, typeExpr: { kind: "struct", members: [{ kind: "field", name: "Value", exported: true, typeExpr: { kind: "ident", name: "string" }, tagValues: [{ key: "json", value: "value" }] }] } }],
       semantic: [{
         profiles: ["linux/amd64:cgo=0:tags="],
-        type: { rhs: { kind: "struct", struct: { fields: [
-          field("Nested", { kind: "struct", struct: { fields: [field("Value", basicType("string"), [{ key: "json", value: "value" }])] } }),
+        type: { rhs: { kind: "struct", nilable: false, struct: { fields: [
+          field("Nested", { kind: "struct", nilable: false, struct: { fields: [field("Value", basicType("string"), [{ key: "json", value: "value" }])] } }),
         ] } } },
       }],
     }],
@@ -264,7 +264,7 @@ test("JSON tag contracts fail closed on wrong type identity, location, embedded 
 
   const unsupported = taggedUnit();
   const unsupportedFields = unsupported.semantic[0].type.rhs.struct.fields;
-  unsupportedFields.push(field("Embedded", { kind: "named", reference: { objectId: "example::type::Embedded", packagePath: "example", name: "Embedded", typeArgs: [] } }, [], { embedded: true }));
+  unsupportedFields.push(field("Embedded", { kind: "named", nilable: false, reference: { objectId: "example::type::Embedded", packagePath: "example", name: "Embedded", typeArgs: [] } }, [], { embedded: true }));
   unsupportedFields[0].tagValues[0].value = "name,string";
   const validIdentitySource = contractSource();
   const unsupportedReport = collectJsonTagMismatches(

@@ -1,4 +1,4 @@
-import { validateSemanticDeclaration } from "./semantic-snapshot-validation.mjs";
+import { validateExternalSemanticDeclarations, validateSemanticDeclaration } from "./semantic-snapshot-validation.mjs";
 import path from "node:path";
 import {
   canonicalSchemaValue,
@@ -28,7 +28,7 @@ import { fail, resolveRepo } from "./runtime.mjs";
 
 export const PORTER_SNAPSHOT_KEYS = Object.freeze(["environment", "files", "gitRevision", "modulePath", "schemaVersion", "semantic", "sourceRoot", "summary"]);
 export const PORTER_ENVIRONMENT_KEYS = Object.freeze(["goVersion", "goarch", "goos"]);
-export const PORTER_SEMANTIC_KEYS = new Set(["compiler", "coveredFiles", "excludedFiles", "goroot", "gorootBytes", "gorootDirectoryCount", "gorootEntryCount", "gorootFileCount", "gorootHash", "gorootHashContract", "gorootSymlinkCount", "moduleGraph", "modulePath", "profiles", "releaseTags", "requiredFiles", "toolchain", "toolchainExecutable", "toolchainHash", "unsupportedProfiles"]);
+export const PORTER_SEMANTIC_KEYS = new Set(["compiler", "coveredFiles", "excludedFiles", "externalDeclarations", "goroot", "gorootBytes", "gorootDirectoryCount", "gorootEntryCount", "gorootFileCount", "gorootHash", "gorootHashContract", "gorootSymlinkCount", "moduleGraph", "modulePath", "profiles", "releaseTags", "requiredFiles", "toolchain", "toolchainExecutable", "toolchainHash", "unsupportedProfiles"]);
 export const PORTER_SEMANTIC_PROFILE_KEYS = new Set(["architecture", "buildFlags", "buildTags", "cgoEnabled", "coveredFiles", "environment", "experiments", "goarch", "goexperiment", "goos", "packageIds", "toolTags"]);
 export const PORTER_SEMANTIC_MODULE_KEYS = new Set(["path", "replacePath", "replaceSum", "replaceVersion", "sum", "version"]);
 export const PORTER_SUMMARY_KEYS = Object.freeze(["buildTagCounts", "fileCount", "generatedFiles", "goFileCount", "importPathCount", "lineCount", "packageCounts", "structTagCount", "structTagKeyCounts", "unitCount", "unitKindCounts"]);
@@ -47,7 +47,7 @@ export function validatePorterSnapshot(snapshot, config) {
   const issues = [];
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)) return ["snapshot must be an object"];
   compareExactKeys(snapshot, PORTER_SNAPSHOT_KEYS, "snapshot", issues);
-  if (snapshot.schemaVersion !== 6) issues.push(`snapshot.schemaVersion must be 6, got ${JSON.stringify(snapshot.schemaVersion)}`);
+  if (snapshot.schemaVersion !== 7) issues.push(`snapshot.schemaVersion must be 7, got ${JSON.stringify(snapshot.schemaVersion)}`);
   if (snapshot.modulePath !== config.goModulePath) issues.push(`snapshot.modulePath must be ${JSON.stringify(config.goModulePath)}`);
   const expectedRoot = resolveRepo(config.sourceRoot).split(path.sep).join("/");
   if (snapshot.sourceRoot !== expectedRoot) issues.push(`snapshot.sourceRoot must be ${JSON.stringify(expectedRoot)}`);
@@ -303,6 +303,7 @@ function validateSemanticEvidence(semantic, issues, modulePath) {
     }
     validateProfileEnvironmentRelations(semantic.profiles, issues);
   }
+  validateExternalSemanticDeclarations(semantic.externalDeclarations, semantic.profiles?.length ?? 0, modulePath, issues);
   validateUnsupportedProfiles(semantic.unsupportedProfiles, issues);
   if (!Array.isArray(semantic.moduleGraph)) {
     issues.push("snapshot.semantic.moduleGraph must be an array");
