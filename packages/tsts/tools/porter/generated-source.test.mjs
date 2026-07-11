@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   buildGeneratedSourceCoverageStatus,
   buildGlobalGeneratedArtifactStatus,
+  inspectGeneratedArtifactRegistration,
   renderGeneratedSourceCoverage,
 } from "./generated-source.mjs";
 
@@ -33,18 +34,30 @@ test("global generated-artifact registry rejects unknown paths and provider meta
   mkdirSync(path.join(tsRoot, "go"), { recursive: true });
   writeFileSync(path.join(tsRoot, "unknown", "output.ts"), [
     "// Code generated. DO NOT EDIT.",
-    '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","path":"unknown/output.ts","contentHash":"x"}',
+    '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","sourceRevision":"rev","path":"unknown/output.ts","contentHash":"x"}',
     "",
   ].join("\n"));
   writeFileSync(path.join(tsRoot, "go", "compat.ts"), [
     "// Code generated. DO NOT EDIT.",
-    '// @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"wrong-generator","path":"go/compat.ts","contentHash":"x"}',
+    '// @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"wrong-generator","sourceRevision":"rev","path":"go/compat.ts","contentHash":"x"}',
     "",
     "export const hidden = undefined as never;",
   ].join("\n"));
   const status = buildGlobalGeneratedArtifactStatus(root, { tsRoot: "src" });
   assert.ok(status.issues.some((issue) => issue.reason.includes("no registered provider")));
   assert.ok(status.issues.some((issue) => issue.provider === "porter:facades" && issue.reason.includes("fix the registered generator")));
+});
+
+test("generated artifact registration is exact and rejects duplicate ownership records", () => {
+  const metadata = '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","sourceRevision":"rev","path":"internal/ast/generated/types.ts","contentHash":"hash"}';
+  const header = "// Code generated. DO NOT EDIT.";
+  const exact = inspectGeneratedArtifactRegistration("internal/ast/generated/types.ts", `${header}\n${metadata}\nexport type Node = unknown;\n`);
+  assert.equal(exact.provider.id, "porter:ast");
+  assert.equal(exact.error, undefined);
+  assert.match(inspectGeneratedArtifactRegistration("internal/ast/generated/types.ts", `${header}\n${metadata}\n${metadata}\n`).error, /exactly one/);
+  assert.match(inspectGeneratedArtifactRegistration("internal/ast/generated/types.ts", `${metadata}\n`).error, /second line/);
+  assert.match(inspectGeneratedArtifactRegistration("internal/ast/generated/types.ts", `${header}\n// @tsgo-generated not-json\n`).error, /second line|JSON object/);
+  assert.match(inspectGeneratedArtifactRegistration("internal/ast/generated/other.ts", `${header}\n${metadata}\n`).error, /metadata path/);
 });
 
 function snapshotWithAstUnits(units) {

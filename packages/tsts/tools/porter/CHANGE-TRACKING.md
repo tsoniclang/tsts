@@ -89,6 +89,9 @@ Parameter defaults belong to `signature`. `initializer` applies only to
 top-level `constGroup` values. Member implementation initializers and function,
 method, accessor, constructor, and static-block bodies have no Porter override
 category because they are outside the declaration/signature contract.
+Ordinary top-level `var` declarations retain exact declaration and inferred-type
+comparison, but their TypeScript initializer expressions are implementation
+bodies and are not compared.
 
 Unknown aspects and noncontract metadata/configuration shapes fail. Body exceptions
 do not exist.

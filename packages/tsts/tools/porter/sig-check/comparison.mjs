@@ -385,13 +385,14 @@ function compareValues(expected, actual, push, equalType) {
 }
 
 function compareValueInitializer(expected, actual, label, push) {
+  if (!owns(expected, "initializerStatus") && !owns(expected, "value") && !owns(expected, "valueIssue")) return;
   if (expected.valueIssue !== undefined) {
     push("value-initializer-unresolved", `${label} initializer could not be resolved from Go: ${expected.valueIssue}`, expected.valueIssue);
   }
-  if (expected.initializerStatus !== actual.initializerStatus && (owns(expected, "initializerStatus") || owns(actual, "initializerStatus"))) {
+  if (expected.initializerStatus !== actual.initializerStatus) {
     push("value-initializer-status", `${label} initializer status differs`, expected.initializerStatus, actual.initializerStatus);
   }
-  if (!sameJson(expected.value, actual.value) && (owns(expected, "value") || owns(actual, "value"))) {
+  if (!sameJson(expected.value, actual.value)) {
     push("value-initializer", `${label} initializer differs`, expected.value, actual.value);
   }
   if (expected.valueIssue !== actual.valueIssue && actual.valueIssue !== undefined) {

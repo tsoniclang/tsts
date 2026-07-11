@@ -18,6 +18,7 @@ import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
 import { createCanonicalTypeResolver } from "./ts-extractor/module-resolution.mjs";
+import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import {
   resolveOverride,
@@ -70,7 +71,7 @@ export async function computeSignatureReport(deps, options = {}) {
     typeNamespaceReexport,
     canonicalTypeAliases: profile.canonicalTypeAliases ?? {},
   });
-  const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile);
+  const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, generatedTypeDeclarations(deps.config, moduleIndex));
   const idPattern = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];
   let overriddenUnits = 0;
@@ -105,16 +106,21 @@ export async function computeSignatureReport(deps, options = {}) {
     const go = goById.get(id);
     const descriptors = descriptorsById.get(id) ?? [];
     const actual = descriptors.length === 1 ? descriptors[0].descriptor : undefined;
-    const expected = goUnitDescriptor(go, expectedIndex);
     const localOverride = deps.tsById.get(id)?.override;
-    const override = resolveOverride(localOverride, id, expected, actual, canonicalIdentity, overrideIssues);
-    const allMismatches = compareSignatures(expected, actual, null, canonicalIdentity, conventions, profile.allowedGlobals);
-    validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
-    if (allMismatches.some((mismatch) => override.ignore.has(mismatch.kind))) overriddenUnits++;
-    const activeMismatches = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
-    for (const mismatch of withSignatureOverrideSnapshots(activeMismatches, expected, actual, canonicalIdentity)) {
-      mismatches.push({ id, file: deps.tsById.get(id)?.path ?? "", ...mismatch });
-    }
+    const result = compareSignatureUnit({
+      id,
+      file: deps.tsById.get(id)?.path ?? "",
+      go,
+      actual,
+      localOverride,
+      expectedIndex,
+      canonicalIdentity,
+      conventions,
+      allowedGlobals: profile.allowedGlobals,
+      overrideIssues,
+    });
+    if (result.overridden) overriddenUnits++;
+    mismatches.push(...result.mismatches);
   }
   return {
     mismatches,
@@ -124,6 +130,61 @@ export async function computeSignatureReport(deps, options = {}) {
     overrideIssues,
     jsonTags: { ...jsonTags, mismatchCount: jsonTags.mismatches.length },
   };
+}
+
+export function generatedTypeDeclarations(config, moduleIndex) {
+  const declarations = new Map();
+  const prefix = `${config.tsRoot.replace(/\/$/, "")}/`;
+  for (const [moduleId, module] of moduleIndex.modules) {
+    if (!moduleId.startsWith(prefix)) throw new Error(`indexed TypeScript module '${moduleId}' is outside configured tsRoot '${config.tsRoot}'`);
+    const relativePath = moduleId.slice(prefix.length);
+    const registration = inspectGeneratedArtifactRegistration(relativePath, module.text);
+    if (registration.error !== undefined) throw new Error(`invalid generated TypeScript artifact '${relativePath}': ${registration.error}`);
+    if (registration.metadata === undefined) continue;
+    for (const name of module.structure.exportedTypeNames) {
+      const modules = declarations.get(name) ?? new Set();
+      modules.add(moduleId);
+      declarations.set(name, modules);
+    }
+  }
+  return declarations;
+}
+
+export function compareSignatureUnit({
+  id,
+  file,
+  go,
+  actual,
+  localOverride,
+  expectedIndex,
+  canonicalIdentity,
+  conventions,
+  allowedGlobals,
+  overrideIssues,
+}) {
+  try {
+    const expected = goUnitDescriptor(go, expectedIndex);
+    const override = resolveOverride(localOverride, id, expected, actual, canonicalIdentity, overrideIssues);
+    const allMismatches = compareSignatures(expected, actual, null, canonicalIdentity, conventions, allowedGlobals);
+    validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
+    const overridden = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
+    const active = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
+    return {
+      overridden,
+      mismatches: withSignatureOverrideSnapshots(active, expected, actual, canonicalIdentity)
+        .map((mismatch) => ({ id, file, ...mismatch })),
+    };
+  } catch (error) {
+    return {
+      overridden: false,
+      mismatches: [{
+        id,
+        file,
+        kind: "signature-contract-error",
+        detail: `exact declaration comparison failed closed: ${error instanceof Error ? error.message : String(error)}`,
+      }],
+    };
+  }
 }
 
 export function descriptorInventoryMismatches(expectedIds, descriptorsById) {

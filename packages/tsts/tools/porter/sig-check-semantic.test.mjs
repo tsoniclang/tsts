@@ -3,9 +3,55 @@ import test from "node:test";
 
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
+import { generatedTypeDeclarations } from "./sig-check.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
+
+test("expected type index ignores non-type units without semantic variants", () => {
+  const config = projectConfig({ keyword: { string: "string" }, core: {} });
+  const importGroup = { id: `${modulePath}::pkg/file.go::importGroup::fmt`, kind: "importGroup" };
+  const unportedType = { id: `${modulePath}::pkg/file.go::type::Hidden`, kind: "type", name: "Hidden" };
+  const snapshot = { files: [{ importPath: packagePath, units: [importGroup, unportedType] }] };
+  assert.doesNotThrow(() => buildExpectedIndex(config, snapshot, new Map(), loadProfile(config)));
+  const generatedIndex = buildExpectedIndex(config, snapshot, new Map(), loadProfile(config),
+    new Map([["Hidden", new Set(["src/pkg/generated.ts"])]]));
+  assert.equal(generatedIndex.pkgType.get(`${packagePath}::Hidden`), "src/pkg/generated.ts");
+  assert.throws(() => buildExpectedIndex(config, snapshot, new Map([[unportedType.id, { path: "pkg/hidden.ts" }]]), loadProfile(config)),
+    /has no semantic profile variants/);
+});
+
+test("expected type index resolves one exact generated declaration and rejects ambiguity", () => {
+  const config = projectConfig({ keyword: { string: "string" }, core: {} });
+  const generated = typeUnit("generated.go", "Generated", structType([]));
+  const snapshot = { files: [{ importPath: packagePath, units: [generated] }] };
+  const profile = loadProfile(config);
+  const exact = new Map([["Generated", new Set(["src/pkg/generated/types.ts"])] ]);
+  const index = buildExpectedIndex(config, snapshot, new Map(), profile, exact);
+  assert.equal(index.pkgType.get(`${packagePath}::Generated`), "src/pkg/generated/types.ts");
+  const ambiguous = new Map([["Generated", new Set(["src/pkg/generated/a.ts", "src/pkg/generated/b.ts"])] ]);
+  assert.throws(() => buildExpectedIndex(config, snapshot, new Map(), profile, ambiguous), /ambiguous generated TypeScript declarations/);
+});
+
+test("generated type identities require registered generated-artifact ownership", () => {
+  const generatedModule = "src/internal/ast/generated/types.ts";
+  const authoredModule = "src/pkg/authored.ts";
+  const metadata = '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","sourceRevision":"rev","path":"internal/ast/generated/types.ts","contentHash":"hash"}';
+  const moduleIndex = {
+    modules: new Map([
+      [generatedModule, {
+        text: `// Code generated. DO NOT EDIT.\n${metadata}\nexport type Generated = unknown;`,
+        structure: { exportedTypeNames: new Set(["Generated"]) },
+      }],
+      [authoredModule, {
+        text: "export type Authored = unknown;",
+        structure: { exportedTypeNames: new Set(["Authored"]) },
+      }],
+    ]),
+  };
+  const declarations = generatedTypeDeclarations({ tsRoot: "src" }, moduleIndex);
+  assert.deepEqual([...declarations], [["Generated", new Set([generatedModule])]]);
+});
 
 test("portability: a non-tsts profile drives canonical Go-to-TS mapping", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: { int: "i32" } });
@@ -98,6 +144,7 @@ test("expected-from-go: interface descriptors contain only source-declared membe
 function projectConfig(primitives) {
   return {
     goModulePath: modulePath,
+    tsRoot: "src",
     signatureCheck: {
       modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
       bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },

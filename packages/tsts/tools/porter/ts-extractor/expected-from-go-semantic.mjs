@@ -7,19 +7,23 @@ import { blankValueName, safeIdentifier, safeParamName, uniqueName } from "../co
 
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
-export function buildExpectedIndex(config, snapshot, tsById, profile) {
+export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map()) {
   const pkgType = new Map();
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
-      const variants = semanticVariants(unit);
-      if (unit.kind === "type") {
-        for (const variant of variants) {
-          const object = variant.type?.object;
-          if (!object) continue;
-          const key = objectKey(object.packagePath, object.name);
-          const ts = tsById.get(unit.id);
-          if (ts) setExactIndexEntry(pkgType, key, ts.path, "TypeScript declaration path");
-        }
+      if (unit.kind !== "type") continue;
+      const ts = tsById.get(unit.id);
+      const targetPath = ts?.path ?? exactGeneratedTypePath(config, file.importPath, unit.name, generatedTypeDeclarations);
+      if (targetPath === undefined) continue;
+      if (ts === undefined && (!Array.isArray(unit.semantic) || unit.semantic.length === 0)) {
+        setExactIndexEntry(pkgType, objectKey(file.importPath, unit.name), targetPath, "TypeScript declaration path");
+        continue;
+      }
+      for (const variant of semanticVariants(unit)) {
+        const object = variant.type?.object;
+        if (!object) continue;
+        const key = objectKey(object.packagePath, object.name);
+        setExactIndexEntry(pkgType, key, targetPath, "TypeScript declaration path");
       }
     }
   }
@@ -40,6 +44,23 @@ export function buildExpectedIndex(config, snapshot, tsById, profile) {
     facadeTemplate: profile.facadeTemplate,
     pkgType,
   };
+}
+
+function exactGeneratedTypePath(config, importPath, name, generatedTypeDeclarations) {
+  if (typeof name !== "string" || name.length === 0) return undefined;
+  const packageDirectory = importPath === config.goModulePath
+    ? config.tsRoot
+    : importPath.startsWith(`${config.goModulePath}/`)
+      ? `${config.tsRoot}/${importPath.slice(config.goModulePath.length + 1)}`
+      : undefined;
+  if (packageDirectory === undefined) return undefined;
+  const candidates = [...(generatedTypeDeclarations.get(name) ?? [])]
+    .filter((moduleId) => moduleId === packageDirectory || moduleId.startsWith(`${packageDirectory}/`))
+    .sort(compareText);
+  if (candidates.length > 1) {
+    throw new Error(`Go type '${importPath}.${name}' has ambiguous generated TypeScript declarations: ${candidates.join(", ")}`);
+  }
+  return candidates[0];
 }
 
 export function goUnitDescriptor(unit, index) {

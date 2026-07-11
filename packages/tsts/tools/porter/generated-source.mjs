@@ -60,6 +60,45 @@ export const generatedArtifactProviders = Object.freeze([
   artifactProvider("porter:unicode", "unicodeGeneratedArtifacts", ["internal/stringutil/generated/**"], ["unicode-generated"]),
 ]);
 
+export function inspectGeneratedArtifactRegistration(relativePath, text) {
+  const markers = [...text.matchAll(/^\/\/ @tsgo-generated[^\n\r]*$/gm)];
+  if (markers.length === 0) return { metadata: undefined, provider: undefined, error: undefined };
+  if (markers.length !== 1) {
+    return { metadata: undefined, provider: undefined, error: `generated artifact must carry exactly one @tsgo-generated record, found ${markers.length}` };
+  }
+  if (!/^\/\/ Code generated[^\n\r]*\r?\n\/\/ @tsgo-generated\s+{[^\n\r]+}\r?(?:\n|$)/.test(text)) {
+    return { metadata: undefined, provider: undefined, error: "@tsgo-generated must be the second line immediately after the generated-file header" };
+  }
+  const payload = /^\/\/ @tsgo-generated\s+({[^\n\r]+})$/.exec(markers[0][0])?.[1];
+  if (payload === undefined) return { metadata: undefined, provider: undefined, error: "@tsgo-generated must contain one JSON object on its line" };
+  let metadata;
+  try {
+    metadata = JSON.parse(payload);
+  } catch (error) {
+    return { metadata: undefined, provider: undefined, error: `invalid @tsgo-generated JSON: ${error.message}` };
+  }
+  if (!isPlainObject(metadata)) return { metadata, provider: undefined, error: "@tsgo-generated metadata must be a plain object" };
+  if (metadata.schemaVersion !== 1) return { metadata, provider: undefined, error: "unsupported @tsgo-generated schemaVersion" };
+  for (const key of ["kind", "generator", "sourceRevision", "path", "contentHash"]) {
+    if (typeof metadata[key] !== "string" || metadata[key].length === 0) {
+      return { metadata, provider: undefined, error: `missing or invalid @tsgo-generated ${key}` };
+    }
+  }
+  const providers = generatedArtifactProviders.filter((provider) => provider.patterns.some((pattern) => matchGlob(pattern, relativePath)));
+  if (providers.length !== 1) {
+    return {
+      metadata,
+      provider: undefined,
+      error: providers.length === 0 ? "generated artifact path has no registered provider" : `generated artifact path matches ${providers.length} providers`,
+    };
+  }
+  const [provider] = providers;
+  if (metadata.generator !== provider.id) return { metadata, provider, error: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'` };
+  if (!provider.kinds.includes(metadata.kind)) return { metadata, provider, error: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'` };
+  if (metadata.path !== relativePath) return { metadata, provider, error: `metadata path '${metadata.path}' does not match '${relativePath}'` };
+  return { metadata, provider, error: undefined };
+}
+
 export function generatedSourceMechanismMatches(sourcePath, mechanisms = generatedSourceMechanisms) {
   return mechanisms.filter((candidate) => candidate.patterns.some((pattern) => matchGlob(pattern, sourcePath)));
 }
@@ -187,29 +226,12 @@ export function buildGlobalGeneratedArtifactStatus(repoRoot, config, artifactSta
   }
   for (const file of walkTypeScriptFiles(tsRoot)) {
     const text = readFileSync(file, "utf8");
-    const matches = [...text.matchAll(/^\/\/ @tsgo-generated\s+({[^\n\r]+})/gm)];
-    if (matches.length === 0) continue;
     const relative = path.relative(tsRoot, file).split(path.sep).join("/");
-    if (matches.length !== 1) {
-      issues.push({ path: relative, reason: `generated artifact must carry exactly one @tsgo-generated record, found ${matches.length}` });
-      continue;
+    const registration = inspectGeneratedArtifactRegistration(relative, text);
+    if (registration.metadata === undefined && registration.error === undefined) continue;
+    if (registration.error !== undefined) {
+      issues.push({ path: relative, ...(registration.provider === undefined ? {} : { provider: registration.provider.id }), reason: `${registration.error}; fix the registered generator output` });
     }
-    let metadata;
-    try {
-      metadata = JSON.parse(matches[0][1]);
-    } catch (error) {
-      issues.push({ path: relative, reason: `invalid @tsgo-generated JSON: ${error.message}` });
-      continue;
-    }
-    const providers = generatedArtifactProviders.filter((provider) => provider.patterns.some((pattern) => matchGlob(pattern, relative)));
-    if (providers.length !== 1) {
-      issues.push({ path: relative, reason: providers.length === 0 ? "generated artifact path has no registered provider" : `generated artifact path matches ${providers.length} providers` });
-      continue;
-    }
-    const [provider] = providers;
-    if (metadata.generator !== provider.id) issues.push({ path: relative, provider: provider.id, reason: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'; fix the registered generator output` });
-    if (!provider.kinds.includes(metadata.kind)) issues.push({ path: relative, provider: provider.id, reason: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'; fix the registered generator output` });
-    if (metadata.path !== relative) issues.push({ path: relative, provider: provider.id, reason: `metadata path '${metadata.path}' does not match '${relative}'; fix the registered generator output` });
   }
   return { issues, providerCount: generatedArtifactProviders.length };
 }
@@ -230,6 +252,11 @@ function mechanism(input) {
 
 function artifactProvider(id, statusKey, patterns, kinds) {
   return Object.freeze({ id, statusKey, patterns: Object.freeze(patterns), kinds: Object.freeze(kinds) });
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    [Object.prototype, null].includes(Object.getPrototypeOf(value));
 }
 
 function walkTypeScriptFiles(root) {

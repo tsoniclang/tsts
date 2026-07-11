@@ -3,6 +3,7 @@ import { compareText } from "./deterministic-order.mjs";
 import { buildExternalFacadeMap, collectExternalTypeUsages } from "./external-facades.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
+import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -66,7 +67,8 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
     // checks, but must NOT carry @tsgo-generated metadata (one module is either
     // generated or authored, never both).
     if (authored.has(relativePath)) {
-      if (parseGeneratedArtifactMetadata(text).metadata) {
+      const registration = inspectGeneratedArtifactRegistration(relativePath.slice(`${config.tsRoot.replace(/\/$/, "")}/`.length), text);
+      if (registration.metadata !== undefined || registration.error !== undefined) {
         invalid.push({
           path: relativePath,
           reason: "Authored facade module must not carry @tsgo-generated metadata; it is classified as authored by porter.config.json authoredFacadeModules.",
@@ -74,7 +76,8 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
       }
       continue;
     }
-    const metadataResult = parseGeneratedArtifactMetadata(text);
+    const artifactPath = relativePath.slice(`${config.tsRoot.replace(/\/$/, "")}/`.length);
+    const metadataResult = inspectGeneratedArtifactRegistration(artifactPath, text);
     if (metadataResult.error) {
       invalid.push({ path: relativePath, reason: metadataResult.error });
       continue;
@@ -112,21 +115,4 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
 
 export function emptyGeneratedArtifactStatus() {
   return { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] };
-}
-
-export function parseGeneratedArtifactMetadata(text) {
-  const match = /^\/\/ @tsgo-generated\s+({[^\n\r]+})/m.exec(text);
-  if (!match) return { metadata: undefined, error: undefined };
-  try {
-    const metadata = JSON.parse(match[1]);
-    if (metadata.schemaVersion !== 1) return { metadata, error: "Unsupported @tsgo-generated schemaVersion." };
-    if (!metadata.kind) return { metadata, error: "Missing @tsgo-generated kind." };
-    if (!metadata.generator) return { metadata, error: "Missing @tsgo-generated generator." };
-    if (!metadata.path) return { metadata, error: "Missing @tsgo-generated path." };
-    if (!metadata.sourceRevision) return { metadata, error: "Missing @tsgo-generated sourceRevision." };
-    if (!metadata.contentHash) return { metadata, error: "Missing @tsgo-generated contentHash." };
-    return { metadata, error: undefined };
-  } catch (error) {
-    return { metadata: undefined, error: `Invalid @tsgo-generated JSON: ${error.message}` };
-  }
 }
