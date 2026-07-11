@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
+import { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { generatedTypeDeclarations } from "./sig-check.mjs";
 
@@ -72,6 +72,18 @@ test("portability: a non-tsts profile drives canonical Go-to-TS mapping", () => 
   assert.deepEqual(goUnitDescriptor(source, index).signatures[0].params[0].type, {
     t: "ref", id: "src/rt/math/rand/v2.ts::Source", args: [],
   });
+});
+
+test("expected types use only explicit full-identity host-native mappings", () => {
+  const config = projectConfig({ keyword: { string: "string" }, core: {} });
+  config.signatureCheck.namedTypeMappings = {
+    "example.com/native.Event": { module: "src/native/events.ts", name: "HostEvent" },
+  };
+  const index = buildExpectedIndex(config, { files: [] }, new Map(), loadProfile(config));
+  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Event"), { index, typeParameters: new Map() }),
+    { t: "ref", id: "src/native/events.ts::HostEvent", args: [] });
+  assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Other"), { index, typeParameters: new Map() }),
+    { t: "ref", id: "src/rt/example.com/native.ts::Other", args: [] });
 });
 
 test("expected-from-go: inline struct value types use resolved array lengths", () => {

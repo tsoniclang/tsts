@@ -56,6 +56,9 @@ export const TSTS_PROFILE = {
     "packages/tsts/src/internal/ast/visitor.ts::NodeVisitor": "packages/tsts/src/internal/ast/spine.ts::NodeVisitor",
     "packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache",
   },
+  // Exact Go named-type identities supplied by authored internal host-native
+  // modules rather than tracked or generated mechanical-port declarations.
+  namedTypeMappings: {},
   conventions: {
     goConstraintId: "packages/tsts/src/go/compat.ts::GoConstraint",
     equivalences: [
@@ -186,6 +189,7 @@ function validateProfile(profile) {
   for (const [source, target] of Object.entries(profile.canonicalTypeAliases)) {
     if (!source.includes("::") || !target.includes("::")) throw new Error("signatureCheck.canonicalTypeAliases entries must use full module/name identities");
   }
+  validateNamedTypeMappings(profile.namedTypeMappings);
   loadConventions(profile.conventions);
   requireStringArray(profile.allowedGlobals, "signatureCheck.allowedGlobals");
   requirePlainRecord(profile.jsonTags, "signatureCheck.jsonTags");
@@ -193,6 +197,17 @@ function validateProfile(profile) {
   validateExternalInterfaceMembers(profile.externalInterfaceMembers);
   validateExternalReferences(profile.externalFunctionReturns, "signatureCheck.externalFunctionReturns");
   validateExternalReferences(profile.externalValueTypes, "signatureCheck.externalValueTypes");
+}
+
+function validateNamedTypeMappings(value) {
+  requirePlainRecord(value, "signatureCheck.namedTypeMappings");
+  for (const [identity, reference] of Object.entries(value)) {
+    const separator = identity.lastIndexOf(".");
+    if (separator <= 0 || separator === identity.length - 1 || /\s/.test(identity)) {
+      throw new Error(`signatureCheck.namedTypeMappings key '${identity}' must be one full Go package.Type identity`);
+    }
+    requireStringRecord(reference, `signatureCheck.namedTypeMappings.${identity}`, ["module", "name"]);
+  }
 }
 
 function validateExternalInterfaceMembers(value) {

@@ -41,6 +41,7 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
       bigintNamedTypes: new Set(profile.constantRepresentations?.bigintNamedTypes ?? []),
     },
     stdlibTypes: profile.stdlibTypes,
+    namedTypeMappings: profile.namedTypeMappings,
     facadeTemplate: profile.facadeTemplate,
     pkgType,
   };
@@ -295,6 +296,8 @@ function referenceDescriptor(reference, context) {
     if (name in context.index.primCompat) return ref(`${context.index.compat}::${context.index.primCompat[name]}`, args);
     return ref(`name::${name}`, args);
   }
+  const exactMapping = context.index.namedTypeMappings[`${packagePath}.${name}`];
+  if (exactMapping) return ref(`${exactMapping.module}::${exactMapping.name}`, args);
   const configured = context.index.stdlibTypes[`${packagePath}.${name}`];
   if (configured) return ref(`${context.index.compat}::${configured}`, args);
   if (isInternal(packagePath, context.index.goModule)) {

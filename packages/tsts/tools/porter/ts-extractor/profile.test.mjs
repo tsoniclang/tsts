@@ -14,9 +14,15 @@ test("signature profile uses one exact recursively validated contract", () => {
     { allowedGlobals: ["Date", "Date"] },
     { facadeTemplate: "packages/no-placeholder.ts" },
     { canonicalTypeAliases: { Short: "also-short" } },
+    { namedTypeMappings: { Short: { module: "m.ts", name: "Type" } } },
+    { namedTypeMappings: { "pkg.Type": { module: "m.ts", name: "Type", extra: true } } },
     { externalFunctionReturns: { "pkg.F": { module: "m.ts", name: "F", extra: true } } },
     { externalInterfaceMembers: { "pkg.I": [{ name: "M", type: { t: "fn", params: [], ret: { t: "kw", kw: "void" } } }] } },
   ]) assert.throws(() => loadProfile({ signatureCheck }));
+
+  assert.deepEqual(loadProfile({ signatureCheck: {
+    namedTypeMappings: { "example.com/native.Type": { module: "src/native.ts", name: "HostType" } },
+  } }).namedTypeMappings["example.com/native.Type"], { module: "src/native.ts", name: "HostType" });
 });
 
 test("convention rules require explicit scope and exact fields", () => {

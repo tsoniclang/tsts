@@ -113,6 +113,9 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
 
 ```jsonc
 "signatureCheck": {
+  "namedTypeMappings": {
+    "example.com/native.Event": { "module": "src/native/events.ts", "name": "HostEvent" }
+  },
   // Go->TS mapping (defaults shown in profile.mjs; override per project):
   "modules":   { "core": "packages/tsts/src/go/scalars.ts", "compat": "packages/tsts/src/go/compat.ts" },
   "bridge":    { "pointer": "GoPtr", "slice": "GoSlice", "array": "GoArray", "map": "GoMap", "chan": "GoChan" },
