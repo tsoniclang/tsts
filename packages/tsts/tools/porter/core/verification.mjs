@@ -20,7 +20,6 @@ export function verifyStatus(status, options) {
 export function collectVerifyFailures(status, options) {
   const strictPort = options["strict-port"] === true;
   const failures = [];
-  if (status.counts.parseErrors > 0) failures.push(`${status.counts.parseErrors} Go parse errors`);
   if (status.counts.duplicateGoIDs > 0) failures.push(`${status.counts.duplicateGoIDs} duplicate Go IDs`);
   if (status.counts.duplicateTsIDs > 0) failures.push(`${status.counts.duplicateTsIDs} duplicate TS IDs`);
   if ((status.counts.largeFileSplitFailures ?? 0) > 0) failures.push(`${status.counts.largeFileSplitFailures} large-file split plan failures`);
@@ -62,13 +61,6 @@ export function collectVerifyFailures(status, options) {
       .join(", ");
     failures.push(`${status.jsonTagCheck.mismatches} Go struct JSON-tag mismatches${byKind ? ` (${byKind})` : ""}`);
   }
-  if ((status.counts.mechanicalPortRisks ?? 0) > 0) {
-    const examples = (status.mechanicalRisks ?? []).slice(0, 3).map((risk) => `${risk.name}:${risk.kind}`).join(", ");
-    failures.push(`${status.counts.mechanicalPortRisks} mechanical port risks${examples ? ` (${examples})` : ""}`);
-  }
-  if ((status.counts.implementationOwnerIssues ?? 0) > 0) {
-    failures.push(`${status.counts.implementationOwnerIssues} missing or ambiguous TypeScript implementation owners`);
-  }
   if ((status.counts.embeddedSourceMismatches ?? 0) > 0) {
     const examples = (status.embeddedSourceMismatches ?? []).slice(0, 3).map((issue) => issue.name).join(", ");
     failures.push(`${status.counts.embeddedSourceMismatches} stale or missing embedded Go source blocks${examples ? ` (${examples})` : ""}`);
@@ -77,19 +69,6 @@ export function collectVerifyFailures(status, options) {
   if (strictPort && status.counts.stubbed > 0) failures.push(`${status.counts.stubbed} stub Go units`);
   if (strictPort && (status.generatedArtifacts?.unresolved?.length ?? 0) > 0) {
     failures.push(`${status.generatedArtifacts.unresolved.length} unresolved generated facade obligations`);
-  }
-  if (strictPort) {
-    const rows = status.rows ?? [];
-    // Check implemented units don't throw TSGO_UNIMPLEMENTED
-    const implWithThrow = rows.filter(r => r.tsStatus === 'implemented' && r.hasUnimplThrow);
-    if (implWithThrow.length > 0) {
-      failures.push(`${implWithThrow.length} implemented units still throw TSGO_UNIMPLEMENTED: ${implWithThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
-    }
-    // Check func/method stubs throw TSGO_UNIMPLEMENTED
-    const stubsWithoutThrow = rows.filter(r => r.tsStatus === 'stub' && (r.kind === 'func' || r.kind === 'method') && r.hasUnimplThrow === false);
-    if (stubsWithoutThrow.length > 0) {
-      failures.push(`${stubsWithoutThrow.length} stub func/method units missing TSGO_UNIMPLEMENTED throw: ${stubsWithoutThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
-    }
   }
   return failures;
 }

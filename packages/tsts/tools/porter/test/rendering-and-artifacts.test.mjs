@@ -16,7 +16,6 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
-  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -74,6 +73,7 @@ import {
   interfaceType,
   mapType,
   pointerType,
+  semanticFunctionDeclaration,
   selectorType,
   sliceType,
   snapshotWith,
@@ -132,16 +132,23 @@ test("renderUnitGroup emits higher-order function and inline interface signature
 });
 
 test("renderUnitGroup resolves Go external types through generated facades", () => {
+  const parameters = [
+    { names: ["writer"], type: selectorType("io", "Writer") },
+    { names: ["opts"], type: sliceType(selectorType("json", "Options")), variadic: true },
+  ];
   const diagnosticWriter = unitRecord({
     id: "m::internal/diagnosticwriter/diagnosticwriter.go::func::WriteFlattenedDiagnosticMessage",
     kind: "func",
     name: "WriteFlattenedDiagnosticMessage",
     qualifiedName: "WriteFlattenedDiagnosticMessage",
     goPath: "internal/diagnosticwriter/diagnosticwriter.go",
-    parameters: [
-      { names: ["writer"], type: selectorType("io", "Writer") },
-      { names: ["opts"], type: sliceType(selectorType("json", "Options")), variadic: true },
-    ],
+    parameters,
+    semantic: semanticFunctionDeclaration({
+      name: "WriteFlattenedDiagnosticMessage",
+      packagePath: "github.com/microsoft/typescript-go/internal/diagnosticwriter",
+      parameters,
+      packages: { io: "io", json: "github.com/go-json-experiment/json" },
+    }),
   });
   const snapshot = snapshotWith([
     fileRecord({
@@ -232,7 +239,8 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
   assert.doesNotMatch(text, /from "\.\/checker\.js"/);
 });
 
-test("renderUnitGroup uses extractor-provided inferred value types", () => {
+test("renderUnitGroup uses canonical declaration value types", () => {
+  const config = { ...baseConfig, goModulePath: "m" };
   const kindType = unitRecord({
     id: "m::internal/ast/kind_generated.go::type::Kind",
     kind: "type",
@@ -242,48 +250,48 @@ test("renderUnitGroup uses extractor-provided inferred value types", () => {
     typeKind: "named",
     typeExpression: identType("int32"),
   });
-  const values = unitRecord({
+  const values = withoutSyntacticValueTypes(unitRecord({
     id: "m::internal/api/proto.go::constGroup::handlePrefixProject+limit",
     kind: "constGroup",
     name: "handlePrefixProject+limit",
     qualifiedName: "handlePrefixProject+limit",
     goPath: "internal/api/proto.go",
     valueSpecs: [
-      { names: ["handlePrefixProject"], values: ["'p'"], inferredValueTypes: [identType("rune")] },
-      { names: ["limit"], values: ["iota * 4"], inferredValueTypes: [identType("int")] },
+      { names: ["handlePrefixProject"], type: identType("rune") },
+      { names: ["limit"], type: identType("int") },
     ],
-  });
-  const kindBounds = unitRecord({
+  }));
+  const kindBounds = withoutSyntacticValueTypes(unitRecord({
     id: "m::internal/ast/kind_generated.go::constGroup::KindEqualsToken+KindFirstAssignment",
     kind: "constGroup",
     name: "KindEqualsToken+KindFirstAssignment",
     qualifiedName: "KindEqualsToken+KindFirstAssignment",
     goPath: "internal/ast/kind_generated.go",
     valueSpecs: [
-      { names: ["KindEqualsToken"], type: identType("Kind"), values: ["iota"], inferredValueTypes: [identType("int")] },
-      { names: ["KindFirstAssignment"], values: ["KindEqualsToken"] },
+      { names: ["KindEqualsToken"], type: identType("Kind") },
+      { names: ["KindFirstAssignment"], type: identType("Kind") },
     ],
-  });
-  const channels = unitRecord({
+  }));
+  const channels = withoutSyntacticValueTypes(unitRecord({
     id: "m::internal/scanner/scanner.go::varGroup::done+factory+err",
     kind: "varGroup",
     name: "done+factory+err",
     qualifiedName: "done+factory+err",
     goPath: "internal/scanner/scanner.go",
     valueSpecs: [
-      { names: ["done"], values: ["make(chan int)"], inferredValueTypes: [channelType(identType("int"))] },
-      { names: ["factory"], values: ["func(x int) string { return \"\" }"], inferredValueTypes: [funcType([{ names: ["x"], type: identType("int") }], [{ type: identType("string") }])] },
-      { names: ["err"], values: ["errors.New(\"boom\")"], inferredValueTypes: [identType("error")] },
+      { names: ["done"], type: channelType(identType("int")) },
+      { names: ["factory"], type: funcType([{ names: ["x"], type: identType("int") }], [{ type: identType("string") }]) },
+      { names: ["err"], type: identType("error") },
     ],
-  });
+  }));
   const text = renderUnitGroup(
-    baseConfig,
-    snapshotWith([fileRecord({ path: "internal/api/proto.go", importPath: "github.com/microsoft/typescript-go/internal/ast", units: [kindType, values, kindBounds, channels] })]),
+    config,
+    snapshotWith([fileRecord({ path: "internal/ast/kind_generated.go", importPath: "m/internal/ast", units: [kindType, values, kindBounds, channels] })]),
     "packages/tsts/src/internal/ast/kind_generated.ts",
     [kindType, values, kindBounds, channels],
   );
 
-  assert.match(text, /export const handlePrefixProject: GoRune = undefined as never;/);
+  assert.match(text, /export const handlePrefixProject: int = undefined as never;/);
   assert.match(text, /export const limit: int = undefined as never;/);
   assert.match(text, /export const KindEqualsToken: Kind = undefined as never;/);
   assert.match(text, /export const KindFirstAssignment: Kind = undefined as never;/);
@@ -292,31 +300,43 @@ test("renderUnitGroup uses extractor-provided inferred value types", () => {
   assert.match(text, /export let err: GoError = undefined as never;/);
 });
 
+function withoutSyntacticValueTypes(unit) {
+  return {
+    ...unit,
+    valueSpecs: unit.valueSpecs.map(({ type: _type, ...specification }) => specification),
+  };
+}
+
 test("renderExternalFacadeModules generates canonical facade modules for observed externals", () => {
+  const parameters = [
+    { names: ["writer"], type: selectorType("io", "Writer") },
+    { names: ["option"], type: selectorType("json", "Options") },
+    { names: ["marshaler"], type: selectorType("encoding", "TextMarshaler") },
+    { names: ["sequence"], type: instantiationType(selectorType("iter", "Seq"), [identType("string")]) },
+  ];
   const unit = unitRecord({
     id: "m::internal/json/json.go::func::MarshalWrite",
     kind: "func",
     name: "MarshalWrite",
     qualifiedName: "MarshalWrite",
     goPath: "internal/json/json.go",
-    parameters: [
-      { names: ["writer"], type: selectorType("io", "Writer") },
-      { names: ["option"], type: selectorType("json", "Options") },
-    ],
-    externalRefs: [
-      { importPath: "encoding", package: "encoding", name: "TextMarshaler", role: "type", arity: 0, count: 1 },
-      { importPath: "iter", package: "iter", name: "Seq", role: "type", arity: 1, count: 1 },
-      { importPath: "path/filepath", package: "filepath", name: "Join", role: "call", count: 1 },
-      { importPath: "os", package: "os", name: "PathSeparator", role: "value", count: 1 },
-    ],
+    parameters,
+    semantic: semanticFunctionDeclaration({
+      name: "MarshalWrite",
+      packagePath: "github.com/microsoft/typescript-go/internal/json",
+      parameters,
+      packages: { encoding: "encoding", io: "io", iter: "iter", json: "github.com/go-json-experiment/json" },
+    }),
   });
   const snapshot = snapshotWith([
     fileRecord({
       path: "internal/json/json.go",
       importPath: "github.com/microsoft/typescript-go/internal/json",
       imports: [
-        { path: "io" },
-        { name: "json", path: "github.com/go-json-experiment/json" },
+        { path: "io", packageName: "io" },
+        { path: "encoding", packageName: "encoding" },
+        { path: "iter", packageName: "iter" },
+        { name: "json", path: "github.com/go-json-experiment/json", packageName: "json" },
       ],
       units: [unit],
     }),
@@ -327,8 +347,8 @@ test("renderExternalFacadeModules generates canonical facade modules for observe
   assert.equal(facades.get("github.com/go-json-experiment/json.Options").tsModule, "go/github.com/go-json-experiment/json.ts");
   assert.equal(facades.get("encoding.TextMarshaler").kind, "interface");
   assert.ok(!facades.has("iter.Seq"), "standard Go sequence types map to GoSeq instead of runtime facades");
-  assert.equal(facades.get("path/filepath.Join").kind, "functionValue");
-  assert.equal(facades.get("os.PathSeparator").kind, "value");
+  assert.ok(!facades.has("path/filepath.Join"));
+  assert.ok(!facades.has("os.PathSeparator"));
 
   const modules = renderExternalFacadeModules(baseConfig, snapshot);
   assert.match(modules.get("go/io.ts"), /export interface Writer/);
@@ -338,9 +358,8 @@ test("renderExternalFacadeModules generates canonical facade modules for observe
   assert.match(modules.get("go/encoding.ts"), /export interface TextMarshaler/);
   assert.match(modules.get("go/encoding.ts"), /MarshalText\(\): \[GoSlice<byte>, GoError\]/);
   assert.equal(modules.has("go/iter.ts"), false);
-  assert.match(modules.get("go/path/filepath.ts"), /export function Join\(\.\.\.args: Array<unknown>\): unknown/);
-  assert.match(modules.get("go/os.ts"), /export const PathSeparator: unknown = \(\(\) => \{[\s\S]*TSGO_EXTERNAL_FACADE_UNIMPLEMENTED os\.PathSeparator/);
-  assert.doesNotMatch(modules.get("go/os.ts"), /= undefined/);
+  assert.equal(modules.has("go/path/filepath.ts"), false);
+  assert.equal(modules.has("go/os.ts"), false);
   assert.doesNotMatch(modules.get("go/github.com/go-json-experiment/json.ts"), /GoExternal/);
 });
 
@@ -355,7 +374,12 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /^\/\/ Code generated by TSTS porter\. DO NOT EDIT\./);
   assert.match(compat, /\/\/ @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","sourceRevision":"abc123","path":"go\/compat\.ts","contentHash":"[a-f0-9]{64}"}/);
   assert.match(compat, /export class GoStructMap<K, V> implements Map<K, V>/);
-  assert.match(compat, /export function NewGoStructMap<K, V>\(\): GoStructMap<K, V>/);
+  assert.match(compat, /export function NewGoStructMap<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoStructMap<K, V>/);
+  assert.match(compat, /export function GoStructKey<K, const Values extends readonly unknown\[\]>/);
+  assert.match(compat, /export function GoInterfaceKey<K>/);
+  assert.match(compat, /readonly identity: symbol/);
+  assert.match(compat, /snapshot\(value: K\): K/);
+  assert.doesNotMatch(compat, /goStructMapKey|JSON\.stringify|\.Hi\b|\.Lo\b|\.pos\b|\.end\b/);
   assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
   assert.match(compat, /export function GoInterfaceTryAssert<T>/);
   assert.match(compat, /export function GoInterfaceAssert<T>/);
@@ -384,13 +408,7 @@ test("external value facades render explicit host-native initializers from polic
       },
     ],
   };
-  const snapshot = snapshotWith([
-    fileRecord({
-      path: "cmd/tool/main.go",
-      importPath: "example/tool",
-      units: [unitRecord({ externalRefs: [{ importPath: "syscall", name: "SIGINT", role: "value", count: 1 }] })],
-    }),
-  ]);
+  const snapshot = snapshotWith([]);
   assert.match(renderExternalFacadeModules(config, snapshot).get("go/syscall.ts"), /export const SIGINT = "SIGINT";/);
 
   assert.throws(
@@ -402,7 +420,7 @@ test("external value facades render explicit host-native initializers from polic
   );
 });
 
-test("host-native body replacements do not create Go syscall facade obligations", () => {
+test("host-native source signatures create only declaration-level facade obligations", () => {
   const config = {
     ...baseConfig,
     policies: [
@@ -418,13 +436,17 @@ test("host-native body replacements do not create Go syscall facade obligations"
       units: [unitRecord({
         goPath: "internal/native/path.go",
         parameters: [{ names: ["handle"], type: selectorType("syscall", "Handle") }],
-        externalRefs: [{ importPath: "example.com/syscall", name: "Open", role: "call", count: 1 }],
+        semantic: semanticFunctionDeclaration({
+          name: "Fail",
+          packagePath: "example/native",
+          parameters: [{ names: ["handle"], type: selectorType("syscall", "Handle") }],
+          packages: { syscall: "example.com/syscall" },
+        }),
       })],
     }),
   ]);
 
   const facades = buildExternalFacadeMap(config, snapshot);
-  assert.ok(!facades.has("example.com/syscall.Open"));
   assert.ok(facades.has("example.com/syscall.Handle"), "host-native source signatures remain facade obligations");
 });
 
@@ -525,10 +547,16 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
       authoredFacadeModules: ["go/io.ts"],
     };
     const snapshot = snapshotWith([fileRecord({
-      units: [unitRecord({ externalRefs: [
-        { importPath: "io", package: "io", name: "SomeValue", role: "value", arity: 0, count: 1 },
-        { importPath: "io", package: "io", name: "Writer", role: "type", arity: 0, count: 1 },
-      ] })],
+      imports: [{ path: "io" }],
+      units: [unitRecord({
+        parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
+        semantic: semanticFunctionDeclaration({
+          name: "Fail",
+          packagePath: "github.com/microsoft/typescript-go/internal/debug",
+          parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
+          packages: { io: "io" },
+        }),
+      })],
     })]);
     const generatedRoot = path.join(root, "src/go");
     mkdirSync(generatedRoot, { recursive: true });
@@ -547,12 +575,12 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     }
 
     // The module path alone cannot discharge a symbol obligation.
-    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\n");
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export const Other = 1;\n");
     const missingSymbol = buildGeneratedArtifactStatus(config, snapshot);
-    assert.deepEqual(missingSymbol.unresolved.map((entry) => entry.symbol), ["io.SomeValue"]);
-    assert.match(missingSymbol.unresolved[0].reason, /exact value symbol 'SomeValue'/);
+    assert.deepEqual(missingSymbol.unresolved.map((entry) => entry.symbol), ["io.Writer"]);
+    assert.match(missingSymbol.unresolved[0].reason, /exact type symbol 'Writer'/);
 
-    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\nexport const SomeValue = 1;\n");
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\n");
     assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot), { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] });
 
     // An authored module that still carries @tsgo-generated metadata is invalid (never both).
@@ -563,29 +591,6 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     const conflicted = buildGeneratedArtifactStatus(config, snapshot);
     assert.equal(conflicted.invalid.length, 1);
     assert.match(conflicted.invalid[0].reason, /Authored facade module must not carry @tsgo-generated/);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("generated facade status exposes active function and value obligations", () => {
-  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-obligation-test-"));
-  try {
-    const config = { ...baseConfig, tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/") };
-    const snapshot = snapshotWith([fileRecord({
-      path: "internal/tool/tool.go",
-      units: [unitRecord({ externalRefs: [
-        { importPath: "example.com/native", name: "Run", role: "call", count: 1 },
-        { importPath: "example.com/native", name: "Value", role: "value", count: 1 },
-      ] })],
-    })]);
-    for (const [relativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot)) {
-      const targetPath = path.join(repoRoot, relativePath);
-      mkdirSync(path.dirname(targetPath), { recursive: true });
-      writeFileSync(targetPath, text);
-    }
-    const status = buildGeneratedArtifactStatus(config, snapshot);
-    assert.deepEqual(status.unresolved.map((entry) => entry.symbol), ["example.com/native.Run", "example.com/native.Value"]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

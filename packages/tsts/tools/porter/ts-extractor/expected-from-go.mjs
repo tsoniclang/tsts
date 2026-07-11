@@ -1,2 +1,1 @@
-export { buildExpectedIndex, goTypeToDescriptor } from "./expected-from-go-types.mjs";
-export { goUnitDescriptor } from "./expected-from-go-units.mjs";
+export { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./expected-from-go-semantic.mjs";

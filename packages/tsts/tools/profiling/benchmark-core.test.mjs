@@ -10,6 +10,13 @@ import {
   parseExtendedDiagnostics,
   parseVerboseTime,
 } from "./benchmark-core.mjs";
+import {
+  assertDirectCompilerArguments,
+  compilerOptionOccurrences,
+  requireBooleanCompilerOption,
+  requireValueCompilerOption,
+  validateBenchmarkCompilerArguments,
+} from "./compiler-arguments.mjs";
 
 const metrics = ["Files", "Lines", "Parse", "Bind", "Check", "Total", "MemReportedKB", "wallSecs", "userSecs", "systemSecs", "cpuSecs", "cpuPercent", "maxRssKB"];
 
@@ -84,6 +91,22 @@ test("baseline gate checks both regression and current/baseline dispersion", () 
     "fixture/wallSecs: current coefficientOfVariation=0.2 limit=0.1",
     "fixture/wallSecs: regressionRatio=1.2 limit=1.1",
   ]);
+});
+
+test("compiler option parsing rejects joined, split, duplicate, and disguised overrides", () => {
+  assert.deepEqual(compilerOptionOccurrences(["--pretty=false"], ["--pretty"]).map((entry) => entry.inlineValue), ["false"]);
+  assert.deepEqual(compilerOptionOccurrences(["--EXTENDEDDIAGNOSTICS", "false"], ["--extendedDiagnostics"]).map((entry) => entry.followingValue), ["false"]);
+  assert.doesNotThrow(() => requireBooleanCompilerOption(["--noEmit", "--incremental=false"], ["--noEmit"], true, "noEmit"));
+  assert.doesNotThrow(() => requireBooleanCompilerOption(["--noEmit", "--incremental=false"], ["--incremental"], false, "incremental"));
+  assert.throws(() => requireBooleanCompilerOption(["--noEmit=false"], ["--noEmit"], true, "noEmit"), /must be true/);
+  assert.throws(() => requireBooleanCompilerOption(["--noEmit", "--noEmit=true"], ["--noEmit"], true, "noEmit"), /exactly once/);
+  assert.equal(requireValueCompilerOption(["--project=tsconfig.json"], ["-p", "--project"], "project"), "tsconfig.json");
+  assert.throws(() => requireValueCompilerOption(["--project", "--noEmit"], ["-p", "--project"], "project"), /requires one explicit value/);
+  assert.equal(validateBenchmarkCompilerArguments(["-p", "tsconfig.json", "--noEmit", "--incremental=false"], "benchmark"), "tsconfig.json");
+  assert.throws(() => validateBenchmarkCompilerArguments(["-p", "tsconfig.json", "--noEmit", "--incremental=false", "--watch=false"], "benchmark"), /unsupported compiler argument '--watch=false'/);
+  assert.throws(() => validateBenchmarkCompilerArguments(["-p", "tsconfig.json", "--noEmit", "--incremental=false", "@options.rsp"], "benchmark"), /cannot use compiler argument indirection/);
+  assert.throws(() => assertDirectCompilerArguments(["@options.rsp"], "compiler"), /cannot use compiler argument indirection/);
+  assert.throws(() => assertDirectCompilerArguments(["--"], "compiler"), /cannot use compiler argument indirection/);
 });
 
 function sample(value) {

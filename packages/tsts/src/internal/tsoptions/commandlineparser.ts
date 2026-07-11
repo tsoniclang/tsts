@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import { GoAppend } from "../../go/compat.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Und } from "../../go/golang.org/x/text/language.js";
@@ -8,7 +9,7 @@ import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Expression } from "../ast/generated/unions.js";
-import { newMapWithSizeHint, OrderedMap_Clone, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set } from "../collections/ordered_map.js";
+import { newMapWithSizeHintWithRuntimeType, OrderedMap_Clone, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set, OrderedMap_StringAnyRuntimeType } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { MapFiltered } from "../core/core.js";
 import { Tristate_IsTrue } from "../core/tristate.js";
@@ -323,7 +324,7 @@ export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<Pa
     currentDirectory: currentDirectory,
     workerDiagnostics: parseCommandLineWithDiagnostics,
     fileNames: [],
-    options: newMapWithSizeHint<string, unknown>(0),
+    options: newMapWithSizeHintWithRuntimeType<string, unknown>(OrderedMap_StringAnyRuntimeType, 0),
     errors: [],
     optionsMap: undefined,
   };
@@ -740,7 +741,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
           const [result, err] = commandLineParser_parseListTypeOption(p, opt, args[i]!);
           OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, result);
           p.errors = [...p.errors, ...(err ?? [])];
-          if (result.length > 0 || (err?.length ?? 0) > 0) {
+          if ((result?.length ?? 0) > 0 || (err?.length ?? 0) > 0) {
             i++;
           }
           break;
@@ -773,7 +774,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
  * 	return ParseListTypeOption(opt, value)
  * }
  */
-export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLineParser>, opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
+export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLineParser>, opt: GoPtr<CommandLineOption>, value: string): [GoPtr<GoSlice<unknown>>, GoPtr<GoSlice<GoPtr<Diagnostic>>>] {
   return ParseListTypeOption(opt, value);
 }
 
@@ -826,9 +827,9 @@ export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLin
  * 	}
  * }
  */
-export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
+export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoPtr<GoSlice<unknown>>, GoPtr<GoSlice<GoPtr<Diagnostic>>>] {
   value = strings.TrimSpace(value);
-  let errors: GoSlice<GoPtr<Diagnostic>> = [];
+  let errors: GoPtr<GoSlice<GoPtr<Diagnostic>>> = undefined;
   if (strings.HasPrefix(value, "-")) {
     return [[], errors];
   }
@@ -851,7 +852,7 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
         if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
           return [val, true];
         }
-        errors = [...errors, ...(err ?? [])];
+        errors = GoAppend(errors, ...(err ?? []));
         return ["", false];
       });
       return [elements, errors];
@@ -869,7 +870,7 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
         if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
           return [val, true];
         }
-        errors = [...errors, ...(err ?? [])];
+        errors = GoAppend(errors, ...(err ?? []));
         return ["", false];
       });
       return [result, errors];

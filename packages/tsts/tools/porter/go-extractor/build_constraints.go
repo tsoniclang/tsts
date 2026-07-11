@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"go/build/constraint"
 	"os/exec"
 	"path/filepath"
@@ -48,7 +49,7 @@ func explicitBuildTags(source []byte, sourcePath string) []string {
 		selected = plusBuild
 	}
 	if selected == nil {
-		return nil
+		return []string{}
 	}
 	return []string{selected.String()}
 }
@@ -58,7 +59,7 @@ func implicitBuildTags(rel string) []string {
 	base = strings.TrimSuffix(base, "_test")
 	parts := strings.Split(base, "_")
 	if len(parts) < 2 {
-		return nil
+		return []string{}
 	}
 	knownOS, knownArch := distTagSets()
 	last := parts[len(parts)-1]
@@ -77,56 +78,179 @@ func implicitBuildTags(rel string) []string {
 var distTagsOnce sync.Once
 var distOperatingSystems map[string]bool
 var distArchitectures map[string]bool
-var distributionTargets []string
+var distributionTargetDetails []distributionTarget
+
+type distributionTarget struct {
+	GOOS         string
+	GOARCH       string
+	CgoSupported bool
+	FirstClass   bool
+}
 
 func distTagSets() (map[string]bool, map[string]bool) {
 	distTagsOnce.Do(func() {
 		distOperatingSystems = map[string]bool{}
 		distArchitectures = map[string]bool{}
-		output, err := exec.Command("go", "tool", "dist", "list").Output()
+		toolchain := exactSemanticToolchain()
+		profile := semanticBuildProfile{GOOS: toolchain.hostOS, GOARCH: toolchain.hostArch}
+		command := exec.Command(toolchain.executable, "tool", "dist", "list", "-json")
+		command.Env = semanticEnvironment(profile)
+		output, err := command.CombinedOutput()
 		if err != nil {
-			fatalf("load pinned Go distribution targets: %v", err)
+			fatalf("load exact Go distribution targets with %s: %v\n%s", toolchain.executable, err, output)
 		}
-		distributionTargets = strings.Fields(string(output))
-		for _, line := range distributionTargets {
-			goos, goarch, ok := strings.Cut(line, "/")
-			if !ok || goos == "" || goarch == "" {
-				fatalf("invalid target from 'go tool dist list': %q", line)
+		if err := json.Unmarshal(output, &distributionTargetDetails); err != nil {
+			fatalf("decode pinned Go distribution targets: %v", err)
+		}
+		for _, target := range distributionTargetDetails {
+			if target.GOOS == "" || target.GOARCH == "" {
+				fatalf("invalid target from 'go tool dist list -json': %#v", target)
 			}
-			distOperatingSystems[goos] = true
-			distArchitectures[goarch] = true
+			distOperatingSystems[target.GOOS] = true
+			distArchitectures[target.GOARCH] = true
 		}
 	})
 	return distOperatingSystems, distArchitectures
 }
 
-func distTargets() []string {
+func distTargetReports() []distributionTarget {
 	distTagSets()
-	return distributionTargets
+	return distributionTargetDetails
 }
 
 func constraintsEquivalent(left constraint.Expr, right constraint.Expr) bool {
+	difference := &constraint.OrExpr{
+		X: &constraint.AndExpr{X: left, Y: &constraint.NotExpr{X: right}},
+		Y: &constraint.AndExpr{X: &constraint.NotExpr{X: left}, Y: right},
+	}
+	_, satisfiable := findConstraintAssignment(difference, nil, nil)
+	return !satisfiable
+}
+
+type partialConstraintValue uint8
+
+const (
+	constraintUnknown partialConstraintValue = iota
+	constraintFalse
+	constraintTrue
+)
+
+func findConstraintAssignment(expression constraint.Expr, fixed map[string]bool, accept func(map[string]bool) bool) (map[string]bool, bool) {
 	tags := map[string]bool{}
-	collectConstraintTags(left, tags)
-	collectConstraintTags(right, tags)
-	names := make([]string, 0, len(tags))
-	for name := range tags {
-		names = append(names, name)
+	collectConstraintTags(expression, tags)
+	known := map[string]bool{}
+	for name, value := range fixed {
+		known[name] = value
+		delete(tags, name)
 	}
+	names := sortedBoolKeys(tags)
+	var search func(int) (map[string]bool, bool)
+	search = func(index int) (map[string]bool, bool) {
+		value := evaluatePartialConstraint(expression, known)
+		if value == constraintFalse {
+			return nil, false
+		}
+		if index == len(names) {
+			if value != constraintTrue || (accept != nil && !accept(known)) {
+				return nil, false
+			}
+			return copyBoolMap(known), true
+		}
+		name := names[index]
+		known[name] = false
+		if assignment, ok := search(index + 1); ok {
+			delete(known, name)
+			return assignment, true
+		}
+		known[name] = true
+		assignment, ok := search(index + 1)
+		delete(known, name)
+		return assignment, ok
+	}
+	return search(0)
+}
+
+func findPartialConstraintAssignment(expression constraint.Expr, assignable []string, accept func(map[string]bool) bool) (map[string]bool, bool) {
+	known := map[string]bool{}
+	names := append([]string{}, assignable...)
 	sort.Strings(names)
-	if len(names) > 18 {
-		fatalf("build constraint equivalence requires %d variables; refusing heuristic comparison", len(names))
-	}
-	for assignment := 0; assignment < 1<<len(names); assignment++ {
-		value := func(tag string) bool {
-			index := sort.SearchStrings(names, tag)
-			return index < len(names) && names[index] == tag && assignment&(1<<index) != 0
+	var search func(int) (map[string]bool, bool)
+	search = func(index int) (map[string]bool, bool) {
+		if evaluatePartialConstraint(expression, known) == constraintFalse {
+			return nil, false
 		}
-		if left.Eval(value) != right.Eval(value) {
-			return false
+		if index == len(names) {
+			if !accept(known) {
+				return nil, false
+			}
+			return copyBoolMap(known), true
 		}
+		name := names[index]
+		known[name] = false
+		if assignment, ok := search(index + 1); ok {
+			delete(known, name)
+			return assignment, true
+		}
+		known[name] = true
+		assignment, ok := search(index + 1)
+		delete(known, name)
+		return assignment, ok
 	}
-	return true
+	return search(0)
+}
+
+func evaluatePartialConstraint(expression constraint.Expr, known map[string]bool) partialConstraintValue {
+	switch typed := expression.(type) {
+	case *constraint.TagExpr:
+		value, ok := known[typed.Tag]
+		if !ok {
+			return constraintUnknown
+		}
+		if value {
+			return constraintTrue
+		}
+		return constraintFalse
+	case *constraint.NotExpr:
+		value := evaluatePartialConstraint(typed.X, known)
+		if value == constraintTrue {
+			return constraintFalse
+		}
+		if value == constraintFalse {
+			return constraintTrue
+		}
+		return constraintUnknown
+	case *constraint.AndExpr:
+		left := evaluatePartialConstraint(typed.X, known)
+		right := evaluatePartialConstraint(typed.Y, known)
+		if left == constraintFalse || right == constraintFalse {
+			return constraintFalse
+		}
+		if left == constraintTrue && right == constraintTrue {
+			return constraintTrue
+		}
+		return constraintUnknown
+	case *constraint.OrExpr:
+		left := evaluatePartialConstraint(typed.X, known)
+		right := evaluatePartialConstraint(typed.Y, known)
+		if left == constraintTrue || right == constraintTrue {
+			return constraintTrue
+		}
+		if left == constraintFalse && right == constraintFalse {
+			return constraintFalse
+		}
+		return constraintUnknown
+	default:
+		fatalf("unknown build constraint expression %T", expression)
+		return constraintUnknown
+	}
+}
+
+func copyBoolMap(values map[string]bool) map[string]bool {
+	copyValue := make(map[string]bool, len(values))
+	for name, value := range values {
+		copyValue[name] = value
+	}
+	return copyValue
 }
 
 func collectConstraintTags(expression constraint.Expr, tags map[string]bool) {

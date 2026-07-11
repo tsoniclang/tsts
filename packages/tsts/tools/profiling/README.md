@@ -68,9 +68,12 @@ node packages/tsts/tools/profiling/bench.mjs --verify-report <sealed-directory>
   compiler-reported memory, wall/user/system/CPU time, CPU utilization, and
   maxRSS. Missing metrics fail the run; aggregation never drops missing values.
   Reports include median, min, max, mean, sample standard deviation, MAD, and CV.
-- Files and Lines must match exactly across all compilers and all rounds. This,
-  the identical read-only staged tree, identical arguments, and successful exit
-  are the equivalent-work receipt.
+- Before timing, every compiler runs `--listFilesOnly` under the same closed
+  environment. Every selected file must be a canonical regular file inside the
+  read-only staged project; paths and byte identities are sorted, hashed, stored
+  for each compiler, and required to match exactly. Files and Lines must also
+  match across all compilers and all rounds. The selected-input receipt, closed
+  tree, identical arguments, and successful exits form the equivalent-work proof.
 
 Measurement/gate outputs are restricted to unique no-overwrite directories
 under `.tests/profiling/runs/`; baseline candidates are restricted to
@@ -89,6 +92,10 @@ sources, compiler producers, and harness files are reverified after measurement.
 The default compiler-shaped fixture supplies its own `noLib` declarations and
 replicates independent parser/checker/flow-style modules, so all three compilers
 see the same nontrivial files and no ambient `node_modules` or standard library.
+Every corpus project has the same obligation: all files selected by the compiler,
+including library declarations, must be staged inputs. A project that selects a
+compiler-owned standard library outside its sealed staging root fails the
+selected-input preflight; use `noLib` with an explicit staged library instead.
 
 Each project has this shape:
 
@@ -108,8 +115,11 @@ Each project has this shape:
 }
 ```
 
-Names and paths are traversal-safe. `--noEmit` and `--incremental false` are
-mandatory; watch/build/profile/diagnostic overrides are rejected. `replicas`
+Names and paths are traversal-safe. Compiler arguments are a closed contract:
+exactly one project option, `--noEmit true`, and `--incremental false` are
+required; response files, option terminators, additional inputs, and every
+other compiler option are rejected. Workload-specific settings belong in the
+sealed project configuration rather than an open command line. `replicas`
 copies a directory into zero-padded child directories and is useful for a
 checked-in deterministic workload template.
 

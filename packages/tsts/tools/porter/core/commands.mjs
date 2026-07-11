@@ -14,9 +14,9 @@ import { printScanSummary, printStatus, renderStatusMarkdown } from "./reporting
 import { fail, loadConfig, parseArgs, repoRoot, resolveRepo, writeJson, writeJsonSafely, writeText, writeTextSafely } from "./runtime.mjs";
 import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
 import { activeSignatureUnitIds, runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
-import { runPinnedScan, runScan } from "./snapshot.mjs";
+import { runPinnedScan, runScan } from "./scan-runner.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
-import { buildEmbeddedGoSourceUpdates, scanTsUnits } from "./ts-units.mjs";
+import { buildEmbeddedGoSourceUpdates, parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { collectGeneratedArtifactFailures, verifyStatus } from "./verification.mjs";
 import path from "node:path";
 import process from "node:process";
@@ -90,7 +90,7 @@ export async function main() {
 
   if (command === "source-docs") {
     const snapshot = runPinnedScan(config);
-    const result = buildEmbeddedGoSourceUpdates(snapshot, resolveRepo(config.tsRoot));
+    const result = await buildEmbeddedGoSourceUpdates(snapshot, resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
     console.log(`embedded Go source docs needing updates: ${result.unitCount} unit(s) in ${result.updates.length} file(s)`);
     if (options.write === true) {
       for (const update of result.updates) {
@@ -195,7 +195,7 @@ export async function main() {
 
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = command === "status" || command === "verify" ? runScan(config) : runPinnedScan(config);
-    const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
+    const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
     const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
     const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
     const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
@@ -239,7 +239,7 @@ export async function main() {
       return;
     }
     if (command === "scaffold") {
-      scaffoldMissing(config, status, snapshot, options);
+      await scaffoldMissing(config, status, snapshot, options);
       return;
     }
     if (command === "skeleton-check") {

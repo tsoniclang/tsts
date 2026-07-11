@@ -38,7 +38,7 @@ test("global generated-artifact registry rejects unknown paths and provider meta
   ].join("\n"));
   writeFileSync(path.join(tsRoot, "go", "compat.ts"), [
     "// Code generated. DO NOT EDIT.",
-    '// @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","path":"go/compat.ts","contentHash":"x"}',
+    '// @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"wrong-generator","path":"go/compat.ts","contentHash":"x"}',
     "",
     "export const hidden = undefined as never;",
   ].join("\n"));

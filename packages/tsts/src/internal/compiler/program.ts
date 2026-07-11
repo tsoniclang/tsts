@@ -63,7 +63,7 @@ import { GetECMALineStarts, GetECMALineOfPosition, ComputeLineOfPosition } from 
 import { IsIdentifierText } from "../scanner/utilities.js";
 import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
 import { NewKnownSymlink, KnownSymlinks_HasDirectory, KnownSymlinks_ProcessResolution, KnownSymlinks_SetSymlinksFromResolutions } from "../symlinks/knownsymlinks.js";
-import { PhaseEmit, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
+import { PhaseBind, PhaseEmit, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import type { Tracing as Tracing_bcfc8412 } from "../tracing/tracing.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_FileNames, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_ProjectReferences, ParsedCommandLine_as_ResolvedProjectReference } from "../tsoptions/parsedcommandline.js";
@@ -486,7 +486,7 @@ export function Program_GetParseFileRedirect(receiver: GoPtr<Program>, fileName:
  * 	return p.projectReferenceFileMapper.getResolvedProjectReferences()
  * }
  */
-export function Program_GetResolvedProjectReferences(receiver: GoPtr<Program>): GoSlice<GoPtr<ParsedCommandLine>> {
+export function Program_GetResolvedProjectReferences(receiver: GoPtr<Program>): GoPtr<GoSlice<GoPtr<ParsedCommandLine>>> {
   return projectReferenceFileMapper_getResolvedProjectReferences(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper);
 }
 
@@ -751,40 +751,40 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
 export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
   // Compute singleThreaded before creating the program (needed for processAllProgramFiles)
   const singleThreaded = Tristate_IsTrue(Tristate_DefaultIfUnknown(opts.SingleThreaded ?? TSUnknown, ParsedCommandLine_CompilerOptions(opts.Config)!.SingleThreaded));
-  let popTrace: (() => void) | undefined;
-  if (opts.Tracing !== undefined) {
-    popTrace = Tracing_Push(opts.Tracing, PhaseProgram, "createProgram", new globalThis.Map([["configFilePath", ParsedCommandLine_CompilerOptions(opts.Config)!.ConfigFilePath]]), true);
+  const popTrace = opts.Tracing === undefined
+    ? undefined
+    : Tracing_Push(opts.Tracing, PhaseProgram, "createProgram", new globalThis.Map([["configFilePath", ParsedCommandLine_CompilerOptions(opts.Config)!.ConfigFilePath]]), true);
+  try {
+    const pf = processAllProgramFiles(opts, singleThreaded);
+    const p: Program = {
+      opts,
+      checkerPool: undefined,
+      compilerCheckerPool: undefined,
+      comparePathsOptions: { UseCaseSensitiveFileNames: false as bool, CurrentDirectory: "" },
+      __tsgoEmbedded0: pf,
+      usesUriStyleNodeCoreModules: TSUnknown,
+      commonSourceDirectory: "",
+      commonSourceDirectoryOnce: new Once(),
+      declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>,
+      programDiagnostics: [],
+      hasEmitBlockingDiagnostics: { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() },
+      sourceFilesToEmitOnce: new Once(),
+      sourceFilesToEmit: [],
+      unresolvedImports: { value: undefined, once: new Once(), initialized: new Bool() },
+      knownSymlinks: { value: undefined, once: new Once(), initialized: new Bool() },
+      packageNames: { value: undefined, once: new Once(), initialized: new Bool() },
+      hasTSFileOnce: new Once(),
+      hasTSFile: false as bool,
+      packagesMapOnce: new Once(),
+      packagesMap: new globalThis.Map<string, bool>(),
+    };
+    attachExtensionHostToProgram(opts, p);
+    Program_initCheckerPool(p);
+    Program_verifyCompilerOptions(p);
+    return p;
+  } finally {
+    popTrace?.();
   }
-  const pf = processAllProgramFiles(opts, singleThreaded);
-  const p: Program = {
-    opts,
-    checkerPool: undefined,
-    compilerCheckerPool: undefined,
-    comparePathsOptions: { UseCaseSensitiveFileNames: false as bool, CurrentDirectory: "" },
-    __tsgoEmbedded0: pf,
-    usesUriStyleNodeCoreModules: TSUnknown,
-    commonSourceDirectory: "",
-    commonSourceDirectoryOnce: new Once(),
-    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoPtr<GoSlice<GoPtr<Diagnostic>>>>,
-    programDiagnostics: [],
-    hasEmitBlockingDiagnostics: { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() },
-    sourceFilesToEmitOnce: new Once(),
-    sourceFilesToEmit: [],
-    unresolvedImports: { value: undefined, once: new Once(), initialized: new Bool() },
-    knownSymlinks: { value: undefined, once: new Once(), initialized: new Bool() },
-    packageNames: { value: undefined, once: new Once(), initialized: new Bool() },
-    hasTSFileOnce: new Once(),
-    hasTSFile: false as bool,
-    packagesMapOnce: new Once(),
-    packagesMap: new globalThis.Map<string, bool>(),
-  };
-  attachExtensionHostToProgram(opts, p);
-  Program_initCheckerPool(p);
-  Program_verifyCompilerOptions(p);
-  if (popTrace !== undefined) {
-    popTrace();
-  }
-  return p;
 }
 
 /**
@@ -1242,12 +1242,23 @@ export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
  * }
  */
 export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
+  const wg = NewWorkGroup(Program_SingleThreaded(receiver));
   for (const file of receiver!.__tsgoEmbedded0!.files) {
     if (!SourceFile_IsBound(file)) {
-      BindSourceFile(file);
-      recordBoundSourceFileExtensionFacts(receiver!.opts, file);
+      wg.Queue((): void => {
+        const popTrace = receiver!.opts.Tracing === undefined
+          ? undefined
+          : Tracing_Push(receiver!.opts.Tracing, PhaseBind, "bindSourceFile", new globalThis.Map([["path", globalThis.String(SourceFile_Path(file!))]]), true);
+        try {
+          BindSourceFile(file);
+          recordBoundSourceFileExtensionFacts(receiver!.opts, file);
+        } finally {
+          popTrace?.();
+        }
+      });
     }
   }
+  wg.RunAndWait();
 }
 
 /**
@@ -3756,9 +3767,9 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
  * 	return allFilesBelongToPath
  * }
  */
-export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, sourceFiles: GoSlice<string>, rootDirectory: string): bool {
+export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, sourceFiles: GoPtr<GoSlice<string>>, rootDirectory: string): bool {
   let allFilesBelongToPath = true as bool;
-  for (const file of sourceFiles) {
+  for (const file of sourceFiles ?? []) {
     const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(receiver)), Program_UseCaseSensitiveFileNames(receiver));
     if (!ContainsPath(rootDirectory, file, receiver!.comparePathsOptions)) {
       includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {

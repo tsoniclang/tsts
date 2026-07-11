@@ -59,6 +59,7 @@ test("Count", () => {
 });
 
 test("Join", () => {
+  assert.equal(strings.Join(undefined, ","), "");
   assert.equal(strings.Join(["a", "b", "c"], "-"), "a-b-c");
   assert.equal(strings.Join([], ","), "");
   assert.equal(strings.Join(["solo"], ","), "solo");

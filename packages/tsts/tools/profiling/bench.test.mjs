@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -8,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { parseBenchmarkArguments } from "./bench.mjs";
 import { assertUninjectedNodeProcess, canonicalBenchmarkEnvironment } from "./benchmark-evidence.mjs";
 import { runTimedCompiler } from "./benchmark-core.mjs";
+import { collectWorkloadSelection } from "./benchmark-selection.mjs";
 import { assertStagedWorkloadsUnchanged, loadBenchmarkCorpus, removeBenchmarkStaging, stageBenchmarkCorpus } from "./benchmark-workload.mjs";
 import { loadPerformancePolicy, requireCalibratedPolicy } from "./performance-policy.mjs";
 
@@ -107,7 +109,10 @@ test("corpus rejects unsafe profile names and mutable compiler modes", () => {
     project.name = "safe";
     project.args.push("--watch");
     writeFileSync(corpusPath, JSON.stringify({ schemaVersion: 2, projects: [project] }));
-    assert.throws(() => loadBenchmarkCorpus(corpusPath), /mutable argument '--watch'/);
+    assert.throws(() => loadBenchmarkCorpus(corpusPath), /unsupported compiler argument '--watch'/);
+    project.args = ["-p", "../outside.json", "--noEmit", "--incremental", "false"];
+    writeFileSync(corpusPath, JSON.stringify({ schemaVersion: 2, projects: [project] }));
+    assert.throws(() => loadBenchmarkCorpus(corpusPath), /project option must be a safe relative POSIX path/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -119,9 +124,19 @@ test("default closed workload produces complete repository-tsc metrics", async (
     const policy = loadPerformancePolicy(join(here, "performance-policy.json"));
     const [project] = stageBenchmarkCorpus(loadBenchmarkCorpus(policy.corpusPath), join(root, "projects"));
     const environment = canonicalBenchmarkEnvironment(join(root, "runtime"));
+    const tsc = [process.execPath, join(here, "../../../../node_modules/typescript/bin/tsc")];
+    const selection = collectWorkloadSelection({
+      id: "default-workload/tsc-selection",
+      argv: tsc,
+      args: project.args,
+      projectRoot: project.root,
+      cwd: project.cwd,
+      environment: environment.actual,
+      timeoutMs: 30_000,
+    });
     const sample = runTimedCompiler({
       id: "default-workload/tsc",
-      argv: [process.execPath, join(here, "../../../../node_modules/typescript/bin/tsc")],
+      argv: tsc,
       args: project.args,
       cwd: project.cwd,
       environment: environment.actual,
@@ -131,10 +146,36 @@ test("default closed workload produces complete repository-tsc metrics", async (
     });
     assert.equal(sample.Files, 161);
     assert.equal(sample.Lines, 12_648);
+    assert.equal(selection.files.length, sample.Files);
     assertStagedWorkloadsUnchanged([project]);
   } finally {
     await removeBenchmarkStaging(root);
   }
+});
+
+test("documented example corpus stages every real tsc input", () => {
+  const root = mkdtempSync(join(tmpdir(), "tsts-performance-example-workload-"));
+  const [project] = stageBenchmarkCorpus(loadBenchmarkCorpus(join(here, "corpus.example.json")), join(root, "projects"));
+  const environment = canonicalBenchmarkEnvironment(join(root, "runtime"));
+  const tsc = [process.execPath, join(here, "../../../../node_modules/typescript/bin/tsc")];
+  const selection = collectWorkloadSelection({
+    id: "example-workload/tsc-selection",
+    argv: tsc,
+    args: project.args,
+    projectRoot: project.root,
+    cwd: project.cwd,
+    environment: environment.actual,
+    timeoutMs: 30_000,
+  });
+  const compilation = spawnSync(tsc[0], [...tsc.slice(1), ...project.args, "--pretty", "false"], {
+    cwd: project.cwd,
+    env: environment.actual,
+    encoding: "utf8",
+    maxBuffer: 256 * 1024 * 1024,
+    timeout: 30_000,
+  });
+  assert.equal(compilation.status, 0, `${compilation.stdout ?? ""}\n${compilation.stderr ?? ""}`);
+  assert.deepEqual(selection.files.map((file) => file.path), ["project/lib.d.ts", "project/src/index.ts"]);
 });
 
 function makeWritable(path) {

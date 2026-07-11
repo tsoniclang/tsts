@@ -288,10 +288,10 @@ export function SymbolTrackerImpl_ReportNonSerializableProperty(receiver: GoPtr<
  * }
  */
 export function SymbolTrackerImpl_ReportNonlocalAugmentation(receiver: GoPtr<SymbolTrackerImpl>, containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void {
-  const primaryDeclaration = Find(parentSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile);
-  const augmentingDeclarations = Filter(augmentingSymbol!.Declarations ?? [], (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
-  if (primaryDeclaration !== undefined && augmentingDeclarations.length > 0) {
-    for (const augmentations of augmentingDeclarations) {
+  const primaryDeclaration = Find(parentSymbol!.Declarations, (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) === containingFile);
+  const augmentingDeclarations = Filter(augmentingSymbol!.Declarations, (d: GoPtr<Node>): bool => GetSourceFileOfNode(d) !== containingFile);
+  if (primaryDeclaration !== undefined && (augmentingDeclarations?.length ?? 0) > 0) {
+    for (const augmentations of augmentingDeclarations ?? []) {
       const diag = createDiagnosticForNode(augmentations, diagnostics.Declaration_augments_declaration_in_another_file_This_cannot_be_serialized);
       const related = createDiagnosticForNode(primaryDeclaration, diagnostics.This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file);
       Diagnostic_AddRelatedInfo(diag, related);

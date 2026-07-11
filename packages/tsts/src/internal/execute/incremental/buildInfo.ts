@@ -912,7 +912,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   }
   return {
     signature,
-    signatureWithDifferentOptions: signatureWithDifferentOptions ?? [],
+    signatureWithDifferentOptions,
   };
 }
 

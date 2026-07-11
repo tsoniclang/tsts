@@ -1,43 +1,80 @@
 import type { int, bool } from "./scalars.js";
-import { GoStructMap, NewGoStructMap } from "./compat.js";
 import type { GoPtr } from "./compat.js";
 
 // Go: package sync
 //
-// TypeScript is single-threaded, so the concurrency primitives degrade to
-// faithful single-threaded equivalents:
-//   - Mutex/RWMutex Lock/Unlock/RLock/RUnlock are no-ops (there is no other
-//     goroutine that could ever hold the lock).
+// TypeScript is single-threaded, so blocking operations fail rather than
+// silently modeling a wakeup or a structurally comparable map key incorrectly.
+//   - Mutex/RWMutex track synchronous ownership and reject an operation that
+//     would block.
 //   - Once.Do / OnceFunc / OnceValue / OnceValues run the function exactly once
 //     and memoize the result.
-//   - Map wraps a plain Map (matching sync.Map's (value, ok) and Range contract).
+//   - Map supports only primitive comparable keys without an exact descriptor.
 //   - Pool returns values retained by Put and calls New only when the pool is
 //     empty, preserving the reuse contract without modeling GC eviction.
-//   - WaitGroup tracks a counter; Wait returns immediately because all "goroutines"
-//     in this single-threaded port run synchronously before Wait is reached.
-//   - Cond's Wait would block forever single-threaded (no other goroutine can
-//     Signal), so we model it as a no-op wakeup paired with Signal/Broadcast,
-//     which matches how the checker pool polls after each wakeup.
+//   - WaitGroup.Wait and Cond.Wait reject pending work because they would block.
+
+const mutexState = new globalThis.WeakMap<Mutex, bool>();
+const rwMutexState = new globalThis.WeakMap<RWMutex, { writer: bool; readers: int }>();
+
+function rwMutexStateOf(mutex: RWMutex): { writer: bool; readers: int } {
+  let state = rwMutexState.get(mutex);
+  if (state === undefined) {
+    state = { writer: false, readers: 0 };
+    rwMutexState.set(mutex, state);
+  }
+  return state;
+}
 
 // Mutex is a mutual exclusion lock. Single-threaded: Lock/Unlock are no-ops.
 export class Mutex {
-  Lock(): void {}
-  Unlock(): void {}
+  Lock(): void {
+    if (mutexState.get(this) === true) throw new Error("sync.Mutex.Lock would block in the synchronous runtime");
+    mutexState.set(this, true);
+  }
+  Unlock(): void {
+    if (mutexState.get(this) !== true) throw new Error("sync: unlock of unlocked mutex");
+    mutexState.set(this, false);
+  }
   TryLock(): bool {
+    if (mutexState.get(this) === true) return false;
+    mutexState.set(this, true);
     return true;
   }
 }
 
 // RWMutex is a reader/writer mutual exclusion lock. Single-threaded: all no-ops.
 export class RWMutex {
-  Lock(): void {}
-  Unlock(): void {}
-  RLock(): void {}
-  RUnlock(): void {}
+  Lock(): void {
+    const state = rwMutexStateOf(this);
+    if (state.writer || state.readers !== 0) throw new Error("sync.RWMutex.Lock would block in the synchronous runtime");
+    state.writer = true;
+  }
+  Unlock(): void {
+    const state = rwMutexStateOf(this);
+    if (!state.writer) throw new Error("sync: Unlock of unlocked RWMutex");
+    state.writer = false;
+  }
+  RLock(): void {
+    const state = rwMutexStateOf(this);
+    if (state.writer) throw new Error("sync.RWMutex.RLock would block in the synchronous runtime");
+    state.readers++;
+  }
+  RUnlock(): void {
+    const state = rwMutexStateOf(this);
+    if (state.readers === 0) throw new Error("sync: RUnlock of unlocked RWMutex");
+    state.readers--;
+  }
   TryLock(): bool {
+    const state = rwMutexStateOf(this);
+    if (state.writer || state.readers !== 0) return false;
+    state.writer = true;
     return true;
   }
   TryRLock(): bool {
+    const state = rwMutexStateOf(this);
+    if (state.writer) return false;
+    state.readers++;
     return true;
   }
   // RLocker returns a Locker interface backed by the read lock.
@@ -131,7 +168,6 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
   private readonly primitive = new globalThis.Map<K, { value: V }>();
-  private readonly structured: GoStructMap<K, V> = NewGoStructMap<K, V>();
   private readonly nanNumberEntries: [K, V][] = [];
 
   // Load returns the value stored for key, and whether it was present.
@@ -144,7 +180,7 @@ export class Map<K = unknown, V = unknown> {
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
     }
-    return this.structured.load(key);
+    throwUnsupportedSyncMapKey(key);
   }
 
   // Store sets the value for a key.
@@ -158,7 +194,7 @@ export class Map<K = unknown, V = unknown> {
       this.nanNumberEntries.push([key, value]);
       return;
     }
-    this.structured.set(key, value);
+    throwUnsupportedSyncMapKey(key);
   }
 
   // LoadOrStore returns the existing value if present; otherwise stores and returns
@@ -177,7 +213,7 @@ export class Map<K = unknown, V = unknown> {
       this.nanNumberEntries.push([key, value]);
       return [value, false];
     }
-    return this.structured.loadOrStore(key, value);
+    throwUnsupportedSyncMapKey(key);
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
@@ -191,7 +227,7 @@ export class Map<K = unknown, V = unknown> {
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
     }
-    return this.structured.loadAndDelete(key);
+    throwUnsupportedSyncMapKey(key);
   }
 
   // Delete deletes the value for a key.
@@ -204,13 +240,12 @@ export class Map<K = unknown, V = unknown> {
     if (bucket === mapKeyBucketNanNumber) {
       return;
     }
-    this.structured.delete(key);
+    throwUnsupportedSyncMapKey(key);
   }
 
   // Clear deletes all the entries.
   Clear(): void {
     this.primitive.clear();
-    this.structured.clear();
     this.nanNumberEntries.length = 0;
   }
 
@@ -225,11 +260,6 @@ export class Map<K = unknown, V = unknown> {
         return;
       }
     }
-    for (const [key, value] of globalThis.Array.from(this.structured.entries())) {
-      if (!f(key, value)) {
-        return;
-      }
-    }
     for (const [key, value] of globalThis.Array.from(this.nanNumberEntries)) {
       if (!f(key, value)) {
         return;
@@ -238,7 +268,6 @@ export class Map<K = unknown, V = unknown> {
   }
 }
 
-const mapKeyBucketStructured: int = 0;
 const mapKeyBucketPrimitive: int = 1;
 const mapKeyBucketNanNumber: int = 2;
 
@@ -250,7 +279,11 @@ function mapKeyBucket(key: unknown): int {
   if (keyType === "string" || keyType === "boolean" || keyType === "bigint") {
     return mapKeyBucketPrimitive;
   }
-  return mapKeyBucketStructured;
+  return 0;
+}
+
+function throwUnsupportedSyncMapKey(key: unknown): never {
+  throw new TypeError(`sync.Map key requires an explicit Go map-key descriptor; unsupported synchronous key type ${typeof key}`);
 }
 
 export class Pool<T = unknown> {
@@ -268,7 +301,7 @@ export class Pool<T = unknown> {
     return undefined;
   }
 
-  Put(x: T): void {
+  Put(x: GoPtr<T>): void {
     if (x !== undefined && x !== null) {
       this.items.push(x);
     }
@@ -289,8 +322,7 @@ export class Cond {
   // Wait atomically unlocks L and suspends; on wakeup it re-locks L. Single-threaded
   // there is nothing to wait for, so it returns immediately with L re-locked.
   Wait(): void {
-    this.L.Unlock();
-    this.L.Lock();
+    throw new Error("sync.Cond.Wait would block in the synchronous runtime");
   }
 
   // Signal wakes one goroutine waiting on c, if there is any. No-op single-threaded.
@@ -326,7 +358,9 @@ export class WaitGroup {
 
   // Wait blocks until the WaitGroup counter is zero. Single-threaded it returns
   // immediately (any goroutines ran synchronously before Wait was reached).
-  Wait(): void {}
+  Wait(): void {
+    if (this.counter !== 0) throw new Error("sync.WaitGroup.Wait would block in the synchronous runtime");
+  }
 
   // Go runs f in a new goroutine and tracks it. Single-threaded, f runs synchronously.
   Go(f: () => void): void {

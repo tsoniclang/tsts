@@ -60,7 +60,7 @@ const RUN_CONFIG_SCHEMA_VERSION = 1;
 const RUN_MANIFEST_SCHEMA_VERSION = 3;
 const REPORT_SCHEMA_VERSION = 3;
 const REPORT_SEAL_METADATA_SCHEMA_VERSION = 1;
-const INVENTORY_SCHEMA_VERSION = 2;
+const INVENTORY_SCHEMA_VERSION = 3;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
 const RESULT_SEGMENT_NAME_PATTERN = /^results-(\d{4})\.ndjson$/;
@@ -93,6 +93,7 @@ const caseRootByCorpus = new Map([
 const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile"]);
 const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
 const requiredFixtureTypeScriptSuites = new Set(["projects", "unittests"]);
+const typeScriptProjectModuleVariants = Object.freeze(["commonjs", "amd"]);
 const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
 const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
 // compiler_runner.go getCompilerVaryByMap: every non-command-line-only boolean/enum
@@ -403,6 +404,7 @@ function summarizeTypeScriptCaseCounts(typeScriptCases) {
   const summary = summarizeNamedCounts(typeScriptCases.entries, inScopeTypeScriptSuites, outOfScopeTypeScriptSuites);
   return {
     ...summary,
+    configurations: typeScriptCases.configurations,
     requiredFixtureFiles: typeScriptCases.requiredFixtureFiles,
   };
 }
@@ -452,6 +454,7 @@ async function countTypeScriptCaseFilesByChild(root) {
     throw new Error(`TypeScript case root is missing: ${root}`);
   }
   const entries = {};
+  const configurationEntries = {};
   const requiredFixtureFiles = {};
   const classifiedSuites = new Set([...inScopeTypeScriptSuites, ...outOfScopeTypeScriptSuites, ...requiredFixtureTypeScriptSuites]);
   const children = (await readdir(root, { withFileTypes: true })).sort((left, right) => compareUtf8(left.name, right.name));
@@ -469,16 +472,34 @@ async function countTypeScriptCaseFilesByChild(root) {
       const invalid = files.filter((file) => !/\.json$/i.test(file));
       if (invalid.length !== 0) throw new Error(`Unclassified TypeScript project descriptor entry '${relative(root, invalid[0])}'`);
       entries[child.name] = files.length;
+      configurationEntries[child.name] = files.length * typeScriptProjectModuleVariants.length;
       continue;
     }
     const pattern = child.name === "compiler" || child.name === "conformance" ? pinnedTsgoCompilerTestPattern : harnessSourceFilePattern;
-    entries[child.name] = files.filter((file) => pattern.test(file)).length;
+    const selectedFiles = files.filter((file) => pattern.test(file));
+    entries[child.name] = selectedFiles.length;
+    if (inScopeTypeScriptSuites.has(child.name)) {
+      let configurations = 0;
+      for (const file of selectedFiles) {
+        const parsed = parseFileBasedTest(await readSourceText(file), file.split(sep).at(-1));
+        configurations += getFileBasedTestConfigurations(parsed.globalOptions).length;
+      }
+      configurationEntries[child.name] = configurations;
+    }
   }
   for (const suite of classifiedSuites) {
     const collection = requiredFixtureTypeScriptSuites.has(suite) ? requiredFixtureFiles : entries;
     if (!Object.hasOwn(collection, suite)) throw new Error(`Required TypeScript case-root entry '${suite}' is missing`);
   }
-  return { entries, requiredFixtureFiles };
+  const configurationCounts = Object.fromEntries(Object.entries(configurationEntries).sort(([left], [right]) => compareUtf8(left, right)));
+  return {
+    entries,
+    requiredFixtureFiles,
+    configurations: {
+      total: Object.values(configurationCounts).reduce((sum, count) => sum + count, 0),
+      entries: configurationCounts,
+    },
+  };
 }
 
 export async function buildTypeScriptUnitTestInventory(options = {}) {
@@ -649,7 +670,7 @@ async function discoverProjectCases(selectedCaseRoot, options) {
     const caseName = relativePath.split("/").at(-1).replace(/\.json$/i, "");
     const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRootRelativeToCaseRoot(descriptor.projectRoot));
     const projectFixture = projectFixtureProvenance(sourceProjectRoot);
-    for (const moduleKind of ["commonjs", "amd"]) {
+    for (const moduleKind of typeScriptProjectModuleVariants) {
       const testCase = {
         corpus: options.corpus,
         suite: "project",
@@ -3449,7 +3470,7 @@ export function hashCaseIds(cases) {
 }
 
 export function inventoryFingerprint(inventory) {
-  return fingerprint(inventory, "tsts-tsgo-suite-inventory-v2");
+  return fingerprint(inventory, "tsts-tsgo-suite-inventory-v3");
 }
 
 export function runManifestFingerprint(manifest) {
@@ -3600,6 +3621,7 @@ export function validateRunManifest(manifest, expectedManifest) {
     if (previousCaseSortKey !== undefined && compareUtf8(previousCaseSortKey, caseSortKey) > 0) throw new Error(`run manifest case ${index} is out of discovery order`);
     previousCaseSortKey = caseSortKey;
   }
+  validateCompleteTypeScriptConfigurationSelection(manifest);
   if (manifest.selection.limit > 0 && manifest.total > manifest.selection.limit) throw new Error("run manifest total exceeds its selected limit");
   if (manifest.caseIdsHash !== hashCaseIds(manifest.cases)) throw new Error("run manifest case ID hash does not match its cases");
   if (!DIGEST_PATTERN.test(manifest.runFingerprint)) throw new Error("run manifest fingerprint is invalid");
@@ -3609,6 +3631,19 @@ export function validateRunManifest(manifest, expectedManifest) {
     throw new Error("run manifest does not match current source, baselines, compiler, runtime, environment, execution mode, or case selection");
   }
   return manifest;
+}
+
+function validateCompleteTypeScriptConfigurationSelection(manifest) {
+  if (manifest.selection.corpus !== "typescript" || manifest.selection.filter !== "" || manifest.selection.limit !== 0) return;
+  const expectedCounts = manifest.inventory.typeScriptCases.configurations.entries;
+  const suites = manifest.selection.suite === "all" ? Object.keys(expectedCounts) : [manifest.selection.suite];
+  const actualCounts = Object.fromEntries(suites.map((suite) => [suite, 0]));
+  for (const entry of manifest.cases) actualCounts[entry.suite] += 1;
+  for (const suite of suites) {
+    if (actualCounts[suite] !== expectedCounts[suite]) {
+      throw new Error(`run manifest TypeScript configuration selection for '${suite}' does not match inventory (${actualCounts[suite]} !== ${expectedCounts[suite]})`);
+    }
+  }
 }
 
 export function createRunConfig(runManifest) {
@@ -3780,8 +3815,17 @@ export function validateInventory(inventory) {
   validateInventoryBucket(inventory.currentHarness, "test universe inventory.currentHarness");
   validateInventoryBucket(inventory.baselines, "test universe inventory.baselines");
   validateInventoryBucket(inventory.goTests, "test universe inventory.goTests");
-  validateInventoryBucket(inventory.typeScriptCases, "test universe inventory.typeScriptCases", ["requiredFixtureFiles"]);
+  validateInventoryBucket(inventory.typeScriptCases, "test universe inventory.typeScriptCases", ["configurations", "requiredFixtureFiles"]);
   assertExactKeys(inventory.typeScriptCases.entries, ["compiler", "conformance", "fourslash", "project", "transpile"], "test universe inventory.typeScriptCases.entries");
+  assertExactKeys(inventory.typeScriptCases.configurations, ["entries", "total"], "test universe inventory.typeScriptCases.configurations");
+  assertExactKeys(inventory.typeScriptCases.configurations.entries, ["compiler", "conformance", "project", "transpile"], "test universe inventory.typeScriptCases.configurations.entries");
+  assertNonNegativeInteger(inventory.typeScriptCases.configurations.total, "test universe inventory.typeScriptCases.configurations.total");
+  let configurationTotal = 0;
+  for (const [suite, count] of Object.entries(inventory.typeScriptCases.configurations.entries)) {
+    assertNonNegativeInteger(count, `test universe inventory.typeScriptCases.configurations.entries.${suite}`);
+    configurationTotal += count;
+  }
+  if (configurationTotal !== inventory.typeScriptCases.configurations.total) throw new Error("test universe inventory TypeScript configuration counts do not match total");
   assertExactKeys(inventory.typeScriptCases.requiredFixtureFiles, ["projects", "unittests"], "test universe inventory.typeScriptCases.requiredFixtureFiles");
   for (const [name, count] of Object.entries(inventory.typeScriptCases.requiredFixtureFiles)) assertNonNegativeInteger(count, `test universe inventory.typeScriptCases.requiredFixtureFiles.${name}`);
   const expectedFileBasedInScope = [...inScopeTypeScriptSuites].reduce((sum, suite) => sum + inventory.typeScriptCases.entries[suite], 0);
@@ -4942,9 +4986,9 @@ function renderInventoryTable(inventory) {
     "| Bucket | Total | In Scope | Excluded | Unclassified | Notes |",
     "|---|---:|---:|---:|---:|---|",
     `| Current TSTS harness | ${inventory.currentHarness.total} | ${inventory.currentHarness.inScope} | ${inventory.currentHarness.outOfScope} | ${inventory.currentHarness.unclassified} | Executed by this runner today |`,
-    `| TypeScript file-based cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile are executable; pinned compiler-runner files are selected without name exclusions; required fixture files: ${fixtureSummary} |`,
+    `| TypeScript file-based cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | ${inventory.typeScriptCases.configurations.total} executable configurations across compiler/conformance/project/transpile; pinned compiler-runner files are selected without name exclusions; required fixture files: ${fixtureSummary} |`,
     `| TypeScript unit-test mirror sources | ${inventory.typeScriptUnitTests.total} | ${inventory.typeScriptUnitTests.inScope} | ${inventory.typeScriptUnitTests.outOfScope} | ${inventory.typeScriptUnitTests.unclassified} | Source-derived required mirror graph (${inventory.typeScriptUnitTests.entries.exportedModules} entrypoint exports, ${inventory.typeScriptUnitTests.entries.supportModules} support modules); not file-based cases |`,
-    `| TS-Go reference baselines | ${inventory.baselines.total} | ${inventory.baselines.inScope} | ${inventory.baselines.outOfScope} | ${inventory.baselines.unclassified} | Exact baseline comparison is the next acceptance-strength gate |`,
+    `| TS-Go reference baselines | ${inventory.baselines.total} | ${inventory.baselines.inScope} | ${inventory.baselines.outOfScope} | ${inventory.baselines.unclassified} | Tracked exact-baseline evidence; executable cases bind applicable artifacts |`,
     `| TS-Go Go unit tests | ${inventory.goTests.total} | ${inventory.goTests.inScope} | ${inventory.goTests.outOfScope} | ${inventory.goTests.unclassified} | Go unit coverage to port or mirror, excluding LS packages |`,
   ];
 }
@@ -4963,13 +5007,17 @@ function renderInventoryMarkdown(inventory) {
     "",
     ...renderNamedCounts(inventory.typeScriptCases.entries),
     "",
+    "## TypeScript File-Based Configurations",
+    "",
+    ...renderNamedCounts(inventory.typeScriptCases.configurations.entries, "Configurations"),
+    "",
     "## Required TypeScript Fixture Files",
     "",
     ...renderNamedCounts(inventory.typeScriptCases.requiredFixtureFiles),
     "",
     "## TypeScript Unit-Test Mirror Sources",
     "",
-    ...renderNamedCounts(inventory.typeScriptUnitTests.entries),
+    ...renderNamedCounts(inventory.typeScriptUnitTests.entries, "Sources"),
     "",
     "## TS-Go Reference Baselines",
     "",
@@ -4983,9 +5031,9 @@ function renderInventoryMarkdown(inventory) {
   return `${lines.join("\n")}\n`;
 }
 
-function renderNamedCounts(entries) {
+function renderNamedCounts(entries, countLabel = "Files") {
   const lines = [
-    "| Name | Files |",
+    `| Name | ${countLabel} |`,
     "|---|---:|",
   ];
   for (const [name, count] of Object.entries(entries)) {

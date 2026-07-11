@@ -162,24 +162,26 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
  * }
  */
 export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>, index: int) => GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
-  const saveParsingContexts = receiver!.parsingContexts;
-  receiver!.parsingContexts |= 1 << kind;
-  const outerReparseList = receiver!.reparseList;
-  receiver!.reparseList = [];
+  const parser = receiver!;
+  const saveParsingContexts = parser.parsingContexts;
+  parser.parsingContexts |= 1 << kind;
+  let outerReparseList = parser.reparseList;
+  parser.reparseList = undefined;
   let list: Array<GoPtr<Node>> = [];
   for (let i = 0; !Parser_isListTerminator(receiver, kind); i++) {
     if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
       const elt = parseElement(receiver, list.length);
-      if (receiver!.reparseList.length !== 0) {
-        for (const e of receiver!.reparseList) {
+      const reparseList = receiver!.reparseList;
+      if ((reparseList?.length ?? 0) !== 0) {
+        for (const e of reparseList!) {
           // Propagate @typedef type alias declarations outwards to a context that permits them.
           if ((IsJSTypeAliasDeclaration(e) || IsJSImportDeclaration(e)) && kind !== PCSourceElements && kind !== PCBlockStatements) {
-            outerReparseList.push(e);
+            outerReparseList = [...(outerReparseList ?? []), e];
           } else {
             list.push(e);
           }
         }
-        receiver!.reparseList = [];
+        parser.reparseList = undefined;
       }
       list.push(elt);
       continue;
@@ -188,9 +190,9 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
       break;
     }
   }
-  receiver!.reparseList = outerReparseList;
-  receiver!.parsingContexts = saveParsingContexts;
-  return Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, list);
+  parser.reparseList = outerReparseList;
+  parser.parsingContexts = saveParsingContexts;
+  return Arena_Clone(parser.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, list);
 }
 
 /**

@@ -22,7 +22,7 @@ import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.j
 import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache, type extendedConfigCacheEntry } from "./tsc/extendedconfigcache.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { OrderedMap_Set, NewOrderedMapWithSizeHint } from "../collections/ordered_map.js";
+import { NewOrderedMapWithSizeHintWithRuntimeType, OrderedMap_HasRuntimeType, OrderedMap_Set, OrderedMap_StringAnyRuntimeType } from "../collections/ordered_map.js";
 import { ParseCommandLine, ParseBuildCommandLine } from "../tsoptions/commandlineparser.js";
 import { ConvertToTSConfig } from "../tsoptions/showconfig.js";
 import { MarshalIndentWrite } from "../json/json.js";
@@ -501,11 +501,10 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
       const configStart = sys.Now();
       const raw = commandLine!.Raw;
       if (raw !== undefined && raw !== null) {
-        const rawMap = raw as OrderedMap<string, unknown>;
-        if (rawMap.keys !== undefined) {
+        if (OrderedMap_HasRuntimeType<string, unknown>(raw, OrderedMap_StringAnyRuntimeType)) {
           // Wrap command line options in a "compilerOptions" key to match tsconfig.json structure
-          const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0);
-          OrderedMap_Set(wrapped, "compilerOptions", rawMap);
+          const wrapped = NewOrderedMapWithSizeHintWithRuntimeType<string, unknown>(OrderedMap_StringAnyRuntimeType, 0);
+          OrderedMap_Set(wrapped, "compilerOptions", raw);
           commandLineRaw = wrapped;
         }
       }

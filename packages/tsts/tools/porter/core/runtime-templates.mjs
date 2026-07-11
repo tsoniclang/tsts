@@ -273,93 +273,140 @@ function takeGoChannelReadyValue<T>(state: GoChannelState<T>): [T, bool] {
 
 export interface GoMapKeyDescriptor<K> {
   readonly identity: symbol;
-  append(parts: unknown[], value: K): void;
+  appendHashParts(parts: unknown[], value: K): void;
+  snapshot(value: K): K;
 }
 
-export interface GoStructKeyField<K> {
-  append(parts: unknown[], value: K): void;
+export interface GoStructKeyField<K, V> {
+  appendHashParts(parts: unknown[], value: K): void;
+  snapshot(value: K): V;
 }
 
-export interface GoDynamicComparable {
-  readonly descriptor: GoMapKeyDescriptor<unknown>;
-  readonly value: unknown;
+export interface GoDynamicComparable<T = unknown> {
+  readonly descriptor: GoMapKeyDescriptor<T>;
+  readonly value: T;
 }
 
 const goNilPointerKey = Symbol("GoKey.nilPointer");
 const goNilInterfaceKey = Symbol("GoKey.nilInterface");
 
-function createGoMapKeyDescriptor<K>(append: (parts: unknown[], value: K) => void): GoMapKeyDescriptor<K> {
-  return globalThis.Object.freeze({ identity: Symbol("GoKey.type"), append });
+function createGoMapKeyDescriptor<K>(
+  appendHashParts: (parts: unknown[], value: K) => void,
+  snapshot: (value: K) => K,
+): GoMapKeyDescriptor<K> {
+  return globalThis.Object.freeze({ identity: Symbol("GoKey.type"), appendHashParts, snapshot });
 }
 
 function appendGoMapKey<K>(parts: unknown[], descriptor: GoMapKeyDescriptor<K>, value: K): void {
   parts.push(descriptor.identity);
-  descriptor.append(parts, value);
+  descriptor.appendHashParts(parts, value);
 }
 
 function requireGoKeyType(value: unknown, expected: string): void {
-  if (typeof value !== expected) throw new TypeError(`Go map key descriptor expected ${expected}, got ${typeof value}`);
+  if (typeof value !== expected) throw new TypeError("Go map key descriptor expected " + expected + ", got " + typeof value);
 }
 
 export const GoBooleanKey: GoMapKeyDescriptor<boolean> = createGoMapKeyDescriptor((parts, value) => {
   requireGoKeyType(value, "boolean");
   parts.push(value);
+}, (value) => {
+  requireGoKeyType(value, "boolean");
+  return value;
 });
 
 export const GoNumberKey: GoMapKeyDescriptor<number> = createGoMapKeyDescriptor((parts, value) => {
   requireGoKeyType(value, "number");
   parts.push(Number.isNaN(value) ? Symbol("GoKey.NaN") : value);
+}, (value) => {
+  requireGoKeyType(value, "number");
+  return value;
 });
 
 export const GoBigIntKey: GoMapKeyDescriptor<bigint> = createGoMapKeyDescriptor((parts, value) => {
   requireGoKeyType(value, "bigint");
   parts.push(value);
+}, (value) => {
+  requireGoKeyType(value, "bigint");
+  return value;
 });
 
 export const GoStringKey: GoMapKeyDescriptor<string> = createGoMapKeyDescriptor((parts, value) => {
   requireGoKeyType(value, "string");
   parts.push(value);
+}, (value) => {
+  requireGoKeyType(value, "string");
+  return value;
 });
 
 export function GoPointerKey<T extends object>(): GoMapKeyDescriptor<GoPtr<T>> {
-  return createGoMapKeyDescriptor((parts, value) => {
-    if (value === undefined) {
-      parts.push(goNilPointerKey);
-      return;
-    }
+  const exact = (value: GoPtr<T>): GoPtr<T> => {
+    if (value === undefined) return undefined;
     if ((typeof value !== "object" || value === null) && typeof value !== "function") {
       throw new TypeError("Go pointer map key must retain object identity");
     }
+    return value;
+  };
+  return createGoMapKeyDescriptor((parts, value) => {
+    if (exact(value) === undefined) {
+      parts.push(goNilPointerKey);
+      return;
+    }
     parts.push(value);
-  });
+  }, exact);
 }
 
 export function GoArrayKey<T>(length: number, element: GoMapKeyDescriptor<T>): GoMapKeyDescriptor<readonly T[]> {
   if (!Number.isSafeInteger(length) || length < 0) throw new RangeError("Go array key length must be a non-negative safe integer");
-  return createGoMapKeyDescriptor((parts, value) => {
+  const requireArray = (value: readonly T[]): void => {
     if (!globalThis.Array.isArray(value) || value.length !== length) {
-      throw new TypeError(`Go array map key expected length ${length}`);
+      throw new TypeError("Go array map key expected length " + length);
     }
+  };
+  return createGoMapKeyDescriptor((parts, value) => {
+    requireArray(value);
     for (const item of value) appendGoMapKey(parts, element, item);
+  }, (value) => {
+    requireArray(value);
+    return value.map((item) => element.snapshot(item));
   });
 }
 
-export function GoStructField<K, V>(read: (value: K) => V, descriptor: GoMapKeyDescriptor<V>): GoStructKeyField<K> {
-  return { append: (parts, value) => appendGoMapKey(parts, descriptor, read(value)) };
+export function GoStructField<K, V>(read: (value: K) => V, descriptor: GoMapKeyDescriptor<V>): GoStructKeyField<K, V> {
+  return {
+    appendHashParts: (parts, value) => appendGoMapKey(parts, descriptor, read(value)),
+    snapshot: (value) => descriptor.snapshot(read(value)),
+  };
 }
 
-export function GoStructKey<K>(fields: readonly GoStructKeyField<K>[]): GoMapKeyDescriptor<K> {
+export function GoStructKey<K, const Values extends readonly unknown[]>(
+  fields: { readonly [Index in keyof Values]: GoStructKeyField<K, Values[Index]> },
+  construct: (values: Values) => K,
+): GoMapKeyDescriptor<K> {
   return createGoMapKeyDescriptor((parts, value) => {
     if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
-    for (const field of fields) field.append(parts, value);
+    for (const field of fields) field.appendHashParts(parts, value);
+  }, (value) => {
+    if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
+    const snapshots = fields.map((field) => field.snapshot(value)) as unknown as Values;
+    return construct(snapshots);
   });
 }
 
 export function GoNamedKey<K>(underlying: GoMapKeyDescriptor<K>): GoMapKeyDescriptor<K> {
-  return createGoMapKeyDescriptor((parts, value) => appendGoMapKey(parts, underlying, value));
+  return createGoMapKeyDescriptor(
+    (parts, value) => appendGoMapKey(parts, underlying, value),
+    (value) => underlying.snapshot(value),
+  );
 }
 
-export function GoInterfaceKey<K>(dynamic: (value: K) => GoDynamicComparable | undefined): GoMapKeyDescriptor<K> {
+export function GoDynamicValue<T>(descriptor: GoMapKeyDescriptor<T>, value: T): GoDynamicComparable<T> {
+  return { descriptor, value };
+}
+
+export function GoInterfaceKey<K>(
+  dynamic: (value: K) => GoDynamicComparable | undefined,
+  construct: (dynamic: GoDynamicComparable | undefined) => K,
+): GoMapKeyDescriptor<K> {
   return createGoMapKeyDescriptor((parts, value) => {
     const selected = dynamic(value);
     if (selected === undefined) {
@@ -367,6 +414,11 @@ export function GoInterfaceKey<K>(dynamic: (value: K) => GoDynamicComparable | u
       return;
     }
     appendGoMapKey(parts, selected.descriptor, selected.value);
+  }, (value) => {
+    const selected = dynamic(value);
+    return selected === undefined
+      ? construct(undefined)
+      : construct(GoDynamicValue(selected.descriptor, selected.descriptor.snapshot(selected.value)));
   });
 }
 
@@ -405,7 +457,7 @@ export class GoStructMap<K, V> implements Map<K, V> {
     const entry = this.findEntry(key);
     if (entry === undefined) return false;
     entry.active = false;
-    this.leafFor(key, false)!.entry = undefined;
+    delete this.leafForHashParts(this.hashParts(key), false)!.entry;
     this.activeSize--;
     return true;
   }
@@ -471,19 +523,24 @@ export class GoStructMap<K, V> implements Map<K, V> {
   [Symbol.iterator](): MapIterator<[K, V]> { return this.entries(); }
 
   private findEntry(key: K): GoStructMapEntry<K, V> | undefined {
-    return this.leafFor(key, false)?.entry;
+    return this.leafForHashParts(this.hashParts(key), false)?.entry;
   }
 
   private insert(key: K, value: V): void {
-    const entry = { key, value, active: true };
-    this.leafFor(key, true)!.entry = entry;
+    const keySnapshot = this.keyDescriptor.snapshot(key);
+    const entry = { key: keySnapshot, value, active: true };
+    this.leafForHashParts(this.hashParts(keySnapshot), true)!.entry = entry;
     this.orderedEntries.push(entry);
     this.activeSize++;
   }
 
-  private leafFor(key: K, create: boolean): GoStructMapTrieNode<K, V> | undefined {
+  private hashParts(key: K): unknown[] {
     const parts: unknown[] = [];
     appendGoMapKey(parts, this.keyDescriptor, key);
+    return parts;
+  }
+
+  private leafForHashParts(parts: readonly unknown[], create: boolean): GoStructMapTrieNode<K, V> | undefined {
     let node = this.root;
     for (const part of parts) {
       let child = node.children.get(part);

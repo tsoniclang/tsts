@@ -7,7 +7,7 @@
 // and convert back to a JavaScript string at the boundaries.
 
 import type { bool, int, byte } from "./scalars.js";
-import type { GoRune, GoSlice } from "./compat.js";
+import type { GoPtr, GoRune, GoSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
 const nonASCII = /[^\x00-\x7F]/;
@@ -521,8 +521,8 @@ export function IndexRune(s: string, r: GoRune): int {
 }
 
 // Join concatenates elements of elems, inserting sep between them.
-export function Join(elems: GoSlice<string>, sep: string): string {
-  return elems.join(sep);
+export function Join(elems: GoPtr<GoSlice<string>>, sep: string): string {
+  return elems?.join(sep) ?? "";
 }
 
 // LastIndex returns the byte index of the last instance of substr in s, or -1.

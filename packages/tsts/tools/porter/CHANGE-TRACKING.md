@@ -96,7 +96,6 @@ has none → `untracked` (flagged).
 | **missing** (new Go units) | 463 | **193** |
 | **orphan** (gone upstream) | 45 | **~21** |
 | excluded (out-of-scope) | 16,281 | — |
-| parse errors | 0 | — |
 
 Phantom reconciliation:
 - **270 of 463 "missing"** are one new module — `internal/fswatch`, a vendored

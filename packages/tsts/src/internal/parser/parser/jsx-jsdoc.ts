@@ -166,11 +166,11 @@ export function Parser_nextJSDocCommentTextToken(receiver: GoPtr<Parser>, inBack
  */
 export function Parser_createJSDocCache(receiver: GoPtr<Parser>): GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>> | undefined {
   const p: Parser = receiver!;
-  if (p.jsdocInfos.length === 0) {
+  if ((p.jsdocInfos?.length ?? 0) === 0) {
     return undefined;
   }
   const result: GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>> = new globalThis.Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
-  for (const info of p.jsdocInfos) {
+  for (const info of p.jsdocInfos ?? []) {
     result.set(info.parent, info.jsDocs);
   }
   return result;
@@ -438,7 +438,7 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
     case KindJsxOpeningElement: {
       let children: GoPtr<NodeList> = Parser_parseJsxChildren(receiver, opening);
       let closingElement: GoPtr<Node>;
-      const lastChild = LastOrNil(children!.Nodes ?? [], () => undefined);
+      const lastChild = LastOrNil(children!.Nodes, () => undefined);
       if (lastChild !== undefined && lastChild.Kind === KindJsxElement &&
         !TagNamesAreEquivalent(Node_TagName(AsJsxElement(lastChild)!.OpeningElement), Node_TagName(AsJsxElement(lastChild)!.ClosingElement)) &&
         TagNamesAreEquivalent(Node_TagName(opening), Node_TagName(AsJsxElement(lastChild)!.ClosingElement))) {

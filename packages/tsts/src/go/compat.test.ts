@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   GoAppend,
+  GoArrayKey,
   GoChanClose,
   GoChanReceive,
   GoChanSelect,
@@ -11,9 +12,18 @@ import {
   GoInterfaceAdapter,
   GoInterfaceAssert,
   GoInterfaceTryAssert,
+  GoDynamicValue,
+  type GoDynamicComparable,
+  GoInterfaceKey,
   GoMapGetExisting,
   GoMapLookup,
   GoRequireNonNilAfterSuccess,
+  GoNamedKey,
+  GoNumberKey,
+  GoPointerKey,
+  GoStringKey,
+  GoStructField,
+  GoStructKey,
   MakeGoChan,
   NewGoInterfaceType,
   NewGoStructMap,
@@ -36,7 +46,7 @@ test("GoAppend returns an extended slice without mutating the input slice", () =
   assert.deepEqual(result, ["a", "b"]);
 });
 
-test("GoMapGetExisting preserves undefined values and structural Go keys", () => {
+test("GoMapGetExisting preserves undefined values and exact structural Go keys", () => {
   const native = new Map<string, undefined>([["present", undefined]]);
   assert.equal(GoMapGetExisting(native, "present"), undefined);
 
@@ -44,9 +54,121 @@ test("GoMapGetExisting preserves undefined values and structural Go keys", () =>
   assert.equal(GoMapGetExisting(numeric, Number.NaN), "nan");
   assert.equal(GoMapGetExisting(numeric, +0), "zero");
 
-  const structured = NewGoStructMap<{ code: number }, string>();
+  interface Key {
+    code: number;
+  }
+  const keyDescriptor = GoStructKey<Key, readonly [number]>(
+    [GoStructField((value: Key) => value.code, GoNumberKey)],
+    ([code]) => ({ code }),
+  );
+  const structured = NewGoStructMap<Key, string>(keyDescriptor);
   structured.set({ code: 1 }, "one");
   assert.equal(GoMapGetExisting(structured, { code: 1 }), "one");
+});
+
+test("GoStructMap follows Go NaN and signed-zero equality", () => {
+  const values = NewGoStructMap<number, string>(GoNumberKey);
+  values.set(Number.NaN, "first");
+  values.set(Number.NaN, "second");
+  assert.equal(values.size, 2);
+  assert.equal(values.has(Number.NaN), false);
+  assert.equal(values.delete(Number.NaN), false);
+
+  values.set(-0, "negative");
+  values.set(+0, "positive");
+  assert.equal(values.size, 3);
+  assert.equal(values.get(-0), "positive");
+  assert.equal(values.get(+0), "positive");
+});
+
+test("GoStructMap uses collision-free nested value and pointer semantics", () => {
+  interface Nested {
+    label: string;
+  }
+  interface Token {
+    readonly id: number;
+  }
+  interface Key {
+    left: string;
+    right: string;
+    nested: Nested;
+    pointer: Token | undefined;
+  }
+  const nestedDescriptor = GoStructKey<Nested, readonly [string]>(
+    [GoStructField((value: Nested) => value.label, GoStringKey)],
+    ([label]) => ({ label }),
+  );
+  const pointerDescriptor = GoPointerKey<Token>();
+  const keyDescriptor = GoStructKey<Key, readonly [string, string, Nested, Token | undefined]>(
+    [
+      GoStructField((value: Key) => value.left, GoStringKey),
+      GoStructField((value: Key) => value.right, GoStringKey),
+      GoStructField((value: Key) => value.nested, nestedDescriptor),
+      GoStructField((value: Key) => value.pointer, pointerDescriptor),
+    ],
+    ([left, right, nested, pointer]) => ({ left, right, nested, pointer }),
+  );
+  const leftPointer: Token = { id: 1 };
+  const rightPointer: Token = { id: 1 };
+  const values = NewGoStructMap<Key, string>(keyDescriptor);
+  values.set({ left: "a,b=c", right: "d", nested: { label: "x:y|z" }, pointer: leftPointer }, "left");
+  values.set({ left: "a", right: "b=c,d", nested: { label: "x:y|z" }, pointer: rightPointer }, "right");
+
+  assert.equal(values.get({ left: "a,b=c", right: "d", nested: { label: "x:y|z" }, pointer: leftPointer }), "left");
+  assert.equal(values.get({ left: "a", right: "b=c,d", nested: { label: "x:y|z" }, pointer: rightPointer }), "right");
+  assert.equal(values.has({ left: "a,b=c", right: "d", nested: { label: "x:y|z" }, pointer: rightPointer }), false);
+});
+
+test("GoStructMap snapshots array and nested struct value keys", () => {
+  interface Key {
+    values: readonly number[];
+    nested: { text: string };
+  }
+  const nestedDescriptor = GoStructKey<{ text: string }, readonly [string]>(
+    [GoStructField((value: { text: string }) => value.text, GoStringKey)],
+    ([text]) => ({ text }),
+  );
+  const descriptor = GoStructKey<Key, readonly [readonly number[], { text: string }]>(
+    [
+      GoStructField((value: Key) => value.values, GoArrayKey(2, GoNumberKey)),
+      GoStructField((value: Key) => value.nested, nestedDescriptor),
+    ],
+    ([values, nested]) => ({ values, nested }),
+  );
+  const source = { values: [1, 2], nested: { text: "before" } };
+  const map = NewGoStructMap<Key, string>(descriptor);
+  map.set(source, "value");
+  source.values[0] = 9;
+  source.nested.text = "after";
+
+  assert.equal(map.get({ values: [1, 2], nested: { text: "before" } }), "value");
+  assert.deepEqual([...map.keys()], [{ values: [1, 2], nested: { text: "before" } }]);
+});
+
+test("Go interface keys distinguish dynamic named types, nil interfaces, and typed nil pointers", () => {
+  interface Token {
+    readonly id: number;
+  }
+  interface InterfaceKey {
+    dynamic: GoDynamicComparable | undefined;
+  }
+  const firstNumberType = GoNamedKey(GoNumberKey);
+  const secondNumberType = GoNamedKey(GoNumberKey);
+  const tokenPointerType = GoPointerKey<Token>();
+  const descriptor = GoInterfaceKey<InterfaceKey>(
+    (value) => value.dynamic,
+    (dynamic) => ({ dynamic }),
+  );
+  const map = NewGoStructMap<InterfaceKey, string>(descriptor);
+  map.set({ dynamic: GoDynamicValue(firstNumberType, 1) }, "first-number");
+  map.set({ dynamic: undefined }, "nil-interface");
+  map.set({ dynamic: GoDynamicValue(tokenPointerType, undefined) }, "typed-nil");
+
+  assert.equal(map.get({ dynamic: GoDynamicValue(firstNumberType, 1) }), "first-number");
+  assert.equal(map.has({ dynamic: GoDynamicValue(secondNumberType, 1) }), false);
+  assert.equal(map.get({ dynamic: undefined }), "nil-interface");
+  assert.equal(map.get({ dynamic: GoDynamicValue(tokenPointerType, undefined) }), "typed-nil");
+  assert.equal(map.size, 3);
 });
 
 test("GoMapLookup distinguishes a present nil value from a missing generic value", () => {

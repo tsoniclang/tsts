@@ -4838,7 +4838,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
       vfsmatch.UnlimitedDepth as int,
     );
     const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host.FS().UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
-    for (const file of otherFiles) {
+    for (const file of otherFiles ?? []) {
       if (resolved_isResolved(mainResolution) && tspath.ComparePaths(file, mainResolution!.path, comparePathsOptions) === 0) {
         continue;
       }
@@ -5041,7 +5041,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
           [extension.ChangeFullExtension(strings.Replace(expStr, "*", "**/*", 1), ".*")],
           vfsmatch.UnlimitedDepth as int,
         );
-        for (const file of files) {
+        for (const file of files ?? []) {
           const [matchedStar, ok] = resolutionState_getMatchedStarForPatternEntrypoint(receiver, file, leadingSlice, trailingSlice, caseSensitive);
           if (!ok) continue;
           const moduleSpecifier = tspath.ResolvePath(packageName, strings.Replace(subpath, "*", matchedStar, 1));

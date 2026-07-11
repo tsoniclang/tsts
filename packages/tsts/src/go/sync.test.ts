@@ -28,7 +28,9 @@ test("sync.RWMutex no-ops + RLocker", () => {
   rw.RLock();
   rw.RUnlock();
   assert.equal(rw.TryLock(), true);
+  rw.Unlock();
   assert.equal(rw.TryRLock(), true);
+  rw.RUnlock();
   const locker = rw.RLocker();
   locker.Lock();
   locker.Unlock();
@@ -180,6 +182,11 @@ test("sync.Map keeps Go NaN key lookup semantics", () => {
   assert.deepEqual(m.LoadAndDelete(key), [undefined, false]);
 });
 
+test("sync.Map rejects object keys without an exact Go key descriptor", () => {
+  const m = new SyncMap<object, string>();
+  assert.throws(() => m.Store({}, "value"), /explicit Go map-key descriptor/);
+});
+
 test("sync.Pool reuses values and falls back to New", () => {
   let constructed = 0;
   const p = new Pool<{ id: number }>();
@@ -191,22 +198,22 @@ test("sync.Pool reuses values and falls back to New", () => {
   const b = p.Get();
   assert.deepEqual(a, { id: 1 });
   assert.deepEqual(b, { id: 2 });
-  p.Put(a as { id: number });
+  p.Put(a);
   assert.equal(p.Get(), a);
 
-  // Without New, Get returns undefined (Go: nil).
+  // Without New, Get returns undefined (Go: nil), and Put(nil) is ignored.
   const empty = new Pool<number>();
+  empty.Put(undefined);
   assert.equal(empty.Get(), undefined);
 });
 
-test("sync.Cond / NewCond no-op wakeups", () => {
+test("sync.Cond rejects blocking waits in the synchronous runtime", () => {
   const m = new Mutex();
   const c = new Cond(m);
   assert.equal(c.L, m);
   c.Signal();
   c.Broadcast();
-  // Wait re-locks and returns immediately single-threaded.
-  c.Wait();
+  assert.throws(() => c.Wait(), /would block/);
 
   const c2 = NewCond(m);
   assert.ok(c2 instanceof Cond);
@@ -222,6 +229,10 @@ test("sync.WaitGroup counter + Wait", () => {
   // Negative counter panics (throws).
   const wg2 = new WaitGroup();
   assert.throws(() => wg2.Done(), /negative WaitGroup counter/);
+
+  const pending = new WaitGroup();
+  pending.Add(1);
+  assert.throws(() => pending.Wait(), /would block/);
 });
 
 test("sync.WaitGroup.Go runs synchronously and balances the counter", () => {

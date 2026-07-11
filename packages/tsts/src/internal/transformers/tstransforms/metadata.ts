@@ -157,7 +157,7 @@ export function MetadataTransformer_visit(receiver: GoPtr<MetadataTransformer>, 
       let updated: GoPtr<Node>;
       try {
         updated = NodeVisitor_VisitEachChild(visitor, node);
-        EmitContext_AddEmitHelper(Transformer_EmitContext(tx.__tsgoEmbedded0), updated, ...EmitContext_ReadEmitHelpers(Transformer_EmitContext(tx.__tsgoEmbedded0)));
+        EmitContext_AddEmitHelper(Transformer_EmitContext(tx.__tsgoEmbedded0), updated, ...(EmitContext_ReadEmitHelpers(Transformer_EmitContext(tx.__tsgoEmbedded0)) ?? []));
       } finally {
         MetadataTransformer_setCurrentLexicalScope(receiver, savedScope0);
         MetadataTransformer_setParent(receiver, savedParent);
@@ -386,7 +386,7 @@ export function MetadataTransformer_visitMethodDeclaration(receiver: GoPtr<Metad
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const astFactory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  if (!HasDecorators(nodeAsNode) && getDecoratorsOfParameters(nodeAsNode).length === 0) {
+  if (!HasDecorators(nodeAsNode) && (getDecoratorsOfParameters(nodeAsNode)?.length ?? 0) === 0) {
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
 
@@ -433,7 +433,7 @@ export function MetadataTransformer_visitSetAccessor(receiver: GoPtr<MetadataTra
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const astFactory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  if (!HasDecorators(nodeAsNode) && getDecoratorsOfParameters(nodeAsNode).length === 0) {
+  if (!HasDecorators(nodeAsNode) && (getDecoratorsOfParameters(nodeAsNode)?.length ?? 0) === 0) {
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
 

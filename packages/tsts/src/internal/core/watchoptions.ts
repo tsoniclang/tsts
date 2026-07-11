@@ -24,8 +24,8 @@ export interface WatchOptions {
   DirectoryKind: WatchDirectoryKind;
   FallbackPolling: PollingKind;
   SyncWatchDir: Tristate;
-  ExcludeDir: GoSlice<string>;
-  ExcludeFiles: GoSlice<string>;
+  ExcludeDir: GoPtr<GoSlice<string>>;
+  ExcludeFiles: GoPtr<GoSlice<string>>;
 }
 
 type watchOptionsJsonFields = JsonFieldNamesForGoStructContract<

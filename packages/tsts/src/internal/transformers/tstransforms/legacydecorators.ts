@@ -159,7 +159,7 @@ export function LegacyDecoratorsTransformer_visit(receiver: GoPtr<LegacyDecorato
       receiver!.classAliases = new Map();
       receiver!.enclosingClasses = [];
       const result = NodeVisitor_VisitEachChild(visitor, node);
-      EmitContext_AddEmitHelper(emitCtx, result, ...EmitContext_ReadEmitHelpers(emitCtx));
+      EmitContext_AddEmitHelper(emitCtx, result, ...(EmitContext_ReadEmitHelpers(emitCtx) ?? []));
       receiver!.classAliases = new Map();
       receiver!.enclosingClasses = [];
       return result;
@@ -709,7 +709,7 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithoutClas
   const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
   const initialMembers = NodeVisitor_VisitNodes(visitor, node!.Members);
   const [members, decorationStatements] = LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(receiver, node, initialMembers);
-  const resolvedName = (name === undefined && decorationStatements.length > 0)
+  const resolvedName = (name === undefined && (decorationStatements?.length ?? 0) > 0)
     ? NodeFactory_NewGeneratedNameForNode(printerFactory, node as unknown as GoPtr<Node>) as unknown as GoPtr<DeclarationName>
     : name;
   const updated = NodeFactory_UpdateClassDeclaration(
@@ -721,10 +721,10 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithoutClas
     heritageClauses,
     members,
   );
-  if (decorationStatements.length === 0) {
+  if ((decorationStatements?.length ?? 0) === 0) {
     return updated;
   }
-  return NewSyntaxList(astFactory, [updated, ...decorationStatements]);
+  return NewSyntaxList(astFactory, [updated, ...(decorationStatements ?? [])]);
 }
 
 /**
@@ -1034,7 +1034,7 @@ export function LegacyDecoratorsTransformer_transformClassDeclarationWithClassDe
   const constructorDecorationStmt = LegacyDecoratorsTransformer_getConstructorDecorationStatement(receiver, node);
   const statements: GoSlice<GoPtr<Node>> = [
     varStatement,
-    ...decorationStatements,
+    ...(decorationStatements ?? []),
     ...(constructorDecorationStmt !== undefined ? [constructorDecorationStmt] : []),
   ];
 
@@ -1278,13 +1278,14 @@ export function decoratorContainsPrivateIdentifierInExpression(decorator: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::parameterDecoratorsContainPrivateIdentifierInExpression","kind":"func","status":"implemented","sigHash":"fd20333494ece93b8d0d4541943ffc949ad32cd497b408e2ff26100712702806","bodyHash":"0dd148b9bde57816b4f54c69859a168471029cb6126f93b2684a2296332fb5e0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/scalars.ts::bool","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/scalars.ts::bool"}
  *
  * Go source:
  * func parameterDecoratorsContainPrivateIdentifierInExpression(parameterDecorators []*ast.Node) bool {
  * 	return core.Some(parameterDecorators, decoratorContainsPrivateIdentifierInExpression)
  * }
  */
-export function parameterDecoratorsContainPrivateIdentifierInExpression(parameterDecorators: GoSlice<GoPtr<Node>>): bool {
+export function parameterDecoratorsContainPrivateIdentifierInExpression(parameterDecorators: GoPtr<GoSlice<GoPtr<Node>>>): bool {
   return Some(parameterDecorators, decoratorContainsPrivateIdentifierInExpression);
 }
 
@@ -1340,6 +1341,7 @@ export function hasClassElementWithDecoratorContainingPrivateIdentifierInExpress
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::type::allDecorators","kind":"type","status":"implemented","sigHash":"e3730293c72cf4bf32bc478a5b918cf16fc71e965e1aa3883d1ced8b856bb706","bodyHash":"10c7e23cf71dd315c01d6cc4fcbd7ea2a30c07e8250db341426a432bbab20e65"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go struct's slice fields have nil zero values; GoPtr preserves nil separately from an allocated empty slice without changing nonnil field behavior.","goSignature":"interface{decorators:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>;parameters:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>}","tsSignature":"interface{decorators:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>;parameters:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>>}"}
  *
  * Go source:
  * allDecorators struct {
@@ -1348,8 +1350,8 @@ export function hasClassElementWithDecoratorContainingPrivateIdentifierInExpress
  * }
  */
 export interface allDecorators {
-  decorators: GoSlice<GoPtr<Node>>;
-  parameters: GoSlice<GoSlice<GoPtr<Node>>>;
+  decorators: GoPtr<GoSlice<GoPtr<Node>>>;
+  parameters: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>>;
 }
 
 /**
@@ -1370,11 +1372,11 @@ export interface allDecorators {
  */
 export function getAllDecoratorsOfClass(node: GoPtr<ClassDeclaration>, useLegacyDecorators: bool): GoPtr<allDecorators> {
   const nodeAsNode = node as unknown as GoPtr<Node>;
-  const decorators = Node_Decorators(nodeAsNode) ?? [];
-  const parameters: GoSlice<GoSlice<GoPtr<Node>>> = useLegacyDecorators
+  const decorators = Node_Decorators(nodeAsNode);
+  const parameters: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>> = useLegacyDecorators
     ? getDecoratorsOfParameters(GetFirstConstructorWithBody(nodeAsNode))
-    : [];
-  if (decorators.length === 0 && parameters.length === 0) {
+    : undefined;
+  if ((decorators?.length ?? 0) === 0 && (parameters?.length ?? 0) === 0) {
     return undefined;
   }
   return { decorators, parameters };
@@ -1470,11 +1472,11 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
   if (firstAccessorWithDecorators === undefined || accessor !== firstAccessorWithDecorators) {
     return undefined;
   }
-  const decorators = Node_Decorators(firstAccessorWithDecorators) ?? [];
-  const parameters: GoSlice<GoSlice<GoPtr<Node>>> = (useLegacyDecorators && decls.SetAccessor !== undefined)
+  const decorators = Node_Decorators(firstAccessorWithDecorators);
+  const parameters: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>> = (useLegacyDecorators && decls.SetAccessor !== undefined)
     ? getDecoratorsOfParameters(decls.SetAccessor as unknown as GoPtr<Node>)
-    : [];
-  if (decorators.length === 0 && parameters.length === 0) {
+    : undefined;
+  if ((decorators?.length ?? 0) === 0 && (parameters?.length ?? 0) === 0) {
     return undefined;
   }
   return { decorators, parameters };
@@ -1493,11 +1495,11 @@ export function getAllDecoratorsOfAccessors(accessor: GoPtr<Node>, parent: GoPtr
  * }
  */
 export function getAllDecoratorsOfProperty(property: GoPtr<Node>): GoPtr<allDecorators> {
-  const decorators = Node_Decorators(property) ?? [];
-  if (decorators.length === 0) {
+  const decorators = Node_Decorators(property);
+  if ((decorators?.length ?? 0) === 0) {
     return undefined;
   }
-  return { decorators, parameters: [] };
+  return { decorators, parameters: undefined };
 }
 
 /**
@@ -1523,11 +1525,11 @@ export function getAllDecoratorsOfMethod(method: GoPtr<Node>, useLegacyDecorator
   if (Node_Body(method) === undefined) {
     return undefined;
   }
-  const decorators = Node_Decorators(method) ?? [];
-  const parameters: GoSlice<GoSlice<GoPtr<Node>>> = useLegacyDecorators
+  const decorators = Node_Decorators(method);
+  const parameters: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>> = useLegacyDecorators
     ? getDecoratorsOfParameters(method)
-    : [];
-  if (decorators.length === 0 && parameters.length === 0) {
+    : undefined;
+  if ((decorators?.length ?? 0) === 0 && (parameters?.length ?? 0) === 0) {
     return undefined;
   }
   return { decorators, parameters };
@@ -1535,6 +1537,7 @@ export function getAllDecoratorsOfMethod(method: GoPtr<Node>, useLegacyDecorator
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::func::getDecoratorsOfParameters","kind":"func","status":"implemented","sigHash":"01f06d15c4f928e90cbaaf816fe518c7e21b669d12e9621fb409992b32ed9697","bodyHash":"035f21b7feec6f8247916b3efe82c29907c1fd3248daf7fd0e51d75ecdefef8a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>>"}
  *
  * Go source:
  * func getDecoratorsOfParameters(node *ast.Node) [][]*ast.Node {
@@ -1562,8 +1565,8 @@ export function getAllDecoratorsOfMethod(method: GoPtr<Node>, useLegacyDecorator
  * 	return decorators
  * }
  */
-export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<GoPtr<Node>>> {
-  const decorators: GoSlice<GoSlice<GoPtr<Node>>> = [];
+export function getDecoratorsOfParameters(node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>> {
+  let decorators: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>> = undefined;
   if (node !== undefined) {
     const parameters = Node_Parameters(node) ?? [];
     const firstParameterIsThis = parameters.length > 0 && IsThisParameter(parameters[0] as unknown as GoPtr<Node>);
@@ -1571,13 +1574,11 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
     const numParameters: int = parameters.length - firstParameterOffset;
     for (let i = 0; i < numParameters; i++) {
       const p = parameters[i + firstParameterOffset] as unknown as GoPtr<Node>;
-      if (decorators.length > 0 || HasDecorators(p)) {
-        if (decorators.length === 0) {
-          for (let j = 0; j < numParameters; j++) {
-            decorators.push([]);
-          }
+      if ((decorators?.length ?? 0) > 0 || HasDecorators(p)) {
+        if ((decorators?.length ?? 0) === 0) {
+          decorators = new globalThis.Array<GoPtr<GoSlice<GoPtr<Node>>>>(numParameters);
         }
-        decorators[i] = Node_Decorators(p) ?? [];
+        decorators![i] = Node_Decorators(p);
       }
     }
   }
@@ -1586,6 +1587,7 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformDecoratorsOfClassElements","kind":"method","status":"implemented","sigHash":"b943d10dcd8434ab48b70eee24a641567c25d44ad66ff6140ba9afc6e4810142","bodyHash":"c71ef6f18e18aa4712d8501bf07975f64a64e88cce09496667c33bed5c1f65e3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::NodeList>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>]"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformDecoratorsOfClassElements(node *ast.ClassDeclaration, members *ast.NodeList) (*ast.NodeList, []*ast.Node) {
@@ -1609,13 +1611,18 @@ export function getDecoratorsOfParameters(node: GoPtr<Node>): GoSlice<GoSlice<Go
  * 	return members, decorationStatements
  * }
  */
-export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, members: GoPtr<NodeList>): [GoPtr<NodeList>, GoSlice<GoPtr<Node>>] {
-  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
-  const decorationStatements: GoSlice<GoPtr<Node>> = [
-    ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, false as bool),
-    ...LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, true as bool),
-  ];
+export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, members: GoPtr<NodeList>): [GoPtr<NodeList>, GoPtr<GoSlice<GoPtr<Node>>>] {
+  let decorationStatements: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  for (const statements of [
+    LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, false as bool),
+    LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver, node, true as bool),
+  ]) {
+    if (statements !== undefined && statements.length !== 0) {
+      decorationStatements = [...(decorationStatements ?? []), ...statements];
+    }
+  }
   if (hasClassElementWithDecoratorContainingPrivateIdentifierInExpression(node)) {
+    const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
     const memberNodes = members === undefined ? undefined : members.Nodes;
     const stmtList = NodeFactory_NewNodeList(astFactory, decorationStatements);
     const staticBlock = NewClassStaticBlockDeclaration(astFactory, undefined, NewBlock(astFactory, stmtList as never, true as bool) as never);
@@ -1625,13 +1632,14 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(r
     }
     newMemberNodes.push(staticBlock);
     const newMembers = NodeFactory_NewNodeList(astFactory, newMemberNodes);
-    return [newMembers, []];
+    return [newMembers, undefined];
   }
   return [members, decorationStatements];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.getClassElementDecorationStatements","kind":"method","status":"implemented","sigHash":"748d10c709ef99ef611aafae304d31df98a4539b2520d2e4370181309383113d","bodyHash":"bb78b3fffbe87ec737ff55fcda71e72ed3131af78c1c5abd7a1131d44b55303d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) getClassElementDecorationStatements(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1643,9 +1651,12 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfClassElements(r
  * 	return statements
  * }
  */
-export function LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
-  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+export function LegacyDecoratorsTransformer_getClassElementDecorationStatements(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoPtr<GoSlice<GoPtr<Node>>> {
   const exprs = LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver, node, isStatic);
+  if (exprs === undefined || exprs.length === 0) {
+    return undefined;
+  }
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
   return exprs.map(e => NewExpressionStatement(astFactory, e as never));
 }
 
@@ -1700,6 +1711,7 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.generateClassElementDecorationExpressions","kind":"method","status":"implemented","sigHash":"a2645c9688536eb5fbcc1d70af44b0828e0b0f4755b1d9c25e4c03c1b53cccae","bodyHash":"f008e6ad9f72f3f64af560bd287e8029330c64e34fc5e7e8fa828028d6e47883"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ClassDeclaration>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) generateClassElementDecorationExpressions(node *ast.ClassDeclaration, isStatic bool) []*ast.Node {
@@ -1714,14 +1726,14 @@ export function getDecoratedClassElements(node: GoPtr<ClassDeclaration>, isStati
  * 	return expressions
  * }
  */
-export function LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoSlice<GoPtr<Node>> {
+export function LegacyDecoratorsTransformer_generateClassElementDecorationExpressions(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ClassDeclaration>, isStatic: bool): GoPtr<GoSlice<GoPtr<Node>>> {
   const members = getDecoratedClassElements(node, isStatic);
-  const expressions: GoSlice<GoPtr<Node>> = [];
+  let expressions: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   if (members !== undefined) {
     for (const member of members) {
       const expr = LegacyDecoratorsTransformer_generateClassElementDecorationExpression(receiver, node, member);
       if (expr !== undefined) {
-        expressions.push(expr);
+        expressions = [...(expressions ?? []), expr];
       }
     }
   }
@@ -1861,7 +1873,7 @@ export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(
     LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver, allDecorators.parameters),
     LegacyDecoratorsTransformer_transformDecorators(receiver, metadata),
   ]) {
-    if (expressions.length !== 0) {
+    if (expressions !== undefined && expressions.length !== 0) {
       decoratorExpressions = [...(decoratorExpressions ?? []), ...expressions];
     }
   }
@@ -1870,6 +1882,7 @@ export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformDecoratorsOfParameters","kind":"method","status":"implemented","sigHash":"6a9400059103ed41b627bc5f73e277f00df05c0fdcb2798abf6030ce1e98d50a","bodyHash":"6581e5d902e9fa2625ba212a168aec31a1af287bb48952dd86d85b48089482a2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformDecoratorsOfParameters(parameters [][]*ast.Node) []*ast.Node {
@@ -1890,12 +1903,15 @@ export function LegacyDecoratorsTransformer_transformAllDecoratorsOfDeclaration(
  * 	return results
  * }
  */
-export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver: GoPtr<LegacyDecoratorsTransformer>, parameters: GoSlice<GoSlice<GoPtr<Node>>>): GoSlice<GoPtr<Node>> {
+export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(receiver: GoPtr<LegacyDecoratorsTransformer>, parameters: GoPtr<GoSlice<GoPtr<GoSlice<GoPtr<Node>>>>>): GoPtr<GoSlice<GoPtr<Node>>> {
+  if (parameters === undefined || parameters.length === 0) {
+    return undefined;
+  }
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const results: GoSlice<GoPtr<Node>> = [];
-  for (let i = 0; i < parameters.length; i++) {
+  let results: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  for (let i = 0; i < (parameters?.length ?? 0); i++) {
     const decorators = parameters[i];
     if (decorators !== undefined && decorators.length > 0) {
       for (const decorator of decorators) {
@@ -1907,7 +1923,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
           decoratorExpr!.Loc,
         );
         EmitContext_SetEmitFlags(emitCtx, helper as unknown as GoPtr<Node>, EFNoComments as never);
-        results.push(helper as unknown as GoPtr<Node>);
+        results = [...(results ?? []), helper as unknown as GoPtr<Node>];
       }
     }
   }
@@ -1916,6 +1932,7 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.transformDecorators","kind":"method","status":"implemented","sigHash":"a723e488927e39ff33e0cfd39a39457255809b6a005f6fe4f2f79f8ec254a2c1","bodyHash":"5929aa8b59d3f667f7d839c86f6ff5567899850a5fc37d76e860f9c6f7085512"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/legacydecorators.ts::LegacyDecoratorsTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) transformDecorators(decorators []*ast.Node) []*ast.Node {
@@ -1926,9 +1943,16 @@ export function LegacyDecoratorsTransformer_transformDecoratorsOfParameters(rece
  * 	return results
  * }
  */
-export function LegacyDecoratorsTransformer_transformDecorators(receiver: GoPtr<LegacyDecoratorsTransformer>, decorators: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
+export function LegacyDecoratorsTransformer_transformDecorators(receiver: GoPtr<LegacyDecoratorsTransformer>, decorators: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Node>>> {
+  if (decorators === undefined || decorators.length === 0) {
+    return undefined;
+  }
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
-  return decorators.map(d => NodeVisitor_VisitNode(visitor, Node_Expression(d)));
+  let results: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  for (const decorator of decorators ?? []) {
+    results = [...(results ?? []), NodeVisitor_VisitNode(visitor, Node_Expression(decorator))];
+  }
+  return results;
 }
 
 /**

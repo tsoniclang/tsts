@@ -473,14 +473,14 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
   if (eof!.Kind !== KindEndOfFile) {
     throw new globalThis.Error("Expected end of file token from scanner.");
   }
-  if (receiver!.reparseList.length !== 0) {
-    statements = [...(statements ?? []), ...receiver!.reparseList];
-    receiver!.reparseList = [];
+  if ((receiver!.reparseList?.length ?? 0) !== 0) {
+    statements = [...(statements ?? []), ...receiver!.reparseList!];
+    receiver!.reparseList = undefined;
   }
   const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts!, receiver!.sourceText, Parser_newNodeList(receiver, NewTextRange(pos, end), statements), eof), pos);
   let result = AsSourceFile(node);
   Parser_finishSourceFile(receiver, result, isDeclarationFile);
-  if (!result!.IsDeclarationFile && result!.ExternalModuleIndicator !== undefined && receiver!.possibleAwaitSpans.length > 0) {
+  if (!result!.IsDeclarationFile && result!.ExternalModuleIndicator !== undefined && (receiver!.possibleAwaitSpans?.length ?? 0) > 0) {
     const reparse = Parser_finishNode(receiver, Parser_reparseTopLevelAwait(receiver, result), pos);
     if (node !== reparse) {
       result = AsSourceFile(reparse);
@@ -575,12 +575,13 @@ export function Parser_parseToplevelStatement(receiver: GoPtr<Parser>, i: int): 
   // Reparsed nodes (e.g. JSDoc @typedef) produced while parsing this statement are inserted
   // into the statement list before this statement, so account for them when recording the
   // statement's index for possibleAwaitSpans.
-  i += receiver!.reparseList.length;
+  i += receiver!.reparseList?.length ?? 0;
   if (receiver!.statementHasAwaitIdentifier && (statement!.Flags & NodeFlagsAwaitContext) === 0) {
-    if (receiver!.possibleAwaitSpans.length === 0 || receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] !== i) {
-      receiver!.possibleAwaitSpans.push(i, i + 1);
+    const possibleAwaitSpansLength = receiver!.possibleAwaitSpans?.length ?? 0;
+    if (possibleAwaitSpansLength === 0 || receiver!.possibleAwaitSpans![possibleAwaitSpansLength - 1] !== i) {
+      receiver!.possibleAwaitSpans = [...(receiver!.possibleAwaitSpans ?? []), i, i + 1];
     } else {
-      receiver!.possibleAwaitSpans[receiver!.possibleAwaitSpans.length - 1] = i + 1;
+      receiver!.possibleAwaitSpans![possibleAwaitSpansLength - 1] = i + 1;
     }
   }
   return statement;
@@ -818,7 +819,7 @@ export function Parser_parseDeclaration(receiver: GoPtr<Parser>): GoPtr<Statemen
   const pos = Parser_nodePos(receiver);
   const jsdoc = Parser_jsdocScannerInfo(receiver);
   const modifiers = Parser_parseModifiersEx(receiver, /*allowDecorators*/ true, false /*permitConstAsModifier*/, false /*stopOnStartOfClassStaticBlock*/);
-  const isAmbient = modifiers !== undefined && Some(modifiers.Nodes ?? [], isDeclareModifier);
+  const isAmbient = modifiers !== undefined && Some(modifiers.Nodes, isDeclareModifier);
   if (isAmbient) {
     // !!! incremental parsing
     // node := p.tryReuseAmbientDeclaration(pos)
@@ -1922,7 +1923,7 @@ export function Parser_parseClassElement(receiver: GoPtr<Parser>): GoPtr<Node> {
     receiver!.token === KindAsteriskToken ||
     receiver!.token === KindOpenBracketToken
   ) {
-    const isAmbient = modifiers !== undefined && Some(modifiers.Nodes ?? [], isDeclareModifier);
+    const isAmbient = modifiers !== undefined && Some(modifiers.Nodes, isDeclareModifier);
     if (isAmbient) {
       for (const m of modifiers!.Nodes ?? []) {
         m!.Flags |= NodeFlagsAmbient;
@@ -3498,8 +3499,9 @@ export function Parser_parseImportAttributes(receiver: GoPtr<Parser>, token: Kin
     multiLine = Parser_hasPrecedingLineBreak(receiver);
     elements = Parser_parseDelimitedList(receiver, PCImportAttributes, Parser_parseImportAttribute);
     if (!Parser_parseExpected(receiver, KindCloseBraceToken)) {
-      if (receiver!.diagnostics.length !== 0) {
-        const lastDiagnostic = receiver!.diagnostics[receiver!.diagnostics.length - 1];
+      const diagnosticsLength = receiver!.diagnostics?.length ?? 0;
+      if (diagnosticsLength !== 0) {
+        const lastDiagnostic = receiver!.diagnostics![diagnosticsLength - 1];
         if (Diagnostic_Code(lastDiagnostic) === Message_Code(diagnostics.X_0_expected)) {
           const related = NewDiagnostic(undefined, NewTextRange(openBracePosition, openBracePosition), diagnostics.The_parser_expected_to_find_a_1_to_match_the_0_token_here, "{", "}");
           Diagnostic_AddRelatedInfo(lastDiagnostic, related);

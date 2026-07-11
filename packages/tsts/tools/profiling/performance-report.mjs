@@ -1,6 +1,7 @@
 import { canonicalJson, compareUtf8, fingerprint } from "../test-provenance.mjs";
 import { readVerifiedEvidenceJson } from "../sealed-evidence.mjs";
 import { aggregateSamples, assertCompleteSample, buildInterleavedSchedule, exactWorkReceipt } from "./benchmark-core.mjs";
+import { exactWorkloadSelection, validateWorkloadSelection } from "./benchmark-selection.mjs";
 import { PERFORMANCE_REPORT_KIND, PERFORMANCE_REPORT_SCHEMA_VERSION } from "./performance-policy.mjs";
 
 const REPORT_KEYS = [
@@ -29,7 +30,7 @@ export function createPerformanceReport(body) {
     ...body,
   };
   if (Object.hasOwn(unsigned, "reportId")) throw new Error("performance report body must not supply reportId");
-  const report = { ...unsigned, reportId: fingerprint(unsigned, "tsts-performance-report-v2") };
+  const report = { ...unsigned, reportId: fingerprint(unsigned, "tsts-performance-report-v3") };
   assertExactKeys(report, REPORT_KEYS, "performance report");
   return report;
 }
@@ -61,7 +62,7 @@ export function validatePerformanceReport(report, contract) {
   if (typeof report.createdAt !== "string" || Number.isNaN(Date.parse(report.createdAt))) throw new Error("performance report createdAt is invalid");
   if (typeof report.reportId !== "string" || !/^[0-9a-f]{64}$/.test(report.reportId)) throw new Error("performance reportId is invalid");
   const { reportId, ...unsigned } = report;
-  if (fingerprint(unsigned, "tsts-performance-report-v2") !== reportId) throw new Error("performance reportId mismatch");
+  if (fingerprint(unsigned, "tsts-performance-report-v3") !== reportId) throw new Error("performance reportId mismatch");
 
   assertExactKeys(report.sampling, ["measuredRounds", "systemCacheWarmupRounds", "timeoutMs"], "performance report sampling");
   if (canonicalJson(report.sampling) !== canonicalJson(contract.sampling)) throw new Error("performance report sampling does not match its policy contract");
@@ -89,8 +90,11 @@ export function validatePerformanceReport(report, contract) {
     names.add(result.name);
     assertExactKeys(result.byCompiler, ["tsc", "tsgo", "tsts"], `performance project '${result.name}' compilers`);
     for (const [compiler, value] of Object.entries(result.byCompiler)) validateCompilerResult(value, compiler, result.name, contract);
-    const work = exactWorkReceipt(result.byCompiler, contract.workloadEquivalence);
-    if (canonicalJson(work) !== canonicalJson(result.work)) throw new Error(`performance project '${result.name}' work receipt mismatch`);
+    assertExactKeys(result.work, ["metrics", "selection"], `performance project '${result.name}' work receipt`);
+    const metrics = exactWorkReceipt(result.byCompiler, contract.workloadEquivalence);
+    const selection = exactWorkloadSelection(result.byCompiler);
+    if (metrics.Files !== selection.files.length) throw new Error(`performance project '${result.name}' selected-file count does not match its Files metric`);
+    if (canonicalJson({ metrics, selection }) !== canonicalJson(result.work)) throw new Error(`performance project '${result.name}' work receipt mismatch`);
   }
   const stagedNames = report.corpus.stagedProjects.map((project) => project.name).sort(compareUtf8);
   const resultNames = [...names].sort(compareUtf8);
@@ -212,7 +216,8 @@ function isSha256(value) {
 }
 
 function validateCompilerResult(value, compiler, project, contract) {
-  assertExactKeys(value, ["aggregate", "measuredSamples", "systemCacheWarmupSamples"], `performance ${project}/${compiler}`);
+  assertExactKeys(value, ["aggregate", "measuredSamples", "selection", "systemCacheWarmupSamples"], `performance ${project}/${compiler}`);
+  validateWorkloadSelection(value.selection, `performance ${project}/${compiler} workload selection`);
   if (!Array.isArray(value.systemCacheWarmupSamples) || value.systemCacheWarmupSamples.length !== contract.sampling.systemCacheWarmupRounds) throw new Error(`performance ${project}/${compiler} warmup sample count mismatch`);
   if (!Array.isArray(value.measuredSamples) || value.measuredSamples.length !== contract.sampling.measuredRounds) throw new Error(`performance ${project}/${compiler} measured sample count mismatch`);
   for (const [index, sample] of [...value.systemCacheWarmupSamples, ...value.measuredSamples].entries()) {

@@ -5,6 +5,7 @@ import * as slices from "../../go/slices.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"955c1a2ed6ee58a00a33eb9d83a514b829e17934a40779d6671c3715322c6279","bodyHash":"5fa746f9ad8184af45af12e61f174c3763b0f6e232c9d3cf29c17b36e4bd2f94"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The zero-value Go multimap has a nil map, and a present map entry may itself hold a nil slice; nested GoPtr values preserve both independently observable states.","goSignature":"interface<T0 extends name::comparable,T1 extends name::comparable>{M:packages/tsts/src/go/compat.ts::GoMap<T0,packages/tsts/src/go/compat.ts::GoSlice<T1>>}","tsSignature":"interface<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1 extends packages/tsts/src/go/compat.ts::GoComparable>{M:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<T0,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>>>}"}
  *
  * Go source:
  * MultiMap[K comparable, V comparable] struct {
@@ -12,7 +13,7 @@ import * as slices from "../../go/slices.js";
  * }
  */
 export interface MultiMap<K extends GoComparable = unknown, V extends GoComparable = unknown> {
-  M: GoMap<K, GoSlice<V>>;
+  M: GoPtr<GoMap<K, GoPtr<GoSlice<V>>>>;
 }
 
 /**
@@ -27,12 +28,13 @@ export interface MultiMap<K extends GoComparable = unknown, V extends GoComparab
  */
 export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComparable>(hint: int): GoPtr<MultiMap<K, V>> {
   return {
-    M: new globalThis.Map<K, GoSlice<V>>(),
+    M: new globalThis.Map<K, GoPtr<GoSlice<V>>>(),
   };
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::func::GroupBy","kind":"func","status":"implemented","sigHash":"dca9bec35095fffba77521f0103dbd239076e0eb2c1ab06c3a4224e7d3b0f013","bodyHash":"7822315175c81430eee5308574a659fac3885eaeea5dff6f9665a93c51b4a4b1"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Ranging a nil Go input slice is valid, and GroupBy returns a zero-value multimap whose backing map remains nil until Add sees an item; GoPtr preserves the input slice state.","goSignature":"func<T0 extends name::comparable,T1 extends name::comparable>(packages/tsts/src/go/compat.ts::GoSlice<T1>,(T1)=>T0)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/multimap.ts::MultiMap<T0,T1>>","tsSignature":"func<T0 extends packages/tsts/src/go/compat.ts::GoComparable,T1 extends packages/tsts/src/go/compat.ts::GoComparable>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T1>>,(T1)=>T0)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/multimap.ts::MultiMap<T0,T1>>"}
  *
  * Go source:
  * func GroupBy[K comparable, V comparable](items []V, groupId func(V) K) *MultiMap[K, V] {
@@ -43,9 +45,9 @@ export function NewMultiMapWithSizeHint<K extends GoComparable, V extends GoComp
  * 	return m
  * }
  */
-export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoSlice<V>, groupId: (arg0: V) => K): GoPtr<MultiMap<K, V>> {
-  const m: MultiMap<K, V> = { M: new globalThis.Map<K, GoSlice<V>>() };
-  for (const item of items) {
+export function GroupBy<K extends GoComparable, V extends GoComparable>(items: GoPtr<GoSlice<V>>, groupId: (arg0: V) => K): GoPtr<MultiMap<K, V>> {
+  const m: MultiMap<K, V> = { M: undefined };
+  for (const item of items ?? []) {
     MultiMap_Add(m, groupId(item), item);
   }
   return m;
@@ -61,7 +63,7 @@ export function GroupBy<K extends GoComparable, V extends GoComparable>(items: G
  * }
  */
 export function MultiMap_Has<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K): bool {
-  const ok = receiver!.M.has(key);
+  const ok = receiver!.M?.has(key) ?? false;
   return ok;
 }
 
@@ -73,8 +75,8 @@ export function MultiMap_Has<K extends GoComparable, V extends GoComparable>(rec
  * 	return s.M[key]
  * }
  */
-export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K): GoSlice<V> {
-  return receiver!.M.get(key) ?? [];
+export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K): GoPtr<GoSlice<V>> {
+  return receiver!.M?.get(key);
 }
 
 /**
@@ -89,6 +91,7 @@ export function MultiMap_Get<K extends GoComparable, V extends GoComparable>(rec
  * }
  */
 export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V): void {
+  receiver!.M ??= new globalThis.Map<K, GoPtr<GoSlice<V>>>();
   const existing = receiver!.M.get(key) ?? [];
   existing.push(value);
   receiver!.M.set(key, existing);
@@ -113,14 +116,18 @@ export function MultiMap_Add<K extends GoComparable, V extends GoComparable>(rec
  * }
  */
 export function MultiMap_Remove<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V): void {
-  const values0 = receiver!.M.get(key);
+  const map = receiver!.M;
+  if (map === undefined) {
+    return;
+  }
+  const values0 = map.get(key);
   if (values0 !== undefined) {
     const i = slices.Index(values0, value);
     if (i >= 0) {
       if (values0.length === 1) {
-        receiver!.M.delete(key);
+        map.delete(key);
       } else {
-        receiver!.M.set(key, values0.slice(0, i).concat(values0.slice(i + 1)));
+        map.set(key, values0.slice(0, i).concat(values0.slice(i + 1)));
       }
     }
   }
@@ -135,7 +142,7 @@ export function MultiMap_Remove<K extends GoComparable, V extends GoComparable>(
  * }
  */
 export function MultiMap_RemoveAll<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>, key: K): void {
-  receiver!.M.delete(key);
+  receiver!.M?.delete(key);
 }
 
 /**
@@ -147,7 +154,7 @@ export function MultiMap_RemoveAll<K extends GoComparable, V extends GoComparabl
  * }
  */
 export function MultiMap_Len<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): int {
-  return receiver!.M.size;
+  return receiver!.M?.size ?? 0;
 }
 
 /**
@@ -170,7 +177,7 @@ export function MultiMap_Keys<K extends GoComparable, V extends GoComparable>(re
  * 	return maps.Values(s.M)
  * }
  */
-export function MultiMap_Values<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): GoSeq<GoSlice<V>> {
+export function MultiMap_Values<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): GoSeq<GoPtr<GoSlice<V>>> {
   return maps.Values(receiver!.M);
 }
 
@@ -183,5 +190,5 @@ export function MultiMap_Values<K extends GoComparable, V extends GoComparable>(
  * }
  */
 export function MultiMap_Clear<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<MultiMap<K, V>>): void {
-  receiver!.M.clear();
+  receiver!.M?.clear();
 }

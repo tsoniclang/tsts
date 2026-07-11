@@ -1,5 +1,5 @@
 import type { bool, uint } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoMap, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList, Node_Name } from "../../ast/spine.js";
 import { Node_Elements, Node_Text, Node_Initializer, Node_StatementList, Node_Statements, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateSourceFile, NodeFactory_NewModifier } from "../../ast/ast.js";
@@ -39,6 +39,7 @@ import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"c11288edbfe88aa16e8c945b427708e30a077c4eb0bdebe1f153d608e1a48b4a","bodyHash":"47d5d92ec15b175fe4faa8f2f3f9b3cdbd0f24a4759973c04156c2b95c3b2342"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go struct's slice fields have nil zero values; GoPtr preserves nil separately from an allocated empty slice without changing nonnil field behavior.","goSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;defaultExportBinding:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>;exportBindingNames:packages/tsts/src/go/compat.ts::GoSlice<string>;exportBindings:packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExportSpecifierNode>>;exportEqualsBinding:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>;exportVars:packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::VariableDeclarationNode>>}","tsSignature":"interface{__tsgoEmbedded0?:packages/tsts/src/internal/transformers/transformer.ts::Transformer;defaultExportBinding:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>;exportBindingNames:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>;exportBindings:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoMap<string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ExportSpecifierNode>>>;exportEqualsBinding:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>;exportVars:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::VariableDeclarationNode>>>}"}
  *
  * Go source:
  * usingDeclarationTransformer struct {
@@ -53,9 +54,9 @@ import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
  */
 export interface usingDeclarationTransformer {
   readonly __tsgoEmbedded0?: Transformer;
-  exportBindings: GoMap<string, GoPtr<ExportSpecifierNode>>;
-  exportBindingNames: GoSlice<string>;
-  exportVars: GoSlice<GoPtr<VariableDeclarationNode>>;
+  exportBindings: GoPtr<GoMap<string, GoPtr<ExportSpecifierNode>>>;
+  exportBindingNames: GoPtr<GoSlice<string>>;
+  exportVars: GoPtr<GoSlice<GoPtr<VariableDeclarationNode>>>;
   defaultExportBinding: GoPtr<IdentifierNode>;
   exportEqualsBinding: GoPtr<IdentifierNode>;
 }
@@ -72,9 +73,9 @@ export interface usingDeclarationTransformer {
 export function newUsingDeclarationTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
   const tx: usingDeclarationTransformer = {
     __tsgoEmbedded0: {} as Transformer,
-    exportBindings: new globalThis.Map<string, GoPtr<ExportSpecifierNode>>(),
-    exportBindingNames: [],
-    exportVars: [],
+    exportBindings: undefined,
+    exportBindingNames: undefined,
+    exportVars: undefined,
     defaultExportBinding: undefined,
     exportEqualsBinding: undefined,
   };
@@ -297,34 +298,39 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
   let visited: GoPtr<Node>;
-  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes!);
+  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes);
   if (usingKind !== usingKindNone) {
     EmitContext_StartVariableEnvironment(emitContext);
-    receiver!.exportBindings = new globalThis.Map<string, GoPtr<ExportSpecifierNode>>();
-    receiver!.exportVars = [];
-    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
-    let topLevelStatements: GoSlice<GoPtr<Statement>> = [];
-    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
-    topLevelStatements = [...topLevelStatements, ...prologueVisited as GoSlice<GoPtr<Statement>>];
+    const transformerState = receiver!;
+    transformerState.exportBindings = new globalThis.Map<string, GoPtr<ExportSpecifierNode>>();
+    transformerState.exportVars = undefined;
+    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes);
+    let topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue)[0];
+    if ((prologueVisited?.length ?? 0) > 0) {
+      topLevelStatements = [...(topLevelStatements ?? []), ...prologueVisited as GoSlice<GoPtr<Statement>>];
+    }
     let pos = 0;
-    while (pos < rest.length) {
+    while (rest !== undefined && pos < rest.length) {
       const statement = rest[pos];
       if (getUsingKind(statement as GoPtr<Node>) !== usingKindNone) {
         if (pos > 0) {
           const leadingVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>)[0];
-          topLevelStatements = [...topLevelStatements, ...leadingVisited as GoSlice<GoPtr<Statement>>];
+          if ((leadingVisited?.length ?? 0) > 0) {
+            topLevelStatements = [...(topLevelStatements ?? []), ...leadingVisited as GoSlice<GoPtr<Statement>>];
+          }
         }
         break;
       }
       pos++;
     }
-    if (pos >= rest.length) {
+    if (rest === undefined || pos >= rest.length) {
       throw new globalThis.Error("Should have encountered at least one 'using' statement.");
     }
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
-    const topLevelStatementsRef = topLevelStatements;
+    const topLevelStatementsRef: GoRef<GoPtr<GoSlice<GoPtr<Statement>>>> = { v: topLevelStatements };
     const bodyStatements = usingDeclarationTransformer_transformUsingDeclarations(receiver, rest.slice(pos) as GoSlice<GoPtr<Statement>>, envBinding, topLevelStatementsRef);
-    topLevelStatements = topLevelStatementsRef;
+    topLevelStatements = topLevelStatementsRef.v;
     if (receiver!.exportBindings!.size > 0) {
       const exportSpecifiers: GoSlice<GoPtr<ExportSpecifierNode>> = [];
       for (const name of receiver!.exportBindingNames ?? []) {
@@ -332,35 +338,39 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
         debug.Assert((specifier !== undefined) as bool, "Missing export binding for hoisted export name");
         exportSpecifiers.push(specifier);
       }
-      topLevelStatements = [...topLevelStatements, NewExportDeclaration(factory,
+      topLevelStatements = [...(topLevelStatements ?? []), NewExportDeclaration(factory,
         undefined, false,
         NewNamedExports(factory, NodeFactory_NewNodeList(factory, exportSpecifiers as GoSlice<GoPtr<Node>>)),
         undefined, undefined,
       ) as GoPtr<Statement>];
     }
     const envVarDecls = EmitContext_EndVariableEnvironment(emitContext);
-    topLevelStatements = [...topLevelStatements, ...envVarDecls as GoSlice<GoPtr<Statement>>];
-    if (receiver!.exportVars!.length > 0) {
-      topLevelStatements = [...topLevelStatements, NewVariableStatement(factory,
+    if ((envVarDecls?.length ?? 0) > 0) {
+      topLevelStatements = [...(topLevelStatements ?? []), ...envVarDecls!];
+    }
+    if ((receiver!.exportVars?.length ?? 0) > 0) {
+      topLevelStatements = [...(topLevelStatements ?? []), NewVariableStatement(factory,
         NodeFactory_NewModifierList(factory, [NewToken(factory, KindExportKeyword)] as GoSlice<GoPtr<Node>>),
         NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, receiver!.exportVars! as GoSlice<GoPtr<Node>>), NodeFlagsLet),
       ) as GoPtr<Statement>];
     }
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(receiver, bodyStatements, envBinding, usingKind === usingKindAsync);
-    topLevelStatements = [...topLevelStatements, ...downlevel as GoSlice<GoPtr<Statement>>];
+    if (downlevel.length > 0) {
+      topLevelStatements = [...(topLevelStatements ?? []), ...downlevel as GoSlice<GoPtr<Statement>>];
+    }
     if (receiver!.exportEqualsBinding !== undefined) {
-      topLevelStatements = [...topLevelStatements, NewExportAssignment(factory,
+      topLevelStatements = [...(topLevelStatements ?? []), NewExportAssignment(factory,
         undefined, true, undefined, receiver!.exportEqualsBinding,
       ) as GoPtr<Statement>];
     }
-    visited = NodeFactory_UpdateSourceFile(factory, node, NodeFactory_NewNodeList(factory, topLevelStatements as GoSlice<GoPtr<Node>>), node!.EndOfFileToken);
+    visited = NodeFactory_UpdateSourceFile(factory, node, NodeFactory_NewNodeList(factory, topLevelStatements as GoPtr<GoSlice<GoPtr<Node>>>), node!.EndOfFileToken);
   } else {
     visited = NodeVisitor_VisitEachChild((visitor as ConcreteNodeVisitor), node as GoPtr<Node>);
   }
-  EmitContext_AddEmitHelper(emitContext, visited, ...EmitContext_ReadEmitHelpers(emitContext)!);
-  receiver!.exportVars = [];
-  receiver!.exportBindings = new globalThis.Map();
-  receiver!.exportBindingNames = [];
+  EmitContext_AddEmitHelper(emitContext, visited, ...(EmitContext_ReadEmitHelpers(emitContext) ?? []));
+  receiver!.exportVars = undefined;
+  receiver!.exportBindings = undefined;
+  receiver!.exportBindingNames = undefined;
   receiver!.defaultExportBinding = undefined;
   receiver!.exportEqualsBinding = undefined;
   return visited;
@@ -390,21 +400,21 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
  * }
  */
 export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Block>): GoPtr<Node> {
-  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes!);
+  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes);
   if (usingKind !== usingKindNone) {
     const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
     const factory = printerFactory!.__tsgoEmbedded0!;
     const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
-    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
+    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes);
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
     let statements: GoSlice<GoPtr<Node>> = [];
-    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue)[0];
     if (prologueVisited !== undefined) {
       statements = [...statements, ...prologueVisited];
     }
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(
       receiver,
-      usingDeclarationTransformer_transformUsingDeclarations(receiver, rest as GoSlice<GoPtr<Statement>>, envBinding, undefined),
+      usingDeclarationTransformer_transformUsingDeclarations(receiver, rest, envBinding, undefined),
       envBinding,
       usingKind === usingKindAsync,
     );
@@ -580,6 +590,7 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.transformUsingDeclarations","kind":"method","status":"implemented","sigHash":"e137108edef541b74d5b6b8689eeedf0b64de92d3ae43996f75c79b6238fa0f2","bodyHash":"9b861724387da300d39313e4a0ad9652495b5c3cc0087862e91145dffcb98634"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go *[]*ast.Statement parameter is a nullable pointer to a mutable slice header that may itself be nil; GoRef<GoPtr<GoSlice<...>>> preserves both states and lets append update the caller-owned header.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoRef<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) transformUsingDeclarations(statementsIn []*ast.Statement, envBinding *ast.IdentifierNode, topLevelStatements *[]*ast.Statement) []*ast.Node {
@@ -673,13 +684,13 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
  * 	return statements
  * }
  */
-export function usingDeclarationTransformer_transformUsingDeclarations(receiver: GoPtr<usingDeclarationTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, envBinding: GoPtr<IdentifierNode>, topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>>): GoSlice<GoPtr<Node>> {
+export function usingDeclarationTransformer_transformUsingDeclarations(receiver: GoPtr<usingDeclarationTransformer>, statementsIn: GoPtr<GoSlice<GoPtr<Statement>>>, envBinding: GoPtr<IdentifierNode>, topLevelStatements: GoPtr<GoRef<GoPtr<GoSlice<GoPtr<Statement>>>>>): GoPtr<GoSlice<GoPtr<Node>>> {
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
 
   const hoist = (node: GoPtr<Statement>): GoPtr<Statement> => {
     if (topLevelStatements === undefined) {
@@ -705,20 +716,20 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
   const hoistOrAppendNode = (node: GoPtr<Node>): void => {
     const hoisted = hoist(node as GoPtr<Statement>);
     if (hoisted !== undefined) {
-      statements = [...statements, hoisted as GoPtr<Statement>];
+      statements = [...(statements ?? []), hoisted as GoPtr<Statement>];
     }
   };
 
-  for (const statement of statementsIn) {
+  for (const statement of statementsIn ?? []) {
     const usingKind = getUsingKind(statement as GoPtr<Node>);
     if (usingKind !== usingKindNone) {
       const varStatement = AsVariableStatement(statement as GoPtr<Node>);
       const declarationList = varStatement!.DeclarationList;
-      let declarations: GoSlice<GoPtr<VariableDeclaration>> = [];
+      let declarations: GoPtr<GoSlice<GoPtr<VariableDeclaration>>> = undefined;
       let invalid = false;
       for (const declaration of AsVariableDeclarationList(declarationList)!.Declarations!.Nodes!) {
         if (!IsIdentifier(Node_Name(declaration as GoPtr<Node>))) {
-          declarations = [];
+          declarations = undefined;
           invalid = true;
           break;
         }
@@ -730,7 +741,7 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
         if (initializer === undefined) {
           initializer = NodeFactory_NewVoidZeroExpression(printerFactory) as GoPtr<Node>;
         }
-        declarations = [...declarations, NodeFactory_UpdateVariableDeclaration(factory,
+        declarations = [...(declarations ?? []), NodeFactory_UpdateVariableDeclaration(factory,
           AsVariableDeclaration(decl),
           Node_Name(decl),
           undefined,
@@ -738,7 +749,7 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
           NodeFactory_NewAddDisposableResourceHelper(printerFactory, envBinding as GoPtr<Expression>, initializer as GoPtr<Expression>, usingKind === usingKindAsync),
         ) as GoPtr<VariableDeclaration>];
       }
-      if (!invalid && declarations.length > 0) {
+      if (!invalid && (declarations?.length ?? 0) > 0) {
         const varList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, declarations as GoSlice<GoPtr<Node>>), NodeFlagsConst);
         EmitContext_SetOriginal(emitContext, varList, declarationList);
         varList!.Loc = declarationList!.Loc;
@@ -758,11 +769,12 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
       }
     }
   }
-  return statements as GoSlice<GoPtr<Node>>;
+  return statements;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistImportOrExportOrHoistedDeclaration","kind":"method","status":"implemented","sigHash":"698df36df6048032bfa8ba30d851a32762b2512f5d9bd18169b3914b9b8255aa","bodyHash":"682e8669b392057aa443dc84016095878cd0d29b2cded30b5f4c24ef6966aa1b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go *[]*ast.Statement parameter is a nullable pointer to a mutable slice header that may itself be nil; GoRef<GoPtr<GoSlice<...>>> preserves both states and lets append update the caller-owned header.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoRef<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>>>)=>void"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) hoistImportOrExportOrHoistedDeclaration(node *ast.Statement, topLevelStatements *[]*ast.Statement) {
@@ -770,8 +782,8 @@ export function usingDeclarationTransformer_transformUsingDeclarations(receiver:
  * 	*topLevelStatements = append(*topLevelStatements, node)
  * }
  */
-export function usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Statement>, topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>>): void {
-  topLevelStatements!.push(node);
+export function usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Statement>, topLevelStatements: GoPtr<GoRef<GoPtr<GoSlice<GoPtr<Statement>>>>>): void {
+  topLevelStatements!.v = [...(topLevelStatements!.v ?? []), node];
 }
 
 /**
@@ -1204,7 +1216,7 @@ export function usingDeclarationTransformer_hoistBindingIdentifier(receiver: GoP
       if (original !== undefined) {
         EmitContext_SetOriginal(emitContext, varDecl, original);
       }
-      receiver!.exportVars = [...receiver!.exportVars, varDecl as GoPtr<VariableDeclarationNode>];
+      receiver!.exportVars = [...(receiver!.exportVars ?? []), varDecl as GoPtr<VariableDeclarationNode>];
       return;
     }
     const localName: GoPtr<IdentifierNode> = exportAlias !== undefined ? name : undefined;
@@ -1239,6 +1251,7 @@ export function usingDeclarationTransformer_createEnvBinding(receiver: GoPtr<usi
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.createDownlevelUsingStatements","kind":"method","status":"implemented","sigHash":"47d3e63afdfe557e293701d2156c29250020e6e149bf45e3fe00371032dd5c1e","bodyHash":"c0ec58ac569feef5af9d1f7c03593c6a9d12fb4761a9d8fce2732c4a42b766d2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/using.ts::usingDeclarationTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::IdentifierNode>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) createDownlevelUsingStatements(bodyStatements []*ast.Node, envBinding *ast.IdentifierNode, async bool) []*ast.Statement {
@@ -1344,7 +1357,7 @@ export function usingDeclarationTransformer_createEnvBinding(receiver: GoPtr<usi
  * 	return statements
  * }
  */
-export function usingDeclarationTransformer_createDownlevelUsingStatements(receiver: GoPtr<usingDeclarationTransformer>, bodyStatements: GoSlice<GoPtr<Node>>, envBinding: GoPtr<IdentifierNode>, async: bool): GoSlice<GoPtr<Statement>> {
+export function usingDeclarationTransformer_createDownlevelUsingStatements(receiver: GoPtr<usingDeclarationTransformer>, bodyStatements: GoPtr<GoSlice<GoPtr<Node>>>, envBinding: GoPtr<IdentifierNode>, async: bool): GoSlice<GoPtr<Statement>> {
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const factory = printerFactory!.__tsgoEmbedded0!;
   const statements: GoSlice<GoPtr<Statement>> = [];
@@ -1507,6 +1520,7 @@ export function getUsingKind(statement: GoPtr<Node>): usingKind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::func::getUsingKindOfStatements","kind":"func","status":"implemented","sigHash":"5af21f743c80ad3a07ab71d1b784d1b00d30511fc9f03e16c4ff7d9505027b47","bodyHash":"0d6cb25517c1643f058093093a0168dc5d9f0a6033e2a63fa1c31d007adb5d11"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/internal/transformers/estransforms/using.ts::usingKind","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/internal/transformers/estransforms/using.ts::usingKind"}
  *
  * Go source:
  * func getUsingKindOfStatements(statements []*ast.Node) usingKind {
@@ -1523,9 +1537,9 @@ export function getUsingKind(statement: GoPtr<Node>): usingKind {
  * 	return result
  * }
  */
-export function getUsingKindOfStatements(statements: GoSlice<GoPtr<Node>>): usingKind {
+export function getUsingKindOfStatements(statements: GoPtr<GoSlice<GoPtr<Node>>>): usingKind {
   let result: usingKind = usingKindNone;
-  for (const statement of statements) {
+  for (const statement of statements ?? []) {
     const usingKind = getUsingKind(statement);
     if (usingKind === usingKindAsync) {
       return usingKindAsync;

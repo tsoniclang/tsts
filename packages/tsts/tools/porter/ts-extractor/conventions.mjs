@@ -93,13 +93,21 @@ export function normalizeDescriptor(d, conv, context = "type") {
       n = { t: d.t, members: d.members.map((m) => normalizeDescriptor(m, conv, "type")) };
       break;
     case "fn":
-      n = { t: "fn", params: d.params.map((p) => ({ ...p, type: normalizeDescriptor(p.type, conv, "type") })), ret: normalizeDescriptor(d.ret, conv, "type") };
+      n = {
+        ...d,
+        params: d.params.map((p) => ({ ...p, type: normalizeDescriptor(p.type, conv, "type") })),
+        ret: normalizeDescriptor(d.ret, conv, "type"),
+        typeParams: (d.typeParams ?? []).map((p) => ({ constraint: normalizeDescriptor(p.constraint, conv, "constraint") })),
+      };
       break;
     case "object":
       n = {
         t: "object",
         members: d.members.map((m) => m.unsupported ? m : { ...m, type: normalizeDescriptor(m.type, conv, "type") }),
       };
+      break;
+    case "goApprox":
+      n = { t: "goApprox", type: normalizeDescriptor(d.type, conv, "type") };
       break;
     default:
       n = d;

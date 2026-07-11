@@ -11,6 +11,9 @@ import { rm } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import { canonicalJson, compareUtf8, fingerprint, hashInputRoots, readStableRegularFile } from "../test-provenance.mjs";
+import {
+  validateBenchmarkCompilerArguments,
+} from "./compiler-arguments.mjs";
 
 export const BENCHMARK_CORPUS_SCHEMA_VERSION = 2;
 
@@ -146,14 +149,8 @@ function inputEvidenceEntries(projects) {
 
 function validateCompilerArguments(args, projectName) {
   if (!Array.isArray(args) || args.length === 0 || !args.every((entry) => typeof entry === "string" && entry !== "" && !entry.includes("\0") && !entry.includes("\n") && !entry.includes("\r"))) throw new Error(`benchmark project '${projectName}' args are invalid`);
-  const lower = args.map((entry) => entry.toLowerCase());
-  if (!lower.includes("--noemit")) throw new Error(`benchmark project '${projectName}' must use --noEmit`);
-  const incremental = lower.indexOf("--incremental");
-  if (incremental < 0 || lower[incremental + 1] !== "false") throw new Error(`benchmark project '${projectName}' must use --incremental false`);
-  if (!lower.includes("-p") && !lower.includes("--project")) throw new Error(`benchmark project '${projectName}' must use an explicit project configuration`);
-  const forbidden = new Set(["--build", "-b", "--extendeddiagnostics", "--generatecpuprofile", "--pretty", "--watch", "-w"]);
-  const override = lower.find((entry) => forbidden.has(entry));
-  if (override !== undefined) throw new Error(`benchmark project '${projectName}' uses harness-controlled or mutable argument '${override}'`);
+  const project = validateBenchmarkCompilerArguments(args, `benchmark project '${projectName}'`);
+  assertSafeRelativePath(project, `benchmark project '${projectName}' project option`);
 }
 
 function copyExclusive(source, destination, kind) {

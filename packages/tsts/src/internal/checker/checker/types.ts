@@ -11947,7 +11947,7 @@ export function Checker_intersectTypes(receiver: GoPtr<Checker>, type1: GoPtr<Ty
  * 	return c.getIntersectionTypeEx(types, IntersectionFlagsNone, nil /*alias* /)
  * }
  */
-export function Checker_getIntersectionType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
+export function Checker_getIntersectionType(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Type> {
   return Checker_getIntersectionTypeEx(receiver, types, IntersectionFlagsNone, undefined);
 }
 
@@ -12124,7 +12124,7 @@ export function Checker_getIntersectionType(receiver: GoPtr<Checker>, types: GoS
  * 	return result
  * }
  */
-export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, flags: IntersectionFlags, alias: GoPtr<TypeAlias>): GoPtr<Type> {
+export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>, flags: IntersectionFlags, alias: GoPtr<TypeAlias>): GoPtr<Type> {
   const orderedTypes: orderedSet<GoPtr<Type>> = {
     values: [],
     valuesByKey: goNilMap<GoPtr<Type>, { readonly __tsgoEmpty?: never }>(),
@@ -12232,7 +12232,7 @@ export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: G
       } else if (core.Every(typeSet, isUnionWithNull)) {
         Checker_filterTypes(receiver, typeSet, isNotNullType);
         result = Checker_getUnionTypeEx(receiver, [Checker_getIntersectionTypeEx(receiver, typeSet, flags, undefined), receiver!.nullType], UnionReductionLiteral, alias, undefined);
-      } else if (typeSet.length >= 3 && types.length > 2) {
+      } else if (typeSet.length >= 3 && (types?.length ?? 0) > 2) {
         const middle = Math.trunc(typeSet.length / 2);
         result = Checker_getIntersectionTypeEx(receiver, [
           Checker_getIntersectionTypeEx(receiver, typeSet.slice(0, middle), flags, undefined),
@@ -12269,8 +12269,8 @@ export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: G
  * 	return includes
  * }
  */
-export function Checker_addTypesToIntersection(receiver: GoPtr<Checker>, typeSet: GoPtr<orderedSet<GoPtr<Type>>>, includes: TypeFlags, types: GoSlice<GoPtr<Type>>): TypeFlags {
-  for (const t of types) {
+export function Checker_addTypesToIntersection(receiver: GoPtr<Checker>, typeSet: GoPtr<orderedSet<GoPtr<Type>>>, includes: TypeFlags, types: GoPtr<GoSlice<GoPtr<Type>>>): TypeFlags {
+  for (const t of types ?? []) {
     includes = Checker_addTypeToIntersection(receiver, typeSet, includes, Checker_getRegularTypeOfLiteralType(receiver, t));
   }
   return includes;
@@ -12847,7 +12847,7 @@ export function Checker_removeType(receiver: GoPtr<Checker>, t: GoPtr<Type>, tar
  * 	return true
  * }
  */
-export function Checker_checkCrossProductUnion(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): bool {
+export function Checker_checkCrossProductUnion(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): bool {
   const size = Checker_getCrossProductUnionSize(receiver, types);
   if (size >= 100_000) {
     if (receiver!.tracer !== undefined) {
@@ -12883,9 +12883,9 @@ export function Checker_checkCrossProductUnion(receiver: GoPtr<Checker>, types: 
  * 	return size
  * }
  */
-export function Checker_getCrossProductUnionSize(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): int {
+export function Checker_getCrossProductUnionSize(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): int {
   let size = 1;
-  for (const t of types) {
+  for (const t of types ?? []) {
     if ((t!.flags & TypeFlagsUnion) !== 0) {
       const n = Type_Types(t)!.length;
       // Cap the result to avoid integer overflow when computing the cross product of many large unions.

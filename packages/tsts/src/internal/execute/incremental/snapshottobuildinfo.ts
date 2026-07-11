@@ -47,7 +47,7 @@ import { NewBuildInfo, newBuildInfoFileInfo } from "./buildInfo.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
 import { OrderedMap_Set, newMapWithSizeHint } from "../../collections/ordered_map.js";
 import type { buildInfoDiagnosticWithFileName, DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, FileInfo, snapshot } from "./snapshot.js";
-import { FileEmitKindNone, GetFileEmitKind } from "./snapshot.js";
+import { emitSignature_requireDifferentOptions, FileEmitKindNone, GetFileEmitKind } from "./snapshot.js";
 import type { referenceMap } from "./referencemap.js";
 import { referenceMap_getPathsWithReferences, referenceMap_getReferences } from "./referencemap.js";
 
@@ -560,11 +560,14 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
           const incrementalEmitSignature: BuildInfoEmitSignature = { FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false };
           if (fileEmitSignature.signature !== "") {
             incrementalEmitSignature.Signature = fileEmitSignature.signature;
-          } else if (fileEmitSignature.signatureWithDifferentOptions[0] === info.signature) {
-            incrementalEmitSignature.DiffersOnlyInDtsMap = true;
           } else {
-            incrementalEmitSignature.Signature = fileEmitSignature.signatureWithDifferentOptions[0]!;
-            incrementalEmitSignature.DiffersInOptions = true;
+            const alternateSignature = emitSignature_requireDifferentOptions(fileEmitSignature);
+            if (alternateSignature === info.signature) {
+              incrementalEmitSignature.DiffersOnlyInDtsMap = true;
+            } else {
+              incrementalEmitSignature.Signature = alternateSignature;
+              incrementalEmitSignature.DiffersInOptions = true;
+            }
           }
           (receiver!.buildInfo!.EmitSignatures ??= []).push(incrementalEmitSignature);
         }

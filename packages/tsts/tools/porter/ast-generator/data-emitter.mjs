@@ -155,7 +155,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  let visited = receiver!.Visit(node);`);
   lines.push(`  if (visited !== undefined && visited.Kind === KindSyntaxList) {`);
   lines.push(`    const nodes = AsSyntaxList(visited)!.Children;`);
-  lines.push(`    if (nodes.length !== 1) {`);
+  lines.push(`    if (nodes === undefined || nodes.length !== 1) {`);
   lines.push(`      throw new globalThis.Error("Expected only a single node to be written to output");`);
   lines.push(`    }`);
   lines.push(`    visited = nodes[0];`);
@@ -194,7 +194,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`        if (visited === undefined) {`);
   lines.push(`          // do nothing`);
   lines.push(`        } else if (visited.Kind === KindSyntaxList) {`);
-  lines.push(`          updated = [...updated, ...AsSyntaxList(visited)!.Children];`);
+  lines.push(`          updated = [...updated, ...(AsSyntaxList(visited)!.Children ?? [])];`);
   lines.push(`        } else {`);
   lines.push(`          updated = [...updated, visited];`);
   lines.push(`        }`);
@@ -287,7 +287,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push("");
   lines.push(`function generatedLiftToBlock(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
-  lines.push(`  let nodes: GoSlice<GoPtr<Node>> = [];`);
+  lines.push(`  let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;`);
   lines.push(`  if (node !== undefined) {`);
   lines.push(`    if (node.Kind === KindSyntaxList) {`);
   lines.push(`      nodes = AsSyntaxList(node)!.Children;`);
@@ -295,7 +295,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`      nodes = [node];`);
   lines.push(`    }`);
   lines.push(`  }`);
-  lines.push(`  if (nodes.length === 1) {`);
+  lines.push(`  if (nodes !== undefined && nodes.length === 1) {`);
   lines.push(`    node = nodes[0];`);
   lines.push(`  } else {`);
   lines.push(`    node = Factory.NewBlock(receiver!.Factory, NodeFactory_NewNodeList(receiver!.Factory, nodes), true as bool);`);

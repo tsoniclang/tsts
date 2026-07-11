@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 
 import { canonicalJson } from "../test-provenance.mjs";
+import { assertDirectCompilerArguments, hasCompilerOption } from "./compiler-arguments.mjs";
 
 export const diagnosticPhases = Object.freeze(["Parse", "Bind", "Check", "Emit"]);
 
@@ -58,9 +59,9 @@ export function runTimedCompiler({
 }) {
   if (!Array.isArray(argv) || argv.length === 0 || !argv.every((entry) => typeof entry === "string" && entry !== "")) throw new Error(`${id} compiler argv is invalid`);
   if (!Array.isArray(args) || !args.every((entry) => typeof entry === "string" && entry !== "")) throw new Error(`${id} compiler arguments are invalid`);
+  assertDirectCompilerArguments(args, `${id} compiler arguments`);
   if (!Array.isArray(requiredMetrics) || requiredMetrics.length === 0) throw new Error(`${id} compiler required metric contract is empty`);
-  const controlled = new Set(args.map((entry) => entry.toLowerCase()));
-  if (controlled.has("--extendeddiagnostics") || controlled.has("--pretty")) throw new Error(`${id} compiler arguments override harness-controlled diagnostics options`);
+  if (hasCompilerOption(args, ["--extendedDiagnostics", "--pretty"])) throw new Error(`${id} compiler arguments override harness-controlled diagnostics options`);
   const result = spawnSync(timeExecutable, ["-v", ...argv, ...args, "--extendedDiagnostics", "--pretty", "false"], {
     cwd,
     env: environment,

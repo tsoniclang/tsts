@@ -3,7 +3,7 @@ import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Name, Node_Clone, Node_SubtreeFacts, Node_Pos } from "../../ast/spine.js";
 import type { TextRange } from "../../core/text.js";
-import { AsSourceFile, Node_Parameters, Node_StatementList, Node_Statements, Node_Body, Node_Initializer, Node_Expression, NodeFactory_UpdateBlock, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateCatchClause, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateFunctionExpression } from "../../ast/ast.js";
+import { AsSourceFile, Node_Parameters, Node_StatementList, Node_Statements, Node_Body, Node_Initializer, Node_Expression, Node_Elements, NodeFactory_UpdateBlock, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateCatchClause, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateFunctionExpression } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { ArrowFunction, BinaryExpression, CatchClause, ConstructorDeclaration, ForInOrOfStatement, FunctionDeclaration, FunctionExpression, GetAccessorDeclaration, MethodDeclaration, ObjectLiteralExpression, ParameterDeclaration, SetAccessorDeclaration, VariableDeclaration, VariableStatement } from "../../ast/generated/data.js";
 import { AsBlock, AsSyntaxList, AsBinaryExpression, AsVariableStatement, AsVariableDeclaration, AsCatchClause, AsParameterDeclaration, AsConstructorDeclaration, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsMethodDeclaration, AsFunctionDeclaration, AsArrowFunction, AsFunctionExpression, AsObjectLiteralExpression, AsVariableDeclarationList } from "../../ast/generated/casts.js";
@@ -171,7 +171,7 @@ export function objectRestSpreadTransformer_visitSourceFile(receiver: GoPtr<obje
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visited = NodeVisitor_VisitEachChild(visitor, node as unknown as GoPtr<Node>);
-  EmitContext_AddEmitHelper(emitContext, visited, ...EmitContext_ReadEmitHelpers(emitContext));
+  EmitContext_AddEmitHelper(emitContext, visited, ...(EmitContext_ReadEmitHelpers(emitContext) ?? []));
   return visited;
 }
 
@@ -666,11 +666,11 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   EmitContext_StartVariableEnvironment(emitContext);
   let body = NodeVisitor_VisitNode(visitor, Node_Body(node));
-  let extras = EmitContext_EndVariableEnvironment(emitContext) as unknown as GoSlice<GoPtr<Node>>;
+  let extras = EmitContext_EndVariableEnvironment(emitContext);
   EmitContext_StartVariableEnvironment(emitContext);
   const newStatements = objectRestSpreadTransformer_collectObjectRestAssignments(receiver, node);
-  extras = EmitContext_EndAndMergeVariableEnvironment(emitContext, extras as unknown as GoPtr<never>[]) as unknown as GoSlice<GoPtr<Node>>;
-  if (newStatements.length === 0 && extras.length === 0) {
+  extras = EmitContext_EndAndMergeVariableEnvironment(emitContext, extras);
+  if ((newStatements?.length ?? 0) === 0 && (extras?.length ?? 0) === 0) {
     return body;
   }
 
@@ -703,7 +703,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
     suffix = [...suffix, ret];
   }
 
-  const combined: GoSlice<GoPtr<Node>> = [...prefix, ...extras, ...newStatements, ...suffix];
+  const combined: GoSlice<GoPtr<Node>> = [...prefix, ...(extras ?? []), ...(newStatements ?? []), ...suffix];
   const newStatementList = NodeFactory_NewNodeList(astFactory, combined);
   newStatementList!.Loc = Node_StatementList(body)!.Loc;
   return NodeFactory_UpdateBlock(astFactory, AsBlock(body)!, newStatementList as unknown as GoPtr<never>, AsBlock(body)!.MultiLine);
@@ -711,6 +711,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectObjectRestAssignments","kind":"method","status":"implemented","sigHash":"9e4ffea39eea074002c804f032309dd9d292a08b5aa358b9c67ba292ddd5c2bb","bodyHash":"83ecc400e79a64bc8fbaa5538abcf6245ef579fb62c4d4a0d310a435316337e4"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/estransforms/objectrestspread.ts::objectRestSpreadTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) collectObjectRestAssignments(node *ast.Node) []*ast.Node {
@@ -803,20 +804,20 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
  * 	return results
  * }
  */
-export function objectRestSpreadTransformer_collectObjectRestAssignments(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function objectRestSpreadTransformer_collectObjectRestAssignments(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const astFactory = printerFactory!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   let containsPrecedingObjectRestOrSpread = false;
-  let results: GoSlice<GoPtr<Node>> = [];
+  let results: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   for (const parameter of Node_Parameters(node) ?? []) {
     const paramNode = parameter as unknown as GoPtr<Node>;
     if (containsPrecedingObjectRestOrSpread) {
       const paramNameNode = Node_Name(paramNode) as unknown as GoPtr<Node>;
       if (IsBindingPattern(paramNameNode)) {
-        const elements = (paramNameNode as unknown as { data: { Elements?: GoSlice<GoPtr<Node>> } })!.data?.Elements ?? [];
-        if (elements.length > 0) {
+        const elements = Node_Elements(paramNameNode);
+        if ((elements?.length ?? 0) > 0) {
           const declarations = FlattenDestructuringBinding(
             receiver!.__tsgoEmbedded0!,
             paramNode, NodeFactory_NewGeneratedNameForNode(printerFactory, paramNode),
@@ -832,7 +833,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
             dl.Declarations!.Nodes = [...(dl.Declarations!.Nodes ?? []), ...decls] as GoSlice<GoPtr<Node>>;
             const statement = NewVariableStatement(astFactory, undefined, declarationList as unknown as GoPtr<never>);
             EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
-            results = [...results, statement];
+            results = [...(results ?? []), statement];
           }
         } else if (Node_Initializer(paramNode) !== undefined) {
           const name = NodeFactory_NewGeneratedNameForNode(printerFactory, paramNode);
@@ -840,7 +841,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
           const assignment = NodeFactory_NewAssignmentExpression(printerFactory, name as unknown as GoPtr<never>, initializer as unknown as GoPtr<never>);
           const statement = NewExpressionStatement(astFactory, assignment as unknown as GoPtr<never>);
           EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
-          results = [...results, statement];
+          results = [...(results ?? []), statement];
         }
       } else if (Node_Initializer(paramNode) !== undefined) {
         const cloneCoercible = { AsNodeFactory: () => astFactory };
@@ -863,7 +864,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
         const statement = NewIfStatement(astFactory, typeCheck as unknown as GoPtr<never>, block as unknown as GoPtr<never>, undefined);
         (statement as unknown as { Loc: TextRange })!.Loc = paramNode!.Loc;
         EmitContext_AddEmitFlags(emitContext, statement, EFNoTokenSourceMaps | EFNoTrailingSourceMap | EFCustomPrologue | EFNoComments | EFStartOnNewLine);
-        results = [...results, statement];
+        results = [...(results ?? []), statement];
       }
     } else if ((Node_SubtreeFacts(paramNode) & SubtreeContainsObjectRestOrSpread) !== 0) {
       containsPrecedingObjectRestOrSpread = true;
@@ -882,7 +883,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
         dl.Declarations!.Nodes = [...(dl.Declarations!.Nodes ?? []), ...decls] as GoSlice<GoPtr<Node>>;
         const statement = NewVariableStatement(astFactory, undefined, declarationList as unknown as GoPtr<never>);
         EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
-        results = [...results, statement];
+        results = [...(results ?? []), statement];
       }
     }
   }
@@ -1268,10 +1269,7 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
   if ((Node_SubtreeFacts(nodeAsNode) & SubtreeContainsObjectRestOrSpread) === 0) {
     return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
   }
-  let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties);
-  if (objects === undefined) {
-    throw new globalThis.RangeError("object rest/spread transformation produced no object chunks");
-  }
+  let objects = objectRestSpreadTransformer_chunkObjectLiteralElements(receiver, node!.Properties)!;
   if (objects.length > 0 && objects[0]!.Kind !== KindObjectLiteralExpression) {
     objects = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, undefined), false), ...objects];
   }
@@ -1325,11 +1323,11 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
  * }
  */
 export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver: GoPtr<objectRestSpreadTransformer>, list: GoPtr<NodeList>): GoPtr<GoSlice<GoPtr<Node>>> {
-  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   if (list === undefined || list.Nodes === undefined || list.Nodes.length === 0) {
     return undefined;
   }
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   const elements = list!.Nodes as unknown as GoSlice<GoPtr<Node>>;
   let chunkObject: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   const objects: GoSlice<GoPtr<Node>> = [];

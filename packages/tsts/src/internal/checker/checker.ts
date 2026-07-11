@@ -800,7 +800,7 @@ export function Checker_checkExternalEmitHelpers(receiver: GoPtr<Checker>, locat
  * }
  */
 export function Checker_hasSignatureWithArityGreaterThan(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, arity: int): bool {
-  for (const signature of Checker_getSignaturesOfSymbol(receiver, symbol_)) {
+  for (const signature of Checker_getSignaturesOfSymbol(receiver, symbol_) ?? []) {
     if (Checker_getParameterCount(receiver, signature) > arity) {
       return true as bool;
     }

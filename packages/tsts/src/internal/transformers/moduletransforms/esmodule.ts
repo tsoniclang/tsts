@@ -1,5 +1,6 @@
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { bool } from "../../../go/scalars.js";
+import { Clone } from "../../../go/slices.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
 import {
   AsSourceFile, SourceFile_FileName, SourceFile_Path,
@@ -42,7 +43,7 @@ import {
   CompilerOptions_GetEmitModuleKind, CompilerOptions_GetIsolatedModules,
   JsxEmitPreserve, ModuleKindES2015, ModuleKindNode16, ModuleKindPreserve,
 } from "../../core/compileroptions.js";
-import { FirstResult, Some } from "../../core/core.js";
+import { Concatenate, FirstResult, Some } from "../../core/core.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import {
   EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AssignCommentAndSourceMapRanges,
@@ -249,7 +250,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
   receiver!.importRequireStatements = undefined;
 
   let result = AsSourceFile(NodeVisitor_VisitEachChild(visitor, nodeAsNode));
-  EmitContext_AddEmitHelper(emitContext, result as unknown as GoPtr<Node>, ...EmitContext_ReadEmitHelpers(emitContext));
+  EmitContext_AddEmitHelper(emitContext, result as unknown as GoPtr<Node>, ...(EmitContext_ReadEmitHelpers(emitContext) ?? []));
 
   const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(
     emitContext, result, receiver!.compilerOptions,
@@ -259,18 +260,18 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     false, /*hasImportDefault*/
   );
   if (externalHelpersImportDeclaration !== undefined || receiver!.importRequireStatements !== undefined) {
-    const [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf!, result!.Statements!.Nodes as GoSlice<GoPtr<Statement>>);
+    const [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf!, result!.Statements!.Nodes);
     const [custom, rest] = NodeFactory_SplitCustomPrologue(pf!, rest0);
-    let statements: GoSlice<GoPtr<Node>> = [...prologue];
-    statements = [...statements, ...custom];
+    let statements: GoPtr<GoSlice<GoPtr<Node>>> = Clone(prologue);
+    statements = Concatenate(statements, custom);
     if (externalHelpersImportDeclaration !== undefined) {
-      statements = [...statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration)];
+      statements = Concatenate(statements, [NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration)]);
     }
     const importRequireStmts = ESModuleTransformer_importRequireStatements(receiver);
     if (importRequireStmts !== undefined) {
-      statements = [...statements, ...importRequireStmts.statements];
+      statements = Concatenate(statements, importRequireStmts.statements);
     }
-    statements = [...statements, ...rest];
+    statements = Concatenate(statements, rest);
     const statementList = NodeFactory_NewNodeList(af, statements);
     statementList!.Loc = result!.Statements!.Loc;
     result = AsSourceFile(NodeFactory_UpdateSourceFile(af, result, statementList, node!.EndOfFileToken));

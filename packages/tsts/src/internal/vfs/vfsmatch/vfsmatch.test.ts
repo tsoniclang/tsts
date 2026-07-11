@@ -115,7 +115,7 @@ type ReadDirCase = {
   readonly excludes?: string[];
   readonly includes?: string[];
   readonly depth?: int;
-  readonly expect: (got: string[]) => void;
+  readonly expect: (got: GoPtr<GoSlice<string>>) => void;
 };
 
 function runReadDirectoryCase(testCase: ReadDirCase): void {
@@ -312,6 +312,7 @@ test("SpecMatcher mirrors upstream match and index behavior", () => {
   assert.equal(SpecMatcher_MatchIndex(exclude, "/project/src"), -1);
 
   assert.equal(NewSpecMatcher([], "/project", UsageFiles, true as bool), undefined);
+  assert.equal(NewSpecMatcher(undefined, "/project", UsageFiles, true as bool), undefined);
   assert.equal(NewSpecMatcher(["**"], "/project", UsageFiles, true as bool), undefined);
 });
 

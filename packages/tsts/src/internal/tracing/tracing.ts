@@ -186,10 +186,10 @@ export interface TracedTypeValue {
   IsConditional(): bool;
   Symbol(): GoPtr<Symbol>;
   AliasSymbol(): GoPtr<Symbol>;
-  AliasTypeArguments(): GoSlice<TracedType>;
+  AliasTypeArguments(): GoPtr<GoSlice<TracedType>>;
   IntrinsicName(): string;
-  UnionTypes(): GoSlice<TracedType>;
-  IntersectionTypes(): GoSlice<TracedType>;
+  UnionTypes(): GoPtr<GoSlice<TracedType>>;
+  IntersectionTypes(): GoPtr<GoSlice<TracedType>>;
   IndexType(): TracedType;
   IndexedAccessObjectType(): TracedType;
   IndexedAccessIndexType(): TracedType;
@@ -200,7 +200,7 @@ export interface TracedTypeValue {
   SubstitutionBaseType(): TracedType;
   SubstitutionConstraintType(): TracedType;
   ReferenceTarget(): TracedType;
-  ReferenceTypeArguments(): GoSlice<TracedType>;
+  ReferenceTypeArguments(): GoPtr<GoSlice<TracedType>>;
   ReferenceNode(): GoPtr<Node>;
   ReverseMappedSourceType(): TracedType;
   ReverseMappedMappedType(): TracedType;
@@ -1565,19 +1565,19 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
 
   // Union types
   const unionTypes = typ.UnionTypes();
-  if (unionTypes.length > 0) {
+  if ((unionTypes?.length ?? 0) > 0) {
     desc.UnionTypes = mapTypeIds(unionTypes);
   }
 
   // Intersection types
   const intersectionTypes = typ.IntersectionTypes();
-  if (intersectionTypes.length > 0) {
+  if ((intersectionTypes?.length ?? 0) > 0) {
     desc.IntersectionTypes = mapTypeIds(intersectionTypes);
   }
 
   // Alias type arguments
   const aliasArgs = typ.AliasTypeArguments();
-  if (aliasArgs.length > 0) {
+  if ((aliasArgs?.length ?? 0) > 0) {
     desc.AliasTypeArguments = mapTypeIds(aliasArgs);
   }
 
@@ -1637,7 +1637,7 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
     desc.InstantiatedType = target.Id();
   }
   const refArgs = typ.ReferenceTypeArguments();
-  if (refArgs.length > 0) {
+  if ((refArgs?.length ?? 0) > 0) {
     desc.TypeArguments = mapTypeIds(refArgs);
   }
   const refNode = typ.ReferenceNode();
@@ -1711,8 +1711,8 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
  * 	return ids
  * }
  */
-export function mapTypeIds(types: GoSlice<TracedType>): GoPtr<GoSlice<uint>> {
-  if (types.length === 0) {
+export function mapTypeIds(types: GoPtr<GoSlice<TracedType>>): GoPtr<GoSlice<uint>> {
+  if (types === undefined || types.length === 0) {
     return undefined;
   }
   return types.map((t) => (t !== undefined ? t.Id() : 0 as uint));

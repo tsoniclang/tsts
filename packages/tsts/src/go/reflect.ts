@@ -15,9 +15,10 @@ import type { GoSlice } from "./compat.js";
 //     Interface).
 //   - DeepEqual (structural deep equality).
 //
-// Static reflection is opt-in: callers that need concrete struct/slice metadata
-// register a Type value. TypeFor without a registered type returns a conservative
-// Interface type; it never guesses a concrete Go type from an erased TS generic.
+// Static reflection is opt-in: callers that need concrete metadata create a
+// RuntimeType token and attach it at the value-construction boundary. TypeFor
+// without a token returns a conservative Interface type; it never guesses a
+// concrete Go type from an erased TS generic.
 
 // Kind represents the specific kind of type that a Type represents (Go: reflect.Kind).
 export type Kind = int;
@@ -103,6 +104,16 @@ export interface TypeDescriptor {
   readonly zero?: () => unknown;
 }
 
+const runtimeTypeBrand = Symbol("reflect.RuntimeType");
+const runtimeTypeValue = Symbol("reflect.RuntimeType.value");
+
+// RuntimeType is an explicit, nominal runtime identity token. It must be
+// created with NewRuntimeType; TypeScript generic parameters alone cannot
+// provide this information after erasure.
+export interface RuntimeType extends Type {
+  readonly [runtimeTypeBrand]: true;
+}
+
 class descriptorType implements Type {
   constructor(private readonly descriptor: TypeDescriptor) {}
 
@@ -130,15 +141,43 @@ class descriptorType implements Type {
   }
 }
 
-const registeredTypes = new globalThis.Map<string, Type>();
-const interfaceType = new descriptorType({ kind: Interface, name: "interface{}" });
+class runtimeDescriptorType extends descriptorType implements RuntimeType {
+  readonly [runtimeTypeBrand] = true;
+}
+
+const interfaceType = new runtimeDescriptorType({ kind: Interface, name: "interface{}" });
+const boolType = new runtimeDescriptorType({ kind: Bool, name: "bool" });
+const int64Type = new runtimeDescriptorType({ kind: Int64, name: "int64" });
+const float64Type = new runtimeDescriptorType({ kind: Float64, name: "float64" });
+const stringType = new runtimeDescriptorType({ kind: String, name: "string" });
+const sliceType = new runtimeDescriptorType({ kind: Slice });
+const mapType = new runtimeDescriptorType({ kind: Map });
+
+export const AnyType: RuntimeType = interfaceType;
+export const StringType: RuntimeType = stringType;
+export const Float64Type: RuntimeType = float64Type;
 
 export function NewType(descriptor: TypeDescriptor): Type {
   return new descriptorType(descriptor);
 }
 
-export function RegisterType(name: string, typ: Type): void {
-  registeredTypes.set(name, typ);
+export function NewRuntimeType(descriptor: TypeDescriptor): RuntimeType {
+  return new runtimeDescriptorType(descriptor);
+}
+
+// RegisterRuntimeType records exact runtime type identity on an object. This is
+// intentionally an explicit construction-boundary operation rather than a
+// structural test or generic inference fallback.
+export function RegisterRuntimeType<T extends object>(value: T, typ: RuntimeType): T {
+  globalThis.Object.defineProperty(value, runtimeTypeValue, { value: typ });
+  return value;
+}
+
+export function RuntimeTypeOf(value: unknown): RuntimeType | undefined {
+  if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+    return undefined;
+  }
+  return (value as { readonly [runtimeTypeValue]?: RuntimeType })[runtimeTypeValue];
 }
 
 // Value is the reflection interface to a Go value. This models a runtime JS value.
@@ -152,13 +191,12 @@ export class Value {
 
   // Kind returns v's Kind.
   Kind(): Kind {
-    return classifyKind(this.v);
+    return TypeOf(this.v)?.Kind() ?? Invalid;
   }
 
   // Type returns v's type.
   Type(): Type {
-    const kind = classifyKind(this.v);
-    return { Kind: (): Kind => kind };
+    return TypeOf(this.v) ?? { Kind: (): Kind => Invalid };
   }
 
   // IsNil reports whether its argument v is nil. Valid for chan, func, interface,
@@ -263,8 +301,26 @@ export function TypeOf(value: unknown): Type | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
-  const kind = classifyKind(value);
-  return { Kind: (): Kind => kind };
+  const runtimeType = RuntimeTypeOf(value);
+  if (runtimeType !== undefined) {
+    return runtimeType;
+  }
+  switch (classifyKind(value)) {
+    case Bool:
+      return boolType;
+    case Int64:
+      return int64Type;
+    case Float64:
+      return float64Type;
+    case String:
+      return stringType;
+    case Slice:
+      return sliceType;
+    case Map:
+      return mapType;
+    default:
+      return interfaceType;
+  }
 }
 
 // ValueOf returns a new Value initialized to the concrete value stored in the
@@ -365,19 +421,21 @@ export interface StructField {
   readonly Type: Type;
 }
 
-export function TypeFor<T>(name?: string): Type {
-  if (name !== undefined) {
-    return registeredTypes.get(name) ?? interfaceType;
+export function TypeFor<T>(typ?: RuntimeType): Type {
+  if (typ !== undefined) {
+    return typ;
   }
+  // A generic argument is erased at runtime. Callers that need exact identity
+  // must pass a RuntimeType token created at their construction boundary.
   return interfaceType;
 }
 
-export function TypeAssert<T>(v: Value, guard?: (value: unknown) => value is T): [T | undefined, bool] {
+export function TypeAssert<T>(v: Value, assertion: RuntimeType | ((value: unknown) => value is T)): [T | undefined, bool] {
   const value = v.Interface();
   if (value === undefined || value === null) {
     return [undefined, false as bool];
   }
-  if (guard !== undefined && !guard(value)) {
+  if (typeof assertion === "function" ? !assertion(value) : TypeOf(value) !== assertion) {
     return [undefined, false as bool];
   }
   return [value as T, true as bool];

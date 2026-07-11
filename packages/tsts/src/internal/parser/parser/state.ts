@@ -180,9 +180,9 @@ export interface Parser {
   sourceText: string;
   scriptKind: ScriptKind;
   languageVariant: LanguageVariant;
-  diagnostics: GoSlice<GoPtr<Diagnostic>>;
-  jsDiagnostics: GoSlice<GoPtr<Diagnostic>>;
-  jsdocDiagnostics: GoSlice<GoPtr<Diagnostic>>;
+  diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  jsDiagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
+  jsdocDiagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   token: Kind;
   sourceFlags: NodeFlags;
   contextFlags: NodeFlags;
@@ -195,17 +195,17 @@ export interface Parser {
   notParenthesizedArrow: Set<int>;
   nodeSliceArena: Arena<GoPtr<Node>>;
   stringSliceArena: Arena<string>;
-  jsdocInfos: GoSlice<JSDocInfo>;
-  possibleAwaitSpans: GoSlice<int>;
-  jsdocCommentsSpace: GoSlice<string>;
-  jsdocCommentRangesSpace: GoSlice<CommentRange>;
-  jsdocTagCommentsSpace: GoSlice<string>;
-  jsdocTagCommentsPartsSpace: GoSlice<GoPtr<Node>>;
-  reparseList: GoSlice<GoPtr<Node>>;
+  jsdocInfos: GoPtr<GoSlice<JSDocInfo>>;
+  possibleAwaitSpans: GoPtr<GoSlice<int>>;
+  jsdocCommentsSpace: GoPtr<GoSlice<string>>;
+  jsdocCommentRangesSpace: GoPtr<GoSlice<CommentRange>>;
+  jsdocTagCommentsSpace: GoPtr<GoSlice<string>>;
+  jsdocTagCommentsPartsSpace: GoPtr<GoSlice<GoPtr<Node>>>;
+  reparseList: GoPtr<GoSlice<GoPtr<Node>>>;
   commonJSModuleIndicator: GoPtr<Node>;
   currentParent: GoPtr<Node>;
   setParentFromContext: Visitor;
-  reparsedClones: GoSlice<GoPtr<Node>>;
+  reparsedClones: GoPtr<GoSlice<GoPtr<Node>>>;
 }
 
 /**

@@ -173,7 +173,7 @@ export function taggedTemplateTransformer_visitSourceFile(receiver: GoPtr<tagged
     visited = NodeFactory_UpdateSourceFile(af, visitedSourceFile, stmtList, visitedSourceFile!.EndOfFileToken);
   }
 
-  EmitContext_AddEmitHelper(emitCtx, visited, ...EmitContext_ReadEmitHelpers(emitCtx));
+  EmitContext_AddEmitHelper(emitCtx, visited, ...(EmitContext_ReadEmitHelpers(emitCtx) ?? []));
   return visited;
 }
 

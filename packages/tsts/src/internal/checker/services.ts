@@ -1270,7 +1270,7 @@ export function Checker_IsDeclarationUsed(receiver: GoPtr<Checker>, sourceFile: 
  */
 export function Checker_IsSymbolReferencedInFile(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>, definition: GoPtr<Identifier>, symbol_: GoPtr<Symbol>): bool {
   const identifierText = definition!.Text;
-  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>)) {
+  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>) ?? []) {
     if (!IsIdentifier(token)) {
       continue;
     }
@@ -1342,7 +1342,7 @@ export function Checker_IsSymbolReferencedInFile(receiver: GoPtr<Checker>, sourc
 export function Checker_GetReferencesToSymbolInFile(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
   const identifierText = symbol_!.Name;
   let result: GoSlice<GoPtr<Node>> = [];
-  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>)) {
+  for (const token of getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile as unknown as GoPtr<Node>) ?? []) {
     if (!IsIdentifier(token)) {
       continue;
     }
@@ -1439,7 +1439,7 @@ export function isExportSpecifierAlias(referenceLocation: GoPtr<Identifier>, exp
  * 	})
  * }
  */
-export function getPossibleSymbolReferenceNodes(sourceFile: GoPtr<SourceFile>, symbolName: string, container: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+export function getPossibleSymbolReferenceNodes(sourceFile: GoPtr<SourceFile>, symbolName: string, container: GoPtr<Node>): GoPtr<GoSlice<GoPtr<Node>>> {
   return MapNonNil(getPossibleSymbolReferencePositions(sourceFile, symbolName, container), (pos: int) => {
     const referenceLocation = GetTouchingPropertyName(sourceFile, pos);
     if (referenceLocation !== (sourceFile as unknown as GoPtr<Node>)) {
@@ -1781,10 +1781,10 @@ export function Checker_getTypeArgumentConstraint(receiver: GoPtr<Checker>, node
 
     if (IsTypeReferenceType(node!.Parent)) {
       const typeParameters = Checker_getTypeParametersForTypeReferenceOrImport(receiver, node!.Parent);
-      if (typeParameters.length === 0) {
+      if ((typeParameters?.length ?? 0) === 0) {
         return undefined;
       }
-      if (typeArgumentPosition >= typeParameters.length) {
+      if (typeParameters === undefined || typeArgumentPosition >= typeParameters.length) {
         return undefined;
       }
       const relevantTypeParameter = typeParameters[typeArgumentPosition];
@@ -2324,7 +2324,7 @@ export function Checker_GetPropertySymbolsFromContextualType(receiver: GoPtr<Che
     }
     return undefined;
   }
-  let filteredTypes = Type_Types(contextualType);
+  let filteredTypes: GoPtr<GoSlice<GoPtr<Type>>> = Type_Types(contextualType);
   if (IsObjectLiteralExpression(node!.Parent) || IsJsxAttributes(node!.Parent)) {
     filteredTypes = Filter(filteredTypes, (t: GoPtr<Type>) => {
       return !Checker_IsTypeInvalidDueToUnionDiscriminant(receiver, t, node!.Parent);
@@ -2333,7 +2333,7 @@ export function Checker_GetPropertySymbolsFromContextualType(receiver: GoPtr<Che
   const discriminatedPropertySymbols = MapNonNil(filteredTypes, (t: GoPtr<Type>) => {
     return Checker_getPropertyOfType(receiver, t, name);
   });
-  if (unionSymbolOk && ((discriminatedPropertySymbols?.length ?? 0) === 0 || discriminatedPropertySymbols?.length === Type_Types(contextualType).length)) {
+  if (unionSymbolOk && ((discriminatedPropertySymbols?.length ?? 0) === 0 || discriminatedPropertySymbols?.length === (Type_Types(contextualType)?.length ?? 0))) {
     const symbol_ = Checker_getPropertyOfType(receiver, contextualType, name);
     if (symbol_ !== undefined) {
       return [symbol_];

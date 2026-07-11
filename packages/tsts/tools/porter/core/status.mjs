@@ -7,7 +7,6 @@ import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin
 import { emptyGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
-import { collectMechanicalPortRisks } from "./mechanical-risks.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, policyFor, policyForUnit, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { normalizeEmbeddedGoSource, renderGoSourceComment, validateTsgoUnitMetadata } from "./ts-units.mjs";
@@ -165,10 +164,6 @@ export function buildStatus(
         sourceInterpretationIssues.push({ path: file.path, reason: "active source uses cgo import C, which has no registered porter mechanism" });
       } else if (imported.name === ".") {
         sourceInterpretationIssues.push({ path: file.path, reason: `active source uses dot import '${imported.path}', which cannot be resolved by explicit symbol identity` });
-      } else if (imported.resolutionError !== undefined) {
-        sourceInterpretationIssues.push({ path: file.path, reason: `import '${imported.path}' is unresolved: ${imported.resolutionError}` });
-      } else if (imported.name === undefined && imported.packageName === undefined) {
-        sourceInterpretationIssues.push({ path: file.path, reason: `package name for import '${imported.path}' is unresolved; basename guessing is forbidden` });
       }
     }
   }
@@ -199,7 +194,6 @@ export function buildStatus(
       goUnits.push(record);
     }
   }
-
   const tsByID = new Map();
   const duplicateTsIDs = [];
   const invalidTsMetadata = [];
@@ -221,8 +215,6 @@ export function buildStatus(
   const implemented = [];
   const stubbed = [];
   const excluded = [];
-  const mechanicalRisks = [];
-  const implementationOwnerIssues = [];
   const embeddedSourceMismatches = [];
 
   for (const unit of goUnits) {
@@ -278,21 +270,7 @@ export function buildStatus(
 
     row.tsPath = tsUnit.path;
     row.tsStatus = tsUnit.status;
-    row.hasUnimplThrow = tsUnit.hasUnimplThrow ?? false;
     row.kind = tsUnit.kind;
-    if (tsUnit.implementationOwnerIssue !== undefined) {
-      implementationOwnerIssues.push({ id: row.id, path: row.tsPath, name: row.name, reason: tsUnit.implementationOwnerIssue });
-    }
-    const unitMechanicalRisks = [
-      ...collectMechanicalPortRisks(unit, tsUnit),
-      ...(tsUnit.mechanicalRisks ?? []),
-    ];
-    if (unitMechanicalRisks.length > 0) {
-      row.mechanicalRisks = unitMechanicalRisks;
-      for (const risk of unitMechanicalRisks) {
-        mechanicalRisks.push({ id: row.id, path: row.tsPath, name: row.name, ...risk });
-      }
-    }
     const sigMatches = tsUnit.sigHash === unit.sigHash;
     const bodyMatches = tsUnit.bodyHash === unit.bodyHash;
     if (!sigMatches || !bodyMatches) {
@@ -326,23 +304,13 @@ export function buildStatus(
       path: file.path,
       reason: tsFilePolicyFor(config, file.path).reason,
     }));
-  const parseErrors = snapshot.files
-    .filter((file) => file.parseError)
-    .map((file) => ({ path: file.path, error: file.parseError }));
   const unitlessGoFiles = snapshot.files
-    .filter((file) => !file.parseError && (file.units ?? []).length === 0)
+    .filter((file) => (file.units ?? []).length === 0)
     .map((file) => ({
       path: file.path,
       lineCount: file.lineCount,
       reason: "No top-level declarations; package docs/comment-only files are valid but reported.",
     }));
-
-  const featureCounts = {};
-  for (const file of snapshot.files) {
-    for (const [name, count] of Object.entries(file.featureCounts ?? {})) {
-      featureCounts[name] = (featureCounts[name] ?? 0) + count;
-    }
-  }
 
   return {
     schemaVersion: 1,
@@ -369,7 +337,6 @@ export function buildStatus(
       orphan: orphanTsUnits.length,
       duplicateGoIDs: duplicateGoIDs.length,
       duplicateTsIDs: duplicateTsIDs.length,
-      parseErrors: parseErrors.length,
       unitlessGoFiles: unitlessGoFiles.length,
       untrackedTsFiles: untrackedTsFiles.length,
       forbiddenTsFiles: forbiddenTsFiles.length,
@@ -403,8 +370,6 @@ export function buildStatus(
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
       schemaFilePolicyIssues: (schemaSourceSync.policyIssues ?? []).length,
       localOverrideIssues: localOverrides.failureCount,
-      mechanicalPortRisks: mechanicalRisks.length,
-      implementationOwnerIssues: implementationOwnerIssues.length,
       embeddedSourceMismatches: embeddedSourceMismatches.length,
       generatedSourcePolicyIssues: generatedSourcePolicies.issues.length,
       generatedSourceCoverageIssues: generatedSourceCoverage.issues.length,
@@ -416,11 +381,9 @@ export function buildStatus(
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
     missingModules: countsByModule(missing),
-    featureCounts,
     duplicateGoIDs,
     duplicateTsIDs,
     orphanTsUnits,
-    parseErrors,
     unitlessGoFiles,
     untrackedTsFiles,
     forbiddenTsFiles,
@@ -431,8 +394,6 @@ export function buildStatus(
     unicodeGeneratedArtifacts,
     schemaSourceSync,
     localOverrides,
-    mechanicalRisks,
-    implementationOwnerIssues,
     embeddedSourceMismatches,
     generatedSourcePolicies,
     generatedSourceCoverage,

@@ -2,9 +2,10 @@ import { createHash } from "node:crypto";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 import { canonicalJson, compareUtf8, fingerprint, readStableRegularFile } from "../test-provenance.mjs";
+import { WORKLOAD_SELECTION_CONTRACT } from "./benchmark-selection.mjs";
 
 export const PERFORMANCE_POLICY_SCHEMA_VERSION = 1;
-export const PERFORMANCE_REPORT_SCHEMA_VERSION = 2;
+export const PERFORMANCE_REPORT_SCHEMA_VERSION = 3;
 export const PERFORMANCE_REPORT_KIND = "tsts-performance-report";
 export const SUPPORTED_METRICS = Object.freeze([
   "Files",
@@ -46,6 +47,7 @@ export function loadPerformancePolicy(file) {
     requiredMetrics: policy.requiredMetrics,
     gatedMetrics: policy.gatedMetrics,
     workloadEquivalence: policy.workloadEquivalence,
+    workloadSelection: WORKLOAD_SELECTION_CONTRACT,
   };
   return {
     path,

@@ -4,10 +4,13 @@ import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
   NewOrderedMapWithSizeHint,
+  NewOrderedMapWithSizeHintWithRuntimeType,
   OrderedMap_Entries,
   OrderedMap_Get,
+  OrderedMap_HasRuntimeType,
   OrderedMap_Set,
   OrderedMap_Size,
+  OrderedMap_StringAnyRuntimeType,
 } from "../collections/ordered_map.js";
 import type { BuildOptions } from "../core/buildoptions.js";
 import type {
@@ -41,10 +44,13 @@ import type { CommandLineOptionNameMap } from "./tsconfigparsing.js";
 import {
   CommandLineCompilerOptionsMap,
   CommandLineOptionNameMap_Get,
-  isOrderedMap,
 } from "./tsconfigparsing.js";
 import { BuildNameMap, NameMap_Get } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
+
+function asOrderedMap(value: unknown): GoPtr<OrderedMap<string, unknown>> {
+  return OrderedMap_HasRuntimeType<string, unknown>(value, OrderedMap_StringAnyRuntimeType) ? value : undefined;
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::ParseTristate","kind":"func","status":"implemented","sigHash":"49c663f5d4d2bfc54d4329d3c33406f6d96155082766b6de7630809dacb0801b","bodyHash":"5c576abd91bbe40ecd51373a6380cc36bcf1cfe3c57c1bf45e846fd8bcd7885f"}
@@ -128,10 +134,10 @@ export function ParseStringArray(value: unknown): GoPtr<GoSlice<string>> {
  * 	return nil
  * }
  */
-export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoSlice<string>>> {
+export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoPtr<GoSlice<string>>>> {
   const m = asOrderedMap(value);
   if (m !== undefined) {
-    const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m));
+    const result = NewOrderedMapWithSizeHint<string, GoPtr<GoSlice<string>>>(OrderedMap_Size(m));
     OrderedMap_Entries(m as GoPtr<OrderedMap<string, unknown>>)((k: string, v: unknown): bool => {
       OrderedMap_Set(result, k, ParseStringArray(v));
       return true;
@@ -237,10 +243,10 @@ export interface projectReferenceParseResult {
  * }
  */
 export function parseProjectReference(json: unknown): GoPtr<projectReferenceParseResult> {
-  if (!isOrderedMap(json)) {
+  const v = asOrderedMap(json);
+  if (v === undefined) {
     return undefined;
   }
-  const v = json;
   const result: projectReferenceParseResult = {
     reference: { Path: "", OriginalPath: "", Circular: false },
     hasPath: false as bool,
@@ -310,8 +316,8 @@ export function parseProjectReference(json: unknown): GoPtr<projectReferencePars
  * }
  */
 export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, unknown>> {
-  const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int);
-  const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
+  const result = NewOrderedMapWithSizeHintWithRuntimeType<string, unknown>(OrderedMap_StringAnyRuntimeType, 6 as int);
+  const m = asOrderedMap(json);
   if (m !== undefined) {
     {
       const [v, ok] = OrderedMap_Get(m, "include", () => undefined);
@@ -380,7 +386,7 @@ export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, un
  * }
  */
 export interface optionParser {
-  ParseOption(key: string, value: unknown): GoSlice<GoPtr<Diagnostic>>;
+  ParseOption(key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>>;
   UnknownOptionDiagnostic(): GoPtr<Message>;
   UnknownDidYouMeanDiagnostic(): GoPtr<Message>;
 }
@@ -405,7 +411,7 @@ export interface compilerOptionsParser {
  * 	return ParseCompilerOptions(key, value, o.CompilerOptions)
  * }
  */
-export function compilerOptionsParser_ParseOption(receiver: GoPtr<compilerOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function compilerOptionsParser_ParseOption(receiver: GoPtr<compilerOptionsParser>, key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const o = receiver!;
   return ParseCompilerOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -436,7 +442,7 @@ export function compilerOptionsParser_UnknownDidYouMeanDiagnostic(receiver: GoPt
 
 export function compilerOptionsParser_as_optionParser(receiver: GoPtr<compilerOptionsParser>): optionParser {
   return {
-    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => compilerOptionsParser_ParseOption(receiver, key, value),
+    ParseOption: (key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> => compilerOptionsParser_ParseOption(receiver, key, value),
     UnknownOptionDiagnostic: (): GoPtr<Message> => compilerOptionsParser_UnknownOptionDiagnostic(receiver),
     UnknownDidYouMeanDiagnostic: (): GoPtr<Message> => compilerOptionsParser_UnknownDidYouMeanDiagnostic(receiver),
   };
@@ -462,7 +468,7 @@ export interface watchOptionsParser {
  * 	return ParseWatchOptions(key, value, o.WatchOptions)
  * }
  */
-export function watchOptionsParser_ParseOption(receiver: GoPtr<watchOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function watchOptionsParser_ParseOption(receiver: GoPtr<watchOptionsParser>, key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const o = receiver!;
   return ParseWatchOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -493,7 +499,7 @@ export function watchOptionsParser_UnknownDidYouMeanDiagnostic(receiver: GoPtr<w
 
 export function watchOptionsParser_as_optionParser(receiver: GoPtr<watchOptionsParser>): optionParser {
   return {
-    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => watchOptionsParser_ParseOption(receiver, key, value),
+    ParseOption: (key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> => watchOptionsParser_ParseOption(receiver, key, value),
     UnknownOptionDiagnostic: (): GoPtr<Message> => watchOptionsParser_UnknownOptionDiagnostic(receiver),
     UnknownDidYouMeanDiagnostic: (): GoPtr<Message> => watchOptionsParser_UnknownDidYouMeanDiagnostic(receiver),
   };
@@ -519,7 +525,7 @@ export interface typeAcquisitionParser {
  * 	return ParseTypeAcquisition(key, value, o.TypeAcquisition)
  * }
  */
-export function typeAcquisitionParser_ParseOption(receiver: GoPtr<typeAcquisitionParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function typeAcquisitionParser_ParseOption(receiver: GoPtr<typeAcquisitionParser>, key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const o = receiver!;
   return ParseTypeAcquisition(key, value, o.__tsgoEmbedded0);
 }
@@ -550,7 +556,7 @@ export function typeAcquisitionParser_UnknownDidYouMeanDiagnostic(receiver: GoPt
 
 export function typeAcquisitionParser_as_optionParser(receiver: GoPtr<typeAcquisitionParser>): optionParser {
   return {
-    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => typeAcquisitionParser_ParseOption(receiver, key, value),
+    ParseOption: (key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> => typeAcquisitionParser_ParseOption(receiver, key, value),
     UnknownOptionDiagnostic: (): GoPtr<Message> => typeAcquisitionParser_UnknownOptionDiagnostic(receiver),
     UnknownDidYouMeanDiagnostic: (): GoPtr<Message> => typeAcquisitionParser_UnknownDidYouMeanDiagnostic(receiver),
   };
@@ -576,7 +582,7 @@ export interface buildOptionsParser {
  * 	return ParseBuildOptions(key, value, o.BuildOptions)
  * }
  */
-export function buildOptionsParser_ParseOption(receiver: GoPtr<buildOptionsParser>, key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> {
+export function buildOptionsParser_ParseOption(receiver: GoPtr<buildOptionsParser>, key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
   const o = receiver!;
   return ParseBuildOptions(key, value, o.__tsgoEmbedded0);
 }
@@ -607,7 +613,7 @@ export function buildOptionsParser_UnknownDidYouMeanDiagnostic(receiver: GoPtr<b
 
 export function buildOptionsParser_as_optionParser(receiver: GoPtr<buildOptionsParser>): optionParser {
   return {
-    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => buildOptionsParser_ParseOption(receiver, key, value),
+    ParseOption: (key: string, value: unknown): GoPtr<GoSlice<GoPtr<Diagnostic>>> => buildOptionsParser_ParseOption(receiver, key, value),
     UnknownOptionDiagnostic: (): GoPtr<Message> => buildOptionsParser_UnknownOptionDiagnostic(receiver),
     UnknownDidYouMeanDiagnostic: (): GoPtr<Message> => buildOptionsParser_UnknownDidYouMeanDiagnostic(receiver),
   };

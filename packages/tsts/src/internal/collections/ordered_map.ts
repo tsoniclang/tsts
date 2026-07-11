@@ -2,8 +2,8 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
 import { GoMapGetExisting, GoMapLookup } from "../../go/compat.js";
 import type { TextMarshaler } from "../../go/encoding.js";
-import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Pointer as reflect_Pointer, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, TypeAssert as reflect_TypeAssert, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
-import type { Value } from "../../go/reflect.js";
+import { AnyType as reflect_AnyType, Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, NewRuntimeType as reflect_NewRuntimeType, Pointer as reflect_Pointer, RegisterRuntimeType as reflect_RegisterRuntimeType, RuntimeTypeOf as reflect_RuntimeTypeOf, String as reflect_String, StringType as reflect_StringType, TypeAssert as reflect_TypeAssert, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
+import type { RuntimeType, Value } from "../../go/reflect.js";
 import { StringFromUtf8Bytes } from "../../go/unicode/utf8.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
 import type { Decoder, Encoder, Kind, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
@@ -28,6 +28,45 @@ export interface OrderedMap<K extends GoComparable = unknown, V = unknown> {
   mp: GoPtr<GoMap<K, V>>;
 }
 
+const orderedMapRuntimeTypes = new globalThis.Map<RuntimeType, globalThis.Map<RuntimeType, RuntimeType>>();
+
+// Generic parameters are erased in TypeScript. Exact OrderedMap identity is
+// therefore established only by an explicit pair of runtime type tokens.
+export function OrderedMap_RuntimeType<K extends GoComparable, V>(keyType: RuntimeType, valueType: RuntimeType): RuntimeType {
+  let valueTypes = orderedMapRuntimeTypes.get(keyType);
+  if (valueTypes === undefined) {
+    valueTypes = new globalThis.Map<RuntimeType, RuntimeType>();
+    orderedMapRuntimeTypes.set(keyType, valueTypes);
+  }
+  let typ = valueTypes.get(valueType);
+  if (typ === undefined) {
+    typ = reflect_NewRuntimeType({ kind: reflect_Pointer, name: "*collections.OrderedMap" });
+    valueTypes.set(valueType, typ);
+  }
+  return typ;
+}
+
+export const OrderedMap_StringAnyRuntimeType: RuntimeType = OrderedMap_RuntimeType<string, unknown>(reflect_StringType, reflect_AnyType);
+
+export function OrderedMap_HasRuntimeType<K extends GoComparable, V>(value: unknown, typ: RuntimeType): value is OrderedMap<K, V> {
+  return reflect_RuntimeTypeOf(value) === typ;
+}
+
+function registerOrderedMapRuntimeType<K extends GoComparable, V>(map: OrderedMap<K, V>, typ: RuntimeType): OrderedMap<K, V> {
+  return reflect_RegisterRuntimeType(map, typ);
+}
+
+export function NewOrderedMapZero<K extends GoComparable, V>(): OrderedMap<K, V> {
+  return {
+    __tsgoBlank0: {},
+    keys: undefined,
+    mp: undefined,
+  };
+}
+
+// Explicit runtime-identity helpers preserve the generated Go constructor
+// signatures while allowing callers that cross an interface boundary to carry
+// the exact instantiated Go type.
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::noCopy","kind":"type","status":"implemented","sigHash":"b0d7fc76eb2a0820142f0a97003bd894c9dc0c9aa9a6200692eb4d77d21c2e00","bodyHash":"4dcbe9a808682845cced4a8ac867060d272f873cf5c3371f5076d5b05b982b44"}
  *
@@ -68,6 +107,11 @@ export function NewOrderedMapWithSizeHint<K extends GoComparable, V>(hint: int):
   return m;
 }
 
+export function NewOrderedMapWithSizeHintWithRuntimeType<K extends GoComparable, V>(typ: RuntimeType, hint: int): GoPtr<OrderedMap<K, V>> {
+  const map = NewOrderedMapWithSizeHint<K, V>(hint);
+  return map === undefined ? undefined : registerOrderedMapRuntimeType(map, typ);
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::newMapWithSizeHint","kind":"func","status":"implemented","sigHash":"9f925b2c16d1d7b12e2daf84eb6bea932acf8473c8c8da665148256cf505f61a","bodyHash":"5903dffb3b83f8d9d5462e7c09199a6625a1d466c6d521bcd6a4b918cb8e110d"}
  *
@@ -85,6 +129,10 @@ export function newMapWithSizeHint<K extends GoComparable, V>(hint: int): Ordere
     keys: [],
     mp: new globalThis.Map<K, V>(),
   };
+}
+
+export function newMapWithSizeHintWithRuntimeType<K extends GoComparable, V>(typ: RuntimeType, hint: int): OrderedMap<K, V> {
+  return registerOrderedMapRuntimeType(newMapWithSizeHint<K, V>(hint), typ);
 }
 
 /**
@@ -484,11 +532,13 @@ export function OrderedMap_Clone<K extends GoComparable, V>(receiver: GoPtr<Orde
  */
 export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>): OrderedMap<K, V> {
   const m = receiver!;
-  return {
+  const clone: OrderedMap<K, V> = {
     __tsgoBlank0: {},
     keys: slices.Clone(m.keys),
     mp: maps.Clone(m.mp),
   };
+  const runtimeType = reflect_RuntimeTypeOf(m);
+  return runtimeType === undefined ? clone : registerOrderedMapRuntimeType(clone, runtimeType);
 }
 
 /**

@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import type { byte, int } from "../../go/scalars.js";
 import { Collect, IsSorted } from "../../go/slices.js";
 import { NewDecoder } from "../../go/github.com/go-json-experiment/json/jsontext.js";
-import { ValueOf } from "../../go/reflect.js";
+import { Int, NewRuntimeType, StringType, TypeFor, TypeOf, ValueOf } from "../../go/reflect.js";
 import {
   NewOrderedMapWithSizeHint,
+  NewOrderedMapWithSizeHintWithRuntimeType,
+  NewOrderedMapZero,
   OrderedMap_as_json_UnmarshalerFrom,
   OrderedMap_Clear,
   OrderedMap_Clone,
@@ -16,6 +18,9 @@ import {
   OrderedMap_Get,
   OrderedMap_GetOrZero,
   OrderedMap_Has,
+  OrderedMap_HasRuntimeType,
+  OrderedMap_RuntimeType,
+  OrderedMap_StringAnyRuntimeType,
   OrderedMap_Keys,
   OrderedMap_Set,
   OrderedMap_Size,
@@ -34,6 +39,25 @@ function padInt(n: number): string {
 function jsonBytes(text: string): byte[] {
   return Array.from(textEncoder.encode(text)) as byte[];
 }
+
+test("OrderedMap runtime identity is exact per generic instantiation", () => {
+  const ordered = NewOrderedMapWithSizeHintWithRuntimeType<string, unknown>(OrderedMap_StringAnyRuntimeType, 0);
+  const zero = NewOrderedMapZero<string, unknown>();
+  const numberType = NewRuntimeType({ kind: Int, name: "int" });
+  const numberStringType = OrderedMap_RuntimeType<number, string>(numberType, StringType);
+  const numberString = NewOrderedMapWithSizeHintWithRuntimeType<number, string>(numberStringType, 0);
+  const lookalike = { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() };
+
+  assert.equal(TypeFor<OrderedMap<string, unknown>>(OrderedMap_StringAnyRuntimeType), OrderedMap_StringAnyRuntimeType);
+  assert.equal(TypeOf(ordered), OrderedMap_StringAnyRuntimeType);
+  assert.equal(OrderedMap_HasRuntimeType<string, unknown>(ordered, OrderedMap_StringAnyRuntimeType), true);
+  assert.equal(OrderedMap_HasRuntimeType<string, unknown>(zero, OrderedMap_StringAnyRuntimeType), false);
+  assert.equal(TypeOf(OrderedMap_Clone(ordered)), OrderedMap_StringAnyRuntimeType);
+  assert.equal(TypeOf(numberString), numberStringType);
+  assert.equal(OrderedMap_HasRuntimeType<string, unknown>(numberString, OrderedMap_StringAnyRuntimeType), false);
+  assert.notEqual(TypeOf(lookalike), OrderedMap_StringAnyRuntimeType);
+  assert.equal(OrderedMap_HasRuntimeType<string, unknown>(lookalike, OrderedMap_StringAnyRuntimeType), false);
+});
 
 function collectEntries<K, V>(map: OrderedMap<K, V>): Array<[K, V]> {
   const entries: Array<[K, V]> = [];

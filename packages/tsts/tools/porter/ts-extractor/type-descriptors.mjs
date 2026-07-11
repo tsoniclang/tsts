@@ -1,11 +1,12 @@
 // Canonical structured type and declaration descriptors for TS signatures.
 
 import { canonicalTypeScriptConstantValue, evaluateTypeScriptConstant } from "./constant-evaluation.mjs";
+import { compareText } from "../core/deterministic-order.mjs";
 import { keywordOf, resolveModuleId, sliceText } from "./source-structure.mjs";
 
 // --- canonicalization ---------------------------------------------------------
 
-// ctx: { api, text, imports:{named,namespaces}, localTypes:Set, typeParamIndex:Map<name,int> }
+// ctx: { api, text, imports:{named,namespaces}, localTypes:Set, localNamespaces:Set, typeParamIndex:Map<name,int> }
 export function canonicalizeType(node, ctx) {
   const { api, text } = ctx;
   if (!node) return { t: "kw", kw: "any" }; // missing annotation handled by caller; default
@@ -33,22 +34,34 @@ export function canonicalizeType(node, ctx) {
     default: {
       const kw = keywordOf(api, node.Kind);
       if (kw) return { t: "kw", kw };
-      // Unhandled (mapped/conditional/indexed/typeof/etc.): compare by normalized text.
-      return { t: "raw", text: sliceText(api, text, node).replace(/\s+/g, " ") };
+      return {
+        t: "unsupported",
+        kind: api.kindName.get(node.Kind) ?? `kind${node.Kind}`,
+        text: sliceText(api, text, node).replace(/\s+/g, " "),
+      };
     }
   }
 }
 
 function canonicalizeFn(node, ctx) {
+  const typeParamIndex = typeParamIndexOf(ctx.api, node.TypeParameters);
+  const fnCtx = { ...ctx, typeParamIndex };
   const params = (node.Parameters?.Nodes ?? []).map((p) => {
     const pd = ctx.api.Casts.AsParameterDeclaration(p);
     return {
-      type: pd.Type ? canonicalizeType(pd.Type, ctx) : { t: "kw", kw: "any" },
+      type: pd.Type ? canonicalizeType(pd.Type, fnCtx) : { t: "kw", kw: "any" },
       rest: !!pd.DotDotDotToken,
       optional: !!pd.QuestionToken,
+      missingType: !pd.Type,
     };
   });
-  return { t: "fn", params, ret: node.Type ? canonicalizeType(node.Type, ctx) : { t: "kw", kw: "void" } };
+  return {
+    t: "fn",
+    params,
+    ret: node.Type ? canonicalizeType(node.Type, fnCtx) : { t: "kw", kw: "void" },
+    missingReturnType: !node.Type,
+    typeParams: typeParamDescriptors(ctx.api, node.TypeParameters, fnCtx),
+  };
 }
 
 function canonicalizeObjectType(members, ctx) {
@@ -58,17 +71,23 @@ function canonicalizeObjectType(members, ctx) {
   };
 }
 
-function entityName(api, tn) {
-  // Returns { qualifier?, name } for an EntityName (Identifier or QualifiedName).
-  if (!tn) return { name: undefined };
-  if (tn.Kind === api.Kinds.KindIdentifier) return { name: tn.Text };
-  if (tn.Kind === api.Kinds.KindQualifiedName) {
-    const q = api.Casts.AsQualifiedName(tn);
-    const left = q.Left;
-    const qualifier = left?.Kind === api.Kinds.KindIdentifier ? left.Text : undefined;
-    return { qualifier, name: q.Right?.Text };
+function entityNameParts(api, typeName) {
+  if (!typeName) return [];
+  if (typeName.Kind === api.Kinds.KindIdentifier) return [typeName.Text];
+  if (typeName.Kind === api.Kinds.KindQualifiedName) {
+    const qualified = api.Casts.AsQualifiedName(typeName);
+    return [...entityNameParts(api, qualified.Left), qualified.Right?.Text].filter((part) => typeof part === "string");
   }
-  return { name: undefined };
+  return [];
+}
+
+function entityName(api, typeName) {
+  const parts = entityNameParts(api, typeName);
+  if (parts.length === 0) return { name: undefined };
+  return {
+    qualifier: parts.length === 1 ? undefined : parts.slice(0, -1).join("."),
+    name: parts.at(-1),
+  };
 }
 
 function canonicalizeRef(node, ctx) {
@@ -88,10 +107,16 @@ function canonicalizeRef(node, ctx) {
 }
 
 function resolveIdentity(ctx, qualifier, name) {
-  const { imports, localTypes, moduleId } = ctx;
+  const { imports, localTypes, localNamespaces, moduleId } = ctx;
   if (qualifier) {
-    const ns = imports.namespaces.get(qualifier);
-    if (ns) return `${resolveModuleId(ns.module, moduleId)}::${name}`;
+    const [head, ...tail] = qualifier.split(".");
+    const ns = imports.namespaces.get(head);
+    if (ns) {
+      const namespacePath = [ns.local, ...tail].filter((part) => part !== undefined).join(".");
+      const prefix = namespacePath.length === 0 ? "" : `${namespacePath}.`;
+      return `${resolveModuleId(ns.module, moduleId)}::${prefix}${name}`;
+    }
+    if (localNamespaces?.has(head)) return `${moduleId}::${qualifier}.${name}`;
     // qualifier is not a known namespace import — unresolved, keep both parts.
     return `unresolved::${qualifier}.${name}`;
   }
@@ -114,17 +139,17 @@ export function canonicalKey(d) {
     case "tuple":
       return `T:[${d.elements.map(canonicalKey).join(",")}]`;
     case "union":
-      return `U:{${flattenCompositeMembers(d, "union").map(canonicalKey).sort().join("|")}}`;
+      return `U:{${flattenCompositeMembers(d, "union").map(canonicalKey).sort(compareText).join("|")}}`;
     case "intersect":
-      return `I:{${flattenCompositeMembers(d, "intersect").map(canonicalKey).sort().join("&")}}`;
+      return `I:{${flattenCompositeMembers(d, "intersect").map(canonicalKey).sort(compareText).join("&")}}`;
     case "fn":
-      return `F:(${d.params
-        .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${canonicalKey(p.type)}`)
-        .join(",")})=>${canonicalKey(d.ret)}`;
+      return `F:<${(d.typeParams ?? []).map((p) => p.constraint ? canonicalKey(p.constraint) : "-").join(",")}>(${d.params
+        .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${p.missingType ? "!" : ""}${canonicalKey(p.type)}`)
+        .join(",")})=>${d.missingReturnType ? "!" : ""}${canonicalKey(d.ret)}`;
     case "object":
       return `O:{${d.members
-        .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKey(m.type)}`)
-        .sort()
+        .map((m) => `${m.readonly ? "readonly " : ""}${m.name}${m.optional ? "?" : ""}:${m.missingType ? "!" : ""}${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKey(m.type)}`)
+        .sort(compareText)
         .join(";")}}`;
     case "kw":
       return `K:${d.kw}`;
@@ -136,6 +161,10 @@ export function canonicalKey(d) {
       return `X:${d.text}`;
     case "conv":
       return `C:${d.token}`;
+    case "goApprox":
+      return `G:~${canonicalKey(d.type)}`;
+    case "unsupported":
+      return `!${d.kind}:${d.text}`;
     default:
       return `?:${JSON.stringify(d)}`;
   }
@@ -152,18 +181,20 @@ function canonicalKeyWithResolver(d, canon) {
     case "tuple":
       return `T:[${d.elements.map((e) => canonicalKeyWithResolver(e, canon)).join(",")}]`;
     case "union":
-      return `U:{${flattenCompositeMembers(d, "union").map((m) => canonicalKeyWithResolver(m, canon)).sort().join("|")}}`;
+      return `U:{${flattenCompositeMembers(d, "union").map((m) => canonicalKeyWithResolver(m, canon)).sort(compareText).join("|")}}`;
     case "intersect":
-      return `I:{${flattenCompositeMembers(d, "intersect").map((m) => canonicalKeyWithResolver(m, canon)).sort().join("&")}}`;
+      return `I:{${flattenCompositeMembers(d, "intersect").map((m) => canonicalKeyWithResolver(m, canon)).sort(compareText).join("&")}}`;
     case "fn":
-      return `F:(${d.params
-        .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${canonicalKeyWithResolver(p.type, canon)}`)
-        .join(",")})=>${canonicalKeyWithResolver(d.ret, canon)}`;
+      return `F:<${(d.typeParams ?? []).map((p) => p.constraint ? canonicalKeyWithResolver(p.constraint, canon) : "-").join(",")}>(${d.params
+        .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${p.missingType ? "!" : ""}${canonicalKeyWithResolver(p.type, canon)}`)
+        .join(",")})=>${d.missingReturnType ? "!" : ""}${canonicalKeyWithResolver(d.ret, canon)}`;
     case "object":
       return `O:{${d.members
-        .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKeyWithResolver(m.type, canon)}`)
-        .sort()
+        .map((m) => `${m.readonly ? "readonly " : ""}${m.name}${m.optional ? "?" : ""}:${m.missingType ? "!" : ""}${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKeyWithResolver(m.type, canon)}`)
+        .sort(compareText)
         .join(";")}}`;
+    case "goApprox":
+      return `G:~${canonicalKeyWithResolver(d.type, canon)}`;
     default:
       return canonicalKey(d);
   }
@@ -189,7 +220,7 @@ export function typesEqual(a, b, canon = (x) => x) {
       if (a.args.length !== b.args.length) return false;
       if (!a.args.every((x, i) => typesEqual(x, b.args[i], canon))) return false;
       const ia = canon(a.id), ib = canon(b.id);
-      return isSoftId(ia) || isSoftId(ib) ? terminalName(ia) === terminalName(ib) : ia === ib;
+      return isSoftId(ia) && isSoftId(ib) ? terminalName(ia) === terminalName(ib) : ia === ib;
     }
     case "array":
       return typesEqual(a.element, b.element, canon);
@@ -200,20 +231,26 @@ export function typesEqual(a, b, canon = (x) => x) {
       const aMembers = flattenCompositeMembers(a, a.t);
       const bMembers = flattenCompositeMembers(b, b.t);
       if (aMembers.length !== bMembers.length) return false;
-      const ak = aMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort();
-      const bk = bMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort();
+      const ak = aMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort(compareText);
+      const bk = bMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort(compareText);
       return ak.every((k, i) => k === bk[i]);
     }
     case "fn":
-      return a.params.length === b.params.length
-        && a.params.every((p, i) => !!p.rest === !!b.params[i].rest && typesEqual(p.type, b.params[i].type, canon))
+      return !!a.missingReturnType === !!b.missingReturnType
+        && (a.typeParams ?? []).length === (b.typeParams ?? []).length
+        && (a.typeParams ?? []).every((p, i) => typesEqual(p.constraint, b.typeParams[i].constraint, canon))
+        && a.params.length === b.params.length
+        && a.params.every((p, i) => !!p.rest === !!b.params[i].rest
+          && !!p.optional === !!b.params[i].optional
+          && !!p.missingType === !!b.params[i].missingType
+          && typesEqual(p.type, b.params[i].type, canon))
         && typesEqual(a.ret, b.ret, canon);
     case "object": {
       if (a.members.length !== b.members.length) return false;
       const am = new Map(a.members.map((m) => [m.name, m]));
       for (const bm of b.members) {
         const m = am.get(bm.name);
-        if (!m || !!m.optional !== !!bm.optional || !!m.unsupported !== !!bm.unsupported) return false;
+        if (!m || !!m.optional !== !!bm.optional || !!m.readonly !== !!bm.readonly || !!m.unsupported !== !!bm.unsupported) return false;
         if (m.unsupported || bm.unsupported) {
           if (m.unsupported !== bm.unsupported) return false;
         } else if (!typesEqual(m.type, bm.type, canon)) {
@@ -231,6 +268,10 @@ export function typesEqual(a, b, canon = (x) => x) {
     case "lit":
     case "raw":
       return a.text === b.text;
+    case "goApprox":
+      return typesEqual(a.type, b.type, canon);
+    case "unsupported":
+      return a.kind === b.kind && a.text === b.text;
     default:
       return canonicalKey(a) === canonicalKey(b);
   }
@@ -260,6 +301,10 @@ export function hasUnresolved(d) {
       return d.params.some((p) => hasUnresolved(p.type)) || hasUnresolved(d.ret);
     case "object":
       return d.members.some((m) => m.type && hasUnresolved(m.type));
+    case "goApprox":
+      return hasUnresolved(d.type);
+    case "unsupported":
+      return true;
     default:
       return false;
   }
@@ -301,7 +346,12 @@ function functionDescriptor(api, fnLike, baseCtx) {
   return {
     params,
     ret: fnLike.Type ? canonicalizeType(fnLike.Type, ctx) : { t: "kw", kw: "void" },
+    missingReturnType: !fnLike.Type,
     typeParams: typeParamDescriptors(api, fnLike.TypeParameters, ctx),
+    signatureModifiers: [
+      ...(fnLike.AsteriskToken ? ["generator"] : []),
+      ...((fnLike.modifiers?.Nodes ?? []).some((modifier) => modifier.Kind === api.Kinds.KindAsyncKeyword) ? ["async"] : []),
+    ],
   };
 }
 
@@ -322,6 +372,7 @@ export function declarationDescriptor(api, node, baseCtx) {
       kind: "interface",
       name: i.name?.Text,
       typeParams: typeParamDescriptors(api, i.TypeParameters, ctx),
+      heritage: (i.HeritageClauses?.Nodes ?? []).map((clause) => sliceText(api, baseCtx.text, clause).replace(/\s+/g, " ")),
       members,
     };
   }
@@ -350,9 +401,6 @@ export function declarationDescriptor(api, node, baseCtx) {
         value: canonicalTypeScriptConstantValue(evaluatedValue),
       };
       decls.push(declaration);
-      if (declaration.name !== undefined && evaluatedValue !== undefined) {
-        ctx.valueEnvironment?.set(declaration.name, evaluatedValue);
-      }
     }
     return { kind: "value", decls };
   }
@@ -365,7 +413,11 @@ function memberDescriptor(api, m, ctx) {
   if (m.Kind === api.Kinds.KindMethodSignature) {
     const sig = api.Casts.AsMethodSignatureDeclaration(m);
     const fn = functionDescriptor(api, sig, ctx);
-    return { name: sig.name?.Text, type: { t: "fn", params: fn.params, ret: fn.ret } };
+    return {
+      name: sig.name?.Text,
+      optional: !!sig.QuestionToken || undefined,
+      type: { t: "fn", params: fn.params, ret: fn.ret, missingReturnType: fn.missingReturnType, typeParams: fn.typeParams },
+    };
   }
   if (m.Kind === api.Kinds.KindPropertySignature) {
     const sig = api.Casts.AsPropertySignatureDeclaration(m);
@@ -375,7 +427,9 @@ function memberDescriptor(api, m, ctx) {
     return {
       name: sig.name?.Text,
       type: sig.Type ? canonicalizeType(sig.Type, ctx) : { t: "kw", kw: "any" },
-      optional: !!sig.PostfixToken || undefined,
+      optional: sig.PostfixToken?.Kind === api.Kinds.KindQuestionToken || undefined,
+      readonly: (sig.modifiers?.Nodes ?? []).some((modifier) => modifier.Kind === api.Kinds.KindReadonlyKeyword) || undefined,
+      missingType: !sig.Type || undefined,
     };
   }
   // Call / index / construct signatures and other member shapes are not modeled;

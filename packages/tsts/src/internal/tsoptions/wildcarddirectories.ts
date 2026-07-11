@@ -92,8 +92,8 @@ import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude }
  * }
  */
 export function getWildcardDirectories(
-  include: GoSlice<string>,
-  exclude: GoSlice<string>,
+  include: GoPtr<GoSlice<string>>,
+  exclude: GoPtr<GoSlice<string>>,
   comparePathsOptions: ComparePathsOptions,
 ): GoMap<string, bool> {
   // We watch a directory recursively if it contains a wildcard anywhere in a directory segment
@@ -109,7 +109,7 @@ export function getWildcardDirectories(
   //  /a/b/*      - Watch /a/b directly to catch any new file
   //  /a/b/a?z    - Watch /a/b directly to catch any new file matching a?z
 
-  if (include.length === 0) {
+  if ((include?.length ?? 0) === 0) {
     return new globalThis.Map<string, bool>();
   }
 
@@ -125,7 +125,7 @@ export function getWildcardDirectories(
 
   const recursiveKeys: GoSlice<string> = [];
 
-  for (const file of include) {
+  for (const file of include ?? []) {
     const spec = NormalizePath(CombinePaths(comparePathsOptions.CurrentDirectory, file));
     if (excludeMatcher !== undefined && SpecMatcher_MatchString(excludeMatcher, spec)) {
       continue;

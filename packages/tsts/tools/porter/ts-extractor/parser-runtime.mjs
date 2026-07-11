@@ -1,7 +1,7 @@
 // Parser loading and freshness checks for TS-side signature extraction.
 
 import { existsSync, statSync, readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -67,27 +67,62 @@ export function assertDistFresh(distRoot = distInternal, srcDirs) {
 
 // --- parser loading (dynamic, after the freshness gate) -----------------------
 
-let cachedApi;
+const parserApisByDistRoot = new Map();
 
 // opts (optional): { distRoot, freshnessSrcDirs } absolute paths from the project
 // profile; defaults to the in-repo tsts dist layout.
 export async function loadParser(opts = {}) {
-  if (cachedApi) return cachedApi;
-  const distRoot = opts.distRoot ?? distInternal;
+  const distRoot = resolve(opts.distRoot ?? distInternal);
   assertDistFresh(distRoot, opts.freshnessSrcDirs);
-  const Kinds = await import(join(distRoot, "ast/generated/kinds.js"));
-  const Casts = await import(join(distRoot, "ast/generated/casts.js"));
-  const { ParseSourceFile } = await import(join(distRoot, "parser/parser/statements-declarations.js"));
-  const { ScriptKindTS } = await import(join(distRoot, "core/scriptkind.js"));
-  const { Node_Pos, Node_End } = await import(join(distRoot, "ast/spine.js"));
-
-  // numeric Kind -> "KindXxx" name, and the reverse for the kinds we branch on.
-  const kindName = new Map();
-  for (const [k, v] of Object.entries(Kinds)) {
-    if (k.startsWith("Kind") && typeof v === "number") kindName.set(v, k);
+  let loading = parserApisByDistRoot.get(distRoot);
+  if (loading === undefined) {
+    loading = loadParserApi(distRoot);
+    parserApisByDistRoot.set(distRoot, loading);
   }
-  cachedApi = { Kinds, Casts, ParseSourceFile, ScriptKindTS, Node_Pos, Node_End, kindName };
-  return cachedApi;
+  try {
+    return await loading;
+  } catch (error) {
+    if (parserApisByDistRoot.get(distRoot) === loading) parserApisByDistRoot.delete(distRoot);
+    throw error;
+  }
+}
+
+async function loadParserApi(distRoot) {
+  const Kinds = await import(join(distRoot, "ast/generated/kinds.js"));
+  const Flags = await import(join(distRoot, "ast/generated/flags.js"));
+  const Casts = await import(join(distRoot, "ast/generated/casts.js"));
+  const Ast = await import(join(distRoot, "ast/ast.js"));
+  const Diagnostics = await import(join(distRoot, "ast/diagnostic.js"));
+  const ScannerUtilities = await import(join(distRoot, "scanner/utilities.js"));
+  const { ParseSourceFile } = await import(join(distRoot, "parser/parser/statements-declarations.js"));
+  const jsdocParser = await import(join(distRoot, "parser/jsdoc.js"));
+  const { ScriptKindTS } = await import(join(distRoot, "core/scriptkind.js"));
+  const { Node_End, Node_ForEachChild, Node_Pos } = await import(join(distRoot, "ast/spine.js"));
+  jsdocParser.init();
+
+  const kindName = new Map();
+  for (const [key, value] of Object.entries(Kinds)) {
+    if (key.startsWith("Kind") && typeof value === "number") kindName.set(value, key);
+  }
+  return {
+    Kinds,
+    Flags,
+    Casts,
+    ParseSourceFile,
+    ScriptKindTS,
+    Node_Pos,
+    Node_End,
+    Node_ForEachChild,
+    Node_JSDoc: Ast.Node_JSDoc,
+    SourceFile_Diagnostics: Ast.SourceFile_Diagnostics,
+    SourceFile_JSDocDiagnostics: Ast.SourceFile_JSDocDiagnostics,
+    Diagnostic_Code: Diagnostics.Diagnostic_Code,
+    Diagnostic_Pos: Diagnostics.Diagnostic_Pos,
+    Diagnostic_End: Diagnostics.Diagnostic_End,
+    GetTextOfNodeFromSourceText: ScannerUtilities.GetTextOfNodeFromSourceText,
+    kindName,
+    distRoot,
+  };
 }
 
 export function parseSource(api, fileName, sourceText) {

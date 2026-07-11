@@ -233,7 +233,7 @@ export function Parser_finishMutatedNode(receiver: GoPtr<Parser>, node: GoPtr<No
 export function Parser_addDeepCloneReparse(receiver: GoPtr<Parser>, node: GoPtr<Node>): GoPtr<Node> {
   const clone = NodeFactory_DeepCloneReparse(receiver!.factory, node);
   if (clone !== undefined) {
-    receiver!.reparsedClones = [...receiver!.reparsedClones, clone];
+    receiver!.reparsedClones = [...(receiver!.reparsedClones ?? []), clone];
   }
   return clone;
 }
@@ -252,7 +252,7 @@ export function Parser_addDeepCloneReparse(receiver: GoPtr<Parser>, node: GoPtr<
 export function Parser_addTransformedReparse(receiver: GoPtr<Parser>, newNode: GoPtr<Node>, old: GoPtr<Node>): GoPtr<Node> {
   Parser_finishReparsedNode(receiver, newNode, old);
   newNode!.Flags |= NodeFlagsReparserTransformedLiteral;
-  receiver!.reparsedClones = [...receiver!.reparsedClones, newNode];
+  receiver!.reparsedClones = [...(receiver!.reparsedClones ?? []), newNode];
   return newNode;
 }
 
@@ -422,10 +422,10 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       }
       AsTypeAliasDeclaration(typeAlias)!.Type = t;
       Parser_finishReparsedNode(receiver, typeAlias, tag);
-      receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] }];
+      receiver!.jsdocInfos = [...(receiver!.jsdocInfos ?? []), { parent: typeAlias, jsDocs: [jsDoc] }];
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
       const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false as bool);
-      receiver!.reparseList = [...receiver!.reparseList, result];
+      receiver!.reparseList = [...(receiver!.reparseList ?? []), result];
       break;
     }
     case KindJSDocCallbackTag: {
@@ -443,10 +443,10 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       const typeAlias = NewJSTypeAliasDeclaration(receiver!.factory, modifiers, Parser_addDeepCloneReparse(receiver, Parser_getInnermostNameOfJSDocNamespace(receiver, fullName)), undefined, functionType);
       AsTypeAliasDeclaration(typeAlias)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, true as bool);
       Parser_finishReparsedNode(receiver, typeAlias, tag);
-      receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] }];
+      receiver!.jsdocInfos = [...(receiver!.jsdocInfos ?? []), { parent: typeAlias, jsDocs: [jsDoc] }];
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
       const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false as bool);
-      receiver!.reparseList = [...receiver!.reparseList, result];
+      receiver!.reparseList = [...(receiver!.reparseList ?? []), result];
       break;
     }
     case KindJSDocImportTag: {
@@ -464,12 +464,12 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
         Parser_addDeepCloneReparse(receiver, importTag!.Attributes),
       );
       Parser_finishReparsedNode(receiver, importDeclaration, tag);
-      receiver!.reparseList = [...receiver!.reparseList, importDeclaration];
+      receiver!.reparseList = [...(receiver!.reparseList ?? []), importDeclaration];
       break;
     }
     case KindJSDocOverloadTag: {
       if ((IsFunctionDeclaration(parent) || IsMethodDeclaration(parent) || IsConstructorDeclaration(parent)) && (receiver!.parsingContexts & (1 << PCObjectLiteralMembers)) === 0) {
-        receiver!.reparseList = [...receiver!.reparseList, Parser_reparseJSDocSignature(receiver, AsJSDocOverloadTag(tag)!.TypeExpression, parent, jsDoc, tag, Node_Modifiers(parent))];
+        receiver!.reparseList = [...(receiver!.reparseList ?? []), Parser_reparseJSDocSignature(receiver, AsJSDocOverloadTag(tag)!.TypeExpression, parent, jsDoc, tag, Node_Modifiers(parent))];
       }
       break;
     }
@@ -747,7 +747,7 @@ export function Parser_reparseJSDocTypeLiteral(receiver: GoPtr<Parser>, t: GoPtr
     const jstypeliteral = AsJSDocTypeLiteral(t);
     const isArrayType = jstypeliteral!.IsArrayType;
     let properties = Arena_NewSlice(receiver!.nodeSliceArena, 0) as GoSlice<GoPtr<Node>>;
-    for (const prop of jstypeliteral!.JSDocPropertyTags) {
+    for (const prop of jstypeliteral!.JSDocPropertyTags ?? []) {
       if (prop!.Kind !== KindJSDocPropertyTag && prop!.Kind !== KindJSDocParameterTag) {
         continue;
       }
@@ -804,7 +804,7 @@ export function Parser_reparseJSDocComment(receiver: GoPtr<Parser>, node: GoPtr<
     const propJSDoc = NewJSDoc(receiver!.factory, newComment, undefined);
     Parser_finishReparsedNode(receiver, propJSDoc, tag);
     propJSDoc!.Parent = node;
-    receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: node, jsDocs: [propJSDoc] }];
+    receiver!.jsdocInfos = [...(receiver!.jsdocInfos ?? []), { parent: node, jsDocs: [propJSDoc] }];
     node!.Flags |= NodeFlagsHasJSDoc;
   }
 }
@@ -1485,7 +1485,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         const implementsTag = AsJSDocImplementsTag(tag);
 
         if (cls!.HeritageClauses !== undefined) {
-          const implementsClause = Find(cls!.HeritageClauses!.Nodes ?? [], (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool);
+          const implementsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindImplementsKeyword) as bool);
           if (implementsClause !== undefined) {
             AsHeritageClause(implementsClause)!.Types!.Nodes = [...(AsHeritageClause(implementsClause)!.Types!.Nodes ?? []), Parser_addDeepCloneReparse(receiver, implementsTag!.ClassName)];
             Parser_finishMutatedNode(receiver, implementsClause);
@@ -1509,7 +1509,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
     case KindJSDocAugmentsTag: {
       const cls = getClassLikeData(parent);
       if (cls !== undefined && cls!.HeritageClauses !== undefined) {
-        const extendsClause = Find(cls!.HeritageClauses!.Nodes ?? [], (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool);
+        const extendsClause = Find(cls!.HeritageClauses!.Nodes, (node) => (AsHeritageClause(node)!.Token === KindExtendsKeyword) as bool);
         const extendsTypes = extendsClause === undefined ? undefined : AsHeritageClause(extendsClause)!.Types!.Nodes;
         if (extendsClause !== undefined && (extendsTypes?.length ?? 0) === 1) {
           const target = AsExpressionWithTypeArguments(extendsTypes![0]);
@@ -1834,6 +1834,6 @@ export function Parser_wrapInJSDocNamespace(receiver: GoPtr<Parser>, fullName: G
   }
   const result = NewModuleDeclaration(receiver!.factory, modifiers, KindNamespaceKeyword, Parser_addDeepCloneReparse(receiver, Node_Name(fullName)), block);
   Parser_finishReparsedNode(receiver, result, fullName);
-  receiver!.reparsedClones = [...receiver!.reparsedClones, result];
+  receiver!.reparsedClones = [...(receiver!.reparsedClones ?? []), result];
   return result;
 }

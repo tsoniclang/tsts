@@ -16,7 +16,6 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
-  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -255,7 +254,6 @@ test("buildStatus excludes exact inactive unit policies without counting their T
       status: "stub",
       sigHash: "sig-1",
       bodyHash: "body-1",
-      hasUnimplThrow: true,
     }],
   });
 
@@ -354,7 +352,6 @@ test("renderUnitGroup treats references to excluded LS/LSP types as opaque bound
 test("verifyStatus fails hard on coverage and metadata defects", () => {
   const status = {
     counts: {
-      parseErrors: 1,
       duplicateGoIDs: 1,
       duplicateTsIDs: 1,
       orphan: 1,
@@ -373,7 +370,6 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
     },
   };
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
-    "1 Go parse errors",
     "1 duplicate Go IDs",
     "1 duplicate TS IDs",
     "1 orphan TS units",

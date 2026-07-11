@@ -26,13 +26,63 @@ test("porter delta reports file, raw-unit, active-unit, and move changes", () =>
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.moveCandidateCount, 1);
   assert.equal(report.activeUnits.bodyChangedCount, 1);
+  assert.equal(report.activeUnits.semanticDeclarationChangedCount, 0);
   assert.match(renderDeltaMarkdown(report), /Active porter units/);
+});
+
+test("porter delta treats canonical declaration and constant drift as signature drift", () => {
+  const id = "m::internal/a/constants.go::constGroup::WordBits";
+  const before = unit(id, "constGroup", "WordBits", "same-syntax", "same-body", semanticConstant("32"));
+  const after = unit(id, "constGroup", "WordBits", "same-syntax", "same-body", semanticConstant("64"));
+  const report = buildPorterDelta(
+    snapshot("a".repeat(40), [file("internal/a/constants.go", "before", [before])]),
+    snapshot("b".repeat(40), [file("internal/a/constants.go", "after", [after])]),
+    {
+      primaryUnitKinds: ["constGroup"],
+      policyForUnit: () => ({ category: "literal-port", active: true }),
+      isActivePortPolicy: () => true,
+    },
+  );
+  assert.equal(report.schemaVersion, 2);
+  assert.equal(report.activeUnits.changedCount, 1);
+  assert.equal(report.activeUnits.sourceSignatureChangedCount, 0);
+  assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
+  assert.equal(report.activeUnits.signatureChangedCount, 1);
+  assert.equal(report.activeUnits.constantsChangedCount, 1);
+  assert.match(renderDeltaMarkdown(report), /1 canonical declarations/);
+});
+
+test("compact profile indexes compare by canonical profile identity across snapshots", () => {
+  const id = "m::internal/a/value.go::func::Value";
+  const from = snapshot("a".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same", "same")])]);
+  const to = snapshot("b".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same", "same")])]);
+  to.semantic.profiles.unshift(profile("darwin", "arm64", "GOARM64=v8.0"));
+  to.files[0].units[0].semantic[0].profiles = [1];
+  const report = buildPorterDelta(from, to, {
+    primaryUnitKinds: ["func"],
+    policyForUnit: () => ({ category: "literal-port", active: true }),
+    isActivePortPolicy: () => true,
+  });
+  assert.equal(report.activeUnits.changedCount, 0);
 });
 
 test("canonical snapshots are deterministic and include source hashes", () => {
   const value = snapshot("c".repeat(40), [file("internal/a/a.go", "source-digest", [])]);
   assert.equal(canonicalSnapshot(value), canonicalSnapshot(structuredClone(value)));
   assert.match(canonicalSnapshot(value), /source-digest/);
+});
+
+test("portable snapshots normalize incidental toolchain and cache locations", () => {
+  const left = snapshot("c".repeat(40), []);
+  const right = structuredClone(left);
+  for (const [value, root, home] of [[left, "/usr/local/go", "/home/one"], [right, "/opt/go", "/home/two"]]) {
+    value.semantic.goroot = root;
+    value.semantic.toolchainExecutable = `${root}/bin/go`;
+    value.semantic.profiles[0].environment = [
+      `GOCACHE=${home}/.cache/go-build`, `GOMODCACHE=${home}/go/pkg/mod`, `GOPATH=${home}/go`, `GOROOT=${root}`, `PATH=${root}/bin`,
+    ];
+  }
+  assert.equal(canonicalSnapshot(left), canonicalSnapshot(right));
 });
 
 test("delta completion binds every evidence artifact and rejects tampering", () => {
@@ -53,11 +103,12 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
 
 function snapshot(gitRevision, files) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 6,
     sourceRoot: "/source",
     modulePath: "m",
     gitRevision,
     environment: { goVersion: "go1.26.4", goos: "linux", goarch: "amd64" },
+    semantic: { profiles: [profile("linux", "amd64", "GOAMD64=v1")] },
     summary: { goFileCount: files.length, unitCount: files.reduce((count, candidate) => count + candidate.units.length, 0) },
     files,
   };
@@ -75,6 +126,25 @@ function file(sourcePath, sourceHash, units) {
   };
 }
 
-function unit(id, kind, qualifiedName, sigHash, bodyHash) {
-  return { id, kind, qualifiedName, sigHash, bodyHash, valueSpecs: [] };
+function unit(id, kind, qualifiedName, sigHash, bodyHash, semantic = semanticFunction(sigHash)) {
+  return { id, kind, qualifiedName, sigHash, bodyHash, semantic, valueSpecs: [] };
+}
+
+function semanticFunction(token) {
+  return [{ kind: "func", profiles: [0], signature: { token } }];
+}
+
+function semanticConstant(exact) {
+  return [{
+    kind: "constGroup",
+    profiles: [0],
+    valueSpecs: [{
+      specIndex: 0,
+      names: [{ name: "WordBits", nameIndex: 0, constant: { kind: "Int", exact } }],
+    }],
+  }];
+}
+
+function profile(goos, goarch, architecture) {
+  return { goos, goarch, cgoEnabled: false, architecture, experiments: "", goexperiment: "", buildTags: [] };
 }

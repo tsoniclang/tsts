@@ -1,5 +1,6 @@
 import type { bool } from "../../../go/scalars.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import { Clone } from "../../../go/slices.js";
 import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Elements, Node_Properties, Node_Expression, Node_Initializer } from "../../ast/ast.js";
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
@@ -828,10 +829,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   if (sourceStatementNodes !== undefined) {
     [prologue, rest0] = NodeFactory_SplitStandardPrologue(pf, sourceStatementNodes);
   }
-  let statements: GoSlice<GoPtr<Node>> = [];
-  if (prologue !== undefined) {
-    statements.push(...prologue);
-  }
+  let statements = Clone(prologue);
 
   // emit custom prologues from other transformations
   let custom: GoPtr<GoSlice<GoPtr<Node>>>;
@@ -841,12 +839,12 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   }
   const [visitedCustom] = NodeVisitor_VisitSlice(topLevelVisitor, custom);
   if (visitedCustom !== undefined) {
-    statements.push(...visitedCustom);
+    statements = [...(statements ?? []), ...visitedCustom];
   }
 
   // emits `Object.defineProperty(exports, "__esModule", { value: true });` at the top of the file
   if (CommonJSModuleTransformer_shouldEmitUnderscoreUnderscoreESModule(receiver)) {
-    statements = [...statements, CommonJSModuleTransformer_createUnderscoreUnderscoreESModule(receiver)];
+    statements = [...(statements ?? []), CommonJSModuleTransformer_createUnderscoreUnderscoreESModule(receiver)];
   }
 
   // initialize all exports to `undefined`, e.g.:
@@ -879,25 +877,25 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
       }
       const statement = NewExpressionStatement(f, right);
       EmitContext_AddEmitFlags(emitContext, statement, EFCustomPrologue);
-      statements = [...statements, statement];
+      statements = [...(statements ?? []), statement];
     }
   }
 
   // initialize exports for function declarations
-  const exportedFunctionsStart = statements.length;
+  const exportedFunctionsStart = statements?.length ?? 0;
   OrderedSet_Values(receiver!.currentModuleInfo!.exportedFunctions as GoPtr<OrderedSet<GoPtr<FunctionDeclarationNode>>>)((f_: GoPtr<FunctionDeclarationNode>) => {
     statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, f_ as GoPtr<Declaration>);
     // Go `for ... range` iterates the whole set; the GoSeq yield returns true to continue.
     return true;
   });
-  for (const s of statements.slice(exportedFunctionsStart)) {
+  for (const s of statements?.slice(exportedFunctionsStart) ?? []) {
     EmitContext_AddEmitFlags(emitContext, s, EFCustomPrologue);
   }
 
   // visit the remaining statements in the source file
   const [visitedRest] = NodeVisitor_VisitSlice(topLevelVisitor, rest);
   if (visitedRest !== undefined) {
-    statements.push(...visitedRest);
+    statements = [...(statements ?? []), ...visitedRest];
   }
 
   // emit `module.exports = ...` if needed
@@ -909,7 +907,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   const statementList = NodeFactory_NewNodeList(f, statements);
   statementList!.Loc = node!.Statements!.Loc;
   let result = AsSourceFile(NodeFactory_UpdateSourceFile(f, node, statementList, node!.EndOfFileToken));
-  EmitContext_AddEmitHelper(emitContext, result as GoPtr<Node>, ...EmitContext_ReadEmitHelpers(emitContext));
+  EmitContext_AddEmitHelper(emitContext, result as GoPtr<Node>, ...(EmitContext_ReadEmitHelpers(emitContext) ?? []));
 
   const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(emitContext, result, receiver!.compilerOptions, receiver!.getEmitModuleFormatOfFile({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }), false /*hasExportStarsToExportValues*/, false /*hasImportStar*/, false /*hasImportDefault*/);
   if (externalHelpersImportDeclaration !== undefined) {
@@ -945,6 +943,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportEqualsIfNeeded","kind":"method","status":"implemented","sigHash":"ac3856b278d37ebe10b47a9dc29cb1d9efb3c0f1117247d997822f358d157127","bodyHash":"5fc337ce18b00b2ffff32a93a6b5013d06ea1645dcc720ef63d2509a38295a60"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportEqualsIfNeeded(statements []*ast.Statement) []*ast.Statement {
@@ -971,7 +970,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     const expressionResult = CommonJSModuleTransformer_visitExportEquals(receiver, receiver!.currentModuleInfo!.exportEquals);
     if (expressionResult !== undefined) {
@@ -991,7 +990,7 @@ export function CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver: G
       );
       EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(receiver!.currentModuleInfo!.exportEquals));
       EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
-      return [...statements, statement];
+      return [...(statements ?? []), statement];
     }
   }
   return statements;
@@ -1018,6 +1017,7 @@ export function CommonJSModuleTransformer_visitExportEquals(receiver: GoPtr<Comm
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfImportDeclaration","kind":"method","status":"implemented","sigHash":"144b9b8a59d92cb2078041cf61fc080fa57225c9b1073b8e8c43c38bbe9bfe09","bodyHash":"f6199d0c6d3646660fc7c7b88809103439c7e3899c00fda4ccf49b755d39f1aa"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ImportDeclaration>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::ImportDeclaration>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfImportDeclaration(statements []*ast.Statement, decl *ast.ImportDeclaration) []*ast.Statement {
@@ -1051,7 +1051,7 @@ export function CommonJSModuleTransformer_visitExportEquals(receiver: GoPtr<Comm
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<ImportDeclaration>): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, decl: GoPtr<ImportDeclaration>): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     return statements;
   }
@@ -1085,18 +1085,20 @@ export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(recei
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableStatement","kind":"method","status":"implemented","sigHash":"f00b79906d296357cd0b115d7ab7d78dc89abfccc34c7aedee864377caa12716","bodyHash":"f82d8d88397ef61ebba919d9c92e7f61b313ece74c51cd1ee6feb550ce06201d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::VariableStatement>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::VariableStatement>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfVariableStatement(statements []*ast.Statement, node *ast.VariableStatement) []*ast.Statement {
  * 	return tx.appendExportsOfVariableDeclarationList(statements, node.DeclarationList.AsVariableDeclarationList() /*isForInOrOfInitializer* /, false)
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, node: GoPtr<VariableStatement>): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, node: GoPtr<VariableStatement>): GoPtr<GoSlice<GoPtr<Statement>>> {
   return CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, statements, AsVariableDeclarationList(node!.DeclarationList) /*isForInOrOfInitializer*/, false);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableDeclarationList","kind":"method","status":"implemented","sigHash":"66a0b4f4dffb5a1cdceab9999397a6ac09ed324b5446f63fc98abf886b341c41","bodyHash":"fc262d86dbec55af9c3a6d6df90f12091b02ff7fd335fa2d6d9a19d6ea2bc6ab"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::VariableDeclarationList>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::VariableDeclarationList>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfVariableDeclarationList(statements []*ast.Statement, node *ast.VariableDeclarationList, isForInOrOfInitializer bool) []*ast.Statement {
@@ -1111,7 +1113,7 @@ export function CommonJSModuleTransformer_appendExportsOfVariableStatement(recei
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, node: GoPtr<VariableDeclarationList>, isForInOrOfInitializer: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, node: GoPtr<VariableDeclarationList>, isForInOrOfInitializer: bool): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     return statements;
   }
@@ -1127,6 +1129,7 @@ export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfBindingElement","kind":"method","status":"implemented","sigHash":"c127fe1c3b8a4aef2bda22b27875580aa23729b9dc8f8a90fc26153fdbd872d2","bodyHash":"86be654ebb90ce235a82b715eacc860ef8d104fbe2ec728a4f2a19fbcc0a637f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfBindingElement(statements []*ast.Statement, decl *ast.Node /*VariableDeclaration | BindingElement* /, isForInOrOfInitializer bool) []*ast.Statement {
@@ -1148,7 +1151,7 @@ export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<Node>, isForInOrOfInitializer: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, decl: GoPtr<Node>, isForInOrOfInitializer: bool): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined || Node_Name(decl) === undefined) {
     return statements;
   }
@@ -1169,6 +1172,7 @@ export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfClassOrFunctionDeclaration","kind":"method","status":"implemented","sigHash":"d9e5b0050af5356d3ca9aef34aa63297df9a7cf7af0c8e6a649cf95718c4bb49","bodyHash":"1d2f202042728e0b2628baa793e1fe2c4ff5023a03dfb55ec2618b6a30d18496"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfClassOrFunctionDeclaration(statements []*ast.Statement, decl *ast.Declaration) []*ast.Statement {
@@ -1196,7 +1200,7 @@ export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<Declaration>): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, decl: GoPtr<Declaration>): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     return statements;
   }
@@ -1224,6 +1228,7 @@ export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclarat
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfDeclaration","kind":"method","status":"implemented","sigHash":"c946a9180e804d3ab5cc332648d9c384080a51a16ae36199b62e94d85e8f748f","bodyHash":"b7739f092738ee566c795913dfd9400f68b2a44d5070159f5fb4c49aef9249de"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<string>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<string>>,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfDeclaration(statements []*ast.Statement, decl *ast.Declaration, seen *collections.Set[string], liveBinding bool) []*ast.Statement {
@@ -1249,7 +1254,7 @@ export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclarat
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<Declaration>, seen: GoPtr<Set<string>>, liveBinding: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, decl: GoPtr<Declaration>, seen: GoPtr<Set<string>>, liveBinding: bool): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     return statements;
   }
@@ -1263,7 +1268,7 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
   if (MultiMap_Len(receiver!.currentModuleInfo!.exportSpecifiers) > 0 && name !== undefined && IsIdentifier(name)) {
     const declName = NodeFactory_GetDeclarationName(pf, Node_AsNode(decl));
     const exportSpecifiers = MultiMap_Get(receiver!.currentModuleInfo!.exportSpecifiers, Node_Text(declName));
-    if (exportSpecifiers.length > 0) {
+    if (exportSpecifiers !== undefined && exportSpecifiers.length > 0) {
       const exportValue = CommonJSModuleTransformer_visitExpressionIdentifier(receiver, declName as GoPtr<IdentifierNode>);
       for (const exportSpecifier of exportSpecifiers) {
         statements = CommonJSModuleTransformer_appendExportStatement(receiver, statements, seen, exportSpecifier!.name, exportValue as GoPtr<Expression>, exportSpecifier!.name!.Loc /*location*/, false /*allowComments*/, liveBinding);
@@ -1276,6 +1281,7 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportStatement","kind":"method","status":"implemented","sigHash":"9330324b7ca26a97098d5c365a66a0da4cdb6169094c82528b77742aa8235ed3","bodyHash":"dbb909ba6c6962450d59013e574106c7f10531c4d8e53733d3a49e735a79a88d"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleExportName>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/text.ts::TextRange>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/moduletransforms/commonjsmodule.ts::CommonJSModuleTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/collections/set.ts::Set<string>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::ModuleExportName>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/core/text.ts::TextRange>,packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::bool)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportStatement(statements []*ast.Statement, seen *collections.Set[string], exportName *ast.ModuleExportName, expression *ast.Expression, location *core.TextRange, allowComments bool, liveBinding bool) []*ast.Statement {
@@ -1289,14 +1295,14 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, seen: GoPtr<Set<string>>, exportName: GoPtr<ModuleExportName>, expression: GoPtr<Expression>, location: GoPtr<TextRange>, allowComments: bool, liveBinding: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, seen: GoPtr<Set<string>>, exportName: GoPtr<ModuleExportName>, expression: GoPtr<Expression>, location: GoPtr<TextRange>, allowComments: bool, liveBinding: bool): GoPtr<GoSlice<GoPtr<Statement>>> {
   if (exportName!.Kind !== KindStringLiteral) {
     if (Set_Has(seen, Node_Text(exportName))) {
       return statements;
     }
     Set_Add(seen, Node_Text(exportName));
   }
-  return [...statements, CommonJSModuleTransformer_createExportStatement(receiver, exportName, expression, location, allowComments, liveBinding)];
+  return [...(statements ?? []), CommonJSModuleTransformer_createExportStatement(receiver, exportName, expression, location, allowComments, liveBinding)];
 }
 
 /**
@@ -1667,7 +1673,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportDeclaration(receive
     return statement;
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
   let variables: GoSlice<GoPtr<Node>> = [];
   const namespaceDeclaration = GetNamespaceDeclarationNode(Node_AsNode(node));
   if (namespaceDeclaration !== undefined && !IsDefaultImport(Node_AsNode(node))) {
@@ -1716,7 +1722,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportDeclaration(receive
 
   EmitContext_SetOriginal(emitContext, varStatement, Node_AsNode(node));
   EmitContext_AssignCommentAndSourceMapRanges(emitContext, varStatement, Node_AsNode(node));
-  statements = [...statements, varStatement as GoPtr<Statement>];
+  statements = [...(statements ?? []), varStatement as GoPtr<Statement>];
   statements = CommonJSModuleTransformer_appendExportsOfImportDeclaration(receiver, statements, node);
   return SingleOrMany(statements, pf);
 }
@@ -1780,7 +1786,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const f = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
     // export import m = require("mod");
@@ -1795,7 +1801,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
     );
     EmitContext_SetOriginal(emitContext, statement, Node_AsNode(node));
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(node));
-    statements = [...statements, statement as GoPtr<Statement>];
+    statements = [statement as GoPtr<Statement>];
   } else {
     // import m = require("mod");
     const statement = NewVariableStatement(f,
@@ -1814,7 +1820,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
     );
     EmitContext_SetOriginal(emitContext, statement, Node_AsNode(node));
     EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(node));
-    statements = [...statements, statement as GoPtr<Statement>];
+    statements = [statement as GoPtr<Statement>];
   }
 
   statements = CommonJSModuleTransformer_appendExportsOfDeclaration(receiver, statements, Node_AsNode(node) as GoPtr<Declaration>, undefined /*seen*/, false /*liveBinding*/);
@@ -2144,10 +2150,10 @@ export function CommonJSModuleTransformer_visitTopLevelClassDeclaration(receiver
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
-    statements = [...statements, NodeFactory_UpdateClassDeclaration(
+    statements = [NodeFactory_UpdateClassDeclaration(
       pf!.__tsgoEmbedded0!,
       node,
       NodeVisitor_VisitModifiers(visitor, ExtractModifiers(emitContext, Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExportDefault)),
@@ -2157,7 +2163,7 @@ export function CommonJSModuleTransformer_visitTopLevelClassDeclaration(receiver
       NodeVisitor_VisitNodes(visitor, node!.Members),
     ) as GoPtr<Statement>];
   } else {
-    statements = [...statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
+    statements = [NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
   }
 
   statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, Node_AsNode(node) as GoPtr<Declaration>);
@@ -2310,13 +2316,13 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
 
   if (HasSyntacticModifier(Node_AsNode(node), ModifierFlagsExport)) {
     // export var a = b;
-    let variables: GoSlice<GoPtr<Node>> = [];
-    let expressions: GoSlice<GoPtr<Expression>> = [];
+    let variables: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+    let expressions: GoPtr<GoSlice<GoPtr<Expression>>> = undefined;
     let modifiers: GoPtr<ModifierList> = undefined;
-    let statements: GoSlice<GoPtr<Statement>> = [];
+    let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
 
     const commitPendingVariables = (): void => {
-      if (variables.length > 0) {
+      if ((variables?.length ?? 0) > 0) {
         const variableList = NodeFactory_NewNodeList(f, variables);
         const statement = NodeFactory_UpdateVariableStatement(
           f,
@@ -2329,34 +2335,34 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
             node!.DeclarationList!.Flags,
           ),
         );
-        if (statements.length > 0) {
+        if ((statements?.length ?? 0) > 0) {
           EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
         }
-        statements = [...statements, statement as GoPtr<Statement>];
-        variables = [];
+        statements = [...(statements ?? []), statement as GoPtr<Statement>];
+        variables = undefined;
       }
     };
 
     const commitPendingExpressions = (): void => {
-      if (expressions.length > 0) {
+      if ((expressions?.length ?? 0) > 0) {
         const statement = NewExpressionStatement(f, NodeFactory_InlineExpressions(pf, expressions));
         EmitContext_AssignCommentAndSourceMapRanges(emitContext, statement, Node_AsNode(node));
-        if (statements.length > 0) {
+        if ((statements?.length ?? 0) > 0) {
           EmitContext_AddEmitFlags(emitContext, statement, EFNoComments);
         }
-        statements = [...statements, statement as GoPtr<Statement>];
-        expressions = [];
+        statements = [...(statements ?? []), statement as GoPtr<Statement>];
+        expressions = undefined;
       }
     };
 
     const pushVariable = (variable: GoPtr<Node>): void => {
       commitPendingExpressions();
-      variables = [...variables, variable];
+      variables = [...(variables ?? []), variable];
     };
 
     const pushExpression = (expression: GoPtr<Expression>): void => {
       commitPendingVariables();
-      expressions = [...expressions, expression];
+      expressions = [...(expressions ?? []), expression];
     };
 
     // If we're exporting these variables, then these just become assignments to 'exports.x'.
@@ -2431,7 +2437,7 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
     commitPendingVariables();
     commitPendingExpressions();
     statements = CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver, statements, node);
-    return SingleOrMany(statements.length === 0 ? undefined : statements, pf);
+    return SingleOrMany(statements, pf);
   }
   return CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(receiver, node);
 }
@@ -2514,8 +2520,8 @@ export function CommonJSModuleTransformer_transformInitializedVariable(receiver:
 export function CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(receiver: GoPtr<CommonJSModuleTransformer>, node: GoPtr<VariableStatement>): GoPtr<Node> {
   const pf = Transformer_Factory(receiver!.__tsgoEmbedded0!);
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
-  let statements: GoSlice<GoPtr<Statement>> = [];
-  statements = [...statements, NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
+  statements = [...(statements ?? []), NodeVisitor_VisitEachChild(visitor, Node_AsNode(node)) as GoPtr<Statement>];
   statements = CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver, statements, node);
   return SingleOrMany(statements, pf);
 }
@@ -2573,8 +2579,8 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForStatement(receiv
   const topLevelNestedVisitor = receiver!.topLevelNestedVisitor as ConcreteNodeVisitor;
 
   if (node!.Initializer !== undefined && IsVariableDeclarationList(node!.Initializer) && (node!.Initializer!.Flags & NodeFlagsBlockScoped) === 0) {
-    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, [], AsVariableDeclarationList(node!.Initializer), false /*isForInOrOfInitializer*/);
-    if (exportStatements.length > 0) {
+    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, undefined, AsVariableDeclarationList(node!.Initializer), false /*isForInOrOfInitializer*/);
+    if (exportStatements !== undefined && exportStatements.length > 0) {
       let statements: GoSlice<GoPtr<Statement>> = [];
       const varDeclList = NodeVisitor_VisitNode(discardedValueVisitor, node!.Initializer);
       const varStatement = NewVariableStatement(f, undefined /*modifiers*/, varDeclList);
@@ -2658,8 +2664,8 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForInOrOfStatement(
   const topLevelNestedVisitor = receiver!.topLevelNestedVisitor as ConcreteNodeVisitor;
 
   if (IsVariableDeclarationList(node!.Initializer) && (node!.Initializer!.Flags & NodeFlagsBlockScoped) === 0) {
-    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, [], AsVariableDeclarationList(node!.Initializer), true /*isForInOrOfInitializer*/);
-    if (exportStatements.length > 0) {
+    const exportStatements = CommonJSModuleTransformer_appendExportsOfVariableDeclarationList(receiver, undefined, AsVariableDeclarationList(node!.Initializer), true /*isForInOrOfInitializer*/);
+    if (exportStatements !== undefined && exportStatements.length > 0) {
       const initializer = NodeVisitor_VisitNode(discardedValueVisitor, node!.Initializer);
       const expression = NodeVisitor_VisitNode(visitor, node!.Expression);
       let body: GoPtr<Node> = EmitContext_VisitIterationBody(emitContext, node!.Statement, topLevelNestedVisitor);
@@ -4044,7 +4050,7 @@ export function CommonJSModuleTransformer_visitImportCallExpression(receiver: Go
     return NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
   }
   const externalModuleName = getExternalModuleNameLiteral(pf, Node_AsNode(node), receiver!.currentSourceFile, undefined /*host*/, undefined /*resolver*/, receiver!.compilerOptions);
-  const firstArgument = NodeVisitor_VisitNode(visitor, FirstOrNil(node!.Arguments?.Nodes ?? [])) as GoPtr<Expression>;
+  const firstArgument = NodeVisitor_VisitNode(visitor, FirstOrNil(node!.Arguments?.Nodes)) as GoPtr<Expression>;
   let argument: GoPtr<Expression>;
   if (externalModuleName !== undefined && (firstArgument === undefined || !IsStringLiteral(firstArgument) || Node_Text(firstArgument) !== Node_Text(externalModuleName))) {
     argument = externalModuleName;
@@ -4652,7 +4658,7 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     if (declarations !== null && declarations !== undefined) {
       for (const declaration of declarations) {
         const exportedBindings = MultiMap_Get(receiver!.currentModuleInfo!.exportedBindings, declaration);
-        for (const binding of exportedBindings) {
+        for (const binding of exportedBindings ?? []) {
           if (!Set_Has(bindingsSet, binding)) {
             Set_Add(bindingsSet, binding);
             bindings = [...(bindings ?? []), binding];
@@ -4665,7 +4671,7 @@ export function CommonJSModuleTransformer_getExports(receiver: GoPtr<CommonJSMod
     const exportSpecifiers = MultiMap_Get(receiver!.currentModuleInfo!.exportSpecifiers, Node_Text(name));
     if (exportSpecifiers !== null && exportSpecifiers !== undefined && exportSpecifiers.length > 0) {
       let exportedNames: GoPtr<GoSlice<GoPtr<ModuleExportName>>> = undefined;
-      for (const exportSpecifier of exportSpecifiers) {
+      for (const exportSpecifier of exportSpecifiers ?? []) {
         exportedNames = [...(exportedNames ?? []), exportSpecifier!.name];
       }
       return exportedNames;

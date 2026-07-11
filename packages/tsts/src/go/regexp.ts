@@ -25,7 +25,7 @@
 // Go (T, error) maps to a `[T, GoError]` tuple; Go panic maps to `throw`.
 
 import type { bool, int } from "./scalars.js";
-import type { GoError, GoSlice } from "./compat.js";
+import type { GoError, GoPtr, GoSlice } from "./compat.js";
 
 // translatePattern rewrites a Go RE2 pattern source into an equivalent JS
 // RegExp source plus the set of JS flags required. It scans character by
@@ -153,7 +153,7 @@ export class Regexp {
   // and the matches of its subexpressions. Returns nil (undefined) if there is
   // no match. A non-participating capture group is the empty string in Go's
   // []string, so JS `undefined` groups are mapped to "".
-  FindStringSubmatch(s: string): GoSlice<string> | undefined {
+  FindStringSubmatch(s: string): GoPtr<GoSlice<string>> {
     const m = this.compileFlags("").exec(s);
     if (m === null) {
       return undefined;
@@ -215,7 +215,7 @@ export class Regexp {
   //   n < 0  -> all substrings
   //   n == 0 -> nil (undefined)
   //   n > 0  -> at most n substrings; the last one is the unsplit remainder.
-  Split(s: string, n: int): GoSlice<string> | undefined {
+  Split(s: string, n: int): GoPtr<GoSlice<string>> {
     if (n === 0) {
       return undefined;
     }

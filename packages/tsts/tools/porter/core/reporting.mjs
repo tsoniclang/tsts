@@ -43,12 +43,9 @@ export function printStatus(config, status) {
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   console.log(`JSON tagged structs/fields mapped structs/fields runtime/custom/source/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.fieldMapUnits ?? 0}/${status.jsonTagCheck?.fieldMapFields ?? 0} ${status.jsonTagCheck?.runtimeUnits ?? 0}/${status.jsonTagCheck?.customCodecUnits ?? 0}/${status.jsonTagCheck?.sourceMetadataUnits ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
-  console.log(`Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
-  console.log(`Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
   console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   console.log(`Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
-  console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
   console.log(`Report: ${path.relative(repoRoot, resolveRepo(config.reportOut))}`);
 }
@@ -89,12 +86,9 @@ export function renderStatusMarkdown(status) {
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   lines.push(`- JSON tagged structs/fields mapped structs/fields runtime/custom/source/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.fieldMapUnits ?? 0}/${status.jsonTagCheck?.fieldMapFields ?? 0} ${status.jsonTagCheck?.runtimeUnits ?? 0}/${status.jsonTagCheck?.customCodecUnits ?? 0}/${status.jsonTagCheck?.sourceMetadataUnits ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
-  lines.push(`- Mechanical port risks: ${status.counts.mechanicalPortRisks ?? 0}`);
-  lines.push(`- Implementation owner issues: ${status.counts.implementationOwnerIssues ?? 0}`);
   lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   lines.push(`- Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   lines.push(`- Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
-  lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
   lines.push("");
   lines.push("## Categories");
@@ -114,14 +108,6 @@ export function renderStatusMarkdown(status) {
   }
   if ((localOverrides.units?.length ?? 0) === 0) lines.push("| _None_ |  |  |  |");
   lines.push("");
-  lines.push("## Go Feature Counts");
-  lines.push("");
-  lines.push("| Feature | Count |");
-  lines.push("|---|---:|");
-  for (const [name, count] of Object.entries(status.featureCounts).sort()) {
-    lines.push(`| ${name} | ${count} |`);
-  }
-  lines.push("");
   lines.push("## Largest Missing Modules");
   lines.push("");
   lines.push("| Module | Units |");
@@ -132,33 +118,12 @@ export function renderStatusMarkdown(status) {
   lines.push("");
   lines.push("## Coverage Diagnostics");
   lines.push("");
-  lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Go files with no top-level units: ${status.counts.unitlessGoFiles}`);
   lines.push(`- Forbidden TypeScript files: ${status.counts.forbiddenTsFiles}`);
   lines.push(`- TypeScript files without unit metadata: ${status.counts.untrackedTsFiles}`);
   lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
   lines.push(`- Bundled generated artifact defects: ${status.counts.missingBundledArtifacts + status.counts.staleBundledArtifacts + status.counts.orphanBundledArtifacts + status.counts.untrackedBundledArtifacts + status.counts.invalidBundledArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
-  if ((status.mechanicalRisks?.length ?? 0) > 0) {
-    lines.push("");
-    lines.push("## Mechanical Port Risks");
-    lines.push("");
-    lines.push("| Unit | Risk | TypeScript path | Message |");
-    lines.push("|---|---|---|---|");
-    for (const risk of status.mechanicalRisks.slice(0, 100)) {
-      lines.push(`| ${escapeMd(risk.name)} | ${risk.kind} | ${risk.path} | ${escapeMd(risk.message)} |`);
-    }
-  }
-  if ((status.implementationOwnerIssues?.length ?? 0) > 0) {
-    lines.push("");
-    lines.push("## TypeScript Implementation Owner Issues");
-    lines.push("");
-    lines.push("| Unit | TypeScript path | Reason |");
-    lines.push("|---|---|---|");
-    for (const issue of status.implementationOwnerIssues.slice(0, 100)) {
-      lines.push(`| ${escapeMd(issue.name)} | ${issue.path} | ${escapeMd(issue.reason)} |`);
-    }
-  }
   if ((status.embeddedSourceMismatches?.length ?? 0) > 0) {
     lines.push("");
     lines.push("## Embedded Go Source Mismatches");

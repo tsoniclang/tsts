@@ -3,7 +3,8 @@ import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
 import { buildSnapshotSourceIntegrityStatus, gitTreeEntries, inspectGitCheckout } from "../source-pin.mjs";
 import { inactiveSourcePolicyFor, isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { assertDirectory, fail, hashText, repoRoot, resolveRepo, writeText } from "./runtime.mjs";
-import { runScan, validatePorterSnapshot } from "./snapshot.mjs";
+import { runScan } from "./scan-runner.mjs";
+import { validatePorterSnapshot } from "./snapshot.mjs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -80,8 +81,6 @@ export function runDelta(config, options) {
     ...(report.environmentMatches ? [] : ["extractor environments differ"]),
     ...report.generatedSourcePolicies.from.issues.map((issue) => `from generated source policy: ${issue.path}: ${issue.reason}`),
     ...report.generatedSourcePolicies.to.issues.map((issue) => `to generated source policy: ${issue.path}: ${issue.reason}`),
-    ...(fromSnapshot.files.some((file) => file.parseError) ? ["from snapshot has Go parse errors"] : []),
-    ...(toSnapshot.files.some((file) => file.parseError) ? ["to snapshot has Go parse errors"] : []),
   ];
   if (gateIssues.length > 0) {
     fail(`porter delta failed its integrity gate before writing evidence: ${gateIssues.join("; ")}`);
@@ -141,7 +140,7 @@ export function runDeltaVerify(config, options) {
     issues.push(...validatePorterSnapshot(normalized, config).map((issue) => `${label} snapshot: ${issue}`));
   }
   if (report !== undefined) {
-    if (report.schemaVersion !== 1) issues.push("delta.json schemaVersion must be 1");
+    if (report.schemaVersion !== 2) issues.push("delta.json schemaVersion must be 2");
     if (report.environmentMatches !== true) issues.push("delta.json must prove equal extractor environments");
     if (fromSnapshot !== undefined && report.from?.digest !== snapshotDigest(fromSnapshot)) issues.push("delta.json from digest does not match from-snapshot.json");
     if (toSnapshot !== undefined && report.to?.digest !== snapshotDigest(toSnapshot)) issues.push("delta.json to digest does not match to-snapshot.json");

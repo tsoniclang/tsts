@@ -178,7 +178,7 @@ export interface CompilerOptions {
   AllowUnusedLabels: Tristate;
   AssumeChangesOnlyAffectDirectDependencies: Tristate;
   CheckJs: Tristate;
-  CustomConditions: GoSlice<string>;
+  CustomConditions: GoPtr<GoSlice<string>>;
   Composite: Tristate;
   EmitDeclarationOnly: Tristate;
   EmitBOM: Tristate;
@@ -208,13 +208,13 @@ export interface CompilerOptions {
   JsxFactory: string;
   JsxFragmentFactory: string;
   JsxImportSource: string;
-  Lib: GoSlice<string>;
+  Lib: GoPtr<GoSlice<string>>;
   LibReplacement: Tristate;
   Locale: string;
   MapRoot: string;
   Module: ModuleKind;
   ModuleResolution: ModuleResolutionKind;
-  ModuleSuffixes: GoSlice<string>;
+  ModuleSuffixes: GoPtr<GoSlice<string>>;
   ModuleDetection: ModuleDetectionKind;
   NewLine: NewLineKind;
   NoEmit: Tristate;
@@ -235,7 +235,7 @@ export interface CompilerOptions {
   NoImplicitOverride: Tristate;
   NoUncheckedSideEffectImports: Tristate;
   OutDir: string;
-  Paths: GoPtr<OrderedMap<string, GoSlice<string>>>;
+  Paths: GoPtr<OrderedMap<string, GoPtr<GoSlice<string>>>>;
   PreserveConstEnums: Tristate;
   PreserveSymlinks: Tristate;
   Project: string;
@@ -246,7 +246,7 @@ export interface CompilerOptions {
   RewriteRelativeImportExtensions: Tristate;
   ReactNamespace: string;
   RootDir: string;
-  RootDirs: GoSlice<string>;
+  RootDirs: GoPtr<GoSlice<string>>;
   SkipLibCheck: Tristate;
   StableTypeOrdering: Tristate;
   Strict: Tristate;
@@ -263,8 +263,8 @@ export interface CompilerOptions {
   Target: ScriptTarget;
   TraceResolution: Tristate;
   TsBuildInfoFile: string;
-  TypeRoots: GoSlice<string>;
-  Types: GoSlice<string>;
+  TypeRoots: GoPtr<GoSlice<string>>;
+  Types: GoPtr<GoSlice<string>>;
   UseDefineForClassFields: Tristate;
   UseUnknownInCatchVariables: Tristate;
   VerbatimModuleSyntax: Tristate;

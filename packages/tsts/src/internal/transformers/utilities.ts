@@ -763,7 +763,7 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"06a1a964ffba2254943ddd89593d332359c5daba36cd696e67af086050c8f98a","bodyHash":"52d08eedf70f43de9ec227529fb74d1b29765de19c08a616b60e18fff2e42649"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func FindSuperStatementIndexPath uses an explicit undefined-capable TypeScript representation at the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Both the statement input and result are Go slices whose nil state is valid and observable; GoPtr preserves those states while iteration over nil remains empty.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
  *
  * Go source:
  * func FindSuperStatementIndexPath(statements []*ast.Statement, start int) []int {
@@ -772,7 +772,7 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
  * 	return indices
  * }
  */
-export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoPtr<GoSlice<int>> {
+export function FindSuperStatementIndexPath(statements: GoPtr<GoSlice<GoPtr<Statement>>>, start: int): GoPtr<GoSlice<int>> {
   const indices = findSuperStatementIndexPathWorker(statements, start, undefined);
   if (indices !== undefined) {
     Reverse(indices);
@@ -782,7 +782,7 @@ export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::findSuperStatementIndexPathWorker","kind":"func","status":"implemented","sigHash":"1e6e07707b338822ea858ad0162a92f59155b8854f0f27786ee83fd02282dbac","bodyHash":"5d3c0b9647cb9064c7c2a1df75adf4b18d0c2791e5c0e2d52d85711cc1077e4d"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"func findSuperStatementIndexPathWorker uses an explicit undefined-capable TypeScript representation at parameter #2, the return value because the corresponding Go value can be nil; this preserves the Go zero value at exactly those positions without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The recursive statement input, accumulator, and result are independently nilable Go slices; GoPtr preserves each state while nil iteration remains empty.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/scalars.ts::int,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>>"}
  *
  * Go source:
  * func findSuperStatementIndexPathWorker(statements []*ast.Statement, start int, indices []int) []int {
@@ -799,19 +799,17 @@ export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>
  * 	return nil
  * }
  */
-export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Statement>>, start: int, indices: GoPtr<GoSlice<int>>): GoPtr<GoSlice<int>> {
-  for (let i = start; i < statements.length; i++) {
-    const statement = statements[i];
+export function findSuperStatementIndexPathWorker(statements: GoPtr<GoSlice<GoPtr<Statement>>>, start: int, indices: GoPtr<GoSlice<int>>): GoPtr<GoSlice<int>> {
+  for (let i = start; i < (statements?.length ?? 0); i++) {
+    const statement = statements![i];
     if (GetSuperCallFromStatement(statement) !== undefined) {
       return indices === undefined ? [i] : [...indices, i];
     } else if (IsTryStatement(statement as unknown as GoPtr<Node>)) {
       const tryStmt = AsTryStatement(statement as unknown as GoPtr<Node>);
       const tryBlockStmts = Node_Statements(tryStmt!.TryBlock);
-      if (tryBlockStmts !== undefined) {
-        const result = findSuperStatementIndexPathWorker(tryBlockStmts as unknown as GoSlice<GoPtr<Statement>>, 0, indices);
-        if (result !== undefined) {
-          return [...result, i];
-        }
+      const result = findSuperStatementIndexPathWorker(tryBlockStmts as unknown as GoPtr<GoSlice<GoPtr<Statement>>>, 0, indices);
+      if (result !== undefined) {
+        return [...result, i];
       }
     }
   }

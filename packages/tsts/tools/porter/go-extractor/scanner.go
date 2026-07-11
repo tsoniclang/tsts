@@ -2,8 +2,6 @@ package main
 
 import (
 	"go/ast"
-	"go/build"
-	"go/constant"
 	"go/parser"
 	"go/token"
 	"os"
@@ -17,7 +15,7 @@ func scanGoFile(root string, path string, modulePath string, knownPackageNames .
 	rel := mustRel(root, path)
 	source, err := os.ReadFile(path)
 	if err != nil {
-		return FileReport{Path: rel, ParseError: err.Error()}
+		fatalf("read Go declaration source %s: %v", rel, err)
 	}
 	lineCount := countLines(source)
 	fileSet := token.NewFileSet()
@@ -26,56 +24,56 @@ func scanGoFile(root string, path string, modulePath string, knownPackageNames .
 	if len(knownPackageNames) > 0 && knownPackageNames[0] != nil {
 		packageNames = knownPackageNames[0]
 	}
-	if _, err := build.Default.MatchFile(filepath.Dir(path), filepath.Base(path)); err != nil {
-		fatalf("invalid Go build constraints in %s: %v", rel, err)
-	}
 	report := FileReport{
 		Path:              rel,
 		SourceHash:        hashBytes(source),
 		GitBlobHash:       gitBlobHash(source),
+		ByteLength:        len(source),
 		LineCount:         lineCount,
 		BuildTags:         explicitBuildTags(source, rel),
 		ImplicitBuildTags: implicitBuildTags(rel),
 		Imports:           []ImportReport{},
-		StructTags:        []MemberReport{},
 		Units:             []UnitReport{},
-		NodeKindCounts:    make(map[string]int),
-		FeatureCounts:     make(map[string]int),
 		Metadata: map[string]string{
 			"basename": filepath.Base(rel),
 		},
 	}
 	report.ImportPath = importPathFor(modulePath, rel)
 	if err != nil {
-		report.ParseError = err.Error()
-		return report
+		fatalf("parse Go declaration source %s: %v", rel, err)
 	}
 	report.PackageName = parsed.Name.Name
+	report.ImportPath = sourceImportPath(modulePath, rel, report.PackageName)
 	report.Generated = ast.IsGenerated(parsed)
 	report.Imports = importsOf(parsed, packageNames, rel)
-	report.NodeKindCounts = nodeCounts(parsed)
-	report.FeatureCounts = featureCounts(parsed)
-	report.StructTags = structTagsOf(fileSet, parsed)
-	report.Units = unitsOf(fileSet, parsed, source, rel, modulePath, report.Generated, report.Imports)
+	report.Units = unitsOf(fileSet, parsed, rel, modulePath, report.Generated)
 	return report
 }
 
-func unitsOf(fileSet *token.FileSet, parsed *ast.File, source []byte, rel string, modulePath string, generated bool, imports []ImportReport) []UnitReport {
+func sourceImportPath(modulePath string, relative string, packageName string) string {
+	path := importPathFor(modulePath, relative)
+	if strings.HasSuffix(relative, "_test.go") && strings.HasSuffix(packageName, "_test") {
+		return path + "_test"
+	}
+	return path
+}
+
+func unitsOf(fileSet *token.FileSet, parsed *ast.File, rel string, modulePath string, generated bool) []UnitReport {
 	units := []UnitReport{}
 	seenIDs := map[string]int{}
 	for _, decl := range parsed.Decls {
 		switch typed := decl.(type) {
 		case *ast.FuncDecl:
-			units = append(units, funcUnit(fileSet, typed, source, rel, modulePath, generated, seenIDs, imports))
+			units = append(units, funcUnit(fileSet, typed, rel, modulePath, generated, seenIDs))
 		case *ast.GenDecl:
-			units = append(units, genDeclUnit(fileSet, typed, source, rel, modulePath, generated, seenIDs, imports))
+			units = append(units, genDeclUnit(fileSet, typed, rel, modulePath, generated, seenIDs))
 			if typed.Tok == token.TYPE {
 				for _, spec := range typed.Specs {
 					typeSpec, ok := spec.(*ast.TypeSpec)
 					if !ok {
 						fatalf("unsupported type declaration spec %T in %s", spec, rel)
 					}
-					units = append(units, typeUnit(fileSet, typeSpec, source, rel, modulePath, generated, seenIDs, imports))
+					units = append(units, typeUnit(fileSet, typeSpec, rel, modulePath, generated, seenIDs))
 				}
 			}
 		default:
@@ -83,15 +81,15 @@ func unitsOf(fileSet *token.FileSet, parsed *ast.File, source []byte, rel string
 		}
 	}
 	sort.Slice(units, func(left, right int) bool {
-		if units[left].StartLine == units[right].StartLine {
+		if units[left].StartOffset == units[right].StartOffset {
 			return units[left].ID < units[right].ID
 		}
-		return units[left].StartLine < units[right].StartLine
+		return units[left].StartOffset < units[right].StartOffset
 	})
 	return units
 }
 
-func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, source []byte, rel string, modulePath string, generated bool, seenIDs map[string]int, imports []ImportReport) UnitReport {
+func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, rel string, modulePath string, generated bool, seenIDs map[string]int) UnitReport {
 	name := decl.Name.Name
 	kind := "func"
 	receiver := ""
@@ -102,8 +100,10 @@ func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, source []byte, rel str
 		name = receiver + "." + name
 	}
 	signature := printed(funcSignatureOnly(decl))
-	snippet := snippetOf(fileSet, source, decl.Pos(), decl.End())
-	unit := baseUnit(fileSet, decl, source, rel, modulePath, kind, name, generated, seenIDs)
+	unit := baseUnit(fileSet, decl, rel, modulePath, kind, name, generated, seenIDs)
+	signatureEnd := fileSet.PositionFor(decl.Type.End(), false)
+	unit.EndLine = signatureEnd.Line
+	unit.EndOffset = signatureEnd.Offset
 	unit.Name = decl.Name.Name
 	unit.QualifiedName = name
 	unit.Receiver = receiver
@@ -113,63 +113,130 @@ func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, source []byte, rel str
 	}
 	unit.Signature = signature
 	unit.SigHash = hashText(signature)
-	unit.BodyHash = hashText(printed(decl))
-	unit.Snippet = snippet
+	unit.BodyHash = opaqueFunctionBodyHash(decl.Body)
+	unit.Snippet = signature
 	unit.TypeParameters = fieldNames(decl.Type.TypeParams)
 	unit.TypeParameterDetails = typeParameters(decl.Type.TypeParams)
 	unit.Parameters = paramsOf(decl.Type.Params)
 	unit.Results = paramsOf(decl.Type.Results)
 	unit.Exported = ast.IsExported(decl.Name.Name)
-	unit.NodeKindCounts = nodeCounts(decl)
-	unit.FeatureCounts = featureCounts(decl)
-	unit.ExternalRefs = externalRefsOf(decl, imports)
-	unit.ReturnFacts = returnFactsOf(fileSet, decl.Body)
 	return unit
 }
 
-func genDeclUnit(fileSet *token.FileSet, decl *ast.GenDecl, source []byte, rel string, modulePath string, generated bool, seenIDs map[string]int, imports []ImportReport) UnitReport {
+func genDeclUnit(fileSet *token.FileSet, decl *ast.GenDecl, rel string, modulePath string, generated bool, seenIDs map[string]int) UnitReport {
 	name := genDeclName(decl)
 	kind := strings.ToLower(decl.Tok.String()) + "Group"
-	signature := decl.Tok.String() + " " + name
-	unit := baseUnit(fileSet, decl, source, rel, modulePath, kind, name, generated, seenIDs)
+	signature := printed(decl)
+	if decl.Tok == token.CONST || decl.Tok == token.VAR {
+		signature = valueGroupSignature(decl)
+	}
+	unit := baseUnit(fileSet, decl, rel, modulePath, kind, name, generated, seenIDs)
+	if decl.Tok == token.VAR {
+		signatureEnd := fileSet.PositionFor(valueGroupSignatureEnd(decl), false)
+		unit.EndLine = signatureEnd.Line
+		unit.EndOffset = signatureEnd.Offset
+	}
 	unit.Name = name
 	unit.QualifiedName = name
 	unit.Signature = signature
 	unit.SigHash = hashText(signature)
-	unit.BodyHash = hashText(printed(decl))
-	unit.Snippet = snippetOf(fileSet, source, decl.Pos(), decl.End())
+	unit.BodyHash = hashText("")
+	if decl.Tok == token.VAR {
+		unit.BodyHash = opaqueValueInitializersHash(decl)
+	}
+	unit.Snippet = signature
 	unit.ValueSpecs = valueSpecsOf(decl)
 	unit.Exported = hasExportedSpec(decl)
-	unit.NodeKindCounts = nodeCounts(decl)
-	unit.FeatureCounts = featureCounts(decl)
-	unit.ExternalRefs = externalRefsOf(decl, imports)
 	return unit
 }
 
-func typeUnit(fileSet *token.FileSet, spec *ast.TypeSpec, source []byte, rel string, modulePath string, generated bool, seenIDs map[string]int, imports []ImportReport) UnitReport {
+func typeUnit(fileSet *token.FileSet, spec *ast.TypeSpec, rel string, modulePath string, generated bool, seenIDs map[string]int) UnitReport {
 	name := spec.Name.Name
-	unit := baseUnit(fileSet, spec, source, rel, modulePath, "type", name, generated, seenIDs)
+	unit := baseUnit(fileSet, spec, rel, modulePath, "type", name, generated, seenIDs)
 	unit.Name = name
 	unit.QualifiedName = name
 	unit.TypeKind = typeKind(spec)
-	unit.Signature = typeSignature(spec)
+	unit.Signature = printed(spec)
 	unit.SigHash = hashText(unit.Signature)
-	unit.BodyHash = hashText(printed(spec))
-	unit.Snippet = snippetOf(fileSet, source, spec.Pos(), spec.End())
+	unit.BodyHash = hashText("")
+	unit.Snippet = unit.Signature
 	unit.TypeParameters = fieldNames(spec.TypeParams)
 	unit.TypeParameterDetails = typeParameters(spec.TypeParams)
 	unit.TypeExpression = typeExpr(spec.Type)
 	unit.Members = typeMembers(spec)
 	unit.Exported = ast.IsExported(name)
-	unit.NodeKindCounts = nodeCounts(spec)
-	unit.FeatureCounts = featureCounts(spec)
-	unit.ExternalRefs = externalRefsOf(spec, imports)
 	return unit
 }
 
-func baseUnit(fileSet *token.FileSet, node ast.Node, source []byte, rel string, modulePath string, kind string, name string, generated bool, seenIDs map[string]int) UnitReport {
-	start := fileSet.Position(node.Pos())
-	end := fileSet.Position(node.End())
+func valueGroupSignature(declaration *ast.GenDecl) string {
+	parts := make([]string, 0, len(declaration.Specs))
+	for _, specification := range declaration.Specs {
+		value, ok := specification.(*ast.ValueSpec)
+		if !ok {
+			fatalf("Go %s declaration contains unsupported specification %T", declaration.Tok, specification)
+		}
+		names := make([]string, len(value.Names))
+		for index, name := range value.Names {
+			names[index] = name.Name
+		}
+		part := strings.Join(names, ", ")
+		if value.Type == nil {
+			part += " <inferred>"
+		} else {
+			part += " " + printed(value.Type)
+		}
+		parts = append(parts, part)
+	}
+	if declaration.Lparen.IsValid() {
+		return declaration.Tok.String() + " (" + strings.Join(parts, "; ") + ")"
+	}
+	return declaration.Tok.String() + " " + strings.Join(parts, "; ")
+}
+
+func valueGroupSignatureEnd(declaration *ast.GenDecl) token.Pos {
+	end := declaration.Pos()
+	for _, specification := range declaration.Specs {
+		value, ok := specification.(*ast.ValueSpec)
+		if !ok {
+			fatalf("Go %s declaration contains unsupported specification %T", declaration.Tok, specification)
+		}
+		for _, name := range value.Names {
+			if name.End() > end {
+				end = name.End()
+			}
+		}
+		if value.Type != nil && value.Type.End() > end {
+			end = value.Type.End()
+		}
+	}
+	return end
+}
+
+func opaqueValueInitializersHash(declaration *ast.GenDecl) string {
+	fragments := []string{}
+	for _, specification := range declaration.Specs {
+		value, ok := specification.(*ast.ValueSpec)
+		if !ok {
+			fatalf("Go %s declaration contains unsupported specification %T", declaration.Tok, specification)
+		}
+		for _, expression := range value.Values {
+			text := printed(expression)
+			fragments = append(fragments, strconv.Itoa(len(text))+":"+text)
+		}
+	}
+	return hashText(strings.Join(fragments, ""))
+}
+
+func opaqueFunctionBodyHash(body *ast.BlockStmt) string {
+	if body == nil {
+		return hashText("")
+	}
+	return hashText(printed(body))
+}
+
+func baseUnit(fileSet *token.FileSet, node ast.Node, rel string, modulePath string, kind string, name string, generated bool, seenIDs map[string]int) UnitReport {
+	start := fileSet.PositionFor(node.Pos(), false)
+	end := fileSet.PositionFor(node.End(), false)
 	idBase := modulePath + "::" + rel + "::" + kind + "::" + name
 	seenIDs[idBase]++
 	id := idBase
@@ -182,16 +249,14 @@ func baseUnit(fileSet *token.FileSet, node ast.Node, source []byte, rel string, 
 		Generated:            generated,
 		StartLine:            start.Line,
 		EndLine:              end.Line,
+		StartOffset:          start.Offset,
+		EndOffset:            end.Offset,
 		TypeParameters:       []string{},
 		TypeParameterDetails: []TypeParameterReport{},
 		Parameters:           []ParamReport{},
 		Results:              []ParamReport{},
 		ValueSpecs:           []ValueSpecReport{},
 		Members:              []MemberReport{},
-		ExternalRefs:         []ExternalRefReport{},
-		ReturnFacts:          []ReturnFactReport{},
-		NodeKindCounts:       make(map[string]int),
-		FeatureCounts:        make(map[string]int),
 		Metadata: map[string]string{
 			"goPath": rel,
 		},
@@ -259,8 +324,11 @@ func receiverName(expr ast.Expr) (string, string) {
 	case *ast.IndexListExpr:
 		name, mode := receiverName(typed.X)
 		return name, mode
+	case *ast.ParenExpr:
+		return receiverName(typed.X)
 	default:
-		return printed(expr), "unknown"
+		fatalf("unsupported Go receiver type syntax %T", expr)
+		return "", ""
 	}
 }
 
@@ -280,36 +348,6 @@ func typeKind(spec *ast.TypeSpec) string {
 	}
 }
 
-func typeSignature(spec *ast.TypeSpec) string {
-	var builder strings.Builder
-	builder.WriteString("type ")
-	builder.WriteString(spec.Name.Name)
-	if spec.TypeParams != nil {
-		builder.WriteString("[")
-		for index, field := range spec.TypeParams.List {
-			if index > 0 {
-				builder.WriteString(", ")
-			}
-			var names []string
-			for _, name := range field.Names {
-				names = append(names, name.Name)
-			}
-			builder.WriteString(strings.Join(names, ", "))
-			if len(names) > 0 {
-				builder.WriteString(" ")
-			}
-			builder.WriteString(printed(field.Type))
-		}
-		builder.WriteString("]")
-	}
-	if spec.Assign.IsValid() {
-		builder.WriteString(" =")
-	}
-	builder.WriteString(" ")
-	builder.WriteString(typeKind(spec))
-	return builder.String()
-}
-
 func typeMembers(spec *ast.TypeSpec) []MemberReport {
 	members := []MemberReport{}
 	switch typed := spec.Type.(type) {
@@ -318,13 +356,13 @@ func typeMembers(spec *ast.TypeSpec) []MemberReport {
 			for _, field := range typed.Fields.List {
 				fieldType := printed(field.Type)
 				fieldExpr := typeExpr(field.Type)
-				structTag, tagValues := fieldTags(field)
+				structTag, tagValues, tagRemainder := fieldTags(field)
 				if len(field.Names) == 0 {
-					members = append(members, MemberReport{Kind: "embeddedField", Name: fieldType, Exported: embeddedFieldExported(field.Type), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
+					members = append(members, MemberReport{Kind: "embeddedField", Name: fieldType, Exported: embeddedFieldExported(field.Type), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues, TagRemainder: tagRemainder})
 					continue
 				}
 				for _, name := range field.Names {
-					members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
+					members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldType, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues, TagRemainder: tagRemainder})
 				}
 			}
 		}
@@ -386,59 +424,17 @@ func valueSpecsOf(decl *ast.GenDecl) []ValueSpecReport {
 		return []ValueSpecReport{}
 	}
 	specs := []ValueSpecReport{}
-	var previousConstValues []ast.Expr
-	var previousConstType ast.Expr
-	constantEnvironment := map[string]constant.Value{}
-	for specIndex, spec := range decl.Specs {
+	for _, spec := range decl.Specs {
 		valueSpec, ok := spec.(*ast.ValueSpec)
 		if !ok {
 			continue
 		}
 		report := ValueSpecReport{}
-		report.ConstIndex = specIndex
 		for _, name := range valueSpec.Names {
 			report.Names = append(report.Names, name.Name)
 		}
 		if valueSpec.Type != nil {
 			report.Type = typeExpr(valueSpec.Type)
-		}
-		values := valueSpec.Values
-		if decl.Tok == token.CONST {
-			if len(values) == 0 {
-				values = previousConstValues
-				if valueSpec.Type == nil && previousConstType != nil {
-					report.Type = typeExpr(previousConstType)
-				}
-			} else {
-				previousConstValues = values
-				previousConstType = valueSpec.Type
-			}
-		}
-		for _, value := range values {
-			report.Values = append(report.Values, printed(value))
-			report.InferredValueTypes = append(report.InferredValueTypes, inferredValueType(value))
-			if decl.Tok == token.CONST {
-				resolved, reason := evaluateConstantExpression(value, constant.MakeInt64(int64(specIndex)), constantEnvironment)
-				report.ConstantValues = append(report.ConstantValues, constantValueReport(resolved, reason))
-			}
-		}
-		if decl.Tok == token.CONST {
-			for ordinal, name := range report.Names {
-				if name == "_" || len(values) == 0 {
-					continue
-				}
-				valueIndex := ordinal
-				if len(values) == 1 {
-					valueIndex = 0
-				}
-				if valueIndex >= len(values) {
-					continue
-				}
-				resolved, _ := evaluateConstantExpression(values[valueIndex], constant.MakeInt64(int64(specIndex)), constantEnvironment)
-				if resolved != nil && resolved.Kind() != constant.Unknown {
-					constantEnvironment[name] = resolved
-				}
-			}
 		}
 		specs = append(specs, report)
 	}

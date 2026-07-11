@@ -1497,11 +1497,11 @@ export function NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignature
     return t!.objectTypeWithoutAbstractConstructSignatures;
   }
   const constructSignatures = Filter(sourceConstructSignatures, (sig) => (sig!.flags & SignatureFlagsAbstract) === 0);
-  if (constructSignatures.length === sourceConstructSignatures.length) {
+  if ((constructSignatures?.length ?? 0) === sourceConstructSignatures.length) {
     t!.objectTypeWithoutAbstractConstructSignatures = asType;
     return asType;
   }
-  const typeCopy = Checker_newAnonymousType(receiver!.ch, asType!.symbol, t!.members, StructuredType_CallSignatures(t), constructSignatures.length > 0 ? constructSignatures : [], t!.indexInfos);
+  const typeCopy = Checker_newAnonymousType(receiver!.ch, asType!.symbol, t!.members, StructuredType_CallSignatures(t), (constructSignatures?.length ?? 0) > 0 ? constructSignatures : [], t!.indexInfos);
   t!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
   Type_AsStructuredType(typeCopy)!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
   return typeCopy;
@@ -2530,6 +2530,9 @@ export function NodeBuilderImpl_lookupSymbolChainWorker(receiver: GoPtr<NodeBuil
     const chain = res;
     // debug.Assert(chain != nil)
     // debug.Assert(len(chain) > 0)
+    if (chain === undefined || chain.length === 0) {
+      throw new globalThis.Error("qualified symbol lookup returned no symbol chain");
+    }
     return chain;
   } else {
     return [symbol_];
@@ -3773,7 +3776,7 @@ export function NodeBuilderImpl_symbolToParameterDeclaration(receiver: GoPtr<Nod
   if ((receiver!.ctx!.flags & FlagsOmitParameterModifiers) === 0 && preserveModifierFlags && parameterDeclaration !== undefined && CanHaveModifiers(parameterDeclaration)) {
     const originals = Filter(Node_ModifierNodes(parameterDeclaration) ?? [], IsModifier);
     const clones = CoreMap(originals, (node) => Node_Clone(node, receiver!.f as unknown as NodeFactoryCoercible));
-    if (clones.length > 0) {
+    if (clones !== undefined && clones.length > 0) {
       modifiers = NodeFactory_NewModifierList(receiver!.f, clones);
     }
   }
@@ -4622,7 +4625,7 @@ export function NodeBuilderImpl_isTriviallySerializableComputedName(receiver: Go
  * 	return []*ast.Node{b.indexInfoToIndexSignatureDeclarationHelper(indexInfo, typeNode)}
  * }
  */
-export function NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclaration(receiver: GoPtr<NodeBuilderImpl>, indexInfo: GoPtr<IndexInfo>, typeNode: GoPtr<TypeNode>): GoSlice<GoPtr<Node>> {
+export function NodeBuilderImpl_indexInfoToObjectComputedNamesOrSignatureDeclaration(receiver: GoPtr<NodeBuilderImpl>, indexInfo: GoPtr<IndexInfo>, typeNode: GoPtr<TypeNode>): GoPtr<GoSlice<GoPtr<Node>>> {
   if ((indexInfo!.components ?? []).length > 0) {
     // Index info is derived from object or class computed property names (plus explicit named members) - we can clone those instead of writing out the result computed index signature
     const allComponentComputedNamesSerializable = receiver!.ctx!.enclosingDeclaration !== undefined && Every(indexInfo!.components, (e) => NodeBuilderImpl_isTriviallySerializableComputedName(receiver, e));
@@ -5888,7 +5891,7 @@ export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<Nod
     }
   }
   const abstractSignatures = Filter(ctorSigs, (signature) => (signature!.flags & SignatureFlagsAbstract) !== 0);
-  if (abstractSignatures.length > 0) {
+  if (abstractSignatures !== undefined && abstractSignatures.length > 0) {
     const types = abstractSignatures.map((signature) => Checker_getOrCreateTypeFromSignature(receiver!.ch, signature));
     const resolvedProperties = resolved!.properties;
     let propertyCount = 0;
@@ -7587,7 +7590,7 @@ export function NodeBuilderImpl_lookupInstantiatedTypeArgumentNodes(receiver: Go
     if ((symbol_!.Flags & SymbolFlagsAlias) !== 0) {
       targetSymbol = Checker_resolveAlias(receiver!.ch, symbol_);
     }
-    let params = NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver, targetSymbol);
+    let params: GoPtr<GoSlice<GoPtr<Type>>> = NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver, targetSymbol);
     const targetMapper = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, nextSymbol)!.mapper;
     if (targetMapper !== undefined) {
       params = CoreMap(params, (param) => TypeMapper_Map(targetMapper, param));

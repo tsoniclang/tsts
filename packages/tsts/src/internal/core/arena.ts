@@ -3,6 +3,7 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"866dd69ab11aaa9aeee1c0e91b8a7af12f59ff5857f9a4e17d1779c0c3f973c2","bodyHash":"38f2190ab841cbf54c059e3dedb3a5a315a1cd4bc80b3c78ed2d38b4c0300932"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The zero-value Go arena contains a nil backing slice; GoPtr preserves that state until the first non-empty allocation initializes storage.","goSignature":"interface<T0 extends unknown>{data:packages/tsts/src/go/compat.ts::GoSlice<T0>}","tsSignature":"interface<T0>{data:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>}"}
  *
  * Go source:
  * Arena[T any] struct {
@@ -10,11 +11,11 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
  * }
  */
 export interface Arena<T = unknown> {
-  data: GoSlice<T>;
+  data: GoPtr<GoSlice<T>>;
 }
 
 function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
-  const arena = receiver ?? ({ data: [] } as Arena<T>);
+  const arena = receiver!;
   arena.data ??= [];
   return arena;
 }

@@ -589,6 +589,7 @@ export function NodeFactory_NewVoidZeroExpression(receiver: GoPtr<NodeFactory>):
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElement","kind":"func","status":"implemented","sigHash":"4dba9a3211c3451b688f07594b484c6c40d78703109fb320351423438c9a23a1","bodyHash":"866ac93aaf0b486833292b91b567d1f8e8a1b31f9f46d7883ea5c91f0333d260"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>"}
  *
  * Go source:
  * func flattenCommaElement(node *ast.Expression, expressions []*ast.Expression) []*ast.Expression {
@@ -601,18 +602,19 @@ export function NodeFactory_NewVoidZeroExpression(receiver: GoPtr<NodeFactory>):
  * 	return expressions
  * }
  */
-export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlice<GoPtr<Expression>>): GoSlice<GoPtr<Expression>> {
+export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoPtr<GoSlice<GoPtr<Expression>>>): GoPtr<GoSlice<GoPtr<Expression>>> {
   if (IsBinaryExpression(node) && NodeIsSynthesized(node) && AsBinaryExpression(node)!.OperatorToken!.Kind === KindCommaToken) {
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Left, expressions);
     expressions = flattenCommaElement(AsBinaryExpression(node)!.Right, expressions);
   } else {
-    expressions = [...expressions, node];
+    expressions = [...(expressions ?? []), node];
   }
   return expressions;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElements","kind":"func","status":"implemented","sigHash":"84f941a6d494a5d83cacb06a8fe8a6c846c4a9674d329d67355a3de984759259","bodyHash":"634c319aca6097f2770d8f60e781c15afc9573046413b3d026f286de266d3919"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>"}
  *
  * Go source:
  * func flattenCommaElements(expressions []*ast.Expression) []*ast.Expression {
@@ -623,9 +625,9 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
  * 	return result
  * }
  */
-export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): GoSlice<GoPtr<Expression>> {
-  let result: GoSlice<GoPtr<Expression>> = [];
-  for (const expression of expressions) {
+export function flattenCommaElements(expressions: GoPtr<GoSlice<GoPtr<Expression>>>): GoPtr<GoSlice<GoPtr<Expression>>> {
+  let result: GoPtr<GoSlice<GoPtr<Expression>>> = undefined;
+  for (const expression of expressions ?? []) {
     result = flattenCommaElement(expression, result);
   }
   return result;
@@ -633,6 +635,7 @@ export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.InlineExpressions","kind":"method","status":"implemented","sigHash":"2bc1eae13585141dba5bfa940201e0f3f8b8f66598c6da167c9b5a180057c4ea","bodyHash":"6e1ef244730734e006aa9b2b4c88c560d871c6358e3e6606f8c26577059d313f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) InlineExpressions(expressions []*ast.Expression) *ast.Expression {
@@ -650,16 +653,16 @@ export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): G
  * 	return expression
  * }
  */
-export function NodeFactory_InlineExpressions(receiver: GoPtr<NodeFactory>, expressions: GoSlice<GoPtr<Expression>>): GoPtr<Expression> {
-  if (expressions.length === 0) {
+export function NodeFactory_InlineExpressions(receiver: GoPtr<NodeFactory>, expressions: GoPtr<GoSlice<GoPtr<Expression>>>): GoPtr<Expression> {
+  if ((expressions?.length ?? 0) === 0) {
     return undefined;
   }
-  if (expressions.length === 1) {
-    return expressions[0];
+  if (expressions!.length === 1) {
+    return expressions![0];
   }
   const flattened = flattenCommaElements(expressions);
-  let expression = flattened[0];
-  for (const next of flattened.slice(1)) {
+  let expression = flattened![0];
+  for (const next of flattened!.slice(1)) {
     expression = NodeFactory_NewCommaExpression(receiver, expression, next);
   }
   return expression;
@@ -833,6 +836,7 @@ export function NodeFactory_NewTypeCheck(receiver: GoPtr<NodeFactory>, value: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewMethodCall","kind":"method","status":"implemented","sigHash":"1a2b13b373216fc0b93624895eb0f8a7722bda836b6dda25f8ad6480ae7bf466","bodyHash":"bfee906b07f1c369ed647e8277ed68997d9828571ccf53d83e18f0b201906b6e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func (f *NodeFactory) NewMethodCall(object *ast.Node, methodName *ast.Node, argumentsList []*ast.Node) *ast.Node {
@@ -855,7 +859,7 @@ export function NodeFactory_NewTypeCheck(receiver: GoPtr<NodeFactory>, value: Go
  * 	)
  * }
  */
-export function NodeFactory_NewMethodCall(receiver: GoPtr<NodeFactory>, object: GoPtr<Node>, methodName: GoPtr<Node>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Node> {
+export function NodeFactory_NewMethodCall(receiver: GoPtr<NodeFactory>, object: GoPtr<Node>, methodName: GoPtr<Node>, argumentsList: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
   // Preserve the optionality of `object`.
   if (IsCallExpression(object) && (object!.Flags & NodeFlagsOptionalChain) !== 0) {
@@ -880,13 +884,14 @@ export function NodeFactory_NewMethodCall(receiver: GoPtr<NodeFactory>, object: 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGlobalMethodCall","kind":"method","status":"implemented","sigHash":"b366904a54ba7f958f3168d517d86f1e788634b2d4960b4e81b21aced8f28da1","bodyHash":"2f893a749483cc792f723b25f5af1fe55c68c5fd6d0466978b734ea68295700e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,string,string,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,string,string,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func (f *NodeFactory) NewGlobalMethodCall(globalObjectName string, methodName string, argumentsList []*ast.Node) *ast.Node {
  * 	return f.NewMethodCall(f.NewIdentifier(globalObjectName), f.NewIdentifier(methodName), argumentsList)
  * }
  */
-export function NodeFactory_NewGlobalMethodCall(receiver: GoPtr<NodeFactory>, globalObjectName: string, methodName: string, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Node> {
+export function NodeFactory_NewGlobalMethodCall(receiver: GoPtr<NodeFactory>, globalObjectName: string, methodName: string, argumentsList: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<Node> {
   const f = receiver!.__tsgoEmbedded0!;
   return NodeFactory_NewMethodCall(receiver, NewIdentifier(f, globalObjectName), NewIdentifier(f, methodName), argumentsList);
 }
@@ -1034,6 +1039,7 @@ export function NodeFactory_RestoreOuterExpressions(receiver: GoPtr<NodeFactory>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.EnsureUseStrict","kind":"method","status":"implemented","sigHash":"d6e817bbbe2d78ef2a1a8169aa420b12345cc1dc182d43c0dadbce83642848e5","bodyHash":"d41a6f64cd1f54a38d5ee50ce1664a04eafbb5339859998bcfe2304ca4ee776e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>"}
  *
  * Go source:
  * func (f *NodeFactory) EnsureUseStrict(statements []*ast.Statement) []*ast.Statement {
@@ -1049,21 +1055,24 @@ export function NodeFactory_RestoreOuterExpressions(receiver: GoPtr<NodeFactory>
  * 	return statements
  * }
  */
-export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
+export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statements: GoPtr<GoSlice<GoPtr<Statement>>>): GoSlice<GoPtr<Statement>> {
   const f = receiver!.__tsgoEmbedded0!;
-  for (const statement of statements) {
-    if (IsPrologueDirective(statement) && Node_Text(Node_Expression(statement)) === "use strict") {
-      return statements;
-    } else {
-      break;
+  if (statements !== undefined) {
+    for (const statement of statements) {
+      if (IsPrologueDirective(statement) && Node_Text(Node_Expression(statement)) === "use strict") {
+        return statements;
+      } else {
+        break;
+      }
     }
   }
   const useStrictPrologue = NewExpressionStatement(f, NewStringLiteral(f, "use strict", TokenFlagsNone));
-  return [useStrictPrologue, ...statements];
+  return [useStrictPrologue, ...(statements ?? [])];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitStandardPrologue","kind":"method","status":"implemented","sigHash":"ec1321842bf1a79f3033af884f3af28534183676c6717a8b529bbfb0ea3ec225","bodyHash":"ca05124590515a23008e265ce4f8e41b1a164c619ef2e7a5ae035af9c733089f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>]"}
  *
  * Go source:
  * func (f *NodeFactory) SplitStandardPrologue(source []*ast.Statement) (prologue []*ast.Statement, rest []*ast.Statement) {
@@ -1075,17 +1084,18 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
  * 	return source, nil
  * }
  */
-export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [GoSlice<GoPtr<Statement>>, GoSlice<GoPtr<Statement>>] {
-  for (let i = 0; i < source.length; i++) {
-    if (!IsPrologueDirective(source[i])) {
-      return [source.slice(0, i), source.slice(i)];
+export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, source: GoPtr<GoSlice<GoPtr<Statement>>>): [GoPtr<GoSlice<GoPtr<Statement>>>, GoPtr<GoSlice<GoPtr<Statement>>>] {
+  for (let i = 0; i < (source?.length ?? 0); i++) {
+    if (!IsPrologueDirective(source![i])) {
+      return [source!.slice(0, i), source!.slice(i)];
     }
   }
-  return [source, []];
+  return [source, undefined];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitCustomPrologue","kind":"method","status":"implemented","sigHash":"e91d02a2935b8cdb5f9ff1cb88e21d928afa9bd28e9b7e9e0200e33d3b08f917","bodyHash":"a3f9a0412989deaecfc527140d4815db45a42dee2096028aab24b3466b75213a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>]"}
  *
  * Go source:
  * func (f *NodeFactory) SplitCustomPrologue(source []*ast.Statement) (prologue []*ast.Statement, rest []*ast.Statement) {
@@ -1097,13 +1107,13 @@ export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, 
  * 	return nil, source
  * }
  */
-export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [GoSlice<GoPtr<Statement>>, GoSlice<GoPtr<Statement>>] {
-  for (let i = 0; i < source.length; i++) {
-    if (IsPrologueDirective(source[i]) || (EmitContext_EmitFlags(receiver!.emitContext, source[i]) & EFCustomPrologue) === 0) {
-      return [source.slice(0, i), source.slice(i)];
+export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, source: GoPtr<GoSlice<GoPtr<Statement>>>): [GoPtr<GoSlice<GoPtr<Statement>>>, GoPtr<GoSlice<GoPtr<Statement>>>] {
+  for (let i = 0; i < (source?.length ?? 0); i++) {
+    if (IsPrologueDirective(source![i]) || (EmitContext_EmitFlags(receiver!.emitContext, source![i]) & EFCustomPrologue) === 0) {
+      return [source!.slice(0, i), source!.slice(i)];
     }
   }
-  return [[], source];
+  return [undefined, source];
 }
 
 /**
@@ -1337,6 +1347,7 @@ export function NodeFactory_NewUnscopedHelperName(receiver: GoPtr<NodeFactory>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewDecorateHelper","kind":"method","status":"implemented","sigHash":"1b391f8443b00f72f6c3263a6ec035c73c121b85b0dcd035777d04eebc46d2cd","bodyHash":"62358f4c549e0f8408819ad9e033681ec76f76c4e9142d57da5c377b0d230cc3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) NewDecorateHelper(decoratorExpressions []*ast.Node, target *ast.Node, memberName *ast.Node, descriptor *ast.Node) *ast.Expression {
@@ -1361,7 +1372,7 @@ export function NodeFactory_NewUnscopedHelperName(receiver: GoPtr<NodeFactory>, 
  * 	)
  * }
  */
-export function NodeFactory_NewDecorateHelper(receiver: GoPtr<NodeFactory>, decoratorExpressions: GoSlice<GoPtr<Node>>, target: GoPtr<Node>, memberName: GoPtr<Node>, descriptor: GoPtr<Node>): GoPtr<Expression> {
+export function NodeFactory_NewDecorateHelper(receiver: GoPtr<NodeFactory>, decoratorExpressions: GoPtr<GoSlice<GoPtr<Node>>>, target: GoPtr<Node>, memberName: GoPtr<Node>, descriptor: GoPtr<Node>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   EmitContext_RequestEmitHelper(receiver!.emitContext, decorateHelper);
 
@@ -1748,6 +1759,7 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionBindCall","kind":"method","status":"implemented","sigHash":"3611c1be12258bcd25732d0966b65ba0464de768dd021a51a073d8355b9da506","bodyHash":"8340ac6f84dabe901a7e5b83e52010cd14cca96714a89236cc4df44039330b0e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) NewFunctionBindCall(target *ast.Expression, thisArg *ast.Expression, argumentsList []*ast.Node) *ast.Expression {
@@ -1757,9 +1769,9 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
  * 	return f.NewMethodCall(target, f.NewIdentifier("bind"), args)
  * }
  */
-export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoSlice<GoPtr<Node>>): GoPtr<Expression> {
+export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, target: GoPtr<Expression>, thisArg: GoPtr<Expression>, argumentsList: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
-  const args: GoSlice<GoPtr<Node>> = [thisArg, ...argumentsList];
+  const args: GoSlice<GoPtr<Node>> = [thisArg, ...(argumentsList ?? [])];
   return NodeFactory_NewMethodCall(receiver, target, NewIdentifier(f, "bind"), args);
 }
 
@@ -1841,13 +1853,14 @@ export function NodeFactory_NewExternalModuleExport(receiver: GoPtr<NodeFactory>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignHelper","kind":"method","status":"implemented","sigHash":"b05953b344be84fd5df77d771e4abf427312ec7a1ccf104d17ca6da6044100ad","bodyHash":"73b0ac887357bafb7a823cc4318f4a09b37ee63f75541cfd49c1b7668ea68253"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>,packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>>>,packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Expression>"}
  *
  * Go source:
  * func (f *NodeFactory) NewAssignHelper(attributesSegments []*ast.Expression, scriptTarget core.ScriptTarget) *ast.Expression {
  * 	return f.NewCallExpression(f.NewPropertyAccessExpression(f.NewIdentifier("Object"), nil, f.NewIdentifier("assign"), ast.NodeFlagsNone), nil, nil, f.NewNodeList(attributesSegments), ast.NodeFlagsNone)
  * }
  */
-export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attributesSegments: GoSlice<GoPtr<Expression>>, scriptTarget: ScriptTarget): GoPtr<Expression> {
+export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attributesSegments: GoPtr<GoSlice<GoPtr<Expression>>>, scriptTarget: ScriptTarget): GoPtr<Expression> {
   const f = receiver!.__tsgoEmbedded0!;
   return NewCallExpression(f, NewPropertyAccessExpression(f, NewIdentifier(f, "Object"), undefined, NewIdentifier(f, "assign"), NodeFlagsNone), undefined, undefined, NodeFactory_NewNodeList(f, attributesSegments), NodeFlagsNone);
 }

@@ -8,14 +8,16 @@
 // where a hand-edited TS signature can drift while the Go hash, tsc build, and
 // conformance baselines all stay green.
 
-import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
-import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
+import { compareText } from "./core/deterministic-order.mjs";
+import { loadParser, canonicalKey, typesEqual, isSoftId } from "./ts-extractor/ast-signatures.mjs";
+import { buildIndexedModuleValueEnvironments, extractParsedFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
+import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
+import { createCanonicalTypeResolver } from "./ts-extractor/module-resolution.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
 const SIGNATURE_MISMATCH_KINDS = new Set([
@@ -26,11 +28,19 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "arity",
   "param-order",
   "param-type",
+  "param-annotation-missing",
+  "param-optionality",
   "variadic-position",
   "return-type",
+  "return-annotation-missing",
+  "function-modifier",
+  "interface-heritage",
   "missing-member",
   "unsupported-member",
   "member-type",
+  "member-optionality",
+  "member-readonly",
+  "member-annotation-missing",
   "extra-member",
   "duplicate-member",
   "alias-type",
@@ -39,6 +49,8 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "extra-value",
   "value-type",
   "unresolved-ref",
+  "unsupported-type",
+  "profile-variant",
 ]);
 const INITIALIZER_MISMATCH_KINDS = new Set(["value-initializer", "value-initializer-unresolved"]);
 const VALUE_ORDER_MISMATCH_KINDS = new Set(["value-order"]);
@@ -124,13 +136,13 @@ function typeSnapshot(d, canon = (x) => x) {
     case "tuple":
       return `[${d.elements.map((e) => typeSnapshot(e, canon)).join(",")}]`;
     case "union":
-      return d.members.map((m) => typeSnapshot(m, canon)).sort().join("|");
+      return d.members.map((m) => typeSnapshot(m, canon)).sort(compareText).join("|");
     case "intersect":
-      return d.members.map((m) => typeSnapshot(m, canon)).sort().join("&");
+      return d.members.map((m) => typeSnapshot(m, canon)).sort(compareText).join("&");
     case "fn":
-      return `(${d.params.map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${typeSnapshot(p.type, canon)}`).join(",")})=>${typeSnapshot(d.ret, canon)}`;
+      return `<${(d.typeParams ?? []).map((p) => p.constraint ? typeSnapshot(p.constraint, canon) : "-").join(",")}>(${d.params.map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${p.missingType ? "!" : ""}${typeSnapshot(p.type, canon)}`).join(",")})=>${d.missingReturnType ? "!" : ""}${typeSnapshot(d.ret, canon)}`;
     case "object":
-      return `{${d.members.map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`).sort().join(";")}}`;
+      return `{${d.members.map((m) => `${m.readonly ? "readonly " : ""}${m.name}${m.optional ? "?" : ""}:${m.missingType ? "!" : ""}${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`).sort(compareText).join(";")}}`;
     case "kw":
       return d.kw;
     case "tp":
@@ -141,6 +153,10 @@ function typeSnapshot(d, canon = (x) => x) {
       return `raw(${d.text})`;
     case "conv":
       return `conv(${d.token})`;
+    case "goApprox":
+      return `~${typeSnapshot(d.type, canon)}`;
+    case "unsupported":
+      return `unsupported(${d.kind}:${d.text})`;
     default:
       return canonicalKey(d);
   }
@@ -148,22 +164,27 @@ function typeSnapshot(d, canon = (x) => x) {
 
 export function unitSignatureSnapshot(desc, canon = (x) => x) {
   if (!desc) return "<missing>";
+  if (desc.kind === "profileVariants") {
+    return desc.variants
+      .map((variant) => `[${variant.profiles.join(",")}]${unitSignatureSnapshot(variant.descriptor, canon)}`)
+      .join("||");
+  }
   const typeParams = (desc.typeParams ?? [])
     .map((tp, index) => `T${index}${tp.constraint ? ` extends ${typeSnapshot(tp.constraint, canon)}` : ""}`)
     .join(",");
   const generic = typeParams ? `<${typeParams}>` : "";
   if (desc.kind === "func") {
     const params = (desc.params ?? [])
-      .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${typeSnapshot(p.type, canon)}`)
+      .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${p.missingType ? "!" : ""}${typeSnapshot(p.type, canon)}`)
       .join(",");
-    return `func${generic}(${params})=>${typeSnapshot(desc.ret, canon)}`;
+    return `func${generic}(${params})=>${desc.missingReturnType ? "!" : ""}${typeSnapshot(desc.ret, canon)}`;
   }
   if (desc.kind === "interface") {
     const members = (desc.members ?? [])
-      .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`)
-      .sort()
+      .map((m) => `${m.readonly ? "readonly " : ""}${m.name}${m.optional ? "?" : ""}:${m.missingType ? "!" : ""}${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`)
+      .sort(compareText)
       .join(";");
-    return `interface${generic}{${members}}`;
+    return `interface${generic}${(desc.heritage ?? []).map((item) => ` extends!(${item})`).join("")}{${members}}`;
   }
   if (desc.kind === "alias") {
     return `type${generic}=${typeSnapshot(desc.type, canon)}`;
@@ -221,6 +242,20 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
     return out;
   }
 
+  if (expected.kind === "profileVariants") {
+    const differences = [];
+    for (const variant of expected.variants) {
+      const variantMismatches = compareSignatures(variant.descriptor, actual, { ignore: new Set() }, canon, conv, allowedGlobalNames);
+      if (variantMismatches.length > 0) {
+        differences.push(`${variant.profiles.join(",")}: ${[...new Set(variantMismatches.map((mismatch) => mismatch.kind))].join(",")}`);
+      }
+    }
+    if (differences.length > 0) {
+      push("profile-variant", `TypeScript declaration does not satisfy every selected Go profile variant (${differences.join("; ")})`);
+    }
+    return out;
+  }
+
   if (expected.kind !== actual.kind) {
     push("declaration-kind", `expected ${expected.kind} declaration, found ${actual.kind}`, expected.kind, actual.kind);
     return out;
@@ -242,6 +277,10 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
   const soft = [...new Set([...unitSoftIds(expected, conv, allowedGlobals), ...unitSoftIds(actual, conv, allowedGlobals)])];
   if (soft.length > 0) {
     push("unresolved-ref", `unresolved type identity: ${soft.slice(0, 6).join(", ")}`, undefined, undefined);
+  }
+  const unsupported = [...new Set([...unitUnsupportedTypes(expected), ...unitUnsupportedTypes(actual)])];
+  if (unsupported.length > 0) {
+    push("unsupported-type", `unsupported TypeScript signature shape: ${unsupported.slice(0, 6).join(", ")}`);
   }
   return out;
 }
@@ -270,7 +309,30 @@ function softIdsIn(d, acc) {
   else if (d.t === "union" || d.t === "intersect") for (const m of d.members) softIdsIn(m, acc);
   else if (d.t === "fn") { for (const p of d.params) softIdsIn(p.type, acc); softIdsIn(d.ret, acc); }
   else if (d.t === "object") for (const m of d.members) if (m.type) softIdsIn(m.type, acc);
+  else if (d.t === "goApprox") softIdsIn(d.type, acc);
   return acc;
+}
+
+function unsupportedTypesIn(d, acc) {
+  if (!d || typeof d !== "object") return acc;
+  if (d.t === "unsupported") acc.add(`${d.kind}:${d.text}`);
+  else if (d.t === "ref") for (const argument of d.args) unsupportedTypesIn(argument, acc);
+  else if (d.t === "array") unsupportedTypesIn(d.element, acc);
+  else if (d.t === "tuple") for (const element of d.elements) unsupportedTypesIn(element, acc);
+  else if (d.t === "union" || d.t === "intersect") for (const member of d.members) unsupportedTypesIn(member, acc);
+  else if (d.t === "fn") {
+    for (const parameter of d.params) unsupportedTypesIn(parameter.type, acc);
+    unsupportedTypesIn(d.ret, acc);
+  } else if (d.t === "object") {
+    for (const member of d.members) if (member.type) unsupportedTypesIn(member.type, acc);
+  } else if (d.t === "goApprox") unsupportedTypesIn(d.type, acc);
+  return acc;
+}
+
+function unitUnsupportedTypes(desc) {
+  const unsupported = new Set();
+  for (const [, type] of unitTypeNodes(desc)) unsupportedTypesIn(type, unsupported);
+  return [...unsupported];
 }
 
 function unitSoftIds(desc, conv, allowedGlobals = new Set()) {
@@ -309,13 +371,19 @@ function compareFunc(expected, actual, push, eq) {
   const eKeys = ep.slice(0, n).map((p) => keyOf(p.type));
   const aKeys = ap.slice(0, n).map((p) => keyOf(p.type));
   const positionalDiff = ep.slice(0, n).some((p, i) => !eq(p.type, ap[i].type));
-  if (positionalDiff && [...eKeys].sort().join(" ") === [...aKeys].sort().join(" ")) {
+  if (positionalDiff && [...eKeys].sort(compareText).join(" ") === [...aKeys].sort(compareText).join(" ")) {
     push("param-order", `parameters reordered: expected [${eKeys.join(", ")}], found [${aKeys.join(", ")}]`);
   } else {
     for (let i = 0; i < n; i++) {
+      if (ap[i].missingType) push("param-annotation-missing", `param #${i} has no explicit type annotation`);
       if (!eq(ep[i].type, ap[i].type)) push("param-type", `param #${i} type differs`, eKeys[i], aKeys[i]);
       if (!!ep[i].rest !== !!ap[i].rest) push("variadic-position", `param #${i} rest/variadic differs`, !!ep[i].rest, !!ap[i].rest);
+      if (!!ep[i].optional !== !!ap[i].optional) push("param-optionality", `param #${i} optionality differs`, !!ep[i].optional, !!ap[i].optional);
     }
+  }
+  if (actual.missingReturnType) push("return-annotation-missing", "function has no explicit return type annotation");
+  if (JSON.stringify(expected.signatureModifiers ?? []) !== JSON.stringify(actual.signatureModifiers ?? [])) {
+    push("function-modifier", "function signature modifiers differ", expected.signatureModifiers ?? [], actual.signatureModifiers ?? []);
   }
   if (!eq(expected.ret, actual.ret)) push("return-type", "return type differs", keyOf(expected.ret), keyOf(actual.ret));
 }
@@ -327,6 +395,9 @@ function memberMap(desc) {
 }
 
 function compareInterface(expected, actual, push, eq) {
+  if (JSON.stringify(expected.heritage ?? []) !== JSON.stringify(actual.heritage ?? [])) {
+    push("interface-heritage", "interface heritage is unsupported unless it exactly matches", expected.heritage ?? [], actual.heritage ?? []);
+  }
   const actualCounts = new Map();
   for (const member of actual.members ?? []) actualCounts.set(member.name, (actualCounts.get(member.name) ?? 0) + 1);
   for (const [name, count] of actualCounts) {
@@ -342,6 +413,9 @@ function compareInterface(expected, actual, push, eq) {
     }
     const got = am.get(name);
     if (got.unsupported) { push("unsupported-member", `member '${name}' is an unsupported shape (${got.unsupported})`, name); continue; }
+    if (!!mem.optional !== !!got.optional) push("member-optionality", `member '${name}' optionality differs`, !!mem.optional, !!got.optional);
+    if (!!mem.readonly !== !!got.readonly) push("member-readonly", `member '${name}' readonly modifier differs`, !!mem.readonly, !!got.readonly);
+    if (got.missingType || got.type?.t === "fn" && got.type.missingReturnType) push("member-annotation-missing", `member '${name}' has a missing type annotation`);
     if (!eq(mem.type, got.type)) push("member-type", `member '${name}' type differs`, keyOf(mem.type), keyOf(got.type));
   }
   for (const [name, mem] of am) {
@@ -388,112 +462,6 @@ function compareValue(expected, actual, push, eq) {
 
 // --- orchestration ------------------------------------------------------------
 
-// Builds a resolver that maps a ref id to its canonical definition module by
-// following TS re-exports (named + star), so a type referenced via a re-export
-// module matches the same type at its definition. core.Node != ast.Node holds
-// because they resolve to different definitions.
-function makeCanon(namedReexport, starReexport, definedAt, canonicalTypes = {}, nodeFormAliases = undefined) {
-  const cache = new Map();
-  const split = (id) => { const i = id.lastIndexOf("::"); return [id.slice(0, i), id.slice(i + 2)]; };
-  const nodeEnvelopeAlias = (id) => {
-    if (!nodeFormAliases?.unionModule || !nodeFormAliases?.sourceModulePrefixes?.length) return undefined;
-    const [mod, name] = split(id);
-    const sourceMatch = nodeFormAliases.sourceModulePrefixes.some((p) => mod === p || mod.startsWith(`${p}/`));
-    const dataMatch = mod === nodeFormAliases.dataModule && new Set(nodeFormAliases.dataTypeNames ?? []).has(name);
-    if (!sourceMatch && !dataMatch) return undefined;
-    const candidateName = name.endsWith("Node") ? name : `${name}Node`;
-    const candidate = `${nodeFormAliases.unionModule}::${candidateName}`;
-    return definedAt.has(candidate) ? candidate : undefined;
-  };
-  const resolve = (id, seen) => {
-    if (cache.has(id)) return cache.get(id);
-    if (seen.has(id)) return id;
-    seen.add(id);
-    let result = id;
-    if (!definedAt.has(id)) {
-      if (namedReexport.has(id)) {
-        result = resolve(namedReexport.get(id), seen);
-      } else {
-        const [mod, name] = split(id);
-        for (const s of starReexport.get(mod) ?? []) {
-          const r = resolve(`${s}::${name}`, seen);
-          if (definedAt.has(r)) { result = r; break; }
-        }
-      }
-    }
-    cache.set(id, result);
-    return result;
-  };
-  return (id) => {
-    if (isSoftId(id) || !id.includes("::")) return id;
-    // A globally-unique duplicated type collapses to its one canonical module.
-    const name = id.slice(id.lastIndexOf("::") + 2);
-    if (canonicalTypes[name]) return `${canonicalTypes[name]}::${name}`;
-    const nodeAlias = nodeEnvelopeAlias(id);
-    if (nodeAlias) return nodeAlias;
-    return resolve(id, new Set());
-  };
-}
-
-// One fast regex scan over EVERY .ts under tsRoot (incl. generated/untracked
-// barrels that `deps.tsFiles` excludes) building both the type-declaration index
-// and the re-export graph. Avoids parsing thousands of files. Returns
-// { tsDecls: Map<name,Set<module>>, namedReexport: Map<"mod::local","src::name">,
-//   starReexport: Map<mod,[srcMod]> }.
-const TYPE_DECL_RE = /^export\s+(?:declare\s+)?(?:abstract\s+)?(?:interface|type|class|enum|const enum)\s+([A-Za-z_$][\w$]*)/gm;
-const NAMED_REEXPORT_RE = /^export\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["']/gm;
-const STAR_REEXPORT_RE = /^export\s+\*\s+from\s+["']([^"']+)["']/gm;
-
-function scanTsModules(repoRoot, tsRootRel) {
-  const tsDecls = new Map();
-  const namedReexport = new Map();
-  const starReexport = new Map();
-  const sources = new Map();
-  const rootAbs = join(repoRoot, tsRootRel);
-  const stack = [rootAbs];
-  while (stack.length > 0) {
-    const dir = stack.pop();
-    const entries = readdirSync(dir, { withFileTypes: true });
-    for (const e of entries) {
-      const p = join(dir, e.name);
-      if (e.isDirectory()) { stack.push(p); continue; }
-      if (!e.name.endsWith(".ts")) continue;
-      const text = readFileSync(p, "utf8");
-      const moduleId = `${tsRootRel}/${p.slice(rootAbs.length + 1)}`;
-      sources.set(moduleId, text);
-      for (const re of [TYPE_DECL_RE]) {
-        re.lastIndex = 0;
-        let m;
-        while ((m = re.exec(text)) !== null) {
-          if (!tsDecls.has(m[1])) tsDecls.set(m[1], new Set());
-          tsDecls.get(m[1]).add(moduleId);
-        }
-      }
-      NAMED_REEXPORT_RE.lastIndex = 0;
-      let nm;
-      while ((nm = NAMED_REEXPORT_RE.exec(text)) !== null) {
-        const src = resolveModuleId(nm[2], moduleId);
-        for (const spec of nm[1].split(",")) {
-          const t = spec.trim();
-          if (!t) continue;
-          const as = t.split(/\s+as\s+/);
-          const srcName = as[0].trim();
-          const local = (as[1] ?? as[0]).trim();
-          if (local) namedReexport.set(`${moduleId}::${local}`, `${src}::${srcName}`);
-        }
-      }
-      STAR_REEXPORT_RE.lastIndex = 0;
-      let sm;
-      while ((sm = STAR_REEXPORT_RE.exec(text)) !== null) {
-        const src = resolveModuleId(sm[1], moduleId);
-        if (!starReexport.has(moduleId)) starReexport.set(moduleId, []);
-        starReexport.get(moduleId).push(src);
-      }
-    }
-  }
-  return { tsDecls, namedReexport, starReexport, sources };
-}
-
 // deps: { config, snapshot, repoRoot, tsFiles:[{path}], tsById:Map<id,{path,metadata}> }
 // options: { idFilter?: glob }
 export async function computeSignatureReport(deps, options = {}) {
@@ -520,21 +488,24 @@ export async function computeSignatureReport(deps, options = {}) {
     }
   }
 
-  // Where each tracked unit is actually defined (module::name).
-  const definedAt = new Set();
-  for (const [id, ts] of deps.tsById) {
-    const name = id.split("::").pop();
-    if (ts?.path && name) definedAt.add(`${ts.path}::${name}`);
-  }
-
-  // One regex scan over ALL .ts (incl. generated/untracked barrels) for the type
-  // declaration index + the re-export graph.
-  const { tsDecls, namedReexport, starReexport, sources } = scanTsModules(deps.repoRoot, deps.config.tsRoot);
-  const valueEnvironments = buildModuleValueEnvironments(api, sources, namedReexport, starReexport);
-  // A type's actual declaring module is its canonical definition, so re-exports
-  // (e.g. the generated barrel) resolve to the same module the expected side picks.
-  for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
-  const canon = makeCanon(namedReexport, starReexport, definedAt, profile.canonicalTypes ?? {}, profile.nodeFormAliases);
+  // Parse every module once. The cached SourceFiles drive declaration indexing,
+  // re-export resolution, constant environments, and tracked-unit extraction.
+  const moduleIndex = loadTypeScriptModuleIndex(api, deps.repoRoot, deps.config.tsRoot);
+  const {
+    tsDecls, namedReexport, starReexport, sources, definedTypes, exportedTypes, typeNamespaceReexport, externalModules,
+  } = moduleIndex;
+  const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
+  const canon = createCanonicalTypeResolver({
+    namedReexport,
+    starReexport,
+    definedTypes,
+    exportedTypes,
+    knownModules: new Set(moduleIndex.modules.keys()),
+    externalModules,
+    typeNamespaceReexport,
+    canonicalTypeAliases: profile.canonicalTypeAliases ?? {},
+    nodeFormAliases: profile.nodeFormAliases,
+  });
   const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, tsDecls);
   const idRe = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];
@@ -549,8 +520,8 @@ export async function computeSignatureReport(deps, options = {}) {
   const descriptorsById = new Map();
 
   for (const file of deps.tsFiles) {
-    const text = readFileSync(join(deps.repoRoot, file.path), "utf8");
-    for (const u of extractFileDescriptors(api, file.path, text, profile.annotation, valueEnvironments.get(file.path))) {
+    const module = requireIndexedModule(moduleIndex, file.path);
+    for (const u of extractParsedFileDescriptors(api, module, profile.annotation, valueEnvironments.get(file.path))) {
       if (idRe && !idRe.test(u.id)) continue;
       if (deps.activeIds !== undefined && !deps.activeIds.has(u.id)) continue;
       const descriptors = descriptorsById.get(u.id) ?? [];
@@ -560,9 +531,13 @@ export async function computeSignatureReport(deps, options = {}) {
   }
 
   mismatches.push(...descriptorInventoryMismatches(expectedIds, descriptorsById));
-  const jsonTags = collectJsonTagMismatches(deps.snapshot, sources, deps.tsById, deps.activeIds, profile.jsonTags);
+  const jsonTags = collectJsonTagMismatches(deps.snapshot, sources, deps.tsById, deps.activeIds, {
+    ...profile.jsonTags,
+    api,
+    moduleIndex,
+  });
 
-  for (const id of [...expectedIds].sort()) {
+  for (const id of [...expectedIds].sort(compareText)) {
     const go = goById.get(id);
     const descriptors = descriptorsById.get(id) ?? [];
     const actual = descriptors.length === 1 ? descriptors[0].descriptor : undefined;
@@ -590,7 +565,7 @@ export function descriptorInventoryMismatches(expectedIds, descriptorsById) {
       mismatches.push({ id, file: descriptors[0]?.file ?? "", kind: "descriptor-duplicate", detail: `${descriptors.length} TS descriptors were extracted for one @tsgo-unit` });
     }
   }
-  return mismatches.sort((left, right) => left.id.localeCompare(right.id) || left.kind.localeCompare(right.kind));
+  return mismatches.sort((left, right) => compareText(left.id, right.id) || compareText(left.kind, right.kind));
 }
 
 export { resolveOverride };

@@ -129,6 +129,7 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: Kind): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges","kind":"func","status":"implemented","sigHash":"abe27f30e9295ee1de1c8e361301cd0f43503a6a7610221b954137e14cf1de5f","bodyHash":"634b57b5113bebc9488a8a7f8a1b22bf79284fc4a6d2da6e3850c6fbb8db4e0e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Appending and slices.DeleteFunc preserve a nil Go comment-range slice when no ranges are discovered; GoPtr preserves both the input and returned slice state.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentRange>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,string)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentRange>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/factory.ts::NodeFactory>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentRange>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>,string)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentRange>>"}
  *
  * Go source:
  * func GetJSDocCommentRanges(f *ast.NodeFactory, commentRanges []ast.CommentRange, node *ast.Node, text string) []ast.CommentRange {
@@ -153,7 +154,12 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: Kind): bool {
  * 	})
  * }
  */
-export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSlice<CommentRange>, node: GoPtr<Node>, text: string): GoSlice<CommentRange> {
+export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoPtr<GoSlice<CommentRange>>, node: GoPtr<Node>, text: string): GoPtr<GoSlice<CommentRange>> {
+  const appendCommentRange = (commentRange: CommentRange): bool => {
+    commentRanges ??= [];
+    commentRanges.push(commentRange);
+    return true;
+  };
   switch (node!.Kind) {
     case KindParameter:
     case KindTypeParameter:
@@ -162,20 +168,11 @@ export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSl
     case KindParenthesizedExpression:
     case KindVariableDeclaration:
     case KindExportSpecifier:
-      GetTrailingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
-        return true;
-      });
-      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
-        return true;
-      });
+      GetTrailingCommentRanges(f, text, Node_Pos(node))(appendCommentRange);
+      GetLeadingCommentRanges(f, text, Node_Pos(node))(appendCommentRange);
       break;
     default:
-      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
-        commentRanges.push(commentRange);
-        return true;
-      });
+      GetLeadingCommentRanges(f, text, Node_Pos(node))(appendCommentRange);
   }
   // Keep if the comment starts with '/**' but not if it is '/**/'
   return DeleteFunc(commentRanges, (comment: CommentRange): bool => {

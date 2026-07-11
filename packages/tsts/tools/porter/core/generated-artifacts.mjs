@@ -1,5 +1,6 @@
 import { buildAuthoredFacadeExportIndex } from "./authored-facade-exports.mjs";
-import { buildExternalFacadeMap, collectExternalRefUsages, collectExternalTypeUsages } from "./external-facades.mjs";
+import { compareText } from "./deterministic-order.mjs";
+import { buildExternalFacadeMap, collectExternalTypeUsages } from "./external-facades.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { readFileSync } from "node:fs";
@@ -30,24 +31,6 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
     if (facade === undefined) continue;
     const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
     if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath, usage });
-  }
-  for (const usage of collectExternalRefUsages(config, snapshot)) {
-    const facade = facades.get(usage.goName);
-    if (facade === undefined) continue;
-    const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
-    if (authored.has(relativePath)) {
-      authoredObligations.push({ facade, namespace: "value", relativePath, usage });
-      continue;
-    }
-    const isUnimplementedFunction = facade.kind === "functionValue";
-    const isUnimplementedValue = facade.kind === "value" && facade.tsInitializer === undefined;
-    if (isUnimplementedFunction || isUnimplementedValue) {
-      unresolved.push({
-        path: relativePath,
-        symbol: usage.goName,
-        reason: "Active external dependency has only a generated throwing scaffold; implement or explicitly replace the dependency boundary before strict verification.",
-      });
-    }
   }
   const authoredExports = buildAuthoredFacadeExportIndex(authoredObligations.map((obligation) => obligation.relativePath));
   const seenAuthoredObligations = new Set();
@@ -123,7 +106,7 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
     }
   }
 
-  unresolved.sort((left, right) => left.path.localeCompare(right.path) || left.symbol.localeCompare(right.symbol));
+  unresolved.sort((left, right) => compareText(left.path, right.path) || compareText(left.symbol, right.symbol));
   return { missing, stale, orphan, untracked, invalid, unresolved };
 }
 

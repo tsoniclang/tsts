@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -90,6 +90,14 @@ import { GetResolutionDiagnostic, InferredTypesContainingFile } from "../module/
 import type { ModeAwareCacheKey } from "../module/types.js";
 import type { PackageId, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsResolved, ResolvedTypeReferenceDirective_IsResolved } from "../module/types.js";
+
+const modeAwareCacheKeyDescriptor = GoStructKey<ModeAwareCacheKey, readonly [string, ResolutionMode]>(
+  [
+    GoStructField((key: ModeAwareCacheKey) => key.Name, GoStringKey),
+    GoStructField((key: ModeAwareCacheKey) => key.Mode, GoNumberKey),
+  ],
+  ([Name, Mode]) => ({ Name, Mode }),
+);
 import { InfoCacheEntry_Exists } from "../packagejson/cache.js";
 import { Expected_GetValue } from "../packagejson/expected.js";
 import {
@@ -1134,7 +1142,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
   const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
   if (automaticTypeDirectiveNames.length !== 0) {
     let toParse: GoSlice<resolvedRef> = [];
-    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
+    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(modeAwareCacheKeyDescriptor);
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
     let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = [];
     for (const name of automaticTypeDirectiveNames) {
@@ -1222,7 +1230,7 @@ export function fileLoader_addProjectReferenceTasks(receiver: GoPtr<fileLoader>,
     realpathDtsToSource: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() },
   } as unknown as projectReferenceFileMapper;
   const projectReferences = ParsedCommandLine_ResolvedProjectReferencePaths(receiver!.opts.Config);
-  if (projectReferences.length === 0) {
+  if ((projectReferences?.length ?? 0) === 0) {
     return;
   }
   const parser: projectReferenceParser = {
@@ -1652,7 +1660,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
   }
   try {
     const meta = t!.metadata;
-    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
+    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>(modeAwareCacheKeyDescriptor);
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
       const ref = file!.TypeReferenceDirectives[index]!;
@@ -1879,7 +1887,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     }
 
     if (moduleNames.length !== 0) {
-      const resolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
+      const resolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(modeAwareCacheKeyDescriptor);
       let resolutionsTrace: GoSlice<DiagAndArgs> = [];
       const extensionHost = fileLoader_getExtensionHost(receiver);
 

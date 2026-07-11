@@ -15,8 +15,11 @@ import {
   Invalid,
   Int,
   NewType,
+  NewRuntimeType,
+  RegisterRuntimeType,
   TypeFor,
   TypeAssert,
+  StringType,
   MakeSlice,
   Append,
   Zero,
@@ -107,9 +110,21 @@ test("reflect static-type helpers use explicit metadata without runtime guessing
   });
 
   assert.equal(TypeFor<string>().Kind(), Interface);
-  assert.deepEqual(TypeAssert<string>(ValueOf("x")), ["x", true]);
+  assert.deepEqual(TypeAssert<string>(ValueOf("x"), StringType), ["x", true]);
+  assert.deepEqual(TypeAssert<string>(ValueOf(1), StringType), [undefined, false]);
   assert.deepEqual(MakeSlice(sliceType, 2, 4).Interface(), [0, 0]);
   assert.deepEqual(Append(ValueOf([1]), ValueOf(2), ValueOf(3)).Interface(), [1, 2, 3]);
   assert.equal(Zero(intType).Interface(), 0);
   assert.deepEqual(VisibleFields(structType).map((field) => field.Name), ["Count"]);
+});
+
+test("reflect runtime type tokens are explicit and nominal", () => {
+  const genericInstantiation = NewRuntimeType({ kind: Struct, name: "Example[string]" });
+  const value = RegisterRuntimeType({ value: "x" }, genericInstantiation);
+  const lookalike = { value: "x" };
+
+  assert.equal(TypeFor(genericInstantiation), genericInstantiation);
+  assert.equal(TypeOf(value), genericInstantiation);
+  assert.equal(ValueOf(value).Kind(), Struct);
+  assert.notEqual(TypeOf(lookalike), genericInstantiation);
 });

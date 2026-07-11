@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 
+import { compareText } from "./core/deterministic-order.mjs";
+import { semanticProfileKey } from "./core/snapshot-validation.mjs";
+
 export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "summary.md", "to-snapshot.json"]);
 
 export function canonicalSnapshot(snapshot) {
@@ -9,7 +12,31 @@ export function canonicalSnapshot(snapshot) {
 export function portableSnapshot(snapshot, label = "source") {
   const portable = structuredClone(snapshot);
   portable.sourceRoot = `<${label}-root>`;
+  if (portable.semantic && snapshot.semantic) {
+    const goroot = snapshot.semantic.goroot;
+    portable.semantic.goroot = "<go-root>";
+    portable.semantic.toolchainExecutable = "<go-root>/bin/go";
+    for (const profile of portable.semantic.profiles ?? []) {
+      profile.environment = (profile.environment ?? []).map((entry) => portableEnvironmentEntry(entry, goroot));
+    }
+  }
   return portable;
+}
+
+function portableEnvironmentEntry(entry, goroot) {
+  const separator = entry.indexOf("=");
+  if (separator < 0) return entry;
+  const key = entry.slice(0, separator);
+  const value = entry.slice(separator + 1);
+  const replacements = new Map([
+    ["GOCACHE", "<go-cache>"],
+    ["GOMODCACHE", "<go-mod-cache>"],
+    ["GOPATH", "<go-path>"],
+    ["GOROOT", "<go-root>"],
+  ]);
+  if (replacements.has(key)) return `${key}=${replacements.get(key)}`;
+  if (key === "PATH" && typeof goroot === "string" && value === `${goroot}/bin`) return "PATH=<go-root>/bin";
+  return entry;
 }
 
 export function snapshotDigest(snapshot) {
@@ -77,7 +104,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
     trackedTreeRecords(options.toTreeEntries ?? []),
   );
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     from: snapshotIdentity(fromSnapshot),
     to: snapshotIdentity(toSnapshot),
     environmentMatches: JSON.stringify(fromSnapshot.environment) === JSON.stringify(toSnapshot.environment),
@@ -99,6 +126,7 @@ export function renderDeltaMarkdown(report) {
     `- Go files: ${summaryLine(report.goFiles)}`,
     `- Raw units: ${summaryLine(report.rawUnits)}`,
     `- Active porter units: ${summaryLine(report.activeUnits)}`,
+    `- Active declaration changes: ${declarationChangeLine(report.activeUnits)}`,
     "",
     "## Active Changed Modules",
     "",
@@ -138,14 +166,12 @@ function fileRecords(snapshot) {
     generated: file.generated,
     buildTags: file.buildTags ?? [],
     implicitBuildTags: file.implicitBuildTags ?? [],
-    parseError: file.parseError ?? "",
     comparisonHash: hashObject({
       sourceHash: file.sourceHash,
       gitBlobHash: file.gitBlobHash,
       generated: file.generated,
       buildTags: file.buildTags ?? [],
       implicitBuildTags: file.implicitBuildTags ?? [],
-      parseError: file.parseError ?? "",
     }),
   }]));
 }
@@ -163,9 +189,10 @@ function trackedTreeRecords(entries) {
 
 function unitRecords(snapshot) {
   const records = new Map();
+  const profileKeys = snapshotProfileKeys(snapshot);
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
-      records.set(unit.id, unitRecord(file, unit));
+      records.set(unit.id, unitRecord(file, unit, profileKeys));
     }
   }
   return records;
@@ -174,19 +201,22 @@ function unitRecords(snapshot) {
 function activeUnitRecords(snapshot, options) {
   const primaryKinds = new Set(options.primaryUnitKinds);
   const records = new Map();
+  const profileKeys = snapshotProfileKeys(snapshot);
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
       if (!primaryKinds.has(unit.kind)) continue;
       const policy = options.policyForUnit(unit, file);
       if (!options.isActivePortPolicy(policy)) continue;
-      records.set(unit.id, { ...unitRecord(file, unit), policy });
+      records.set(unit.id, { ...unitRecord(file, unit, profileKeys), policy });
     }
   }
   return records;
 }
 
-function unitRecord(file, unit) {
-  const constantValues = (unit.valueSpecs ?? []).flatMap((spec) => spec.constantValues ?? []);
+function unitRecord(file, unit, profileKeys) {
+  const semanticDeclaration = expandSemanticProfiles(unit.semantic ?? [], profileKeys, unit.id);
+  const semanticHash = hashObject(semanticDeclaration);
+  const constantValues = semanticConstantValues(semanticDeclaration);
   return {
     id: unit.id,
     path: file.path,
@@ -195,13 +225,50 @@ function unitRecord(file, unit) {
     name: unit.qualifiedName ?? unit.name,
     sigHash: unit.sigHash,
     bodyHash: unit.bodyHash,
+    semanticHash,
+    semanticDeclaration,
     constantValues,
     comparisonHash: hashObject({
       sigHash: unit.sigHash,
       bodyHash: unit.bodyHash,
-      constantValues,
+      semanticHash,
     }),
   };
+}
+
+function semanticConstantValues(variants) {
+  const values = [];
+  for (const variant of variants) {
+    for (const specification of variant.valueSpecs ?? []) {
+      for (const binding of specification.names ?? []) {
+        if (binding.constant === undefined) continue;
+        values.push({
+          profiles: variant.profiles ?? [],
+          specIndex: specification.specIndex,
+          nameIndex: binding.nameIndex,
+          name: binding.name,
+          constant: binding.constant,
+        });
+      }
+    }
+  }
+  return values;
+}
+
+function snapshotProfileKeys(snapshot) {
+  return (snapshot.semantic?.profiles ?? []).map((profile) => semanticProfileKey(profile));
+}
+
+function expandSemanticProfiles(variants, profileKeys, unitId) {
+  return variants.map((variant) => ({
+    ...variant,
+    profiles: (variant.profiles ?? []).map((profileIndex) => {
+      if (!Number.isSafeInteger(profileIndex) || profileIndex < 0 || profileIndex >= profileKeys.length) {
+        throw new Error(`Go unit '${unitId}' references invalid semantic profile index '${profileIndex}'`);
+      }
+      return profileKeys[profileIndex];
+    }),
+  }));
 }
 
 function compareRecordMaps(fromRecords, toRecords) {
@@ -218,7 +285,9 @@ function compareRecordMaps(fromRecords, toRecords) {
     } else {
       changed.push({
         ...next,
-        signatureChanged: previous.sigHash !== next.sigHash,
+        sourceSignatureChanged: previous.sigHash !== next.sigHash,
+        semanticDeclarationChanged: previous.semanticHash !== next.semanticHash,
+        signatureChanged: previous.sigHash !== next.sigHash || previous.semanticHash !== next.semanticHash,
         bodyChanged: previous.bodyHash !== next.bodyHash,
         constantsChanged: JSON.stringify(previous.constantValues) !== JSON.stringify(next.constantValues),
         previous,
@@ -248,7 +317,9 @@ function moveCandidates(removed, added) {
       to: next.path,
       kind: next.kind,
       name: next.name,
-      signaturePreserved: previous.sigHash === next.sigHash,
+      sourceSignaturePreserved: previous.sigHash === next.sigHash,
+      semanticDeclarationPreserved: previous.semanticHash === next.semanticHash,
+      signaturePreserved: previous.sigHash === next.sigHash && previous.semanticHash === next.semanticHash,
       bodyPreserved: previous.bodyHash === next.bodyHash,
     });
   }
@@ -268,6 +339,8 @@ function summarizeComparison(comparison) {
     removedCount: comparison.removed.length,
     changedCount: comparison.changed.length,
     signatureChangedCount: comparison.changed.filter((record) => record.signatureChanged).length,
+    sourceSignatureChangedCount: comparison.changed.filter((record) => record.sourceSignatureChanged).length,
+    semanticDeclarationChangedCount: comparison.changed.filter((record) => record.semanticDeclarationChanged).length,
     bodyChangedCount: comparison.changed.filter((record) => record.bodyChanged).length,
     constantsChangedCount: comparison.changed.filter((record) => record.constantsChanged).length,
     moveCandidateCount: comparison.moves.length,
@@ -287,7 +360,7 @@ function countByModule(records) {
     const module = moduleName(record.path);
     counts.set(module, (counts.get(module) ?? 0) + 1);
   }
-  return [...counts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]));
+  return [...counts.entries()].sort((left, right) => right[1] - left[1] || compareText(left[0], right[0]));
 }
 
 function moduleName(sourcePath) {
@@ -308,7 +381,7 @@ function groupBy(values, keyFor) {
 }
 
 function compareRecord(left, right) {
-  return String(left.id).localeCompare(String(right.id));
+  return compareText(left.id, right.id);
 }
 
 function hashObject(value) {
@@ -321,6 +394,10 @@ function sha256(value) {
 
 function summaryLine(summary) {
   return `${summary.fromCount} → ${summary.toCount}; ${summary.addedCount} added, ${summary.removedCount} removed, ${summary.changedCount} changed, ${summary.moveCandidateCount} move candidates`;
+}
+
+function declarationChangeLine(summary) {
+  return `${summary.sourceSignatureChangedCount} source signatures, ${summary.semanticDeclarationChangedCount} canonical declarations, ${summary.constantsChangedCount} constant sets, ${summary.bodyChangedCount} opaque bodies`;
 }
 
 function moduleLines(entries) {

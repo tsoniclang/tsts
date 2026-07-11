@@ -1,25 +1,41 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  collectJsonTagMismatches,
+  collectJsonTagMismatches as collectJsonTagMismatchesWithParser,
   expectedJsonFields,
-  extractJsonFieldMapRegistrations,
+  extractJsonFieldMapRegistrations as extractJsonFieldMapRegistrationsWithParser,
   parseGoJsonTag,
 } from "./ts-extractor/json-tags.mjs";
+import { loadParser } from "./ts-extractor/parser-runtime.mjs";
+import { indexTypeScriptModuleSources } from "./ts-extractor/module-index.mjs";
+
+const parserApi = await loadParser();
+const extractJsonFieldMapRegistrations = (file, text, options = {}) =>
+  extractJsonFieldMapRegistrationsWithParser(file, text, { ...options, api: parserApi });
+const collectJsonTagMismatches = (snapshotValue, sources, tsById, activeIds, options = {}) =>
+  collectJsonTagMismatchesWithParser(snapshotValue, sources, tsById, activeIds, { ...options, api: parserApi });
 
 const id = "example.com/project::event.go::type::Event";
 
+const basicType = (name) => ({ kind: "basic", basic: { name, untyped: false } });
+const field = (name, type, tagValues = [], options = {}) => ({
+  variable: { name, exported: options.exported ?? true, embedded: options.embedded || undefined, type },
+  tag: "",
+  tagValues,
+});
+const structUnit = (unitId, name, fields) => ({
+  id: unitId,
+  kind: "type",
+  name,
+  semantic: [{ type: { rhs: { kind: "struct", struct: { fields } } } }],
+});
+
 function taggedUnit() {
-  return {
-    id,
-    kind: "type",
-    name: "Event",
-    members: [
-      { kind: "field", name: "Name", exported: true, typeExpr: { kind: "ident", name: "string" }, tagValues: [{ key: "json", value: "name,omitzero" }] },
-      { kind: "field", name: "Default", exported: true, typeExpr: { kind: "ident", name: "string" } },
-      { kind: "field", name: "Hidden", exported: false, tagValues: [{ key: "json", value: "hidden" }] },
-    ],
-  };
+  return structUnit(id, "Event", [
+    field("Name", basicType("string"), [{ key: "json", value: "name,omitzero" }]),
+    field("Default", basicType("string")),
+    field("Hidden", basicType("string"), [{ key: "json", value: "hidden" }], { exported: false }),
+  ]);
 }
 
 function snapshot(unit = taggedUnit()) {
@@ -47,15 +63,11 @@ test("Go JSON tags preserve default names, ignores, and distinct omission option
 });
 
 test("Go JSON zero modes distinguish nil-bearing fields from scalar payload zero", () => {
-  const unit = {
-    id: "example::type::ZeroModes",
-    kind: "type",
-    members: [
-      { kind: "field", name: "Scalar", exported: true, typeExpr: { kind: "ident", name: "int" }, tagValues: [{ key: "json", value: "scalar,omitzero" }] },
-      { kind: "field", name: "Pointer", exported: true, typeExpr: { kind: "pointer", element: { kind: "ident", name: "int" } }, tagValues: [{ key: "json", value: "pointer,omitzero" }] },
-      { kind: "field", name: "Slice", exported: true, typeExpr: { kind: "slice", element: { kind: "ident", name: "string" } }, tagValues: [{ key: "json", value: "slice,omitzero" }] },
-    ],
-  };
+  const unit = structUnit("example::type::ZeroModes", "ZeroModes", [
+    field("Scalar", basicType("int"), [{ key: "json", value: "scalar,omitzero" }]),
+    field("Pointer", { kind: "pointer", element: basicType("int") }, [{ key: "json", value: "pointer,omitzero" }]),
+    field("Slice", { kind: "slice", element: basicType("string") }, [{ key: "json", value: "slice,omitzero" }]),
+  ]);
   assert.deepEqual([...expectedJsonFields(unit)].map(([name, field]) => [name, field.zeroMode]), [
     ["Scalar", "value"],
     ["Pointer", "nil"],
@@ -64,15 +76,10 @@ test("Go JSON zero modes distinguish nil-bearing fields from scalar payload zero
 });
 
 test("runtime contracts reject unproven deep or named omitzero semantics", () => {
-  const zeroUnit = {
-    id: "example::zero.go::type::ZeroModes",
-    kind: "type",
-    name: "ZeroModes",
-    members: [
-      { kind: "field", name: "Fixed", exported: true, typeExpr: { kind: "array", length: "2", element: { kind: "ident", name: "int" } }, tagValues: [{ key: "json", value: "fixed,omitzero" }] },
-      { kind: "field", name: "Named", exported: true, typeExpr: { kind: "ident", name: "NamedStruct" }, tagValues: [{ key: "json", value: "named,omitzero" }] },
-    ],
-  };
+  const zeroUnit = structUnit("example::zero.go::type::ZeroModes", "ZeroModes", [
+    field("Fixed", { kind: "array", length: "2", element: basicType("int") }, [{ key: "json", value: "fixed,omitzero" }]),
+    field("Named", { kind: "named", reference: { objectId: "example::type::NamedStruct", packagePath: "example", name: "NamedStruct", typeArgs: [] } }, [{ key: "json", value: "named,omitzero" }]),
+  ]);
   const source = `
     import { AttachJsonFieldNamesForGoStruct, DefineJsonFieldNamesForGoStruct } from "./json.js";
     const fields = DefineJsonFieldNamesForGoStruct<ZeroModes>(
@@ -99,8 +106,13 @@ test("active local and nested anonymous JSON structs cannot escape the contract 
   const typeId = "example::nested.go::type::Outer";
   const localFile = {
     path: "local.go",
-    units: [{ id: functionId, kind: "func", name: "read", qualifiedName: "read", startLine: 1, endLine: 5 }],
-    structTags: [{ name: "Value", startLine: 3, structDepth: 1, tagValues: [{ key: "json", value: "value" }] }],
+    units: [{
+      id: functionId,
+      kind: "func",
+      name: "read",
+      qualifiedName: "read",
+      parameters: [{ type: { kind: "struct", members: [{ kind: "field", name: "Value", exported: true, tagValues: [{ key: "json", value: "value" }] }] } }],
+    }],
   };
   const nestedFile = {
     path: "nested.go",
@@ -111,8 +123,13 @@ test("active local and nested anonymous JSON structs cannot escape the contract 
       startLine: 1,
       endLine: 5,
       members: [{ kind: "field", name: "Nested", exported: true, typeExpr: { kind: "struct", members: [{ kind: "field", name: "Value", exported: true, typeExpr: { kind: "ident", name: "string" }, tagValues: [{ key: "json", value: "value" }] }] } }],
+      semantic: [{
+        profiles: ["linux/amd64:cgo=0:tags="],
+        type: { rhs: { kind: "struct", struct: { fields: [
+          field("Nested", { kind: "struct", struct: { fields: [field("Value", basicType("string"), [{ key: "json", value: "value" }])] } }),
+        ] } } },
+      }],
     }],
-    structTags: [{ name: "Value", startLine: 3, structDepth: 2, tagValues: [{ key: "json", value: "value" }] }],
   };
   const report = collectJsonTagMismatches(
     { files: [localFile, nestedFile] },
@@ -194,7 +211,7 @@ test("JSON tag verifier rejects missing, drifted, dynamic, duplicate, and unatta
   assert.deepEqual(missing.mismatches.map((entry) => entry.kind), ["json-tag-unclassified"]);
 
   const driftedSource = `
-    import { DefineJsonFieldNamesForGoStruct } from "./json.js";
+    import { DefineJsonFieldNamesForGoStruct, type JsonFieldNameMap } from "./json.js";
     const eventFields = DefineJsonFieldNamesForGoStruct<Event>(
       "${id}",
       { Name: "wrong", Extra: "extra" },
@@ -210,7 +227,7 @@ test("JSON tag verifier rejects missing, drifted, dynamic, duplicate, and unatta
   ]));
 
   const invalid = extractJsonFieldMapRegistrations("event.ts", `
-    import { DefineJsonFieldNamesForGoStruct } from "./json.js";
+    import { DefineJsonFieldNamesForGoStruct, type JsonFieldNameMap } from "./json.js";
     const raw: JsonFieldNameMap = { Name: "name" };
     const spread = DefineJsonFieldNamesForGoStruct<Event>("${id}", { ...raw }, { strategy: "runtime", reason: "Runtime event values use the generic Go JSON field mapper." });
   `);
@@ -252,6 +269,45 @@ test("JSON helper evidence resolves imported identities instead of trusting term
   assert.deepEqual(wrongModule.mismatches.map((entry) => entry.kind), ["json-tag-helper-unresolved"]);
 });
 
+test("JSON extraction audits only top-level contract positions and rejects shadowed imports", () => {
+  const nested = extractJsonFieldMapRegistrations("event.ts", `
+    import { AttachJsonFieldNamesForGoStruct, DefineJsonFieldNamesForGoStruct } from "./json.js";
+    function hidden(): void {
+      const nestedFields = DefineJsonFieldNamesForGoStruct<Event>("nested", {}, {});
+      AttachJsonFieldNamesForGoStruct(value, nestedFields);
+    }
+    class Holder { method(): void { DefineJsonFieldNamesForGoStruct("method", {}, {}); } }
+  `);
+  assert.deepEqual(nested, { registrations: [], attachments: new Set(), mismatches: [] });
+
+  const shadowed = extractJsonFieldMapRegistrations("event.ts", `
+    import { DefineJsonFieldNamesForGoStruct as define } from "./json.js";
+    function define(): void {}
+    const fields = define<Event>("${id}", {}, { strategy: "source-metadata", reason: "This durable explanation proves that shadowed imports are rejected exactly." });
+  `);
+  assert.deepEqual(shadowed.mismatches.map((entry) => entry.kind), ["json-tag-helper-unresolved"]);
+  assert.equal(shadowed.registrations.length, 0);
+});
+
+test("JSON helper bindings follow exact indexed re-export origins", () => {
+  const source = `
+    import { DefineJsonFieldNamesForGoStruct as define } from "./barrel.js";
+    const fields = define<Event>("${id}", {}, { strategy: "source-metadata", reason: "This durable explanation proves exact indexed helper re-export identity." });
+  `;
+  const sources = new Map([
+    ["contract.ts", "export declare function DefineJsonFieldNamesForGoStruct<T>(id: string, fields: unknown, strategy: unknown): unknown;"],
+    ["barrel.ts", 'export { DefineJsonFieldNamesForGoStruct } from "./contract.js";'],
+    ["event.ts", source],
+  ]);
+  const moduleIndex = indexTypeScriptModuleSources(parserApi, sources);
+  const extracted = extractJsonFieldMapRegistrations("event.ts", source, {
+    contractModules: ["contract.ts"],
+    moduleIndex,
+  });
+  assert.deepEqual(extracted.mismatches, []);
+  assert.equal(extracted.registrations.length, 1);
+});
+
 test("JSON tag contracts fail closed on wrong type identity, location, embedded fields, and unsupported options", () => {
   const source = `
     import { DefineJsonFieldNamesForGoStruct } from "./json.js";
@@ -273,8 +329,9 @@ test("JSON tag contracts fail closed on wrong type identity, location, embedded 
   ]));
 
   const unsupported = taggedUnit();
-  unsupported.members.push({ kind: "embeddedField", name: "Embedded", exported: true });
-  unsupported.members[0].tagValues[0].value = "name,string";
+  const unsupportedFields = unsupported.semantic[0].type.rhs.struct.fields;
+  unsupportedFields.push(field("Embedded", { kind: "named", reference: { objectId: "example::type::Embedded", packagePath: "example", name: "Embedded", typeArgs: [] } }, [], { embedded: true }));
+  unsupportedFields[0].tagValues[0].value = "name,string";
   const unsupportedReport = collectJsonTagMismatches(
     snapshot(unsupported),
     new Map([["event.ts", source.replace("WrongEvent", "Event").replace("other.ts", "event.ts")]]),
@@ -287,6 +344,6 @@ test("JSON tag contracts fail closed on wrong type identity, location, embedded 
 
 test("duplicate Go JSON tag namespaces fail instead of selecting one heuristically", () => {
   const unit = taggedUnit();
-  unit.members[0].tagValues.push({ key: "json", value: "other" });
+  unit.semantic[0].type.rhs.struct.fields[0].tagValues.push({ key: "json", value: "other" });
   assert.throws(() => expectedJsonFields(unit), /duplicate json struct-tag keys/);
 });

@@ -32,9 +32,9 @@ const inputLabels = [
 function inventoryFixture() {
   const bucket = () => ({ total: 0, inScope: 0, outOfScope: 0, unclassified: 0, entries: {} });
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     currentHarness: bucket(),
-    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
+    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, configurations: { total: 0, entries: { compiler: 0, conformance: 0, project: 0, transpile: 0 } }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
     typeScriptUnitTests: { ...bucket(), entries: { exportedModules: 0, supportModules: 0 } },
     baselines: bucket(),
     goTests: bucket(),

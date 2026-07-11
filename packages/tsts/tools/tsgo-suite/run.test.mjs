@@ -14,9 +14,9 @@ const testInputLabels = [
 function protocolTestInventory() {
   const bucket = () => ({ total: 0, inScope: 0, outOfScope: 0, unclassified: 0, entries: {} });
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     currentHarness: bucket(),
-    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
+    typeScriptCases: { ...bucket(), entries: { compiler: 0, conformance: 0, fourslash: 0, project: 0, transpile: 0 }, configurations: { total: 0, entries: { compiler: 0, conformance: 0, project: 0, transpile: 0 } }, requiredFixtureFiles: { projects: 0, unittests: 0 } },
     typeScriptUnitTests: { ...bucket(), entries: { exportedModules: 0, supportModules: 0 } },
     baselines: bucket(),
     goTests: bucket(),
@@ -1303,6 +1303,9 @@ test("discoverCases retains every project descriptor variant with an exact seale
   const projectCases = await discoverCases({ corpus: "typescript", suite: "project", filter: "", limit: 0 });
   assert.equal(projectCases.length, 632);
   assert.equal(new Set(projectCases.map((testCase) => testCase.relativePath)).size, 316);
+  for (const relativePath of new Set(projectCases.map((testCase) => testCase.relativePath))) {
+    assert.deepEqual(projectCases.filter((testCase) => testCase.relativePath === relativePath).map((testCase) => testCase.configurationName).sort(compareUtf8), ["module=amd", "module=commonjs"]);
+  }
   assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module resolution kind classic").length, 313);
   assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module resolution kind node").length, 3);
   assert.equal(projectCases.filter((testCase) => testCase.expectedSkipReason === "TS-Go runner skips unsupported module kind amd").length, 316);
@@ -1494,17 +1497,93 @@ test("caseExpectedErrors treats TS-Go removed option diagnostics as expected err
   assert.equal(compilerOptionsRequireTsGoRemovedOptionDiagnostic({ target: "ES2024" }), false);
 });
 
-test("buildTestUniverseInventory tracks full compiler scope and excludes language service scope", async () => {
+test("every pinned TS-Go compiler-runner file is selected exactly once with full configuration expansion", async () => {
+  const { readdir, readFile: readFileAsync } = await import("node:fs/promises");
+  const { join: joinPath, relative: relativePath, sep: pathSeparator } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const caseRoot = fileURLToPath(new URL("../../_vendor/typescript-go/_submodules/TypeScript/tests/cases/", import.meta.url));
+  const walk = async (root) => {
+    const files = [];
+    for (const entry of await readdir(root, { withFileTypes: true })) {
+      const path = joinPath(root, entry.name);
+      if (entry.isDirectory()) files.push(...await walk(path));
+      else if (entry.isFile()) files.push(path);
+    }
+    return files;
+  };
+
+  for (const suite of ["compiler", "conformance"]) {
+    const expected = [];
+    const selectedFiles = (await walk(joinPath(caseRoot, suite))).filter((file) => /\.tsx?$/.test(file)).sort(compareUtf8);
+    for (const file of selectedFiles) {
+      const parsed = parseFileBasedTest(decodeSourceText(await readFileAsync(file)), file.split(pathSeparator).at(-1));
+      const relativeFile = relativePath(caseRoot, file).split(pathSeparator).join("/");
+      for (const configuration of getFileBasedTestConfigurations(parsed.globalOptions)) expected.push(`${relativeFile}:${configuration.name}`);
+    }
+    expected.sort(compareUtf8);
+    const discovered = await discoverCases({ corpus: "typescript", suite, filter: "", limit: 0 });
+    const actual = discovered.map((testCase) => `${testCase.relativePath}:${testCase.configurationName}`).sort(compareUtf8);
+    assert.equal(new Set(actual).size, actual.length);
+    assert.deepEqual(actual, expected);
+  }
+});
+
+test("TypeScript unit-test mirror inventory is source-derived, closed, and entirely in scope", async () => {
+  assert.deepEqual(await buildTypeScriptUnitTestInventory(), {
+    total: 257,
+    inScope: 257,
+    outOfScope: 0,
+    unclassified: 0,
+    entries: { exportedModules: 233, supportModules: 24 },
+  });
+
+  const { mkdir, mkdtemp, writeFile } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join: joinPath } = await import("node:path");
+  const root = await mkdtemp(joinPath(tmpdir(), "tsts-unit-inventory-"));
+  const sources = joinPath(root, "unittests");
+  const entrypoint = joinPath(root, "tests.ts");
+  await mkdir(sources);
+  await writeFile(entrypoint, 'export * from "./unittests/exported.js";\n');
+  await writeFile(joinPath(sources, "exported.ts"), 'import "./support.js";\n');
+  await writeFile(joinPath(sources, "support.ts"), "export {};\n");
+  const orphan = joinPath(sources, "orphan.ts");
+  await writeFile(orphan, "export {};\n");
+  await assert.rejects(buildTypeScriptUnitTestInventory({ root: sources, entrypoint }), /Unclassified TypeScript unit-test mirror source 'orphan\.ts'/);
+
+  const validRoot = joinPath(root, "valid");
+  const validSources = joinPath(validRoot, "unittests");
+  const validEntrypoint = joinPath(validRoot, "tests.ts");
+  await mkdir(validSources, { recursive: true });
+  await writeFile(validEntrypoint, 'export * from "./unittests/exported.js";\n');
+  await writeFile(joinPath(validSources, "exported.ts"), 'import "./support.js";\n');
+  await writeFile(joinPath(validSources, "support.ts"), "export {};\n");
+  assert.deepEqual(await buildTypeScriptUnitTestInventory({ root: validSources, entrypoint: validEntrypoint }), {
+    total: 2,
+    inScope: 2,
+    outOfScope: 0,
+    unclassified: 0,
+    entries: { exportedModules: 1, supportModules: 1 },
+  });
+});
+
+test("buildTestUniverseInventory closes executable, fixture, and unit-mirror scope", async () => {
+  const { validateInventory } = await import("./run.mjs");
   const inventory = await buildTestUniverseInventory();
+  assert.equal(inventory.schemaVersion, 3);
   assert.equal(inventory.currentHarness.inScope, 318);
-  assert.ok(inventory.typeScriptCases.entries.compiler > inventory.currentHarness.entries.compiler);
-  assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
-  assert.equal(inventory.typeScriptCases.entries.project, 316);
-  assert.equal(inventory.typeScriptCases.entries.projects, 0);
-  assert.equal(inventory.typeScriptCases.entries.unittests, 1);
-  assert.equal(inventory.typeScriptCases.languageServiceHarnessCases, 2);
-  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.project + inventory.typeScriptCases.entries.unittests + inventory.typeScriptCases.languageServiceHarnessCases);
-  assert.ok(inventory.typeScriptCases.inScope > 0);
+  assert.deepEqual(inventory.typeScriptCases.entries, { compiler: 6537, conformance: 5907, fourslash: 6567, project: 316, transpile: 22 });
+  assert.deepEqual(inventory.typeScriptCases.requiredFixtureFiles, { projects: 233, unittests: 1 });
+  assert.deepEqual(inventory.typeScriptCases.configurations.entries, { compiler: 7275, conformance: 7696, project: 632, transpile: 25 });
+  assert.equal(inventory.typeScriptCases.configurations.total, Object.values(inventory.typeScriptCases.configurations.entries).reduce((sum, count) => sum + count, 0));
+  assert.equal(inventory.typeScriptCases.inScope, inventory.typeScriptCases.entries.compiler + inventory.typeScriptCases.entries.conformance + inventory.typeScriptCases.entries.project + inventory.typeScriptCases.entries.transpile);
+  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash);
+  assert.equal(inventory.typeScriptCases.unclassified, 0);
+  assert.deepEqual(inventory.typeScriptUnitTests, { total: 257, inScope: 257, outOfScope: 0, unclassified: 0, entries: { exportedModules: 233, supportModules: 24 } });
+  const fullSelection = await discoverCases({ corpus: "typescript", suite: "all", filter: "", limit: 0 });
+  assert.equal(fullSelection.length, inventory.typeScriptCases.configurations.total);
+  const configurationsBySuite = Object.fromEntries([...new Set(fullSelection.map((testCase) => testCase.suite))].sort(compareUtf8).map((suite) => [suite, fullSelection.filter((testCase) => testCase.suite === suite).length]));
+  assert.deepEqual(configurationsBySuite, inventory.typeScriptCases.configurations.entries);
   assert.ok(inventory.baselines.entries.astnav > 0);
   assert.ok(inventory.baselines.entries.tsbuildWatch > 0);
   assert.ok(inventory.baselines.entries.tscWatch > 0);
@@ -1513,6 +1592,17 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.equal(inventory.baselines.outOfScope, inventory.baselines.entries.fourslash + inventory.baselines.entries.lsp);
   assert.ok(inventory.goTests.entries["internal/fourslash"] > 0);
   assert.ok(inventory.goTests.outOfScope >= inventory.goTests.entries["internal/fourslash"]);
+
+  const unclassified = structuredClone(inventory);
+  unclassified.typeScriptUnitTests.inScope -= 1;
+  unclassified.typeScriptUnitTests.unclassified = 1;
+  assert.throws(() => validateInventory(unclassified), /contains unclassified entries/);
+  const staleSchema = structuredClone(inventory);
+  staleSchema.schemaVersion = 2;
+  assert.throws(() => validateInventory(staleSchema), /unsupported test universe inventory schemaVersion/);
+  const drifted = structuredClone(inventory);
+  drifted.typeScriptCases.entries.unknown = 0;
+  assert.throws(() => validateInventory(drifted), /entries keys are invalid/);
 });
 
 test("applyTsgoAcceptedOverlay replaces emitted output sections and reports use", async () => {
@@ -1728,6 +1818,47 @@ test("run manifest validation detects tampering and malformed case provenance", 
   );
   const malformedInventory = { ...unsigned, inventoryHash: "0".repeat(64) };
   assert.throws(() => validateRunManifest({ ...malformedInventory, runFingerprint: runManifestFingerprint(malformedInventory) }), /inventory hash/);
+});
+
+test("complete TypeScript manifests are bound to source-derived configuration counts", async () => {
+  const { validateRunManifest } = await import("./run.mjs");
+  const template = protocolTestManifest();
+  const inventory = structuredClone(template.inventory);
+  inventory.typeScriptCases = {
+    total: 1,
+    inScope: 1,
+    outOfScope: 0,
+    unclassified: 0,
+    entries: { compiler: 1, conformance: 0, fourslash: 0, project: 0, transpile: 0 },
+    configurations: { total: 1, entries: { compiler: 1, conformance: 0, project: 0, transpile: 0 } },
+    requiredFixtureFiles: { projects: 0, unittests: 0 },
+  };
+  const identity = { corpus: "typescript", suite: "compiler", relativePath: "compiler/a.ts", configurationName: "" };
+  const cases = [{ ...template.cases[0], ...identity, id: reportCaseIdentifier(identity) }];
+  const { runFingerprint: ignored, ...templateUnsigned } = template;
+  const unsigned = {
+    ...templateUnsigned,
+    selection: { corpus: "typescript", suite: "all", filter: "", limit: 0 },
+    cases,
+    caseIdsHash: hashCaseIds(cases),
+    inventory,
+    inventoryHash: inventoryFingerprint(inventory),
+  };
+  const manifest = { ...unsigned, runFingerprint: runManifestFingerprint(unsigned) };
+  assert.equal(validateRunManifest(manifest), manifest);
+
+  const driftedInventory = structuredClone(inventory);
+  driftedInventory.typeScriptCases.configurations.entries.compiler = 2;
+  driftedInventory.typeScriptCases.configurations.total = 2;
+  const driftedUnsigned = {
+    ...unsigned,
+    inventory: driftedInventory,
+    inventoryHash: inventoryFingerprint(driftedInventory),
+  };
+  assert.throws(
+    () => validateRunManifest({ ...driftedUnsigned, runFingerprint: runManifestFingerprint(driftedUnsigned) }),
+    /configuration selection for 'compiler' does not match inventory/,
+  );
 });
 
 test("nested run-config and result schemas reject re-fingerprinted extra fields", async () => {

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { canonicalGitEnvironment, readStableRegularFile } from "../test-provenance.mjs";
+import { resolveAndVerifyPinnedGoToolchain, validatePinnedGoToolchainContract } from "./go-toolchain-pin.mjs";
 
 const REVISION_PATTERN = /^[0-9a-f]{40}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
@@ -12,7 +13,10 @@ export function emptySourcePinStatus() {
     issues: [],
     manifestPath: "",
     source: { root: "", revision: "", dirty: false, nestedSources: [] },
-    extractor: { expectedGoVersion: "", actualGoVersion: "", goos: "", goarch: "" },
+    extractor: {
+      expectedGoVersion: "", actualGoVersion: "", executable: "", executableHash: "",
+      goroot: "", gorootHash: "", goos: "", goarch: "",
+    },
     schemaFileCount: 0,
   };
 }
@@ -61,8 +65,8 @@ export function buildSourcePinStatus(repoRoot, config, snapshot = undefined) {
     "documentation", "extractor", "gitObjectFormat", "goModulePath", "nestedSources", "revision",
     "schemaDirectory", "schemaFiles", "schemaVersion", "sourceFiles", "sourceRoot", "upstream",
   ], "source pin manifest", status);
-  if (manifest.schemaVersion !== 1) {
-    status.issues.push({ path: status.manifestPath, reason: "source pin manifest schemaVersion must be 1" });
+  if (manifest.schemaVersion !== 2) {
+    status.issues.push({ path: status.manifestPath, reason: "source pin manifest schemaVersion must be 2" });
   }
   if (manifest.sourceRoot !== config.sourceRoot) {
     status.issues.push({ path: status.manifestPath, reason: `manifest sourceRoot '${manifest.sourceRoot}' does not match porter config '${config.sourceRoot}'` });
@@ -75,7 +79,7 @@ export function buildSourcePinStatus(repoRoot, config, snapshot = undefined) {
   }
   validateRevision(manifest.revision, "revision", status);
   if (manifest.gitObjectFormat !== "sha1") {
-    status.issues.push({ path: status.manifestPath, reason: "gitObjectFormat must be 'sha1' for source-pin schema 1" });
+    status.issues.push({ path: status.manifestPath, reason: "gitObjectFormat must be 'sha1' for source-pin schema 2" });
   }
 
   let sourceRoot;
@@ -127,7 +131,7 @@ export function buildSourcePinStatus(repoRoot, config, snapshot = undefined) {
     nestedPaths.add(nestedPath);
     validateRevision(nested.revision, `${label}.revision`, status);
     if (nested.gitObjectFormat !== "sha1") {
-      status.issues.push({ path: status.manifestPath, reason: `${label}.gitObjectFormat must be 'sha1' for source-pin schema 1` });
+      status.issues.push({ path: status.manifestPath, reason: `${label}.gitObjectFormat must be 'sha1' for source-pin schema 2` });
     }
     if (nested.goPolicy !== "no-go") {
       status.issues.push({ path: status.manifestPath, reason: `${label}.goPolicy must explicitly be 'no-go'; scanned nested Go sources require a future source-pin schema` });
@@ -331,6 +335,9 @@ function validateVersionDocument(repoRoot, manifest, status) {
   ]);
   const typeScript = (manifest.nestedSources ?? []).find((entry) => entry?.name === "TypeScript");
   if (typeScript) expected.set("Nested TypeScript commit", typeScript.revision);
+  if (manifest.extractor?.toolchainExecutableSha256) expected.set("Go toolchain executable SHA-256", manifest.extractor.toolchainExecutableSha256);
+  if (manifest.extractor?.goroot?.contract) expected.set("Go GOROOT hash contract", manifest.extractor.goroot.contract);
+  if (manifest.extractor?.goroot?.sha256) expected.set("Go GOROOT tree SHA-256", manifest.extractor.goroot.sha256);
   for (const entry of manifest.schemaFiles ?? []) expected.set(`\`${entry.path}\` SHA-256`, entry.sha256);
   for (const entry of manifest.sourceFiles ?? []) expected.set(`Source \`${entry.path}\` SHA-256`, entry.sha256);
   for (const [label, value] of expected) {
@@ -382,7 +389,12 @@ function validateExtractor(repoRoot, manifest, snapshot, status) {
     status.issues.push({ path: status.manifestPath, reason: "extractor must be an object" });
     return;
   }
-  validateExactKeys(extractor, ["goVersion", "goarch", "goos", "module"], "extractor", status);
+  try {
+    validatePinnedGoToolchainContract(extractor);
+  } catch (error) {
+    status.issues.push({ path: status.manifestPath, reason: error.message });
+    return;
+  }
   let moduleRoot;
   try {
     moduleRoot = resolveInside(repoRoot, extractor.module, "extractor.module");
@@ -402,11 +414,30 @@ function validateExtractor(repoRoot, manifest, snapshot, status) {
   status.extractor = {
     expectedGoVersion: extractor.goVersion,
     actualGoVersion: snapshot?.environment?.goVersion ?? "",
+    executable: snapshot?.semantic?.toolchainExecutable ?? "",
+    executableHash: snapshot?.semantic?.toolchainHash ?? "",
+    goroot: snapshot?.semantic?.goroot ?? "",
+    gorootHash: snapshot?.semantic?.gorootHash ?? "",
     goos: snapshot?.environment?.goos ?? "",
     goarch: snapshot?.environment?.goarch ?? "",
   };
   if (snapshot !== undefined && snapshot.environment?.goVersion !== extractor.goVersion) {
     status.issues.push({ path: relativePath(repoRoot, goMod), reason: `extractor ran with ${snapshot.environment?.goVersion ?? "<unknown>"}, expected ${extractor.goVersion}` });
+  }
+  if (snapshot !== undefined && snapshot.semantic?.toolchainHash !== extractor.toolchainExecutableSha256) {
+    status.issues.push({ path: relativePath(repoRoot, goMod), reason: `Go toolchain executable hash ${snapshot.semantic?.toolchainHash ?? "<unknown>"} does not match pinned ${extractor.toolchainExecutableSha256}` });
+  }
+  if (snapshot !== undefined) {
+    const fields = new Map([
+      ["gorootHashContract", "contract"], ["gorootHash", "sha256"], ["gorootEntryCount", "entryCount"],
+      ["gorootFileCount", "fileCount"], ["gorootDirectoryCount", "directoryCount"],
+      ["gorootSymlinkCount", "symlinkCount"], ["gorootBytes", "bytes"],
+    ]);
+    for (const [snapshotKey, pinKey] of fields) {
+      if (snapshot.semantic?.[snapshotKey] !== extractor.goroot[pinKey]) {
+        status.issues.push({ path: relativePath(repoRoot, goMod), reason: `extractor ${snapshotKey} ${snapshot.semantic?.[snapshotKey] ?? "<unknown>"} does not match pinned ${extractor.goroot[pinKey]}` });
+      }
+    }
   }
   if (snapshot !== undefined && snapshot.environment?.goos !== extractor.goos) {
     status.issues.push({ path: relativePath(repoRoot, goMod), reason: `extractor ran for ${snapshot.environment?.goos ?? "<unknown>"}, expected GOOS ${extractor.goos}` });
@@ -414,6 +445,11 @@ function validateExtractor(repoRoot, manifest, snapshot, status) {
   if (snapshot !== undefined && snapshot.environment?.goarch !== extractor.goarch) {
     status.issues.push({ path: relativePath(repoRoot, goMod), reason: `extractor ran for ${snapshot.environment?.goarch ?? "<unknown>"}, expected GOARCH ${extractor.goarch}` });
   }
+}
+
+export function resolvePinnedGoToolchain(repoRoot, config) {
+  const { manifest } = readSourcePinManifest(repoRoot, config);
+  return resolveAndVerifyPinnedGoToolchain(manifest?.extractor);
 }
 
 function validateGitlink(parentRoot, sourcePath, expectedRevision, label, status) {

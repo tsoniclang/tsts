@@ -510,7 +510,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       return;
     case KindStringLiteral:
       if (!isDoubleQuotedString(valueExpression)) {
-        receiver!.diagnostics = [...receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected)];
+        receiver!.diagnostics = [...(receiver!.diagnostics ?? []), NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), String_literal_with_double_quotes_expected)];
       }
       return;
     case KindPrefixUnaryExpression: {
@@ -529,7 +529,7 @@ export function Parser_validateJsonValue(receiver: GoPtr<Parser>, sourceFile: Go
       }
       return;
   }
-  receiver!.diagnostics = [...receiver!.diagnostics, NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal)];
+  receiver!.diagnostics = [...(receiver!.diagnostics ?? []), NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, valueExpression), Property_value_can_only_be_string_literal_numeric_literal_true_false_null_object_literal_or_array_literal)];
 }
 
 /**
@@ -552,7 +552,7 @@ export function ParseIsolatedEntityName(text: string): GoPtr<EntityName> {
     Parser_initializeState(p, {} as SourceFileParseOptions, text, ScriptKindJS);
     Parser_nextToken(p);
     const entityName = Parser_parseEntityName(p, true, undefined);
-    return (p!.token === KindEndOfFile && p!.diagnostics.length === 0) ? entityName as GoPtr<EntityName> : undefined;
+    return (p!.token === KindEndOfFile && (p!.diagnostics?.length ?? 0) === 0) ? entityName as GoPtr<EntityName> : undefined;
   } finally {
     putParser(p);
   }
@@ -595,9 +595,9 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   }
 
   receiver!.factory = NewNodeFactory({})!;
-  receiver!.diagnostics = [];
-  receiver!.jsDiagnostics = [];
-  receiver!.jsdocDiagnostics = [];
+  receiver!.diagnostics = undefined;
+  receiver!.jsDiagnostics = undefined;
+  receiver!.jsdocDiagnostics = undefined;
   receiver!.token = KindUnknown;
   receiver!.sourceFlags = NodeFlagsNone;
   receiver!.parsingContexts = 0 as ParsingContexts;
@@ -607,18 +607,18 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   receiver!.identifiers = undefined;
   receiver!.identifierCount = 0 as int;
   receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int)!;
-  receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
-  receiver!.stringSliceArena = { data: [] } as Arena<string>;
-  receiver!.jsdocInfos = [];
-  receiver!.possibleAwaitSpans = [];
-  receiver!.jsdocCommentsSpace = [];
-  receiver!.jsdocCommentRangesSpace = [];
-  receiver!.jsdocTagCommentsSpace = [];
-  receiver!.jsdocTagCommentsPartsSpace = [];
-  receiver!.reparseList = [];
+  receiver!.nodeSliceArena = { data: undefined } as Arena<GoPtr<Node>>;
+  receiver!.stringSliceArena = { data: undefined } as Arena<string>;
+  receiver!.jsdocInfos = undefined;
+  receiver!.possibleAwaitSpans = undefined;
+  receiver!.jsdocCommentsSpace = undefined;
+  receiver!.jsdocCommentRangesSpace = undefined;
+  receiver!.jsdocTagCommentsSpace = undefined;
+  receiver!.jsdocTagCommentsPartsSpace = undefined;
+  receiver!.reparseList = undefined;
   receiver!.commonJSModuleIndicator = undefined;
   receiver!.currentParent = undefined;
-  receiver!.reparsedClones = [];
+  receiver!.reparsedClones = undefined;
 
   if (receiver!.scanner === undefined) {
     receiver!.scanner = NewScanner();
@@ -666,10 +666,10 @@ export function Parser_mark(receiver: GoPtr<Parser>): ParserState {
   return {
     scannerState: Scanner_Mark(receiver!.scanner),
     contextFlags: receiver!.contextFlags,
-    diagnosticsLen: receiver!.diagnostics.length,
-    jsDiagnosticsLen: receiver!.jsDiagnostics.length,
-    jsdocInfosLen: receiver!.jsdocInfos.length,
-    reparsedClonesLen: receiver!.reparsedClones.length,
+    diagnosticsLen: receiver!.diagnostics?.length ?? 0,
+    jsDiagnosticsLen: receiver!.jsDiagnostics?.length ?? 0,
+    jsdocInfosLen: receiver!.jsdocInfos?.length ?? 0,
+    reparsedClonesLen: receiver!.reparsedClones?.length ?? 0,
     statementHasAwaitIdentifier: receiver!.statementHasAwaitIdentifier,
     hasParseError: receiver!.hasParseError,
   };
@@ -695,10 +695,10 @@ export function Parser_rewind(receiver: GoPtr<Parser>, state: ParserState): void
   Scanner_Rewind(receiver!.scanner, state.scannerState);
   receiver!.token = Scanner_Token(receiver!.scanner);
   receiver!.contextFlags = state.contextFlags;
-  receiver!.diagnostics = receiver!.diagnostics.slice(0, state.diagnosticsLen);
-  receiver!.jsDiagnostics = receiver!.jsDiagnostics.slice(0, state.jsDiagnosticsLen);
-  receiver!.jsdocInfos = receiver!.jsdocInfos.slice(0, state.jsdocInfosLen);
-  receiver!.reparsedClones = receiver!.reparsedClones.slice(0, state.reparsedClonesLen);
+  receiver!.diagnostics = receiver!.diagnostics?.slice(0, state.diagnosticsLen);
+  receiver!.jsDiagnostics = receiver!.jsDiagnostics?.slice(0, state.jsDiagnosticsLen);
+  receiver!.jsdocInfos = receiver!.jsdocInfos?.slice(0, state.jsdocInfosLen);
+  receiver!.reparsedClones = receiver!.reparsedClones?.slice(0, state.reparsedClonesLen);
   receiver!.statementHasAwaitIdentifier = state.statementHasAwaitIdentifier;
   receiver!.hasParseError = state.hasParseError;
 }
@@ -1447,9 +1447,9 @@ export function Parser_skipParameterStart(receiver: GoPtr<Parser>): bool {
   }
   if (receiver!.token === KindOpenBracketToken || receiver!.token === KindOpenBraceToken) {
     // Return true if we can parse an array or object binding pattern with no errors
-    const previousErrorCount = receiver!.diagnostics.length;
+    const previousErrorCount = receiver!.diagnostics?.length ?? 0;
     Parser_parseIdentifierOrPattern(receiver);
-    return previousErrorCount === receiver!.diagnostics.length;
+    return previousErrorCount === (receiver!.diagnostics?.length ?? 0);
   }
   return false;
 }
@@ -2485,7 +2485,7 @@ export function Parser_checkJSDecoratorSyntax(receiver: GoPtr<Parser>, node: GoP
                 NewTextRange(SkipTrivia(receiver!.sourceText, modifiers[decoratorIndex]!.Loc.pos), modifiers[decoratorIndex]!.Loc.end),
                 Decorator_used_before_export_here,
               ));
-              receiver!.jsDiagnostics = [...receiver!.jsDiagnostics, diag];
+              receiver!.jsDiagnostics = [...(receiver!.jsDiagnostics ?? []), diag];
             }
           }
         }
@@ -2704,7 +2704,7 @@ export function Parser_checkJSSyntax(receiver: GoPtr<Parser>, node: GoPtr<Node>)
       }
       break;
     case KindParameter:
-      if (Some(Node_ModifierNodes(node) ?? [], IsModifier)) {
+      if (Some(Node_ModifierNodes(node), IsModifier)) {
         Parser_jsErrorAtRange(receiver, Node_Modifiers(node)!.Loc, Parameter_modifiers_can_only_be_used_in_TypeScript_files);
       }
       break;

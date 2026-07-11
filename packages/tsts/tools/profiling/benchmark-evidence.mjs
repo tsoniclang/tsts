@@ -123,6 +123,8 @@ export function collectHarnessEvidence() {
   const inputs = hashInputRoots([
     { label: "performance-driver", path: fileURLToPath(new URL("./bench.mjs", import.meta.url)) },
     { label: "performance-core", path: fileURLToPath(new URL("./benchmark-core.mjs", import.meta.url)) },
+    { label: "performance-compiler-arguments", path: fileURLToPath(new URL("./compiler-arguments.mjs", import.meta.url)) },
+    { label: "performance-workload-selection", path: fileURLToPath(new URL("./benchmark-selection.mjs", import.meta.url)) },
     { label: "performance-workload", path: fileURLToPath(new URL("./benchmark-workload.mjs", import.meta.url)) },
     { label: "performance-evidence", path: fileURLToPath(import.meta.url) },
     { label: "performance-policy-loader", path: fileURLToPath(new URL("./performance-policy.mjs", import.meta.url)) },

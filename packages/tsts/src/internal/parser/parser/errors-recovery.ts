@@ -53,9 +53,10 @@ export function Parser_parseErrorAt(receiver: GoPtr<Parser>, pos: int, end: int,
 export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
   // Don't report another error if it would just be at the same location as the last error
   let result: GoPtr<Diagnostic> = undefined;
-  if (receiver!.diagnostics.length === 0 || Diagnostic_Pos(receiver!.diagnostics[receiver!.diagnostics.length - 1]) !== TextRange_Pos(loc)) {
+  const diagnosticsLength = receiver!.diagnostics?.length ?? 0;
+  if (diagnosticsLength === 0 || Diagnostic_Pos(receiver!.diagnostics![diagnosticsLength - 1]) !== TextRange_Pos(loc)) {
     result = NewDiagnostic(undefined, loc, message, ...args);
-    receiver!.diagnostics = [...receiver!.diagnostics, result];
+    receiver!.diagnostics = [...(receiver!.diagnostics ?? []), result];
   }
   receiver!.hasParseError = true;
   return result;
@@ -75,8 +76,8 @@ export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange
  * 	return diagnostics
  * }
  */
-export function attachFileToDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  for (const d of diagnostics) {
+export function attachFileToDiagnostics(diagnostics: GoPtr<GoSlice<GoPtr<Diagnostic>>>, file: GoPtr<SourceFile>): GoPtr<GoSlice<GoPtr<Diagnostic>>> {
+  for (const d of diagnostics ?? []) {
     Diagnostic_SetFile(d, file);
     for (const r of Diagnostic_RelatedInformation(d)) {
       Diagnostic_SetFile(r, file);
@@ -94,5 +95,5 @@ export function attachFileToDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>,
  * }
  */
 export function Parser_jsErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<unknown>): void {
-  receiver!.jsDiagnostics = [...receiver!.jsDiagnostics, NewDiagnostic(undefined, NewTextRange(SkipTrivia(receiver!.sourceText, TextRange_Pos(loc)), TextRange_End(loc)), message, ...args)];
+  receiver!.jsDiagnostics = [...(receiver!.jsDiagnostics ?? []), NewDiagnostic(undefined, NewTextRange(SkipTrivia(receiver!.sourceText, TextRange_Pos(loc)), TextRange_End(loc)), message, ...args)];
 }

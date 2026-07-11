@@ -149,7 +149,9 @@ export function CompareFunc<T1, T2>(
 
 // Clone returns a copy of the slice. The elements are copied using assignment,
 // so this is a shallow clone. Clone(nil) returns nil in Go; we mirror that.
-export function Clone<T>(s: GoSlice<T> | undefined): GoSlice<T> | undefined {
+export function Clone<T>(s: GoSlice<T>): GoSlice<T>;
+export function Clone<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>>;
+export function Clone<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
   if (s === undefined) {
     return undefined;
   }
@@ -157,8 +159,15 @@ export function Clone<T>(s: GoSlice<T> | undefined): GoSlice<T> | undefined {
 }
 
 // Concat returns a new slice concatenating the passed in slices.
-export function Concat<T>(...slices: Array<GoPtr<GoSlice<T>>>): GoSlice<T> {
-  const result: T[] = [];
+export function Concat<T>(...slices: Array<GoPtr<GoSlice<T>>>): GoPtr<GoSlice<T>> {
+  let size = 0;
+  for (const slice of slices) {
+    size += slice?.length ?? 0;
+  }
+  if (size === 0) {
+    return undefined;
+  }
+  const result: GoSlice<T> = [];
   for (const s of slices) {
     for (const e of s ?? []) {
       result.push(e);
@@ -186,17 +195,21 @@ export function Repeat<T>(x: GoPtr<GoSlice<T>>, count: int): GoSlice<T> {
 // another n elements. In a JS array there is no observable capacity, so Grow is
 // a faithful no-op that returns the slice unchanged. Grow panics if n is
 // negative.
-export function Grow<T>(s: GoPtr<GoSlice<T>>, n: int): GoSlice<T> {
+export function Grow<T>(s: GoSlice<T>, n: int): GoSlice<T>;
+export function Grow<T>(s: GoPtr<GoSlice<T>>, n: int): GoPtr<GoSlice<T>>;
+export function Grow<T>(s: GoPtr<GoSlice<T>>, n: int): GoPtr<GoSlice<T>> {
   if (n < 0) {
     throw new globalThis.Error("cannot be negative");
   }
-  return s ?? [];
+  return s === undefined && n > 0 ? [] : s;
 }
 
 // Clip removes unused capacity from the slice. JS arrays expose no spare
 // capacity, so Clip returns the slice unchanged.
-export function Clip<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
-  return s ?? [];
+export function Clip<T>(s: GoSlice<T>): GoSlice<T>;
+export function Clip<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>>;
+export function Clip<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,56 +218,75 @@ export function Clip<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
 
 // Delete removes the elements s[i:j] from s, returning the modified slice.
 // Delete panics if j > len(s) or s[i:j] is not a valid slice of s.
-export function Delete<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoSlice<T> {
-  const slice = s ?? [];
-  if (i < 0 || j > slice.length || i > j) {
+export function Delete<T>(s: GoSlice<T>, i: int, j: int): GoSlice<T>;
+export function Delete<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoPtr<GoSlice<T>>;
+export function Delete<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoPtr<GoSlice<T>> {
+  const length = s?.length ?? 0;
+  if (i < 0 || j > length || i > j) {
     throw new globalThis.Error("slices.Delete: invalid range");
   }
-  slice.splice(i, j - i);
-  return slice;
+  if (i !== j) {
+    s!.splice(i, j - i);
+  }
+  return s;
 }
 
 // DeleteFunc removes any elements from s for which del returns true, returning
 // the modified slice.
-export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoSlice<T> {
-  const slice = s ?? [];
-  const i = IndexFunc(slice, del);
+export function DeleteFunc<T>(s: GoSlice<T>, del: (e: T) => bool): GoSlice<T>;
+export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoPtr<GoSlice<T>>;
+export function DeleteFunc<T>(s: GoPtr<GoSlice<T>>, del: (e: T) => bool): GoPtr<GoSlice<T>> {
+  const i = IndexFunc(s, del);
   if (i === -1) {
-    return slice;
+    return s;
   }
   // Compact remaining elements onto the front, matching Go's in-place algorithm.
   let w = i;
-  for (let k = i + 1; k < slice.length; k++) {
-    const e = slice[k]!;
+  for (let k = i + 1; k < s!.length; k++) {
+    const e = s![k]!;
     if (!del(e)) {
-      slice[w] = e;
+      s![w] = e;
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  s!.length = w;
+  return s;
 }
 
 // Insert inserts the values v... into s at index i, returning the modified
 // slice. Insert panics if i is out of range.
-export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int, ...v: T[]): GoSlice<T> {
-  const slice = s ?? [];
-  if (i < 0 || i > slice.length) {
+export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int, first: T, ...rest: T[]): GoSlice<T>;
+export function Insert<T>(s: GoSlice<T>, i: int): GoSlice<T>;
+export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int): GoPtr<GoSlice<T>>;
+export function Insert<T>(s: GoPtr<GoSlice<T>>, i: int, ...v: T[]): GoPtr<GoSlice<T>> {
+  const length = s?.length ?? 0;
+  if (i < 0 || i > length) {
     throw new globalThis.Error("slices.Insert: index out of range");
   }
-  slice.splice(i, 0, ...v);
-  return slice;
+  if (v.length === 0) {
+    return s;
+  }
+  const result = s ?? [];
+  result.splice(i, 0, ...v);
+  return result;
 }
 
 // Replace replaces the elements s[i:j] by the given v, and returns the modified
 // slice. Replace panics if j > len(s) or s[i:j] is not a valid slice of s.
-export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int, ...v: T[]): GoSlice<T> {
-  const slice = s ?? [];
-  if (i < 0 || j > slice.length || i > j) {
+export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int, first: T, ...rest: T[]): GoSlice<T>;
+export function Replace<T>(s: GoSlice<T>, i: int, j: int): GoSlice<T>;
+export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int): GoPtr<GoSlice<T>>;
+export function Replace<T>(s: GoPtr<GoSlice<T>>, i: int, j: int, ...v: T[]): GoPtr<GoSlice<T>> {
+  const length = s?.length ?? 0;
+  if (i < 0 || j > length || i > j) {
     throw new globalThis.Error("slices.Replace: invalid range");
   }
-  slice.splice(i, j - i, ...v);
-  return slice;
+  if (s === undefined && v.length === 0) {
+    return undefined;
+  }
+  const result = s ?? [];
+  result.splice(i, j - i, ...v);
+  return result;
 }
 
 // Reverse reverses the elements of the slice in place.
@@ -265,41 +297,43 @@ export function Reverse<T>(s: GoPtr<GoSlice<T>>): void {
 // Compact replaces consecutive runs of equal elements with a single copy. This
 // is like the uniq command found on Unix. Compact modifies the contents of the
 // slice s and returns the modified slice, which may have a smaller length.
-export function Compact<T>(s: GoPtr<GoSlice<T>>): GoSlice<T> {
-  const slice = s ?? [];
-  if (slice.length < 2) {
-    return slice;
+export function Compact<T>(s: GoSlice<T>): GoSlice<T>;
+export function Compact<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>>;
+export function Compact<T>(s: GoPtr<GoSlice<T>>): GoPtr<GoSlice<T>> {
+  if ((s?.length ?? 0) < 2) {
+    return s;
   }
   let w = 1;
-  for (let k = 1; k < slice.length; k++) {
-    const e = slice[k]!;
-    if (e !== slice[k - 1]!) {
-      slice[w] = e;
+  for (let k = 1; k < s!.length; k++) {
+    const e = s![k]!;
+    if (e !== s![k - 1]!) {
+      s![w] = e;
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  s!.length = w;
+  return s;
 }
 
 // CompactFunc is like Compact but uses an equality function to compare
 // elements. For runs of elements that compare equal, CompactFunc keeps the
 // first one.
-export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): GoSlice<T> {
-  const slice = s ?? [];
-  if (slice.length < 2) {
-    return slice;
+export function CompactFunc<T>(s: GoSlice<T>, eq: (a: T, b: T) => bool): GoSlice<T>;
+export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): GoPtr<GoSlice<T>>;
+export function CompactFunc<T>(s: GoPtr<GoSlice<T>>, eq: (a: T, b: T) => bool): GoPtr<GoSlice<T>> {
+  if ((s?.length ?? 0) < 2) {
+    return s;
   }
   let w = 1;
-  for (let k = 1; k < slice.length; k++) {
-    const e = slice[k]!;
-    if (!eq(e, slice[w - 1]!)) {
-      slice[w] = e;
+  for (let k = 1; k < s!.length; k++) {
+    const e = s![k]!;
+    if (!eq(e, s![w - 1]!)) {
+      s![w] = e;
       w++;
     }
   }
-  slice.length = w;
-  return slice;
+  s!.length = w;
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -331,7 +365,7 @@ export function SortStableFunc<T>(x: GoPtr<GoSlice<T>>, cmp: (a: T, b: T) => int
 
 // Sorted collects values from an iterator into a new slice, sorts the slice in
 // ascending order, and returns it.
-export function Sorted<T extends GoOrdered>(seq: GoSeq<T>): GoSlice<T> {
+export function Sorted<T extends GoOrdered>(seq: GoSeq<T>): GoPtr<GoSlice<T>> {
   const result = Collect(seq);
   Sort(result);
   return result;
@@ -339,7 +373,7 @@ export function Sorted<T extends GoOrdered>(seq: GoSeq<T>): GoSlice<T> {
 
 // SortedFunc collects values from an iterator into a new slice, sorts the slice
 // using the comparison function, and returns it.
-export function SortedFunc<T>(seq: GoSeq<T>, cmp: (a: T, b: T) => int): GoSlice<T> {
+export function SortedFunc<T>(seq: GoSeq<T>, cmp: (a: T, b: T) => int): GoPtr<GoSlice<T>> {
   const result = Collect(seq);
   SortFunc(result, cmp);
   return result;
@@ -414,17 +448,20 @@ export function Values<T>(s: GoPtr<GoSlice<T>>): GoSeq<T> {
 }
 
 // Collect collects values from seq into a new slice and returns it.
-export function Collect<T>(seq: GoSeq<T>): GoSlice<T> {
-  return AppendSeq([], seq);
+export function Collect<T>(seq: GoSeq<T>): GoPtr<GoSlice<T>> {
+  return AppendSeq(undefined, seq);
 }
 
 // AppendSeq appends the values from seq to the slice and returns the extended
 // slice.
-export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: GoSeq<T>): GoSlice<T> {
-  const slice = s ?? [];
+export function AppendSeq<T>(s: GoSlice<T>, seq: GoSeq<T>): GoSlice<T>;
+export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: GoSeq<T>): GoPtr<GoSlice<T>>;
+export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: GoSeq<T>): GoPtr<GoSlice<T>> {
+  let result = s;
   seq((value: T): bool => {
-    slice.push(value);
+    result ??= [];
+    result.push(value);
     return true;
   });
-  return slice;
+  return result;
 }

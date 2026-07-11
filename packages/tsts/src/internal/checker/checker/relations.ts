@@ -225,7 +225,7 @@ import { LanguageFeatureMinimumTarget, ExternalEmitHelpersRest } from "../types.
  */
 export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Checker>, t: GoPtr<Type>, typeNode: GoPtr<Node>): bool {
   const baseTypes = Checker_getBaseTypes(receiver, t);
-  if (baseTypes.length < 2) {
+  if ((baseTypes?.length ?? 0) < 2) {
     return true;
   }
   const seen = new globalThis.Map<string, InheritanceInfo>();
@@ -236,7 +236,7 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
     }
   }
   let identical = true;
-  for (const base of baseTypes) {
+  for (const base of baseTypes ?? []) {
     const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, Type_AsInterfaceType(t)!.thisType, false));
     if (properties === undefined) {
       continue;
@@ -1717,7 +1717,7 @@ export function Checker_getSingleBaseForNonAugmentingSubtype(receiver: GoPtr<Che
     }
   }
   const bases = Checker_getBaseTypes(receiver, target);
-  if (bases.length !== 1) {
+  if (bases === undefined || bases.length !== 1) {
     return undefined;
   }
   if (Checker_getMembersOfSymbol(receiver, t!.symbol).size !== 0) {

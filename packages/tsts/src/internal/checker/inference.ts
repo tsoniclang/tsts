@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -267,6 +267,14 @@ export interface InferenceKey {
   t: TypeId;
 }
 
+const inferenceKeyDescriptor = GoStructKey<InferenceKey, readonly [TypeId, TypeId]>(
+  [
+    GoStructField((key: InferenceKey): TypeId => key.s, GoNumberKey),
+    GoStructField((key: InferenceKey): TypeId => key.t, GoNumberKey),
+  ],
+  ([s, t]): InferenceKey => ({ s, t }),
+);
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974","bodyHash":"8ef85c1de611c40f56bee91845833de67f41d0d43830761c1346913f05d793ea"}
  *
@@ -289,7 +297,7 @@ export interface InferenceKey {
  * }
  */
 export interface InferenceState {
-  inferences: GoSlice<GoPtr<InferenceInfo>>;
+  inferences: GoPtr<GoSlice<GoPtr<InferenceInfo>>>;
   originalSource: GoPtr<Type>;
   originalTarget: GoPtr<Type>;
   priority: InferencePriority;
@@ -298,9 +306,9 @@ export interface InferenceState {
   bivariant: bool;
   expandingFlags: ExpandingFlags;
   propagationType: GoPtr<Type>;
-  visited: GoMap<InferenceKey, InferencePriority>;
-  sourceStack: GoSlice<GoPtr<Type>>;
-  targetStack: GoSlice<GoPtr<Type>>;
+  visited: GoPtr<GoMap<InferenceKey, InferencePriority>>;
+  sourceStack: GoPtr<GoSlice<GoPtr<Type>>>;
+  targetStack: GoPtr<GoSlice<GoPtr<Type>>>;
   next: GoPtr<InferenceState>;
   depth: int;
 }
@@ -321,7 +329,7 @@ export interface InferenceState {
 export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<InferenceState> {
   const c = receiver!;
   const n: InferenceState = c.freeinferenceState ?? {
-    inferences: [],
+    inferences: undefined,
     originalSource: undefined,
     originalTarget: undefined,
     priority: 0,
@@ -330,9 +338,9 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
     bivariant: false,
     expandingFlags: 0,
     propagationType: undefined,
-    visited: NewGoStructMap<InferenceKey, InferencePriority>(),
-    sourceStack: [],
-    targetStack: [],
+    visited: undefined,
+    sourceStack: undefined,
+    targetStack: undefined,
     next: undefined,
     depth: 0 as int,
   };
@@ -359,12 +367,12 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
 export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>): void {
   const c = receiver!;
   const state = n!;
-  state.visited.clear();
+  state.visited?.clear();
   const visited = state.visited;
   const inferences = state.inferences;
   const sourceStack = state.sourceStack;
   const targetStack = state.targetStack;
-  state.inferences = inferences.slice(0, 0);
+  state.inferences = inferences?.slice(0, 0);
   state.originalSource = undefined;
   state.originalTarget = undefined;
   state.priority = 0;
@@ -374,8 +382,8 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
   state.expandingFlags = 0;
   state.propagationType = undefined;
   state.visited = visited;
-  state.sourceStack = sourceStack.slice(0, 0);
-  state.targetStack = targetStack.slice(0, 0);
+  state.sourceStack = sourceStack?.slice(0, 0);
+  state.targetStack = targetStack?.slice(0, 0);
   state.next = c.freeinferenceState;
   state.depth = 0 as int;
   c.freeinferenceState = state;
@@ -397,7 +405,7 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
  * 	c.putInferenceState(n)
  * }
  */
-export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice<GoPtr<InferenceInfo>>, originalSource: GoPtr<Type>, originalTarget: GoPtr<Type>, priority: InferencePriority, contravariant: bool): void {
+export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoPtr<GoSlice<GoPtr<InferenceInfo>>>, originalSource: GoPtr<Type>, originalTarget: GoPtr<Type>, priority: InferencePriority, contravariant: bool): void {
   const c = receiver!;
   const n = Checker_getInferenceState(c)!;
   n.inferences = inferences;
@@ -691,13 +699,13 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
   if (source === target && (source!.flags & TypeFlagsUnionOrIntersection) !== 0) {
     // When source and target are the same union or intersection type, just relate each constituent
     // type to itself.
-    for (const t of Type_Types(source)) {
+    for (const t of Type_Types(source) ?? []) {
       Checker_inferFromTypes(c, state, t, t);
     }
     return;
   }
   if ((target!.flags & TypeFlagsUnion) !== 0) {
-    let sourceTypes: GoSlice<GoPtr<Type>>;
+    let sourceTypes: GoPtr<GoSlice<GoPtr<Type>>>;
     if ((source!.flags & TypeFlagsUnion) !== 0) {
       sourceTypes = Type_Types(source);
     } else {
@@ -710,11 +718,11 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
     // the matching types. Types closely match when they are instantiations of the same
     // object type or instantiations of the same type alias.
     const [sources, targets] = Checker_inferFromMatchingTypes(c, state, tempSources, tempTargets, Checker_isTypeCloselyMatchedBy);
-    if (targets.length === 0) {
+    if ((targets?.length ?? 0) === 0) {
       return;
     }
     let newTarget = Checker_getUnionType(c, targets);
-    if (sources.length === 0) {
+    if ((sources?.length ?? 0) === 0) {
       // All source constituents have been matched and there is nothing further to infer from.
       // However, simply making no inferences is undesirable because it could ultimately mean
       // inferring a type parameter constraint. Instead, make a lower priority inference from
@@ -731,7 +739,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
     // infer { extra: any } for T. But when inferring to 'string[] & Iterable<T>' we want to keep the
     // string[] on the source side and infer string for T.
     if ((source!.flags & TypeFlagsUnion) === 0) {
-      let sourceTypes2: GoSlice<GoPtr<Type>>;
+      let sourceTypes2: GoPtr<GoSlice<GoPtr<Type>>>;
       if ((source!.flags & TypeFlagsIntersection) !== 0) {
         sourceTypes2 = Type_Types(source);
       } else {
@@ -739,7 +747,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
       }
       // Infer between identically matching source and target constituents and remove the matching types.
       const [srcRes, tgtRes] = Checker_inferFromMatchingTypes(c, state, sourceTypes2, Type_Types(target), Checker_isTypeIdenticalTo);
-      if (srcRes.length === 0 || tgtRes.length === 0) {
+      if ((srcRes?.length ?? 0) === 0 || (tgtRes?.length ?? 0) === 0) {
         return;
       }
       source = Checker_getIntersectionType(c, srcRes);
@@ -1053,13 +1061,16 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
   const c = receiver!;
   const state = n!;
   const key: InferenceKey = { s: source!.id, t: target!.id };
-  const existing = state.visited.get(key);
-  if (existing !== undefined) {
+  const existing = state.visited?.get(key);
+  if (state.visited?.has(key)) {
+    if (existing === undefined) {
+      throw new globalThis.Error("inference visit map contains a key without a priority");
+    }
     state.inferencePriority = Math.min(state.inferencePriority, existing);
     return;
   }
   if (state.visited === undefined) {
-    state.visited = NewGoStructMap<InferenceKey, InferencePriority>();
+    state.visited = NewGoStructMap<InferenceKey, InferencePriority>(inferenceKeyDescriptor);
   }
   state.visited.set(key, InferencePriorityCircularity);
   const saveInferencePriority = state.inferencePriority;
@@ -1067,8 +1078,8 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
   // We stop inferring and report a circularity if we encounter duplicate recursion identities on both
   // the source side and the target side.
   const saveExpandingFlags = state.expandingFlags;
-  state.sourceStack = [...state.sourceStack, source];
-  state.targetStack = [...state.targetStack, target];
+  state.sourceStack = [...(state.sourceStack ?? []), source];
+  state.targetStack = [...(state.targetStack ?? []), target];
   if (Checker_isDeeplyNestedType(c, source, state.sourceStack, 2)) {
     state.expandingFlags |= ExpandingFlagsSource;
   }
@@ -1112,12 +1123,12 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
  * 	return sources, targets
  * }
  */
-export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>, matches: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): [GoSlice<GoPtr<Type>>, GoSlice<GoPtr<Type>>] {
+export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, sources: GoPtr<GoSlice<GoPtr<Type>>>, targets: GoPtr<GoSlice<GoPtr<Type>>>, matches: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): [GoPtr<GoSlice<GoPtr<Type>>>, GoPtr<GoSlice<GoPtr<Type>>>] {
   const c = receiver!;
-  let matchedSources: GoSlice<GoPtr<Type>> = [];
-  let matchedTargets: GoSlice<GoPtr<Type>> = [];
-  for (const t of targets) {
-    for (const s of sources) {
+  let matchedSources: GoPtr<GoSlice<GoPtr<Type>>> = undefined;
+  let matchedTargets: GoPtr<GoSlice<GoPtr<Type>>> = undefined;
+  for (const t of targets ?? []) {
+    for (const s of sources ?? []) {
       if (matches(c, s, t)) {
         Checker_inferFromTypes(c, n, s, t);
         matchedSources = core.AppendIfUnique(matchedSources, s);
@@ -1125,12 +1136,12 @@ export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPt
       }
     }
   }
-  let resultSources = sources;
-  let resultTargets = targets;
-  if (matchedSources.length !== 0) {
+  let resultSources: GoPtr<GoSlice<GoPtr<Type>>> = sources;
+  let resultTargets: GoPtr<GoSlice<GoPtr<Type>>> = targets;
+  if ((matchedSources?.length ?? 0) !== 0) {
     resultSources = core.Filter(sources, (t: GoPtr<Type>): bool => !slices.Contains(matchedSources, t));
   }
-  if (matchedTargets.length !== 0) {
+  if ((matchedTargets?.length ?? 0) !== 0) {
     resultTargets = core.Filter(targets, (t: GoPtr<Type>): bool => !slices.Contains(matchedTargets, t));
   }
   return [resultSources, resultTargets];
@@ -3029,7 +3040,7 @@ export function Checker_cloneInferenceContext(receiver: GoPtr<Checker>, n: GoPtr
  */
 export function Checker_cloneInferredPartOfContext(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoPtr<InferenceContext> {
   const inferences = core.Filter(n!.inferences, hasInferenceCandidates);
-  if (inferences.length === 0) {
+  if ((inferences?.length ?? 0) === 0) {
     return undefined;
   }
   return Checker_newInferenceContextWorker(receiver, core.Map(inferences, cloneInferenceInfo), n!.signature, n!.flags, n!.compareTypes);
@@ -3051,7 +3062,7 @@ export function Checker_cloneInferredPartOfContext(receiver: GoPtr<Checker>, n: 
  * 	return n
  * }
  */
-export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, inferences: GoSlice<GoPtr<InferenceInfo>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer): GoPtr<InferenceContext> {
+export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, inferences: GoPtr<GoSlice<GoPtr<InferenceInfo>>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer): GoPtr<InferenceContext> {
   const n: InferenceContext = {
     inferences,
     signature,
@@ -3061,8 +3072,8 @@ export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, infe
     nonFixingMapper: undefined,
     returnMapper: undefined,
     outerReturnMapper: undefined,
-    inferredTypeParameters: [],
-    intraExpressionInferenceSites: [],
+    inferredTypeParameters: undefined,
+    intraExpressionInferenceSites: undefined,
   };
   n.mapper = Checker_newInferenceTypeMapper(receiver, n, true);
   n.nonFixingMapper = Checker_newInferenceTypeMapper(receiver, n, false);
@@ -3079,7 +3090,7 @@ export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, infe
  */
 export function Checker_addIntraExpressionInferenceSite(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, node: GoPtr<Node>, t: GoPtr<Type>): void {
   const site: IntraExpressionInferenceSite = { node, t };
-  n!.intraExpressionInferenceSites = [...n!.intraExpressionInferenceSites, site];
+  n!.intraExpressionInferenceSites = [...(n!.intraExpressionInferenceSites ?? []), site];
 }
 
 /**
@@ -3102,7 +3113,7 @@ export function Checker_addIntraExpressionInferenceSite(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): void {
-  for (const site of n!.intraExpressionInferenceSites) {
+  for (const site of n!.intraExpressionInferenceSites ?? []) {
     let contextualType: GoPtr<Type>;
     if (IsMethodDeclaration(site.node)) {
       contextualType = Checker_getContextualTypeForObjectLiteralMethod(receiver, site.node, ContextFlagsNoConstraints);
@@ -3113,7 +3124,7 @@ export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, 
       Checker_inferTypes(receiver, n!.inferences, site.t, contextualType, InferencePriorityNone, false);
     }
   }
-  n!.intraExpressionInferenceSites = [];
+  n!.intraExpressionInferenceSites = undefined;
 }
 
 /**
@@ -3211,6 +3222,9 @@ export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, 
  */
 export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, index: int): GoPtr<Type> {
   const c = receiver!;
+  if (n!.inferences === undefined) {
+    throw new globalThis.Error("inference index access requires an inference slice");
+  }
   const inference = n!.inferences[index];
   if (inference!.inferredType === undefined) {
     if (inference!.typeParameter === c.errorType) {
@@ -3295,8 +3309,9 @@ export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<Infer
  * }
  */
 export function Checker_getInferredTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
-  const result: GoSlice<GoPtr<Type>> = new Array(n!.inferences.length);
-  for (let i = 0; i < n!.inferences.length; i++) {
+  const inferenceCount = n!.inferences?.length ?? 0;
+  const result: GoSlice<GoPtr<Type>> = new Array(inferenceCount);
+  for (let i = 0; i < inferenceCount; i++) {
     result[i] = Checker_getInferredType(receiver, n, i);
   }
   return result;
@@ -3383,7 +3398,7 @@ export function Checker_getCovariantInference(receiver: GoPtr<Checker>, inferenc
   const candidates = Checker_unionObjectAndArrayLiteralCandidates(receiver, inference!.candidates);
   const primitiveConstraint = Checker_hasPrimitiveConstraint(receiver, inference!.typeParameter) || Checker_isConstTypeVariable(receiver, inference!.typeParameter, 0);
   const widenLiteralTypes = !primitiveConstraint && inference!.topLevel && (inference!.isFixed || !Checker_isTypeParameterAtTopLevelInReturnType(receiver, signature, inference!.typeParameter));
-  let baseCandidates: GoSlice<GoPtr<Type>>;
+  let baseCandidates: GoPtr<GoSlice<GoPtr<Type>>>;
   if (primitiveConstraint) {
     baseCandidates = core.SameMap(candidates, (t) => Checker_getRegularTypeOfLiteralType(receiver, t));
   } else if (widenLiteralTypes) {
@@ -3434,10 +3449,10 @@ export function Checker_getContravariantInference(receiver: GoPtr<Checker>, infe
  * 	return candidates
  * }
  */
-export function Checker_unionObjectAndArrayLiteralCandidates(receiver: GoPtr<Checker>, candidates: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
-  if (candidates.length > 1) {
+export function Checker_unionObjectAndArrayLiteralCandidates(receiver: GoPtr<Checker>, candidates: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<GoSlice<GoPtr<Type>>> {
+  if ((candidates?.length ?? 0) > 1) {
     const objectLiterals = core.Filter(candidates, isObjectOrArrayLiteralType);
-    if (objectLiterals.length !== 0) {
+    if ((objectLiterals?.length ?? 0) !== 0) {
       const literalsType = Checker_getUnionTypeEx(receiver, objectLiterals, UnionReductionSubtype, undefined, undefined);
       const nonLiteralTypes = core.Filter(candidates, (t) => !isObjectOrArrayLiteralType(t));
       return core.Concatenate(nonLiteralTypes, [literalsType]);
@@ -3527,10 +3542,10 @@ export function Checker_isTypeParameterAtTopLevelInReturnType(receiver: GoPtr<Ch
  * }
  */
 export function Checker_getTypeFromInference(receiver: GoPtr<Checker>, inference: GoPtr<InferenceInfo>): GoPtr<Type> {
-  if (inference!.candidates.length !== 0) {
+  if ((inference!.candidates?.length ?? 0) !== 0) {
     return Checker_getUnionTypeEx(receiver, inference!.candidates, UnionReductionSubtype, undefined, undefined);
   }
-  if (inference!.contraCandidates.length !== 0) {
+  if ((inference!.contraCandidates?.length ?? 0) !== 0) {
     return Checker_getIntersectionType(receiver, inference!.contraCandidates);
   }
   return undefined;
@@ -3553,7 +3568,7 @@ export function Checker_getTypeFromInference(receiver: GoPtr<Checker>, inference
  */
 export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>): GoPtr<InferenceInfo> {
   if ((t!.flags & TypeFlagsTypeVariable) !== 0) {
-    for (const inference of n!.inferences) {
+    for (const inference of n!.inferences ?? []) {
       if (t === inference!.typeParameter) {
         return inference;
       }
@@ -3593,12 +3608,12 @@ export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>
  * 	return c.getNullableType(supertype, c.getCombinedTypeFlags(types)&TypeFlagsNullable)
  * }
  */
-export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
+export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Type> {
   const c = receiver!;
-  if (types.length === 1) {
+  if (types !== undefined && types.length === 1) {
     return types[0];
   }
-  let primaryTypes = types;
+  let primaryTypes: GoPtr<GoSlice<GoPtr<Type>>> = types;
   if (c.strictNullChecks) {
     primaryTypes = core.SameMap(types, (t) => Checker_filterType(receiver, t, (u) => (u!.flags & TypeFlagsNullable) === 0));
   }
@@ -3629,7 +3644,7 @@ export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSl
  * 	return c.findLeftmostType(types, (*Checker).isTypeSubtypeOf)
  * }
  */
-export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
+export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Type> {
   const candidate = Checker_findLeftmostType(receiver, types, Checker_isTypeStrictSubtypeOf);
   if (core.Every(types, (t) => t === candidate || Checker_isTypeStrictSubtypeOf(receiver, t, candidate))) {
     return candidate;
@@ -3651,9 +3666,9 @@ export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types
  * 	return candidate
  * }
  */
-export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, f: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): GoPtr<Type> {
+export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>, f: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): GoPtr<Type> {
   let candidate: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (const t of types ?? []) {
     if (candidate === undefined || f(receiver, candidate, t)) {
       candidate = t;
     }
@@ -3675,9 +3690,9 @@ export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlic
  * 	return subtype
  * }
  */
-export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
+export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): GoPtr<Type> {
   let subtype: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (const t of types ?? []) {
     if (subtype === undefined || Checker_isTypeSubtypeOf(receiver, t, subtype)) {
       subtype = t;
     }
@@ -3701,9 +3716,9 @@ export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlic
  * 	return flags
  * }
  */
-export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): TypeFlags {
+export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): TypeFlags {
   let flags = TypeFlagsNone;
-  for (const t of types) {
+  for (const t of types ?? []) {
     if ((t!.flags & TypeFlagsUnion) !== 0) {
       flags |= Checker_getCombinedTypeFlags(receiver, Type_Types(t));
     } else {
@@ -3733,10 +3748,10 @@ export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: Go
  * 	return true
  * }
  */
-export function Checker_literalTypesWithSameBaseType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): bool {
+export function Checker_literalTypesWithSameBaseType(receiver: GoPtr<Checker>, types: GoPtr<GoSlice<GoPtr<Type>>>): bool {
   const c = receiver!;
   let commonBaseType: GoPtr<Type> = undefined;
-  for (const t of types) {
+  for (const t of types ?? []) {
     if ((t!.flags & TypeFlagsNever) === 0) {
       const baseType = Checker_getBaseTypeOfLiteralType(receiver, t);
       if (commonBaseType === undefined) {
@@ -3831,8 +3846,8 @@ export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceI
  * 	}
  * }
  */
-export function clearCachedInferences(inferences: GoSlice<GoPtr<InferenceInfo>>): void {
-  for (const inference of inferences) {
+export function clearCachedInferences(inferences: GoPtr<GoSlice<GoPtr<InferenceInfo>>>): void {
+  for (const inference of inferences ?? []) {
     if (!inference!.isFixed) {
       inference!.inferredType = undefined;
     }

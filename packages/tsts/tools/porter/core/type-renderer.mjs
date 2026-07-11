@@ -1,7 +1,10 @@
 import { buildExternalFacadeMap } from "./external-facades.mjs";
+import { renderCanonicalType } from "./canonical-type-renderer.mjs";
+import { compareText } from "./deterministic-order.mjs";
 import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { localTsName, primitiveTypes, safeIdentifier, safeParamName, safePropertyName, standardSelectorTypes } from "./names.mjs";
-import { buildSymbolIndex, buildValueTypeIndex, fileFromUnit, importAliasMap, relativeImportPath } from "./render-indexes.mjs";
+import { buildSymbolIndex, fileFromUnit, importAliasMap, relativeImportPath } from "./render-indexes.mjs";
+import { invariantSemanticVariant } from "./semantic-variants.mjs";
 import { renderGoSourceComment } from "./ts-units.mjs";
 import { createHash } from "node:crypto";
 
@@ -36,7 +39,6 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
     config,
     snapshot,
     symbolIndex,
-    valueTypeIndex: options.valueTypeIndex ?? buildValueTypeIndex(config, snapshot, largeFileSplits),
     file,
     relativeTargetPath,
     imports: new Map(),
@@ -45,7 +47,7 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
     diagnostics: options.diagnostics ?? [],
     localTypeNames,
     localTopLevelNames,
-    importAliases: importAliasMap(file.imports ?? []),
+    importAliases: rendererImportAliases(file.imports ?? []),
     externalFacades: options.externalFacades ?? buildExternalFacadeMap(config, snapshot),
   };
 }
@@ -60,7 +62,6 @@ export function buildRenderIndexes(config, snapshot) {
     filesByPath,
     largeFileSplits,
     symbolIndex: buildSymbolIndex(config, snapshot, largeFileSplits),
-    valueTypeIndex: buildValueTypeIndex(config, snapshot, largeFileSplits),
     externalFacades: buildExternalFacadeMap(config, snapshot),
   };
 }
@@ -118,20 +119,19 @@ export function renderValueGroup(unit, context, declarationKind) {
   let fallbackIndex = 0;
   let blankIndex = 0;
   const used = new Set();
-  for (const spec of unit.valueSpecs ?? []) {
+  const semantic = invariantSemanticVariant(unit, "rendered as one TypeScript value declaration");
+  for (const [specIndex, spec] of (unit.valueSpecs ?? []).entries()) {
+    const semanticSpec = semantic.valueSpecs?.[specIndex];
+    if (semanticSpec === undefined) throw new Error(`canonical Go value declaration semantics are missing for ${unit.id} spec ${specIndex}`);
     const names = (spec.names ?? []).length > 0 ? spec.names : [`__tsgoValue${fallbackIndex++}`];
     for (const [index, name] of names.entries()) {
+      const semanticBinding = semanticSpec.names?.[index];
+      if (semanticBinding === undefined || semanticBinding.name !== name) {
+        throw new Error(`canonical Go value binding ${unit.id} spec ${specIndex} name ${index} does not match '${name}'`);
+      }
       const baseName = name === "_" ? `${localTsName(unit)}_${unitHash(unit)}_${blankIndex++}` : safeIdentifier(name);
       const localName = uniqueName(baseName, used);
-      const inferredType = spec.inferredValueTypes?.[index] ?? spec.inferredValueTypes?.[0];
-      const indexedType = context.valueTypeIndex.get(`${context.file.importPath}::${name}`);
-      const valueType = spec.type
-        ? tsType(spec.type, context, scopeForUnit(unit), unit)
-        : inferredType
-          ? tsType(inferredType, context, scopeForUnit(unit), unit)
-          : indexedType
-            ? tsType(indexedType, context, scopeForUnit(unit), unit)
-            : inferValueType(spec.values?.[index] ?? spec.values?.[0], context, unit);
+      const valueType = tsCanonicalType(semanticBinding.type, context, scopeForUnit(unit), unit);
       lines.push(`export ${declarationKind} ${localName}: ${valueType} = undefined as never;`);
     }
   }
@@ -265,6 +265,35 @@ export function tsType(expr, context, scope, unit) {
   }
 }
 
+export function tsCanonicalType(type, context, scope, unit) {
+  return renderCanonicalType(type, {
+    basic: (name) => tsIdentType(name, context, scope, unit),
+    compat: (name) => useCompat(context, name),
+    reference: (reference, typeArguments) => {
+      if (reference.packagePath === "") {
+        const base = tsIdentType(reference.name, context, scope, unit);
+        return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
+      }
+      const standard = standardSelectorTypes.get(`${reference.packagePath}.${reference.name}`);
+      if (standard !== undefined) {
+        const base = useCompat(context, standard);
+        return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
+      }
+      if (reference.packagePath.startsWith(context.config.goModulePath)) {
+        const base = resolvePackageSymbol(context, reference.packagePath, reference.name, unit);
+        if (base !== undefined) return typeArguments.length === 0 ? base : `${base}<${typeArguments.join(", ")}>`;
+        context.diagnostics.push({
+          severity: "error",
+          unitID: unit?.id ?? "",
+          message: `unresolved canonical TS-Go type '${reference.name}' from ${reference.packagePath}`,
+        });
+        return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${reference.packagePath}.${reference.name}`)}>`;
+      }
+      return tsExternalType(context, `${reference.packagePath}.${reference.name}`, typeArguments, unit);
+    },
+  });
+}
+
 export function tsIdentType(name, context, scope, unit) {
   if (!name) return "unknown";
   if (scope.typeParameters.has(name)) return safeIdentifier(name);
@@ -372,23 +401,6 @@ export function tsInlineStruct(members, context, scope, unit) {
   }).join("; ")} }`;
 }
 
-export function inferValueType(value, context, unit) {
-  if (value === undefined || value === "") return "unknown";
-  if (/^".*"$|^`[\s\S]*`$/.test(value)) return "string";
-  if (/^(true|false)$/.test(value)) return useCore(context, "bool");
-  if (/^[+-]?(?:\d|\.\d)/.test(value) || value === "iota") return useCore(context, "int");
-  const identifierMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)$/.exec(value);
-  if (identifierMatch) {
-    const inferred = context.valueTypeIndex.get(`${context.file.importPath}::${identifierMatch[1]}`);
-    if (inferred) return tsType(inferred, context, scopeForUnit(unit), unit);
-  }
-  const conversionMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/.exec(value);
-  if (conversionMatch && context.symbolIndex.has(`${context.file.importPath}::${conversionMatch[1]}`)) {
-    return tsType({ kind: "ident", name: conversionMatch[1], text: conversionMatch[1] }, context, scopeForUnit(unit), unit);
-  }
-  return "unknown";
-}
-
 export function topLevelNamesForUnit(unit) {
   if (unit.kind === "type" || unit.kind === "func" || unit.kind === "method") return [localTsName(unit), safeIdentifier(unit.name)];
   if (unit.kind === "constGroup" || unit.kind === "varGroup") {
@@ -401,6 +413,14 @@ export function topLevelNamesForUnit(unit) {
     return names.length > 0 ? names : [localTsName(unit)];
   }
   return [localTsName(unit)];
+}
+
+function rendererImportAliases(imports) {
+  const aliases = importAliasMap(imports);
+  for (const imported of imports) {
+    if (typeof imported.path === "string" && imported.path !== "") aliases.set(imported.path, imported.path);
+  }
+  return aliases;
 }
 
 export function uniqueName(name, used) {
@@ -506,7 +526,7 @@ export function renderImports(context) {
   }
   for (const [source, names] of [...context.imports.entries()].sort()) {
     const specifiers = [...names.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => compareText(left, right))
       .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`)
       .join(", ");
     lines.push(`import type { ${specifiers} } from "${source}";`);

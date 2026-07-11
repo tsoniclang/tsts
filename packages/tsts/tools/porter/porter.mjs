@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import process from "node:process";
+import path from "node:path";
 
 import { main } from "./core/commands.mjs";
 import { fail } from "./core/runtime.mjs";
@@ -35,7 +36,8 @@ export {
   writeText,
   writeTextSafely,
 } from "./core/runtime.mjs";
-export { runScan, validatePorterSnapshot } from "./core/snapshot.mjs";
+export { runScan } from "./core/scan-runner.mjs";
+export { validatePorterSnapshot } from "./core/snapshot.mjs";
 export {
   buildSchemaSourceSyncStatus,
   buildStatus,
@@ -43,14 +45,10 @@ export {
   emptySchemaSourceSyncStatus,
 } from "./core/status.mjs";
 export {
-  collectTypeScriptFileMechanicalRisks,
-} from "./core/asserted-zero-risks.mjs";
-export {
   buildEmbeddedGoSourceUpdates,
   scanTsUnits,
   validateTsgoUnitMetadata,
 } from "./core/ts-units.mjs";
-export { collectMechanicalPortRisks } from "./core/mechanical-risks.mjs";
 export { buildLocalOverrideStatus, emptyLocalOverrideStatus } from "./core/local-overrides.mjs";
 export {
   authoredFacadePathSet,
@@ -71,8 +69,10 @@ export {
 } from "./core/verification.mjs";
 export { printScanSummary, printStatus, renderStatusMarkdown } from "./core/reporting.mjs";
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  Promise.resolve()
-    .then(() => main())
-    .catch((error) => fail(error?.message ?? String(error)));
+if (process.argv[1] !== undefined && path.basename(process.argv[1]) === "porter.mjs") {
+  try {
+    await main();
+  } catch (error) {
+    fail(error?.message ?? String(error));
+  }
 }

@@ -1875,8 +1875,8 @@ export function isExcessPropertyCheckTarget(t: GoPtr<Type>): bool {
  * 	return false
  * }
  */
-export function Checker_isDeeplyNestedType(receiver: GoPtr<Checker>, t: GoPtr<Type>, stack: GoSlice<GoPtr<Type>>, maxDepth: int): bool {
-  if (stack.length >= maxDepth) {
+export function Checker_isDeeplyNestedType(receiver: GoPtr<Checker>, t: GoPtr<Type>, stack: GoPtr<GoSlice<GoPtr<Type>>>, maxDepth: int): bool {
+  if ((stack?.length ?? 0) >= maxDepth) {
     let cur = t;
     if ((cur!.objectFlags & ObjectFlagsInstantiatedMapped) === ObjectFlagsInstantiatedMapped) {
       cur = Checker_getMappedTargetWithSymbol(receiver, cur);
@@ -1891,7 +1891,7 @@ export function Checker_isDeeplyNestedType(receiver: GoPtr<Checker>, t: GoPtr<Ty
     const identity = getRecursionIdentity(cur);
     let count = 0;
     let lastTypeId: TypeId = 0;
-    for (const stackT of stack) {
+    for (const stackT of stack ?? []) {
       if (Checker_hasMatchingRecursionIdentity(receiver, stackT, identity)) {
         if (stackT!.id >= lastTypeId) {
           count++;

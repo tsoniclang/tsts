@@ -121,7 +121,7 @@ export function NodeVisitor_VisitNode(receiver: GoPtr<NodeVisitor>, node: GoPtr<
     let visited = receiver!.Visit(node);
     if (visited !== undefined && visited.Kind === KindSyntaxList) {
       const nodes = AsSyntaxList(visited)!.Children;
-      if (nodes.length !== 1) {
+      if (nodes === undefined || nodes.length !== 1) {
         throw new globalThis.Error("Expected only a single node to be written to output");
       }
       visited = nodes[0];
@@ -295,14 +295,14 @@ export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoPt
 
     let visited = receiver!.Visit(node);
     if (visited === undefined || visited !== node) {
-      let updated = slices.Clone(nodes.slice(0, i))!;
+      let updated = slices.Clone(nodes.slice(0, i));
 
       for (;;) {
         // finish prior loop
         if (visited === undefined) {
           // do nothing
         } else if (visited.Kind === KindSyntaxList) {
-          updated = [...updated, ...AsSyntaxList(visited)!.Children];
+          updated = [...updated, ...(AsSyntaxList(visited)!.Children ?? [])];
         } else {
           updated = [...updated, visited];
         }
@@ -543,7 +543,7 @@ export function NodeVisitor_visitTopLevelStatements(receiver: GoPtr<NodeVisitor>
  * }
  */
 export function NodeVisitor_liftToBlock(receiver: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {
-  let nodes: GoSlice<GoPtr<Node>> = [];
+  let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   if (node !== undefined) {
     if (node.Kind === KindSyntaxList) {
       nodes = AsSyntaxList(node)!.Children;
@@ -551,7 +551,7 @@ export function NodeVisitor_liftToBlock(receiver: GoPtr<NodeVisitor>, node: GoPt
       nodes = [node];
     }
   }
-  if (nodes.length === 1) {
+  if (nodes !== undefined && nodes.length === 1) {
     node = nodes[0];
   } else {
     node = NewBlock(receiver!.Factory, NodeFactory_NewNodeList(receiver!.Factory, nodes), true as bool);

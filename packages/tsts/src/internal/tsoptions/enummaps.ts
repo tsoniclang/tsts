@@ -321,9 +321,9 @@ export const LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<
  */
 export const Libs: GoSlice<string> = slices.Collect(OrderedMap_Keys(LibMap));
 export const LibFilesSet: GoPtr<Set<string>> = NewSetFromItems<string>(
-  ...core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: unknown): string => {
+  ...(core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: unknown): string => {
     return s as string;
-  }),
+  }) ?? []),
 );
 
 /**

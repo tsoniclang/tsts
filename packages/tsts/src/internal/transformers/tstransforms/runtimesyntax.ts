@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { Coalesce, Find, IfElse } from "../../core/core.js";
+import { Clone } from "../../../go/slices.js";
+import { Coalesce, Concatenate, Find, IfElse } from "../../core/core.js";
 import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
 import {
@@ -688,6 +689,7 @@ export function RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaratio
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.addVarForDeclaration","kind":"method","status":"implemented","sigHash":"3a3eee91d036cfaab2d3202f1450f3d5e5be1db6e07b2c4e5edd54ef6ddd3315","bodyHash":"ecf23a0b7ad1730318cc41ada6d190c7acbb0220724a6ce620e9c49c092e2a18"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>)=>[packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/scalars.ts::bool]","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Declaration>)=>[packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/scalars.ts::bool]"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) addVarForDeclaration(statements []*ast.Statement, node *ast.Declaration) ([]*ast.Statement, bool) {
@@ -743,7 +745,7 @@ export function RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaratio
  * 	return statements, true
  * }
  */
-export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoSlice<GoPtr<Statement>>, node: GoPtr<Declaration>): [GoSlice<GoPtr<Statement>>, bool] {
+export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, node: GoPtr<Declaration>): [GoPtr<GoSlice<GoPtr<Statement>>>, bool] {
   RuntimeSyntaxTransformer_recordDeclarationInScope(receiver, Node_AsNode(node));
   if (!RuntimeSyntaxTransformer_isFirstDeclarationInScope(receiver, Node_AsNode(node))) {
     return [statements, false];
@@ -775,7 +777,7 @@ export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<Ru
   EmitContext_SetCommentRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, Node_AsNode(node)!.Loc);
   EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, EFNoTrailingComments);
 
-  return [[...statements, varStatement], true];
+  return [[...(statements ?? []), varStatement], true];
 }
 
 /**
@@ -838,7 +840,7 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
     return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), EnumDeclaration_as_nodeData(node).AsNode());
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = [];
   const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, EnumDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
   statements = statementsAfterVar;
 
@@ -917,7 +919,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
   const visitedNode = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
   const visitedEnum = AsEnumDeclaration(visitedNode);
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = [];
   for (let i = 0; i < visitedEnum!.Members!.Nodes!.length; i++) {
     statements = RuntimeSyntaxTransformer_transformEnumMember(receiver, statements, visitedEnum, i);
   }
@@ -932,6 +934,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember","kind":"method","status":"implemented","sigHash":"4fd24669997aaec2c65b694a1c2450f4c2ef8a83b517ca7cef4bcdffae1186a0","bodyHash":"b83e04cc22e0772053ae1e55d8c88b2f578c02c27becaa4d0fb1150b588639d8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::EnumDeclaration>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/data.ts::EnumDeclaration>,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformEnumMember(
@@ -999,7 +1002,7 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
  * 	return statements
  * }
  */
-export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoSlice<GoPtr<Statement>>, enum_: GoPtr<EnumDeclaration>, index: int): GoSlice<GoPtr<Statement>> {
+export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoPtr<GoSlice<GoPtr<Statement>>>, enum_: GoPtr<EnumDeclaration>, index: int): GoPtr<GoSlice<GoPtr<Statement>>> {
   const memberNode = enum_!.Members!.Nodes![index];
   const member = AsEnumMember(memberNode);
 
@@ -1126,7 +1129,7 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
     return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), ModuleDeclaration_as_nodeData(node).AsNode());
   }
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = [];
   const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, ModuleDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
   statements = statementsAfterVar;
 
@@ -1251,7 +1254,7 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
   receiver!.currentNamespace = Node_AsNode(node) as unknown as GoPtr<ModuleDeclarationNode>;
   receiver!.currentScopeFirstDeclarationsOfName = undefined;
 
-  let statements: GoSlice<GoPtr<Statement>> = [];
+  let statements: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
   EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));
 
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
@@ -1266,12 +1269,12 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
       const visitedNode = NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
       const visitedModule = AsModuleDeclaration(visitedNode);
       const body = AsModuleBlock(visitedModule!.Body);
-      statements = body!.Statements!.Nodes! as GoSlice<GoPtr<Statement>>;
+      statements = body!.Statements!.Nodes as GoPtr<GoSlice<GoPtr<Statement>>>;
       statementsLocation = body!.Statements!.Loc;
       blockLocation = body!.Loc;
     } else { // node.Body.Kind == KindModuleDeclaration
       const [visitedStatements] = NodeVisitor_VisitSlice(visitor, [node!.Body]);
-      statements = visitedStatements as GoSlice<GoPtr<Statement>>;
+      statements = visitedStatements as GoPtr<GoSlice<GoPtr<Statement>>>;
       const innermostModule = getInnermostModuleDeclarationFromDottedModule(node);
       const moduleBlock = AsModuleBlock(innermostModule!.Body);
       statementsLocation = TextRange_WithPos(moduleBlock!.Statements!.Loc, -1);
@@ -1841,11 +1844,11 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
   EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
   const astFactory = factory.__tsgoEmbedded0!;
-  const [prologue, rest] = NodeFactory_SplitStandardPrologue(factory, body!.Statements!.Nodes! as GoSlice<GoPtr<Statement>>);
-  let statements: GoSlice<GoPtr<Statement>> = [...prologue];
+  const [prologue, rest] = NodeFactory_SplitStandardPrologue(factory, body!.Statements!.Nodes);
+  let statements = Clone(prologue);
 
   // Transform parameters into property assignments
-  let parameterPropertyAssignments: GoSlice<GoPtr<Statement>> = [];
+  let parameterPropertyAssignments: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
   for (const parameter of parameterProperties) {
     if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
       const innerFactory = factory.__tsgoEmbedded0!;
@@ -1875,18 +1878,18 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
       );
       EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
       EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, EFStartOnNewLine);
-      parameterPropertyAssignments = [...parameterPropertyAssignments, parameterProperty];
+      parameterPropertyAssignments = [...(parameterPropertyAssignments ?? []), parameterProperty];
     }
   }
 
   const superPath = FindSuperStatementIndexPath(rest, 0);
 
   if (superPath !== undefined) {
-    statements = [...statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments)];
+    statements = Concatenate(statements, RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest!, superPath, parameterPropertyAssignments));
   } else {
-    statements = [...statements, ...parameterPropertyAssignments];
+    statements = Concatenate(statements, parameterPropertyAssignments);
     const [visitedRest] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest);
-    statements = [...statements, ...visitedRest as GoSlice<GoPtr<Statement>>];
+    statements = Concatenate(statements, visitedRest as GoPtr<GoSlice<GoPtr<Statement>>>);
   }
 
   statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
@@ -1903,6 +1906,7 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformConstructorBodyWorker","kind":"method","status":"implemented","sigHash":"2b9c44f7506c3f56880b07642955bb17621b70cf30342bf0308ecb7f05ea8535","bodyHash":"a9fa71fb4aaf48b9ff51c626cc24ce4be2a710dafa5f0580de118dd14916568f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>)=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/tstransforms/runtimesyntax.ts::RuntimeSyntaxTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/scalars.ts::int>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::Statement>>>"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformConstructorBodyWorker(statementsIn []*ast.Statement, superPath []int, initializerStatements []*ast.Statement) []*ast.Statement {
@@ -1958,8 +1962,8 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
  * 	return statementsOut
  * }
  */
-export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
-  let statementsOut: GoSlice<GoPtr<Statement>> = [];
+export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoPtr<GoSlice<GoPtr<Statement>>>): GoPtr<GoSlice<GoPtr<Statement>>> {
+  let statementsOut: GoPtr<GoSlice<GoPtr<Statement>>> = undefined;
   const superStatementIndex = superPath[0]!;
   const superStatement = statementsIn[superStatementIndex];
 
@@ -1969,7 +1973,7 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
 
   // visit up to the statement containing `super`
   const [visitedBefore] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>);
-  statementsOut = [...statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>];
+  statementsOut = Concatenate(statementsOut, visitedBefore as GoPtr<GoSlice<GoPtr<Statement>>>);
 
   // if the statement containing `super` is a `try` statement, transform the body of the `try` block
   if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
@@ -1996,7 +2000,7 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
     const tryBlockStatementList = NodeFactory_NewNodeList(astFactory, tryBlockStatements);
     tryBlockStatementList!.Loc = tryBlock!.Statements!.Loc;
     statementsOut = [
-      ...statementsOut,
+      ...(statementsOut ?? []),
       NodeFactory_UpdateTryStatement(
         factory.__tsgoEmbedded0!,
         tryStatement,
@@ -2011,15 +2015,15 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
   } else {
     // visit the statement containing `super`
     const [visitedSuper] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-    statementsOut = [...statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>];
+    statementsOut = Concatenate(statementsOut, visitedSuper as GoPtr<GoSlice<GoPtr<Statement>>>);
 
     // insert the initializer statements
-    statementsOut = [...statementsOut, ...initializerStatements];
+    statementsOut = Concatenate(statementsOut, initializerStatements);
   }
 
   // visit the statements after `super`
   const [visitedAfter] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
-  statementsOut = [...statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>];
+  statementsOut = Concatenate(statementsOut, visitedAfter as GoPtr<GoSlice<GoPtr<Statement>>>);
   return statementsOut;
 }
 

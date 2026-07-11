@@ -933,8 +933,9 @@ export function Parser_parseImportType(receiver: GoPtr<Parser>): GoPtr<Node> {
     attributes = Parser_parseImportAttributes(receiver, currentToken, true /*skipKeyword*/);
     Parser_parseOptional(receiver, KindCommaToken);
     if (!Parser_parseExpected(receiver, KindCloseBraceToken)) {
-      if (receiver!.diagnostics.length !== 0) {
-        const lastDiagnostic = receiver!.diagnostics[receiver!.diagnostics.length - 1];
+      const diagnosticsLength = receiver!.diagnostics?.length ?? 0;
+      if (diagnosticsLength !== 0) {
+        const lastDiagnostic = receiver!.diagnostics![diagnosticsLength - 1];
         if (Diagnostic_Code(lastDiagnostic) === X_0_expected.code) {
           const related = NewDiagnostic(undefined, NewTextRange(openBracePosition, openBracePosition), The_parser_expected_to_find_a_1_to_match_the_0_token_here, "{", "}");
           Diagnostic_AddRelatedInfo(lastDiagnostic, related);

@@ -1,21 +1,45 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { buildSourcePinStatus, readSourcePinManifest } from "./source-pin.mjs";
+import { GO_TOOLCHAIN_ROOT_HASH_CONTRACT, hashGoToolchainRoot } from "./go-toolchain-pin.mjs";
+import { buildSourcePinStatus, readSourcePinManifest, resolvePinnedGoToolchain } from "./source-pin.mjs";
 import { loadConfig, repoRoot } from "./porter.mjs";
 
 test("checked-in source pin proves source, nested source, schema, documentation, and extractor", () => {
   const status = buildSourcePinStatus(repoRoot, loadConfig());
   const { manifest } = readSourcePinManifest(repoRoot, loadConfig());
+  const toolchain = resolvePinnedGoToolchain(repoRoot, loadConfig());
   assert.deepEqual(status.issues, []);
+  assert.equal(sha256(readFileSync(toolchain.executable)), manifest.extractor.toolchainExecutableSha256);
+  assert.deepEqual({ ...toolchain.tree, root: undefined }, { ...manifest.extractor.goroot, root: undefined });
   assert.equal(status.source.revision, manifest.revision);
   assert.equal(status.source.nestedSources[0].revision, manifest.nestedSources[0].revision);
   assert.equal(status.schemaFileCount, manifest.schemaFiles.length);
+});
+
+test("GOROOT tree hash is cross-language exact over paths, modes, bytes, and symlink targets", () => {
+  const first = goRootFixture("lib/data.txt");
+  const second = goRootFixture("bin/tool");
+  const expected = "e9438fb2b08e3255f850123a8437fd10cd73f3d2367351e5615272f35108ef7f";
+  const initial = hashGoToolchainRoot(first);
+  assert.equal(GO_TOOLCHAIN_ROOT_HASH_CONTRACT.name, "tsts-porter-goroot-tree-v1");
+  assert.equal(initial.sha256, expected);
+  assert.equal(initial.entryCount, 5);
+  assert.equal(initial.fileCount, 2);
+  assert.equal(initial.directoryCount, 2);
+  assert.equal(initial.symlinkCount, 1);
+  assert.notEqual(hashGoToolchainRoot(second).sha256, expected);
+
+  writeFileSync(path.join(first, "lib/data.txt"), "changed\0bytes\n");
+  assert.notEqual(hashGoToolchainRoot(first).sha256, expected);
+  writeFileSync(path.join(first, "lib/data.txt"), "alpha\0beta\n");
+  chmodSync(path.join(first, "lib/data.txt"), 0o600);
+  assert.notEqual(hashGoToolchainRoot(first).sha256, expected);
 });
 
 test("source pin detects dirty source and byte/hash drift", (t) => {
@@ -73,6 +97,8 @@ function sourcePinFixture(options = {}) {
   const sourceRevision = runGit(sourceRoot, ["rev-parse", "HEAD"]).trim();
 
   const digest = sha256(schemaText);
+  const extractorExecutableHash = "a".repeat(64);
+  const extractorGoRootHash = "c".repeat(64);
   writeFileSync(path.join(schemaRoot, "schema.go"), schemaText);
   writeFileSync(path.join(schemaRoot, "VERSION.md"), [
     "| Field | Value |",
@@ -81,13 +107,16 @@ function sourcePinFixture(options = {}) {
     `| Commit | \`${sourceRevision}\` |`,
     "| Git object format | `sha1` |",
     `| Nested TypeScript commit | \`${nestedRevision}\` |`,
+    `| Go toolchain executable SHA-256 | \`${extractorExecutableHash}\` |`,
+    "| Go GOROOT hash contract | `tsts-porter-goroot-tree-v1` |",
+    `| Go GOROOT tree SHA-256 | \`${extractorGoRootHash}\` |`,
     `| \`schema.go\` SHA-256 | \`${digest}\` |`,
     "",
   ].join("\n"));
   writeFileSync(path.join(extractorRoot, "go.mod"), "module example-extractor\n\ngo 1.26\n\ntoolchain go1.26.4\n");
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     upstream: "example/source",
     sourceRoot: "source",
     goModulePath: "example/source",
@@ -98,7 +127,17 @@ function sourcePinFixture(options = {}) {
     documentation: "VERSION.md",
     schemaFiles: [{ path: "schema.go", source: "schema.go", sha256: digest }],
     sourceFiles: [],
-    extractor: { module: "extractor", goVersion: "go1.26.4", goos: "linux", goarch: "amd64" },
+    extractor: {
+      module: "extractor",
+      goVersion: "go1.26.4",
+      goos: "linux",
+      goarch: "amd64",
+      toolchainExecutableSha256: extractorExecutableHash,
+      goroot: {
+        contract: "tsts-porter-goroot-tree-v1", sha256: extractorGoRootHash,
+        entryCount: 5, fileCount: 2, directoryCount: 2, symlinkCount: 1, bytes: 28,
+      },
+    },
   };
   writeFileSync(path.join(schemaRoot, "source-pin.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -118,9 +157,31 @@ function sourcePinFixture(options = {}) {
     snapshot: {
       gitRevision: sourceRevision,
       environment: { goVersion: "go1.26.4", goos: "linux", goarch: "amd64" },
+      semantic: {
+        toolchainExecutable: "/fixture/go", toolchainHash: extractorExecutableHash,
+        goroot: "/fixture", gorootHash: extractorGoRootHash, gorootHashContract: "tsts-porter-goroot-tree-v1",
+        gorootEntryCount: 5, gorootFileCount: 2, gorootDirectoryCount: 2, gorootSymlinkCount: 1, gorootBytes: 28,
+      },
       files: [{ path: "schema.go", gitBlobHash: gitBlobHash(schemaText) }],
     },
   };
+}
+
+function goRootFixture(linkTarget) {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-goroot-hash-"));
+  const bin = path.join(root, "bin");
+  const lib = path.join(root, "lib");
+  mkdirSync(bin);
+  mkdirSync(lib);
+  chmodSync(root, 0o755);
+  chmodSync(bin, 0o755);
+  chmodSync(lib, 0o755);
+  writeFileSync(path.join(bin, "tool"), "#!/bin/sh\nexit 0\n");
+  chmodSync(path.join(bin, "tool"), 0o755);
+  writeFileSync(path.join(lib, "data.txt"), "alpha\0beta\n");
+  chmodSync(path.join(lib, "data.txt"), 0o644);
+  symlinkSync(linkTarget, path.join(root, "alias"));
+  return root;
 }
 
 function commitRepository(directory, message) {

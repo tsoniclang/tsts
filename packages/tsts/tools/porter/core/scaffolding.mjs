@@ -8,14 +8,14 @@ import { fileFromUnit, skeletonTsConfig, unitsByIDMap } from "./render-indexes.m
 import { renderStatusMarkdown } from "./reporting.mjs";
 import { fail, repoRoot, resolveRepo, writeJson, writeText } from "./runtime.mjs";
 import { buildStatus } from "./status.mjs";
-import { scanTsUnits } from "./ts-units.mjs";
+import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { renderUnitGroup } from "./type-renderer.mjs";
 import { assertLargeFileSplitPlanClean } from "./verification.mjs";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-export function scaffoldMissing(config, status, snapshot, options) {
+export async function scaffoldMissing(config, status, snapshot, options) {
   assertLargeFileSplitPlanClean(status);
   const write = options.write === true;
   const scaffoldAll = options.all === true;
@@ -94,7 +94,7 @@ export function scaffoldMissing(config, status, snapshot, options) {
     const afterStatus = buildStatus(
       config,
       snapshot,
-      scanTsUnits(resolveRepo(config.tsRoot)),
+      await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) }),
       buildGeneratedArtifactStatus(config, snapshot),
       buildAstGeneratedArtifactStatus(config, snapshot.gitRevision),
       buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision),

@@ -199,8 +199,8 @@ export function parseJSDocForNode(sourceFile: GoPtr<SourceFileNode>, node: GoPtr
   const p = getParser();
   try {
     Parser_initializeState(p, sf!.parseOptions, sf!.text, sf!.ScriptKind);
-    const ranges = GetJSDocCommentRanges(p!.factory, [], node, sf!.text);
-    if (ranges.length === 0) {
+    const ranges = GetJSDocCommentRanges(p!.factory, undefined, node, sf!.text);
+    if (ranges === undefined || ranges.length === 0) {
       return undefined;
     }
     const jsdoc: GoSlice<GoPtr<Node>> = [];
@@ -342,16 +342,16 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
   }
 
   const ranges = GetJSDocCommentRanges(receiver!.factory, receiver!.jsdocCommentRangesSpace, node, receiver!.sourceText);
-  receiver!.jsdocCommentRangesSpace = ranges.slice(0, 0);
+  receiver!.jsdocCommentRangesSpace = ranges?.slice(0, 0);
 
   // Should only be called once per node
   receiver!.hasDeprecatedTag = false;
-  let jsdoc = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length);
+  let jsdoc = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges?.length ?? 0);
   if (jsdoc !== undefined) {
     jsdoc.length = 0;
   }
   let pos = Node_Pos(node);
-  for (const comment of ranges) {
+  for (const comment of ranges ?? []) {
     const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
     if (parsed !== undefined) {
       parsed!.Parent = node;
@@ -370,7 +370,7 @@ export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, inf
     if (Parser_isJavaScript(receiver)) {
       Parser_reparseTags(receiver, node, jsdoc);
     }
-    receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: node, jsDocs: jsdoc } as JSDocInfo];
+    receiver!.jsdocInfos = [...(receiver!.jsdocInfos ?? []), { parent: node, jsDocs: jsdoc } as JSDocInfo];
     return jsdoc;
   }
   return undefined;
@@ -517,7 +517,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   const saveParsingContexts = receiver!.parsingContexts;
   const saveScannerState: ScannerState = Scanner_Mark(receiver!.scanner);
   const saveScannerEnd = receiver!.scanner!.end;
-  const saveDiagnosticsLength = receiver!.diagnostics.length;
+  const saveDiagnosticsLength = receiver!.diagnostics?.length ?? 0;
   const saveHasParseError = receiver!.hasParseError;
   const saveHasAwaitIdentifier = receiver!.statementHasAwaitIdentifier;
 
@@ -537,9 +537,9 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   const comment = Parser_parseJSDocCommentWorker(receiver, start, end, fullStart, initialIndent);
   // move jsdoc diagnostics to jsdocDiagnostics -- for JS files only
   if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) !== 0) {
-    receiver!.jsdocDiagnostics = [...receiver!.jsdocDiagnostics, ...receiver!.diagnostics.slice(saveDiagnosticsLength)];
+    receiver!.jsdocDiagnostics = [...(receiver!.jsdocDiagnostics ?? []), ...(receiver!.diagnostics?.slice(saveDiagnosticsLength) ?? [])];
   }
-  receiver!.diagnostics = receiver!.diagnostics.slice(0, saveDiagnosticsLength);
+  receiver!.diagnostics = receiver!.diagnostics?.slice(0, saveDiagnosticsLength);
 
   receiver!.sourceText = saveSourceText;
   Scanner_SetTextEnd(receiver!.scanner, receiver!.sourceText, saveScannerEnd);
@@ -754,7 +754,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
   let backtickCount = 0;
   let inFencedCodeBlock = false;
   let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1)!.slice(0, 0);
-  let comments: GoSlice<string> = receiver!.jsdocCommentsSpace;
+  let comments: GoPtr<GoSlice<string>> = receiver!.jsdocCommentsSpace;
   let commentsPos = -1;
   let linkEnd = start;
   let margin = -1;
@@ -762,6 +762,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
     if (margin === -1) {
       margin = indent;
     }
+    comments ??= [];
     comments.push(text);
     indent += text.length;
   };
@@ -812,6 +813,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
         margin = -1;
         break;
       case KindNewLineTrivia:
+        comments ??= [];
         comments.push(Scanner_TokenText(receiver!.scanner));
         state = jsdocStateBeginningOfLine;
         indent = 0;
@@ -840,6 +842,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
           if (existingIndent < 0) {
             existingIndent = 0;
           }
+          comments ??= [];
           comments.push(whitespace.slice(existingIndent));
         }
         indent += whitespace.length;
@@ -883,7 +886,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
           const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentEnd);
           commentParts.push(jsdocText!);
           commentParts.push(link!);
-          comments = comments.slice(0, 0);
+          comments = comments?.slice(0, 0);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
           break;
         }
@@ -919,12 +922,12 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
     }
   }
 
-  receiver!.jsdocCommentsSpace = comments.slice(0, 0); // Reuse this slice for further parses
+  receiver!.jsdocCommentsSpace = comments?.slice(0, 0); // Reuse this slice for further parses
   if (commentsPos === -1) {
     commentsPos = Scanner_TokenFullStart(receiver!.scanner);
   }
 
-  if (comments.length > 0) {
+  if (comments !== undefined && comments.length > 0) {
     comments[comments.length - 1] = comments[comments.length - 1]!.replace(/\s+$/, "");
     const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentsPos);
     commentParts.push(jsdocText!);
@@ -941,6 +944,7 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::removeLeadingNewlines","kind":"func","status":"implemented","sigHash":"e53d4458ccab413fe97f6b76340d4510be498d3511e51ff5d4b8f15224331b19","bodyHash":"daba3f872841552753a1682b954fb6e50549e91ea48d8d21377e4ccad02343e2"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Slicing a nil Go string slice at zero returns nil, while slicing an allocated empty slice remains allocated-empty; GoPtr preserves both outcomes.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>"}
  *
  * Go source:
  * func removeLeadingNewlines(comments []string) []string {
@@ -951,7 +955,10 @@ export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: i
  * 	return comments[i:]
  * }
  */
-export function removeLeadingNewlines(comments: GoSlice<string>): GoSlice<string> {
+export function removeLeadingNewlines(comments: GoPtr<GoSlice<string>>): GoPtr<GoSlice<string>> {
+  if (comments === undefined) {
+    return undefined;
+  }
   let i = 0;
   while (i < comments.length && TrimLeft(comments[i]!, "\r\n") === "") {
     i++;
@@ -973,6 +980,7 @@ export function trimEnd(s: string): string {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::removeTrailingWhitespace","kind":"func","status":"implemented","sigHash":"72419d161f6097cd49ab9a59e1f108736447ad32a9812536557606483e202231","bodyHash":"7b28a499c2f6eb126ae244230e49e8d5a92f83801643dbb94998f19c89de9df0"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Trimming a nil Go string slice returns the same nil slice, while an allocated empty input remains allocated-empty; GoPtr preserves that distinction.","goSignature":"func(packages/tsts/src/go/compat.ts::GoSlice<string>)=>packages/tsts/src/go/compat.ts::GoSlice<string>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>"}
  *
  * Go source:
  * func removeTrailingWhitespace(comments []string) []string {
@@ -989,7 +997,10 @@ export function trimEnd(s: string): string {
  * 	return comments[:end]
  * }
  */
-export function removeTrailingWhitespace(comments: GoSlice<string>): GoSlice<string> {
+export function removeTrailingWhitespace(comments: GoPtr<GoSlice<string>>): GoPtr<GoSlice<string>> {
+  if (comments === undefined) {
+    return undefined;
+  }
   let end = comments.length;
   for (let i = comments.length - 1; i >= 0; i--) {
     const trimmed = trimEnd(comments[i]!);
@@ -1489,10 +1500,10 @@ export function Parser_parseTrailingTagComments(receiver: GoPtr<Parser>, pos: in
  */
 export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, initialMargin: GoPtr<string>): GoPtr<NodeList> {
   const commentsPos = Parser_nodePos(receiver);
-  let comments: GoSlice<string> = receiver!.jsdocTagCommentsSpace;
-  receiver!.jsdocTagCommentsSpace = [];
-  let parts: GoSlice<GoPtr<Node>> = receiver!.jsdocTagCommentsPartsSpace;
-  receiver!.jsdocTagCommentsPartsSpace = [];
+  let comments: GoPtr<GoSlice<string>> = receiver!.jsdocTagCommentsSpace;
+  receiver!.jsdocTagCommentsSpace = undefined;
+  let parts: GoPtr<GoSlice<GoPtr<Node>>> = receiver!.jsdocTagCommentsPartsSpace;
+  receiver!.jsdocTagCommentsPartsSpace = undefined;
   let linkEnd = -1;
   let state: jsdocState = jsdocStateBeginningOfLine;
   let backtickCount = 0;
@@ -1505,6 +1516,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
     if (margin === -1) {
       margin = indent;
     }
+    comments ??= [];
     comments.push(text);
     indent += byteLen(text);
   };
@@ -1531,6 +1543,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
       case KindNewLineTrivia:
         state = jsdocStateBeginningOfLine;
         // don't use pushComment here because we want to keep the margin unchanged
+        comments ??= [];
         comments.push(Scanner_TokenText(receiver!.scanner));
         indent = 0;
         break;
@@ -1556,6 +1569,7 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
         const whitespace = Scanner_TokenText(receiver!.scanner);
         // if the whitespace crosses the margin, take only the whitespace that passes the margin
         if (margin > -1 && indent + byteLen(whitespace) > margin) {
+          comments ??= [];
           comments.push(StringByteSlice(whitespace, Math.max(margin - indent, 0)));
           if (inFencedCodeBlock) {
             state = jsdocStateSavingBackticks;
@@ -1579,9 +1593,10 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
         if (link !== undefined) {
           const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
           const text = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart, commentEnd);
+          parts ??= [];
           parts.push(text!);
           parts.push(link!);
-          comments = comments.slice(0, 0);
+          comments = comments?.slice(0, 0);
           linkEnd = Scanner_TokenEnd(receiver!.scanner);
         } else {
           pushComment(Scanner_TokenText(receiver!.scanner));
@@ -1646,19 +1661,20 @@ export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, in
     }
   }
 
-  receiver!.jsdocTagCommentsSpace = comments.slice(0, 0);
+  receiver!.jsdocTagCommentsSpace = comments?.slice(0, 0);
 
   comments = removeLeadingNewlines(comments);
   comments = removeTrailingWhitespace(comments);
-  if (comments.length > 0) {
+  if (comments !== undefined && comments.length > 0) {
     const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
     const text = Parser_finishNode(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart);
+    parts ??= [];
     parts.push(text!);
   }
 
-  receiver!.jsdocTagCommentsPartsSpace = parts.slice(0, 0);
+  receiver!.jsdocTagCommentsPartsSpace = parts?.slice(0, 0);
 
-  if (parts.length > 0) {
+  if (parts !== undefined && parts.length > 0) {
     return Parser_newNodeList(receiver, NewTextRange(commentsPos, Scanner_TokenEnd(receiver!.scanner)), Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, parts));
   }
   return undefined;

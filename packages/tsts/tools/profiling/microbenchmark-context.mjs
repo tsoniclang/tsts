@@ -9,6 +9,7 @@ const contextPath = fileURLToPath(import.meta.url);
 const provenancePath = fileURLToPath(new URL("../test-provenance.mjs", import.meta.url));
 const buildPath = fileURLToPath(new URL("../tsts-build.mjs", import.meta.url));
 const benchmarkCorePath = fileURLToPath(new URL("./benchmark-core.mjs", import.meta.url));
+const compilerArgumentsPath = fileURLToPath(new URL("./compiler-arguments.mjs", import.meta.url));
 const benchmarkEvidencePath = fileURLToPath(new URL("./benchmark-evidence.mjs", import.meta.url));
 
 export async function prepareTstsMicrobenchmark({ driverPath, noBuild, quiet = false }) {
@@ -51,6 +52,7 @@ function microHarnessEvidence(driverPath) {
     { label: "microbenchmark-provenance", path: provenancePath },
     { label: "microbenchmark-prepared-build", path: buildPath },
     { label: "microbenchmark-statistics", path: benchmarkCorePath },
+    { label: "microbenchmark-compiler-arguments", path: compilerArgumentsPath },
     { label: "microbenchmark-environment", path: benchmarkEvidencePath },
   ]);
 }

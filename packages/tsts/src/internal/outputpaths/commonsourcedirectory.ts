@@ -103,8 +103,8 @@ const computeNextComponents = (
   return commonPathComponents;
 };
 
-export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool): string {
-  const commonPathComponents = fileNames.reduce(
+export function computeCommonSourceDirectoryOfFilenames(fileNames: GoPtr<GoSlice<string>>, currentDirectory: string, useCaseSensitiveFileNames: bool): string {
+  const commonPathComponents = (fileNames ?? []).reduce(
     (acc: GoSlice<string> | null | undefined, sourceFile: string) =>
       computeNextComponents(acc, sourceFile, currentDirectory, useCaseSensitiveFileNames),
     undefined,
@@ -176,7 +176,7 @@ export function GetComputedCommonSourceDirectory(emittedFiles: GoSlice<string>, 
  * 	return commonSourceDirectory
  * }
  */
-export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: () => GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: ((sourceFiles: GoSlice<string>, rootDirectory: string) => bool) | undefined): string {
+export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: () => GoPtr<GoSlice<string>>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: ((sourceFiles: GoPtr<GoSlice<string>>, rootDirectory: string) => bool) | undefined): string {
   let commonSourceDirectory = "";
   if (options!.RootDir !== "") {
     // If a rootDir is specified use it as the commonSourceDirectory

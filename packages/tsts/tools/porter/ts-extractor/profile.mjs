@@ -32,6 +32,10 @@ export const TSTS_PROFILE = {
     },
     compat: { rune: "GoRune", error: "GoError", complex64: "GoComplex64", complex128: "GoComplex128" },
   },
+  constantRepresentations: {
+    bigintBasics: ["uint64"],
+    bigintNamedTypes: [],
+  },
   // Qualified Go stdlib types that map to compat helpers (pkg.Name -> compat name).
   stdlibTypes: {
     "iter.Seq": "GoSeq", "iter.Seq2": "GoSeq2",
@@ -41,17 +45,13 @@ export const TSTS_PROFILE = {
   // Stdlib/runtime package -> facade module path. {importPath} is the full Go
   // import path (e.g. sync/atomic -> packages/tsts/src/go/sync/atomic.ts).
   facadeTemplate: "packages/tsts/src/go/{importPath}.ts",
-  // One canonical module per GLOBALLY-UNIQUE type name that is declared in more
-  // than one TS module (a generated copy + a hand-ported copy, or a brand +
-  // full interface). Both declarations are the same logical (same Go-origin)
-  // type; the checker collapses every reference to the canonical module. Narrow
-  // and named — NOT broad module-path equivalence. Only add names that are
-  // unique across the tree.
-  canonicalTypes: {
-    "SymbolFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
-    "NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
-    "NodeVisitor": "packages/tsts/src/internal/ast/spine.ts",
-    "ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts",
+  // Exact duplicate-declaration identities whose two full module/name IDs are
+  // known to represent one Go-origin type. Terminal-name matching is forbidden.
+  canonicalTypeAliases: {
+    "packages/tsts/src/internal/ast/symbolflags.ts::SymbolFlags": "packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags",
+    "packages/tsts/src/internal/ast/nodeflags.ts::NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts::NodeFlags",
+    "packages/tsts/src/internal/ast/visitor.ts::NodeVisitor": "packages/tsts/src/internal/ast/spine.ts::NodeVisitor",
+    "packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache",
   },
   // TSTS represents TS-Go AST nodes as a Node envelope plus generated data
   // interfaces. A Go `*SourceFile` in signature position corresponds to the TS

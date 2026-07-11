@@ -1,4 +1,5 @@
 import { buildExternalFacadeMap } from "./external-facades.mjs";
+import { compareText } from "./deterministic-order.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { fail, hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
@@ -57,7 +58,7 @@ export function renderExpectedGeneratedArtifacts(config, snapshot) {
   for (const authoredPath of authoredFacadePathSet(config)) {
     artifacts.delete(authoredPath);
   }
-  return new Map([...artifacts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+  return new Map([...artifacts.entries()].sort(([left], [right]) => compareText(left, right)));
 }
 
 export function renderGeneratedArtifact(snapshot, relativePath, kind, body) {
@@ -93,12 +94,12 @@ export function renderExternalFacadeModules(config, snapshot) {
   }
 
   const output = new Map();
-  for (const [tsModule, policies] of [...groups.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+  for (const [tsModule, policies] of [...groups.entries()].sort(([left], [right]) => compareText(left, right))) {
     const relativeTargetPath = `${config.tsRoot}/${tsModule}`;
     const context = facadeRendererContext(config, relativeTargetPath, policies, facades);
     const body = policies
       .slice()
-      .sort((left, right) => left.tsName.localeCompare(right.tsName))
+      .sort((left, right) => compareText(left.tsName, right.tsName))
       .map((policy) => renderExternalFacadePolicy(policy, context))
       .join("\n\n");
     output.set(tsModule, `${renderImports(context)}${body}\n`);

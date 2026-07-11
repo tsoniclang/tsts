@@ -32,6 +32,7 @@ import {
   stageBenchmarkCorpus,
   workloadReportEvidence,
 } from "./benchmark-workload.mjs";
+import { collectWorkloadSelection, exactWorkloadSelection } from "./benchmark-selection.mjs";
 import { loadPerformancePolicy, requireCalibratedPolicy } from "./performance-policy.mjs";
 import {
   createPerformanceReport,
@@ -116,6 +117,9 @@ export async function runBenchmarkCli(argv = process.argv.slice(2)) {
     const results = initializeResults(stagedProjects);
     const projectByName = new Map(stagedProjects.map((project) => [project.name, project]));
     const compilerById = new Map(compilerContext.compilers.map((compiler) => [compiler.id, compiler]));
+    collectInitialWorkloadSelections({ results, projects: stagedProjects, compilers: compilerContext.compilers, environment: environment.actual, timeoutMs: policyContext.policy.sampling.timeoutMs });
+    assertStagedWorkloadsUnchanged(stagedProjects);
+    assertCorpusSourcesUnchanged(corpus);
     for (const entry of schedule) {
       const project = projectByName.get(entry.project);
       const compiler = compilerById.get(entry.compiler);
@@ -150,6 +154,9 @@ export async function runBenchmarkCli(argv = process.argv.slice(2)) {
         },
       })
       : [];
+    assertStagedWorkloadsUnchanged(stagedProjects);
+    assertCorpusSourcesUnchanged(corpus);
+    reverifyWorkloadSelections({ results, projects: stagedProjects, compilers: compilerContext.compilers, environment: environment.actual, timeoutMs: policyContext.policy.sampling.timeoutMs });
     assertStagedWorkloadsUnchanged(stagedProjects);
     assertCorpusSourcesUnchanged(corpus);
     await compilerContext.reverify();
@@ -231,7 +238,7 @@ export function renderPerformanceSummary(report) {
     "",
   ];
   for (const result of report.results) {
-    lines.push(`## ${result.name}`, "", `Equivalent work: ${result.work.Files} files / ${result.work.Lines} lines`, "", "| metric | tsgo median | tsc median | TSTS median | TSTS CV | TSTS/tsgo | TSTS/tsc |", "|---|---:|---:|---:|---:|---:|---:|");
+    lines.push(`## ${result.name}`, "", `Equivalent work: ${result.work.metrics.Files} files / ${result.work.metrics.Lines} lines`, `Exact selected inputs: ${result.work.selection.files.length} files / ${result.work.selection.digest}`, "", "| metric | tsgo median | tsc median | TSTS median | TSTS CV | TSTS/tsgo | TSTS/tsc |", "|---|---:|---:|---:|---:|---:|---:|");
     for (const metric of report.policy.measurementContract.gatedMetrics) {
       const tsts = result.byCompiler.tsts.aggregate[metric];
       const tsgo = result.byCompiler.tsgo.aggregate[metric];
@@ -251,14 +258,54 @@ export function renderPerformanceSummary(report) {
 function initializeResults(projects) {
   return new Map(projects.map((project) => [project.name, {
     name: project.name,
-    byCompiler: Object.fromEntries(compilerIds.map((id) => [id, { systemCacheWarmupSamples: [], measuredSamples: [] }])),
+    byCompiler: Object.fromEntries(compilerIds.map((id) => [id, { selection: undefined, systemCacheWarmupSamples: [], measuredSamples: [] }])),
   }]));
+}
+
+function collectInitialWorkloadSelections({ results, projects, compilers, environment, timeoutMs }) {
+  for (const project of projects) {
+    for (const compiler of compilers) {
+      results.get(project.name).byCompiler[compiler.id].selection = workloadSelection({ project, compiler, environment, timeoutMs });
+    }
+    exactWorkloadSelection(results.get(project.name).byCompiler);
+  }
+}
+
+function reverifyWorkloadSelections({ results, projects, compilers, environment, timeoutMs }) {
+  for (const project of projects) {
+    for (const compiler of compilers) {
+      const before = results.get(project.name).byCompiler[compiler.id].selection;
+      const after = workloadSelection({ project, compiler, environment, timeoutMs });
+      if (canonicalJson(after) !== canonicalJson(before)) throw new Error(`${project.name}/${compiler.id} workload selection changed during benchmark execution`);
+    }
+  }
+}
+
+function workloadSelection({ project, compiler, environment, timeoutMs }) {
+  return collectWorkloadSelection({
+    id: `${project.name}/${compiler.id}`,
+    argv: compiler.argv,
+    args: project.args,
+    projectRoot: project.root,
+    cwd: project.cwd,
+    environment,
+    timeoutMs,
+  });
 }
 
 function finalizeResults(results, policy) {
   return [...results.values()].map((result) => {
     for (const compiler of compilerIds) result.byCompiler[compiler].aggregate = aggregateSamples(result.byCompiler[compiler].measuredSamples, policy.requiredMetrics);
-    return { ...result, work: exactWorkReceipt(result.byCompiler, policy.workloadEquivalence) };
+    const metrics = exactWorkReceipt(result.byCompiler, policy.workloadEquivalence);
+    const selection = exactWorkloadSelection(result.byCompiler);
+    if (metrics.Files !== selection.files.length) throw new Error(`benchmark selected-file receipt does not match compiler Files metric: selected=${selection.files.length} reported=${metrics.Files}`);
+    return {
+      ...result,
+      work: {
+        metrics,
+        selection,
+      },
+    };
   });
 }
 

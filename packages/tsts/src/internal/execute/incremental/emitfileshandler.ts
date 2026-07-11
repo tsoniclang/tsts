@@ -46,6 +46,7 @@ import {
   FileEmitKindDtsErrors,
   getPendingEmitKind,
   getTextHandlingSourceMapForSignature,
+  emitSignature_requireDifferentOptions,
   snapshot_canUseIncrementalState,
   snapshot_computeHash,
   snapshot_computeSignatureWithDiagnostics,
@@ -632,7 +633,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
     if (oldSignatureFormat!.signature !== "") {
       oldSignature = oldSignatureFormat!.signature;
     } else {
-      oldSignature = oldSignatureFormat!.signatureWithDifferentOptions[0]!;
+      oldSignature = emitSignature_requireDifferentOptions(oldSignatureFormat);
     }
   }
   if (newSignature === "") {
@@ -655,7 +656,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   SyncMap_Store<Path, GoPtr<emitSignature>>(
     receiver!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
     SourceFile_Path(file),
-    { signature: newSignature, signatureWithDifferentOptions: [] }
+    { signature: newSignature, signatureWithDifferentOptions: undefined }
   );
   return false as bool;
 }

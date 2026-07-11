@@ -1725,6 +1725,7 @@ export function makeIdentifierFromModuleName(moduleName: string): string {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::findSpanEndWithEmitContext","kind":"func","status":"implemented","sigHash":"06f2364671f6bb4e517996d81b80bd0d68da80a4dff0d85cc92e3f0ee9645299","bodyHash":"7d0e1fc36ab67adcd91dced6eb3244c87809a070fad16251ff7432f033e6c6d8"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoSlice<T0>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,T0)=>packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/printer/emitcontext.ts::EmitContext>,T0)=>packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func findSpanEndWithEmitContext[T any](c *EmitContext, array []T, test func(c *EmitContext, value T) bool, start int) int {
@@ -1735,9 +1736,9 @@ export function makeIdentifierFromModuleName(moduleName: string): string {
  * 	return i
  * }
  */
-export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSlice<T>, test: (c: GoPtr<EmitContext>, value: T) => bool, start: int): int {
+export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoPtr<GoSlice<T>>, test: (c: GoPtr<EmitContext>, value: T) => bool, start: int): int {
   let i = start;
-  while (i < array.length && test(c, array[i]!)) {
+  while (i < (array?.length ?? 0) && test(c, array![i]!)) {
     i++;
   }
   return i;
@@ -1745,6 +1746,7 @@ export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSl
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::findSpanEnd","kind":"func","status":"implemented","sigHash":"ba96c8d9823ba67dcb4175d95c9c21559153a50d829799fcf113b8ea286e8952","bodyHash":"3cb2f7e4885d452327746241b2022f3017ec0a377328fde1dfd73163fe7617ca"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func<T0 extends unknown>(packages/tsts/src/go/compat.ts::GoSlice<T0>,(T0)=>packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::int","tsSignature":"func<T0>(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<T0>>,(T0)=>packages/tsts/src/go/scalars.ts::bool,packages/tsts/src/go/scalars.ts::int)=>packages/tsts/src/go/scalars.ts::int"}
  *
  * Go source:
  * func findSpanEnd[T any](array []T, test func(value T) bool, start int) int {
@@ -1755,9 +1757,9 @@ export function findSpanEndWithEmitContext<T>(c: GoPtr<EmitContext>, array: GoSl
  * 	return i
  * }
  */
-export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, start: int): int {
+export function findSpanEnd<T>(array: GoPtr<GoSlice<T>>, test: (value: T) => bool, start: int): int {
   let i = start;
-  while (i < array.length && test(array[i]!)) {
+  while (i < (array?.length ?? 0) && test(array![i]!)) {
     i++;
   }
   return i;

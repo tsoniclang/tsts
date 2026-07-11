@@ -16,7 +16,6 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
-  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,

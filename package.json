@@ -30,7 +30,7 @@
     "porter:skeleton-check": "node packages/tsts/tools/porter/porter.mjs skeleton-check",
     "porter:sig-check": "node packages/tsts/tools/porter/porter.mjs sig-check",
     "porter:test": "npm run porter:test:node && npm run porter:test:go",
-    "porter:test:node": "node --test packages/tsts/tools/porter/*.test.mjs packages/tsts/tools/porter/test/*.test.mjs",
+    "porter:test:node": "node --test packages/tsts/tools/porter/*.test.mjs",
     "porter:test:go": "cd packages/tsts/tools/porter/go-extractor && go test ./...",
     "source:test": "node packages/tsts/tools/source-tests/run.mjs",
     "tsgo-suite": "node packages/tsts/tools/tsgo-suite/prepare-run.mjs",

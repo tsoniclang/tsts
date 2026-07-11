@@ -1,8 +1,8 @@
 import { computeSignatureReport } from "../sig-check.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { repoRoot, resolveRepo } from "./runtime.mjs";
-import { runPinnedScan } from "./snapshot.mjs";
-import { scanTsUnits } from "./ts-units.mjs";
+import { runPinnedScan } from "./scan-runner.mjs";
+import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import process from "node:process";
 
 // Signature/type-equivalence check. Compares each ported @tsgo-unit's actual TS
@@ -11,7 +11,7 @@ import process from "node:process";
 // and `--no-gate` for local exploration.
 export async function runSigCheck(config, options) {
   const snapshot = runPinnedScan(config);
-  const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
+  const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
   const tsById = new Map(tsUnits.units.map((u) => [u.id, u]));
   const tsFiles = tsUnits.files.filter((file) => file.metadataCount > 0);
   const report = await computeSignatureReport(

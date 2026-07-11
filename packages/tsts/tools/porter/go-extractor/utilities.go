@@ -6,16 +6,20 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
 
+func itoa(value int) string {
+	return strconv.Itoa(value)
+}
+
 func uniqueSorted(values []string) []string {
 	if len(values) == 0 {
-		return nil
+		return []string{}
 	}
 	seen := map[string]bool{}
 	var output []string
@@ -62,15 +66,6 @@ func gitBlobHash(value []byte) string {
 	_, _ = fmt.Fprintf(hasher, "blob %d%c", len(value), byte(0))
 	_, _ = hasher.Write(value)
 	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-func gitRevision(root string) string {
-	command := exec.Command("git", "-C", root, "rev-parse", "HEAD")
-	out, err := command.Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
 }
 
 func fatalf(format string, args ...any) {

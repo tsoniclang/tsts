@@ -292,6 +292,7 @@ export function getPendingEmitKind(emitKind: FileEmitKind, oldEmitKind: FileEmit
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::type::emitSignature","kind":"type","status":"implemented","sigHash":"4ef15f1f2c7bf4cd72359988bc50d894b5533d8fce0b3d6a73e11f035299a6a9","bodyHash":"da483500ad424212d208ff75b962eb41b784b1b9333ab52b6fbba1c1e4e31fb6"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The alternate-options signature slice is nil in the ordinary single-signature state and nonnil only when declaration-map or compiler-option variants are tracked; GoPtr preserves that state distinction and explicit invariant checks retain Go's fail-closed indexed access.","goSignature":"interface{signature:string;signatureWithDifferentOptions:packages/tsts/src/go/compat.ts::GoSlice<string>}","tsSignature":"interface{signature:string;signatureWithDifferentOptions:packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<string>>}"}
  *
  * Go source:
  * emitSignature struct {
@@ -301,7 +302,15 @@ export function getPendingEmitKind(emitKind: FileEmitKind, oldEmitKind: FileEmit
  */
 export interface emitSignature {
   signature: string;
-  signatureWithDifferentOptions: GoSlice<string>;
+  signatureWithDifferentOptions: GoPtr<GoSlice<string>>;
+}
+
+export function emitSignature_requireDifferentOptions(receiver: GoPtr<emitSignature>): string {
+  const value = receiver?.signatureWithDifferentOptions?.[0];
+  if (value === undefined) {
+    throw new globalThis.Error("incremental emit signature is missing its alternate-options signature");
+  }
+  return value;
 }
 
 /**
@@ -334,8 +343,8 @@ export function emitSignature_getNewEmitSignature(receiver: GoPtr<emitSignature>
     };
   } else {
     return {
-      signature: receiver!.signatureWithDifferentOptions[0]!,
-      signatureWithDifferentOptions: [],
+      signature: emitSignature_requireDifferentOptions(receiver),
+      signatureWithDifferentOptions: undefined,
     };
   }
 }

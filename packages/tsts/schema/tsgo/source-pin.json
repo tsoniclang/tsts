@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "upstream": "microsoft/typescript-go",
   "sourceRoot": "packages/tsts/_vendor/typescript-go",
   "goModulePath": "github.com/microsoft/typescript-go",
@@ -54,6 +54,16 @@
     "module": "packages/tsts/tools/porter/go-extractor",
     "goVersion": "go1.26.4",
     "goos": "linux",
-    "goarch": "amd64"
+    "goarch": "amd64",
+    "toolchainExecutableSha256": "86b748c64de0175db601f56805251f3b08cd12bffb927ad5c68ef8497c50c7ba",
+    "goroot": {
+      "contract": "tsts-porter-goroot-tree-v1",
+      "sha256": "97e26a04c728a7dc6b39db3198b9d3b6ae89abb5d97f28e082509c8082205447",
+      "entryCount": 16688,
+      "fileCount": 15022,
+      "directoryCount": 1666,
+      "symlinkCount": 0,
+      "bytes": 232354977
+    }
   }
 }

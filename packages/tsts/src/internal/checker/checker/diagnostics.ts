@@ -1083,7 +1083,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
   } else if (!IsJsxOpeningFragment(node)) {
     const signaturesWithCorrectTypeArgumentArity = Filter(signatures, (sig: GoPtr<Signature>) =>
       Checker_hasCorrectTypeArgumentArity(receiver, sig, s!.typeArguments));
-    if (signaturesWithCorrectTypeArgumentArity.length === 0) {
+    if ((signaturesWithCorrectTypeArgumentArity?.length ?? 0) === 0) {
       Checker_addDiagnostic(receiver, Checker_getTypeArgumentArityError(receiver, s!.node, signatures, s!.typeArguments, headMessage));
     } else {
       Checker_addDiagnostic(receiver, Checker_getArgumentArityError(receiver, s!.node, signaturesWithCorrectTypeArgumentArity, s!.args, headMessage));
@@ -1214,7 +1214,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
  * 	}
  * }
  */
-export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoSlice<GoPtr<Signature>>, args: GoPtr<GoSlice<GoPtr<Node>>>, headMessage: GoPtr<Message>): GoPtr<Diagnostic> {
+export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: GoPtr<Node>, signatures: GoPtr<GoSlice<GoPtr<Signature>>>, args: GoPtr<GoSlice<GoPtr<Node>>>, headMessage: GoPtr<Message>): GoPtr<Diagnostic> {
   const argumentCount = args === undefined ? 0 : args.length;
   const spreadIndex = Checker_getSpreadArgumentIndex(receiver, args);
   if (spreadIndex > -1) {
@@ -1228,7 +1228,7 @@ export function Checker_getArgumentArityError(receiver: GoPtr<Checker>, node: Go
   let maxBelow = Number.MIN_SAFE_INTEGER; // largest parameter count that is smaller than the number of arguments
   let minAbove = Number.MAX_SAFE_INTEGER; // smallest parameter count that is larger than the number of arguments
   let closestSignature: GoPtr<Signature> = undefined;
-  for (const sig of signatures) {
+  for (const sig of signatures ?? []) {
     const minParameter = Checker_getMinArgumentCount(receiver, sig);
     const maxParameter = Checker_getParameterCount(receiver, sig);
     if (minParameter < minCount) {

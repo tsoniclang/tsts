@@ -14,10 +14,14 @@ import (
 func main() {
 	root := flag.String("root", "", "path to a TypeScript-Go checkout")
 	modulePath := flag.String("module", "github.com/microsoft/typescript-go", "Go module path")
+	revision := flag.String("revision", "", "validated Git revision of the source checkout")
 	flag.Parse()
 
 	if *root == "" {
 		fatalf("missing required -root")
+	}
+	if len(*revision) != 40 || strings.IndexFunc(*revision, func(value rune) bool { return value < '0' || value > '9' && value < 'a' || value > 'f' }) >= 0 {
+		fatalf("-revision must be a lowercase 40-character Git object id")
 	}
 
 	absRoot, err := filepath.Abs(*root)
@@ -29,10 +33,10 @@ func main() {
 	}
 
 	snapshot := Snapshot{
-		SchemaVersion: 3,
+		SchemaVersion: 6,
 		SourceRoot:    filepath.ToSlash(absRoot),
 		ModulePath:    *modulePath,
-		GitRevision:   gitRevision(absRoot),
+		GitRevision:   *revision,
 		Environment: Environment{
 			GoVersion: runtime.Version(),
 			GOOS:      runtime.GOOS,
@@ -40,14 +44,12 @@ func main() {
 		},
 		Summary: Summary{
 			UnitKindCounts: make(map[string]int),
-			NodeKindCounts: make(map[string]int),
 			BuildTagCounts: make(map[string]int),
 			PackageCounts:  make(map[string]int),
 			StructTagKeys:  make(map[string]int),
 		},
 	}
 
-	packageNames := loadPackageNames(absRoot, *modulePath)
 	importPaths := map[string]bool{}
 	err = filepath.WalkDir(absRoot, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -64,7 +66,7 @@ func main() {
 		if !strings.HasSuffix(name, ".go") {
 			return nil
 		}
-		report := scanGoFile(absRoot, path, *modulePath, packageNames)
+		report := scanGoFile(absRoot, path, *modulePath)
 		snapshot.Files = append(snapshot.Files, report)
 		snapshot.Summary.GoFileCount++
 		snapshot.Summary.LineCount += report.LineCount
@@ -76,25 +78,17 @@ func main() {
 		for _, tag := range append(report.BuildTags, report.ImplicitBuildTags...) {
 			snapshot.Summary.BuildTagCounts[tag]++
 		}
-		for kind, count := range report.NodeKindCounts {
-			snapshot.Summary.NodeKindCounts[kind] += count
-		}
-		for _, member := range report.StructTags {
-			snapshot.Summary.StructTagCount++
-			for _, value := range member.TagValues {
-				snapshot.Summary.StructTagKeys[value.Key]++
-			}
-		}
 		for _, unit := range report.Units {
 			snapshot.Summary.UnitCount++
 			snapshot.Summary.UnitKindCounts[unit.Kind]++
+			accumulateUnitStructTags(&snapshot.Summary, unit)
 		}
 		return nil
 	})
 	if err != nil {
 		fatalf("walk root: %v", err)
 	}
-	resolveSnapshotConstantValues(&snapshot)
+	applyGoSemanticEvidence(absRoot, *modulePath, &snapshot)
 
 	sort.Slice(snapshot.Files, func(left, right int) bool {
 		return snapshot.Files[left].Path < snapshot.Files[right].Path
@@ -120,9 +114,6 @@ func accumulateUnitStructTags(summary *Summary, unit UnitReport) {
 	}
 	for _, spec := range unit.ValueSpecs {
 		accumulateTypeExpressionStructTags(summary, spec.Type)
-		for _, inferred := range spec.InferredValueTypes {
-			accumulateTypeExpressionStructTags(summary, inferred)
-		}
 	}
 }
 

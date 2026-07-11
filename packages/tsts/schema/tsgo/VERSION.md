@@ -8,6 +8,9 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 | Commit | `168e7015edf98244febc8f4ae450b673b5d195d7` |
 | Git object format | `sha1` |
 | Nested TypeScript commit | `4d4f005c8541e0255a9d8791205fdce326e462bc` |
+| Go toolchain executable SHA-256 | `86b748c64de0175db601f56805251f3b08cd12bffb927ad5c68ef8497c50c7ba` |
+| Go GOROOT hash contract | `tsts-porter-goroot-tree-v1` |
+| Go GOROOT tree SHA-256 | `97e26a04c728a7dc6b39db3198b9d3b6ae89abb5d97f28e082509c8082205447` |
 | `ast.json` SHA-256 | `8f9117acd1ba332beb8222e4f958346a6846dc0acbcb75d1c20a7bb0eef68689` |
 | `ast.schema.json` SHA-256 | `c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2` |
 | `protocol.ts` SHA-256 | `02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830` |
@@ -27,6 +30,11 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
   upstream copy byte-for-byte against the clean pinned source tree, validates this
   document against the manifest, and fails on any provenance or classification
   drift.
+- Porter also pins the exact Go executable and the complete GOROOT tree used by
+  semantic extraction. The GOROOT digest covers normalized relative paths,
+  entry kinds, permission bits, file bytes, and symlink targets; mutation,
+  escaping symlinks, unsupported file kinds, and toolchain auto-downloads fail
+  closed.
 
 ## Pin bump — 2026-07-10
 

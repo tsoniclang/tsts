@@ -16,7 +16,6 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
-  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -149,6 +148,24 @@ test("buildLocalOverrideStatus accepts local initializer overrides with snapshot
   }] });
   assert.equal(status.byAllow.initializer, 1);
   assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
+test("initializer overrides cannot make variable initializer bodies part of the Porter contract", () => {
+  const status = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/core/version.go::varGroup::Version",
+    kind: "varGroup",
+    status: "implemented",
+    path: "packages/tsts/src/internal/core/version.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["initializer"],
+      reason: "This invalid fixture attempts to make a variable implementation initializer contractual.",
+      goInitializer: "Version=undefined",
+      tsInitializer: 'Version={"kind":"string","value":"host"}',
+    },
+  }] });
+  assert.equal(status.failureCount, 1);
+  assert.match(status.invalidInline[0].reason, /outside the declaration contract/);
 });
 
 test("buildLocalOverrideStatus accepts local value-order overrides with snapshots", () => {

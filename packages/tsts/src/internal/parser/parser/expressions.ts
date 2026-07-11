@@ -301,12 +301,12 @@ import {
 export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>, node: GoPtr<ObjectLiteralExpression>): void {
   for (const element of node!.Properties!.Nodes!) {
     if (element!.Kind !== KindPropertyAssignment) {
-      receiver!.diagnostics.push(NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected));
+      receiver!.diagnostics = [...(receiver!.diagnostics ?? []), NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected)];
       continue;
     }
     const elementName = Node_Name(element);
     if (elementName !== undefined && !isDoubleQuotedString(elementName)) {
-      receiver!.diagnostics.push(NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected));
+      receiver!.diagnostics = [...(receiver!.diagnostics ?? []), NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, elementName), String_literal_with_double_quotes_expected)];
     }
     Parser_validateJsonValue(receiver, sourceFile, AsPropertyAssignment(element)!.Initializer);
   }
@@ -413,17 +413,21 @@ export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, source
  * }
  */
 export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>): GoPtr<Node> {
-  if (receiver!.possibleAwaitSpans.length % 2 === 1) {
+  const possibleAwaitSpans = receiver!.possibleAwaitSpans;
+  if ((possibleAwaitSpans?.length ?? 0) % 2 === 1) {
     throw new globalThis.Error("possibleAwaitSpans malformed: odd number of indices, not paired into spans.");
   }
   const statements: GoSlice<GoPtr<Node>> = [];
   const savedParseDiagnostics = receiver!.diagnostics;
   receiver!.diagnostics = [];
-  const sourceStatements = sourceFile!.Statements?.Nodes ?? [];
+  const sourceStatements = sourceFile!.Statements!.Nodes;
+  if (sourceStatements === undefined) {
+    throw new globalThis.Error("possibleAwaitSpans requires source statements");
+  }
 
   let afterAwaitStatement = 0;
-  for (let i = 0; i < receiver!.possibleAwaitSpans.length; i += 2) {
-    const nextAwaitStatement = receiver!.possibleAwaitSpans[i];
+  for (let i = 0; i < (possibleAwaitSpans?.length ?? 0); i += 2) {
+    const nextAwaitStatement = possibleAwaitSpans![i];
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
     const prevStatement = sourceStatements[afterAwaitStatement];
     const nextStatement = sourceStatements[nextAwaitStatement!];
@@ -435,7 +439,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     });
     let diagnosticEnd: int;
     if (diagnosticStart >= 0) {
-      diagnosticEnd = FindIndex(savedParseDiagnostics.slice(diagnosticStart), (diagnostic) => {
+      diagnosticEnd = FindIndex(savedParseDiagnostics!.slice(diagnosticStart), (diagnostic) => {
         return Diagnostic_Pos(diagnostic) >= Node_Pos(nextStatement);
       });
     } else {
@@ -443,9 +447,9 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     }
     if (diagnosticStart >= 0) {
       if (diagnosticEnd >= 0) {
-        receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd));
+        receiver!.diagnostics!.push(...savedParseDiagnostics!.slice(diagnosticStart, diagnosticStart + diagnosticEnd));
       } else {
-        receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart));
+        receiver!.diagnostics!.push(...savedParseDiagnostics!.slice(diagnosticStart));
       }
     }
 
@@ -455,7 +459,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     Scanner_ResetPos(receiver!.scanner, Node_Pos(nextStatement));
     Parser_nextToken(receiver);
 
-    afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
+    afterAwaitStatement = possibleAwaitSpans![i + 1]!;
     while (receiver!.token !== KindEndOfFile) {
       const startPos = Scanner_TokenFullStart(receiver!.scanner);
       const statement = Parser_parseStatement(receiver);
@@ -472,8 +476,8 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
         if (Node_End(statement) > Node_End(lastAwaitStatement)) {
           // we ate into the next statement, so we must continue reparsing the next span
           i += 2;
-          if (i < receiver!.possibleAwaitSpans.length) {
-            afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
+          if (i < (possibleAwaitSpans?.length ?? 0)) {
+            afterAwaitStatement = possibleAwaitSpans![i + 1]!;
           } else {
             afterAwaitStatement = sourceStatements.length;
           }
@@ -482,7 +486,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     }
 
     // Keep diagnostics from the reparse
-    state.diagnosticsLen = receiver!.diagnostics.length;
+    state.diagnosticsLen = receiver!.diagnostics?.length ?? 0;
     Parser_rewind(receiver, state);
   }
 
@@ -496,7 +500,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
       return Diagnostic_Pos(diagnostic) >= Node_Pos(prevStatement2);
     });
     if (diagnosticStart2 >= 0) {
-      receiver!.diagnostics.push(...savedParseDiagnostics.slice(diagnosticStart2));
+      receiver!.diagnostics!.push(...savedParseDiagnostics!.slice(diagnosticStart2));
     }
   }
 
@@ -750,7 +754,7 @@ export function Parser_parseClassDeclarationOrExpression(receiver: GoPtr<Parser>
   // We don't parse the name here in await context, instead we will report a grammar error in the checker.
   const name = Parser_parseNameOfClassDeclarationOrExpression(receiver);
   const typeParameters = Parser_parseTypeParameters(receiver);
-  if (modifiers !== undefined && Some(modifiers.Nodes ?? [], isExportModifier)) {
+  if (modifiers !== undefined && Some(modifiers.Nodes, isExportModifier)) {
     Parser_setContextFlags(receiver, NodeFlagsAwaitContext, true /*value*/);
   }
   const heritageClauses = Parser_parseHeritageClauses(receiver);

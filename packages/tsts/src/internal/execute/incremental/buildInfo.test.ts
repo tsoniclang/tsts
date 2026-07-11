@@ -5,8 +5,10 @@ import { OrderedMap_Entries, OrderedMap_Set, NewOrderedMapWithSizeHint } from ".
 import { Version } from "../../core/version.js";
 import { TSFalse, TSTrue } from "../../core/tristate.js";
 import { Unmarshal } from "../../json/json.js";
+import type { Path } from "../../tspath/path.js";
 import {
   BuildInfoDiagnosticsOfFile_UnmarshalJSON,
+  BuildInfoEmitSignature_toEmitSignature,
   BuildInfoEmitSignature_UnmarshalJSON,
   BuildInfoFileInfo_GetFileInfo,
   BuildInfoFileInfo_UnmarshalJSON,
@@ -465,34 +467,57 @@ test("every compact build-info decoder rejects malformed scalar, range, and tupl
   const malformed: ReadonlyArray<readonly [string, string, string]> = [
     ["Root", "1.0", "invalid BuildInfoRoot: 1.0"],
     ["Root", "9223372036854775808", "invalid BuildInfoRoot: 9223372036854775808"],
+    ["Root", "true", "invalid BuildInfoRoot: true"],
     ["Root", "[1]", "invalid BuildInfoRoot: [1]"],
     ["FileInfo", '{"impliedNodeFormat":1.0}', 'invalid BuildInfoFileInfo: {"impliedNodeFormat":1.0}'],
     ["FileInfo", '{"impliedNodeFormat":2147483648}', 'invalid BuildInfoFileInfo: {"impliedNodeFormat":2147483648}'],
+    ["FileInfo", "true", "invalid BuildInfoFileInfo: true"],
     ["Reference", "[1]", "json: cannot unmarshal JSON array into Go [2]int after offset 2: too few array elements"],
     ["Reference", "[1,2,3]", "json: cannot unmarshal JSON array into Go [2]int after offset 6: too many array elements"],
     ["Reference", "[1.0,2]", 'json: cannot unmarshal JSON number 1.0 into Go int within "/0": invalid syntax'],
+    ["Reference", "true", "json: cannot unmarshal JSON boolean into Go [2]int"],
     ["Reference", "", "jsontext: unexpected EOF"],
     ["Reference", "[1,2,]", "jsontext: invalid character ',' at start of value after offset 4"],
     ["Diagnostics", "null", "invalid BuildInfoDiagnosticsOfFile: expected 2 elements, got 0"],
+    ["Diagnostics", "true", "invalid BuildInfoDiagnosticsOfFile: true"],
+    ["Diagnostics", "[true,[]]", "invalid fileId in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON boolean into Go incremental.BuildInfoFileId"],
+    ["Diagnostics", "[1,{}]", "invalid diagnostics in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON object into Go []*incremental.BuildInfoDiagnostic"],
     ["Diagnostics", "[1.0,[]]", "invalid fileId in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 1.0 into Go incremental.BuildInfoFileId: invalid syntax"],
     ["Diagnostics", '[1,[{"code":1.0}]]', 'invalid diagnostics in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 1.0 into Go int32 within "/0/code": invalid syntax'],
     ["Diagnostics", '[1,[{"code":2147483648}]]', 'invalid diagnostics in BuildInfoDiagnosticsOfFile: json: cannot unmarshal JSON number 2147483648 into Go int32 within "/0/code": value out of range'],
     ["Semantic", "1e0", "invalid BuildInfoSemanticDiagnostic: 1e0"],
+    ["Semantic", "true", "invalid BuildInfoSemanticDiagnostic: true"],
     ["Semantic", "[1]", "invalid BuildInfoSemanticDiagnostic: [1]"],
     ["Pending", "1.5", "invalid BuildInfoFilePendingEmit: 1.5"],
+    ["Pending", "true", "invalid BuildInfoFilePendingEmit: true"],
     ["Pending", "[1.0,2]", "invalid BuildInfoFilePendingEmit: [1.0,2]"],
     ["Pending", "[1,2,3]", "invalid BuildInfoFilePendingEmit: expected 1 or 2 integers, got 3"],
     ["Emit", "1.0", "invalid BuildInfoEmitSignature: 1.0"],
     ["Emit", "[1]", "invalid BuildInfoEmitSignature: expected 2 elements, got 1"],
+    ["Emit", '[true,"signature"]', "invalid fileId in BuildInfoEmitSignature: expected float64, got bool"],
+    ["Emit", "[1,true]", "invalid signature in BuildInfoEmitSignature: expected string or []string, got bool"],
     ["Emit", "[1,null]", "invalid signature in BuildInfoEmitSignature: expected string or []string, got <nil>"],
+    ["Emit", "[1,[true]]", "invalid signature in BuildInfoEmitSignature: expected string, got bool"],
     ["Emit", "[1,[null]]", "invalid signature in BuildInfoEmitSignature: expected string, got <nil>"],
+    ["Emit", '[1,["a","b"]]', "invalid signature in BuildInfoEmitSignature: expected string or []string with 0 or 1 element, got 2 elements"],
     ["Resolved", "[1.0,2]", "invalid BuildInfoResolvedRoot: [1.0,2]"],
+    ["Resolved", "true", "invalid BuildInfoResolvedRoot: true"],
     ["Resolved", "[1,2,3]", "invalid BuildInfoResolvedRoot: [1,2,3]"],
   ];
 
   for (const [decoderName, text, expected] of malformed) {
     assert.equal(errorMessage(decoders[decoderName]!(text)), expected, `${decoderName}: ${text}`);
   }
+});
+
+test("plain build-info emit signatures preserve a nil alternate-options slice", () => {
+  const decoded = BuildInfoEmitSignature_toEmitSignature(
+    { FileId: 1, Signature: "signature", DiffersOnlyInDtsMap: false, DiffersInOptions: false },
+    "/out.d.ts" as Path,
+    {},
+  );
+  assert.equal(decoded?.signature, "signature");
+  assert.equal(decoded?.signatureWithDifferentOptions, undefined);
 });
 
 test("compact integer bounds follow Go int64 rather than JavaScript safe-integer limits", () => {

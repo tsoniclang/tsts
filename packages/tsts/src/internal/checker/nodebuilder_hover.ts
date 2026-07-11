@@ -1,4 +1,5 @@
 import type { bool } from "../../go/scalars.js";
+import { GoAppend } from "../../go/compat.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { ModifierList, Node } from "../ast/spine.js";
@@ -187,7 +188,7 @@ export function NodeBuilderImpl_expandSymbolForHover(receiver: GoPtr<NodeBuilder
 export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 9 + name.length;
-  const memberProps = Filter(Checker_getPropertiesOfType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, symbol_)), (p) => ((p!.Flags & SymbolFlagsEnumMember) !== 0) as bool);
+  const memberProps = Filter(Checker_getPropertiesOfType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, symbol_)), (p) => ((p!.Flags & SymbolFlagsEnumMember) !== 0) as bool) ?? [];
   let members: GoSlice<GoPtr<Node>> = [];
   for (let i = 0; i < memberProps.length; i++) {
     const p = memberProps[i];
@@ -380,7 +381,7 @@ export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>
   }
   const constructors = NodeBuilderImpl_serializeConstructors(receiver, staticType, staticBaseType, isClass, symbol_);
   const indexSigs = NodeBuilderImpl_serializeIndexSignaturesOfType(receiver, classType, FirstOrNil(baseTypes));
-  const allMembers = [...indexSigs, ...staticMembers, ...constructors, ...instanceMembers, ...privateMembers];
+  const allMembers = [...(indexSigs ?? []), ...staticMembers, ...(constructors ?? []), ...instanceMembers, ...privateMembers];
   receiver!.ctx!.enclosingDeclaration = oldEnclosing;
   return NewClassDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, name), NodeFactory_NewNodeList(receiver!.f, typeParamDecls), NodeFactory_NewNodeList(receiver!.f, heritageClauses), NodeFactory_NewNodeList(receiver!.f, allMembers));
 }
@@ -587,29 +588,29 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
  * 	return heritageClauses
  * }
  */
-export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilderImpl>, declarations: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  let extendsTypes: GoSlice<GoPtr<Node>> = [];
-  let implementsTypes: GoSlice<GoPtr<Node>> = [];
-  for (const declaration of declarations) {
+export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilderImpl>, declarations: GoPtr<GoSlice<GoPtr<Node>>>): GoPtr<GoSlice<GoPtr<Node>>> {
+  let extendsTypes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  let implementsTypes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  for (const declaration of declarations ?? []) {
     const extendsHeritageElements = GetExtendsHeritageClauseElements(declaration);
     if (extendsHeritageElements !== undefined) {
       for (const heritageElement of extendsHeritageElements) {
-        extendsTypes = [...extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+        extendsTypes = GoAppend(extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
       }
     }
     const implementsHeritageElements = GetImplementsHeritageClauseElements(declaration);
     if (implementsHeritageElements !== undefined) {
       for (const heritageElement of implementsHeritageElements) {
-        implementsTypes = [...implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+        implementsTypes = GoAppend(implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement));
       }
     }
   }
-  let heritageClauses: GoSlice<GoPtr<Node>> = [];
-  if (extendsTypes.length > 0) {
-    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes))];
+  let heritageClauses: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
+  if ((extendsTypes?.length ?? 0) > 0) {
+    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes)));
   }
-  if (implementsTypes.length > 0) {
-    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes))];
+  if ((implementsTypes?.length ?? 0) > 0) {
+    heritageClauses = GoAppend(heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes)));
   }
   return heritageClauses;
 }
@@ -637,7 +638,7 @@ export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilder
  * }
  */
 export function NodeBuilderImpl_serializePropertiesWithTruncation(receiver: GoPtr<NodeBuilderImpl>, properties: GoPtr<GoSlice<GoPtr<Symbol>>>, elements: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  const filtered = Filter(properties, (p) => ((p!.Flags & SymbolFlagsPrototype) === 0) as bool);
+  const filtered = Filter(properties, (p) => ((p!.Flags & SymbolFlagsPrototype) === 0) as bool) ?? [];
   let result = [...elements];
   for (let i = 0; i < filtered.length; i++) {
     const p = filtered[i];

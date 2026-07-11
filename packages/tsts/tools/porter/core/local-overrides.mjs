@@ -1,51 +1,5 @@
+import { compareText } from "./deterministic-order.mjs";
 import { increment } from "./runtime.mjs";
-
-export function extractTsgoOverrideJson(doc) {
-  const marker = "@tsgo-override";
-  const markerIndex = doc.indexOf(marker);
-  if (markerIndex < 0) return undefined;
-
-  const raw = doc.slice(markerIndex + marker.length);
-  const cleaned = raw
-    .split(/\r?\n/)
-    .map((line, index) => (index === 0 ? line : line.replace(/^\s*\*\s?/, "")))
-    .join("\n")
-    .trimStart();
-  const start = cleaned.indexOf("{");
-  if (start < 0) return undefined;
-
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let index = start; index < cleaned.length; index++) {
-    const ch = cleaned[index];
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (ch === "\\") {
-        escaped = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-      continue;
-    }
-    if (ch === "{") {
-      depth++;
-      continue;
-    }
-    if (ch === "}") {
-      depth--;
-      if (depth === 0) {
-        return cleaned.slice(start, index + 1);
-      }
-    }
-  }
-  return cleaned.slice(start);
-}
 
 export function emptyLocalOverrideStatus() {
   return {
@@ -105,14 +59,14 @@ export function buildLocalOverrideStatus(config, tsUnits) {
       signatureUnits.push({ id: unit.id, path: unit.path, category: unit.override.category, reason: unit.override.reason });
     }
   }
-  overrideUnits.sort((left, right) => left.path.localeCompare(right.path) || left.id.localeCompare(right.id));
-  signatureUnits.sort((left, right) => left.path.localeCompare(right.path) || left.id.localeCompare(right.id));
+  overrideUnits.sort((left, right) => compareText(left.path, right.path) || compareText(left.id, right.id));
+  signatureUnits.sort((left, right) => compareText(left.path, right.path) || compareText(left.id, right.id));
   return {
     inline: inlineUnits.length,
     failureCount: invalidInline.length,
     invalidInline,
-    byCategory: Object.fromEntries([...byCategory.entries()].sort()),
-    byAllow: Object.fromEntries([...byAllow.entries()].sort()),
+    byCategory: Object.fromEntries([...byCategory.entries()].sort(([left], [right]) => compareText(left, right))),
+    byAllow: Object.fromEntries([...byAllow.entries()].sort(([left], [right]) => compareText(left, right))),
     signatureUnits,
     units: overrideUnits,
   };
@@ -143,8 +97,11 @@ export function validateOverrideShape(value, config, unit) {
   if (Array.isArray(value.allow) && value.allow.includes("body") && unit?.kind === "type") {
     issues.push("body overrides do not apply to type units; type-shape differences require a signature override");
   }
-  if (Array.isArray(value.allow) && (value.allow.includes("initializer") || value.allow.includes("value-order")) && unit?.kind !== "constGroup" && unit?.kind !== "varGroup") {
-    issues.push("initializer and value-order overrides apply only to constGroup or varGroup units");
+  if (Array.isArray(value.allow) && value.allow.includes("initializer") && unit?.kind !== "constGroup") {
+    issues.push("initializer overrides apply only to constGroup units; variable initializers are outside the declaration contract");
+  }
+  if (Array.isArray(value.allow) && value.allow.includes("value-order") && unit?.kind !== "constGroup" && unit?.kind !== "varGroup") {
+    issues.push("value-order overrides apply only to constGroup or varGroup units");
   }
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
     if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {

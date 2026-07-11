@@ -1,4 +1,5 @@
 import { addRefsFromTsType } from "./node-emitters.mjs";
+import { compareText } from "../core/deterministic-order.mjs";
 
 // ── factory.ts (NodeFactory struct + New/Clone factories) ────────────────────
 
@@ -73,7 +74,7 @@ function emitNodeFactoryStruct(schema, lines) {
   }
   arenaFields.push({ field: "modifierListArena", type: "ModifierList" });
   arenaFields.push({ field: "nodeListArena", type: "NodeList" });
-  arenaFields.sort((a, b) => a.field.localeCompare(b.field));
+  arenaFields.sort((left, right) => compareText(left.field, right.field));
 
   lines.push(`export interface NodeFactory {`);
   lines.push(`  hooks: NodeFactoryHooks;`);

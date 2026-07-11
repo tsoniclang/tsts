@@ -325,7 +325,7 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
     const info = requireBuildInfoValue(BuildInfoFileInfo_GetFileInfo(buildInfoFileInfo), `decoded fileInfos[${index}]`);
     SyncMap_Store(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, path, info);
     if (info.signature !== "" && isComposite) {
-      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info.signature, signatureWithDifferentOptions: [] });
+      SyncMap_Store(receiver!.snapshot.emitSignatures, path, { signature: info.signature, signatureWithDifferentOptions: undefined });
     }
   }
   for (const valueOrNil of receiver!.buildInfo!.EmitSignatures ?? []) {

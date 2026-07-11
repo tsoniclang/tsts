@@ -5,7 +5,7 @@ import { Time as TimeClass } from "../../../go/time.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { SourceFileParseOptions } from "../../ast/parseoptions.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
-import { OrderedMap_Set } from "../../collections/ordered_map.js";
+import { NewOrderedMapWithSizeHintWithRuntimeType, OrderedMap_HasRuntimeType, OrderedMap_Set, OrderedMap_StringAnyRuntimeType } from "../../collections/ordered_map.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import type { CompilerHost } from "../../compiler/host.js";
@@ -189,10 +189,9 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
     let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
     const raw = receiver!.orchestrator!.opts.Command!.Raw;
     if (raw !== undefined && raw !== null) {
-      const rawMap = raw as OrderedMap<string, unknown>;
-      if (rawMap.keys !== undefined) {
-        const wrapped: OrderedMap<string, unknown> = { __tsgoBlank0: {}, keys: [], mp: new Map() };
-        OrderedMap_Set(wrapped, "compilerOptions", rawMap);
+      if (OrderedMap_HasRuntimeType<string, unknown>(raw, OrderedMap_StringAnyRuntimeType)) {
+        const wrapped = NewOrderedMapWithSizeHintWithRuntimeType<string, unknown>(OrderedMap_StringAnyRuntimeType, 1);
+        OrderedMap_Set(wrapped, "compilerOptions", raw);
         commandLineRaw = wrapped;
       }
     }

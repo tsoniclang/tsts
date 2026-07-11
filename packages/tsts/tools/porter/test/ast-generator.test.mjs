@@ -17,7 +17,6 @@ import {
   buildStatus,
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
-  collectMechanicalPortRisks,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -243,6 +242,9 @@ test("ast-generator: a schema input content change makes committed output stale"
 
 test("ast-generator preserves nil NodeList slices in generated visitors", async () => {
   const output = buildAstGeneratedFiles(baseConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
+  assert.match(output, /if \(nodes === undefined \|\| nodes\.length !== 1\)/);
+  assert.match(output, /updated = \[\.\.\.updated, \.\.\.\(AsSyntaxList\(visited\)!\.Children \?\? \[\]\)\]/);
+  assert.match(output, /let nodes: GoPtr<GoSlice<GoPtr<Node>>> = undefined;/);
   const sourceFile = ts.createSourceFile("data.ts", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const declaration = sourceFile.statements.find((statement) =>
     ts.isFunctionDeclaration(statement) && statement.name?.text === "generatedVisitSlice");
@@ -381,7 +383,7 @@ test("ast-schema-model: raw string lists are not children; node raw lists are Go
   // JSDocText.text is []string (raw) inherited from JSDocCommentBase -> not a child.
   const textField = schema.baseFields("JSDocCommentBase").find((f) => f.name === "text");
   assert.equal(textField.isChild(), false);
-  assert.equal(textField.tsReference(), "GoSlice<string>");
+  assert.equal(textField.tsReference(), "GoPtr<GoSlice<string>>");
 });
 
 test("ast-generator: multi-kind and type-parameter Is functions follow ast_generated.go", () => {

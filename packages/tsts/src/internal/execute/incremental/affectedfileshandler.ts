@@ -364,8 +364,9 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
       return [false as bool, false as bool];
     }
   );
-  const values: GoPtr<SourceFile>[] = [];
+  let values: GoPtr<GoSlice<GoPtr<SourceFile>>> = undefined;
   for (const v of seenFileNamesMap.values()) {
+    values ??= [];
     values.push(v);
   }
   return Filter(values, (f: GoPtr<SourceFile>): bool => (f !== undefined) as bool);

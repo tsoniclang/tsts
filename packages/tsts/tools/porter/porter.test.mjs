@@ -1,6 +1,8 @@
 import "./test/policy-and-status.test.mjs";
+import "./test/semantic-provenance.test.mjs";
 import "./test/coverage-and-verification.test.mjs";
 import "./test/source-scanning-and-stubs.test.mjs";
+import "./test/source-scanning-tail.test.mjs";
 import "./test/rendering-and-artifacts.test.mjs";
 import "./test/ast-generator.test.mjs";
 import "./test/diagnostics-generator.test.mjs";

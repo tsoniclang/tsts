@@ -1,156 +1,72 @@
-import { extractTsgoOverrideJson } from "./local-overrides.mjs";
-import {
-  collectPositionedTypeScriptFileMechanicalRisks,
-  createMechanicalRiskChecker,
-  publicMechanicalRisk,
-} from "./asserted-zero-risks.mjs";
-import { safeIdentifier } from "./names.mjs";
-import { analyzeExceptionSafeCleanup, analyzeTypeScriptReturnSemantics } from "./semantic-risk-analysis.mjs";
-import { fail, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import ts from "typescript";
+import { compareText } from "./deterministic-order.mjs";
+import { parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
+import { loadParser } from "../ts-extractor/parser-runtime.mjs";
+import { loadProfile } from "../ts-extractor/profile.mjs";
+import { repoRoot, resolveRepo, walk } from "./runtime.mjs";
 
-export function scanTsUnits(root) {
+export function parserOptionsForConfig(config, root = repoRoot) {
+  const parser = loadProfile(config).parser;
+  return {
+    distRoot: path.join(root, parser.distRoot),
+    freshnessSrcDirs: parser.freshnessSrcDirs.map((directory) => path.join(root, directory)),
+  };
+}
+
+export async function scanTsUnits(root, options = {}) {
   if (!existsSync(root)) return { fileCount: 0, files: [], units: [] };
-
-  const files = walk(root).filter((file) => file.endsWith(".ts"));
-  const sourceRecords = files.map((file) => {
-    const text = readFileSync(file, "utf8");
-    return {
-      file,
-      text,
-      sourceFile: ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS),
-    };
-  });
-  const mechanicalRiskChecker = createMechanicalRiskChecker(sourceRecords.map((record) => record.sourceFile));
-  const statementBySymbol = topLevelStatementIndex(sourceRecords, mechanicalRiskChecker);
-  const positionedRisksByFile = new Map(sourceRecords.map((record) => [
-    record.sourceFile,
-    collectPositionedTypeScriptFileMechanicalRisks(record.sourceFile, mechanicalRiskChecker),
-  ]));
+  const api = options.api ?? await loadParser(options.parser);
+  const files = walk(root).filter((file) => file.endsWith(".ts")).sort(compareText);
   const fileReports = [];
   const units = [];
-  for (const { file, text, sourceFile } of sourceRecords) {
+  const unitsById = new Map();
+  for (const file of files) {
+    const text = readFileSync(file, "utf8");
     const relativeFile = path.relative(repoRoot, file).split(path.sep).join("/");
-    const overridesByUnitId = collectFileOverrides(text, relativeFile);
-    const textLines = text.split(/\r?\n/);
-    const malformedGoSourceLine = textLines.findIndex((line) => /^\s*\*\s+Go source:\s*\S/.test(line));
-    if (malformedGoSourceLine >= 0) {
-      throw new Error(`inline Go source annotations are forbidden in ${path.relative(repoRoot, file)}:${malformedGoSourceLine + 1}; use 'Port note:' for prose and reserve 'Go source:' for the exact embedded upstream source block`);
-    }
-    const regex = /@tsgo-unit\s+({[^\n\r]+})/g;
-    let match;
-    let metadataCount = 0;
-    const fileUnits = [];
-    while ((match = regex.exec(text)) !== null) {
-      metadataCount++;
-      try {
-        const metadata = JSON.parse(match[1]);
-        const metadataIssues = validateTsgoUnitMetadata(metadata);
-        if (metadataIssues.length > 0) {
-          throw new Error(metadataIssues.join("; "));
-        }
-        const overrideDocStart = text.lastIndexOf("/**", match.index);
-        const overrideDocEnd = text.indexOf("*/", regex.lastIndex);
-        const doc = overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex
-          ? text.slice(overrideDocStart, overrideDocEnd)
-          : "";
-        const tsUnit = {
-          id: metadata.id,
-          kind: metadata.kind,
-          status: metadata.status,
-          sigHash: metadata.sigHash,
-          bodyHash: metadata.bodyHash,
-          path: relativeFile,
-          metadata,
-          embeddedGoSource: extractEmbeddedGoSource(doc),
-        };
-        units.push(tsUnit);
-        const override = overridesByUnitId.get(metadata.id);
-        if (override !== undefined) units[units.length - 1].override = override;
-        const expectedName = expectedTsImplementationName(metadata);
-        const matchingDeclarations = expectedName === undefined
-          ? []
-          : sourceFile.statements.filter((statement) => ts.isFunctionDeclaration(statement) && statement.name?.text === expectedName);
-        const declaration = matchingDeclarations.length === 1 ? matchingDeclarations[0] : undefined;
-        const implementationBody = declaration?.body?.getText(sourceFile) ?? "";
-        if (expectedName !== undefined && matchingDeclarations.length !== 1) {
-          units[units.length - 1].implementationOwnerIssue = matchingDeclarations.length === 0
-            ? `missing function declaration '${expectedName}'`
-            : `ambiguous function declaration '${expectedName}' (${matchingDeclarations.length} matches)`;
-        }
-        const hasUnimplThrow = implementationBody.includes("TSGO_UNIMPLEMENTED");
-        units[units.length - 1].hasUnimplThrow = hasUnimplThrow;
-        units[units.length - 1].implementationBody = implementationBody;
-        fileUnits.push({
-          unit: tsUnit,
-          ownerStatements: mechanicalRiskOwnerStatements(sourceFile, metadata, matchingDeclarations),
-        });
-      } catch (error) {
-        fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
+    const moduleId = path.relative(root, file).split(path.sep).join("/");
+    const module = parseTypeScriptModule(api, moduleId, text);
+    for (const record of module.metadata) {
+      const metadataIssues = validateTsgoUnitMetadata(record.metadata);
+      if (metadataIssues.length > 0) {
+        throw new Error(`invalid @tsgo-unit metadata in ${relativeFile}: ${metadataIssues.join("; ")}`);
       }
+      assertEmbeddedGoSourceLabel(record.documentText, relativeFile, record.metadata.id);
+      if (unitsById.has(record.metadata.id)) {
+        throw new Error(`duplicate @tsgo-unit '${record.metadata.id}' in ${unitsById.get(record.metadata.id).path} and ${relativeFile}`);
+      }
+      const unit = {
+        id: record.metadata.id,
+        kind: record.metadata.kind,
+        status: record.metadata.status,
+        sigHash: record.metadata.sigHash,
+        bodyHash: record.metadata.bodyHash,
+        path: relativeFile,
+        metadata: record.metadata,
+        embeddedGoSource: extractEmbeddedGoSource(record.documentText),
+      };
+      if (record.override !== undefined) unit.override = record.override;
+      Object.defineProperty(unit, "declarationMetadata", { value: record, enumerable: false });
+      units.push(unit);
+      unitsById.set(unit.id, unit);
     }
-    const positionedSourceRisks = positionedRisksByFile.get(sourceFile) ?? [];
-    for (const owner of fileUnits) {
-      const reachableStatements = collectReachableTopLevelStatements(owner.ownerStatements, statementBySymbol, mechanicalRiskChecker);
-      owner.unit.mechanicalRisks = mechanicalRisksForStatements(reachableStatements, positionedRisksByFile).map(publicMechanicalRisk);
-      owner.unit.mechanicalRiskBody = reachableStatements
-        .map((statement) => statement.getText(statement.getSourceFile()))
-        .join("\n");
-      owner.unit.implementationAnalysis = analyzeTypeScriptStatements(reachableStatements, mechanicalRiskChecker);
-      owner.unit.returnSemantics = analyzeTypeScriptReturnSemantics(owner.ownerStatements, mechanicalRiskChecker, statementBySymbol);
-      owner.unit.exceptionSafeCleanup = analyzeExceptionSafeCleanup(reachableStatements);
-    }
-    fileReports.push({
-      path: relativeFile,
-      metadataCount,
-      sourceRisks: positionedSourceRisks.map(publicMechanicalRisk),
-    });
+    fileReports.push({ path: relativeFile, metadataCount: module.metadata.length });
   }
   return { fileCount: files.length, files: fileReports, units };
 }
 
-export function collectFileOverrides(text, relativeFile) {
-  const overrides = new Map();
-  let markersInDocs = 0;
-  for (const match of text.matchAll(/\/\*\*[\s\S]*?\*\//g)) {
-    const doc = match[0];
-    const markerCount = [...doc.matchAll(/@tsgo-override\b/g)].length;
-    markersInDocs += markerCount;
-    if (markerCount === 0) continue;
-    if (markerCount !== 1) throw new Error(`invalid @tsgo-override metadata in ${relativeFile}: one JSDoc must contain exactly one override marker`);
-    const unitMatches = [...doc.matchAll(/@tsgo-unit\s+({[^\n\r]+})/g)];
-    if (unitMatches.length !== 1) throw new Error(`orphan or ambiguous @tsgo-override in ${relativeFile}: its JSDoc must contain exactly one @tsgo-unit`);
-    let metadata;
-    try {
-      metadata = JSON.parse(unitMatches[0][1]);
-    } catch (error) {
-      throw new Error(`invalid @tsgo-unit JSON next to @tsgo-override in ${relativeFile}: ${error.message}`);
-    }
-    const overrideJson = extractTsgoOverrideJson(doc);
-    if (overrideJson === undefined) throw new Error(`invalid @tsgo-override in ${relativeFile}: marker must be followed by one JSON object`);
-    let override;
-    try {
-      override = JSON.parse(overrideJson);
-    } catch (error) {
-      throw new Error(`invalid @tsgo-override JSON in ${relativeFile}: ${error.message}`);
-    }
-    if (overrides.has(metadata.id)) throw new Error(`duplicate @tsgo-override for ${metadata.id} in ${relativeFile}`);
-    overrides.set(metadata.id, override);
+function assertEmbeddedGoSourceLabel(documentText, relativeFile, id) {
+  const malformedLine = documentText.split(/\r?\n/).findIndex((line) => /^\s*\*\s+Go source:\s*\S/.test(line));
+  if (malformedLine >= 0) {
+    throw new Error(`inline Go source annotations are forbidden in ${relativeFile} for ${id}; use 'Port note:' for prose and reserve 'Go source:' for the exact embedded upstream source block`);
   }
-  const totalMarkers = [...text.matchAll(/@tsgo-override\b/g)].length;
-  if (totalMarkers !== markersInDocs) throw new Error(`orphan @tsgo-override marker outside a JSDoc in ${relativeFile}`);
-  return overrides;
 }
 
 export function validateTsgoUnitMetadata(metadata) {
   const issues = [];
-  if (metadata === null || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return ["metadata must be an object"];
-  }
+  if (metadata === null || typeof metadata !== "object" || Array.isArray(metadata)) return ["metadata must be an object"];
   const expectedKeys = ["bodyHash", "id", "kind", "sigHash", "status"];
-  const actualKeys = Object.keys(metadata).sort();
+  const actualKeys = Object.keys(metadata).sort(compareText);
   if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
     issues.push(`metadata keys must be exactly ${expectedKeys.join(", ")}`);
   }
@@ -162,9 +78,7 @@ export function validateTsgoUnitMetadata(metadata) {
   if (typeof metadata.id === "string" && typeof metadata.kind === "string" && !metadata.id.includes(`::${metadata.kind}::`)) {
     issues.push("id kind segment does not match metadata kind");
   }
-  if (metadata.status !== "implemented" && metadata.status !== "stub") {
-    issues.push("status must be 'implemented' or 'stub'");
-  }
+  if (metadata.status !== "implemented" && metadata.status !== "stub") issues.push("status must be 'implemented' or 'stub'");
   if (typeof metadata.sigHash !== "string" || !/^[0-9a-f]{64}$/.test(metadata.sigHash)) {
     issues.push("sigHash must be a lowercase SHA-256 digest");
   }
@@ -174,217 +88,6 @@ export function validateTsgoUnitMetadata(metadata) {
   return issues;
 }
 
-export function collectTypeScriptImportBindings(sourceFile) {
-  const bindings = new Map();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
-    const moduleSpecifier = statement.moduleSpecifier.text;
-    const clause = statement.importClause;
-    if (clause?.name !== undefined) bindings.set(clause.name.text, { declaration: clause.name, moduleSpecifier, importedName: "default" });
-    const named = clause?.namedBindings;
-    if (named === undefined) continue;
-    if (ts.isNamespaceImport(named)) {
-      bindings.set(named.name.text, { declaration: named.name, moduleSpecifier, importedName: "*" });
-      continue;
-    }
-    for (const element of named.elements) {
-      bindings.set(element.name.text, { declaration: element.name, moduleSpecifier, importedName: element.propertyName?.text ?? element.name.text });
-    }
-  }
-  return bindings;
-}
-
-export function analyzeTypeScriptImplementation(body, importBindings = new Map()) {
-  if (body === "") return { calls: [] };
-  const sourceFile = ts.createSourceFile("/__tsgo_unit.ts", `function __tsgoUnit() ${body}`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  return analyzeTypeScriptNodes([sourceFile], undefined, () => importBindings);
-}
-
-export function analyzeTypeScriptStatements(statements, checker) {
-  const importBindings = new Map();
-  return analyzeTypeScriptNodes(statements, checker, (sourceFile) => {
-    let bindings = importBindings.get(sourceFile);
-    if (bindings === undefined) {
-      bindings = collectTypeScriptImportBindings(sourceFile);
-      importBindings.set(sourceFile, bindings);
-    }
-    return bindings;
-  });
-}
-
-function analyzeTypeScriptNodes(nodes, checker, bindingsForSourceFile) {
-  const calls = [];
-  const visit = (node) => {
-    if (ts.isCallExpression(node)) {
-      const callee = typeScriptCallee(node.expression, bindingsForSourceFile(node.getSourceFile()), checker);
-      if (callee !== undefined) {
-        const argumentCalls = new Set();
-        for (const argument of node.arguments) {
-          collectTypeScriptCallTerminals(argument, argumentCalls);
-        }
-        calls.push({ ...callee, argumentCalls: [...argumentCalls] });
-      }
-    }
-    ts.forEachChild(node, visit);
-  };
-  for (const node of nodes) visit(node);
-  return { calls };
-}
-
-export function typeScriptCallee(expression, importBindings, checker = undefined) {
-  const segments = [];
-  let current = expression;
-  while (ts.isPropertyAccessExpression(current)) {
-    segments.unshift(current.name.text);
-    current = current.expression;
-  }
-  if (!ts.isIdentifier(current)) {
-    if (segments.length === 0) return undefined;
-    return { text: segments.join("."), terminal: segments.at(-1), moduleSpecifier: undefined, importedName: undefined };
-  }
-  segments.unshift(current.text);
-  const binding = importBindings.get(current.text);
-  const bindingIsSelected = binding !== undefined && (checker === undefined
-    || checker.getSymbolAtLocation(current) === checker.getSymbolAtLocation(binding.declaration));
-  const importedSymbol = bindingIsSelected && checker !== undefined ? checker.getSymbolAtLocation(importedSymbolNode(expression)) : undefined;
-  const resolvedImportedSymbol = importedSymbol === undefined ? undefined : resolveAliasSymbol(checker, importedSymbol);
-  return {
-    text: segments.join("."),
-    terminal: segments.at(-1),
-    moduleSpecifier: bindingIsSelected ? binding.moduleSpecifier : undefined,
-    moduleFile: resolvedImportedSymbol?.declarations?.[0]?.getSourceFile().fileName.split(path.sep).join("/"),
-    importedName: bindingIsSelected ? (binding.importedName === "*" ? segments[1] : binding.importedName) : undefined,
-  };
-}
-
-function importedSymbolNode(expression) {
-  let current = expression;
-  while (ts.isPropertyAccessExpression(current)) {
-    if (ts.isIdentifier(current.expression)) return current.name;
-    current = current.expression;
-  }
-  return current;
-}
-
-export function collectTypeScriptCallTerminals(node, out) {
-  if (ts.isCallExpression(node)) {
-    let expression = node.expression;
-    while (ts.isPropertyAccessExpression(expression)) expression = expression.name;
-    if (ts.isIdentifier(expression)) out.add(expression.text);
-  }
-  ts.forEachChild(node, (child) => collectTypeScriptCallTerminals(child, out));
-}
-
-export function expectedTsImplementationName(metadata) {
-  if (metadata.kind !== "func" && metadata.kind !== "method") return undefined;
-  const segments = String(metadata.id ?? "").split("::");
-  const ordinal = /^#(\d+)$/.exec(segments.at(-1) ?? "");
-  if (ordinal !== null) segments.pop();
-  const qualifiedName = segments.at(-1) ?? "";
-  const base = metadata.kind === "method" ? qualifiedName.replaceAll(".", "_") : qualifiedName;
-  return ordinal === null ? base : `${base}__${ordinal[1]}`;
-}
-
-function mechanicalRiskOwnerStatements(sourceFile, metadata, matchingFunctionDeclarations) {
-  if (metadata.kind === "func" || metadata.kind === "method") return matchingFunctionDeclarations;
-  const expectedNames = expectedTsDeclarationNames(metadata);
-  return sourceFile.statements.filter((statement) =>
-    topLevelDeclarationNames(statement).some((name) => expectedNames.has(name)));
-}
-
-function expectedTsDeclarationNames(metadata) {
-  const segments = String(metadata.id ?? "").split("::");
-  if (/^#\d+$/.test(segments.at(-1) ?? "")) segments.pop();
-  const declaredNames = (segments.at(-1) ?? "").split("+");
-  return new Set(declaredNames.filter((name) => name !== "_").map(safeIdentifier));
-}
-
-function topLevelDeclarationNames(statement) {
-  if (ts.isInterfaceDeclaration(statement)
-    || ts.isTypeAliasDeclaration(statement)
-    || ts.isClassDeclaration(statement)
-    || ts.isEnumDeclaration(statement)
-    || ts.isFunctionDeclaration(statement)) {
-    return statement.name === undefined ? [] : [statement.name.text];
-  }
-  if (!ts.isVariableStatement(statement)) return [];
-  return statement.declarationList.declarations
-    .filter((declaration) => ts.isIdentifier(declaration.name))
-    .map((declaration) => declaration.name.text);
-}
-
-export function topLevelStatementIndex(sourceRecords, checker) {
-  const index = new Map();
-  for (const { sourceFile } of sourceRecords) {
-    for (const statement of sourceFile.statements) {
-      for (const name of topLevelDeclarationNameNodes(statement)) {
-        const symbol = checker.getSymbolAtLocation(name);
-        if (symbol !== undefined) index.set(resolveAliasSymbol(checker, symbol), statement);
-      }
-    }
-  }
-  return index;
-}
-
-export function collectReachableTopLevelStatements(ownerStatements, statementBySymbol, checker) {
-  const reachable = new Set();
-  const pending = [...ownerStatements];
-  while (pending.length > 0) {
-    const statement = pending.pop();
-    if (statement === undefined || reachable.has(statement)) continue;
-    reachable.add(statement);
-    const visit = (node) => {
-      if (ts.isIdentifier(node)) {
-        const symbol = checker.getSymbolAtLocation(node);
-        const dependency = symbol === undefined ? undefined : statementBySymbol.get(resolveAliasSymbol(checker, symbol));
-        if (dependency !== undefined && !reachable.has(dependency)) pending.push(dependency);
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(statement);
-  }
-  return [...reachable].sort((left, right) =>
-    left.getSourceFile().fileName.localeCompare(right.getSourceFile().fileName)
-      || left.getStart(left.getSourceFile()) - right.getStart(right.getSourceFile()));
-}
-
-export function mechanicalRisksForStatements(statements, risksByFile) {
-  const output = [];
-  const seen = new Set();
-  for (const statement of statements) {
-    const sourceFile = statement.getSourceFile();
-    for (const risk of risksByFile.get(sourceFile) ?? []) {
-      if (risk.position < statement.getStart(sourceFile) || risk.position >= statement.end) continue;
-      const key = `${sourceFile.fileName}\0${risk.position}\0${risk.kind}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      output.push(risk);
-    }
-  }
-  return output.sort((left, right) => left.position - right.position || left.kind.localeCompare(right.kind));
-}
-
-function topLevelDeclarationNameNodes(statement) {
-  if (ts.isInterfaceDeclaration(statement)
-    || ts.isTypeAliasDeclaration(statement)
-    || ts.isClassDeclaration(statement)
-    || ts.isEnumDeclaration(statement)
-    || ts.isFunctionDeclaration(statement)) {
-    return statement.name === undefined ? [] : [statement.name];
-  }
-  if (!ts.isVariableStatement(statement)) return [];
-  return statement.declarationList.declarations.flatMap((declaration) => bindingNameNodes(declaration.name));
-}
-
-function bindingNameNodes(name) {
-  if (ts.isIdentifier(name)) return [name];
-  return name.elements.flatMap((element) => ts.isOmittedExpression(element) ? [] : bindingNameNodes(element.name));
-}
-
-function resolveAliasSymbol(checker, symbol) {
-  return (symbol.flags & ts.SymbolFlags.Alias) === 0 ? symbol : checker.getAliasedSymbol(symbol);
-}
-
 export function renderGoSourceComment(snippet) {
   return String(snippet ?? "")
     .split("\n")
@@ -392,19 +95,17 @@ export function renderGoSourceComment(snippet) {
     .join("\n");
 }
 
-export function extractEmbeddedGoSource(doc) {
-  const lines = doc.split(/\r?\n/);
+export function extractEmbeddedGoSource(documentText) {
+  const lines = documentText.split(/\r?\n/);
   const markerIndex = lines.findIndex((line) => /^\s*\*\s+Go source:\s*$/.test(line));
   if (markerIndex < 0) return undefined;
   const sourceLines = [];
   for (let index = markerIndex + 1; index < lines.length; index++) {
     const line = lines[index];
-    if (/^\s*\*\s+@tsgo-/.test(line)) break;
+    if (/^\s*\*\s+@tsgo-/.test(line) || /^\s*\*\//.test(line)) break;
     sourceLines.push(line);
   }
-  while (sourceLines.length > 0 && /^\s*(?:\*)?\s*$/.test(sourceLines[sourceLines.length - 1])) {
-    sourceLines.pop();
-  }
+  while (sourceLines.length > 0 && /^\s*(?:\*)?\s*$/.test(sourceLines.at(-1))) sourceLines.pop();
   return sourceLines.join("\n");
 }
 
@@ -413,17 +114,17 @@ export function normalizeEmbeddedGoSource(source) {
   return source.split("\n").map((line) => line.trimEnd()).join("\n");
 }
 
-export function buildEmbeddedGoSourceUpdates(snapshot, root) {
+export async function buildEmbeddedGoSourceUpdates(snapshot, root, options = {}) {
   const goById = new Map(snapshot.files.flatMap((file) => (file.units ?? []).map((unit) => [unit.id, unit])));
-  const tsUnits = scanTsUnits(root);
+  const tsUnits = await scanTsUnits(root, options);
   const replacementsByPath = new Map();
   for (const tsUnit of tsUnits.units) {
     const goUnit = goById.get(tsUnit.id);
     if (goUnit === undefined) continue;
     const expected = renderGoSourceComment(goUnit.snippet);
     if (normalizeEmbeddedGoSource(tsUnit.embeddedGoSource) === normalizeEmbeddedGoSource(expected)) continue;
-    const replacements = replacementsByPath.get(tsUnit.path) ?? new Map();
-    replacements.set(tsUnit.id, expected);
+    const replacements = replacementsByPath.get(tsUnit.path) ?? [];
+    replacements.push({ record: tsUnit.declarationMetadata, expected });
     replacementsByPath.set(tsUnit.path, replacements);
   }
 
@@ -431,47 +132,42 @@ export function buildEmbeddedGoSourceUpdates(snapshot, root) {
   let unitCount = 0;
   for (const [relativePath, replacements] of replacementsByPath) {
     const filePath = resolveRepo(relativePath);
-    const current = readFileSync(filePath, "utf8");
-    const locations = [];
-    const metadataRegex = /@tsgo-unit\s+({[^\n\r]+})/g;
-    let match;
-    while ((match = metadataRegex.exec(current)) !== null) {
-      const metadata = JSON.parse(match[1]);
-      const expected = replacements.get(metadata.id);
-      if (expected === undefined) continue;
-      const docStart = current.lastIndexOf("/**", match.index);
-      const docEnd = current.indexOf("*/", metadataRegex.lastIndex);
-      if (docStart < 0 || docEnd < 0) {
-        fail(`missing JSDoc block for ${metadata.id} in ${relativePath}`);
-      }
-      locations.push({ docStart, docEnd, expected });
+    let next = readFileSync(filePath, "utf8");
+    for (const replacement of replacements.sort((left, right) => right.record.documentStart - left.record.documentStart)) {
+      const currentDocument = utf8Slice(next, replacement.record.documentStart, replacement.record.documentEnd);
+      const updatedDocument = synchronizeEmbeddedGoSourceDoc(currentDocument, replacement.expected);
+      next = replaceUtf8Range(next, replacement.record.documentStart, replacement.record.documentEnd, updatedDocument);
     }
-    if (locations.length !== replacements.size) {
-      fail(`could not locate every stale Go source block in ${relativePath}`);
-    }
-    let next = current;
-    for (const location of locations.sort((left, right) => right.docStart - left.docStart)) {
-      const doc = next.slice(location.docStart, location.docEnd);
-      const updatedDoc = synchronizeEmbeddedGoSourceDoc(doc, location.expected);
-      next = next.slice(0, location.docStart) + updatedDoc + next.slice(location.docEnd);
-    }
-    updates.push({ path: filePath, text: next, unitCount: locations.length });
-    unitCount += locations.length;
+    updates.push({ path: filePath, text: next, unitCount: replacements.length });
+    unitCount += replacements.length;
   }
   return { updates, unitCount };
 }
 
-export function synchronizeEmbeddedGoSourceDoc(doc, expected) {
-  const marker = /^\s*\*\s+Go source:\s*$/m.exec(doc);
-  if (marker === null) {
-    return `${doc.trimEnd()}\n *\n * Go source:\n${expected}\n `;
-  }
-  const markerLineStart = doc.lastIndexOf("\n", marker.index) + 1;
+export function synchronizeEmbeddedGoSourceDoc(documentText, expected) {
+  const closeIndex = documentText.lastIndexOf("*/");
+  if (closeIndex < 0) throw new Error("attached JSDoc is missing its closing delimiter");
+  const body = documentText.slice(0, closeIndex);
+  const closing = documentText.slice(closeIndex);
+  const marker = /^\s*\*\s+Go source:\s*$/m.exec(body);
+  if (marker === null) return `${body.trimEnd()}\n *\n * Go source:\n${expected}\n ${closing}`;
+  const markerLineStart = body.lastIndexOf("\n", marker.index) + 1;
   const afterMarker = marker.index + marker[0].length;
-  const nextTag = /\n\s*\*\s+@tsgo-/.exec(doc.slice(afterMarker));
-  const sourceEnd = nextTag === null ? doc.trimEnd().length : afterMarker + nextTag.index + 1;
-  const sourceBlock = nextTag === null
-    ? ` * Go source:\n${expected}`
-    : ` * Go source:\n${expected}\n *\n`;
-  return doc.slice(0, markerLineStart) + sourceBlock + doc.slice(sourceEnd);
+  const nextTag = /\n\s*\*\s+@tsgo-/.exec(body.slice(afterMarker));
+  const sourceEnd = nextTag === null ? body.trimEnd().length : afterMarker + nextTag.index + 1;
+  const sourceBlock = nextTag === null ? ` * Go source:\n${expected}\n ` : ` * Go source:\n${expected}\n *\n`;
+  return body.slice(0, markerLineStart) + sourceBlock + body.slice(sourceEnd) + closing;
+}
+
+function utf8Slice(text, start, end) {
+  return Buffer.from(text, "utf8").subarray(start, end).toString("utf8");
+}
+
+function replaceUtf8Range(text, start, end, replacement) {
+  const source = Buffer.from(text, "utf8");
+  return Buffer.concat([
+    source.subarray(0, start),
+    Buffer.from(replacement, "utf8"),
+    source.subarray(end),
+  ]).toString("utf8");
 }

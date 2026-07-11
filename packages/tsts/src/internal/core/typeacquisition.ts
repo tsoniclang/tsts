@@ -17,8 +17,8 @@ import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
  */
 export interface TypeAcquisition {
   Enable: Tristate;
-  Include: GoSlice<string>;
-  Exclude: GoSlice<string>;
+  Include: GoPtr<GoSlice<string>>;
+  Exclude: GoPtr<GoSlice<string>>;
   DisableFilenameBasedTypeAcquisition: Tristate;
 }
 

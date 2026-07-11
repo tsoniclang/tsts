@@ -1,3 +1,4 @@
+import { compareText } from "./deterministic-order.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { fail, resolveRepo } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
@@ -58,9 +59,9 @@ export function buildLargeFileSplitStatus(config, snapshot) {
     plannedFileCount: Object.keys(plan.files ?? {}).length,
     assignedUnitCount: assignments.size,
     failureCount: issues.length,
-    assignments: Object.fromEntries([...assignments.entries()].sort(([left], [right]) => left.localeCompare(right))),
-    files: files.sort((left, right) => left.path.localeCompare(right.path)),
-    issues: issues.sort((left, right) => `${left.file}:${left.kind}:${left.declaration ?? ""}`.localeCompare(`${right.file}:${right.kind}:${right.declaration ?? ""}`)),
+    assignments: Object.fromEntries([...assignments.entries()].sort(([left], [right]) => compareText(left, right))),
+    files: files.sort((left, right) => compareText(left.path, right.path)),
+    issues: issues.sort((left, right) => compareText(`${left.file}:${left.kind}:${left.declaration ?? ""}`, `${right.file}:${right.kind}:${right.declaration ?? ""}`)),
   };
 }
 
@@ -88,9 +89,9 @@ export function buildDraftLargeFileSplitPlan(config, snapshot) {
       targets: [...groups.values()]
         .map((target) => ({
           ...target,
-          declarations: target.declarations.sort((left, right) => left.localeCompare(right)),
+          declarations: target.declarations.sort(compareText),
         }))
-        .sort((left, right) => left.file.localeCompare(right.file)),
+        .sort((left, right) => compareText(left.file, right.file)),
     };
   }
   return {

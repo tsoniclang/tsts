@@ -1,185 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
-	"go/token"
-	"strings"
 )
-
-func inferredValueType(expr ast.Expr) *TypeExprReport {
-	if expr == nil {
-		return nil
-	}
-	switch typed := expr.(type) {
-	case *ast.BasicLit:
-		switch typed.Kind {
-		case token.STRING:
-			return identTypeExpr("string")
-		case token.CHAR:
-			return identTypeExpr("rune")
-		case token.INT:
-			return identTypeExpr("int")
-		case token.FLOAT:
-			return identTypeExpr("float64")
-		case token.IMAG:
-			return identTypeExpr("complex128")
-		default:
-			return nil
-		}
-	case *ast.Ident:
-		switch typed.Name {
-		case "true", "false":
-			return identTypeExpr("bool")
-		case "iota":
-			return identTypeExpr("int")
-		default:
-			return nil
-		}
-	case *ast.ParenExpr:
-		return inferredValueType(typed.X)
-	case *ast.UnaryExpr:
-		if typed.Op == token.AND {
-			if composite, ok := typed.X.(*ast.CompositeLit); ok && composite.Type != nil {
-				element := typeExpr(composite.Type)
-				if element != nil {
-					return &TypeExprReport{Kind: "pointer", Text: "*" + element.Text, Element: element}
-				}
-			}
-			return nil
-		}
-		return inferredValueType(typed.X)
-	case *ast.BinaryExpr:
-		if isComparisonOp(typed.Op) {
-			return identTypeExpr("bool")
-		}
-		left := inferredValueType(typed.X)
-		right := inferredValueType(typed.Y)
-		if left != nil && right != nil {
-			if left.Name == "string" || right.Name == "string" {
-				if typed.Op == token.ADD {
-					return identTypeExpr("string")
-				}
-				return nil
-			}
-			if isNumericTypeName(left.Name) && isNumericTypeName(right.Name) {
-				return widerNumericType(left.Name, right.Name)
-			}
-		}
-		if typed.Op == token.SHL || typed.Op == token.SHR || typed.Op == token.AND || typed.Op == token.OR || typed.Op == token.XOR || typed.Op == token.AND_NOT {
-			return identTypeExpr("int")
-		}
-		return nil
-	case *ast.CompositeLit:
-		return typeExpr(typed.Type)
-	case *ast.FuncLit:
-		return typeExpr(typed.Type)
-	case *ast.CallExpr:
-		if ident, ok := typed.Fun.(*ast.Ident); ok {
-			switch ident.Name {
-			case "make":
-				if len(typed.Args) > 0 {
-					return typeExpr(typed.Args[0])
-				}
-			case "new":
-				if len(typed.Args) > 0 {
-					element := typeExpr(typed.Args[0])
-					if !isUsableTypeExpr(element) {
-						element = inferredValueType(typed.Args[0])
-					}
-					if element != nil {
-						return &TypeExprReport{Kind: "pointer", Text: "*" + element.Text, Element: element}
-					}
-				}
-			case "complex":
-				return identTypeExpr("complex128")
-			}
-			if isPrimitiveTypeName(ident.Name) {
-				return identTypeExpr(ident.Name)
-			}
-		}
-		if selector, ok := typed.Fun.(*ast.SelectorExpr); ok {
-			if printed(selector.X) == "errors" && selector.Sel.Name == "New" {
-				return identTypeExpr("error")
-			}
-		}
-		return nil
-	default:
-		return nil
-	}
-}
-
-func identTypeExpr(name string) *TypeExprReport {
-	return &TypeExprReport{Kind: "ident", Text: name, Name: name}
-}
-
-func isUsableTypeExpr(expr *TypeExprReport) bool {
-	if expr == nil {
-		return false
-	}
-	if strings.HasPrefix(expr.Kind, "*ast.") {
-		return false
-	}
-	if expr.Kind == "ident" && (expr.Name == "true" || expr.Name == "false" || expr.Name == "nil") {
-		return false
-	}
-	return true
-}
-
-func isComparisonOp(op token.Token) bool {
-	return op == token.EQL || op == token.NEQ || op == token.LSS || op == token.LEQ || op == token.GTR || op == token.GEQ
-}
-
-func isPrimitiveTypeName(name string) bool {
-	switch name {
-	case "any", "bool", "byte", "complex64", "complex128", "error", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune", "string", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr":
-		return true
-	default:
-		return false
-	}
-}
-
-func isNumericTypeName(name string) bool {
-	switch name {
-	case "byte", "complex64", "complex128", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr":
-		return true
-	default:
-		return false
-	}
-}
-
-func widerNumericType(left string, right string) *TypeExprReport {
-	ranks := map[string]int{
-		"byte":       1,
-		"int8":       1,
-		"uint8":      1,
-		"int16":      2,
-		"uint16":     2,
-		"int32":      3,
-		"rune":       3,
-		"uint32":     3,
-		"int":        4,
-		"uint":       4,
-		"uintptr":    4,
-		"int64":      5,
-		"uint64":     5,
-		"float32":    6,
-		"float64":    7,
-		"complex64":  8,
-		"complex128": 9,
-	}
-	if ranks[right] > ranks[left] {
-		return identTypeExpr(right)
-	}
-	return identTypeExpr(left)
-}
 
 func typeExpr(expr ast.Expr) *TypeExprReport {
 	if expr == nil {
 		return nil
 	}
+	kind, supported := typeExprKind(expr)
+	if !supported {
+		fatalf("unsupported Go declaration type expression %T", expr)
+	}
 	report := &TypeExprReport{
-		Kind: typeExprKind(expr),
+		Kind: kind,
 		Text: printed(expr),
 	}
 	switch typed := expr.(type) {
@@ -233,41 +67,41 @@ func typeExpr(expr ast.Expr) *TypeExprReport {
 	return report
 }
 
-func typeExprKind(expr ast.Expr) string {
+func typeExprKind(expr ast.Expr) (string, bool) {
 	switch typed := expr.(type) {
 	case *ast.Ident:
-		return "ident"
+		return "ident", true
 	case *ast.SelectorExpr:
-		return "selector"
+		return "selector", true
 	case *ast.StarExpr:
-		return "pointer"
+		return "pointer", true
 	case *ast.ArrayType:
 		if typed.Len == nil {
-			return "slice"
+			return "slice", true
 		}
-		return "array"
+		return "array", true
 	case *ast.MapType:
-		return "map"
+		return "map", true
 	case *ast.FuncType:
-		return "func"
+		return "func", true
 	case *ast.InterfaceType:
-		return "interface"
+		return "interface", true
 	case *ast.StructType:
-		return "struct"
+		return "struct", true
 	case *ast.Ellipsis:
-		return "ellipsis"
+		return "ellipsis", true
 	case *ast.IndexExpr, *ast.IndexListExpr:
-		return "instantiation"
+		return "instantiation", true
 	case *ast.ParenExpr:
-		return "paren"
+		return "paren", true
 	case *ast.ChanType:
-		return "channel"
+		return "channel", true
 	case *ast.UnaryExpr:
-		return "unary"
+		return "unary", true
 	case *ast.BinaryExpr:
-		return "binary"
+		return "binary", true
 	default:
-		return fmt.Sprintf("%T", expr)
+		return "", false
 	}
 }
 
@@ -298,13 +132,13 @@ func structMembers(expr *ast.StructType) []MemberReport {
 	for _, field := range expr.Fields.List {
 		fieldText := printed(field.Type)
 		fieldExpr := typeExpr(field.Type)
-		structTag, tagValues := fieldTags(field)
+		structTag, tagValues, tagRemainder := fieldTags(field)
 		if len(field.Names) == 0 {
-			members = append(members, MemberReport{Kind: "embeddedField", Name: fieldText, Exported: embeddedFieldExported(field.Type), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
+			members = append(members, MemberReport{Kind: "embeddedField", Name: fieldText, Exported: embeddedFieldExported(field.Type), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues, TagRemainder: tagRemainder})
 			continue
 		}
 		for _, name := range field.Names {
-			members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues})
+			members = append(members, MemberReport{Kind: "field", Name: name.Name, Exported: ast.IsExported(name.Name), Type: fieldText, TypeExpr: fieldExpr, StructTag: structTag, TagValues: tagValues, TagRemainder: tagRemainder})
 		}
 	}
 	return members
@@ -323,9 +157,9 @@ func chanDirection(direction ast.ChanDir) string {
 
 func fieldNames(fields *ast.FieldList) []string {
 	if fields == nil {
-		return nil
+		return []string{}
 	}
-	var names []string
+	names := []string{}
 	for _, field := range fields.List {
 		for _, name := range field.Names {
 			names = append(names, name.Name)

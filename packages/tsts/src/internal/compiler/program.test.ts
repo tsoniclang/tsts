@@ -26,6 +26,7 @@ import { NewCompilerHost } from "./host.js";
 import { EmitAll } from "./emitter.js";
 import {
   NewProgram,
+  Program_BindSourceFiles,
   Program_Emit,
   Program_GetCheckerPool,
   Program_GetSourceFiles,
@@ -367,6 +368,82 @@ test("SortAndDeduplicateDiagnostics preserves the Go nil-slice distinction", () 
   const result = SortAndDeduplicateDiagnostics(allocatedEmpty);
   assert.deepEqual(result, []);
   assert.notEqual(result, allocatedEmpty);
+});
+
+test("NewProgram closes its trace scope when source loading throws", () => {
+  const fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", "export const value = 1;"],
+    ["/trace/.keep", ""],
+  ]), true as bool);
+  const [tracing, startError] = StartTracing(fs, "/trace", "", true as bool);
+  assert.equal(startError, undefined);
+  if (tracing === undefined) {
+    assert.fail("StartTracing returned nil without an error");
+  }
+  const failure = new globalThis.Error("source loading failure");
+  const host = NewCompilerHost("/src", WrapFS(fs), LibPath(), undefined, undefined);
+  const throwingHost = new Proxy(host, {
+    get(target, property, receiver) {
+      if (property === "GetSourceFile") {
+        return (): never => {
+          throw failure;
+        };
+      }
+      return Reflect.get(target, property, receiver) as unknown;
+    },
+  });
+
+  assert.throws(
+    () => NewProgram({
+      Config: parsedCommandLine(["/src/index.ts"], { NoLib: TSTrue } as CompilerOptions),
+      Host: throwingHost,
+      Tracing: tracing,
+    }),
+    failure,
+  );
+  assert.equal(Tracing_StopTracing(tracing), undefined);
+  const [traceText, ok] = fs.ReadFile("/trace/trace.json");
+  assert.equal(ok, true);
+  const events = JSON.parse(traceText) as Array<{ readonly ph: string; readonly name?: string }>;
+  assert.deepEqual(events.filter((event) => event.name === "createProgram").map((event) => event.ph), ["B", "E"]);
+});
+
+test("Program.BindSourceFiles closes its per-file trace when binding throws", () => {
+  const traceFS = FromMap(new Map<string, string>([["/trace/.keep", ""]]), true as bool);
+  const [tracing, startError] = StartTracing(traceFS, "/trace", "", true as bool);
+  assert.equal(startError, undefined);
+  if (tracing === undefined) {
+    assert.fail("StartTracing returned nil without an error");
+  }
+  const { program, sourceFile } = focusedProgram(tracing);
+  const originalIsBound = sourceFile!.isBound;
+  const failure = new globalThis.Error("binding failure");
+  let loadCount = 0;
+  sourceFile!.isBound = new Proxy(originalIsBound, {
+    get(target, property, receiver) {
+      if (property === "Load") {
+        return (): bool => {
+          loadCount++;
+          if (loadCount === 1) {
+            return false as bool;
+          }
+          throw failure;
+        };
+      }
+      return Reflect.get(target, property, receiver) as unknown;
+    },
+  });
+
+  try {
+    assert.throws(() => Program_BindSourceFiles(program), failure);
+  } finally {
+    sourceFile!.isBound = originalIsBound;
+  }
+  assert.equal(Tracing_StopTracing(tracing), undefined);
+  const [traceText, ok] = traceFS.ReadFile("/trace/trace.json");
+  assert.equal(ok, true);
+  const events = JSON.parse(traceText) as Array<{ readonly ph: string; readonly name?: string }>;
+  assert.deepEqual(events.filter((event) => event.name === "bindSourceFile").map((event) => event.ph), ["B", "E"]);
 });
 
 test("Program.Emit stops after no-emit-on-error handling when its context is canceled", () => {

@@ -9,6 +9,8 @@ import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extra
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
+import "./ts-extractor/declaration-metadata.test.mjs";
+import "./ts-extractor/module-index.test.mjs";
 
 async function tryLoad() {
   try { return await loadParser(); } catch { return undefined; }
@@ -37,7 +39,7 @@ export function f<T extends Node>(a: string, ...rest: number[]): GoPtr<Node> { t
   assert.equal(canonicalKey(d.ret), "R:pkg/compat.ts::GoPtr<R:pkg/node.ts::Node>");
 });
 
-test("integration: association survives an interleaved non-tracked helper", async (t) => {
+test("integration: metadata belongs to the interleaved helper and cannot skip it", async (t) => {
   const api = await tryLoad();
   if (!api) return t.skip("TSTS dist not built/fresh");
   // JSDoc for `target`, then a helper with no annotation, then `target` itself.
@@ -45,11 +47,10 @@ test("integration: association survives an interleaved non-tracked helper", asyn
 function helperNotTracked(): number { return 0; }
 export function target(a: string): void {}
 `;
-  const units = extractFileDescriptors(api, "pkg/f.ts", src, ANNO);
-  const d = units.find((u) => u.id.endsWith("::target")).descriptor;
-  assert.equal(d.kind, "func");
-  assert.equal(d.params.length, 1); // target's sig, NOT helper's
-  assert.equal(canonicalKey(d.params[0].type), "K:string");
+  assert.throws(
+    () => extractFileDescriptors(api, "pkg/f.ts", src, ANNO),
+    /attached to 'helperNotTracked', expected 'target'/,
+  );
 });
 
 test("integration: unannotated value declaration is detected as missing", async (t) => {
@@ -86,9 +87,47 @@ export const mask: bigint = 0x8000000000000000n;
 `;
   const units = extractFileDescriptors(api, "pkg/v.ts", src, ANNO);
   assert.deepEqual(units[0].descriptor.decls[0].value, {
-    kind: "number",
+    kind: "bigint",
     value: "9223372036854775808",
   });
+  const profile = loadProfile({});
+  const index = buildExpectedIndex({ goModulePath: "m", tsRoot: "pkg" }, { files: [] }, new Map(), profile, new Map());
+  const expected = goUnitDescriptor({
+    id: "m::v.go::constGroup::mask",
+    kind: "constGroup",
+    semantic: [{
+      kind: "constGroup",
+      packagePath: "m",
+      profiles: [0],
+      valueSpecs: [{
+        specIndex: 0,
+        names: [{
+          name: "mask",
+          nameIndex: 0,
+          blank: false,
+          type: { kind: "basic", basic: { name: "uint64", untyped: false } },
+          constant: { kind: "Int", exact: "9223372036854775808" },
+        }],
+      }],
+    }],
+  }, index);
+  assert.deepEqual(expected.decls[0].value, units[0].descriptor.decls[0].value);
+});
+
+test("integration: number constants use IEEE-754 semantics", async (t) => {
+  const api = await tryLoad();
+  if (!api) return t.skip("TSTS dist not built/fresh");
+  const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::unsafe+sum+mixed","kind":"constGroup"} */
+export const unsafe: number = 9007199254740993;
+export const sum: number = 0.1 + 0.2;
+export const mixed: bigint = 1n + 1;
+`;
+  const declarations = extractFileDescriptors(api, "pkg/v.ts", src, ANNO)[0].descriptor.decls;
+  assert.deepEqual(declarations.map((declaration) => declaration.value), [
+    { kind: "number", value: "9007199254740992" },
+    { kind: "number", value: "0.30000000000000004" },
+    undefined,
+  ]);
 });
 
 test("integration: imported constant expressions resolve mechanically", async (t) => {
@@ -115,14 +154,22 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   const index = buildExpectedIndex(config, { files: [] }, new Map(), profile, new Map());
   // Go: func f(a string, b *int) — expected [string, GoPtr<int>].
   const goUnit = {
+    id: "m::pkg/f.go::func::f",
     kind: "func",
-    file: { importPath: "m/pkg", imports: [] },
-    parameters: [
-      { names: ["a"], type: { kind: "ident", name: "string" } },
-      { names: ["b"], type: { kind: "pointer", element: { kind: "ident", name: "int" } } },
-    ],
-    results: [],
-    typeParameterDetails: [],
+    semantic: [{
+      kind: "func",
+      profiles: ["linux/amd64:cgo=0:tags="],
+      signature: {
+        receiverTypeParameters: [],
+        typeParameters: [],
+        parameters: { variables: [
+          { name: "a", type: { kind: "basic", basic: { name: "string", untyped: false } } },
+          { name: "b", type: { kind: "pointer", element: { kind: "basic", basic: { name: "int", untyped: false } } } },
+        ] },
+        results: { variables: [] },
+        variadic: false,
+      },
+    }],
   };
   const expected = goUnitDescriptor(goUnit, index);
 

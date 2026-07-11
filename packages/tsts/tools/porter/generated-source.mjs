@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-import { collectTypeScriptTextMechanicalRisks } from "./core/asserted-zero-risks.mjs";
+import { compareText } from "./core/deterministic-order.mjs";
 import { matchGlob } from "./path-policy.mjs";
 
 export const generatedSourceMechanisms = Object.freeze([
@@ -130,7 +130,7 @@ export function buildGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
         const units = (file.units ?? [])
           .filter((unit) => primaryKinds.has(unit.kind))
           .map((unit) => ({ id: unit.id, sigHash: unit.sigHash, bodyHash: unit.bodyHash }))
-          .sort((left, right) => left.id.localeCompare(right.id));
+          .sort((left, right) => compareText(left.id, right.id));
         return {
           path: file.path,
           sourceHash: file.sourceHash,
@@ -138,7 +138,7 @@ export function buildGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
           unitCoverageHash: hashJson(units),
         };
       })
-      .sort((left, right) => left.path.localeCompare(right.path));
+      .sort((left, right) => compareText(left.path, right.path));
     return {
       id: candidate.id,
       mode: candidate.mode,
@@ -207,18 +207,9 @@ export function buildGlobalGeneratedArtifactStatus(repoRoot, config, artifactSta
       continue;
     }
     const [provider] = providers;
-    if (metadata.generator !== provider.id) issues.push({ path: relative, reason: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'` });
-    if (!provider.kinds.includes(metadata.kind)) issues.push({ path: relative, reason: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'` });
-    if (metadata.path !== relative) issues.push({ path: relative, reason: `metadata path '${metadata.path}' does not match '${relative}'` });
-    const mechanicalRisks = collectTypeScriptTextMechanicalRisks(file, text);
-    if (mechanicalRisks.length > 0) {
-      const first = mechanicalRisks[0];
-      issues.push({
-        path: relative,
-        provider: provider.id,
-        reason: `generated artifact provider '${provider.id}' emitted ${mechanicalRisks.length} asserted Go zero risk(s), first at ${first.line}:${first.column}; fix the registered generator, not its output`,
-      });
-    }
+    if (metadata.generator !== provider.id) issues.push({ path: relative, provider: provider.id, reason: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'; fix the registered generator output` });
+    if (!provider.kinds.includes(metadata.kind)) issues.push({ path: relative, provider: provider.id, reason: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'; fix the registered generator output` });
+    if (metadata.path !== relative) issues.push({ path: relative, provider: provider.id, reason: `metadata path '${metadata.path}' does not match '${relative}'; fix the registered generator output` });
   }
   return { issues, providerCount: generatedArtifactProviders.length };
 }

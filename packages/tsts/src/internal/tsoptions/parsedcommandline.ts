@@ -349,7 +349,7 @@ export function ParsedCommandLine_CommonSourceDirectory(receiver: GoPtr<ParsedCo
   p.commonSourceDirectoryOnce.Do((): void => {
     p.commonSourceDirectory = GetCommonSourceDirectory(
       p.ParsedConfig!.CompilerOptions,
-      (): GoSlice<string> => {
+      (): GoPtr<GoSlice<string>> => {
         return Filter(
           p.ParsedConfig!.FileNames,
           (file: string): bool => {
@@ -383,10 +383,10 @@ export function ParsedCommandLine_CommonSourceDirectory(receiver: GoPtr<ParsedCo
  * 	return allFilesBelongToPath
  * }
  */
-export function ParsedCommandLine_checkSourceFilesBelongToPath(receiver: GoPtr<ParsedCommandLine>, sourceFiles: GoSlice<string>, rootDirectory: string): bool {
+export function ParsedCommandLine_checkSourceFilesBelongToPath(receiver: GoPtr<ParsedCommandLine>, sourceFiles: GoPtr<GoSlice<string>>, rootDirectory: string): bool {
   const p = receiver!;
   let allFilesBelongToPath = true as bool;
-  for (const file of sourceFiles) {
+  for (const file of sourceFiles ?? []) {
     const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, ParsedCommandLine_GetCurrentDirectory(p)), ParsedCommandLine_UseCaseSensitiveFileNames(p));
     if (!ContainsPath(rootDirectory, file, p.comparePathsOptions)) {
       p.Errors = [...(p.Errors ?? []), NewCompilerDiagnostic(File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files, absoluteSourceFilePath, rootDirectory)];
@@ -585,7 +585,7 @@ export function ParsedCommandLine_WildcardDirectories(receiver: GoPtr<ParsedComm
   p.wildcardDirectoriesOnce.Do((): void => {
     if (p.wildcardDirectories === undefined) {
       const include = p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs;
-      if (include.length !== 0) {
+      if ((include?.length ?? 0) !== 0) {
         p.wildcardDirectories = getWildcardDirectories(
           include,
           p.ConfigFile!.configFileSpecs!.validatedExcludeSpecs,
@@ -884,7 +884,7 @@ export function ParsedCommandLine_PossiblyMatchesFileName(receiver: GoPtr<Parsed
     return true;
   }
 
-  for (const include of p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs) {
+  for (const include of p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs ?? []) {
     if (!strings.ContainsAny(include, "*?") && !IsImplicitGlob(include)) {
       const includePath = ToPath(include, ParsedCommandLine_GetCurrentDirectory(p), ParsedCommandLine_UseCaseSensitiveFileNames(p));
       if (includePath === path) {
@@ -971,12 +971,13 @@ export function ParsedCommandLine_GetMatchedFileSpec(receiver: GoPtr<ParsedComma
  */
 export function ParsedCommandLine_GetMatchedIncludeSpec(receiver: GoPtr<ParsedCommandLine>, fileName: string): [string, bool] {
   const p = receiver!;
-  if (p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs.length === 0) {
+  const validatedIncludeSpecs = p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs;
+  if ((validatedIncludeSpecs?.length ?? 0) === 0) {
     return ["", false];
   }
 
   if (p.ConfigFile!.configFileSpecs!.isDefaultIncludeSpec) {
-    return [p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs[0]!, true];
+    return [validatedIncludeSpecs![0]!, true];
   }
 
   return [configFileSpecs_getMatchedIncludeSpec(p.ConfigFile!.configFileSpecs, fileName, p.comparePathsOptions), false];

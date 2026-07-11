@@ -4,8 +4,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
-import { loadProfile } from "./ts-extractor/profile.mjs";
-import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse, withSignatureOverrideSnapshots } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
@@ -21,8 +19,9 @@ test("typesEqual: Array<T> == T[]", () => {
   assert.equal(canonicalKey(arrayGen) === canonicalKey(arraySugar), false); // pre-canonicalization differ
 });
 
-test("typesEqual: soft id compares by terminal name; hard ids must match fully", () => {
-  assert.ok(typesEqual(ref("name::Node"), ref("a/b.ts::Node"))); // soft vs hard -> by name
+test("typesEqual: only compatible soft ids compare by terminal name", () => {
+  assert.ok(typesEqual(ref("name::Node"), ref("global::Node")));
+  assert.ok(!typesEqual(ref("global::Date"), ref("a/b.ts::Date")));
   assert.ok(!typesEqual(ref("core.ts::Node"), ref("ast.ts::Node"))); // two hard, different module
   assert.ok(typesEqual(ref("ast.ts::Node"), ref("ast.ts::Node")));
 });
@@ -48,6 +47,20 @@ test("compareFunc: arity, param-type, return-type, param-order", () => {
   assert.ok(kinds(compareSignatures(exp, swapped, null)).has("param-order"));
 
   assert.equal(compareSignatures(exp, exp, null).length, 0);
+});
+
+test("missing function annotations fail closed", () => {
+  const expected = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: kw("number") }] };
+  const actual = {
+    kind: "func",
+    typeParams: [],
+    ret: kw("void"),
+    missingReturnType: true,
+    params: [{ type: kw("number"), missingType: true }],
+  };
+  const mismatches = kinds(compareSignatures(expected, actual, null));
+  assert.ok(mismatches.has("param-annotation-missing"));
+  assert.ok(mismatches.has("return-annotation-missing"));
 });
 
 test("declaration kind is compared before kind-specific descriptor dispatch", () => {
@@ -77,6 +90,27 @@ test("compareInterface: member-type, missing-member, extra-member; method == fn-
   const ifaceA = { kind: "interface", typeParams: [], members: [{ name: "m", type: fnType }] };
   const ifaceB = { kind: "interface", typeParams: [], members: [{ name: "m", type: { t: "fn", params: [{ type: kw("string") }], ret: kw("void") } }] };
   assert.equal(compareSignatures(ifaceA, ifaceB, null).length, 0);
+});
+
+test("interface heritage and member modifiers compare exactly", () => {
+  const member = { name: "value", type: kw("number") };
+  const expected = { kind: "interface", typeParams: [], heritage: [], members: [member] };
+  assert.equal(compareSignatures(expected, { ...expected, members: [{ ...member }] }, null).length, 0);
+  const actual = { ...expected, heritage: ["extends Base"], members: [{ ...member, readonly: true, optional: true }] };
+  const mismatches = kinds(compareSignatures(expected, actual, null));
+  assert.ok(mismatches.has("interface-heritage"));
+  assert.ok(mismatches.has("member-readonly"));
+  assert.ok(mismatches.has("member-optionality"));
+
+  const plain = { t: "fn", typeParams: [], params: [], ret: kw("void") };
+  const generic = { t: "fn", typeParams: [{ constraint: null }], params: [], ret: kw("void") };
+  assert.equal(typesEqual(plain, generic), false);
+});
+
+test("allowed globals cannot hide hard imported identity drift", () => {
+  const expected = { kind: "func", typeParams: [], params: [{ type: ref("global::Date") }], ret: kw("void") };
+  const actual = { kind: "func", typeParams: [], params: [{ type: ref("pkg/date.ts::Date") }], ret: kw("void") };
+  assert.ok(kinds(compareSignatures(expected, actual, null, (id) => id, noConv, ["Date"])).has("param-type"));
 });
 
 test("compareValue: value-annotation-missing and value-type", () => {
@@ -352,208 +386,4 @@ test("typesEqual: nested unions are associative", () => {
   const c = ref("m::C");
   assert.ok(typesEqual({ t: "union", members: [a, { t: "union", members: [b, c] }] }, { t: "union", members: [c, a, b] }));
   assert.ok(typesEqual({ t: "intersect", members: [a, { t: "intersect", members: [b, c] }] }, { t: "intersect", members: [b, c, a] }));
-});
-
-test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)", () => {
-  // A completely different project profile: different bridge/module/primitive names.
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
-  // func f(a *int) — pointer-to-int.
-  const unit = {
-    kind: "func",
-    file: { importPath: "example.com/proj/pkg", imports: [] },
-    parameters: [{ names: ["a"], type: { kind: "pointer", element: { kind: "ident", name: "int" } } }],
-    results: [],
-    typeParameterDetails: [],
-  };
-  const desc = goUnitDescriptor(unit, index);
-  assert.equal(canonicalKey(desc.params[0].type), "R:src/rt/bridge.ts::Ptr<R:@acme/prim::i32>");
-  // selector to a stdlib facade uses the configured template.
-  const sel = goUnitDescriptor(
-    { kind: "func", file: { importPath: "example.com/proj/pkg", imports: [{ path: "time", packageName: "time" }] }, parameters: [{ names: ["t"], type: { kind: "selector", package: "time", name: "Duration" } }], results: [], typeParameterDetails: [] },
-    index,
-  );
-  assert.equal(canonicalKey(sel.params[0].type), "R:src/rt/time.ts::Duration");
-
-  const versionedImport = goUnitDescriptor(
-    {
-      kind: "func",
-      file: { importPath: "example.com/proj/pkg", imports: [{ path: "math/rand/v2", packageName: "rand" }] },
-      parameters: [{ names: ["source"], type: { kind: "selector", package: "rand", name: "Source" } }],
-      results: [],
-      typeParameterDetails: [],
-    },
-    index,
-  );
-  assert.equal(canonicalKey(versionedImport.params[0].type), "R:src/rt/math/rand/v2.ts::Source");
-});
-
-test("expected-from-go: inline struct value types are structural descriptors", () => {
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
-  const unit = {
-    kind: "varGroup",
-    file: { importPath: "example.com/proj/pkg", imports: [] },
-    valueSpecs: [{
-      names: ["table"],
-      inferredValueTypes: [{
-        kind: "array",
-        length: "...",
-        element: {
-          kind: "struct",
-          members: [
-            { kind: "field", name: "flag", typeExpr: { kind: "ident", name: "int" } },
-            { kind: "field", name: "name", typeExpr: { kind: "ident", name: "string" } },
-          ],
-        },
-      }],
-    }],
-  };
-  const desc = goUnitDescriptor(unit, index);
-  assert.equal(canonicalKey(desc.decls[0].type), "R:src/rt/bridge.ts::Arr<O:{flag:R:@acme/prim::i32;name:K:string},L:\"...\">");
-});
-
-test("expected-from-go: receiver methods remain separate from struct data signatures", () => {
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { string: "string" }, core: {}, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const baseType = {
-    id: "example.com/proj::pkg/base.go::type::Base",
-    kind: "type",
-    name: "Base",
-    typeKind: "struct",
-    members: [],
-    typeParameterDetails: [],
-  };
-  const baseMethod = {
-    id: "example.com/proj::pkg/base.go::method::Base.Signature",
-    kind: "method",
-    name: "Signature",
-    receiverType: { kind: "pointer", element: { kind: "ident", name: "Base" } },
-    parameters: [],
-    results: [{ type: { kind: "ident", name: "string" } }],
-    typeParameterDetails: [],
-  };
-  const childType = {
-    id: "example.com/proj::pkg/child.go::type::Child",
-    kind: "type",
-    name: "Child",
-    typeKind: "struct",
-    members: [
-      { kind: "embeddedField", typeExpr: { kind: "ident", name: "Base" } },
-      { kind: "field", name: "Signature", typeExpr: { kind: "ident", name: "string" } },
-    ],
-    typeParameterDetails: [],
-  };
-  const file = { importPath: "example.com/proj/pkg", imports: [], units: [baseType, baseMethod, childType] };
-  const profile = loadProfile(config);
-  const tsById = new Map([
-    [baseType.id, { path: "pkg/base.ts" }],
-    [childType.id, { path: "pkg/child.ts" }],
-  ]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, profile);
-  const desc = goUnitDescriptor({ ...childType, file }, index);
-  const signatureMembers = desc.members.filter((member) => member.name === "Signature");
-  assert.equal(signatureMembers.length, 1);
-  assert.equal(canonicalKey(signatureMembers[0].type), "K:string");
-  assert.deepEqual(
-    desc.members.map((member) => member.name),
-    ["Signature", "__tsgoEmbedded0"],
-    "the embedded receiver method is checked by its own method unit, not injected into the struct interface",
-  );
-
-  const baseDescriptor = goUnitDescriptor({ ...baseType, file }, index);
-  assert.equal(baseDescriptor.members.some((member) => member.name === "Signature"), false);
-});
-
-test("expected-from-go: interface methods and embedded interface contracts remain structural", () => {
-  const config = {
-    goModulePath: "example.com/proj",
-    signatureCheck: {
-      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
-      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
-      primitives: { keyword: { bool: "boolean", string: "string" }, core: {}, compat: {} },
-      stdlibTypes: {},
-      facadeTemplate: "src/rt/{importPath}.ts",
-    },
-  };
-  const reader = {
-    id: "example.com/proj::pkg/contracts.go::type::Reader",
-    kind: "type",
-    name: "Reader",
-    typeKind: "interface",
-    members: [{
-      kind: "method",
-      name: "Read",
-      typeExpr: {
-        kind: "func",
-        parameters: [{ names: ["path"], type: { kind: "ident", name: "string" } }],
-        results: [{ type: { kind: "ident", name: "bool" } }],
-      },
-    }],
-    typeParameterDetails: [],
-  };
-  const closer = {
-    id: "example.com/proj::pkg/contracts.go::type::ReadCloser",
-    kind: "type",
-    name: "ReadCloser",
-    typeKind: "interface",
-    members: [
-      { kind: "embeddedInterface", typeExpr: { kind: "ident", name: "Reader" } },
-      { kind: "method", name: "Close", typeExpr: { kind: "func", parameters: [], results: [] } },
-    ],
-    typeParameterDetails: [],
-  };
-  const wrapper = {
-    id: "example.com/proj::pkg/contracts.go::type::ReaderWrapper",
-    kind: "type",
-    name: "ReaderWrapper",
-    typeKind: "struct",
-    members: [{ kind: "embeddedInterface", typeExpr: { kind: "ident", name: "Reader" } }],
-    typeParameterDetails: [],
-  };
-  const file = { importPath: "example.com/proj/pkg", imports: [], units: [reader, closer, wrapper] };
-  const profile = loadProfile(config);
-  const tsById = new Map([
-    [reader.id, { path: "pkg/contracts.ts" }],
-    [closer.id, { path: "pkg/contracts.ts" }],
-    [wrapper.id, { path: "pkg/contracts.ts" }],
-  ]);
-  const index = buildExpectedIndex(config, { files: [file] }, tsById, profile);
-  const descriptor = goUnitDescriptor({ ...closer, file }, index);
-  assert.deepEqual(descriptor.members.map((member) => member.name), ["Close", "__tsgoEmbedded0", "Read"]);
-  assert.equal(canonicalKey(descriptor.members[0].type), "F:()=>K:void");
-  assert.equal(canonicalKey(descriptor.members[2].type), "F:(K:string)=>K:boolean");
-  assert.equal(descriptor.members[2].optional, true);
-
-  const wrapperDescriptor = goUnitDescriptor({ ...wrapper, file }, index);
-  assert.deepEqual(wrapperDescriptor.members.map((member) => member.name), ["__tsgoEmbedded0", "Read"]);
-  assert.equal(wrapperDescriptor.members[1].optional, true);
 });

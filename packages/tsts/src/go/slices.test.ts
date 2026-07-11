@@ -97,14 +97,25 @@ test("slices.Clone is shallow and independent; Clone(undefined) is undefined", (
 
 test("slices.Concat / Repeat", () => {
   assert.deepEqual(Concat([1, 2], [3], [4, 5]), [1, 2, 3, 4, 5]);
+  assert.equal(Concat<number>(), undefined);
+  assert.equal(Concat<number>(undefined, []), undefined);
+  assert.deepEqual(Repeat<number>(undefined, 0), []);
+  assert.notEqual(Repeat<number>(undefined, 0), undefined);
   assert.deepEqual(Repeat([1, 2], 3), [1, 2, 1, 2, 1, 2]);
   assert.throws(() => Repeat([1], -1), /negative Repeat count/);
 });
 
-test("slices.Grow / Clip are identity no-ops", () => {
+test("slices.Grow / Clip preserve Go nilness", () => {
   const s = [1, 2, 3];
   assert.equal(Grow(s, 5), s);
   assert.equal(Clip(s), s);
+  assert.equal(Grow<number>(undefined, 0), undefined);
+  assert.deepEqual(Grow<number>(undefined, 1), []);
+  assert.notEqual(Grow<number>(undefined, 1), undefined);
+  assert.equal(Clip<number>(undefined), undefined);
+  const empty: number[] = [];
+  assert.equal(Grow(empty, 0), empty);
+  assert.equal(Clip(empty), empty);
   assert.throws(() => Grow(s, -1), /negative/);
 });
 
@@ -113,6 +124,9 @@ test("slices.Delete mutates in place and returns the slice", () => {
   const r = Delete(s, 1, 3);
   assert.deepEqual(r, [1, 4, 5]);
   assert.equal(r, s);
+  assert.equal(Delete<number>(undefined, 0, 0), undefined);
+  const empty: number[] = [];
+  assert.equal(Delete(empty, 0, 0), empty);
   assert.throws(() => Delete([1, 2], 0, 5), /invalid range/);
 });
 
@@ -120,12 +134,19 @@ test("slices.DeleteFunc removes matching elements", () => {
   const s = [1, 2, 3, 4, 5, 6];
   const r = DeleteFunc(s, (e) => e % 2 === 0);
   assert.deepEqual(r, [1, 3, 5]);
+  assert.equal(DeleteFunc<number>(undefined, () => true), undefined);
+  const empty: number[] = [];
+  assert.equal(DeleteFunc(empty, () => true), empty);
 });
 
 test("slices.Insert inserts at index", () => {
   const s = [1, 4, 5];
   const r = Insert(s, 1, 2, 3);
   assert.deepEqual(r, [1, 2, 3, 4, 5]);
+  assert.equal(Insert<number>(undefined, 0), undefined);
+  assert.deepEqual(Insert<number>(undefined, 0, 1), [1]);
+  const empty: number[] = [];
+  assert.equal(Insert(empty, 0), empty);
   assert.throws(() => Insert([1], 5, 9), /out of range/);
 });
 
@@ -133,6 +154,10 @@ test("slices.Replace replaces a range", () => {
   const s = [1, 2, 3, 4];
   const r = Replace(s, 1, 3, 9, 9, 9);
   assert.deepEqual(r, [1, 9, 9, 9, 4]);
+  assert.equal(Replace<number>(undefined, 0, 0), undefined);
+  assert.deepEqual(Replace<number>(undefined, 0, 0, 1), [1]);
+  const empty: number[] = [];
+  assert.equal(Replace(empty, 0, 0), empty);
 });
 
 test("slices.Reverse reverses in place", () => {
@@ -147,6 +172,11 @@ test("slices.Compact / CompactFunc collapse consecutive equals", () => {
     CompactFunc([1, 3, 2, 4, 6], (a, b) => a % 2 === b % 2),
     [1, 2],
   );
+  assert.equal(Compact<number>(undefined), undefined);
+  assert.equal(CompactFunc<number>(undefined, () => true), undefined);
+  const empty: number[] = [];
+  assert.equal(Compact(empty), empty);
+  assert.equal(CompactFunc(empty, () => true), empty);
 });
 
 test("slices.Sort sorts ascending in place with NaN first", () => {
@@ -197,6 +227,9 @@ test("slices.Sorted / SortedFunc collect-and-sort from a seq", () => {
     SortedFunc(seq, (a, b) => b - a),
     [3, 2, 1],
   );
+  const empty: GoSeq<number> = () => {};
+  assert.equal(Sorted(empty), undefined);
+  assert.equal(SortedFunc(empty, (a, b) => a - b), undefined);
 });
 
 test("slices.BinarySearch / BinarySearchFunc", () => {
@@ -218,6 +251,12 @@ test("slices.Values / Collect / AppendSeq round-trip", () => {
   assert.notEqual(collected, s);
   const appended = AppendSeq([0], Values(s));
   assert.deepEqual(appended, [0, 1, 2, 3]);
+  const empty: GoSeq<number> = () => {};
+  assert.equal(Collect(empty), undefined);
+  assert.equal(AppendSeq<number>(undefined, empty), undefined);
+  const allocated: number[] = [];
+  assert.equal(AppendSeq(allocated, empty), allocated);
+  assert.deepEqual(AppendSeq<number>(undefined, Values([1])), [1]);
 });
 
 test("slices.Values honors early termination", () => {

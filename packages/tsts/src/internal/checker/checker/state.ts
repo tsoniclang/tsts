@@ -611,7 +611,7 @@ export const InferenceFlagsSkippedGenericFunction: InferenceFlags = 1 << 2; // A
  * }
  */
 export interface InferenceContext {
-  inferences: GoSlice<GoPtr<InferenceInfo>>;
+  inferences: GoPtr<GoSlice<GoPtr<InferenceInfo>>>;
   signature: GoPtr<Signature>;
   flags: InferenceFlags;
   compareTypes: TypeComparer;
@@ -619,8 +619,8 @@ export interface InferenceContext {
   nonFixingMapper: GoPtr<TypeMapper>;
   returnMapper: GoPtr<TypeMapper>;
   outerReturnMapper: GoPtr<TypeMapper>;
-  inferredTypeParameters: GoSlice<GoPtr<Type>>;
-  intraExpressionInferenceSites: GoSlice<IntraExpressionInferenceSite>;
+  inferredTypeParameters: GoPtr<GoSlice<GoPtr<Type>>>;
+  intraExpressionInferenceSites: GoPtr<GoSlice<IntraExpressionInferenceSite>>;
 }
 
 /**

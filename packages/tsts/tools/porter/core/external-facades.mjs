@@ -1,7 +1,9 @@
+import { compareText } from "./deterministic-order.mjs";
 import { safeIdentifier, standardSelectorTypes } from "./names.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
-import { buildSymbolIndex, importAliasMap } from "./render-indexes.mjs";
+import { buildSymbolIndex } from "./render-indexes.mjs";
 import { fail } from "./runtime.mjs";
+import { semanticVariants } from "./semantic-variants.mjs";
 
 export function buildExternalFacadeMap(config, snapshot) {
   const facades = new Map();
@@ -21,9 +23,6 @@ export function buildExternalFacadeMap(config, snapshot) {
     }
     addExternalFacade(facades, autoExternalFacadePolicy(usage));
   }
-  for (const usage of collectExternalRefUsages(config, snapshot)) {
-    addOrMergeExternalFacade(facades, autoExternalRefFacadePolicy(usage));
-  }
   return facades;
 }
 
@@ -33,83 +32,71 @@ export function addExternalFacade(facades, policy) {
   facades.set(policy.goName, policy);
 }
 
-export function addOrMergeExternalFacade(facades, policy) {
-  if (!policy.goName) fail("external facade policy must include goName");
-  const existing = facades.get(policy.goName);
-  if (!existing) {
-    facades.set(policy.goName, policy);
-    return;
-  }
-  if (existing.generated && existing.kind === "value" && policy.kind === "functionValue") {
-    facades.set(policy.goName, policy);
-  }
-}
-
 export function collectExternalTypeUsages(config, snapshot) {
   const usages = new Map();
   const symbolIndex = buildSymbolIndex(config, snapshot);
   for (const file of snapshot.files ?? []) {
-    const aliases = importAliasMap(file.imports ?? []);
     for (const unit of file.units ?? []) {
       if (!isActivePortPolicy(policyForUnit(config, unit, file))) continue;
-      collectExternalTypesFromUnit(config, symbolIndex, aliases, file.importPath, unit, usages);
-      for (const ref of unit.externalRefs ?? []) {
-        if (ref.role !== "type") continue;
-        if (!Number.isSafeInteger(ref.arity ?? 0) || (ref.arity ?? 0) < 0) {
-          fail(`external type reference '${ref.importPath}.${ref.name}' has invalid arity '${ref.arity}'`);
-        }
-        const goName = `${ref.importPath}.${ref.name}`;
-        if (standardSelectorTypes.has(goName)) continue;
-        if (ref.importPath.startsWith(config.goModulePath)
-          && symbolIndex.has(`${ref.importPath}::${ref.name}`)) continue;
-        recordExternalUsage(usages, goName, ref.arity ?? 0);
+      collectExternalTypesFromUnit(config, symbolIndex, unit, usages);
+    }
+  }
+  return [...usages.values()].sort((left, right) => compareText(left.goName, right.goName));
+}
+
+export function collectExternalTypesFromUnit(config, symbolIndex, unit, usages) {
+  if (unit.semantic === undefined) return;
+  for (const declaration of semanticVariants(unit)) {
+    visitObject(declaration.object);
+    visitObject(declaration.type?.object);
+    visitType(declaration.type?.rhs);
+    visitSignature(declaration.signature);
+    for (const specification of declaration.valueSpecs ?? []) {
+      for (const binding of specification.names ?? []) {
+        visitType(binding.type);
+        visitObject(binding.object);
       }
     }
   }
-  return [...usages.values()].sort((left, right) => left.goName.localeCompare(right.goName));
-}
 
-export function collectExternalTypesFromUnit(config, symbolIndex, aliases, currentImportPath, unit, usages) {
-  visitTypeExpr(unit.receiverType);
-  visitTypeExpr(unit.typeExpression);
-  for (const param of unit.typeParameterDetails ?? []) visitTypeExpr(param.constraint);
-  for (const param of unit.parameters ?? []) visitTypeExpr(param.type);
-  for (const result of unit.results ?? []) visitTypeExpr(result.type);
-  for (const spec of unit.valueSpecs ?? []) visitTypeExpr(spec.type);
-  for (const member of unit.members ?? []) visitTypeExpr(member.typeExpr);
+  function visitObject(object) {
+    if (object !== undefined) visitType(object.type);
+  }
 
-  function visitTypeExpr(expr) {
-    if (!expr) return;
-    if (expr.kind === "selector") {
-      const goName = externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr);
-      if (goName) recordExternalUsage(usages, goName, 0);
-    }
-    if (expr.kind === "instantiation") {
-      if (expr.element?.kind === "selector") {
-        const goName = externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr.element);
-        if (goName) recordExternalUsage(usages, goName, expr.typeArgs?.length ?? 0);
+  function visitSignature(signature) {
+    if (signature === undefined) return;
+    visitVariable(signature.receiver);
+    for (const parameter of [...(signature.receiverTypeParameters ?? []), ...(signature.typeParameters ?? [])]) visitType(parameter.constraint);
+    for (const variable of signature.parameters?.variables ?? []) visitVariable(variable);
+    for (const variable of signature.results?.variables ?? []) visitVariable(variable);
+  }
+
+  function visitVariable(variable) {
+    if (variable !== undefined) visitType(variable.type);
+  }
+
+  function visitType(type) {
+    if (type === undefined) return;
+    if (type.kind === "named" || type.kind === "alias") {
+      const reference = type.reference;
+      const goName = `${reference.packagePath}.${reference.name}`;
+      if (reference.packagePath !== ""
+        && !standardSelectorTypes.has(goName)
+        && !(reference.packagePath.startsWith(config.goModulePath) && symbolIndex.has(`${reference.packagePath}::${reference.name}`))) {
+        recordExternalUsage(usages, goName, reference.typeArgs?.length ?? 0);
       }
+      for (const argument of reference.typeArgs ?? []) visitType(argument);
+      return;
     }
-    visitTypeExpr(expr.element);
-    visitTypeExpr(expr.key);
-    visitTypeExpr(expr.value);
-    visitTypeExpr(expr.left);
-    visitTypeExpr(expr.right);
-    for (const arg of expr.typeArgs ?? []) visitTypeExpr(arg);
-    for (const param of expr.parameters ?? []) visitTypeExpr(param.type);
-    for (const result of expr.results ?? []) visitTypeExpr(result.type);
-    for (const member of expr.members ?? []) visitTypeExpr(member.typeExpr);
+    visitType(type.element);
+    visitType(type.key);
+    visitSignature(type.signature);
+    for (const variable of type.tuple?.variables ?? []) visitVariable(variable);
+    for (const field of type.struct?.fields ?? []) visitVariable(field.variable);
+    for (const method of type.interface?.explicitMethods ?? []) visitSignature(method.signature);
+    for (const embedded of type.interface?.embeddedTypes ?? []) visitType(embedded);
+    for (const term of type.union?.terms ?? []) visitType(term.type);
   }
-}
-
-export function externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr) {
-  const importPath = aliases.get(expr.package);
-  if (!importPath) return `${expr.package}.${expr.name}`;
-  if (standardSelectorTypes.has(`${importPath}.${expr.name}`)) return undefined;
-  if (importPath.startsWith(config.goModulePath)) {
-    return symbolIndex.has(`${importPath}::${expr.name}`) ? undefined : `${importPath}.${expr.name}`;
-  }
-  return `${importPath}.${expr.name}`;
 }
 
 export function recordExternalUsage(usages, goName, arity) {
@@ -124,33 +111,6 @@ export function recordExternalUsage(usages, goName, arity) {
   usages.set(goName, { goName, arity, count: 1 });
 }
 
-export function collectExternalRefUsages(config, snapshot) {
-  const usages = new Map();
-  for (const file of snapshot.files ?? []) {
-    for (const unit of file.units ?? []) {
-      const policy = policyForUnit(config, unit, file);
-      if (!isActivePortPolicy(policy) || policy.category === "host-native") continue;
-      for (const ref of unit.externalRefs ?? []) {
-        if (!ref.importPath || ref.importPath.startsWith(config.goModulePath)) continue;
-        if (ref.role === "type") continue;
-        if (ref.role !== "call" && ref.role !== "value") {
-          fail(`external reference '${ref.importPath}.${ref.name}' has unsupported role '${ref.role}'`);
-        }
-        const goName = `${ref.importPath}.${ref.name}`;
-        const role = ref.role;
-        const existing = usages.get(goName);
-        if (existing) {
-          existing.count += ref.count ?? 1;
-          if (role === "call") existing.role = "call";
-          continue;
-        }
-        usages.set(goName, { goName, role, count: ref.count ?? 1 });
-      }
-    }
-  }
-  return [...usages.values()].sort((left, right) => left.goName.localeCompare(right.goName));
-}
-
 export function autoExternalFacadePolicy(usage) {
   const { importPath, name } = splitExternalGoName(usage.goName);
   return {
@@ -159,18 +119,6 @@ export function autoExternalFacadePolicy(usage) {
     tsName: safeIdentifier(name),
     kind: "opaque",
     arity: usage.arity,
-    generated: true,
-  };
-}
-
-export function autoExternalRefFacadePolicy(usage) {
-  const { importPath, name } = splitExternalGoName(usage.goName);
-  return {
-    goName: usage.goName,
-    tsModule: externalFacadeModulePath(importPath),
-    tsName: safeIdentifier(name),
-    kind: usage.role === "call" ? "functionValue" : "value",
-    arity: 0,
     generated: true,
   };
 }

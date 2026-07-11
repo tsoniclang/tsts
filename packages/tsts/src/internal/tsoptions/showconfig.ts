@@ -287,9 +287,9 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   // Add references
   const refs = ParsedCommandLine_ProjectReferences(configParseResult);
-  if (refs.length > 0) {
+  if ((refs?.length ?? 0) > 0) {
     const references: GoSlice<unknown> = [];
-    for (const r of refs) {
+    for (const r of refs ?? []) {
       const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int);
       OrderedMap_Set(ref, "path", r!.OriginalPath);
       if (r!.Circular) {
@@ -310,7 +310,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   if (p.ConfigFile !== undefined && p.ConfigFile.configFileSpecs !== undefined) {
     const specs = p.ConfigFile.configFileSpecs;
     const include = filterSameAsDefaultInclude(specs.validatedIncludeSpecs);
-    if (include.length > 0) {
+    if ((include?.length ?? 0) > 0) {
       config.Include = include;
     }
     config.Exclude = specs.validatedExcludeSpecs;
@@ -338,12 +338,12 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
  * 	return specs
  * }
  */
-export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<string> {
-  if (specs.length === 0) {
-    return [];
+export function filterSameAsDefaultInclude(specs: GoPtr<GoSlice<string>>): GoPtr<GoSlice<string>> {
+  if ((specs?.length ?? 0) === 0) {
+    return undefined;
   }
-  if (specs.length === 1 && specs[0] === defaultIncludeSpec) {
-    return [];
+  if (specs!.length === 1 && specs![0] === defaultIncludeSpec) {
+    return undefined;
   }
   return specs;
 }

@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
     "module": "esnext",
+    "noLib": true,
     "noEmit": true,
     "strict": true,
-    "target": "es2022"
+    "target": "es2022",
+    "types": []
   },
+  "files": ["lib.d.ts"],
   "include": ["src/**/*.ts"]
 }

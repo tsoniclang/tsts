@@ -1,4 +1,5 @@
 import type { bool, int, sbyte } from "../../../go/scalars.js";
+import { GoAppend } from "../../../go/compat.js";
 import type { GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";
@@ -50,7 +51,7 @@ export const UnlimitedDepth: int = MaxInt;
  * 	return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host)
  * }
  */
-export function ReadDirectory(host: FS, currentDir: string, path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, depth: int): GoSlice<string> {
+export function ReadDirectory(host: FS, currentDir: string, path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, depth: int): GoPtr<GoSlice<string>> {
   return matchFiles(path, extensions, excludes, includes, host.UseCaseSensitiveFileNames(), currentDir, depth, host);
 }
 
@@ -1225,10 +1226,10 @@ export interface globVisitor {
   host: FS;
   fileMatcher: GoPtr<globMatcher>;
   directoryMatcher: GoPtr<globMatcher>;
-  extensions: GoSlice<string>;
+  extensions: GoPtr<GoSlice<string>>;
   useCaseSensitiveFileNames: bool;
   visited: Set<string>;
-  results: GoSlice<GoSlice<string>>;
+  results: GoSlice<GoPtr<GoSlice<string>>>;
 }
 
 /**
@@ -1314,7 +1315,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
     if (ok) {
-      receiver!.results[idx]!.push(pathPrefix + file);
+      receiver!.results[idx] = GoAppend(receiver!.results[idx], pathPrefix + file);
     }
   }
 
@@ -1378,26 +1379,21 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
  * 	return core.Flatten(v.results)
  * }
  */
-export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: FS): GoSlice<string> {
+export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: FS): GoPtr<GoSlice<string>> {
   const normalizedPath = NormalizePath(path);
   const normalizedCurrentDir = NormalizePath(currentDirectory);
   const absolutePath = CombinePaths(normalizedCurrentDir, normalizedPath);
-  const extensionList = extensions ?? [];
-
   const fileMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageFiles);
   const directoryMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageDirectories);
 
   const resultsLen = Math.max(fileMatcher!.includes.length, 1);
-  const results: string[][] = [];
-  for (let i = 0; i < resultsLen; i++) {
-    results.push([]);
-  }
+  const results = new globalThis.Array<GoPtr<GoSlice<string>>>(resultsLen);
 
   const v: globVisitor = {
     host: host,
     fileMatcher: fileMatcher,
     directoryMatcher: directoryMatcher,
-    extensions: extensionList,
+    extensions,
     useCaseSensitiveFileNames: useCaseSensitiveFileNames,
     visited: NewSetWithSizeHint<string>(0 as int)!,
     results: results,
@@ -1409,7 +1405,7 @@ export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, exc
 
   // Fast path: a single include bucket (or no includes) doesn't need flattening.
   if (v.results.length === 1) {
-    return v.results[0]!;
+    return v.results[0];
   }
   return Flatten(v.results);
 }
@@ -1490,12 +1486,12 @@ export function SpecMatcher_MatchIndex(receiver: GoPtr<SpecMatcher>, path: strin
  * 	return &SpecMatcher{patterns: patterns}
  * }
  */
-export function NewSpecMatcher(specs: GoSlice<string>, basePath: string, usage: Usage, useCaseSensitiveFileNames: bool): GoPtr<SpecMatcher> {
-  if (specs.length === 0) {
+export function NewSpecMatcher(specs: GoPtr<GoSlice<string>>, basePath: string, usage: Usage, useCaseSensitiveFileNames: bool): GoPtr<SpecMatcher> {
+  if ((specs?.length ?? 0) === 0) {
     return undefined;
   }
   const patterns: globPattern[] = [];
-  for (const spec of specs) {
+  for (const spec of specs!) {
     const [p, ok] = compileGlobPattern(spec, basePath, usage, useCaseSensitiveFileNames);
     if (ok) {
       patterns.push(p);

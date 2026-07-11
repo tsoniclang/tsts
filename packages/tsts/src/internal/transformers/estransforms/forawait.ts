@@ -746,7 +746,7 @@ export function forawaitTransformer_visitSourceFile(receiver: GoPtr<forawaitTran
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   const visited = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
   const helpers = EmitContext_ReadEmitHelpers(emitContext);
-  EmitContext_AddEmitHelper(emitContext, visited, ...helpers);
+  EmitContext_AddEmitHelper(emitContext, visited, ...(helpers ?? []));
   forawaitTransformer_exitSubtree(receiver, ancestorFacts);
   return visited;
 }

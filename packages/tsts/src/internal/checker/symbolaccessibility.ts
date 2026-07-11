@@ -164,17 +164,17 @@ export function Checker_IsSymbolAccessibleByFlags(receiver: GoPtr<Checker>, symb
  * 	return nil
  * }
  */
-export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols: GoSlice<GoPtr<Symbol>>, enclosingDeclaration: GoPtr<Node>, initialSymbol: GoPtr<Symbol>, meaning: SymbolFlags, shouldComputeAliasesToMakeVisible: bool, allowModules: bool): GoPtr<SymbolAccessibilityResult> {
-  if (symbols.length === 0) {
+export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols: GoPtr<GoSlice<GoPtr<Symbol>>>, enclosingDeclaration: GoPtr<Node>, initialSymbol: GoPtr<Symbol>, meaning: SymbolFlags, shouldComputeAliasesToMakeVisible: bool, allowModules: bool): GoPtr<SymbolAccessibilityResult> {
+  if ((symbols?.length ?? 0) === 0) {
     return undefined;
   }
 
   let hadAccessibleChain: GoPtr<Symbol> = undefined;
   let earlyModuleBail = false;
-  for (const symbol_ of symbols) {
+  for (const symbol_ of symbols ?? []) {
     // Symbol is accessible if it by itself is accessible
     const accessibleSymbolChain = Checker_getAccessibleSymbolChain(receiver, symbol_, enclosingDeclaration, meaning /*useOnlyExternalAliasing*/, false);
-    if (accessibleSymbolChain.length > 0) {
+    if (accessibleSymbolChain !== undefined && accessibleSymbolChain.length > 0) {
       hadAccessibleChain = symbol_;
       // TODO: going through emit resolver here is weird. Relayer these APIs.
       const hasAccessibleDeclarations = EmitResolver_hasVisibleDeclarations(Checker_GetEmitResolver(receiver), accessibleSymbolChain[0], shouldComputeAliasesToMakeVisible);
@@ -679,7 +679,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       // direct children of a module
       if (hasNonGlobalAugmentationExternalModuleSymbol(d!.Parent)) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent);
-        if (sym !== undefined && !candidates.includes(sym)) {
+        if (sym !== undefined && !(candidates?.includes(sym) ?? false)) {
           candidates = [...(candidates ?? []), sym];
         }
         continue;
@@ -687,7 +687,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       // export ='d member of an ambient module
       if (IsModuleBlock(d!.Parent) && d!.Parent!.Parent !== undefined && Checker_resolveExternalModuleSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent), false) === symbol_) {
         const sym = Checker_getSymbolOfDeclaration(receiver, d!.Parent!.Parent);
-        if (sym !== undefined && !candidates.includes(sym)) {
+        if (sym !== undefined && !(candidates?.includes(sym) ?? false)) {
           candidates = [...(candidates ?? []), sym];
         }
         continue;
@@ -696,14 +696,14 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
     if (IsClassExpression(d) && IsBinaryExpression(d!.Parent) && AsBinaryExpression(d!.Parent)!.OperatorToken!.Kind === KindEqualsToken && IsAccessExpression(AsBinaryExpression(d!.Parent)!.Left) && IsEntityNameExpression(Node_Expression(AsBinaryExpression(d!.Parent)!.Left))) {
       if (IsModuleExportsAccessExpression(AsBinaryExpression(d!.Parent)!.Left) || IsExportsIdentifier(Node_Expression(AsBinaryExpression(d!.Parent)!.Left))) {
         const sym = Checker_getSymbolOfDeclaration(receiver, GetSourceFileOfNode(d) as unknown as GoPtr<Node>);
-        if (sym !== undefined && !candidates.includes(sym)) {
-          candidates = [...candidates, sym];
+        if (sym !== undefined && !(candidates?.includes(sym) ?? false)) {
+          candidates = [...(candidates ?? []), sym];
         }
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
       const sym = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left)) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
-      if (sym !== undefined && !candidates.includes(sym)) {
+      if (sym !== undefined && !(candidates?.includes(sym) ?? false)) {
         candidates = [...(candidates ?? []), sym];
       }
       continue;
@@ -720,7 +720,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
       continue;
     }
     const allAlts = Checker_getWithAlternativeContainers(receiver, cont, symbol_, enclosingDeclaration, meaning);
-    if (allAlts.length === 0) {
+    if (allAlts === undefined || allAlts.length === 0) {
       continue;
     }
     bestContainers = [...(bestContainers ?? []), allAlts[0]];
@@ -1451,7 +1451,7 @@ export function Checker_canQualifySymbol(receiver: GoPtr<Checker>, ctx: accessib
   // If the symbol is equivalent and doesn't need further qualification, this symbol is accessible
   return !Checker_needsQualification(receiver, symbolFromSymbolTable, ctx.enclosingDeclaration, meaning) ||
     // If symbol needs qualification, make sure that parent is accessible, if it is then this symbol is accessible too
-    Checker_getAccessibleSymbolChainEx(receiver, { symbol: symbolFromSymbolTable!.Parent, enclosingDeclaration: ctx.enclosingDeclaration, meaning: getQualifiedLeftMeaning(meaning), useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, visitedSymbolTablesMap: ctx.visitedSymbolTablesMap }).length > 0;
+    (Checker_getAccessibleSymbolChainEx(receiver, { symbol: symbolFromSymbolTable!.Parent, enclosingDeclaration: ctx.enclosingDeclaration, meaning: getQualifiedLeftMeaning(meaning), useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, visitedSymbolTablesMap: ctx.visitedSymbolTablesMap })?.length ?? 0) > 0;
 }
 
 /**

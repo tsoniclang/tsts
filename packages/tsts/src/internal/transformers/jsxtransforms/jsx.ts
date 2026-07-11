@@ -20,7 +20,7 @@ import type { SourceFileLike } from "../../ast/ast.js";
 import { AsSourceFile, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
 import { GetJSXImplicitImportBase, GetJSXRuntimeImport, GetSemanticJsxChildren, IsExternalModule, IsExternalOrCommonJSModule, IsPrologueDirective, SetParentInChildren } from "../../ast/utilities.js";
 import { IsJsxOpeningLikeElement } from "../../ast/utilities.js";
-import { OrderedMap_Clear, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set, OrderedMap_Size } from "../../collections/ordered_map.js";
+import { NewOrderedMapZero, OrderedMap_Clear, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set, OrderedMap_Size } from "../../collections/ordered_map.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { CompilerOptions_GetEmitScriptTarget, JsxEmitReactJSXDev, ScriptTargetES2018 } from "../../core/compileroptions.js";
@@ -108,7 +108,7 @@ export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transfor
     emitResolver: opts!.EmitResolver,
     importSpecifier: "",
     filenameDeclaration: undefined,
-    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: undefined, mp: undefined },
+    utilizedImplicitRuntimeImports: NewOrderedMapZero(),
     inJsxChild: false,
     currentSourceFile: undefined,
   };
@@ -591,7 +591,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   let visited = NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, file as unknown as GoPtr<Node>);
-  EmitContext_AddEmitHelper(emitContext, visited!, ...EmitContext_ReadEmitHelpers(emitContext));
+  EmitContext_AddEmitHelper(emitContext, visited!, ...(EmitContext_ReadEmitHelpers(emitContext) ?? []));
   let statements: GoSlice<GoPtr<Node>> = Node_Statements(visited) ?? [];
   let statementsUpdated = false;
   if (receiver!.filenameDeclaration !== undefined) {
@@ -813,6 +813,7 @@ export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSX
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment","kind":"method","status":"implemented","sigHash":"f8adc13a5c690fe86ac97a56fa6ebe0c881888e65609a6f16c5c19db82bfa647","bodyHash":"755e7b267f1c52a2cbc5c437e2dc9856323a407ce775f13f3de02e2df31043f9"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The Go slice input or result can be nil on this unit's zero-value, empty, or no-op path; GoPtr preserves nil separately from an allocated empty slice without changing nonnil behavior.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/jsxtransforms/jsx.ts::JSXTransformer>,packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::JsxChild>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/transformers/jsxtransforms/jsx.ts::JSXTransformer>,packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/generated/unions.ts::JsxChild>>>)=>packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/ast/spine.ts::Node>"}
  *
  * Go source:
  * func (tx *JSXTransformer) convertJsxChildrenToChildrenPropAssignment(children []*ast.JsxChild) *ast.Node {
@@ -841,13 +842,13 @@ export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSX
  * 	return tx.Factory().NewPropertyAssignment(nil, tx.Factory().NewIdentifier("children"), nil, nil, tx.Factory().NewArrayLiteralExpression(tx.Factory().NewNodeList(results), false))
  * }
  */
-export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver: GoPtr<JSXTransformer>, children: GoSlice<GoPtr<JsxChild>>): GoPtr<Node> {
+export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver: GoPtr<JSXTransformer>, children: GoPtr<GoSlice<GoPtr<JsxChild>>>): GoPtr<Node> {
   const nonWhitespaceChildren = GetSemanticJsxChildren(children);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  if (nonWhitespaceChildren.length === 1 && (nonWhitespaceChildren[0]!.Kind !== KindJsxExpression || AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken === undefined)) {
-    const result = JSXTransformer_transformJsxChildToExpression(receiver, nonWhitespaceChildren[0] as unknown as GoPtr<Node>);
+  if ((nonWhitespaceChildren?.length ?? 0) === 1 && (nonWhitespaceChildren![0]!.Kind !== KindJsxExpression || AsJsxExpression(nonWhitespaceChildren![0])!.DotDotDotToken === undefined)) {
+    const result = JSXTransformer_transformJsxChildToExpression(receiver, nonWhitespaceChildren![0] as unknown as GoPtr<Node>);
     if (result === undefined) {
       return undefined;
     }
@@ -856,7 +857,7 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
   // For multiple children in the children property array, don't set StartOnNewLine
   // on child elements — the array literal is single-line.
   const results: GoSlice<GoPtr<Node>> = [];
-  for (const child of nonWhitespaceChildren) {
+  for (const child of nonWhitespaceChildren ?? []) {
     const res = JSXTransformer_transformJsxChildToExpression(receiver, child as unknown as GoPtr<Node>);
     if (res === undefined) {
       continue;
@@ -1399,13 +1400,13 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  let nonWhitespaceChildren: GoSlice<GoPtr<Node>> = [];
+  let nonWhitespaceChildren: GoPtr<GoSlice<GoPtr<Node>>> = undefined;
   if (children !== undefined) {
-    nonWhitespaceChildren = GetSemanticJsxChildren(children!.Nodes as GoSlice<GoPtr<JsxChild>>);
+    nonWhitespaceChildren = GetSemanticJsxChildren(children!.Nodes as GoPtr<GoSlice<GoPtr<JsxChild>>>);
   }
   const isStaticChildren =
-    nonWhitespaceChildren.length > 1 ||
-    (nonWhitespaceChildren.length === 1 && IsJsxExpression(nonWhitespaceChildren[0]) && AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken !== undefined);
+    (nonWhitespaceChildren?.length ?? 0) > 1 ||
+    ((nonWhitespaceChildren?.length ?? 0) === 1 && IsJsxExpression(nonWhitespaceChildren![0]) && AsJsxExpression(nonWhitespaceChildren![0])!.DotDotDotToken !== undefined);
   const args: GoSlice<GoPtr<Node>> = [];
   args.push(tagName as unknown as GoPtr<Node>);
   args.push(object as unknown as GoPtr<Node>);

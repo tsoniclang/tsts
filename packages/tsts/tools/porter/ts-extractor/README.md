@@ -18,10 +18,23 @@ the same signature check as a hard gate.
 
 ## How it works
 
+- **Metadata ownership** (`declaration-metadata.mjs`): initializes TSTS's lazy
+  JSDoc parser and accepts metadata only from parser-proven JSDoc attached to the
+  exact top-level declaration. Text in strings, ordinary comments, and function
+  bodies is never metadata. Duplicate, malformed, orphaned, non-leading, or
+  misplaced tags fail hard.
 - **Actual side** (`extract-signatures.mjs` + `ast-signatures.mjs`): parses each
   ported `.ts` with TSTS's own compiled parser and builds a canonical structured
-  type descriptor per unit, resolving type references through imports/re-exports
-  to their defining module.
+  type descriptor per unit. Interfaces and aliases are type-only, functions are
+  value-only, classes and enums are dual, and namespace identities remain
+  separate from both. Explicit exports shadow stars, same-origin star paths
+  coalesce, true ambiguities fail, and `export *` excludes `default`. Relative
+  modules must exist, namespace/default aliases resolve transitively, and all
+  source ranges are read with TS-Go's UTF-8-aware node-text API.
+- **Constant side** (`constant-environment.mjs`): resolves only immutable `const`
+  and enum declaration values, on demand, through exact local/default/named/star
+  and namespace export routes. It never scans function bodies or promotes
+  `let`/`var` bindings into compile-time constants.
 - **Expected side** (`expected-from-go.mjs`): builds the same descriptor shape
   directly from the Go extractor's structured type model, resolving each Go type
   to the TS module where its `@tsgo-unit` actually lives (split-aware).

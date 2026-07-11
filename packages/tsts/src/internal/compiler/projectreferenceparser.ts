@@ -27,7 +27,7 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 export interface projectReferenceParseTask {
   configName: string;
   resolved: GoPtr<ParsedCommandLine>;
-  subTasks: GoSlice<GoPtr<projectReferenceParseTask>>;
+  subTasks: GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>>;
 }
 
 /**
@@ -57,7 +57,7 @@ export function projectReferenceParseTask_parse(receiver: GoPtr<projectReference
   }
   ParsedCommandLine_ParseInputOutputNames(receiver!.resolved);
   const subReferences = ParsedCommandLine_ResolvedProjectReferencePaths(receiver!.resolved);
-  if (subReferences.length > 0) {
+  if ((subReferences?.length ?? 0) > 0) {
     receiver!.subTasks = createProjectReferenceParseTasks(subReferences);
   }
 }
@@ -74,11 +74,11 @@ export function projectReferenceParseTask_parse(receiver: GoPtr<projectReference
  * 	})
  * }
  */
-export function createProjectReferenceParseTasks(projectReferences: GoSlice<string>): GoSlice<GoPtr<projectReferenceParseTask>> {
-  return projectReferences.map((configName: string): GoPtr<projectReferenceParseTask> => ({
+export function createProjectReferenceParseTasks(projectReferences: GoPtr<GoSlice<string>>): GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>> {
+  return projectReferences?.map((configName: string): GoPtr<projectReferenceParseTask> => ({
     configName,
     resolved: undefined,
-    subTasks: [],
+    subTasks: undefined,
   }));
 }
 
@@ -109,7 +109,7 @@ export interface projectReferenceParser {
  * 	p.initMapper(tasks)
  * }
  */
-export function projectReferenceParser_parse(receiver: GoPtr<projectReferenceParser>, tasks: GoSlice<GoPtr<projectReferenceParseTask>>): void {
+export function projectReferenceParser_parse(receiver: GoPtr<projectReferenceParser>, tasks: GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>>): void {
   receiver!.loader!.projectReferenceFileMapper!.loader = receiver!.loader;
   projectReferenceParser_start(receiver, tasks);
   receiver!.wg.RunAndWait();
@@ -135,14 +135,14 @@ export function projectReferenceParser_parse(receiver: GoPtr<projectReferencePar
  * 	}
  * }
  */
-export function projectReferenceParser_start(receiver: GoPtr<projectReferenceParser>, tasks: GoSlice<GoPtr<projectReferenceParseTask>>): void {
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
+export function projectReferenceParser_start(receiver: GoPtr<projectReferenceParser>, tasks: GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>>): void {
+  for (let i = 0; i < (tasks?.length ?? 0); i++) {
+    const task = tasks![i];
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
     const [loadedTask, loaded] = SyncMap_LoadOrStore<Path, GoPtr<projectReferenceParseTask>>(receiver!.tasksByFileName as SyncMap<Path, GoPtr<projectReferenceParseTask>>, path, task);
     if (loaded) {
       // dedup tasks to ensure correct file order, regardless of which task would be started first
-      tasks[i] = loadedTask;
+      tasks![i] = loadedTask;
     } else {
       receiver!.wg.Queue((): void => {
         projectReferenceParseTask_parse(task, receiver);
@@ -168,13 +168,13 @@ export function projectReferenceParser_start(receiver: GoPtr<projectReferencePar
  * 	}
  * }
  */
-export function projectReferenceParser_initMapper(receiver: GoPtr<projectReferenceParser>, tasks: GoSlice<GoPtr<projectReferenceParseTask>>): void {
+export function projectReferenceParser_initMapper(receiver: GoPtr<projectReferenceParser>, tasks: GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>>): void {
   const totalReferences = SyncMap_Size(receiver!.tasksByFileName) + 1;
   receiver!.loader!.projectReferenceFileMapper!.configToProjectReference = new globalThis.Map<Path, GoPtr<ParsedCommandLine>>();
-  receiver!.loader!.projectReferenceFileMapper!.referencesInConfigFile = new globalThis.Map<Path, GoSlice<Path>>();
+  receiver!.loader!.projectReferenceFileMapper!.referencesInConfigFile = new globalThis.Map<Path, GoPtr<GoSlice<Path>>>();
   receiver!.loader!.projectReferenceFileMapper!.sourceToProjectReference = new globalThis.Map<Path, GoPtr<import("../tsoptions/parsedcommandline.js").SourceOutputAndProjectReference>>();
   receiver!.loader!.projectReferenceFileMapper!.outputDtsToProjectReference = new globalThis.Map<Path, GoPtr<import("../tsoptions/parsedcommandline.js").SourceOutputAndProjectReference>>();
-  const seen = NewSetWithSizeHint<GoPtr<projectReferenceParseTask>>(tasks.length);
+  const seen = NewSetWithSizeHint<GoPtr<projectReferenceParseTask>>(tasks?.length ?? 0);
   receiver!.loader!.projectReferenceFileMapper!.referencesInConfigFile.set(
     SourceFile_Path(receiver!.loader!.opts.Config!.ConfigFile!.SourceFile),
     projectReferenceParser_initMapperWorker(receiver, tasks, seen),
@@ -224,12 +224,12 @@ export function projectReferenceParser_initMapper(receiver: GoPtr<projectReferen
  * 	return results
  * }
  */
-export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectReferenceParser>, tasks: GoSlice<GoPtr<projectReferenceParseTask>>, seen: GoPtr<Set<GoPtr<projectReferenceParseTask>>>): GoSlice<Path> {
-  if (tasks.length === 0) {
-    return [];
+export function projectReferenceParser_initMapperWorker(receiver: GoPtr<projectReferenceParser>, tasks: GoPtr<GoSlice<GoPtr<projectReferenceParseTask>>>, seen: GoPtr<Set<GoPtr<projectReferenceParseTask>>>): GoPtr<GoSlice<Path>> {
+  if ((tasks?.length ?? 0) === 0) {
+    return undefined;
   }
   const results: Path[] = [];
-  for (const task of tasks) {
+  for (const task of tasks!) {
     const path = fileLoader_toPath(receiver!.loader, task!.configName);
     results.push(path);
     // ensure we only walk each task once

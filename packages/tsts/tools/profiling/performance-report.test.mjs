@@ -5,13 +5,14 @@ import { join } from "node:path";
 import test from "node:test";
 
 import { aggregateSamples, assertBaselineCompatibility, buildInterleavedSchedule, exactWorkReceipt } from "./benchmark-core.mjs";
+import { WORKLOAD_SELECTION_CONTRACT } from "./benchmark-selection.mjs";
 import { sealEvidenceDirectory } from "../sealed-evidence.mjs";
 import { fingerprint } from "../test-provenance.mjs";
 import { createPerformanceReport, performanceReportSealMetadata, readVerifiedPerformanceReport, validatePerformanceReport } from "./performance-report.mjs";
 
 const requiredMetrics = ["Files", "Lines", "Parse", "Bind", "Check", "Total", "MemReportedKB", "wallSecs", "userSecs", "systemSecs", "cpuSecs", "cpuPercent", "maxRssKB"];
 const sampling = { systemCacheWarmupRounds: 1, measuredRounds: 5, timeoutMs: 1000 };
-const measurementContract = { policyId: "fixture", gatedMetrics: ["wallSecs"] };
+const measurementContract = { policyId: "fixture", gatedMetrics: ["wallSecs"], workloadSelection: WORKLOAD_SELECTION_CONTRACT };
 const measurementContractDigest = fingerprint(measurementContract, "tsts-performance-measurement-contract-v1");
 const contract = { sampling, requiredMetrics, workloadEquivalence: ["Files", "Lines"], measurementContract, measurementContractDigest };
 
@@ -39,13 +40,23 @@ test("baseline compatibility permits a new prepared TSTS build but binds referen
   assert.throws(() => assertBaselineCompatibility(current, baseline), /tsgo reference producer/);
 });
 
+test("performance reports bind selected-file count to compiler work metrics", () => {
+  const original = fixtureReport();
+  const { reportId: _reportId, ...body } = structuredClone(original);
+  const mismatched = selectionEvidence(["index.ts", "other.ts"]);
+  for (const compiler of Object.values(body.results[0].byCompiler)) compiler.selection = structuredClone(mismatched);
+  body.results[0].work.selection = structuredClone(mismatched);
+  const report = createPerformanceReport(body);
+  assert.throws(() => validatePerformanceReport(report, contract), /selected-file count does not match/);
+});
+
 function fixtureReport() {
   const byCompiler = Object.fromEntries(["tsts", "tsgo", "tsc"].map((compiler, compilerIndex) => {
     const warmup = [sample(1 + compilerIndex)];
     const measured = [1, 2, 3, 4, 5].map((value) => sample(value + compilerIndex));
-    return [compiler, { systemCacheWarmupSamples: warmup, measuredSamples: measured, aggregate: aggregateSamples(measured, requiredMetrics) }];
+    return [compiler, { selection: selectionEvidence(), systemCacheWarmupSamples: warmup, measuredSamples: measured, aggregate: aggregateSamples(measured, requiredMetrics) }];
   }));
-  const results = [{ name: "fixture", byCompiler, work: exactWorkReceipt(byCompiler, ["Files", "Lines"]) }];
+  const results = [{ name: "fixture", byCompiler, work: { metrics: exactWorkReceipt(byCompiler, ["Files", "Lines"]), selection: selectionEvidence() } }];
   return createPerformanceReport({
     role: "baseline-candidate",
     outcome: "measurement-complete",
@@ -146,9 +157,14 @@ function inputRoot(label) {
   return { label, kind: "file", mode: 420, symlinkPolicy: "reject", fileCount: 1, symlinkCount: 0, bytes: 1, digest: "d".repeat(64) };
 }
 
+function selectionEvidence(paths = ["index.ts"]) {
+  const body = { schemaVersion: 1, files: paths.map((path, index) => ({ path, bytes: index + 1, sha256: String(index + 1).repeat(64) })) };
+  return { ...body, digest: fingerprint(body, "tsts-performance-workload-selection-v1") };
+}
+
 function sample(value) {
   return {
-    Files: 10,
+    Files: 1,
     Lines: 100,
     Parse: value,
     Bind: value,
