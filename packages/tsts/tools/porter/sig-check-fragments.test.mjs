@@ -98,7 +98,6 @@ test("merged enum fragments retain exact member placement", () => {
   const mismatches = compareSignatures(expected, redistributed, null);
   assert.equal(mismatches.some((mismatch) => mismatch.kind === "enum-member-count"), true);
 });
-
 test("heritage roots use constructor space while nested arguments use type space", () => {
   const descriptor = {
     kind: "class",
