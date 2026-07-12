@@ -18,7 +18,7 @@ import { loadConventions } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
-import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
+import { buildGeneratedTypeDeclarationOwnership } from "./generated-declaration-ownership.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
@@ -76,6 +76,7 @@ export async function computeSignatureReport(deps, options = {}) {
   }
 
   const moduleIndex = loadTypeScriptModuleIndex(api, deps.repoRoot, deps.config.tsRoot);
+  const generatedTypeOwnership = buildGeneratedTypeDeclarationOwnership(deps.config, deps.snapshot, moduleIndex);
   const { sources } = moduleIndex;
   const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
   const typeEquivalenceRegistry = buildTypeEquivalenceRelationRegistry({
@@ -91,7 +92,7 @@ export async function computeSignatureReport(deps, options = {}) {
     deps.snapshot,
     deps.tsById,
     profile,
-    generatedTypeDeclarations(deps.config, moduleIndex),
+    generatedTypeOwnership,
     { externalFacadeStorageView: externalFacadeCatalog.artifactFacades(deps.config, deps.snapshot) },
   );
   const externalExpectedIndex = wholeProgramAudit
@@ -100,7 +101,7 @@ export async function computeSignatureReport(deps, options = {}) {
       deps.snapshot,
       deps.tsById,
       profile,
-      generatedTypeDeclarations(deps.config, moduleIndex),
+      generatedTypeOwnership,
       { externalFacadeStorageView: externalFacadeCatalog.auditFacades(deps.config, deps.snapshot) },
     )
     : undefined;
@@ -350,24 +351,6 @@ function prerequisiteBlockedReport(idFilter, mismatches) {
     declarationOwnership: skipped(),
     untrackedTypeScript: skipped(),
   };
-}
-
-export function generatedTypeDeclarations(config, moduleIndex) {
-  const declarations = new Map();
-  const prefix = `${config.tsRoot.replace(/\/$/, "")}/`;
-  for (const [moduleId, module] of moduleIndex.modules) {
-    if (!moduleId.startsWith(prefix)) throw new Error(`indexed TypeScript module '${moduleId}' is outside configured tsRoot '${config.tsRoot}'`);
-    const relativePath = moduleId.slice(prefix.length);
-    const registration = inspectGeneratedArtifactRegistration(relativePath, module.text);
-    if (registration.error !== undefined) throw new Error(`invalid generated TypeScript artifact '${relativePath}': ${registration.error}`);
-    if (registration.metadata === undefined) continue;
-    for (const name of module.structure.exportedTypeNames) {
-      const modules = declarations.get(name) ?? new Set();
-      modules.add(moduleId);
-      declarations.set(name, modules);
-    }
-  }
-  return declarations;
 }
 
 export function compareSignatureUnit({

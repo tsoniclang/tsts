@@ -285,7 +285,10 @@ test("porter:ast --check detects missing/stale/orphan/untracked/invalid generate
 
     // Orphan: well-formed generated file no longer in the expected set.
     const expected = buildAstGeneratedFiles(config, "rev-fixture-1");
-    writeFileSync(path.join(genDir, "orphan.ts"), expected.get("internal/ast/generated/kinds.ts"));
+    writeFileSync(
+      path.join(genDir, "orphan.ts"),
+      expected.get("internal/ast/generated/kinds.ts").replace('"path":"internal/ast/generated/kinds.ts"', '"path":"internal/ast/generated/orphan.ts"'),
+    );
     assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").orphan.length, 1);
     unlinkSync(path.join(genDir, "orphan.ts"));
 
@@ -301,6 +304,12 @@ test("porter:ast --check detects missing/stale/orphan/untracked/invalid generate
     );
     assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").invalid.length, 1);
     unlinkSync(path.join(genDir, "wrongkind.ts"));
+
+    writeFileSync(path.join(genDir, "badmetadata.ts"), "// Code generated\n// @tsgo-generated {bad-json}\n");
+    const badMetadata = buildAstGeneratedArtifactStatus(config, "rev-fixture-1");
+    assert.equal(badMetadata.invalid.length, 1);
+    assert.equal(badMetadata.untracked.length, 0);
+    unlinkSync(path.join(genDir, "badmetadata.ts"));
 
     assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-1"), cleanAstStatus);
   } finally {

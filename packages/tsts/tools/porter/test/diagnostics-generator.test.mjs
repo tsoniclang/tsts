@@ -223,6 +223,21 @@ test("diagnostics-generator: buildDiagnosticsGeneratedArtifactStatus detects mis
       writeDiagnosticsGenerated(config, "rev-diag-2", { force: true });
       const restoredStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
       assert.equal(collectDiagnosticsArtifactFailures(restoredStatus).length, 0);
+
+      const generatedRoot = path.dirname(messagesPath);
+      const expectedMessage = buildDiagnosticsGeneratedFiles(config, "rev-diag-2").get("internal/diagnostics/generated/messages.ts");
+      writeFileSync(path.join(generatedRoot, "loose.ts"), "export const loose = true;\n");
+      writeFileSync(path.join(generatedRoot, "badmetadata.ts"), "// Code generated\n// @tsgo-generated {bad-json}\n");
+      writeFileSync(
+        path.join(generatedRoot, "orphan.ts"),
+        expectedMessage.replace('"path":"internal/diagnostics/generated/messages.ts"', '"path":"internal/diagnostics/generated/orphan.ts"'),
+      );
+      const classifiedStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
+      assert.deepEqual(classifiedStatus.untracked.map((issue) => issue.path), ["internal/diagnostics/generated/loose.ts"]);
+      assert.deepEqual(classifiedStatus.invalid.map((issue) => issue.path), ["internal/diagnostics/generated/badmetadata.ts"]);
+      assert.deepEqual(classifiedStatus.orphan.map((issue) => issue.path), ["internal/diagnostics/generated/orphan.ts"]);
+      assert.equal(classifiedStatus.missing.length, 0);
+      assert.equal(classifiedStatus.stale.length, 0);
     } finally {
       rmSync(tsRootAbs, { recursive: true, force: true });
     }

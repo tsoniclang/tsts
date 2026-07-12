@@ -1,10 +1,17 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { compareText } from "./core/deterministic-order.mjs";
 import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
+import {
+  generatedArtifactProviders,
+  inspectGeneratedArtifactRegistration,
+  walkGeneratedArtifactFiles,
+} from "./generated-artifact-registry.mjs";
 import { matchGlob } from "./path-policy.mjs";
+
+export { generatedArtifactProviders, inspectGeneratedArtifactRegistration } from "./generated-artifact-registry.mjs";
 
 export const generatedSourceMechanisms = Object.freeze([
   mechanism({
@@ -52,53 +59,6 @@ export const generatedSourceMechanisms = Object.freeze([
     reason: "Generated runtime behavior remains an active mechanical port with exact @tsgo-unit ownership.",
   }),
 ]);
-
-export const generatedArtifactProviders = Object.freeze([
-  artifactProvider("porter:facades", "generatedArtifacts", ["go/**"], ["go-scalars", "go-compat", "go-facade"]),
-  artifactProvider("porter:ast", "astGeneratedArtifacts", ["internal/ast/generated/**"], ["ast-generated"]),
-  artifactProvider("porter:diagnostics", "diagnosticsGeneratedArtifacts", ["internal/diagnostics/generated/**"], ["diagnostics-generated"]),
-  artifactProvider("porter:bundled", "bundledGeneratedArtifacts", ["internal/bundled/*_generated.ts", "internal/bundled/libs/**"], ["bundled-generated"]),
-  artifactProvider("porter:unicode", "unicodeGeneratedArtifacts", ["internal/stringutil/generated/**"], ["unicode-generated"]),
-]);
-
-export function inspectGeneratedArtifactRegistration(relativePath, text) {
-  const markers = [...text.matchAll(/^\/\/ @tsgo-generated[^\n\r]*$/gm)];
-  if (markers.length === 0) return { metadata: undefined, provider: undefined, error: undefined };
-  if (markers.length !== 1) {
-    return { metadata: undefined, provider: undefined, error: `generated artifact must carry exactly one @tsgo-generated record, found ${markers.length}` };
-  }
-  if (!/^\/\/ Code generated[^\n\r]*\r?\n\/\/ @tsgo-generated\s+{[^\n\r]+}\r?(?:\n|$)/.test(text)) {
-    return { metadata: undefined, provider: undefined, error: "@tsgo-generated must be the second line immediately after the generated-file header" };
-  }
-  const payload = /^\/\/ @tsgo-generated\s+({[^\n\r]+})$/.exec(markers[0][0])?.[1];
-  if (payload === undefined) return { metadata: undefined, provider: undefined, error: "@tsgo-generated must contain one JSON object on its line" };
-  let metadata;
-  try {
-    metadata = JSON.parse(payload);
-  } catch (error) {
-    return { metadata: undefined, provider: undefined, error: `invalid @tsgo-generated JSON: ${error.message}` };
-  }
-  if (!isPlainObject(metadata)) return { metadata, provider: undefined, error: "@tsgo-generated metadata must be a plain object" };
-  if (metadata.schemaVersion !== 1) return { metadata, provider: undefined, error: "unsupported @tsgo-generated schemaVersion" };
-  for (const key of ["kind", "generator", "sourceRevision", "path", "contentHash"]) {
-    if (typeof metadata[key] !== "string" || metadata[key].length === 0) {
-      return { metadata, provider: undefined, error: `missing or invalid @tsgo-generated ${key}` };
-    }
-  }
-  const providers = generatedArtifactProviders.filter((provider) => provider.patterns.some((pattern) => matchGlob(pattern, relativePath)));
-  if (providers.length !== 1) {
-    return {
-      metadata,
-      provider: undefined,
-      error: providers.length === 0 ? "generated artifact path has no registered provider" : `generated artifact path matches ${providers.length} providers`,
-    };
-  }
-  const [provider] = providers;
-  if (metadata.generator !== provider.id) return { metadata, provider, error: `metadata generator '${metadata.generator}' does not match provider '${provider.id}'` };
-  if (!provider.kinds.includes(metadata.kind)) return { metadata, provider, error: `metadata kind '${metadata.kind}' is not registered for '${provider.id}'` };
-  if (metadata.path !== relativePath) return { metadata, provider, error: `metadata path '${metadata.path}' does not match '${relativePath}'` };
-  return { metadata, provider, error: undefined };
-}
 
 export function generatedSourceMechanismMatches(sourcePath, mechanisms = generatedSourceMechanisms) {
   return mechanisms.filter((candidate) => candidate.patterns.some((pattern) => matchGlob(pattern, sourcePath)));
@@ -224,14 +184,13 @@ export function buildGlobalGeneratedArtifactStatus(repoRoot, config, artifactSta
       issues.push({ path: provider.id, reason: `artifact status provider '${provider.statusKey}' was not supplied` });
     }
   }
-  for (const file of walkTypeScriptFiles(tsRoot)) {
+  for (const file of walkGeneratedArtifactFiles(tsRoot)) {
     const text = readFileSync(file, "utf8");
     const relative = path.relative(tsRoot, file).split(path.sep).join("/");
     const registration = inspectGeneratedArtifactRegistration(relative, text);
     if (registration.metadata === undefined && registration.error === undefined) continue;
-    if (registration.error !== undefined) {
-      issues.push({ path: relative, ...(registration.provider === undefined ? {} : { provider: registration.provider.id }), reason: `${registration.error}; fix the registered generator output` });
-    }
+    if (registration.provider !== undefined) continue;
+    issues.push({ path: relative, reason: `${registration.error}; fix the registered generator output` });
   }
   return { issues, providerCount: generatedArtifactProviders.length };
 }
@@ -248,30 +207,6 @@ function mechanism(input) {
     active: tracked,
     patterns: Object.freeze([...input.patterns]),
   });
-}
-
-function artifactProvider(id, statusKey, patterns, kinds) {
-  return Object.freeze({ id, statusKey, patterns: Object.freeze(patterns), kinds: Object.freeze(kinds) });
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value) &&
-    [Object.prototype, null].includes(Object.getPrototypeOf(value));
-}
-
-function walkTypeScriptFiles(root) {
-  if (!existsSync(root)) return [];
-  const files = [];
-  const stack = [root];
-  while (stack.length > 0) {
-    const current = stack.pop();
-    for (const entry of readdirSync(current, { withFileTypes: true })) {
-      const full = path.join(current, entry.name);
-      if (entry.isDirectory()) stack.push(full);
-      else if (entry.isFile() && entry.name.endsWith(".ts")) files.push(full);
-    }
-  }
-  return files.sort();
 }
 
 function hashJson(value) {

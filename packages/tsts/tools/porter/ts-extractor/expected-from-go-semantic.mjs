@@ -26,7 +26,7 @@ import { buildTypeStorageIdentityMap } from "../core/type-storage-policies.mjs";
 
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
-export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map(), options = {}) {
+export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeOwnership = new Map(), options = {}) {
   requireOnlyOptions(options, new Set(["externalFacadeStorageView"]), "expected signature index");
   const evidence = addProfileSemanticStorageEvidence(
     buildTypeRepresentationEvidence(config, snapshot, options.externalFacadeStorageView),
@@ -38,16 +38,16 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
     for (const unit of file.units ?? []) {
       if (unit.kind !== "type") continue;
       const ts = tsById.get(unit.id);
-      const targetPath = ts?.path ?? exactGeneratedTypePath(config, file.importPath, unit.name, generatedTypeDeclarations);
-      if (targetPath === undefined) continue;
-      if (ts === undefined && (!Array.isArray(unit.semantic) || unit.semantic.length === 0)) {
-        setExactIndexEntry(pkgType, objectKey(file.importPath, unit.name), targetPath, "TypeScript declaration path");
-        continue;
-      }
+      if (ts === undefined && (!Array.isArray(unit.semantic) || unit.semantic.length === 0)) continue;
       for (const variant of semanticVariants(unit)) {
         const object = variant.type?.object;
         if (object === undefined) continue;
-        setExactIndexEntry(pkgType, objectKey(object.packagePath, object.name), targetPath, "TypeScript declaration path");
+        const generated = generatedTypeOwnership.get(object.id);
+        if (ts === undefined && generated === undefined) continue;
+        const owner = ts === undefined
+          ? { moduleId: generated.moduleId, tsName: generated.tsName }
+          : { moduleId: ts.path, tsName: unit.name };
+        setExactIndexEntry(pkgType, object.id, owner, "TypeScript declaration owner", sameDeclarationOwner);
       }
     }
   }
@@ -310,9 +310,9 @@ function referenceDescriptor(reference, argumentsList, index) {
   const storageIdentity = index.namedTypeStorage.get(reference.objectId);
   if (storageIdentity !== undefined) return ref(storageIdentity, argumentsList);
   if (isInternal(packagePath, index.goModule)) {
-    const target = index.pkgType.get(objectKey(packagePath, name));
-    if (target === undefined) throw new Error(`internal Go type '${goName}' has no exact @tsgo-unit declaration identity`);
-    return ref(`${target}::${name}`, argumentsList);
+    const target = index.pkgType.get(reference.objectId);
+    if (target === undefined) throw new Error(`internal Go type '${goName}' has no exact declaration ownership identity`);
+    return ref(`${target.moduleId}::${target.tsName}`, argumentsList);
   }
   const external = index.externalTypeContracts.get(reference.objectId);
   if (external !== undefined) {
@@ -379,17 +379,6 @@ function validateStructSyntax(contract, sourceMembers, unitId) {
   }
 }
 
-function exactGeneratedTypePath(config, importPath, name, generatedTypeDeclarations) {
-  if (typeof name !== "string" || name === "") return undefined;
-  const packageDirectory = importPath === config.goModulePath ? config.tsRoot
-    : importPath.startsWith(`${config.goModulePath}/`) ? `${config.tsRoot}/${importPath.slice(config.goModulePath.length + 1)}` : undefined;
-  if (packageDirectory === undefined) return undefined;
-  const candidates = [...(generatedTypeDeclarations.get(name) ?? [])]
-    .filter((moduleId) => moduleId === packageDirectory || moduleId.startsWith(`${packageDirectory}/`)).sort(compareText);
-  if (candidates.length > 1) throw new Error(`Go type '${importPath}.${name}' has ambiguous generated TypeScript declarations: ${candidates.join(", ")}`);
-  return candidates[0];
-}
-
 function emptyDeclarationMember() {
   return { kind: "property", name: "__tsgoEmpty", modifiers: ["readonly"], optional: true, type: { t: "kw", kw: "never" } };
 }
@@ -419,13 +408,13 @@ function withArguments(descriptor, argumentsList, objectId) {
   throw new Error(`mapped keyword Go type '${objectId}' cannot accept explicit type arguments`);
 }
 
-function objectKey(packagePath, name) {
-  return `${packagePath}::${name}`;
+function setExactIndexEntry(index, key, value, label, equals = Object.is) {
+  if (index.has(key) && !equals(index.get(key), value)) throw new Error(`${label} identity '${key}' is ambiguous`);
+  index.set(key, value);
 }
 
-function setExactIndexEntry(index, key, value, label) {
-  if (index.has(key) && index.get(key) !== value) throw new Error(`${label} identity '${key}' is ambiguous`);
-  index.set(key, value);
+function sameDeclarationOwner(left, right) {
+  return left.moduleId === right.moduleId && left.tsName === right.tsName;
 }
 
 function isInternal(importPath, goModule) {

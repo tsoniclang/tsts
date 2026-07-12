@@ -19,9 +19,10 @@
 // missing / stale / orphan / untracked / invalid. Safe-write contract: create
 // missing, no-op identical, fail on different unless --force.
 
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { inspectGeneratedArtifactRegistration, walkGeneratedArtifactFiles } from "./generated-artifact-registry.mjs";
 import { hashText, resolveRepo, writeTextSafely } from "./porter.mjs";
 
 const GENERATOR = "porter:diagnostics";
@@ -336,30 +337,6 @@ function generatedDirAbsolute(config) {
   return resolveRepo(path.join(dc.tsRoot, dc.generatedDir));
 }
 
-function walkTsFiles(root) {
-  if (!existsSync(root)) return [];
-  const out = [];
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const full = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...walkTsFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith(".ts")) {
-      out.push(full);
-    }
-  }
-  return out;
-}
-
-function parseDiagnosticsMetadata(text) {
-  const match = /^\/\/ @tsgo-generated\s+({[^\n\r]+})/m.exec(text);
-  if (!match) return undefined;
-  try {
-    return JSON.parse(match[1]);
-  } catch {
-    return undefined;
-  }
-}
-
 // Returns { missing, stale, orphan, untracked, invalid } — same shape as the AST
 // and facade generated-artifact checks.
 export function buildDiagnosticsGeneratedArtifactStatus(config, sourceRevision) {
@@ -367,7 +344,7 @@ export function buildDiagnosticsGeneratedArtifactStatus(config, sourceRevision) 
   const expected = buildDiagnosticsGeneratedFiles(config, sourceRevision);
   const expectedPaths = new Set(expected.keys());
   const root = generatedDirAbsolute(config);
-  const actualFiles = walkTsFiles(root).map((file) => `${dc.generatedDir}/${path.relative(root, file).split(path.sep).join("/")}`);
+  const actualFiles = walkGeneratedArtifactFiles(root).map((file) => `${dc.generatedDir}/${path.relative(root, file).split(path.sep).join("/")}`);
   const actualPaths = new Set(actualFiles);
 
   const missing = [];
@@ -385,13 +362,17 @@ export function buildDiagnosticsGeneratedArtifactStatus(config, sourceRevision) 
   for (const relativePath of actualFiles) {
     const absolute = resolveRepo(path.join(dc.tsRoot, relativePath));
     const text = readFileSync(absolute, "utf8");
-    const metadata = parseDiagnosticsMetadata(text);
-    if (!metadata) {
+    const registration = inspectGeneratedArtifactRegistration(relativePath, text);
+    if (registration.error !== undefined) {
+      invalid.push({ path: relativePath, reason: registration.error });
+      continue;
+    }
+    if (registration.metadata === undefined) {
       untracked.push({ path: relativePath, reason: "Generated diagnostics directory file is missing @tsgo-generated metadata." });
       continue;
     }
-    if (metadata.kind !== GENERATED_KIND || metadata.generator !== GENERATOR) {
-      invalid.push({ path: relativePath, reason: "Generated diagnostics file metadata kind/generator is not diagnostics-generated/porter:diagnostics." });
+    if (registration.provider?.id !== GENERATOR) {
+      invalid.push({ path: relativePath, reason: `generated artifact path is registered to '${registration.provider?.id}' instead of '${GENERATOR}'` });
       continue;
     }
     if (!expectedPaths.has(relativePath)) {
