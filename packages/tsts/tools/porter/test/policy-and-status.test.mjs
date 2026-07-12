@@ -316,7 +316,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, [key]: {} }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
     assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: {} }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
   }
-  for (const key of ["externalRefs", "deferFacts", "resultSemantics", "returnFacts"]) {
+  for (const key of ["bodyHash", "externalRefs", "deferFacts", "resultSemantics", "returnFacts"]) {
     assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: [] }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
   }
   const missingSemantic = { ...unit };
