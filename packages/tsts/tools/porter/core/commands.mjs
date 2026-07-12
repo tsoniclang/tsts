@@ -17,9 +17,8 @@ import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
 import { activeSignatureUnitIds, runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
 import { runPinnedScan, runScan } from "./scan-runner.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
-import { buildEmbeddedGoSourceUpdates, parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
+import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { collectGeneratedArtifactFailures, verifyStatus } from "./verification.mjs";
-import path from "node:path";
 import process from "node:process";
 
 export async function main() {
@@ -86,29 +85,6 @@ export async function main() {
     const snapshot = runPinnedScan(config);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     printScanSummary(config, snapshot);
-    return;
-  }
-
-  if (command === "source-docs") {
-    const snapshot = runPinnedScan(config);
-    const result = await buildEmbeddedGoSourceUpdates(snapshot, resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
-    console.log(`embedded Go source docs needing updates: ${result.unitCount} unit(s) in ${result.updates.length} file(s)`);
-    if (options.write === true) {
-      for (const update of result.updates) {
-        const outcome = writeTextSafely(update.path, update.text, {
-          force: options.force === true,
-          label: "ported TypeScript source file",
-        });
-        console.log(`${outcome}: ${path.relative(repoRoot, update.path)}`);
-      }
-      return;
-    }
-    if (options.check === true && result.unitCount > 0) {
-      fail(`${result.unitCount} embedded Go source block(s) differ from pinned TS-Go`);
-    }
-    if (result.unitCount > 0) {
-      console.log("Dry run only. Re-run with --write --force to synchronize source documentation.");
-    }
     return;
   }
 
@@ -254,5 +230,5 @@ export async function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, sig-check, source-docs, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected delta, delta-verify, generated-source-coverage, bundled, unicode, scan, status, verify, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
 }

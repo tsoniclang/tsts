@@ -12,7 +12,6 @@ import { blankValueName, localTsName, safeIdentifier, safePropertyName, uniqueNa
 import { buildSymbolIndex, fileFromUnit, importAliasMap, relativeImportPath } from "./render-indexes.mjs";
 import { invariantSemanticVariant } from "./semantic-variants.mjs";
 import { semanticTypeContexts } from "./semantic-type-nilability.mjs";
-import { renderGoSourceComment } from "./ts-units.mjs";
 import {
   invariantSemanticDeclarationContext,
   invariantSemanticSignatureContract,
@@ -93,8 +92,8 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
 }
 
 export function renderUnit(unit, context) {
-  const metadata = { id: unit.id, kind: unit.kind, status: "stub", sigHash: unit.sigHash, bodyHash: unit.bodyHash };
-  const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n *\n * Go source:\n${renderGoSourceComment(unit.snippet)}\n */\n`;
+  const metadata = { id: unit.id, kind: unit.kind, status: "stub", sigHash: unit.sigHash };
+  const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n */\n`;
   if (unit.kind === "type") return `${header}${renderTypeUnit(unit, context)}\n`;
   if (unit.kind === "func" || unit.kind === "method") return `${header}${renderFunctionUnit(unit, context)}\n`;
   if (unit.kind === "constGroup") return `${header}${renderValueGroup(unit, context, "const")}\n`;

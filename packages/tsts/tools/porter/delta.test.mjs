@@ -5,14 +5,14 @@ import { buildDeltaCompletion, buildPorterDelta, canonicalSnapshot, renderDeltaM
 
 test("porter delta reports file, raw-unit, active-unit, and move changes", () => {
   const from = snapshot("a".repeat(40), [
-    file("internal/a/old.go", "old-hash", [unit("m::internal/a/old.go::func::Moved", "func", "Moved", "sig", "body")]),
-    file("internal/a/changed.go", "before", [unit("m::internal/a/changed.go::func::Changed", "func", "Changed", "sig", "body-1")]),
-    file("internal/ignored/ignored.go", "ignored-1", [unit("m::internal/ignored/ignored.go::func::Ignored", "func", "Ignored", "sig", "body-1")]),
+    file("internal/a/old.go", "old-hash", [unit("m::internal/a/old.go::func::Moved", "func", "Moved", "sig")]),
+    file("internal/a/changed.go", "before", [unit("m::internal/a/changed.go::func::Changed", "func", "Changed", "sig-1")]),
+    file("internal/ignored/ignored.go", "ignored-1", [unit("m::internal/ignored/ignored.go::func::Ignored", "func", "Ignored", "sig-1")]),
   ]);
   const to = snapshot("b".repeat(40), [
-    file("internal/a/new.go", "new-hash", [unit("m::internal/a/new.go::func::Moved", "func", "Moved", "sig", "body")]),
-    file("internal/a/changed.go", "after", [unit("m::internal/a/changed.go::func::Changed", "func", "Changed", "sig", "body-2")]),
-    file("internal/ignored/ignored.go", "ignored-2", [unit("m::internal/ignored/ignored.go::func::Ignored", "func", "Ignored", "sig", "body-2")]),
+    file("internal/a/new.go", "new-hash", [unit("m::internal/a/new.go::func::Moved", "func", "Moved", "sig")]),
+    file("internal/a/changed.go", "after", [unit("m::internal/a/changed.go::func::Changed", "func", "Changed", "sig-2")]),
+    file("internal/ignored/ignored.go", "ignored-2", [unit("m::internal/ignored/ignored.go::func::Ignored", "func", "Ignored", "sig-2")]),
   ]);
   excludeSemanticFile(from, "internal/ignored/ignored.go");
   excludeSemanticFile(to, "internal/ignored/ignored.go");
@@ -27,15 +27,28 @@ test("porter delta reports file, raw-unit, active-unit, and move changes", () =>
   assert.equal(report.rawUnits.moveCandidateCount, 1);
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.moveCandidateCount, 1);
-  assert.equal(report.activeUnits.bodyChangedCount, 1);
-  assert.equal(report.activeUnits.semanticDeclarationChangedCount, 0);
+  assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
   assert.match(renderDeltaMarkdown(report), /Active porter units/);
+});
+
+test("porter delta keeps body-only source edits outside unit change evidence", () => {
+  const id = "m::internal/a/read.go::func::Read";
+  const before = snapshot("a".repeat(40), [file("internal/a/read.go", "body-source-1", [unit(id, "func", "Read", "same-signature")])]);
+  const after = snapshot("b".repeat(40), [file("internal/a/read.go", "body-source-2", [unit(id, "func", "Read", "same-signature")])]);
+  const report = buildPorterDelta(before, after, {
+    primaryUnitKinds: ["func"],
+    policyForUnit: () => ({ category: "literal-port", active: true }),
+    isActivePortPolicy: () => true,
+  });
+  assert.equal(report.goFiles.changedCount, 1);
+  assert.equal(report.rawUnits.changedCount, 0);
+  assert.equal(report.activeUnits.changedCount, 0);
 });
 
 test("porter delta treats canonical declaration and constant drift as signature drift", () => {
   const id = "m::internal/a/constants.go::constGroup::WordBits";
-  const before = unit(id, "constGroup", "WordBits", "same-syntax", "same-body", semanticConstant("32"));
-  const after = unit(id, "constGroup", "WordBits", "same-syntax", "same-body", semanticConstant("64"));
+  const before = unit(id, "constGroup", "WordBits", "same-syntax", semanticConstant("32"));
+  const after = unit(id, "constGroup", "WordBits", "same-syntax", semanticConstant("64"));
   const report = buildPorterDelta(
     snapshot("a".repeat(40), [file("internal/a/constants.go", "before", [before])]),
     snapshot("b".repeat(40), [file("internal/a/constants.go", "after", [after])]),
@@ -45,7 +58,7 @@ test("porter delta treats canonical declaration and constant drift as signature 
       isActivePortPolicy: () => true,
     },
   );
-  assert.equal(report.schemaVersion, 2);
+  assert.equal(report.schemaVersion, 3);
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.sourceSignatureChangedCount, 0);
   assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
@@ -56,8 +69,8 @@ test("porter delta treats canonical declaration and constant drift as signature 
 
 test("compact profile indexes compare by canonical profile identity across snapshots", () => {
   const id = "m::internal/a/value.go::func::Value";
-  const from = snapshot("a".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same", "same")])]);
-  const to = snapshot("b".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same", "same")])]);
+  const from = snapshot("a".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same")])]);
+  const to = snapshot("b".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same")])]);
   to.semantic.profiles.unshift(profile("darwin", "arm64", "GOARM64=v8.0"));
   to.files[0].units[0].semantic[0].profiles = [1];
   const report = buildPorterDelta(from, to, {
@@ -105,7 +118,7 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
 
 function snapshot(gitRevision, files) {
   return {
-    schemaVersion: 11,
+    schemaVersion: 12,
     sourceRoot: "/source",
     modulePath: "m",
     gitRevision,
@@ -135,8 +148,8 @@ function file(sourcePath, sourceHash, units) {
   };
 }
 
-function unit(id, kind, qualifiedName, sigHash, bodyHash, semantic = semanticFunction(sigHash)) {
-  return { id, kind, qualifiedName, sigHash, bodyHash, semantic, valueSpecs: [] };
+function unit(id, kind, qualifiedName, sigHash, semantic = semanticFunction(sigHash)) {
+  return { id, kind, qualifiedName, sigHash, semantic, valueSpecs: [] };
 }
 
 function semanticFunction(token) {

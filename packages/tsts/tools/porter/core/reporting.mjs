@@ -41,9 +41,8 @@ export function printStatus(config, status) {
   console.log(`Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
-  console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  console.log(`Local overrides inline/signature/initializer/value-order/issues: ${localOverrides.inline}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.byAllow.initializer ?? 0}/${localOverrides.byAllow["value-order"] ?? 0}/${localOverrides.failureCount}`);
   for (const line of signatureAuditSummaryLines(status)) console.log(line);
-  console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   console.log(`Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -83,9 +82,8 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
-  lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
+  lines.push(`- Local overrides inline/signature/initializer/value-order/issues: ${localOverrides.inline}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.byAllow.initializer ?? 0}/${localOverrides.byAllow["value-order"] ?? 0}/${localOverrides.failureCount}`);
   for (const line of signatureAuditSummaryLines(status)) lines.push(`- ${line}`);
-  lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   lines.push(`- Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   lines.push(`- Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -125,16 +123,6 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Bundled generated artifact defects: ${status.counts.missingBundledArtifacts + status.counts.staleBundledArtifacts + status.counts.orphanBundledArtifacts + status.counts.untrackedBundledArtifacts + status.counts.invalidBundledArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   lines.push(`- Units outside semantic split targets: ${status.counts.splitPathMismatches ?? 0}`);
-  if ((status.embeddedSourceMismatches?.length ?? 0) > 0) {
-    lines.push("");
-    lines.push("## Embedded Go Source Mismatches");
-    lines.push("");
-    lines.push("| TS path | Unit | Reason |");
-    lines.push("|---|---|---|");
-    for (const issue of status.embeddedSourceMismatches.slice(0, 100)) {
-      lines.push(`| ${issue.path} | ${escapeMd(issue.name)} | ${issue.reason} |`);
-    }
-  }
   if (status.largeFileSplits?.files?.length > 0) {
     lines.push("");
     lines.push("### Large-File Semantic Split Plans");

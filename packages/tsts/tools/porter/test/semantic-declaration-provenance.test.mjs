@@ -11,7 +11,6 @@ import {
   identType,
   semanticFunctionDeclaration,
   signatureHash,
-  testBodyHash,
   testSemanticEnvironment,
   testSigHash,
   unitRecord,
@@ -108,7 +107,7 @@ test("blank value provenance is owned by the stable syntax unit id", () => {
   const syntaxType = funcType([{ type: identType("int") }], []);
   const unit = unitRecord({
     id: "m::internal/a.go::varGroup::_", kind: "varGroup", name: "_", qualifiedName: "_", exported: false, goPath: "internal/a.go",
-    signature, snippet: signature, sigHash: signatureHash(signature), bodyHash: testBodyHash,
+    signature, snippet: signature, sigHash: signatureHash(signature),
     valueSpecs: [{ names: ["_"], type: syntaxType }],
   });
   const snapshot = snapshotFrom({ files: [functionFile("internal/a.go", "_", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
@@ -133,7 +132,6 @@ test("semantic array lengths are unbounded canonical decimal strings", () => {
     parameters: [{ type: syntaxArray }],
     semantic: semanticFunctionDeclaration({ name: "Sized", packagePath: "m/internal", parameters: [{ type: syntaxArray }] }),
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
   });
   const snapshot = snapshotFrom({ files: [functionFile("internal/a.go", "Sized", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
   assert.deepEqual(validate(snapshot), []);
@@ -147,7 +145,7 @@ test("semantic array lengths are unbounded canonical decimal strings", () => {
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.kind = 2;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.kind = 2;
-  }), /unknown snapshot-schema-11 key 'kind'/, "removed redundant basic kind");
+  }), /unknown snapshot-schema-12 key 'kind'/, "removed redundant basic kind");
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.untyped = true;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.untyped = true;
@@ -194,7 +192,6 @@ function methodSnapshot() {
     receiverMode: "value",
     receiverType: identType("Receiver"),
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
   });
   return snapshotFrom({ files: [functionFile("internal/a.go", "Run", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
 }
@@ -212,7 +209,6 @@ function typeSnapshot() {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   return snapshotFrom({ files: [functionFile("internal/a.go", "Item", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
 }
@@ -280,7 +276,6 @@ function twoProfileConstSnapshot() {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   const linux = profile({ coveredFiles: ["internal/a.go"] });
   const darwin = profile({ goarch: "arm64", goos: "darwin", coveredFiles: ["internal/a.go"] });
@@ -300,7 +295,6 @@ function functionFile(filePath, name, providedUnit) {
     name,
     qualifiedName: name,
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
   });
   const directory = filePath.split("/").slice(0, -1).join("/");
   return fileRecord({
@@ -325,7 +319,6 @@ function initializerUnit(id, startOffset) {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   unit.semantic[0].object.id = `${id}::object`;
   return unit;
@@ -352,7 +345,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 11,
+    schemaVersion: 12,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),

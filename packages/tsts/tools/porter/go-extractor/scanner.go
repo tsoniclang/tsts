@@ -113,7 +113,6 @@ func funcUnit(fileSet *token.FileSet, decl *ast.FuncDecl, rel string, modulePath
 	}
 	unit.Signature = signature
 	unit.SigHash = hashText(signature)
-	unit.BodyHash = opaqueFunctionBodyHash(decl.Body)
 	unit.Snippet = signature
 	unit.TypeParameters = fieldNames(decl.Type.TypeParams)
 	unit.TypeParameterDetails = typeParameters(decl.Type.TypeParams)
@@ -140,10 +139,6 @@ func genDeclUnit(fileSet *token.FileSet, decl *ast.GenDecl, rel string, modulePa
 	unit.QualifiedName = name
 	unit.Signature = signature
 	unit.SigHash = hashText(signature)
-	unit.BodyHash = hashText("")
-	if decl.Tok == token.VAR {
-		unit.BodyHash = opaqueValueInitializersHash(decl)
-	}
 	unit.Snippet = signature
 	unit.ValueSpecs = valueSpecsOf(decl)
 	unit.Exported = hasExportedSpec(decl)
@@ -158,7 +153,6 @@ func typeUnit(fileSet *token.FileSet, spec *ast.TypeSpec, rel string, modulePath
 	unit.TypeKind = typeKind(spec)
 	unit.Signature = printed(typeSpecWithoutComments(spec))
 	unit.SigHash = hashText(unit.Signature)
-	unit.BodyHash = hashText("")
 	unit.Snippet = unit.Signature
 	unit.TypeParameters = fieldNames(spec.TypeParams)
 	unit.TypeParameterDetails = typeParameters(spec.TypeParams)
@@ -210,28 +204,6 @@ func valueGroupSignatureEnd(declaration *ast.GenDecl) token.Pos {
 		}
 	}
 	return end
-}
-
-func opaqueValueInitializersHash(declaration *ast.GenDecl) string {
-	fragments := []string{}
-	for _, specification := range declaration.Specs {
-		value, ok := specification.(*ast.ValueSpec)
-		if !ok {
-			fatalf("Go %s declaration contains unsupported specification %T", declaration.Tok, specification)
-		}
-		for _, expression := range value.Values {
-			text := printed(expression)
-			fragments = append(fragments, strconv.Itoa(len(text))+":"+text)
-		}
-	}
-	return hashText(strings.Join(fragments, ""))
-}
-
-func opaqueFunctionBodyHash(body *ast.BlockStmt) string {
-	if body == nil {
-		return hashText("")
-	}
-	return hashText(printed(body))
 }
 
 func baseUnit(fileSet *token.FileSet, node ast.Node, rel string, modulePath string, kind string, name string, generated bool, seenIDs map[string]int) UnitReport {

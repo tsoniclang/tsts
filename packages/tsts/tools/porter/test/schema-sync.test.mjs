@@ -8,7 +8,6 @@ import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
   buildGeneratedSourcePolicyStatus,
-  buildEmbeddedGoSourceUpdates,
   buildLocalOverrideStatus,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
@@ -76,7 +75,6 @@ import {
   selectorType,
   sliceType,
   snapshotWith,
-  testBodyHash,
   testSigHash,
   unitRecord,
 } from "./helpers.mjs";

@@ -16,7 +16,6 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
         qualifiedName: "Implemented",
         goPath: "internal/checker/checker.go",
         sigHash: "sig-1",
-        bodyHash: "body-1",
       })],
     }),
     fileRecord({
@@ -27,7 +26,6 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
         qualifiedName: "Missing",
         goPath: "internal/parser/parser.go",
         sigHash: "sig-2",
-        bodyHash: "body-2",
       })],
     }),
   ]);
@@ -39,12 +37,11 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
       path: "packages/tsts/src/internal/checker/checker.ts",
       status: "implemented",
       sigHash: "sig-1",
-      bodyHash: "body-1",
     }],
   });
   const markdown = renderStatusMarkdown(status);
 
-  assert.equal(status.schemaVersion, 3);
+  assert.equal(status.schemaVersion, 4);
   assert.match(markdown, /\| internal\/parser \| 1 \|/);
   assert.doesNotMatch(markdown, /\| internal\/checker \| 1 \|/);
   assert.match(markdown, /Go\/TypeScript signature unit audit: not run/);
@@ -221,7 +218,7 @@ function minimalStatus() {
       staleBundledArtifacts: 0, orphanBundledArtifacts: 0, untrackedBundledArtifacts: 0,
       invalidBundledArtifacts: 0, missingUnicodeArtifacts: 0, staleUnicodeArtifacts: 0,
       orphanUnicodeArtifacts: 0, untrackedUnicodeArtifacts: 0, invalidUnicodeArtifacts: 0,
-      largeFileSplitFailures: 0, embeddedSourceMismatches: 0, schemaFilePolicyIssues: 0,
+      largeFileSplitFailures: 0, schemaFilePolicyIssues: 0,
       schemaSourceMismatches: 0, unitlessGoFiles: 0,
     },
     categories: {}, rows: [], unitlessGoFiles: [], untrackedTsFiles: [], forbiddenTsFiles: [],

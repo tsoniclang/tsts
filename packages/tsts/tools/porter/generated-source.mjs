@@ -168,7 +168,7 @@ export function buildGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
       .map((file) => {
         const units = (file.units ?? [])
           .filter((unit) => primaryKinds.has(unit.kind))
-          .map((unit) => ({ id: unit.id, sigHash: unit.sigHash, bodyHash: unit.bodyHash }))
+          .map((unit) => ({ id: unit.id, sigHash: unit.sigHash }))
           .sort((left, right) => compareText(left.id, right.id));
         return {
           path: file.path,

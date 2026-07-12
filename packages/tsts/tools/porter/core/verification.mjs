@@ -71,10 +71,6 @@ export function collectVerifyFailures(status, options = {}) {
       .join(", ");
     failures.push(`${status.jsonTagCheck.mismatches} Go struct JSON-tag mismatches${byKind ? ` (${byKind})` : ""}`);
   }
-  if ((status.counts.embeddedSourceMismatches ?? 0) > 0) {
-    const examples = (status.embeddedSourceMismatches ?? []).slice(0, 3).map((issue) => issue.name).join(", ");
-    failures.push(`${status.counts.embeddedSourceMismatches} stale or missing embedded Go source blocks${examples ? ` (${examples})` : ""}`);
-  }
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort && status.counts.stubbed > 0) failures.push(`${status.counts.stubbed} stub Go units`);
   return failures;

@@ -52,7 +52,7 @@ export function buildDeltaCompletion(artifacts, report) {
     files[name] = { bytes: Buffer.byteLength(contents), sha256: sha256(contents) };
   }
   const identity = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     fromRevision: report.from.gitRevision,
     toRevision: report.to.gitRevision,
     files,
@@ -68,7 +68,7 @@ export function verifyDeltaCompletion(artifacts, completion) {
     if (JSON.stringify(actual) !== JSON.stringify(wanted)) issues.push(`${label} keys must be exactly ${wanted.join(", ")}`);
   };
   exactKeys(completion, ["evidenceHash", "files", "fromRevision", "schemaVersion", "toRevision"], "COMPLETE.json");
-  if (completion?.schemaVersion !== 2) issues.push("COMPLETE.json schemaVersion must be 2");
+  if (completion?.schemaVersion !== 3) issues.push("COMPLETE.json schemaVersion must be 3");
   exactKeys(completion?.files, DELTA_EVIDENCE_ARTIFACTS, "COMPLETE.json files");
   for (const name of DELTA_EVIDENCE_ARTIFACTS) {
     const record = completion?.files?.[name];
@@ -105,7 +105,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
     trackedTreeRecords(options.toTreeEntries ?? []),
   );
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     from: snapshotIdentity(fromSnapshot),
     to: snapshotIdentity(toSnapshot),
     environmentMatches: JSON.stringify(fromSnapshot.environment) === JSON.stringify(toSnapshot.environment),
@@ -227,13 +227,11 @@ function unitRecord(file, unit, profileKeys) {
     kind: unit.kind,
     name: unit.qualifiedName ?? unit.name,
     sigHash: unit.sigHash,
-    bodyHash: unit.bodyHash,
     semanticHash,
     semanticDeclaration,
     constantValues,
     comparisonHash: hashObject({
       sigHash: unit.sigHash,
-      bodyHash: unit.bodyHash,
       semanticHash,
     }),
   };
@@ -291,7 +289,6 @@ function compareRecordMaps(fromRecords, toRecords) {
         sourceSignatureChanged: previous.sigHash !== next.sigHash,
         semanticDeclarationChanged: previous.semanticHash !== next.semanticHash,
         signatureChanged: previous.sigHash !== next.sigHash || previous.semanticHash !== next.semanticHash,
-        bodyChanged: previous.bodyHash !== next.bodyHash,
         constantsChanged: JSON.stringify(previous.constantValues) !== JSON.stringify(next.constantValues),
         previous,
       });
@@ -323,7 +320,6 @@ function moveCandidates(removed, added) {
       sourceSignaturePreserved: previous.sigHash === next.sigHash,
       semanticDeclarationPreserved: previous.semanticHash === next.semanticHash,
       signaturePreserved: previous.sigHash === next.sigHash && previous.semanticHash === next.semanticHash,
-      bodyPreserved: previous.bodyHash === next.bodyHash,
     });
   }
   return moves;
@@ -344,7 +340,6 @@ function summarizeComparison(comparison) {
     signatureChangedCount: comparison.changed.filter((record) => record.signatureChanged).length,
     sourceSignatureChangedCount: comparison.changed.filter((record) => record.sourceSignatureChanged).length,
     semanticDeclarationChangedCount: comparison.changed.filter((record) => record.semanticDeclarationChanged).length,
-    bodyChangedCount: comparison.changed.filter((record) => record.bodyChanged).length,
     constantsChangedCount: comparison.changed.filter((record) => record.constantsChanged).length,
     moveCandidateCount: comparison.moves.length,
     addedByModule: countByModule(comparison.added),
@@ -400,7 +395,7 @@ function summaryLine(summary) {
 }
 
 function declarationChangeLine(summary) {
-  return `${summary.sourceSignatureChangedCount} source signatures, ${summary.semanticDeclarationChangedCount} canonical declarations, ${summary.constantsChangedCount} constant sets, ${summary.bodyChangedCount} opaque bodies`;
+  return `${summary.sourceSignatureChangedCount} source signatures, ${summary.semanticDeclarationChangedCount} canonical declarations, ${summary.constantsChangedCount} constant sets`;
 }
 
 function moduleLines(entries) {

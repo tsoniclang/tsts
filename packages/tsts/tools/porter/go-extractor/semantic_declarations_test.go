@@ -157,9 +157,6 @@ func Read(value int) int { return undefinedInsideFunction(value) }
 	if strings.Contains(callbackUnit.Signature, "undefinedInsideLiteral") || strings.Contains(callbackUnit.Snippet, "undefinedInsideLiteral") || strings.Contains(readUnit.Signature, "undefinedInsideFunction") || strings.Contains(readUnit.Snippet, "undefinedInsideFunction") {
 		t.Fatalf("opaque function body leaked into declaration text: callback=%q read=%q", callbackUnit.Signature, readUnit.Signature)
 	}
-	if callbackUnit.BodyHash == hashText("") || readUnit.BodyHash == hashText("") {
-		t.Fatalf("opaque body digests were not retained: callback=%s read=%s", callbackUnit.BodyHash, readUnit.BodyHash)
-	}
 	if callbackUnit.EndLine != 2 || readUnit.EndLine != 3 {
 		t.Fatalf("declaration ranges include opaque bodies: callback=%d read=%d", callbackUnit.EndLine, readUnit.EndLine)
 	}

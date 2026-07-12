@@ -8,7 +8,6 @@ import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
   buildGeneratedSourcePolicyStatus,
-  buildEmbeddedGoSourceUpdates,
   buildLocalOverrideStatus,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
@@ -79,7 +78,6 @@ import {
   selectorType,
   sliceType,
   snapshotWith,
-  testBodyHash,
   testSigHash,
   unitRecord,
 } from "./helpers.mjs";
@@ -245,7 +243,6 @@ test("buildStatus excludes exact inactive unit policies without counting their T
         qualifiedName: "fmtMain",
         goPath: "internal/execute/tsc.go",
         sigHash: "sig-1",
-        bodyHash: "body-1",
       })],
     }),
   ]), {
@@ -257,7 +254,6 @@ test("buildStatus excludes exact inactive unit policies without counting their T
       path: "packages/tsts/src/internal/execute/tsc.ts",
       status: "stub",
       sigHash: "sig-1",
-      bodyHash: "body-1",
     }],
   });
 
@@ -268,9 +264,7 @@ test("buildStatus excludes exact inactive unit policies without counting their T
   assert.equal(status.rows[0].status, "excluded");
   assert.equal(status.rows[0].reason, "formatter command path excluded");
   Object.assign(status, completeDeclarationAuditStatus());
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
-    "1 stale or missing embedded Go source blocks (fmtMain)",
-  ]);
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
 });
 
 test("buildStatus excludes generated and Go test units from production scaffold coverage", () => {

@@ -25,7 +25,6 @@ export const baseConfig = {
 };
 export const testSignature = "func Fail()";
 export const testSigHash = signatureHash(testSignature);
-export const testBodyHash = "b".repeat(64);
 export const testSemanticProfileKey = "linux/amd64:cgo=0:arch=GOAMD64=v1:compiler=gc:experiments=:goexperiment=:tags=";
 export const testSemanticProfileIndex = 0;
 export function signatureHash(signature) {
@@ -153,7 +152,6 @@ export function unitRecord(overrides) {
     endOffset: normalizedOverrides.endOffset ?? startOffset + Buffer.byteLength(signature),
     signature,
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
     snippet: testSignature,
     typeParameters: [],
     typeParameterDetails: [],

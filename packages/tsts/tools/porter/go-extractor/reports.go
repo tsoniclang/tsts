@@ -1,6 +1,6 @@
 package main
 
-const porterSnapshotSchemaVersion = 11
+const porterSnapshotSchemaVersion = 12
 
 type Snapshot struct {
 	SchemaVersion int                    `json:"schemaVersion"`
@@ -143,7 +143,6 @@ type UnitReport struct {
 	EndOffset            int                         `json:"endOffset"`
 	Signature            string                      `json:"signature"`
 	SigHash              string                      `json:"sigHash"`
-	BodyHash             string                      `json:"bodyHash"`
 	Snippet              string                      `json:"snippet"`
 	TypeParameters       []string                    `json:"typeParameters"`
 	TypeParameterDetails []TypeParameterReport       `json:"typeParameterDetails"`

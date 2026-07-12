@@ -12,7 +12,6 @@ import {
   identType,
   semanticFunctionDeclaration,
   signatureHash,
-  testBodyHash,
   testSemanticEnvironment,
   testSemanticProfileKey,
   testSigHash,
@@ -92,7 +91,7 @@ test("semantic profile keys and file provenance are exact relational evidence", 
   }
 });
 
-test("canonical semantic identity retains every snapshot-schema-11 declaration field", () => {
+test("canonical semantic identity retains every snapshot-schema-12 declaration field", () => {
   const method = methodSnapshot().files[0].units[0].semantic[0];
   const pointerMethod = structuredClone(method);
   pointerMethod.signature.receiverMode = "pointer";
@@ -295,7 +294,6 @@ function methodSnapshot() {
     receiverMode: "value",
     receiverType: identType("Receiver"),
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
   });
   return snapshotFrom({ files: [functionFile("internal/a.go", "Run", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
 }
@@ -313,7 +311,6 @@ function typeSnapshot() {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   return snapshotFrom({ files: [functionFile("internal/a.go", "Item", unit)], profiles: [profile({ coveredFiles: ["internal/a.go"] })], requiredFiles: ["internal/a.go"] });
 }
@@ -381,7 +378,6 @@ function twoProfileConstSnapshot() {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   const linux = profile({ coveredFiles: ["internal/a.go"] });
   const darwin = profile({ goarch: "arm64", goos: "darwin", coveredFiles: ["internal/a.go"] });
@@ -401,7 +397,6 @@ function functionFile(filePath, name, providedUnit) {
     name,
     qualifiedName: name,
     sigHash: testSigHash,
-    bodyHash: testBodyHash,
   });
   const directory = filePath.split("/").slice(0, -1).join("/");
   return fileRecord({
@@ -426,7 +421,6 @@ function initializerUnit(id, startOffset) {
     signature,
     snippet: signature,
     sigHash: signatureHash(signature),
-    bodyHash: testBodyHash,
   });
   unit.semantic[0].object.id = `${id}::object`;
   return unit;
@@ -464,7 +458,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 11,
+    schemaVersion: 12,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),

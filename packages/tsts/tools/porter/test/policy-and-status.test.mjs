@@ -8,7 +8,6 @@ import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
   buildGeneratedSourcePolicyStatus,
-  buildEmbeddedGoSourceUpdates,
   buildLocalOverrideStatus,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
@@ -75,7 +74,6 @@ import {
   sliceType,
   snapshotWith,
   signatureHash,
-  testBodyHash,
   testSemanticEnvironment,
   testSigHash,
   unitRecord,
@@ -95,13 +93,12 @@ test("@tsgo-unit metadata is exact and cannot fail open", () => {
     kind: "func",
     status: "implemented",
     sigHash: "a".repeat(64),
-    bodyHash: "b".repeat(64),
   };
   assert.deepEqual(validateTsgoUnitMetadata(valid), []);
   for (const mutation of [
     { ...valid, status: undefined },
     { ...valid, sigHash: undefined },
-    { ...valid, bodyHash: "short" },
+    { ...valid, bodyHash: "b".repeat(64) },
     { ...valid, kind: "method" },
     { ...valid, extra: true },
   ]) {
@@ -120,7 +117,6 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     signature: "func Run()",
     snippet: "func Run()",
     sigHash: signatureHash("func Run()"),
-    bodyHash: testBodyHash,
   });
   const file = fileRecord({
     path: "internal/a.go",
@@ -133,7 +129,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     units: [unit],
   });
   const snapshot = {
-    schemaVersion: 11,
+    schemaVersion: 12,
     sourceRoot,
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -263,7 +259,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
   const varSignature = "var Value int";
   const varUnit = unitRecord({
     id: "m::internal/a.go::varGroup::Value", kind: "varGroup", name: "Value", qualifiedName: "Value", goPath: "internal/a.go",
-    signature: varSignature, snippet: varSignature, sigHash: signatureHash(varSignature), bodyHash: testBodyHash,
+    signature: varSignature, snippet: varSignature, sigHash: signatureHash(varSignature),
     valueSpecs: [{ names: ["Value"], type: identType("int") }],
   });
   const varSnapshot = { ...snapshot, files: [{ ...file, units: [varUnit] }], summary: { ...snapshot.summary, unitKindCounts: { varGroup: 1 } } };
@@ -281,7 +277,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
   assert.match(validatePorterSnapshot({ ...snapshot, schemaVersion: 2 }, config)[0], /schemaVersion/);
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, imports: [{ name: "x", packageName: "x", path: "example/x", futureField: true }] }] }, config).some((issue) => issue.includes("futureField")));
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, kind: "futureDecl" }] }] }, config).some((issue) => issue.includes("unknown")));
-  assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, parseError: "broken" }] }, config).some((issue) => issue.includes("unknown snapshot-schema-11 key 'parseError'")));
+  assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, parseError: "broken" }] }, config).some((issue) => issue.includes("unknown snapshot-schema-12 key 'parseError'")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, unitCount: 0 } }, config).some((issue) => issue.includes("unitCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, structTagCount: 1 } }, config).some((issue) => issue.includes("structTagCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, nodeKindCounts: {} } }, config).some((issue) => issue.includes("keys must be exactly")));
@@ -304,7 +300,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     const missing = structuredClone(file);
     delete missing[key];
     assert.ok(
-      validatePorterSnapshot({ ...snapshot, files: [missing] }, config).some((issue) => issue.includes(`missing required snapshot-schema-11 key '${key}'`)),
+      validatePorterSnapshot({ ...snapshot, files: [missing] }, config).some((issue) => issue.includes(`missing required snapshot-schema-12 key '${key}'`)),
       `missing file field ${key} must fail closed`,
     );
   }
@@ -312,16 +308,16 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     const missing = structuredClone(unit);
     delete missing[key];
     assert.ok(
-      validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(`missing required snapshot-schema-11 key '${key}'`)),
+      validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(`missing required snapshot-schema-12 key '${key}'`)),
       `missing unit field ${key} must fail closed`,
     );
   }
   for (const key of ["nodeKindCounts", "featureCounts"]) {
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, [key]: {} }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-11 key '${key}'`)));
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: {} }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-11 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, [key]: {} }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: {} }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
   }
   for (const key of ["externalRefs", "deferFacts", "resultSemantics", "returnFacts"]) {
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: [] }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-11 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: [] }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-12 key '${key}'`)));
   }
   const missingSemantic = { ...unit };
   delete missingSemantic.semantic;
@@ -367,7 +363,6 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     signature: "Tagged struct { Value string }",
     snippet: "Tagged struct { Value string }",
     sigHash: signatureHash("Tagged struct { Value string }"),
-    bodyHash: testBodyHash,
   });
   const taggedSnapshot = {
     ...snapshot,
@@ -479,7 +474,6 @@ test("buildStatus rejects tracked units outside their semantic split targets", (
     qualifiedName: "Checker.checkSourceFile",
     goPath: "internal/checker/checker.go",
     sigHash: "sig-1",
-    bodyHash: "body-1",
   });
   const config = {
     ...baseConfig,
@@ -509,7 +503,6 @@ test("buildStatus rejects tracked units outside their semantic split targets", (
       path: "packages/tsts/src/internal/checker/wrong.ts",
       status: "implemented",
       sigHash: "sig-1",
-      bodyHash: "body-1",
     }],
   });
 
@@ -532,7 +525,6 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
         qualifiedName: "Fail",
         goPath: "internal/debug/debug.go",
         sigHash: "sig-1",
-        bodyHash: "body-1",
       })],
     }),
     fileRecord({
@@ -552,15 +544,13 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
         id: "m::internal/debug/debug.go::func::Fail",
         path: "packages/tsts/src/internal/debug/debug.ts",
         status: "implemented",
-        sigHash: "sig-1",
-        bodyHash: "old-body",
+        sigHash: "old-sig",
       },
       {
         id: "m::internal/debug/debug.go::func::Gone",
         path: "packages/tsts/src/internal/debug/debug.ts",
         status: "implemented",
         sigHash: "sig",
-        bodyHash: "body",
       },
     ],
   });

@@ -8,7 +8,7 @@ import {
   collectVerifyFailures,
   scanTsUnits,
 } from "../porter.mjs";
-import { emptyCounts, testBodyHash, testSigHash } from "./helpers.mjs";
+import { emptyCounts, testSigHash } from "./helpers.mjs";
 import { parserOptionsForConfig } from "../core/ts-units.mjs";
 
 const removedBodySemanticFields = [
@@ -37,7 +37,7 @@ test("scanTsUnits records declaration metadata without interpreting TypeScript b
   try {
     mkdirSync(path.join(root, "internal/debug"), { recursive: true });
     writeFileSync(path.join(root, "internal/debug/debug.ts"), `/**
- * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This declaration carries an audited local signature override.","goSignature":"go","tsSignature":"ts"}
  *
  * Go source:
@@ -52,7 +52,7 @@ export function Fail(): void {
     const result = await scanTsUnits(root);
     assert.equal(result.fileCount, 2);
     assert.equal(result.units.length, 1);
-    assert.equal(result.units[0].embeddedGoSource, " * func Fail() {}");
+    assert.equal(Object.hasOwn(result.units[0], "embeddedGoSource"), false);
     assert.deepEqual(result.units[0].override, {
       category: "runtime-performance",
       allow: ["signature"],
@@ -72,7 +72,7 @@ test("scanTsUnits ignores metadata-like text outside attached declaration JSDoc"
   const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-opaque-body-"));
   try {
     writeFileSync(path.join(root, "opaque.ts"), `/**
- * @tsgo-unit {"id":"m::opaque.go::func::Opaque","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::opaque.go::func::Opaque","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  *
  * Go source:
  * func Opaque() {}
@@ -97,20 +97,19 @@ export function Opaque(): void {
   }
 });
 
-test("scanTsUnits rejects prose disguised as an embedded Go source block", async () => {
+test("scanTsUnits does not treat Go source prose as declaration evidence", async () => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-source-label-"));
   try {
     writeFileSync(path.join(root, "bad.ts"), `/**
- * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  *
  * Go source: (uses a helper rather than embedding upstream source)
  */
 export function Bad(): void {}
 `);
-    await assert.rejects(
-      scanTsUnits(root),
-      /inline Go source annotations are forbidden.*use 'Port note:'.*exact embedded upstream source block/,
-    );
+    const result = await scanTsUnits(root);
+    assert.equal(result.units.length, 1);
+    assert.equal(result.units[0].id, "m::bad.go::func::Bad");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -130,7 +129,7 @@ export function orphan(): void {}
     unlinkSync(path.join(root, "orphan.ts"));
 
     writeFileSync(path.join(root, "missing-json.ts"), `/**
- * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  * @tsgo-override
  */
 export function Bad(): void {}
@@ -139,7 +138,7 @@ export function Bad(): void {}
     unlinkSync(path.join(root, "missing-json.ts"));
 
     writeFileSync(path.join(root, "duplicate.ts"), `/**
- * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignature":"go","tsSignature":"ts"}
  * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignature":"go","tsSignature":"ts"}
  */
@@ -149,7 +148,7 @@ export function Bad(): void {}
     unlinkSync(path.join(root, "duplicate.ts"));
 
     writeFileSync(path.join(root, "misplaced.ts"), `/**
- * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
+ * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
  */
 import "external-package";
 `);

@@ -11,7 +11,7 @@ import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, policyFor, policyForUnit, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
-import { normalizeEmbeddedGoSource, renderGoSourceComment, validateTsgoUnitMetadata } from "./ts-units.mjs";
+import { validateTsgoUnitMetadata } from "./ts-units.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -218,7 +218,6 @@ export function buildStatus(
   const implemented = [];
   const stubbed = [];
   const excluded = [];
-  const embeddedSourceMismatches = [];
   const splitPathMismatches = [];
 
   for (const unit of goUnits) {
@@ -240,24 +239,9 @@ export function buildStatus(
       status: "missing",
       reason: unit.policy.reason,
       sigHash: unit.sigHash,
-      bodyHash: unit.bodyHash,
       tsPath: "",
       tsStatus: "",
     };
-
-    if (tsUnit !== undefined) {
-      const expectedSource = normalizeEmbeddedGoSource(renderGoSourceComment(unit.snippet));
-      if (normalizeEmbeddedGoSource(tsUnit.embeddedGoSource) !== expectedSource) {
-        embeddedSourceMismatches.push({
-          id: row.id,
-          path: tsUnit.path,
-          name: row.name,
-          reason: tsUnit.embeddedGoSource === undefined
-            ? "missing Go source block"
-            : "Go source block differs from pinned TS-Go",
-        });
-      }
-    }
 
     if (!isActivePortPolicy(unit.policy)) {
       row.status = "excluded";
@@ -284,10 +268,9 @@ export function buildStatus(
       });
     }
     const sigMatches = tsUnit.sigHash === unit.sigHash;
-    const bodyMatches = tsUnit.bodyHash === unit.bodyHash;
-    if (!sigMatches || !bodyMatches) {
+    if (!sigMatches) {
       row.status = "stale";
-      row.reason = `metadata hash drift: sig=${sigMatches ? "ok" : "changed"} body=${bodyMatches ? "ok" : "changed"}`;
+      row.reason = "signature metadata hash drift";
       stale.push(row);
     } else if (tsUnit.status === "implemented") {
       row.status = "implemented";
@@ -326,7 +309,7 @@ export function buildStatus(
   const declarationAudits = declarationAuditsNotRun();
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     generatedAt: new Date().toISOString(),
     source: {
       root: snapshot.sourceRoot,
@@ -385,7 +368,6 @@ export function buildStatus(
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
       schemaFilePolicyIssues: (schemaSourceSync.policyIssues ?? []).length,
       localOverrideIssues: localOverrides.failureCount,
-      embeddedSourceMismatches: embeddedSourceMismatches.length,
       generatedSourcePolicyIssues: generatedSourcePolicies.issues.length,
       generatedSourceCoverageIssues: generatedSourceCoverage.issues.length,
       sourcePinIssues: sourcePin.issues.length,
@@ -409,7 +391,6 @@ export function buildStatus(
     unicodeGeneratedArtifacts,
     schemaSourceSync,
     localOverrides,
-    embeddedSourceMismatches,
     generatedSourcePolicies,
     generatedSourceCoverage,
     sourcePin,

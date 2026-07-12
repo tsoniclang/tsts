@@ -15,6 +15,7 @@ import {
   canonicalSemanticModule,
   compareAllowedKeys,
   compareExactKeys,
+  PORTER_SNAPSHOT_SCHEMA_VERSION,
   requireKeys,
   semanticProfileKey,
   validateExperimentNames,
@@ -45,8 +46,8 @@ export const PORTER_SUMMARY_KEYS = Object.freeze(["buildTagCounts", "fileCount",
 export const PORTER_FILE_KEYS = new Set(["buildTags", "byteLength", "generated", "gitBlobHash", "implicitBuildTags", "importPath", "imports", "lineCount", "metadata", "packageName", "path", "sourceHash", "units"]);
 export const PORTER_FILE_REQUIRED_KEYS = new Set(PORTER_FILE_KEYS);
 export const PORTER_IMPORT_KEYS = new Set(["name", "packageName", "path"]);
-export const PORTER_UNIT_KEYS = new Set(["bodyHash", "endLine", "endOffset", "exported", "generated", "id", "kind", "members", "metadata", "name", "parameters", "qualifiedName", "receiver", "receiverMode", "receiverType", "results", "semantic", "sigHash", "signature", "snippet", "startLine", "startOffset", "typeExpression", "typeKind", "typeParameterDetails", "typeParameters", "valueSpecs"]);
-export const PORTER_UNIT_REQUIRED_KEYS = new Set(["bodyHash", "endLine", "endOffset", "exported", "generated", "id", "kind", "members", "metadata", "name", "parameters", "qualifiedName", "results", "sigHash", "signature", "snippet", "startLine", "startOffset", "typeParameterDetails", "typeParameters", "valueSpecs"]);
+export const PORTER_UNIT_KEYS = new Set(["endLine", "endOffset", "exported", "generated", "id", "kind", "members", "metadata", "name", "parameters", "qualifiedName", "receiver", "receiverMode", "receiverType", "results", "semantic", "sigHash", "signature", "snippet", "startLine", "startOffset", "typeExpression", "typeKind", "typeParameterDetails", "typeParameters", "valueSpecs"]);
+export const PORTER_UNIT_REQUIRED_KEYS = new Set(["endLine", "endOffset", "exported", "generated", "id", "kind", "members", "metadata", "name", "parameters", "qualifiedName", "results", "sigHash", "signature", "snippet", "startLine", "startOffset", "typeParameterDetails", "typeParameters", "valueSpecs"]);
 export const PORTER_TYPE_PARAMETER_KEYS = new Set(["constraint", "name"]);
 export const PORTER_STRUCT_TAG_VALUE_KEYS = new Set(["key", "value"]);
 export const PORTER_VALUE_SPEC_KEYS = new Set(["names", "type"]);
@@ -57,7 +58,7 @@ export function validatePorterSnapshot(snapshot, config) {
   const issues = [];
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)) return ["snapshot must be an object"];
   compareExactKeys(snapshot, PORTER_SNAPSHOT_KEYS, "snapshot", issues);
-  if (snapshot.schemaVersion !== 11) issues.push(`snapshot.schemaVersion must be 11, got ${JSON.stringify(snapshot.schemaVersion)}`);
+  if (snapshot.schemaVersion !== PORTER_SNAPSHOT_SCHEMA_VERSION) issues.push(`snapshot.schemaVersion must be ${PORTER_SNAPSHOT_SCHEMA_VERSION}, got ${JSON.stringify(snapshot.schemaVersion)}`);
   if (snapshot.modulePath !== config.goModulePath) issues.push(`snapshot.modulePath must be ${JSON.stringify(config.goModulePath)}`);
   const expectedRoot = resolveRepo(config.sourceRoot).split(path.sep).join("/");
   if (snapshot.sourceRoot !== expectedRoot) issues.push(`snapshot.sourceRoot must be ${JSON.stringify(expectedRoot)}`);

@@ -28,9 +28,9 @@ top-level declaration. Canonical `go/types` evidence closes:
 - constants and variables, including exact constant values;
 - all supported build-profile variants.
 
-Implementation bodies contribute only opaque hashes. They are never traversed
-for imports, types, ownership, control flow, risk classification, or semantic
-comparison.
+Implementation bodies contribute no unit evidence. They are never traversed,
+hashed, copied, or compared for imports, types, ownership, control flow, risk
+classification, or semantic comparison.
 
 ## Delta Evidence
 
@@ -41,7 +41,9 @@ nondeterministic. The resulting immutable evidence records:
 - declaration additions, removals, moves, and signature changes;
 - canonical semantic declaration changes by build profile;
 - exact constant changes;
-- opaque body-hash changes.
+
+Body-only edits remain visible in the complete tracked-tree and Go-file change
+sets. They do not create declaration-unit changes.
 
 Move candidates are evidence only. Porter never treats an orphan/missing pair as
 equivalent and never rewrites or re-stamps authored TypeScript.

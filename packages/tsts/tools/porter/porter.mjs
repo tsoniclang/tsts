@@ -44,11 +44,7 @@ export {
   collectSchemaSourceSyncFailures,
   emptySchemaSourceSyncStatus,
 } from "./core/status.mjs";
-export {
-  buildEmbeddedGoSourceUpdates,
-  scanTsUnits,
-  validateTsgoUnitMetadata,
-} from "./core/ts-units.mjs";
+export { scanTsUnits, validateTsgoUnitMetadata } from "./core/ts-units.mjs";
 export { buildLocalOverrideStatus, emptyLocalOverrideStatus } from "./core/local-overrides.mjs";
 export {
   authoredFacadePathSet,

@@ -140,7 +140,7 @@ export function runDeltaVerify(config, options) {
     issues.push(...validatePorterSnapshot(normalized, config).map((issue) => `${label} snapshot: ${issue}`));
   }
   if (report !== undefined) {
-    if (report.schemaVersion !== 2) issues.push("delta.json schemaVersion must be 2");
+    if (report.schemaVersion !== 3) issues.push("delta.json schemaVersion must be 3");
     if (report.environmentMatches !== true) issues.push("delta.json must prove equal extractor environments");
     if (fromSnapshot !== undefined && report.from?.digest !== snapshotDigest(fromSnapshot)) issues.push("delta.json from digest does not match from-snapshot.json");
     if (toSnapshot !== undefined && report.to?.digest !== snapshotDigest(toSnapshot)) issues.push("delta.json to digest does not match to-snapshot.json");

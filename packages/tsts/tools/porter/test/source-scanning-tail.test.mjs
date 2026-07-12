@@ -1,51 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { buildEmbeddedGoSourceUpdates, buildStatus, collectVerifyFailures, renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
-import { baseConfig, fileRecord, identType, instantiationType, pointerType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
+import { renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
+import { baseConfig, fileRecord, identType, instantiationType, pointerType, snapshotWith, unitRecord } from "./helpers.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "./external-facade-fixtures.mjs";
-
-test("buildStatus rejects stale embedded Go source blocks", () => {
-  const unit = unitRecord({ id: "m::internal/debug/debug.go::func::Fail", kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: "sig", bodyHash: "body", snippet: "func Fail()" });
-  const status = buildStatus(baseConfig, snapshotWith([fileRecord({ units: [unit] })]), {
-    fileCount: 1,
-    files: [{ path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 }],
-    units: [{ id: unit.id, kind: unit.kind, path: "packages/tsts/src/internal/debug/debug.ts", status: "implemented", sigHash: unit.sigHash, bodyHash: unit.bodyHash, embeddedGoSource: " * func OldFail() {}" }],
-  });
-  assert.equal(status.counts.embeddedSourceMismatches, 1);
-  assert.equal(collectVerifyFailures(status, {}).some((failure) => /stale or missing embedded Go source blocks/.test(failure)), true);
-});
-
-test("buildEmbeddedGoSourceUpdates synchronizes docs without disturbing overrides", async () => {
-  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-source-docs-"));
-  try {
-    const file = path.join(root, "debug.ts");
-    const unit = unitRecord({ id: "m::internal/debug/debug.go::func::Fail", kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: testSigHash, bodyHash: testBodyHash, snippet: "func Fail()" });
-    writeFileSync(file, `const unicodePrefix = "💚 café";
-
-/**
- * @tsgo-unit {"id":"${unit.id}","kind":"func","status":"implemented","sigHash":"${testSigHash}","bodyHash":"${testBodyHash}"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"This exact declaration signature difference is reviewed locally.","goSignature":"go","tsSignature":"ts"}
- *
- * Go source:
- * func OldFail() {}
- */
-export function Fail(): void {}
-`);
-    const first = await buildEmbeddedGoSourceUpdates(snapshotWith([fileRecord({ units: [unit] })]), root);
-    assert.equal(first.unitCount, 1);
-    assert.match(first.updates[0].text, /^const unicodePrefix = "💚 café";/);
-    assert.match(first.updates[0].text, /@tsgo-override/);
-    assert.match(first.updates[0].text, /\* func Fail\(\)/);
-    writeFileSync(file, first.updates[0].text);
-    assert.equal((await buildEmbeddedGoSourceUpdates(snapshotWith([fileRecord({ units: [unit] })]), root)).unitCount, 0);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
 
 test("writeTextSafely refuses to overwrite edited files without force", () => {
   const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));

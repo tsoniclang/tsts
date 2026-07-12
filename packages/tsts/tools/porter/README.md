@@ -4,11 +4,11 @@ This directory is the mechanical-port backbone for TSTS. The tooling reads the r
 
 ## Scope Boundary
 
-Porter is an authoritative **inventory, declaration-contract verifier, and upgrade-delta tool** for the maintained Go-to-TypeScript mechanical port. It proves the pinned source identity, complete Go declaration inventory, source/signature/body hashes, generated-artifact ownership, canonical `go/types` signatures, exact `go/constant` values, and every reviewed local exception. It reports changes; it does not decide how an upstream implementation should be rewritten in TypeScript.
+Porter is an authoritative **inventory, declaration-contract verifier, and upgrade-delta tool** for the maintained Go-to-TypeScript mechanical port. It proves the pinned source identity, complete Go declaration inventory, source-signature hashes, generated-artifact ownership, canonical `go/types` signatures, exact `go/constant` values, and every reviewed local exception. It reports declaration changes; it does not decide how an upstream implementation should be rewritten in TypeScript.
 
 Porter is deliberately not a Go-to-TypeScript translator. It must not infer implementation bodies, rewrite authored TypeScript, automatically re-stamp stale metadata, accept a scaffold as an implementation, or treat an orphan/missing pair as a rename. `scaffold` is optional, non-authoritative bootstrap output: it creates a traceable throwing/type-only placeholder for human implementation, while strict verification continues to reject the stub.
 
-The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, type-intrinsic nilability, embedding, and struct tags. Nilability is recorded by `go/types` on every canonical type occurrence; it is never inferred from TypeScript optional syntax or carrier spelling. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits them for imports, constants, types, ownership, control flow, classification, or equivalence. A body hash is an opaque upstream-drift fingerprint only.
+The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, type-intrinsic nilability, embedding, and struct tags. Nilability is recorded by `go/types` on every canonical type occurrence; it is never inferred from TypeScript optional syntax or carrier spelling. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits, hashes, copies, or gates on them.
 
 ## Nilability Carriers
 
@@ -57,7 +57,7 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 
 ## Commands
 
-- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and opaque body drift. `--to` defaults to the pinned source root. Evidence directories are immutable and are never overwritten; a completion marker is published last.
+- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, and exact `go/constant` values. Body-only edits remain visible in tracked-tree and Go-file evidence but never become declaration-unit drift. `--to` defaults to the pinned source root. Evidence directories are immutable and are never overwritten; a completion marker is published last.
 - `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir>` independently validates the exact evidence-file inventory, every byte length and SHA-256 digest, both complete extractor snapshots, report/snapshot identities, clean deterministic provenance, and the exact Markdown rendering.
 - `npm run porter:scan` extracts a full TS-Go snapshot into `.temp/porter/tsgo-snapshot.json`.
 - `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute declaration subaudits, so every signature, facade, external-package, storage-policy, relation, ownership, unmatched-TypeScript, and JSON-tag subaudit is recorded separately as `not-run`; absent evidence is never rendered as zero findings.
@@ -76,7 +76,7 @@ Each ported unit carries one JSON metadata line:
 
 ```ts
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"...","bodyHash":"..."}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"..."}
  */
 ```
 
@@ -93,8 +93,8 @@ establish declaration boundaries and never traverses them for semantics.
 
 - `missing`: the Go unit has no TypeScript `@tsgo-unit`.
 - `stub`: the TypeScript unit exists but intentionally throws or contains type-only placeholder shape.
-- `implemented`: a maintainer has attested that the TypeScript unit implements the recorded Go unit. The Go body hash proves upstream freshness; it does not prove semantic equivalence of arbitrary TypeScript body text.
-- `stale`: the Go signature/body hash changed since the TypeScript unit was written.
+- `implemented`: a maintainer has attested that the TypeScript unit implements the recorded Go declaration.
+- `stale`: the Go source-signature hash changed since the TypeScript unit was written. Canonical declaration drift is additionally enforced by the full signature audit.
 - `orphan`: a TypeScript `@tsgo-unit` refers to no current Go unit.
 - `untracked TS file`: a TypeScript source file exists under `src/` but carries no `@tsgo-unit`.
 - `excluded`: the Go unit is explicitly outside the active standalone compiler porter scope and must not be scaffolded. Go tests, language-service/editor surfaces, generator programs, and generated artifacts owned by a named deterministic generator are excluded from production scaffold coverage even though they remain visible in the inventory.
@@ -128,19 +128,16 @@ size, and nanosecond timestamps are checked for mutation during a run. ACLs,
 extended attributes, and file capabilities are outside the semantic-input
 digest and therefore outside the current threat model. The snapshot has no
 wall-clock field and records complete source-file hashes in addition to exact
-declaration semantics and opaque body hashes. Nested Git worktrees are excluded
+declaration semantics. Nested Git worktrees are excluded
 from the Go walk and audited separately through the source pin.
 
 ## Declaration Overrides
 
-The porter intentionally hashes the upstream Go unit, not the TypeScript body.
-That makes TS-Go baseline updates safe: if upstream changes, the existing
-`@tsgo-unit` becomes `stale` even when the TypeScript body is hand-optimized.
-The complementary risk is that a deliberate TypeScript body divergence can be
-invisible when its declaration still matches. Porter deliberately does not
-interpret implementation bodies and does not permit body exceptions. Such
-implementation decisions belong to ordinary architecture review; the opaque Go
-body hash only detects upstream source change.
+Porter hashes the exact upstream source signature and compares canonical
+declaration semantics; it never hashes either implementation body. Body-only
+changes remain visible at the pinned-tree and Go-file levels, while deciding
+whether or how to port them belongs to ordinary architecture review and tests.
+There is no body exception because there is no body contract.
 
 Override metadata is local-only. Do not add per-unit override ledgers to
 `porter.config.json`.
@@ -161,7 +158,7 @@ Signature overrides must capture both current snapshots locally:
 
 ```ts
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"...","bodyHash":"..."}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"..."}
  * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"Use a target-native source text carrier.","goSignature":"func{source:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,string)=>void}","tsSignature":"func{implementation:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,packages/tsts/src/internal/core/source_text.ts::SourceText)=>void}"}
  */
 ```
@@ -349,7 +346,7 @@ npm run porter:status
 npm run porter:verify
 ```
 
-`porter:status` reports source-pin defects but remains a diagnostic command. `porter:verify` is the gate: it proves the complete source pin, then recomputes Go signature/body hashes from the current Go AST. Any TypeScript unit whose embedded hashes no longer match becomes `stale`. The tool never overwrites implemented TypeScript. Scaffold writes are explicit and append-only unless a new file is being created.
+`porter:status` reports source-pin defects but remains a diagnostic command. `porter:verify` is the gate: it proves the complete source pin, then recomputes Go source-signature hashes and canonical declaration semantics. Any TypeScript unit whose signature evidence no longer matches becomes `stale` or a signature-audit failure. The tool never overwrites implemented TypeScript. Scaffold writes are explicit and append-only unless a new file is being created.
 
 If a TS-Go update removes or renames a Go unit, the existing TypeScript `@tsgo-unit` becomes `orphan`. If the update adds the same concept under a new Go identity, that new identity is reported separately as `missing`. The tool does not guess that an orphan and a missing unit are the same change; a human must either delete the orphan, move the implementation, or update the metadata after reviewing the upstream delta.
 

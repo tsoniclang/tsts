@@ -8,6 +8,8 @@ import {
 } from "./semantic-variants.mjs";
 import { validateStructTagContract } from "./struct-tag-validation.mjs";
 
+export const PORTER_SNAPSHOT_SCHEMA_VERSION = 12;
+
 export { canonicalSchemaValue, canonicalSemanticDeclaration, canonicalSemanticModule, semanticProfileKey, semanticProfileStateKey };
 export { validateStructTagContract };
 
@@ -21,13 +23,13 @@ export function compareExactKeys(value, expected, label, issues) {
 
 export function compareAllowedKeys(value, allowed, label, issues) {
   for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-11 key '${key}'`);
+    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-${PORTER_SNAPSHOT_SCHEMA_VERSION} key '${key}'`);
   }
 }
 
 export function requireKeys(value, required, label, issues) {
   for (const key of required) {
-    if (!Object.hasOwn(value, key)) issues.push(`${label} is missing required snapshot-schema-11 key '${key}'`);
+    if (!Object.hasOwn(value, key)) issues.push(`${label} is missing required snapshot-schema-${PORTER_SNAPSHOT_SCHEMA_VERSION} key '${key}'`);
   }
 }
 
@@ -163,7 +165,6 @@ export function validateFileUnitContracts(modulePath, file, label, issues) {
     }
     if (!/^[a-f0-9]{64}$/.test(unit?.sigHash ?? "")) issues.push(`${unitLabel}.sigHash must be lowercase SHA-256`);
     else if (unit.sigHash !== hashSignature(unit.signature)) issues.push(`${unitLabel}.sigHash must equal SHA-256 of the normalized signature`);
-    if (!/^[a-f0-9]{64}$/.test(unit?.bodyHash ?? "")) issues.push(`${unitLabel}.bodyHash must be lowercase SHA-256`);
     if (bodylessUnitKinds.has(unit?.kind) && unit.snippet !== unit.signature) {
       issues.push(`${unitLabel}.snippet must equal the bodyless declaration signature exactly`);
     }

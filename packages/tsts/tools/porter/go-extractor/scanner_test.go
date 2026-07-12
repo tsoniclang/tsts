@@ -5,26 +5,25 @@ import (
 	"go/build/constraint"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
 )
 
 func TestSyntaxScannerRetainsOnlyBodylessDeclarationEvidence(t *testing.T) {
-	root := t.TempDir()
-	firstPath := filepath.Join(root, "first.go")
-	secondPath := filepath.Join(root, "second.go")
+	firstRoot := t.TempDir()
+	secondRoot := t.TempDir()
+	firstPath := filepath.Join(firstRoot, "sample.go")
+	secondPath := filepath.Join(secondRoot, "sample.go")
 	writeTestFile(t, firstPath, "package sample\nfunc Read(value int) int { return missingOne(value) }\n")
 	writeTestFile(t, secondPath, "package sample\nfunc Read(value int) int { return missingTwo(value) }\n")
-	first := scanGoFile(root, firstPath, "example.test/sample")
-	second := scanGoFile(root, secondPath, "example.test/sample")
+	first := scanGoFile(firstRoot, firstPath, "example.test/sample")
+	second := scanGoFile(secondRoot, secondPath, "example.test/sample")
 	firstUnit := requireSyntaxUnit(t, first, "func", "Read")
 	secondUnit := requireSyntaxUnit(t, second, "func", "Read")
-	if firstUnit.Signature != secondUnit.Signature || firstUnit.SigHash != secondUnit.SigHash {
-		t.Fatalf("body-only edit changed source signature: %#v vs %#v", firstUnit, secondUnit)
-	}
-	if firstUnit.BodyHash == "" || firstUnit.BodyHash == secondUnit.BodyHash {
-		t.Fatalf("opaque body hashes did not distinguish bodies: %q vs %q", firstUnit.BodyHash, secondUnit.BodyHash)
+	if !reflect.DeepEqual(firstUnit, secondUnit) {
+		t.Fatalf("body-only edit changed declaration evidence: %#v vs %#v", firstUnit, secondUnit)
 	}
 	if firstUnit.Snippet != firstUnit.Signature || secondUnit.Snippet != secondUnit.Signature {
 		t.Fatalf("human evidence must be the bodyless declaration signature: %#v vs %#v", firstUnit, secondUnit)
@@ -76,25 +75,19 @@ func TestSyntaxScannerRecordsPhysicalByteLengthAndOffsetOrder(t *testing.T) {
 	}
 }
 
-func TestBodylessAndNonFunctionDeclarationsUseExactAbsentBodyHash(t *testing.T) {
-	root := t.TempDir()
-	path := filepath.Join(root, "sample.go")
-	writeTestFile(t, path, "package sample\nfunc Assembly()\ntype Value int\nvar Current Value\n")
-	report := scanGoFile(root, path, "example.test/sample")
-	expected := hashText("")
-	for _, unit := range report.Units {
-		if unit.BodyHash != expected {
-			t.Fatalf("%s body hash = %q, want exact absent-body hash %q", unit.ID, unit.BodyHash, expected)
-		}
-	}
-}
-
 func TestVariableDeclarationEvidenceDoesNotEmbedInitializerBodies(t *testing.T) {
-	root := t.TempDir()
-	path := filepath.Join(root, "sample.go")
-	writeTestFile(t, path, "package sample\nvar Callback = func(value int) int { return value + 1 }\n")
-	report := scanGoFile(root, path, "example.test/sample")
-	unit := requireSyntaxUnit(t, report, "varGroup", "Callback")
+	firstRoot := t.TempDir()
+	secondRoot := t.TempDir()
+	firstPath := filepath.Join(firstRoot, "sample.go")
+	secondPath := filepath.Join(secondRoot, "sample.go")
+	writeTestFile(t, firstPath, "package sample\nvar Callback = func(value int) int { return value + 1 }\n")
+	writeTestFile(t, secondPath, "package sample\nvar Callback = func(value int) int { return value + 2 }\n")
+	first := requireSyntaxUnit(t, scanGoFile(firstRoot, firstPath, "example.test/sample"), "varGroup", "Callback")
+	second := requireSyntaxUnit(t, scanGoFile(secondRoot, secondPath, "example.test/sample"), "varGroup", "Callback")
+	if !reflect.DeepEqual(first, second) {
+		t.Fatalf("initializer-only edit changed declaration evidence: %#v vs %#v", first, second)
+	}
+	unit := first
 	if unit.Snippet != unit.Signature || strings.Contains(unit.Snippet, "return") {
 		t.Fatalf("variable initializer body leaked into declaration evidence: %#v", unit)
 	}

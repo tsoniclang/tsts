@@ -11,17 +11,17 @@ import {
   renderGeneratedSourceCoverage,
 } from "./generated-source.mjs";
 
-test("generated-source coverage becomes stale when artifact-owned behavior changes", (t) => {
+test("generated-source coverage becomes stale when artifact-owned declarations change", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-generated-coverage-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const config = { generatedSourceCoveragePath: "coverage.json", primaryUnitKinds: ["func"] };
-  const original = snapshotWithAstUnits([unit("A", "sig-a", "body-a")]);
+  const original = snapshotWithAstUnits([unit("A", "sig-a")]);
   writeFileSync(path.join(root, "coverage.json"), renderGeneratedSourceCoverage(original, config.primaryUnitKinds));
   assert.deepEqual(buildGeneratedSourceCoverageStatus(root, config, original).issues, []);
 
   const withHiddenBehavior = snapshotWithAstUnits([
-    unit("A", "sig-a", "body-a"),
-    unit("NewHiddenBehavior", "sig-b", "body-b"),
+    unit("A", "sig-a"),
+    unit("NewDeclaration", "sig-b"),
   ]);
   assert.match(buildGeneratedSourceCoverageStatus(root, config, withHiddenBehavior).issues[0].reason, /stale/);
 });
@@ -72,11 +72,10 @@ function snapshotWithAstUnits(units) {
   };
 }
 
-function unit(name, sigHash, bodyHash) {
+function unit(name, sigHash) {
   return {
     id: `m::internal/ast/ast_generated.go::func::${name}`,
     kind: "func",
     sigHash,
-    bodyHash,
   };
 }
