@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { GoNumberKey, GoStructField, GoStructKey } from "./compat.js";
 import {
   Mutex,
   RWMutex,
@@ -132,6 +133,20 @@ test("sync.Map keeps Go NaN key lookup semantics", () => {
   m.Store(key, "value");
   assert.deepEqual(m.Load(key), [undefined, false]);
   assert.deepEqual(m.LoadAndDelete(key), [undefined, false]);
+});
+
+test("sync.Map uses an explicit descriptor for Go struct value keys", () => {
+  interface Key { value: number }
+  const keyDescriptor = GoStructKey<Key, readonly [number]>(
+    [GoStructField((key) => key.value, GoNumberKey)],
+    ([value]) => ({ value }),
+  );
+  const map = new SyncMap<Key, string>(keyDescriptor);
+  const source = { value: 1 };
+  map.Store(source, "stored");
+  source.value = 2;
+  assert.deepEqual(map.Load({ value: 1 }), ["stored", true]);
+  assert.deepEqual(map.Load({ value: 2 }), [undefined, false]);
 });
 
 test("sync.Pool reuses values and falls back to New", () => {
