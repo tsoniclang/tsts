@@ -39,6 +39,7 @@ test("Porter command option schemas accept only their typed options", () => {
 test("Porter command option schemas reject malformed arguments", () => {
   assert.throws(() => parseArgs("unknown", []), /unknown Porter command/);
   assert.throws(() => parseArgs("verify", ["--strict-port"]), /unknown option '--strict-port'/);
+  assert.throws(() => parseArgs("delta", ["--force"]), /unknown option '--force'/);
   assert.throws(() => parseArgs("status", ["positional"]), /unexpected positional argument/);
   assert.throws(() => parseArgs("status", ["--"]), /unexpected positional argument/);
   assert.throws(() => parseArgs("sig-check", ["--id", "one", "--id", "two"]), /duplicate option '--id'/);

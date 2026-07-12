@@ -15,8 +15,6 @@ import {
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
   collectVerifyFailures,
-  emptyLocalOverrideStatus,
-  emptySchemaSourceSyncStatus,
   expectedTsPath,
   matchGlob,
   policyFor,
@@ -61,14 +59,13 @@ import {
   collectBundledArtifactFailures,
   writeBundledGenerated,
 } from "../../bundled/generate-bundled.mjs";
-import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin.mjs";
+import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 
 import {
   baseConfig,
   channelType,
   completeDeclarationAuditStatus,
   emptyCounts,
-  emptyGeneratedArtifacts,
   emptyVerificationEvidence,
   fileRecord,
   funcType,
@@ -84,21 +81,6 @@ import {
   testSigHash,
   unitRecord,
 } from "./helpers.mjs";
-
-function emptyBuildStatusEvidence() {
-  return {
-    generatedArtifacts: emptyGeneratedArtifacts(),
-    astGeneratedArtifacts: emptyGeneratedArtifacts(),
-    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
-    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
-    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
-    schemaSourceSync: emptySchemaSourceSyncStatus(),
-    localOverrides: emptyLocalOverrideStatus(),
-    sourcePin: emptySourcePinStatus(),
-    generatedSourceCoverage: { issues: [] },
-    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
-  };
-}
 
 test("large-file split plans must cover every declaration exactly once", () => {
   const sourceMethod = unitRecord({
@@ -238,7 +220,7 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
       }),
     ]),
     tsUnits: { fileCount: 0, files: [], units: [] },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
 
   assert.equal(status.counts.portable, 0);
@@ -285,7 +267,7 @@ test("buildStatus excludes exact inactive unit policies without counting their T
         sigHash: "sig-1",
       }],
     },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
 
   assert.equal(status.counts.portable, 0);
@@ -323,7 +305,7 @@ test("buildStatus excludes generated and Go test units from production scaffold 
       }),
     ]),
     tsUnits: { fileCount: 0, files: [], units: [] },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
 
   assert.equal(status.counts.portable, 0);

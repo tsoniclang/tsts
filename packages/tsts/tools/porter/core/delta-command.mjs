@@ -17,7 +17,6 @@ export function runDelta(config, options) {
   if (typeof options.out !== "string" || options.out.trim() === "") {
     fail("porter delta requires --out <new evidence directory>");
   }
-  if (options.force === true) fail("porter delta never overwrites evidence; choose a new --out directory");
   const fromRoot = path.resolve(repoRoot, options.from);
   const toRoot = path.resolve(repoRoot, typeof options.to === "string" ? options.to : config.sourceRoot);
   const outRoot = path.resolve(repoRoot, options.out);

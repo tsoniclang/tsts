@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
+import { emptyLocalOverrideStatus } from "../core/local-overrides.mjs";
+import { emptySchemaSourceSyncStatus } from "../core/status.mjs";
 import { isSemanticPrimaryUnitKind } from "../core/unit-kinds.mjs";
+import { emptySourcePinStatus } from "../source-pin.mjs";
 
 export const baseConfig = {
   goModulePath: "github.com/microsoft/typescript-go",
@@ -114,9 +117,9 @@ export function emptyVerificationEvidence() {
     diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
     bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
     unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
-    schemaSourceSync: { mismatches: [], policyIssues: [], classifiedFileCount: 0 },
-    localOverrides: { failureCount: 0, invalidInline: [] },
-    sourcePin: { issues: [] },
+    schemaSourceSync: emptySchemaSourceSyncStatus(),
+    localOverrides: emptyLocalOverrideStatus(),
+    sourcePin: emptySourcePinStatus(),
     generatedSourceCoverage: { issues: [] },
     globalGeneratedArtifacts: { issues: [], providerCount: 0 },
   };

@@ -15,8 +15,6 @@ import {
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
   collectVerifyFailures,
-  emptyLocalOverrideStatus,
-  emptySchemaSourceSyncStatus,
   expectedTsPath,
   matchGlob,
   policyFor,
@@ -58,13 +56,12 @@ import {
   collectBundledArtifactFailures,
   writeBundledGenerated,
 } from "../../bundled/generate-bundled.mjs";
-import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin.mjs";
-
+import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import {
   baseConfig,
   channelType,
   emptyCounts,
-  emptyGeneratedArtifacts,
+  emptyVerificationEvidence,
   fileRecord,
   funcType,
   identType,
@@ -80,21 +77,6 @@ import {
   testSigHash,
   unitRecord,
 } from "./helpers.mjs";
-
-function emptyBuildStatusEvidence() {
-  return {
-    generatedArtifacts: emptyGeneratedArtifacts(),
-    astGeneratedArtifacts: emptyGeneratedArtifacts(),
-    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
-    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
-    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
-    schemaSourceSync: emptySchemaSourceSyncStatus(),
-    localOverrides: emptyLocalOverrideStatus(),
-    sourcePin: emptySourcePinStatus(),
-    generatedSourceCoverage: { issues: [] },
-    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
-  };
-}
 
 test("matchGlob supports recursive and single-segment patterns", () => {
   assert.equal(matchGlob("internal/jsnum/**", "internal/jsnum/jsnum.go"), true);
@@ -525,7 +507,7 @@ test("buildStatus rejects tracked units outside their semantic split targets", (
         sigHash: "sig-1",
       }],
     },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
 
   assert.deepEqual(status.splitPathMismatches, [{
@@ -579,7 +561,7 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
         },
       ],
     },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
 
   assert.equal(status.counts.portable, 1);
@@ -610,7 +592,7 @@ test("buildStatus excludes files omitted from every semantic profile", () => {
     config: baseConfig,
     snapshot,
     tsUnits: { fileCount: 0, files: [], units: [] },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
   assert.equal(status.counts.excluded, 1);
   assert.equal(status.counts.missing, 0);

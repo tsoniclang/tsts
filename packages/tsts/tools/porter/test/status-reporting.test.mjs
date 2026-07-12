@@ -3,36 +3,18 @@ import test from "node:test";
 
 import {
   buildStatus,
-  emptyLocalOverrideStatus,
-  emptySchemaSourceSyncStatus,
   renderStatusMarkdown,
 } from "../porter.mjs";
 import { summarizeSignatureReport } from "../core/signature-command.mjs";
 import { signatureAuditSummaryLines } from "../core/signature-reporting.mjs";
-import { emptySourcePinStatus } from "../source-pin.mjs";
-import { baseConfig, emptyGeneratedArtifacts, fileRecord, snapshotWith, unitRecord } from "./helpers.mjs";
-
-function emptyBuildStatusEvidence() {
-  return {
-    generatedArtifacts: emptyGeneratedArtifacts(),
-    astGeneratedArtifacts: emptyGeneratedArtifacts(),
-    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
-    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
-    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
-    schemaSourceSync: emptySchemaSourceSyncStatus(),
-    localOverrides: emptyLocalOverrideStatus(),
-    sourcePin: emptySourcePinStatus(),
-    generatedSourceCoverage: { issues: [] },
-    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
-  };
-}
+import { baseConfig, emptyVerificationEvidence, fileRecord, snapshotWith, unitRecord } from "./helpers.mjs";
 
 test("buildStatus rejects missing, extra, undefined, and positional inputs", () => {
   const input = {
     config: baseConfig,
     snapshot: snapshotWith([]),
     tsUnits: { fileCount: 0, files: [], units: [] },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   };
 
   for (const key of Object.keys(input)) {
@@ -81,7 +63,7 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
         sigHash: "sig-1",
       }],
     },
-    ...emptyBuildStatusEvidence(),
+    ...emptyVerificationEvidence(),
   });
   const markdown = renderStatusMarkdown(status);
 
@@ -246,29 +228,10 @@ test("filtered signature summaries preserve every skipped whole-program subaudit
 });
 
 function minimalStatus() {
-  return {
-    generatedAt: "2026-07-12T00:00:00.000Z",
-    source: { gitRevision: "a".repeat(40), fileCount: 0, lineCount: 0 },
-    counts: {
-      portable: 0, excluded: 0, implemented: 0, stubbed: 0, missing: 0, stale: 0, orphan: 0,
-      forbiddenTsFiles: 0, untrackedTsFiles: 0, generatedSourcePolicyIssues: 0,
-      generatedSourceCoverageIssues: 0, sourcePinIssues: 0, invalidTsMetadata: 0,
-      globalGeneratedArtifactIssues: 0, sourceInterpretationIssues: 0, missingGeneratedArtifacts: 0,
-      staleGeneratedArtifacts: 0, orphanGeneratedArtifacts: 0, untrackedGeneratedArtifacts: 0,
-      invalidGeneratedArtifacts: 0, missingAstArtifacts: 0,
-      staleAstArtifacts: 0, orphanAstArtifacts: 0, untrackedAstArtifacts: 0, invalidAstArtifacts: 0,
-      missingDiagnosticsArtifacts: 0, staleDiagnosticsArtifacts: 0, orphanDiagnosticsArtifacts: 0,
-      untrackedDiagnosticsArtifacts: 0, invalidDiagnosticsArtifacts: 0, missingBundledArtifacts: 0,
-      staleBundledArtifacts: 0, orphanBundledArtifacts: 0, untrackedBundledArtifacts: 0,
-      invalidBundledArtifacts: 0, missingUnicodeArtifacts: 0, staleUnicodeArtifacts: 0,
-      orphanUnicodeArtifacts: 0, untrackedUnicodeArtifacts: 0, invalidUnicodeArtifacts: 0,
-      largeFileSplitFailures: 0, schemaFilePolicyIssues: 0,
-      schemaSourceMismatches: 0, unitlessGoFiles: 0,
-    },
-    categories: {}, rows: [], unitlessGoFiles: [], untrackedTsFiles: [], forbiddenTsFiles: [],
-    generatedArtifacts: { missing: [], stale: [], orphan: [], untracked: [], invalid: [] },
-    bundledGeneratedArtifacts: { missing: [], stale: [], orphan: [], untracked: [], invalid: [] },
-    diagnosticsGeneratedArtifacts: { missing: [], stale: [], orphan: [], untracked: [], invalid: [] },
-    excluded: [], missing: [],
-  };
+  return buildStatus({
+    config: baseConfig,
+    snapshot: snapshotWith([]),
+    tsUnits: { fileCount: 0, files: [], units: [] },
+    ...emptyVerificationEvidence(),
+  });
 }
