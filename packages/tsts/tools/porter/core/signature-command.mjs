@@ -43,6 +43,7 @@ export function summarizeSignatureReport(report) {
   const byKind = {};
   for (const mismatch of report.mismatches) byKind[mismatch.kind] = (byKind[mismatch.kind] ?? 0) + 1;
   return {
+    state: "complete",
     checked: report.checked,
     descriptors: report.descriptors,
     overriddenUnits: report.overriddenUnits,
@@ -58,6 +59,7 @@ export function summarizeJsonTagReport(report) {
   const byKind = {};
   for (const mismatch of report?.mismatches ?? []) byKind[mismatch.kind] = (byKind[mismatch.kind] ?? 0) + 1;
   return {
+    state: "complete",
     taggedUnits: report?.taggedUnits ?? 0,
     taggedFields: report?.taggedFields ?? 0,
     contractUnits: report?.contractUnits ?? 0,
@@ -73,7 +75,7 @@ export function printSigReport(report) {
   console.log(`porter sig-check: ${report.checked} units checked, ${report.overriddenUnits} overridden, ${report.mismatches.length} mismatches, ${report.overrideIssues?.length ?? 0} override metadata issues`);
   console.log(`porter JSON tags: ${report.jsonTags?.taggedUnits ?? 0} structs/${report.jsonTags?.taggedFields ?? 0} fields, ${report.jsonTags?.contractUnits ?? 0}/${report.jsonTags?.contractFields ?? 0} declaration contracts, ${report.jsonTags?.mismatchCount ?? 0} issues`);
   console.log(`porter authored facades: ${report.authoredFacades?.checked ?? 0} checked, ${report.authoredFacades?.methodBindingCount ?? 0} exact method bindings, ${report.authoredFacades?.goOnlyMemberCount ?? 0} Go-only members, ${report.authoredFacades?.tsOnlyMemberCount ?? 0} public TS-only members, ${report.authoredFacades?.privateStorageMemberCount ?? 0} private storage members, ${report.authoredFacades?.constructorCount ?? 0} constructors`);
-  console.log(`porter unmatched TypeScript: ${report.untrackedTypeScript?.exportedDeclarationCount ?? 0} exported declarations, ${report.untrackedTypeScript?.privateDeclarationCount ?? 0} module-private declarations, ${report.untrackedTypeScript?.reExportCount ?? 0} validated module re-export routes`);
+  console.log(`porter TypeScript declaration inventory: ${report.untrackedTypeScript?.exportedDeclarationCount ?? 0} unmatched exported declarations, ${report.untrackedTypeScript?.privateDeclarationCount ?? 0} module-private declarations, ${report.untrackedTypeScript?.reviewedDeclarationCount ?? 0} reviewed non-Go declarations, ${report.untrackedTypeScript?.reExportCount ?? 0} module re-export routes`);
   for (const issue of report.overrideIssues ?? []) {
     console.log(`\n[override-metadata] ${issue.id || "<config>"}\n  ${issue.reason}`);
   }

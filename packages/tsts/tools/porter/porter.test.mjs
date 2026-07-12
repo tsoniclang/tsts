@@ -1,20 +1,20 @@
-import "./test/policy-and-status.test.mjs";
-import "./test/semantic-provenance.test.mjs";
-import "./test/semantic-type-expression.test.mjs";
-import "./test/coverage-and-verification.test.mjs";
-import "./test/source-scanning-and-stubs.test.mjs";
-import "./test/source-scanning-tail.test.mjs";
-import "./test/status-reporting.test.mjs";
-import "./test/rendering-and-artifacts.test.mjs";
-import "./test/ast-generator.test.mjs";
-import "./test/diagnostics-generator.test.mjs";
-import "./test/schema-sync.test.mjs";
-import "./test/local-overrides.test.mjs";
-import "./ts-extractor/declaration-metadata.test.mjs";
-import "./ts-extractor/declaration-shapes.test.mjs";
-import "./ts-extractor/constant-evaluation.test.mjs";
-import "./ts-extractor/profile.test.mjs";
-import "./ts-extractor/type-descriptors-exact.test.mjs";
-import "./ts-extractor/module-index-fail-closed.test.mjs";
-import "./ts-extractor/module-index-namespace-routes.test.mjs";
-import "./ts-extractor/module-index.test.mjs";
+import { readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const porterRoot = path.dirname(fileURLToPath(import.meta.url));
+const testFiles = ["test", "ts-extractor"]
+  .flatMap((directory) => collectTestFiles(path.join(porterRoot, directory)))
+  .sort();
+
+for (const file of testFiles) await import(pathToFileURL(file).href);
+
+function collectTestFiles(directory) {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...collectTestFiles(absolute));
+    else if (entry.isFile() && entry.name.endsWith(".test.mjs")) files.push(absolute);
+  }
+  return files;
+}

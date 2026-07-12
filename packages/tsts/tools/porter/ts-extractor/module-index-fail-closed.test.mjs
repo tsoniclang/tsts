@@ -6,9 +6,8 @@ import { indexTypeScriptModuleSources, loadTypeScriptModuleIndex } from "./modul
 import { createCanonicalTypeResolver } from "./module-resolution.mjs";
 import { resolveModuleId } from "./source-structure.mjs";
 
-test("module paths and unsupported syntax fail closed", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("module paths and unsupported syntax fail closed", async () => {
+  const counted = await parserWithCount();
   assert.equal(resolveModuleId("graphics.js", "pkg/use.ts"), "graphics.js");
   assert.equal(resolveModuleId(".hidden.js", "pkg/use.ts"), ".hidden.js");
   for (const specifier of ["pkg/../escape.js", "pkg/./value.js", "pkg//value.js", "bare.js?query"]) {
@@ -97,9 +96,8 @@ test("module paths and unsupported syntax fail closed", async (t) => {
   assert.equal(canonicalize("pkg/external.ts::T"), "graphics.js::T");
 });
 
-test("canonical duplicate types require exact full identities", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("canonical duplicate types require exact full identities", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["exact/a.ts", "export interface Shared {}"],
     ["exact/b.ts", "export interface Shared {}"],

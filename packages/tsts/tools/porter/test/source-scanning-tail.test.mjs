@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { buildEmbeddedGoSourceUpdates, buildStatus, collectVerifyFailures, renderStub, renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
-import { baseConfig, fileRecord, identType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
+import { baseConfig, fileRecord, identType, instantiationType, pointerType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
 
 test("buildStatus rejects stale embedded Go source blocks", () => {
   const unit = unitRecord({ id: "m::internal/debug/debug.go::func::Fail", kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: "sig", bodyHash: "body", snippet: "func Fail()" });
@@ -63,57 +63,140 @@ test("renderStub rejects non-portable unit kinds", () => {
   assert.throws(() => renderStub(unitRecord({ kind: "importGroup" })), /cannot render scaffold for non-portable Go unit kind 'importGroup'/);
 });
 
-test("renderUnitGroup emits typed generic function skeletons with Go result tuples", () => {
+test("renderUnitGroup preserves generic and pointer receiver method skeletons", () => {
   const packagePath = "m/internal/collections";
-  const objectId = `${packagePath}::func::Pair`;
-  const makeSignature = (ownerId) => {
-    const parameter = (index, name, constraint) => ({ reference: { ownerId, role: "type", index, name }, constraint });
-    const key = parameter(0, "K", {
-      kind: "named", nilable: true,
-      reference: { objectId: "builtin::type::comparable", packagePath: "", name: "comparable", typeArgs: [] },
-    });
-    const value = parameter(1, "V", {
-      kind: "interface", nilable: true,
-      interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: true },
-    });
-    const typeParameter = (entry) => ({ kind: "typeParameter", nilable: false, typeParameter: entry.reference });
-    const variable = (role, index, name, type) => ({ id: `${ownerId}::${role}::${index}`, name, packagePath, exported: false, type });
-    return {
-      receiverTypeParameters: [],
-      typeParameters: [key, value],
-      parameters: { variables: [
-        variable("parameters", 0, "key", typeParameter(key)),
-        variable("parameters", 1, "value", typeParameter(value)),
-      ] },
-      results: { variables: [
-        variable("results", 0, "", typeParameter(value)),
-        variable("results", 1, "", { kind: "basic", nilable: false, basic: { name: "bool", untyped: false } }),
-      ] },
-      variadic: false,
-    };
+  const goPath = "internal/collections/ordered_map.go";
+  const objectId = `${packagePath}::type::OrderedMap`;
+  const methodId = `${objectId}::method::Get`;
+  const orderedMap = genericOrderedMapType({ goPath, objectId, packagePath });
+  const get = genericOrderedMapMethod({ goPath, methodId, objectId, packagePath });
+  const text = renderUnitGroup(
+    baseConfig,
+    snapshotWith([fileRecord({ path: goPath, importPath: packagePath, units: [orderedMap, get] })]),
+    "packages/tsts/src/internal/collections/ordered_map.ts",
+    [orderedMap, get],
+  );
+  assert.match(text, /import type \{ bool \} from "\.\.\/\.\.\/go\/scalars\.js";/);
+  assert.match(text, /import type \{ GoComparable, GoPtr \}/);
+  assert.match(text, /export interface OrderedMap<K extends GoComparable = unknown, V = unknown>/);
+  assert.match(text, /export function OrderedMap_Get<K extends GoComparable, V>\(receiver: GoPtr<OrderedMap<K, V>>, key: K\): \[V, bool\]/);
+});
+
+function genericOrderedMapType({ goPath, objectId, packagePath }) {
+  const parameters = typeParameters(objectId, "type");
+  const object = {
+    id: objectId,
+    name: "OrderedMap",
+    packagePath,
+    exported: true,
+    type: namedType(objectId, packagePath, "OrderedMap"),
   };
-  const declarationSignature = makeSignature(`${objectId}::signature`);
-  const objectSignature = makeSignature(`${objectId}::type`);
-  const pair = unitRecord({
-    id: "m::internal/collections/pair.go::func::Pair",
-    kind: "func",
-    name: "Pair",
-    qualifiedName: "Pair",
-    goPath: "internal/collections/pair.go",
+  return unitRecord({
+    id: `m::${goPath}::type::OrderedMap`,
+    kind: "type",
+    name: "OrderedMap",
+    qualifiedName: "OrderedMap",
+    goPath,
+    typeKind: "struct",
+    typeExpression: { kind: "struct", text: "struct{}", members: [] },
     typeParameters: ["K", "V"],
     typeParameterDetails: [{ name: "K", constraint: identType("comparable") }, { name: "V", constraint: identType("any") }],
-    parameters: [{ names: ["key"], type: identType("K") }, { names: ["value"], type: identType("V") }],
-    results: [{ type: identType("V") }, { type: identType("bool") }],
+    members: [],
     semantic: [{
-      kind: "func",
+      kind: "type",
       packagePath,
-      object: { id: objectId, name: "Pair", packagePath, exported: true, type: { kind: "signature", nilable: true, signature: objectSignature } },
-      signature: declarationSignature,
+      object,
+      type: {
+        alias: false,
+        object,
+        typeParameters: parameters,
+        rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+        methods: [],
+      },
       profiles: [0],
     }],
   });
-  const text = renderUnitGroup(baseConfig, snapshotWith([fileRecord({ path: "internal/collections/pair.go", units: [pair] })]), "packages/tsts/src/internal/collections/pair.ts", [pair]);
-  assert.match(text, /import type \{ bool \} from "..\/..\/go\/scalars\.js";/);
-  assert.match(text, /import type \{ GoComparable \}/);
-  assert.match(text, /export function Pair<K extends GoComparable, V>\(key: K, value: V\): \[V, bool\]/);
-});
+}
+
+function genericOrderedMapMethod({ goPath, methodId, objectId, packagePath }) {
+  const parameters = typeParameters(methodId, "receiver");
+  const signature = methodSignature(`${methodId}::signature`, objectId, packagePath, parameters, true);
+  const objectSignature = methodSignature(`${methodId}::type`, objectId, packagePath, parameters, false);
+  return unitRecord({
+    id: `m::${goPath}::method::OrderedMap.Get`,
+    kind: "method",
+    name: "Get",
+    qualifiedName: "OrderedMap.Get",
+    receiver: "OrderedMap",
+    receiverMode: "pointer",
+    receiverType: pointerType(instantiationType(identType("OrderedMap"), [identType("K"), identType("V")])),
+    goPath,
+    parameters: [{ names: ["key"], type: identType("K") }],
+    results: [{ type: identType("V") }, { type: identType("bool") }],
+    semantic: [{
+      kind: "method",
+      packagePath,
+      object: {
+        id: methodId,
+        name: "Get",
+        packagePath,
+        exported: true,
+        type: { kind: "signature", nilable: true, signature: objectSignature },
+      },
+      signature,
+      profiles: [0],
+    }],
+  });
+}
+
+function methodSignature(ownerId, objectId, packagePath, parameters, includeReceiver) {
+  const type = (parameter) => ({ kind: "typeParameter", nilable: false, typeParameter: parameter.reference });
+  return {
+    ...(includeReceiver ? {
+      receiver: {
+        id: `${ownerId}::receiver`,
+        name: "receiver",
+        packagePath,
+        exported: false,
+        type: {
+          kind: "pointer",
+          nilable: true,
+          element: namedType(objectId, packagePath, "OrderedMap", parameters.map(type)),
+        },
+      },
+    } : {}),
+    receiverTypeParameters: parameters,
+    typeParameters: [],
+    parameters: { variables: [semanticVariable(ownerId, "parameters", 0, "key", packagePath, type(parameters[0]))] },
+    results: { variables: [
+      semanticVariable(ownerId, "results", 0, "", packagePath, type(parameters[1])),
+      semanticVariable(ownerId, "results", 1, "", packagePath, { kind: "basic", nilable: false, basic: { name: "bool", untyped: false } }),
+    ] },
+    variadic: false,
+  };
+}
+
+function typeParameters(ownerId, role) {
+  return [
+    {
+      reference: { ownerId, role, index: 0, name: "K" },
+      constraint: { kind: "named", nilable: true, reference: { objectId: "builtin::type::comparable", packagePath: "", name: "comparable", typeArgs: [] } },
+    },
+    {
+      reference: { ownerId, role, index: 1, name: "V" },
+      constraint: {
+        kind: "interface",
+        nilable: true,
+        interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: true },
+      },
+    },
+  ];
+}
+
+function namedType(objectId, packagePath, name, typeArgs = []) {
+  return { kind: "named", nilable: false, reference: { objectId, packagePath, name, typeArgs } };
+}
+
+function semanticVariable(ownerId, role, index, name, packagePath, type) {
+  return { id: `${ownerId}::${role}::${index}`, name, packagePath, exported: false, type };
+}

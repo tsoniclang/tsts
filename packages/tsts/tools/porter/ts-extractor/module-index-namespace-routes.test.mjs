@@ -5,9 +5,8 @@ import { ANNOTATION, parserWithCount } from "./module-index-test-helpers.mjs";
 import { indexTypeScriptModuleSources } from "./module-index.mjs";
 import { createCanonicalTypeResolver } from "./module-resolution.mjs";
 
-test("type and value namespaces model dual declarations, defaults, and namespace exports", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("type and value namespaces model dual declarations, defaults, and namespace exports", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["pkg/family.ts", `
 export interface I {}
@@ -63,9 +62,8 @@ export const total: number = d + explicitDefault + family.v + family.N.K;
   assert.deepEqual(environments.get("pkg/use.ts").get("family.Dotted.Inner.Value"), { status: "known", value: { kind: "number", value: 10 } });
 });
 
-test("module namespace aliases survive named and star re-exports with exact type-only state", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("module namespace aliases survive named and star re-exports with exact type-only state", async () => {
+  const counted = await parserWithCount();
   const sources = new Map([
     ["namespace/source.ts", "export interface T {} export const V: number = 11;"],
     ["namespace/other.ts", "export interface U {}"],
@@ -183,9 +181,8 @@ export type DefaultAlias = defaultNamespace.T;
   );
 });
 
-test("namespace routes stay independent and hide private qualified members", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("namespace routes stay independent and hide private qualified members", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["routes/type-source.ts", "export interface T {}"],
     ["routes/value-source.ts", "export const V: number = 17;"],

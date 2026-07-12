@@ -2,6 +2,7 @@ import { collectBundledArtifactFailures, emptyBundledGeneratedArtifactStatus } f
 import { collectDiagnosticsArtifactFailures, emptyDiagnosticsGeneratedArtifactStatus } from "../diagnostics-generator.mjs";
 import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { countsByModule, escapeMd, repoRoot, resolveRepo } from "./runtime.mjs";
+import { appendSignatureAuditMarkdown, signatureAuditSummaryLines } from "./signature-reporting.mjs";
 import { collectGeneratedArtifactFailures } from "./verification.mjs";
 import path from "node:path";
 
@@ -42,9 +43,7 @@ export function printStatus(config, status) {
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
-  console.log(`JSON tagged structs/fields declaration contracts/fields/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.contractUnits ?? 0}/${status.jsonTagCheck?.contractFields ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
-  console.log(`Authored facades checked/bound methods/Go-only/TS-only: ${status.signatureCheck?.authoredFacades?.checked ?? 0}/${status.signatureCheck?.authoredFacades?.methodBindingCount ?? 0}/${status.signatureCheck?.authoredFacades?.goOnlyMemberCount ?? 0}/${status.signatureCheck?.authoredFacades?.tsOnlyMemberCount ?? 0}`);
-  console.log(`Unmatched TypeScript exported/private/re-export routes: ${status.signatureCheck?.untrackedTypeScript?.exportedDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.privateDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.reExportCount ?? 0}`);
+  for (const line of signatureAuditSummaryLines(status)) console.log(line);
   console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   console.log(`Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
@@ -87,13 +86,12 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
-  lines.push(`- JSON tagged structs/fields declaration contracts/fields/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.contractUnits ?? 0}/${status.jsonTagCheck?.contractFields ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
-  lines.push(`- Authored facades checked/bound methods/Go-only/TS-only: ${status.signatureCheck?.authoredFacades?.checked ?? 0}/${status.signatureCheck?.authoredFacades?.methodBindingCount ?? 0}/${status.signatureCheck?.authoredFacades?.goOnlyMemberCount ?? 0}/${status.signatureCheck?.authoredFacades?.tsOnlyMemberCount ?? 0}`);
-  lines.push(`- Unmatched TypeScript exported/private/re-export routes: ${status.signatureCheck?.untrackedTypeScript?.exportedDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.privateDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.reExportCount ?? 0}`);
+  for (const line of signatureAuditSummaryLines(status)) lines.push(`- ${line}`);
   lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   lines.push(`- Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   lines.push(`- Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
+  appendSignatureAuditMarkdown(lines, status);
   lines.push("");
   lines.push("## Categories");
   lines.push("");

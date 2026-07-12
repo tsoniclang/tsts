@@ -60,8 +60,8 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 - `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and opaque body drift. `--to` defaults to the pinned source root. Evidence directories are immutable and are never overwritten; a completion marker is published last.
 - `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir>` independently validates the exact evidence-file inventory, every byte length and SHA-256 digest, both complete extractor snapshots, report/snapshot identities, clean deterministic provenance, and the exact Markdown rendering.
 - `npm run porter:scan` extracts a full TS-Go snapshot into `.temp/porter/tsgo-snapshot.json`.
-- `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`.
-- `npm run porter:verify` runs strict-port mode and fails on missing/stub/stale/orphan/duplicate units, untracked TypeScript, generated-artifact drift, source-pin drift, or an invalid override. Source read/parse failures stop extraction before a snapshot exists.
+- `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute the signature, facade, unmatched-TypeScript, or JSON-tag declaration audits, so both reports mark those audit sections `not-run`; they never render absent evidence as zero findings.
+- `npm run porter:verify` runs strict-port mode and fails on missing/stub/stale/orphan/duplicate units, untracked TypeScript, generated-artifact drift, source-pin drift, or an invalid override. Source read/parse failures stop extraction before a snapshot exists. Its JSON and Markdown reports retain every concrete authored-facade constructor/private-storage/method-binding row and every exported/private/re-export TypeScript inventory row, not only aggregate counts.
 - `npm run porter:scaffold -- --limit 25` previews missing-unit scaffolds. Add `-- --write` to create files.
 - `npm run porter:scaffold-all` creates or appends scaffolds for every active missing Go unit, refreshes porter status, and fails if any active unit remains missing.
 - `npm run porter:facades -- --out packages/tsts/src` regenerates the checked-in Go compatibility/facade layer from the full TS-Go snapshot. Existing differing files are never overwritten unless `-- --force` is also supplied.
@@ -280,6 +280,12 @@ module; they must not be hidden among mechanically ported declarations.
 Export declarations are not duplicate declarations: named, namespace, and star
 re-export routes are inventoried separately and validated by the exact module
 index for missing or ambiguous targets.
+
+Parser-backed Porter tests require a fresh built TSTS parser. Parser loading or
+freshness failures fail the suite; they are never converted into skips. The
+aggregate Porter test entry recursively discovers every `*.test.mjs` below its
+`test/` and `ts-extractor/` suites so a newly added nested test cannot silently
+fall outside `npm run porter:test`.
 
 Examples:
 

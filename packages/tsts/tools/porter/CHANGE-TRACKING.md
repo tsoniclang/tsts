@@ -122,3 +122,10 @@ Strict verification fails on any:
 False positives are preferable to silent misses. A new upstream shape must be
 modeled at the extractor/schema/comparator boundary or rejected explicitly; it
 must never acquire an approximation or fallback.
+
+Audit execution is evidence. Commands that do not run declaration-signature,
+authored-facade, unmatched-TypeScript, or JSON-tag checks record those sections
+as `not-run`, never as zero findings. A completed verification report preserves
+the concrete facade and TypeScript declaration inventories alongside counts so
+reviewers can trace every reported row to its source declaration or export
+route. Parser unavailability is a Porter test failure, not a skip condition.

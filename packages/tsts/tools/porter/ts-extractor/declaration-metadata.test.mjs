@@ -5,19 +5,10 @@ import { parseTypeScriptModule } from "./module-index.mjs";
 import { loadParser } from "./parser-runtime.mjs";
 
 const ANNOTATION = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
+const parser = await loadParser();
 
-async function parserOrSkip(t) {
-  try {
-    return await loadParser();
-  } catch (error) {
-    t.skip(`TSTS parser unavailable: ${error.message}`);
-    return undefined;
-  }
-}
-
-test("metadata comes only from parser-attached declaration JSDoc", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("metadata comes only from parser-attached declaration JSDoc", () => {
+  const api = parser;
   const source = `
 const ordinary = '@tsgo-unit {"id":"m::fake.go::func::Fake","kind":"func"}';
 // @tsgo-unit {"id":"m::comment.go::func::Comment","kind":"func"}
@@ -37,9 +28,8 @@ export function Real(value: string): void {}
   assert.equal(descriptors[0].descriptor.name, "Real");
 });
 
-test("metadata ownership reports the attached declaration instead of skipping ahead", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("metadata ownership reports the attached declaration instead of skipping ahead", () => {
+  const api = parser;
   const source = `/** @tsgo-unit {"id":"m::f.go::func::target","kind":"func"} */
 function helper(): void {}
 export function target(): void {}
@@ -49,9 +39,8 @@ export function target(): void {}
   assert.deepEqual(descriptor.metadataIssues, ["metadata names 'target', but declaration name is 'helper'"]);
 });
 
-test("attached metadata rejects malformed, duplicate, orphan, misplaced, and non-leading forms", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("attached metadata rejects malformed, duplicate, orphan, misplaced, and non-leading forms", () => {
+  const api = parser;
   const cases = [
     ["malformed", `/** @tsgo-unit {bad} */\nexport function f(): void {}`, /invalid @tsgo-unit JSON/],
     ["duplicate", `/** @tsgo-unit {"id":"m::f.go::func::f","kind":"func"}\n * @tsgo-unit {"id":"m::f.go::func::f","kind":"func"}\n */\nexport function f(): void {}`, /duplicate @tsgo-unit tags/],
@@ -69,9 +58,8 @@ test("attached metadata rejects malformed, duplicate, orphan, misplaced, and non
   }
 });
 
-test("value groups own only exact contiguous declarations", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("value groups own only exact contiguous declarations", () => {
+  const api = parser;
   const exact = `/** @tsgo-unit {"id":"m::v.go::constGroup::first+second","kind":"constGroup"} */
 export const first: number = 1;
 export const second: number = 2;
@@ -102,9 +90,8 @@ export let value: number = 1;
   );
 });
 
-test("UTF-8 prefixes do not corrupt metadata or declaration text", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("UTF-8 prefixes do not corrupt metadata or declaration text", () => {
+  const api = parser;
   const source = `const prefix = "💚 café";
 /** @tsgo-unit {"id":"m::types.go::type::Box","kind":"type"} */
 export type Box<T extends { café: string }> = keyof T;
@@ -116,9 +103,8 @@ export type Box<T extends { café: string }> = keyof T;
   assert.deepEqual(descriptor.type, { t: "operator", operator: "keyof", type: { t: "tp", depth: 0, index: 0 } });
 });
 
-test("parser instances are cached by dist root, not globally", async (t) => {
-  const api = await parserOrSkip(t);
-  if (!api) return;
+test("parser instances are cached by dist root, not globally", async () => {
+  const api = parser;
   assert.equal(await loadParser(), api);
   await assert.rejects(
     loadParser({ distRoot: "/nonexistent/tsts-parser-root-for-cache-contract" }),

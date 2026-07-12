@@ -11,6 +11,8 @@ import { buildIndexedModuleValueEnvironments } from "./ts-extractor/extract-sign
 import { indexTypeScriptModuleSources } from "./ts-extractor/module-index.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
+const parser = await loadParser();
+
 test("the full authored policy catalog is validated before active facade selection", () => {
   const used = externalType({ packagePath: "example.com/native", name: "Used", rhs: basic("int") });
   const unused = externalType({ packagePath: "example.com/native", name: "Unused", rhs: basic("int") });
@@ -30,13 +32,8 @@ test("the full authored policy catalog is validated before active facade selecti
   }, snapshot), /authoredFacadeModules duplicates/);
 });
 
-test("authored facade storage cannot alias Porter-generated declaration storage", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored facade storage cannot alias Porter-generated declaration storage", () => {
+  const api = parser;
   const declaration = externalType({ packagePath: "example.com/native", name: "Facade", rhs: interfaceType() });
   const snapshot = externalSnapshot([declaration]);
   const config = {

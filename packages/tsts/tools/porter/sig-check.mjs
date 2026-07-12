@@ -111,8 +111,9 @@ export async function computeSignatureReport(deps, options = {}) {
       accountedDeclarationIds: authoredFacades.ownedDeclarationIds,
       config: deps.config,
       moduleIndex,
+      valueEnvironments,
     })
-    : { exportedDeclarations: [], privateDeclarations: [], reExports: [], mismatches: [] };
+    : { exportedDeclarations: [], privateDeclarations: [], reExports: [], reviewedDeclarations: [], mismatches: [] };
   mismatches.push(...untrackedTypeScript.mismatches);
 
   for (const id of [...expectedIds].sort(compareText)) {
@@ -150,11 +151,21 @@ export async function computeSignatureReport(deps, options = {}) {
       methodBindingCount: authoredFacades.inventory.methodBindings.length,
       privateStorageMemberCount: authoredFacades.inventory.privateStorageMembers.length,
       tsOnlyMemberCount: authoredFacades.inventory.tsOnlyMembers.length,
+      constructors: authoredFacades.inventory.constructors,
+      goOnlyMembers: authoredFacades.inventory.goOnlyMembers,
+      methodBindings: authoredFacades.inventory.methodBindings,
+      privateStorageMembers: authoredFacades.inventory.privateStorageMembers,
+      tsOnlyMembers: authoredFacades.inventory.tsOnlyMembers,
     },
     untrackedTypeScript: {
       exportedDeclarationCount: untrackedTypeScript.exportedDeclarations.length,
       privateDeclarationCount: untrackedTypeScript.privateDeclarations.length,
       reExportCount: untrackedTypeScript.reExports.length,
+      reviewedDeclarationCount: untrackedTypeScript.reviewedDeclarations.length,
+      exportedDeclarations: untrackedTypeScript.exportedDeclarations,
+      privateDeclarations: untrackedTypeScript.privateDeclarations,
+      reExports: untrackedTypeScript.reExports,
+      reviewedDeclarations: untrackedTypeScript.reviewedDeclarations,
     },
   };
 }

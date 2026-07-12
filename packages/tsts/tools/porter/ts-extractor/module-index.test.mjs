@@ -17,9 +17,8 @@ import { ANNOTATION, parserWithCount } from "./module-index-test-helpers.mjs";
 import "./module-index-fail-closed.test.mjs";
 import "./module-index-namespace-routes.test.mjs";
 
-test("parser-backed module index is exact and reuses every SourceFile", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("parser-backed module index is exact and reuses every SourceFile", async () => {
+  const counted = await parserWithCount();
   const sources = new Map([
     ["pkg/types.ts", `
 const fakeSource = "export interface FakeFromString {}";
@@ -91,9 +90,8 @@ export const value: number = A | 2;
   assert.equal(counted.count(), sources.size + 1);
 });
 
-test("parser cache products stay immutable across independent module indexes", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("parser cache products stay immutable across independent module indexes", async () => {
+  const counted = await parserWithCount();
   const cachedSource = "export interface Stable {}";
   const mutableView = parseTypeScriptModule(counted.api, "cache/stable.ts", cachedSource);
   mutableView.structure.localTypeNames.clear();
@@ -134,9 +132,8 @@ export type Alias = ns.T;
   assert.equal(extractId(first), "cache/source-a.ts::T");
 });
 
-test("named declaration extraction requires exact local public storage and merges interface fragments", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("named declaration extraction requires exact local public storage and merges interface fragments", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["facade/local.ts", `
 export interface Exact { Read(value: string): number; }
@@ -174,9 +171,8 @@ export interface Owned { value: string; }
   );
 });
 
-test("module index rejects parser recovery and conflicting export identities", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("module index rejects parser recovery and conflicting export identities", async () => {
+  const counted = await parserWithCount();
   assert.throws(
     () => indexTypeScriptModuleSources(counted.api, new Map([["pkg/broken.ts", "export interface {"]])),
     /syntax diagnostic/,
@@ -205,9 +201,8 @@ test("module index rejects parser recovery and conflicting export identities", a
   );
 });
 
-test("canonical module resolution follows exact aliases and rejects ambiguous stars", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("canonical module resolution follows exact aliases and rejects ambiguous stars", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["pkg/a.ts", "interface Private {} export interface T {}"],
     ["pkg/b.ts", "export interface T {}"],
@@ -241,9 +236,8 @@ test("canonical module resolution follows exact aliases and rejects ambiguous st
   );
 });
 
-test("export-star excludes default while explicit exports shadow stars", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("export-star excludes default while explicit exports shadow stars", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["pkg/a.ts", "export interface T {} export const V: number = 1; export default class D {}"],
     ["pkg/b.ts", "export interface T {} export const V: number = 2;"],
@@ -274,9 +268,8 @@ test("export-star excludes default while explicit exports shadow stars", async (
   );
 });
 
-test("star cycles allow exact exits, deduplicate one origin, and reject true ambiguity", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("star cycles allow exact exits, deduplicate one origin, and reject true ambiguity", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["cycle/a.ts", 'export * from "./b.js";'],
     ["cycle/b.ts", 'export * from "./a.js"; export * from "./origin.js";'],
@@ -316,9 +309,8 @@ test("star cycles allow exact exits, deduplicate one origin, and reject true amb
   );
 });
 
-test("constant resolution is immutable-only and demand-driven", async (t) => {
-  const counted = await parserWithCount(t);
-  if (!counted) return;
+test("constant resolution is immutable-only and demand-driven", async () => {
+  const counted = await parserWithCount();
   const index = indexTypeScriptModuleSources(counted.api, new Map([
     ["constants/source.ts", `
 export let mutable: number = 1;

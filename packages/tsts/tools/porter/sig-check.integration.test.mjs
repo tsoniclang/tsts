@@ -1,7 +1,6 @@
 // Integration tests: parse real TS fixtures with TSTS's own parser and exercise
-// the actual-side extractor + Go-model expected + comparator end to end. Skips
-// gracefully if dist isn't built/fresh (descriptor-level tests in sig-check.test.mjs
-// cover the comparator without a parser).
+// the actual-side extractor + Go-model expected + comparator end to end. The
+// parser is a required test input: unavailable or stale dist fails this suite.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { loadParser } from "./ts-extractor/ast-signatures.mjs";
@@ -10,14 +9,9 @@ import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-fr
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
-import "./ts-extractor/declaration-metadata.test.mjs";
-import "./ts-extractor/module-index.test.mjs";
-
-async function tryLoad() {
-  try { return await loadParser(); } catch { return undefined; }
-}
 
 const ANNO = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
+const parser = await loadParser();
 const EMPTY_SEMANTIC_SNAPSHOT = {
   files: [],
   semantic: {
@@ -26,9 +20,8 @@ const EMPTY_SEMANTIC_SNAPSHOT = {
   },
 };
 
-test("integration: extract a function signature (rest + generics + import-resolved types)", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: extract a function signature (rest + generics + import-resolved types)", () => {
+  const api = parser;
   const src = `import { GoPtr } from "./compat.js";
 import { Node } from "./node.js";
 /** @tsgo-unit {"id":"m::f.go::func::f","kind":"func"} */
@@ -52,9 +45,8 @@ export function f<T extends Node>(a: string, ...rest: number[]): GoPtr<Node> { t
   });
 });
 
-test("integration: top-level overloads are one exact ordered signature set", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: top-level overloads are one exact ordered signature set", () => {
+  const api = parser;
   const source = `/** @tsgo-unit {"id":"m::f.go::func::read","kind":"func"} */
 export function read(value: string): string;
 export function read(value: number): number;
@@ -71,9 +63,8 @@ export function read(value: string | number): string | number { implementationBo
   assert.equal(JSON.stringify(descriptor).includes("implementationBodyMustStayOpaque"), false);
 });
 
-test("integration: interface fragments merge without hiding any declaration", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: interface fragments merge without hiding any declaration", () => {
+  const api = parser;
   const source = `/** @tsgo-unit {"id":"m::i.go::type::Merged","kind":"type"} */
 export interface Merged { first: string; }
 export interface Merged { second(value: number): boolean; }
@@ -84,9 +75,8 @@ export interface Merged { second(value: number): boolean; }
   assert.deepEqual(descriptor.members.map((member) => member.name), ["first", "second"]);
 });
 
-test("integration: one declaration symbol cannot be owned by multiple units", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: one declaration symbol cannot be owned by multiple units", () => {
+  const api = parser;
   const source = `/** @tsgo-unit {"id":"m::a.go::func::read","kind":"func"} */
 export function read(value: string): string;
 /** @tsgo-unit {"id":"m::b.go::func::read","kind":"func"} */
@@ -96,9 +86,8 @@ export function read(value: string | number): string | number { return value; }
   assert.throws(() => extractFileDescriptors(api, "pkg/duplicate-owner.ts", source, ANNO), /owned by more than one @tsgo-unit/);
 });
 
-test("integration: metadata mismatch is retained as an unwaivable descriptor issue", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: metadata mismatch is retained as an unwaivable descriptor issue", () => {
+  const api = parser;
   // JSDoc for `target`, then a helper with no annotation, then `target` itself.
   const src = `/** @tsgo-unit {"id":"m::f.go::func::target","kind":"func"} */
 function helperNotTracked(): number { return 0; }
@@ -111,9 +100,8 @@ export function target(a: string): void {}
   assert.ok(mismatches.some((mismatch) => mismatch.kind === "metadata-declaration"));
 });
 
-test("integration: unannotated value declaration is detected as missing", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: unannotated value declaration is detected as missing", () => {
+  const api = parser;
   const src = `/** @tsgo-unit {"id":"m::v.go::varGroup::_","kind":"varGroup"} */
 export const maxLevel = 2;
 `;
@@ -123,9 +111,8 @@ export const maxLevel = 2;
   assert.ok(d.decls[0].missing);
 });
 
-test("integration: value groups collect every declaration before the next unit", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: value groups collect every declaration before the next unit", () => {
+  const api = parser;
   const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::first+second","kind":"constGroup"} */
 export const first: number = 1;
 export const second: number = 2;
@@ -137,9 +124,8 @@ export function done(): void {}
   assert.equal(units[1].descriptor.kind, "func");
 });
 
-test("integration: bigint literals retain their exact uint64 initializer", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: bigint literals retain their exact uint64 initializer", () => {
+  const api = parser;
   const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::mask","kind":"constGroup"} */
 export const mask: bigint = 0x8000000000000000n;
 `;
@@ -172,9 +158,8 @@ export const mask: bigint = 0x8000000000000000n;
   assert.deepEqual(expected.decls[0].value, units[0].descriptor.decls[0].value);
 });
 
-test("integration: number constants use IEEE-754 semantics", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: number constants use IEEE-754 semantics", () => {
+  const api = parser;
   const src = `/** @tsgo-unit {"id":"m::v.go::constGroup::unsafe+sum+mixed","kind":"constGroup"} */
 export const unsafe: number = 9007199254740993;
 export const sum: number = 0.1 + 0.2;
@@ -188,9 +173,8 @@ export const mixed: bigint = 1n + 1;
   ]);
 });
 
-test("integration: imported constant expressions resolve mechanically", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: imported constant expressions resolve mechanically", () => {
+  const api = parser;
   const sources = new Map([
     ["pkg/flags.ts", "export const A: number = 1;\nexport const B: number = 4;\n"],
     ["pkg/value.ts", `import { A, B as LocalB } from "./flags.js";
@@ -203,9 +187,8 @@ export const value: number = A | LocalB;
   assert.deepEqual(units[0].descriptor.decls[0].value, { kind: "number", value: "5" });
 });
 
-test("integration: end-to-end expected(Go-model) vs actual — match and drift", async (t) => {
-  const api = await tryLoad();
-  if (!api) return t.skip("TSTS dist not built/fresh");
+test("integration: end-to-end expected(Go-model) vs actual — match and drift", () => {
+  const api = parser;
   // Self-consistent profile: GoRef lives in the same module the fixture imports it from.
   const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);

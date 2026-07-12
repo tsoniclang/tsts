@@ -322,7 +322,7 @@ export function buildStatus(
     }));
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     source: {
       root: snapshot.sourceRoot,
@@ -335,6 +335,14 @@ export function buildStatus(
       root: resolveRepo(config.tsRoot),
       metadataUnitCount: tsUnits.units.length,
       scannedFileCount: tsUnits.fileCount,
+    },
+    signatureCheck: {
+      state: "not-run",
+      reason: "This command did not execute the signature, authored-facade, or unmatched-TypeScript audits.",
+    },
+    jsonTagCheck: {
+      state: "not-run",
+      reason: "This command did not execute the Go struct JSON-tag declaration audit.",
     },
     counts: {
       portable: rows.length - excluded.length,
