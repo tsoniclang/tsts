@@ -2,9 +2,9 @@ import {
   canonicalSchemaValue,
   canonicalSemanticDeclaration,
   compareExactKeys,
-  SEMANTIC_PRIMARY_UNIT_KINDS,
   validateSnapshotObject,
 } from "../snapshot-validation.mjs";
+import { isSemanticPrimaryUnitKind } from "../unit-kinds.mjs";
 import { validateSemanticMethodSet } from "../semantic-method-set-validation.mjs";
 import {
   declarationObjectId,
@@ -25,7 +25,7 @@ import {
 
 export function validateSemanticDeclaration(semantic, label, issues, unit, expectation, context = {}) {
   const unitKind = unit?.kind;
-  if (!SEMANTIC_PRIMARY_UNIT_KINDS.has(unitKind)) {
+  if (!isSemanticPrimaryUnitKind(unitKind)) {
     if (semantic !== undefined) issues.push(`${label} is only valid for primary declaration units`);
     return;
   }

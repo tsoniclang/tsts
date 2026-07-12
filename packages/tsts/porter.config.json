@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sourceRoot": "packages/tsts/_vendor/typescript-go",
   "tsRoot": "packages/tsts/src",
   "goModulePath": "github.com/microsoft/typescript-go",
@@ -32,13 +32,11 @@
     {
       "id": "github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI",
       "category": "out-of-scope",
-      "active": false,
       "reason": "The JSON-RPC/session API entrypoint depends on internal/api, which is outside the standalone compiler runtime port."
     },
     {
       "id": "github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain",
       "category": "out-of-scope",
-      "active": false,
       "reason": "fmtMain is the commented formatter command path and depends on internal/format / language-service formatter settings, which are outside the standalone compiler runtime port."
     }
   ],
@@ -325,87 +323,55 @@
       "reason": "Every source file must carry at least one @tsgo-unit unless an explicit policy allows it."
     }
   ],
-  "overrides": [
-    {
-      "match": "internal/jsnum/**",
-      "category": "manual-required",
-      "reason": "Fixed-width integer and floating-point behavior must be implemented as an explicit Go-semantics layer."
-    },
-    {
-      "match": "internal/vfs/osvfs/**",
-      "category": "host-native",
-      "reason": "Operating-system bindings must be implemented through the TypeScript host layer."
-    },
-    {
-      "match": "internal/vfs/vfswatch/**",
-      "category": "host-native",
-      "reason": "File-watch bindings must be implemented through the TypeScript host layer."
-    }
-  ],
   "policies": [
     {
       "match": "**/*_test.go",
       "category": "test",
-      "active": false,
       "reason": "Go test units are ported through the test-parity harness, not production compiler scaffolds."
-    },
-    {
-      "match": "**/*_generated.go",
-      "category": "generated",
-      "reason": "Generated Go files must be regenerated from their upstream source schema or generator."
     },
     {
       "match": "_tools/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Upstream repository maintenance tools are not part of the standalone compiler runtime port."
     },
     {
       "match": "internal/execute/tsctests/**",
       "category": "test",
-      "active": false,
       "reason": "TS-Go command-line test harness files are ported through test-parity infrastructure, not production compiler scaffolds."
     },
     {
       "match": "internal/tsoptions/tsoptionstest/**",
       "category": "test",
-      "active": false,
       "reason": "TS-Go tsoptions test helpers are ported through test-parity infrastructure, not production compiler scaffolds."
     },
     {
       "match": "cmd/tsgo/lsp.go",
       "category": "out-of-scope",
-      "active": false,
       "reason": "The LSP command entrypoint is outside the standalone compiler porter scope."
     },
     {
       "match": "internal/api/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "JSON-RPC/session API surfaces are language-service/embedder infrastructure, not the standalone compiler runtime port."
     },
     {
       "match": "internal/project/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Project-service state management belongs to the language-service layer, not the standalone compiler runtime port."
     },
     {
       "match": "internal/format/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Formatting is an editor/language-service feature and is outside the standalone compiler runtime port."
     },
     {
       "match": "internal/testutil/**",
       "category": "test",
-      "active": false,
       "reason": "Upstream test helpers are ported through test-parity infrastructure, not production compiler scaffolds."
     },
     {
       "match": "internal/testrunner/**",
       "category": "test",
-      "active": false,
       "reason": "Upstream test-runner files are ported through test-parity infrastructure, not production compiler scaffolds."
     },
     {
@@ -426,39 +392,27 @@
     {
       "match": "internal/fswatch/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Upstream's vendored file-watch library (fsnotify fork: fanotify/FSEvents/debounce, ~270 units) replaces vfswatch. TSTS does not port the OS-level watch internals; file watching is provided through the TypeScript/Node host layer behind the WatchBackend interface that execute/watcher consumes."
     },
     {
       "match": "internal/lsp/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Language-service protocol/server surface is not in the standalone compiler porter scope."
     },
     {
       "match": "internal/ls/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Language-service implementation is not in the standalone compiler porter scope."
     },
     {
       "match": "**/fourslash/**",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Fourslash is a language-service/editor test harness and is not in the standalone compiler porter scope."
     },
     {
       "match": "**/*fourslash*",
       "category": "out-of-scope",
-      "active": false,
       "reason": "Fourslash is a language-service/editor test harness and is not in the standalone compiler porter scope."
     }
-  ],
-  "primaryUnitKinds": [
-    "constGroup",
-    "func",
-    "method",
-    "type",
-    "varGroup"
   ]
 }

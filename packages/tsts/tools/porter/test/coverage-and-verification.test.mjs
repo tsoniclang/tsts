@@ -188,9 +188,9 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
     ...baseConfig,
     largeFileSplitPlan: { schemaVersion: 1, files: {} },
     policies: [
-      { match: "internal/ls/**", category: "out-of-scope", active: false, reason: "ls excluded" },
-      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
-      { match: "**/*fourslash*", category: "out-of-scope", active: false, reason: "fourslash excluded" },
+      { match: "internal/ls/**", category: "out-of-scope", reason: "ls excluded" },
+      { match: "internal/lsp/**", category: "out-of-scope", reason: "lsp excluded" },
+      { match: "**/*fourslash*", category: "out-of-scope", reason: "fourslash excluded" },
     ],
   };
   const status = buildStatus(config, snapshotWith([
@@ -218,7 +218,7 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
   assert.equal(status.counts.excluded, 2);
   assert.equal(status.counts.missing, 0);
   Object.assign(status, completeDeclarationAuditStatus());
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+  assert.deepEqual(collectVerifyFailures(status), []);
 });
 
 test("buildStatus excludes exact inactive unit policies without counting their TS stubs", () => {
@@ -229,7 +229,6 @@ test("buildStatus excludes exact inactive unit policies without counting their T
       {
         id,
         category: "out-of-scope",
-        active: false,
         reason: "formatter command path excluded",
       },
     ],
@@ -264,7 +263,7 @@ test("buildStatus excludes exact inactive unit policies without counting their T
   assert.equal(status.rows[0].status, "excluded");
   assert.equal(status.rows[0].reason, "formatter command path excluded");
   Object.assign(status, completeDeclarationAuditStatus());
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+  assert.deepEqual(collectVerifyFailures(status), []);
 });
 
 test("buildStatus excludes generated and Go test units from production scaffold coverage", () => {
@@ -294,15 +293,15 @@ test("buildStatus excludes generated and Go test units from production scaffold 
   assert.equal(status.counts.excluded, 2);
   assert.equal(status.counts.missing, 0);
   Object.assign(status, completeDeclarationAuditStatus());
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+  assert.deepEqual(collectVerifyFailures(status), []);
 });
 
 test("renderUnitGroup requires explicit storage for excluded source-boundary types", () => {
   const config = {
     ...baseConfig,
     policies: [
-      { match: "internal/ls/**", category: "out-of-scope", active: false, reason: "ls excluded" },
-      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
+      { match: "internal/ls/**", category: "out-of-scope", reason: "ls excluded" },
+      { match: "internal/lsp/**", category: "out-of-scope", reason: "lsp excluded" },
     ],
   };
   const formatCodeSettings = unitRecord({
@@ -419,7 +418,7 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
       invalid: [{ path: "packages/tsts/src/go/bad.ts" }],
     },
   };
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
+  assert.deepEqual(collectVerifyFailures(status), [
     "1 duplicate Go IDs",
     "1 duplicate TS IDs",
     "1 orphan TS units",
@@ -442,7 +441,7 @@ test("trusted verification requires every whole-program declaration subaudit", (
     generatedArtifacts: emptyGeneratedArtifacts(),
   };
   status.signatureCheck.declarationOwnership = { state: "not-run", reason: "fixture omitted ownership" };
-  assert.deepEqual(collectVerifyFailures(status, {}), [
+  assert.deepEqual(collectVerifyFailures(status), [
     "declaration ownership audit must be complete for trusted verification (not run — fixture omitted ownership)",
   ]);
 
@@ -453,14 +452,13 @@ test("trusted verification requires every whole-program declaration subaudit", (
   ]);
 });
 
-test("strict verification rejects traceable stubs", () => {
+test("verification always rejects traceable stubs", () => {
   const status = {
     ...completeDeclarationAuditStatus(),
     counts: { ...emptyCounts(), stubbed: 4 },
     generatedArtifacts: emptyGeneratedArtifacts(),
   };
-  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
+  assert.deepEqual(collectVerifyFailures(status), [
     "4 stub Go units",
   ]);
-  assert.deepEqual(collectVerifyFailures(status, {}), []);
 });

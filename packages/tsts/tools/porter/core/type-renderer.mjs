@@ -22,11 +22,12 @@ import { addProfileSemanticStorageEvidence, buildTypeRepresentationEvidence } fr
 import { semanticContractContainsApproximation, semanticTypeParameterKey } from "../ts-extractor/semantic-type-contract.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 
 export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
   requireOnlyRendererOptions(options);
   for (const unit of units) {
-    if (!["constGroup", "func", "method", "type", "varGroup"].includes(unit.kind)) {
+    if (!isSemanticPrimaryUnitKind(unit.kind)) {
       throw new Error(`cannot render scaffold for non-portable Go unit kind '${unit.kind}': ${unit.id}`);
     }
   }

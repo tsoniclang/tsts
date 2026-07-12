@@ -1,5 +1,6 @@
 import { compareText } from "./deterministic-order.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { fail, resolveRepo } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -105,9 +106,8 @@ export function buildDraftLargeFileSplitPlan(config, snapshot) {
 
 export function largeLiteralUnitsForFile(config, file, threshold) {
   if (file.lineCount < threshold) return [];
-  const primaryKinds = new Set(config.primaryUnitKinds);
   return (file.units ?? []).filter((unit) => {
-    if (!primaryKinds.has(unit.kind)) return false;
+    if (!isSemanticPrimaryUnitKind(unit.kind)) return false;
     const policy = policyForUnit(config, unit, file);
     return policy.category === "literal-port" && isActivePortPolicy(policy);
   });

@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { compareText } from "./core/deterministic-order.mjs";
+import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import { matchGlob } from "./path-policy.mjs";
 
 export const generatedSourceMechanisms = Object.freeze([
@@ -160,14 +161,13 @@ export function buildGeneratedSourcePolicyStatus(snapshot, options = {}) {
   return { issues, relevantFileCount: relevantFiles.length, mechanismCount: mechanisms.length };
 }
 
-export function buildGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
-  const primaryKinds = new Set(primaryUnitKinds);
+export function buildGeneratedSourceCoverage(snapshot) {
   const mechanisms = generatedSourceMechanisms.map((candidate) => {
     const files = (snapshot.files ?? [])
       .filter((file) => file.generated && candidate.patterns.some((pattern) => matchGlob(pattern, file.path)))
       .map((file) => {
         const units = (file.units ?? [])
-          .filter((unit) => primaryKinds.has(unit.kind))
+          .filter((unit) => isSemanticPrimaryUnitKind(unit.kind))
           .map((unit) => ({ id: unit.id, sigHash: unit.sigHash }))
           .sort((left, right) => compareText(left.id, right.id));
         return {
@@ -194,14 +194,14 @@ export function buildGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
   };
 }
 
-export function renderGeneratedSourceCoverage(snapshot, primaryUnitKinds) {
-  return `${JSON.stringify(buildGeneratedSourceCoverage(snapshot, primaryUnitKinds), null, 2)}\n`;
+export function renderGeneratedSourceCoverage(snapshot) {
+  return `${JSON.stringify(buildGeneratedSourceCoverage(snapshot), null, 2)}\n`;
 }
 
 export function buildGeneratedSourceCoverageStatus(repoRoot, config, snapshot) {
   const relativePath = config.generatedSourceCoveragePath ?? "packages/tsts/generated-source-coverage.json";
   const absolutePath = path.resolve(repoRoot, relativePath);
-  const expected = renderGeneratedSourceCoverage(snapshot, config.primaryUnitKinds);
+  const expected = renderGeneratedSourceCoverage(snapshot);
   if (!existsSync(absolutePath)) {
     return { issues: [{ path: relativePath, reason: "generated-source coverage evidence is missing" }], expected };
   }

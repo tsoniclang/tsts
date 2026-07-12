@@ -1,13 +1,11 @@
 import { createHash } from "node:crypto";
+import { isSemanticPrimaryUnitKind } from "../core/unit-kinds.mjs";
 
 export const baseConfig = {
   goModulePath: "github.com/microsoft/typescript-go",
-  primaryUnitKinds: ["constGroup", "func", "method", "type", "varGroup"],
   tsRoot: "packages/tsts/src",
   policies: [
     { match: "**/*_test.go", category: "test", reason: "test reason" },
-  ],
-  overrides: [
     { match: "internal/jsnum/**", category: "manual-required", reason: "manual reason" },
   ],
   tsFilePolicies: [
@@ -63,8 +61,7 @@ export function testSemanticProfile({ coveredFiles = [], packageIds = [] } = {})
   };
 }
 export function snapshotWith(files) {
-  const primaryKinds = new Set(baseConfig.primaryUnitKinds);
-  const requiredFiles = files.filter((file) => file.units.some((unit) => primaryKinds.has(unit.kind)));
+  const requiredFiles = files.filter((file) => file.units.some((unit) => isSemanticPrimaryUnitKind(unit.kind)));
   return {
     sourceRoot: "/tmp/tsgo",
     gitRevision: "abc123",

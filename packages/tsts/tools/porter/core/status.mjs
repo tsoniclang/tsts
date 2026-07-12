@@ -11,6 +11,7 @@ import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, policyFor, policyForUnit, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { validateTsgoUnitMetadata } from "./ts-units.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -145,7 +146,6 @@ export function buildStatus(
   generatedSourceCoverage = { issues: [] },
   globalGeneratedArtifacts = { issues: [], providerCount: 0 },
 ) {
-  const primaryKinds = new Set(config.primaryUnitKinds);
   const semanticEligibility = buildSemanticUnitEligibility(snapshot);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const generatedSourcePolicies = buildGeneratedSourcePolicyStatus(snapshot, {
@@ -188,7 +188,7 @@ export function buildStatus(
           generated: file.generated,
           policy: filePolicy,
         },
-        portable: primaryKinds.has(unit.kind),
+        portable: isSemanticPrimaryUnitKind(unit.kind),
         policy,
         expectedTsPath: expectedTsPath(config, unit, largeFileSplits),
       };

@@ -41,7 +41,7 @@ export async function main() {
     const relativePath = config.generatedSourceCoveragePath ?? "packages/tsts/generated-source-coverage.json";
     const outcome = writeTextSafely(
       resolveRepo(relativePath),
-      renderGeneratedSourceCoverage(snapshot, config.primaryUnitKinds),
+      renderGeneratedSourceCoverage(snapshot),
       { force: options.force === true, label: "generated-source coverage evidence" },
     );
     console.log(`${outcome}: ${relativePath}`);
@@ -216,7 +216,7 @@ export async function main() {
     printStatus(config, status);
 
     if (command === "verify") {
-      verifyStatus(status, options);
+      verifyStatus(status);
       return;
     }
     if (command === "scaffold") {

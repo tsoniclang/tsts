@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { compareText } from "./deterministic-order.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
 import { loadParser } from "../ts-extractor/parser-runtime.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
@@ -63,8 +64,7 @@ export function validateTsgoUnitMetadata(metadata) {
   if (typeof metadata.id !== "string" || metadata.id.trim() === "" || /\s/.test(metadata.id)) {
     issues.push("id must be a non-empty whitespace-free string");
   }
-  const kinds = new Set(["constGroup", "func", "method", "type", "varGroup"]);
-  if (!kinds.has(metadata.kind)) issues.push("kind must be a primary porter unit kind");
+  if (!isSemanticPrimaryUnitKind(metadata.kind)) issues.push("kind must be a primary porter unit kind");
   if (typeof metadata.id === "string" && typeof metadata.kind === "string" && !metadata.id.includes(`::${metadata.kind}::`)) {
     issues.push("id kind segment does not match metadata kind");
   }

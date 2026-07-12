@@ -14,9 +14,9 @@ import {
 test("generated-source coverage becomes stale when artifact-owned declarations change", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-generated-coverage-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const config = { generatedSourceCoveragePath: "coverage.json", primaryUnitKinds: ["func"] };
+  const config = { generatedSourceCoveragePath: "coverage.json" };
   const original = snapshotWithAstUnits([unit("A", "sig-a")]);
-  writeFileSync(path.join(root, "coverage.json"), renderGeneratedSourceCoverage(original, config.primaryUnitKinds));
+  writeFileSync(path.join(root, "coverage.json"), renderGeneratedSourceCoverage(original));
   assert.deepEqual(buildGeneratedSourceCoverageStatus(root, config, original).issues, []);
 
   const withHiddenBehavior = snapshotWithAstUnits([

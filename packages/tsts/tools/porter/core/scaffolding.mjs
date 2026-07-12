@@ -10,6 +10,7 @@ import { fail, repoRoot, resolveRepo, writeJson, writeText } from "./runtime.mjs
 import { buildStatus } from "./status.mjs";
 import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { renderUnitGroup } from "./type-renderer.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { assertLargeFileSplitPlanClean } from "./verification.mjs";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -126,7 +127,7 @@ export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, 
 
   for (const row of rows) {
     const unit = unitsByID.get(row.id);
-    if (!unit || !["constGroup", "func", "method", "type", "varGroup"].includes(unit.kind)) continue;
+    if (!unit || !isSemanticPrimaryUnitKind(unit.kind)) continue;
     const group = groups.get(row.expectedTsPath) ?? [];
     group.push(unit);
     groups.set(row.expectedTsPath, group);

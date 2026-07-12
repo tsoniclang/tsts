@@ -10,16 +10,15 @@ import { auditExecutionLabel, declarationAuditEntries } from "./declaration-audi
 import { fail } from "./runtime.mjs";
 import { collectSchemaSourceSyncFailures, emptySchemaSourceSyncStatus } from "./status.mjs";
 
-export function verifyStatus(status, options) {
-  const failures = collectVerifyFailures(status, options);
+export function verifyStatus(status) {
+  const failures = collectVerifyFailures(status);
   if (failures.length > 0) {
     fail(`porter verify failed: ${failures.join(", ")}`);
   }
   console.log("porter verify passed");
 }
 
-export function collectVerifyFailures(status, options = {}) {
-  const strictPort = options["strict-port"] === true;
+export function collectVerifyFailures(status) {
   const failures = [];
   for (const entry of declarationAuditEntries(status)) {
     if (entry.audit?.state !== "complete") {
@@ -71,8 +70,8 @@ export function collectVerifyFailures(status, options = {}) {
       .join(", ");
     failures.push(`${status.jsonTagCheck.mismatches} Go struct JSON-tag mismatches${byKind ? ` (${byKind})` : ""}`);
   }
-  if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
-  if (strictPort && status.counts.stubbed > 0) failures.push(`${status.counts.stubbed} stub Go units`);
+  if (status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
+  if (status.counts.stubbed > 0) failures.push(`${status.counts.stubbed} stub Go units`);
   return failures;
 }
 

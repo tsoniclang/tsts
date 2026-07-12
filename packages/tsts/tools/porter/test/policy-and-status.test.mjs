@@ -385,7 +385,7 @@ test("repeated Go declarations receive distinct deterministic TypeScript owners"
   assert.equal(localTsName(unitRecord({ id: "m::a.go::func::init::#2", name: "init" })), "init__2");
 });
 
-test("policyFor applies explicit generated dispositions and overrides before default literal ports", () => {
+test("policyFor applies generated and configured dispositions before default literal ports", () => {
   assert.equal(policyFor(baseConfig, "internal/jsnum/jsnum.go", false).category, "manual-required");
   assert.equal(policyFor(baseConfig, "internal/debug/debug_test.go", false).category, "test");
   assert.equal(policyFor(baseConfig, "internal/ast/ast_generated.go", true).category, "generated-artifact");
@@ -421,7 +421,7 @@ test("policyFor lets explicit inactive policies exclude generated LS/LSP files",
   const policy = policyFor({
     ...baseConfig,
     policies: [
-      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
+      { match: "internal/lsp/**", category: "out-of-scope", reason: "lsp excluded" },
     ],
   }, "internal/lsp/lsproto/lsp_generated.go", true);
 

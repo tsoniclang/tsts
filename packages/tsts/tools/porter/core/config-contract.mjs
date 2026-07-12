@@ -1,6 +1,7 @@
 import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
 import { normalizeAuthoredFacadeModules, normalizeExternalFacadePolicyConfigs } from "./external-facade-config.mjs";
 import { validateNonGoDeclarationManifestPath } from "./non-go-declaration-manifest.mjs";
+import { activityForConfiguredPortCategory } from "./policies.mjs";
 
 const allowedKeys = new Set([
   "astGeneratedDir",
@@ -21,9 +22,7 @@ const allowedKeys = new Set([
   "largeFileSplitStatusOut",
   "nonGoDeclarationManifestPath",
   "overrideCategories",
-  "overrides",
   "policies",
-  "primaryUnitKinds",
   "protocolGeneratedInput",
   "reportOut",
   "schemaFilePolicies",
@@ -45,17 +44,12 @@ export function assertPorterConfig(config) {
   if (!isPlainObject(config)) throw new Error("Porter config must be one plain object");
   const unknown = Object.keys(config).filter((key) => !allowedKeys.has(key)).sort();
   if (unknown.length > 0) throw new Error(`Porter config contains unknown current-contract key(s): ${unknown.join(", ")}`);
-  if (config.schemaVersion !== 1) throw new Error(`Porter config schemaVersion must be 1, got ${JSON.stringify(config.schemaVersion)}`);
+  if (config.schemaVersion !== 2) throw new Error(`Porter config schemaVersion must be 2, got ${JSON.stringify(config.schemaVersion)}`);
   for (const key of requiredStrings) {
     if (typeof config[key] !== "string" || config[key] === "") throw new Error(`Porter config ${key} must be a non-empty string`);
   }
-  if (!Array.isArray(config.primaryUnitKinds) || config.primaryUnitKinds.length === 0 ||
-      config.primaryUnitKinds.some((kind) => typeof kind !== "string" || kind === "")) {
-    throw new Error("Porter config primaryUnitKinds must be a non-empty string array");
-  }
-  if (new Set(config.primaryUnitKinds).size !== config.primaryUnitKinds.length) {
-    throw new Error("Porter config primaryUnitKinds must be unique");
-  }
+  validatePathPolicies(config.policies ?? [], "policies");
+  validateUnitPolicies(config.unitPolicies ?? []);
   const authoredFacadeModules = normalizeAuthoredFacadeModules(config);
   const facadePolicies = normalizeExternalFacadePolicyConfigs(config, authoredFacadeModules);
   const packageSelections = normalizeExternalPackageSurfaceSelections(config);
@@ -68,6 +62,45 @@ export function assertPorterConfig(config) {
   }
   validateNonGoDeclarationManifestPath(config.nonGoDeclarationManifestPath);
   return config;
+}
+
+function validatePathPolicies(policies, label) {
+  if (!Array.isArray(policies)) throw new Error(`Porter config ${label} must be an array`);
+  const matches = new Set();
+  for (const [index, policy] of policies.entries()) {
+    validateExactPolicyObject(policy, `${label}[${index}]`, new Set(["category", "match", "reason"]));
+    if (typeof policy.match !== "string" || policy.match === "") throw new Error(`Porter config ${label}[${index}].match must be a non-empty glob`);
+    if (matches.has(policy.match)) throw new Error(`Porter config ${label} duplicates match '${policy.match}'`);
+    matches.add(policy.match);
+  }
+}
+
+function validateUnitPolicies(policies) {
+  if (!Array.isArray(policies)) throw new Error("Porter config unitPolicies must be an array");
+  const selectors = new Set();
+  for (const [index, policy] of policies.entries()) {
+    if (!isPlainObject(policy)) throw new Error(`Porter config unitPolicies[${index}] must be one plain object`);
+    const hasId = Object.hasOwn(policy, "id");
+    const hasMatch = Object.hasOwn(policy, "match");
+    if (hasId === hasMatch) throw new Error(`Porter config unitPolicies[${index}] must contain exactly one of id or match`);
+    validateExactPolicyObject(policy, `unitPolicies[${index}]`, new Set(["category", hasId ? "id" : "match", "reason"]));
+    const selector = hasId ? policy.id : policy.match;
+    if (typeof selector !== "string" || selector === "") throw new Error(`Porter config unitPolicies[${index}].${hasId ? "id" : "match"} must be non-empty`);
+    const key = `${hasId ? "id" : "match"}:${selector}`;
+    if (selectors.has(key)) throw new Error(`Porter config unitPolicies duplicates selector '${key}'`);
+    selectors.add(key);
+  }
+}
+
+function validateExactPolicyObject(policy, label, expectedKeys) {
+  if (!isPlainObject(policy)) throw new Error(`Porter config ${label} must be one plain object`);
+  const actual = Object.keys(policy).sort();
+  const expected = [...expectedKeys].sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new Error(`Porter config ${label} keys must be exactly ${expected.join(", ")}; got ${actual.join(", ")}`);
+  }
+  activityForConfiguredPortCategory(policy.category);
+  if (typeof policy.reason !== "string" || policy.reason.trim() === "") throw new Error(`Porter config ${label}.reason must be non-empty`);
 }
 
 function isPlainObject(value) {

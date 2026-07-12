@@ -56,7 +56,6 @@ export function runDelta(config, options) {
   if (postScanIssues.length > 0) fail(`porter delta source changed or diverged during extraction (${postScanIssues.join("; ")})`);
 
   const report = buildPorterDelta(fromSnapshot, toSnapshot, {
-    primaryUnitKinds: config.primaryUnitKinds,
     policyForUnit: (unit, file) => policyForUnit(config, unit, file),
     isActivePortPolicy,
     fromTreeEntries: gitTreeEntries(fromRoot, fromSnapshot.gitRevision),

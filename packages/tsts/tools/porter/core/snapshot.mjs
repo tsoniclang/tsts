@@ -36,6 +36,7 @@ import {
   validateUnsupportedProfiles,
 } from "./snapshot-validation.mjs";
 import { fail, resolveRepo } from "./runtime.mjs";
+import { isPorterUnitKind, PORTER_UNIT_KINDS } from "./unit-kinds.mjs";
 
 export const PORTER_SNAPSHOT_KEYS = Object.freeze(["environment", "files", "gitRevision", "modulePath", "schemaVersion", "semantic", "sourceRoot", "summary"]);
 export const PORTER_ENVIRONMENT_KEYS = Object.freeze(["goVersion", "goarch", "goos"]);
@@ -52,7 +53,7 @@ export const PORTER_TYPE_PARAMETER_KEYS = new Set(["constraint", "name"]);
 export const PORTER_STRUCT_TAG_VALUE_KEYS = new Set(["key", "value"]);
 export const PORTER_VALUE_SPEC_KEYS = new Set(["names", "type"]);
 export const PORTER_PARAMETER_KEYS = new Set(["names", "type", "variadic"]);
-export const PORTER_UNIT_KINDS = new Set(["constGroup", "func", "importGroup", "method", "type", "typeGroup", "varGroup"]);
+export { PORTER_UNIT_KINDS };
 
 export function validatePorterSnapshot(snapshot, config) {
   const issues = [];
@@ -153,7 +154,7 @@ export function validatePorterSnapshot(snapshot, config) {
       requireKeys(unit, PORTER_UNIT_REQUIRED_KEYS, unitLabel, issues);
       validateUnitPayload(unit, unitLabel, issues);
       accumulateUnitStructTags(aggregate, unit);
-      if (!PORTER_UNIT_KINDS.has(unit.kind)) issues.push(`${unitLabel}.kind '${unit.kind}' is unknown to snapshot schema 5`);
+      if (!isPorterUnitKind(unit.kind)) issues.push(`${unitLabel}.kind '${unit.kind}' is unknown to snapshot schema ${PORTER_SNAPSHOT_SCHEMA_VERSION}`);
       if (typeof unit.exported !== "boolean") issues.push(`${unitLabel}.exported must be boolean`);
       if (typeof unit.generated !== "boolean") issues.push(`${unitLabel}.generated must be boolean`);
       if (!Number.isSafeInteger(unit.startLine) || !Number.isSafeInteger(unit.endLine) || unit.startLine < 1 || unit.endLine < unit.startLine) {

@@ -17,7 +17,6 @@ test("porter delta reports file, raw-unit, active-unit, and move changes", () =>
   excludeSemanticFile(from, "internal/ignored/ignored.go");
   excludeSemanticFile(to, "internal/ignored/ignored.go");
   const report = buildPorterDelta(from, to, {
-    primaryUnitKinds: ["func"],
     policyForUnit: () => ({ category: "literal-port", active: true }),
     isActivePortPolicy: (policy) => policy.active !== false && policy.category === "literal-port",
   });
@@ -36,7 +35,6 @@ test("porter delta keeps body-only source edits outside unit change evidence", (
   const before = snapshot("a".repeat(40), [file("internal/a/read.go", "body-source-1", [unit(id, "func", "Read", "same-signature")])]);
   const after = snapshot("b".repeat(40), [file("internal/a/read.go", "body-source-2", [unit(id, "func", "Read", "same-signature")])]);
   const report = buildPorterDelta(before, after, {
-    primaryUnitKinds: ["func"],
     policyForUnit: () => ({ category: "literal-port", active: true }),
     isActivePortPolicy: () => true,
   });
@@ -53,7 +51,6 @@ test("porter delta treats canonical declaration and constant drift as signature 
     snapshot("a".repeat(40), [file("internal/a/constants.go", "before", [before])]),
     snapshot("b".repeat(40), [file("internal/a/constants.go", "after", [after])]),
     {
-      primaryUnitKinds: ["constGroup"],
       policyForUnit: () => ({ category: "literal-port", active: true }),
       isActivePortPolicy: () => true,
     },
@@ -74,7 +71,6 @@ test("compact profile indexes compare by canonical profile identity across snaps
   to.semantic.profiles.unshift(profile("darwin", "arm64", "GOARM64=v8.0"));
   to.files[0].units[0].semantic[0].profiles = [1];
   const report = buildPorterDelta(from, to, {
-    primaryUnitKinds: ["func"],
     policyForUnit: () => ({ category: "literal-port", active: true }),
     isActivePortPolicy: () => true,
   });

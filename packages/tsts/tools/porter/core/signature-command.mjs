@@ -7,6 +7,7 @@ import { runPinnedScan } from "./scan-runner.mjs";
 import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
 import { signatureAuditSummaryLines } from "./signature-reporting.mjs";
 import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
+import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import process from "node:process";
 
 // Signature/type-equivalence check. Compares each ported @tsgo-unit's actual TS
@@ -40,13 +41,12 @@ export async function runSigCheck(config, options = {}) {
 }
 
 export function activeSignatureUnitIds(config, snapshot) {
-  const primary = new Set(config.primaryUnitKinds);
   const eligibility = buildSemanticUnitEligibility(snapshot);
   const ids = new Set();
   for (const file of snapshot.files ?? []) {
     if (!eligibility.includes(file)) continue;
     for (const unit of file.units ?? []) {
-      if (primary.has(unit.kind) && isActivePortPolicy(policyForUnit(config, unit, file))) ids.add(unit.id);
+      if (isSemanticPrimaryUnitKind(unit.kind) && isActivePortPolicy(policyForUnit(config, unit, file))) ids.add(unit.id);
     }
   }
   return ids;

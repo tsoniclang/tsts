@@ -7,6 +7,7 @@ import {
   semanticProfileStateKey,
 } from "./semantic-variants.mjs";
 import { validateStructTagContract } from "./struct-tag-validation.mjs";
+import { isSemanticPrimaryUnitKind, SEMANTIC_PRIMARY_UNIT_KINDS } from "./unit-kinds.mjs";
 
 export const PORTER_SNAPSHOT_SCHEMA_VERSION = 12;
 
@@ -53,12 +54,12 @@ export function validateStringArray(value, label, issues, options = {}) {
   }
 }
 
-export const SEMANTIC_PRIMARY_UNIT_KINDS = new Set(["constGroup", "func", "method", "type", "varGroup"]);
+export { SEMANTIC_PRIMARY_UNIT_KINDS };
 
 export function isSemanticPrimaryFile(file) {
   return typeof file?.path === "string"
     && Array.isArray(file?.units)
-    && file.units.some((unit) => SEMANTIC_PRIMARY_UNIT_KINDS.has(unit?.kind));
+    && file.units.some((unit) => isSemanticPrimaryUnitKind(unit?.kind));
 }
 const architectureVariableByGoarch = Object.freeze({
   "386": "GO386", amd64: "GOAMD64", arm: "GOARM", arm64: "GOARM64", mips: "GOMIPS", mipsle: "GOMIPS",
@@ -73,7 +74,6 @@ const semanticEnvironmentKeys = new Set([
 ]);
 const fileMetadataKeys = new Set(["basename"]);
 const unitMetadataKeys = new Set(["goPath"]);
-const bodylessUnitKinds = new Set(["constGroup", "func", "method", "type", "varGroup"]);
 const directlyExportedUnitKinds = new Set(["func", "method", "type"]);
 
 export function validateSortedUniqueStrings(value, label, issues, options = {}) {
@@ -165,7 +165,7 @@ export function validateFileUnitContracts(modulePath, file, label, issues) {
     }
     if (!/^[a-f0-9]{64}$/.test(unit?.sigHash ?? "")) issues.push(`${unitLabel}.sigHash must be lowercase SHA-256`);
     else if (unit.sigHash !== hashSignature(unit.signature)) issues.push(`${unitLabel}.sigHash must equal SHA-256 of the normalized signature`);
-    if (bodylessUnitKinds.has(unit?.kind) && unit.snippet !== unit.signature) {
+    if (isSemanticPrimaryUnitKind(unit?.kind) && unit.snippet !== unit.signature) {
       issues.push(`${unitLabel}.snippet must equal the bodyless declaration signature exactly`);
     }
     validateUnitIdentityFields(unit, unitLabel, issues);
