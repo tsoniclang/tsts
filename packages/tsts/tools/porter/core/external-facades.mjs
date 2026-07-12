@@ -1,6 +1,5 @@
 import { compareText } from "./deterministic-order.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
-import { canonicalSchemaValue } from "./semantic-variants.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "./semantic-method-sets.mjs";
@@ -20,25 +19,86 @@ import {
   resolveExternalFacadePolicy,
 } from "./external-facade-policies.mjs";
 import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
-import { exactSemanticTypeDeclarationIdentity } from "./semantic-type-declaration-identity.mjs";
 import {
   collectReachableDependencyTypeProfiles,
   dependencyDeclarationDependencies,
-  isPlainObject,
   requireDependencyReference,
   requireDependencySemanticUsage,
   requireExactDependencyTypeClosure,
   unsafePointerReference,
 } from "./external-facades/dependency-closure.mjs";
 import { buildAuthoredContractSurface } from "./authored-contract-surface.mjs";
-import {
-  createFinalizedExternalFacadeStorageCatalog,
-  immutableFacadeEvidenceCopy,
-} from "./external-facades/catalog.mjs";
+import { buildDependencySemanticTypeIndex, externalPackageTypeEvidence } from "./external-facades/semantic-index.mjs";
 
 export { authoredFacadeModuleSet, externalFacadeModulePath } from "./external-facade-policies.mjs";
+export { buildDependencySemanticTypeIndex } from "./external-facades/semantic-index.mjs";
 
-const externalFacadeStoragePlanState = Symbol("externalFacadeStoragePlanState");
+const externalFacadeStoragePlans = new WeakMap();
+
+class FinalizedExternalFacadeStorageCatalog {
+  #artifactView;
+  #authoredSurfaces;
+  #auditView;
+  #config;
+  #snapshot;
+
+  constructor(config, snapshot, artifactFacades, auditFacades, authoredSurfaces) {
+    deepFreezeContractInput(config, "Porter config");
+    deepFreezeContractInput(snapshot, "Porter snapshot");
+    this.#config = config;
+    this.#snapshot = snapshot;
+    this.#artifactView = new ImmutableFacadeView(config, snapshot, "artifact", artifactFacades);
+    this.#auditView = new ImmutableFacadeView(config, snapshot, "audit", auditFacades);
+    this.#authoredSurfaces = new Map([...authoredSurfaces].map(([objectId, surface]) => [
+      objectId,
+      immutableFacadeEvidenceCopy(surface),
+    ]));
+    Object.freeze(this);
+  }
+
+  artifactFacades(config, snapshot) { this.#requireInputs(config, snapshot); return this.#artifactView; }
+  auditFacades(config, snapshot) { this.#requireInputs(config, snapshot); return this.#auditView; }
+  authoredSurface(config, snapshot, objectId) { this.#requireInputs(config, snapshot); return this.#authoredSurfaces.get(objectId); }
+
+  #requireInputs(config, snapshot) {
+    if (config !== this.#config || snapshot !== this.#snapshot) {
+      throw new Error("external facade catalog was built from different config or snapshot objects");
+    }
+  }
+}
+
+class ImmutableFacadeView {
+  #config;
+  #facades;
+  #scope;
+  #snapshot;
+
+  constructor(config, snapshot, scope, facades) {
+    this.#config = config;
+    this.#facades = new Map(facades);
+    this.#scope = scope;
+    this.#snapshot = snapshot;
+    Object.freeze(this);
+  }
+
+  get size() { return this.#facades.size; }
+  get(objectId) { return this.#facades.get(objectId); }
+  has(objectId) { return this.#facades.has(objectId); }
+  entries() { return this.#facades.entries(); }
+  keys() { return this.#facades.keys(); }
+  values() { return this.#facades.values(); }
+  [Symbol.iterator]() { return this.#facades[Symbol.iterator](); }
+
+  require(config, snapshot, expectedScope) {
+    if (config !== this.#config || snapshot !== this.#snapshot) {
+      throw new Error("external facade storage view was built from different config or snapshot objects");
+    }
+    if (expectedScope !== undefined && expectedScope !== this.#scope) {
+      throw new Error(`external facade storage view has '${this.#scope}' scope, not required '${expectedScope}' scope`);
+    }
+    return this.#scope;
+  }
+}
 
 export function buildExternalFacadeStoragePlan(config, snapshot) {
   const artifactContext = buildExternalFacadeContext(config, snapshot, false);
@@ -50,7 +110,9 @@ export function buildExternalFacadeStoragePlan(config, snapshot) {
     if (semantic === undefined) throw new Error(`authored external facade '${objectId}' has no exact semantic declaration`);
     authoredRoots.set(objectId, Object.freeze(materializeExternalFacade(config, semantic, policy)));
   }
-  return Object.freeze({ [externalFacadeStoragePlanState]: { artifactContext, auditContext, authoredRoots } });
+  const plan = Object.freeze({});
+  externalFacadeStoragePlans.set(plan, { artifactContext, auditContext, authoredRoots });
+  return plan;
 }
 
 export function externalFacadeStoragePlanAuthoredRoots(plan) {
@@ -69,7 +131,7 @@ export function finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces) {
     if (facade === undefined) throw new Error(`artifact facade '${objectId}' is absent from the complete audit closure`);
     artifactFacades.set(objectId, facade);
   }
-  return createFinalizedExternalFacadeStorageCatalog(
+  return new FinalizedExternalFacadeStorageCatalog(
     artifactContext.config,
     artifactContext.snapshot,
     artifactFacades,
@@ -81,7 +143,7 @@ export function finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces) {
 function buildExternalFacadeContext(config, snapshot, includeExternalPackageSurface) {
   const ordinarySemanticIndex = buildDependencySemanticTypeIndex(snapshot);
   const semanticIndex = includeExternalPackageSurface
-    ? buildDependencySemanticTypeIndex(snapshot, { includeExternalPackageSurface: true })
+    ? buildDependencySemanticTypeIndex(snapshot, "audit")
     : ordinarySemanticIndex;
   const methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot);
   const localStorageTypeProfileKeys = buildMechanicallyStoredLocalTypeProfileKeys(config, snapshot);
@@ -198,58 +260,6 @@ function materializeExternalFacade(config, semantic, policy) {
     methodBindings: policy.methodBindings,
     storageIdentity: `${config.tsRoot.replace(/\/+$/, "")}/${policy.tsModule}::${policy.tsName}`,
   });
-}
-
-export function buildDependencySemanticTypeIndex(snapshot, options = {}) {
-  requireExactOptionKeys(options, new Set(["includeExternalPackageSurface"]), "dependency semantic type index");
-  if (!Array.isArray(snapshot?.semantic?.dependencyTypeDeclarations)) {
-    throw new Error("Porter snapshot has no exact dependency go/types declaration index");
-  }
-  const rows = snapshot.semantic.dependencyTypeDeclarations.map((report, index) => ({
-    label: `snapshot.semantic.dependencyTypeDeclarations[${index}]`, report,
-  }));
-  if (options.includeExternalPackageSurface === true) {
-    for (const [index, report] of externalPackageTypeEvidence(snapshot).entries()) {
-      rows.push({ label: `snapshot.semantic.externalPackageSurface type declaration[${index}]`, report });
-    }
-  } else if (options.includeExternalPackageSurface !== undefined && options.includeExternalPackageSurface !== false) {
-    throw new Error("dependency semantic type index includeExternalPackageSurface must be boolean when provided");
-  }
-  const index = new Map();
-  for (const { label, report } of rows) {
-    const declaration = requireDependencyTypeDeclaration(report, label);
-    const objectId = declaration.object.id;
-    const entry = index.get(objectId) ?? {
-      objectId,
-      packagePath: declaration.object.packagePath,
-      name: declaration.object.name,
-      goDisplayName: `${declaration.object.packagePath}.${declaration.object.name}`,
-      byProfile: new Map(),
-      variants: [],
-    };
-    if (entry.packagePath !== declaration.object.packagePath || entry.name !== declaration.object.name) {
-      throw new Error(`${label} changes exact external Go object identity '${objectId}'`);
-    }
-    for (const profile of report.profiles) {
-      if (entry.byProfile.has(profile)) throw new Error(`${label} duplicates dependency Go type '${objectId}' in semantic profile '${profile}'`);
-      entry.byProfile.set(profile, declaration);
-    }
-    entry.variants.push({ declaration, profiles: [...report.profiles] });
-    index.set(objectId, entry);
-  }
-  for (const entry of index.values()) {
-    entry.variants.sort((left, right) => compareText(canonicalSchemaValue(left.declaration), canonicalSchemaValue(right.declaration)));
-    entry.arity = invariantDependencyProperty(entry, "type-parameter arity", (declaration) => declaration.typeParameters.length);
-  }
-  return new Map([...index.entries()].sort(([left], [right]) => compareText(left, right)));
-}
-
-function externalPackageTypeEvidence(snapshot) {
-  const surface = snapshot.semantic?.externalPackageSurface;
-  return [
-    ...(Array.isArray(surface?.declarations) ? surface.declarations : []),
-    ...(Array.isArray(surface?.dependencyTypeDeclarations) ? surface.dependencyTypeDeclarations : []),
-  ].filter((declaration) => declaration?.kind === "type");
 }
 
 function allSemanticDeclarations(snapshot, includeExternalPackageSurface) {
@@ -488,47 +498,8 @@ function requireProfileSet(value, label) {
   return new Set(value);
 }
 
-function requireDependencyTypeDeclaration(report, label) {
-  if (!isPlainObject(report) || report.kind !== "type" || !isPlainObject(report.type) || !isPlainObject(report.object)) {
-    throw new Error(`${label} must be one canonical dependency Go type declaration`);
-  }
-  if (Object.hasOwn(report, "externalRole")) throw new Error(`${label}.externalRole is obsolete; dependency declarations are exact reachable types only`);
-  if (!Array.isArray(report.profiles) || report.profiles.length === 0 || report.profiles.some((profile) => !Number.isSafeInteger(profile) || profile < 0)) {
-    throw new Error(`${label}.profiles must identify one or more exact semantic profiles`);
-  }
-  if (!isPlainObject(report.object.type) || typeof report.object.type.nilable !== "boolean") throw new Error(`${label}.object.type has no intrinsic nilability evidence`);
-  if (typeof report.object.id !== "string" || typeof report.object.packagePath !== "string" || typeof report.object.name !== "string") {
-    throw new Error(`${label}.object has incomplete exact Go identity`);
-  }
-  const expectedId = `${report.object.packagePath}::type::${report.object.name}`;
-  if (report.object.id !== expectedId || report.packagePath !== report.object.packagePath) throw new Error(`${label} has inconsistent exact Go object identity`);
-  if (report.type.alias !== true && report.type.alias !== false) throw new Error(`${label}.type has no exact alias flag`);
-  if (canonicalSchemaValue(report.type.object) !== canonicalSchemaValue(report.object)) throw new Error(`${label}.type.object does not equal its exact declaration object`);
-  exactSemanticTypeDeclarationIdentity(report.type, `${label}.type`);
-  if (!Array.isArray(report.type.typeParameters) || !isPlainObject(report.type.rhs) || typeof report.type.rhs.nilable !== "boolean") {
-    throw new Error(`${label}.type lacks exact type parameters, RHS, or intrinsic nilability`);
-  }
-  if (report.type.rhs.nilable !== report.object.type.nilable) throw new Error(`${label}.type RHS and object disagree on intrinsic nilability`);
-  if (report.type.methods !== undefined && !Array.isArray(report.type.methods)) throw new Error(`${label}.type.methods must be an exact array when present`);
-  return { ...report.type, methods: report.type.methods ?? [] };
-}
-
-function invariantDependencyProperty(entry, label, select) {
-  let value;
-  for (const declaration of entry.byProfile.values()) {
-    const next = select(declaration);
-    if (value === undefined) value = next;
-    else if (canonicalSchemaValue(value) !== canonicalSchemaValue(next)) {
-      throw new Error(`dependency Go type '${entry.objectId}' changes ${label} across active semantic profiles`);
-    }
-  }
-  if (value === undefined) throw new Error(`dependency Go type '${entry.objectId}' has no active semantic profile`);
-  return value;
-}
-
-
 function requireExternalFacadeStoragePlan(value) {
-  const state = value?.[externalFacadeStoragePlanState];
+  const state = value !== null && typeof value === "object" ? externalFacadeStoragePlans.get(value) : undefined;
   if (state === undefined || !(state.authoredRoots instanceof Map)) {
     throw new Error("operation requires one exact external facade storage plan");
   }
@@ -557,4 +528,41 @@ function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures)
     if (!surfaces.has(objectId)) throw new Error(`authored facade root '${objectId}' has no source declaration surface`);
   }
   return surfaces;
+}
+
+export function requireFinalizedExternalFacadeStorageCatalog(value, config, snapshot) {
+  if (!(value instanceof FinalizedExternalFacadeStorageCatalog)) {
+    throw new Error("operation requires one finalized external facade storage catalog");
+  }
+  value.artifactFacades(config, snapshot);
+  return value;
+}
+
+export function requireExternalFacadeStorageView(value, config, snapshot, expectedScope = undefined) {
+  if (!(value instanceof ImmutableFacadeView)) {
+    throw new Error("operation requires one finalized external facade storage view");
+  }
+  return value.require(config, snapshot, expectedScope);
+}
+
+function immutableFacadeEvidenceCopy(value) {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return Object.freeze(value.map(immutableFacadeEvidenceCopy));
+  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    throw new Error("finalized external facade evidence contains a non-canonical mutable object");
+  }
+  return Object.freeze(Object.fromEntries(Object.entries(value).map(([key, entry]) => [
+    key,
+    immutableFacadeEvidenceCopy(entry),
+  ])));
+}
+
+function deepFreezeContractInput(value, label, seen = new WeakSet()) {
+  if (value === null || typeof value !== "object" || seen.has(value)) return value;
+  if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    throw new Error(`${label} contains non-canonical mutable state`);
+  }
+  seen.add(value);
+  for (const entry of Array.isArray(value) ? value : Object.values(value)) deepFreezeContractInput(entry, label, seen);
+  return Object.freeze(value);
 }

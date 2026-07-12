@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
 import {
   renderCanonicalSignature,
   renderCanonicalType,

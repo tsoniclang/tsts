@@ -224,6 +224,9 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(): void; }\n");
     const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
     assert.throws(() => facades.artifactFacades({ ...config }, snapshot), /different config or snapshot/);
+    assert.throws(() => facades.artifactFacades(config, structuredClone(snapshot)), /different config or snapshot/);
+    assert.throws(() => { config.tsRoot = "changed"; }, TypeError);
+    assert.throws(() => snapshot.files.push({}), TypeError);
 
     // The policy resolves "go/io.ts" to a full repo-relative path.
     assert.ok(authoredFacadePathSet(config).has(`${config.tsRoot}/go/io.ts`));
@@ -240,6 +243,10 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
 
     // Authored declaration validity belongs to finalized catalog construction, not generated-artifact status.
     writeFileSync(path.join(generatedRoot, "io.ts"), "export const Other = 1;\n");
+    await assert.rejects(
+      prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot),
+      /does not resolve to an indexed type declaration/,
+    );
     assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot, facades), { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
 
     writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(): void; }\n");

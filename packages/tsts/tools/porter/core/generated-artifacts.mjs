@@ -3,7 +3,7 @@ import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
 
 export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
   requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot);

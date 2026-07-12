@@ -27,7 +27,7 @@ import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-pol
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-facades/catalog.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
 import { loadNonGoDeclarationManifest } from "./core/non-go-declaration-manifest.mjs";
 import {
   resolveOverride,

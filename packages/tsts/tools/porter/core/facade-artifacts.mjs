@@ -3,7 +3,7 @@ import {
   renderCanonicalTypeParameters,
 } from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";

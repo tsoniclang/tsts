@@ -153,17 +153,17 @@ test("authored facade audit checks every selected member without requiring the c
     externalFacadePolicies: [{ objectId, tsModule: "go/example.com/native.ts", tsName: "Reader", storageStrategy: "authored" }],
   };
   const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
-  const audit = (source, canonicalIdentity = (identity) => identity) => {
+  const audit = (source, canonicalIdentity = (identity) => identity, currentSnapshot = snapshot) => {
     const moduleIndex = indexTypeScriptModuleSources(api, new Map([[moduleId, source]]));
     return collectAuthoredFacadeMismatches({
       api,
       canonicalIdentity,
       config,
       conventions: {},
-      facades: finalizedCatalog(config, snapshot, moduleIndex),
+      facades: finalizedCatalog(config, currentSnapshot, moduleIndex),
       moduleIndex,
       profile: loadProfile(config),
-      snapshot,
+      snapshot: currentSnapshot,
       valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
     });
   };
@@ -189,10 +189,11 @@ test("authored facade audit checks every selected member without requiring the c
   assert.ok(audit("interface Extra { extra(): void; } export interface Reader extends Extra { Read(value: string): string; Close(): void; }")
     .mismatches.some((mismatch) => mismatch.kind === "interface-heritage"));
 
-  setMethodSetParameterNameProvenance(snapshot, "unavailable");
-  assert.ok(audit("export interface Reader { Read(input: string): string; Close(): void; }")
+  const unavailableSnapshot = structuredClone(snapshot);
+  setMethodSetParameterNameProvenance(unavailableSnapshot, "unavailable");
+  assert.ok(audit("export interface Reader { Read(input: string): string; Close(): void; }", undefined, unavailableSnapshot)
     .mismatches.every((mismatch) => mismatch.kind !== "param-name"));
-  assert.ok(audit("export interface Reader { Close(): void; Read(input: string): string; }")
+  assert.ok(audit("export interface Reader { Close(): void; Read(input: string): string; }", undefined, unavailableSnapshot)
     .mismatches.every((mismatch) => mismatch.kind !== "member-order" && mismatch.kind !== "param-name"));
 });
 
@@ -334,7 +335,7 @@ test("slot-authored aggregate storage carries pointer-only methods through exact
   const provisionalFacades = finalizedCatalog(provisionalConfig, snapshot, seedIndex);
   const source = createExternalFacadeContractRenderer(provisionalConfig, snapshot, provisionalFacades)(
     provisionalFacades.auditFacades(provisionalConfig, snapshot).get(objectId),
-    thing.type,
+    semantic.byProfile.get(0),
     0,
   ).source;
   assert.match(source, /__tsgoPointerMethodSet/);

@@ -5,7 +5,7 @@ import {
 import { compareText } from "../core/deterministic-order.mjs";
 import { hashText } from "../core/runtime.mjs";
 import { canonicalSchemaValue } from "../core/semantic-variants.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "../core/external-facades/catalog.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "../core/external-facades.mjs";
 import { externalTypeScriptDeclarationHash } from "../core/external-facade-runtime-adaptation.mjs";
 import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "../core/semantic-method-sets.mjs";
 import {

@@ -123,24 +123,24 @@ test("external package surfaces are explicit and never seed generated facade art
     /canonical dependency Go type declaration/,
   );
 
-  const audit = (packageSource) => {
+  const audit = (packageSource, currentSnapshot = snapshot) => {
     const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
     const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
       [moduleId, packageSource],
       [`${config.tsRoot}/go/scalars.ts`, "export type int = number;"],
     ]));
     const profile = loadProfile(config);
-    const facades = finalizedCatalog(config, snapshot, moduleIndex);
+    const facades = finalizedCatalog(config, currentSnapshot, moduleIndex);
     return collectExternalPackageSurfaceMismatches({
       api: parser,
       canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex, {}),
       config,
       conventions: loadConventions(profile.conventions),
-      expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
-        externalFacadeStorageView: facades.auditFacades(config, snapshot),
+      expectedIndex: buildExpectedIndex(config, currentSnapshot, new Map(), profile, new Map(), {
+        externalFacadeStorageView: facades.auditFacades(config, currentSnapshot),
       }),
       moduleIndex,
-      snapshot,
+      snapshot: currentSnapshot,
       valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
     });
   };
@@ -155,8 +155,11 @@ test("external package surfaces are explicit and never seed generated facade art
   );
   const renamedParameter = authoredSource.replace("ParseNative(text: string)", "ParseNative(input: string)");
   assert.ok(audit(renamedParameter).mismatches.some((mismatch) => mismatch.kind === "param-name"));
-  parse.signature.parameterNameProvenance = "unavailable";
-  assert.ok(audit(renamedParameter).mismatches.every((mismatch) => mismatch.kind !== "param-name"));
+  const unavailableSnapshot = structuredClone(snapshot);
+  unavailableSnapshot.semantic.externalPackageSurface.declarations
+    .find((declaration) => declaration.object.id === `${packagePath}::func::Parse`)
+    .signature.parameterNameProvenance = "unavailable";
+  assert.ok(audit(renamedParameter, unavailableSnapshot).mismatches.every((mismatch) => mismatch.kind !== "param-name"));
 });
 
 test("selected external types reuse the authored-facade comparison without becoming generation roots", () => {

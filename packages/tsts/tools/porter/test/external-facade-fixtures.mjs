@@ -30,9 +30,10 @@ export function finalizeGeneratedFacadeFixtureCatalog(config, snapshot) {
 
 export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dependencyTypeDeclarations.map((declaration) => declaration.object.id)) {
   const used = new Set(usedObjectIds);
+  const declarations = structuredClone(dependencyTypeDeclarations);
   const methodSetSignatures = new Map();
-  for (const declaration of dependencyTypeDeclarations) attachDirectMethodSets(declaration, methodSetSignatures);
-  const profileIndexes = [...new Set(dependencyTypeDeclarations.flatMap((declaration) => declaration.profiles))]
+  for (const declaration of declarations) attachDirectMethodSets(declaration, methodSetSignatures);
+  const profileIndexes = [...new Set(declarations.flatMap((declaration) => declaration.profiles))]
     .sort((left, right) => left - right);
   return {
     gitRevision: "a".repeat(40),
@@ -44,9 +45,9 @@ export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dep
         kind: "func",
         generated: false,
         metadata: { goPath: "fixture/use.go" },
-        semantic: profileIndexes.map((profileIndex) => ({
-          profiles: [profileIndex],
-          signature: signature(dependencyTypeDeclarations
+          semantic: profileIndexes.map((profileIndex) => ({
+            profiles: [profileIndex],
+            signature: signature(declarations
             .filter((declaration) => used.has(declaration.object.id) && declaration.profiles.includes(profileIndex))
             .map((declaration, index) => variable(
               `fixture::func::Use::profile::${profileIndex}::signature::parameters::${index}`,
@@ -57,7 +58,7 @@ export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dep
       }],
     }],
     semantic: {
-      dependencyTypeDeclarations,
+      dependencyTypeDeclarations: declarations,
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [...methodSetSignatures.values()].sort((left, right) => left.id.localeCompare(right.id)),
       profiles: profileIndexes.map(() => ({})),

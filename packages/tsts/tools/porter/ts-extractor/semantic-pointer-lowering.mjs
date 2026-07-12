@@ -1,5 +1,4 @@
-import { buildDependencySemanticTypeIndex } from "../core/external-facades.mjs";
-import { requireExternalFacadeStorageView } from "../core/external-facades/catalog.mjs";
+import { buildDependencySemanticTypeIndex, requireExternalFacadeStorageView } from "../core/external-facades.mjs";
 import { assertSemanticNilability } from "../core/semantic-type-nilability.mjs";
 import { buildDeclaredTypeContractIndex } from "./semantic-named-nilability.mjs";
 
@@ -17,9 +16,7 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades) {
     if (facade?.objectId !== objectId) throw new Error(`external facade map key '${objectId}' is not its exact Go object identity`);
     facadeByObjectId.set(objectId, facade);
   }
-  const semanticIndex = buildDependencySemanticTypeIndex(snapshot, {
-    includeExternalPackageSurface: facadeScope === "audit",
-  });
+  const semanticIndex = buildDependencySemanticTypeIndex(snapshot, facadeScope);
   for (const semantic of semanticIndex.values()) {
     const facade = facadeByObjectId.get(semantic.objectId);
     const contract = {
