@@ -174,6 +174,7 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
     parameters: { variables: [] },
     results: { variables: [] },
     variadic: false,
+    parameterNameProvenance: "source",
   };
   const ownerId = kind === "method"
     ? `${packagePath}::type::${receiverName}::method::${name}`
@@ -296,6 +297,7 @@ function testSemanticSignature(ownerPath, packagePath, parameters, results, pack
     parameters: { variables: variables(parameters, "parameters") },
     results: { variables: variables(results, "results") },
     variadic: parameters.at(-1)?.variadic === true,
+    parameterNameProvenance: "source",
   };
 }
 

@@ -52,3 +52,98 @@ test("external package selections bind one exact Go object to authored TypeScrip
     externalPackageSurfaceSelections: [{ objectId: "errors::package::all", tsModule: "go/errors.ts", tsName: "all" }],
   }), /package::\(const\|func\|type\|var\)::name/);
 });
+
+test("external facade configuration is validated completely before semantic scanning", () => {
+  const runtimeAdaptation = {
+    representation: "scalar",
+    scalarStorage: "number",
+    nominality: "erased",
+    nominalityReason: "The test deliberately erases the defined Go numeric identity in reviewed scalar storage.",
+    goDeclarationHash: "a".repeat(64),
+    tsDeclarationHash: "b".repeat(64),
+    reason: "The test stores this exact Go type in one reviewed TypeScript numeric scalar declaration.",
+  };
+  const exact = {
+    ...base,
+    authoredFacadeModules: ["go/time.ts"],
+    externalFacadePolicies: [{
+      objectId: "time::type::Duration",
+      tsModule: "go/time.ts",
+      tsName: "Duration",
+      storageStrategy: "authored",
+      runtimeAdaptation,
+    }],
+  };
+  assert.equal(assertPorterConfig(exact), exact);
+  assert.throws(() => assertPorterConfig({ ...exact, authoredFacadeModules: ["go/time.ts", "go/time.ts"] }), /authoredFacadeModules duplicates/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalFacadePolicies: [{ ...exact.externalFacadePolicies[0], goKind: "type" }],
+  }), /forbidden hand-authored Go semantic field/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalFacadePolicies: [{ ...exact.externalFacadePolicies[0], tsModule: "go/other.ts" }],
+  }), /authored storage outside/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalFacadePolicies: [
+      exact.externalFacadePolicies[0],
+      { ...exact.externalFacadePolicies[0], objectId: "time::type::Other" },
+    ],
+  }), /duplicates TypeScript storage/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalFacadePolicies: [{
+      ...exact.externalFacadePolicies[0],
+      runtimeAdaptation: { ...runtimeAdaptation, scalarStorage: "float" },
+    }],
+  }), /requires exact scalarStorage/);
+  const carrierConfig = {
+    ...exact,
+    externalFacadePolicies: [{
+      ...exact.externalFacadePolicies[0],
+      runtimeAdaptation: { ...runtimeAdaptation, scalarCarrierIdentity: "src/go/scalars.ts::int" },
+    }],
+  };
+  assert.equal(assertPorterConfig(carrierConfig), carrierConfig);
+  for (const scalarCarrierIdentity of [
+    "",
+    "src/go/scalars.ts",
+    "src/go/scalars.ts::",
+    "::int",
+    "src/go/a::b.ts::int",
+    "src/go/a?.ts::int",
+    "src/go/a#.ts::int",
+    "src/go/a\0b.ts::int",
+    "../src/go/scalars.ts::int",
+    "src/go/scalars.js::int",
+    "src/go/scalars.ts::class",
+  ]) {
+    assert.throws(() => assertPorterConfig({
+      ...carrierConfig,
+      externalFacadePolicies: [{
+        ...carrierConfig.externalFacadePolicies[0],
+        runtimeAdaptation: { ...carrierConfig.externalFacadePolicies[0].runtimeAdaptation, scalarCarrierIdentity },
+      }],
+    }), /scalarCarrierIdentity/);
+  }
+});
+
+test("selected external type storage cannot disagree with an explicit facade policy", () => {
+  const config = {
+    ...base,
+    authoredFacadeModules: ["go/native.ts", "go/other.ts"],
+    externalFacadePolicies: [{
+      objectId: "example.test/native::type::Token",
+      tsModule: "go/native.ts",
+      tsName: "Token",
+      storageStrategy: "authored",
+    }],
+    externalPackageSurfaceSelections: [{
+      objectId: "example.test/native::type::Token",
+      tsModule: "go/other.ts",
+      tsName: "OtherToken",
+    }],
+  };
+  assert.throws(() => assertPorterConfig(config), /disagrees with its externalFacadePolicies storage identity/);
+});

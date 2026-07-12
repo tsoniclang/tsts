@@ -1,15 +1,16 @@
 import { buildAuthoredFacadeExportIndex } from "./authored-facade-exports.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { buildExternalFacadeMap } from "./external-facades.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
 
-export function buildGeneratedArtifactStatus(config, snapshot) {
+export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
+  const facades = requireFinalizedExternalFacadeStorageCatalog(catalog).artifactFacades();
   const authored = authoredFacadePathSet(config);
-  const expected = renderExpectedGeneratedArtifacts(config, snapshot);
+  const expected = renderExpectedGeneratedArtifacts(config, snapshot, catalog);
   const expectedPaths = new Set(expected.keys());
   const actualRoot = resolveRepo(`${config.tsRoot.replace(/\/$/, "")}/go`);
   const actualFiles = walk(actualRoot)
@@ -25,7 +26,6 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
   const invalid = [];
   const unresolved = [];
 
-  const facades = buildExternalFacadeMap(config, snapshot);
   const authoredObligations = [];
   for (const facade of facades.values()) {
     if (facade.storageStrategy !== "authored") continue;

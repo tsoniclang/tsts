@@ -222,7 +222,7 @@ func TestExternalPackageSurfaceRunsThroughExactExportDataAndSchemaAssembly(t *te
 	selections := externalPackageSurfaceFixtureSelections(t, []string{"errors::func::New"})
 	snapshot := declarationSnapshotWithSelections(t, root, modulePath, selections)
 	if snapshot.SchemaVersion != porterSnapshotSchemaVersion || snapshot.Semantic.ExternalPackageSurface.Selections[0] != "errors::func::New" {
-		t.Fatalf("schema-10 external package surface = %#v", snapshot.Semantic.ExternalPackageSurface)
+		t.Fatalf("schema-11 external package surface = %#v", snapshot.Semantic.ExternalPackageSurface)
 	}
 	surface := snapshot.Semantic.ExternalPackageSurface
 	if len(surface.UnresolvedSelections) != 0 || len(surface.Declarations) != 1 {
@@ -234,6 +234,9 @@ func TestExternalPackageSurfaceRunsThroughExactExportDataAndSchemaAssembly(t *te
 	}
 	parameters := declaration.Signature.Parameters.Variables
 	results := declaration.Signature.Results.Variables
+	if declaration.Signature.ParameterNameProvenance != "unavailable" {
+		t.Fatalf("export-data parameter-name provenance = %#v", declaration.Signature.ParameterNameProvenance)
+	}
 	if len(parameters) != 1 || parameters[0].Type == nil || parameters[0].Type.Basic == nil || parameters[0].Type.Basic.Name != "string" ||
 		len(results) != 1 || results[0].Type == nil || results[0].Type.Reference == nil || results[0].Type.Reference.ObjectID != "builtin::type::error" {
 		t.Fatalf("errors.New exact signature = %#v", declaration.Signature)

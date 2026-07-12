@@ -91,6 +91,7 @@ test("local generic method objects and declarations use their receiver declarati
     parameters: { variables: [] },
     results: { variables: [] },
     variadic: false,
+    parameterNameProvenance: "source",
   };
   const signature = {
     ...structuredClone(callable),
@@ -164,6 +165,7 @@ function selectedMethodSignature() {
     },
     results: { variables: [] },
     variadic: false,
+    parameterNameProvenance: "source",
   };
 }
 

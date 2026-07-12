@@ -48,7 +48,7 @@ func TestSemanticExtractionRequestRejectsLegacyAndInexactInputs(t *testing.T) {
 }
 
 func TestPorterSnapshotSchemaVersionIncludesExternalPackageSurface(t *testing.T) {
-	if porterSnapshotSchemaVersion != 10 {
-		t.Fatalf("Porter snapshot schema version = %d, want 10", porterSnapshotSchemaVersion)
+	if porterSnapshotSchemaVersion != 11 {
+		t.Fatalf("Porter snapshot schema version = %d, want 11", porterSnapshotSchemaVersion)
 	}
 }

@@ -22,9 +22,11 @@ const named = (name, nilable, kind = "named") => ({
 });
 const emptySignature = () => ({
   receiverTypeParameters: [], typeParameters: [], parameters: { variables: [] }, results: { variables: [] }, variadic: false,
+  parameterNameProvenance: "source",
 });
 const emptyInterface = () => ({
   explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: false, methodSetOnly: true,
+  explicitMethodOrderProvenance: "source",
 });
 const semanticInterface = () => ({ kind: "interface", nilable: true, interface: emptyInterface() });
 const semanticSignature = () => ({ kind: "signature", nilable: true, signature: emptySignature() });

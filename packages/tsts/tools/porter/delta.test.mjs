@@ -105,7 +105,7 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
 
 function snapshot(gitRevision, files) {
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     sourceRoot: "/source",
     modulePath: "m",
     gitRevision,

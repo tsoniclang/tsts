@@ -1,15 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go.mjs";
+import { buildExpectedIndex as buildExpectedIndexRaw, goUnitDescriptor, semanticTypeDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures, generatedTypeDeclarations } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
 import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
 import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
+import { buildExternalTypeStorageMap } from "./core/external-facades.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
+
+function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map()) {
+  return buildExpectedIndexRaw(config, snapshot, tsById, profile, generatedTypeDeclarations, {
+    externalFacades: buildExternalTypeStorageMap(config, snapshot),
+  });
+}
 
 test("expected type index ignores non-type units without semantic variants", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
@@ -462,6 +469,7 @@ function constantUnit(bindings) {
 function signature(owner, parameters, results) {
   return {
     receiverTypeParameters: [], typeParameters: [], variadic: false,
+    parameterNameProvenance: "source",
     parameters: { variables: parameters.map((type, index) => semanticVariable(`${owner}::parameter::${index}`, "", type)) },
     results: { variables: results.map((type, index) => semanticVariable(`${owner}::result::${index}`, "", type)) },
   };
@@ -500,5 +508,18 @@ function structType(fields) {
 }
 
 function interfaceType(explicitMethods, embeddedTypes, completeMethods) {
-  return { kind: "interface", nilable: true, interface: { explicitMethods, embeddedTypes, embeddedKinds: embeddedTypes.map(() => "interface"), completeMethods, comparable: false, implicit: false, methodSetOnly: false } };
+  return {
+    kind: "interface",
+    nilable: true,
+    interface: {
+      explicitMethods,
+      embeddedTypes,
+      embeddedKinds: embeddedTypes.map(() => "interface"),
+      completeMethods,
+      comparable: false,
+      implicit: false,
+      methodSetOnly: false,
+      explicitMethodOrderProvenance: "source",
+    },
+  };
 }

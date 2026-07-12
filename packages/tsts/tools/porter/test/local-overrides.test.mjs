@@ -10,7 +10,6 @@ import {
   buildGeneratedSourcePolicyStatus,
   buildEmbeddedGoSourceUpdates,
   buildLocalOverrideStatus,
-  buildExternalFacadeMap,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
   buildStatus,

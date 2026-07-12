@@ -176,6 +176,7 @@ function methodSignature(ownerId, objectId, packagePath, parameters, includeRece
       semanticVariable(ownerId, "results", 1, "", packagePath, { kind: "basic", nilable: false, basic: { name: "bool", untyped: false } }),
     ] },
     variadic: false,
+    parameterNameProvenance: "source",
   };
 }
 
@@ -190,7 +191,10 @@ function typeParameters(ownerId, role) {
       constraint: {
         kind: "interface",
         nilable: true,
-        interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: true },
+        interface: {
+          explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: true,
+          explicitMethodOrderProvenance: "source",
+        },
       },
     },
   ];

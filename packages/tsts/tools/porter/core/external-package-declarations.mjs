@@ -1,11 +1,12 @@
 import { compareText } from "./deterministic-order.mjs";
 import { safeIdentifier } from "./names.mjs";
 import { canonicalSchemaValue } from "./semantic-variants.mjs";
+import { normalizeAuthoredFacadeModules } from "./external-facade-config.mjs";
 
 export function normalizeExternalPackageSurfaceSelections(config) {
   const configured = config.externalPackageSurfaceSelections ?? [];
   if (!Array.isArray(configured)) throw new Error("config.externalPackageSurfaceSelections must be an array");
-  const authoredModules = new Set(config.authoredFacadeModules ?? []);
+  const authoredModules = normalizeAuthoredFacadeModules(config);
   const objectIds = new Set();
   const storageIdentities = new Set();
   const selections = [];

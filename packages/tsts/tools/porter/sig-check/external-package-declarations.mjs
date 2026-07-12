@@ -8,8 +8,14 @@ import {
   extractIndexedValueExportDescriptor,
 } from "../ts-extractor/extract-signatures.mjs";
 import { goUnitDescriptor } from "../ts-extractor/expected-from-go-semantic.mjs";
+import { lowerSemanticSignature, lowerSemanticType } from "../ts-extractor/semantic-type-contract.mjs";
 import { compareSignatures } from "./comparison.mjs";
 import { declarationOwnershipIds, descriptorOwnershipKind } from "./declaration-ownership.mjs";
+import {
+  mergeExternalEvidence,
+  normalizeExternalFunctionDescriptor,
+  normalizeExternalValueDescriptor,
+} from "./external-evidence-projection.mjs";
 
 export function collectExternalPackageSurfaceMismatches({
   api,
@@ -57,14 +63,42 @@ export function collectExternalPackageSurfaceMismatches({
     let expected;
     try {
       expected = goUnitDescriptor(externalPackageSurfaceValueUnit(entry), expectedIndex);
-      if (expected.kind === "profileVariants") {
-        throw new Error(`selected external package declaration changes across profiles ${expected.variants.map((row) => `[${row.profiles.join(",")}]`).join(" versus ")}`);
-      }
     } catch (error) {
       mismatches.push(contractError(entry, file, error));
       continue;
     }
     try {
+      if (entry.kind === "func") {
+        const signature = mergeExternalEvidence(
+          entry.variants.flatMap(({ declaration, profiles }) => profiles.map((profile) => ({
+            evidence: lowerSemanticSignature(declaration.signature, { index: expectedIndex, profile }),
+            profiles: [profile],
+          }))),
+          `external package function '${entry.objectId}' evidence`,
+        );
+        expected = collapseExpectedProfiles(
+          expected,
+          (descriptor) => normalizeExternalFunctionDescriptor(descriptor, [signature]),
+          entry,
+        );
+        actual = normalizeExternalFunctionDescriptor(actual, [signature]);
+      } else if (entry.kind === "var") {
+        const contract = mergeExternalEvidence(
+          entry.variants.flatMap(({ declaration, profiles }) => profiles.map((profile) => ({
+            evidence: lowerSemanticType(externalValueType(declaration, entry.objectId), { index: expectedIndex, profile }),
+            profiles: [profile],
+          }))),
+          `external package variable '${entry.objectId}' evidence`,
+        );
+        expected = collapseExpectedProfiles(
+          expected,
+          (descriptor) => normalizeExternalValueDescriptor(descriptor, [contract]),
+          entry,
+        );
+        actual = normalizeExternalValueDescriptor(actual, [contract]);
+      } else {
+        expected = collapseExpectedProfiles(expected, (descriptor) => descriptor, entry);
+      }
       for (const mismatch of compareSignatures(
         expected,
         actual,
@@ -86,6 +120,32 @@ export function collectExternalPackageSurfaceMismatches({
   }
   inventory.sort((left, right) => compareText(left.objectId, right.objectId));
   return { checked: inventory.length, inventory, mismatches, ownedDeclarationIds };
+}
+
+function collapseExpectedProfiles(expected, normalize, entry) {
+  if (expected.kind !== "profileVariants") return normalize(expected);
+  const groups = new Map();
+  for (const variant of expected.variants) {
+    const descriptor = normalize(variant.descriptor);
+    const key = JSON.stringify(descriptor);
+    const row = groups.get(key) ?? { descriptor, profiles: [] };
+    row.profiles.push(...variant.profiles);
+    groups.set(key, row);
+  }
+  if (groups.size !== 1) {
+    throw new Error(`selected external package declaration '${entry.objectId}' changes across profiles ${
+      [...groups.values()].map((row) => `[${row.profiles.sort((left, right) => left - right).join(",")}]`).join(" versus ")}`);
+  }
+  return groups.values().next().value.descriptor;
+}
+
+function externalValueType(declaration, objectId) {
+  const bindings = (declaration.valueSpecs ?? []).flatMap((specification) => specification.names ?? [])
+    .filter((binding) => binding.object?.id === objectId);
+  if (bindings.length !== 1 || bindings[0].type === undefined) {
+    throw new Error(`external package value '${objectId}' has no unique exact semantic type binding`);
+  }
+  return bindings[0].type;
 }
 
 function requireDirectStorage(declarationId, file, name) {

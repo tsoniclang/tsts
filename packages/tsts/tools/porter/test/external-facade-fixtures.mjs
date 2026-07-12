@@ -1,5 +1,32 @@
 import { hashText } from "../core/runtime.mjs";
 import { canonicalSemanticSignature } from "../core/semantic-variants.mjs";
+import {
+  buildExternalFacadeStoragePlan,
+  externalFacadeStoragePlanAuthoredRoots,
+  finalizeExternalFacadeStorageCatalog,
+} from "../core/external-facades.mjs";
+import { buildAuthoredFacadeSurfaceIndex } from "../core/authored-facade-selections.mjs";
+
+export function finalizeExternalFacadeFixtureCatalog(config, snapshot, parserContext) {
+  if (parserContext === undefined) throw new Error("authored facade fixture finalization requires one exact parser/source context");
+  const plan = buildExternalFacadeStoragePlan(config, snapshot);
+  const authoredSurfaces = buildAuthoredFacadeSurfaceIndex({
+    api: parserContext.api,
+    config,
+    moduleIndex: parserContext.moduleIndex,
+    plan,
+    valueEnvironments: parserContext.valueEnvironments,
+  });
+  return finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces);
+}
+
+export function finalizeGeneratedFacadeFixtureCatalog(config, snapshot) {
+  const plan = buildExternalFacadeStoragePlan(config, snapshot);
+  if (externalFacadeStoragePlanAuthoredRoots(plan).size !== 0) {
+    throw new Error("generated-only facade fixture cannot contain authored storage policies");
+  }
+  return finalizeExternalFacadeStorageCatalog(plan, new Map());
+}
 
 export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dependencyTypeDeclarations.map((declaration) => declaration.object.id)) {
   const used = new Set(usedObjectIds);
@@ -36,6 +63,22 @@ export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dep
       profiles: profileIndexes.map(() => ({})),
     },
   };
+}
+
+export function setMethodSetParameterNameProvenance(snapshot, provenance) {
+  const signatureIds = new Map();
+  for (const entry of snapshot.semantic.methodSetSignatures) {
+    const previous = entry.id;
+    entry.signature.parameterNameProvenance = provenance;
+    entry.id = `${entry.methodId}::methodSetSignature::${hashText(canonicalSemanticSignature(entry.signature))}`;
+    signatureIds.set(previous, entry.id);
+  }
+  for (const report of snapshot.semantic.dependencyTypeDeclarations) {
+    for (const method of report.type.methods ?? []) method.signature.parameterNameProvenance = provenance;
+    for (const mode of ["valueMethodSet", "pointerMethodSet"]) {
+      for (const selection of report.type[mode] ?? []) selection.signatureId = signatureIds.get(selection.signatureId) ?? selection.signatureId;
+    }
+  }
 }
 
 function attachDirectMethodSets(declaration, methodSetSignatures) {
@@ -166,6 +209,7 @@ export function interfaceType(explicitMethods = []) {
       comparable: false,
       implicit: false,
       methodSetOnly: true,
+      explicitMethodOrderProvenance: "source",
     },
   };
 }
@@ -181,6 +225,7 @@ export function signature(parameters, results = []) {
     parameters: { variables: parameters },
     results: { variables: results },
     variadic: false,
+    parameterNameProvenance: "source",
   };
 }
 

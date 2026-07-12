@@ -1,4 +1,5 @@
 import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
+import { normalizeAuthoredFacadeModules, normalizeExternalFacadePolicyConfigs } from "./external-facade-config.mjs";
 import { validateNonGoDeclarationManifestPath } from "./non-go-declaration-manifest.mjs";
 
 const allowedKeys = new Set([
@@ -55,7 +56,16 @@ export function assertPorterConfig(config) {
   if (new Set(config.primaryUnitKinds).size !== config.primaryUnitKinds.length) {
     throw new Error("Porter config primaryUnitKinds must be unique");
   }
-  normalizeExternalPackageSurfaceSelections(config);
+  const authoredFacadeModules = normalizeAuthoredFacadeModules(config);
+  const facadePolicies = normalizeExternalFacadePolicyConfigs(config, authoredFacadeModules);
+  const packageSelections = normalizeExternalPackageSurfaceSelections(config);
+  const policiesByObject = new Map(facadePolicies.map((policy) => [policy.objectId, policy]));
+  for (const selection of packageSelections.filter((entry) => entry.goKind === "type")) {
+    const policy = policiesByObject.get(selection.objectId);
+    if (policy !== undefined && (policy.storageStrategy !== "authored" || policy.tsModule !== selection.tsModule || policy.tsName !== selection.tsName)) {
+      throw new Error(`external package type selection '${selection.objectId}' disagrees with its externalFacadePolicies storage identity`);
+    }
+  }
   validateNonGoDeclarationManifestPath(config.nonGoDeclarationManifestPath);
   return config;
 }

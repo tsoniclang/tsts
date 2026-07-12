@@ -137,7 +137,14 @@ export const mask: bigint = 0x8000000000000000n;
     value: "9223372036854775808",
   });
   const profile = loadProfile({});
-  const index = buildExpectedIndex({ goModulePath: "m", tsRoot: "pkg" }, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map());
+  const index = buildExpectedIndex(
+    { goModulePath: "m", tsRoot: "pkg" },
+    EMPTY_SEMANTIC_SNAPSHOT,
+    new Map(),
+    profile,
+    new Map(),
+    { externalFacades: new Map() },
+  );
   const expected = goUnitDescriptor({
     id: "m::v.go::constGroup::mask",
     kind: "constGroup",
@@ -194,7 +201,7 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   // Self-consistent profile: GoRef lives in the same module the fixture imports it from.
   const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map());
+  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacades: new Map() });
   // Go: func f(a string, b *int) — expected [string, GoRef<int>].
   const goUnit = {
     id: "m::pkg/f.go::func::f",
@@ -211,6 +218,7 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
         ] },
         results: { variables: [] },
         variadic: false,
+        parameterNameProvenance: "source",
       },
     }],
   };

@@ -92,7 +92,7 @@ test("semantic profile keys and file provenance are exact relational evidence", 
   }
 });
 
-test("canonical semantic identity retains every snapshot-schema-10 declaration field", () => {
+test("canonical semantic identity retains every snapshot-schema-11 declaration field", () => {
   const method = methodSnapshot().files[0].units[0].semantic[0];
   const pointerMethod = structuredClone(method);
   pointerMethod.signature.receiverMode = "pointer";
@@ -131,6 +131,7 @@ test("method-set selections reference one exact normalized selected-signature po
     parameters: { variables: [] },
     results: { variables: [] },
     variadic: false,
+    parameterNameProvenance: "source",
   };
   const signatureId = `${methodId}::methodSetSignature::${hashText(canonicalSemanticSignature(signature))}`;
   const selection = {
@@ -177,6 +178,9 @@ test("method-set selections reference one exact normalized selected-signature po
   }];
   snapshot.semantic.methodSetSignatures = [{ id: signatureId, methodId, signature }];
   assert.deepEqual(validate(snapshot), []);
+  assertRejected(mutateClone(snapshot, (value) => {
+    value.semantic.methodSetSignatures[0].signature.parameterNameProvenance = "guessed";
+  }), /parameterNameProvenance/, "method-set parameter-name provenance");
   assertRejected(mutateClone(snapshot, (value) => {
     value.semantic.externalDeclarations = value.semantic.dependencyTypeDeclarations;
     delete value.semantic.dependencyTypeDeclarations;
@@ -343,7 +347,7 @@ function identityRichTypeSnapshot() {
     const id = `${interfaceOwner}::${role}::0::Read`;
     return {
       id, ownerId: interfaceOwner, name: "Read", packagePath: declaration.packagePath, exported: true,
-      signature: { receiverTypeParameters: [], typeParameters: [], parameters: { variables: [] }, results: { variables: [] }, variadic: false },
+      signature: { receiverTypeParameters: [], typeParameters: [], parameters: { variables: [] }, results: { variables: [] }, variadic: false, parameterNameProvenance: "source" },
     };
   };
   const interfaceType = {
@@ -353,7 +357,7 @@ function identityRichTypeSnapshot() {
       explicitMethods: [method("explicitMethod")],
       embeddedTypes: [{ kind: "named", nilable: true, reference: { objectId: "example.org/api::type::Token", packagePath: "example.org/api", name: "Token", typeArgs: [] } }],
       embeddedKinds: ["interface"],
-      completeMethods: [method("completeMethod")], comparable: false, implicit: false, methodSetOnly: true,
+      completeMethods: [method("completeMethod")], comparable: false, implicit: false, methodSetOnly: true, explicitMethodOrderProvenance: "source",
     },
   };
   declaration.type.rhs = {
@@ -460,7 +464,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 10,
+    schemaVersion: 11,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -528,7 +532,7 @@ function refreshSummary(snapshot) {
 }
 
 function emptyInterfaceType() {
-  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true, explicitMethodOrderProvenance: "source" } };
 }
 
 function mutateClone(value, mutate) {

@@ -33,8 +33,14 @@ func Use(writer io.Writer, duration time.Duration, cancel context.CancelFunc, in
 		t.Fatalf("io.Writer declaration = %#v", writer.Type)
 	}
 	methods := writer.Type.RHS.Interface.ExplicitMethods
+	if writer.Type.RHS.Interface.ExplicitMethodOrderProvenance != "canonical" {
+		t.Fatalf("export-data interface explicit-method order provenance = %#v", writer.Type.RHS.Interface.ExplicitMethodOrderProvenance)
+	}
 	if len(methods) != 1 || methods[0].Name != "Write" || methods[0].Signature.Variadic {
 		t.Fatalf("io.Writer methods = %#v", methods)
+	}
+	if methods[0].Signature.ParameterNameProvenance != "unavailable" {
+		t.Fatalf("export-data method parameter names = %#v", methods[0].Signature.ParameterNameProvenance)
 	}
 	writeParameter := methods[0].Signature.Parameters.Variables[0].Type
 	if writeParameter.Kind != "slice" || !writeParameter.Nilable || writeParameter.Element.Basic.Name != "byte" {

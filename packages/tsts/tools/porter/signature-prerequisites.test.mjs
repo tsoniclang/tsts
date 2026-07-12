@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generatedArtifactPrerequisiteMismatches } from "./sig-check.mjs";
+import { computeSignatureReport, generatedArtifactPrerequisiteMismatches } from "./sig-check.mjs";
 
 test("generated declaration artifacts block signature comparison once per root artifact", () => {
   const mismatches = generatedArtifactPrerequisiteMismatches({
@@ -20,4 +20,15 @@ test("generated declaration artifacts block signature comparison once per root a
   assert.throws(() => generatedArtifactPrerequisiteMismatches({
     missing: null, stale: [], orphan: [], untracked: [], invalid: [], unresolved: [],
   }), /status\.missing must be an array/);
+});
+
+test("filtered and whole-program signature checks require the same finalized facade catalog", async () => {
+  await assert.rejects(
+    computeSignatureReport({}, { idFilter: "fixture::*" }),
+    /finalized external facade storage catalog/,
+  );
+  await assert.rejects(
+    computeSignatureReport({ externalFacadeCatalog: new Map() }),
+    /finalized external facade storage catalog/,
+  );
 });

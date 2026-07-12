@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDependencySemanticTypeIndex, buildExternalFacadeMap } from "./core/external-facades.mjs";
+import { buildDependencySemanticTypeIndex, buildExternalTypeStorageMap } from "./core/external-facades.mjs";
 import { externalTypeScriptDeclarationHash } from "./core/external-facade-runtime-adaptation.mjs";
 import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
 import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
-import { renderExternalFacadeModules } from "./core/facade-artifacts.mjs";
+import { createExternalFacadeContractRenderer, renderExternalFacadeModules } from "./core/facade-artifacts.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { declarationOwnershipId } from "./sig-check/declaration-ownership.mjs";
 import { baseConfig } from "./test/helpers.mjs";
@@ -14,9 +14,12 @@ import {
   builtinType,
   externalSnapshot,
   externalType,
+  finalizeExternalFacadeFixtureCatalog,
+  finalizeGeneratedFacadeFixtureCatalog,
   interfaceType,
   method,
   namedType,
+  setMethodSetParameterNameProvenance,
   signature,
   sliceType,
   structType,
@@ -35,6 +38,14 @@ function authoredTypeHash(moduleId, name, source, additionalSources = new Map())
   return externalTypeScriptDeclarationHash(
     extractIndexedTypeExportDescriptor(parser, moduleIndex, moduleId, name, valueEnvironments).descriptor,
   );
+}
+
+function finalizedCatalog(config, snapshot, moduleIndex) {
+  return finalizeExternalFacadeFixtureCatalog(config, snapshot, {
+    api: parser,
+    moduleIndex,
+    valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
+  });
 }
 
 test("external facade identity and signatures come only from extracted go/types declarations", () => {
@@ -65,13 +76,18 @@ test("external facade identity and signatures come only from extracted go/types 
   assert.equal(semantic.get("io::type::Writer").arity, 0);
   assert.equal(semantic.get("io::type::Writer").variants[0].declaration.object.type.nilable, true);
 
-  const facades = buildExternalFacadeMap(config, snapshot);
-  assert.equal(facades.get("io::type::Writer").storageStrategy, "authored");
-  assert.equal(facades.get("io::type::Writer").arity, 0);
-  assert.equal(facades.get("time::type::Duration").variants[0].declaration.rhs.kind, "basic");
-  assert.equal(facades.get("example.com/native::type::Box").storageStrategy, "generated");
+  const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
+    [`${config.tsRoot}/go/io.ts`, "export interface Writer { Write(p: unknown): unknown; }\n"],
+    [`${config.tsRoot}/go/time.ts`, "export type Duration = number;\n"],
+  ]));
+  const facades = finalizedCatalog(config, snapshot, moduleIndex);
+  const auditFacades = facades.auditFacades();
+  assert.equal(auditFacades.get("io::type::Writer").storageStrategy, "authored");
+  assert.equal(auditFacades.get("io::type::Writer").arity, 0);
+  assert.equal(auditFacades.get("time::type::Duration").variants[0].declaration.rhs.kind, "basic");
+  assert.equal(auditFacades.get("example.com/native::type::Box").storageStrategy, "generated");
 
-  const modules = renderExternalFacadeModules(config, snapshot);
+  const modules = renderExternalFacadeModules(config, snapshot, facades);
   assert.equal(modules.has("go/io.ts"), false, "authored modules are excluded before rendering");
   assert.equal(modules.has("go/time.ts"), false, "authored modules are excluded before rendering");
   assert.match(modules.get("go/example.com/native.ts"), /export type Box = \(\{ Value: string \}\) & \{ readonly "__goDefinedType::example\.com\/native::type::Box::[0-9a-f]{64}": never \};/);
@@ -83,7 +99,7 @@ test("excluded module-local dependency types require reviewed storage and never 
   const declaration = externalType({ packagePath, name: "HiddenState", rhs: structType([]) });
   const snapshot = externalSnapshot([declaration]);
   assert.throws(
-    () => buildExternalFacadeMap(baseConfig, snapshot),
+    () => buildExternalTypeStorageMap(baseConfig, snapshot),
     /excluded module-local dependency type .* requires an explicit go-type-storage relation/,
   );
 
@@ -99,8 +115,8 @@ test("excluded module-local dependency types require reviewed storage and never 
       reason: "The excluded module-local declaration has one reviewed TypeScript storage owner.",
     }],
   };
-  assert.deepEqual([...buildExternalFacadeMap(config, snapshot)], []);
-  assert.equal(renderExternalFacadeModules(config, snapshot).size, 0);
+  assert.deepEqual([...buildExternalTypeStorageMap(config, snapshot)], []);
+  assert.equal(renderExternalFacadeModules(config, snapshot, finalizeGeneratedFacadeFixtureCatalog(config, snapshot)).size, 0);
 });
 
 test("authored facade audit checks every selected member without requiring the complete Go surface", () => {
@@ -143,6 +159,7 @@ test("authored facade audit checks every selected member without requiring the c
       canonicalIdentity,
       config,
       conventions: {},
+      facades: finalizedCatalog(config, snapshot, moduleIndex),
       moduleIndex,
       profile: loadProfile(config),
       snapshot,
@@ -166,8 +183,186 @@ test("authored facade audit checks every selected member without requiring the c
   assert.deepEqual(wrong.inventory.unselectedGoMembers.map((member) => member.name), ["Close"]);
   assert.ok(audit("export interface Reader { Read(input: string): string; Close(): void; }")
     .mismatches.some((mismatch) => mismatch.kind === "param-name"));
+  assert.ok(audit("export interface Reader { Close(): void; Read(value: string): string; }")
+    .mismatches.every((mismatch) => mismatch.kind !== "member-order"), "go/types method-set order is canonical evidence");
   assert.ok(audit("interface Extra { extra(): void; } export interface Reader extends Extra { Read(value: string): string; Close(): void; }")
     .mismatches.some((mismatch) => mismatch.kind === "interface-heritage"));
+
+  setMethodSetParameterNameProvenance(snapshot, "unavailable");
+  assert.ok(audit("export interface Reader { Read(input: string): string; Close(): void; }")
+    .mismatches.every((mismatch) => mismatch.kind !== "param-name"));
+  assert.ok(audit("export interface Reader { Close(): void; Read(input: string): string; }")
+    .mismatches.every((mismatch) => mismatch.kind !== "member-order" && mismatch.kind !== "param-name"));
+});
+
+test("aggregate authored storage exposes pointer methods and replaces private Go layout", () => {
+  const api = parser;
+  const packagePath = "example.com/native";
+  const objectId = `${packagePath}::type::Thing`;
+  const hidden = externalType({ packagePath: "private.example/internal", name: "State", rhs: structType([]) });
+  const declaredMethod = (name, receiverMode) => {
+    const methodId = `${objectId}::method::${name}`;
+    return {
+      id: methodId,
+      ownerId: objectId,
+      name,
+      packagePath,
+      exported: true,
+      signature: {
+        ...signature([], []),
+        receiver: variable(`${methodId}::signature::receiver`, "thing", namedType(objectId, packagePath, "Thing")),
+        receiverMode,
+      },
+    };
+  };
+  const thing = externalType({
+    packagePath,
+    name: "Thing",
+    rhs: structType([
+      variable(
+        `${objectId}::rhs::field::state`,
+        "state",
+        namedType(hidden.object.id, "private.example/internal", "State"),
+        false,
+      ),
+    ]),
+    methods: [declaredMethod("Value", "value"), declaredMethod("Pointer", "pointer")],
+  });
+  const snapshot = externalSnapshot([thing, hidden], [objectId]);
+  const moduleId = `${baseConfig.tsRoot}/go/example.com/native.ts`;
+  const source = "export class Thing { private state: number; Pointer(): void {} }";
+  const semantic = buildDependencySemanticTypeIndex(snapshot).get(objectId);
+  const config = {
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts", "go/private.example/internal.ts"],
+    externalFacadePolicies: [{
+      objectId,
+      tsModule: "go/example.com/native.ts",
+      tsName: "Thing",
+      storageStrategy: "authored",
+      runtimeAdaptation: {
+        representation: "class",
+        nominality: "preserved",
+        pointer: "aggregate",
+        goDeclarationHash: semanticDeclarationVariantsHash(semantic),
+        tsDeclarationHash: authoredTypeHash(moduleId, "Thing", source),
+        reason: "The authored class replaces private Go layout while retaining aggregate pointer identity.",
+      },
+    }],
+  };
+  const moduleIndex = indexTypeScriptModuleSources(api, new Map([[moduleId, source]]));
+  const result = collectAuthoredFacadeMismatches({
+    api,
+    canonicalIdentity: (identity) => identity,
+    config,
+    conventions: {},
+    facades: finalizedCatalog(config, snapshot, moduleIndex),
+    moduleIndex,
+    profile: loadProfile(config),
+    snapshot,
+    valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
+  });
+  assert.deepEqual(result.mismatches, []);
+  assert.deepEqual(result.inventory.tsOnlyMembers, []);
+  assert.deepEqual(result.inventory.unselectedGoMembers.map((member) => member.name), ["Value"]);
+  assert.deepEqual(result.inventory.privateStorageMembers.map((member) => member.name), ["state"]);
+  assert.throws(() => buildExternalTypeStorageMap({
+    ...config,
+    externalFacadePolicies: [{
+      ...config.externalFacadePolicies[0],
+      runtimeAdaptation: { ...config.externalFacadePolicies[0].runtimeAdaptation, pointer: undefined },
+    }],
+  }, snapshot), /aggregate Go storage requires exact pointer storage/);
+});
+
+test("slot-authored aggregate storage carries pointer-only methods through exact metadata", () => {
+  const api = parser;
+  const packagePath = "example.com/native";
+  const objectId = `${packagePath}::type::SlotThing`;
+  const declaredMethod = (name, receiverMode) => {
+    const methodId = `${objectId}::method::${name}`;
+    return {
+      id: methodId,
+      ownerId: objectId,
+      name,
+      packagePath,
+      exported: true,
+      signature: {
+        ...signature([], []),
+        receiver: variable(`${methodId}::signature::receiver`, "thing", namedType(objectId, packagePath, "SlotThing")),
+        receiverMode,
+      },
+    };
+  };
+  const thing = externalType({
+    packagePath,
+    name: "SlotThing",
+    rhs: structType([]),
+    methods: [declaredMethod("Value", "value"), declaredMethod("Pointer", "pointer")],
+  });
+  const snapshot = externalSnapshot([thing]);
+  const moduleId = `${baseConfig.tsRoot}/go/example.com/native.ts`;
+  const compatModuleId = `${baseConfig.tsRoot}/go/compat.ts`;
+  const compatSource = "export type GoPointerMethodSet<T extends object> = T; declare global { const __tsgoPointerMethodSet: unique symbol; }";
+  const seedSource = "export interface SlotThing { Value(): void; }\n";
+  const semantic = buildDependencySemanticTypeIndex(snapshot).get(objectId);
+  const policy = {
+    objectId,
+    tsModule: "go/example.com/native.ts",
+    tsName: "SlotThing",
+    storageStrategy: "authored",
+    runtimeAdaptation: {
+      representation: "structural",
+      pointer: "slot",
+      nominality: "erased",
+      nominalityReason: "The structural slot representation intentionally erases the defined Go aggregate identity.",
+      goDeclarationHash: semanticDeclarationVariantsHash(semantic),
+      tsDeclarationHash: authoredTypeHash(moduleId, "SlotThing", seedSource, new Map([[compatModuleId, compatSource]])),
+      reason: "The aggregate value is stored structurally while pointers use a replaceable slot with exact method metadata.",
+    },
+  };
+  const provisionalConfig = {
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts"],
+    externalFacadePolicies: [policy],
+  };
+  const seedIndex = indexTypeScriptModuleSources(api, new Map([
+    [moduleId, seedSource],
+    [compatModuleId, compatSource],
+  ]));
+  const provisionalFacades = finalizedCatalog(provisionalConfig, snapshot, seedIndex);
+  const source = createExternalFacadeContractRenderer(provisionalConfig, snapshot, provisionalFacades)(
+    provisionalFacades.auditFacades().get(objectId),
+    thing.type,
+    0,
+  ).source;
+  assert.match(source, /__tsgoPointerMethodSet/);
+  assert.match(source, /Pointer\(\): void/);
+  const config = {
+    ...provisionalConfig,
+    externalFacadePolicies: [{
+      ...policy,
+      runtimeAdaptation: {
+        ...policy.runtimeAdaptation,
+        tsDeclarationHash: authoredTypeHash(moduleId, "SlotThing", source, new Map([[compatModuleId, compatSource]])),
+      },
+    }],
+  };
+  const moduleIndex = indexTypeScriptModuleSources(api, new Map([[moduleId, source], [compatModuleId, compatSource]]));
+  const result = collectAuthoredFacadeMismatches({
+    api,
+    canonicalIdentity: (identity) => identity,
+    config,
+    conventions: {},
+    facades: finalizedCatalog(config, snapshot, moduleIndex),
+    moduleIndex,
+    profile: loadProfile(config),
+    snapshot,
+    valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
+  });
+  assert.deepEqual(result.mismatches, []);
+  assert.deepEqual(result.inventory.tsOnlyMembers, []);
+  assert.deepEqual(result.inventory.unselectedGoMembers.map((member) => member.name), []);
 });
 
 test("authored Go interfaces retain unexported nominal method seals", () => {
@@ -187,12 +382,38 @@ test("authored Go interfaces retain unexported nominal method seals", () => {
     externalFacadePolicies: [{ objectId, tsModule: "go/example.com/native.ts", tsName: "Sealed", storageStrategy: "authored" }],
   };
   const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
+  const seedIndex = indexTypeScriptModuleSources(api, new Map([[
+    moduleId,
+    "export interface Sealed { Read(): void; }\n",
+  ]]));
+  const seedFacades = finalizedCatalog(config, snapshot, seedIndex);
+  const facade = seedFacades.auditFacades().get(objectId);
+  const exactSource = createExternalFacadeContractRenderer(config, snapshot, seedFacades)(
+    facade,
+    snapshot.semantic.dependencyTypeDeclarations[0].type,
+    0,
+  ).source;
+  const exactIndex = indexTypeScriptModuleSources(api, new Map([[moduleId, exactSource]]));
+  const exact = collectAuthoredFacadeMismatches({
+    api,
+    canonicalIdentity: (identity) => identity,
+    config,
+    conventions: {},
+    facades: finalizedCatalog(config, snapshot, exactIndex),
+    moduleIndex: exactIndex,
+    profile: loadProfile(config),
+    snapshot,
+    valueEnvironments: buildIndexedModuleValueEnvironments(api, exactIndex),
+  });
+  assert.deepEqual(exact.mismatches, []);
+  assert.deepEqual(exact.inventory.tsOnlyMembers, []);
   const moduleIndex = indexTypeScriptModuleSources(api, new Map([[moduleId, "export interface Sealed { Read(): void; }"]]));
   const result = collectAuthoredFacadeMismatches({
     api,
     canonicalIdentity: (identity) => identity,
     config,
     conventions: {},
+    facades: finalizedCatalog(config, snapshot, moduleIndex),
     moduleIndex,
     profile: loadProfile(config),
     snapshot,
@@ -224,18 +445,9 @@ test("authored facade aliases cannot redirect configured storage through another
     moduleId,
     "interface Shared { Read(): void; } export { Shared as First, Shared as Second };",
   ]]));
-  const result = collectAuthoredFacadeMismatches({
-    api,
-    canonicalIdentity: (identity) => identity,
-    config,
-    conventions: {},
-    moduleIndex,
-    profile: loadProfile(config),
-    snapshot,
-    valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
-  });
-  assert.equal(result.mismatches.filter((mismatch) => mismatch.kind === "authored-facade-contract-error" &&
-    mismatch.detail.includes("must be stored directly")).length, 2);
+  for (const policy of config.externalFacadePolicies) {
+    assert.throws(() => finalizedCatalog({ ...config, externalFacadePolicies: [policy] }, snapshot, moduleIndex), /must be stored directly/);
+  }
 });
 
 test("authored scalar adaptation accepts one exact branded scalar storage type", () => {
@@ -267,7 +479,7 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
       },
     }],
   };
-  assert.throws(() => buildExternalFacadeMap({
+  assert.throws(() => buildExternalTypeStorageMap({
     ...config,
     externalFacadePolicies: [{
       objectId,
@@ -288,6 +500,7 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
       canonicalIdentity: (identity) => identity,
       config,
       conventions: {},
+      facades: finalizedCatalog(config, snapshot, moduleIndex),
       moduleIndex,
       profile: loadProfile(config),
       snapshot,
@@ -295,16 +508,21 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
     });
   };
   assert.deepEqual(audit(exactSource).mismatches, []);
-  assert.ok(audit("export type Tag = number;").mismatches.some((mismatch) =>
-    mismatch.kind === "authored-facade-typescript-adaptation-drift"));
-  assert.ok(audit('export type Tag = string & { mutable: "Tag" };').mismatches.some((mismatch) =>
-    mismatch.kind === "authored-facade-typescript-adaptation-drift"));
+  assert.throws(() => audit("export type Tag = number;"), /reviewed TypeScript declaration hash/);
+  assert.throws(() => audit('export type Tag = string & { mutable: "Tag" };'), /reviewed TypeScript declaration hash/);
+  assert.throws(() => buildExternalTypeStorageMap({
+    ...config,
+    externalFacadePolicies: [{
+      ...config.externalFacadePolicies[0],
+      runtimeAdaptation: { ...config.externalFacadePolicies[0].runtimeAdaptation, pointer: "slot" },
+    }],
+  }, snapshot), /pointer storage applies only to Go values with aggregate storage/);
   const profileDrift = externalSnapshot([
     externalType({ packagePath: "example.com/native", name: "Tag", rhs: basic("string"), profiles: [0] }),
     externalType({ packagePath: "example.com/native", name: "Tag", rhs: basic("int"), profiles: [1] }),
   ]);
-  assert.throws(() => buildExternalFacadeMap(config, profileDrift), /cannot erase profile-dependent Go declaration semantics/);
-  assert.throws(() => buildExternalFacadeMap({
+  assert.throws(() => buildExternalTypeStorageMap(config, profileDrift), /cannot erase profile-dependent Go declaration semantics/);
+  assert.throws(() => buildExternalTypeStorageMap({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],
@@ -314,217 +532,4 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
       },
     }],
   }, snapshot), /Go declaration snapshot drifted/);
-});
-
-test("authored method bindings map one exact Go method signature to one top-level function", () => {
-  const api = parser;
-  const objectId = "example.com/native::type::Code";
-  const methodId = `${objectId}::method::Valid`;
-  const receiver = variable(`${methodId}::signature::receiver`, "code", namedType(objectId, "example.com/native", "Code"));
-  const valid = {
-    id: methodId,
-    ownerId: objectId,
-    name: "Valid",
-    packagePath: "example.com/native",
-    exported: true,
-    signature: {
-      ...signature(
-        [variable(`${methodId}::signature::parameters::0`, "prefix", basic("string"))],
-        [variable(`${methodId}::signature::results::0`, "", basic("bool"))],
-      ),
-      receiver,
-    },
-  };
-  const snapshot = externalSnapshot([
-    externalType({ packagePath: "example.com/native", name: "Code", rhs: basic("string"), methods: [valid] }),
-  ]);
-  const semantic = buildDependencySemanticTypeIndex(snapshot).get(objectId);
-  const moduleId = `${baseConfig.tsRoot}/go/example.com/native.ts`;
-  const exactTypeSource = 'export type Code = string & { readonly __code: "Code" };';
-  const tsDeclarationHash = authoredTypeHash(moduleId, "Code", exactTypeSource);
-  const config = {
-    ...baseConfig,
-    authoredFacadeModules: ["go/example.com/native.ts"],
-    externalFacadePolicies: [{
-      objectId,
-      tsModule: "go/example.com/native.ts",
-      tsName: "Code",
-      storageStrategy: "authored",
-      methodBindings: [{
-        methodId,
-        receiverName: "value",
-        tsName: "Code_Valid",
-        reason: "Scalar Code storage cannot host the Go instance method, so its receiver is promoted explicitly.",
-      }],
-      runtimeAdaptation: {
-        representation: "scalar",
-        scalarStorage: "string",
-        nominality: "preserved",
-        goDeclarationHash: semanticDeclarationVariantsHash(semantic),
-        tsDeclarationHash,
-        reason: "The native code is stored as one exact branded JavaScript string scalar.",
-      },
-    }],
-  };
-  const audit = (source) => {
-    const moduleIndex = indexTypeScriptModuleSources(api, new Map([
-      [moduleId, source],
-      [`${config.tsRoot}/go/scalars.ts`, "export type bool = boolean;"],
-    ]));
-    return collectAuthoredFacadeMismatches({
-      api,
-      canonicalIdentity: (identity) => identity,
-      config,
-      conventions: {},
-      moduleIndex,
-      profile: loadProfile(config),
-      snapshot,
-      valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
-    });
-  };
-  const exact = audit(`
-import type { bool } from "../scalars.js";
-export type Code = string & { readonly __code: "Code" };
-export function Code_Valid(value: Code, prefix: string): bool { return value.startsWith(prefix) as bool; }
-`);
-  assert.deepEqual(exact.mismatches, []);
-  assert.equal(exact.inventory.methodBindings.length, 1);
-  assert.ok(exact.ownedDeclarationIds.has(declarationOwnershipId(moduleId, "value", "function", "Code_Valid")));
-  const wrong = audit(`
-import type { bool } from "../scalars.js";
-export type Code = string & { readonly __code: "Code" };
-export function Code_Valid(value: Code, prefix: number): string { return String(prefix); }
-`);
-  assert.ok(wrong.mismatches.some((mismatch) => mismatch.id === `external-method:${methodId}` && mismatch.kind === "param-type"));
-  assert.ok(wrong.mismatches.some((mismatch) => mismatch.id === `external-method:${methodId}` && mismatch.kind === "return-type"));
-  assert.throws(() => buildExternalFacadeMap({
-    ...config,
-    externalFacadePolicies: [{
-      ...config.externalFacadePolicies[0],
-      methodBindings: [{
-        methodId: `${objectId}::method::Missing`,
-        receiverName: "value",
-        tsName: "Code_Missing",
-        reason: "Scalar Code storage cannot host the Go instance method, so its receiver is promoted explicitly.",
-      }],
-    }],
-  }, snapshot), /not present in every active semantic profile/);
-  assert.throws(() => buildExternalFacadeMap({
-    ...config,
-    externalFacadePolicies: [{
-      ...config.externalFacadePolicies[0],
-      methodBindings: [{ methodId, receiverName: "class", tsName: "Code_Valid" }],
-    }],
-  }, snapshot), /receiverName must be one exact TypeScript identifier/);
-});
-
-test("external facade policy rejects hand-authored Go semantics and unknown objects", () => {
-  const snapshot = externalSnapshot([externalType({ packagePath: "time", name: "Duration", rhs: basic("int64") })]);
-  assert.throws(
-    () => buildExternalFacadeMap({
-      ...baseConfig,
-      externalFacadePolicies: [{ objectId: "time::type::Duration", arity: 0, kind: "type", typeExpression: basic("int64") }],
-    }, snapshot),
-    /forbidden hand-authored Go semantic field/,
-  );
-  assert.throws(
-    () => buildExternalFacadeMap({
-      ...baseConfig,
-      externalFacadePolicies: [{ objectId: "time::type::Missing", tsModule: "go/time.ts", tsName: "Missing", storageStrategy: "authored" }],
-    }, snapshot),
-    /no extracted go\/types declaration/,
-  );
-  for (const forbidden of [
-    { members: ["String"] },
-    { embeddings: ["io::type::Writer"] },
-  ]) {
-    assert.throws(
-      () => buildExternalFacadeMap({
-        ...baseConfig,
-        authoredFacadeModules: ["go/time.ts"],
-        externalFacadePolicies: [{
-          objectId: "time::type::Duration",
-          tsModule: "go/time.ts",
-          tsName: "Duration",
-          storageStrategy: "authored",
-          ...forbidden,
-        }],
-      }, snapshot),
-      /forbidden hand-authored Go semantic field/,
-    );
-  }
-});
-
-test("generated method-bearing types remain declaration-only and reject runtime adaptation", () => {
-  const objectId = "example.com/native::type::Thing";
-  const methodId = `${objectId}::method::Use`;
-  const receiver = variable(`${methodId}::signature::receiver`, "thing", namedType(objectId, "example.com/native", "Thing"));
-  const useMethod = {
-    id: methodId,
-    ownerId: objectId,
-    name: "Use",
-    packagePath: "example.com/native",
-    exported: true,
-    signature: { ...signature([], []), receiver },
-  };
-  const snapshot = externalSnapshot([
-    externalType({ packagePath: "example.com/native", name: "Thing", rhs: structType([]), methods: [useMethod] }),
-  ]);
-  const generatedPolicy = {
-    objectId,
-    tsModule: "go/example.com/native.ts",
-    tsName: "Thing",
-    storageStrategy: "generated",
-  };
-  const source = renderExternalFacadeModules({ ...baseConfig, externalFacadePolicies: [generatedPolicy] }, snapshot)
-    .get("go/example.com/native.ts");
-  assert.match(source, /export type Thing =/);
-  assert.match(source, /Use\(\): void/);
-  assert.doesNotMatch(source, /export class Thing|TSGO_EXTERNAL_FACADE_UNIMPLEMENTED/);
-  assert.throws(() => buildExternalFacadeMap({
-    ...baseConfig,
-    externalFacadePolicies: [{
-      ...generatedPolicy,
-      runtimeAdaptation: {
-        representation: "class",
-        nominality: "preserved",
-        pointer: "aggregate",
-        goDeclarationHash: semanticDeclarationVariantsHash(buildDependencySemanticTypeIndex(snapshot).get(objectId)),
-        reason: "The stateful Go struct is stored as one JavaScript class instance with aggregate identity.",
-      },
-    }],
-  }, snapshot), /generated declaration storage cannot define runtime adaptation/);
-  assert.throws(() => buildExternalFacadeMap({
-    ...baseConfig,
-    externalFacadePolicies: [{
-      ...generatedPolicy,
-      memberBodies: { [methodId]: "return;" },
-    }],
-  }, snapshot), /forbidden hand-authored Go semantic field.*memberBodies/);
-});
-
-test("one generated storage contract rejects profile-dependent external semantics", () => {
-  const objectId = "example.com/native::type::Word";
-  const snapshot = externalSnapshot([
-    externalType({ packagePath: "example.com/native", name: "Word", rhs: basic("int32"), profiles: [0] }),
-    externalType({ packagePath: "example.com/native", name: "Word", rhs: basic("int64"), profiles: [1] }),
-  ]);
-  assert.throws(
-    () => renderExternalFacadeModules({
-      ...baseConfig,
-      externalFacadePolicies: [{ objectId, tsModule: "go/example.com/native.ts", tsName: "Word", storageStrategy: "generated" }],
-    }, snapshot),
-    /renders differently across active semantic profiles/,
-  );
-  assert.throws(() => buildExternalFacadeMap({
-    ...baseConfig,
-    semanticRelations: [{
-      kind: "go-type-storage",
-      objectId,
-      storageIdentity: "packages/tsts/src/native.ts::Word",
-      goDeclarationHash: semanticDeclarationVariantsHash(buildSemanticTypeCatalog(snapshot).get(objectId)),
-      tsDeclarationHash: "0".repeat(64),
-      reason: "The test intentionally attempts one storage declaration for a profile-dependent Go type.",
-    }],
-  }, snapshot), /profile-dependent go\/types declarations but one storage contract/);
 });

@@ -7,6 +7,7 @@ import { computeSignatureReport } from "../sig-check.mjs";
 import { buildSourcePinStatus } from "../source-pin.mjs";
 import { runDelta, runDeltaVerify } from "./delta-command.mjs";
 import { writeExternalFacades } from "./facade-artifacts.mjs";
+import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus, printLargeFileSplitStatus, splitPlanLabel, verifyLargeFileSplitStatus } from "./large-files.mjs";
 import { buildLocalOverrideStatus } from "./local-overrides.mjs";
@@ -113,9 +114,10 @@ export async function main() {
 
   if (command === "facades") {
     const snapshot = runPinnedScan(config);
+    const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     if (options.check === true) {
-      const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
+      const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, facades);
       const failures = collectGeneratedArtifactFailures(generatedArtifacts);
       if (failures.length > 0) {
         fail(`generated facade check failed: ${failures.join(", ")}`);
@@ -123,7 +125,7 @@ export async function main() {
       console.log("generated facade check passed");
       return;
     }
-    writeExternalFacades(config, snapshot, options);
+    writeExternalFacades(config, snapshot, facades, options);
     return;
   }
 
@@ -196,7 +198,8 @@ export async function main() {
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = command === "status" || command === "verify" ? runScan(config) : runPinnedScan(config);
     const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
-    const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
+    const externalFacadeCatalog = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
+    const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, externalFacadeCatalog);
     const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
     const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
     const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
@@ -225,6 +228,7 @@ export async function main() {
           tsFiles: tsUnits.files.filter((file) => file.metadataCount > 0),
           tsById: new Map(tsUnits.units.map((unit) => [unit.id, unit])),
           activeIds: activeSignatureUnitIds(config, snapshot),
+          externalFacadeCatalog,
         },
       );
       status.signatureCheck = summarizeSignatureReport(signatureReport);
@@ -244,7 +248,7 @@ export async function main() {
       return;
     }
     if (command === "skeleton-check") {
-      checkSkeletons(config, status, snapshot, options);
+      checkSkeletons(config, status, snapshot, externalFacadeCatalog, options);
       return;
     }
     return;

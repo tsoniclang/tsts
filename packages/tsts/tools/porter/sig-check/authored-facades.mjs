@@ -5,10 +5,16 @@ import {
 import { compareText } from "../core/deterministic-order.mjs";
 import { hashText } from "../core/runtime.mjs";
 import { canonicalSchemaValue } from "../core/semantic-variants.mjs";
-import { buildExternalFacadeStorageCatalog } from "../core/external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "../core/external-facades.mjs";
 import { externalTypeScriptDeclarationHash } from "../core/external-facade-runtime-adaptation.mjs";
 import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "../core/semantic-method-sets.mjs";
-import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
+import {
+  isPorterContractMarker,
+  isPublicFacadeMember,
+  isSourceVisibleFacadeMember,
+  publicFacadeDeclaration,
+  requireAuthoredDeclarationOrigin,
+} from "../core/authored-facade-selections.mjs";
 import {
   extractIndexedFunctionExportDescriptor,
   extractIndexedTypeExportDescriptor,
@@ -16,8 +22,15 @@ import {
   extractNamedFunctionDescriptor,
 } from "../ts-extractor/extract-signatures.mjs";
 import { parseTypeScriptModule } from "../ts-extractor/module-index.mjs";
+import { createCanonicalDeclarationResolver } from "../ts-extractor/module-resolution.mjs";
+import { typesEqual } from "../ts-extractor/ast-signatures.mjs";
 import { compareSignatures } from "./comparison.mjs";
 import { declarationOwnershipIds, descriptorOwnershipKind } from "./declaration-ownership.mjs";
+import {
+  mergeExternalEvidence,
+  normalizeExternalDeclarationDescriptor,
+  normalizeExternalFunctionDescriptor,
+} from "./external-evidence-projection.mjs";
 
 export function collectAuthoredFacadeMismatches({
   api,
@@ -28,12 +41,13 @@ export function collectAuthoredFacadeMismatches({
   profile,
   snapshot,
   valueEnvironments,
-  facades: suppliedFacades,
+  facades,
   ambientReferences = { accept: () => false },
 }) {
-  const facades = suppliedFacades ?? buildExternalFacadeStorageCatalog(config, snapshot);
-  const renderContract = createExternalFacadeContractRenderer(config, snapshot, facades);
-  const renderMethodContract = createExternalMethodBindingContractRenderer(config, snapshot, facades);
+  const catalog = requireFinalizedExternalFacadeStorageCatalog(facades);
+  const auditFacades = catalog.auditFacades();
+  const renderContract = createExternalFacadeContractRenderer(config, snapshot, catalog);
+  const renderMethodContract = createExternalMethodBindingContractRenderer(config, snapshot, catalog);
   const methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot);
   const mismatches = [];
   const inventory = {
@@ -46,8 +60,9 @@ export function collectAuthoredFacadeMismatches({
   const declarationOwners = new Map();
   const ownedDeclarationIds = new Set();
   const nominalStorageOwners = new Map();
+  const routeCanonicalIdentity = createCanonicalDeclarationResolver(moduleIndex);
   let checked = 0;
-  for (const facade of [...facades.values()].filter((entry) => entry.storageStrategy === "authored")
+  for (const facade of [...auditFacades.values()].filter((entry) => entry.storageStrategy === "authored")
     .sort((left, right) => compareText(left.objectId, right.objectId))) {
     checked++;
     const file = `${config.tsRoot.replace(/\/+$/, "")}/${facade.tsModule}`;
@@ -68,9 +83,20 @@ export function collectAuthoredFacadeMismatches({
       continue;
     }
     const storageActual = actual;
+    const authoredSurface = catalog.authoredSurface(facade.objectId);
+    const actualTsHash = externalTypeScriptDeclarationHash(storageActual);
+    if (authoredSurface === undefined || authoredSurface.declarationId !== declarationId ||
+        authoredSurface.declarationHash !== actualTsHash) {
+      mismatches.push({
+        id: `external-facade:${facade.objectId}`,
+        file,
+        kind: "authored-facade-surface-drift",
+        detail: `authored facade '${facade.objectId}' no longer matches the declaration surface used to finalize its dependency closure`,
+      });
+      continue;
+    }
     const configuredTsHash = facade.runtimeAdaptation?.tsDeclarationHash;
     if (configuredTsHash !== undefined) {
-      const actualTsHash = externalTypeScriptDeclarationHash(storageActual);
       if (actualTsHash !== configuredTsHash) {
         mismatches.push({
           id: `external-facade:${facade.objectId}`,
@@ -84,7 +110,13 @@ export function collectAuthoredFacadeMismatches({
     const publicActual = publicFacadeDeclaration(storageActual);
     let directional;
     try {
-      directional = collectDirectionalMemberEvidence(facade, file, storageActual, methodSetSignatures);
+      directional = collectDirectionalMemberEvidence(facade, file, storageActual, methodSetSignatures, {
+        api,
+        canonicalIdentity,
+        moduleIndex,
+        routeCanonicalIdentity,
+        valueEnvironments,
+      });
     } catch (error) {
       mismatches.push(contractError(facade, file, error));
       continue;
@@ -111,11 +143,12 @@ export function collectAuthoredFacadeMismatches({
     try {
       for (const variant of facade.variants) {
         for (const profileIndex of variant.profiles) {
-          const source = renderContract(facade, variant.declaration, profileIndex);
-          const module = parseTypeScriptModule(api, file, source);
+          const contract = renderContract(facade, variant.declaration, profileIndex);
+          const module = parseTypeScriptModule(api, file, contract.source);
           const expected = extractNamedDeclarationDescriptor(api, module, facade.tsName);
           expectedRows.push({
             descriptor: projectAuthoredFacadeContract(facade, expected, publicActual, false),
+            evidence: contract.evidence,
             profile: profileIndex,
           });
         }
@@ -124,7 +157,20 @@ export function collectAuthoredFacadeMismatches({
       mismatches.push(contractError(facade, file, error));
       continue;
     }
-    const expectedGroups = groupExpectedContracts(expectedRows);
+    let evidence;
+    try {
+      evidence = mergeExternalEvidence(
+        expectedRows.map((row) => ({ evidence: row.evidence, profiles: [row.profile] })),
+        `authored facade '${facade.objectId}' evidence`,
+      );
+    } catch (error) {
+      mismatches.push(contractError(facade, file, error));
+      continue;
+    }
+    const expectedGroups = groupExpectedContracts(expectedRows.map((row) => ({
+      ...row,
+      descriptor: normalizeExternalDeclarationDescriptor(row.descriptor, evidence),
+    })));
     if (expectedGroups.length > 1) {
       mismatches.push({
         id: `external-facade:${facade.objectId}`,
@@ -140,8 +186,11 @@ export function collectAuthoredFacadeMismatches({
       mismatches.push(contractError(facade, file, new Error("no active semantic profile produced an authored facade contract")));
       continue;
     }
-    const actualProjection = projectAuthoredFacadeContract(facade, publicActual, expected, true);
     try {
+      const actualProjection = normalizeExternalDeclarationDescriptor(
+        projectAuthoredFacadeContract(facade, publicActual, expected, true),
+        evidence,
+      );
       for (const mismatch of compareSignatures(
         expected,
         actualProjection,
@@ -161,7 +210,7 @@ export function collectAuthoredFacadeMismatches({
       mismatches.push(contractError(facade, file, error));
     }
   }
-  for (const facade of [...facades.values()].filter((entry) => entry.storageStrategy === "authored")
+  for (const facade of [...auditFacades.values()].filter((entry) => entry.storageStrategy === "authored")
     .sort((left, right) => compareText(left.objectId, right.objectId))) {
     const file = `${config.tsRoot.replace(/\/+$/, "")}/${facade.tsModule}`;
     for (const binding of facade.methodBindings) {
@@ -190,10 +239,11 @@ export function collectAuthoredFacadeMismatches({
       try {
         for (const variant of facade.variants) {
           for (const profileIndex of variant.profiles) {
-            const source = renderMethodContract(facade, variant.declaration, binding, profileIndex);
-            const module = parseTypeScriptModule(api, file, source);
+            const contract = renderMethodContract(facade, variant.declaration, binding, profileIndex);
+            const module = parseTypeScriptModule(api, file, contract.source);
             expectedRows.push({
               descriptor: extractNamedFunctionDescriptor(api, module, binding.tsName),
+              evidence: contract.signature,
               profile: profileIndex,
             });
           }
@@ -202,7 +252,20 @@ export function collectAuthoredFacadeMismatches({
         mismatches.push(contractError(facade, file, error, binding.methodId));
         continue;
       }
-      const groups = groupExpectedContracts(expectedRows);
+      let evidence;
+      try {
+        evidence = mergeExternalEvidence(
+          expectedRows.map((row) => ({ evidence: row.evidence, profiles: [row.profile] })),
+          `bound external Go method '${binding.methodId}' evidence`,
+        );
+      } catch (error) {
+        mismatches.push(contractError(facade, file, error, binding.methodId));
+        continue;
+      }
+      const groups = groupExpectedContracts(expectedRows.map((row) => ({
+        ...row,
+        descriptor: normalizeExternalFunctionDescriptor(row.descriptor, [evidence], 1),
+      })));
       if (groups.length !== 1) {
         mismatches.push({
           id: `external-method:${binding.methodId}`,
@@ -213,8 +276,25 @@ export function collectAuthoredFacadeMismatches({
         continue;
       }
       try {
+        const expected = groups[0].descriptor;
+        actual = normalizeExternalFunctionDescriptor(
+          actual,
+          [evidence],
+          1,
+        );
+        const expectedReceiver = expected.signatures?.[0]?.params?.[0]?.type;
+        const actualReceiver = actual.signatures?.[0]?.params?.[0]?.type;
+        if (expectedReceiver !== undefined && actualReceiver !== undefined &&
+            !typesEqual(expectedReceiver, actualReceiver, routeCanonicalIdentity)) {
+          mismatches.push({
+            id: `external-method:${binding.methodId}`,
+            file,
+            kind: "authored-facade-receiver-storage",
+            detail: `bound external Go method '${binding.methodId}' receiver does not use its exact authored facade storage route`,
+          });
+        }
         for (const mismatch of compareSignatures(
-          groups[0].descriptor,
+          expected,
           actual,
           null,
           canonicalIdentity,
@@ -237,20 +317,19 @@ export function collectAuthoredFacadeMismatches({
   return { checked, inventory, mismatches, ownedDeclarationIds };
 }
 
-function collectDirectionalMemberEvidence(facade, file, storageActual, methodSetSignatures) {
-  const nominalStorageIdentity = validateAuthoredRuntimeRepresentation(facade, storageActual);
+function collectDirectionalMemberEvidence(facade, file, storageActual, methodSetSignatures, descriptorContext) {
+  const nominalStorageIdentity = validateAuthoredRuntimeRepresentation(facade, storageActual, descriptorContext);
   const expectedMembers = goFacadePublicMembers(facade, methodSetSignatures);
-  const actualMembers = new Set(["class", "interface"]).has(storageActual.kind)
-    ? (storageActual.members ?? []).filter(isSourceVisibleFacadeMember) : [];
-  const expectedNames = new Set(expectedMembers.map((member) => member.name));
-  const actualNames = new Set(actualMembers.map((member) => member.name));
-  const unselectedGoMembers = expectedMembers.filter((member) => !actualNames.has(member.name))
+  const actualMembers = authoredDescriptorMembers(storageActual).filter(isSourceVisibleFacadeMember);
+  const expectedKeys = new Set(expectedMembers.map(directionalMemberKey));
+  const actualKeys = new Set(actualMembers.map(directionalMemberKey));
+  const unselectedGoMembers = expectedMembers.filter((member) => !actualKeys.has(directionalMemberKey(member)))
     .map((member) => memberEvidence(facade, file, member));
-  const tsOnlyMembers = actualMembers.filter((member) => !expectedNames.has(member.name))
+  const tsOnlyMembers = actualMembers.filter((member) => !expectedKeys.has(directionalMemberKey(member)))
     .map((member) => memberEvidence(facade, file, member));
-  const constructors = actualMembers.filter((member) => member.kind === "constructor")
+  const constructors = authoredDescriptorMembers(storageActual).filter((member) => member.kind === "constructor")
     .map((member) => memberEvidence(facade, file, member));
-  const privateStorageMembers = (storageActual.members ?? [])
+  const privateStorageMembers = authoredDescriptorMembers(storageActual)
     .filter((member) => member.kind !== "constructor" && !isPublicFacadeMember(member))
     .map((member) => memberEvidence(facade, file, member));
   const mismatches = [];
@@ -300,7 +379,7 @@ function collectDirectionalMemberEvidence(facade, file, storageActual, methodSet
   };
 }
 
-function validateAuthoredRuntimeRepresentation(facade, descriptor) {
+function validateAuthoredRuntimeRepresentation(facade, descriptor, descriptorContext) {
   const adaptation = facade.runtimeAdaptation;
   if (adaptation?.representation === "class") {
     if (descriptor.kind !== "class") throw new Error(`reviewed class facade '${facade.objectId}' must be one TypeScript class declaration`);
@@ -315,21 +394,45 @@ function validateAuthoredRuntimeRepresentation(facade, descriptor) {
   if (adaptation?.representation !== "scalar") return undefined;
   if (descriptor.kind !== "alias") throw new Error(`reviewed scalar facade '${facade.objectId}' must be one TypeScript type alias`);
   const scalar = adaptation.scalarStorage;
+  validateScalarCarrier(adaptation, descriptorContext);
   if (adaptation.nominality === "erased") {
-    if (descriptor.type?.t !== "kw" || descriptor.type.kw !== scalar) {
-      throw new Error(`reviewed scalar facade '${facade.objectId}' with erased nominality must be exactly '${scalar}'`);
+    if (!isScalarStorageTerm(descriptor.type, adaptation, descriptorContext.routeCanonicalIdentity)) {
+      throw new Error(`reviewed scalar facade '${facade.objectId}' with erased nominality must use its exact '${scalar}' storage carrier`);
     }
     return undefined;
   }
   if (adaptation.nominality !== "preserved" || descriptor.type?.t !== "intersect") {
     throw new Error(`reviewed scalar facade '${facade.objectId}' must preserve nominality through one branded scalar intersection`);
   }
-  const scalarMembers = descriptor.type.members.filter((member) => member?.t === "kw" && member.kw === scalar);
-  const brandMembers = descriptor.type.members.filter((member) => !(member?.t === "kw" && member.kw === scalar));
+  const scalarMembers = descriptor.type.members.filter((member) => isScalarStorageTerm(member, adaptation, descriptorContext.routeCanonicalIdentity));
+  const brandMembers = descriptor.type.members.filter((member) => !isScalarStorageTerm(member, adaptation, descriptorContext.routeCanonicalIdentity));
   if (scalarMembers.length !== 1 || brandMembers.length !== 1 || !isExactNominalBrandObject(brandMembers[0])) {
     throw new Error(`reviewed scalar facade '${facade.objectId}' must contain exactly one '${scalar}' storage term and one exact readonly nominal brand object`);
   }
   return canonicalSchemaValue(brandMembers[0]);
+}
+
+function validateScalarCarrier(adaptation, { api, moduleIndex, valueEnvironments }) {
+  const identity = adaptation.scalarCarrierIdentity;
+  if (identity === undefined) return;
+  const separator = identity.lastIndexOf("::");
+  const moduleId = identity.slice(0, separator);
+  const name = identity.slice(separator + 2);
+  const extracted = extractIndexedTypeExportDescriptor(api, moduleIndex, moduleId, name, valueEnvironments);
+  if (extracted.declarationId !== identity) {
+    throw new Error(`reviewed scalar carrier '${identity}' must be stored directly at its configured declaration identity`);
+  }
+  const descriptor = extracted.descriptor;
+  if (descriptor.kind !== "alias" || (descriptor.typeParams ?? []).length !== 0 ||
+      descriptor.type?.t !== "kw" || descriptor.type.kw !== adaptation.scalarStorage) {
+    throw new Error(`reviewed scalar carrier '${identity}' must be one exact '${adaptation.scalarStorage}' alias`);
+  }
+}
+
+function isScalarStorageTerm(type, adaptation, routeCanonicalIdentity) {
+  if (adaptation.scalarCarrierIdentity === undefined) return type?.t === "kw" && type.kw === adaptation.scalarStorage;
+  return type?.t === "ref" && (type.args ?? []).length === 0 &&
+    routeCanonicalIdentity(type.id, "type") === adaptation.scalarCarrierIdentity;
 }
 
 function isExactNominalBrandObject(type) {
@@ -351,12 +454,17 @@ function goFacadePublicMembers(facade, methodSetSignatures) {
     for (const field of declaration.rhs.struct?.fields ?? []) {
       if (field.variable?.exported) addGoMember(members, field.variable.name, "property", facade.objectId);
     }
-    const methods = materializeSemanticMethodSet(declaration, "value", methodSetSignatures);
+    const methodMode = facade.runtimeAdaptation?.pointer === "aggregate" ? "pointer" : "value";
+    const methods = materializeSemanticMethodSet(declaration, methodMode, methodSetSignatures);
     for (const method of methods) {
       if (method.exported && !boundMethods.has(method.methodId)) addGoMember(members, method.name, "method", facade.objectId);
     }
   }
   return [...members.values()].sort((left, right) => compareText(left.name, right.name) || compareText(left.kind, right.kind));
+}
+
+function directionalMemberKey(member) {
+  return `${member.kind}\0${member.name}`;
 }
 
 function addGoMember(members, name, kind, objectId) {
@@ -365,31 +473,6 @@ function addGoMember(members, name, kind, objectId) {
     throw new Error(`external Go facade '${objectId}' changes member '${name}' from ${existing.kind} to ${kind} across semantic profiles`);
   }
   members.set(name, { kind, name, modifiers: [] });
-}
-
-function publicFacadeDeclaration(descriptor) {
-  if (!new Set(["class", "interface"]).has(descriptor.kind)) return descriptor;
-  const members = (descriptor.members ?? []).filter(isPublicFacadeMember);
-  if (descriptor.kind === "class") return { ...descriptor, members };
-  return {
-    ...descriptor,
-    members,
-    fragments: (descriptor.fragments ?? []).map((fragment) => ({
-      ...fragment,
-      members: (fragment.members ?? []).filter(isPublicFacadeMember),
-    })),
-  };
-}
-
-function isPublicFacadeMember(member) {
-  if (member.kind === "constructor" || String(member.name).startsWith("private:")) return false;
-  const modifiers = new Set(member.modifiers ?? []);
-  return !modifiers.has("private") && !modifiers.has("protected");
-}
-
-function isSourceVisibleFacadeMember(member) {
-  if (String(member.name).startsWith("private:")) return false;
-  return !(member.modifiers ?? []).includes("private");
 }
 
 function memberEvidence(facade, file, member) {
@@ -405,22 +488,33 @@ function memberEvidence(facade, file, member) {
 function projectAuthoredFacadeContract(facade, descriptor, counterpart, validateRuntimeStorage) {
   void validateRuntimeStorage;
   if (facade.runtimeAdaptation?.representation === "scalar") return counterpart;
-  if (!new Set(["class", "interface"]).has(descriptor.kind) || descriptor.kind !== counterpart.kind) return descriptor;
-  const expectedNames = new Set((counterpart.members ?? []).map((member) => member.name));
-  const members = (descriptor.members ?? []).filter((member) => expectedNames.has(member.name) || isPorterContractMarker(member));
+  if (descriptor.kind !== counterpart.kind) return descriptor;
+  const counterpartMembers = authoredDescriptorMembers(counterpart);
+  const descriptorMembers = authoredDescriptorMembers(descriptor);
+  if (counterpartMembers.length === 0 && descriptorMembers.length === 0) return descriptor;
+  const expectedNames = new Set(counterpartMembers.map((member) => member.name));
+  const members = descriptorMembers.filter((member) => expectedNames.has(member.name) || isPorterContractMarker(member));
   if (descriptor.kind === "class") return { ...descriptor, members };
-  return {
-    ...descriptor,
-    members,
-    fragments: (descriptor.fragments ?? []).map((fragment) => ({
-      ...fragment,
-      members: (fragment.members ?? []).filter((member) => expectedNames.has(member.name) || isPorterContractMarker(member)),
-    })),
-  };
+  if (descriptor.kind === "interface") {
+    return {
+      ...descriptor,
+      members,
+      fragments: (descriptor.fragments ?? []).map((fragment) => ({
+        ...fragment,
+        members: (fragment.members ?? []).filter((member) => expectedNames.has(member.name) || isPorterContractMarker(member)),
+      })),
+    };
+  }
+  if (descriptor.kind === "alias" && descriptor.type?.t === "object") {
+    return { ...descriptor, type: { ...descriptor.type, members } };
+  }
+  return descriptor;
 }
 
-function isPorterContractMarker(member) {
-  return member.name === "__tsgoEmpty" || String(member.name).startsWith("__goUnexported");
+function authoredDescriptorMembers(descriptor) {
+  if (new Set(["class", "interface"]).has(descriptor?.kind)) return descriptor.members ?? [];
+  if (descriptor?.kind === "alias" && descriptor.type?.t === "object") return descriptor.type.members ?? [];
+  return [];
 }
 
 function groupExpectedContracts(rows) {
@@ -450,23 +544,6 @@ function claimDescriptorOwner(owners, ownedDeclarationIds, moduleId, name, descr
     claimDeclarationOwner(owners, declarationId, owner);
     ownedDeclarationIds.add(declarationId);
   }
-}
-
-function requireAuthoredDeclarationOrigin(moduleIndex, config, declarationId, expectedModuleId, expectedName) {
-  const separator = declarationId.lastIndexOf("::");
-  if (separator < 0) throw new Error(`authored declaration '${declarationId}' has no exact module identity`);
-  const moduleId = declarationId.slice(0, separator);
-  const declarationName = declarationId.slice(separator + 2);
-  if (moduleId !== expectedModuleId || declarationName !== expectedName) {
-    throw new Error(`authored declaration '${declarationId}' must be stored directly as '${expectedModuleId}::${expectedName}'`);
-  }
-  const module = moduleIndex.modules.get(moduleId);
-  if (module === undefined) throw new Error(`authored declaration '${declarationId}' has no indexed source module`);
-  const prefix = `${config.tsRoot.replace(/\/+$/, "")}/`;
-  if (!moduleId.startsWith(prefix)) throw new Error(`authored declaration '${declarationId}' is outside configured tsRoot`);
-  const registration = inspectGeneratedArtifactRegistration(moduleId.slice(prefix.length), module.text);
-  if (registration.error !== undefined) throw new Error(`authored declaration '${declarationId}' has invalid generated-artifact evidence: ${registration.error}`);
-  if (registration.metadata !== undefined) throw new Error(`authored declaration '${declarationId}' resolves into Porter-generated storage`);
 }
 
 function contractError(facade, file, error, methodId = undefined) {

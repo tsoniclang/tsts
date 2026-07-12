@@ -9,6 +9,7 @@ import {
   semanticTypeDescriptor,
 } from "./ts-extractor/expected-from-go-semantic.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
+import { buildExternalTypeStorageMap } from "./core/external-facades.mjs";
 
 const profile = {
   modules: { core: "src/go/scalars.ts", compat: "src/go/compat.ts" },
@@ -28,7 +29,10 @@ const semanticProfile = 0;
 function indexFor(units = []) {
   const snapshot = semanticSnapshot([{ importPath: "example/p", units }]);
   const tsById = new Map(units.map((unit) => [unit.id, { path: `src/p/${unit.name}.ts` }]));
-  return buildExpectedIndex({ goModulePath: "example", tsRoot: "src" }, snapshot, tsById, profile);
+  const config = { goModulePath: "example", tsRoot: "src" };
+  return buildExpectedIndex(config, snapshot, tsById, profile, new Map(), {
+    externalFacades: buildExternalTypeStorageMap(config, snapshot),
+  });
 }
 
 function semanticSnapshot(files) {
@@ -128,6 +132,7 @@ test("function descriptors use exact go/types parameters, constraints, variadics
   const owner = "example/p::func::Collect";
   const typeParameter = parameter(owner, 0, { kind: "interface", nilable: true, interface: {
     explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: false,
+    explicitMethodOrderProvenance: "source",
   } }, "T");
   const typeRef = { kind: "typeParameter", nilable: false, typeParameter: typeParameter.reference };
   const unit = {
@@ -142,6 +147,7 @@ test("function descriptors use exact go/types parameters, constraints, variadics
         parameters: { variables: [{ name: "values", type: { kind: "slice", nilable: true, element: typeRef } }] },
         results: { variables: [{ name: "", type: { kind: "map", nilable: true, key: basic("string"), element: typeRef } }] },
         variadic: true,
+        parameterNameProvenance: "source",
       },
       valueSpecs: [],
     }),

@@ -13,6 +13,7 @@ import {
   signature,
   structType,
   variable,
+  finalizeGeneratedFacadeFixtureCatalog,
 } from "./test/external-facade-fixtures.mjs";
 
 test("facade values expose value methods while pointer carriers recover the complete pointer set", () => {
@@ -51,7 +52,7 @@ test("facade values expose value methods while pointer carriers recover the comp
     }],
   };
 
-  const source = renderExternalFacadeModules(config, snapshot).get("go/example.com/native.ts");
+  const source = renderExternalFacadeModules(config, snapshot, finalizeGeneratedFacadeFixtureCatalog(config, snapshot)).get("go/example.com/native.ts");
   assert.match(source, /import type \{ GoPointerMethodSet \} from "\.\.\/compat\.js";/);
   assert.equal(source.match(/\bValue\(/g)?.length, 2, "value method appears on Thing and in its pointer metadata");
   assert.equal(source.match(/\bPointer\(/g)?.length, 1, "pointer-only method appears only in pointer metadata");
@@ -79,7 +80,7 @@ test("promoted instantiated signatures are rendered directly from the normalized
   snapshot.semantic.methodSetSignatures = [echo.signatureEntry, reset.signatureEntry]
     .sort((left, right) => left.id.localeCompare(right.id));
 
-  const source = renderExternalFacadeModules(baseConfig, snapshot).get("go/example.com/native.ts");
+  const source = renderExternalFacadeModules(baseConfig, snapshot, finalizeGeneratedFacadeFixtureCatalog(baseConfig, snapshot)).get("go/example.com/native.ts");
   assert.match(source, /Echo\(value: int\): int/);
   assert.match(source, /\[__tsgoPointerMethodSet\]\?: GoPointerMethodSet<\{[^}]*Echo\(value: int\): int[^}]*Reset\(\): void[^}]*\}>/);
   assert.equal(source.match(/\bReset\(/g)?.length, 1, "pointer-only promoted method is not added to Outer itself");

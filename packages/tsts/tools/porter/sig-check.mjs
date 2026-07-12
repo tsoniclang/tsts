@@ -27,7 +27,7 @@ import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-pol
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
-import { buildExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
 import { loadNonGoDeclarationManifest } from "./core/non-go-declaration-manifest.mjs";
 import {
   resolveOverride,
@@ -44,6 +44,7 @@ function globToRegExp(glob) {
 }
 
 export async function computeSignatureReport(deps, options = {}) {
+  const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(deps.externalFacadeCatalog);
   const idFilter = options.idFilter;
   if (idFilter !== undefined && (typeof idFilter !== "string" || idFilter.trim() === "")) {
     throw new Error("signature audit idFilter must be a non-empty glob when provided");
@@ -85,8 +86,14 @@ export async function computeSignatureReport(deps, options = {}) {
     valueEnvironments,
   });
   const ambientReferenceRegistry = buildAmbientReferenceRelationRegistry({ api, config: deps.config });
-  const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, generatedTypeDeclarations(deps.config, moduleIndex));
-  const externalStorageFacades = wholeProgramAudit ? buildExternalFacadeStorageCatalog(deps.config, deps.snapshot) : new Map();
+  const expectedIndex = buildExpectedIndex(
+    deps.config,
+    deps.snapshot,
+    deps.tsById,
+    profile,
+    generatedTypeDeclarations(deps.config, moduleIndex),
+    { externalFacades: externalFacadeCatalog.artifactFacades() },
+  );
   const externalExpectedIndex = wholeProgramAudit
     ? buildExpectedIndex(
       deps.config,
@@ -94,7 +101,7 @@ export async function computeSignatureReport(deps, options = {}) {
       deps.tsById,
       profile,
       generatedTypeDeclarations(deps.config, moduleIndex),
-      { externalFacades: externalStorageFacades, includeExternalPackageSurface: true },
+      { externalFacades: externalFacadeCatalog.auditFacades(), includeExternalPackageSurface: true },
     )
     : undefined;
   const idPattern = idFilter === undefined ? undefined : globToRegExp(idFilter);
@@ -138,7 +145,7 @@ export async function computeSignatureReport(deps, options = {}) {
       profile,
       snapshot: deps.snapshot,
       valueEnvironments,
-      facades: externalStorageFacades,
+      facades: externalFacadeCatalog,
       ambientReferences: ambientReferenceRegistry.forUseSite("authored-facade-audit"),
     })
     : {

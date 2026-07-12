@@ -121,7 +121,7 @@ function orderTypeParameter(value) {
 }
 
 function orderSignature(value) {
-  return ordered(value, ["receiver", "receiverMode", "receiverTypeParameters", "typeParameters", "parameters", "results", "variadic"], {
+  return ordered(value, ["receiver", "receiverMode", "receiverTypeParameters", "typeParameters", "parameters", "results", "variadic", "parameterNameProvenance"], {
     receiver: orderVariable, receiverTypeParameters: (items) => mapItems(items, orderTypeParameter),
     typeParameters: (items) => mapItems(items, orderTypeParameter), parameters: orderTuple, results: orderTuple,
   });
@@ -142,7 +142,7 @@ function orderStructField(value) {
 }
 
 function orderInterface(value) {
-  return ordered(value, ["explicitMethods", "embeddedTypes", "embeddedKinds", "completeMethods", "comparable", "implicit", "methodSetOnly"], {
+  return ordered(value, ["explicitMethods", "embeddedTypes", "embeddedKinds", "completeMethods", "comparable", "implicit", "methodSetOnly", "explicitMethodOrderProvenance"], {
     explicitMethods: (items) => mapItems(items, orderMethod), embeddedTypes: (items) => mapItems(items, orderType),
     completeMethods: (items) => mapItems(items, orderMethod),
   });

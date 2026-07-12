@@ -101,6 +101,9 @@ func TestDeclarationOnlyExtractorCapturesExactGoSemantics(t *testing.T) {
 	if transform == nil || len(transform.TypeParameters) != 1 || len(transform.Parameters.Variables) != 4 || !transform.Variadic {
 		t.Fatalf("generic variadic signature = %#v", transform)
 	}
+	if transform.ParameterNameProvenance != "source" {
+		t.Fatalf("source-backed parameter names = %#v", transform.ParameterNameProvenance)
+	}
 	array := transform.Parameters.Variables[0].Type
 	if array.Kind != "array" || array.Length == nil || *array.Length != "4" || array.Element.Kind != "typeParameter" {
 		t.Fatalf("const-resolved generic array = %#v", array)

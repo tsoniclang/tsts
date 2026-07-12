@@ -59,7 +59,7 @@ export { buildGeneratedArtifactStatus, emptyGeneratedArtifactStatus } from "./co
 export { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus } from "./core/large-files.mjs";
 export { checkSkeletons, renderStub, scaffoldMissing } from "./core/scaffolding.mjs";
 export { buildRenderIndexes, renderUnitGroup } from "./core/type-renderer.mjs";
-export { buildExternalFacadeMap } from "./core/external-facades.mjs";
+export { prepareExternalFacadeStorageCatalog } from "./core/authored-facade-selections.mjs";
 export { localTsName } from "./core/names.mjs";
 export {
   collectGeneratedArtifactFailures,

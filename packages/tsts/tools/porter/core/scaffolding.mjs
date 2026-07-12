@@ -2,6 +2,7 @@ import { buildAstGeneratedArtifactStatus } from "../ast-generator.mjs";
 import { buildDiagnosticsGeneratedArtifactStatus } from "../diagnostics-generator.mjs";
 import { matchGlob } from "../path-policy.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts } from "./facade-artifacts.mjs";
+import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { expectedTsPath } from "./policies.mjs";
 import { fileFromUnit, skeletonTsConfig, unitsByIDMap } from "./render-indexes.mjs";
@@ -91,11 +92,12 @@ export async function scaffoldMissing(config, status, snapshot, options) {
   }
 
   if (scaffoldAll) {
+    const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
     const afterStatus = buildStatus(
       config,
       snapshot,
       await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) }),
-      buildGeneratedArtifactStatus(config, snapshot),
+      buildGeneratedArtifactStatus(config, snapshot, facades),
       buildAstGeneratedArtifactStatus(config, snapshot.gitRevision),
       buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision),
     );
@@ -118,7 +120,7 @@ export function renderStub(unit) {
   );
 }
 
-export function checkSkeletons(config, status, snapshot, options) {
+export function checkSkeletons(config, status, snapshot, facades, options) {
   assertLargeFileSplitPlanClean(status);
   const emitTemp = options["emit-temp"] !== false;
   const compile = options.compile !== false && options.compile !== "false";
@@ -141,7 +143,7 @@ export function checkSkeletons(config, status, snapshot, options) {
   if (emitTemp) {
     rmSync(outRoot, { recursive: true, force: true });
     mkdirSync(targetRoot, { recursive: true });
-    for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot)) {
+    for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot, facades)) {
       const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
         ? repoRelativePath.slice(tsRootPrefix.length)
         : repoRelativePath;

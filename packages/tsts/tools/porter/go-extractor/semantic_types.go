@@ -9,23 +9,27 @@ import (
 )
 
 type semanticTypeEncoder struct {
-	typeParameterOwners               map[*types.TypeParam]SemanticTypeParameterRef
-	typeParameterConstraintSources    map[*types.TypeParam]SemanticTypeParameterRef
-	typeParameterConstraintSyntax     map[*types.TypeParam]string
-	objectIDs                         map[types.Object]string
-	referencedTypes                   map[string]*types.TypeName
-	preserveInterfaceDeclarationOrder bool
-	synthesizeConstraintSyntax        bool
+	typeParameterOwners                    map[*types.TypeParam]SemanticTypeParameterRef
+	typeParameterConstraintSources         map[*types.TypeParam]SemanticTypeParameterRef
+	typeParameterConstraintSyntax          map[*types.TypeParam]string
+	objectIDs                              map[types.Object]string
+	referencedTypes                        map[string]*types.TypeName
+	preserveInterfaceDeclarationOrder      bool
+	synthesizeConstraintSyntax             bool
+	parameterNameProvenance                string
+	interfaceExplicitMethodOrderProvenance string
 }
 
 func newSemanticTypeEncoder() *semanticTypeEncoder {
 	return &semanticTypeEncoder{
-		typeParameterOwners:               map[*types.TypeParam]SemanticTypeParameterRef{},
-		typeParameterConstraintSources:    map[*types.TypeParam]SemanticTypeParameterRef{},
-		typeParameterConstraintSyntax:     map[*types.TypeParam]string{},
-		objectIDs:                         map[types.Object]string{},
-		referencedTypes:                   map[string]*types.TypeName{},
-		preserveInterfaceDeclarationOrder: true,
+		typeParameterOwners:                    map[*types.TypeParam]SemanticTypeParameterRef{},
+		typeParameterConstraintSources:         map[*types.TypeParam]SemanticTypeParameterRef{},
+		typeParameterConstraintSyntax:          map[*types.TypeParam]string{},
+		objectIDs:                              map[types.Object]string{},
+		referencedTypes:                        map[string]*types.TypeName{},
+		preserveInterfaceDeclarationOrder:      true,
+		parameterNameProvenance:                "source",
+		interfaceExplicitMethodOrderProvenance: "source",
 	}
 }
 
@@ -56,6 +60,8 @@ func newDeclarationSurfaceSemanticTypeEncoder() *semanticTypeEncoder {
 	encoder := newSemanticTypeEncoder()
 	encoder.preserveInterfaceDeclarationOrder = false
 	encoder.synthesizeConstraintSyntax = true
+	encoder.parameterNameProvenance = "unavailable"
+	encoder.interfaceExplicitMethodOrderProvenance = "canonical"
 	return encoder
 }
 
@@ -255,11 +261,12 @@ func (encoder *semanticTypeEncoder) signatureReportAt(signature *types.Signature
 		fatalf("cannot encode a nil Go signature at %s", ownerPath)
 	}
 	report := &SemanticSignatureReport{
-		ReceiverTypeParameters: encoder.typeParameterReports(signature.RecvTypeParams()),
-		TypeParameters:         encoder.typeParameterReports(signature.TypeParams()),
-		Parameters:             encoder.tupleReportAt(signature.Params(), ownerPath+"::parameters"),
-		Results:                encoder.tupleReportAt(signature.Results(), ownerPath+"::results"),
-		Variadic:               signature.Variadic(),
+		ReceiverTypeParameters:  encoder.typeParameterReports(signature.RecvTypeParams()),
+		TypeParameters:          encoder.typeParameterReports(signature.TypeParams()),
+		Parameters:              encoder.tupleReportAt(signature.Params(), ownerPath+"::parameters"),
+		Results:                 encoder.tupleReportAt(signature.Results(), ownerPath+"::results"),
+		Variadic:                signature.Variadic(),
+		ParameterNameProvenance: encoder.parameterNameProvenance,
 	}
 	if includeReceiver && signature.Recv() != nil {
 		receiver := encoder.variableReportAt(signature.Recv(), ownerPath+"::receiver")
@@ -367,6 +374,7 @@ func (encoder *semanticTypeEncoder) interfaceReportAt(value *types.Interface, ow
 	report := &SemanticInterfaceReport{
 		ExplicitMethods: []SemanticMethodReport{}, EmbeddedTypes: []*SemanticTypeReport{}, EmbeddedKinds: []string{}, CompleteMethods: []SemanticMethodReport{},
 		Comparable: value.IsComparable(), Implicit: value.IsImplicit(), MethodSetOnly: value.IsMethodSet(),
+		ExplicitMethodOrderProvenance: encoder.interfaceExplicitMethodOrderProvenance,
 	}
 	for index, method := range encoder.explicitInterfaceMethods(value) {
 		report.ExplicitMethods = append(report.ExplicitMethods, encoder.methodReportAt(method, ownerPath, "explicitMethod", index))

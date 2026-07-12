@@ -60,6 +60,9 @@ export function lowerSemanticType(type, context, typeContext = semanticTypeConte
 
 export function lowerSemanticSignature(signature, parentContext, options = {}) {
   if (!isObject(signature)) throw new Error("canonical Go signature is missing");
+  if (signature.parameterNameProvenance !== "source" && signature.parameterNameProvenance !== "unavailable") {
+    throw new Error("canonical Go signature has no exact parameter-name provenance");
+  }
   const receiverTypeParameters = requireArray(signature.receiverTypeParameters, "canonical Go receiver type parameters");
   const typeParameters = requireArray(signature.typeParameters, "canonical Go signature type parameters");
   const context = semanticContextWithTypeParameters(parentContext, [...receiverTypeParameters, ...typeParameters]);
@@ -85,6 +88,7 @@ export function lowerSemanticSignature(signature, parentContext, options = {}) {
     receiver = { name: signature.receiver.name, type: lowerValue(signature.receiver.type, context) };
   }
   return {
+    parameterNameProvenance: signature.parameterNameProvenance,
     receiver,
     receiverTypeParameters: lowerSemanticTypeParameters(receiverTypeParameters, context),
     typeParameters: lowerSemanticTypeParameters(typeParameters, context),
@@ -204,6 +208,9 @@ function lowerStruct(structure, context) {
 
 function lowerInterface(value, context) {
   if (!isObject(value)) throw new Error("canonical Go interface is missing");
+  if (value.explicitMethodOrderProvenance !== "source" && value.explicitMethodOrderProvenance !== "canonical") {
+    throw new Error("canonical Go interface has no exact explicit-method-order provenance");
+  }
   const methods = requireArray(value.explicitMethods, "canonical Go interface explicit methods").map((method, index) => {
     if (!isObject(method) || typeof method.name !== "string" || method.name === "") {
       throw new Error(`canonical Go interface method #${index} is missing its name`);
@@ -223,7 +230,13 @@ function lowerInterface(value, context) {
       type: lowerSemanticType(type, context, embeddingKind === "interface" ? semanticTypeContexts.heritage : semanticTypeContexts.constraint),
     };
   });
-  return { kind: "interfaceShape", methods, embedded, comparable: value.comparable === true };
+  return {
+    kind: "interfaceShape",
+    methods,
+    embedded,
+    comparable: value.comparable === true,
+    explicitMethodOrderProvenance: value.explicitMethodOrderProvenance,
+  };
 }
 
 function lowerUnion(union, context) {

@@ -85,6 +85,7 @@ test("type-parameter ownership, roles, indices, and active-scope references are 
     }, /active declaration scope/],
     [(value) => value.files[0].units[0].semantic[0].signature.parameters.variables[0].id += "-drift", /\.id must equal/],
     [(value) => value.files[0].units[0].semantic[0].object.type.signature.results.variables[0].id += "-drift", /\.id must equal/],
+    [(value) => value.files[0].units[0].semantic[0].signature.parameterNameProvenance = "guessed", /parameterNameProvenance/],
   ];
   for (const [mutate, pattern] of mutations) assertRejected(mutateClone(snapshot, mutate), pattern, "type-parameter relation");
 });
@@ -99,6 +100,7 @@ test("nested semantic object and local provenance identities are exact", () => {
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.id += "-drift"), /variable.id must equal|\.id must equal/, "struct field id");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.explicitMethods[0].id += "-drift"), /\.id must equal/, "interface method id");
   assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.embeddedTypes[0].reference.objectId += "-drift"), /objectId must equal/, "nested type reference id");
+  assertRejected(mutateClone(snapshot, (value) => value.files[0].units[0].semantic[0].type.rhs.struct.fields[0].variable.type.interface.explicitMethodOrderProvenance = "guessed"), /explicitMethodOrderProvenance/, "interface explicit-method order provenance");
 });
 
 test("blank value provenance is owned by the stable syntax unit id", () => {
@@ -145,7 +147,7 @@ test("semantic array lengths are unbounded canonical decimal strings", () => {
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.kind = 2;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.kind = 2;
-  }), /unknown snapshot-schema-10 key 'kind'/, "removed redundant basic kind");
+  }), /unknown snapshot-schema-11 key 'kind'/, "removed redundant basic kind");
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.untyped = true;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.untyped = true;
@@ -244,7 +246,7 @@ function identityRichTypeSnapshot() {
     const id = `${interfaceOwner}::${role}::0::Read`;
     return {
       id, ownerId: interfaceOwner, name: "Read", packagePath: declaration.packagePath, exported: true,
-      signature: { receiverTypeParameters: [], typeParameters: [], parameters: { variables: [] }, results: { variables: [] }, variadic: false },
+      signature: { receiverTypeParameters: [], typeParameters: [], parameters: { variables: [] }, results: { variables: [] }, variadic: false, parameterNameProvenance: "source" },
     };
   };
   const interfaceType = {
@@ -254,7 +256,7 @@ function identityRichTypeSnapshot() {
       explicitMethods: [method("explicitMethod")],
       embeddedTypes: [{ kind: "named", nilable: true, reference: { objectId: "example.org/api::type::Token", packagePath: "example.org/api", name: "Token", typeArgs: [] } }],
       embeddedKinds: ["interface"],
-      completeMethods: [method("completeMethod")], comparable: false, implicit: false, methodSetOnly: true,
+      completeMethods: [method("completeMethod")], comparable: false, implicit: false, methodSetOnly: true, explicitMethodOrderProvenance: "source",
     },
   };
   declaration.type.rhs = {
@@ -350,7 +352,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 10,
+    schemaVersion: 11,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -418,7 +420,7 @@ function refreshSummary(snapshot) {
 }
 
 function emptyInterfaceType() {
-  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: true, implicit: true, methodSetOnly: true, explicitMethodOrderProvenance: "source" } };
 }
 
 function mutateClone(value, mutate) {

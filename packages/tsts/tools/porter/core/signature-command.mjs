@@ -1,5 +1,6 @@
 import { computeSignatureReport } from "../sig-check.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { repoRoot, resolveRepo } from "./runtime.mjs";
 import { runPinnedScan } from "./scan-runner.mjs";
@@ -19,12 +20,13 @@ export async function runSigCheck(config, options = {}) {
     idFilter = options.id;
   }
   const snapshot = runPinnedScan(config);
-  const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
+  const externalFacadeCatalog = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
+  const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, externalFacadeCatalog);
   const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
   const tsById = new Map(tsUnits.units.map((u) => [u.id, u]));
   const tsFiles = tsUnits.files.filter((file) => file.metadataCount > 0);
   const report = await computeSignatureReport(
-    { config, generatedArtifacts, snapshot, repoRoot, tsFiles, tsById, activeIds: activeSignatureUnitIds(config, snapshot) },
+    { config, generatedArtifacts, snapshot, repoRoot, tsFiles, tsById, activeIds: activeSignatureUnitIds(config, snapshot), externalFacadeCatalog },
     { idFilter },
   );
   if (options.json === true) {

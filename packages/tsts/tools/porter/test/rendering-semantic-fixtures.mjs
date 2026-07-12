@@ -20,7 +20,7 @@ export function semanticSignature(ownerId, packagePath, parameters, results, typ
       type: entry.type,
     })),
   });
-  return { receiverTypeParameters: [], typeParameters, parameters: variables(parameters, "parameters"), results: variables(results, "results"), variadic };
+  return { receiverTypeParameters: [], typeParameters, parameters: variables(parameters, "parameters"), results: variables(results, "results"), variadic, parameterNameProvenance: "source" };
 }
 
 export function semanticTypeParameter(ownerId, index, name, constraint = semanticAnyType()) {
@@ -68,11 +68,11 @@ export function semanticMethod(id, ownerId, name, parameters, results) {
 }
 
 export function semanticInterfaceType(explicitMethods) {
-  return { kind: "interface", nilable: true, interface: { explicitMethods, embeddedTypes: [], embeddedKinds: [], completeMethods: explicitMethods, comparable: false, implicit: false, methodSetOnly: true } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods, embeddedTypes: [], embeddedKinds: [], completeMethods: explicitMethods, comparable: false, implicit: false, methodSetOnly: true, explicitMethodOrderProvenance: "source" } };
 }
 
 export function semanticConstraintType(comparable) {
-  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable, implicit: true, methodSetOnly: false } };
+  return { kind: "interface", nilable: true, interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable, implicit: true, methodSetOnly: false, explicitMethodOrderProvenance: "source" } };
 }
 
 export const semanticAnyType = () => semanticConstraintType(false);

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { buildExternalFacadeMap } from "./external-facades.mjs";
+import { buildExternalTypeStorageMap } from "./external-facades.mjs";
 import {
   renderCanonicalSignature,
   renderCanonicalType,
@@ -41,7 +41,7 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
   const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
   const file = filesByPath.get(firstUnit?.metadata?.goPath ?? "") ?? fileFromUnit(firstUnit);
-  const externalFacades = options.externalFacades ?? buildExternalFacadeMap(config, snapshot);
+  const externalFacades = options.externalFacades ?? buildExternalTypeStorageMap(config, snapshot);
   const profile = loadProfile(config);
   const evidence = addProfileSemanticStorageEvidence(
     buildTypeRepresentationEvidence(config, snapshot, externalFacades),
@@ -91,7 +91,7 @@ export function buildRenderIndexes(config, snapshot) {
     filesByPath,
     largeFileSplits,
     symbolIndex: buildSymbolIndex(config, snapshot, largeFileSplits),
-    externalFacades: buildExternalFacadeMap(config, snapshot),
+    externalFacades: buildExternalTypeStorageMap(config, snapshot),
   };
 }
 

@@ -1,6 +1,6 @@
 package main
 
-const porterSnapshotSchemaVersion = 10
+const porterSnapshotSchemaVersion = 11
 
 type Snapshot struct {
 	SchemaVersion int                    `json:"schemaVersion"`
@@ -300,13 +300,14 @@ type SemanticTypeParameterReport struct {
 }
 
 type SemanticSignatureReport struct {
-	Receiver               *SemanticVariableReport       `json:"receiver,omitempty"`
-	ReceiverMode           string                        `json:"receiverMode,omitempty"`
-	ReceiverTypeParameters []SemanticTypeParameterReport `json:"receiverTypeParameters"`
-	TypeParameters         []SemanticTypeParameterReport `json:"typeParameters"`
-	Parameters             SemanticTupleReport           `json:"parameters"`
-	Results                SemanticTupleReport           `json:"results"`
-	Variadic               bool                          `json:"variadic"`
+	Receiver                *SemanticVariableReport       `json:"receiver,omitempty"`
+	ReceiverMode            string                        `json:"receiverMode,omitempty"`
+	ReceiverTypeParameters  []SemanticTypeParameterReport `json:"receiverTypeParameters"`
+	TypeParameters          []SemanticTypeParameterReport `json:"typeParameters"`
+	Parameters              SemanticTupleReport           `json:"parameters"`
+	Results                 SemanticTupleReport           `json:"results"`
+	Variadic                bool                          `json:"variadic"`
+	ParameterNameProvenance string                        `json:"parameterNameProvenance"`
 }
 
 type SemanticTupleReport struct {
@@ -335,13 +336,14 @@ type SemanticStructFieldReport struct {
 }
 
 type SemanticInterfaceReport struct {
-	ExplicitMethods []SemanticMethodReport `json:"explicitMethods"`
-	EmbeddedTypes   []*SemanticTypeReport  `json:"embeddedTypes"`
-	EmbeddedKinds   []string               `json:"embeddedKinds"`
-	CompleteMethods []SemanticMethodReport `json:"completeMethods"`
-	Comparable      bool                   `json:"comparable"`
-	Implicit        bool                   `json:"implicit"`
-	MethodSetOnly   bool                   `json:"methodSetOnly"`
+	ExplicitMethods               []SemanticMethodReport `json:"explicitMethods"`
+	EmbeddedTypes                 []*SemanticTypeReport  `json:"embeddedTypes"`
+	EmbeddedKinds                 []string               `json:"embeddedKinds"`
+	CompleteMethods               []SemanticMethodReport `json:"completeMethods"`
+	Comparable                    bool                   `json:"comparable"`
+	Implicit                      bool                   `json:"implicit"`
+	MethodSetOnly                 bool                   `json:"methodSetOnly"`
+	ExplicitMethodOrderProvenance string                 `json:"explicitMethodOrderProvenance"`
 }
 
 type SemanticMethodReport struct {

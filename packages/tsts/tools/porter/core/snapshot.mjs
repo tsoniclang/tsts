@@ -57,7 +57,7 @@ export function validatePorterSnapshot(snapshot, config) {
   const issues = [];
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)) return ["snapshot must be an object"];
   compareExactKeys(snapshot, PORTER_SNAPSHOT_KEYS, "snapshot", issues);
-  if (snapshot.schemaVersion !== 10) issues.push(`snapshot.schemaVersion must be 10, got ${JSON.stringify(snapshot.schemaVersion)}`);
+  if (snapshot.schemaVersion !== 11) issues.push(`snapshot.schemaVersion must be 11, got ${JSON.stringify(snapshot.schemaVersion)}`);
   if (snapshot.modulePath !== config.goModulePath) issues.push(`snapshot.modulePath must be ${JSON.stringify(config.goModulePath)}`);
   const expectedRoot = resolveRepo(config.sourceRoot).split(path.sep).join("/");
   if (snapshot.sourceRoot !== expectedRoot) issues.push(`snapshot.sourceRoot must be ${JSON.stringify(expectedRoot)}`);

@@ -152,8 +152,8 @@ export function validateTypeParameters(parameters, label, issues, context = {}) 
 }
 
 export function validateSignature(signature, label, issues, context = {}) {
-  const allowed = new Set(["parameters", "receiver", "receiverMode", "receiverTypeParameters", "results", "typeParameters", "variadic"]);
-  const required = new Set(["parameters", "receiverTypeParameters", "results", "typeParameters", "variadic"]);
+  const allowed = new Set(["parameterNameProvenance", "parameters", "receiver", "receiverMode", "receiverTypeParameters", "results", "typeParameters", "variadic"]);
+  const required = new Set(["parameterNameProvenance", "parameters", "receiverTypeParameters", "results", "typeParameters", "variadic"]);
   validateSnapshotObject(signature, allowed, label, issues, required);
   if (!isObject(signature)) return;
   if (context.declarationKind === "method" && signature.receiver === undefined) issues.push(`${label}.receiver is required for a declared method`);
@@ -179,6 +179,9 @@ export function validateSignature(signature, label, issues, context = {}) {
   validateTuple(signature.parameters, `${label}.parameters`, issues, scope, `${context.ownerPath}::parameters`);
   validateTuple(signature.results, `${label}.results`, issues, scope, `${context.ownerPath}::results`);
   if (typeof signature.variadic !== "boolean") issues.push(`${label}.variadic must be boolean`);
+  if (signature.parameterNameProvenance !== "source" && signature.parameterNameProvenance !== "unavailable") {
+    issues.push(`${label}.parameterNameProvenance must be 'source' or 'unavailable'`);
+  }
   if (signature.variadic === true && signature.parameters?.variables?.at(-1)?.type?.kind !== "slice") issues.push(`${label}.variadic requires a final slice parameter`);
 }
 
@@ -234,10 +237,13 @@ function validateStruct(structure, label, issues, scope, ownerPath) {
 }
 
 function validateInterface(value, label, issues, scope, ownerPath) {
-  const keys = new Set(["comparable", "completeMethods", "embeddedKinds", "embeddedTypes", "explicitMethods", "implicit", "methodSetOnly"]);
+  const keys = new Set(["comparable", "completeMethods", "embeddedKinds", "embeddedTypes", "explicitMethodOrderProvenance", "explicitMethods", "implicit", "methodSetOnly"]);
   validateSnapshotObject(value, keys, label, issues, keys);
   if (!isObject(value)) return;
   for (const key of ["comparable", "implicit", "methodSetOnly"]) if (typeof value[key] !== "boolean") issues.push(`${label}.${key} must be boolean`);
+  if (value.explicitMethodOrderProvenance !== "source" && value.explicitMethodOrderProvenance !== "canonical") {
+    issues.push(`${label}.explicitMethodOrderProvenance must be 'source' or 'canonical'`);
+  }
   for (const key of ["explicitMethods", "completeMethods"]) {
     if (!Array.isArray(value[key])) issues.push(`${label}.${key} must be an array`);
     const role = key === "explicitMethods" ? "explicitMethod" : "completeMethod";

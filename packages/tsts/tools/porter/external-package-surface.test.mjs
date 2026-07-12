@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDependencySemanticTypeIndex, buildExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
+import { buildDependencySemanticTypeIndex, buildExternalFacadeStoragePlan } from "./core/external-facades.mjs";
 import { buildExternalPackageSurfaceDeclarationIndex } from "./core/external-package-declarations.mjs";
 import { createExternalFacadeContractRenderer, renderExternalFacadeModules } from "./core/facade-artifacts.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
@@ -11,8 +11,11 @@ import {
   externalFunction,
   externalType,
   externalValue,
+  finalizeExternalFacadeFixtureCatalog,
+  finalizeGeneratedFacadeFixtureCatalog,
   namedType,
   signature,
+  structType,
   variable,
 } from "./test/external-facade-fixtures.mjs";
 import { baseConfig } from "./test/helpers.mjs";
@@ -25,6 +28,14 @@ import { createCanonicalDeclarationResolver } from "./ts-extractor/module-resolu
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
 const parser = await loadParser();
+
+function finalizedCatalog(config, snapshot, moduleIndex) {
+  return finalizeExternalFacadeFixtureCatalog(config, snapshot, {
+    api: parser,
+    moduleIndex,
+    valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
+  });
+}
 
 test("external package surfaces are explicit and never seed generated facade artifacts", () => {
   const packagePath = "example.com/native";
@@ -50,6 +61,12 @@ test("external package surfaces are explicit and never seed generated facade art
   const config = {
     ...baseConfig,
     authoredFacadeModules: ["go/example.com/native.ts"],
+    externalFacadePolicies: [{
+      objectId: tokenId,
+      tsModule: "go/example.com/native.ts",
+      tsName: "Token",
+      storageStrategy: "authored",
+    }],
     externalPackageSurfaceSelections: [
       { objectId: `${packagePath}::const::Limit`, tsModule: "go/example.com/native.ts", tsName: "MaxLimit" },
       { objectId: `${packagePath}::func::Parse`, tsModule: "go/example.com/native.ts", tsName: "ParseNative" },
@@ -77,19 +94,28 @@ test("external package surfaces are explicit and never seed generated facade art
     `${packagePath}::var::State`,
   ]);
 
-  assert.equal(renderExternalFacadeModules(config, snapshot).size, 0);
+  const authoredSource = `import type { int } from "../scalars.js";\nexport type Token = string;\nexport function ParseNative(text: string): Token { throw new Error(text); }\nexport const MaxLimit: int = 7;\nexport let CurrentState: string = "";\n`;
+  const initialModuleIndex = indexTypeScriptModuleSources(parser, new Map([
+    [`${config.tsRoot}/go/example.com/native.ts`, authoredSource],
+    [`${config.tsRoot}/go/scalars.ts`, "export type int = number;"],
+  ]));
+  assert.equal(renderExternalFacadeModules(config, snapshot, finalizedCatalog(config, snapshot, initialModuleIndex)).size, 0);
   const missingClosure = structuredClone(snapshot);
   missingClosure.semantic.externalPackageSurface.dependencyTypeDeclarations = [];
   assert.throws(
-    () => buildExternalFacadeStorageCatalog(config, missingClosure),
+    () => buildExternalFacadeStoragePlan({ ...config, externalFacadePolicies: [] }, missingClosure),
     /references dependency type 'example\.com\/native::type::Token' without extracted go\/types declaration evidence/,
+  );
+  assert.throws(
+    () => buildExternalFacadeStoragePlan(config, missingClosure),
+    /externalFacadePolicies\[0\]\.objectId 'example\.com\/native::type::Token' has no extracted go\/types declaration/,
   );
   const extraClosure = structuredClone(snapshot);
   extraClosure.semantic.externalPackageSurface.dependencyTypeDeclarations.push(
     externalType({ packagePath, name: "Unused", rhs: basic("string") }),
   );
   assert.throws(
-    () => buildExternalFacadeStorageCatalog(config, extraClosure),
+    () => buildExternalFacadeStoragePlan(config, extraClosure),
     /snapshot dependency type 'example\.com\/native::type::Unused'.*not recursively reachable/,
   );
   assert.throws(
@@ -97,7 +123,6 @@ test("external package surfaces are explicit and never seed generated facade art
     /canonical dependency Go type declaration/,
   );
 
-  const authoredSource = `import type { int } from "../scalars.js";\nexport type Token = string;\nexport function ParseNative(text: string): Token { throw new Error(text); }\nexport const MaxLimit: int = 7;\nexport let CurrentState: string = "";\n`;
   const audit = (packageSource) => {
     const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
     const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
@@ -105,14 +130,14 @@ test("external package surfaces are explicit and never seed generated facade art
       [`${config.tsRoot}/go/scalars.ts`, "export type int = number;"],
     ]));
     const profile = loadProfile(config);
-    const facades = buildExternalFacadeStorageCatalog(config, snapshot);
+    const facades = finalizedCatalog(config, snapshot, moduleIndex);
     return collectExternalPackageSurfaceMismatches({
       api: parser,
       canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex, {}),
       config,
       conventions: loadConventions(profile.conventions),
       expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
-        externalFacades: facades,
+        externalFacades: facades.auditFacades(),
         includeExternalPackageSurface: true,
       }),
       moduleIndex,
@@ -129,6 +154,10 @@ test("external package surfaces are explicit and never seed generated facade art
     drifted.mismatches.some((mismatch) => mismatch.id === `external-package:${packagePath}::const::Limit` && mismatch.kind === "value-initializer"),
     JSON.stringify(drifted.mismatches),
   );
+  const renamedParameter = authoredSource.replace("ParseNative(text: string)", "ParseNative(input: string)");
+  assert.ok(audit(renamedParameter).mismatches.some((mismatch) => mismatch.kind === "param-name"));
+  parse.signature.parameterNameProvenance = "unavailable";
+  assert.ok(audit(renamedParameter).mismatches.every((mismatch) => mismatch.kind !== "param-name"));
 });
 
 test("selected external types reuse the authored-facade comparison without becoming generation roots", () => {
@@ -153,16 +182,19 @@ test("selected external types reuse the authored-facade comparison without becom
       profiles: [{}],
     },
   };
-  assert.equal(renderExternalFacadeModules(config, snapshot).size, 0);
-  const facades = buildExternalFacadeStorageCatalog(config, snapshot);
-  const facade = facades.get(`${packagePath}::type::Token`);
+  const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
+  const seedIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, "export type Token = string;\n"]]));
+  const seedFacades = finalizedCatalog(config, snapshot, seedIndex);
+  assert.equal(renderExternalFacadeModules(config, snapshot, seedFacades).size, 0);
+  const facade = seedFacades.auditFacades().get(`${packagePath}::type::Token`);
   assert.equal(facade?.storageStrategy, "authored");
-  const source = createExternalFacadeContractRenderer(config, snapshot, facades)(facade, token.type, 0);
+  const source = createExternalFacadeContractRenderer(config, snapshot, seedFacades)(facade, token.type, 0).source;
   const audit = (text) => {
     const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
       [`${config.tsRoot}/go/example.com/native.ts`, text],
     ]));
     const profile = loadProfile(config);
+    const facades = finalizedCatalog(config, snapshot, moduleIndex);
     return collectAuthoredFacadeMismatches({
       api: parser,
       canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex, {}),
@@ -177,4 +209,126 @@ test("selected external types reuse the authored-facade comparison without becom
   };
   assert.deepEqual(audit(source).mismatches, []);
   assert.ok(audit(source.replace(/\bstring\b/, "number")).mismatches.length > 0);
+});
+
+test("external declaration evidence normalizes unavailable names through nested callbacks", () => {
+  const packagePath = "example.com/native";
+  const callback = signature([
+    variable(`${packagePath}::callback::parameters::0`, "arg0", basic("string")),
+  ], []);
+  callback.parameterNameProvenance = "unavailable";
+  const callbackType = { kind: "signature", nilable: true, signature: callback };
+  const register = externalFunction({
+    packagePath,
+    name: "Register",
+    functionSignature: signature([
+      variable(`${packagePath}::func::Register::parameters::0`, "arg0", callbackType),
+    ], []),
+  });
+  register.signature.parameterNameProvenance = "unavailable";
+  register.object.type.signature.parameterNameProvenance = "unavailable";
+  const current = externalValue({ packagePath, name: "Current", type: callbackType });
+  const config = {
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts"],
+    externalPackageSurfaceSelections: [
+      { objectId: register.object.id, tsModule: "go/example.com/native.ts", tsName: "RegisterNative" },
+      { objectId: `${packagePath}::var::Current`, tsModule: "go/example.com/native.ts", tsName: "CurrentCallback" },
+    ],
+  };
+  const snapshot = {
+    files: [],
+    semantic: {
+      dependencyTypeDeclarations: [],
+      externalPackageSurface: {
+        declarations: [register, current],
+        dependencyTypeDeclarations: [],
+        selections: config.externalPackageSurfaceSelections.map((selection) => selection.objectId),
+        unresolvedSelections: [],
+      },
+      methodSetSignatures: [],
+      profiles: [{}],
+    },
+  };
+  const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
+  const compatModuleId = `${config.tsRoot}/go/compat.ts`;
+  const audit = (callbackParameterType) => {
+    const moduleIndex = indexTypeScriptModuleSources(parser, new Map([
+      [moduleId, `
+import type { GoFunc } from "../compat.js";
+export function RegisterNative(handler: GoFunc<(value: ${callbackParameterType}) => void>): void {}
+export let CurrentCallback: GoFunc<(currentValue: ${callbackParameterType}) => void>;
+`],
+      [compatModuleId, "export type GoFunc<F> = F | null;"],
+    ]));
+    const profile = loadProfile(config);
+    const facades = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
+    return collectExternalPackageSurfaceMismatches({
+      api: parser,
+      canonicalIdentity: createCanonicalDeclarationResolver(moduleIndex),
+      config,
+      conventions: loadConventions(profile.conventions),
+      expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
+        externalFacades: facades.auditFacades(),
+        includeExternalPackageSurface: true,
+      }),
+      moduleIndex,
+      snapshot,
+      valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
+    });
+  };
+  assert.deepEqual(audit("string").mismatches, []);
+  const wrong = audit("number").mismatches;
+  assert.equal(wrong.some((mismatch) => mismatch.id === `external-package:${register.object.id}`), true);
+  assert.equal(wrong.some((mismatch) => mismatch.id === `external-package:${packagePath}::var::Current`), true);
+});
+
+test("selected external type members close audit-only dependencies without generating artifacts", () => {
+  const packagePath = "example.com/native";
+  const tokenPackage = "dependency.example/types";
+  const token = externalType({ packagePath: tokenPackage, name: "Token", rhs: basic("string") });
+  const container = externalType({
+    packagePath,
+    name: "Container",
+    rhs: structType([variable(
+      `${packagePath}::type::Container::field::Token`,
+      "Token",
+      namedType(token.object.id, tokenPackage, "Token"),
+      true,
+    )]),
+  });
+  const config = {
+    ...baseConfig,
+    authoredFacadeModules: ["go/example.com/native.ts"],
+    externalPackageSurfaceSelections: [{
+      objectId: container.object.id,
+      tsModule: "go/example.com/native.ts",
+      tsName: "Container",
+    }],
+  };
+  const snapshot = {
+    files: [],
+    semantic: {
+      dependencyTypeDeclarations: [],
+      externalPackageSurface: {
+        declarations: [container],
+        dependencyTypeDeclarations: [token],
+        selections: [container.object.id],
+        unresolvedSelections: [],
+      },
+      methodSetSignatures: [],
+      profiles: [{}],
+    },
+  };
+  const moduleId = `${config.tsRoot}/go/example.com/native.ts`;
+  const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[
+    moduleId,
+    "export type Container = { Token: unknown };\n",
+  ]]));
+  const catalog = finalizedCatalog(config, snapshot, moduleIndex);
+  const auditFacades = catalog.auditFacades();
+  assert.equal(auditFacades.get(container.object.id)?.storageStrategy, "authored");
+  assert.equal(auditFacades.get(token.object.id)?.storageStrategy, "generated");
+  assert.equal(catalog.artifactFacades().size, 0);
+  assert.equal(renderExternalFacadeModules(config, snapshot, catalog).size, 0);
 });
