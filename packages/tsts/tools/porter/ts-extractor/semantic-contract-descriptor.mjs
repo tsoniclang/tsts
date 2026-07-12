@@ -81,9 +81,7 @@ export function semanticSignatureDescriptor(signature, parentContext, operations
     const type = semanticContractDescriptor(parameter.type, context, operations);
     params.push(callableParameterDescriptor(name, parameter.variadic ? { t: "array", element: type } : type, parameter.variadic));
   }
-  const results = signature.results.map((result) => semanticContractDescriptor(result.type, context, operations));
-  const ret = results.length === 0 ? { t: "kw", kw: "void" }
-    : results.length === 1 ? results[0] : { t: "tuple", elements: results };
+  const ret = semanticResultsDescriptor(signature.results, context, operations);
   const receiverCount = signature.receiverTypeParameters.length;
   const typeParams = allTypeParameters.map((parameter, index) => {
     const binding = typeParameters.get(semanticTypeParameterKey(parameter.reference));
@@ -100,6 +98,41 @@ export function semanticSignatureDescriptor(signature, parentContext, operations
     typeParams,
     signatureModifiers: [],
   };
+}
+
+function semanticResultsDescriptor(results, context, operations) {
+  if (!Array.isArray(results)) throw new Error("canonical semantic signature results must be an array");
+  for (const [index, result] of results.entries()) {
+    validateResultName(result, index);
+  }
+  if (results.length === 0) return { t: "kw", kw: "void" };
+  if (results.length === 1) {
+    return semanticContractDescriptor(results[0].type, context, operations);
+  }
+  const labeledCount = results.filter((result) => result.nameKind !== "unnamed").length;
+  if (labeledCount !== 0 && labeledCount !== results.length) {
+    throw new Error("canonical Go result list mixes named/blank and unnamed results and has no exact TypeScript tuple descriptor");
+  }
+  const elements = results.map((result) => {
+    const type = semanticContractDescriptor(result.type, context, operations);
+    if (result.nameKind === "unnamed") return type;
+    return {
+      t: "namedTuple",
+      name: result.name === "_" ? "_" : safeParamName(result.name),
+      rest: false,
+      optional: false,
+      type,
+    };
+  });
+  return { t: "tuple", elements };
+}
+
+function validateResultName(result, index) {
+  if (!isObject(result) || typeof result.name !== "string") throw new Error(`canonical Go result #${index} has no exact name`);
+  const expectedNameKind = result.name === "" ? "unnamed" : result.name === "_" ? "blank" : "named";
+  if (result.nameKind !== expectedNameKind) {
+    throw new Error(`canonical Go result #${index} nameKind must be '${expectedNameKind}', got '${result.nameKind}'`);
+  }
 }
 
 export function bindTypeParameters(parameters, inherited = new Map()) {

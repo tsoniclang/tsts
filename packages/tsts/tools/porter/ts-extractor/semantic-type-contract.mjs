@@ -80,7 +80,7 @@ export function lowerSemanticSignature(signature, parentContext, options = {}) {
   if (signature.variadic === true && input.length === 0) throw new Error("canonical Go variadic signature has no final parameter");
   const results = variables(signature.results).map((variable, index) => {
     requireVariable(variable, `canonical Go result #${index}`);
-    return { name: variable.name, type: lowerValue(variable.type, context) };
+    return { name: variable.name, nameKind: variable.nameKind, type: lowerValue(variable.type, context) };
   });
   let receiver;
   if (options.includeReceiver === true) {

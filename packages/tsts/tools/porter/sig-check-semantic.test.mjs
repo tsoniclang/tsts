@@ -481,7 +481,8 @@ function interfaceMethod(owner, name, parameters, results) {
 }
 
 function semanticVariable(id, name, type, embedded = false) {
-  return { id, name, packagePath, embedded, exported: false, type };
+  const nameKind = name === "" ? "unnamed" : name === "_" ? "blank" : "named";
+  return { id, name, nameKind, packagePath, embedded, exported: false, type };
 }
 
 function structField(name, type, embedded = false) {

@@ -69,6 +69,27 @@ const parameterRef = (ownerId, index, name = `T${index}`) => ({ ownerId, role: "
 const parameter = (ownerId, index, constraint, name) => ({ reference: parameterRef(ownerId, index, name), constraint });
 const variants = (semantic, profiles = [semanticProfile]) => [{ ...semantic, profiles }];
 
+function signatureResultDescriptor(results) {
+  const unit = {
+    id: "example::p.go::func::ResultFixture",
+    kind: "func",
+    name: "ResultFixture",
+    semantic: variants({
+      kind: "func",
+      signature: {
+        receiverTypeParameters: [],
+        typeParameters: [],
+        parameters: { variables: [] },
+        results: { variables: results },
+        variadic: false,
+        parameterNameProvenance: "source",
+      },
+      valueSpecs: [],
+    }),
+  };
+  return goUnitDescriptor(unit, indexFor()).signatures[0].ret;
+}
+
 test("canonical semantic types map resolved array lengths, identities, and constraints", () => {
   const boxObject = {
     id: "example/p::type::Box",
@@ -146,7 +167,7 @@ test("function descriptors use exact go/types parameters, constraints, variadics
         receiverTypeParameters: [],
         typeParameters: [typeParameter],
         parameters: { variables: [{ name: "values", type: { kind: "slice", nilable: true, element: typeRef } }] },
-        results: { variables: [{ name: "", type: { kind: "map", nilable: true, key: basic("string"), element: typeRef } }] },
+        results: { variables: [{ name: "", nameKind: "unnamed", type: { kind: "map", nilable: true, key: basic("string"), element: typeRef } }] },
         variadic: true,
         parameterNameProvenance: "source",
       },
@@ -191,6 +212,58 @@ test("function descriptors use exact go/types parameters, constraints, variadics
       signatureModifiers: [],
     }],
   });
+});
+
+test("multiple Go results preserve named, blank, and unnamed tuple elements", () => {
+  assert.deepEqual(signatureResultDescriptor([
+    { name: "value", nameKind: "named", type: basic("int") },
+    { name: "_", nameKind: "blank", type: basic("string") },
+  ]), {
+    t: "tuple",
+    elements: [
+      {
+        t: "namedTuple",
+        name: "value",
+        rest: false,
+        optional: false,
+        type: { t: "ref", id: "src/go/scalars.ts::int", args: [] },
+      },
+      {
+        t: "namedTuple",
+        name: "_",
+        rest: false,
+        optional: false,
+        type: { t: "kw", kw: "string" },
+      },
+    ],
+  });
+  assert.deepEqual(signatureResultDescriptor([
+    { name: "", nameKind: "unnamed", type: basic("int") },
+    { name: "", nameKind: "unnamed", type: basic("string") },
+  ]), {
+    t: "tuple",
+    elements: [
+      { t: "ref", id: "src/go/scalars.ts::int", args: [] },
+      { t: "kw", kw: "string" },
+    ],
+  });
+});
+
+test("single result bindings retain scalar shape while mixed and malformed result names fail closed", () => {
+  assert.deepEqual(signatureResultDescriptor([{ name: "", nameKind: "unnamed", type: basic("string") }]), { t: "kw", kw: "string" });
+  assert.deepEqual(signatureResultDescriptor([{ name: "value", nameKind: "named", type: basic("string") }]), { t: "kw", kw: "string" });
+  assert.deepEqual(signatureResultDescriptor([{ name: "_", nameKind: "blank", type: basic("string") }]), { t: "kw", kw: "string" });
+  assert.throws(
+    () => signatureResultDescriptor([
+      { name: "value", nameKind: "named", type: basic("int") },
+      { name: "", nameKind: "unnamed", type: basic("string") },
+    ]),
+    /mixes named\/blank and unnamed results and has no exact TypeScript tuple descriptor/,
+  );
+  assert.throws(
+    () => signatureResultDescriptor([{ name: "value", nameKind: "unnamed", type: basic("string") }]),
+    /nameKind must be 'named'/,
+  );
 });
 
 test("value declarations use exact go/constant values and retain blank binding types", () => {
