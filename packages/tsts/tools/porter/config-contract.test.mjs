@@ -12,11 +12,13 @@ const base = {
   statusOut: ".temp/status.json",
   reportOut: ".temp/status.md",
   nonGoDeclarationManifestPath: "porter.non-go-declarations.json",
+  largeFileLineThreshold: 5000,
+  largeFileSplitPlanPath: "porter.large-splits.json",
 };
 
 test("Porter config rejects unknown and retired top-level contracts", () => {
   assert.equal(assertPorterConfig(structuredClone(base)).schemaVersion, 3);
-  for (const key of ["astGeneratedDir", "astGeneratedStatusOut", "astSchemaInputs", "bundledGeneratedDir", "diagnosticsGeneratedDir", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "protocolGeneratedInput", "schemaSourceSyncChecks", "futureGuess"]) {
+  for (const key of ["astGeneratedDir", "astGeneratedStatusOut", "astSchemaInputs", "bundledGeneratedDir", "diagnosticsGeneratedDir", "diagnosticsGeneratedStatusOut", "generatedPolicy", "largeFileSplitPlan", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "protocolGeneratedInput", "schemaSourceSyncChecks", "futureGuess"]) {
     assert.throws(() => assertPorterConfig({ ...base, [key]: true }), /unknown current-contract key/);
   }
 });
@@ -24,6 +26,8 @@ test("Porter config rejects unknown and retired top-level contracts", () => {
 test("Porter config requires exact core identity and policy fields", () => {
   assert.throws(() => assertPorterConfig({ ...base, schemaVersion: 2 }), /schemaVersion must be 3/);
   assert.throws(() => assertPorterConfig({ ...base, goModulePath: "" }), /goModulePath must be a non-empty string/);
+  assert.throws(() => assertPorterConfig({ ...base, largeFileLineThreshold: 0 }), /largeFileLineThreshold must be a positive integer/);
+  assert.throws(() => assertPorterConfig({ ...base, largeFileSplitPlanPath: "../plan.json" }), /canonical repository-relative/);
   assert.throws(() => assertPorterConfig({ ...base, nonGoDeclarationManifestPath: "../manifest.json" }), /canonical repository-relative/);
   assert.throws(() => assertPorterConfig({ ...base, policies: [{ match: "internal/**", category: "typo", reason: "invalid" }] }), /unknown configured Porter policy category/);
   assert.throws(() => assertPorterConfig({ ...base, policies: [{ match: "internal/**", category: "out-of-scope", active: false, reason: "invalid dual disposition" }] }), /keys must be exactly/);

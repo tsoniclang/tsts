@@ -9,7 +9,6 @@ import {
   buildGeneratedArtifactStatus,
   buildGeneratedSourcePolicyStatus,
   buildLocalOverrideStatus,
-  buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
   buildStatus,
   collectSchemaSourceSyncFailures,
@@ -31,6 +30,7 @@ import {
   validatePorterSnapshot,
   writeTextSafely,
 } from "../porter.mjs";
+import { buildLargeFileSplitStatusFromPlan } from "../core/large-files.mjs";
 import {
   buildAstGeneratedArtifactStatus,
   buildAstGeneratedFiles,
@@ -67,6 +67,7 @@ import {
   identType,
   instantiationType,
   interfaceType,
+  largeFileSplitPlan,
   mapType,
   pointerType,
   selectorType,
@@ -75,6 +76,7 @@ import {
   signatureHash,
   testSemanticEnvironment,
   testSigHash,
+  tsUnitRecord,
   unitRecord,
 } from "./helpers.mjs";
 
@@ -440,28 +442,21 @@ test("expectedTsPath uses semantic large-file split plans without repeating sour
     lineCount: 6000,
     units: [unit],
   })]);
-  const config = {
-    ...baseConfig,
-    largeFileSplitPlan: {
-      schemaVersion: 1,
-      files: {
-        "internal/checker/checker.go": {
-          targetRoot: "packages/tsts/src/internal/checker/checker",
-          reason: "test semantic split plan",
-          targets: [
-            {
-              file: "source-files.ts",
-              description: "Source-file checking methods",
-              declarations: ["method::Checker.checkSourceFile"],
-            },
-          ],
+  const plan = largeFileSplitPlan({
+    "internal/checker/checker.go": {
+      reason: "test semantic split plan",
+      targets: [
+        {
+          path: "packages/tsts/src/internal/checker/checker/source-files.ts",
+          description: "Source-file checking methods",
+          declarations: ["method::Checker.checkSourceFile"],
         },
-      },
+      ],
     },
-  };
-  const splitStatus = buildLargeFileSplitStatus(config, snapshot);
+  });
+  const splitStatus = buildLargeFileSplitStatusFromPlan(baseConfig, { ...snapshot, gitRevision: plan.sourceRevision }, plan);
   assert.equal(
-    expectedTsPath(config, unit, splitStatus),
+    expectedTsPath(baseConfig, unit, splitStatus),
     "packages/tsts/src/internal/checker/checker/source-files.ts",
   );
 });
@@ -472,42 +467,42 @@ test("buildStatus rejects tracked units outside their semantic split targets", (
     kind: "method",
     qualifiedName: "Checker.checkSourceFile",
     goPath: "internal/checker/checker.go",
-    sigHash: "sig-1",
+    sigHash: testSigHash,
   });
-  const config = {
-    ...baseConfig,
-    largeFileSplitPlan: {
-      schemaVersion: 1,
-      files: {
-        "internal/checker/checker.go": {
-          targetRoot: "packages/tsts/src/internal/checker/checker",
-          targets: [{
-            file: "source-files.ts",
-            description: "Source-file checking methods",
-            declarations: ["method::Checker.checkSourceFile"],
-          }],
-        },
-      },
+  const plan = largeFileSplitPlan({
+    "internal/checker/checker.go": {
+      reason: "Exact semantic split fixture for source-file checking.",
+      targets: [{
+        path: "packages/tsts/src/internal/checker/checker/source-files.ts",
+        description: "Source-file checking methods",
+        declarations: ["method::Checker.checkSourceFile"],
+      }],
     },
-  };
-  const status = buildStatus({
-    config,
-    snapshot: snapshotWith([fileRecord({
+  });
+  const snapshot = {
+    ...snapshotWith([fileRecord({
       path: "internal/checker/checker.go",
       lineCount: 6000,
       units: [unit],
     })]),
+    gitRevision: plan.sourceRevision,
+  };
+  const largeFileSplits = buildLargeFileSplitStatusFromPlan(baseConfig, snapshot, plan);
+  const status = buildStatus({
+    config: baseConfig,
+    snapshot,
     tsUnits: {
       fileCount: 1,
       files: [{ path: "packages/tsts/src/internal/checker/wrong.ts", metadataCount: 1 }],
-      units: [{
+      units: [tsUnitRecord({
         id: unit.id,
+        kind: "method",
         path: "packages/tsts/src/internal/checker/wrong.ts",
-        status: "implemented",
-        sigHash: "sig-1",
-      }],
+        sigHash: testSigHash,
+      })],
     },
     ...emptyVerificationEvidence(),
+    largeFileSplits,
   });
 
   assert.deepEqual(status.splitPathMismatches, [{
@@ -528,7 +523,7 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
         kind: "func",
         qualifiedName: "Fail",
         goPath: "internal/debug/debug.go",
-        sigHash: "sig-1",
+        sigHash: testSigHash,
       })],
     }),
     fileRecord({
@@ -540,25 +535,23 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
     config: baseConfig,
     snapshot,
     tsUnits: {
-      fileCount: 2,
+      fileCount: 3,
       files: [
-        { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 },
+        { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 2 },
         { path: "packages/tsts/src/internal/debug/helper.ts", metadataCount: 0 },
-        { path: "packages/tsts/src/internal/ls/service.ts", metadataCount: 1 },
+        { path: "packages/tsts/src/internal/ls/service.ts", metadataCount: 0 },
       ],
       units: [
-        {
+        tsUnitRecord({
           id: "m::internal/debug/debug.go::func::Fail",
           path: "packages/tsts/src/internal/debug/debug.ts",
-          status: "implemented",
-          sigHash: "old-sig",
-        },
-        {
+          sigHash: "f".repeat(64),
+        }),
+        tsUnitRecord({
           id: "m::internal/debug/debug.go::func::Gone",
           path: "packages/tsts/src/internal/debug/debug.ts",
-          status: "implemented",
-          sigHash: "sig",
-        },
+          sigHash: "e".repeat(64),
+        }),
       ],
     },
     ...emptyVerificationEvidence(),

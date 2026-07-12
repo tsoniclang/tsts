@@ -13,6 +13,7 @@ import { buildSourcePinStatus } from "../source-pin.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { compareText } from "./deterministic-order.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { buildLocalOverrideStatus } from "./local-overrides.mjs";
 import { resolveRepo } from "./runtime.mjs";
 import { buildSchemaSourceSyncStatus, buildStatus } from "./status.mjs";
@@ -42,6 +43,7 @@ export async function preparePorterWorkspaceState(input) {
   const sourcePin = buildSourcePinStatus(repositoryRoot, config, snapshot);
   const generatedSourceCoverage = buildGeneratedSourceCoverageStatus(repositoryRoot, config, snapshot);
   const globalGeneratedArtifacts = buildGlobalGeneratedArtifactStatus(repositoryRoot, config);
+  const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const status = buildStatus({
     config,
     snapshot,
@@ -56,6 +58,7 @@ export async function preparePorterWorkspaceState(input) {
     sourcePin,
     generatedSourceCoverage,
     globalGeneratedArtifacts,
+    largeFileSplits,
   });
   const state = Object.freeze({
     config,
@@ -74,6 +77,7 @@ export async function preparePorterWorkspaceState(input) {
     sourcePin,
     generatedSourceCoverage,
     globalGeneratedArtifacts,
+    largeFileSplits,
     status,
   });
   preparedWorkspaceStates.add(state);

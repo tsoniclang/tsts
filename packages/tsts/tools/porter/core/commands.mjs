@@ -106,9 +106,7 @@ export async function main() {
 
   if (command === "large-files") {
     const snapshot = runPinnedScan(config);
-    const splitStatus = buildLargeFileSplitStatus(config, snapshot);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
-    writeJson(resolveRepo(config.largeFileSplitStatusOut ?? ".temp/porter/large-file-splits.json"), splitStatus);
     if (options["write-draft"] === true) {
       const draft = buildDraftLargeFileSplitPlan(config, snapshot);
       writeJsonSafely(resolveRepo(splitPlanLabel(config)), draft, {
@@ -118,11 +116,10 @@ export async function main() {
       console.log(`wrote draft semantic split plan: ${splitPlanLabel(config)}`);
       return;
     }
+    const splitStatus = buildLargeFileSplitStatus(config, snapshot);
+    writeJson(resolveRepo(config.largeFileSplitStatusOut ?? ".temp/porter/large-file-splits.json"), splitStatus);
     printLargeFileSplitStatus(config, splitStatus);
-    if (options.check === true) {
-      verifyLargeFileSplitStatus(splitStatus);
-      return;
-    }
+    verifyLargeFileSplitStatus(splitStatus);
     return;
   }
 

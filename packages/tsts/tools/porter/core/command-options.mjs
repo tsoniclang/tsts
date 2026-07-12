@@ -36,9 +36,8 @@ const commandSchemas = Object.freeze({
     { conflicts: [["check", "out"], ["check", "force"]] },
   ),
   "large-files": schema(
-    { "write-draft": booleanOption, force: booleanOption, check: booleanOption },
+    { "write-draft": booleanOption, force: booleanOption },
     {
-      conflicts: [["check", "write-draft"], ["check", "force"]],
       requires: [["force", "write-draft"]],
     },
   ),

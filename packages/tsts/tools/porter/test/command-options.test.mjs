@@ -33,7 +33,8 @@ test("Porter command option schemas accept only their typed options", () => {
   }
   assert.deepEqual(parseArgs("scaffold", ["--all"]), { all: true });
   assert.deepEqual(parseArgs("facades", ["--check"]), { check: true });
-  assert.deepEqual(parseArgs("large-files", ["--check"]), { check: true });
+  assert.deepEqual(parseArgs("large-files", []), {});
+  assert.deepEqual(parseArgs("large-files", ["--write-draft"]), { "write-draft": true });
 });
 
 test("Porter command option schemas reject malformed arguments", () => {
@@ -51,6 +52,7 @@ test("Porter command option schemas reject malformed arguments", () => {
   assert.throws(() => parseArgs("skeleton-check", ["--compile", "false"]), /unknown option '--compile'/);
   assert.throws(() => parseArgs("skeleton-check", ["--emit-temp", "false"]), /unknown option '--emit-temp'/);
   assert.throws(() => parseArgs("skeleton-check", ["--out", "elsewhere"]), /unknown option '--out'/);
+  assert.throws(() => parseArgs("large-files", ["--check"]), /unknown option '--check'/);
   assert.throws(() => parseArgs("delta", []), /required option '--from' is missing/);
 });
 
@@ -58,7 +60,6 @@ test("Porter command option schemas reject ignored combinations", () => {
   assert.throws(() => parseArgs("scaffold", ["--all", "--limit", "5"]), /options '--all' and '--limit' cannot be used together/);
   assert.throws(() => parseArgs("scaffold", ["--append"]), /option '--append' requires '--write'/);
   assert.throws(() => parseArgs("facades", ["--check", "--out", "generated"]), /options '--check' and '--out' cannot be used together/);
-  assert.throws(() => parseArgs("large-files", ["--check", "--write-draft"]), /options '--check' and '--write-draft' cannot be used together/);
   assert.throws(() => parseArgs("large-files", ["--force"]), /option '--force' requires '--write-draft'/);
   assert.throws(() => parseArgs("ast", ["--force"]), /option '--force' requires '--write'/);
   assert.throws(() => parseArgs("diagnostics", ["--force"]), /option '--force' requires '--write'/);

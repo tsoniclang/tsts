@@ -2,11 +2,12 @@ import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
 import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import { declarationAuditsNotRun } from "./declaration-audits.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
-import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { validateTsgoUnitMetadata } from "./ts-units.mjs";
+import { PORTER_STATUS_SCHEMA_VERSION, requireExactPorterStatus } from "./status-contract.mjs";
+import { validateBuildStatusInput } from "./status-input-contract.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -125,43 +126,6 @@ export function collectSchemaSourceSyncFailures(status) {
   return failures;
 }
 
-const buildStatusInputKeys = Object.freeze([
-  "config",
-  "snapshot",
-  "tsUnits",
-  "generatedArtifacts",
-  "astGeneratedArtifacts",
-  "diagnosticsGeneratedArtifacts",
-  "bundledGeneratedArtifacts",
-  "unicodeGeneratedArtifacts",
-  "schemaSourceSync",
-  "localOverrides",
-  "sourcePin",
-  "generatedSourceCoverage",
-  "globalGeneratedArtifacts",
-]);
-const buildStatusInputKeySet = new Set(buildStatusInputKeys);
-
-function validateBuildStatusInput(input) {
-  if (input === null || typeof input !== "object" || Array.isArray(input) ||
-      ![Object.prototype, null].includes(Object.getPrototypeOf(input))) {
-    throw new TypeError("buildStatus input must be one exact object");
-  }
-  const keys = Reflect.ownKeys(input);
-  if (keys.some((key) => {
-    const descriptor = Object.getOwnPropertyDescriptor(input, key);
-    return typeof key !== "string" || descriptor?.enumerable !== true || !("value" in descriptor);
-  })) {
-    throw new TypeError("buildStatus input must contain only enumerable own data properties");
-  }
-  const extra = keys.filter((key) => !buildStatusInputKeySet.has(key)).sort();
-  if (extra.length > 0) throw new TypeError(`buildStatus input has extra key(s): ${extra.join(", ")}`);
-  const missing = buildStatusInputKeys.filter((key) => !Object.hasOwn(input, key));
-  if (missing.length > 0) throw new TypeError(`buildStatus input is missing required key(s): ${missing.join(", ")}`);
-  const undefinedKeys = buildStatusInputKeys.filter((key) => input[key] === undefined);
-  if (undefinedKeys.length > 0) throw new TypeError(`buildStatus input has undefined key(s): ${undefinedKeys.join(", ")}`);
-}
-
 export function buildStatus(input) {
   if (arguments.length !== 1) throw new TypeError(`buildStatus requires exactly one input object; received ${arguments.length} arguments`);
   validateBuildStatusInput(input);
@@ -179,9 +143,9 @@ export function buildStatus(input) {
     sourcePin,
     generatedSourceCoverage,
     globalGeneratedArtifacts,
+    largeFileSplits,
   } = input;
   const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
-  const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const generatedSourcePolicies = buildGeneratedSourcePolicyStatus(snapshot, {
     isInactive: (sourcePath) => inactiveSourcePolicyFor(config, sourcePath) !== undefined,
     requireAllMechanisms: config.sourcePinManifest !== undefined,
@@ -342,8 +306,8 @@ export function buildStatus(input) {
     }));
   const declarationAudits = declarationAuditsNotRun();
 
-  return {
-    schemaVersion: 4,
+  return requireExactPorterStatus({
+    schemaVersion: PORTER_STATUS_SCHEMA_VERSION,
     generatedAt: new Date().toISOString(),
     source: {
       root: snapshot.sourceRoot,
@@ -433,9 +397,9 @@ export function buildStatus(input) {
     sourceInterpretationIssues,
     largeFileSplits,
     splitPathMismatches,
-    missing: missing.slice(0, 500),
-    stale: stale.slice(0, 500),
-    excluded: excluded.slice(0, 500),
+    missing,
+    stale,
+    excluded,
     rows,
-  };
+  });
 }

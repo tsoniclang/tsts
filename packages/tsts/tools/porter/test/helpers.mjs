@@ -18,10 +18,7 @@ export const baseConfig = {
     { match: "packages/tsts/src/**/*.ts", category: "requires-tsgo-unit", reason: "metadata required" },
   ],
   largeFileLineThreshold: 5000,
-  largeFileSplitPlan: {
-    schemaVersion: 1,
-    files: {},
-  },
+  largeFileSplitPlanPath: "packages/tsts/porter.large-splits.json",
   overrideCategories: ["extension-host", "host-native", "runtime-correctness-performance", "runtime-performance", "runtime-representation"],
 };
 export const testSignature = "func Fail()";
@@ -67,7 +64,7 @@ export function snapshotWith(files) {
   const requiredFiles = files.filter((file) => file.units.some((unit) => isSemanticPrimaryUnitKind(unit.kind)));
   return {
     sourceRoot: "/tmp/tsgo",
-    gitRevision: "abc123",
+    gitRevision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     summary: {
       goFileCount: files.length,
       lineCount: files.reduce((sum, file) => sum + file.lineCount, 0),
@@ -90,18 +87,53 @@ export function snapshotWith(files) {
 
 export function emptyCounts() {
   return {
+    portable: 0,
+    excluded: 0,
+    implemented: 0,
+    stubbed: 0,
+    missing: 0,
+    stale: 0,
+    orphan: 0,
     duplicateGoIDs: 0,
     duplicateTsIDs: 0,
-    orphan: 0,
-    forbiddenTsFiles: 0,
+    unitlessGoFiles: 0,
     untrackedTsFiles: 0,
-    stale: 0,
-    missing: 0,
-    stubbed: 0,
+    forbiddenTsFiles: 0,
+    missingGeneratedArtifacts: 0,
+    staleGeneratedArtifacts: 0,
+    orphanGeneratedArtifacts: 0,
+    untrackedGeneratedArtifacts: 0,
+    invalidGeneratedArtifacts: 0,
+    missingAstArtifacts: 0,
+    staleAstArtifacts: 0,
+    orphanAstArtifacts: 0,
+    untrackedAstArtifacts: 0,
+    invalidAstArtifacts: 0,
+    missingDiagnosticsArtifacts: 0,
+    staleDiagnosticsArtifacts: 0,
+    orphanDiagnosticsArtifacts: 0,
+    untrackedDiagnosticsArtifacts: 0,
+    invalidDiagnosticsArtifacts: 0,
+    missingBundledArtifacts: 0,
+    staleBundledArtifacts: 0,
+    orphanBundledArtifacts: 0,
+    untrackedBundledArtifacts: 0,
+    invalidBundledArtifacts: 0,
+    missingUnicodeArtifacts: 0,
+    staleUnicodeArtifacts: 0,
+    orphanUnicodeArtifacts: 0,
+    untrackedUnicodeArtifacts: 0,
+    invalidUnicodeArtifacts: 0,
     largeFileSplitFailures: 0,
     splitPathMismatches: 0,
+    schemaSourceMismatches: 0,
+    schemaFilePolicyIssues: 0,
+    localOverrideIssues: 0,
     generatedSourcePolicyIssues: 0,
+    generatedSourceCoverageIssues: 0,
+    sourcePinIssues: 0,
     invalidTsMetadata: 0,
+    globalGeneratedArtifactIssues: 0,
     sourceInterpretationIssues: 0,
   };
 }
@@ -122,6 +154,62 @@ export function emptyVerificationEvidence() {
     sourcePin: emptySourcePinStatus(),
     generatedSourceCoverage: { issues: [] },
     globalGeneratedArtifacts: { issues: [], providerCount: 0 },
+    largeFileSplits: emptyLargeFileSplitStatus(),
+  };
+}
+
+export function completeVerificationStatus(overrides = {}) {
+  const status = {
+    schemaVersion: 4,
+    generatedAt: "2026-01-01T00:00:00.000Z",
+    source: { root: "/source", gitRevision: "a".repeat(40), fileCount: 0, lineCount: 0, unitCount: 0 },
+    ts: { root: "/source/ts", metadataUnitCount: 0, scannedFileCount: 0 },
+    ...completeDeclarationAuditStatus(),
+    counts: emptyCounts(),
+    categories: {},
+    modules: {},
+    missingModules: {},
+    duplicateGoIDs: [],
+    duplicateTsIDs: [],
+    orphanTsUnits: [],
+    unitlessGoFiles: [],
+    untrackedTsFiles: [],
+    forbiddenTsFiles: [],
+    ...emptyVerificationEvidence(),
+    generatedSourcePolicies: { issues: [], relevantFileCount: 0, mechanismCount: 0 },
+    invalidTsMetadata: [],
+    sourceInterpretationIssues: [],
+    splitPathMismatches: [],
+    missing: [],
+    stale: [],
+    excluded: [],
+    rows: [],
+  };
+  return { ...status, ...overrides };
+}
+
+export function emptyLargeFileSplitStatus() {
+  return {
+    schemaVersion: 1,
+    threshold: 5000,
+    planPath: "packages/tsts/porter.large-splits.json",
+    requiredFileCount: 0,
+    plannedFileCount: 0,
+    assignedUnitCount: 0,
+    failureCount: 0,
+    assignments: {},
+    files: [],
+    issues: [],
+  };
+}
+
+export function largeFileSplitPlan(files = {}, { sourceRevision = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", threshold = 5000 } = {}) {
+  return {
+    schemaVersion: 1,
+    generatedAt: "2026-01-01T00:00:00.000Z",
+    sourceRevision,
+    threshold,
+    files,
   };
 }
 
@@ -182,6 +270,20 @@ export function unitRecord(overrides) {
     metadata,
     ...normalizedOverrides,
   };
+}
+
+export function tsUnitRecord({
+  id = "m::internal/debug/debug.go::func::Fail",
+  kind = "func",
+  path = "packages/tsts/src/internal/debug/debug.ts",
+  sigHash = testSigHash,
+  status = "implemented",
+  override = undefined,
+} = {}) {
+  const metadata = { id, kind, sigHash, status };
+  const unit = { id, kind, status, sigHash, path, metadata };
+  if (override !== undefined) unit.override = override;
+  return unit;
 }
 
 function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/debug/debug.go", receiverName = "Receiver", unitId = "m::internal/debug/debug.go::func::Fail") {
@@ -390,22 +492,43 @@ export function interfaceType(members) {
 }
 
 export function completeDeclarationAuditStatus() {
-  const complete = () => ({ state: "complete" });
+  const inventoryAudit = () => ({ state: "complete", checked: 0, inventory: [], mismatchCount: 0 });
   return {
     signatureCheck: {
       state: "complete",
       selection: { kind: "all-active" },
-      mismatches: 0,
-      overrideIssues: 0,
+      checked: 0,
+      descriptors: 0,
+      overriddenUnits: 0,
+      mismatchCount: 0,
+      mismatches: [],
+      overrideIssueCount: 0,
+      overrideIssues: [],
       byKind: {},
-      authoredFacades: complete(),
-      externalPackageSurface: complete(),
-      typeStoragePolicies: complete(),
-      typeEquivalenceRelations: complete(),
-      ambientReferenceRelations: complete(),
-      declarationOwnership: complete(),
-      untrackedTypeScript: complete(),
+      authoredFacades: {
+        state: "complete", checked: 0, mismatchCount: 0,
+        constructorCount: 0, constructors: [], methodBindingCount: 0, methodBindings: [],
+        privateStorageMemberCount: 0, privateStorageMembers: [], tsOnlyMemberCount: 0, tsOnlyMembers: [],
+        unselectedGoMemberCount: 0, unselectedGoMembers: [],
+      },
+      externalPackageSurface: {
+        ...inventoryAudit(), resolvedProfileCount: 0, unresolvedProfileCount: 0,
+      },
+      typeStoragePolicies: inventoryAudit(),
+      typeEquivalenceRelations: inventoryAudit(),
+      ambientReferenceRelations: inventoryAudit(),
+      declarationOwnership: inventoryAudit(),
+      untrackedTypeScript: {
+        state: "complete", mismatchCount: 0,
+        exportedDeclarationCount: 0, exportedDeclarations: [], privateDeclarationCount: 0, privateDeclarations: [],
+        reExportCount: 0, reExports: [], reviewedDeclarationCount: 0, reviewedDeclarations: [],
+        reviewedRouteCount: 0, reviewedRoutes: [], testParityDeclarationCount: 0,
+        testParityFileCount: 0, testParityFiles: [],
+      },
     },
-    jsonTagCheck: { ...complete(), mismatches: 0, byKind: {} },
+    jsonTagCheck: {
+      state: "complete", taggedUnits: 0, taggedFields: 0, contractUnits: 0, contractFields: 0,
+      mismatchCount: 0, mismatches: [], byKind: {},
+    },
   };
 }

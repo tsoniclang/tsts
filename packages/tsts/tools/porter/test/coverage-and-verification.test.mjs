@@ -9,7 +9,6 @@ import {
   buildGeneratedArtifactStatus,
   buildGeneratedSourcePolicyStatus,
   buildLocalOverrideStatus,
-  buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
   buildStatus,
   collectSchemaSourceSyncFailures,
@@ -65,7 +64,9 @@ import {
   baseConfig,
   channelType,
   completeDeclarationAuditStatus,
+  completeVerificationStatus,
   emptyCounts,
+  emptyLargeFileSplitStatus,
   emptyVerificationEvidence,
   fileRecord,
   funcType,
@@ -79,118 +80,14 @@ import {
   sliceType,
   snapshotWith,
   testSigHash,
+  tsUnitRecord,
   unitRecord,
 } from "./helpers.mjs";
 
-test("large-file split plans must cover every declaration exactly once", () => {
-  const sourceMethod = unitRecord({
-    id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
-    kind: "method",
-    name: "checkSourceFile",
-    qualifiedName: "Checker.checkSourceFile",
-    receiver: "Checker",
-    goPath: "internal/checker/checker.go",
-  });
-  const typeMethod = unitRecord({
-    id: "m::internal/checker/checker.go::method::Checker.getTypeOfNode",
-    kind: "method",
-    name: "getTypeOfNode",
-    qualifiedName: "Checker.getTypeOfNode",
-    receiver: "Checker",
-    goPath: "internal/checker/checker.go",
-  });
-  const orphanMethod = unitRecord({
-    id: "m::internal/checker/checker.go::method::Checker.resolveName",
-    kind: "method",
-    name: "resolveName",
-    qualifiedName: "Checker.resolveName",
-    receiver: "Checker",
-    goPath: "internal/checker/checker.go",
-  });
-  const config = {
-    ...baseConfig,
-    largeFileSplitPlan: {
-      schemaVersion: 1,
-      files: {
-        "internal/checker/checker.go": {
-          targetRoot: "packages/tsts/src/internal/checker/checker",
-          targets: [
-            {
-              file: "source-files.ts",
-              description: "Source-file checking",
-              declarations: ["method::Checker.checkSourceFile", "method::Checker.gone"],
-            },
-            {
-              file: "types.ts",
-              description: "Type queries",
-              matchers: [{ kind: "method", receiver: "Checker", nameRegex: "^getType" }],
-            },
-            {
-              file: "duplicate-types.ts",
-              description: "Duplicate type queries",
-              declarations: ["method::Checker.getTypeOfNode"],
-            },
-          ],
-        },
-      },
-    },
-  };
-  const splitStatus = buildLargeFileSplitStatus(config, snapshotWith([fileRecord({
-    path: "internal/checker/checker.go",
-    lineCount: 6000,
-    units: [sourceMethod, typeMethod, orphanMethod],
-  })]));
-
-  assert.equal(splitStatus.requiredFileCount, 1);
-  assert.equal(splitStatus.files[0].assigned, 2);
-  assert.equal(splitStatus.files[0].unassigned, 1);
-  assert.ok(splitStatus.issues.some((issue) => issue.kind === "stale-declaration"));
-  assert.ok(splitStatus.issues.some((issue) => issue.kind === "duplicate-assignment"));
-  assert.ok(splitStatus.issues.some((issue) => issue.kind === "unassigned-declaration"));
-  assert.deepEqual(
-    collectVerifyFailures({
-      ...completeDeclarationAuditStatus(),
-      ...emptyVerificationEvidence(),
-      counts: { ...emptyCounts(), largeFileSplitFailures: splitStatus.failureCount },
-    }),
-    [`${splitStatus.failureCount} large-file split plan failures`],
-  );
-});
-
-test("large-file split plans reject random line/chunk target names", () => {
-  const unit = unitRecord({
-    id: "m::internal/parser/parser.go::func::ParseSourceFile",
-    kind: "func",
-    name: "ParseSourceFile",
-    qualifiedName: "ParseSourceFile",
-    goPath: "internal/parser/parser.go",
-  });
-  const splitStatus = buildLargeFileSplitStatus({
-    ...baseConfig,
-    largeFileSplitPlan: {
-      schemaVersion: 1,
-      files: {
-        "internal/parser/parser.go": {
-          targetRoot: "packages/tsts/src/internal/parser/parser",
-          targets: [
-            {
-              file: "part-001.ts",
-              description: "Invalid line-range style split",
-              declarations: ["func::ParseSourceFile"],
-            },
-          ],
-        },
-      },
-    },
-  }, snapshotWith([fileRecord({ path: "internal/parser/parser.go", lineCount: 6000, units: [unit] })]));
-
-  assert.ok(splitStatus.issues.some((issue) => issue.kind === "random-split-target"));
-});
 
 test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter coverage", () => {
   const config = {
     ...baseConfig,
-    largeFileSplitPlan: { schemaVersion: 1, files: {} },
     policies: [
       { match: "internal/ls/**", category: "out-of-scope", reason: "ls excluded" },
       { match: "internal/lsp/**", category: "out-of-scope", reason: "lsp excluded" },
@@ -252,20 +149,20 @@ test("buildStatus excludes exact inactive unit policies without counting their T
           kind: "func",
           qualifiedName: "fmtMain",
           goPath: "internal/execute/tsc.go",
-          sigHash: "sig-1",
+          sigHash: testSigHash,
         })],
       }),
     ]),
     tsUnits: {
       fileCount: 1,
       files: [{ path: "packages/tsts/src/internal/execute/tsc.ts", metadataCount: 1 }],
-      units: [{
+      units: [tsUnitRecord({
         id,
         kind: "func",
         path: "packages/tsts/src/internal/execute/tsc.ts",
         status: "stub",
-        sigHash: "sig-1",
-      }],
+        sigHash: testSigHash,
+      })],
     },
     ...emptyVerificationEvidence(),
   });
@@ -410,7 +307,7 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
     snapshot,
     "packages/tsts/src/internal/format/api.ts",
     [withFormatCodeSettings],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(mapped, snapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(mapped, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   assert.match(text, /import type \{ FormatCodeSettings \} from "\.\/source-boundaries\.js";/);
   assert.match(text, /options: FormatCodeSettings/);
@@ -418,13 +315,26 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
 });
 
 test("verifyStatus fails hard on coverage and metadata defects", () => {
-  const status = {
-    ...completeDeclarationAuditStatus(),
-    ...emptyVerificationEvidence(),
+  const staleRow = { id: "stale", status: "stale" };
+  const missingRow = { id: "missing", status: "missing" };
+  const status = completeVerificationStatus({
     counts: {
-      ...emptyCounts(), duplicateGoIDs: 1, duplicateTsIDs: 1, orphan: 1, forbiddenTsFiles: 1,
+      ...emptyCounts(), portable: 2, duplicateGoIDs: 1, duplicateTsIDs: 1, orphan: 1, forbiddenTsFiles: 1,
       untrackedTsFiles: 1, stale: 1, missing: 1,
+      missingGeneratedArtifacts: 1, staleGeneratedArtifacts: 1, orphanGeneratedArtifacts: 1,
+      untrackedGeneratedArtifacts: 1, invalidGeneratedArtifacts: 1,
     },
+    duplicateGoIDs: ["duplicate-go"],
+    duplicateTsIDs: ["duplicate-ts"],
+    orphanTsUnits: [{ id: "orphan", path: "packages/tsts/src/orphan.ts", status: "implemented" }],
+    forbiddenTsFiles: [{ path: "packages/tsts/src/forbidden.ts", reason: "forbidden" }],
+    untrackedTsFiles: [{ path: "packages/tsts/src/untracked.ts", reason: "untracked" }],
+    stale: [staleRow],
+    missing: [missingRow],
+    rows: [staleRow, missingRow],
+    categories: { "literal-port": 2 },
+    modules: { internal: 2 },
+    missingModules: { internal: 1 },
     generatedArtifacts: {
       missing: [{ path: "packages/tsts/src/go/compat.ts" }],
       stale: [{ path: "packages/tsts/src/go/io.ts" }],
@@ -432,7 +342,7 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
       untracked: [{ path: "packages/tsts/src/go/manual.ts" }],
       invalid: [{ path: "packages/tsts/src/go/bad.ts" }],
     },
-  };
+  });
   assert.deepEqual(collectVerifyFailures(status), [
     "1 duplicate Go IDs",
     "1 duplicate TS IDs",
@@ -450,11 +360,7 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
 });
 
 test("trusted verification requires every whole-program declaration subaudit", () => {
-  const status = {
-    ...completeDeclarationAuditStatus(),
-    ...emptyVerificationEvidence(),
-    counts: emptyCounts(),
-  };
+  const status = completeVerificationStatus();
   status.signatureCheck.declarationOwnership = { state: "not-run", reason: "fixture omitted ownership" };
   assert.deepEqual(collectVerifyFailures(status), [
     "declaration ownership audit must be complete for trusted verification (not run — fixture omitted ownership)",
@@ -467,12 +373,40 @@ test("trusted verification requires every whole-program declaration subaudit", (
   ]);
 });
 
+test("trusted verification rejects forged status envelopes and summary-only audit claims", () => {
+  const extra = completeVerificationStatus();
+  extra.trusted = true;
+  assert.throws(() => collectVerifyFailures(extra), /Porter status keys must be exactly/);
+
+  const countOnly = completeVerificationStatus({
+    counts: { ...emptyCounts(), missing: 1, portable: 1 },
+    categories: { "literal-port": 1 },
+    modules: { internal: 1 },
+    missingModules: { internal: 1 },
+  });
+  assert.throws(() => collectVerifyFailures(countOnly), /counts\.missing must equal Porter status\.missing/);
+
+  const missingMismatchEvidence = completeVerificationStatus();
+  delete missingMismatchEvidence.signatureCheck.mismatches;
+  assert.throws(() => collectVerifyFailures(missingMismatchEvidence), /signatureCheck keys must be exactly/);
+
+  const partialCompleteSubaudit = completeVerificationStatus();
+  partialCompleteSubaudit.signatureCheck.declarationOwnership = { state: "complete" };
+  assert.throws(() => collectVerifyFailures(partialCompleteSubaudit), /declarationOwnership keys must be exactly/);
+
+  const accessor = completeVerificationStatus();
+  Object.defineProperty(accessor.counts, "missing", { enumerable: true, get: () => 0 });
+  assert.throws(() => collectVerifyFailures(accessor), /enumerable own data properties/);
+});
+
 test("verification always rejects traceable stubs", () => {
-  const status = {
-    ...completeDeclarationAuditStatus(),
-    ...emptyVerificationEvidence(),
-    counts: { ...emptyCounts(), stubbed: 4 },
-  };
+  const rows = Array.from({ length: 4 }, (_, index) => ({ id: `stub-${index}`, status: "stub" }));
+  const status = completeVerificationStatus({
+    counts: { ...emptyCounts(), portable: 4, stubbed: 4 },
+    categories: { "literal-port": 4 },
+    modules: { internal: 4 },
+    rows,
+  });
   assert.deepEqual(collectVerifyFailures(status), [
     "4 stub Go units",
   ]);

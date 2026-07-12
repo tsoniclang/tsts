@@ -7,7 +7,6 @@ import {
   renderCanonicalTypeParameters,
 } from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { blankValueName, localTsName, safeIdentifier, safePropertyName, uniqueName } from "./names.mjs";
 import { buildSymbolIndex, fileFromUnit, importAliasMap, relativeImportPath } from "./render-indexes.mjs";
 import { invariantSemanticVariant } from "./semantic-variants.mjs";
@@ -40,11 +39,14 @@ function requireOnlyRendererOptions(options) {
   const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "largeFileSplits", "symbolIndex"]);
   const unknown = Reflect.ownKeys(options).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
   if (unknown.length > 0) throw new Error(`unit renderer options contain unknown current-contract key(s): ${unknown.join(", ")}`);
+  if (!Object.hasOwn(options, "largeFileSplits") || options.largeFileSplits === undefined) {
+    throw new Error("unit renderer options must contain finalized largeFileSplits evidence");
+  }
 }
 
 function rendererContext(config, snapshot, relativeTargetPath, units, options) {
   const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
-  const largeFileSplits = options.largeFileSplits ?? buildLargeFileSplitStatus(config, snapshot);
+  const largeFileSplits = options.largeFileSplits;
   const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
   const file = filesByPath.get(firstUnit?.metadata?.goPath ?? "") ?? fileFromUnit(firstUnit);

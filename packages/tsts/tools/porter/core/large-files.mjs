@@ -2,17 +2,39 @@ import { compareText } from "./deterministic-order.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
 import { isActivePortPolicy } from "./policies.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
+import { validateCanonicalRepositoryJsonPath } from "./non-go-declaration-manifest.mjs";
 import { fail, resolveRepo } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-export function buildLargeFileSplitStatus(config, snapshot) {
-  const threshold = Number(config.largeFileLineThreshold ?? 5000);
-  if (!Number.isInteger(threshold) || threshold < 1) {
-    fail("largeFileLineThreshold must be a positive integer");
-  }
+const splitPlanRootKeys = Object.freeze(["files", "generatedAt", "schemaVersion", "sourceRevision", "threshold"]);
+const splitFilePlanKeys = Object.freeze(["reason", "targets"]);
+const splitMatcherSelectorKeys = Object.freeze([
+  "idRegex",
+  "kind",
+  "name",
+  "nameRegex",
+  "qualifiedName",
+  "qualifiedNameRegex",
+  "receiver",
+  "receiverRegex",
+]);
+const splitMatcherSelectorKeySet = new Set(splitMatcherSelectorKeys);
+const splitMatcherRegexKeys = Object.freeze(["idRegex", "nameRegex", "qualifiedNameRegex", "receiverRegex"]);
 
-  const plan = loadLargeFileSplitPlan(config);
+export function buildLargeFileSplitStatus(config, snapshot) {
+  return buildLargeFileSplitStatusFromPlan(config, snapshot, loadLargeFileSplitPlan(config));
+}
+
+export function buildLargeFileSplitStatusFromPlan(config, snapshot, inputPlan) {
+  const threshold = largeFileLineThreshold(config);
+  const plan = normalizeLargeFileSplitPlan(inputPlan, config);
+  if (plan.threshold !== threshold) {
+    throw new Error(`large-file split plan threshold ${plan.threshold} does not match configured threshold ${threshold}`);
+  }
+  if (plan.sourceRevision !== snapshot.gitRevision) {
+    throw new Error(`large-file split plan sourceRevision ${plan.sourceRevision} does not match snapshot revision ${snapshot.gitRevision}`);
+  }
   const assignments = new Map();
   const files = [];
   const issues = [];
@@ -23,7 +45,7 @@ export function buildLargeFileSplitStatus(config, snapshot) {
     const portableUnits = largeLiteralUnitsForFile(config, snapshot, file, threshold);
     if (portableUnits.length === 0) continue;
     requiredPaths.add(file.path);
-    const filePlan = plan.files?.[file.path];
+    const filePlan = Object.hasOwn(plan.files, file.path) ? plan.files[file.path] : undefined;
     if (!filePlan) {
       issues.push(splitIssue(file.path, "missing-plan", `Large file has ${file.lineCount} LOC and ${portableUnits.length} portable units, but no semantic split plan.`));
       files.push({
@@ -39,10 +61,10 @@ export function buildLargeFileSplitStatus(config, snapshot) {
       });
       continue;
     }
-    files.push(validateLargeFilePlan(config, file, portableUnits, filePlan, assignments, issues));
+    files.push(validateLargeFilePlan(file, portableUnits, filePlan, assignments, issues));
   }
 
-  for (const plannedPath of Object.keys(plan.files ?? {})) {
+  for (const plannedPath of Object.keys(plan.files)) {
     const file = snapshotFiles.get(plannedPath);
     if (!file) {
       issues.push(splitIssue(plannedPath, "stale-file", "Split plan references a Go file that does not exist in the current TS-Go snapshot."));
@@ -58,7 +80,7 @@ export function buildLargeFileSplitStatus(config, snapshot) {
     threshold,
     planPath: splitPlanLabel(config),
     requiredFileCount: requiredPaths.size,
-    plannedFileCount: Object.keys(plan.files ?? {}).length,
+    plannedFileCount: Object.keys(plan.files).length,
     assignedUnitCount: assignments.size,
     failureCount: issues.length,
     assignments: Object.fromEntries([...assignments.entries()].sort(([left], [right]) => compareText(left, right))),
@@ -68,41 +90,39 @@ export function buildLargeFileSplitStatus(config, snapshot) {
 }
 
 export function buildDraftLargeFileSplitPlan(config, snapshot) {
-  const threshold = Number(config.largeFileLineThreshold ?? 5000);
+  const threshold = largeFileLineThreshold(config);
   const files = {};
   for (const file of snapshot.files ?? []) {
     const units = largeLiteralUnitsForFile(config, snapshot, file, threshold);
     if (units.length === 0) continue;
-    const targetRoot = defaultLargeFileTargetRoot(config, file.path);
     const groups = new Map();
     for (const unit of units) {
-      const target = draftSemanticTargetForUnit(file.path, unit);
-      const group = groups.get(target.file) ?? {
-        file: target.file,
+      const target = draftSemanticTargetForUnit(config, file.path, unit);
+      const group = groups.get(target.path) ?? {
+        path: target.path,
         description: target.description,
         declarations: [],
       };
       group.declarations.push(splitDeclarationKey(unit));
-      groups.set(target.file, group);
+      groups.set(target.path, group);
     }
     files[file.path] = {
-      targetRoot,
       reason: `Semantic split plan for ${file.lineCount} LOC TS-Go file. Generated by porter large-files --write-draft; review group boundaries before large-scale implementation.`,
       targets: [...groups.values()]
         .map((target) => ({
           ...target,
           declarations: target.declarations.sort(compareText),
         }))
-        .sort((left, right) => compareText(left.file, right.file)),
+        .sort((left, right) => compareText(left.path, right.path)),
     };
   }
-  return {
+  return normalizeLargeFileSplitPlan({
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     sourceRevision: snapshot.gitRevision,
     threshold,
     files,
-  };
+  }, config);
 }
 
 export function largeLiteralUnitsForFile(config, snapshot, file, threshold) {
@@ -115,134 +135,125 @@ export function largeLiteralUnitsForFile(config, snapshot, file, threshold) {
   });
 }
 
-export function defaultLargeFileTargetRoot(config, goPath) {
-  return `${config.tsRoot.replace(/\/$/, "")}/${goPath.replace(/\.go$/, "")}`;
-}
-
-export function draftSemanticTargetForUnit(goPath, unit) {
-  if (goPath === "internal/checker/checker.go") return draftCheckerTarget(unit);
-  if (goPath === "internal/parser/parser.go") return draftParserTarget(unit);
-  if (goPath === "internal/printer/printer.go") return draftPrinterTarget(unit);
-  return { file: "support.ts", description: "General declarations that do not yet have a more specific semantic split." };
+export function draftSemanticTargetForUnit(config, goPath, unit) {
+  let target;
+  if (goPath === "internal/checker/checker.go") target = draftCheckerTarget(unit);
+  else if (goPath === "internal/parser/parser.go") target = draftParserTarget(unit);
+  else if (goPath === "internal/printer/printer.go") target = draftPrinterTarget(unit);
+  else target = { relativePath: "support.ts", description: "General declarations that do not yet have a more specific semantic split." };
+  return {
+    path: `${config.tsRoot}/${goPath.replace(/\.go$/, "")}/${target.relativePath}`,
+    description: target.description,
+  };
 }
 
 export function draftCheckerTarget(unit) {
   if (unit.kind !== "method") {
-    return { file: "state.ts", description: "Checker state, enums, cache keys, constructors, package constants, and top-level helpers." };
+    return { relativePath: "state.ts", description: "Checker state, enums, cache keys, constructors, package constants, and top-level helpers." };
   }
   const name = unit.name ?? "";
   const qualified = unit.qualifiedName ?? "";
   if (/(Diagnostic|Diagnostics|Error|Errors|Grammar|Report|Message|Span|RelatedInfo|Unreachable|Deprecated)/.test(qualified)) {
-    return { file: "diagnostics.ts", description: "Checker diagnostics, grammar checks, error construction, and diagnostic attachment." };
+    return { relativePath: "diagnostics.ts", description: "Checker diagnostics, grammar checks, error construction, and diagnostic attachment." };
   }
   if (/(Flow|Narrow|Narrowing|Truthiness|Falsy|Truthy|Discriminant|ControlFlow|Reachable|Definitely|Predicate)/.test(qualified)) {
-    return { file: "flow-narrowing.ts", description: "Control-flow analysis, narrowing, predicates, and definite-state queries." };
+    return { relativePath: "flow-narrowing.ts", description: "Control-flow analysis, narrowing, predicates, and definite-state queries." };
   }
   if (/(Signature|Call|Construct|Overload|Candidate|Applicable|Invocation|Argument|Parameter|Arity|ReturnType|RestType|ThisType|JsxSignature)/.test(qualified)) {
-    return { file: "signatures.ts", description: "Call, construct, overload, signature, argument, and return-type checking." };
+    return { relativePath: "signatures.ts", description: "Call, construct, overload, signature, argument, and return-type checking." };
   }
   if (/(Infer|Inference|Instantiation|Instantiate|Mapper|Mapping|Substitution|TypeParameter|Constraint|Variance)/.test(qualified)) {
-    return { file: "inference.ts", description: "Generic inference, type parameter constraints, type mappers, instantiation, and variance." };
+    return { relativePath: "inference.ts", description: "Generic inference, type parameter constraints, type mappers, instantiation, and variance." };
   }
   if (/(Assignable|Assignment|Related|Relation|Comparable|Compare|Subtype|Supertype|Identity|Identical|Excess|Satisfies)/.test(qualified)) {
-    return { file: "relations.ts", description: "Assignability, comparability, relation checks, identity checks, and excess-property logic." };
+    return { relativePath: "relations.ts", description: "Assignability, comparability, relation checks, identity checks, and excess-property logic." };
   }
   if (/(Symbol|Declaration|Name|Member|Property|PropertyAccess|ElementAccess|Index|Lookup|ResolveName|Alias|Export|Import|Scope|Local|Global|Identifier)/.test(qualified)) {
-    return { file: "symbols.ts", description: "Symbol lookup, declarations, names, imports/exports, property/member resolution, and identifier checks." };
+    return { relativePath: "symbols.ts", description: "Symbol lookup, declarations, names, imports/exports, property/member resolution, and identifier checks." };
   }
   if (/(Object|Type|Union|Intersection|Tuple|Array|Literal|Enum|Widen|Apparent|Base|Indexed|Mapped|Conditional|Template|Primitive|StringLike|NumberLike|BooleanLike|BigInt|ESSymbol|Unknown|Never|Any|Void|Null|Undefined)/.test(qualified)) {
-    return { file: "types.ts", description: "Type construction, classification, object/union/intersection/tuple types, and apparent/base type operations." };
+    return { relativePath: "types.ts", description: "Type construction, classification, object/union/intersection/tuple types, and apparent/base type operations." };
   }
   if (/(Class|Constructor|Heritage|Interface|Implements|BaseClass|Derived|Abstract|Private|Protected|Public|Static|Override)/.test(qualified)) {
-    return { file: "classes.ts", description: "Class, interface, constructor, heritage, visibility, and override semantics." };
+    return { relativePath: "classes.ts", description: "Class, interface, constructor, heritage, visibility, and override semantics." };
   }
   if (/(Module|Namespace|Ambient|External|Augmentation|Import|Export|Package|Global)/.test(qualified)) {
-    return { file: "modules.ts", description: "Module, namespace, ambient, package, import/export, and global augmentation checks." };
+    return { relativePath: "modules.ts", description: "Module, namespace, ambient, package, import/export, and global augmentation checks." };
   }
   if (/(Jsx|JSX|JSDoc|Decorator|TaggedTemplate|TemplateTag)/.test(qualified)) {
-    return { file: "jsx-jsdoc-decorators.ts", description: "JSX, JSDoc, decorators, and tagged-template checking." };
+    return { relativePath: "jsx-jsdoc-decorators.ts", description: "JSX, JSDoc, decorators, and tagged-template checking." };
   }
   if (/(Expression|Node|SourceFile|Statement|Block|Variable|Function|Arrow|Return|Throw|Switch|For|While|Do|Break|Continue|With|Try|Catch|Binary|Unary|Conditional|Delete|Await|Yield|Access|Literal|Template|ObjectLiteral|ArrayLiteral)/.test(qualified)) {
-    return { file: "syntax-checking.ts", description: "Syntax-node checking for expressions, statements, literals, functions, and source files." };
+    return { relativePath: "syntax-checking.ts", description: "Syntax-node checking for expressions, statements, literals, functions, and source files." };
   }
   if (/^(get|set|create|make|add|remove|append|clear|cache|mark|is|has|contains|maybe|try|forEach|visit|walk)/.test(name)) {
-    return { file: "support-queries.ts", description: "Shared checker queries, caches, predicates, walkers, and small support operations." };
+    return { relativePath: "support-queries.ts", description: "Shared checker queries, caches, predicates, walkers, and small support operations." };
   }
-  return { file: "support.ts", description: "General checker support declarations that remain exact-id tracked and must be reviewed before implementation." };
+  return { relativePath: "support.ts", description: "General checker support declarations that remain exact-id tracked and must be reviewed before implementation." };
 }
 
 export function draftParserTarget(unit) {
   if (unit.kind !== "method" && unit.kind !== "func") {
-    return { file: "state.ts", description: "Parser state, parsing contexts, pools, package constants, and top-level data." };
+    return { relativePath: "state.ts", description: "Parser state, parsing contexts, pools, package constants, and top-level data." };
   }
   const qualified = unit.qualifiedName ?? "";
-  if (/(JSDoc|Jsx|JSX)/.test(qualified)) return { file: "jsx-jsdoc.ts", description: "JSX and JSDoc parsing." };
-  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage|Constraint)/.test(qualified)) return { file: "types.ts", description: "Type syntax parsing and type-list parsing." };
-  if (/(Expression|Primary|Member|Call|New|Literal|Template|Binary|Unary|Update|Yield|Await|Arrow|Object|Array|Spread|ElementAccess|PropertyAccess)/.test(qualified)) return { file: "expressions.ts", description: "Expression, literal, template, and binding-element parsing." };
-  if (/(Statement|Declaration|SourceFile|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { file: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item parsing." };
-  if (/(List|Delimited|Separated|Array|Members|Elements|Clauses|Specifiers|Parameters|Arguments)/.test(qualified)) return { file: "lists.ts", description: "List parsing, delimited lists, parameters, arguments, members, and recovery around list terminators." };
-  if (/(Token|Scanner|Scan|Expected|ReScan|LookAhead|Speculation|Context|Trivia|Keyword|Identifier)/.test(qualified)) return { file: "tokens-speculation.ts", description: "Token consumption, scanner coordination, lookahead, speculation, and context flags." };
-  if (/(Error|Missing|Diagnostic|Recover|ParseError|Abort)/.test(qualified)) return { file: "errors-recovery.ts", description: "Parser diagnostics, missing nodes, recovery, and parse-error spans." };
-  return { file: "support.ts", description: "General parser support declarations that remain exact-id tracked and must be reviewed before implementation." };
+  if (/(JSDoc|Jsx|JSX)/.test(qualified)) return { relativePath: "jsx-jsdoc.ts", description: "JSX and JSDoc parsing." };
+  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage|Constraint)/.test(qualified)) return { relativePath: "types.ts", description: "Type syntax parsing and type-list parsing." };
+  if (/(Expression|Primary|Member|Call|New|Literal|Template|Binary|Unary|Update|Yield|Await|Arrow|Object|Array|Spread|ElementAccess|PropertyAccess)/.test(qualified)) return { relativePath: "expressions.ts", description: "Expression, literal, template, and binding-element parsing." };
+  if (/(Statement|Declaration|SourceFile|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { relativePath: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item parsing." };
+  if (/(List|Delimited|Separated|Array|Members|Elements|Clauses|Specifiers|Parameters|Arguments)/.test(qualified)) return { relativePath: "lists.ts", description: "List parsing, delimited lists, parameters, arguments, members, and recovery around list terminators." };
+  if (/(Token|Scanner|Scan|Expected|ReScan|LookAhead|Speculation|Context|Trivia|Keyword|Identifier)/.test(qualified)) return { relativePath: "tokens-speculation.ts", description: "Token consumption, scanner coordination, lookahead, speculation, and context flags." };
+  if (/(Error|Missing|Diagnostic|Recover|ParseError|Abort)/.test(qualified)) return { relativePath: "errors-recovery.ts", description: "Parser diagnostics, missing nodes, recovery, and parse-error spans." };
+  return { relativePath: "support.ts", description: "General parser support declarations that remain exact-id tracked and must be reviewed before implementation." };
 }
 
 export function draftPrinterTarget(unit) {
   if (unit.kind !== "method" && unit.kind !== "func") {
-    return { file: "state.ts", description: "Printer options, state records, write-kind constants, and construction helpers." };
+    return { relativePath: "state.ts", description: "Printer options, state records, write-kind constants, and construction helpers." };
   }
   const qualified = unit.qualifiedName ?? "";
-  if (/(Comment|Trivia|Detached|Directive|Pragma)/.test(qualified)) return { file: "comments.ts", description: "Comment, trivia, detached-comment, directive, and pragma emission." };
-  if (/(SourceMap|Source|Line|Position|Span|Range)/.test(qualified)) return { file: "source-maps.ts", description: "Source-map state and source-position emission." };
-  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage)/.test(qualified)) return { file: "types.ts", description: "Type-node and type-list printing." };
-  if (/(Expression|Literal|Template|Binary|Unary|Call|New|Member|PropertyAccess|ElementAccess|Object|Array|Spread|Await|Yield|Arrow)/.test(qualified)) return { file: "expressions.ts", description: "Expression, literal, template, call, member, and operator printing." };
-  if (/(Statement|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { file: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item printing." };
-  if (/(Write|writer|Emit|Print|Node|List|Children|Separator|Indent|Line|Text|Token|Keyword|Punctuation|Operator)/.test(qualified)) return { file: "emit-core.ts", description: "Core writer, token/list emission, indentation, separators, and node dispatch." };
-  return { file: "support.ts", description: "General printer support declarations that remain exact-id tracked and must be reviewed before implementation." };
+  if (/(Comment|Trivia|Detached|Directive|Pragma)/.test(qualified)) return { relativePath: "comments.ts", description: "Comment, trivia, detached-comment, directive, and pragma emission." };
+  if (/(SourceMap|Source|Line|Position|Span|Range)/.test(qualified)) return { relativePath: "source-maps.ts", description: "Source-map state and source-position emission." };
+  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage)/.test(qualified)) return { relativePath: "types.ts", description: "Type-node and type-list printing." };
+  if (/(Expression|Literal|Template|Binary|Unary|Call|New|Member|PropertyAccess|ElementAccess|Object|Array|Spread|Await|Yield|Arrow)/.test(qualified)) return { relativePath: "expressions.ts", description: "Expression, literal, template, call, member, and operator printing." };
+  if (/(Statement|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { relativePath: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item printing." };
+  if (/(Write|writer|Emit|Print|Node|List|Children|Separator|Indent|Line|Text|Token|Keyword|Punctuation|Operator)/.test(qualified)) return { relativePath: "emit-core.ts", description: "Core writer, token/list emission, indentation, separators, and node dispatch." };
+  return { relativePath: "support.ts", description: "General printer support declarations that remain exact-id tracked and must be reviewed before implementation." };
 }
 
-export function validateLargeFilePlan(config, file, units, filePlan, assignments, issues) {
-  const targetRoot = normalizeSplitTargetRoot(config, file.path, filePlan.targetRoot);
+export function validateLargeFilePlan(file, units, filePlan, assignments, issues) {
   const targetDeclarations = new Map();
   const declarationToUnit = new Map(units.map((unit) => [splitDeclarationKey(unit), unit]));
   const assignedInFile = new Map();
   let staleDeclarations = 0;
   let invalidTargets = 0;
 
-  if (!targetRoot) {
-    issues.push(splitIssue(file.path, "invalid-target-root", "Split plan must specify a repo-relative targetRoot under the TypeScript source root."));
-  }
-
-  for (const [targetIndex, target] of (filePlan.targets ?? []).entries()) {
-    const targetPath = splitTargetPath(targetRoot, target);
-    if (!targetPath) {
-      invalidTargets++;
-      issues.push(splitIssue(file.path, "invalid-target", `Target #${targetIndex + 1} must specify file or path.`));
-      continue;
-    }
+  for (const target of filePlan.targets) {
+    const targetPath = target.path;
     if (isRandomLookingSplitPath(targetPath)) {
       invalidTargets++;
       issues.push(splitIssue(file.path, "random-split-target", `Target '${targetPath}' looks line/chunk based; large files must be split semantically.`));
       continue;
     }
-    if (!target.description || String(target.description).trim() === "") {
-      invalidTargets++;
-      issues.push(splitIssue(file.path, "missing-target-description", `Target '${targetPath}' must document its semantic responsibility.`));
-    }
 
     const targetKey = targetPath;
     const claimed = new Set();
-    for (const declaration of target.declarations ?? []) {
-      const unit = declarationToUnit.get(declaration);
-      if (!unit) {
-        staleDeclarations++;
-        issues.push(splitIssue(file.path, "stale-declaration", `Split plan references declaration '${declaration}' that does not exist in this Go file.`, declaration, targetPath));
-        continue;
+    if (Object.hasOwn(target, "declarations")) {
+      for (const declaration of target.declarations) {
+        const unit = declarationToUnit.get(declaration);
+        if (!unit) {
+          staleDeclarations++;
+          issues.push(splitIssue(file.path, "stale-declaration", `Split plan references declaration '${declaration}' that does not exist in this Go file.`, declaration, targetPath));
+          continue;
+        }
+        claimed.add(splitDeclarationKey(unit));
       }
-      claimed.add(splitDeclarationKey(unit));
     }
-    for (const matcher of target.matchers ?? []) {
-      for (const unit of units) {
-        if (matchesSplitMatcher(unit, matcher)) claimed.add(splitDeclarationKey(unit));
+    if (Object.hasOwn(target, "matchers")) {
+      for (const matcher of target.matchers) {
+        for (const unit of units) {
+          if (matchesSplitMatcher(unit, matcher)) claimed.add(splitDeclarationKey(unit));
+        }
       }
     }
     if (claimed.size === 0) {
@@ -281,50 +292,173 @@ export function validateLargeFilePlan(config, file, units, filePlan, assignments
     duplicateAssignments: issues.filter((issue) => issue.file === file.path && issue.kind === "duplicate-assignment").length,
     staleDeclarations,
     invalidTargets,
-    targetCount: (filePlan.targets ?? []).length,
+    targetCount: filePlan.targets.length,
     targetDeclarationCounts: Object.fromEntries([...targetDeclarations.entries()].sort()),
     unassignedDeclarations: unassigned.slice(0, 100),
   };
 }
 
 export function loadLargeFileSplitPlan(config) {
-  if (config.largeFileSplitPlan) return normalizeLargeFileSplitPlan(config.largeFileSplitPlan);
-  const planPath = config.largeFileSplitPlanPath ?? "packages/tsts/porter.large-splits.json";
+  const planPath = config?.largeFileSplitPlanPath;
+  validateCanonicalRepositoryJsonPath(planPath, "largeFileSplitPlanPath");
   const absolutePath = resolveRepo(planPath);
-  if (!existsSync(absolutePath)) return { schemaVersion: 1, files: {} };
+  if (!existsSync(absolutePath)) throw new Error(`required large-file split plan is missing: ${planPath}`);
+  let plan;
   try {
-    return normalizeLargeFileSplitPlan(JSON.parse(readFileSync(absolutePath, "utf8")));
+    plan = JSON.parse(readFileSync(absolutePath, "utf8"));
   } catch (error) {
-    fail(`invalid large-file split plan ${planPath}: ${error.message}`);
+    throw new Error(`invalid large-file split plan ${planPath}: ${error.message}`);
+  }
+  try {
+    return normalizeLargeFileSplitPlan(plan, config);
+  } catch (error) {
+    throw new Error(`invalid large-file split plan ${planPath}: ${error.message}`);
   }
 }
 
-export function normalizeLargeFileSplitPlan(plan) {
-  if (!plan || typeof plan !== "object") fail("large-file split plan must be an object");
-  if (plan.schemaVersion !== 1) fail("large-file split plan schemaVersion must be 1");
-  if (!plan.files || typeof plan.files !== "object" || Array.isArray(plan.files)) {
-    fail("large-file split plan must contain a files object keyed by Go source path");
+export function normalizeLargeFileSplitPlan(plan, config) {
+  const tsRoot = normalizedTypeScriptRoot(config);
+  requireExactSplitPlanObject(plan, splitPlanRootKeys, "large-file split plan");
+  if (plan.schemaVersion !== 1) throw new Error("large-file split plan schemaVersion must be 1");
+  if (typeof plan.generatedAt !== "string" || !isExactIsoTimestamp(plan.generatedAt)) {
+    throw new Error("large-file split plan generatedAt must be an exact ISO timestamp");
+  }
+  if (typeof plan.sourceRevision !== "string" || !/^[a-f0-9]{40}$/.test(plan.sourceRevision)) {
+    throw new Error("large-file split plan sourceRevision must be a lowercase 40-character Git object id");
+  }
+  if (!Number.isInteger(plan.threshold) || plan.threshold < 1) {
+    throw new Error("large-file split plan threshold must be a positive integer");
+  }
+  requireSplitPlanRecord(plan.files, "large-file split plan files");
+  for (const [sourcePath, filePlan] of Object.entries(plan.files)) {
+    if (!isNormalizedGoSourcePath(sourcePath)) {
+      throw new Error(`large-file split plan file key '${sourcePath}' must be one normalized repo-relative .go path`);
+    }
+    const fileLabel = `large-file split plan files[${JSON.stringify(sourcePath)}]`;
+    requireExactSplitPlanObject(filePlan, splitFilePlanKeys, fileLabel);
+    if (typeof filePlan.reason !== "string" || filePlan.reason.trim() === "") {
+      throw new Error(`${fileLabel}.reason must be a non-empty string`);
+    }
+    requireSplitPlanArray(filePlan.targets, `${fileLabel}.targets`, { nonEmpty: true });
+    const targetPaths = new Set();
+    for (const [targetIndex, target] of filePlan.targets.entries()) {
+      validateSplitPlanTarget(target, `${fileLabel}.targets[${targetIndex}]`, tsRoot);
+      if (targetPaths.has(target.path)) throw new Error(`${fileLabel}.targets duplicates path '${target.path}'`);
+      targetPaths.add(target.path);
+    }
   }
   return plan;
 }
 
-export function normalizeSplitTargetRoot(config, sourcePath, targetRoot) {
-  if (!targetRoot || typeof targetRoot !== "string") return "";
-  const normalized = targetRoot.split(path.sep).join("/").replace(/\/+$/, "");
-  if (normalized.startsWith("/") || normalized.includes("..")) return "";
-  const tsRoot = config.tsRoot.replace(/\/$/, "");
-  if (!normalized.startsWith(`${tsRoot}/`)) return "";
-  if (normalized.endsWith(".ts")) return "";
-  if (normalized.includes(sourcePath.replace(/\.go$/, ".ts"))) return "";
-  return normalized;
+function validateSplitPlanTarget(target, label, tsRoot) {
+  requireSplitPlanRecord(target, label);
+  const hasDeclarations = Object.hasOwn(target, "declarations");
+  const hasMatchers = Object.hasOwn(target, "matchers");
+  if (!hasDeclarations && !hasMatchers) throw new Error(`${label} must contain declarations or matchers`);
+  const expectedKeys = ["path", "description"];
+  if (hasDeclarations) expectedKeys.push("declarations");
+  if (hasMatchers) expectedKeys.push("matchers");
+  requireExactSplitPlanObject(target, expectedKeys, label);
+  if (!isNormalizedTypeScriptTargetPath(target.path, tsRoot)) {
+    throw new Error(`${label}.path must be one normalized repo-relative .ts path under '${tsRoot}'`);
+  }
+  if (typeof target.description !== "string" || target.description.trim() === "") {
+    throw new Error(`${label}.description must be a non-empty string`);
+  }
+  if (hasDeclarations) {
+    requireSplitPlanArray(target.declarations, `${label}.declarations`, { nonEmpty: true });
+    const declarations = new Set();
+    for (const [index, declaration] of target.declarations.entries()) {
+      if (typeof declaration !== "string" || declaration.trim() === "") {
+        throw new Error(`${label}.declarations[${index}] must be a non-empty string`);
+      }
+      if (declarations.has(declaration)) throw new Error(`${label}.declarations duplicates '${declaration}'`);
+      declarations.add(declaration);
+    }
+  }
+  if (hasMatchers) {
+    requireSplitPlanArray(target.matchers, `${label}.matchers`, { nonEmpty: true });
+    for (const [index, matcher] of target.matchers.entries()) {
+      const issue = splitMatcherShapeIssue(matcher);
+      if (issue !== undefined) throw new Error(`${label}.matchers[${index}] ${issue}`);
+    }
+  }
 }
 
-export function splitTargetPath(targetRoot, target) {
-  const raw = target.path ?? (target.file ? `${targetRoot}/${target.file}` : "");
-  if (!raw || typeof raw !== "string") return "";
-  const normalized = raw.split(path.sep).join("/");
-  if (normalized.startsWith("/") || normalized.includes("..") || !normalized.endsWith(".ts")) return "";
-  return normalized;
+function requireExactSplitPlanObject(value, expectedKeys, label) {
+  const actualKeys = requireSplitPlanRecord(value, label).sort();
+  const expected = [...expectedKeys].sort();
+  if (expected.length !== actualKeys.length || expected.some((key, index) => key !== actualKeys[index])) {
+    throw new Error(`${label} keys must be exactly ${expected.join(", ")}; got ${actualKeys.join(", ")}`);
+  }
+}
+
+function requireSplitPlanRecord(value, label) {
+  if (value === null || typeof value !== "object" || Array.isArray(value) ||
+      ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+    throw new Error(`${label} must be one plain object`);
+  }
+  const keys = [];
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (typeof key !== "string" || descriptor?.enumerable !== true || !("value" in descriptor)) {
+      throw new Error(`${label} must contain only enumerable own data properties`);
+    }
+    keys.push(key);
+  }
+  return keys;
+}
+
+function requireSplitPlanArray(value, label, options = {}) {
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
+    throw new Error(`${label} must be one array`);
+  }
+  if (options.nonEmpty === true && value.length === 0) throw new Error(`${label} must not be empty`);
+  const expectedKeys = new Set(["length"]);
+  for (let index = 0; index < value.length; index++) expectedKeys.add(String(index));
+  const actualKeys = Reflect.ownKeys(value);
+  if (actualKeys.length !== expectedKeys.size || actualKeys.some((key) => typeof key !== "string" || !expectedKeys.has(key))) {
+    throw new Error(`${label} must be a dense array with no extra properties`);
+  }
+  for (let index = 0; index < value.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (descriptor?.enumerable !== true || !("value" in descriptor)) {
+      throw new Error(`${label}[${index}] must be an enumerable own data property`);
+    }
+  }
+}
+
+function isExactIsoTimestamp(value) {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
+}
+
+function isNormalizedGoSourcePath(value) {
+  return typeof value === "string" && value !== "" && !value.includes("\\") && !path.posix.isAbsolute(value) &&
+    path.posix.normalize(value) === value && value.endsWith(".go");
+}
+
+function largeFileLineThreshold(config) {
+  const threshold = config?.largeFileLineThreshold;
+  if (!Number.isInteger(threshold) || threshold < 1) {
+    throw new Error("largeFileLineThreshold must be a positive integer");
+  }
+  return threshold;
+}
+
+function normalizedTypeScriptRoot(config) {
+  const tsRoot = config?.tsRoot;
+  if (typeof tsRoot !== "string" || tsRoot === "" || tsRoot.includes("\\") || path.posix.isAbsolute(tsRoot) ||
+      path.posix.normalize(tsRoot) !== tsRoot || tsRoot.endsWith("/")) {
+    throw new Error("tsRoot must be one normalized repo-relative directory path");
+  }
+  return tsRoot;
+}
+
+function isNormalizedTypeScriptTargetPath(targetPath, tsRoot) {
+  return typeof targetPath === "string" && targetPath !== "" && !targetPath.includes("\\") &&
+    !path.posix.isAbsolute(targetPath) && path.posix.normalize(targetPath) === targetPath &&
+    targetPath.endsWith(".ts") && targetPath.startsWith(`${tsRoot}/`);
 }
 
 export function isRandomLookingSplitPath(targetPath) {
@@ -333,16 +467,42 @@ export function isRandomLookingSplitPath(targetPath) {
 }
 
 export function matchesSplitMatcher(unit, matcher) {
-  if (!matcher || typeof matcher !== "object") return false;
-  if (matcher.kind && unit.kind !== matcher.kind) return false;
-  if (matcher.receiver && unit.receiver !== matcher.receiver) return false;
-  if (matcher.name && unit.name !== matcher.name) return false;
-  if (matcher.qualifiedName && unit.qualifiedName !== matcher.qualifiedName) return false;
-  if (matcher.receiverRegex && !new RegExp(matcher.receiverRegex).test(unit.receiver ?? "")) return false;
-  if (matcher.nameRegex && !new RegExp(matcher.nameRegex).test(unit.name ?? "")) return false;
-  if (matcher.qualifiedNameRegex && !new RegExp(matcher.qualifiedNameRegex).test(unit.qualifiedName ?? "")) return false;
-  if (matcher.idRegex && !new RegExp(matcher.idRegex).test(unit.id ?? "")) return false;
+  if (splitMatcherShapeIssue(matcher) !== undefined) return false;
+  if (Object.hasOwn(matcher, "kind") && unit.kind !== matcher.kind) return false;
+  if (Object.hasOwn(matcher, "receiver") && unit.receiver !== matcher.receiver) return false;
+  if (Object.hasOwn(matcher, "name") && unit.name !== matcher.name) return false;
+  if (Object.hasOwn(matcher, "qualifiedName") && unit.qualifiedName !== matcher.qualifiedName) return false;
+  if (Object.hasOwn(matcher, "receiverRegex") && !new RegExp(matcher.receiverRegex).test(unit.receiver ?? "")) return false;
+  if (Object.hasOwn(matcher, "nameRegex") && !new RegExp(matcher.nameRegex).test(unit.name ?? "")) return false;
+  if (Object.hasOwn(matcher, "qualifiedNameRegex") && !new RegExp(matcher.qualifiedNameRegex).test(unit.qualifiedName ?? "")) return false;
+  if (Object.hasOwn(matcher, "idRegex") && !new RegExp(matcher.idRegex).test(unit.id ?? "")) return false;
   return true;
+}
+
+function splitMatcherShapeIssue(matcher) {
+  let keys;
+  try {
+    keys = requireSplitPlanRecord(matcher, "split matcher");
+  } catch (error) {
+    return error.message.replace(/^split matcher /, "");
+  }
+  if (keys.length === 0) return `must name at least one supported declaration selector (${splitMatcherSelectorKeys.join(", ")})`;
+  const unknown = keys.filter((key) => !splitMatcherSelectorKeySet.has(key)).sort(compareText);
+  if (unknown.length > 0) return `has unknown selector key(s): ${unknown.join(", ")}`;
+  for (const key of keys) {
+    if (typeof matcher[key] !== "string" || matcher[key].trim() === "") {
+      return `selector '${key}' must be a non-empty string`;
+    }
+  }
+  for (const key of splitMatcherRegexKeys) {
+    if (!Object.hasOwn(matcher, key)) continue;
+    try {
+      new RegExp(matcher[key]);
+    } catch (error) {
+      return `selector '${key}' must be a valid regular expression: ${error.message}`;
+    }
+  }
+  return undefined;
 }
 
 export function splitDeclarationKey(unit) {
@@ -351,11 +511,14 @@ export function splitDeclarationKey(unit) {
 }
 
 export function splitIssue(file, kind, message, declaration = undefined, target = undefined) {
-  return { file, kind, message, declaration, target };
+  const issue = { file, kind, message };
+  if (declaration !== undefined) issue.declaration = declaration;
+  if (target !== undefined) issue.target = target;
+  return issue;
 }
 
 export function splitPlanLabel(config) {
-  return config.largeFileSplitPlanPath ?? "packages/tsts/porter.large-splits.json";
+  return config.largeFileSplitPlanPath;
 }
 
 export function verifyLargeFileSplitStatus(splitStatus) {

@@ -2,17 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  buildLargeFileSplitStatus,
   renderUnitGroup,
 } from "../porter.mjs";
+import { buildLargeFileSplitStatusFromPlan } from "../core/large-files.mjs";
 
 import {
   baseConfig,
   channelType,
+  emptyLargeFileSplitStatus,
   fileRecord,
   funcType,
   identType,
   interfaceType,
+  largeFileSplitPlan,
   selectorType,
   sliceType,
   snapshotWith,
@@ -96,7 +98,7 @@ test("renderUnitGroup emits higher-order function and inline interface signature
     debugSnapshot,
     "packages/tsts/src/internal/debug/debug.ts",
     [nodeAssert],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, debugSnapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, debugSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   const diffSnapshot = snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", importPath: collectionsPackage, units: [diffFunc] })]);
   const diffText = renderUnitGroup(
@@ -104,7 +106,7 @@ test("renderUnitGroup emits higher-order function and inline interface signature
     diffSnapshot,
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [diffFunc],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, \.\.\.message: GoInterface<unknown>\[\]/);
   assert.match(diffText, /equalValues: GoFunc<\(a: V, b: V\) => bool>/);
@@ -151,7 +153,7 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
     snapshot,
     "packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts",
     [diagnosticWriter],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
 
   assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
@@ -184,40 +186,37 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
       { name: "checker", type: semanticNamedType(`${packagePath}::type::Checker`, packagePath, "Checker") },
     ]),
   });
-  const config = {
-    ...baseConfig,
-    goModulePath: "m",
-    largeFileSplitPlan: {
-      schemaVersion: 1,
-      files: {
-        "internal/checker/checker.go": {
-          targetRoot: "packages/tsts/src/internal/checker/checker",
-          targets: [
-            {
-              file: "state.ts",
-              description: "Checker state",
-              declarations: ["type::Checker"],
-            },
-          ],
+  const config = { ...baseConfig, goModulePath: "m" };
+  const plan = largeFileSplitPlan({
+    "internal/checker/checker.go": {
+      reason: "Exact semantic split fixture for checker state imports.",
+      targets: [
+        {
+          path: "packages/tsts/src/internal/checker/checker/state.ts",
+          description: "Checker state",
+          declarations: ["type::Checker"],
         },
-      },
+      ],
     },
+  });
+  const snapshot = {
+    ...snapshotWith([
+      fileRecord({
+        path: "internal/checker/checker.go",
+        importPath: packagePath,
+        lineCount: 6000,
+        units: [checkerType],
+      }),
+      fileRecord({
+        path: "internal/checker/emitresolver.go",
+        importPath: packagePath,
+        imports: [{ name: "checker", path: packagePath }],
+        units: [emitResolverFactory],
+      }),
+    ]),
+    gitRevision: plan.sourceRevision,
   };
-  const snapshot = snapshotWith([
-    fileRecord({
-      path: "internal/checker/checker.go",
-      importPath: packagePath,
-      lineCount: 6000,
-      units: [checkerType],
-    }),
-    fileRecord({
-      path: "internal/checker/emitresolver.go",
-      importPath: packagePath,
-      imports: [{ name: "checker", path: packagePath }],
-      units: [emitResolverFactory],
-    }),
-  ]);
-  const splitStatus = buildLargeFileSplitStatus(config, snapshot);
+  const splitStatus = buildLargeFileSplitStatusFromPlan(config, snapshot, plan);
   const text = renderUnitGroup(
     config,
     snapshot,
@@ -282,7 +281,7 @@ test("renderUnitGroup uses canonical declaration value types", () => {
     snapshot,
     "packages/tsts/src/internal/ast/kind_generated.ts",
     [kindType, values, kindBounds, channels],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
 
   assert.match(text, /export const handlePrefixProject: GoRune = undefined as never;/);

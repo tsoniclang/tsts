@@ -22,9 +22,13 @@ export function loadNonGoDeclarationManifest(config, repoRoot, readSource = (fil
 }
 
 export function validateNonGoDeclarationManifestPath(value) {
+  validateCanonicalRepositoryJsonPath(value, "Porter config nonGoDeclarationManifestPath");
+}
+
+export function validateCanonicalRepositoryJsonPath(value, label) {
   if (typeof value !== "string" || value === "" || path.isAbsolute(value) || value.includes("\\") || value.includes("\0") ||
       value.split("/").some((segment) => segment === "" || segment === "." || segment === "..") || !value.endsWith(".json")) {
-    throw new Error("Porter config nonGoDeclarationManifestPath must be one canonical repository-relative JSON path");
+    throw new Error(`${label} must be one canonical repository-relative JSON path`);
   }
 }
 

@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
-import { baseConfig, fileRecord, identType, instantiationType, pointerType, snapshotWith, unitRecord } from "./helpers.mjs";
+import { baseConfig, emptyLargeFileSplitStatus, fileRecord, identType, instantiationType, pointerType, snapshotWith, unitRecord } from "./helpers.mjs";
 import { finalizeGeneratedFacadeFixtureCatalog } from "./external-facade-fixtures.mjs";
 
 test("writeTextSafely refuses to overwrite edited files without force", () => {
@@ -35,7 +35,7 @@ test("renderUnitGroup preserves generic and pointer receiver method skeletons", 
     snapshot,
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [orderedMap, get],
-    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: emptyLargeFileSplitStatus() },
   );
   assert.match(text, /import type \{ bool \} from "\.\.\/\.\.\/go\/scalars\.js";/);
   assert.match(text, /import type \{ GoComparable, GoPtr \}/);

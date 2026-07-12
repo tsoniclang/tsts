@@ -1,6 +1,6 @@
 import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
 import { normalizeAuthoredFacadeModules, normalizeExternalFacadePolicyConfigs } from "./external-facade-config.mjs";
-import { validateNonGoDeclarationManifestPath } from "./non-go-declaration-manifest.mjs";
+import { validateCanonicalRepositoryJsonPath, validateNonGoDeclarationManifestPath } from "./non-go-declaration-manifest.mjs";
 import { activityForConfiguredPortCategory } from "./policies.mjs";
 
 const allowedKeys = new Set([
@@ -14,7 +14,6 @@ const allowedKeys = new Set([
   "generatedSourceCoveragePath",
   "goModulePath",
   "largeFileLineThreshold",
-  "largeFileSplitPlan",
   "largeFileSplitPlanPath",
   "largeFileSplitStatusOut",
   "nonGoDeclarationManifestPath",
@@ -34,7 +33,7 @@ const allowedKeys = new Set([
   "unitPolicies",
 ]);
 
-const requiredStrings = ["goModulePath", "nonGoDeclarationManifestPath", "reportOut", "snapshotOut", "sourceRoot", "statusOut", "tsRoot"];
+const requiredStrings = ["goModulePath", "largeFileSplitPlanPath", "nonGoDeclarationManifestPath", "reportOut", "snapshotOut", "sourceRoot", "statusOut", "tsRoot"];
 
 export function assertPorterConfig(config) {
   if (!isPlainObject(config)) throw new Error("Porter config must be one plain object");
@@ -43,6 +42,9 @@ export function assertPorterConfig(config) {
   if (config.schemaVersion !== 3) throw new Error(`Porter config schemaVersion must be 3, got ${JSON.stringify(config.schemaVersion)}`);
   for (const key of requiredStrings) {
     if (typeof config[key] !== "string" || config[key] === "") throw new Error(`Porter config ${key} must be a non-empty string`);
+  }
+  if (!Number.isInteger(config.largeFileLineThreshold) || config.largeFileLineThreshold < 1) {
+    throw new Error("Porter config largeFileLineThreshold must be a positive integer");
   }
   validatePathPolicies(config.policies ?? [], "policies");
   validateUnitPolicies(config.unitPolicies ?? []);
@@ -57,6 +59,7 @@ export function assertPorterConfig(config) {
     }
   }
   validateNonGoDeclarationManifestPath(config.nonGoDeclarationManifestPath);
+  validateCanonicalRepositoryJsonPath(config.largeFileSplitPlanPath, "Porter config largeFileSplitPlanPath");
   return config;
 }
 

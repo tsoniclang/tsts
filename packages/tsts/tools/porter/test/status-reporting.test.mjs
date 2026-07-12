@@ -7,7 +7,7 @@ import {
 } from "../porter.mjs";
 import { summarizeSignatureReport } from "../core/signature-command.mjs";
 import { signatureAuditSummaryLines } from "../core/signature-reporting.mjs";
-import { baseConfig, emptyVerificationEvidence, fileRecord, snapshotWith, unitRecord } from "./helpers.mjs";
+import { baseConfig, emptyVerificationEvidence, fileRecord, snapshotWith, testSigHash, tsUnitRecord, unitRecord } from "./helpers.mjs";
 
 test("buildStatus rejects missing, extra, undefined, and positional inputs", () => {
   const input = {
@@ -27,6 +27,55 @@ test("buildStatus rejects missing, extra, undefined, and positional inputs", () 
   assert.throws(() => buildStatus(input.config, input.snapshot, input.tsUnits), /requires exactly one input object/);
 });
 
+test("buildStatus rejects partial and forged TS-unit status evidence before matching", () => {
+  const id = "m::internal/debug/debug.go::func::Fail";
+  const tsPath = "packages/tsts/src/internal/debug/debug.ts";
+  const snapshot = snapshotWith([fileRecord({
+    path: "internal/debug/debug.go",
+    units: [unitRecord({ id, kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: testSigHash })],
+  })]);
+  const exactUnit = tsUnitRecord({ id, path: tsPath, sigHash: testSigHash });
+  const inputFor = (unit, files = [{ path: tsPath, metadataCount: 1 }]) => ({
+    config: baseConfig,
+    snapshot,
+    tsUnits: { fileCount: files.length, files, units: [unit] },
+    ...emptyVerificationEvidence(),
+  });
+
+  assert.equal(buildStatus(inputFor(exactUnit)).counts.implemented, 1);
+  const partial = structuredClone(exactUnit);
+  delete partial.metadata;
+  const missingKind = structuredClone(exactUnit);
+  delete missingKind.kind;
+  const extra = { ...structuredClone(exactUnit), trusted: true };
+  const forgedStatus = { ...structuredClone(exactUnit), status: "stub" };
+  const forgedMetadata = structuredClone(exactUnit);
+  forgedMetadata.metadata.extra = true;
+  const invalidDigest = structuredClone(exactUnit);
+  invalidDigest.sigHash = invalidDigest.metadata.sigHash = "not-a-digest";
+  const accessor = structuredClone(exactUnit);
+  Object.defineProperty(accessor, "status", { enumerable: true, get: () => "implemented" });
+
+  for (const [description, unit] of [
+    ["missing metadata", partial],
+    ["missing mirrored kind", missingKind],
+    ["extra trust marker", extra],
+    ["forged wrapper status", forgedStatus],
+    ["extra metadata field", forgedMetadata],
+    ["invalid signature digest", invalidDigest],
+    ["accessor-backed status", accessor],
+  ]) {
+    assert.throws(() => buildStatus(inputFor(unit)), /buildStatus tsUnits\.units\[0\]/, description);
+  }
+  assert.throws(
+    () => buildStatus(inputFor(exactUnit, [{ path: tsPath, metadataCount: 0 }])),
+    /metadataCount must equal its unit-record count/,
+  );
+  const duplicateEvidence = inputFor(exactUnit, [{ path: tsPath, metadataCount: 2 }]);
+  duplicateEvidence.tsUnits.units.push(structuredClone(exactUnit));
+  assert.throws(() => buildStatus(duplicateEvidence), /tsUnits\.units duplicates id/);
+});
+
 test("renderStatusMarkdown reports largest missing modules from missing rows only", () => {
   const snapshot = snapshotWith([
     fileRecord({
@@ -36,7 +85,7 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
         kind: "func",
         qualifiedName: "Implemented",
         goPath: "internal/checker/checker.go",
-        sigHash: "sig-1",
+        sigHash: testSigHash,
       })],
     }),
     fileRecord({
@@ -56,12 +105,11 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
     tsUnits: {
       fileCount: 1,
       files: [{ path: "packages/tsts/src/internal/checker/checker.ts", metadataCount: 1 }],
-      units: [{
+      units: [tsUnitRecord({
         id: "m::internal/checker/checker.go::func::Implemented",
         path: "packages/tsts/src/internal/checker/checker.ts",
-        status: "implemented",
-        sigHash: "sig-1",
-      }],
+        sigHash: testSigHash,
+      })],
     },
     ...emptyVerificationEvidence(),
   });
@@ -164,6 +212,10 @@ test("signature summaries retain audit state and every concrete inventory row", 
   });
   assert.equal(summary.state, "complete");
   assert.deepEqual(summary.selection, { kind: "all-active" });
+  assert.equal(summary.mismatchCount, 0);
+  assert.deepEqual(summary.mismatches, []);
+  assert.equal(summary.overrideIssueCount, 0);
+  assert.deepEqual(summary.overrideIssues, []);
   assert.deepEqual(summary.authoredFacades.constructors, [constructor]);
   assert.deepEqual(summary.authoredFacades.unselectedGoMembers, [unselectedGoMember]);
   assert.deepEqual(summary.authoredFacades.methodBindings, [methodBinding]);
@@ -184,7 +236,8 @@ test("signature summaries retain audit state and every concrete inventory row", 
     ...minimalStatus(),
     signatureCheck: summary,
     jsonTagCheck: {
-      state: "complete", taggedUnits: 1, taggedFields: 2, contractUnits: 1, contractFields: 2, mismatches: 0,
+      state: "complete", taggedUnits: 1, taggedFields: 2, contractUnits: 1, contractFields: 2,
+      mismatchCount: 0, mismatches: [], byKind: {},
     },
   });
   for (const evidence of [
@@ -222,7 +275,7 @@ test("filtered signature summaries preserve every skipped whole-program subaudit
   ]) assert.equal(summary[key].state, "not-run", key);
   const lines = signatureAuditSummaryLines({
     signatureCheck: summary,
-    jsonTagCheck: { state: "complete", taggedUnits: 0, taggedFields: 0, contractUnits: 0, contractFields: 0, mismatches: 0 },
+    jsonTagCheck: { state: "complete", taggedUnits: 0, taggedFields: 0, contractUnits: 0, contractFields: 0, mismatchCount: 0, mismatches: [], byKind: {} },
   });
   assert.equal(lines.filter((line) => line.includes("not run")).length, 7);
 });

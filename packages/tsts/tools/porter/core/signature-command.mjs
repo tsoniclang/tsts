@@ -51,8 +51,10 @@ export function summarizeSignatureReport(report) {
     checked: report.checked,
     descriptors: report.descriptors,
     overriddenUnits: report.overriddenUnits,
-    mismatches: report.mismatches.length,
-    overrideIssues: report.overrideIssues?.length ?? 0,
+    mismatchCount: report.mismatches.length,
+    mismatches: report.mismatches.map((mismatch) => ({ ...mismatch })),
+    overrideIssueCount: report.overrideIssues.length,
+    overrideIssues: report.overrideIssues.map((issue) => ({ ...issue })),
     byKind,
   };
 }
@@ -71,7 +73,8 @@ export function summarizeJsonTagReport(report) {
     taggedFields: report?.taggedFields ?? 0,
     contractUnits: report?.contractUnits ?? 0,
     contractFields: report?.contractFields ?? 0,
-    mismatches: report?.mismatchCount ?? report?.mismatches?.length ?? 0,
+    mismatchCount: report.mismatches.length,
+    mismatches: report.mismatches.map((mismatch) => ({ ...mismatch })),
     byKind,
   };
 }
