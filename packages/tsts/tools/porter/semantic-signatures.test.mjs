@@ -44,6 +44,7 @@ function semanticSnapshot(files) {
   return {
     semantic: {
       dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [testSemanticProfile({
         coveredFiles: normalizedFiles.map((file) => file.path),

@@ -15,7 +15,7 @@ func main() {
 	root := flag.String("root", "", "path to a TypeScript-Go checkout")
 	modulePath := flag.String("module", "github.com/microsoft/typescript-go", "Go module path")
 	revision := flag.String("revision", "", "validated Git revision of the source checkout")
-	semanticFilesStdin := flag.Bool("semantic-files-stdin", false, "read the exact active semantic-file manifest from standard input")
+	extractionRequestStdin := flag.Bool("extraction-request-stdin", false, "read the exact semantic extraction request from standard input")
 	flag.Parse()
 
 	if *root == "" {
@@ -24,10 +24,10 @@ func main() {
 	if len(*revision) != 40 || strings.IndexFunc(*revision, func(value rune) bool { return value < '0' || value > '9' && value < 'a' || value > 'f' }) >= 0 {
 		fatalf("-revision must be a lowercase 40-character Git object id")
 	}
-	if !*semanticFilesStdin {
-		fatalf("missing required -semantic-files-stdin")
+	if !*extractionRequestStdin {
+		fatalf("missing required -extraction-request-stdin")
 	}
-	semanticFiles := readSemanticFileManifest(os.Stdin)
+	request := readSemanticExtractionRequest(os.Stdin, *modulePath)
 
 	absRoot, err := filepath.Abs(*root)
 	if err != nil {
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	snapshot := Snapshot{
-		SchemaVersion: 9,
+		SchemaVersion: porterSnapshotSchemaVersion,
 		SourceRoot:    filepath.ToSlash(absRoot),
 		ModulePath:    *modulePath,
 		GitRevision:   *revision,
@@ -93,7 +93,7 @@ func main() {
 	if err != nil {
 		fatalf("walk root: %v", err)
 	}
-	applyGoSemanticEvidence(absRoot, *modulePath, &snapshot, semanticFiles)
+	applyGoSemanticEvidence(absRoot, *modulePath, &snapshot, request.semanticFiles, request.externalPackageSurfaceSelections)
 
 	sort.Slice(snapshot.Files, func(left, right int) bool {
 		return snapshot.Files[left].Path < snapshot.Files[right].Path

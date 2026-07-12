@@ -28,9 +28,10 @@ export function collectAuthoredFacadeMismatches({
   profile,
   snapshot,
   valueEnvironments,
+  facades: suppliedFacades,
   ambientReferences = { accept: () => false },
 }) {
-  const facades = buildExternalFacadeStorageCatalog(config, snapshot);
+  const facades = suppliedFacades ?? buildExternalFacadeStorageCatalog(config, snapshot);
   const renderContract = createExternalFacadeContractRenderer(config, snapshot, facades);
   const renderMethodContract = createExternalMethodBindingContractRenderer(config, snapshot, facades);
   const methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot);

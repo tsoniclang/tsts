@@ -1,3 +1,5 @@
+import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
+
 const allowedKeys = new Set([
   "astGeneratedDir",
   "astSchemaDir",
@@ -8,6 +10,7 @@ const allowedKeys = new Set([
   "diagnosticsLocaleDir",
   "diagnosticsLocaleInput",
   "externalFacadePolicies",
+  "externalPackageSurfaceSelections",
   "generatedSourceCoveragePath",
   "goModulePath",
   "largeFileLineThreshold",
@@ -52,6 +55,7 @@ export function assertPorterConfig(config) {
   if (new Set(config.primaryUnitKinds).size !== config.primaryUnitKinds.length) {
     throw new Error("Porter config primaryUnitKinds must be unique");
   }
+  normalizeExternalPackageSurfaceSelections(config);
   return config;
 }
 

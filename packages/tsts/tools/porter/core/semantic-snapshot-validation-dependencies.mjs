@@ -12,8 +12,8 @@ import {
   validateProfileIndexes,
 } from "./semantic-snapshot-validation-identity.mjs";
 
-export function validateDependencyTypeDeclarations(declarations, profileCount, activeTypeProfileKeys, issues) {
-  const label = "snapshot.semantic.dependencyTypeDeclarations";
+export function validateDependencyTypeDeclarations(declarations, profileCount, activeTypeProfileKeys, issues, options = {}) {
+  const label = options.label ?? "snapshot.semantic.dependencyTypeDeclarations";
   if (!Array.isArray(declarations)) {
     issues.push(`${label} must be an array`);
     return;
@@ -37,6 +37,21 @@ export function validateDependencyTypeDeclarations(declarations, profileCount, a
   }
 }
 
+export function activeSemanticTypeProfileKeys(files) {
+  const keys = new Set();
+  for (const file of Array.isArray(files) ? files : []) {
+    for (const unit of Array.isArray(file?.units) ? file.units : []) {
+      for (const declaration of Array.isArray(unit?.semantic) ? unit.semantic : []) {
+        if (declaration?.kind !== "type" || typeof declaration.object?.id !== "string") continue;
+        for (const profile of Array.isArray(declaration.profiles) ? declaration.profiles : []) {
+          if (Number.isSafeInteger(profile) && profile >= 0) keys.add(`${profile}\0${declaration.object.id}`);
+        }
+      }
+    }
+  }
+  return keys;
+}
+
 function validateDependencyDeclaration(semantic, label, profileCount, activeTypeProfileKeys, issues) {
   if (!isObject(semantic)) {
     issues.push(`${label} must be an object`);
@@ -44,7 +59,7 @@ function validateDependencyDeclaration(semantic, label, profileCount, activeType
   }
   compareExactKeys(semantic, ["kind", "object", "packagePath", "profiles", "type"], label, issues);
   const kind = semantic.kind;
-  if (kind !== "type") issues.push(`${label}.kind must be 'type'; dependencyTypeDeclarations contains only reachable named types`);
+  if (kind !== "type") issues.push(`${label}.kind must be 'type'; dependency type closure contains only reachable named types`);
   if (typeof semantic.packagePath !== "string" || semantic.packagePath === "") issues.push(`${label}.packagePath must be non-empty`);
   const expectedId = objectId(semantic.packagePath, "type", semantic.object?.name);
   validateObject(semantic.object, `${label}.object`, issues, expectedId);

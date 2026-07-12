@@ -21,13 +21,13 @@ export function compareExactKeys(value, expected, label, issues) {
 
 export function compareAllowedKeys(value, allowed, label, issues) {
   for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-9 key '${key}'`);
+    if (!allowed.has(key)) issues.push(`${label} contains unknown snapshot-schema-10 key '${key}'`);
   }
 }
 
 export function requireKeys(value, required, label, issues) {
   for (const key of required) {
-    if (!Object.hasOwn(value, key)) issues.push(`${label} is missing required snapshot-schema-9 key '${key}'`);
+    if (!Object.hasOwn(value, key)) issues.push(`${label} is missing required snapshot-schema-10 key '${key}'`);
   }
 }
 

@@ -49,6 +49,12 @@ export function buildSemanticTypeCatalog(snapshot) {
   for (const declaration of snapshot.semantic?.dependencyTypeDeclarations ?? []) {
     if (declaration?.kind === "type" && declaration.type !== undefined) rows.push(declaration);
   }
+  for (const declaration of snapshot.semantic?.externalPackageSurface?.declarations ?? []) {
+    if (declaration?.kind === "type" && declaration.type !== undefined) rows.push(declaration);
+  }
+  for (const declaration of snapshot.semantic?.externalPackageSurface?.dependencyTypeDeclarations ?? []) {
+    if (declaration?.kind === "type" && declaration.type !== undefined) rows.push(declaration);
+  }
   const catalog = new Map();
   for (const declaration of rows) {
     const object = declaration.type?.object;

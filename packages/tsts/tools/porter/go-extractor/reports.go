@@ -1,5 +1,7 @@
 package main
 
+const porterSnapshotSchemaVersion = 10
+
 type Snapshot struct {
 	SchemaVersion int                    `json:"schemaVersion"`
 	SourceRoot    string                 `json:"sourceRoot"`
@@ -18,28 +20,41 @@ type Environment struct {
 }
 
 type SemanticEvidenceReport struct {
-	Toolchain                  string                             `json:"toolchain"`
-	ToolchainExecutable        string                             `json:"toolchainExecutable"`
-	ToolchainHash              string                             `json:"toolchainHash"`
-	GOROOT                     string                             `json:"goroot"`
-	GOROOTHash                 string                             `json:"gorootHash"`
-	GOROOTHashContract         string                             `json:"gorootHashContract"`
-	GOROOTEntryCount           int                                `json:"gorootEntryCount"`
-	GOROOTFileCount            int                                `json:"gorootFileCount"`
-	GOROOTDirectoryCount       int                                `json:"gorootDirectoryCount"`
-	GOROOTSymlinkCount         int                                `json:"gorootSymlinkCount"`
-	GOROOTBytes                int64                              `json:"gorootBytes"`
-	Compiler                   string                             `json:"compiler"`
-	ReleaseTags                []string                           `json:"releaseTags"`
-	ModulePath                 string                             `json:"modulePath"`
-	RequiredFiles              []string                           `json:"requiredFiles"`
-	CoveredFiles               []string                           `json:"coveredFiles"`
-	ExcludedFiles              []string                           `json:"excludedFiles"`
-	Profiles                   []SemanticProfileReport            `json:"profiles"`
-	UnsupportedProfiles        []SemanticProfileRejectionReport   `json:"unsupportedProfiles"`
-	ModuleGraph                []SemanticModuleReport             `json:"moduleGraph"`
-	MethodSetSignatures        []SemanticMethodSetSignatureReport `json:"methodSetSignatures"`
-	DependencyTypeDeclarations []SemanticDeclarationReport        `json:"dependencyTypeDeclarations"`
+	Toolchain                  string                               `json:"toolchain"`
+	ToolchainExecutable        string                               `json:"toolchainExecutable"`
+	ToolchainHash              string                               `json:"toolchainHash"`
+	GOROOT                     string                               `json:"goroot"`
+	GOROOTHash                 string                               `json:"gorootHash"`
+	GOROOTHashContract         string                               `json:"gorootHashContract"`
+	GOROOTEntryCount           int                                  `json:"gorootEntryCount"`
+	GOROOTFileCount            int                                  `json:"gorootFileCount"`
+	GOROOTDirectoryCount       int                                  `json:"gorootDirectoryCount"`
+	GOROOTSymlinkCount         int                                  `json:"gorootSymlinkCount"`
+	GOROOTBytes                int64                                `json:"gorootBytes"`
+	Compiler                   string                               `json:"compiler"`
+	ReleaseTags                []string                             `json:"releaseTags"`
+	ModulePath                 string                               `json:"modulePath"`
+	RequiredFiles              []string                             `json:"requiredFiles"`
+	CoveredFiles               []string                             `json:"coveredFiles"`
+	ExcludedFiles              []string                             `json:"excludedFiles"`
+	Profiles                   []SemanticProfileReport              `json:"profiles"`
+	UnsupportedProfiles        []SemanticProfileRejectionReport     `json:"unsupportedProfiles"`
+	ModuleGraph                []SemanticModuleReport               `json:"moduleGraph"`
+	MethodSetSignatures        []SemanticMethodSetSignatureReport   `json:"methodSetSignatures"`
+	DependencyTypeDeclarations []SemanticDeclarationReport          `json:"dependencyTypeDeclarations"`
+	ExternalPackageSurface     SemanticExternalPackageSurfaceReport `json:"externalPackageSurface"`
+}
+
+type SemanticExternalPackageSurfaceReport struct {
+	Selections                 []string                                  `json:"selections"`
+	UnresolvedSelections       []SemanticExternalPackageUnresolvedReport `json:"unresolvedSelections"`
+	Declarations               []SemanticDeclarationReport               `json:"declarations"`
+	DependencyTypeDeclarations []SemanticDeclarationReport               `json:"dependencyTypeDeclarations"`
+}
+
+type SemanticExternalPackageUnresolvedReport struct {
+	ObjectID string `json:"objectId"`
+	Profiles []int  `json:"profiles"`
 }
 
 type SemanticProfileReport struct {

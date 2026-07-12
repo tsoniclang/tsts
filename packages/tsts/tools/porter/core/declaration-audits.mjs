@@ -1,6 +1,7 @@
 export const DECLARATION_AUDIT_DEFINITIONS = Object.freeze([
   Object.freeze({ key: "signature-units", label: "Go/TypeScript signature unit audit", path: Object.freeze(["signatureCheck"]) }),
   Object.freeze({ key: "authored-facades", label: "authored facade audit", path: Object.freeze(["signatureCheck", "authoredFacades"]) }),
+  Object.freeze({ key: "external-package-surface", label: "external package surface audit", path: Object.freeze(["signatureCheck", "externalPackageSurface"]) }),
   Object.freeze({ key: "type-storage-policies", label: "reviewed type storage policy audit", path: Object.freeze(["signatureCheck", "typeStoragePolicies"]) }),
   Object.freeze({ key: "type-equivalence-relations", label: "TypeScript type-equivalence relation audit", path: Object.freeze(["signatureCheck", "typeEquivalenceRelations"]) }),
   Object.freeze({ key: "ambient-reference-relations", label: "ambient reference relation audit", path: Object.freeze(["signatureCheck", "ambientReferenceRelations"]) }),
@@ -24,6 +25,7 @@ export function declarationAuditsNotRun(subject = "This command") {
     signatureCheck: {
       ...skipped("Go/TypeScript signature unit audit"),
       authoredFacades: skipped("authored facade audit"),
+      externalPackageSurface: skipped("external package surface audit"),
       typeStoragePolicies: skipped("reviewed type storage policy audit"),
       typeEquivalenceRelations: skipped("TypeScript type-equivalence relation audit"),
       ambientReferenceRelations: skipped("ambient reference relation audit"),

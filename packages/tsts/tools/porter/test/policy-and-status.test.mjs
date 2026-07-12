@@ -135,7 +135,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     units: [unit],
   });
   const snapshot = {
-    schemaVersion: 9,
+    schemaVersion: 10,
     sourceRoot,
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -159,6 +159,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
       coveredFiles: ["internal/a.go"],
       excludedFiles: [],
       dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [{
         goos: "linux",
@@ -282,7 +283,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
   assert.match(validatePorterSnapshot({ ...snapshot, schemaVersion: 2 }, config)[0], /schemaVersion/);
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, imports: [{ name: "x", packageName: "x", path: "example/x", futureField: true }] }] }, config).some((issue) => issue.includes("futureField")));
   assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, kind: "futureDecl" }] }] }, config).some((issue) => issue.includes("unknown")));
-  assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, parseError: "broken" }] }, config).some((issue) => issue.includes("unknown snapshot-schema-9 key 'parseError'")));
+  assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, parseError: "broken" }] }, config).some((issue) => issue.includes("unknown snapshot-schema-10 key 'parseError'")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, unitCount: 0 } }, config).some((issue) => issue.includes("unitCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, structTagCount: 1 } }, config).some((issue) => issue.includes("structTagCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, nodeKindCounts: {} } }, config).some((issue) => issue.includes("keys must be exactly")));
@@ -291,7 +292,7 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     const missing = structuredClone(file);
     delete missing[key];
     assert.ok(
-      validatePorterSnapshot({ ...snapshot, files: [missing] }, config).some((issue) => issue.includes(`missing required snapshot-schema-9 key '${key}'`)),
+      validatePorterSnapshot({ ...snapshot, files: [missing] }, config).some((issue) => issue.includes(`missing required snapshot-schema-10 key '${key}'`)),
       `missing file field ${key} must fail closed`,
     );
   }
@@ -299,16 +300,16 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
     const missing = structuredClone(unit);
     delete missing[key];
     assert.ok(
-      validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(`missing required snapshot-schema-9 key '${key}'`)),
+      validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [missing] }] }, config).some((issue) => issue.includes(`missing required snapshot-schema-10 key '${key}'`)),
       `missing unit field ${key} must fail closed`,
     );
   }
   for (const key of ["nodeKindCounts", "featureCounts"]) {
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, [key]: {} }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-9 key '${key}'`)));
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: {} }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-9 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, [key]: {} }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-10 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: {} }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-10 key '${key}'`)));
   }
   for (const key of ["externalRefs", "deferFacts", "resultSemantics", "returnFacts"]) {
-    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: [] }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-9 key '${key}'`)));
+    assert.ok(validatePorterSnapshot({ ...snapshot, files: [{ ...file, units: [{ ...unit, [key]: [] }] }] }, config).some((issue) => issue.includes(`unknown snapshot-schema-10 key '${key}'`)));
   }
   const missingSemantic = { ...unit };
   delete missingSemantic.semantic;

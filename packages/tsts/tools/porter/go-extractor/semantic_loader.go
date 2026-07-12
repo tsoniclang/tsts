@@ -30,6 +30,7 @@ type semanticVariantEvidence struct {
 type semanticProfileLoad struct {
 	declarations               map[string]SemanticDeclarationReport
 	dependencyTypeDeclarations map[string]SemanticDeclarationReport
+	externalPackageSurface     semanticExternalPackageSurfaceProfile
 	importNames                []semanticImportNameEvidence
 	report                     SemanticProfileReport
 	modules                    []SemanticModuleReport
@@ -45,25 +46,29 @@ type declarationCheckedPackage struct {
 }
 
 type declarationPackageChecker struct {
-	root             string
-	modulePath       string
-	profile          semanticBuildProfile
-	fileSet          *token.FileSet
-	localByID        map[string]*packages.Package
-	exportFiles      map[string]string
-	checkedByID      map[string]*declarationCheckedPackage
-	checkingByID     map[string]bool
-	externalImporter types.ImporterFrom
-	externalByPath   map[string]*types.Package
+	root                            string
+	modulePath                      string
+	profile                         semanticBuildProfile
+	fileSet                         *token.FileSet
+	localByID                       map[string]*packages.Package
+	exportFiles                     map[string]string
+	checkedByID                     map[string]*declarationCheckedPackage
+	checkingByID                    map[string]bool
+	externalImporter                types.ImporterFrom
+	externalByPath                  map[string]*types.Package
+	externalPackageSurfaceAvailable map[string]bool
 }
 
-func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot, semanticFiles map[string]bool) {
+func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot, semanticFiles map[string]bool, externalSelections []semanticExternalPackageSelection) {
 	plan := semanticBuildProfiles(root, snapshot, semanticFiles)
 	locations := snapshotSemanticUnitLocations(snapshot)
 	requiredFiles := stringSet(plan.RequiredFiles)
 	requiredUnits := requiredSemanticUnitIDs(snapshot, requiredFiles)
 	merged := map[string]semanticUnitEvidence{}
 	dependencyTypeMerged := map[string]semanticUnitEvidence{}
+	externalDeclarationMerged := map[string]semanticUnitEvidence{}
+	externalDependencyTypeMerged := map[string]semanticUnitEvidence{}
+	externalUnresolvedMerged := map[string]map[int]bool{}
 	methodSetSignatures := map[string]SemanticMethodSetSignatureReport{}
 	resolvedImportNames := map[string]map[string]string{}
 	coveredFiles := map[string]bool{}
@@ -72,9 +77,11 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 	profileReports := []SemanticProfileReport{}
 	moduleSelections := exactSemanticModuleSelections(root)
 	for profileIndex, profile := range plan.Profiles {
-		loaded := loadSemanticProfile(root, modulePath, profile, locations, requiredFiles, moduleSelections, verifiedModules)
+		loaded := loadSemanticProfile(root, modulePath, profile, locations, requiredFiles, externalSelections, moduleSelections, verifiedModules)
 		collectSemanticMethodSetSignatures(loaded.declarations, methodSetSignatures)
 		collectSemanticMethodSetSignatures(loaded.dependencyTypeDeclarations, methodSetSignatures)
+		collectSemanticMethodSetSignatures(loaded.externalPackageSurface.declarations, methodSetSignatures)
+		collectSemanticMethodSetSignatures(loaded.externalPackageSurface.dependencyTypeDeclarations, methodSetSignatures)
 		mergeSemanticImportNames(resolvedImportNames, loaded.importNames)
 		profileReports = append(profileReports, loaded.report)
 		for _, file := range loaded.report.CoveredFiles {
@@ -84,32 +91,27 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 			moduleGraph[canonicalSemanticModule(module)] = module
 		}
 		for unitID, report := range loaded.declarations {
-			canonical := canonicalSemanticDeclaration(report)
-			evidence := merged[unitID]
-			if evidence.variants == nil {
-				evidence.variants = map[string]semanticVariantEvidence{}
-			}
-			variant, ok := evidence.variants[canonical]
-			if !ok {
-				variant = semanticVariantEvidence{report: report, profiles: map[int]bool{}}
-			}
-			variant.profiles[profileIndex] = true
-			evidence.variants[canonical] = variant
-			merged[unitID] = evidence
+			mergeSemanticDeclarationEvidence(merged, unitID, report, profileIndex)
 		}
 		for objectID, report := range loaded.dependencyTypeDeclarations {
-			canonical := canonicalSemanticDeclaration(report)
-			evidence := dependencyTypeMerged[objectID]
-			if evidence.variants == nil {
-				evidence.variants = map[string]semanticVariantEvidence{}
+			mergeSemanticDeclarationEvidence(dependencyTypeMerged, objectID, report, profileIndex)
+		}
+		for objectID, report := range loaded.externalPackageSurface.declarations {
+			mergeSemanticDeclarationEvidence(externalDeclarationMerged, objectID, report, profileIndex)
+		}
+		for objectID, report := range loaded.externalPackageSurface.dependencyTypeDeclarations {
+			mergeSemanticDeclarationEvidence(externalDependencyTypeMerged, objectID, report, profileIndex)
+		}
+		for _, objectID := range loaded.externalPackageSurface.unresolvedSelections {
+			profiles := externalUnresolvedMerged[objectID]
+			if profiles == nil {
+				profiles = map[int]bool{}
+				externalUnresolvedMerged[objectID] = profiles
 			}
-			variant, ok := evidence.variants[canonical]
-			if !ok {
-				variant = semanticVariantEvidence{report: report, profiles: map[int]bool{}}
+			if profiles[profileIndex] {
+				fatalf("external Go package surface selection %s is unresolved more than once in profile %d", objectID, profileIndex)
 			}
-			variant.profiles[profileIndex] = true
-			evidence.variants[canonical] = variant
-			dependencyTypeMerged[objectID] = evidence
+			profiles[profileIndex] = true
 		}
 	}
 	if missing := setDifference(requiredFiles, coveredFiles); len(missing) > 0 {
@@ -156,6 +158,10 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 	})
 	toolchain := exactSemanticToolchain()
 	dependencyTypeDeclarations := mergedDependencyTypeDeclarations(dependencyTypeMerged)
+	externalPackageSurface := mergedSemanticExternalPackageSurface(
+		externalSelections, len(plan.Profiles), externalDeclarationMerged, externalUnresolvedMerged,
+		externalDependencyTypeMerged, dependencyTypeMerged, merged,
+	)
 	methodSetSignatureReports := sortedSemanticMethodSetSignatures(methodSetSignatures)
 	snapshot.Semantic = SemanticEvidenceReport{
 		Toolchain: toolchain.goVersion, ToolchainExecutable: toolchain.executable, ToolchainHash: toolchain.executableHash,
@@ -168,7 +174,29 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 		Profiles: profileReports, UnsupportedProfiles: plan.UnsupportedProfiles, ModuleGraph: modules,
 		MethodSetSignatures:        methodSetSignatureReports,
 		DependencyTypeDeclarations: dependencyTypeDeclarations,
+		ExternalPackageSurface:     externalPackageSurface,
 	}
+}
+
+func mergeSemanticDeclarationEvidence(merged map[string]semanticUnitEvidence, identity string, report SemanticDeclarationReport, profileIndex int) {
+	if identity == "" || profileIndex < 0 || len(report.Profiles) != 0 {
+		fatalf("cannot merge malformed profile-local Go declaration evidence for %q", identity)
+	}
+	canonical := canonicalSemanticDeclaration(report)
+	evidence := merged[identity]
+	if evidence.variants == nil {
+		evidence.variants = map[string]semanticVariantEvidence{}
+	}
+	variant, ok := evidence.variants[canonical]
+	if !ok {
+		variant = semanticVariantEvidence{report: report, profiles: map[int]bool{}}
+	}
+	if variant.profiles[profileIndex] {
+		fatalf("Go declaration evidence %s is duplicated in profile %d", identity, profileIndex)
+	}
+	variant.profiles[profileIndex] = true
+	evidence.variants[canonical] = variant
+	merged[identity] = evidence
 }
 
 func collectSemanticMethodSetSignatures(declarations map[string]SemanticDeclarationReport, collected map[string]SemanticMethodSetSignatureReport) {
@@ -217,7 +245,7 @@ func canonicalMethodSetSignature(report SemanticMethodSetSignatureReport) string
 	return string(encoded)
 }
 
-func loadSemanticProfile(root string, modulePath string, profile semanticBuildProfile, locations map[string]string, requiredFiles map[string]bool, moduleSelections map[string]exactSemanticModuleSelection, verifiedModules map[string]semanticModuleContentSeal) semanticProfileLoad {
+func loadSemanticProfile(root string, modulePath string, profile semanticBuildProfile, locations map[string]string, requiredFiles map[string]bool, externalSelections []semanticExternalPackageSelection, moduleSelections map[string]exactSemanticModuleSelection, verifiedModules map[string]semanticModuleContentSeal) semanticProfileLoad {
 	verifySemanticGoResolution()
 	buildFlags := semanticBuildFlags(profile)
 	config := &packages.Config{
@@ -233,13 +261,20 @@ func loadSemanticProfile(root string, modulePath string, profile semanticBuildPr
 	graph := semanticPackageGraph(loaded)
 	validateSemanticPackages(root, modulePath, loaded, graph)
 	validateSemanticProfileFileSelection(root, profile, graph, requiredFiles)
-	checker := newDeclarationPackageChecker(root, modulePath, profile, graph)
+	checker, externalGraph := newDeclarationPackageChecker(root, modulePath, profile, graph, externalSelections)
 	checked := checker.checkRequiredPackages(requiredFiles)
 	declarations, covered, referencedTypes := semanticDeclarations(root, modulePath, checked, locations, requiredFiles)
-	dependencyTypeDeclarations := semanticDependencyTypeDeclarations(referencedTypes, activeSemanticTypeObjectIDs(declarations))
+	activeTypeIDs := activeSemanticTypeObjectIDs(declarations)
+	dependencyTypeDeclarations := semanticDependencyTypeDeclarations(referencedTypes, activeTypeIDs)
+	externalPackageSurface := semanticExternalPackageSurfaceForProfile(
+		externalSelections, checker.resolveExternalPackageSurface, activeTypeIDs, dependencyTypeDeclarations,
+	)
+	combinedGraph := append([]*packages.Package{}, graph...)
+	combinedGraph = append(combinedGraph, externalGraph...)
 	return semanticProfileLoad{
 		declarations:               declarations,
 		dependencyTypeDeclarations: dependencyTypeDeclarations,
+		externalPackageSurface:     externalPackageSurface,
 		importNames:                semanticProfileImportNames(root, graph),
 		report: SemanticProfileReport{
 			GOOS: profile.GOOS, GOARCH: profile.GOARCH, CgoEnabled: profile.CgoEnabled,
@@ -251,16 +286,16 @@ func loadSemanticProfile(root string, modulePath string, profile semanticBuildPr
 			Environment: semanticEnvironment(profile),
 			PackageIDs:  semanticPackageIDs(graph, modulePath), CoveredFiles: sortedBoolKeys(covered),
 		},
-		modules: semanticModuleGraph(graph, moduleSelections, verifiedModules),
+		modules: semanticModuleGraph(combinedGraph, moduleSelections, verifiedModules),
 	}
 }
 
-func newDeclarationPackageChecker(root string, modulePath string, profile semanticBuildProfile, graph []*packages.Package) *declarationPackageChecker {
+func newDeclarationPackageChecker(root string, modulePath string, profile semanticBuildProfile, graph []*packages.Package, externalSelections []semanticExternalPackageSelection) (*declarationPackageChecker, []*packages.Package) {
 	checker := &declarationPackageChecker{
 		root: root, modulePath: modulePath, profile: profile, fileSet: token.NewFileSet(),
 		localByID:   map[string]*packages.Package{},
 		exportFiles: map[string]string{}, checkedByID: map[string]*declarationCheckedPackage{}, checkingByID: map[string]bool{},
-		externalByPath: map[string]*types.Package{},
+		externalByPath: map[string]*types.Package{}, externalPackageSurfaceAvailable: map[string]bool{},
 	}
 	for _, metadata := range graph {
 		if metadata == nil {
@@ -275,6 +310,9 @@ func newDeclarationPackageChecker(root string, modulePath string, profile semant
 		checker.localByID[metadata.ID] = metadata
 	}
 	checker.exportFiles = loadExternalExportFiles(root, modulePath, profile, graph)
+	externalLoad := loadSemanticExternalPackageExports(root, modulePath, profile, semanticExternalPackagePaths(externalSelections))
+	mergeSemanticExportFiles(checker.exportFiles, externalLoad.exportFiles)
+	checker.externalPackageSurfaceAvailable = externalLoad.availablePackages
 	gcImporter := importer.ForCompiler(checker.fileSet, "gc", func(path string) (io.ReadCloser, error) {
 		exportFile := checker.exportFiles[path]
 		if exportFile == "" {
@@ -287,51 +325,7 @@ func newDeclarationPackageChecker(root string, modulePath string, profile semant
 		fatalf("Go gc export importer does not implement types.ImporterFrom")
 	}
 	checker.externalImporter = importerFrom
-	return checker
-}
-
-func loadExternalExportFiles(root string, modulePath string, profile semanticBuildProfile, graph []*packages.Package) map[string]string {
-	patterns := map[string]bool{}
-	for _, metadata := range graph {
-		if metadata == nil || !packageBelongsToModule(metadata, modulePath) {
-			continue
-		}
-		for importPath, imported := range metadata.Imports {
-			if importPath != "unsafe" && !packageBelongsToModule(imported, modulePath) {
-				patterns[importPath] = true
-			}
-		}
-	}
-	if len(patterns) == 0 {
-		return map[string]string{}
-	}
-	verifySemanticGoResolution()
-	buildFlags := semanticBuildFlags(profile)
-	config := &packages.Config{
-		Mode: packages.NeedName | packages.NeedImports | packages.NeedDeps | packages.NeedExportFile | packages.NeedModule,
-		Dir:  root, Env: semanticEnvironment(profile), BuildFlags: buildFlags,
-	}
-	loaded, err := packages.Load(config, sortedBoolKeys(patterns)...)
-	if err != nil {
-		fatalf("load external Go export metadata under %s: %v", semanticProfileKey(profile), err)
-	}
-	exports := map[string]string{}
-	for _, metadata := range semanticPackageGraph(loaded) {
-		for _, packageError := range metadata.Errors {
-			fatalf("external Go package %s has package error kind %d: %s", metadata.PkgPath, packageError.Kind, packageError.Msg)
-		}
-		if metadata.PkgPath == "unsafe" {
-			continue
-		}
-		if metadata.ExportFile == "" {
-			fatalf("external Go package %s has no exact compiled export data under %s", metadata.PkgPath, semanticProfileKey(profile))
-		}
-		if previous := exports[metadata.PkgPath]; previous != "" && previous != metadata.ExportFile {
-			fatalf("external Go package %s has conflicting export files %s and %s", metadata.PkgPath, previous, metadata.ExportFile)
-		}
-		exports[metadata.PkgPath] = metadata.ExportFile
-	}
-	return exports
+	return checker, externalLoad.graph
 }
 
 func (checker *declarationPackageChecker) checkRequiredPackages(requiredFiles map[string]bool) []*declarationCheckedPackage {

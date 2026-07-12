@@ -92,7 +92,7 @@ test("semantic profile keys and file provenance are exact relational evidence", 
   }
 });
 
-test("canonical semantic identity retains every snapshot-schema-9 declaration field", () => {
+test("canonical semantic identity retains every snapshot-schema-10 declaration field", () => {
   const method = methodSnapshot().files[0].units[0].semantic[0];
   const pointerMethod = structuredClone(method);
   pointerMethod.signature.receiverMode = "pointer";
@@ -186,7 +186,7 @@ test("method-set selections reference one exact normalized selected-signature po
   }), /externalRole/, "obsolete external declaration role");
   assertRejected(mutateClone(snapshot, (value) => {
     value.semantic.dependencyTypeDeclarations[0].kind = "func";
-  }), /dependencyTypeDeclarations contains only reachable named types/, "package function in dependency type closure");
+  }), /dependency type closure contains only reachable named types/, "package function in dependency type closure");
   assertRejected(mutateClone(snapshot, (value) => value.semantic.methodSetSignatures[0].signature.variadic = true), /id must hash the exact selected signature/, "selected signature drift");
   assertRejected(mutateClone(snapshot, (value) => value.semantic.dependencyTypeDeclarations[0].type.valueMethodSet[0].signatureId = "missing"), /has no exact method-set signature evidence/, "missing selected signature");
   assertRejected(mutateClone(snapshot, (value) => {
@@ -460,7 +460,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 9,
+    schemaVersion: 10,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -484,6 +484,7 @@ function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
       coveredFiles: [...requiredFiles].sort(),
       excludedFiles: [...excludedFiles].sort(),
       dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [...profiles].sort((left, right) => semanticProfileKey(left).localeCompare(semanticProfileKey(right))),
       unsupportedProfiles: [],

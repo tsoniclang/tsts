@@ -26,3 +26,27 @@ test("Porter config requires exact core identity and unit-kind fields", () => {
   assert.throws(() => assertPorterConfig({ ...base, goModulePath: "" }), /goModulePath must be a non-empty string/);
   assert.throws(() => assertPorterConfig({ ...base, primaryUnitKinds: ["func", "func"] }), /must be unique/);
 });
+
+test("external package selections bind one exact Go object to authored TypeScript storage", () => {
+  const exact = {
+    ...base,
+    authoredFacadeModules: ["go/errors.ts"],
+    externalPackageSurfaceSelections: [{ objectId: "errors::func::New", tsModule: "go/errors.ts", tsName: "New" }],
+  };
+  assert.equal(assertPorterConfig(exact), exact);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalPackageSurfaceSelections: [{ objectId: "errors::func::New", tsModule: "go/missing.ts", tsName: "New" }],
+  }), /not listed in config\.authoredFacadeModules/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalPackageSurfaceSelections: [
+      ...exact.externalPackageSurfaceSelections,
+      { objectId: "errors::var::Other", tsModule: "go/errors.ts", tsName: "New" },
+    ],
+  }), /duplicates TypeScript storage/);
+  assert.throws(() => assertPorterConfig({
+    ...exact,
+    externalPackageSurfaceSelections: [{ objectId: "errors::package::all", tsModule: "go/errors.ts", tsName: "all" }],
+  }), /package::\(const\|func\|type\|var\)::name/);
+});

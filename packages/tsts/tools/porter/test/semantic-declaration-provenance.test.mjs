@@ -145,7 +145,7 @@ test("semantic array lengths are unbounded canonical decimal strings", () => {
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.kind = 2;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.kind = 2;
-  }), /unknown snapshot-schema-9 key 'kind'/, "removed redundant basic kind");
+  }), /unknown snapshot-schema-10 key 'kind'/, "removed redundant basic kind");
   assertRejected(mutateClone(snapshot, (value) => {
     value.files[0].units[0].semantic[0].signature.parameters.variables[0].type.element.basic.untyped = true;
     value.files[0].units[0].semantic[0].object.type.signature.parameters.variables[0].type.element.basic.untyped = true;
@@ -350,7 +350,7 @@ function profile({ goos = "linux", goarch = "amd64", coveredFiles, experiments =
 
 function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
   const snapshot = {
-    schemaVersion: 9,
+    schemaVersion: 10,
     sourceRoot: path.resolve(repoRoot),
     modulePath: "m",
     gitRevision: "e".repeat(40),
@@ -374,6 +374,7 @@ function snapshotFrom({ files, profiles, requiredFiles, excludedFiles = [] }) {
       coveredFiles: [...requiredFiles].sort(),
       excludedFiles: [...excludedFiles].sort(),
       dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [...profiles].sort((left, right) => semanticProfileKey(left).localeCompare(semanticProfileKey(right))),
       unsupportedProfiles: [],

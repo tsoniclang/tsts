@@ -457,8 +457,12 @@ func TestCanonicalTypeEncoderCoversTupleVariant(t *testing.T) {
 }
 
 func declarationSnapshot(t *testing.T, root string, modulePath string) Snapshot {
+	return declarationSnapshotWithSelections(t, root, modulePath, nil)
+}
+
+func declarationSnapshotWithSelections(t *testing.T, root string, modulePath string, selections []semanticExternalPackageSelection) Snapshot {
 	t.Helper()
-	snapshot := Snapshot{SchemaVersion: 9, SourceRoot: root, ModulePath: modulePath}
+	snapshot := Snapshot{SchemaVersion: porterSnapshotSchemaVersion, SourceRoot: root, ModulePath: modulePath}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -477,7 +481,7 @@ func declarationSnapshot(t *testing.T, root string, modulePath string) Snapshot 
 	for _, file := range snapshot.Files {
 		semanticFiles[file.Path] = true
 	}
-	applyGoSemanticEvidence(root, modulePath, &snapshot, semanticFiles)
+	applyGoSemanticEvidence(root, modulePath, &snapshot, semanticFiles, selections)
 	return snapshot
 }
 

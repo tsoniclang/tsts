@@ -4,7 +4,7 @@ import { buildDeclaredTypeContractIndex } from "./semantic-named-nilability.mjs"
 
 const directReferenceTerminals = new Set(["basic", "channel", "interface", "map", "pointer", "signature", "slice"]);
 
-export function buildTypeRepresentationEvidence(config, snapshot, facades = buildExternalFacadeMap(config, snapshot)) {
+export function buildTypeRepresentationEvidence(config, snapshot, facades = buildExternalFacadeMap(config, snapshot), options = {}) {
   const externalTypeContracts = new Map();
   const dependencyTypeContractsByProfile = new Map();
   const dependencyPointerTerminalsByProfile = new Map();
@@ -15,7 +15,10 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades = buil
     if (facade?.objectId !== objectId) throw new Error(`external facade map key '${objectId}' is not its exact Go object identity`);
     facadeByObjectId.set(objectId, facade);
   }
-  for (const semantic of buildDependencySemanticTypeIndex(snapshot).values()) {
+  const semanticIndex = buildDependencySemanticTypeIndex(snapshot, {
+    includeExternalPackageSurface: options.includeExternalPackageSurface === true,
+  });
+  for (const semantic of semanticIndex.values()) {
     const facade = facadeByObjectId.get(semantic.objectId);
     const contract = {
       objectId: semantic.objectId,

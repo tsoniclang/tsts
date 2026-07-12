@@ -103,12 +103,12 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
 
 function snapshot(gitRevision, files) {
   return {
-    schemaVersion: 9,
+    schemaVersion: 10,
     sourceRoot: "/source",
     modulePath: "m",
     gitRevision,
     environment: { goVersion: "go1.26.4", goos: "linux", goarch: "amd64" },
-    semantic: { dependencyTypeDeclarations: [], methodSetSignatures: [], profiles: [profile("linux", "amd64", "GOAMD64=v1")] },
+    semantic: { dependencyTypeDeclarations: [], externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] }, methodSetSignatures: [], profiles: [profile("linux", "amd64", "GOAMD64=v1")] },
     summary: { goFileCount: files.length, unitCount: files.reduce((count, candidate) => count + candidate.units.length, 0) },
     files,
   };

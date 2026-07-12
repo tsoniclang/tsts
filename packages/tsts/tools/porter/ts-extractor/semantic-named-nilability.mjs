@@ -1,5 +1,6 @@
 import { canonicalSchemaValue } from "../core/semantic-variants.mjs";
 import { assertSemanticNilability } from "../core/semantic-type-nilability.mjs";
+import { exactSemanticTypeDeclarationIdentity } from "../core/semantic-type-declaration-identity.mjs";
 
 const intrinsicallyNilableStorageCarriers = new Set([
   "chan",
@@ -22,38 +23,40 @@ export function buildDeclaredTypeContractIndex(snapshot) {
       for (const semantic of unit.semantic ?? []) {
         const declaration = semantic?.type;
         if (declaration === undefined) continue;
-        const contract = semanticTypeDeclarationContract(declaration, `Go type unit '${unit.id}'`);
-        for (const profile of semantic.profiles ?? []) {
-          const contracts = contractsByProfile.get(profile) ?? new Map();
-          const previous = contracts.get(contract.objectId);
-          if (previous !== undefined && canonicalSchemaValue(previous) !== canonicalSchemaValue(contract)) {
-            throw new Error(`Go type '${contract.objectId}' has conflicting semantic declaration contracts in profile '${profile}'`);
-          }
-          contracts.set(contract.objectId, contract);
-          contractsByProfile.set(profile, contracts);
-        }
+        addTypeDeclaration(declaration, semantic.profiles, `Go type unit '${unit.id}'`);
       }
     }
   }
+  const surface = snapshot.semantic?.externalPackageSurface;
+  for (const semantic of [
+    ...(Array.isArray(surface?.declarations) ? surface.declarations : []),
+    ...(Array.isArray(surface?.dependencyTypeDeclarations) ? surface.dependencyTypeDeclarations : []),
+  ]) {
+    if (semantic?.kind !== "type" || semantic.type === undefined) continue;
+    addTypeDeclaration(semantic.type, semantic.profiles, "external package Go type");
+  }
   return contractsByProfile;
+
+  function addTypeDeclaration(declaration, profiles, label) {
+    const contract = semanticTypeDeclarationContract(declaration, label);
+    for (const profile of profiles ?? []) {
+      const contracts = contractsByProfile.get(profile) ?? new Map();
+      const previous = contracts.get(contract.objectId);
+      if (previous !== undefined && canonicalSchemaValue(previous) !== canonicalSchemaValue(contract)) {
+        throw new Error(`Go type '${contract.objectId}' has conflicting semantic declaration contracts in profile '${profile}'`);
+      }
+      contracts.set(contract.objectId, contract);
+      contractsByProfile.set(profile, contracts);
+    }
+  }
 }
 
 export function semanticTypeDeclarationContract(declaration, label = "Go type declaration") {
-  if (declaration?.alias !== true && declaration?.alias !== false) throw new Error(`${label} has no exact alias flag`);
-  const objectId = declaration.object?.id;
-  if (typeof objectId !== "string" || objectId === "") throw new Error(`${label} has no exact type object identity`);
-  if (declaration.rhs === undefined) throw new Error(`${label} has no canonical declaration RHS`);
-  const objectType = declaration.object?.type;
-  if (objectType?.kind !== "named" && objectType?.kind !== "alias") {
-    throw new Error(`${label} object '${objectId}' is not a canonical named/alias type`);
-  }
+  const { objectId, objectType } = exactSemanticTypeDeclarationIdentity(declaration, label);
   assertSemanticNilability(objectType, `${label} object type`);
   assertSemanticNilability(declaration.rhs, `${label} RHS`);
   if (objectType.nilable !== declaration.rhs.nilable) {
     throw new Error(`${label} object '${objectId}' and declaration RHS disagree on intrinsic nilability`);
-  }
-  if (objectType.reference?.objectId !== objectId) {
-    throw new Error(`${label} object type does not reference its exact object identity '${objectId}'`);
   }
   const rawInterface = declaration.rhs.kind === "interface";
   if (!Array.isArray(declaration.typeParameters)) throw new Error(`${label} has no exact type-parameter list`);

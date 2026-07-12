@@ -89,6 +89,10 @@ test("signature summaries retain audit state and every concrete inventory row", 
     sourceSetHash: "f".repeat(64), uses: ["fixture-ambient-use"],
   };
   const declarationOwner = { id: "pkg/time.ts::type::class::Time", owner: "authored-facade:time::type::Time" };
+  const externalPackageSelection = {
+    file: "packages/tsts/src/go/errors.ts", kind: "func", name: "New", objectId: "errors::func::New",
+    resolvedProfiles: [0], tsModule: "go/errors.ts", tsName: "New", unresolvedProfiles: [],
+  };
   const summary = summarizeSignatureReport({
     state: "complete",
     selection: { kind: "all-active" },
@@ -110,6 +114,10 @@ test("signature summaries retain audit state and every concrete inventory row", 
       tsOnlyMembers: [tsOnlyMember],
       unselectedGoMemberCount: 1,
       unselectedGoMembers: [unselectedGoMember],
+    },
+    externalPackageSurface: {
+      state: "complete", checked: 1, inventory: [externalPackageSelection], mismatchCount: 0,
+      resolvedProfileCount: 1, unresolvedProfileCount: 0,
     },
     typeStoragePolicies: { state: "complete", checked: 1, inventory: [typeStoragePolicy], mismatchCount: 0 },
     typeEquivalenceRelations: { state: "complete", checked: 1, inventory: [typeEquivalenceRelation], mismatchCount: 0 },
@@ -135,6 +143,7 @@ test("signature summaries retain audit state and every concrete inventory row", 
   assert.deepEqual(summary.authoredFacades.methodBindings, [methodBinding]);
   assert.deepEqual(summary.authoredFacades.privateStorageMembers, [privateStorage]);
   assert.deepEqual(summary.authoredFacades.tsOnlyMembers, [tsOnlyMember]);
+  assert.deepEqual(summary.externalPackageSurface.inventory, [externalPackageSelection]);
   assert.deepEqual(summary.typeStoragePolicies.inventory, [typeStoragePolicy]);
   assert.deepEqual(summary.typeEquivalenceRelations.inventory, [typeEquivalenceRelation]);
   assert.deepEqual(summary.ambientReferenceRelations.inventory, [ambientReferenceRelation]);
@@ -155,10 +164,11 @@ test("signature summaries retain audit state and every concrete inventory row", 
     "Add", "ToDate", "FileMode_IsDir", "extra", "helper", "reviewed", "pkg/time.ts::Time", "route-hash",
     "go/time.ts::Time", "go/a.ts::Node", "fixture-use", "global::ReadonlyArray", "fixture-ambient-use",
     "pkg/time.ts::type::class::Time", "authored-facade:time::type::Time",
+    "errors::func::New",
   ]) {
     assert.match(markdown, new RegExp(evidence));
   }
-  assert.equal(signatureAuditSummaryLines({ signatureCheck: summary, jsonTagCheck: { state: "not-run", reason: "fixture" } }).length, 8);
+  assert.equal(signatureAuditSummaryLines({ signatureCheck: summary, jsonTagCheck: { state: "not-run", reason: "fixture" } }).length, 9);
 });
 
 test("filtered signature summaries preserve every skipped whole-program subaudit", () => {
@@ -172,6 +182,7 @@ test("filtered signature summaries preserve every skipped whole-program subaudit
     mismatches: [],
     overrideIssues: [],
     authoredFacades: skipped("facades"),
+    externalPackageSurface: skipped("external package"),
     typeStoragePolicies: skipped("storage"),
     typeEquivalenceRelations: skipped("equivalence"),
     ambientReferenceRelations: skipped("ambient"),
@@ -179,14 +190,14 @@ test("filtered signature summaries preserve every skipped whole-program subaudit
     untrackedTypeScript: skipped("TypeScript inventory"),
   });
   for (const key of [
-    "authoredFacades", "typeStoragePolicies", "typeEquivalenceRelations",
+    "authoredFacades", "externalPackageSurface", "typeStoragePolicies", "typeEquivalenceRelations",
     "ambientReferenceRelations", "declarationOwnership", "untrackedTypeScript",
   ]) assert.equal(summary[key].state, "not-run", key);
   const lines = signatureAuditSummaryLines({
     signatureCheck: summary,
     jsonTagCheck: { state: "complete", taggedUnits: 0, taggedFields: 0, contractUnits: 0, contractFields: 0, mismatches: 0 },
   });
-  assert.equal(lines.filter((line) => line.includes("not run")).length, 6);
+  assert.equal(lines.filter((line) => line.includes("not run")).length, 7);
 });
 
 function minimalStatus() {

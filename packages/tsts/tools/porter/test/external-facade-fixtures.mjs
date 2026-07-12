@@ -31,6 +31,7 @@ export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dep
     }],
     semantic: {
       dependencyTypeDeclarations,
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [...methodSetSignatures.values()].sort((left, right) => left.id.localeCompare(right.id)),
       profiles: profileIndexes.map(() => ({})),
     },
@@ -121,7 +122,6 @@ export function externalValue({ packagePath, name, type, constant, profiles = [0
   return {
     kind: declarationKind,
     packagePath,
-    object,
     valueSpecs: [{
       specIndex: 0,
       names: [{ name, nameIndex: 0, blank: false, type, object, ...(constant === undefined ? {} : { constant }) }],

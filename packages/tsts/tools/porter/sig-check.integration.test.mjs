@@ -16,6 +16,7 @@ const EMPTY_SEMANTIC_SNAPSHOT = {
   files: [],
   semantic: {
     dependencyTypeDeclarations: [],
+    externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
     methodSetSignatures: [],
     profiles: [testSemanticProfile()],
   },

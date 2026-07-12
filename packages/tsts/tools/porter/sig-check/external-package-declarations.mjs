@@ -1,5 +1,4 @@
 import { compareText } from "../core/deterministic-order.mjs";
-import { externalFacadeModulePath } from "../core/external-facades.mjs";
 import {
   buildExternalPackageSurfaceDeclarationIndex,
   externalPackageSurfaceValueUnit,
@@ -12,8 +11,6 @@ import { goUnitDescriptor } from "../ts-extractor/expected-from-go-semantic.mjs"
 import { compareSignatures } from "./comparison.mjs";
 import { declarationOwnershipIds, descriptorOwnershipKind } from "./declaration-ownership.mjs";
 
-// This audit is intentionally disconnected until the caller supplies a
-// reviewed partial package-surface catalog and its complete type dependencies.
 export function collectExternalPackageSurfaceMismatches({
   api,
   canonicalIdentity,
@@ -21,32 +18,38 @@ export function collectExternalPackageSurfaceMismatches({
   conventions,
   expectedIndex,
   moduleIndex,
-  profile,
-  surfaceDeclarations,
+  snapshot,
   valueEnvironments,
   ambientReferences = { accept: () => false },
 }) {
-  const declarations = buildExternalPackageSurfaceDeclarationIndex(surfaceDeclarations);
+  const declarations = buildExternalPackageSurfaceDeclarationIndex(config, snapshot);
   const inventory = [];
   const mismatches = [];
   const ownedDeclarationIds = new Set();
   for (const entry of declarations.values()) {
-    const tsModule = externalFacadeModulePath(config, profile, entry.packagePath);
-    const file = `${config.tsRoot.replace(/\/+$/, "")}/${tsModule}`;
-    inventory.push({ file, kind: entry.kind, name: entry.name, objectId: entry.objectId });
+    const file = `${config.tsRoot.replace(/\/+$/, "")}/${entry.tsModule}`;
+    inventory.push({
+      file,
+      kind: entry.kind,
+      name: entry.name,
+      objectId: entry.objectId,
+      resolvedProfiles: [...entry.byProfile.keys()].sort((left, right) => left - right),
+      tsModule: entry.tsModule,
+      tsName: entry.tsName,
+      unresolvedProfiles: [...entry.unresolvedProfiles].sort((left, right) => left - right),
+    });
     if (entry.kind === "type") {
-      mismatches.push(contractError(entry, file, new Error("external package type-surface auditing requires an explicit TypeScript storage contract")));
       continue;
     }
     let actual;
     try {
       const extracted = entry.kind === "func"
-        ? extractIndexedFunctionExportDescriptor(api, moduleIndex, file, entry.name, valueEnvironments)
-        : extractIndexedValueExportDescriptor(api, moduleIndex, file, entry.name, valueEnvironments);
-      requireDirectStorage(extracted.declarationId, file, entry.name);
+        ? extractIndexedFunctionExportDescriptor(api, moduleIndex, file, entry.tsName, valueEnvironments)
+        : extractIndexedValueExportDescriptor(api, moduleIndex, file, entry.tsName, valueEnvironments);
+      requireDirectStorage(extracted.declarationId, file, entry.tsName);
       actual = extracted.descriptor;
       const ownershipKind = descriptorOwnershipKind(actual);
-      for (const id of declarationOwnershipIds(file, entry.name, ownershipKind)) ownedDeclarationIds.add(id);
+      for (const id of declarationOwnershipIds(file, entry.tsName, ownershipKind)) ownedDeclarationIds.add(id);
     } catch (error) {
       mismatches.push(contractError(entry, file, error));
       continue;

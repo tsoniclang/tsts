@@ -21,11 +21,13 @@ import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/
 import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
+import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
 import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
 import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-policies.mjs";
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
+import { buildExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
 import {
   resolveOverride,
   unitSignatureSnapshot,
@@ -76,6 +78,17 @@ export async function computeSignatureReport(deps, options = {}) {
   });
   const ambientReferenceRegistry = buildAmbientReferenceRelationRegistry({ api, config: deps.config });
   const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, generatedTypeDeclarations(deps.config, moduleIndex));
+  const externalStorageFacades = wholeProgramAudit ? buildExternalFacadeStorageCatalog(deps.config, deps.snapshot) : new Map();
+  const externalExpectedIndex = wholeProgramAudit
+    ? buildExpectedIndex(
+      deps.config,
+      deps.snapshot,
+      deps.tsById,
+      profile,
+      generatedTypeDeclarations(deps.config, moduleIndex),
+      { externalFacades: externalStorageFacades, includeExternalPackageSurface: true },
+    )
+    : undefined;
   const idPattern = idFilter === undefined ? undefined : globToRegExp(idFilter);
   const mismatches = [];
   let overriddenUnits = 0;
@@ -117,6 +130,7 @@ export async function computeSignatureReport(deps, options = {}) {
       profile,
       snapshot: deps.snapshot,
       valueEnvironments,
+      facades: externalStorageFacades,
       ambientReferences: ambientReferenceRegistry.forUseSite("authored-facade-audit"),
     })
     : {
@@ -136,9 +150,24 @@ export async function computeSignatureReport(deps, options = {}) {
     })
     : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
   mismatches.push(...typeStoragePolicies.mismatches);
+  const externalPackageSurface = wholeProgramAudit
+    ? collectExternalPackageSurfaceMismatches({
+      api,
+      canonicalIdentity: typeEquivalenceRegistry.forUseSite("external-package-surface-audit"),
+      config: deps.config,
+      conventions,
+      expectedIndex: externalExpectedIndex,
+      moduleIndex,
+      snapshot: deps.snapshot,
+      valueEnvironments,
+      ambientReferences: ambientReferenceRegistry.forUseSite("external-package-surface-audit"),
+    })
+    : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
+  mismatches.push(...externalPackageSurface.mismatches);
   const declarationOwnership = wholeProgramAudit
     ? buildDeclarationOwnershipRegistry([
       { owner: "authored-facade", ids: authoredFacades.ownedDeclarationIds },
+      { owner: "external-package", ids: externalPackageSurface.ownedDeclarationIds },
       { owner: "go-type-storage", ids: typeStoragePolicies.ownedDeclarationIds },
     ])
     : { ids: new Set(), inventory: [], mismatches: [] };
@@ -214,6 +243,15 @@ export async function computeSignatureReport(deps, options = {}) {
         checked: typeStoragePolicies.checked,
         inventory: typeStoragePolicies.inventory,
         mismatchCount: typeStoragePolicies.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
+    externalPackageSurface: wholeProgramAudit
+      ? completeAudit({
+        checked: externalPackageSurface.checked,
+        inventory: externalPackageSurface.inventory,
+        mismatchCount: externalPackageSurface.mismatches.length,
+        resolvedProfileCount: externalPackageSurface.inventory.reduce((count, row) => count + row.resolvedProfiles.length, 0),
+        unresolvedProfileCount: externalPackageSurface.inventory.reduce((count, row) => count + row.unresolvedProfiles.length, 0),
       })
       : wholeProgramAuditNotRun(),
     typeEquivalenceRelations: wholeProgramAudit

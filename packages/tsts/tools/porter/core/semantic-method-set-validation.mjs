@@ -55,12 +55,15 @@ export function buildSemanticTypeParameterScopes(snapshot, issues) {
     }
     scopes.set(ownerId, next);
   };
-  for (const [index, declaration] of (snapshot.semantic?.dependencyTypeDeclarations ?? []).entries()) {
+  for (const [index, declaration] of exactArray(snapshot.semantic?.dependencyTypeDeclarations).entries()) {
     register(declaration, `snapshot.semantic.dependencyTypeDeclarations[${index}]`);
   }
-  for (const [fileIndex, file] of (snapshot.files ?? []).entries()) {
-    for (const [unitIndex, unit] of (file.units ?? []).entries()) {
-      for (const [variantIndex, declaration] of (unit.semantic ?? []).entries()) {
+  for (const [index, declaration] of externalPackageTypeDeclarations(snapshot).entries()) {
+    register(declaration, `snapshot.semantic.externalPackageSurface type declaration[${index}]`);
+  }
+  for (const [fileIndex, file] of exactArray(snapshot.files).entries()) {
+    for (const [unitIndex, unit] of exactArray(file?.units).entries()) {
+      for (const [variantIndex, declaration] of exactArray(unit?.semantic).entries()) {
         register(declaration, `snapshot.files[${fileIndex}].units[${unitIndex}].semantic[${variantIndex}]`);
       }
     }
@@ -83,12 +86,15 @@ export function buildSemanticMethodSetSignatureScopes(snapshot, ownerScopes, iss
       }
     }
   };
-  for (const [index, declaration] of (snapshot.semantic?.dependencyTypeDeclarations ?? []).entries()) {
+  for (const [index, declaration] of exactArray(snapshot.semantic?.dependencyTypeDeclarations).entries()) {
     register(declaration, `snapshot.semantic.dependencyTypeDeclarations[${index}]`);
   }
-  for (const [fileIndex, file] of (snapshot.files ?? []).entries()) {
-    for (const [unitIndex, unit] of (file.units ?? []).entries()) {
-      for (const [variantIndex, declaration] of (unit.semantic ?? []).entries()) {
+  for (const [index, declaration] of externalPackageTypeDeclarations(snapshot).entries()) {
+    register(declaration, `snapshot.semantic.externalPackageSurface type declaration[${index}]`);
+  }
+  for (const [fileIndex, file] of exactArray(snapshot.files).entries()) {
+    for (const [unitIndex, unit] of exactArray(file?.units).entries()) {
+      for (const [variantIndex, declaration] of exactArray(unit?.semantic).entries()) {
         register(declaration, `snapshot.files[${fileIndex}].units[${unitIndex}].semantic[${variantIndex}]`);
       }
     }
@@ -163,12 +169,15 @@ export function validateSemanticMethodSetSignatureUsage(snapshot, signatureIds, 
       }
     }
   };
-  for (const [index, declaration] of (snapshot.semantic?.dependencyTypeDeclarations ?? []).entries()) {
+  for (const [index, declaration] of exactArray(snapshot.semantic?.dependencyTypeDeclarations).entries()) {
     visitDeclaration(declaration, `snapshot.semantic.dependencyTypeDeclarations[${index}]`);
   }
-  for (const [fileIndex, file] of (snapshot.files ?? []).entries()) {
-    for (const [unitIndex, unit] of (file.units ?? []).entries()) {
-      for (const [variantIndex, declaration] of (unit.semantic ?? []).entries()) {
+  for (const [index, declaration] of externalPackageTypeDeclarations(snapshot).entries()) {
+    visitDeclaration(declaration, `snapshot.semantic.externalPackageSurface type declaration[${index}]`);
+  }
+  for (const [fileIndex, file] of exactArray(snapshot.files).entries()) {
+    for (const [unitIndex, unit] of exactArray(file?.units).entries()) {
+      for (const [variantIndex, declaration] of exactArray(unit?.semantic).entries()) {
         visitDeclaration(declaration, `snapshot.files[${fileIndex}].units[${unitIndex}].semantic[${variantIndex}]`);
       }
     }
@@ -176,4 +185,16 @@ export function validateSemanticMethodSetSignatureUsage(snapshot, signatureIds, 
   for (const signatureId of signatureIds) {
     if (!used.has(signatureId)) issues.push(`snapshot.semantic.methodSetSignatures contains unused signature '${signatureId}'`);
   }
+}
+
+function externalPackageTypeDeclarations(snapshot) {
+  const surface = snapshot.semantic?.externalPackageSurface;
+  return [
+    ...exactArray(surface?.declarations),
+    ...exactArray(surface?.dependencyTypeDeclarations),
+  ].filter((declaration) => declaration?.kind === "type");
+}
+
+function exactArray(value) {
+  return Array.isArray(value) ? value : [];
 }

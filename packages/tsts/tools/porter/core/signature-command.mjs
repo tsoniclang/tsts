@@ -53,6 +53,7 @@ export function summarizeSignatureReport(report) {
     ...(report?.reason === undefined ? {} : { reason: report.reason }),
     ...(report?.selection === undefined ? {} : { selection: { ...report.selection } }),
     authoredFacades: preserveSubaudit(report?.authoredFacades),
+    externalPackageSurface: preserveSubaudit(report?.externalPackageSurface),
     typeStoragePolicies: preserveSubaudit(report?.typeStoragePolicies),
     typeEquivalenceRelations: preserveSubaudit(report?.typeEquivalenceRelations),
     ambientReferenceRelations: preserveSubaudit(report?.ambientReferenceRelations),

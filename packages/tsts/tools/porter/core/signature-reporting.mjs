@@ -7,6 +7,7 @@ export function signatureAuditSummaryLines(status) {
   return [
     auditSummaryLine(signature, "Signature unit audit", () => `Signature units/descriptors/mismatches/override issues: ${metric(signature.checked)}/${metric(signature.descriptors)}/${metric(signature.mismatches)}/${metric(signature.overrideIssues)}`),
     auditSummaryLine(signature?.authoredFacades, "Authored facade audit", () => `Authored facades checked/bound methods/unselected Go/TS-only/issues: ${metric(signature.authoredFacades.checked)}/${metric(signature.authoredFacades.methodBindingCount)}/${metric(signature.authoredFacades.unselectedGoMemberCount)}/${metric(signature.authoredFacades.tsOnlyMemberCount)}/${metric(signature.authoredFacades.mismatchCount)}`),
+    auditSummaryLine(signature?.externalPackageSurface, "External package surface audit", () => `External package selections/resolved profiles/unresolved profiles/issues: ${metric(signature.externalPackageSurface.checked)}/${metric(signature.externalPackageSurface.resolvedProfileCount)}/${metric(signature.externalPackageSurface.unresolvedProfileCount)}/${metric(signature.externalPackageSurface.mismatchCount)}`),
     auditSummaryLine(signature?.typeStoragePolicies, "Reviewed type storage policy audit", () => `Reviewed type storage policies checked/issues: ${metric(signature.typeStoragePolicies.checked)}/${metric(signature.typeStoragePolicies.mismatchCount)}`),
     auditSummaryLine(signature?.typeEquivalenceRelations, "TypeScript type-equivalence relation audit", () => `TypeScript type-equivalence relations checked/issues: ${metric(signature.typeEquivalenceRelations.checked)}/${metric(signature.typeEquivalenceRelations.mismatchCount)}`),
     auditSummaryLine(signature?.ambientReferenceRelations, "Ambient reference relation audit", () => `Ambient reference relations checked/issues: ${metric(signature.ambientReferenceRelations.checked)}/${metric(signature.ambientReferenceRelations.mismatchCount)}`),
@@ -32,6 +33,7 @@ export function appendSignatureAuditMarkdown(lines, status) {
     appendMethodBindingInventory(lines, facades.methodBindings);
   }
   if (signature?.typeStoragePolicies?.state === "complete") appendTypeStorageInventory(lines, signature.typeStoragePolicies.inventory);
+  if (signature?.externalPackageSurface?.state === "complete") appendExternalPackageSurfaceInventory(lines, signature.externalPackageSurface.inventory);
   if (signature?.typeEquivalenceRelations?.state === "complete") appendTypeEquivalenceInventory(lines, signature.typeEquivalenceRelations.inventory);
   if (signature?.ambientReferenceRelations?.state === "complete") appendAmbientReferenceInventory(lines, signature.ambientReferenceRelations.inventory);
   if (signature?.declarationOwnership?.state === "complete") appendDeclarationOwnershipInventory(lines, signature.declarationOwnership.inventory);
@@ -42,6 +44,16 @@ export function appendSignatureAuditMarkdown(lines, status) {
     appendTypeScriptDeclarationInventory(lines, "Reviewed Non-Go TypeScript Declarations", untracked.reviewedDeclarations);
     appendReExportInventory(lines, untracked.reExports);
   }
+}
+
+function appendExternalPackageSurfaceInventory(lines, rows) {
+  appendTable(lines, "External Package Surface", ["Go object", "Kind", "Resolved profiles", "Unresolved profiles", "TS storage"], rows, (row) => [
+    row.objectId,
+    row.kind,
+    (row.resolvedProfiles ?? []).join(", "),
+    (row.unresolvedProfiles ?? []).join(", "),
+    `${row.file}::${row.tsName}`,
+  ]);
 }
 
 function auditSummaryLine(audit, label, renderComplete) {

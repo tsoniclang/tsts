@@ -1,5 +1,7 @@
 import { validateSemanticDeclaration } from "./semantic-snapshot-validation.mjs";
-import { validateDependencyTypeDeclarations } from "./semantic-snapshot-validation-dependencies.mjs";
+import { activeSemanticTypeProfileKeys, validateDependencyTypeDeclarations } from "./semantic-snapshot-validation-dependencies.mjs";
+import { validateExternalPackageSurface } from "./semantic-snapshot-validation-external-package.mjs";
+import { validateExternalPackageDependencyClosure } from "./semantic-snapshot-validation-external-closure.mjs";
 import {
   buildSemanticMethodSetSignatureScopes,
   buildSemanticTypeParameterScopes,
@@ -36,7 +38,7 @@ import { fail, resolveRepo } from "./runtime.mjs";
 
 export const PORTER_SNAPSHOT_KEYS = Object.freeze(["environment", "files", "gitRevision", "modulePath", "schemaVersion", "semantic", "sourceRoot", "summary"]);
 export const PORTER_ENVIRONMENT_KEYS = Object.freeze(["goVersion", "goarch", "goos"]);
-export const PORTER_SEMANTIC_KEYS = new Set(["compiler", "coveredFiles", "dependencyTypeDeclarations", "excludedFiles", "goroot", "gorootBytes", "gorootDirectoryCount", "gorootEntryCount", "gorootFileCount", "gorootHash", "gorootHashContract", "gorootSymlinkCount", "methodSetSignatures", "moduleGraph", "modulePath", "profiles", "releaseTags", "requiredFiles", "toolchain", "toolchainExecutable", "toolchainHash", "unsupportedProfiles"]);
+export const PORTER_SEMANTIC_KEYS = new Set(["compiler", "coveredFiles", "dependencyTypeDeclarations", "excludedFiles", "externalPackageSurface", "goroot", "gorootBytes", "gorootDirectoryCount", "gorootEntryCount", "gorootFileCount", "gorootHash", "gorootHashContract", "gorootSymlinkCount", "methodSetSignatures", "moduleGraph", "modulePath", "profiles", "releaseTags", "requiredFiles", "toolchain", "toolchainExecutable", "toolchainHash", "unsupportedProfiles"]);
 export const PORTER_SEMANTIC_PROFILE_KEYS = new Set(["architecture", "buildFlags", "buildTags", "cgoEnabled", "coveredFiles", "environment", "experiments", "goarch", "goexperiment", "goos", "packageIds", "toolTags"]);
 export const PORTER_SEMANTIC_MODULE_KEYS = new Set(["path", "replacePath", "replaceSum", "replaceVersion", "sum", "version"]);
 export const PORTER_SUMMARY_KEYS = Object.freeze(["buildTagCounts", "fileCount", "generatedFiles", "goFileCount", "importPathCount", "lineCount", "packageCounts", "structTagCount", "structTagKeyCounts", "unitCount", "unitKindCounts"]);
@@ -55,7 +57,7 @@ export function validatePorterSnapshot(snapshot, config) {
   const issues = [];
   if (snapshot === null || typeof snapshot !== "object" || Array.isArray(snapshot)) return ["snapshot must be an object"];
   compareExactKeys(snapshot, PORTER_SNAPSHOT_KEYS, "snapshot", issues);
-  if (snapshot.schemaVersion !== 9) issues.push(`snapshot.schemaVersion must be 9, got ${JSON.stringify(snapshot.schemaVersion)}`);
+  if (snapshot.schemaVersion !== 10) issues.push(`snapshot.schemaVersion must be 10, got ${JSON.stringify(snapshot.schemaVersion)}`);
   if (snapshot.modulePath !== config.goModulePath) issues.push(`snapshot.modulePath must be ${JSON.stringify(config.goModulePath)}`);
   const expectedRoot = resolveRepo(config.sourceRoot).split(path.sep).join("/");
   if (snapshot.sourceRoot !== expectedRoot) issues.push(`snapshot.sourceRoot must be ${JSON.stringify(expectedRoot)}`);
@@ -69,6 +71,10 @@ export function validatePorterSnapshot(snapshot, config) {
       if (typeof snapshot.environment[key] !== "string" || snapshot.environment[key] === "") issues.push(`snapshot.environment.${key} must be a non-empty string`);
     }
   }
+  if (!Array.isArray(snapshot.files)) return [...issues, "snapshot.files must be an array"];
+  if (snapshot.summary === null || typeof snapshot.summary !== "object" || Array.isArray(snapshot.summary)) {
+    return [...issues, "snapshot.summary must be an object"];
+  }
   const typeParameterScopes = buildSemanticTypeParameterScopes(snapshot, issues);
   const methodSetSignatureScopes = buildSemanticMethodSetSignatureScopes(snapshot, typeParameterScopes, issues);
   const methodSetSignatureIds = validateSemanticEvidence(
@@ -76,11 +82,11 @@ export function validatePorterSnapshot(snapshot, config) {
     issues,
     snapshot.modulePath,
     methodSetSignatureScopes,
-    activeTypeProfileKeys(snapshot.files),
+    activeSemanticTypeProfileKeys(snapshot.files),
+    config,
   );
+  validateExternalPackageDependencyClosure(snapshot, issues);
   if (snapshot.semantic?.toolchain !== snapshot.environment?.goVersion) issues.push("snapshot.semantic.toolchain must equal snapshot.environment.goVersion");
-  if (!Array.isArray(snapshot.files)) return [...issues, "snapshot.files must be an array"];
-  if (snapshot.summary === null || typeof snapshot.summary !== "object" || Array.isArray(snapshot.summary)) return [...issues, "snapshot.summary must be an object"];
   compareExactKeys(snapshot.summary, PORTER_SUMMARY_KEYS, "snapshot.summary", issues);
 
   const paths = new Set();
@@ -274,7 +280,7 @@ export function validateUnitPayload(unit, label, issues) {
   }
 }
 
-function validateSemanticEvidence(semantic, issues, modulePath, methodSetSignatureScopes, activeTypeProfiles) {
+function validateSemanticEvidence(semantic, issues, modulePath, methodSetSignatureScopes, activeTypeProfiles, config) {
   if (semantic === null || typeof semantic !== "object" || Array.isArray(semantic)) {
     issues.push("snapshot.semantic must be an object");
     return new Set();
@@ -329,6 +335,17 @@ function validateSemanticEvidence(semantic, issues, modulePath, methodSetSignatu
     activeTypeProfiles,
     issues,
   );
+  const forbiddenExternalDependencyProfiles = new Set(activeTypeProfiles);
+  for (const declaration of Array.isArray(semantic.dependencyTypeDeclarations) ? semantic.dependencyTypeDeclarations : []) {
+    for (const profile of declaration?.profiles ?? []) forbiddenExternalDependencyProfiles.add(`${profile}\0${declaration?.object?.id}`);
+  }
+  validateExternalPackageSurface(
+    semantic.externalPackageSurface,
+    config,
+    semantic.profiles?.length ?? 0,
+    forbiddenExternalDependencyProfiles,
+    issues,
+  );
   const methodSetSignatureIds = validateSemanticMethodSetSignaturePool(
     semantic.methodSetSignatures,
     "snapshot.semantic.methodSetSignatures",
@@ -356,21 +373,6 @@ function validateSemanticEvidence(semantic, issues, modulePath, methodSetSignatu
     validateSemanticModuleRelations(semantic.moduleGraph, semantic.modulePath, issues);
   }
   return methodSetSignatureIds;
-}
-
-function activeTypeProfileKeys(files) {
-  const keys = new Set();
-  for (const file of Array.isArray(files) ? files : []) {
-    for (const unit of Array.isArray(file?.units) ? file.units : []) {
-      for (const declaration of Array.isArray(unit?.semantic) ? unit.semantic : []) {
-        if (declaration?.kind !== "type" || typeof declaration.object?.id !== "string") continue;
-        for (const profile of Array.isArray(declaration.profiles) ? declaration.profiles : []) {
-          if (Number.isSafeInteger(profile) && profile >= 0) keys.add(`${profile}\0${declaration.object.id}`);
-        }
-      }
-    }
-  }
-  return keys;
 }
 
 export function validateParameter(parameter, label, issues, options = {}) {

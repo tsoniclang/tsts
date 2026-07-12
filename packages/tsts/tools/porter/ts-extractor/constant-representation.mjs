@@ -16,6 +16,9 @@ export function buildDeclaredTypeRhsIndex(snapshot) {
     if (semantic?.kind !== "type" || semantic.type?.rhs === undefined) continue;
     addDeclaration(semantic.type.object?.id, semantic.type.rhs, semantic.profiles, "dependency Go type");
   }
+  for (const semantic of externalPackageTypeDeclarations(snapshot)) {
+    addDeclaration(semantic.type.object?.id, semantic.type.rhs, semantic.profiles, "external package Go type");
+  }
   return byProfile;
 
   function addDeclaration(objectId, rhs, profiles, label) {
@@ -26,6 +29,14 @@ export function buildDeclaredTypeRhsIndex(snapshot) {
       byProfile.set(profile, declarations);
     }
   }
+}
+
+function externalPackageTypeDeclarations(snapshot) {
+  const surface = snapshot.semantic?.externalPackageSurface;
+  return [
+    ...(Array.isArray(surface?.declarations) ? surface.declarations : []),
+    ...(Array.isArray(surface?.dependencyTypeDeclarations) ? surface.dependencyTypeDeclarations : []),
+  ].filter((semantic) => semantic?.kind === "type" && semantic.type?.rhs !== undefined);
 }
 
 export function semanticConstantUsesBigInt(type, index, profile) {

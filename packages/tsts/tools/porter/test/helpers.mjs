@@ -74,6 +74,7 @@ export function snapshotWith(files) {
     },
     semantic: {
       dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [testSemanticProfile({
         coveredFiles: files.map((file) => file.path),
@@ -372,6 +373,7 @@ export function completeDeclarationAuditStatus() {
       state: "complete",
       selection: { kind: "all-active" },
       authoredFacades: complete(),
+      externalPackageSurface: complete(),
       typeStoragePolicies: complete(),
       typeEquivalenceRelations: complete(),
       ambientReferenceRelations: complete(),

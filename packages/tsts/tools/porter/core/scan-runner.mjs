@@ -12,6 +12,7 @@ import {
   resolvePinnedGoToolchain,
 } from "../source-pin.mjs";
 import { assertPorterSnapshot } from "./snapshot.mjs";
+import { externalPackageSurfaceObjectIds } from "./external-package-declarations.mjs";
 import { assertDirectory, fail, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 
 const OUTPUT_FLAGS = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0);
@@ -29,12 +30,16 @@ export function runScan(config) {
   try {
     const result = spawnSync(
       goToolchain.executable,
-      ["run", ".", "-root", sourceRoot, "-module", config.goModulePath, "-revision", sourceBefore.revision, "-semantic-files-stdin"],
+      ["run", ".", "-root", sourceRoot, "-module", config.goModulePath, "-revision", sourceBefore.revision, "-extraction-request-stdin"],
       {
         cwd: helperDir,
         encoding: "utf8",
         env: goToolchain.environment,
-        input: `${JSON.stringify(semanticFiles)}\n`,
+        input: `${JSON.stringify({
+          schemaVersion: 1,
+          semanticFiles,
+          externalPackageSurfaceObjectIds: externalPackageSurfaceObjectIds(config),
+        })}\n`,
         maxBuffer: 16 * 1024 * 1024,
         stdio: ["pipe", output.fd, "pipe"],
       },
