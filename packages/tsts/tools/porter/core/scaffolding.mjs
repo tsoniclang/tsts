@@ -1,17 +1,12 @@
-import { buildAstGeneratedArtifactStatus } from "../ast-generator.mjs";
-import { buildDiagnosticsGeneratedArtifactStatus } from "../diagnostics-generator.mjs";
 import { matchGlob } from "../path-policy.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts } from "./facade-artifacts.mjs";
-import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
-import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { skeletonTsConfig, unitsByIDMap } from "./render-indexes.mjs";
 import { renderStatusMarkdown } from "./reporting.mjs";
 import { fail, repoRoot, resolveRepo, writeJson, writeText } from "./runtime.mjs";
-import { buildStatus } from "./status.mjs";
-import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { renderUnitGroup } from "./type-renderer.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { assertLargeFileSplitPlanClean } from "./verification.mjs";
+import { preparePorterWorkspaceState } from "./workspace-state.mjs";
 import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -101,15 +96,13 @@ export async function scaffoldMissing(config, status, snapshot, externalFacadeCa
   }
 
   if (scaffoldAll) {
-    const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
-    const afterStatus = buildStatus(
+    const afterWorkspace = await preparePorterWorkspaceState({
       config,
+      repositoryRoot: repoRoot,
       snapshot,
-      await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) }),
-      buildGeneratedArtifactStatus(config, snapshot, facades),
-      buildAstGeneratedArtifactStatus(config, snapshot.gitRevision),
-      buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision),
-    );
+      unicodeMode: "metadata",
+    });
+    const afterStatus = afterWorkspace.status;
     writeJson(resolveRepo(config.statusOut), afterStatus);
     writeText(resolveRepo(config.reportOut), renderStatusMarkdown(afterStatus));
     if (afterStatus.counts.missing > 0) {

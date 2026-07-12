@@ -1,33 +1,70 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { computeSignatureReport, generatedArtifactPrerequisiteMismatches } from "./sig-check.mjs";
+import {
+  collectDeclarationPrerequisiteIssues,
+  prepareDeclarationAuditPrerequisites,
+} from "./core/declaration-prerequisites.mjs";
+import { computeSignatureReport } from "./sig-check.mjs";
 
-test("generated declaration artifacts block signature comparison once per root artifact", () => {
-  const mismatches = generatedArtifactPrerequisiteMismatches({
-    missing: [{ path: "packages/tsts/src/go/compat.ts", reason: "compatibility declarations are absent" }],
-    stale: [{ path: "packages/tsts/src/go/iter.ts", reason: "iterator declarations changed" }],
-    orphan: [],
-    untracked: [],
-    invalid: [],
+test("every declaration-universe prerequisite blocks before signature comparison", () => {
+  const status = cleanStatus();
+  status.generatedArtifacts.missing.push({
+    path: "packages/tsts/src/go/compat.ts",
+    reason: "compatibility declarations are absent",
   });
-  assert.deepEqual(mismatches.map((row) => row.id), [
-    "generated-artifact:missing:packages/tsts/src/go/compat.ts",
-    "generated-artifact:stale:packages/tsts/src/go/iter.ts",
+  status.astGeneratedArtifacts.stale.push({
+    path: "packages/tsts/src/internal/ast/generated/data.ts",
+    reason: "AST declarations changed",
+  });
+  status.sourcePin.issues.push({ path: "source-pin.json", reason: "source revision drifted" });
+  status.generatedSourceCoverage.issues.push({ path: "generated-source-coverage.json", reason: "coverage is stale" });
+
+  const issues = collectDeclarationPrerequisiteIssues(status);
+  assert.deepEqual(issues.map((issue) => `${issue.category}:${issue.path}`), [
+    "generated-ast-stale:packages/tsts/src/internal/ast/generated/data.ts",
+    "generated-facades-missing:packages/tsts/src/go/compat.ts",
+    "generated-source-coverage:generated-source-coverage.json",
+    "source-pin:source-pin.json",
   ]);
-  assert.ok(mismatches.every((row) => row.kind === "signature-generated-artifact-prerequisite"));
-  assert.throws(() => generatedArtifactPrerequisiteMismatches({
-    missing: null, stale: [], orphan: [], untracked: [], invalid: [],
-  }), /status\.missing must be an array/);
+  assert.throws(
+    () => collectDeclarationPrerequisiteIssues({ ...status, generatedArtifacts: { ...status.generatedArtifacts, missing: null } }),
+    /generated-facades\.missing must be an array/,
+  );
 });
 
-test("filtered and whole-program signature checks require the same finalized facade catalog", async () => {
+test("signature audits accept only finalized workspace-derived prerequisites", async () => {
+  await assert.rejects(
+    prepareDeclarationAuditPrerequisites({}),
+    /finalized Porter workspace state/,
+  );
   await assert.rejects(
     computeSignatureReport({}, { idFilter: "fixture::*" }),
-    /finalized external facade storage catalog/,
-  );
-  await assert.rejects(
-    computeSignatureReport({ externalFacadeCatalog: new Map() }),
-    /finalized external facade storage catalog/,
+    /finalized declaration prerequisites/,
   );
 });
+
+function cleanStatus() {
+  return {
+    generatedArtifacts: emptyArtifacts(),
+    astGeneratedArtifacts: emptyArtifacts(),
+    diagnosticsGeneratedArtifacts: emptyArtifacts(),
+    bundledGeneratedArtifacts: emptyArtifacts(),
+    unicodeGeneratedArtifacts: emptyArtifacts(),
+    sourcePin: { issues: [] },
+    schemaSourceSync: { policyIssues: [], mismatches: [] },
+    generatedSourcePolicies: { issues: [] },
+    generatedSourceCoverage: { issues: [] },
+    globalGeneratedArtifacts: { issues: [] },
+    localOverrides: { invalidInline: [] },
+    invalidTsMetadata: [],
+    sourceInterpretationIssues: [],
+    largeFileSplits: { issues: [] },
+    duplicateGoIDs: [],
+    duplicateTsIDs: [],
+  };
+}
+
+function emptyArtifacts() {
+  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+}

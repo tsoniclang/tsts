@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -199,26 +199,62 @@ test("bundled-generator catches missing, stale, orphan, untracked, and invalid g
   }
 });
 
+test("facade catalog bootstrap uses bounded authored sources and virtual generated foundations", async () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = authoredWriterConfig(root);
+    const snapshot = authoredWriterSnapshot();
+    const generatedRoot = path.join(root, "src/go");
+    mkdirSync(path.join(root, "src/internal"), { recursive: true });
+    mkdirSync(generatedRoot, { recursive: true });
+    writeFileSync(path.join(generatedRoot, "io.ts"), `import type { byte, int } from "./scalars.js";
+import type { GoError, GoSlice } from "./compat.js";
+
+export interface Writer { Write(value: GoSlice<byte>): [int, GoError]; }
+`);
+    writeFileSync(path.join(root, "src/internal/unrelated.ts"), 'export { Missing } from "./absent.js";\n');
+
+    assert.equal(existsSync(path.join(generatedRoot, "scalars.ts")), false);
+    assert.equal(existsSync(path.join(generatedRoot, "compat.ts")), false);
+    const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
+
+    assert.ok(facades.artifactFacades(config, snapshot).has("io::type::Writer"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("facade catalog bootstrap fails on missing configured and relative authored sources", async () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = authoredWriterConfig(root);
+    const snapshot = authoredWriterSnapshot();
+    const generatedRoot = path.join(root, "src/go");
+    mkdirSync(generatedRoot, { recursive: true });
+    await assert.rejects(
+      prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot),
+      /configured authored facade module 'go\/io\.ts' is missing/,
+    );
+
+    writeFileSync(path.join(generatedRoot, "io.ts"), `import type { WriterOptions } from "./writer-options.js";
+
+export interface Writer { Write(options: WriterOptions): void; }
+`);
+
+    await assert.rejects(
+      prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot),
+      /relative module '\.\/writer-options\.js'.*resolves to missing '.*\/go\/writer-options\.ts'/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("authoredFacadeModules require the exact public symbol while remaining excluded from generation", async () => {
   const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
   try {
-    const config = {
-      ...baseConfig,
-      tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
-      authoredFacadeModules: ["go/io.ts"],
-      externalFacadePolicies: [{ objectId: "io::type::Writer", tsModule: "go/io.ts", tsName: "Writer", storageStrategy: "authored" }],
-    };
-    const snapshot = snapshotWith([fileRecord({
-      imports: [{ path: "io" }],
-      units: [unitRecord({
-        id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail",
-        parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
-        semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "Fail", [
-          { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
-        ]),
-      })],
-    })]);
-    snapshot.semantic.dependencyTypeDeclarations = [writerTypeFixture()];
+    const config = authoredWriterConfig(root);
+    const snapshot = authoredWriterSnapshot();
     const generatedRoot = path.join(root, "src/go");
     mkdirSync(generatedRoot, { recursive: true });
     writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(): void; }\n");
@@ -264,3 +300,27 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+function authoredWriterConfig(root) {
+  return {
+    ...baseConfig,
+    tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
+    authoredFacadeModules: ["go/io.ts"],
+    externalFacadePolicies: [{ objectId: "io::type::Writer", tsModule: "go/io.ts", tsName: "Writer", storageStrategy: "authored" }],
+  };
+}
+
+function authoredWriterSnapshot() {
+  const snapshot = snapshotWith([fileRecord({
+    imports: [{ path: "io" }],
+    units: [unitRecord({
+      id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail",
+      parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
+      semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "Fail", [
+        { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
+      ]),
+    })],
+  })]);
+  snapshot.semantic.dependencyTypeDeclarations = [writerTypeFixture()];
+  return snapshot;
+}

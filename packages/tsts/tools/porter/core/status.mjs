@@ -1,14 +1,8 @@
-import { emptyBundledGeneratedArtifactStatus } from "../../bundled/generate-bundled.mjs";
-import { emptyUnicodeGeneratedArtifactStatus } from "../../unicode/generate-unicode-data.mjs";
-import { emptyAstGeneratedArtifactStatus } from "../ast-generator.mjs";
-import { emptyDiagnosticsGeneratedArtifactStatus } from "../diagnostics-generator.mjs";
 import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
-import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin.mjs";
-import { emptyGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import { declarationAuditsNotRun } from "./declaration-audits.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
 import { buildLargeFileSplitStatus } from "./large-files.mjs";
-import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
@@ -131,21 +125,61 @@ export function collectSchemaSourceSyncFailures(status) {
   return failures;
 }
 
-export function buildStatus(
-  config,
-  snapshot,
-  tsUnits,
-  generatedArtifacts = emptyGeneratedArtifactStatus(),
-  astGeneratedArtifacts = emptyAstGeneratedArtifactStatus(),
-  diagnosticsGeneratedArtifacts = emptyDiagnosticsGeneratedArtifactStatus(),
-  bundledGeneratedArtifacts = emptyBundledGeneratedArtifactStatus(),
-  unicodeGeneratedArtifacts = emptyUnicodeGeneratedArtifactStatus(),
-  schemaSourceSync = emptySchemaSourceSyncStatus(),
-  localOverrides = emptyLocalOverrideStatus(),
-  sourcePin = emptySourcePinStatus(),
-  generatedSourceCoverage = { issues: [] },
-  globalGeneratedArtifacts = { issues: [], providerCount: 0 },
-) {
+const buildStatusInputKeys = Object.freeze([
+  "config",
+  "snapshot",
+  "tsUnits",
+  "generatedArtifacts",
+  "astGeneratedArtifacts",
+  "diagnosticsGeneratedArtifacts",
+  "bundledGeneratedArtifacts",
+  "unicodeGeneratedArtifacts",
+  "schemaSourceSync",
+  "localOverrides",
+  "sourcePin",
+  "generatedSourceCoverage",
+  "globalGeneratedArtifacts",
+]);
+const buildStatusInputKeySet = new Set(buildStatusInputKeys);
+
+function validateBuildStatusInput(input) {
+  if (input === null || typeof input !== "object" || Array.isArray(input) ||
+      ![Object.prototype, null].includes(Object.getPrototypeOf(input))) {
+    throw new TypeError("buildStatus input must be one exact object");
+  }
+  const keys = Reflect.ownKeys(input);
+  if (keys.some((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(input, key);
+    return typeof key !== "string" || descriptor?.enumerable !== true || !("value" in descriptor);
+  })) {
+    throw new TypeError("buildStatus input must contain only enumerable own data properties");
+  }
+  const extra = keys.filter((key) => !buildStatusInputKeySet.has(key)).sort();
+  if (extra.length > 0) throw new TypeError(`buildStatus input has extra key(s): ${extra.join(", ")}`);
+  const missing = buildStatusInputKeys.filter((key) => !Object.hasOwn(input, key));
+  if (missing.length > 0) throw new TypeError(`buildStatus input is missing required key(s): ${missing.join(", ")}`);
+  const undefinedKeys = buildStatusInputKeys.filter((key) => input[key] === undefined);
+  if (undefinedKeys.length > 0) throw new TypeError(`buildStatus input has undefined key(s): ${undefinedKeys.join(", ")}`);
+}
+
+export function buildStatus(input) {
+  if (arguments.length !== 1) throw new TypeError(`buildStatus requires exactly one input object; received ${arguments.length} arguments`);
+  validateBuildStatusInput(input);
+  const {
+    config,
+    snapshot,
+    tsUnits,
+    generatedArtifacts,
+    astGeneratedArtifacts,
+    diagnosticsGeneratedArtifacts,
+    bundledGeneratedArtifacts,
+    unicodeGeneratedArtifacts,
+    schemaSourceSync,
+    localOverrides,
+    sourcePin,
+    generatedSourceCoverage,
+    globalGeneratedArtifacts,
+  } = input;
   const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const generatedSourcePolicies = buildGeneratedSourcePolicyStatus(snapshot, {

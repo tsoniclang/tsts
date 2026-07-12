@@ -8,17 +8,16 @@
 // where a hand-edited TS signature can drift while the Go hash, tsc build, and
 // conformance baselines all stay green.
 
-import { join } from "node:path";
 import { compareText } from "./core/deterministic-order.mjs";
 import { completeAudit, notRunAudit } from "./core/declaration-audits.mjs";
-import { loadParser } from "./ts-extractor/ast-signatures.mjs";
+import {
+  declarationPrerequisiteMismatches,
+  requireDeclarationAuditPrerequisites,
+} from "./core/declaration-prerequisites.mjs";
 import { buildIndexedModuleValueEnvironments, extractParsedFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { loadConventions } from "./ts-extractor/conventions.mjs";
-import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
-import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
-import { buildGeneratedTypeDeclarationOwnership } from "./generated-declaration-ownership.mjs";
+import { requireIndexedModule } from "./ts-extractor/module-index.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { collectExternalPackageSurfaceMismatches } from "./sig-check/external-package-declarations.mjs";
@@ -43,7 +42,18 @@ function globToRegExp(glob) {
   return new RegExp(`^${escaped}$`);
 }
 
-export async function computeSignatureReport(deps, options = {}) {
+export async function computeSignatureReport(preparedPrerequisites, options = {}) {
+  const prerequisites = requireDeclarationAuditPrerequisites(preparedPrerequisites);
+  const workspace = prerequisites.workspace;
+  const deps = {
+    config: workspace.config,
+    snapshot: workspace.snapshot,
+    repoRoot: workspace.repositoryRoot,
+    tsById: new Map(workspace.tsUnits.units.map((unit) => [unit.id, unit])),
+    tsFiles: workspace.tsUnits.files.filter((file) => file.metadataCount > 0),
+    activeIds: prerequisites.activeIds,
+    externalFacadeCatalog: workspace.externalFacadeCatalog,
+  };
   const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(deps.externalFacadeCatalog, deps.config, deps.snapshot);
   const idFilter = options.idFilter;
   if (idFilter !== undefined && (typeof idFilter !== "string" || idFilter.trim() === "")) {
@@ -53,16 +63,11 @@ export async function computeSignatureReport(deps, options = {}) {
   const wholeProgramAuditNotRun = () => notRunAudit(
     `The --id filter ${JSON.stringify(idFilter)} limits signature-unit comparison, so this whole-program subaudit was not run.`,
   );
-  const prerequisiteMismatches = generatedArtifactPrerequisiteMismatches(deps.generatedArtifacts);
+  const prerequisiteMismatches = declarationPrerequisiteMismatches(prerequisites);
   if (prerequisiteMismatches.length > 0) {
     return prerequisiteBlockedReport(idFilter, prerequisiteMismatches);
   }
-  const profile = loadProfile(deps.config);
-  const api = await loadParser({
-    distRoot: join(deps.repoRoot, profile.parser.distRoot),
-    freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(deps.repoRoot, directory)),
-  });
-  const conventions = loadConventions(profile.conventions ?? {});
+  const { api, conventions, generatedTypeOwnership, moduleIndex, profile } = prerequisites;
   const nonGoManifest = wholeProgramAudit
     ? deps.nonGoManifest ?? loadNonGoDeclarationManifest(deps.config, deps.repoRoot)
     : undefined;
@@ -75,8 +80,6 @@ export async function computeSignatureReport(deps, options = {}) {
     }
   }
 
-  const moduleIndex = loadTypeScriptModuleIndex(api, deps.repoRoot, deps.config.tsRoot);
-  const generatedTypeOwnership = buildGeneratedTypeDeclarationOwnership(deps.config, deps.snapshot, moduleIndex);
   const { sources } = moduleIndex;
   const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
   const typeEquivalenceRegistry = buildTypeEquivalenceRelationRegistry({
@@ -313,28 +316,8 @@ export async function computeSignatureReport(deps, options = {}) {
   });
 }
 
-export function generatedArtifactPrerequisiteMismatches(status) {
-  if (status === undefined) return [];
-  const rows = [];
-  for (const category of ["missing", "stale", "orphan", "untracked", "invalid"]) {
-    const entries = status?.[category];
-    if (!Array.isArray(entries)) throw new Error(`generated artifact prerequisite status.${category} must be an array`);
-    for (const entry of entries) {
-      const path = typeof entry?.path === "string" && entry.path !== "" ? entry.path : "<generated-artifact>";
-      const symbol = typeof entry?.symbol === "string" && entry.symbol !== "" ? `::${entry.symbol}` : "";
-      rows.push({
-        id: `generated-artifact:${category}:${path}${symbol}`,
-        file: path,
-        kind: "signature-generated-artifact-prerequisite",
-        detail: `${category} generated declaration artifact blocks exact signature comparison: ${entry?.reason ?? "no exact artifact evidence"}`,
-      });
-    }
-  }
-  return rows.sort((left, right) => compareText(left.file, right.file) || compareText(left.id, right.id));
-}
-
 function prerequisiteBlockedReport(idFilter, mismatches) {
-  const reason = `${mismatches.length} generated declaration artifact prerequisite(s) failed; signature comparison was not run against a stale type universe.`;
+  const reason = `${mismatches.length} declaration prerequisite(s) failed; signature comparison was not run against an untrusted type universe.`;
   const skipped = () => notRunAudit(reason);
   return {
     state: "not-run",

@@ -1,13 +1,9 @@
 import { computeSignatureReport } from "../sig-check.mjs";
-import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
-import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
-import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
-import { isActivePortPolicy } from "./policies.mjs";
-import { repoRoot, resolveRepo } from "./runtime.mjs";
+import { prepareDeclarationAuditPrerequisites } from "./declaration-prerequisites.mjs";
+import { repoRoot } from "./runtime.mjs";
 import { runPinnedScan } from "./scan-runner.mjs";
 import { signatureAuditSummaryLines } from "./signature-reporting.mjs";
-import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
-import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
+import { preparePorterWorkspaceState } from "./workspace-state.mjs";
 import process from "node:process";
 
 // Signature/type-equivalence check. Compares each ported @tsgo-unit's actual TS
@@ -21,15 +17,9 @@ export async function runSigCheck(config, options = {}) {
     idFilter = options.id;
   }
   const snapshot = runPinnedScan(config);
-  const externalFacadeCatalog = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
-  const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, externalFacadeCatalog);
-  const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
-  const tsById = new Map(tsUnits.units.map((u) => [u.id, u]));
-  const tsFiles = tsUnits.files.filter((file) => file.metadataCount > 0);
-  const report = await computeSignatureReport(
-    { config, generatedArtifacts, snapshot, repoRoot, tsFiles, tsById, activeIds: activeSignatureUnitIds(config, snapshot), externalFacadeCatalog },
-    { idFilter },
-  );
+  const workspace = await preparePorterWorkspaceState({ config, repositoryRoot: repoRoot, snapshot, unicodeMode: "deep" });
+  const prerequisites = await prepareDeclarationAuditPrerequisites(workspace);
+  const report = await computeSignatureReport(prerequisites, { idFilter });
   if (options.json === true) {
     console.log(JSON.stringify(report, null, 2));
   } else {
@@ -38,17 +28,6 @@ export async function runSigCheck(config, options = {}) {
   if ((report.mismatches.length > 0 || (report.overrideIssues?.length ?? 0) > 0 || (report.jsonTags?.mismatchCount ?? 0) > 0) && options["no-gate"] !== true) {
     process.exit(1);
   }
-}
-
-export function activeSignatureUnitIds(config, snapshot) {
-  const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
-  const ids = new Set();
-  for (const file of snapshot.files ?? []) {
-    for (const unit of file.units ?? []) {
-      if (isSemanticPrimaryUnitKind(unit.kind) && isActivePortPolicy(effectivePolicies.unit(unit, file))) ids.add(unit.id);
-    }
-  }
-  return ids;
 }
 
 export function summarizeSignatureReport(report) {

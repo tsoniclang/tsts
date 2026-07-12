@@ -15,6 +15,8 @@ import {
   collectSchemaSourceSyncFailures,
   collectLocalOverrideFailures,
   collectVerifyFailures,
+  emptyLocalOverrideStatus,
+  emptySchemaSourceSyncStatus,
   expectedTsPath,
   matchGlob,
   policyFor,
@@ -56,7 +58,7 @@ import {
   collectBundledArtifactFailures,
   writeBundledGenerated,
 } from "../../bundled/generate-bundled.mjs";
-import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
+import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 
 import {
   baseConfig,
@@ -78,6 +80,21 @@ import {
   testSigHash,
   unitRecord,
 } from "./helpers.mjs";
+
+function emptyBuildStatusEvidence() {
+  return {
+    generatedArtifacts: emptyGeneratedArtifacts(),
+    astGeneratedArtifacts: emptyGeneratedArtifacts(),
+    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
+    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
+    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
+    schemaSourceSync: emptySchemaSourceSyncStatus(),
+    localOverrides: emptyLocalOverrideStatus(),
+    sourcePin: emptySourcePinStatus(),
+    generatedSourceCoverage: { issues: [] },
+    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
+  };
+}
 
 test("matchGlob supports recursive and single-segment patterns", () => {
   assert.equal(matchGlob("internal/jsnum/**", "internal/jsnum/jsnum.go"), true);
@@ -491,19 +508,24 @@ test("buildStatus rejects tracked units outside their semantic split targets", (
       },
     },
   };
-  const status = buildStatus(config, snapshotWith([fileRecord({
-    path: "internal/checker/checker.go",
-    lineCount: 6000,
-    units: [unit],
-  })]), {
-    fileCount: 1,
-    files: [{ path: "packages/tsts/src/internal/checker/wrong.ts", metadataCount: 1 }],
-    units: [{
-      id: unit.id,
-      path: "packages/tsts/src/internal/checker/wrong.ts",
-      status: "implemented",
-      sigHash: "sig-1",
-    }],
+  const status = buildStatus({
+    config,
+    snapshot: snapshotWith([fileRecord({
+      path: "internal/checker/checker.go",
+      lineCount: 6000,
+      units: [unit],
+    })]),
+    tsUnits: {
+      fileCount: 1,
+      files: [{ path: "packages/tsts/src/internal/checker/wrong.ts", metadataCount: 1 }],
+      units: [{
+        id: unit.id,
+        path: "packages/tsts/src/internal/checker/wrong.ts",
+        status: "implemented",
+        sigHash: "sig-1",
+      }],
+    },
+    ...emptyBuildStatusEvidence(),
   });
 
   assert.deepEqual(status.splitPathMismatches, [{
@@ -532,27 +554,32 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
       units: [],
     }),
   ]);
-  const status = buildStatus(baseConfig, snapshot, {
-    fileCount: 2,
-    files: [
-      { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 },
-      { path: "packages/tsts/src/internal/debug/helper.ts", metadataCount: 0 },
-      { path: "packages/tsts/src/internal/ls/service.ts", metadataCount: 1 },
-    ],
-    units: [
-      {
-        id: "m::internal/debug/debug.go::func::Fail",
-        path: "packages/tsts/src/internal/debug/debug.ts",
-        status: "implemented",
-        sigHash: "old-sig",
-      },
-      {
-        id: "m::internal/debug/debug.go::func::Gone",
-        path: "packages/tsts/src/internal/debug/debug.ts",
-        status: "implemented",
-        sigHash: "sig",
-      },
-    ],
+  const status = buildStatus({
+    config: baseConfig,
+    snapshot,
+    tsUnits: {
+      fileCount: 2,
+      files: [
+        { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 },
+        { path: "packages/tsts/src/internal/debug/helper.ts", metadataCount: 0 },
+        { path: "packages/tsts/src/internal/ls/service.ts", metadataCount: 1 },
+      ],
+      units: [
+        {
+          id: "m::internal/debug/debug.go::func::Fail",
+          path: "packages/tsts/src/internal/debug/debug.ts",
+          status: "implemented",
+          sigHash: "old-sig",
+        },
+        {
+          id: "m::internal/debug/debug.go::func::Gone",
+          path: "packages/tsts/src/internal/debug/debug.ts",
+          status: "implemented",
+          sigHash: "sig",
+        },
+      ],
+    },
+    ...emptyBuildStatusEvidence(),
   });
 
   assert.equal(status.counts.portable, 1);
@@ -579,7 +606,12 @@ test("buildStatus excludes files omitted from every semantic profile", () => {
   snapshot.semantic.requiredFiles = [];
   snapshot.semantic.excludedFiles = [file.path];
   snapshot.semantic.profiles[0].coveredFiles = [];
-  const status = buildStatus(baseConfig, snapshot, { fileCount: 0, files: [], units: [] });
+  const status = buildStatus({
+    config: baseConfig,
+    snapshot,
+    tsUnits: { fileCount: 0, files: [], units: [] },
+    ...emptyBuildStatusEvidence(),
+  });
   assert.equal(status.counts.excluded, 1);
   assert.equal(status.counts.missing, 0);
   assert.equal(status.excluded[0].category, "semantic-excluded");

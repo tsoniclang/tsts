@@ -96,11 +96,30 @@ export function emptyCounts() {
     missing: 0,
     stubbed: 0,
     largeFileSplitFailures: 0,
+    splitPathMismatches: 0,
+    generatedSourcePolicyIssues: 0,
+    invalidTsMetadata: 0,
+    sourceInterpretationIssues: 0,
   };
 }
 
 export function emptyGeneratedArtifacts() {
   return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+}
+
+export function emptyVerificationEvidence() {
+  return {
+    generatedArtifacts: emptyGeneratedArtifacts(),
+    astGeneratedArtifacts: emptyGeneratedArtifacts(),
+    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
+    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
+    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
+    schemaSourceSync: { mismatches: [], policyIssues: [], classifiedFileCount: 0 },
+    localOverrides: { failureCount: 0, invalidInline: [] },
+    sourcePin: { issues: [] },
+    generatedSourceCoverage: { issues: [] },
+    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
+  };
 }
 
 export function fileRecord(overrides) {
@@ -373,6 +392,9 @@ export function completeDeclarationAuditStatus() {
     signatureCheck: {
       state: "complete",
       selection: { kind: "all-active" },
+      mismatches: 0,
+      overrideIssues: 0,
+      byKind: {},
       authoredFacades: complete(),
       externalPackageSurface: complete(),
       typeStoragePolicies: complete(),
@@ -381,6 +403,6 @@ export function completeDeclarationAuditStatus() {
       declarationOwnership: complete(),
       untrackedTypeScript: complete(),
     },
-    jsonTagCheck: complete(),
+    jsonTagCheck: { ...complete(), mismatches: 0, byKind: {} },
   };
 }

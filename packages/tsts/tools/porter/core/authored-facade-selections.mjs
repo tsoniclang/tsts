@@ -1,15 +1,20 @@
 import { compareText } from "./deterministic-order.mjs";
 import {
+  authoredFacadeModuleSet,
   buildExternalFacadeStoragePlan,
   externalFacadeStoragePlanAuthoredRoots,
   finalizeExternalFacadeStorageCatalog,
 } from "./external-facades.mjs";
+import { renderGeneratedArtifact } from "./facade-artifacts/generated-envelope.mjs";
+import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { loadParser } from "../ts-extractor/ast-signatures.mjs";
 import { buildIndexedModuleValueEnvironments, extractIndexedTypeExportDescriptor } from "../ts-extractor/extract-signatures.mjs";
-import { loadTypeScriptModuleIndex } from "../ts-extractor/module-index.mjs";
+import { indexTypeScriptModuleSources } from "../ts-extractor/module-index.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
-import { join } from "node:path";
+import { assertSourceModuleId } from "../ts-extractor/source-structure.mjs";
+import { lstatSync, readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { externalTypeScriptDeclarationHash } from "./external-facade-runtime-adaptation.mjs";
 
 export async function prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot) {
@@ -18,7 +23,10 @@ export async function prepareExternalFacadeStorageCatalog(config, snapshot, repo
     distRoot: join(repoRoot, profile.parser.distRoot),
     freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(repoRoot, directory)),
   });
-  const moduleIndex = loadTypeScriptModuleIndex(api, repoRoot, config.tsRoot);
+  const moduleIndex = indexTypeScriptModuleSources(
+    api,
+    collectAuthoredFacadeModuleSources(config, snapshot, repoRoot),
+  );
   const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
   const plan = buildExternalFacadeStoragePlan(config, snapshot);
   const authoredSurfaces = buildAuthoredFacadeSurfaceIndex({
@@ -29,6 +37,88 @@ export async function prepareExternalFacadeStorageCatalog(config, snapshot, repo
     valueEnvironments,
   });
   return finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces);
+}
+
+function collectAuthoredFacadeModuleSources(config, snapshot, repoRoot) {
+  const moduleRoot = requireExactTypeScriptModuleRoot(config.tsRoot);
+  const sourceRoot = sourceRootContext(repoRoot, moduleRoot);
+  const sources = expectedVirtualFacadeSources(moduleRoot, snapshot);
+
+  for (const authoredModule of [...authoredFacadeModuleSet(config)].sort(compareText)) {
+    const moduleId = `${moduleRoot}/${authoredModule}`;
+    if (sources.has(moduleId)) {
+      throw new Error(`configured authored facade module '${authoredModule}' conflicts with Porter-generated bootstrap storage '${moduleId}'`);
+    }
+    sources.set(moduleId, readRequiredFacadeSource(sourceRoot, moduleId, authoredModule));
+  }
+
+  return sources;
+}
+
+function expectedVirtualFacadeSources(moduleRoot, snapshot) {
+  return new Map([
+    [
+      `${moduleRoot}/go/scalars.ts`,
+      renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", renderGoScalarsModule()),
+    ],
+    [
+      `${moduleRoot}/go/compat.ts`,
+      renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", renderGoCompatModule()),
+    ],
+  ]);
+}
+
+function requireExactTypeScriptModuleRoot(value) {
+  if (typeof value !== "string" || value.length === 0 || isAbsolute(value) || value.includes("\\") ||
+      value.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) {
+    throw new Error(`TypeScript module root must be an exact repo-relative path: '${value}'`);
+  }
+  assertSourceModuleId(`${value}/__porter_facade_bootstrap__.ts`);
+  return value;
+}
+
+function sourceRootContext(repoRoot, moduleRoot) {
+  const canonicalRepoRoot = realpathSync(resolve(repoRoot));
+  const rootDirectory = resolve(canonicalRepoRoot, moduleRoot);
+  requireContainedPath(canonicalRepoRoot, rootDirectory, `TypeScript module root '${moduleRoot}' is not contained within repo root`);
+  return { canonicalRepoRoot, moduleRoot, rootDirectory };
+}
+
+function readRequiredFacadeSource(context, moduleId, authoredModule) {
+  const prefix = `${context.moduleRoot}/`;
+  if (!moduleId.startsWith(prefix)) throw new Error(`TypeScript facade module '${moduleId}' is outside configured tsRoot`);
+  const sourcePath = resolve(context.rootDirectory, moduleId.slice(prefix.length));
+  requireContainedPath(context.rootDirectory, sourcePath, `TypeScript facade module '${moduleId}' is outside configured tsRoot`);
+  let stats;
+  try {
+    stats = lstatSync(sourcePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error(`configured authored facade module '${authoredModule}' is missing at '${moduleId}'`);
+    }
+    throw error;
+  }
+  if (!stats.isFile()) throw new Error(`required TypeScript facade source '${moduleId}' is not one regular file`);
+  const canonicalSourceRoot = realpathSync(context.rootDirectory);
+  requireContainedPath(
+    context.canonicalRepoRoot,
+    canonicalSourceRoot,
+    `TypeScript module root '${context.moduleRoot}' is not contained within repo root`,
+  );
+  const canonicalSourcePath = realpathSync(sourcePath);
+  requireContainedPath(
+    canonicalSourceRoot,
+    canonicalSourcePath,
+    `required TypeScript facade source '${moduleId}' resolves outside configured tsRoot`,
+  );
+  return readFileSync(canonicalSourcePath, "utf8");
+}
+
+function requireContainedPath(root, target, message) {
+  const relativePath = relative(root, target);
+  if (relativePath === "" || relativePath === ".." || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
+    throw new Error(message);
+  }
 }
 
 export function buildAuthoredFacadeSurfaceIndex({

@@ -1,24 +1,23 @@
 import { buildBundledGeneratedArtifactStatus, collectBundledArtifactFailures, writeBundledGenerated } from "../../bundled/generate-bundled.mjs";
-import { buildUnicodeGeneratedArtifactStatus, buildUnicodeGeneratedArtifactStatusDeep, collectUnicodeArtifactFailures, writeUnicodeGenerated } from "../../unicode/generate-unicode-data.mjs";
+import { buildUnicodeGeneratedArtifactStatusDeep, collectUnicodeArtifactFailures, writeUnicodeGenerated } from "../../unicode/generate-unicode-data.mjs";
 import { buildAstGeneratedArtifactStatus, collectAstArtifactFailures, writeAstGenerated } from "../ast-generator.mjs";
 import { buildDiagnosticsGeneratedArtifactStatus, collectDiagnosticsArtifactFailures, writeDiagnosticsGenerated } from "../diagnostics-generator.mjs";
-import { buildGeneratedSourceCoverageStatus, buildGlobalGeneratedArtifactStatus, renderGeneratedSourceCoverage } from "../generated-source.mjs";
+import { renderGeneratedSourceCoverage } from "../generated-source.mjs";
 import { computeSignatureReport } from "../sig-check.mjs";
-import { buildSourcePinStatus } from "../source-pin.mjs";
 import { runDelta, runDeltaVerify } from "./delta-command.mjs";
 import { writeExternalFacades } from "./facade-artifacts.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus, printLargeFileSplitStatus, splitPlanLabel, verifyLargeFileSplitStatus } from "./large-files.mjs";
-import { buildLocalOverrideStatus } from "./local-overrides.mjs";
 import { printScanSummary, printStatus, renderStatusMarkdown } from "./reporting.mjs";
 import { fail, loadConfig, parseArgs, repoRoot, resolveRepo, writeJson, writeJsonSafely, writeText, writeTextSafely } from "./runtime.mjs";
 import { checkSkeletons, scaffoldMissing } from "./scaffolding.mjs";
-import { activeSignatureUnitIds, runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
+import { runSigCheck, summarizeJsonTagReport, summarizeSignatureReport } from "./signature-command.mjs";
 import { runPinnedScan, runScan } from "./scan-runner.mjs";
-import { buildSchemaSourceSyncStatus, buildStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
-import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
+import { buildSchemaSourceSyncStatus, collectSchemaSourceSyncFailures } from "./status.mjs";
 import { collectGeneratedArtifactFailures, verifyStatus } from "./verification.mjs";
+import { prepareDeclarationAuditPrerequisites } from "./declaration-prerequisites.mjs";
+import { preparePorterWorkspaceState } from "./workspace-state.mjs";
 import process from "node:process";
 
 export async function main() {
@@ -173,40 +172,16 @@ export async function main() {
 
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = command === "status" || command === "verify" ? runScan(config) : runPinnedScan(config);
-    const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
-    const externalFacadeCatalog = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
-    const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot, externalFacadeCatalog);
-    const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
-    const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
-    const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
-    const unicodeGeneratedArtifacts = command === "verify"
-      ? await buildUnicodeGeneratedArtifactStatusDeep(config)
-      : buildUnicodeGeneratedArtifactStatus(config);
-    const schemaSourceSync = buildSchemaSourceSyncStatus(config);
-    const localOverrides = buildLocalOverrideStatus(config, tsUnits);
-    const sourcePin = buildSourcePinStatus(repoRoot, config, snapshot);
-    const generatedSourceCoverage = buildGeneratedSourceCoverageStatus(repoRoot, config, snapshot);
-    const globalGeneratedArtifacts = buildGlobalGeneratedArtifactStatus(repoRoot, config, {
-      generatedArtifacts,
-      astGeneratedArtifacts,
-      diagnosticsGeneratedArtifacts,
-      bundledGeneratedArtifacts,
-      unicodeGeneratedArtifacts,
+    const workspace = await preparePorterWorkspaceState({
+      config,
+      repositoryRoot: repoRoot,
+      snapshot,
+      unicodeMode: command === "verify" ? "deep" : "metadata",
     });
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync, localOverrides, sourcePin, generatedSourceCoverage, globalGeneratedArtifacts);
+    const { externalFacadeCatalog, status } = workspace;
     if (command === "verify") {
-      const signatureReport = await computeSignatureReport(
-        {
-          config,
-          generatedArtifacts,
-          snapshot,
-          repoRoot,
-          tsFiles: tsUnits.files.filter((file) => file.metadataCount > 0),
-          tsById: new Map(tsUnits.units.map((unit) => [unit.id, unit])),
-          activeIds: activeSignatureUnitIds(config, snapshot),
-          externalFacadeCatalog,
-        },
-      );
+      const prerequisites = await prepareDeclarationAuditPrerequisites(workspace);
+      const signatureReport = await computeSignatureReport(prerequisites);
       status.signatureCheck = summarizeSignatureReport(signatureReport);
       status.jsonTagCheck = summarizeJsonTagReport(signatureReport.jsonTags);
     }

@@ -1,10 +1,49 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildStatus, renderStatusMarkdown } from "../porter.mjs";
+import {
+  buildStatus,
+  emptyLocalOverrideStatus,
+  emptySchemaSourceSyncStatus,
+  renderStatusMarkdown,
+} from "../porter.mjs";
 import { summarizeSignatureReport } from "../core/signature-command.mjs";
 import { signatureAuditSummaryLines } from "../core/signature-reporting.mjs";
-import { baseConfig, fileRecord, snapshotWith, unitRecord } from "./helpers.mjs";
+import { emptySourcePinStatus } from "../source-pin.mjs";
+import { baseConfig, emptyGeneratedArtifacts, fileRecord, snapshotWith, unitRecord } from "./helpers.mjs";
+
+function emptyBuildStatusEvidence() {
+  return {
+    generatedArtifacts: emptyGeneratedArtifacts(),
+    astGeneratedArtifacts: emptyGeneratedArtifacts(),
+    diagnosticsGeneratedArtifacts: emptyGeneratedArtifacts(),
+    bundledGeneratedArtifacts: emptyGeneratedArtifacts(),
+    unicodeGeneratedArtifacts: emptyGeneratedArtifacts(),
+    schemaSourceSync: emptySchemaSourceSyncStatus(),
+    localOverrides: emptyLocalOverrideStatus(),
+    sourcePin: emptySourcePinStatus(),
+    generatedSourceCoverage: { issues: [] },
+    globalGeneratedArtifacts: { issues: [], providerCount: 0 },
+  };
+}
+
+test("buildStatus rejects missing, extra, undefined, and positional inputs", () => {
+  const input = {
+    config: baseConfig,
+    snapshot: snapshotWith([]),
+    tsUnits: { fileCount: 0, files: [], units: [] },
+    ...emptyBuildStatusEvidence(),
+  };
+
+  for (const key of Object.keys(input)) {
+    const missing = { ...input };
+    delete missing[key];
+    assert.throws(() => buildStatus(missing), new RegExp(`missing required key\\(s\\): ${key}`));
+    assert.throws(() => buildStatus({ ...input, [key]: undefined }), new RegExp(`undefined key\\(s\\): ${key}`));
+  }
+  assert.throws(() => buildStatus({ ...input, extra: true }), /extra key\(s\): extra/);
+  assert.throws(() => buildStatus(input.config, input.snapshot, input.tsUnits), /requires exactly one input object/);
+});
 
 test("renderStatusMarkdown reports largest missing modules from missing rows only", () => {
   const snapshot = snapshotWith([
@@ -29,15 +68,20 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
       })],
     }),
   ]);
-  const status = buildStatus(baseConfig, snapshot, {
-    fileCount: 1,
-    files: [{ path: "packages/tsts/src/internal/checker/checker.ts", metadataCount: 1 }],
-    units: [{
-      id: "m::internal/checker/checker.go::func::Implemented",
-      path: "packages/tsts/src/internal/checker/checker.ts",
-      status: "implemented",
-      sigHash: "sig-1",
-    }],
+  const status = buildStatus({
+    config: baseConfig,
+    snapshot,
+    tsUnits: {
+      fileCount: 1,
+      files: [{ path: "packages/tsts/src/internal/checker/checker.ts", metadataCount: 1 }],
+      units: [{
+        id: "m::internal/checker/checker.go::func::Implemented",
+        path: "packages/tsts/src/internal/checker/checker.ts",
+        status: "implemented",
+        sigHash: "sig-1",
+      }],
+    },
+    ...emptyBuildStatusEvidence(),
   });
   const markdown = renderStatusMarkdown(status);
 
