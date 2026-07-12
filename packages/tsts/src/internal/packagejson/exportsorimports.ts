@@ -196,7 +196,7 @@ export function ExportsOrImports_initObjectKind(receiver: GoPtr<ExportsOrImports
     const obj = ExportsOrImports_AsObject(e);
     if (OrderedMap_Size(obj) > 0) {
       const state = { seenDot: false, seenHash: false, seenOther: false, done: false };
-      OrderedMap_Keys(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)((k: string): bool => {
+      OrderedMap_Keys(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)!((k: string): bool => {
         if (k.length > 0) {
           state.seenDot = state.seenDot || k[0] === ".";
           state.seenHash = state.seenHash || k[0] === "#";

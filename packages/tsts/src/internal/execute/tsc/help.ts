@@ -691,7 +691,7 @@ export function formatDefaultValue(defaultValue: unknown, option: GoPtr<CommandL
     // e.g. ScriptTarget.ES2015 -> "es6/es2015"
     const names: string[] = [];
     const enumMap = CommandLineOption_EnumMap(option);
-    OrderedMap_Entries(enumMap)((name: unknown, value: unknown): bool => {
+    OrderedMap_Entries(enumMap)!((name: unknown, value: unknown): bool => {
       if (value === defaultValue) {
         names.push(name as string);
       }
@@ -860,14 +860,14 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
       const inverted = NewOrderedMapWithSizeHint<unknown, GoSlice<string>>(OrderedMap_Size(enumMap));
       const deprecatedKeys = CommandLineOption_DeprecatedKeys(option);
 
-      OrderedMap_Entries(enumMap)((name: unknown, value: unknown): bool => {
+      OrderedMap_Entries(enumMap)!((name: unknown, value: unknown): bool => {
         if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name as string)) {
           OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value), name as string));
         }
         return true;
       });
       const syns: string[] = [];
-      OrderedMap_Values(inverted)((synonyms: GoSlice<string>): bool => {
+      OrderedMap_Values(inverted)!((synonyms: GoSlice<string>): bool => {
         syns.push(strings.Join(synonyms, "/"));
         return true;
       });

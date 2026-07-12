@@ -149,7 +149,7 @@ export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoSlice
   const m = asOrderedMap(value);
   if (m !== undefined) {
     const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m));
-    OrderedMap_Entries(m as GoPtr<OrderedMap<string, unknown>>)((k: string, v: unknown): bool => {
+    OrderedMap_Entries(m as GoPtr<OrderedMap<string, unknown>>)!((k: string, v: unknown): bool => {
       OrderedMap_Set(result, k, ParseStringArray(v));
       return true;
     });
@@ -1312,7 +1312,7 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
       if (exists) {
         const compilerOptionsMap = asOrderedMap(compilerOptionsRaw) as GoPtr<OrderedMap<string, unknown>>;
         if (compilerOptionsMap !== undefined) {
-          OrderedMap_Entries(compilerOptionsMap)((key: string, value: unknown): bool => {
+          OrderedMap_Entries(compilerOptionsMap)!((key: string, value: unknown): bool => {
             if (value === undefined || value === null) {
               explicitNullFields.add(key);
             }
@@ -1382,7 +1382,7 @@ export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<
     return undefined;
   }
   const base = optionsBase as GoPtr<OrderedMap<string, unknown>>;
-  OrderedMap_Entries(base)((o: string, v: unknown): bool => {
+  OrderedMap_Entries(base)!((o: string, v: unknown): bool => {
     const [result, ok] = ConvertOptionToAbsolutePath(o, v, optionMap, cwd);
     if (ok) {
       OrderedMap_Set(base, o, result);

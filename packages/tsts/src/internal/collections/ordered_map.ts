@@ -693,14 +693,14 @@ export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(
  * }
  */
 export function DiffOrderedMapsFunc<K extends GoComparable, V>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, equalValues: (a: V, b: V) => bool, onAdded: (key: K, value: V) => void, onRemoved: (key: K, value: V) => void, onModified: (key: K, oldValue: V, newValue: V) => void): void {
-  OrderedMap_Entries(m2)((k: K, v2: V): bool => {
+  OrderedMap_Entries(m2)!((k: K, v2: V): bool => {
     const [, ok] = OrderedMap_Get(m1, k);
     if (!ok) {
       onAdded(k, v2);
     }
     return true;
   });
-  OrderedMap_Entries(m1)((k: K, v1: V): bool => {
+  OrderedMap_Entries(m1)!((k: K, v1: V): bool => {
     const [v2, ok] = OrderedMap_Get(m2, k);
     if (ok) {
       if (!equalValues(v1, v2)) {

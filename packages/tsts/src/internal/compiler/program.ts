@@ -2552,7 +2552,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag;
   };
 
-  OrderedMap_Entries(options!.Paths as GoPtr<import("../collections/ordered_map.js").OrderedMap<string, GoSlice<string>>>)((key: string, value: GoSlice<string>): bool => {
+  OrderedMap_Entries(options!.Paths as GoPtr<import("../collections/ordered_map.js").OrderedMap<string, GoSlice<string>>>)!((key: string, value: GoSlice<string>): bool => {
     if (!hasZeroOrOneAsteriskCharacter(key)) {
       createDiagnosticForOptionPaths(true as bool, key, diagnostics.Pattern_0_can_have_at_most_one_Asterisk_character, key);
     }

@@ -1040,7 +1040,7 @@ export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: 
     iterationType = Checker_getIterationTypeOfIterable(receiver, IterationUseForOf, IterationTypeKindYield, nonTupleOrArrayLikeTargetParts, undefined);
   }
   let reportedError = false;
-  iterator((element) => {
+  iterator!((element) => {
     const prop = element.errorNode;
     const next = element.innerExpression;
     const nameType = element.nameType;

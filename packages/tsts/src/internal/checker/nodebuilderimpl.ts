@@ -1178,7 +1178,7 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
   if (seenNames !== undefined) {
     const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
     receiver!.ctx!.flags |= FlagsUseFullyQualifiedType;
-    MultiMap_Values<string, { t: GoPtr<Type>; i: int }>(seenNames)(types => {
+    MultiMap_Values<string, { t: GoPtr<Type>; i: int }>(seenNames)!(types => {
       if (!arrayIsHomogeneous(types, (a, b) => typesAreSameReference(a.t, b.t))) {
         for (const seen of types) {
           result[seen.i] = NodeBuilderImpl_typeToTypeNode(receiver, seen.t);

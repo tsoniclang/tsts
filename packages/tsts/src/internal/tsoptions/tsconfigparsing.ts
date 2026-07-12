@@ -1408,7 +1408,7 @@ export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLi
  */
 export function convertMapToOptions<O extends optionParser>(compilerOptions: GoPtr<OrderedMap<string, unknown>>, result: O): O {
   // this assumes any `key`, `value` pair in `options` will have `value` already be the correct type. this function should no error handling
-  OrderedMap_Entries(compilerOptions as GoPtr<OrderedMap<string, unknown>>)((key: string, value: unknown): bool => {
+  OrderedMap_Entries(compilerOptions as GoPtr<OrderedMap<string, unknown>>)!((key: string, value: unknown): bool => {
     result.ParseOption(key, value);
     return true;
   });
@@ -1474,7 +1474,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
   }
   const jsonMap = jsonOptions as GoPtr<OrderedMap<string, unknown>>;
   const errors: GoPtr<Diagnostic>[] = [];
-  OrderedMap_Entries(jsonMap)((key: string, value: unknown): bool => {
+  OrderedMap_Entries(jsonMap)!((key: string, value: unknown): bool => {
     const opt = CommandLineOptionNameMap_Get(optionsNameMap, key);
     if (opt !== undefined && opt.Name !== key) {
       // Case-insensitive match found but exact case doesn't match - provide "did you mean" suggestion
@@ -3410,7 +3410,7 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
 
   // !!! don't hardcode this; use options declarations?
 
-  OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((k: string, v: GoSlice<string>): bool => {
+  OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)!((k: string, v: GoSlice<string>): bool => {
     const substitution = getSubstitutedStringArrayWithConfigDirTemplate(v, basePath);
     if (substitution !== undefined) {
       OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution);
@@ -3718,15 +3718,15 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
     }
   }
   const files: string[] = [];
-  OrderedMap_Values(literalFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
+  OrderedMap_Values(literalFileMap as GoPtr<OrderedMap<string, string>>)!((file: string): bool => {
     files.push(file);
     return true;
   });
-  OrderedMap_Values(wildcardFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
+  OrderedMap_Values(wildcardFileMap as GoPtr<OrderedMap<string, string>>)!((file: string): bool => {
     files.push(file);
     return true;
   });
-  OrderedMap_Values(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
+  OrderedMap_Values(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>)!((file: string): bool => {
     files.push(file);
     return true;
   });

@@ -840,7 +840,7 @@ export function Printer_willEmitLeadingNewLine(receiver: GoPtr<Printer>, node: G
   }
   let hasLeadingCommentRanges = false;
   let hasNewLineComment = false;
-  GetLeadingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(node as GoPtr<Node>))((comment: CommentRange): bool => {
+  GetLeadingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(node as GoPtr<Node>))!((comment: CommentRange): bool => {
     hasLeadingCommentRanges = true;
     if (Printer_commentWillEmitNewLine(receiver, comment)) {
       hasNewLineComment = true;
@@ -863,7 +863,7 @@ export function Printer_willEmitLeadingNewLine(receiver: GoPtr<Printer>, node: G
     const pee = AsPartiallyEmittedExpression(node as GoPtr<Node>);
     if (Node_Pos(node as GoPtr<Node>) !== Node_Pos(pee!.Expression as GoPtr<Node>)) {
       let foundNewLineComment = false;
-      GetTrailingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(pee!.Expression as GoPtr<Node>))((comment: CommentRange): bool => {
+      GetTrailingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(pee!.Expression as GoPtr<Node>))!((comment: CommentRange): bool => {
         if (Printer_commentWillEmitNewLine(receiver, comment)) {
           foundNewLineComment = true;
           return false as bool; // stop iterating (like Go's return)

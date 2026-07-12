@@ -40,7 +40,7 @@ export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkSto
   if (value !== undefined) {
     return value;
   }
-  value = {} as V;
+  value = {} as GoPtr<V>;
   entries.set(key, value);
   return value;
 }

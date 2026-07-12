@@ -288,7 +288,7 @@ export function ParsedCommandLine_ParseInputOutputNames(receiver: GoPtr<ParsedCo
     const sourceToOutput: GoMap<Path, GoPtr<SourceOutputAndProjectReference>> = new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>();
     const outputDtsToSource: GoMap<Path, GoPtr<SourceOutputAndProjectReference>> = new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>();
 
-    ParsedCommandLine_getOutputDeclarationAndSourceFileNames(p)((outputDts: string, source: string): bool => {
+    ParsedCommandLine_getOutputDeclarationAndSourceFileNames(p)!((outputDts: string, source: string): bool => {
       const path = ToPath(source, ParsedCommandLine_GetCurrentDirectory(p), ParsedCommandLine_UseCaseSensitiveFileNames(p));
       const projectReference: GoPtr<SourceOutputAndProjectReference> = {
         Source: source,

@@ -210,7 +210,7 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
 
     const obj = JSONValue_AsObject(typesVersions);
     let done = false;
-    OrderedMap_Entries<string, JSONValue>(obj as GoPtr<OrderedMap<string, JSONValue>>)((key, value) => {
+    OrderedMap_Entries<string, JSONValue>(obj as GoPtr<OrderedMap<string, JSONValue>>)!((key, value) => {
       if (done) return false;
       const [keyRange, ok] = TryParseVersionRange(key);
       if (!ok) {
@@ -320,7 +320,7 @@ export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<Orde
     return receiver!.paths;
   }
   const paths = NewOrderedMapWithSizeHint<string, GoSlice<string>>(0);
-  OrderedMap_Entries<string, JSONValue>(receiver!.pathsJSON as GoPtr<OrderedMap<string, JSONValue>>)((key, value) => {
+  OrderedMap_Entries<string, JSONValue>(receiver!.pathsJSON as GoPtr<OrderedMap<string, JSONValue>>)!((key, value) => {
     if (value.Type !== JSONValueTypeArray) {
       return false;
     }

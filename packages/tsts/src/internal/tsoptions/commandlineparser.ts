@@ -246,7 +246,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
   }
   const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host.FS(), host.GetCurrentDirectory());
   const compilerOptions: CompilerOptions = {} as CompilerOptions;
-  OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, unknown>>)((key: string, value: unknown): bool => {
+  OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, unknown>>)!((key: string, value: unknown): bool => {
     const buildOption = NameMap_Get(BuildNameMap, key);
     if (buildOption === TscBuildOption || buildOption === NameMap_Get(CompilerNameMap, key)) {
       ParseCompilerOptions(key, value, compilerOptions);

@@ -393,7 +393,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
   seenFileNamesMap.set(SourceFile_Path(file), file);
 
   const queue: Path[] = [];
-  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(file))((p: Path): bool => {
+  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(file))!((p: Path): bool => {
     queue.push(p);
     return true as bool;
   });
@@ -409,7 +409,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
         return seenFileNamesMap;
       }
       if (queueForFile) {
-        referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(currentFile))((ref: Path): bool => {
+        referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(currentFile))!((ref: Path): bool => {
           queue.push(ref);
           return true as bool;
         });
@@ -572,7 +572,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
   }
 
   let earlyReturn = false;
-  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(affectedFile))((fileReferencingChangedFile: Path): bool => {
+  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(affectedFile))!((fileReferencingChangedFile: Path): bool => {
     if (earlyReturn) {
       return false as bool;
     }
@@ -580,7 +580,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
       earlyReturn = true;
       return false as bool;
     }
-    referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, fileReferencingChangedFile)((fileReferencingAffectedFile: Path): bool => {
+    referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, fileReferencingChangedFile)!((fileReferencingAffectedFile: Path): bool => {
       if (affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(receiver, dtsMayChange, fileReferencingAffectedFile, invalidateJsFiles as bool)) {
         earlyReturn = true;
         return false as bool;
@@ -640,7 +640,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
   affectedFilesHandler_handleDtsMayChangeOf(receiver, dtsMayChange, filePath, invalidateJsFiles);
 
   let earlyReturn = false;
-  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, filePath)((referencingFilePath: Path): bool => {
+  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, filePath)!((referencingFilePath: Path): bool => {
     if (affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(receiver, dtsMayChange, referencingFilePath, invalidateJsFiles)) {
       earlyReturn = true;
       return false as bool;

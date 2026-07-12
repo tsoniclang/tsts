@@ -1938,7 +1938,7 @@ export function tryGetModuleNameFromExports(options: GoPtr<CompilerOptions>, hos
   if (ExportsOrImports_IsSubpaths(exports)) {
     const obj = ExportsOrImports_AsObject(exports);
     let result = "";
-    OrderedMap_Entries(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)((k, subk) => {
+    OrderedMap_Entries(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)!((k, subk) => {
       const subPackageName = GetNormalizedAbsolutePath(CombinePaths(packageName, k), "");
       const mode = strings.HasSuffix(k, "/") ? MatchingModeDirectory : strings.Contains(k, "*") ? MatchingModePattern : MatchingModeExact;
       result = tryGetModuleNameFromExportsOrImports(options, host, targetFilePath, packageDirectory, subPackageName, subk, conditions, mode, false, false);
@@ -2065,7 +2065,7 @@ export function tryGetModuleNameFromPackageJsonImports(moduleFileName: string, s
       const conditions = GetConditions(options, importMode);
       const top = ExportsOrImports_AsObject(imports);
       let result = "";
-      OrderedMap_Entries(top as GoPtr<OrderedMap<string, ExportsOrImports>>)((k, value) => {
+      OrderedMap_Entries(top as GoPtr<OrderedMap<string, ExportsOrImports>>)!((k, value) => {
         if (k === "#" || k === "#/" || !strings.HasPrefix(k, "#")) {
           return true; // continue
         }
@@ -2219,7 +2219,7 @@ export interface specPair {
 export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPtr<OrderedMap<string, GoSlice<string>>>, allowedEndings: GoSlice<ModuleSpecifierEnding>, baseDirectory: string, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>): string {
   const caseSensitive = host.UseCaseSensitiveFileNames();
   let finalResult = "";
-  OrderedMap_Entries(paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((key, values) => {
+  OrderedMap_Entries(paths as GoPtr<OrderedMap<string, GoSlice<string>>>)!((key, values) => {
     for (const patternText of values) {
       const normalized = NormalizePath(patternText);
       const patternRel = getRelativePathIfInSameVolume(normalized, baseDirectory, caseSensitive);
@@ -2516,7 +2516,7 @@ export function tryGetModuleNameFromExportsOrImports(options: GoPtr<CompilerOpti
     case JSONValueTypeObject: {
       const obj = ExportsOrImports_AsObject(exports);
       let result = "";
-      OrderedMap_Entries(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)((key, value) => {
+      OrderedMap_Entries(obj as GoPtr<OrderedMap<string, ExportsOrImports>>)!((key, value) => {
         if (key === "default" || conditions.includes(key) || (conditions.includes("types") && IsApplicableVersionedTypesKey(key))) {
           result = tryGetModuleNameFromExportsOrImports(options, host, targetFilePath, packageDirectory, packageName, value, conditions, mode, isImports, preferTsExtension);
           if (result.length > 0) {

@@ -1510,7 +1510,7 @@ export function EmitContext_RequestEmitHelper(receiver: GoPtr<EmitContext>, help
 export function EmitContext_ReadEmitHelpers(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<EmitHelper>> {
   const c = receiver!;
   const helpers: GoSlice<GoPtr<EmitHelper>> = [];
-  OrderedSet_Values(c.emitHelpers)((v) => { helpers.push(v); return true; });
+  OrderedSet_Values(c.emitHelpers)!((v) => { helpers.push(v); return true; });
   OrderedSet_Clear(c.emitHelpers);
   return helpers;
 }

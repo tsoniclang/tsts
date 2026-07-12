@@ -1364,7 +1364,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
   try {
     let bestCandidate = undefined as T;
     let hasBest = false;
-    candidates((candidate: T): bool => {
+    candidates!((candidate: T): bool => {
       const candidateName = getName(candidate) ?? "";
       const maxLen = globalThis.Math.max(byteLen(candidateName), runeName.length);
       const minLen = globalThis.Math.min(byteLen(candidateName), runeName.length);
@@ -1699,7 +1699,7 @@ export function ConcatenateSeq<T>(...seqs: Array<GoSeq<T>>): GoSeq<T> {
 export function Enumerate<T>(seq: GoSeq<T>): GoSeq2<int, T> {
   return (yield_: (key: int, value: T) => bool): void => {
     let i = 0;
-    seq((v: T): bool => {
+    seq!((v: T): bool => {
       if (!yield_(i, v)) {
         return false;
       }

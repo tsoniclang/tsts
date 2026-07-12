@@ -336,7 +336,7 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
 export function getNameOfCompilerOptionValue(value: unknown, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
   const found: { value: string } = { value: "" };
   const matched: { value: bool } = { value: false };
-  OrderedMap_Entries(enumMap)((k: unknown, v: unknown): bool => {
+  OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
     if (v === value) {
       found.value = k as string;
       matched.value = true;
@@ -610,7 +610,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
 export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
   if (typeof value === "number") {
     const container = { result: "" };
-    OrderedMap_Entries(enumMap)((k: unknown, v: unknown): bool => {
+    OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
       if (typeof v === "number" && v === value) {
         container.result = k as string;
         return false as bool;
@@ -681,7 +681,7 @@ export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap<str
 export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, unknown>>, options: GoPtr<CompilerOptions>, arg: string, arg1: ComparePathsOptions): void {
   // Build the set of explicitly provided option JSON names (e.g., "module", "target").
   const provided = new globalThis.Map<string, bool>();
-  OrderedMap_Keys(optionMap)((k: unknown): bool => {
+  OrderedMap_Keys(optionMap)!((k: unknown): bool => {
     provided.set(k as string, true);
     return true;
   });

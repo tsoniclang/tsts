@@ -382,14 +382,14 @@ export function Printer_hasCommentsAtPosition(receiver: GoPtr<Printer>, pos: int
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
   let found = false;
-  GetTrailingCommentRanges(nf, text, pos + 1)((_comment: CommentRange): bool => {
+  GetTrailingCommentRanges(nf, text, pos + 1)!((_comment: CommentRange): bool => {
     found = true;
     return false as bool;
   });
   if (found) {
     return true as bool;
   }
-  GetLeadingCommentRanges(nf, text, pos + 1)((_comment: CommentRange): bool => {
+  GetLeadingCommentRanges(nf, text, pos + 1)!((_comment: CommentRange): bool => {
     found = true;
     return false as bool;
   });
@@ -1100,7 +1100,7 @@ export function Printer_emitLeadingComments(receiver: GoPtr<Printer>, pos: int, 
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
   const comments: CommentRange[] = [];
-  GetLeadingCommentRanges(nf, text, adjustedPos)((comment) => {
+  GetLeadingCommentRanges(nf, text, adjustedPos)!((comment) => {
     if (Printer_shouldWriteComment(receiver, comment) && Printer_shouldEmitCommentIfTripleSlash(receiver, comment, tripleSlash)) {
       comments.push(comment);
     }
@@ -1214,7 +1214,7 @@ export function Printer_emitTrailingComments(receiver: GoPtr<Printer>, pos: int,
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
   const comments: CommentRange[] = [];
-  GetTrailingCommentRanges(nf, text, pos)((comment) => {
+  GetTrailingCommentRanges(nf, text, pos)!((comment) => {
     if (Printer_shouldWriteComment(receiver, comment)) {
       comments.push(comment);
     }
@@ -1285,7 +1285,7 @@ export function Printer_emitTrailingCommentsOfPosition(receiver: GoPtr<Printer>,
   const nf = NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0);
   const text = SourceFile_Text(receiver!.currentSourceFile);
   const comments: CommentRange[] = [];
-  GetTrailingCommentRanges(nf, text, pos)((comment) => {
+  GetTrailingCommentRanges(nf, text, pos)!((comment) => {
     comments.push(comment);
     return true as bool;
   });
@@ -1443,7 +1443,7 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
   if (receiver!.commentsDisabled) {
     // removeComments is true, only reserve pinned comment at the top of file
     if (TextRange_Pos(textRange) === 0) {
-      GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))((comment) => {
+      GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))!((comment) => {
         if (IsPinnedComment(text, comment)) {
           leadingComments.push(comment);
         }
@@ -1452,7 +1452,7 @@ export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange
     }
   } else {
     // removeComments is false, just get detached as normal and bypass the process to filter comment
-    GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))((comment) => {
+    GetLeadingCommentRanges(nf, text, TextRange_Pos(textRange))!((comment) => {
       leadingComments.push(comment);
       return true as bool;
     });

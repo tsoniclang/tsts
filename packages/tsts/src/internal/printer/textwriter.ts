@@ -348,7 +348,7 @@ export function textWriter_updateLineCountAndPosFor(receiver: GoPtr<textWriter>,
   let count: int = 0;
   let lastLineStart: TextPos = 0;
 
-  ComputeECMALineStartsSeq(s)((lineStart: TextPos): bool => {
+  ComputeECMALineStartsSeq(s)!((lineStart: TextPos): bool => {
     count++;
     lastLineStart = lineStart;
     return true;

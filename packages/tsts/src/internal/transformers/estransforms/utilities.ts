@@ -503,7 +503,7 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
   const pf = receiver!.factory!;
   let accessors: GoSlice<GoPtr<Node>> = [];
 
-  OrderedSet_Values(receiver!.capturedSuperProperties!)((name: string) => {
+  OrderedSet_Values(receiver!.capturedSuperProperties!)!((name: string) => {
     let descriptorProperties: GoSlice<GoPtr<Node>> = [];
 
     const getterBody = NewPropertyAccessExpression(

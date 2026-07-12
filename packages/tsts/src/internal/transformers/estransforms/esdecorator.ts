@@ -2246,7 +2246,7 @@ export function esDecoratorTransformer_emitMemberInfoDeclarations(receiver: GoPt
   const f = Transformer_Factory(tx.__tsgoEmbedded0!);
   const factory = f!.__tsgoEmbedded0!;
   const stmts: GoPtr<Statement>[] = [];
-  (OrderedMap_Entries(ci!.memberInfos) as ReturnType<typeof OrderedMap_Entries<GoPtr<Node>, GoPtr<memberInfo>>>)((member, mi) => {
+  (OrderedMap_Entries(ci!.memberInfos) as ReturnType<typeof OrderedMap_Entries<GoPtr<Node>, GoPtr<memberInfo>>>)!((member, mi) => {
     if (IsStatic(member as GoPtr<Node>) !== isStatic) {
       // Go `continue`: the GoSeq yield returns true to keep iterating.
       return true;

@@ -1216,7 +1216,7 @@ export function BuildInfo_fileInfo(receiver: GoPtr<BuildInfo>, fileId: BuildInfo
 export function BuildInfo_GetCompilerOptions(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string): GoPtr<CompilerOptions> {
   const options: CompilerOptions = {} as CompilerOptions;
   const entries: GoSeq2<string, unknown> = OrderedMap_Entries(receiver!.Options as import("../../collections/ordered_map.js").OrderedMap<string, unknown>);
-  entries((option: string, value: unknown): bool => {
+  entries!((option: string, value: unknown): bool => {
     if (buildInfoDirectory !== "") {
       const [result, ok] = ConvertOptionToAbsolutePath(option, value, CommandLineCompilerOptionsMap, buildInfoDirectory);
       if (ok) {

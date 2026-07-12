@@ -602,7 +602,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
       data!.SkippedDtsWrite = true as bool;
       return true as bool;
     } else {
-      differsOnlyInMap.v = Tristate_IsTrue(incremental_Program_Options(receiver!.program)!.Build);
+      differsOnlyInMap!.v = Tristate_IsTrue(incremental_Program_Options(receiver!.program)!.Build);
     }
   } else {
     SyncMap_Store<Path, string>(

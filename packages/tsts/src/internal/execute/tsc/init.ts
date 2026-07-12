@@ -272,7 +272,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
   const result: string[] = [];
 
   const allSetOptions: string[] = [];
-  OrderedMap_Keys(options)((k: unknown): boolean => {
+  OrderedMap_Keys(options)!((k: unknown): boolean => {
     if (k !== "init" && k !== "help" && k !== "watch") {
       allSetOptions.push(k as string);
     }
@@ -293,7 +293,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
     let resolvedValue = value;
     if (enumMap !== undefined) {
       let found = false;
-      OrderedMap_Entries(enumMap)((k: unknown, v: unknown): boolean => {
+      OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): boolean => {
         if (v === resolvedValue) {
           resolvedValue = k;
           found = true;

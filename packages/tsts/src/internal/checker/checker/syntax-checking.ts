@@ -362,7 +362,7 @@ export function Checker_checkNodeDeferred(receiver: GoPtr<Checker>, node: GoPtr<
  */
 export function Checker_checkDeferredNodes(receiver: GoPtr<Checker>, context: GoPtr<SourceFile>): void {
   const links = Checker_getSourceFileLinks(receiver, context);
-  OrderedSet_Values(links!.deferredNodes)((node) => {
+  OrderedSet_Values(links!.deferredNodes)!((node) => {
     if (Checker_isCanceled(receiver)) {
       return false as bool;
     }

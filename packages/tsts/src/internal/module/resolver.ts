@@ -1669,7 +1669,7 @@ export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<r
     }
   }
   const expandingKeys: string[] = [];
-  OrderedMap_Keys<string, ExportsOrImports>(lookupTable)((key: string): bool => {
+  OrderedMap_Keys<string, ExportsOrImports>(lookupTable)!((key: string): bool => {
     if (strings.Count(key, "*") === 1 || strings.HasSuffix(key, "/")) {
       expandingKeys.push(key);
     }
@@ -1946,7 +1946,7 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
       }
       let condResult: GoPtr<resolved> = undefined;
       let done = false;
-      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(target) as GoPtr<OrderedMap<string, ExportsOrImports>>)((condition: string, subTarget: ExportsOrImports): bool => {
+      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(target) as GoPtr<OrderedMap<string, ExportsOrImports>>)!((condition: string, subTarget: ExportsOrImports): bool => {
         if (resolutionState_conditionMatches(receiver, condition)) {
           if (receiver!.tracer !== undefined) {
             tracer_write(receiver!.tracer, diagnostics.Matched_0_condition_1, core.IfElse(isImports, "imports", "exports"), condition);
@@ -4005,7 +4005,7 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
   }
   const nodeModules = packageDirectory.slice(0, nodeModulesIndex + "/node_modules".length) + "/";
   const names: GoSlice<string> = [];
-  maps.Keys<string, string>(peerDependencies.Value!)((key: string): bool => {
+  maps.Keys<string, string>(peerDependencies.Value!)!((key: string): bool => {
     names.push(key);
     return true as bool;
   });
@@ -4380,7 +4380,7 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
   const typedMappings = pathMappings as GoPtr<OrderedMap<string, GoSlice<string>>>;
   // Count patterns (wildcard) vs matchables (exact)
   let numPatterns = 0;
-  OrderedMap_Keys<string, GoSlice<string>>(typedMappings)((p: string): bool => {
+  OrderedMap_Keys<string, GoSlice<string>>(typedMappings)!((p: string): bool => {
     const pattern = TryParsePattern(p);
     if (Pattern_IsValid(pattern) && pattern.StarIndex === -1) {
       numPatterns++;
@@ -4392,7 +4392,7 @@ export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<
   const patterns: GoSlice<Pattern> = [];
   const matchableStringSet: Set<string> = NewSetWithSizeHint<string>(numMatchables)!;
 
-  OrderedMap_Keys<string, GoSlice<string>>(typedMappings)((p: string): bool => {
+  OrderedMap_Keys<string, GoSlice<string>>(typedMappings)!((p: string): bool => {
     const pattern = TryParsePattern(p);
     if (Pattern_IsValid(pattern)) {
       if (pattern.StarIndex === -1) {
@@ -5049,7 +5049,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
       }
     } else if (expType === JSONValueTypeObject) {
       const prevConditions: GoSlice<string> = [];
-      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exp) as GoPtr<OrderedMap<string, ExportsOrImports>>)((condition: string, subExport: ExportsOrImports): bool => {
+      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exp) as GoPtr<OrderedMap<string, ExportsOrImports>>)!((condition: string, subExport: ExportsOrImports): bool => {
         if (excludeConditions !== undefined && Set_Has(excludeConditions, condition)) {
           return true;
         }
@@ -5087,7 +5087,7 @@ export function resolutionState_loadEntrypointsFromExportMap(receiver: GoPtr<res
     }
   } else if (exportsType === JSONValueTypeObject) {
     if (ExportsOrImports_IsSubpaths(exports)) {
-      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exports) as GoPtr<OrderedMap<string, ExportsOrImports>>)((subpath: string, exp: ExportsOrImports): bool => {
+      OrderedMap_Entries<string, ExportsOrImports>(ExportsOrImports_AsObject(exports) as GoPtr<OrderedMap<string, ExportsOrImports>>)!((subpath: string, exp: ExportsOrImports): bool => {
         loadEntrypointsFromTargetExports(subpath, undefined, undefined, exp);
         return true;
       });

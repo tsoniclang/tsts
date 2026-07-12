@@ -390,11 +390,11 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
     let commentRanges: GoSlice<CommentRange> = [];
     if (previousSibling !== undefined) {
       const trailingPos = SkipTriviaEx(text, Node_End(previousSibling!) + 1, { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
-      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
-      GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, Node_Pos(node!))((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
+      GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, Node_Pos(node!))!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
     } else {
       const trailingPos = SkipTriviaEx(text, Node_Pos(node!), { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
-      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)!((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return true; });
     }
     if (commentRanges.length > 0) {
       return hasInternalAnnotation(commentRanges[commentRanges.length - 1]!, sourceFile);
@@ -402,7 +402,7 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
     return false;
   }
   let found = false;
-  DeclarationTransformer_getLeadingCommentRangesOfNode(receiver, parseTreeNode, sourceFile)((commentRange: CommentRange) => {
+  DeclarationTransformer_getLeadingCommentRangesOfNode(receiver, parseTreeNode, sourceFile)!((commentRange: CommentRange) => {
     if (hasInternalAnnotation(commentRange, sourceFile)) {
       found = true;
       return true;

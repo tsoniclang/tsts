@@ -422,7 +422,7 @@ export function Collect<T>(seq: GoSeq<T>): GoSlice<T> {
 // slice.
 export function AppendSeq<T>(s: GoPtr<GoSlice<T>>, seq: GoSeq<T>): GoSlice<T> {
   const slice = s ?? [];
-  seq((value: T): bool => {
+  seq!((value: T): bool => {
     slice.push(value);
     return true;
   });

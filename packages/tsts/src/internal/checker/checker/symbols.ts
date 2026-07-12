@@ -14229,7 +14229,7 @@ export function Checker_createUnionOrIntersectionProperty(receiver: GoPtr<Checke
   let writeTypes: GoSlice<GoPtr<Type>> | undefined;
   let firstValueDeclaration: GoPtr<Node>;
   let hasNonUniformValueDeclaration = false;
-  OrderedSet_Values<GoPtr<Symbol>>(propSet)((prop) => {
+  OrderedSet_Values<GoPtr<Symbol>>(propSet)!((prop) => {
     if (firstValueDeclaration === undefined) {
       firstValueDeclaration = prop!.ValueDeclaration;
     } else if (prop!.ValueDeclaration !== undefined && prop!.ValueDeclaration !== firstValueDeclaration) {
@@ -14345,7 +14345,7 @@ export function Checker_getTargetSymbol(receiver: GoPtr<Checker>, s: GoPtr<Symbo
 export function Checker_hasCommonDeclaration(receiver: GoPtr<Checker>, symbols: GoPtr<OrderedSet<GoPtr<Symbol>>>): bool {
   const commonDeclarations = NewSetWithSizeHint<GoPtr<Node>>(0);
   let result = true;
-  OrderedSet_Values<GoPtr<Symbol>>(symbols)((symbol_) => {
+  OrderedSet_Values<GoPtr<Symbol>>(symbols)!((symbol_) => {
     const declarations = symbol_!.Declarations ?? [];
     if (declarations.length === 0) {
       result = false;

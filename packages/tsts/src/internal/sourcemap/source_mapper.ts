@@ -268,7 +268,7 @@ export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSou
 
   // getDecodedMappings()
   const decoder = DecodeMappings(sourceMap!.Mappings);
-  MappingsDecoder_Values(decoder)((mapping): bool => {
+  MappingsDecoder_Values(decoder)!((mapping): bool => {
     // processMapping()
     let generatedPosition: int = -1;
     let lineInfo: GoPtr<ECMALineInfo> = host.GetECMALineInfo(generatedAbsoluteFilePath);

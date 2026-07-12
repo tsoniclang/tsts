@@ -1804,7 +1804,7 @@ export function isReservedWord(token: Kind): bool {
  */
 export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): GoSlice<Pragma> {
   let pragmas: GoSlice<Pragma> = [];
-  GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)((commentRange: CommentRange): bool => {
+  GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)!((commentRange: CommentRange): bool => {
     const comment = byteSlice(sourceText, commentRange.pos, commentRange.end);
     pragmas = [...pragmas, ...extractPragmas(commentRange, comment)];
     return true;

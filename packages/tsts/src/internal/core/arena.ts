@@ -37,7 +37,7 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
  */
 export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
   ensureArena(receiver);
-  return {} as T;
+  return {} as GoPtr<T>;
 }
 
 /**

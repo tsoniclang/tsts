@@ -870,7 +870,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 
   // initialize exports for function declarations
   const exportedFunctionsStart = statements.length;
-  OrderedSet_Values(receiver!.currentModuleInfo!.exportedFunctions as GoPtr<OrderedSet<GoPtr<FunctionDeclarationNode>>>)((f_: GoPtr<FunctionDeclarationNode>) => {
+  OrderedSet_Values(receiver!.currentModuleInfo!.exportedFunctions as GoPtr<OrderedSet<GoPtr<FunctionDeclarationNode>>>)!((f_: GoPtr<FunctionDeclarationNode>) => {
     statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, f_ as GoPtr<Declaration>);
     // Go `for ... range` iterates the whole set; the GoSeq yield returns true to continue.
     return true;

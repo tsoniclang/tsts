@@ -162,17 +162,17 @@ export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSl
     case KindParenthesizedExpression:
     case KindVariableDeclaration:
     case KindExportSpecifier:
-      GetTrailingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+      GetTrailingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
         commentRanges.push(commentRange);
         return true;
       });
-      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+      GetLeadingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
         commentRanges.push(commentRange);
         return true;
       });
       break;
     default:
-      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+      GetLeadingCommentRanges(f, text, Node_Pos(node))!((commentRange: CommentRange): bool => {
         commentRanges.push(commentRange);
         return true;
       });

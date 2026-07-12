@@ -607,7 +607,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
     if (IsExternalModule(file)) {
       statementsUpdated = true;
       const newStatements: GoSlice<GoPtr<Node>> = [];
-      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)!((importSource, importSpecifiersMap) => {
         const s = NewImportDeclaration(
           astFactory,
           undefined,
@@ -625,7 +625,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
     } else if (IsExternalOrCommonJSModule(file)) {
       statementsUpdated = true;
       const newStatements: GoSlice<GoPtr<Node>> = [];
-      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)!((importSource, importSpecifiersMap) => {
         const sorted = getSortedSpecifiers(importSpecifiersMap);
         const asBindingElems: GoSlice<GoPtr<Node>> = [];
         for (const elem of sorted) {
