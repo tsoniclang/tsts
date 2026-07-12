@@ -58,6 +58,8 @@ export function externalSnapshot(dependencyTypeDeclarations, usedObjectIds = dep
       }],
     }],
     semantic: {
+      requiredFiles: ["fixture/use.go"],
+      excludedFiles: [],
       dependencyTypeDeclarations: declarations,
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [...methodSetSignatures.values()].sort((left, right) => left.id.localeCompare(right.id)),

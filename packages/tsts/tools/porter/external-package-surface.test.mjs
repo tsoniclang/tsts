@@ -76,6 +76,8 @@ test("external package surfaces are explicit and never seed generated facade art
   const snapshot = {
     files: [],
     semantic: {
+      requiredFiles: [],
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: {
         declarations: surfaceDeclarations,
@@ -175,6 +177,8 @@ test("selected external types reuse the authored-facade comparison without becom
   const snapshot = {
     files: [],
     semantic: {
+      requiredFiles: [],
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: {
         declarations: [token], dependencyTypeDeclarations: [],
@@ -241,6 +245,8 @@ test("external declaration evidence normalizes unavailable names through nested 
   const snapshot = {
     files: [],
     semantic: {
+      requiredFiles: [],
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: {
         declarations: [register, current],
@@ -310,6 +316,8 @@ test("selected external type members close audit-only dependencies without gener
   const snapshot = {
     files: [],
     semantic: {
+      requiredFiles: [],
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: {
         declarations: [container],

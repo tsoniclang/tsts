@@ -16,6 +16,8 @@ const parser = await loadParser();
 const EMPTY_SEMANTIC_SNAPSHOT = {
   files: [],
   semantic: {
+    requiredFiles: [],
+    excludedFiles: [],
     dependencyTypeDeclarations: [],
     externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
     methodSetSignatures: [],

@@ -52,7 +52,10 @@ function indexWith(declarations = []) {
     primCore: { bool: "bool", int: "int" },
     primCompat: { error: "GoError" },
     facadeTemplate: "src/go/{importPath}.ts",
-    pkgType: new Map(declarations.map(([name]) => [`${packagePath}::${name}`, "src/p/types.ts"])),
+    pkgType: new Map(declarations.map(([name]) => [
+      `${packagePath}::type::${name}`,
+      { moduleId: "src/p/types.ts", tsName: name },
+    ])),
     declaredTypeContractsByProfile: new Map([[0, contracts]]),
     externalTypeContracts: new Map(),
     externalPointerTerminals: new Map(),

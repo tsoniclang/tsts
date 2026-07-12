@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { renderValueGroup } from "./core/type-renderer.mjs";
 import { semanticTypeContexts } from "./core/semantic-type-nilability.mjs";
+import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import {
   buildExpectedIndex,
   goUnitDescriptor,
@@ -48,6 +49,10 @@ function semanticSnapshot(files) {
   });
   return {
     semantic: {
+      requiredFiles: normalizedFiles
+        .filter((file) => file.units.some((unit) => isSemanticPrimaryUnitKind(unit.kind)))
+        .map((file) => file.path),
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
