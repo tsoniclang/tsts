@@ -13,8 +13,14 @@ import { renderUnitGroup } from "./type-renderer.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { assertLargeFileSplitPlanClean } from "./verification.mjs";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+
+export const skeletonOutputRelativePath = ".temp/porter/skeleton";
+export const skeletonOutputSentinelName = ".tsts-porter-skeleton-output";
+
+const skeletonOutputSentinelContents = "tsts-porter:skeleton-check-output:v1\n";
+const skeletonOutputPathComponents = Object.freeze(skeletonOutputRelativePath.split("/"));
 
 export async function scaffoldMissing(config, status, snapshot, externalFacadeCatalog, options) {
   assertLargeFileSplitPlanClean(status);
@@ -115,11 +121,10 @@ export async function scaffoldMissing(config, status, snapshot, externalFacadeCa
 
 export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, options) {
   assertLargeFileSplitPlanClean(status);
-  const emitTemp = options["emit-temp"] !== false;
-  const compile = options.compile !== false && options.compile !== "false";
-  const outRoot = resolveRepo(options.out ?? ".temp/porter/skeleton");
+  const emitTemp = options["no-emit-temp"] !== true;
+  const compile = emitTemp && options["no-compile"] !== true;
+  const outRoot = path.join(repoRoot, ...skeletonOutputPathComponents);
   const targetRoot = path.join(outRoot, "src");
-  const tsRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
   const rows = status.rows.filter((row) => row.status === "missing" || row.status === "stub" || row.status === "implemented");
   const unitsByID = unitsByIDMap(snapshot);
   const groups = new Map();
@@ -134,20 +139,16 @@ export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, 
   }
 
   if (emitTemp) {
-    rmSync(outRoot, { recursive: true, force: true });
-    mkdirSync(targetRoot, { recursive: true });
+    resetSkeletonOutputDirectory();
+    mkdirSync(targetRoot);
     for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot, externalFacadeCatalog)) {
-      const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
-        ? repoRelativePath.slice(tsRootPrefix.length)
-        : repoRelativePath;
+      const relativeUnderSource = skeletonSourceRelativePath(config, repoRelativePath);
       writeText(path.join(targetRoot, relativeUnderSource), text);
     }
     for (const repoRelativePath of authoredFacadePathSet(config)) {
+      const relativeUnderSource = skeletonSourceRelativePath(config, repoRelativePath);
       const sourcePath = resolveRepo(repoRelativePath);
       if (!existsSync(sourcePath)) continue;
-      const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
-        ? repoRelativePath.slice(tsRootPrefix.length)
-        : repoRelativePath;
       writeText(path.join(targetRoot, relativeUnderSource), readFileSync(sourcePath, "utf8"));
     }
   }
@@ -165,9 +166,7 @@ export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, 
       renderedFiles++;
       renderedUnits += units.length;
       if (emitTemp) {
-        const relativeUnderSource = relativeTargetPath.startsWith(tsRootPrefix)
-          ? relativeTargetPath.slice(tsRootPrefix.length)
-          : relativeTargetPath;
+        const relativeUnderSource = skeletonSourceRelativePath(config, relativeTargetPath);
         const targetPath = path.join(targetRoot, relativeUnderSource);
         mkdirSync(path.dirname(targetPath), { recursive: true });
         writeFileSync(targetPath, text);
@@ -208,5 +207,114 @@ export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, 
       }
       console.log("skeleton TypeScript compile passed");
     }
+  }
+}
+
+export function resetSkeletonOutputDirectory() {
+  const repositoryRoot = repoRoot;
+  assertCanonicalDirectory(repositoryRoot, "Porter repository root");
+  const tempRoot = path.join(repositoryRoot, skeletonOutputPathComponents[0]);
+  const porterTempRoot = path.join(tempRoot, skeletonOutputPathComponents[1]);
+  ensureCanonicalDirectory(tempRoot, "Porter .temp directory");
+  ensureCanonicalDirectory(porterTempRoot, "Porter .temp/porter directory");
+  const porterTempIdentity = lstatSync(porterTempRoot, { bigint: true });
+
+  const outputRoot = path.join(porterTempRoot, skeletonOutputPathComponents[2]);
+  const existing = lstatIfExists(outputRoot, { bigint: true });
+  if (existing !== undefined) {
+    assertCanonicalDirectory(outputRoot, "Porter skeleton output directory", existing);
+    assertSkeletonOutputSentinel(outputRoot);
+    assertPathIdentity(porterTempRoot, porterTempIdentity, "Porter .temp/porter directory changed before skeleton cleanup");
+    assertPathIdentity(outputRoot, existing, "Porter skeleton output directory changed before cleanup");
+    rmSync(outputRoot, { recursive: true, force: false });
+    assertPathIdentity(porterTempRoot, porterTempIdentity, "Porter .temp/porter directory changed during skeleton cleanup");
+  }
+
+  mkdirSync(outputRoot);
+  assertCanonicalDirectory(outputRoot, "Porter skeleton output directory");
+  writeFileSync(
+    path.join(outputRoot, skeletonOutputSentinelName),
+    skeletonOutputSentinelContents,
+    { encoding: "utf8", flag: "wx", mode: 0o600 },
+  );
+  return outputRoot;
+}
+
+function skeletonSourceRelativePath(config, repoRelativePath) {
+  const tsRoot = config.tsRoot.replace(/\/+$/, "");
+  const prefix = `${tsRoot}/`;
+  if (typeof repoRelativePath !== "string" || !repoRelativePath.startsWith(prefix)) {
+    throw new Error(`skeleton output path must be beneath ${tsRoot}: ${String(repoRelativePath)}`);
+  }
+  const relative = repoRelativePath.slice(prefix.length);
+  if (
+    relative === "" ||
+    relative.includes("\\") ||
+    path.posix.isAbsolute(relative) ||
+    path.posix.normalize(relative) !== relative ||
+    relative.split("/").some((component) => component === "" || component === "." || component === "..")
+  ) {
+    throw new Error(`skeleton output path is not canonical: ${repoRelativePath}`);
+  }
+  return relative.split("/").join(path.sep);
+}
+
+function ensureCanonicalDirectory(directory, label) {
+  const existing = lstatIfExists(directory);
+  if (existing === undefined) mkdirSync(directory);
+  assertCanonicalDirectory(directory, label, existing ?? lstatSync(directory));
+}
+
+function assertCanonicalDirectory(directory, label, stats = lstatIfExists(directory)) {
+  if (!path.isAbsolute(directory) || path.normalize(directory) !== directory) {
+    throw new Error(`${label} path must be absolute and canonical: ${directory}`);
+  }
+  if (stats === undefined || stats.isSymbolicLink() || !stats.isDirectory()) {
+    throw new Error(`${label} must be an existing non-symlink directory: ${directory}`);
+  }
+  if (realpathSync(directory) !== directory) {
+    throw new Error(`${label} must not traverse symlinks: ${directory}`);
+  }
+}
+
+function assertSkeletonOutputSentinel(outputRoot) {
+  const sentinelPath = path.join(outputRoot, skeletonOutputSentinelName);
+  const before = lstatIfExists(sentinelPath, { bigint: true });
+  if (before === undefined || before.isSymbolicLink() || !before.isFile()) {
+    throw new Error(`refusing to delete Porter skeleton output without its ownership sentinel: ${sentinelPath}`);
+  }
+  const contents = readFileSync(sentinelPath, "utf8");
+  const after = lstatIfExists(sentinelPath, { bigint: true });
+  if (
+    contents !== skeletonOutputSentinelContents ||
+    after === undefined ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino ||
+    before.size !== after.size ||
+    before.mtimeNs !== after.mtimeNs ||
+    before.ctimeNs !== after.ctimeNs
+  ) {
+    throw new Error(`refusing to delete Porter skeleton output with an invalid ownership sentinel: ${sentinelPath}`);
+  }
+}
+
+function assertPathIdentity(file, expected, message) {
+  const actual = lstatIfExists(file, { bigint: true });
+  if (
+    actual === undefined ||
+    actual.isSymbolicLink() ||
+    actual.dev !== expected.dev ||
+    actual.ino !== expected.ino
+  ) {
+    throw new Error(message);
+  }
+}
+
+function lstatIfExists(file, options) {
+  try {
+    return lstatSync(file, options);
+  } catch (error) {
+    if (error?.code === "ENOENT") return undefined;
+    throw error;
   }
 }

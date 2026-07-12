@@ -23,7 +23,7 @@ import process from "node:process";
 
 export async function main() {
   const [command = "status", ...args] = process.argv.slice(2);
-  const options = parseArgs(args);
+  const options = parseArgs(command, args);
   const config = loadConfig();
 
   if (command === "delta") {

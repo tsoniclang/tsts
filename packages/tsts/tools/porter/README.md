@@ -68,7 +68,9 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 - `npm run porter:facades -- --check` verifies the checked-in Go compatibility/facade layer is exactly the deterministic output for the current TS-Go snapshot.
 - `npm run porter:large-files` verifies every active literal-port Go file over the configured LOC threshold has a semantic split plan.
 - `npm run porter:large-files -- --write-draft` writes a draft semantic split plan from the current TS-Go declaration inventory. Existing differing plans are never overwritten unless `-- --force` is also supplied. Treat this as a bootstrap command, not the normal update path for a reviewed plan.
-- `npm run porter:skeleton-check` renders the complete missing-unit skeleton corpus into `.temp/porter/skeleton` and runs `tsc --noEmit` against it.
+- `npm run porter:skeleton-check` renders the complete missing-unit skeleton corpus into the fixed, sentinel-owned `.temp/porter/skeleton` directory and runs `tsc --noEmit` against it. The command never accepts an output path and refuses to replace a directory without its exact ownership sentinel. Use `-- --no-compile` to retain the rendered corpus without compiling it, or `-- --no-emit-temp` to skip skeleton corpus emission and compilation.
+
+Porter options are closed per command. Boolean options never accept values such as `true` or `false`; use the command's explicit flag, including negative flags such as `--no-compile`. Unknown, duplicate, missing-value, conflicting, and command-inapplicable options are errors.
 
 ## Embedded Metadata
 

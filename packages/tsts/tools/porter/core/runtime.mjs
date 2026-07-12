@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { parseCommandOptions } from "./command-options.mjs";
 import { assertPorterConfig } from "./config-contract.mjs";
 
 export const repoRoot = findRepoRoot(process.cwd());
@@ -19,23 +20,8 @@ export function loadConfig() {
   };
 }
 
-export function parseArgs(args) {
-  const options = {};
-  for (let index = 0; index < args.length; index++) {
-    const arg = args[index];
-    if (!arg.startsWith("--")) {
-      fail(`unexpected positional argument: ${arg}`);
-    }
-    const key = arg.slice(2);
-    const next = args[index + 1];
-    if (next === undefined || next.startsWith("--")) {
-      options[key] = true;
-    } else {
-      options[key] = next;
-      index++;
-    }
-  }
-  return options;
+export function parseArgs(command, args) {
+  return parseCommandOptions(command, args);
 }
 
 export function walk(root) {
