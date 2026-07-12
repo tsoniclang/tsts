@@ -1,4 +1,5 @@
 import { FACADE_POINTER_METHOD_SET_SYMBOL } from "../pointer-method-facades.mjs";
+import { channelRuntime } from "./compatibility/channels.mjs";
 
 export function renderGoCompatModule() {
   const pointerMethodSetSymbol = FACADE_POINTER_METHOD_SET_SYMBOL;
@@ -22,13 +23,13 @@ type GoPointerMethods<T> = typeof ${pointerMethodSetSymbol} extends keyof T
   : unknown;
 export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;
 export type GoRef<T> = GoNilable<{ v: T } & GoPointerMethods<T>>;
-export type GoSlice<T> = GoNilable<T[]>;
+export type GoSlice<T> = T[];
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
-export type GoMap<K, V> = GoNilable<Map<K, V>>;
-export type GoChan<T, Direction extends string = "bidirectional"> = GoNilable<{
+export type GoMap<K, V> = Map<K, V>;
+export type GoChan<T, Direction extends string = "bidirectional"> = {
   readonly [__goBrand]?: { readonly element: T; readonly direction: Direction };
   readonly [goChannelState]?: GoChannelState<T>;
-}>;
+};
 export type GoFunc<F> = GoNilable<F>;
 export type GoInterface<I> = GoNilable<I>;
 export type GoSeq<T> = GoFunc<(yieldValue: (value: T) => bool) => void>;
@@ -49,6 +50,32 @@ export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: strin
     throw new TypeError(\`\${operation} returned nil after success\`);
   }
   return value;
+}
+
+const goNilSlices = new WeakSet<readonly unknown[]>();
+
+export function GoNilSlice<T>(): GoSlice<T> {
+  const slice: T[] = [];
+  goNilSlices.add(slice);
+  return slice;
+}
+
+export function GoSliceIsNil<T>(slice: GoSlice<T>): bool {
+  return goNilSlices.has(slice) as bool;
+}
+
+const goNilMap: Map<unknown, unknown> = new class extends Map<unknown, unknown> {
+  override clear(): void {}
+  override delete(_key: unknown): boolean { return false; }
+  override set(_key: unknown, _value: unknown): this { throw new Error("assignment to entry in nil map"); }
+}();
+
+export function GoNilMap<K, V>(): GoMap<K, V> {
+  return goNilMap as GoMap<K, V>;
+}
+
+export function GoMapIsNil<K, V>(map: GoMap<K, V>): bool {
+  return (map === goNilMap) as bool;
 }
 
 export interface GoInterfaceType<T> {
@@ -96,182 +123,7 @@ function isGoInterfaceObject(value: unknown): value is GoInterfaceValue<unknown>
   return (typeof value === "object" && value !== null) || typeof value === "function";
 }
 
-type GoChannelReceiver<T> = (value: T, ok: bool) => void;
-
-interface GoChannelWaiter<T> {
-  active: bool;
-  deliver(value: T, ok: bool): bool;
-}
-
-interface GoChannelState<T> {
-  capacity: number;
-  queue: T[];
-  waiters: GoChannelWaiter<T>[];
-  closed: bool;
-  zeroValue(): T;
-}
-
-export interface GoChanSelectCase {
-  readonly channel: GoChan<unknown, string>;
-  readonly receiver: GoChannelReceiver<unknown>;
-}
-
-const goChannelState: unique symbol = Symbol("GoChannel.state");
-
-export function MakeGoChan<T>(capacity: number, zeroValue: () => T): NonNullable<GoChan<T>> {
-  if (!Number.isSafeInteger(capacity) || capacity < 0) {
-    throw new RangeError("makechan: size out of range");
-  }
-  return {
-    [goChannelState]: {
-      capacity,
-      queue: [],
-      waiters: [],
-      closed: false,
-      zeroValue,
-    },
-  };
-}
-
-export function GoChanAsReceive<T>(channel: GoChan<T>): GoChan<T, "receive"> {
-  return channel as unknown as GoChan<T, "receive">;
-}
-
-export function GoChanAsSend<T>(channel: GoChan<T>): GoChan<T, "send"> {
-  return channel as unknown as GoChan<T, "send">;
-}
-
-export function GoChanTrySend<T>(channel: GoChan<T, string>, value: T): bool {
-  const state = requireGoChannelState(channel);
-  if (state.closed) {
-    throw new Error("send on closed channel");
-  }
-  const waiter = takeGoChannelWaiter(state);
-  if (waiter !== undefined) {
-    return waiter.deliver(value, true as bool);
-  }
-  if (state.queue.length < state.capacity) {
-    state.queue.push(value);
-    return true as bool;
-  }
-  return false as bool;
-}
-
-export function GoChanReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): () => void {
-  const state = requireGoChannelState(channel);
-  if (goChannelReceiveReady(state)) {
-    const [value, ok] = takeGoChannelReadyValue(state);
-    queueMicrotask(() => receiver(value, ok));
-    return () => {};
-  }
-  const waiter: GoChannelWaiter<T> = {
-    active: true,
-    deliver(value, ok) {
-      queueMicrotask(() => receiver(value, ok));
-      return true as bool;
-    },
-  };
-  state.waiters.push(waiter);
-  return () => {
-    waiter.active = false;
-  };
-}
-
-export function GoChanSelectReceive<T>(channel: GoChan<T, string>, receiver: GoChannelReceiver<T>): GoChanSelectCase {
-  return {
-    channel: channel as GoChan<unknown, string>,
-    receiver: receiver as GoChannelReceiver<unknown>,
-  };
-}
-
-export function GoChanSelect(cases: readonly GoChanSelectCase[]): () => void {
-  const ready = [] as number[];
-  for (let index = 0; index < cases.length; index++) {
-    if (goChannelReceiveReady(requireGoChannelState(cases[index]!.channel))) ready.push(index);
-  }
-  if (ready.length > 0) {
-    const selectedIndex = ready.length === 1 ? ready[0]! : ready[Math.floor(Math.random() * ready.length)]!;
-    const selected = cases[selectedIndex]!;
-    const [value, ok] = takeGoChannelReadyValue(requireGoChannelState(selected.channel));
-    queueMicrotask(() => selected.receiver(value, ok));
-    return () => {};
-  }
-
-  let active = true;
-  const waiters: Array<GoChannelWaiter<unknown>> = [];
-  const cancel = (): void => {
-    if (!active) return;
-    active = false;
-    for (const waiter of waiters) waiter.active = false;
-  };
-  for (const selectCase of cases) {
-    const waiter: GoChannelWaiter<unknown> = {
-      active: true,
-      deliver(value, ok) {
-        if (!active) return false as bool;
-        active = false;
-        for (const other of waiters) other.active = false;
-        queueMicrotask(() => selectCase.receiver(value, ok));
-        return true as bool;
-      },
-    };
-    waiters.push(waiter);
-    requireGoChannelState(selectCase.channel).waiters.push(waiter);
-  }
-  return cancel;
-}
-
-export function GoChanClose<T>(channel: GoChan<T, string>): void {
-  const state = requireGoChannelState(channel);
-  if (state.closed) {
-    throw new Error("close of closed channel");
-  }
-  state.closed = true;
-  while (state.queue.length > 0) {
-    const waiter = takeGoChannelWaiter(state);
-    if (waiter === undefined) {
-      break;
-    }
-    const value = state.queue.shift()!;
-    waiter.deliver(value, true as bool);
-  }
-  let waiter: GoChannelWaiter<T> | undefined;
-  while ((waiter = takeGoChannelWaiter(state)) !== undefined) {
-    waiter.deliver(state.zeroValue(), false as bool);
-  }
-}
-
-function requireGoChannelState<T>(channel: GoChan<T, string>): GoChannelState<T> {
-  if (channel === undefined) {
-    throw new Error("channel is nil");
-  }
-  const state = channel[goChannelState];
-  if (state === undefined) {
-    throw new Error("channel has no runtime state");
-  }
-  return state;
-}
-
-function takeGoChannelWaiter<T>(state: GoChannelState<T>): GoChannelWaiter<T> | undefined {
-  while (state.waiters.length > 0) {
-    const waiter = state.waiters.shift()!;
-    if (waiter.active) {
-      waiter.active = false;
-      return waiter;
-    }
-  }
-  return undefined;
-}
-
-function goChannelReceiveReady<T>(state: GoChannelState<T>): bool {
-  return (state.queue.length > 0 || state.closed) as bool;
-}
-
-function takeGoChannelReadyValue<T>(state: GoChannelState<T>): [T, bool] {
-  if (state.queue.length > 0) return [state.queue.shift()!, true as bool];
-  if (state.closed) return [state.zeroValue(), false as bool];
-  throw new Error("receive from channel that is not ready");
-}
+${channelRuntime}
 
 export interface GoMapKeyDescriptor<K> {
   readonly identity: symbol;
@@ -574,14 +426,14 @@ export function GoMapGetExisting<K, V>(map: NonNullable<GoMap<K, V>>, key: K): V
 }
 
 export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: () => V): [V, bool] {
-  if (map === undefined || !map.has(key)) {
+  if (!map.has(key)) {
     return [zeroValue(), false];
   }
   return [GoMapGetExisting(map, key), true];
 }
 
 export function GoAppend<T>(slice: GoSlice<T>, ...items: T[]): NonNullable<GoSlice<T>> {
-  return [...(slice ?? []), ...items];
+  return items.length === 0 ? slice : [...slice, ...items];
 }
 
 `;
