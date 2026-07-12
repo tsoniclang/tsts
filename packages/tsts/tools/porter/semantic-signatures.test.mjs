@@ -21,8 +21,6 @@ const profile = {
     core: { bool: "bool", int: "int", int32: "int", float64: "double" },
     compat: { rune: "GoRune", error: "GoError", complex128: "GoComplex128" },
   },
-  stdlibTypes: { "iter::type::Seq": "src/go/compat.ts::GoSeq" },
-  namedTypeMappings: {},
   facadeTemplate: "src/go/{importPath}.ts",
 };
 const semanticProfile = 0;
@@ -45,7 +43,8 @@ function semanticSnapshot(files) {
   });
   return {
     semantic: {
-      externalDeclarations: [],
+      dependencyTypeDeclarations: [],
+      methodSetSignatures: [],
       profiles: [testSemanticProfile({
         coveredFiles: normalizedFiles.map((file) => file.path),
         packageIds: normalizedFiles.map((file) => file.importPath),
@@ -77,12 +76,18 @@ test("canonical semantic types map resolved array lengths, identities, and const
     kind: "type",
     name: "Box",
     semantic: variants({
+      kind: "type",
+      packagePath: "example/p",
       object: boxObject,
       type: {
         alias: false,
         object: boxObject,
         typeParameters: [],
         rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+        methodSurface: "declaration-units",
+        methods: [],
+        valueMethodSet: [],
+        pointerMethodSet: [],
       },
     }),
   };

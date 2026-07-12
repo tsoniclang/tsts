@@ -8,6 +8,7 @@ import {
   buildIndexedModuleValueEnvironments,
   buildModuleValueEnvironments,
   extractFileDescriptors,
+  extractIndexedReviewedTypeDescriptor,
   extractIndexedTypeExportDescriptor,
   extractNamedDeclarationDescriptor,
   extractParsedFileDescriptors,
@@ -169,6 +170,9 @@ export interface Owned { value: string; }
     () => extractNamedDeclarationDescriptor(counted.api, module, "Owned"),
     /cannot be both authored facade storage and @tsgo-unit storage/,
   );
+  const reviewed = extractIndexedReviewedTypeDescriptor(counted.api, index, "facade/local.ts", "Owned", environments);
+  assert.equal(reviewed.declarationId, "facade/local.ts::Owned");
+  assert.equal(reviewed.descriptor.kind, "interface");
 });
 
 test("module index rejects parser recovery and conflicting export identities", async () => {
@@ -178,10 +182,11 @@ test("module index rejects parser recovery and conflicting export identities", a
     /syntax diagnostic/,
   );
   assert.throws(
-    () => indexTypeScriptModuleSources(counted.api, new Map([[
-      "pkg/conflict.ts",
-      'export type { A as X } from "./a.js"; export type { B as X } from "./b.js";',
-    ]])),
+    () => indexTypeScriptModuleSources(counted.api, new Map([
+      ["pkg/a.ts", "export interface A {}"],
+      ["pkg/b.ts", "export interface B {}"],
+      ["pkg/conflict.ts", 'export type { A as X } from "./a.js"; export type { B as X } from "./b.js";'],
+    ])),
     /conflicting TypeScript export/,
   );
   assert.throws(

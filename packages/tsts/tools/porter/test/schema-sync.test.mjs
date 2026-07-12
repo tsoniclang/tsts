@@ -65,6 +65,7 @@ import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import {
   baseConfig,
   channelType,
+  completeDeclarationAuditStatus,
   emptyCounts,
   emptyGeneratedArtifacts,
   fileRecord,
@@ -208,6 +209,7 @@ test("buildSchemaSourceSyncStatus rejects unclassified, duplicate, missing, and 
 
 test("collectVerifyFailures fails when schemaSourceSync has mismatches", () => {
   const status = {
+    ...completeDeclarationAuditStatus(),
     counts: { duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
     schemaSourceSync: { mismatches: [{ schema: "packages/tsts/schema/tsgo/symbolflags.go", source: "internal/ast/symbolflags.go", reason: "differs" }] },
     rows: [],
@@ -218,19 +220,21 @@ test("collectVerifyFailures fails when schemaSourceSync has mismatches", () => {
 
 test("collectVerifyFailures hard-gates signature mismatches", () => {
   const status = {
+    ...completeDeclarationAuditStatus(),
     counts: { duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
-    signatureCheck: { checked: 2, overriddenUnits: 0, mismatches: 2, byKind: { "param-type": 1, "alias-type": 1 } },
     rows: [],
   };
+  Object.assign(status.signatureCheck, { checked: 2, overriddenUnits: 0, mismatches: 2, byKind: { "param-type": 1, "alias-type": 1 } });
   assert.deepEqual(collectVerifyFailures(status, {}), ["2 signature/type mismatches (param-type=1, alias-type=1)"]);
 });
 
 test("collectVerifyFailures hard-gates JSON-tag mismatches separately from signature overrides", () => {
   const status = {
+    ...completeDeclarationAuditStatus(),
     counts: { duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
-    signatureCheck: { checked: 1, overrideIssues: 0, mismatches: 0, byKind: {} },
-    jsonTagCheck: { taggedUnits: 1, taggedFields: 2, contractUnits: 1, contractFields: 2, mismatches: 1, byKind: { "json-tag-field-drift": 1 } },
     rows: [],
   };
+  Object.assign(status.signatureCheck, { checked: 1, overrideIssues: 0, mismatches: 0, byKind: {} });
+  Object.assign(status.jsonTagCheck, { taggedUnits: 1, taggedFields: 2, contractUnits: 1, contractFields: 2, mismatches: 1, byKind: { "json-tag-field-drift": 1 } });
   assert.deepEqual(collectVerifyFailures(status, {}), ["1 Go struct JSON-tag mismatches (json-tag-field-drift=1)"]);
 });

@@ -76,9 +76,11 @@ function orderObject(value) {
 }
 
 function orderTypeDeclaration(value) {
-  return ordered(value, ["alias", "object", "typeParameters", "rhs", "methods"], {
+  return ordered(value, ["alias", "object", "typeParameters", "rhs", "methodSurface", "methods", "valueMethodSet", "pointerMethodSet"], {
     object: orderObject, typeParameters: (items) => mapItems(items, orderTypeParameter), rhs: orderType,
     methods: (items) => mapItems(items, orderMethod),
+    valueMethodSet: (items) => mapItems(items, orderMethodSelection),
+    pointerMethodSet: (items) => mapItems(items, orderMethodSelection),
   });
 }
 
@@ -111,11 +113,15 @@ function orderTypeParameterReference(value) {
 }
 
 function orderTypeParameter(value) {
-  return ordered(value, ["reference", "constraint"], { reference: orderTypeParameterReference, constraint: orderType });
+  return ordered(value, ["reference", "constraint", "constraintSource", "constraintSyntax"], {
+    reference: orderTypeParameterReference,
+    constraint: orderType,
+    constraintSource: orderTypeParameterReference,
+  });
 }
 
 function orderSignature(value) {
-  return ordered(value, ["receiver", "receiverTypeParameters", "typeParameters", "parameters", "results", "variadic"], {
+  return ordered(value, ["receiver", "receiverMode", "receiverTypeParameters", "typeParameters", "parameters", "results", "variadic"], {
     receiver: orderVariable, receiverTypeParameters: (items) => mapItems(items, orderTypeParameter),
     typeParameters: (items) => mapItems(items, orderTypeParameter), parameters: orderTuple, results: orderTuple,
   });
@@ -126,7 +132,7 @@ function orderTuple(value) {
 }
 
 function orderVariable(value) {
-  return ordered(value, ["id", "name", "packagePath", "embedded", "exported", "type"], { type: orderType });
+  return ordered(value, ["id", "name", "nameKind", "packagePath", "embedded", "exported", "type"], { type: orderType });
 }
 
 function orderStructField(value) {
@@ -144,6 +150,14 @@ function orderInterface(value) {
 
 function orderMethod(value) {
   return ordered(value, ["id", "ownerId", "name", "packagePath", "exported", "signature"], { signature: orderSignature });
+}
+
+function orderMethodSelection(value) {
+  return ordered(value, ["key", "methodId", "methodOwnerId", "name", "packagePath", "exported", "index", "indirect", "promoted", "signatureId"]);
+}
+
+export function canonicalSemanticSignature(value) {
+  return JSON.stringify(orderSignature(value));
 }
 
 function ordered(value, keys, transforms = {}) {

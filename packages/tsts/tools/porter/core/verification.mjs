@@ -6,6 +6,7 @@ import { collectGeneratedSourceCoverageFailures, collectGlobalGeneratedArtifactF
 import { collectSourcePinFailures, emptySourcePinStatus } from "../source-pin.mjs";
 import { emptyGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
+import { auditExecutionLabel, declarationAuditEntries } from "./declaration-audits.mjs";
 import { fail } from "./runtime.mjs";
 import { collectSchemaSourceSyncFailures, emptySchemaSourceSyncStatus } from "./status.mjs";
 
@@ -17,9 +18,17 @@ export function verifyStatus(status, options) {
   console.log("porter verify passed");
 }
 
-export function collectVerifyFailures(status, options) {
+export function collectVerifyFailures(status, options = {}) {
   const strictPort = options["strict-port"] === true;
   const failures = [];
+  for (const entry of declarationAuditEntries(status)) {
+    if (entry.audit?.state !== "complete") {
+      failures.push(`${entry.label} must be complete for trusted verification (${auditExecutionLabel(entry.audit)})`);
+    }
+  }
+  if (status.signatureCheck?.state === "complete" && status.signatureCheck.selection?.kind !== "all-active") {
+    failures.push("Go/TypeScript signature unit audit must cover all active units for trusted verification");
+  }
   if (status.counts.duplicateGoIDs > 0) failures.push(`${status.counts.duplicateGoIDs} duplicate Go IDs`);
   if (status.counts.duplicateTsIDs > 0) failures.push(`${status.counts.duplicateTsIDs} duplicate TS IDs`);
   if ((status.counts.largeFileSplitFailures ?? 0) > 0) failures.push(`${status.counts.largeFileSplitFailures} large-file split plan failures`);

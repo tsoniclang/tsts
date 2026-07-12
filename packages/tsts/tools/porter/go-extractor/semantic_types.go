@@ -15,6 +15,7 @@ type semanticTypeEncoder struct {
 	objectIDs                         map[types.Object]string
 	referencedTypes                   map[string]*types.TypeName
 	preserveInterfaceDeclarationOrder bool
+	synthesizeConstraintSyntax        bool
 }
 
 func newSemanticTypeEncoder() *semanticTypeEncoder {
@@ -51,9 +52,10 @@ func (encoder *semanticTypeEncoder) copyTypeParameterConstraintSyntax(target *ty
 	}
 }
 
-func newExternalSemanticTypeEncoder() *semanticTypeEncoder {
+func newDeclarationSurfaceSemanticTypeEncoder() *semanticTypeEncoder {
 	encoder := newSemanticTypeEncoder()
 	encoder.preserveInterfaceDeclarationOrder = false
+	encoder.synthesizeConstraintSyntax = true
 	return encoder
 }
 
@@ -164,6 +166,13 @@ func (encoder *semanticTypeEncoder) typeReportAt(value types.Type, ownerPath str
 		if typed.Kind() == types.Invalid {
 			fatalf("cannot encode invalid Go basic type at %s", ownerPath)
 		}
+		if typed.Kind() == types.UnsafePointer {
+			pointer, ok := types.Unsafe.Scope().Lookup("Pointer").(*types.TypeName)
+			if !ok || pointer == nil || pointer.Type() != typed {
+				fatalf("unsafe.Pointer has no exact go/types TypeName object at %s", ownerPath)
+			}
+			encoder.registerReferencedType(pointer)
+		}
 		return semanticTypeReport(value, &SemanticTypeReport{Kind: "basic", Basic: &SemanticBasicTypeReport{
 			Name: typed.Name(), Untyped: typed.Info()&types.IsUntyped != 0,
 		}})
@@ -220,11 +229,7 @@ func (encoder *semanticTypeEncoder) typeReference(object *types.TypeName, argume
 	if object == nil {
 		fatalf("Go named/alias type has no TypeName object at %s", ownerPath)
 	}
-	objectID := encoder.objectID(object)
-	if previous := encoder.referencedTypes[objectID]; previous != nil && previous != object {
-		fatalf("Go type object identity %s resolves to multiple go/types objects", objectID)
-	}
-	encoder.referencedTypes[objectID] = object
+	objectID := encoder.registerReferencedType(object)
 	report := &SemanticTypeReferenceReport{
 		ObjectID: objectID, PackagePath: semanticPackagePath(object.Pkg()), Name: object.Name(), TypeArgs: []*SemanticTypeReport{},
 	}
@@ -234,6 +239,15 @@ func (encoder *semanticTypeEncoder) typeReference(object *types.TypeName, argume
 		}
 	}
 	return report
+}
+
+func (encoder *semanticTypeEncoder) registerReferencedType(object *types.TypeName) string {
+	objectID := encoder.objectID(object)
+	if previous := encoder.referencedTypes[objectID]; previous != nil && previous != object {
+		fatalf("Go type object identity %s resolves to multiple go/types objects", objectID)
+	}
+	encoder.referencedTypes[objectID] = object
+	return objectID
 }
 
 func (encoder *semanticTypeEncoder) signatureReportAt(signature *types.Signature, ownerPath string, includeReceiver bool) *SemanticSignatureReport {
@@ -266,10 +280,19 @@ func (encoder *semanticTypeEncoder) typeParameterReports(parameters *types.TypeP
 		if !ok {
 			fatalf("Go type parameter %s has no registered owner", parameter.Obj().Name())
 		}
+		constraintSyntax := encoder.typeParameterConstraintSyntax[parameter]
+		if constraintSyntax == "" && encoder.synthesizeConstraintSyntax {
+			constraintSyntax = types.TypeString(parameter.Constraint(), func(pkg *types.Package) string {
+				if pkg == nil {
+					return ""
+				}
+				return pkg.Path()
+			})
+		}
 		reports = append(reports, SemanticTypeParameterReport{
 			Reference: reference, Constraint: encoder.typeReportAt(parameter.Constraint(), reference.OwnerID+"::"+reference.Role+"::"+itoa(reference.Index)+"::constraint"),
 			ConstraintSource: semanticTypeParameterConstraintSource(encoder.typeParameterConstraintSources, parameter),
-			ConstraintSyntax: encoder.typeParameterConstraintSyntax[parameter],
+			ConstraintSyntax: constraintSyntax,
 		})
 	}
 	return reports

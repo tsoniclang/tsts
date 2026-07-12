@@ -5,6 +5,7 @@ import { emptyDiagnosticsGeneratedArtifactStatus } from "../diagnostics-generato
 import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
 import { emptySourcePinStatus, schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import { emptyGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { declarationAuditsNotRun } from "./declaration-audits.mjs";
 import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, policyFor, policyForUnit, tsFilePolicyFor } from "./policies.mjs";
@@ -320,9 +321,10 @@ export function buildStatus(
       lineCount: file.lineCount,
       reason: "No top-level declarations; package docs/comment-only files are valid but reported.",
     }));
+  const declarationAudits = declarationAuditsNotRun();
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     generatedAt: new Date().toISOString(),
     source: {
       root: snapshot.sourceRoot,
@@ -336,14 +338,8 @@ export function buildStatus(
       metadataUnitCount: tsUnits.units.length,
       scannedFileCount: tsUnits.fileCount,
     },
-    signatureCheck: {
-      state: "not-run",
-      reason: "This command did not execute the signature, authored-facade, or unmatched-TypeScript audits.",
-    },
-    jsonTagCheck: {
-      state: "not-run",
-      reason: "This command did not execute the Go struct JSON-tag declaration audit.",
-    },
+    signatureCheck: declarationAudits.signatureCheck,
+    jsonTagCheck: declarationAudits.jsonTagCheck,
     counts: {
       portable: rows.length - excluded.length,
       excluded: excluded.length,

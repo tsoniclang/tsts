@@ -2,7 +2,7 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "declaration-kind", "declaration-modifier", "declaration-fragment-contract", "declaration-fragment-count",
   "declaration-fragment-modifier", "type-param-count", "type-param-name", "type-param-binding", "type-param-constraint",
   "type-param-default", "type-param-const", "type-param-variance", "type-param-modifier", "type-param-invalid-constraint",
-  "function-signature-count", "function-signature-role", "param-order", "arity", "param-name", "param-role", "param-type",
+  "function-signature-count", "param-order", "arity", "param-name", "param-role", "param-type",
   "param-annotation-missing", "param-optionality", "param-optional-syntax", "param-question", "param-modifier",
   "param-initializer-status", "param-initializer", "param-initializer-unresolved",
   "variadic-position", "return-type", "return-type-policy", "return-annotation-missing", "function-modifier",

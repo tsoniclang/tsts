@@ -73,7 +73,8 @@ export function snapshotWith(files) {
       unitCount: files.reduce((sum, file) => sum + file.units.length, 0),
     },
     semantic: {
-      externalDeclarations: [],
+      dependencyTypeDeclarations: [],
+      methodSetSignatures: [],
       profiles: [testSemanticProfile({
         coveredFiles: files.map((file) => file.path),
         packageIds: files.map((file) => file.importPath),
@@ -179,10 +180,12 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
         receiver: {
           id: `${ownerId}::signature::receiver`,
           name: "",
+          nameKind: "unnamed",
           packagePath,
           exported: false,
           type: { kind: "named", nilable: false, reference: { objectId: `${packagePath}::type::${receiverName}`, packagePath, name: receiverName, typeArgs: [] } },
         },
+        receiverMode: "value",
         ...objectSignature,
       }
     : objectSignature;
@@ -200,7 +203,16 @@ function semanticDeclaration(kind, name, valueSpecs = [], goPath = "internal/deb
       kind,
       packagePath,
       object,
-      type: { alias: false, object, typeParameters: [], rhs: { kind: "struct", nilable: false, struct: { fields: [] } } },
+      type: {
+        alias: false,
+        object,
+        typeParameters: [],
+        rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+        methodSurface: "declaration-units",
+        methods: [],
+        valueMethodSet: [],
+        pointerMethodSet: [],
+      },
       profiles: [testSemanticProfileIndex],
     };
   }
@@ -272,7 +284,8 @@ function testSemanticSignature(ownerPath, packagePath, parameters, results, pack
     let index = 0;
     return items.flatMap((item) => (item.names?.length ? item.names : [""]).map((name) => {
       const id = `${ownerPath}::${role}::${index++}`;
-      return { id, name, packagePath, exported: false, type: testSemanticType(item.type, packagePath, false, packages, `${id}::type`) };
+      const nameKind = name === "" ? "unnamed" : name === "_" ? "blank" : "named";
+      return { id, name, nameKind, packagePath, exported: false, type: testSemanticType(item.type, packagePath, false, packages, `${id}::type`) };
     }));
   };
   return {
@@ -350,4 +363,21 @@ export function funcType(parameters, results) {
 
 export function interfaceType(members) {
   return { kind: "interface", text: "interface", members };
+}
+
+export function completeDeclarationAuditStatus() {
+  const complete = () => ({ state: "complete" });
+  return {
+    signatureCheck: {
+      state: "complete",
+      selection: { kind: "all-active" },
+      authoredFacades: complete(),
+      typeStoragePolicies: complete(),
+      typeEquivalenceRelations: complete(),
+      ambientReferenceRelations: complete(),
+      declarationOwnership: complete(),
+      untrackedTypeScript: complete(),
+    },
+    jsonTagCheck: complete(),
+  };
 }

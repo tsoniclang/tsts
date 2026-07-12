@@ -28,11 +28,11 @@ type semanticVariantEvidence struct {
 }
 
 type semanticProfileLoad struct {
-	declarations         map[string]SemanticDeclarationReport
-	externalDeclarations map[string]SemanticDeclarationReport
-	importNames          []semanticImportNameEvidence
-	report               SemanticProfileReport
-	modules              []SemanticModuleReport
+	declarations               map[string]SemanticDeclarationReport
+	dependencyTypeDeclarations map[string]SemanticDeclarationReport
+	importNames                []semanticImportNameEvidence
+	report                     SemanticProfileReport
+	modules                    []SemanticModuleReport
 }
 
 type declarationCheckedPackage struct {
@@ -63,7 +63,8 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 	requiredFiles := stringSet(plan.RequiredFiles)
 	requiredUnits := requiredSemanticUnitIDs(snapshot, requiredFiles)
 	merged := map[string]semanticUnitEvidence{}
-	externalMerged := map[string]semanticUnitEvidence{}
+	dependencyTypeMerged := map[string]semanticUnitEvidence{}
+	methodSetSignatures := map[string]SemanticMethodSetSignatureReport{}
 	resolvedImportNames := map[string]map[string]string{}
 	coveredFiles := map[string]bool{}
 	moduleGraph := map[string]SemanticModuleReport{}
@@ -72,6 +73,8 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 	moduleSelections := exactSemanticModuleSelections(root)
 	for profileIndex, profile := range plan.Profiles {
 		loaded := loadSemanticProfile(root, modulePath, profile, locations, requiredFiles, moduleSelections, verifiedModules)
+		collectSemanticMethodSetSignatures(loaded.declarations, methodSetSignatures)
+		collectSemanticMethodSetSignatures(loaded.dependencyTypeDeclarations, methodSetSignatures)
 		mergeSemanticImportNames(resolvedImportNames, loaded.importNames)
 		profileReports = append(profileReports, loaded.report)
 		for _, file := range loaded.report.CoveredFiles {
@@ -94,9 +97,9 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 			evidence.variants[canonical] = variant
 			merged[unitID] = evidence
 		}
-		for objectID, report := range loaded.externalDeclarations {
+		for objectID, report := range loaded.dependencyTypeDeclarations {
 			canonical := canonicalSemanticDeclaration(report)
-			evidence := externalMerged[objectID]
+			evidence := dependencyTypeMerged[objectID]
 			if evidence.variants == nil {
 				evidence.variants = map[string]semanticVariantEvidence{}
 			}
@@ -106,7 +109,7 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 			}
 			variant.profiles[profileIndex] = true
 			evidence.variants[canonical] = variant
-			externalMerged[objectID] = evidence
+			dependencyTypeMerged[objectID] = evidence
 		}
 	}
 	if missing := setDifference(requiredFiles, coveredFiles); len(missing) > 0 {
@@ -152,7 +155,8 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 		return canonicalSemanticModule(modules[left]) < canonicalSemanticModule(modules[right])
 	})
 	toolchain := exactSemanticToolchain()
-	externalDeclarations := mergedExternalSemanticDeclarations(externalMerged)
+	dependencyTypeDeclarations := mergedDependencyTypeDeclarations(dependencyTypeMerged)
+	methodSetSignatureReports := sortedSemanticMethodSetSignatures(methodSetSignatures)
 	snapshot.Semantic = SemanticEvidenceReport{
 		Toolchain: toolchain.goVersion, ToolchainExecutable: toolchain.executable, ToolchainHash: toolchain.executableHash,
 		GOROOT: toolchain.goRoot, GOROOTHash: toolchain.goRootSeal.SHA256,
@@ -162,8 +166,55 @@ func applyGoSemanticEvidence(root string, modulePath string, snapshot *Snapshot,
 		Compiler: toolchain.compiler, ReleaseTags: append([]string{}, toolchain.releaseTags...), ModulePath: modulePath,
 		RequiredFiles: plan.RequiredFiles, CoveredFiles: sortedBoolKeys(coveredFiles), ExcludedFiles: plan.ExcludedFiles,
 		Profiles: profileReports, UnsupportedProfiles: plan.UnsupportedProfiles, ModuleGraph: modules,
-		ExternalDeclarations: externalDeclarations,
+		MethodSetSignatures:        methodSetSignatureReports,
+		DependencyTypeDeclarations: dependencyTypeDeclarations,
 	}
+}
+
+func collectSemanticMethodSetSignatures(declarations map[string]SemanticDeclarationReport, collected map[string]SemanticMethodSetSignatureReport) {
+	for _, declaration := range declarations {
+		if declaration.Type == nil {
+			continue
+		}
+		for _, selection := range append(append([]SemanticMethodSelectionReport{}, declaration.Type.ValueMethodSet...), declaration.Type.PointerMethodSet...) {
+			if selection.Signature == nil {
+				fatalf("Go method selection %s has no exact selected signature", selection.MethodID)
+			}
+			expectedID := semanticMethodSetSignatureID(selection.MethodID, selection.Signature)
+			if selection.SignatureID != expectedID {
+				fatalf("Go method selection %s has inconsistent selected signature identity", selection.MethodID)
+			}
+			report := SemanticMethodSetSignatureReport{ID: selection.SignatureID, MethodID: selection.MethodID, Signature: selection.Signature}
+			if previous, exists := collected[report.ID]; exists {
+				if canonicalMethodSetSignature(previous) != canonicalMethodSetSignature(report) {
+					fatalf("Go method-set signature identity %s has conflicting exact signatures", report.ID)
+				}
+				continue
+			}
+			collected[report.ID] = report
+		}
+	}
+}
+
+func sortedSemanticMethodSetSignatures(collected map[string]SemanticMethodSetSignatureReport) []SemanticMethodSetSignatureReport {
+	ids := make([]string, 0, len(collected))
+	for id := range collected {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	reports := make([]SemanticMethodSetSignatureReport, 0, len(ids))
+	for _, id := range ids {
+		reports = append(reports, collected[id])
+	}
+	return reports
+}
+
+func canonicalMethodSetSignature(report SemanticMethodSetSignatureReport) string {
+	encoded, err := json.Marshal(report)
+	if err != nil {
+		fatalf("encode selected Go method signature %s: %v", report.ID, err)
+	}
+	return string(encoded)
 }
 
 func loadSemanticProfile(root string, modulePath string, profile semanticBuildProfile, locations map[string]string, requiredFiles map[string]bool, moduleSelections map[string]exactSemanticModuleSelection, verifiedModules map[string]semanticModuleContentSeal) semanticProfileLoad {
@@ -184,12 +235,12 @@ func loadSemanticProfile(root string, modulePath string, profile semanticBuildPr
 	validateSemanticProfileFileSelection(root, profile, graph, requiredFiles)
 	checker := newDeclarationPackageChecker(root, modulePath, profile, graph)
 	checked := checker.checkRequiredPackages(requiredFiles)
-	declarations, covered := semanticDeclarations(root, modulePath, checked, locations, requiredFiles)
-	externalDeclarations := semanticExternalDeclarations(root, modulePath, checker, checked, declarations, requiredFiles)
+	declarations, covered, referencedTypes := semanticDeclarations(root, modulePath, checked, locations, requiredFiles)
+	dependencyTypeDeclarations := semanticDependencyTypeDeclarations(referencedTypes, activeSemanticTypeObjectIDs(declarations))
 	return semanticProfileLoad{
-		declarations:         declarations,
-		externalDeclarations: externalDeclarations,
-		importNames:          semanticProfileImportNames(root, graph),
+		declarations:               declarations,
+		dependencyTypeDeclarations: dependencyTypeDeclarations,
+		importNames:                semanticProfileImportNames(root, graph),
 		report: SemanticProfileReport{
 			GOOS: profile.GOOS, GOARCH: profile.GOARCH, CgoEnabled: profile.CgoEnabled,
 			Architecture:      semanticArchitectureSetting(profile),

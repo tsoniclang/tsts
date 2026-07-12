@@ -71,14 +71,14 @@ test("renderUnitGroup preserves generic and pointer receiver method skeletons", 
   const orderedMap = genericOrderedMapType({ goPath, objectId, packagePath });
   const get = genericOrderedMapMethod({ goPath, methodId, objectId, packagePath });
   const text = renderUnitGroup(
-    baseConfig,
+    { ...baseConfig, goModulePath: "m" },
     snapshotWith([fileRecord({ path: goPath, importPath: packagePath, units: [orderedMap, get] })]),
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [orderedMap, get],
   );
   assert.match(text, /import type \{ bool \} from "\.\.\/\.\.\/go\/scalars\.js";/);
   assert.match(text, /import type \{ GoComparable, GoPtr \}/);
-  assert.match(text, /export interface OrderedMap<K extends GoComparable = unknown, V = unknown>/);
+  assert.match(text, /export interface OrderedMap<K extends GoComparable, V>/);
   assert.match(text, /export function OrderedMap_Get<K extends GoComparable, V>\(receiver: GoPtr<OrderedMap<K, V>>, key: K\): \[V, bool\]/);
 });
 
@@ -111,7 +111,10 @@ function genericOrderedMapType({ goPath, objectId, packagePath }) {
         object,
         typeParameters: parameters,
         rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+        methodSurface: "declaration-units",
         methods: [],
+        valueMethodSet: [],
+        pointerMethodSet: [],
       },
       profiles: [0],
     }],

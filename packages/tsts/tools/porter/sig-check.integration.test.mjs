@@ -15,7 +15,8 @@ const parser = await loadParser();
 const EMPTY_SEMANTIC_SNAPSHOT = {
   files: [],
   semantic: {
-    externalDeclarations: [],
+    dependencyTypeDeclarations: [],
+    methodSetSignatures: [],
     profiles: [testSemanticProfile()],
   },
 };

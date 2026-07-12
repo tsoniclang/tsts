@@ -60,8 +60,8 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 - `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and opaque body drift. `--to` defaults to the pinned source root. Evidence directories are immutable and are never overwritten; a completion marker is published last.
 - `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir>` independently validates the exact evidence-file inventory, every byte length and SHA-256 digest, both complete extractor snapshots, report/snapshot identities, clean deterministic provenance, and the exact Markdown rendering.
 - `npm run porter:scan` extracts a full TS-Go snapshot into `.temp/porter/tsgo-snapshot.json`.
-- `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute the signature, facade, unmatched-TypeScript, or JSON-tag declaration audits, so both reports mark those audit sections `not-run`; they never render absent evidence as zero findings.
-- `npm run porter:verify` runs strict-port mode and fails on missing/stub/stale/orphan/duplicate units, untracked TypeScript, generated-artifact drift, source-pin drift, or an invalid override. Source read/parse failures stop extraction before a snapshot exists. Its JSON and Markdown reports retain every concrete authored-facade constructor/private-storage/method-binding row and every exported/private/re-export TypeScript inventory row, not only aggregate counts.
+- `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute declaration subaudits, so every signature, facade, external-package, storage-policy, relation, ownership, unmatched-TypeScript, and JSON-tag subaudit is recorded separately as `not-run`; absent evidence is never rendered as zero findings.
+- `npm run porter:verify` runs strict-port mode and fails on missing/stub/stale/orphan/duplicate units, untracked TypeScript, generated-artifact drift, source-pin drift, an invalid override, any incomplete declaration subaudit, or a filtered signature selection. Source read/parse failures stop extraction before a snapshot exists. Its JSON and Markdown reports retain every concrete subaudit inventory row, not only aggregate counts.
 - `npm run porter:scaffold -- --limit 25` previews missing-unit scaffolds. Add `-- --write` to create files.
 - `npm run porter:scaffold-all` creates or appends scaffolds for every active missing Go unit, refreshes porter status, and fails if any active unit remains missing.
 - `npm run porter:facades -- --out packages/tsts/src` regenerates the checked-in Go compatibility/facade layer from the full TS-Go snapshot. Existing differing files are never overwritten unless `-- --force` is also supplied.
@@ -258,15 +258,17 @@ Generated artifacts are not hand-editable. `porter:verify` fails on:
 
 Facade generation has declaration inputs only:
 
+- `snapshot.semantic.dependencyTypeDeclarations` is the exact, profile-aware transitive closure of non-active named types reachable from active local Go declarations. It includes external-package types and excluded module-local dependency types. Every entry is a type declaration; package functions, constants, variables, builtins, role markers, and unused package exports are invalid in this collection.
+- Generated facade modules export only reachable external-package type declarations. Excluded module-local dependency types must use an exact reviewed `go-type-storage` relation and are never regenerated as external facades. Generated modules never reproduce a dependency package's callable/value API, and the extractor never seeds this closure from every exported package object.
 - External type identity, alias state, type parameters and constraints, declaration RHS/underlying type, intrinsic nilability, interface composition, and method signatures come only from the snapshot's `go/types` evidence.
 - External facade policy may choose only the exact Go object ID's TypeScript module/name, authored-versus-generated storage, and reviewed runtime adaptation. Every adaptation requires a specific durable reason. Policy cannot provide implementation bodies or restate Go names, arity, members, embeddings, or types.
 - Every runtime adaptation snapshots all canonical external Go declaration variants and their profile sets with `goDeclarationHash`. A pin that changes fields, underlying type, methods, constraints, profile coverage, or any other declaration evidence invalidates the adaptation even when the public TypeScript storage still happens to type-check.
 - A Go method stored as a top-level authored TypeScript function requires one exact `methodBindings` row: canonical Go method ID, TypeScript export name, and the receiver parameter's local TypeScript name. The function signature is still rendered only from Go evidence, including the promoted receiver type; policy cannot restate parameters, generics, or results.
 - Type identities in active Go signatures produce typed facades such as `io.Writer`, `io.Reader`, `time.Duration`, and `context.Context`; policy presence is not a usage root.
-- External callable/value facades exist only through explicit reviewed configuration or authored modules. Porter never discovers them by scanning implementation bodies.
+- An authored external-package surface is a separate explicit, partial declaration contract. Callable/value entries can be compared only when supplied by that catalog; type entries additionally require an explicit TypeScript storage contract and fail closed without one. The catalog never becomes a reachability root and never enters generated facade artifacts. Porter never discovers package surfaces by scanning implementation bodies or by enumerating every package export.
 - Authored facade modules are removed from the generation set before rendering. They are never rendered and discarded afterward.
-- Every configured authored facade is checked, including facades not reached by the current active source declarations. An authored facade export may be reached through an exact barrel re-export, but it must resolve to one indexed declaration origin. Ambiguous origins, cross-kind merges, storage shared by two facade policies, generated storage masquerading as authored storage, and storage also owned by `@tsgo-unit` fail closed.
-- Authored facade checking is bidirectional: every public Go member omitted by TypeScript and every public TypeScript member without a Go identity is reported. Same-name members retain full structural signature comparison. Constructors and private/protected storage are inventoried separately and do not become Go members.
+- Every configured authored type facade must identify a type in the reachable external declaration closure. An authored facade export may be reached through an exact barrel re-export, but it must resolve to one indexed declaration origin. Ambiguous origins, cross-kind merges, storage shared by two facade policies, generated storage masquerading as authored storage, and storage also owned by `@tsgo-unit` fail closed.
+- Authored facade checking is selected-surface exact: every public TypeScript member must match the same-name Go member structurally or carry one exact reviewed runtime-adaptation row. Public Go members omitted from the authored TypeScript surface are inventoried as unselected, not treated as a requirement to port the complete package API. Constructors and private/protected storage are inventoried separately and do not become Go members.
 
 In every file governed by `requires-tsgo-unit`, including a file with zero
 metadata records, Porter also accounts for complete
@@ -281,11 +283,13 @@ Export declarations are not duplicate declarations: named, namespace, and star
 re-export routes are inventoried separately and validated by the exact module
 index for missing or ambiguous targets.
 
-Parser-backed Porter tests require a fresh built TSTS parser. Parser loading or
-freshness failures fail the suite; they are never converted into skips. The
-aggregate Porter test entry recursively discovers every `*.test.mjs` below its
-`test/` and `ts-extractor/` suites so a newly added nested test cannot silently
-fall outside `npm run porter:test`.
+Parser-backed Porter tests require a fresh built TSTS parser. Missing, empty, or
+unreadable configured freshness source trees, stale output, and parser loading
+failures fail the suite; they are never converted into skips. The authoritative
+gate recursively discovers every `*.test.mjs` below its `test/` and
+`ts-extractor/` suites and separately runs `go test ./...` for the Go extractor,
+so a newly added nested Node or Go test cannot silently fall outside
+`npm run porter:test`.
 
 Examples:
 

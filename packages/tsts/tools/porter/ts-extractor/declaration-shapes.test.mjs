@@ -87,7 +87,7 @@ export const enum Mode { First = 1, Second = First + 2, Third = Second + 1 }
   ]);
 });
 
-test("variable descriptors distinguish every declaration kind and reject unmodeled binding patterns", async () => {
+test("variable descriptors distinguish every declaration kind and retain structural binding patterns", async () => {
   const api = await loadParser();
   const moduleId = "fixture/values.ts";
   const text = `
@@ -113,8 +113,14 @@ const { value } = source;
   assert.equal(descriptors[1].decls[0].definite, true);
   assert.equal(descriptors[2].decls[0].initializerStatus, "known");
   assert.equal(Object.hasOwn(descriptors[0].decls[0], "initializerStatus"), false);
-  assert.throws(
-    () => declarationDescriptor(api, sourceFile.Statements.Nodes[5], context),
-    /requires a structural binding-pattern descriptor.*KindObjectBindingPattern/,
-  );
+  assert.deepEqual(declarationDescriptor(api, sourceFile.Statements.Nodes[5], context).decls[0].binding, {
+    kind: "object",
+    elements: [{
+      kind: "binding-element",
+      rest: false,
+      property: null,
+      name: { kind: "identifier", name: "value" },
+      initializer: "missing",
+    }],
+  });
 });

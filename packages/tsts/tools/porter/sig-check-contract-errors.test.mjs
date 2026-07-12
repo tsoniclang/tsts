@@ -12,8 +12,8 @@ test("one invalid unit becomes an unwaivable contract error instead of aborting 
     localOverride: undefined,
     expectedIndex: {},
     canonicalIdentity: (identity) => identity,
-    conventions: { equivalences: [] },
-    allowedGlobals: [],
+    conventions: { goConstraintId: "m.ts::GoConstraint" },
+    ambientReferences: { accept: () => false },
     overrideIssues: [],
   });
   assert.equal(result.overridden, false);

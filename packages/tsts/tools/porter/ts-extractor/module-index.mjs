@@ -117,6 +117,7 @@ export function indexTypeScriptModuleSources(api, inputSources) {
     sourceFiles.set(moduleId, module.sourceFile);
   }
   validateModuleReferences(modules, externalModules);
+  resolveTypeExportAlternatives(modules, externalModules);
   validateStarExportAmbiguities(modules, externalModules, "type");
   validateStarExportAmbiguities(modules, externalModules, "value");
   const resolvedNamespaces = buildNamespaceExportIndexes(modules);
@@ -334,6 +335,30 @@ function validateModuleReferences(modules, externalModules) {
   }
 }
 
+function resolveTypeExportAlternatives(modules, externalModules) {
+  for (const module of modules.values()) {
+    for (const [name, candidates] of module.structure.typeExportAlternatives ?? []) {
+      const available = [];
+      for (const target of candidates) {
+        const disposition = exportTargetDisposition(target, "type", modules, externalModules, [], false);
+        if (disposition === "cycle") throw new Error(`cyclic TypeScript named export '${module.moduleId}::${name}'`);
+        if (disposition !== "missing") available.push(target);
+      }
+      if (available.length > 1) {
+        throw new Error(`conflicting TypeScript export '${module.moduleId}::${name}' in the type namespace`);
+      }
+      const selected = available[0];
+      if (selected !== undefined) {
+        module.structure.typeExports.set(name, selected);
+        if (selected !== `${module.moduleId}::${name}`) module.structure.namedReexports.set(name, selected);
+      }
+      module.structure.explicitExportRoutes = module.structure.explicitExportRoutes.filter((route) =>
+        route.namespace !== "type" || route.name !== name || route.target === selected);
+    }
+    module.structure.typeExportAlternatives?.clear();
+  }
+}
+
 function validateStarExportAmbiguities(modules, externalModules, namespace) {
   const namesByModule = new Map();
   for (const module of modules.values()) {
@@ -392,17 +417,27 @@ function exportTargetResolution(id, namespace, modules, externalModules, trail, 
   const localNames = namespace === "type" ? module.structure.localTypeNames : module.structure.localValueNames;
   const exports = namespace === "type" ? module.structure.typeExports : module.structure.valueExports;
   const explicit = exports.get(name);
-  if (explicit !== undefined) {
-    if (explicit === id) {
-      if (localNames.has(name)) return { origins: new Set([id]), cycle: false };
-      const namespaceExport = namespace === "value" ? module.structure.namespaceReexports.get(name) : undefined;
-      return namespaceExport !== undefined && !namespaceExport.typeOnly
-        ? { origins: new Set([`namespace:${namespaceTargetKey(namespaceExport)}`]), cycle: false }
-        : emptyExportResolution();
+  const alternatives = namespace === "type" ? module.structure.typeExportAlternatives?.get(name) ?? [] : [];
+  const targets = [...new Set([...(explicit === undefined ? [] : [explicit]), ...alternatives])];
+  if (targets.length > 0) {
+    const origins = new Set();
+    let cycle = false;
+    for (const target of targets) {
+      if (target === id) {
+        if (localNames.has(name)) origins.add(id);
+        else if (namespace === "value") {
+          const namespaceExport = module.structure.namespaceReexports.get(name);
+          if (namespaceExport !== undefined && !namespaceExport.typeOnly) origins.add(`namespace:${namespaceTargetKey(namespaceExport)}`);
+        }
+        continue;
+      }
+      const targetSeparator = target.lastIndexOf("::");
+      const targetModule = targetSeparator < 0 ? "" : target.slice(0, targetSeparator);
+      const result = exportTargetResolution(target, namespace, modules, externalModules, [...trail, id], targetModule === moduleId);
+      for (const origin of result.origins) origins.add(origin);
+      cycle ||= result.cycle;
     }
-    const targetSeparator = explicit.lastIndexOf("::");
-    const targetModule = targetSeparator < 0 ? "" : explicit.slice(0, targetSeparator);
-    return exportTargetResolution(explicit, namespace, modules, externalModules, [...trail, id], targetModule === moduleId);
+    return { origins, cycle };
   }
   if (namespace === "value") {
     const namespaceExport = module.structure.namespaceReexports.get(name);

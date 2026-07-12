@@ -5,6 +5,8 @@ import { buildExpectedIndex, goUnitDescriptor, semanticTypeDescriptor } from "./
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures, generatedTypeDeclarations } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
+import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
+import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
@@ -83,15 +85,14 @@ test("portability: a non-tsts profile drives canonical Go-to-TS mapping", () => 
 
 test("expected types use only explicit full-identity host-native mappings", () => {
   const config = projectConfig({ keyword: { string: "string" }, core: {} });
-  config.signatureCheck.namedTypeMappings = {
-    "example.com/native::type::Event": "src/native/events.ts::HostEvent",
-  };
   const event = functionUnit("event", [namedType("example.com/native", "Event")]);
   const other = functionUnit("other", [namedType("example.com/native", "Other")]);
   const snapshot = semanticSnapshot([{ importPath: packagePath, units: [event, other] }], [
     externalType("example.com/native", "Event", structType([])),
     externalType("example.com/native", "Other", structType([])),
   ]);
+  const objectId = "example.com/native::type::Event";
+  config.semanticRelations = [storageRelation(snapshot, objectId, "src/native/events.ts::HostEvent")];
   const index = buildExpectedIndex(config, snapshot, new Map(), loadProfile(config));
   const context = { index, profile: 0, typeParameters: new Map() };
   assert.deepEqual(semanticTypeDescriptor(namedType("example.com/native", "Event"), context),
@@ -315,13 +316,24 @@ function projectConfig(primitives) {
         map: "Dict", chan: "Ch", func: "Fn", interface: "Iface",
       },
       primitives: { ...primitives, compat: {} },
-      stdlibTypes: {},
       facadeTemplate: "src/rt/{importPath}.ts",
     },
   };
 }
 
-function semanticSnapshot(files = [], externalDeclarations = []) {
+function storageRelation(snapshot, objectId, storageIdentity) {
+  const semantic = buildSemanticTypeCatalog(snapshot).get(objectId);
+  return {
+    kind: "go-type-storage",
+    objectId,
+    storageIdentity,
+    goDeclarationHash: semanticDeclarationVariantsHash(semantic),
+    tsDeclarationHash: "0".repeat(64),
+    reason: "The test pins one exact host-native TypeScript storage declaration for this Go type.",
+  };
+}
+
+function semanticSnapshot(files = [], dependencyTypeDeclarations = []) {
   const normalizedFiles = files.map((file, fileIndex) => {
     const goPath = file.path ?? `fixture/file-${fileIndex}.go`;
     return {
@@ -333,7 +345,8 @@ function semanticSnapshot(files = [], externalDeclarations = []) {
   });
   return {
     semantic: {
-      externalDeclarations,
+      dependencyTypeDeclarations,
+      methodSetSignatures: [],
       profiles: [testSemanticProfile({
         coveredFiles: normalizedFiles.map((file) => file.path),
         packageIds: normalizedFiles.map((file) => file.importPath),
@@ -381,7 +394,22 @@ function typeUnit(file, name, rhs, members = [], alias = false) {
     kind: "type",
     name,
     members,
-    semantic: [{ kind: "type", packagePath, profiles: [0], object, type: { alias, object, typeParameters: [], rhs } }],
+    semantic: [{
+      kind: "type",
+      packagePath,
+      profiles: [0],
+      object,
+      type: {
+        alias,
+        object,
+        typeParameters: [],
+        rhs,
+        methodSurface: "declaration-units",
+        methods: [],
+        valueMethodSet: [],
+        pointerMethodSet: [],
+      },
+    }],
   };
 }
 
@@ -398,7 +426,16 @@ function externalType(ownerPackage, name, rhs, alias = false) {
     kind: "type",
     packagePath: ownerPackage,
     object,
-    type: { alias, object, typeParameters: [], rhs, methods: [] },
+    type: {
+      alias,
+      object,
+      typeParameters: [],
+      rhs,
+      methodSurface: "complete",
+      methods: [],
+      valueMethodSet: [],
+      pointerMethodSet: [],
+    },
     profiles: [0],
   };
 }

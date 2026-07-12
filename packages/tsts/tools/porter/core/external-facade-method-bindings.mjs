@@ -11,7 +11,7 @@ export function normalizeExternalMethodBindings(value, semantic, label) {
   for (const [index, binding] of value.entries()) {
     const bindingLabel = `${label}.methodBindings[${index}]`;
     if (!isPlainObject(binding)) throw new Error(`${bindingLabel} must be an object`);
-    const unknown = Object.keys(binding).filter((key) => !new Set(["methodId", "receiverName", "tsName"]).has(key));
+    const unknown = Object.keys(binding).filter((key) => !new Set(["methodId", "reason", "receiverName", "tsName"]).has(key));
     if (unknown.length > 0) throw new Error(`${bindingLabel} contains unknown key(s): ${unknown.sort().join(", ")}`);
     if (typeof binding.methodId !== "string" || binding.methodId.length === 0) throw new Error(`${bindingLabel}.methodId must be non-empty`);
     if (typeof binding.tsName !== "string" || safeIdentifier(binding.tsName) !== binding.tsName || binding.tsName === "") {
@@ -19,6 +19,9 @@ export function normalizeExternalMethodBindings(value, semantic, label) {
     }
     if (typeof binding.receiverName !== "string" || safeIdentifier(binding.receiverName) !== binding.receiverName || binding.receiverName === "") {
       throw new Error(`${bindingLabel}.receiverName must be one exact TypeScript identifier`);
+    }
+    if (typeof binding.reason !== "string" || binding.reason.trim().length < 20) {
+      throw new Error(`${bindingLabel}.reason must specifically justify moving the Go method to a TypeScript function`);
     }
     if (methodIds.has(binding.methodId)) throw new Error(`${label}.methodBindings duplicates Go method '${binding.methodId}'`);
     if (tsNames.has(binding.tsName)) throw new Error(`${label}.methodBindings duplicates TypeScript export '${binding.tsName}'`);
@@ -32,7 +35,7 @@ export function normalizeExternalMethodBindings(value, semantic, label) {
     }
     methodIds.add(binding.methodId);
     tsNames.add(binding.tsName);
-    bindings.push({ methodId: binding.methodId, receiverName: binding.receiverName, tsName: binding.tsName });
+    bindings.push({ methodId: binding.methodId, reason: binding.reason.trim(), receiverName: binding.receiverName, tsName: binding.tsName });
   }
   return bindings.sort((left, right) => compareText(left.methodId, right.methodId));
 }

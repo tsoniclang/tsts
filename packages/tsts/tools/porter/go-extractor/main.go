@@ -38,7 +38,7 @@ func main() {
 	}
 
 	snapshot := Snapshot{
-		SchemaVersion: 8,
+		SchemaVersion: 9,
 		SourceRoot:    filepath.ToSlash(absRoot),
 		ModulePath:    *modulePath,
 		GitRevision:   *revision,
@@ -101,7 +101,6 @@ func main() {
 	snapshot.Summary.ImportPathCount = len(importPaths)
 
 	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(snapshot); err != nil {
 		fatalf("encode snapshot: %v", err)
 	}

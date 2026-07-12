@@ -102,8 +102,8 @@ export function semanticNamedNilabilityDisposition(type, context) {
     return { kind: "rawInterface" };
   }
 
-  const external = context.index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
-  if (external !== undefined) return externalDisposition(type, reference, external);
+  const dependency = context.index.dependencyTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
+  if (dependency !== undefined) return dependencyDisposition(type, reference, dependency);
   return { kind: "unresolved" };
 }
 
@@ -113,13 +113,13 @@ function storageDisposition(type, reference, storageIdentity, context) {
   if (builtinStorage !== undefined && builtinStorage !== storageIdentity) {
     throw new Error(`builtin Go type '${reference.objectId}' storage '${storageIdentity}' does not equal profile primitive storage '${builtinStorage}'`);
   }
-  const external = index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId)
+  const dependency = index.dependencyTypeContractsByProfile?.get(context.profile)?.get(reference.objectId)
     ?? index.externalTypeContracts?.get(reference.objectId);
-  if (external !== undefined) {
-    if (external.storageIdentity !== storageIdentity) {
-      throw new Error(`external Go type '${reference.objectId}' storage '${storageIdentity}' does not equal facade storage '${external.storageIdentity}'`);
+  if (dependency !== undefined) {
+    if (dependency.storageIdentity !== storageIdentity) {
+      throw new Error(`dependency Go type '${reference.objectId}' storage '${storageIdentity}' does not equal reviewed storage '${dependency.storageIdentity}'`);
     }
-    return externalDisposition(type, reference, external);
+    return dependencyDisposition(type, reference, dependency);
   }
   const carrier = index.storageCarrierByIdentity?.get(storageIdentity);
   if (carrier !== undefined) {
@@ -152,12 +152,12 @@ function builtinStorageIdentity(reference, index) {
   return undefined;
 }
 
-function externalDisposition(type, reference, external) {
-  if (reference.typeArgs.length !== external.arity) {
-    throw new Error(`Go type '${reference.objectId}' expected ${external.arity} canonical type argument(s), got ${reference.typeArgs.length}`);
+function dependencyDisposition(type, reference, dependency) {
+  if (reference.typeArgs.length !== dependency.arity) {
+    throw new Error(`Go type '${reference.objectId}' expected ${dependency.arity} canonical type argument(s), got ${reference.typeArgs.length}`);
   }
-  requireNilabilityMatch(type, external.intrinsicNilable, reference.objectId, "external go/types declaration");
-  if (external.rawInterface) return { kind: "rawInterface" };
+  requireNilabilityMatch(type, dependency.intrinsicNilable, reference.objectId, "dependency go/types declaration");
+  if (dependency.rawInterface) return { kind: "rawInterface" };
   return { kind: "plain" };
 }
 
@@ -166,8 +166,8 @@ function usesRawInterfaceStorage(type, context, resolving) {
   if (type?.kind !== "named" && type?.kind !== "alias") return false;
   const reference = requireReference(type.reference);
   if (context.index.rawInterfaceObjects?.has(reference.objectId) === true) return true;
-  const external = context.index.externalTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
-  if (external?.rawInterface === true) return true;
+  const dependency = context.index.dependencyTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);
+  if (dependency?.rawInterface === true) return true;
   const storageIdentity = context.index.namedTypeStorage?.get(reference.objectId);
   if (storageIdentity !== undefined && context.index.storageCarrierByIdentity?.get(storageIdentity) === "interface") return true;
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(reference.objectId);

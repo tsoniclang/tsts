@@ -12,7 +12,7 @@ const parser = await loadParser();
 test("descriptor extraction resolves local values without conflating type and value exports", () => {
   const index = indexTypeScriptModuleSources(parser, new Map([
     ["pkg/type.ts", "export interface Shared {}"],
-    ["pkg/value.ts", "export class Shared {}"],
+    ["pkg/value.ts", "export const Shared = class {};"],
     ["pkg/namespace-source.ts", "export const present = 1;"],
     ["pkg/namespace-barrel.ts", 'export * as api from "./namespace-source.js";'],
     ["pkg/barrel.ts", 'export type { Shared } from "./type.js"; export { Shared } from "./value.js";'],

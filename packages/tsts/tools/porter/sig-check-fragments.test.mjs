@@ -71,13 +71,12 @@ test("merged declarations compare every fragment rather than only their aggregat
     .some((mismatch) => mismatch.kind === "interface-heritage"), true);
 });
 
-test("callable member implementation roles compare exactly", () => {
+test("callable member body-presence roles are outside signature comparison", () => {
   const expected = mergedInterface();
   const actual = structuredClone(expected);
   actual.members[0].role = "implementation";
   actual.fragments[0].members[0].role = "implementation";
-  assert.equal(compareSignatures(expected, actual, null)
-    .some((mismatch) => mismatch.kind === "member-declaration-role"), true);
+  assert.deepEqual(compareSignatures(expected, actual, null), []);
 });
 
 test("merged enum fragments retain exact member placement", () => {

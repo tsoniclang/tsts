@@ -115,6 +115,29 @@ export function extractIndexedTypeExportDescriptor(api, index, moduleId, exportN
   return { exportId, declarationId, descriptor, ...(valueDeclarationId === undefined ? {} : { valueDeclarationId }) };
 }
 
+export function extractIndexedLocalTypeDescriptor(api, index, moduleId, name, valueEnvironments) {
+  return extractIndexedDirectTypeDescriptor(api, index, moduleId, name, valueEnvironments, "authored-facade");
+}
+
+export function extractIndexedReviewedTypeDescriptor(api, index, moduleId, name, valueEnvironments) {
+  return extractIndexedDirectTypeDescriptor(api, index, moduleId, name, valueEnvironments, "reviewed-relation");
+}
+
+function extractIndexedDirectTypeDescriptor(api, index, moduleId, name, valueEnvironments, ownership) {
+  if (typeof moduleId !== "string" || moduleId === "" || typeof name !== "string" || name === "") {
+    throw new Error("indexed local TypeScript type identity requires a module and declaration name");
+  }
+  const declarationId = `${moduleId}::${name}`;
+  const module = index.modules.get(moduleId);
+  if (module === undefined || !index.definedTypes.has(declarationId)) {
+    throw new Error(`TypeScript module '${moduleId}' has no exact local type declaration '${name}'`);
+  }
+  return {
+    declarationId,
+    descriptor: extractLocalNamedTypeDescriptor(api, module, name, valueEnvironments?.get(moduleId) ?? new Map(), ownership),
+  };
+}
+
 export function extractIndexedFunctionExportDescriptor(api, index, moduleId, exportName, valueEnvironments) {
   if (typeof moduleId !== "string" || moduleId.length === 0 || typeof exportName !== "string" || exportName.length === 0) {
     throw new Error("indexed TypeScript function export identity requires a module and export name");
@@ -143,12 +166,31 @@ export function extractIndexedFunctionExportDescriptor(api, index, moduleId, exp
   return {
     exportId,
     declarationId,
-    descriptor: {
-      ...descriptor,
-      name: exportName,
-      modifiers: ["export", ...(descriptor.modifiers ?? []).filter((modifier) => modifier !== "export")],
-    },
+    descriptor,
   };
+}
+
+export function extractIndexedValueExportDescriptor(api, index, moduleId, exportName, valueEnvironments) {
+  if (typeof moduleId !== "string" || moduleId === "" || typeof exportName !== "string" || exportName === "") {
+    throw new Error("indexed TypeScript value export identity requires a module and export name");
+  }
+  const exportId = `${moduleId}::${exportName}`;
+  const declarationId = createIndexedValueResolver(index)(exportId);
+  const separator = declarationId.lastIndexOf("::");
+  if (separator < 0) throw new Error(`TypeScript value export '${exportId}' has no indexed declaration identity`);
+  const declarationModuleId = declarationId.slice(0, separator);
+  const declarationNameText = declarationId.slice(separator + 2);
+  const declarationModule = index.modules.get(declarationModuleId);
+  if (declarationModule === undefined || !index.definedValues.has(declarationId)) {
+    throw new Error(`TypeScript value export '${exportId}' resolves outside indexed declarations to '${declarationId}'`);
+  }
+  const descriptor = extractLocalValueDescriptor(
+    api,
+    declarationModule,
+    declarationNameText,
+    valueEnvironments?.get(declarationModuleId) ?? new Map(),
+  );
+  return { declarationId, descriptor, exportId };
 }
 
 function extractLocalFunctionDescriptor(api, module, name, initialValueEnvironment) {
@@ -176,7 +218,21 @@ function createIndexedValueResolver(index) {
   });
 }
 
-function extractLocalNamedTypeDescriptor(api, module, name, initialValueEnvironment) {
+function extractLocalValueDescriptor(api, module, name, initialValueEnvironment) {
+  const matches = [];
+  const base = declarationDescriptorContext(api, module, initialValueEnvironment);
+  for (const statement of module.sourceFile.Statements?.Nodes ?? []) {
+    if (statement.Kind !== api.Kinds.KindVariableStatement) continue;
+    const descriptor = declarationDescriptor(api, statement, base);
+    for (const declaration of descriptor.decls ?? []) if (declaration.name === name) matches.push(declaration);
+  }
+  if (matches.length !== 1) {
+    throw new Error(`TypeScript value '${module.moduleId}::${name}' has ${matches.length} exact variable declaration(s), expected one`);
+  }
+  return { kind: "value", decls: matches };
+}
+
+function extractLocalNamedTypeDescriptor(api, module, name, initialValueEnvironment, ownership = "authored-facade") {
   const declarationIdentity = `${module.moduleId}::${name}`;
   const declarationKinds = new Set([
     api.Kinds.KindInterfaceDeclaration,
@@ -190,8 +246,11 @@ function extractLocalNamedTypeDescriptor(api, module, name, initialValueEnvironm
     throw new Error(`TypeScript declaration '${declarationIdentity}' has no exact local type declaration`);
   }
   const metadataStatements = new Set(module.metadata.map((record) => record.statement));
-  if (declarations.some((statement) => metadataStatements.has(statement))) {
+  if (ownership === "authored-facade" && declarations.some((statement) => metadataStatements.has(statement))) {
     throw new Error(`TypeScript declaration '${declarationIdentity}' cannot be both authored facade storage and @tsgo-unit storage`);
+  }
+  if (ownership !== "authored-facade" && ownership !== "reviewed-relation") {
+    throw new Error(`TypeScript declaration '${declarationIdentity}' has unsupported extraction ownership '${ownership}'`);
   }
   const kinds = new Set(declarations.map((statement) => statement.Kind));
   if (kinds.size !== 1) {

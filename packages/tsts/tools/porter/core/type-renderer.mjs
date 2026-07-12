@@ -22,6 +22,7 @@ import { semanticTypeDeclarationContract } from "../ts-extractor/semantic-named-
 import { addProfileSemanticStorageEvidence, buildTypeRepresentationEvidence } from "../ts-extractor/semantic-pointer-lowering.mjs";
 import { semanticContractContainsApproximation, semanticTypeParameterKey } from "../ts-extractor/semantic-type-contract.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
+import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 
 export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
   for (const unit of units) {
@@ -45,6 +46,7 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
   const evidence = addProfileSemanticStorageEvidence(
     buildTypeRepresentationEvidence(config, snapshot, externalFacades),
     profile,
+    buildTypeStorageIdentityMap(config, snapshot),
   );
   const semanticIndex = {
     goModule: config.goModulePath,
@@ -56,8 +58,8 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
     primCompat: profile.primitives.compat,
     declaredTypeContractsByProfile: evidence.declaredTypeContractsByProfile,
     externalTypeContracts: evidence.externalTypeContracts,
-    externalTypeContractsByProfile: evidence.externalTypeContractsByProfile,
-    externalPointerTerminalsByProfile: evidence.externalPointerTerminalsByProfile,
+    dependencyTypeContractsByProfile: evidence.dependencyTypeContractsByProfile,
+    dependencyPointerTerminalsByProfile: evidence.dependencyPointerTerminalsByProfile,
     externalFacadeArities: evidence.externalFacadeArities,
     namedTypeStorage: evidence.namedTypeStorage,
     rawInterfaceObjects: evidence.rawInterfaceObjects,
@@ -231,14 +233,22 @@ function renderInterfaceDeclaration(shape, sourceMembers, context, unit) {
 }
 
 function renderDeclarationTypeParameters(parameters, sourceParameters, context, unit) {
-  const sourceByName = sourceConstraintMap(parameters, sourceParameters, unit);
-  return renderCanonicalTypeParameters(parameters, constraintOperations(context, unit, sourceByName));
+  return renderCanonicalTypeParameters(parameters, typeParameterRenderingOperations(
+    semanticRendererOperations(context, unit),
+    parameters,
+    sourceParameters,
+    unit,
+  ));
 }
 
 function renderSignatureTypeParameters(signature, sourceParameters, context, unit) {
   const parameters = [...signature.receiverTypeParameters, ...signature.typeParameters];
-  const sourceByName = sourceConstraintMap(signature.typeParameters, sourceParameters, unit);
-  return renderCanonicalTypeParameters(parameters, constraintOperations(context, unit, sourceByName));
+  return renderCanonicalTypeParameters(parameters, typeParameterRenderingOperations(
+    semanticRendererOperations(context, unit),
+    signature.typeParameters,
+    sourceParameters,
+    unit,
+  ));
 }
 
 function sourceConstraintMap(parameters, sourceParameters, unit) {
@@ -251,19 +261,19 @@ function sourceConstraintMap(parameters, sourceParameters, unit) {
   return output;
 }
 
-function constraintOperations(context, unit, sourceByName) {
-  const operations = semanticRendererOperations(context, unit);
+export function typeParameterRenderingOperations(operations, parameters, sourceParameters, unit) {
+  const sourceByName = sourceConstraintMap(parameters, sourceParameters, unit);
   return {
     ...operations,
-    constraint: (contract, parameter) => renderConstraint(contract, sourceByName.get(semanticTypeParameterKey(parameter.reference)), operations, context),
+    constraint: (contract, parameter) => renderConstraint(contract, sourceByName.get(semanticTypeParameterKey(parameter.reference)), operations),
   };
 }
 
-function renderConstraint(contract, sourceConstraint, operations, context) {
+function renderConstraint(contract, sourceConstraint, operations) {
   const rendered = renderCanonicalType(contract, operations);
   if (!semanticContractContainsApproximation(contract)) return rendered;
   if (typeof sourceConstraint?.text !== "string" || sourceConstraint.text === "") throw new Error("canonical Go approximation constraint has no exact source text provenance");
-  return `${useCompat(context, "GoConstraint")}<${JSON.stringify(sourceConstraint.text)}> & ${rendered}`;
+  return `${operations.compat("GoConstraint")}<${JSON.stringify(sourceConstraint.text)}> & ${rendered}`;
 }
 
 function renderSemanticContract(contract, context, unit) {

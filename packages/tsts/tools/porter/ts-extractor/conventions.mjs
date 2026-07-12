@@ -1,53 +1,17 @@
 // Configurable Go->TS porting-convention engine.
 //
-// Conventions are exact, scoped Go-constraint spelling mappings. Runtime/type
-// representation differences are never global conventions: they require a
-// local snapshotted @tsgo-override on every affected declaration.
-//
-// Config shape:
-//   "signatureCheck": { "conventions": {
-//     "equivalences": [
-//       { "as": "<token>", "match": [ {"id":"full/module.ts::Type"}, {"kw":"number"} ] }
-//     ],
-//   } }
+// The only convention is the exact GoConstraint carrier identity. Arbitrary
+// descriptor equivalences are forbidden because they can hide declaration drift.
 
 // `c` is the conventions config object (profile.conventions).
 import { descriptorShapeIssue } from "./type-descriptors/schema.mjs";
 
 export function loadConventions(c = {}) {
-  requireExactKeys(c, new Set(["goConstraintId", "equivalences"]), "signatureCheck.conventions", false);
+  requireExactKeys(c, new Set(["goConstraintId"]), "signatureCheck.conventions");
   if (typeof c.goConstraintId !== "string" || !c.goConstraintId.includes("::")) {
     throw new Error("signatureCheck.conventions.goConstraintId must be one full module/name identity");
   }
-  const equivalences = (c.equivalences ?? []).map((rule, ruleIndex) => {
-    requireExactKeys(rule, new Set(["as", "scope", "match"]), `signature equivalence #${ruleIndex}`);
-    if (typeof rule?.as !== "string" || rule.as === "") throw new Error(`signature equivalence #${ruleIndex} has no token`);
-    if (!new Set(["constraint", "type"]).has(rule.scope)) throw new Error(`signature equivalence '${rule.as}' has invalid scope`);
-    if (!Array.isArray(rule.match) || rule.match.length < 2) throw new Error(`signature equivalence '${rule.as}' must contain at least two exact forms`);
-    const match = rule.match.map((predicate, predicateIndex) => validatePredicate(predicate, rule.as, predicateIndex));
-    return { as: rule.as, match, scope: rule.scope };
-  });
-  return {
-    goConstraintId: c.goConstraintId,
-    // Each equivalence is SCOPED: "constraint" rules apply only when comparing
-    // type-parameter constraints (so a Go numeric constraint can map to `number`
-    // WITHOUT making a param `x: int` equal `x: number`); "type" rules apply to
-    // ordinary positions. Scope is always explicit in the current contract.
-    equivalences,
-  };
-}
-
-function validatePredicate(predicate, token, index) {
-  requireExactKeys(predicate, new Set(["id", "kw"]), `signature equivalence '${token}' predicate #${index}`, false);
-  const keys = Object.keys(predicate);
-  if (keys.length !== 1 || !new Set(["id", "kw"]).has(keys[0])) {
-    throw new Error(`signature equivalence '${token}' predicate #${index} must contain exactly one of id or kw`);
-  }
-  const key = keys[0];
-  const value = predicate[key];
-  if (typeof value !== "string" || value === "") throw new Error(`signature equivalence '${token}' predicate #${index}.${key} must be non-empty`);
-  if (key === "id" && !value.includes("::")) throw new Error(`signature equivalence '${token}' predicate #${index}.id must be a full identity`);
-  return { [key]: value };
+  return { goConstraintId: c.goConstraintId };
 }
 
 function requireExactKeys(value, allowed, label, requireAll = true) {
@@ -63,12 +27,6 @@ function requireExactKeys(value, allowed, label, requireAll = true) {
   if (!requireAll) return;
   const missing = [...allowed].filter((key) => !Object.hasOwn(value, key));
   if (missing.length > 0) throw new Error(`${label} is missing current-contract key(s): ${missing.join(", ")}`);
-}
-
-function matchesPredicate(d, p) {
-  if (p.kw !== undefined) return d.t === "kw" && d.kw === p.kw;
-  if (p.id !== undefined) return d.t === "ref" && d.id === p.id;
-  return false;
 }
 
 function isGoConstraint(d, conv) {
@@ -99,9 +57,8 @@ function normalizeGoConstraint(d, conv) {
 
 // Recursively normalize a type descriptor under the active conventions.
 // `context` is "type" (ordinary positions) or "constraint" (type-param bounds);
-// structural shape rules apply only to "type"; equivalences apply only to their
-// own scope. Children are always normalized in "type" context (a constraint's
-// inner types are ordinary types).
+// Children are always normalized in "type" context (a constraint's inner types
+// are ordinary types).
 export function normalizeDescriptor(d, conv, context = "type") {
   if (!d || typeof d !== "object") return d;
   if (descriptorShapeIssue(d) !== undefined) return d;
@@ -202,11 +159,6 @@ export function normalizeDescriptor(d, conv, context = "type") {
     if (goConstraint) return goConstraint;
   }
 
-  // Value-equivalence rules: collapse matching forms to a shared token, but only
-  // rules whose scope matches the current context.
-  for (const rule of conv.equivalences) {
-    if (rule.scope === context && rule.match.some((p) => matchesPredicate(n, p))) return { t: "conv", token: rule.as };
-  }
   return n;
 }
 

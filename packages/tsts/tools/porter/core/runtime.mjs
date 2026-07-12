@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { assertPorterConfig } from "./config-contract.mjs";
 
 export const repoRoot = findRepoRoot(process.cwd());
 export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
@@ -11,7 +12,7 @@ export function loadConfig() {
   if (!existsSync(configPath)) {
     fail(`missing config: ${path.relative(repoRoot, configPath)}`);
   }
-  const config = JSON.parse(readFileSync(configPath, "utf8"));
+  const config = assertPorterConfig(JSON.parse(readFileSync(configPath, "utf8")));
   return {
     ...config,
     sourcePinManifest: config.sourcePinManifest ?? defaultSourcePinManifest,

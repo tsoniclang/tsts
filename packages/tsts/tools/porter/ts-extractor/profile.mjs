@@ -41,42 +41,12 @@ export const TSTS_PROFILE = {
     bigintBasics: ["uint64"],
     bigintNamedTypes: [],
   },
-  // Exact Go stdlib type object identity -> exact TypeScript storage identity.
-  stdlibTypes: {
-    "iter::type::Seq": "packages/tsts/src/go/compat.ts::GoSeq",
-    "iter::type::Seq2": "packages/tsts/src/go/compat.ts::GoSeq2",
-    "cmp::type::Ordered": "packages/tsts/src/go/compat.ts::GoOrdered",
-  },
   // Stdlib/runtime package -> facade module path. {importPath} is the full Go
   // import path (e.g. sync/atomic -> packages/tsts/src/go/sync/atomic.ts).
   facadeTemplate: "packages/tsts/src/go/{importPath}.ts",
-  // Exact duplicate-declaration identities whose two full module/name IDs are
-  // known to represent one Go-origin type. Terminal-name matching is forbidden.
-  canonicalTypeAliases: {
-    "packages/tsts/src/internal/ast/symbolflags.ts::SymbolFlags": "packages/tsts/src/internal/ast/generated/flags.ts::SymbolFlags",
-    "packages/tsts/src/internal/ast/nodeflags.ts::NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts::NodeFlags",
-    "packages/tsts/src/internal/ast/visitor.ts::NodeVisitor": "packages/tsts/src/internal/ast/spine.ts::NodeVisitor",
-    "packages/tsts/src/internal/tsoptions/tsconfigparsing.ts::ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts::ExtendedConfigCache",
-  },
-  // Exact Go type object identity -> exact authored TypeScript storage identity.
-  namedTypeMappings: {},
   conventions: {
     goConstraintId: "packages/tsts/src/go/compat.ts::GoConstraint",
-    equivalences: [
-      {
-        as: "go-comparable",
-        scope: "constraint",
-        match: [
-          { id: "name::comparable" },
-          { id: "packages/tsts/src/go/compat.ts::GoComparable" },
-        ],
-      },
-    ],
   },
-  // Ambient TypeScript/host globals that are intentional signature surface.
-  // Everything else under global::/name::/unresolved:: remains a hard
-  // unresolved-ref mismatch.
-  allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
   jsonTags: {
     contractModules: ["packages/tsts/src/internal/json/json.ts"],
   },
@@ -106,7 +76,7 @@ export function loadProfile(config) {
     ["bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
     ["primitives", ["keyword", "core", "compat"]],
     ["constantRepresentations", ["bigintBasics", "bigintNamedTypes"]],
-    ["conventions", ["goConstraintId", "equivalences"]],
+    ["conventions", ["goConstraintId"]],
     ["jsonTags", ["contractModules"]],
   ]) {
     if (override[key] !== undefined) requireKnownKeys(override[key], new Set(allowed), `signatureCheck.${key}`);
@@ -135,16 +105,8 @@ function validateProfile(profile) {
   requirePlainRecord(profile.constantRepresentations, "signatureCheck.constantRepresentations");
   requireStringArray(profile.constantRepresentations.bigintBasics, "signatureCheck.constantRepresentations.bigintBasics");
   requireStringArray(profile.constantRepresentations.bigintNamedTypes, "signatureCheck.constantRepresentations.bigintNamedTypes");
-  validateTypeStorageMappings(profile.stdlibTypes, "signatureCheck.stdlibTypes");
   validateFacadeTemplate(profile.facadeTemplate);
-  requireStringRecord(profile.canonicalTypeAliases, "signatureCheck.canonicalTypeAliases");
-  for (const [source, target] of Object.entries(profile.canonicalTypeAliases)) {
-    if (!source.includes("::") || !target.includes("::")) throw new Error("signatureCheck.canonicalTypeAliases entries must use full module/name identities");
-  }
-  validateNamedTypeMappings(profile.namedTypeMappings);
-  validateStorageAgreement(profile);
   loadConventions(profile.conventions);
-  requireStringArray(profile.allowedGlobals, "signatureCheck.allowedGlobals");
   requirePlainRecord(profile.jsonTags, "signatureCheck.jsonTags");
   requireStringArray(profile.jsonTags.contractModules, "signatureCheck.jsonTags.contractModules");
 }
@@ -159,52 +121,6 @@ function validateFacadeTemplate(value) {
   const remainder = `${value.slice(0, first)}${value.slice(first + placeholder.length)}`;
   if (remainder.includes("{") || remainder.includes("}")) {
     throw new Error("signatureCheck.facadeTemplate contains an unsupported placeholder");
-  }
-}
-
-function validateNamedTypeMappings(value) {
-  validateTypeStorageMappings(value, "signatureCheck.namedTypeMappings");
-}
-
-function validateTypeStorageMappings(value, label) {
-  requirePlainRecord(value, label);
-  for (const [objectId, storage] of Object.entries(value)) {
-    requireGoTypeObjectIdentity(objectId, `${label} key '${objectId}'`);
-    requireStorageIdentity(storage, `${label}.${objectId}`);
-  }
-}
-
-function validateStorageAgreement(profile) {
-  const storageByObjectId = new Map();
-  const objectIdByStorage = new Map();
-  for (const [label, mappings] of [
-    ["signatureCheck.stdlibTypes", profile.stdlibTypes],
-    ["signatureCheck.namedTypeMappings", profile.namedTypeMappings],
-  ]) {
-    for (const [objectId, storage] of Object.entries(mappings)) {
-      const existing = storageByObjectId.get(objectId);
-      if (existing !== undefined && existing.storage !== storage) {
-        throw new Error(`${label}.${objectId} conflicts with ${existing.label}: '${storage}' versus '${existing.storage}'`);
-      }
-      storageByObjectId.set(objectId, { storage, label: `${label}.${objectId}` });
-      const storageOwner = objectIdByStorage.get(storage);
-      if (storageOwner !== undefined && storageOwner.objectId !== objectId) {
-        throw new Error(`${label}.${objectId} and ${storageOwner.label} map different Go objects to the same TypeScript storage '${storage}'`);
-      }
-      objectIdByStorage.set(storage, { objectId, label: `${label}.${objectId}` });
-    }
-  }
-}
-
-function requireGoTypeObjectIdentity(value, label) {
-  if (typeof value !== "string" || !/^(?:builtin|[^:\s]+)::type::[^:\s]+$/.test(value)) {
-    throw new Error(`${label} must be one exact Go type object identity`);
-  }
-}
-
-function requireStorageIdentity(value, label) {
-  if (typeof value !== "string" || !/^[^:\s]+::[^:\s]+$/.test(value)) {
-    throw new Error(`${label} must be one exact module/name storage identity`);
   }
 }
 

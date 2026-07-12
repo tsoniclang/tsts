@@ -8,9 +8,10 @@ import (
 	"strings"
 )
 
-func semanticDeclarations(root string, modulePath string, checkedPackages []*declarationCheckedPackage, locations map[string]string, requiredFiles map[string]bool) (map[string]SemanticDeclarationReport, map[string]bool) {
+func semanticDeclarations(root string, modulePath string, checkedPackages []*declarationCheckedPackage, locations map[string]string, requiredFiles map[string]bool) (map[string]SemanticDeclarationReport, map[string]bool, semanticTypeObjectSet) {
 	reports := map[string]SemanticDeclarationReport{}
 	covered := map[string]bool{}
+	referencedTypes := semanticTypeObjectSet{}
 	for _, checked := range checkedPackages {
 		if checked == nil || checked.info == nil || checked.fileSet == nil || !packageBelongsToModule(checked.metadata, modulePath) {
 			continue
@@ -39,8 +40,11 @@ func semanticDeclarations(root string, modulePath string, checkedPackages []*dec
 				}
 			}
 		}
+		for _, referenced := range encoder.referencedTypes {
+			addSemanticTypeObject(referencedTypes, referenced)
+		}
 	}
-	return reports, covered
+	return reports, covered, referencedTypes
 }
 
 func semanticAllPackageFiles(root string, checked *declarationCheckedPackage) []semanticPackageFile {
@@ -254,16 +258,11 @@ func semanticTypeDeclarationItem(encoder *semanticTypeEncoder, checked *declarat
 	if rhs == nil {
 		fatalf("Go type declaration %s has no go/types RHS", specification.Name.Name)
 	}
-	methods := externalDeclaredMethods(typeName)
-	valueMethodSet := types.NewMethodSet(typeName.Type())
-	pointerMethodSet := types.NewMethodSet(types.NewPointer(typeName.Type()))
-	registerExternalMethods(encoder, methods, valueMethodSet, pointerMethodSet)
 	objectReport := semanticObjectReport(encoder, typeName)
 	declaration := &SemanticTypeDeclaration{
 		Alias: typeName.IsAlias(), Object: objectReport, TypeParameters: semanticDeclaredTypeParameters(encoder, typeName),
-		RHS: encoder.typeReportAt(rhs, objectReport.ID+"::rhs"), Methods: semanticExternalMethodReports(encoder, objectReport.ID, methods),
-		ValueMethodSet:   semanticExternalMethodSet(encoder, objectReport.ID, "valueMethodSet", valueMethodSet),
-		PointerMethodSet: semanticExternalMethodSet(encoder, objectReport.ID, "pointerMethodSet", pointerMethodSet),
+		RHS: encoder.typeReportAt(rhs, objectReport.ID+"::rhs"), MethodSurface: "declaration-units",
+		Methods: []SemanticMethodReport{}, ValueMethodSet: []SemanticMethodSelectionReport{}, PointerMethodSet: []SemanticMethodSelectionReport{},
 	}
 	return semanticDeclarationItem{
 		kind: "type", name: specification.Name.Name, offset: checked.fileSet.PositionFor(specification.Pos(), false).Offset,

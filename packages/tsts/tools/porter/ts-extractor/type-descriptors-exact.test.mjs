@@ -219,31 +219,25 @@ class MethodRoles {
   assert.equal(JSON.stringify([parsed.initialized, parsed.predicate, parsed.generate, parsed.Holder, parsed.MethodRoles]).includes("implementationBody"), false);
 });
 
-test("normalization traverses every structured child and preserves signature metadata", async () => {
+test("normalization traverses every structured child without collapsing declaration identities", async () => {
   const parsed = await descriptors([
     "import type { Native } from \"./native.js\";",
     "type Complex<const T extends Native = Native> = T extends Native",
     "  ? { [K in keyof T]: import(\"./dependency.js\").Box<Native> }",
     "  : `fallback-${Native}`;",
   ].join("\n"));
-  const conventions = loadConventions({
-    goConstraintId: "fixture/go.ts::GoConstraint",
-    equivalences: [
-      { as: "native-bound", scope: "constraint", match: [{ id: "fixture/native.ts::Native" }, { id: "fixture/other.ts::Native" }] },
-      { as: "native-type", scope: "type", match: [{ id: "fixture/native.ts::Native" }, { id: "fixture/other.ts::Native" }] },
-    ],
-  });
+  const conventions = loadConventions({ goConstraintId: "fixture/go.ts::GoConstraint" });
   const normalized = normalizeDescriptor(parsed.Complex.type, conventions);
-  assert.equal(JSON.stringify(normalized).includes("fixture/native.ts::Native"), false);
+  assert.equal(JSON.stringify(normalized).includes("fixture/native.ts::Native"), true);
   assert.deepEqual(normalized.check, { t: "tp", depth: 0, index: 0 });
   assert.equal(normalized.trueType.typeParam.modifiers.const, false);
-  assert.equal(normalized.trueType.valueType.args[0].t, "conv");
-  assert.equal(normalized.falseType.spans[0].type.t, "conv");
+  assert.equal(normalized.trueType.valueType.args[0].t, "ref");
+  assert.equal(normalized.falseType.spans[0].type.t, "ref");
   const normalizedParameter = normalizeDescriptor({ t: "fn", params: [], ret: { t: "kw", kw: "void" },
     missingReturnType: false, returnTypePolicy: "required",
     typeParams: parsed.Complex.typeParams, signatureModifiers: ["async"] }, conventions);
   assert.equal(normalizedParameter.typeParams[0].modifiers.const, true);
-  assert.equal(normalizedParameter.typeParams[0].default.t, "conv");
+  assert.equal(normalizedParameter.typeParams[0].default.t, "ref");
   assert.deepEqual(normalizedParameter.signatureModifiers, ["async"]);
 });
 

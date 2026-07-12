@@ -33,6 +33,7 @@ export function declarationDescriptor(api, node, baseCtx) {
   if (node.Kind === K.KindClassDeclaration) return classDescriptor(api, node, baseCtx);
   if (node.Kind === K.KindEnumDeclaration) return enumDescriptor(api, node, baseCtx);
   if (node.Kind === K.KindVariableStatement) return variableDescriptor(api, node, baseCtx);
+  if (node.Kind === K.KindModuleDeclaration) return moduleDescriptor(api, node, baseCtx);
   return { kind: "unsupported-declaration", nodeKind: api.kindName.get(node.Kind) ?? `kind${node.Kind}` };
 }
 
@@ -119,15 +120,13 @@ function variableDescriptor(api, node, baseCtx) {
   const declarations = [];
   for (const nodeDeclaration of statement.DeclarationList?.Declarations?.Nodes ?? []) {
     const declaration = api.Casts.AsVariableDeclaration(nodeDeclaration);
-    if (declaration.name?.Kind !== api.Kinds.KindIdentifier) {
-      const kind = api.kindName.get(declaration.name?.Kind) ?? "<missing>";
-      throw new Error(`Porter requires a structural binding-pattern descriptor before accepting ${kind} in '${baseCtx.moduleId}'`);
-    }
+    const identifier = declaration.name?.Kind === api.Kinds.KindIdentifier;
     const evaluation = declarationKind === "const"
       ? evaluateTypeScriptConstant(api, declaration.Initializer, ctx.valueEnvironment)
       : undefined;
     declarations.push({
-      name: declaration.name.Text,
+      name: identifier ? declaration.name.Text : "<binding-pattern>",
+      ...(identifier ? {} : { binding: bindingNameDescriptor(api, declaration.name, ctx) }),
       missing: !declaration.Type,
       type: declaration.Type ? canonicalizeType(declaration.Type, ctx) : null,
       ...(evaluation === undefined ? {} : {
@@ -141,6 +140,57 @@ function variableDescriptor(api, node, baseCtx) {
     });
   }
   return { kind: "value", modifiers, decls: declarations };
+}
+
+function moduleDescriptor(api, node, baseCtx) {
+  const declaration = api.Casts.AsModuleDeclaration(node);
+  const body = declaration.Body;
+  const statements = body?.Kind === api.Kinds.KindModuleBlock ? body.Statements?.Nodes ?? []
+    : body?.Kind === api.Kinds.KindModuleDeclaration ? [body] : [];
+  return {
+    kind: "namespace",
+    name: declaration.name?.Text,
+    modifiers: declarationModifiers(api, declaration, new Set(["export", "default", "declare", "global"])),
+    bodyKind: body === undefined ? "empty" : api.kindName.get(body.Kind) ?? `kind${body.Kind}`,
+    declarations: statements.map((statement) => declarationDescriptor(api, statement, baseCtx)),
+  };
+}
+
+function bindingNameDescriptor(api, node, ctx) {
+  if (node?.Kind === api.Kinds.KindIdentifier) return { kind: "identifier", name: node.Text };
+  if (node?.Kind === api.Kinds.KindObjectBindingPattern) {
+    return {
+      kind: "object",
+      elements: (node.Elements?.Nodes ?? []).map((element) => bindingElementDescriptor(api, element, ctx)),
+    };
+  }
+  if (node?.Kind === api.Kinds.KindArrayBindingPattern) {
+    return {
+      kind: "array",
+      elements: (node.Elements?.Nodes ?? []).map((element) =>
+        element.Kind === api.Kinds.KindOmittedExpression ? { kind: "omitted" } : bindingElementDescriptor(api, element, ctx)),
+    };
+  }
+  throw new Error(`unsupported TypeScript binding name ${api.kindName.get(node?.Kind) ?? "<missing>"} in '${ctx.moduleId}'`);
+}
+
+function bindingElementDescriptor(api, node, ctx) {
+  const element = api.Casts.AsBindingElement(node);
+  return {
+    kind: "binding-element",
+    rest: element.DotDotDotToken !== undefined,
+    property: bindingPropertyDescriptor(api, element.PropertyName, ctx),
+    name: bindingNameDescriptor(api, element.name, ctx),
+    initializer: element.Initializer === undefined ? "missing" : "present",
+  };
+}
+
+function bindingPropertyDescriptor(api, node, ctx) {
+  if (node === undefined) return null;
+  if (node.Kind === api.Kinds.KindIdentifier || node.Kind === api.Kinds.KindStringLiteral || node.Kind === api.Kinds.KindNumericLiteral) {
+    return { kind: api.kindName.get(node.Kind) ?? `kind${node.Kind}`, name: String(node.Text) };
+  }
+  throw new Error(`unsupported TypeScript binding property ${api.kindName.get(node.Kind) ?? node.Kind} in '${ctx.moduleId}'`);
 }
 
 function variableDeclarationKind(api, flags) {

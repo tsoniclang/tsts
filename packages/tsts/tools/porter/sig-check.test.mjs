@@ -146,7 +146,7 @@ test("function overload sets compare every ordered declaration signature", () =>
   assert.equal(compareSignatures(two, structuredClone(two), null).length, 0);
 });
 
-test("exact declarations retain modifier, role, and lexical type-parameter contracts", () => {
+test("exact declarations retain modifier and lexical type-parameter contracts", () => {
   const expected = func({
     typeParams: [{
       name: "T",
@@ -159,7 +159,6 @@ test("exact declarations retain modifier, role, and lexical type-parameter contr
   });
   const mutations = [
     [(actual) => { actual.modifiers = []; }, "declaration-modifier"],
-    [(actual) => { actual.signatures[0].role = "overload"; }, "function-signature-role"],
     [(actual) => { actual.signatures[0].declarationModifiers = ["declare"]; }, "declaration-modifier"],
     [(actual) => { actual.signatures[0].signatureModifiers = []; }, "function-modifier"],
     [(actual) => { actual.signatures[0].typeParams[0].name = "U"; }, "type-param-name"],
@@ -288,7 +287,7 @@ test("interface heritage and member modifiers compare exactly", () => {
 test("allowed globals cannot hide hard imported identity drift", () => {
   const expected = func({ typeParams: [], params: [{ type: ref("global::Date") }], ret: kw("void") });
   const actual = func({ typeParams: [], params: [{ type: ref("pkg/date.ts::Date") }], ret: kw("void") });
-  assert.ok(kinds(compareSignatures(expected, actual, null, (id) => id, noConv, ["Date"])).has("param-type"));
+  assert.ok(kinds(compareSignatures(expected, actual, null, (id) => id, noConv, { accept: (identity) => identity === "global::Date" })).has("param-type"));
 });
 
 test("compareValue: value-annotation-missing and value-type", () => {
@@ -497,21 +496,12 @@ test("signature profile rejects every unknown or retired contract key", () => {
   assert.throws(() => loadProfile({ signatureCheck: { conventions: { structural: {} } } }), /unknown current-contract key/);
 });
 
-test("conventions: equivalences are scoped to constraint context", () => {
-  const conv = loadConventions({
-    ...conventionBase,
-    equivalences: [{
-      as: "comparable",
-      scope: "constraint",
-      match: [
-        { id: "name::comparable" },
-        { id: "packages/tsts/src/go/compat.ts::GoComparable" },
-      ],
-    }],
-  });
+test("conventions reject arbitrary descriptor equivalences", () => {
+  assert.throws(() => loadConventions({ ...conventionBase, equivalences: [] }), /unknown current-contract key/);
+  const conv = loadConventions(conventionBase);
   const goComparable = ref("name::comparable");
   const tsComparable = ref("packages/tsts/src/go/compat.ts::GoComparable");
-  assert.ok(typesEqual(normalizeDescriptor(goComparable, conv, "constraint"), normalizeDescriptor(tsComparable, conv, "constraint")));
+  assert.ok(!typesEqual(normalizeDescriptor(goComparable, conv, "constraint"), normalizeDescriptor(tsComparable, conv, "constraint")));
   assert.ok(!typesEqual(normalizeDescriptor(goComparable, conv, "type"), normalizeDescriptor(tsComparable, conv, "type")));
 });
 
@@ -578,10 +568,10 @@ test("gate: unresolved type identity is surfaced", () => {
   assert.ok(kinds(compareSignatures(exp, act, null)).has("unresolved-ref"));
 });
 
-test("gate: allowed ambient globals do not produce unresolved-ref", () => {
+test("gate: reviewed ambient declarations do not produce unresolved-ref", () => {
   const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] });
   const act = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] });
-  assert.equal(compareSignatures(exp, act, null, (x) => x, noConv, ["Uint8Array"]).length, 0);
+  assert.equal(compareSignatures(exp, act, null, (x) => x, noConv, { accept: (identity) => identity === "global::Uint8Array" }).length, 0);
 });
 
 test("typesEqual: object descriptors compare structurally", () => {

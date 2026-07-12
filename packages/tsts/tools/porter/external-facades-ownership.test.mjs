@@ -30,6 +30,10 @@ test("the full authored policy catalog is validated before active facade selecti
     ...baseConfig,
     authoredFacadeModules: ["go/example.com/native.ts", "go/example.com/native.ts"],
   }, snapshot), /authoredFacadeModules duplicates/);
+  assert.throws(
+    () => buildExternalFacadeMap(baseConfig, snapshot),
+    /is not recursively reachable from an active Go declaration/,
+  );
 });
 
 test("authored facade storage cannot alias Porter-generated declaration storage", () => {
@@ -56,12 +60,12 @@ test("authored facade storage cannot alias Porter-generated declaration storage"
     api,
     canonicalIdentity: (identity) => identity,
     config,
-    conventions: { equivalences: [] },
+    conventions: {},
     moduleIndex,
     profile: loadProfile(config),
     snapshot,
     valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
   });
   assert.ok(result.mismatches.some((mismatch) => mismatch.kind === "authored-facade-contract-error" &&
-    mismatch.detail.includes("resolves into Porter-generated storage")));
+    mismatch.detail.includes("must be stored directly")));
 });

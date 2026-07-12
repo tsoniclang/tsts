@@ -1,6 +1,6 @@
 // Parser loading and freshness checks for TS-side signature extraction.
 
-import { existsSync, statSync, readdirSync } from "node:fs";
+import { statSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,33 +9,34 @@ const here = dirname(fileURLToPath(import.meta.url));
 const pkgRoot = join(here, "../../..");
 const distInternal = join(pkgRoot, "dist/src/internal");
 const srcInternal = join(pkgRoot, "src/internal");
-const parserEntry = join(distInternal, "parser/parser/statements-declarations.js");
-
 // --- dist presence + freshness ------------------------------------------------
 
 function newestMtimeMs(dir, exts) {
-  // Recursive newest mtime of files with the given extensions under dir.
   let newest = 0;
+  let fileCount = 0;
   const stack = [dir];
   while (stack.length > 0) {
     const d = stack.pop();
     let entries;
     try {
       entries = readdirSync(d, { withFileTypes: true });
-    } catch {
-      continue;
+    } catch (error) {
+      throw new Error(`cannot inspect parser freshness source directory '${d}': ${error instanceof Error ? error.message : String(error)}`);
     }
     for (const e of entries) {
       const p = join(d, e.name);
       if (e.isDirectory()) {
         stack.push(p);
-      } else if (exts.some((x) => e.name.endsWith(x))) {
+      } else if (e.isFile() && exts.some((x) => e.name.endsWith(x))) {
         const m = statSync(p).mtimeMs;
         if (m > newest) newest = m;
+        fileCount++;
+      } else if (!e.isFile()) {
+        throw new Error(`cannot prove parser freshness through unsupported filesystem entry '${p}'`);
       }
     }
   }
-  return newest;
+  return { fileCount, newest };
 }
 
 // Asserts dist is present and not stale relative to src. Throws a clear,
@@ -44,18 +45,34 @@ function newestMtimeMs(dir, exts) {
 // `distRoot`/`srcDirs` are absolute; default to the in-repo tsts layout.
 export function assertDistFresh(distRoot = distInternal, srcDirs) {
   const entry = join(distRoot, "parser/parser/statements-declarations.js");
-  if (!existsSync(entry)) {
+  let entryStat;
+  try {
+    entryStat = statSync(entry);
+  } catch {
     throw new Error(
       `TS parser dist not built (missing ${entry}).\n` +
         `Build the parser package first (e.g. npm run build).`,
     );
   }
-  const distMtime = statSync(entry).mtimeMs;
+  if (!entryStat.isFile()) throw new Error(`TS parser dist entry is not a regular file: ${entry}`);
+  const distMtime = entryStat.mtimeMs;
   const watched = srcDirs ?? ["parser", "ast", "scanner", "core"].map((d) => join(srcInternal, d));
+  if (!Array.isArray(watched) || watched.length === 0 || watched.some((directory) => typeof directory !== "string" || directory === "")) {
+    throw new Error("TS parser freshness sources must be a non-empty array of directory paths");
+  }
+  if (new Set(watched).size !== watched.length) throw new Error("TS parser freshness source directories must be unique");
   let newestSrc = 0;
   for (const w of watched) {
-    const m = newestMtimeMs(w, [".ts"]);
-    if (m > newestSrc) newestSrc = m;
+    let sourceStat;
+    try {
+      sourceStat = statSync(w);
+    } catch (error) {
+      throw new Error(`cannot inspect parser freshness source directory '${w}': ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (!sourceStat.isDirectory()) throw new Error(`parser freshness source path is not a directory: ${w}`);
+    const source = newestMtimeMs(w, [".ts"]);
+    if (source.fileCount === 0) throw new Error(`parser freshness source directory contains no TypeScript files: ${w}`);
+    if (source.newest > newestSrc) newestSrc = source.newest;
   }
   if (newestSrc > distMtime) {
     throw new Error(

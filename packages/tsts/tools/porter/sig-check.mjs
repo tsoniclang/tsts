@@ -10,6 +10,7 @@
 
 import { join } from "node:path";
 import { compareText } from "./core/deterministic-order.mjs";
+import { completeAudit, notRunAudit } from "./core/declaration-audits.mjs";
 import { loadParser } from "./ts-extractor/ast-signatures.mjs";
 import { buildIndexedModuleValueEnvironments, extractParsedFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
@@ -17,11 +18,14 @@ import { loadConventions } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
-import { createCanonicalDeclarationResolver } from "./ts-extractor/module-resolution.mjs";
 import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
 import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
+import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-policies.mjs";
+import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
+import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
+import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
 import {
   resolveOverride,
   unitSignatureSnapshot,
@@ -37,6 +41,14 @@ function globToRegExp(glob) {
 }
 
 export async function computeSignatureReport(deps, options = {}) {
+  const idFilter = options.idFilter;
+  if (idFilter !== undefined && (typeof idFilter !== "string" || idFilter.trim() === "")) {
+    throw new Error("signature audit idFilter must be a non-empty glob when provided");
+  }
+  const wholeProgramAudit = idFilter === undefined;
+  const wholeProgramAuditNotRun = () => notRunAudit(
+    `The --id filter ${JSON.stringify(idFilter)} limits signature-unit comparison, so this whole-program subaudit was not run.`,
+  );
   const profile = loadProfile(deps.config);
   const api = await loadParser({
     distRoot: join(deps.repoRoot, profile.parser.distRoot),
@@ -55,17 +67,26 @@ export async function computeSignatureReport(deps, options = {}) {
   const moduleIndex = loadTypeScriptModuleIndex(api, deps.repoRoot, deps.config.tsRoot);
   const { sources } = moduleIndex;
   const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
-  const canonicalIdentity = createCanonicalDeclarationResolver(moduleIndex, profile.canonicalTypeAliases ?? {});
+  const typeEquivalenceRegistry = buildTypeEquivalenceRelationRegistry({
+    api,
+    config: deps.config,
+    moduleIndex,
+    snapshot: deps.snapshot,
+    valueEnvironments,
+  });
+  const ambientReferenceRegistry = buildAmbientReferenceRelationRegistry({ api, config: deps.config });
   const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, generatedTypeDeclarations(deps.config, moduleIndex));
-  const idPattern = options.idFilter ? globToRegExp(options.idFilter) : undefined;
+  const idPattern = idFilter === undefined ? undefined : globToRegExp(idFilter);
   const mismatches = [];
   let overriddenUnits = 0;
   const expectedIds = new Set();
-  for (const id of deps.tsById.keys()) {
+  for (const [id, go] of goById) {
     if (idPattern && !idPattern.test(id)) continue;
     if (deps.activeIds !== undefined && !deps.activeIds.has(id)) continue;
-    const go = goById.get(id);
-    if (go && RENDERABLE.has(go.kind)) expectedIds.add(id);
+    if (RENDERABLE.has(go.kind)) expectedIds.add(id);
+  }
+  if (idPattern !== undefined && expectedIds.size === 0) {
+    throw new Error(`signature audit --id filter ${JSON.stringify(idFilter)} matched no active renderable Go units`);
   }
   const descriptorsById = new Map();
 
@@ -86,29 +107,47 @@ export async function computeSignatureReport(deps, options = {}) {
     api,
     moduleIndex,
   });
-  const authoredFacades = options.idFilter === undefined
+  const authoredFacades = wholeProgramAudit
     ? collectAuthoredFacadeMismatches({
       api,
-      canonicalIdentity,
+      canonicalIdentity: typeEquivalenceRegistry.forUseSite("authored-facade-audit"),
       config: deps.config,
       conventions,
       moduleIndex,
       profile,
       snapshot: deps.snapshot,
       valueEnvironments,
+      ambientReferences: ambientReferenceRegistry.forUseSite("authored-facade-audit"),
     })
     : {
       checked: 0,
-      inventory: { constructors: [], goOnlyMembers: [], methodBindings: [], privateStorageMembers: [], tsOnlyMembers: [] },
+      inventory: { constructors: [], methodBindings: [], privateStorageMembers: [], tsOnlyMembers: [], unselectedGoMembers: [] },
       mismatches: [],
       ownedDeclarationIds: new Set(),
     };
   mismatches.push(...authoredFacades.mismatches);
-  const untrackedTypeScript = options.idFilter === undefined
+  const typeStoragePolicies = wholeProgramAudit
+    ? collectTypeStoragePolicyMismatches({
+      api,
+      config: deps.config,
+      moduleIndex,
+      snapshot: deps.snapshot,
+      valueEnvironments,
+    })
+    : { checked: 0, inventory: [], mismatches: [], ownedDeclarationIds: new Set() };
+  mismatches.push(...typeStoragePolicies.mismatches);
+  const declarationOwnership = wholeProgramAudit
+    ? buildDeclarationOwnershipRegistry([
+      { owner: "authored-facade", ids: authoredFacades.ownedDeclarationIds },
+      { owner: "go-type-storage", ids: typeStoragePolicies.ownedDeclarationIds },
+    ])
+    : { ids: new Set(), inventory: [], mismatches: [] };
+  mismatches.push(...declarationOwnership.mismatches);
+  const untrackedTypeScript = wholeProgramAudit
     ? collectUntrackedTypeScriptDeclarations({
       api,
       annotation: profile.annotation,
-      accountedDeclarationIds: authoredFacades.ownedDeclarationIds,
+      accountedDeclarationIds: declarationOwnership.ids,
       config: deps.config,
       moduleIndex,
       valueEnvironments,
@@ -128,46 +167,90 @@ export async function computeSignatureReport(deps, options = {}) {
       actual,
       localOverride,
       expectedIndex,
-      canonicalIdentity,
+      canonicalIdentity: typeEquivalenceRegistry.forUseSite(id),
       conventions,
-      allowedGlobals: profile.allowedGlobals,
+      ambientReferences: ambientReferenceRegistry.forUseSite(id),
       overrideIssues,
     });
     if (result.overridden) overriddenUnits++;
     mismatches.push(...result.mismatches);
   }
-  return {
+  const typeEquivalenceRelations = wholeProgramAudit
+    ? typeEquivalenceRegistry.finalize()
+    : { checked: 0, inventory: [], mismatches: [] };
+  mismatches.push(...typeEquivalenceRelations.mismatches);
+  const ambientReferenceRelations = wholeProgramAudit
+    ? ambientReferenceRegistry.finalize()
+    : { checked: 0, inventory: [], mismatches: [] };
+  mismatches.push(...ambientReferenceRelations.mismatches);
+  return completeAudit({
+    selection: wholeProgramAudit
+      ? { kind: "all-active" }
+      : { kind: "id-filter", pattern: idFilter, matchedUnitCount: expectedIds.size },
     mismatches,
     checked: expectedIds.size,
     descriptors: [...descriptorsById.values()].reduce((count, rows) => count + rows.length, 0),
     overriddenUnits,
     overrideIssues,
-    jsonTags: { ...jsonTags, mismatchCount: jsonTags.mismatches.length },
-    authoredFacades: {
-      checked: authoredFacades.checked,
-      mismatchCount: authoredFacades.mismatches.length,
-      constructorCount: authoredFacades.inventory.constructors.length,
-      goOnlyMemberCount: authoredFacades.inventory.goOnlyMembers.length,
-      methodBindingCount: authoredFacades.inventory.methodBindings.length,
-      privateStorageMemberCount: authoredFacades.inventory.privateStorageMembers.length,
-      tsOnlyMemberCount: authoredFacades.inventory.tsOnlyMembers.length,
-      constructors: authoredFacades.inventory.constructors,
-      goOnlyMembers: authoredFacades.inventory.goOnlyMembers,
-      methodBindings: authoredFacades.inventory.methodBindings,
-      privateStorageMembers: authoredFacades.inventory.privateStorageMembers,
-      tsOnlyMembers: authoredFacades.inventory.tsOnlyMembers,
-    },
-    untrackedTypeScript: {
-      exportedDeclarationCount: untrackedTypeScript.exportedDeclarations.length,
-      privateDeclarationCount: untrackedTypeScript.privateDeclarations.length,
-      reExportCount: untrackedTypeScript.reExports.length,
-      reviewedDeclarationCount: untrackedTypeScript.reviewedDeclarations.length,
-      exportedDeclarations: untrackedTypeScript.exportedDeclarations,
-      privateDeclarations: untrackedTypeScript.privateDeclarations,
-      reExports: untrackedTypeScript.reExports,
-      reviewedDeclarations: untrackedTypeScript.reviewedDeclarations,
-    },
-  };
+    jsonTags: completeAudit({ ...jsonTags, mismatchCount: jsonTags.mismatches.length }),
+    authoredFacades: wholeProgramAudit
+      ? completeAudit({
+        checked: authoredFacades.checked,
+        mismatchCount: authoredFacades.mismatches.length,
+        constructorCount: authoredFacades.inventory.constructors.length,
+        methodBindingCount: authoredFacades.inventory.methodBindings.length,
+        privateStorageMemberCount: authoredFacades.inventory.privateStorageMembers.length,
+        tsOnlyMemberCount: authoredFacades.inventory.tsOnlyMembers.length,
+        unselectedGoMemberCount: authoredFacades.inventory.unselectedGoMembers.length,
+        constructors: authoredFacades.inventory.constructors,
+        methodBindings: authoredFacades.inventory.methodBindings,
+        privateStorageMembers: authoredFacades.inventory.privateStorageMembers,
+        tsOnlyMembers: authoredFacades.inventory.tsOnlyMembers,
+        unselectedGoMembers: authoredFacades.inventory.unselectedGoMembers,
+      })
+      : wholeProgramAuditNotRun(),
+    typeStoragePolicies: wholeProgramAudit
+      ? completeAudit({
+        checked: typeStoragePolicies.checked,
+        inventory: typeStoragePolicies.inventory,
+        mismatchCount: typeStoragePolicies.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
+    typeEquivalenceRelations: wholeProgramAudit
+      ? completeAudit({
+        checked: typeEquivalenceRelations.checked,
+        inventory: typeEquivalenceRelations.inventory,
+        mismatchCount: typeEquivalenceRelations.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
+    ambientReferenceRelations: wholeProgramAudit
+      ? completeAudit({
+        checked: ambientReferenceRelations.checked,
+        inventory: ambientReferenceRelations.inventory,
+        mismatchCount: ambientReferenceRelations.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
+    declarationOwnership: wholeProgramAudit
+      ? completeAudit({
+        checked: declarationOwnership.inventory.length,
+        inventory: declarationOwnership.inventory,
+        mismatchCount: declarationOwnership.mismatches.length,
+      })
+      : wholeProgramAuditNotRun(),
+    untrackedTypeScript: wholeProgramAudit
+      ? completeAudit({
+        mismatchCount: untrackedTypeScript.mismatches.length,
+        exportedDeclarationCount: untrackedTypeScript.exportedDeclarations.length,
+        privateDeclarationCount: untrackedTypeScript.privateDeclarations.length,
+        reExportCount: untrackedTypeScript.reExports.length,
+        reviewedDeclarationCount: untrackedTypeScript.reviewedDeclarations.length,
+        exportedDeclarations: untrackedTypeScript.exportedDeclarations,
+        privateDeclarations: untrackedTypeScript.privateDeclarations,
+        reExports: untrackedTypeScript.reExports,
+        reviewedDeclarations: untrackedTypeScript.reviewedDeclarations,
+      })
+      : wholeProgramAuditNotRun(),
+  });
 }
 
 export function generatedTypeDeclarations(config, moduleIndex) {
@@ -197,13 +280,13 @@ export function compareSignatureUnit({
   expectedIndex,
   canonicalIdentity,
   conventions,
-  allowedGlobals,
+  ambientReferences,
   overrideIssues,
 }) {
   try {
     const expected = goUnitDescriptor(go, expectedIndex);
     const override = resolveOverride(localOverride, id, expected, actual, canonicalIdentity, overrideIssues);
-    const allMismatches = compareSignatures(expected, actual, null, canonicalIdentity, conventions, allowedGlobals);
+    const allMismatches = compareSignatures(expected, actual, null, canonicalIdentity, conventions, ambientReferences);
     validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
     const overridden = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
     const active = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));

@@ -458,7 +458,7 @@ func TestCanonicalTypeEncoderCoversTupleVariant(t *testing.T) {
 
 func declarationSnapshot(t *testing.T, root string, modulePath string) Snapshot {
 	t.Helper()
-	snapshot := Snapshot{SchemaVersion: 8, SourceRoot: root, ModulePath: modulePath}
+	snapshot := Snapshot{SchemaVersion: 9, SourceRoot: root, ModulePath: modulePath}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr

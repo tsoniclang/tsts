@@ -1,4 +1,4 @@
-import { buildExternalFacadeMap, buildExternalSemanticTypeIndex } from "../core/external-facades.mjs";
+import { buildDependencySemanticTypeIndex, buildExternalFacadeMap } from "../core/external-facades.mjs";
 import { assertSemanticNilability } from "../core/semantic-type-nilability.mjs";
 import { buildDeclaredTypeContractIndex } from "./semantic-named-nilability.mjs";
 
@@ -6,8 +6,8 @@ const directReferenceTerminals = new Set(["basic", "channel", "interface", "map"
 
 export function buildTypeRepresentationEvidence(config, snapshot, facades = buildExternalFacadeMap(config, snapshot)) {
   const externalTypeContracts = new Map();
-  const externalTypeContractsByProfile = new Map();
-  const externalPointerTerminalsByProfile = new Map();
+  const dependencyTypeContractsByProfile = new Map();
+  const dependencyPointerTerminalsByProfile = new Map();
   const externalFacadeArities = new Map();
   const knownStorageIdentities = new Set();
   const facadeByObjectId = new Map();
@@ -15,7 +15,7 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades = buil
     if (facade?.objectId !== objectId) throw new Error(`external facade map key '${objectId}' is not its exact Go object identity`);
     facadeByObjectId.set(objectId, facade);
   }
-  for (const semantic of buildExternalSemanticTypeIndex(snapshot).values()) {
+  for (const semantic of buildDependencySemanticTypeIndex(snapshot).values()) {
     const facade = facadeByObjectId.get(semantic.objectId);
     const contract = {
       objectId: semantic.objectId,
@@ -31,7 +31,7 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades = buil
       knownStorageIdentities.add(facade.storageIdentity);
     }
     for (const [profile, declaration] of semantic.byProfile) {
-      const contracts = externalTypeContractsByProfile.get(profile) ?? new Map();
+      const contracts = dependencyTypeContractsByProfile.get(profile) ?? new Map();
       setExact(contracts, semantic.objectId, {
         ...contract,
         declaration,
@@ -39,26 +39,26 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades = buil
         intrinsicNilable: declaration.object.type.nilable,
         rawInterface: declaration.rhs.kind === "interface",
         pointerStorage: facade?.runtimeAdaptation?.pointer,
-      }, `external Go type contract in profile '${profile}'`);
-      externalTypeContractsByProfile.set(profile, contracts);
+      }, `dependency Go type contract in profile '${profile}'`);
+      dependencyTypeContractsByProfile.set(profile, contracts);
     }
   }
-  for (const [profile, contracts] of externalTypeContractsByProfile) {
+  for (const [profile, contracts] of dependencyTypeContractsByProfile) {
     for (const [objectId, contract] of contracts) {
-      contract.rawInterface = externalRawInterface(contract.semanticType, contracts, new Set([objectId]));
+      contract.rawInterface = dependencyRawInterface(contract.semanticType, contracts, new Set([objectId]));
     }
     const terminals = new Map();
     for (const objectId of contracts.keys()) {
-      const terminal = externalPointerTerminalForProfile(objectId, contracts, new Set());
-      if (terminal !== undefined) setExact(terminals, objectId, terminal, `external Go pointer terminal in profile '${profile}'`);
+      const terminal = dependencyPointerTerminalForProfile(objectId, contracts, new Set());
+      if (terminal !== undefined) setExact(terminals, objectId, terminal, `dependency Go pointer terminal in profile '${profile}'`);
     }
-    externalPointerTerminalsByProfile.set(profile, terminals);
+    dependencyPointerTerminalsByProfile.set(profile, terminals);
   }
   return {
     declaredTypeContractsByProfile: buildDeclaredTypeContractIndex(snapshot),
     externalTypeContracts,
-    externalTypeContractsByProfile,
-    externalPointerTerminalsByProfile,
+    dependencyTypeContractsByProfile,
+    dependencyPointerTerminalsByProfile,
     externalFacadeArities,
     namedTypeStorage: new Map(),
     rawInterfaceObjects: new Set(),
@@ -67,7 +67,7 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades = buil
   };
 }
 
-export function addProfileSemanticStorageEvidence(evidence, profile) {
+export function addProfileSemanticStorageEvidence(evidence, profile, typeStorage = new Map()) {
   for (const [key, name] of Object.entries(profile.bridge ?? {})) {
     const identity = `${profile.modules.compat}::${name}`;
     setExact(evidence.storageCarrierByIdentity, identity, key, "semantic carrier storage");
@@ -75,26 +75,23 @@ export function addProfileSemanticStorageEvidence(evidence, profile) {
   }
   for (const name of Object.values(profile.primitives?.core ?? {})) evidence.knownStorageIdentities.add(`${profile.modules.core}::${name}`);
   for (const name of Object.values(profile.primitives?.compat ?? {})) evidence.knownStorageIdentities.add(`${profile.modules.compat}::${name}`);
-  const stdlibMappings = Object.entries(profile.stdlibTypes ?? {});
-  for (const [objectId, storageIdentity] of [
-    ...stdlibMappings,
-    ...Object.entries(profile.namedTypeMappings ?? {}),
-  ]) {
+  if (!(typeStorage instanceof Map)) throw new Error("semantic named-type storage evidence must be one exact policy map");
+  for (const [objectId, storageIdentity] of typeStorage) {
     if (typeof storageIdentity !== "string" || !storageIdentity.includes("::")) {
       throw new Error(`semantic profile storage evidence for '${objectId}' is not one exact TypeScript storage identity`);
     }
     evidence.knownStorageIdentities.add(storageIdentity);
     setExact(evidence.namedTypeStorage, objectId, storageIdentity, "semantic named-type storage evidence");
-    for (const contracts of evidence.externalTypeContractsByProfile.values()) {
+    for (const contracts of evidence.dependencyTypeContractsByProfile.values()) {
       const contract = contracts.get(objectId);
       if (contract === undefined) continue;
       if (contract.storageIdentity !== undefined && contract.storageIdentity !== storageIdentity) {
-        throw new Error(`external Go type '${objectId}' has conflicting facade/profile storage identities`);
+        throw new Error(`dependency Go type '${objectId}' has conflicting facade/relation storage identities`);
       }
       contract.storageIdentity = storageIdentity;
     }
   }
-  for (const contracts of evidence.externalTypeContractsByProfile.values()) {
+  for (const contracts of evidence.dependencyTypeContractsByProfile.values()) {
     for (const [objectId, contract] of contracts) if (contract.rawInterface) evidence.rawInterfaceObjects.add(objectId);
   }
   return evidence;
@@ -115,6 +112,7 @@ function pointeeRepresentation(type, context, resolving) {
   if (type.kind !== "named" && type.kind !== "alias") throw new Error(`cannot choose GoRef versus GoPtr for canonical Go ${type.kind} pointee`);
   const objectId = type.reference?.objectId;
   if (typeof objectId !== "string" || objectId === "") throw new Error("canonical named/alias Go pointee has no exact object identity");
+  if (objectId === "builtin::type::any" || objectId === "builtin::type::error") return "reference";
   if (resolving.has(objectId)) throw new Error(`Go pointer pointee declaration RHS cycle at '${objectId}'`);
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(objectId);
   if (declaration !== undefined) {
@@ -125,10 +123,10 @@ function pointeeRepresentation(type, context, resolving) {
       resolving.delete(objectId);
     }
   }
-  const external = context.index.externalPointerTerminalsByProfile?.get(context.profile)?.get(objectId);
-  if (external !== undefined) return external;
-  if (context.index.externalTypeContractsByProfile?.get(context.profile)?.has(objectId)) {
-    throw new Error(`cannot choose GoRef versus GoPtr for external aggregate '${objectId}' in semantic profile '${context.profile}': no reviewed pointer storage strategy`);
+  const dependency = context.index.dependencyPointerTerminalsByProfile?.get(context.profile)?.get(objectId);
+  if (dependency !== undefined) return dependency;
+  if (context.index.dependencyTypeContractsByProfile?.get(context.profile)?.has(objectId)) {
+    throw new Error(`cannot choose GoRef versus GoPtr for dependency aggregate '${objectId}' in semantic profile '${context.profile}': no reviewed pointer storage strategy`);
   }
   if (context.index.namedTypeStorage?.has(objectId)) {
     throw new Error(`cannot choose GoRef versus GoPtr for mapped storage '${objectId}' in semantic profile '${context.profile}': pointee storage strategy is not proven`);
@@ -179,18 +177,18 @@ function namedConstraintRepresentations(type, context, resolvingTypes, resolving
   if (type?.kind !== "named" && type?.kind !== "alias") return undefined;
   const objectId = type.reference?.objectId;
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(objectId)
-    ?? context.index.externalTypeContractsByProfile?.get(context.profile)?.get(objectId)?.declaration;
+    ?? context.index.dependencyTypeContractsByProfile?.get(context.profile)?.get(objectId)?.declaration;
   if (declaration === undefined || declaration.rhs.kind !== "interface") return undefined;
   return constraintRepresentations(declaration.rhs, context, resolvingTypes, resolvingConstraints);
 }
 
-function externalPointerTerminalForProfile(objectId, contracts, resolving) {
+function dependencyPointerTerminalForProfile(objectId, contracts, resolving) {
   if (resolving.has(objectId)) return undefined;
   const contract = contracts.get(objectId);
   if (contract === undefined) return undefined;
   resolving.add(objectId);
   try {
-    const terminal = externalTypeTerminal(contract.semanticType, contracts, resolving);
+    const terminal = dependencyTypeTerminal(contract.semanticType, contracts, resolving);
     if (terminal !== "aggregate") return terminal;
     if (contract.pointerStorage === "aggregate") return "aggregate";
     if (contract.pointerStorage === "slot") return "reference";
@@ -200,26 +198,26 @@ function externalPointerTerminalForProfile(objectId, contracts, resolving) {
   }
 }
 
-function externalTypeTerminal(type, contracts, resolving) {
+function dependencyTypeTerminal(type, contracts, resolving) {
   if (type?.kind === "array" || type?.kind === "struct") return "aggregate";
   if (directReferenceTerminals.has(type?.kind)) return "reference";
   if (type?.kind === "typeParameter") return "polymorphic";
   if (type?.kind !== "named" && type?.kind !== "alias") return undefined;
   const objectId = type.reference?.objectId;
-  return typeof objectId === "string" ? externalPointerTerminalForProfile(objectId, contracts, resolving) : undefined;
+  return typeof objectId === "string" ? dependencyPointerTerminalForProfile(objectId, contracts, resolving) : undefined;
 }
 
-function externalRawInterface(type, contracts, resolving) {
+function dependencyRawInterface(type, contracts, resolving) {
   if (type?.kind === "interface") return true;
   if (type?.kind !== "named" && type?.kind !== "alias") return false;
   const objectId = type.reference?.objectId;
   if (typeof objectId !== "string" || objectId === "") return false;
-  if (resolving.has(objectId)) throw new Error(`external Go interface storage cycle at '${objectId}'`);
+  if (resolving.has(objectId)) throw new Error(`dependency Go interface storage cycle at '${objectId}'`);
   const contract = contracts.get(objectId);
   if (contract === undefined) return false;
   resolving.add(objectId);
   try {
-    return externalRawInterface(contract.semanticType, contracts, resolving);
+    return dependencyRawInterface(contract.semanticType, contracts, resolving);
   } finally {
     resolving.delete(objectId);
   }

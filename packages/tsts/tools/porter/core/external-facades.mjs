@@ -5,6 +5,14 @@ import { canonicalSchemaValue } from "./semantic-variants.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { normalizeExternalMethodBindings } from "./external-facade-method-bindings.mjs";
 import { normalizeRuntimeAdaptation } from "./external-facade-runtime-adaptation.mjs";
+import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
+import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "./semantic-method-sets.mjs";
+import {
+  buildActiveLocalTypeProfileKeys,
+  isExternalPackage,
+  isModulePackage,
+  requiresDependencyDeclarationForProfile,
+} from "./dependency-type-ownership.mjs";
 
 const policyKeys = new Set([
   "methodBindings", "objectId", "runtimeAdaptation", "storageStrategy", "tsModule", "tsName",
@@ -12,13 +20,15 @@ const policyKeys = new Set([
 const storageStrategies = new Set(["authored", "generated"]);
 
 export function buildExternalFacadeMap(config, snapshot) {
-  const semanticIndex = buildExternalSemanticTypeIndex(snapshot);
+  const semanticIndex = buildDependencySemanticTypeIndex(snapshot);
+  const methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot);
+  const activeLocalTypeProfileKeys = buildActiveLocalTypeProfileKeys(config, snapshot);
   const profile = loadProfile(config);
-  const profileStorage = externalProfileStorage(profile);
+  const profileStorage = buildTypeStorageIdentityMap(config, snapshot);
   for (const [objectId, storageIdentity] of profileStorage) {
     const semantic = semanticIndex.get(objectId);
     if (semantic !== undefined && semantic.variants.length !== 1) {
-      throw new Error(`external Go type '${objectId}' has profile-dependent go/types declarations but one profile storage contract '${storageIdentity}'`);
+      throw new Error(`dependency Go type '${objectId}' has profile-dependent go/types declarations but one storage contract '${storageIdentity}'`);
     }
   }
   const authoredModules = authoredFacadeModuleSet(config);
@@ -30,14 +40,17 @@ export function buildExternalFacadeMap(config, snapshot) {
     policies,
     authoredModules,
   );
-  const directUsages = collectExternalTypeUsages(config, snapshot);
-  const selectedObjectIds = selectExternalFacadeObjectIds(
+  const directUsages = collectDependencyTypeUsages(config, snapshot, semanticIndex, activeLocalTypeProfileKeys, methodSetSignatures);
+  const { selectedObjectIds, reachedProfileKeys } = selectExternalFacadeObjectIds(
     config,
     semanticIndex,
     resolvePolicy,
     profileStorage,
     directUsages,
+    methodSetSignatures,
+    activeLocalTypeProfileKeys,
   );
+  requireExactDependencyTypeClosure(semanticIndex, reachedProfileKeys);
   const storageOwners = externalStorageOwners(config, policies, profileStorage);
   const facades = new Map();
   for (const objectId of [...selectedObjectIds].sort(compareText)) {
@@ -54,21 +67,7 @@ export function buildExternalFacadeMap(config, snapshot) {
 }
 
 export function buildExternalFacadeStorageCatalog(config, snapshot) {
-  const semanticIndex = buildExternalSemanticTypeIndex(snapshot);
-  const profile = loadProfile(config);
-  const profileStorage = externalProfileStorage(profile);
-  const authoredModules = authoredFacadeModuleSet(config);
-  const policies = normalizedExternalFacadePolicies(config, semanticIndex, profileStorage, authoredModules);
-  const storageOwners = externalStorageOwners(config, policies, profileStorage);
-  const facades = new Map();
-  for (const [objectId, policy] of [...policies].sort(([left], [right]) => compareText(left, right))) {
-    const semantic = semanticIndex.get(objectId);
-    if (semantic === undefined) throw new Error(`external facade storage policy '${objectId}' has no exact semantic declaration`);
-    const facade = materializeExternalFacade(config, semantic, policy);
-    if (storageOwners.get(facade.storageIdentity) !== objectId) throw new Error(`external facade '${objectId}' lost its exact TypeScript storage ownership`);
-    facades.set(objectId, facade);
-  }
-  return facades;
+  return buildExternalFacadeMap(config, snapshot);
 }
 
 function materializeExternalFacade(config, semantic, policy) {
@@ -83,14 +82,14 @@ function materializeExternalFacade(config, semantic, policy) {
   };
 }
 
-export function buildExternalSemanticTypeIndex(snapshot) {
-  if (!Array.isArray(snapshot?.semantic?.externalDeclarations)) {
-    throw new Error("Porter snapshot has no exact external go/types declaration index");
+export function buildDependencySemanticTypeIndex(snapshot) {
+  if (!Array.isArray(snapshot?.semantic?.dependencyTypeDeclarations)) {
+    throw new Error("Porter snapshot has no exact dependency go/types declaration index");
   }
   const index = new Map();
-  for (const [declarationIndex, report] of snapshot.semantic.externalDeclarations.entries()) {
-    const label = `snapshot.semantic.externalDeclarations[${declarationIndex}]`;
-    const declaration = requireExternalTypeDeclaration(report, label);
+  for (const [declarationIndex, report] of snapshot.semantic.dependencyTypeDeclarations.entries()) {
+    const label = `snapshot.semantic.dependencyTypeDeclarations[${declarationIndex}]`;
+    const declaration = requireDependencyTypeDeclaration(report, label);
     const objectId = declaration.object.id;
     const entry = index.get(objectId) ?? {
       objectId,
@@ -104,7 +103,7 @@ export function buildExternalSemanticTypeIndex(snapshot) {
       throw new Error(`${label} changes exact external Go object identity '${objectId}'`);
     }
     for (const profile of report.profiles) {
-      if (entry.byProfile.has(profile)) throw new Error(`${label} duplicates external Go type '${objectId}' in semantic profile '${profile}'`);
+      if (entry.byProfile.has(profile)) throw new Error(`${label} duplicates dependency Go type '${objectId}' in semantic profile '${profile}'`);
       entry.byProfile.set(profile, declaration);
     }
     entry.variants.push({ declaration, profiles: [...report.profiles] });
@@ -112,14 +111,18 @@ export function buildExternalSemanticTypeIndex(snapshot) {
   }
   for (const entry of index.values()) {
     entry.variants.sort((left, right) => compareText(canonicalSchemaValue(left.declaration), canonicalSchemaValue(right.declaration)));
-    entry.arity = invariantExternalProperty(entry, "type-parameter arity", (declaration) => declaration.typeParameters.length);
-    entry.intrinsicNilable = invariantExternalProperty(entry, "intrinsic nilability", (declaration) => declaration.object.type.nilable);
-    entry.declarationKind = invariantExternalProperty(entry, "declaration kind", externalDeclarationKind);
+    entry.arity = invariantDependencyProperty(entry, "type-parameter arity", (declaration) => declaration.typeParameters.length);
   }
   return new Map([...index.entries()].sort(([left], [right]) => compareText(left, right)));
 }
 
-export function collectExternalTypeUsages(config, snapshot) {
+export function collectDependencyTypeUsages(
+  config,
+  snapshot,
+  semanticIndex = buildDependencySemanticTypeIndex(snapshot),
+  activeLocalTypeProfileKeys = buildActiveLocalTypeProfileKeys(config, snapshot),
+  methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot),
+) {
   const usages = new Map();
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
@@ -135,6 +138,11 @@ export function collectExternalTypeUsages(config, snapshot) {
     visitType(declaration.type?.rhs, profiles);
     for (const parameter of declaration.type?.typeParameters ?? []) visitType(parameter.constraint, profiles);
     for (const method of declaration.type?.methods ?? []) visitSignature(method.signature, profiles);
+    if (declaration.type !== undefined) {
+      for (const mode of ["value", "pointer"]) {
+        for (const method of materializeSemanticMethodSet(declaration.type, mode, methodSetSignatures)) visitSignature(method.signature, profiles);
+      }
+    }
     visitSignature(declaration.signature, profiles);
     for (const specification of declaration.valueSpecs ?? []) {
       for (const binding of specification.names ?? []) visitType(binding.type, profiles);
@@ -153,7 +161,15 @@ export function collectExternalTypeUsages(config, snapshot) {
     if (type === undefined) return;
     if (type.kind === "named" || type.kind === "alias") {
       const reference = type.reference;
-      if (isExternalPackage(reference.packagePath, config.goModulePath)) record(reference, profiles);
+      requireDependencyReference(reference, "active Go semantic declaration");
+      const dependencyProfiles = new Set([...profiles].filter((profile) => requiresDependencyDeclarationForProfile(
+        reference,
+        profile,
+        semanticIndex,
+        activeLocalTypeProfileKeys,
+        config.goModulePath,
+      )));
+      if (dependencyProfiles.size > 0) record(reference, dependencyProfiles);
       for (const argument of reference.typeArgs ?? []) visitType(argument, profiles);
       return;
     }
@@ -168,11 +184,11 @@ export function collectExternalTypeUsages(config, snapshot) {
   }
 
   function record(reference, profiles) {
-    requireExternalReference(reference, "active Go semantic declaration");
+    requireDependencyReference(reference, "active Go semantic declaration");
     const arity = reference.typeArgs.length;
     const existing = usages.get(reference.objectId);
     if (existing !== undefined) {
-      if (existing.arity !== arity) throw new Error(`external Go type '${reference.objectId}' is instantiated with conflicting arities`);
+      if (existing.arity !== arity) throw new Error(`dependency Go type '${reference.objectId}' is instantiated with conflicting arities`);
       existing.count++;
       for (const profile of profiles) existing.profiles.add(profile);
       return;
@@ -187,14 +203,23 @@ export function collectExternalTypeUsages(config, snapshot) {
   }
 }
 
-function selectExternalFacadeObjectIds(config, semanticIndex, resolvePolicy, profileStorage, directUsages) {
+function selectExternalFacadeObjectIds(
+  config,
+  semanticIndex,
+  resolvePolicy,
+  profileStorage,
+  directUsages,
+  methodSetSignatures,
+  activeLocalTypeProfileKeys,
+) {
   const selected = new Set();
+  const reached = new Set();
   const pending = [];
   const queued = new Set();
   const expanded = new Set();
 
   for (const usage of directUsages) {
-    requireExternalSemanticUsage(semanticIndex, usage.objectId, usage.arity, usage.profiles, "active Go declaration");
+    requireDependencySemanticUsage(semanticIndex, usage.objectId, usage.arity, usage.profiles, "active Go declaration");
     for (const profile of usage.profiles) enqueue(usage.objectId, profile, "active Go declaration");
   }
   while (pending.length > 0) {
@@ -203,28 +228,41 @@ function selectExternalFacadeObjectIds(config, semanticIndex, resolvePolicy, pro
     const semantic = semanticIndex.get(current.objectId);
     const declaration = semantic?.byProfile.get(current.profile);
     if (declaration === undefined) {
-      throw new Error(`external Go type '${current.objectId}' has no declaration in semantic profile '${current.profile}' required by ${current.reason}`);
+      throw new Error(`dependency Go type '${current.objectId}' has no declaration in semantic profile '${current.profile}' required by ${current.reason}`);
     }
-    if (profileStorage.has(current.objectId)) continue;
-    const policy = resolvePolicy(current.objectId);
-    if (policy === undefined) {
-      throw new Error(`external Go dependency '${current.objectId}' in semantic profile '${current.profile}' requires an exact TS module/name/storage policy; reached from ${current.reason}`);
+    reached.add(current.key);
+    const moduleLocalDependency = isModulePackage(semantic.packagePath, config.goModulePath);
+    if (moduleLocalDependency && !profileStorage.has(current.objectId)) {
+      throw new Error(`excluded module-local dependency type '${current.objectId}' in semantic profile '${current.profile}' requires an explicit go-type-storage relation; reached from ${current.reason}`);
     }
-    selected.add(current.objectId);
-    if (policy.storageStrategy === "authored" || expanded.has(current.key)) continue;
+    if (!moduleLocalDependency && !profileStorage.has(current.objectId)) {
+      const policy = resolvePolicy(current.objectId);
+      if (policy === undefined) {
+        throw new Error(`external Go dependency '${current.objectId}' in semantic profile '${current.profile}' requires an exact TS module/name/storage policy; reached from ${current.reason}`);
+      }
+      selected.add(current.objectId);
+    }
+    if (expanded.has(current.key)) continue;
     expanded.add(current.key);
-    for (const dependency of externalDeclarationDependencies(declaration, config.goModulePath)) {
-      requireExternalSemanticUsage(
+    for (const dependency of dependencyDeclarationDependencies(
+      declaration,
+      semanticIndex,
+      activeLocalTypeProfileKeys,
+      config.goModulePath,
+      methodSetSignatures,
+      current.profile,
+    )) {
+      requireDependencySemanticUsage(
         semanticIndex,
         dependency.objectId,
         dependency.arity,
         new Set([current.profile]),
-        `generated external facade '${current.objectId}'`,
+        `dependency type '${current.objectId}'`,
       );
-      enqueue(dependency.objectId, current.profile, `generated external facade '${current.objectId}'`);
+      enqueue(dependency.objectId, current.profile, `dependency type '${current.objectId}'`);
     }
   }
-  return selected;
+  return { selectedObjectIds: selected, reachedProfileKeys: reached };
 
   function enqueue(objectId, profile, reason) {
     const key = `${profile}\0${objectId}`;
@@ -234,12 +272,22 @@ function selectExternalFacadeObjectIds(config, semanticIndex, resolvePolicy, pro
   }
 }
 
-function externalDeclarationDependencies(declaration, modulePath) {
+function dependencyDeclarationDependencies(
+  declaration,
+  semanticIndex,
+  activeLocalTypeProfileKeys,
+  modulePath,
+  methodSetSignatures,
+  profile,
+) {
   const dependencies = new Map();
   visitType(declaration.object?.type);
   visitType(declaration.rhs);
   for (const parameter of declaration.typeParameters ?? []) visitType(parameter.constraint);
   for (const method of declaration.methods ?? []) visitSignature(method.signature);
+  for (const mode of ["value", "pointer"]) {
+    for (const method of materializeSemanticMethodSet(declaration, mode, methodSetSignatures)) visitSignature(method.signature);
+  }
   return [...dependencies.values()].sort((left, right) => compareText(left.objectId, right.objectId));
 
   function visitSignature(signature) {
@@ -254,10 +302,10 @@ function externalDeclarationDependencies(declaration, modulePath) {
     if (type === undefined) return;
     if (type.kind === "named" || type.kind === "alias") {
       if (!isPlainObject(type.reference) || !Array.isArray(type.reference.typeArgs)) {
-        throw new Error("external declaration dependency has an incomplete named/alias reference");
+        throw new Error("dependency declaration has an incomplete named/alias reference");
       }
-      if (isExternalPackage(type.reference.packagePath, modulePath)) {
-        requireExternalReference(type.reference, "external declaration dependency");
+      if (requiresDependencyDeclarationForProfile(type.reference, profile, semanticIndex, activeLocalTypeProfileKeys, modulePath)) {
+        requireDependencyReference(type.reference, "dependency declaration");
         record(type.reference);
       }
       for (const argument of type.reference.typeArgs) visitType(argument);
@@ -278,18 +326,29 @@ function externalDeclarationDependencies(declaration, modulePath) {
     const arity = reference.typeArgs.length;
     const previous = dependencies.get(reference.objectId);
     if (previous !== undefined && previous.arity !== arity) {
-      throw new Error(`external declaration dependency '${reference.objectId}' has conflicting exact arities`);
+      throw new Error(`dependency declaration '${reference.objectId}' has conflicting exact arities`);
     }
     dependencies.set(reference.objectId, { objectId: reference.objectId, arity });
   }
 }
 
-function requireExternalSemanticUsage(semanticIndex, objectId, arity, profiles, source) {
+function requireExactDependencyTypeClosure(semanticIndex, reachedProfileKeys) {
+  for (const entry of semanticIndex.values()) {
+    for (const profile of entry.byProfile.keys()) {
+      const key = `${profile}\0${entry.objectId}`;
+      if (!reachedProfileKeys.has(key)) {
+        throw new Error(`snapshot dependency type '${entry.objectId}' in semantic profile '${profile}' is not recursively reachable from an active Go declaration`);
+      }
+    }
+  }
+}
+
+function requireDependencySemanticUsage(semanticIndex, objectId, arity, profiles, source) {
   const semantic = semanticIndex.get(objectId);
-  if (semantic === undefined) throw new Error(`${source} references external type '${objectId}' without extracted go/types declaration evidence`);
-  if (semantic.arity !== arity) throw new Error(`${source} references external type '${objectId}' with ${arity} type argument(s), expected ${semantic.arity}`);
+  if (semantic === undefined) throw new Error(`${source} references dependency type '${objectId}' without extracted go/types declaration evidence`);
+  if (semantic.arity !== arity) throw new Error(`${source} references dependency type '${objectId}' with ${arity} type argument(s), expected ${semantic.arity}`);
   for (const profile of profiles) {
-    if (!semantic.byProfile.has(profile)) throw new Error(`${source} references external type '${objectId}' outside semantic profile '${profile}'`);
+    if (!semantic.byProfile.has(profile)) throw new Error(`${source} references dependency type '${objectId}' outside semantic profile '${profile}'`);
   }
 }
 
@@ -333,6 +392,9 @@ function normalizedExternalFacadePolicies(config, semanticIndex, profileStorage,
     requireExternalTypeObjectId(objectId, `${label}.objectId`);
     const semantic = semanticIndex.get(objectId);
     if (semantic === undefined) throw new Error(`${label}.objectId '${objectId}' has no extracted go/types declaration`);
+    if (!isExternalPackage(semantic.packagePath, config.goModulePath)) {
+      throw new Error(`${label}.objectId '${objectId}' is module-local; excluded local dependency types require go-type-storage relations`);
+    }
     if (profileStorage.has(objectId)) {
       throw new Error(`external Go type '${objectId}' has both facade policy storage and profile named-type storage`);
     }
@@ -365,7 +427,19 @@ function resolveExternalFacadePolicy(config, profile, semantic, policies, author
   const explicit = policies.get(semantic.objectId);
   if (explicit !== undefined) return explicit;
   const tsModule = externalFacadeModulePath(config, profile, semantic.packagePath);
-  if (authoredModules.has(tsModule)) return undefined;
+  if (authoredModules.has(tsModule)) {
+    const authored = {
+      objectId: semantic.objectId,
+      tsModule,
+      tsName: semantic.name,
+      storageStrategy: "authored",
+      runtimeAdaptation: undefined,
+      methodBindings: [],
+    };
+    validateExternalFacadePolicy(authored, semantic, authoredModules, `automatic authored external facade '${semantic.objectId}'`);
+    policies.set(semantic.objectId, authored);
+    return authored;
+  }
   if (safeIdentifier(semantic.name) !== semantic.name) {
     throw new Error(`external Go type '${semantic.objectId}' needs an explicit storage policy because its name is not an exact TypeScript declaration identifier`);
   }
@@ -394,16 +468,17 @@ function validateExternalFacadePolicy(policy, semantic, authoredModules, label) 
   if (policy.methodBindings.length > 0 && policy.storageStrategy !== "authored") {
     throw new Error(`${label}.methodBindings require authored storage`);
   }
-  if (policy.storageStrategy === "generated" && representation !== undefined && representation !== "class") {
-    throw new Error(`${label} generated storage supports only class runtime adaptation; '${representation}' storage must be authored`);
+  if (policy.methodBindings.length > 0 && representation !== "scalar") {
+    throw new Error(`${label}.methodBindings are permitted only when reviewed scalar storage cannot carry Go instance methods`);
   }
-  if (policy.storageStrategy === "generated" && representation === "class"
-    && semantic.variants.some(({ declaration }) => declaration.alias || declaration.rhs.kind !== "struct")) {
-    throw new Error(`${label} class runtime adaptation requires a defined Go struct in every active semantic profile`);
+  if (policy.storageStrategy === "generated" && policy.runtimeAdaptation !== undefined) {
+    throw new Error(`${label} generated declaration storage cannot define runtime adaptation; runtime representation belongs to authored storage`);
   }
-  if (policy.storageStrategy === "generated" && representation !== "class"
-    && semantic.variants.some(({ declaration }) => declaration.methods.length > 0)) {
-    throw new Error(`external facade ${semantic.objectId} has declared Go methods but no generated class runtime adaptation`);
+  if (policy.storageStrategy === "authored" && representation !== undefined && policy.runtimeAdaptation?.tsDeclarationHash === undefined) {
+    throw new Error(`${label} authored runtime representation requires one exact tsDeclarationHash`);
+  }
+  if (policy.storageStrategy === "generated" && policy.runtimeAdaptation?.tsDeclarationHash !== undefined) {
+    throw new Error(`${label} generated runtime representation cannot carry an authored tsDeclarationHash`);
   }
 }
 
@@ -424,10 +499,11 @@ function externalStorageOwners(config, policies, profileStorage) {
   }
 }
 
-function requireExternalTypeDeclaration(report, label) {
+function requireDependencyTypeDeclaration(report, label) {
   if (!isPlainObject(report) || report.kind !== "type" || !isPlainObject(report.type) || !isPlainObject(report.object)) {
-    throw new Error(`${label} must be one canonical external Go type declaration`);
+    throw new Error(`${label} must be one canonical dependency Go type declaration`);
   }
+  if (Object.hasOwn(report, "externalRole")) throw new Error(`${label}.externalRole is obsolete; dependency declarations are exact reachable types only`);
   if (!Array.isArray(report.profiles) || report.profiles.length === 0 || report.profiles.some((profile) => !Number.isSafeInteger(profile) || profile < 0)) {
     throw new Error(`${label}.profiles must identify one or more exact semantic profiles`);
   }
@@ -454,23 +530,17 @@ function requireExternalTypeDeclaration(report, label) {
   return { ...report.type, methods: report.type.methods ?? [] };
 }
 
-function invariantExternalProperty(entry, label, select) {
+function invariantDependencyProperty(entry, label, select) {
   let value;
   for (const declaration of entry.byProfile.values()) {
     const next = select(declaration);
     if (value === undefined) value = next;
     else if (canonicalSchemaValue(value) !== canonicalSchemaValue(next)) {
-      throw new Error(`external Go type '${entry.objectId}' changes ${label} across active semantic profiles`);
+      throw new Error(`dependency Go type '${entry.objectId}' changes ${label} across active semantic profiles`);
     }
   }
-  if (value === undefined) throw new Error(`external Go type '${entry.objectId}' has no active semantic profile`);
+  if (value === undefined) throw new Error(`dependency Go type '${entry.objectId}' has no active semantic profile`);
   return value;
-}
-
-function externalDeclarationKind(declaration) {
-  if (declaration.rhs.kind === "interface") return "interface";
-  if (declaration.rhs.kind === "struct") return "struct";
-  return "type";
 }
 
 export function authoredFacadeModuleSet(config) {
@@ -486,23 +556,6 @@ export function authoredFacadeModuleSet(config) {
   return modules;
 }
 
-function externalProfileStorage(profile) {
-  const storage = new Map();
-  for (const [label, mappings] of [
-    ["signatureCheck.stdlibTypes", profile.stdlibTypes],
-    ["signatureCheck.namedTypeMappings", profile.namedTypeMappings],
-  ]) {
-    for (const [objectId, identity] of Object.entries(mappings ?? {})) {
-      const previous = storage.get(objectId);
-      if (previous !== undefined && previous !== identity) {
-        throw new Error(`${label}.${objectId} conflicts with external profile storage '${previous}'`);
-      }
-      storage.set(objectId, identity);
-    }
-  }
-  return storage;
-}
-
 function requireExternalTypeObjectId(value, label) {
   if (typeof value !== "string" || !/^[^:\s]+::type::[^:\s]+$/.test(value)) {
     throw new Error(`${label} must be one exact external Go type object identity`);
@@ -515,16 +568,13 @@ function requireExactTsModule(value, label) {
   }
 }
 
-function requireExternalReference(reference, label) {
+function requireDependencyReference(reference, label) {
   if (!isPlainObject(reference) || typeof reference.objectId !== "string" || typeof reference.packagePath !== "string"
     || typeof reference.name !== "string" || !Array.isArray(reference.typeArgs)) {
-    throw new Error(`${label} has an incomplete external go/types reference`);
+    throw new Error(`${label} has an incomplete dependency go/types reference`);
   }
-  if (reference.objectId !== `${reference.packagePath}::type::${reference.name}`) throw new Error(`${label} has an inconsistent external go/types object identity`);
-}
-
-function isExternalPackage(packagePath, modulePath) {
-  return packagePath !== "" && packagePath !== modulePath && !packagePath.startsWith(`${modulePath}/`);
+  const owner = reference.packagePath === "" ? "builtin" : reference.packagePath;
+  if (reference.objectId !== `${owner}::type::${reference.name}`) throw new Error(`${label} has an inconsistent dependency go/types object identity`);
 }
 
 function requirePlainObject(value, label) {

@@ -46,8 +46,8 @@ export function compareSignatures(
   actual,
   override,
   canon = (identity) => identity,
-  conventions = { equivalences: [] },
-  allowedGlobalNames = [],
+  conventions = {},
+  ambientReferences = { accept: () => false },
 ) {
   const ignore = override?.ignore ?? new Set();
   const mismatches = [];
@@ -82,7 +82,7 @@ export function compareSignatures(
   }
   if (expected.kind === "profileVariants") {
     for (const variant of expected.variants) {
-      for (const mismatch of compareSignatures(variant.descriptor, actual, null, canon, conventions, allowedGlobalNames)) {
+      for (const mismatch of compareSignatures(variant.descriptor, actual, null, canon, conventions, ambientReferences)) {
         push(mismatch.kind, `profile ${variant.profiles.join(",")}: ${mismatch.detail}`, mismatch.expected, mismatch.actual);
       }
     }
@@ -106,10 +106,9 @@ export function compareSignatures(
     if (!equalType(expected.type, actual.type)) push("alias-type", "alias type differs", keyOf(expected.type), keyOf(actual.type));
   } else if (actual.kind === "value") compareValues(expected, actual, push, equalType);
 
-  const allowedGlobals = allowedGlobalNames instanceof Set ? allowedGlobalNames : new Set(allowedGlobalNames ?? []);
   const softIds = [...new Set([
-    ...unitSoftIds(expected, conventions, allowedGlobals),
-    ...unitSoftIds(actual, conventions, allowedGlobals),
+    ...unitSoftIds(expected, conventions, ambientReferences),
+    ...unitSoftIds(actual, conventions, ambientReferences),
   ])];
   if (softIds.length > 0) push("unresolved-ref", `unresolved type identity: ${softIds.slice(0, 6).join(", ")}`);
   const unsupported = [...new Set([...unitUnsupportedTypes(expected), ...unitUnsupportedTypes(actual)])];
@@ -130,9 +129,6 @@ function compareFunction(expected, actual, push, equalType, equalConstraint) {
     const expectedSignature = expected.signatures[index];
     const actualSignature = actual.signatures[index];
     const signaturePush = (kind, detail, left, right) => push(kind, `signature #${index}: ${detail}`, left, right);
-    if (expectedSignature.role !== actualSignature.role) {
-      signaturePush("function-signature-role", "signature role differs", expectedSignature.role, actualSignature.role);
-    }
     compareModifiers(expectedSignature.declarationModifiers, actualSignature.declarationModifiers, "signature declaration", signaturePush);
     compareTypeParameters(expectedSignature.typeParams, actualSignature.typeParams, signaturePush, equalConstraint, "signature");
     compareCallable(expectedSignature, actualSignature, signaturePush, equalType);
@@ -344,9 +340,6 @@ function compareMember(expected, actual, push, equalType, equalConstraint, overl
   if (expected.definite !== actual.definite && (owns(expected, "definite") || owns(actual, "definite"))) {
     push("member-definite", `${label} definite-assignment semantics differ`, expected.definite, actual.definite);
   }
-  if (expected.role !== actual.role && (owns(expected, "role") || owns(actual, "role"))) {
-    push("member-declaration-role", `${label} declaration role differs`, expected.role, actual.role);
-  }
   compareModifiers(expected.modifiers, actual.modifiers, label, push, "member-modifier");
   if (actual.missingType || actual.type?.missingReturnType) push("member-annotation-missing", `${label} has a missing type annotation`);
   if (expected.type?.t === "fn" && actual.type?.t === "fn") {
@@ -549,10 +542,10 @@ function unitTypeNodes(descriptor) {
   return output;
 }
 
-function unitSoftIds(descriptor, conventions, allowedGlobals) {
+function unitSoftIds(descriptor, conventions, ambientReferences) {
   const identities = new Set();
   for (const [context, type] of unitTypeNodes(descriptor)) collectSoftIds(normalizeDescriptor(type, conventions, context), identities);
-  return [...identities].filter((identity) => !(identity.startsWith("global::") && allowedGlobals.has(identity.slice("global::".length))));
+  return [...identities].filter((identity) => !ambientReferences.accept(identity));
 }
 
 function collectSoftIds(descriptor, identities) {

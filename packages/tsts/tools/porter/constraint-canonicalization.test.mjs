@@ -17,7 +17,7 @@ const index = {
   primCore: { bool: "bool", int: "int", int32: "int", uint32: "uint" },
   primCompat: {},
 };
-const conventions = loadConventions({ goConstraintId, equivalences: [] });
+const conventions = loadConventions({ goConstraintId });
 
 const kw = (keyword) => ({ t: "kw", kw: keyword });
 const ref = (id, args = []) => ({ t: "ref", id, args });

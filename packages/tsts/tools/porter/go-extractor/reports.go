@@ -18,27 +18,28 @@ type Environment struct {
 }
 
 type SemanticEvidenceReport struct {
-	Toolchain            string                           `json:"toolchain"`
-	ToolchainExecutable  string                           `json:"toolchainExecutable"`
-	ToolchainHash        string                           `json:"toolchainHash"`
-	GOROOT               string                           `json:"goroot"`
-	GOROOTHash           string                           `json:"gorootHash"`
-	GOROOTHashContract   string                           `json:"gorootHashContract"`
-	GOROOTEntryCount     int                              `json:"gorootEntryCount"`
-	GOROOTFileCount      int                              `json:"gorootFileCount"`
-	GOROOTDirectoryCount int                              `json:"gorootDirectoryCount"`
-	GOROOTSymlinkCount   int                              `json:"gorootSymlinkCount"`
-	GOROOTBytes          int64                            `json:"gorootBytes"`
-	Compiler             string                           `json:"compiler"`
-	ReleaseTags          []string                         `json:"releaseTags"`
-	ModulePath           string                           `json:"modulePath"`
-	RequiredFiles        []string                         `json:"requiredFiles"`
-	CoveredFiles         []string                         `json:"coveredFiles"`
-	ExcludedFiles        []string                         `json:"excludedFiles"`
-	Profiles             []SemanticProfileReport          `json:"profiles"`
-	UnsupportedProfiles  []SemanticProfileRejectionReport `json:"unsupportedProfiles"`
-	ModuleGraph          []SemanticModuleReport           `json:"moduleGraph"`
-	ExternalDeclarations []SemanticDeclarationReport      `json:"externalDeclarations"`
+	Toolchain                  string                             `json:"toolchain"`
+	ToolchainExecutable        string                             `json:"toolchainExecutable"`
+	ToolchainHash              string                             `json:"toolchainHash"`
+	GOROOT                     string                             `json:"goroot"`
+	GOROOTHash                 string                             `json:"gorootHash"`
+	GOROOTHashContract         string                             `json:"gorootHashContract"`
+	GOROOTEntryCount           int                                `json:"gorootEntryCount"`
+	GOROOTFileCount            int                                `json:"gorootFileCount"`
+	GOROOTDirectoryCount       int                                `json:"gorootDirectoryCount"`
+	GOROOTSymlinkCount         int                                `json:"gorootSymlinkCount"`
+	GOROOTBytes                int64                              `json:"gorootBytes"`
+	Compiler                   string                             `json:"compiler"`
+	ReleaseTags                []string                           `json:"releaseTags"`
+	ModulePath                 string                             `json:"modulePath"`
+	RequiredFiles              []string                           `json:"requiredFiles"`
+	CoveredFiles               []string                           `json:"coveredFiles"`
+	ExcludedFiles              []string                           `json:"excludedFiles"`
+	Profiles                   []SemanticProfileReport            `json:"profiles"`
+	UnsupportedProfiles        []SemanticProfileRejectionReport   `json:"unsupportedProfiles"`
+	ModuleGraph                []SemanticModuleReport             `json:"moduleGraph"`
+	MethodSetSignatures        []SemanticMethodSetSignatureReport `json:"methodSetSignatures"`
+	DependencyTypeDeclarations []SemanticDeclarationReport        `json:"dependencyTypeDeclarations"`
 }
 
 type SemanticProfileReport struct {
@@ -192,14 +193,13 @@ type TypeExprReport struct {
 }
 
 type SemanticDeclarationReport struct {
-	Kind         string                    `json:"kind"`
-	PackagePath  string                    `json:"packagePath"`
-	ExternalRole string                    `json:"externalRole,omitempty"`
-	Object       *SemanticObjectReport     `json:"object,omitempty"`
-	Type         *SemanticTypeDeclaration  `json:"type,omitempty"`
-	ValueSpecs   []SemanticValueSpecReport `json:"valueSpecs,omitempty"`
-	Signature    *SemanticSignatureReport  `json:"signature,omitempty"`
-	Profiles     []int                     `json:"profiles"`
+	Kind        string                    `json:"kind"`
+	PackagePath string                    `json:"packagePath"`
+	Object      *SemanticObjectReport     `json:"object,omitempty"`
+	Type        *SemanticTypeDeclaration  `json:"type,omitempty"`
+	ValueSpecs  []SemanticValueSpecReport `json:"valueSpecs,omitempty"`
+	Signature   *SemanticSignatureReport  `json:"signature,omitempty"`
+	Profiles    []int                     `json:"profiles"`
 }
 
 type SemanticObjectReport struct {
@@ -215,9 +215,10 @@ type SemanticTypeDeclaration struct {
 	Object           SemanticObjectReport            `json:"object"`
 	TypeParameters   []SemanticTypeParameterReport   `json:"typeParameters"`
 	RHS              *SemanticTypeReport             `json:"rhs"`
-	Methods          []SemanticMethodReport          `json:"methods,omitempty"`
-	ValueMethodSet   []SemanticMethodSelectionReport `json:"valueMethodSet,omitempty"`
-	PointerMethodSet []SemanticMethodSelectionReport `json:"pointerMethodSet,omitempty"`
+	MethodSurface    string                          `json:"methodSurface"`
+	Methods          []SemanticMethodReport          `json:"methods"`
+	ValueMethodSet   []SemanticMethodSelectionReport `json:"valueMethodSet"`
+	PointerMethodSet []SemanticMethodSelectionReport `json:"pointerMethodSet"`
 }
 
 type SemanticValueSpecReport struct {
@@ -280,7 +281,7 @@ type SemanticTypeParameterReport struct {
 	Reference        SemanticTypeParameterRef  `json:"reference"`
 	Constraint       *SemanticTypeReport       `json:"constraint"`
 	ConstraintSource *SemanticTypeParameterRef `json:"constraintSource,omitempty"`
-	ConstraintSyntax string                    `json:"constraintSyntax,omitempty"`
+	ConstraintSyntax string                    `json:"constraintSyntax"`
 }
 
 type SemanticSignatureReport struct {
@@ -338,11 +339,22 @@ type SemanticMethodReport struct {
 }
 
 type SemanticMethodSelectionReport struct {
-	Key       string                   `json:"key"`
-	Method    SemanticMethodReport     `json:"method"`
-	Index     []int                    `json:"index"`
-	Indirect  bool                     `json:"indirect"`
-	Promoted  bool                     `json:"promoted"`
+	Key           string                   `json:"key"`
+	MethodID      string                   `json:"methodId"`
+	MethodOwnerID string                   `json:"methodOwnerId"`
+	Name          string                   `json:"name"`
+	PackagePath   string                   `json:"packagePath"`
+	Exported      bool                     `json:"exported"`
+	Index         []int                    `json:"index"`
+	Indirect      bool                     `json:"indirect"`
+	Promoted      bool                     `json:"promoted"`
+	SignatureID   string                   `json:"signatureId"`
+	Signature     *SemanticSignatureReport `json:"-"`
+}
+
+type SemanticMethodSetSignatureReport struct {
+	ID        string                   `json:"id"`
+	MethodID  string                   `json:"methodId"`
 	Signature *SemanticSignatureReport `json:"signature"`
 }
 

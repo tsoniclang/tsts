@@ -8,19 +8,24 @@ export function buildDeclaredTypeRhsIndex(snapshot) {
       for (const semantic of unit.semantic ?? []) {
         const declaration = semantic?.type;
         if (declaration?.rhs === undefined) continue;
-        const objectId = declaration.object?.id;
-        if (typeof objectId !== "string" || objectId.length === 0) {
-          throw new Error(`Go type unit '${unit.id}' has an exact RHS without an object identity`);
-        }
-        for (const profile of semantic.profiles ?? []) {
-          const declarations = byProfile.get(profile) ?? new Map();
-          setExactRhs(declarations, objectId, declaration.rhs, profile);
-          byProfile.set(profile, declarations);
-        }
+        addDeclaration(declaration.object?.id, declaration.rhs, semantic.profiles, `Go type unit '${unit.id}'`);
       }
     }
   }
+  for (const semantic of snapshot.semantic?.dependencyTypeDeclarations ?? []) {
+    if (semantic?.kind !== "type" || semantic.type?.rhs === undefined) continue;
+    addDeclaration(semantic.type.object?.id, semantic.type.rhs, semantic.profiles, "dependency Go type");
+  }
   return byProfile;
+
+  function addDeclaration(objectId, rhs, profiles, label) {
+    if (typeof objectId !== "string" || objectId.length === 0) throw new Error(`${label} has an exact RHS without an object identity`);
+    for (const profile of profiles ?? []) {
+      const declarations = byProfile.get(profile) ?? new Map();
+      setExactRhs(declarations, objectId, rhs, profile);
+      byProfile.set(profile, declarations);
+    }
+  }
 }
 
 export function semanticConstantUsesBigInt(type, index, profile) {

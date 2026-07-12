@@ -77,6 +77,15 @@ The comparison uses exact module/export/object identity. It has no terminal-name
 matching, suffix aliasing, source-spelling guesses, structural waivers, or
 compatibility path.
 
+Dependency declaration evidence is split by ownership. The semantic snapshot's
+`dependencyTypeDeclarations` collection is a type-only transitive closure rooted
+in active local declaration signatures. External-package entries may receive
+generated facades; excluded module-local entries require exact reviewed
+`go-type-storage` relations. The collection is neither a package API inventory
+nor a source for generated functions, constants, or variables. A reviewed
+authored package surface is an independent explicit partial contract and cannot
+seed the generated type closure.
+
 Any reviewed declaration divergence must use one local `@tsgo-override` with:
 
 - a registered timeless category;
@@ -123,9 +132,11 @@ False positives are preferable to silent misses. A new upstream shape must be
 modeled at the extractor/schema/comparator boundary or rejected explicitly; it
 must never acquire an approximation or fallback.
 
-Audit execution is evidence. Commands that do not run declaration-signature,
-authored-facade, unmatched-TypeScript, or JSON-tag checks record those sections
-as `not-run`, never as zero findings. A completed verification report preserves
-the concrete facade and TypeScript declaration inventories alongside counts so
-reviewers can trace every reported row to its source declaration or export
-route. Parser unavailability is a Porter test failure, not a skip condition.
+Audit execution is evidence. Every declaration subaudit records `complete` or
+`not-run` independently, with a reason for non-execution; skipped checks are
+never represented as zero findings. Trusted verification requires every
+whole-program subaudit, including declaration ownership, and rejects filtered
+signature evidence. A completed report preserves every concrete inventory row
+alongside counts. Parser freshness uncertainty is a failure, and the
+authoritative Porter test gate includes both recursive Node tests and the Go
+extractor test suite.

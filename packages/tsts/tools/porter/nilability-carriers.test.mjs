@@ -49,8 +49,6 @@ function indexWith(declarations = []) {
     primKeyword: { string: "string", any: "unknown" },
     primCore: { bool: "bool", int: "int" },
     primCompat: { error: "GoError" },
-    stdlibTypes: {},
-    namedTypeMappings: {},
     facadeTemplate: "src/go/{importPath}.ts",
     pkgType: new Map(declarations.map(([name]) => [`${packagePath}::${name}`, "src/p/types.ts"])),
     declaredTypeContractsByProfile: new Map([[0, contracts]]),
@@ -69,8 +67,11 @@ const context = (index) => ({ index, profile: 0, typeParameters: new Map() });
 test("compat declares one exact family of nilability carriers", () => {
   const source = renderGoCompatModule();
   assert.match(source, /export type GoNilable<T> = T \| undefined;/);
-  assert.match(source, /export type GoPtr<T> = GoNilable<T>;/);
-  assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \}>;/);
+  assert.match(source, /const __tsgoPointerMethodSet: unique symbol;/);
+  assert.match(source, /export type GoPointerMethodSet<Methods extends object> = Methods;/);
+  assert.match(source, /type GoPointerMethods<T> = typeof __tsgoPointerMethodSet extends keyof T/);
+  assert.match(source, /export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;/);
+  assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \} & GoPointerMethods<T>>;/);
   assert.match(source, /export type GoSlice<T> = GoNilable<T\[]>;/);
   assert.match(source, /export type GoMap<K, V> = GoNilable<Map<K, V>>;/);
   assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = GoNilable<\{/);
@@ -137,6 +138,28 @@ test("pointer lowering selects GoRef only from scalar representation evidence", 
   });
   assert.equal(polymorphic.t, "unsupported");
   assert.match(polymorphic.reason, /representation-polymorphic Go pointer/);
+});
+
+test("pointers to builtin interface values use mutable slot storage", () => {
+  const index = indexWith();
+  index.namedTypeStorage.set("builtin::type::error", `${compat}::GoError`);
+  index.knownStorageIdentities.add(`${compat}::GoError`);
+  const anyType = {
+    kind: "named", nilable: true,
+    reference: { objectId: "builtin::type::any", packagePath: "", name: "any", typeArgs: [] },
+  };
+  const errorType = {
+    kind: "named", nilable: true,
+    reference: { objectId: "builtin::type::error", packagePath: "", name: "error", typeArgs: [] },
+  };
+  assert.deepEqual(semanticTypeDescriptor({ kind: "pointer", nilable: true, element: anyType }, context(index)), {
+    t: "ref", id: `${compat}::GoRef`, args: [{
+      t: "ref", id: `${compat}::GoInterface`, args: [{ t: "kw", kw: "unknown" }],
+    }],
+  });
+  assert.deepEqual(semanticTypeDescriptor({ kind: "pointer", nilable: true, element: errorType }, context(index)), {
+    t: "ref", id: `${compat}::GoRef`, args: [{ t: "ref", id: `${compat}::GoError`, args: [] }],
+  });
 });
 
 test("pointer lowering preserves every nested storage layer", () => {

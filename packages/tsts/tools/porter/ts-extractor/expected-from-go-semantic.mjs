@@ -22,11 +22,16 @@ import {
   lowerSemanticTypeParameters,
   semanticContextWithTypeParameters,
 } from "./semantic-type-contract.mjs";
+import { buildTypeStorageIdentityMap } from "../core/type-storage-policies.mjs";
 
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
 export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map()) {
-  const evidence = addProfileSemanticStorageEvidence(buildTypeRepresentationEvidence(config, snapshot), profile);
+  const evidence = addProfileSemanticStorageEvidence(
+    buildTypeRepresentationEvidence(config, snapshot),
+    profile,
+    buildTypeStorageIdentityMap(config, snapshot),
+  );
   const pkgType = new Map();
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
@@ -61,8 +66,8 @@ export function buildExpectedIndex(config, snapshot, tsById, profile, generatedT
     declaredTypeRhsByProfile: buildDeclaredTypeRhsIndex(snapshot),
     declaredTypeContractsByProfile: evidence.declaredTypeContractsByProfile,
     externalTypeContracts: evidence.externalTypeContracts,
-    externalTypeContractsByProfile: evidence.externalTypeContractsByProfile,
-    externalPointerTerminalsByProfile: evidence.externalPointerTerminalsByProfile,
+    dependencyTypeContractsByProfile: evidence.dependencyTypeContractsByProfile,
+    dependencyPointerTerminalsByProfile: evidence.dependencyPointerTerminalsByProfile,
     externalFacadeArities: evidence.externalFacadeArities,
     namedTypeStorage: evidence.namedTypeStorage,
     rawInterfaceObjects: evidence.rawInterfaceObjects,
@@ -319,7 +324,7 @@ function referenceDescriptor(reference, argumentsList, index) {
   throw new Error(`Go type '${reference.objectId}' has no exact declaration or profile storage identity`);
 }
 
-function semanticConstantValue(constant, type, index, profile) {
+export function semanticConstantValue(constant, type, index, profile) {
   if (constant.kind === "Bool") return { kind: "boolean", value: constant.exact === "true" };
   if (constant.kind === "String") {
     if (typeof constant.stringValue !== "string") throw new Error("canonical Go String constant has no decoded stringValue");

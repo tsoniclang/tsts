@@ -99,7 +99,7 @@ declaration boundaries.
 Before comparison, every declaration, callable, parameter, type parameter, and
 type descriptor must satisfy the one current schema: plain enumerable own data
 properties, every required field present, and no unknown field. Signature
-comparison then covers declaration kind/modifiers/fragments, overload roles and
+comparison then covers declaration kind/modifiers/fragments, overload count and
 order, parameter names/roles/modifiers/defaults/optionality/rest position,
 return annotation policy, lexical generic bindings/modifiers/constraints/
 defaults, heritage, members, value declaration shape/type, enums, aliases,
@@ -116,14 +116,10 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
 
 ```jsonc
 "signatureCheck": {
-  "namedTypeMappings": {
-    "example.com/native.Event": { "module": "src/native/events.ts", "name": "HostEvent" }
-  },
   // Go->TS mapping (defaults shown in profile.mjs; override per project):
   "modules":   { "core": "packages/tsts/src/go/scalars.ts", "compat": "packages/tsts/src/go/compat.ts" },
   "bridge":    { "pointer": "GoPtr", "slice": "GoSlice", "array": "GoArray", "map": "GoMap", "chan": "GoChan" },
   "primitives":{ "keyword": { "string": "string", "any": "unknown" }, "core": { "int": "int", "uint64": "ulong" }, "compat": { "error": "GoError" } },
-  "stdlibTypes": { "iter.Seq": "GoSeq" },
   "facadeTemplate": "packages/tsts/src/go/{importPath}.ts",
   "annotation": { "tag": "@tsgo-unit", "idSeparator": "::", "methodNameJoin": "_" },
   "parser": { "distRoot": "packages/tsts/dist/src/internal", "freshnessSrcDirs": ["…/parser", "…/ast", "…/scanner", "…/core"] },
@@ -140,6 +136,12 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
   }
 }
 ```
+
+Reviewed declaration relationships do not live in `signatureCheck`. Exact
+Go-to-TypeScript storage, duplicate TypeScript type identity, and ambient
+library dependencies use top-level `semanticRelations` rows. Every row pins
+the exact Go and/or TypeScript declaration hashes it depends on; there is no
+name-only mapping table.
 
 Per-unit signature acceptances are intentionally not configured here. They live
 next to the declaration as local `@tsgo-override` metadata with full

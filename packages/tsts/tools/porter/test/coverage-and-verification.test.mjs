@@ -43,6 +43,8 @@ import {
   parseGoFlagFile,
   writeAstGenerated,
 } from "../ast-generator.mjs";
+import { semanticDeclarationVariantsHash } from "../core/semantic-declaration-hash.mjs";
+import { buildSemanticTypeCatalog } from "../core/type-storage-policies.mjs";
 import { AstSchema } from "../ast-schema-model.mjs";
 import {
   buildDiagnosticsGeneratedArtifactStatus,
@@ -64,6 +66,7 @@ import { schemaPoliciesFromSourcePin } from "../source-pin.mjs";
 import {
   baseConfig,
   channelType,
+  completeDeclarationAuditStatus,
   emptyCounts,
   emptyGeneratedArtifacts,
   fileRecord,
@@ -148,7 +151,7 @@ test("large-file split plans must cover every declaration exactly once", () => {
   assert.ok(splitStatus.issues.some((issue) => issue.kind === "duplicate-assignment"));
   assert.ok(splitStatus.issues.some((issue) => issue.kind === "unassigned-declaration"));
   assert.deepEqual(
-    collectVerifyFailures({ counts: { ...emptyCounts(), largeFileSplitFailures: splitStatus.failureCount }, generatedArtifacts: emptyGeneratedArtifacts() }, {}),
+    collectVerifyFailures({ ...completeDeclarationAuditStatus(), counts: { ...emptyCounts(), largeFileSplitFailures: splitStatus.failureCount }, generatedArtifacts: emptyGeneratedArtifacts() }, {}),
     [`${splitStatus.failureCount} large-file split plan failures`],
   );
 });
@@ -217,6 +220,7 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
   assert.equal(status.counts.portable, 0);
   assert.equal(status.counts.excluded, 2);
   assert.equal(status.counts.missing, 0);
+  Object.assign(status, completeDeclarationAuditStatus());
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
 });
 
@@ -264,6 +268,7 @@ test("buildStatus excludes exact inactive unit policies without counting their T
   assert.equal(status.counts.missing, 0);
   assert.equal(status.rows[0].status, "excluded");
   assert.equal(status.rows[0].reason, "formatter command path excluded");
+  Object.assign(status, completeDeclarationAuditStatus());
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
     "1 stale or missing embedded Go source blocks (fmtMain)",
   ]);
@@ -295,6 +300,7 @@ test("buildStatus excludes generated and Go test units from production scaffold 
   assert.equal(status.counts.portable, 0);
   assert.equal(status.counts.excluded, 2);
   assert.equal(status.counts.missing, 0);
+  Object.assign(status, completeDeclarationAuditStatus());
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
 });
 
@@ -314,7 +320,32 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
     goPath: "internal/ls/lsutil/formatcodeoptions.go",
     typeKind: "struct",
   });
-  delete formatCodeSettings.semantic;
+  const sourceBoundaryPackage = "github.com/microsoft/typescript-go/internal/ls/lsutil";
+  const sourceBoundaryObjectId = `${sourceBoundaryPackage}::type::FormatCodeSettings`;
+  const sourceBoundaryObject = {
+    id: sourceBoundaryObjectId,
+    name: "FormatCodeSettings",
+    packagePath: sourceBoundaryPackage,
+    exported: true,
+    type: { kind: "named", nilable: false, reference: { objectId: sourceBoundaryObjectId, packagePath: sourceBoundaryPackage, name: "FormatCodeSettings", typeArgs: [] } },
+  };
+  const sourceBoundaryDeclaration = {
+    kind: "type",
+    packagePath: sourceBoundaryPackage,
+    object: sourceBoundaryObject,
+    type: {
+      alias: false,
+      object: sourceBoundaryObject,
+      typeParameters: [],
+      rhs: { kind: "struct", nilable: false, struct: { fields: [] } },
+      methodSurface: "complete",
+      methods: [],
+      valueMethodSet: [],
+      pointerMethodSet: [],
+    },
+    profiles: [0],
+  };
+  formatCodeSettings.semantic = [sourceBoundaryDeclaration];
   const withFormatCodeSettings = unitRecord({
     id: "m::internal/format/api.go::func::WithFormatCodeSettings",
     kind: "func",
@@ -346,21 +377,24 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
         units: [withFormatCodeSettings],
       }),
     ]);
+  snapshot.semantic.dependencyTypeDeclarations = [sourceBoundaryDeclaration];
   assert.throws(() => renderUnitGroup(
     config,
     snapshot,
     "packages/tsts/src/internal/format/api.ts",
     [withFormatCodeSettings],
-  ), /has no exact semantic lowering contract/);
+  ), /requires an explicit go-type-storage relation/);
 
   const mapped = {
     ...config,
-    signatureCheck: {
-      namedTypeMappings: {
-        "github.com/microsoft/typescript-go/internal/ls/lsutil::type::FormatCodeSettings":
-          "packages/tsts/src/internal/format/source-boundaries.ts::FormatCodeSettings",
-      },
-    },
+    semanticRelations: [{
+      kind: "go-type-storage",
+      objectId: sourceBoundaryObjectId,
+      storageIdentity: "packages/tsts/src/internal/format/source-boundaries.ts::FormatCodeSettings",
+      goDeclarationHash: semanticDeclarationVariantsHash(buildSemanticTypeCatalog(snapshot).get(sourceBoundaryObjectId)),
+      tsDeclarationHash: "0".repeat(64),
+      reason: "The test pins an excluded source-boundary Go type to one exact reviewed TypeScript declaration.",
+    }],
   };
   const text = renderUnitGroup(
     mapped,
@@ -375,6 +409,7 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
 
 test("verifyStatus fails hard on coverage and metadata defects", () => {
   const status = {
+    ...completeDeclarationAuditStatus(),
     counts: {
       duplicateGoIDs: 1,
       duplicateTsIDs: 1,
@@ -410,8 +445,27 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
   ]);
 });
 
+test("trusted verification requires every whole-program declaration subaudit", () => {
+  const status = {
+    ...completeDeclarationAuditStatus(),
+    counts: emptyCounts(),
+    generatedArtifacts: emptyGeneratedArtifacts(),
+  };
+  status.signatureCheck.declarationOwnership = { state: "not-run", reason: "fixture omitted ownership" };
+  assert.deepEqual(collectVerifyFailures(status, {}), [
+    "declaration ownership audit must be complete for trusted verification (not run — fixture omitted ownership)",
+  ]);
+
+  Object.assign(status, completeDeclarationAuditStatus());
+  status.signatureCheck.selection = { kind: "id-filter", pattern: "m::one", matchedUnitCount: 1 };
+  assert.deepEqual(collectVerifyFailures(status, {}), [
+    "Go/TypeScript signature unit audit must cover all active units for trusted verification",
+  ]);
+});
+
 test("strict verification rejects traceable stubs and generated runtime scaffolds", () => {
   const status = {
+    ...completeDeclarationAuditStatus(),
     counts: { ...emptyCounts(), stubbed: 4 },
     generatedArtifacts: {
       ...emptyGeneratedArtifacts(),

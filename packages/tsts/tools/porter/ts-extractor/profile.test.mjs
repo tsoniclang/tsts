@@ -6,7 +6,6 @@ import { loadProfile } from "./profile.mjs";
 
 test("signature profile uses one exact recursively validated contract", () => {
   const profile = loadProfile({});
-  assert.equal(profile.stdlibTypes["iter::type::Seq"], "packages/tsts/src/go/compat.ts::GoSeq");
   assert.equal(profile.bridge.pointer, "GoPtr");
   assert.equal(profile.bridge.nilable, "GoNilable");
 
@@ -28,17 +27,13 @@ test("signature profile uses one exact recursively validated contract", () => {
     { externalInterfaceMembers: { "pkg.I": [{ name: "M", type: { t: "fn", params: [], ret: { t: "kw", kw: "void" } } }] } },
   ]) assert.throws(() => loadProfile({ signatureCheck }));
 
-  assert.deepEqual(loadProfile({ signatureCheck: {
-    namedTypeMappings: { "example.com/native::type::Type": "src/native.ts::HostType" },
-  } }).namedTypeMappings["example.com/native::type::Type"], "src/native.ts::HostType");
+  assert.throws(() => loadProfile({ signatureCheck: { stdlibTypes: {} } }), /unknown current-contract key/);
+  assert.throws(() => loadProfile({ signatureCheck: { namedTypeMappings: {} } }), /unknown current-contract key/);
 });
 
-test("convention rules require explicit scope and exact fields", () => {
+test("conventions expose only the exact GoConstraint carrier", () => {
   const base = { goConstraintId: "m.ts::Constraint" };
   assert.throws(() => loadConventions({ ...base, unknown: true }), /unknown current-contract key/);
-  assert.throws(() => loadConventions({ ...base, equivalences: [{ as: "same", match: [{ id: "a.ts::A" }, { id: "b.ts::B" }] }] }),
-    /missing current-contract key.*scope/);
-  assert.doesNotThrow(() => loadConventions({ ...base, equivalences: [{
-    as: "same", scope: "type", match: [{ id: "a.ts::A" }, { id: "b.ts::B" }],
-  }] }));
+  assert.throws(() => loadConventions({ ...base, equivalences: [] }), /unknown current-contract key/);
+  assert.deepEqual(loadConventions(base), base);
 });
