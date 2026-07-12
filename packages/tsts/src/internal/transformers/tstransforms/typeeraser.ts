@@ -121,7 +121,7 @@ import { getInnermostModuleDeclarationFromDottedModule } from "./runtimesyntax.j
  * }
  */
 export interface TypeEraserTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   parentNode: GoPtr<Node>;
   currentNode: GoPtr<Node>;

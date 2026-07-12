@@ -62,7 +62,7 @@ export type GoInterfaceValue<C> = { readonly [goReceiverKey]?: C };
  * Go source:
  * type Visitor func(*Node) bool
  */
-export type Visitor = (node: GoPtr<Node>) => bool;
+export type Visitor = (arg0: GoPtr<Node>) => bool;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::visit","kind":"func","status":"implemented","sigHash":"bef78268f8a3a18b41ab5c60fb297d2a9369e5cdbf170f785c999f329d979b43","bodyHash":"aeee441d8fb9ff4e184d19a4b9b42d8c3571949c597297c9745d5f298f9496e9"}

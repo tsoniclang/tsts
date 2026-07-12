@@ -1,4 +1,5 @@
 import type { bool, byte, int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Value } from "../json/json.js";
 import * as errors from "../../go/errors.js";
@@ -465,3 +466,48 @@ export interface ResponseMessage {
   Result: unknown;
   Error: GoPtr<ResponseError>;
 }
+
+type ResponseErrorJsonFields = JsonFieldNamesForGoStructContract<
+  ResponseError,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseError",
+  {
+    readonly Code: { readonly name: "code"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Message: { readonly name: "message"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Data: { readonly name: "data"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type MessageJsonFields = JsonFieldNamesForGoStructContract<
+  Message,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::Message",
+  {
+    readonly JSONRPC: { readonly name: "jsonrpc"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ID: { readonly name: "id"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Method: { readonly name: "method"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Params: { readonly name: "params"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Result: { readonly name: "result"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Error: { readonly name: "error"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type RequestMessageJsonFields = JsonFieldNamesForGoStructContract<
+  RequestMessage,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::RequestMessage",
+  {
+    readonly JSONRPC: { readonly name: "jsonrpc"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ID: { readonly name: "id"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Method: { readonly name: "method"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Params: { readonly name: "params"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type ResponseMessageJsonFields = JsonFieldNamesForGoStructContract<
+  ResponseMessage,
+  "github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::type::ResponseMessage",
+  {
+    readonly JSONRPC: { readonly name: "jsonrpc"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ID: { readonly name: "id"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Result: { readonly name: "result"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Error: { readonly name: "error"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

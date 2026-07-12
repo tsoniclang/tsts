@@ -23,8 +23,8 @@ import {
  * 	whitespaceRegExp = regexp.MustCompile(`\s+`)
  * )
  */
-export const logicalOrRegExp: regexp.Regexp = regexp.MustCompile(`\\|\\|`);
-export const whitespaceRegExp: regexp.Regexp = regexp.MustCompile(`\\s+`);
+export let logicalOrRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(`\\|\\|`);
+export let whitespaceRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(`\\s+`);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::partialRegExp","kind":"varGroup","status":"implemented","sigHash":"c87b5064a228e96d391a2dafbc9c1da48a39065877dc6ec80a4dc2ce343252e4","bodyHash":"7c8cf43c0671c3b8f83ea4dd1d291e929876dd3491bdd68039f687ff0e97ab1a"}
@@ -32,7 +32,7 @@ export const whitespaceRegExp: regexp.Regexp = regexp.MustCompile(`\\s+`);
  * Go source:
  * var partialRegExp = regexp.MustCompile(`(?i)^([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$`)
  */
-export const partialRegExp: regexp.Regexp = regexp.MustCompile(
+export let partialRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^([x*0]|[1-9]\\d*)(?:\\.([x*0]|[1-9]\\d*)(?:\\.([x*0]|[1-9]\\d*)(?:-([a-z0-9-.]+))?(?:\\+([a-z0-9-.]+))?)?)?$`,
 );
 
@@ -42,7 +42,7 @@ export const partialRegExp: regexp.Regexp = regexp.MustCompile(
  * Go source:
  * var hyphenRegExp = regexp.MustCompile(`(?i)^\s*([a-z0-9-+.*]+)\s+-\s+([a-z0-9-+.*]+)\s*$`)
  */
-export const hyphenRegExp: regexp.Regexp = regexp.MustCompile(
+export let hyphenRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^\\s*([a-z0-9-+.*]+)\\s+-\\s+([a-z0-9-+.*]+)\\s*$`,
 );
 
@@ -52,7 +52,7 @@ export const hyphenRegExp: regexp.Regexp = regexp.MustCompile(
  * Go source:
  * var rangeRegExp = regexp.MustCompile(`(?i)^([~^<>=]|<=|>=)?\s*([a-z0-9-+.*]+)$`)
  */
-export const rangeRegExp: regexp.Regexp = regexp.MustCompile(
+export let rangeRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^([~^<>=]|<=|>=)?\\s*([a-z0-9-+.*]+)$`,
 );
 
@@ -373,7 +373,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
   const trimmed: string = strings.TrimSpace(text);
   // Split with n=-1 returns all substrings (never nil); Go ranges over the
   // resulting slice (a nil slice would simply yield zero iterations).
-  const ranges: GoSlice<string> = logicalOrRegExp.Split(trimmed, -1) ?? [];
+  const ranges: GoSlice<string> = logicalOrRegExp!.Split(trimmed, -1) ?? [];
   for (const rRaw of ranges) {
     const r: string = strings.TrimSpace(rRaw);
     if (r === "") {
@@ -382,7 +382,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 
     const comparators: GoSlice<versionComparator> = [];
 
-    const hyphenMatch: GoSlice<string> | undefined = hyphenRegExp.FindStringSubmatch(r);
+    const hyphenMatch: GoSlice<string> | undefined = hyphenRegExp!.FindStringSubmatch(r);
     if (hyphenMatch !== undefined) {
       const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
       if (ok) {
@@ -393,8 +393,8 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
         return [[], false];
       }
     } else {
-      for (const simple of whitespaceRegExp.Split(r, -1) ?? []) {
-        const match: GoSlice<string> | undefined = rangeRegExp.FindStringSubmatch(strings.TrimSpace(simple));
+      for (const simple of whitespaceRegExp!.Split(r, -1) ?? []) {
+        const match: GoSlice<string> | undefined = rangeRegExp!.FindStringSubmatch(strings.TrimSpace(simple));
         if (match === undefined) {
           return [[], false];
         }
@@ -629,7 +629,7 @@ export function parsePartial(text: string): [partialVersion, bool] {
     patchStr: "",
   };
 
-  const match: GoSlice<string> | undefined = partialRegExp.FindStringSubmatch(text);
+  const match: GoSlice<string> | undefined = partialRegExp!.FindStringSubmatch(text);
   if (match === undefined) {
     return [zeroPartial, false];
   }

@@ -371,7 +371,7 @@ export interface optionParser {
  * }
  */
 export interface compilerOptionsParser {
-  readonly __tsgoEmbedded0?: GoPtr<CompilerOptions>;
+  __tsgoEmbedded0: GoPtr<CompilerOptions>;
 }
 
 /**
@@ -428,7 +428,7 @@ export function compilerOptionsParser_as_optionParser(receiver: GoPtr<compilerOp
  * }
  */
 export interface watchOptionsParser {
-  readonly __tsgoEmbedded0?: GoPtr<WatchOptions>;
+  __tsgoEmbedded0: GoPtr<WatchOptions>;
 }
 
 /**
@@ -485,7 +485,7 @@ export function watchOptionsParser_as_optionParser(receiver: GoPtr<watchOptionsP
  * }
  */
 export interface typeAcquisitionParser {
-  readonly __tsgoEmbedded0?: GoPtr<TypeAcquisition>;
+  __tsgoEmbedded0: GoPtr<TypeAcquisition>;
 }
 
 /**
@@ -542,7 +542,7 @@ export function typeAcquisitionParser_as_optionParser(receiver: GoPtr<typeAcquis
  * }
  */
 export interface buildOptionsParser {
-  readonly __tsgoEmbedded0?: GoPtr<BuildOptions>;
+  __tsgoEmbedded0: GoPtr<BuildOptions>;
 }
 
 /**

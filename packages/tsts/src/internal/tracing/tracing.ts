@@ -1,4 +1,5 @@
 import type { bool, byte, double, int, uint, ulong } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
@@ -629,7 +630,7 @@ export const fileThreadIDHashRange: int = 1_000_000_000 as int;
  * Go source:
  * var traceThreadArgKeys = [...]string{"path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"}
  */
-export const traceThreadArgKeys: GoArray<string, "..."> = ["path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"];
+export let traceThreadArgKeys: GoArray<string, "5"> = ["path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::traceThreadKind","kind":"type","status":"implemented","sigHash":"7f8971828713d04c4545433a652f30e223fd2b57b824058221a9c6b3a1311886","bodyHash":"cd398ca0b7b5f53734837bb31f3eedcfcb7ab2026b5ce5c04fb978e4bf50fa60"}
@@ -1032,6 +1033,88 @@ export function typeTracer_as_Tracer(receiver: GoPtr<typeTracer>): Tracer {
     },
   };
 }
+
+type TraceRecordJsonFields = JsonFieldNamesForGoStructContract<
+  TraceRecord,
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TraceRecord",
+  {
+    readonly ConfigFilePath: { readonly name: "configFilePath"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TracePath: { readonly name: "tracePath"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TypesPath: { readonly name: "typesPath"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly CheckerID: { readonly name: "checkerId"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type traceEventJsonFields = JsonFieldNamesForGoStructContract<
+  traceEvent,
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::traceEvent",
+  {
+    readonly PID: { readonly name: "pid"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly TID: { readonly name: "tid"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly PH: { readonly name: "ph"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Cat: { readonly name: "cat"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly TS: { readonly name: "ts"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Name: { readonly name: "name"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly S: { readonly name: "s"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Dur: { readonly name: "dur"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Args: { readonly name: "args"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type TypeDescriptorJsonFields = JsonFieldNamesForGoStructContract<
+  TypeDescriptor,
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::TypeDescriptor",
+  {
+    readonly ID: { readonly name: "id"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly IntrinsicName: { readonly name: "intrinsicName"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SymbolName: { readonly name: "symbolName"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RecursionID: { readonly name: "recursionId"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IsTuple: { readonly name: "isTuple"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly UnionTypes: { readonly name: "unionTypes"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IntersectionTypes: { readonly name: "intersectionTypes"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AliasTypeArguments: { readonly name: "aliasTypeArguments"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly KeyofType: { readonly name: "keyofType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IndexedAccessObjectType: { readonly name: "indexedAccessObjectType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IndexedAccessIndexType: { readonly name: "indexedAccessIndexType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConditionalCheckType: { readonly name: "conditionalCheckType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConditionalExtendsType: { readonly name: "conditionalExtendsType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConditionalTrueType: { readonly name: "conditionalTrueType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConditionalFalseType: { readonly name: "conditionalFalseType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SubstitutionBaseType: { readonly name: "substitutionBaseType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConstraintType: { readonly name: "constraintType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly InstantiatedType: { readonly name: "instantiatedType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TypeArguments: { readonly name: "typeArguments"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReferenceLocation: { readonly name: "referenceLocation"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReverseMappedSourceType: { readonly name: "reverseMappedSourceType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReverseMappedMappedType: { readonly name: "reverseMappedMappedType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReverseMappedConstraintType: { readonly name: "reverseMappedConstraintType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EvolvingArrayElementType: { readonly name: "evolvingArrayElementType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EvolvingArrayFinalType: { readonly name: "evolvingArrayFinalType"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DestructuringPattern: { readonly name: "destructuringPattern"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly FirstDeclaration: { readonly name: "firstDeclaration"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Flags: { readonly name: "flags"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Display: { readonly name: "display"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type LocationJsonFields = JsonFieldNamesForGoStructContract<
+  Location,
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::Location",
+  {
+    readonly Path: { readonly name: "path"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Start: { readonly name: "start"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly End: { readonly name: "end"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
+
+type LineAndCharJsonFields = JsonFieldNamesForGoStructContract<
+  LineAndChar,
+  "github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::LineAndChar",
+  {
+    readonly Line: { readonly name: "line"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly Character: { readonly name: "character"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.RecordType","kind":"method","status":"implemented","sigHash":"9cc9e8c2a24e98a39130d1a9f22f9512e83d749c4572cf5c30873db16031cc4b","bodyHash":"0758d69293f2a188784c492ff4f2e062784bc579eed5172af20bc9f5cff4c808"}

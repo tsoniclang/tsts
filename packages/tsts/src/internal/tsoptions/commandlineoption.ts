@@ -227,7 +227,7 @@ export function CommandLineOption_DisallowNullOrUndefined(receiver: GoPtr<Comman
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionElements","kind":"varGroup","status":"implemented","sigHash":"8a8a530e9218e40f68d7544870a2cef90e2ff234717d659d40227396c4f07112","bodyHash":"cd83d1acb253d1499396e8e81bc6d4ecdbcbe14ff044a807c9312090ee216788"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * var commandLineOptionElements = map[string]*CommandLineOption{
@@ -346,7 +346,10 @@ export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLi
   return result;
 }
 
-export const commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = new globalThis.Map<string, GoPtr<CommandLineOption>>([
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionElements","kind":"varGroup","status":"implemented","sigHash":"8a8a530e9218e40f68d7544870a2cef90e2ff234717d659d40227396c4f07112","bodyHash":"cd83d1acb253d1499396e8e81bc6d4ecdbcbe14ff044a807c9312090ee216788"}
+ */
+export let commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = new globalThis.Map<string, GoPtr<CommandLineOption>>([
   ["lib", newCommandLineOption({
     Name: "lib",
     Kind: CommandLineOptionTypeEnum, // libMap,
@@ -436,7 +439,7 @@ export const commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> 
  * 	"fallbackPolling":  fallbackEnumMap,
  * }
  */
-export const commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, unknown>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, unknown>>>([
+export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, unknown>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, unknown>>>([
   ["lib", LibMap as GoPtr<OrderedMap<string, unknown>>],
   ["moduleResolution", moduleResolutionOptionMap as GoPtr<OrderedMap<string, unknown>>],
   ["module", moduleOptionMap as GoPtr<OrderedMap<string, unknown>>],
@@ -459,7 +462,7 @@ export const commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, un
  * 	"target":           collections.NewSetFromItems("es5"),
  * }
  */
-export const commandLineOptionDeprecated: GoMap<string, GoPtr<Set<string>>> = new globalThis.Map<string, GoPtr<Set<string>>>([
+export let commandLineOptionDeprecated: GoMap<string, GoPtr<Set<string>>> = new globalThis.Map<string, GoPtr<Set<string>>>([
   ["module", NewSetFromItems<string>("none", "amd", "system", "umd")],
   ["moduleResolution", NewSetFromItems<string>("node", "classic", "node10")],
   ["target", NewSetFromItems<string>("es5")],

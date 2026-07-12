@@ -169,8 +169,8 @@ export interface lexicalArgumentsInfo {
  * }
  */
 export interface asyncTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
-  readonly __tsgoEmbedded1?: superAccessState;
+  __tsgoEmbedded0: Transformer;
+  __tsgoEmbedded1: superAccessState;
   contextFlags: asyncContextFlags;
   enclosingFunctionParameterNames: GoPtr<Set<string>>;
   lexicalArguments: lexicalArgumentsInfo;

@@ -53,7 +53,7 @@ import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
  * }
  */
 export interface usingDeclarationTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   exportBindings: GoMap<string, GoPtr<ExportSpecifierNode>>;
   exportBindingNames: GoSlice<string>;
   exportVars: GoSlice<GoPtr<VariableDeclarationNode>>;

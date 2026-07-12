@@ -3,7 +3,7 @@ import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
-import type { Decoder, Encoder, Kind, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
+import type { Decoder, Encoder, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
@@ -478,7 +478,7 @@ export function OrderedMap_clone<K extends GoComparable, V>(receiver: GoPtr<Orde
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
  */
-export const __83877ae8_0: MarshalerTo = OrderedMap_as_json_MarshalerTo<string, string>(undefined);
+export let __83877ae8_0: MarshalerTo = OrderedMap_as_json_MarshalerTo<string, string>(undefined);
 
 export function OrderedMap_as_json_MarshalerTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>): MarshalerTo {
   return {
@@ -519,7 +519,7 @@ export function OrderedMap_MarshalJSONTo<K extends GoComparable, V>(receiver: Go
     return new globalThis.Error("nil json encoder");
   }
   const m = receiver!;
-  let err = enc.WriteToken(json_BeginObject as Kind);
+  let err = enc.WriteToken(json_BeginObject);
   if (err !== undefined) {
     return err;
   }
@@ -537,7 +537,7 @@ export function OrderedMap_MarshalJSONTo<K extends GoComparable, V>(receiver: Go
       return err;
     }
   }
-  return enc.WriteToken(json_EndObject as Kind);
+  return enc.WriteToken(json_EndObject);
 }
 
 /**
@@ -585,7 +585,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
  */
-export const __ffc9f882_0: UnmarshalerFrom = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
+export let ___2_ffc9f882_0: UnmarshalerFrom = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
 
 export function OrderedMap_as_json_UnmarshalerFrom<K, V>(receiver: GoPtr<OrderedMap<K, V>>): UnmarshalerFrom {
   return {

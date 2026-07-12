@@ -1470,7 +1470,7 @@ export function Checker_narrowTypeByTypeof(receiver: GoPtr<Checker>, f: GoPtr<Fl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::varGroup::typeofNEFacts","kind":"varGroup","status":"implemented","sigHash":"89bd1307af65ec16e5166d7ab6f05d11ef6fe6b5a07d372a56d682eb786b5482","bodyHash":"d0a80f511125817407938eb1be1e14d4a4d9fbc3d2182475c107a744ac696cf3"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * var typeofNEFacts = map[string]TypeFacts{
@@ -1528,7 +1528,10 @@ class LazyTypeofNEFacts extends Map<string, TypeFacts> {
   }
 }
 
-export const typeofNEFacts: GoMap<string, TypeFacts> = new LazyTypeofNEFacts();
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::varGroup::typeofNEFacts","kind":"varGroup","status":"implemented","sigHash":"89bd1307af65ec16e5166d7ab6f05d11ef6fe6b5a07d372a56d682eb786b5482","bodyHash":"d0a80f511125817407938eb1be1e14d4a4d9fbc3d2182475c107a744ac696cf3"}
+ */
+export let typeofNEFacts: GoMap<string, TypeFacts> = new LazyTypeofNEFacts();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.narrowTypeByLiteralExpression","kind":"method","status":"implemented","sigHash":"21f112067eb9ee2d1c20d821f0c06352592156aef66b408a5ee1d5afe6cf4ce3","bodyHash":"2af8f66909bca82bc04efb990224cf0b49b9bbb9aceb5c13febd5ee0024e9f5c"}
@@ -3619,7 +3622,7 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
  * Go source:
  * var nonDottedNameCacheKey = CacheHashKey(xxh3.HashString128("?"))
  */
-export const nonDottedNameCacheKey: CacheHashKey = HashString128("?");
+export let nonDottedNameCacheKey: CacheHashKey = HashString128("?");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getFlowReferenceKey","kind":"method","status":"implemented","sigHash":"7f9c86a333fc3319345e1d2e40cd94e84184cc42804dbda3e0deebe4b4fa8c87","bodyHash":"8bcfb16a0b81f307700c2d8c04c39c9d3419508117866e6fecd4abfdf9d6257b"}

@@ -9,7 +9,6 @@ import type { SourceFile } from "../ast/ast.js";
 import { Node_Text, SourceFile_Text } from "../ast/ast.js";
 import { GetSourceFileOfNode, NodeIsMissing } from "../ast/utilities.js";
 import type { Identifier } from "../ast/generated/data.js";
-import type { SourceFileNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindIdentifier, KindJSDocLink, KindJSDocLinkCode, KindJSDocLinkPlain, KindJSDocText, KindUnknown } from "../ast/generated/kinds.js";
 import { IsIdentifier, IsStringLiteral } from "../ast/generated/predicates.js";
@@ -58,8 +57,8 @@ export function IdentifierToKeywordKind(node: GoPtr<Identifier>): Kind {
  * 	return GetTextOfNodeFromSourceText(sourceFile.Text(), node, includeTrivia)
  * }
  */
-export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>, includeTrivia: bool): string {
-  return GetTextOfNodeFromSourceText(SourceFile_Text(sourceFile as GoPtr<SourceFile>), node, includeTrivia);
+export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, includeTrivia: bool): string {
+  return GetTextOfNodeFromSourceText(SourceFile_Text(sourceFile), node, includeTrivia);
 }
 
 /**

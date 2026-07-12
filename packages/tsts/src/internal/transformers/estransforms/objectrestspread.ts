@@ -42,7 +42,7 @@ import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
  * }
  */
 export interface objectRestSpreadTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   inExportedVariableStatement: bool;
   expressionResultIsUnused: bool;

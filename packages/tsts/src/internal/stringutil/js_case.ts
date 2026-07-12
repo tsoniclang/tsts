@@ -178,7 +178,7 @@ export function ToUpperJS(str: string): string {
  * 	return string(buf), true
  * }
  */
-function toLowerASCII(str: string): [string, bool] {
+export function toLowerASCII(str: string): [string, bool] {
   // The loop bails on the first non-ASCII code unit, so for a pure-ASCII string
   // (the only case that returns ok=true) code units and Go's bytes coincide.
   let needsMapping = false;
@@ -226,7 +226,7 @@ function toLowerASCII(str: string): [string, bool] {
  * 	return string(buf), true
  * }
  */
-function toUpperASCII(str: string): [string, bool] {
+export function toUpperASCII(str: string): [string, bool] {
   let needsMapping = false;
   for (let i = 0; i < str.length; i++) {
     const ch = str.charCodeAt(i);
@@ -255,7 +255,7 @@ function toUpperASCII(str: string): [string, bool] {
  * 	return casedBefore && !hasSigmaCasedAfter(str, afterOffset)
  * }
  */
-function isFinalSigmaContext(casedBefore: bool, str: string, afterOffset: int): bool {
+export function isFinalSigmaContext(casedBefore: bool, str: string, afterOffset: int): bool {
   return (casedBefore && !hasSigmaCasedAfter(str, afterOffset)) as bool;
 }
 
@@ -275,7 +275,7 @@ function isFinalSigmaContext(casedBefore: bool, str: string, afterOffset: int): 
  * 	return false
  * }
  */
-function hasSigmaCasedAfter(str: string, start: int): bool {
+export function hasSigmaCasedAfter(str: string, start: int): bool {
   let i = start;
   while (i < str.length) {
     const [r, advance] = decodeRuneAt(str, i);
@@ -296,7 +296,7 @@ function hasSigmaCasedAfter(str: string, start: int): bool {
  * 	return unicode.Is(unicodeCasedRanges, r)
  * }
  */
-function isSigmaCased(r: GoRune): bool {
+export function isSigmaCased(r: GoRune): bool {
   return Is(unicodeCasedRanges, r);
 }
 
@@ -308,6 +308,6 @@ function isSigmaCased(r: GoRune): bool {
  * 	return unicode.Is(unicodeCaseIgnorableRanges, r)
  * }
  */
-function isUnicodeCaseIgnorable(r: GoRune): bool {
+export function isUnicodeCaseIgnorable(r: GoRune): bool {
   return Is(unicodeCaseIgnorableRanges, r);
 }

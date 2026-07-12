@@ -48,7 +48,7 @@ export function NewUseStrictTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tr
  * }
  */
 export interface useStrictTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
 }

@@ -103,7 +103,7 @@ import {
 import { IsTypeOrJSTypeAliasDeclaration } from "../ast/ast.js";
 import { Node_Expression, Node_ArgumentList, Node_TypeParameterList, Node_MemberList, Node_StatementList, Node_TypeArgumentList, Node_ElementList, Node_PropertyList, Node_Children, Node_Text, Node_RawText } from "../ast/ast.js";
 import { Node_Pos, Node_End, NodeList_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
-import type { Expression, LiteralLikeNode, SourceFileNode } from "../ast/generated/unions.js";
+import type { Expression, LiteralLikeNode } from "../ast/generated/unions.js";
 import { UTF16Len, IfElse } from "../core/core.js";
 import type { UTF16Offset } from "../core/core.js";
 import type { TextPos } from "../core/text.js";
@@ -181,7 +181,7 @@ export const QuoteCharBacktick: QuoteChar = 0x60; // '`'
  * 	'\'': "&apos;",
  * }
  */
-export const jsxEscapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune, string>([
+export let jsxEscapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune, string>([
   [0x22 /* '"' */, "&quot;"],
   [0x27 /* '\'' */, "&apos;"],
 ]);
@@ -207,7 +207,7 @@ export const jsxEscapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRu
  * 	'\u0085': `\u0085`, // nextLine
  * }
  */
-export const escapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune, string>([
+export let escapedCharsMap: GoMap<GoRune, string> = new globalThis.Map<GoRune, string>([
   [0x09 /* '\t' */, "\\t"],
   [0x0b /* '\v' */, "\\v"],
   [0x0c /* '\f' */, "\\f"],
@@ -712,7 +712,7 @@ export function canUseOriginalText(node: GoPtr<LiteralLikeNode>, flags: getLiter
  * 	}
  * }
  */
-export function getLiteralText(node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<SourceFileNode>, flags: getLiteralTextFlags): string {
+export function getLiteralText(node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<SourceFile>, flags: getLiteralTextFlags): string {
   // If we don't need to downlevel and we can reach the original source text using
   // the node's parent reference, then simply get the text as it was originally written.
   if (sourceFile !== undefined && canUseOriginalText(node, flags)) {
@@ -854,7 +854,7 @@ export function isNotPrologueDirective(node: GoPtr<Node>): bool {
  * 	return rangeStartIsOnSameLineAsRangeEnd(r, r, sourceFile)
  * }
  */
-export function RangeIsOnSingleLine(r: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
+export function RangeIsOnSingleLine(r: TextRange, sourceFile: GoPtr<SourceFile>): bool {
   return rangeStartIsOnSameLineAsRangeEnd(r, r, sourceFile);
 }
 
@@ -870,7 +870,7 @@ export function RangeIsOnSingleLine(r: TextRange, sourceFile: GoPtr<SourceFileNo
  * 	)
  * }
  */
-export function RangeStartPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
+export function RangeStartPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFile>): bool {
   return PositionsAreOnSameLine(
     getStartPositionOfRange(range1, sourceFile, false /*includeComments*/),
     getStartPositionOfRange(range2, sourceFile, false /*includeComments*/),
@@ -886,7 +886,7 @@ export function RangeStartPositionsAreOnSameLine(range1: TextRange, range2: Text
  * 	return PositionsAreOnSameLine(range1.End(), range2.End(), sourceFile)
  * }
  */
-export function rangeEndPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
+export function rangeEndPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFile>): bool {
   return PositionsAreOnSameLine(TextRange_End(range1), TextRange_End(range2), sourceFile);
 }
 
@@ -898,7 +898,7 @@ export function rangeEndPositionsAreOnSameLine(range1: TextRange, range2: TextRa
  * 	return PositionsAreOnSameLine(getStartPositionOfRange(range1, sourceFile, false /*includeComments* /), range2.End(), sourceFile)
  * }
  */
-export function rangeStartIsOnSameLineAsRangeEnd(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
+export function rangeStartIsOnSameLineAsRangeEnd(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFile>): bool {
   return PositionsAreOnSameLine(getStartPositionOfRange(range1, sourceFile, false /*includeComments*/), TextRange_End(range2), sourceFile);
 }
 
@@ -910,7 +910,7 @@ export function rangeStartIsOnSameLineAsRangeEnd(range1: TextRange, range2: Text
  * 	return PositionsAreOnSameLine(range1.End(), getStartPositionOfRange(range2, sourceFile, false /*includeComments* /), sourceFile)
  * }
  */
-export function rangeEndIsOnSameLineAsRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
+export function rangeEndIsOnSameLineAsRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFile>): bool {
   return PositionsAreOnSameLine(TextRange_End(range1), getStartPositionOfRange(range2, sourceFile, false /*includeComments*/), sourceFile);
 }
 
@@ -925,7 +925,7 @@ export function rangeEndIsOnSameLineAsRangeStart(range1: TextRange, range2: Text
  * 	return scanner.SkipTriviaEx(sourceFile.Text(), r.Pos(), &scanner.SkipTriviaOptions{StopAtComments: includeComments})
  * }
  */
-export function getStartPositionOfRange(r: TextRange, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
+export function getStartPositionOfRange(r: TextRange, sourceFile: GoPtr<SourceFile>, includeComments: bool): int {
   if (PositionIsSynthesized(TextRange_Pos(r))) {
     return -1 as int;
   }
@@ -940,7 +940,7 @@ export function getStartPositionOfRange(r: TextRange, sourceFile: GoPtr<SourceFi
  * 	return GetLinesBetweenPositions(sourceFile, pos1, pos2) == 0
  * }
  */
-export function PositionsAreOnSameLine(pos1: int, pos2: int, sourceFile: GoPtr<SourceFileNode>): bool {
+export function PositionsAreOnSameLine(pos1: int, pos2: int, sourceFile: GoPtr<SourceFile>): bool {
   return GetLinesBetweenPositions(sourceFile, pos1, pos2) === 0;
 }
 
@@ -965,7 +965,7 @@ export function PositionsAreOnSameLine(pos1: int, pos2: int, sourceFile: GoPtr<S
  * 	}
  * }
  */
-export function GetLinesBetweenPositions(sourceFile: GoPtr<SourceFileNode>, pos1: int, pos2: int): int {
+export function GetLinesBetweenPositions(sourceFile: GoPtr<SourceFile>, pos1: int, pos2: int): int {
   if (pos1 === pos2) {
     return 0 as int;
   }
@@ -995,7 +995,7 @@ export function GetLinesBetweenPositions(sourceFile: GoPtr<SourceFileNode>, pos1
  * 	return GetLinesBetweenPositions(sourceFile, range1.End(), range2Start)
  * }
  */
-export function getLinesBetweenRangeEndAndRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>, includeSecondRangeComments: bool): int {
+export function getLinesBetweenRangeEndAndRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFile>, includeSecondRangeComments: bool): int {
   const range2Start = getStartPositionOfRange(range2, sourceFile, includeSecondRangeComments);
   return GetLinesBetweenPositions(sourceFile, TextRange_End(range1), range2Start);
 }
@@ -1010,7 +1010,7 @@ export function getLinesBetweenRangeEndAndRangeStart(range1: TextRange, range2: 
  * 	return GetLinesBetweenPositions(sourceFile, core.IfElse(prevPos >= 0, prevPos, stopPos), startPos)
  * }
  */
-export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
+export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFile>, includeComments: bool): int {
   const startPos = SkipTriviaEx(SourceFile_Text(AsSourceFile(sourceFile)!), pos, { StopAfterLineBreak: false, StopAtComments: includeComments, InJSDoc: false });
   const prevPos = getPreviousNonWhitespacePosition(startPos, stopPos, sourceFile);
   return GetLinesBetweenPositions(sourceFile, IfElse(prevPos >= 0, prevPos, stopPos), startPos);
@@ -1025,7 +1025,7 @@ export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos: i
  * 	return GetLinesBetweenPositions(sourceFile, pos, core.IfElse(stopPos < nextPos, stopPos, nextPos))
  * }
  */
-export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
+export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFile>, includeComments: bool): int {
   const nextPos = SkipTriviaEx(SourceFile_Text(AsSourceFile(sourceFile)!), pos, { StopAfterLineBreak: false, StopAtComments: includeComments, InJSDoc: false });
   return GetLinesBetweenPositions(sourceFile, pos, IfElse(stopPos < nextPos, stopPos, nextPos));
 }
@@ -1043,7 +1043,7 @@ export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, s
  * 	return -1
  * }
  */
-export function getPreviousNonWhitespacePosition(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>): int {
+export function getPreviousNonWhitespacePosition(pos: int, stopPos: int, sourceFile: GoPtr<SourceFile>): int {
   const text = SourceFile_Text(AsSourceFile(sourceFile)!);
   const textBytes = StringUtf8Bytes(text);
   for (let p = pos; p >= stopPos; p--) {
@@ -1576,7 +1576,7 @@ export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: GoPt
  * 	return !ok
  * }
  */
-export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFileNode>, name: string, hasGlobalName: ((arg0: string) => bool) | undefined): bool {
+export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFile>, name: string, hasGlobalName: ((arg0: string) => bool) | undefined): bool {
   if (hasGlobalName !== undefined && hasGlobalName(name)) {
     return false;
   }

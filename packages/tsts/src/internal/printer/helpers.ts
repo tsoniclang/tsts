@@ -90,7 +90,7 @@ export function compareEmitHelpers(x: GoPtr<EmitHelper>, y: GoPtr<EmitHelper>): 
  * };`,
  * }
  */
-export const decorateHelper: GoPtr<EmitHelper> = {
+export let decorateHelper: GoPtr<EmitHelper> = {
   Name: "typescript:decorate",
   ImportName: "__decorate",
   Scoped: false,
@@ -119,7 +119,7 @@ export const decorateHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const metadataHelper: GoPtr<EmitHelper> = {
+export let metadataHelper: GoPtr<EmitHelper> = {
   Name: "typescript:metadata",
   ImportName: "__metadata",
   Scoped: false,
@@ -145,7 +145,7 @@ export const metadataHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const paramHelper: GoPtr<EmitHelper> = {
+export let paramHelper: GoPtr<EmitHelper> = {
   Name: "typescript:param",
   ImportName: "__param",
   Scoped: false,
@@ -189,7 +189,7 @@ export const paramHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const addDisposableResourceHelper: GoPtr<EmitHelper> = {
+export let addDisposableResourceHelper: GoPtr<EmitHelper> = {
   Name: "typescript:addDisposableResource",
   ImportName: "__addDisposableResource",
   Scoped: false,
@@ -260,7 +260,7 @@ export const addDisposableResourceHelper: GoPtr<EmitHelper> = {
  * });`,
  * }
  */
-export const disposeResourcesHelper: GoPtr<EmitHelper> = {
+export let disposeResourcesHelper: GoPtr<EmitHelper> = {
   Name: "typescript:disposeResources",
   ImportName: "__disposeResources",
   Scoped: false,
@@ -314,7 +314,7 @@ export const disposeResourcesHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const classPrivateFieldGetHelper: GoPtr<EmitHelper> = {
+export let classPrivateFieldGetHelper: GoPtr<EmitHelper> = {
   Name: "typescript:classPrivateFieldGet",
   ImportName: "__classPrivateFieldGet",
   Scoped: false,
@@ -344,7 +344,7 @@ export const classPrivateFieldGetHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const classPrivateFieldSetHelper: GoPtr<EmitHelper> = {
+export let classPrivateFieldSetHelper: GoPtr<EmitHelper> = {
   Name: "typescript:classPrivateFieldSet",
   ImportName: "__classPrivateFieldSet",
   Scoped: false,
@@ -373,7 +373,7 @@ export const classPrivateFieldSetHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const classPrivateFieldInHelper: GoPtr<EmitHelper> = {
+export let classPrivateFieldInHelper: GoPtr<EmitHelper> = {
   Name: "typescript:classPrivateFieldIn",
   ImportName: "__classPrivateFieldIn",
   Scoped: false,
@@ -397,7 +397,7 @@ export const classPrivateFieldInHelper: GoPtr<EmitHelper> = {
  * 	Text:       `var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }`,
  * }
  */
-export const awaitHelper: GoPtr<EmitHelper> = {
+export let awaitHelper: GoPtr<EmitHelper> = {
   Name: "typescript:await",
   ImportName: "__await",
   Scoped: false,
@@ -430,7 +430,7 @@ export const awaitHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const asyncGeneratorHelper: GoPtr<EmitHelper> = {
+export let asyncGeneratorHelper: GoPtr<EmitHelper> = {
   Name: "typescript:asyncGenerator",
   ImportName: "__asyncGenerator",
   Scoped: false,
@@ -467,7 +467,7 @@ export const asyncGeneratorHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const asyncDelegatorHelper: GoPtr<EmitHelper> = {
+export let asyncDelegatorHelper: GoPtr<EmitHelper> = {
   Name: "typescript:asyncDelegator",
   ImportName: "__asyncDelegator",
   Scoped: false,
@@ -498,7 +498,7 @@ export const asyncDelegatorHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const asyncValuesHelper: GoPtr<EmitHelper> = {
+export let asyncValuesHelper: GoPtr<EmitHelper> = {
   Name: "typescript:asyncValues",
   ImportName: "__asyncValues",
   Scoped: false,
@@ -535,7 +535,7 @@ export const asyncValuesHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const restHelper: GoPtr<EmitHelper> = {
+export let restHelper: GoPtr<EmitHelper> = {
   Name: "typescript:rest",
   ImportName: "__rest",
   Scoped: false,
@@ -575,7 +575,7 @@ export const restHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const awaiterHelper: GoPtr<EmitHelper> = {
+export let awaiterHelper: GoPtr<EmitHelper> = {
   Name: "typescript:awaiter",
   ImportName: "__awaiter",
   Scoped: false,
@@ -605,7 +605,7 @@ export const awaiterHelper: GoPtr<EmitHelper> = {
  * 	},
  * }
  */
-export const AsyncSuperHelper: GoPtr<EmitHelper> = {
+export let AsyncSuperHelper: GoPtr<EmitHelper> = {
   Name: "typescript:async-super",
   Scoped: true,
   TextCallback: (makeUniqueName: (arg0: string) => string): string => {
@@ -632,7 +632,7 @@ export const AsyncSuperHelper: GoPtr<EmitHelper> = {
  * 	},
  * }
  */
-export const AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
+export let AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
   Name: "typescript:advanced-async-super",
   Scoped: true,
   TextCallback: (makeUniqueName: (arg0: string) => string): string => {
@@ -685,7 +685,7 @@ export const AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const esDecorateHelper: GoPtr<EmitHelper> = {
+export let esDecorateHelper: GoPtr<EmitHelper> = {
   Name: "typescript:esDecorate",
   ImportName: "__esDecorate",
   Scoped: false,
@@ -739,7 +739,7 @@ export const esDecorateHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const runInitializersHelper: GoPtr<EmitHelper> = {
+export let runInitializersHelper: GoPtr<EmitHelper> = {
   Name: "typescript:runInitializers",
   ImportName: "__runInitializers",
   Scoped: false,
@@ -770,7 +770,7 @@ export const runInitializersHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const makeTemplateObjectHelper: GoPtr<EmitHelper> = {
+export let makeTemplateObjectHelper: GoPtr<EmitHelper> = {
   Name: "typescript:makeTemplateObject",
   ImportName: "__makeTemplateObject",
   Scoped: false,
@@ -796,7 +796,7 @@ export const makeTemplateObjectHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const propKeyHelper: GoPtr<EmitHelper> = {
+export let propKeyHelper: GoPtr<EmitHelper> = {
   Name: "typescript:propKey",
   ImportName: "__propKey",
   Scoped: false,
@@ -822,7 +822,7 @@ export const propKeyHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const setFunctionNameHelper: GoPtr<EmitHelper> = {
+export let setFunctionNameHelper: GoPtr<EmitHelper> = {
   Name: "typescript:setFunctionName",
   ImportName: "__setFunctionName",
   Scoped: false,
@@ -857,7 +857,7 @@ export const setFunctionNameHelper: GoPtr<EmitHelper> = {
  * }));`,
  * }
  */
-export const createBindingHelper: GoPtr<EmitHelper> = {
+export let createBindingHelper: GoPtr<EmitHelper> = {
   Name: "typescript:commonjscreatebinding",
   ImportName: "__createBinding",
   Scoped: false,
@@ -893,7 +893,7 @@ export const createBindingHelper: GoPtr<EmitHelper> = {
  * });`,
  * }
  */
-export const setModuleDefaultHelper: GoPtr<EmitHelper> = {
+export let setModuleDefaultHelper: GoPtr<EmitHelper> = {
   Name: "typescript:commonjscreatevalue",
   ImportName: "__setModuleDefault",
   Scoped: false,
@@ -936,7 +936,7 @@ export const setModuleDefaultHelper: GoPtr<EmitHelper> = {
  * })();`,
  * }
  */
-export const importStarHelper: GoPtr<EmitHelper> = {
+export let importStarHelper: GoPtr<EmitHelper> = {
   Name: "typescript:commonjsimportstar",
   ImportName: "__importStar",
   Scoped: false,
@@ -975,7 +975,7 @@ export const importStarHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const importDefaultHelper: GoPtr<EmitHelper> = {
+export let importDefaultHelper: GoPtr<EmitHelper> = {
   Name: "typescript:commonjsimportdefault",
   ImportName: "__importDefault",
   Scoped: false,
@@ -1002,7 +1002,7 @@ export const importDefaultHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const exportStarHelper: GoPtr<EmitHelper> = {
+export let exportStarHelper: GoPtr<EmitHelper> = {
   Name: "typescript:export-star",
   ImportName: "__exportStar",
   Scoped: false,
@@ -1032,7 +1032,7 @@ export const exportStarHelper: GoPtr<EmitHelper> = {
  * };`,
  * }
  */
-export const rewriteRelativeImportExtensionsHelper: GoPtr<EmitHelper> = {
+export let rewriteRelativeImportExtensionsHelper: GoPtr<EmitHelper> = {
   Name: "typescript:rewriteRelativeImportExtensions",
   ImportName: "__rewriteRelativeImportExtension",
   Scoped: false,

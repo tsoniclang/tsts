@@ -79,7 +79,7 @@ import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifie
  * }
  */
 export interface ESModuleTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   resolver: ReferenceResolver;
   getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;

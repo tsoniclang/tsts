@@ -1,5 +1,5 @@
 import type { bool, byte, int } from "../../go/scalars.js";
-import type { GoRune, GoSlice } from "../../go/compat.js";
+import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import * as regexp from "../../go/regexp.js";
 import { Builder, Count } from "../../go/strings.js";
 import { ToLower } from "../../go/unicode.js";
@@ -588,7 +588,7 @@ export function StripQuotes(name: string): string {
  * Go source:
  * var matchSlashSomething = regexp.MustCompile(`\\.`)
  */
-export const matchSlashSomething: regexp.Regexp = regexp.MustCompile(`\\\\.`);
+export let matchSlashSomething: GoPtr<regexp.Regexp> = regexp.MustCompile(`\\\\.`);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::matchSlashReplacer","kind":"func","status":"implemented","sigHash":"9b639d53c6eb5051f3849fa52411841e72642d5bd8bb5b24ac29a88edd6643b0","bodyHash":"add1c043d85c9d225a2df6f6febdf5b13251cb8c8a94c69bed4cab6ac66be239"}
@@ -619,7 +619,7 @@ export function UnquoteString(str: string): string {
   const inner: string = StripQuotes(str);
   // In strada we do str.replace(/\\./g, s => s.substring(1)) - which is to say, replace all backslash-something with just something
   // That's replicated here faithfully, but it seems wrong! This should probably be an actual unquote operation?
-  return matchSlashSomething.ReplaceAllStringFunc(inner, matchSlashReplacer);
+  return matchSlashSomething!.ReplaceAllStringFunc(inner, matchSlashReplacer);
 }
 
 /**
@@ -761,18 +761,18 @@ export function CodePointToSurrogatePair(ch: GoRune): [GoRune, GoRune] {
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::constGroup::surrogateUTF8Lead+surrogateUTF8LeadBits+utf8ContMarker+utf8ContMax+utf8ContMask+surrogateUTF8Byte1Min+surrogateUTF8Byte1Max","kind":"constGroup","status":"implemented","sigHash":"01744899508cfb5f4c0cf35f7ef8e13aca37b4dd4eb009ad02519f22600bed91","bodyHash":"4da5e8ec178a6659a5f3a4c71fec8982883ced413d37a019041bcc6cb742d205"}
  *
- * Go source: const block describing the CESU-8/WTF-8 byte layout Go uses to encode a lone
+ * Port note: const block describing the CESU-8/WTF-8 byte layout Go uses to encode a lone
  * surrogate (U+D000–U+DFFF) that valid UTF-8 cannot represent. TSTS keeps lone surrogates as
  * native JS UTF-16 code units instead (see EncodeJSStringRune/DecodeJSStringRune), so these
  * byte-layout constants are carried for fidelity but are not referenced by the JS-native helpers.
  */
-const surrogateUTF8Lead: int = 0xed;
-const surrogateUTF8LeadBits: int = 0xd000;
-const utf8ContMarker: int = 0x80;
-const utf8ContMax: int = 0xbf;
-const utf8ContMask: int = 0x3f;
-const surrogateUTF8Byte1Min: int = 0xa0;
-const surrogateUTF8Byte1Max: int = 0xbf;
+export const surrogateUTF8Lead: int = 0xed;
+export const surrogateUTF8LeadBits: int = 0xd000;
+export const utf8ContMarker: int = 0x80;
+export const utf8ContMax: int = 0xbf;
+export const utf8ContMask: int = 0x3f;
+export const surrogateUTF8Byte1Min: int = 0xa0;
+export const surrogateUTF8Byte1Max: int = 0xbf;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeJSStringRune","kind":"func","status":"implemented","sigHash":"1b022e6bf6f6c57eebaf4d88589ab66f999ca307423a34b6f60e1485fc0dc6c1","bodyHash":"24ea1f4d378e6f40da70e9ba018e40169769c24256e5014bdd4dd172cd17b483"}

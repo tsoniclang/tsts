@@ -62,8 +62,8 @@ export const CategoryMessage: Category = 3;
  * 	panic("Unhandled diagnostic category")
  * }
  */
-export function Category_Name(category: Category): string {
-  switch (category) {
+export function Category_Name(receiver: Category): string {
+  switch (receiver) {
     case CategoryWarning:
       return "warning";
     case CategoryError:
@@ -114,8 +114,8 @@ export interface Message {
  * Go source:
  * func (m *Message) Code() int32                        { return m.code }
  */
-export function Message_Code(m: GoPtr<Message>): int {
-  return m!.code;
+export function Message_Code(receiver: GoPtr<Message>): int {
+  return receiver!.code;
 }
 
 /**
@@ -124,8 +124,8 @@ export function Message_Code(m: GoPtr<Message>): int {
  * Go source:
  * func (m *Message) Category() Category                 { return m.category }
  */
-export function Message_Category(m: GoPtr<Message>): Category {
-  return m!.category;
+export function Message_Category(receiver: GoPtr<Message>): Category {
+  return receiver!.category;
 }
 
 /**
@@ -134,8 +134,8 @@ export function Message_Category(m: GoPtr<Message>): Category {
  * Go source:
  * func (m *Message) Key() Key                           { return m.key }
  */
-export function Message_Key(m: GoPtr<Message>): Key {
-  return m!.key;
+export function Message_Key(receiver: GoPtr<Message>): Key {
+  return receiver!.key;
 }
 
 /**
@@ -144,8 +144,8 @@ export function Message_Key(m: GoPtr<Message>): Key {
  * Go source:
  * func (m *Message) ReportsUnnecessary() bool           { return m.reportsUnnecessary }
  */
-export function Message_ReportsUnnecessary(m: GoPtr<Message>): bool {
-  return (m!.reportsUnnecessary ?? false) as bool;
+export function Message_ReportsUnnecessary(receiver: GoPtr<Message>): bool {
+  return (receiver!.reportsUnnecessary ?? false) as bool;
 }
 
 /**
@@ -154,8 +154,8 @@ export function Message_ReportsUnnecessary(m: GoPtr<Message>): bool {
  * Go source:
  * func (m *Message) ElidedInCompatibilityPyramid() bool { return m.elidedInCompatibilityPyramid }
  */
-export function Message_ElidedInCompatibilityPyramid(m: GoPtr<Message>): bool {
-  return (m!.elidedInCompatibilityPyramid ?? false) as bool;
+export function Message_ElidedInCompatibilityPyramid(receiver: GoPtr<Message>): bool {
+  return (receiver!.elidedInCompatibilityPyramid ?? false) as bool;
 }
 
 /**
@@ -164,8 +164,8 @@ export function Message_ElidedInCompatibilityPyramid(m: GoPtr<Message>): bool {
  * Go source:
  * func (m *Message) ReportsDeprecated() bool            { return m.reportsDeprecated }
  */
-export function Message_ReportsDeprecated(m: GoPtr<Message>): bool {
-  return (m!.reportsDeprecated ?? false) as bool;
+export function Message_ReportsDeprecated(receiver: GoPtr<Message>): bool {
+  return (receiver!.reportsDeprecated ?? false) as bool;
 }
 
 /**
@@ -176,8 +176,8 @@ export function Message_ReportsDeprecated(m: GoPtr<Message>): bool {
  * 	return m.text
  * }
  */
-export function Message_String(m: GoPtr<Message>): string {
-  return m!.text;
+export function Message_String(receiver: GoPtr<Message>): string {
+  return receiver!.text;
 }
 
 /**
@@ -188,8 +188,8 @@ export function Message_String(m: GoPtr<Message>): string {
  * 	return Localize(locale, m, "", StringifyArgs(args)...)
  * }
  */
-export function Message_Localize(m: GoPtr<Message>, locale: Locale, ...args: Array<unknown>): string {
-  return Localize(locale, m, "", ...StringifyArgs(args));
+export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, ...args: Array<unknown>): string {
+  return Localize(locale, receiver, "", ...StringifyArgs(args));
 }
 
 /**
@@ -236,7 +236,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
  * Go source:
  * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
  */
-export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = new Map<Tag, GoMap<Key, string> | undefined>();
+export let localizedMessagesCache: Map = new Map<Tag, GoMap<Key, string> | undefined>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236","bodyHash":"79c121d4902ea2df4ae30c8163ca050fd98619c9fb79b1a85d5287003efc1cdb"}
@@ -274,7 +274,7 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
   }
   const cached = localizedMessagesCache.Load(loc);
   if (cached[1]) {
-    return cached[0];
+    return cached[0] as GoMap<Key, string> | undefined;
   }
   const messages = loadMatchedLocaleMessages(loc);
   localizedMessagesCache.Store(loc, messages);
@@ -287,7 +287,7 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
  * Go source:
  * var placeholderRegexp = regexp.MustCompile(`{(\d+)}`)
  */
-export const placeholderRegexp: regexp.Regexp = regexp.MustCompile("{(\\d+)}");
+export let placeholderRegexp: GoPtr<regexp.Regexp> = regexp.MustCompile("{(\\d+)}");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::Format","kind":"func","status":"implemented","sigHash":"8d0ebfd027fe9bdc6d80156a5f0e328da2c262f3f22071796afad2985f458936","bodyHash":"26677394f0f9f362b2c40aad56d500f24382cf9c597bd43576e032cac001c1b3"}
@@ -322,7 +322,7 @@ export function Format(text: string, args: GoSlice<string>): string {
     return ToValidUTF8(arg, "�");
   });
 
-  return placeholderRegexp.ReplaceAllStringFunc(text, (match: string): string => {
+  return placeholderRegexp!.ReplaceAllStringFunc(text, (match: string): string => {
     const [index, err] = ParseInt(byteSlice(match, 1, (byteLen(match) - 1) as int), 10, 0);
     if (err !== undefined || (index as int) >= args.length) {
       throw new globalThis.Error("Invalid formatting placeholder");

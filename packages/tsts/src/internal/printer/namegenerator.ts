@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr } from "../../go/compat.js";
-import type { Node } from "../ast/ast.js";
-import type { MemberName } from "../ast/ast_generated.js";
+import type { Node } from "../ast/spine.js";
+import type { MemberName } from "../ast/generated/unions.js";
 import type { NodeId } from "../ast/ids.js";
 import { GetNodeId, GetExternalModuleName, IsNodeDescendantOf } from "../ast/utilities.js";
 import { IsIdentifier, IsPrivateIdentifier, IsStringLiteral } from "../ast/generated/predicates.js";

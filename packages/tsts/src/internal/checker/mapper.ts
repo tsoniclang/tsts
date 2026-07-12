@@ -201,7 +201,7 @@ export function Checker_newBackreferenceMapper(receiver: GoPtr<Checker>, context
  * }
  */
 export interface TypeMapperBase {
-  readonly __tsgoEmbedded0?: TypeMapper;
+  __tsgoEmbedded0: TypeMapper;
 }
 
 /**
@@ -224,6 +224,15 @@ export function TypeMapperBase_Kind(receiver: GoPtr<TypeMapperBase>): TypeMapper
   return TypeMapperKindUnknown;
 }
 
+class EmbeddedTypeMapper implements TypeMapper {
+  data!: TypeMapperData;
+}
+
+function newEmbeddedTypeMapper(): [TypeMapperBase, TypeMapper] {
+  const mapper = new EmbeddedTypeMapper();
+  return [{ __tsgoEmbedded0: mapper }, mapper];
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::type::SimpleTypeMapper","kind":"type","status":"implemented","sigHash":"18f1b0f031cf526f482f5b0052883312586c7d7bc59f979e5beddb717cc022a1","bodyHash":"85cfca898955cc7df26c9dadd16046fe02020f4903f1fca381cf5edfd4f6a23d"}
  *
@@ -235,7 +244,7 @@ export function TypeMapperBase_Kind(receiver: GoPtr<TypeMapperBase>): TypeMapper
  * }
  */
 export interface SimpleTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   source: GoPtr<Type>;
   target: GoPtr<Type>;
 }
@@ -253,11 +262,14 @@ export interface SimpleTypeMapper {
  * }
  */
 export function newSimpleTypeMapper(source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: SimpleTypeMapper = {
+    __tsgoEmbedded0: base,
     source: source,
     target: target,
   };
-  return { data: SimpleTypeMapper_as_TypeMapperData(m) };
+  mapper.data = SimpleTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function SimpleTypeMapper_as_TypeMapperData(receiver: GoPtr<SimpleTypeMapper>): TypeMapperData {
@@ -309,7 +321,7 @@ export function SimpleTypeMapper_Kind(receiver: GoPtr<SimpleTypeMapper>): TypeMa
  * }
  */
 export interface ArrayTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   sources: GoSlice<GoPtr<Type>>;
   targets: GoSlice<GoPtr<Type>>;
 }
@@ -327,11 +339,14 @@ export interface ArrayTypeMapper {
  * }
  */
 export function newArrayTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: ArrayTypeMapper = {
+    __tsgoEmbedded0: base,
     sources: sources,
     targets: targets,
   };
-  return { data: ArrayTypeMapper_as_TypeMapperData(m) };
+  mapper.data = ArrayTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function ArrayTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayTypeMapper>): TypeMapperData {
@@ -388,7 +403,7 @@ export function ArrayTypeMapper_Kind(receiver: GoPtr<ArrayTypeMapper>): TypeMapp
  * }
  */
 export interface ArrayToSingleTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   sources: GoSlice<GoPtr<Type>>;
   target: GoPtr<Type>;
 }
@@ -406,11 +421,14 @@ export interface ArrayToSingleTypeMapper {
  * }
  */
 export function newArrayToSingleTypeMapper(sources: GoSlice<GoPtr<Type>>, target: GoPtr<Type>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: ArrayToSingleTypeMapper = {
+    __tsgoEmbedded0: base,
     sources: sources,
     target: target,
   };
-  return { data: ArrayToSingleTypeMapper_as_TypeMapperData(m) };
+  mapper.data = ArrayToSingleTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function ArrayToSingleTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayToSingleTypeMapper>): TypeMapperData {
@@ -450,7 +468,7 @@ export function ArrayToSingleTypeMapper_Map(receiver: GoPtr<ArrayToSingleTypeMap
  * }
  */
 export interface DeferredTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   sources: GoSlice<GoPtr<Type>>;
   targets: GoSlice<() => GoPtr<Type>>;
 }
@@ -468,11 +486,14 @@ export interface DeferredTypeMapper {
  * }
  */
 export function newDeferredTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<() => GoPtr<Type>>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: DeferredTypeMapper = {
+    __tsgoEmbedded0: base,
     sources: sources,
     targets: targets,
   };
-  return { data: DeferredTypeMapper_as_TypeMapperData(m) };
+  mapper.data = DeferredTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function DeferredTypeMapper_as_TypeMapperData(receiver: GoPtr<DeferredTypeMapper>): TypeMapperData {
@@ -516,7 +537,7 @@ export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: G
  * }
  */
 export interface FunctionTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   fn: (arg0: GoPtr<Type>) => GoPtr<Type>;
 }
 
@@ -532,10 +553,13 @@ export interface FunctionTypeMapper {
  * }
  */
 export function newFunctionTypeMapper(fn: (arg0: GoPtr<Type>) => GoPtr<Type>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: FunctionTypeMapper = {
+    __tsgoEmbedded0: base,
     fn: fn,
   };
-  return { data: FunctionTypeMapper_as_TypeMapperData(m) };
+  mapper.data = FunctionTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function FunctionTypeMapper_as_TypeMapperData(receiver: GoPtr<FunctionTypeMapper>): TypeMapperData {
@@ -569,7 +593,7 @@ export function FunctionTypeMapper_Map(receiver: GoPtr<FunctionTypeMapper>, t: G
  * }
  */
 export interface MergedTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   m1: GoPtr<TypeMapper>;
   m2: GoPtr<TypeMapper>;
 }
@@ -587,11 +611,14 @@ export interface MergedTypeMapper {
  * }
  */
 export function newMergedTypeMapper(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: MergedTypeMapper = {
+    __tsgoEmbedded0: base,
     m1: m1,
     m2: m2,
   };
-  return { data: MergedTypeMapper_as_TypeMapperData(m) };
+  mapper.data = MergedTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function MergedTypeMapper_as_TypeMapperData(receiver: GoPtr<MergedTypeMapper>): TypeMapperData {
@@ -638,7 +665,7 @@ export function MergedTypeMapper_Kind(receiver: GoPtr<MergedTypeMapper>): TypeMa
  * }
  */
 export interface CompositeTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   c: GoPtr<Checker>;
   m1: GoPtr<TypeMapper>;
   m2: GoPtr<TypeMapper>;
@@ -658,12 +685,15 @@ export interface CompositeTypeMapper {
  * }
  */
 export function newCompositeTypeMapper(c: GoPtr<Checker>, m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: CompositeTypeMapper = {
+    __tsgoEmbedded0: base,
     c: c,
     m1: m1,
     m2: m2,
   };
-  return { data: CompositeTypeMapper_as_TypeMapperData(m) };
+  mapper.data = CompositeTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function CompositeTypeMapper_as_TypeMapperData(receiver: GoPtr<CompositeTypeMapper>): TypeMapperData {
@@ -706,7 +736,7 @@ export function CompositeTypeMapper_Map(receiver: GoPtr<CompositeTypeMapper>, t:
  * }
  */
 export interface InferenceTypeMapper {
-  readonly __tsgoEmbedded0?: TypeMapperBase;
+  __tsgoEmbedded0: TypeMapperBase;
   c: GoPtr<Checker>;
   n: GoPtr<InferenceContext>;
   fixing: bool;
@@ -726,12 +756,15 @@ export interface InferenceTypeMapper {
  * }
  */
 export function Checker_newInferenceTypeMapper(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, fixing: bool): GoPtr<TypeMapper> {
+  const [base, mapper] = newEmbeddedTypeMapper();
   const m: InferenceTypeMapper = {
+    __tsgoEmbedded0: base,
     c: receiver,
     n: n,
     fixing: fixing,
   };
-  return { data: InferenceTypeMapper_as_TypeMapperData(m) };
+  mapper.data = InferenceTypeMapper_as_TypeMapperData(m);
+  return mapper;
 }
 
 function InferenceTypeMapper_as_TypeMapperData(receiver: GoPtr<InferenceTypeMapper>): TypeMapperData {

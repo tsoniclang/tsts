@@ -21,7 +21,7 @@ import { Transformer_NewTransformer, Transformer_TransformSourceFile } from "./t
  * }
  */
 export interface chainedTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   components: GoSlice<GoPtr<Transformer>>;
 }
 

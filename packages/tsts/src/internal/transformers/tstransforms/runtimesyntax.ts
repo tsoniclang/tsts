@@ -178,7 +178,7 @@ import { Tristate_IsTrue } from "../../core/tristate.js";
  * }
  */
 export interface RuntimeSyntaxTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   parentNode: GoPtr<Node>;
   currentNode: GoPtr<Node>;
@@ -321,7 +321,7 @@ export function RuntimeSyntaxTransformer_popScope(receiver: GoPtr<RuntimeSyntaxT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visit","kind":"method","status":"implemented","sigHash":"4a674213a6d9b575419adde9114929a4f5760db52c1cd1a8e20328590dbfa1d8","bodyHash":"4bf5a2ee3a71b68a84b00dcd53750d03fdc9d885313dbf69828191f8b467362d"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visit(node *ast.Node) *ast.Node {
@@ -442,6 +442,9 @@ const RuntimeSyntaxTransformer_visitInner = (receiver: GoPtr<RuntimeSyntaxTransf
   }
 };
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visit","kind":"method","status":"implemented","sigHash":"4a674213a6d9b575419adde9114929a4f5760db52c1cd1a8e20328590dbfa1d8","bodyHash":"4bf5a2ee3a71b68a84b00dcd53750d03fdc9d885313dbf69828191f8b467362d"}
+ */
 export function RuntimeSyntaxTransformer_visit(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): GoPtr<Node> {
   const grandparentNode = RuntimeSyntaxTransformer_pushNode(receiver, node);
   const [savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName] = RuntimeSyntaxTransformer_pushScope(receiver, node);

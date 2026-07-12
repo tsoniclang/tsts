@@ -82,7 +82,7 @@ import {
   NodeFlagsOptionalChain,
   NodeFlagsPossiblyContainsDeprecatedTag,
 } from "../ast/generated/flags.js";
-import type { EntityName, IdentifierNode, SourceFileNode, TypeNode, TypeParameterList } from "../ast/generated/unions.js";
+import type { EntityName, IdentifierNode, TypeNode, TypeParameterList } from "../ast/generated/unions.js";
 import { Some, IfElse } from "../core/core.js";
 import {
   A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag,
@@ -192,8 +192,8 @@ export function init(): void {
  * 	return jsdoc
  * }
  */
-export function parseJSDocForNode(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  const sf = sourceFile as unknown as GoPtr<SourceFile>;
+export function parseJSDocForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+  const sf = sourceFile;
   const p = getParser();
   try {
     Parser_initializeState(p, sf!.parseOptions, sf!.text, sf!.ScriptKind);
@@ -936,7 +936,7 @@ export function Parser_skipWhitespaceOrAsterisk(receiver: GoPtr<Parser>): string
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTag","kind":"method","status":"implemented","sigHash":"2ee0b49974131ada9371d804ff8e3483a96aa1072a602069013b40ca94176289","bodyHash":"90f6984f17d8de2caadd8238904bbb638a8194b85326c65dc1e4343742e10350"}
  *
- * Go source: (uses tagName.Text() and many trailing-tag-comment parsers)
+ * Port note: (uses tagName.Text() and many trailing-tag-comment parsers)
  */
 export function Parser_parseTag(receiver: GoPtr<Parser>, tags: GoSlice<GoPtr<Node>>, margin: int): GoPtr<Node> {
   const start = Scanner_TokenStart(receiver!.scanner);
@@ -1052,7 +1052,7 @@ export function Parser_parseTrailingTagComments(receiver: GoPtr<Parser>, pos: in
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTagComments","kind":"method","status":"implemented","sigHash":"a6864a465e146657c734aa711bdc59d3613d2e8f704e4664fec203229f84a8dc","bodyHash":"3efea51ab5f10f26b19a8657cd641c241ff4a097d7dd8c4b9274ec32cabd2748"}
  *
- * Go source: (uses arena-cloned string slices: p.stringSliceArena.Clone / p.nodeSliceArena.Clone)
+ * Port note: (uses arena-cloned string slices: p.stringSliceArena.Clone / p.nodeSliceArena.Clone)
  */
 export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, initialMargin: GoPtr<string>): GoPtr<NodeList> {
   const commentsPos = Parser_nodePos(receiver);
@@ -1465,7 +1465,7 @@ export function Parser_parseBracketNameInPropertyAndParamTag(receiver: GoPtr<Par
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::isObjectOrObjectArrayTypeReference","kind":"func","status":"implemented","sigHash":"4f5c566c07833aef7e31cb0628afaf73e9484fbb2f97c9df8b806eb8698f503e","bodyHash":"1b9cdc562b578359bf0502d602e06010c436a8393f30af3c4b2e74b6b5e6ea65"}
  *
- * Go source: (uses node.AsArrayTypeNode().ElementType and ref.TypeName.Text())
+ * Port note: (uses node.AsArrayTypeNode().ElementType and ref.TypeName.Text())
  */
 export function isObjectOrObjectArrayTypeReference(node: GoPtr<TypeNode>): bool {
   switch (node!.Kind) {
@@ -1485,7 +1485,7 @@ export function isObjectOrObjectArrayTypeReference(node: GoPtr<TypeNode>): bool 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseParameterOrPropertyTag","kind":"method","status":"implemented","sigHash":"c1d527e4a71c31007f5c504d9092b440cde7dcccd669fa80eba50fc8120b8124","bodyHash":"7db3c9dda9860fa53ae971f9d0471db4e2a2e10c7a688cc645d268dcb2903952"}
  *
- * Go source: (uses parseNestedTypeLiteral / parseTrailingTagComments)
+ * Port note: (uses parseNestedTypeLiteral / parseTrailingTagComments)
  */
 export function Parser_parseParameterOrPropertyTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, target: propertyLikeParse, indent: int): GoPtr<Node> {
   let typeExpression = Parser_tryParseTypeExpression(receiver);
@@ -1513,7 +1513,7 @@ export function Parser_parseParameterOrPropertyTag(receiver: GoPtr<Parser>, star
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseNestedTypeLiteral","kind":"method","status":"implemented","sigHash":"c59f7ee0382abe1caaa8c28de790420f33b055e596509f4c07e5afe2158c6605","bodyHash":"fd2ed57948639a75af3d91dec125a270ab24b1a8e0aba16ada818f1b952fd449"}
  *
- * Go source: (uses typeExpression.Type() and child.TagName().Loc)
+ * Port note: (uses typeExpression.Type() and child.TagName().Loc)
  */
 export function Parser_parseNestedTypeLiteral(receiver: GoPtr<Parser>, typeExpression: GoPtr<Node>, name: GoPtr<EntityName>, target: propertyLikeParse, indent: int): GoPtr<Node> {
   if (typeExpression !== undefined && isObjectOrObjectArrayTypeReference(Node_Type(typeExpression) as GoPtr<TypeNode>)) {
@@ -1547,7 +1547,7 @@ export function Parser_parseNestedTypeLiteral(receiver: GoPtr<Parser>, typeExpre
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseReturnTag","kind":"method","status":"implemented","sigHash":"6491578673ceb6108907c2a933952d4fa68d38ec3348d7937d05ad2e29474dad","bodyHash":"b03d7195134d9d1cfb0499e1e04d90543f376a2aa13d27e3b5e9e43465fbc1f2"}
  *
- * Go source: (uses tagName.Text() and parseTrailingTagComments)
+ * Port note: (uses tagName.Text() and parseTrailingTagComments)
  */
 export function Parser_parseReturnTag(receiver: GoPtr<Parser>, previousTags: GoSlice<GoPtr<Node>>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   if (Some(previousTags, IsJSDocReturnTag)) {
@@ -1561,7 +1561,7 @@ export function Parser_parseReturnTag(receiver: GoPtr<Parser>, previousTags: GoS
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag","kind":"method","status":"implemented","sigHash":"2349d1317667067c0b7600b02473eb3e8b9dffd31b847f37bec66fd38c5bffc3","bodyHash":"59d07509d6201d922b971412447c5b015828c71f14bf46d9b2ff52a6635e33c4"}
  *
- * Go source: (uses tagName.Text() and parseTrailingTagComments)
+ * Port note: (uses tagName.Text() and parseTrailingTagComments)
  */
 export function Parser_parseTypeTag(receiver: GoPtr<Parser>, previousTags: GoSlice<GoPtr<Node>>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   if (Some(previousTags, IsJSDocTypeTag)) {
@@ -1579,7 +1579,7 @@ export function Parser_parseTypeTag(receiver: GoPtr<Parser>, previousTags: GoSli
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSeeTag","kind":"method","status":"implemented","sigHash":"f733cbb444adbbbe3e9593eea39b9aca5c2d0ae808423d3e644eaa3566cca2c4","bodyHash":"2304947e2f6b8486b4fb6a3009b312188cd67a7a9e8fd314fe150d8dd45397ac"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseSeeTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   const hasNameReference = (Parser_isIdentifier(receiver) && !hasAsciiPrefixAt(receiver!.sourceText, Scanner_TokenEnd(receiver!.scanner), "://")) ||
@@ -1595,7 +1595,7 @@ export function Parser_parseSeeTag(receiver: GoPtr<Parser>, start: int, tagName:
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImplementsTag","kind":"method","status":"implemented","sigHash":"06875622725a4ceeec31288b6b045de012dcde0067beeb1f6662ddedfd360e79","bodyHash":"b1541afcf22b034b580c942a65c26fa4effc6fd5c9682f3106b179d6684ada91"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseImplementsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const className = Parser_parseExpressionWithTypeArgumentsForAugments(receiver);
@@ -1605,7 +1605,7 @@ export function Parser_parseImplementsTag(receiver: GoPtr<Parser>, start: int, t
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseAugmentsTag","kind":"method","status":"implemented","sigHash":"f1279fcea9b5213917cc93294df2eee310e33254c84254f1060a79da8fa9c53f","bodyHash":"54cd3659041908d0ed05c3449c799bf98fb90abf695085e7368344fd11495348"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseAugmentsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const className = Parser_parseExpressionWithTypeArgumentsForAugments(receiver);
@@ -1615,7 +1615,7 @@ export function Parser_parseAugmentsTag(receiver: GoPtr<Parser>, start: int, tag
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSatisfiesTag","kind":"method","status":"implemented","sigHash":"01d516ec22ee779accaa39283ed15a76cf1bffdb2b167d5c63b610d45bec7483","bodyHash":"36c8e0356b3282f6fd1d6911a684e2f6b52ed69ae6fbd55e3e96970b5d3a8e1b"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseSatisfiesTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const typeExpression = Parser_parseJSDocTypeExpression(receiver, false);
@@ -1626,7 +1626,7 @@ export function Parser_parseSatisfiesTag(receiver: GoPtr<Parser>, start: int, ta
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThrowsTag","kind":"method","status":"implemented","sigHash":"6e6a885e0f2ae2822e5f24f917c1475bd6ddc38010d00a619a07f67a280510de","bodyHash":"dd555f80f274b9bacab720bc59cfd589ea60c06a53128e006b0cbd075b496dcf"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseThrowsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const typeExpression = Parser_tryParseTypeExpression(receiver);
@@ -1637,7 +1637,7 @@ export function Parser_parseThrowsTag(receiver: GoPtr<Parser>, start: int, tagNa
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImportTag","kind":"method","status":"implemented","sigHash":"3fee6b8292a484a3fb35f9e880b3e68bfa9348b036c10cd5d675f0eb8a7a8a38","bodyHash":"ca679c17c1c517daf81d1bb0fe9fca67e44c97936f3ddfc324edd2710f92174f"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseImportTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const afterImportTagPos = Scanner_TokenFullStart(receiver!.scanner);
@@ -1716,7 +1716,7 @@ export function Parser_parsePropertyAccessEntityNameExpression(receiver: GoPtr<P
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSimpleTag","kind":"method","status":"implemented","sigHash":"0fa7d14d798a66fe0ddb91610d0b26e1dffb43851310f682b2ede94a8cadf1e8","bodyHash":"d76afe493cc550dc21eea24d88085626c8c150332a5ee1eaad94a592f7349286"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseSimpleTag(receiver: GoPtr<Parser>, start: int, createTag: (tagName: GoPtr<IdentifierNode>, comment: GoPtr<NodeList>) => GoPtr<Node>, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   return Parser_finishNode(receiver, createTag(tagName, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
@@ -1725,7 +1725,7 @@ export function Parser_parseSimpleTag(receiver: GoPtr<Parser>, start: int, creat
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThisTag","kind":"method","status":"implemented","sigHash":"f1ce0385f28356b3d02dc3020e1b166e28245756ab72d43dd2000fb903786213","bodyHash":"ee85f94bfb60ec08ef5846d576d9188bc51247deab23898acad919f823499f51"}
  *
- * Go source: (uses parseTrailingTagComments)
+ * Port note: (uses parseTrailingTagComments)
  */
 export function Parser_parseThisTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
   const typeExpression = Parser_parseJSDocTypeExpression(receiver, true);
@@ -1792,7 +1792,7 @@ export function Parser_parseJSDocTypeNameWithNamespace(receiver: GoPtr<Parser>, 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypedefTag","kind":"method","status":"implemented","sigHash":"5d56ed9fa8a5d4d2f7d04ebb717d03b62cf3d34b70138e46b4967dc3679b000f","bodyHash":"a75b3f14dd0bf0c60d37616bce7822a8f51b99e212b535fc7a7c027d044a3197"}
  *
- * Go source: (uses parseJSDocTypeNameWithNamespace / isObjectOrObjectArrayTypeReference / typeExpression.Type() / parseTagComments)
+ * Port note: (uses parseJSDocTypeNameWithNamespace / isObjectOrObjectArrayTypeReference / typeExpression.Type() / parseTagComments)
  */
 export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   let typeExpression = Parser_tryParseTypeExpression(receiver);
@@ -1885,7 +1885,7 @@ export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagN
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTagParameters","kind":"method","status":"implemented","sigHash":"4ad87430b3330f13901ca974355508fb4e1cc79ddc839f284d7d84e57f2f282a","bodyHash":"0102bd38e054b7f7c44ca0230f09d97bfc5c458d0db48ebd43d28354cca92da3"}
  *
- * Go source: (uses parseChildParameterOrPropertyTag / child.TagName().Loc)
+ * Port note: (uses parseChildParameterOrPropertyTag / child.TagName().Loc)
  */
 export function Parser_parseCallbackTagParameters(receiver: GoPtr<Parser>, indent: int): GoPtr<NodeList> {
   let child: GoPtr<Node>;
@@ -1910,7 +1910,7 @@ export function Parser_parseCallbackTagParameters(receiver: GoPtr<Parser>, inden
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocSignature","kind":"method","status":"implemented","sigHash":"3904620168ad3f97031ea33815eb4b184215bf6de3e5ee72f49a7b5cb519ae8d","bodyHash":"f22fc90581ca99e6f85674a30d8cedf86afc3e05cded37d223ff0c667d934297"}
  *
- * Go source: (uses parseCallbackTagParameters / parseTag)
+ * Port note: (uses parseCallbackTagParameters / parseTag)
  */
 export function Parser_parseJSDocSignature(receiver: GoPtr<Parser>, start: int, indent: int): GoPtr<Node> {
   const parameters = Parser_parseCallbackTagParameters(receiver, indent);
@@ -1931,7 +1931,7 @@ export function Parser_parseJSDocSignature(receiver: GoPtr<Parser>, start: int, 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTag","kind":"method","status":"implemented","sigHash":"cb3bc6c00bfc192275c96cf7ba0b68de671626f1b38670fec99b97c57b7c6055","bodyHash":"51304a04839e0d8aacc720954895beb55637dbca463aa979d56090a8b7103ad4"}
  *
- * Go source: (uses parseJSDocTypeNameWithNamespace / parseTagComments / parseJSDocSignature)
+ * Port note: (uses parseJSDocTypeNameWithNamespace / parseTagComments / parseJSDocSignature)
  */
 export function Parser_parseCallbackTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   let fullName = Parser_parseJSDocTypeNameWithNamespace(receiver, false as bool);
@@ -1951,7 +1951,7 @@ export function Parser_parseCallbackTag(receiver: GoPtr<Parser>, start: int, tag
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseOverloadTag","kind":"method","status":"implemented","sigHash":"386780e260b3597c399fe60ab174d15f5b4ec704302ff81c9e8e6a229034aa13","bodyHash":"b0c7c256c9ae1e4902582b80ccda679646183fde0f496ba67c3e042f46f6f393"}
  *
- * Go source: (uses parseTagComments / parseJSDocSignature)
+ * Port note: (uses parseTagComments / parseJSDocSignature)
  */
 export function Parser_parseOverloadTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   Parser_skipWhitespace(receiver);
@@ -1967,7 +1967,7 @@ export function Parser_parseOverloadTag(receiver: GoPtr<Parser>, start: int, tag
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::textsEqual","kind":"func","status":"implemented","sigHash":"187dca3f1d3c550954abc643ba1eb68a6b9953e48f7cc80140fd3ffc097176a6","bodyHash":"8e643117b3c5cb1f51eebec1125b468d5e8a5a77b7b3965081244ca0cc7b2578"}
  *
- * Go source: (uses a.AsQualifiedName().Right.Text() and a.Text())
+ * Port note: (uses a.AsQualifiedName().Right.Text() and a.Text())
  */
 export function textsEqual(a: GoPtr<EntityName>, b: GoPtr<EntityName>): bool {
   for (;;) {
@@ -2000,7 +2000,7 @@ export function Parser_parseChildPropertyTag(receiver: GoPtr<Parser>, indent: in
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildParameterOrPropertyTag","kind":"method","status":"implemented","sigHash":"efe568b14a7e0a40fef1206589beb4ebc3c02fba71293ffd1166550dc373b576","bodyHash":"4d5217b6ea6215a821af142031eda4489c8325706c4e2402d3c9a95190d50fba"}
  *
- * Go source: (uses textsEqual / child.Name() / child.Kind)
+ * Port note: (uses textsEqual / child.Name() / child.Kind)
  */
 export function Parser_parseChildParameterOrPropertyTag(receiver: GoPtr<Parser>, target: propertyLikeParse, indent: int, name: GoPtr<EntityName>): GoPtr<Node> {
   let canParseTag = true;
@@ -2041,7 +2041,7 @@ export function Parser_parseChildParameterOrPropertyTag(receiver: GoPtr<Parser>,
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.tryParseChildTag","kind":"method","status":"implemented","sigHash":"88dc5cb321a70b88417f72c9f69f1ad92c234c6259bea3da55a5e75b80f33aa7","bodyHash":"6a3ff17a7e2e7c1fcda5a9ca09f3b5334761661e0d52b3d64f2f52b420a10cf4"}
  *
- * Go source: (uses tagName.Text())
+ * Port note: (uses tagName.Text())
  */
 export function Parser_tryParseChildTag(receiver: GoPtr<Parser>, target: propertyLikeParse, indent: int): GoPtr<Node> {
   if (receiver!.token !== KindAtToken) {
@@ -2084,7 +2084,7 @@ export function Parser_tryParseChildTag(receiver: GoPtr<Parser>, target: propert
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameter","kind":"method","status":"implemented","sigHash":"deef519dbbae989e3c31f9127b46ef873cfc760ae17a5c1cf76f420790a1673c","bodyHash":"c25356eb0bd20e24a4445930ddb67922d4af9e200e50d32eb0da87d38ca9c2bd"}
  *
- * Go source: (uses ast.NodeIsMissing -- not yet ported in the AST layer)
+ * Port note: (uses ast.NodeIsMissing -- not yet ported in the AST layer)
  */
 export function Parser_parseTemplateTagTypeParameter(receiver: GoPtr<Parser>): GoPtr<Node> {
   const typeParameterPos = Parser_nodePos(receiver);
@@ -2115,7 +2115,7 @@ export function Parser_parseTemplateTagTypeParameter(receiver: GoPtr<Parser>): G
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameters","kind":"method","status":"implemented","sigHash":"85b9f38c4f8ba05631dae52ecfcee50aa5b829d336c11d99025c5231abd22590","bodyHash":"9d79d578b7413d7a68d177821b1d93e3a06471fd46b247836bd586aa07120974"}
  *
- * Go source: (uses parseTemplateTagTypeParameter)
+ * Port note: (uses parseTemplateTagTypeParameter)
  */
 export function Parser_parseTemplateTagTypeParameters(receiver: GoPtr<Parser>): GoPtr<TypeParameterList> {
   const pos = Parser_nodePos(receiver);
@@ -2134,7 +2134,7 @@ export function Parser_parseTemplateTagTypeParameters(receiver: GoPtr<Parser>): 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTag","kind":"method","status":"implemented","sigHash":"c25858bf3d7381a0a8a3f24800807ebf870458f1ac65bd2c845b9151a9ad131a","bodyHash":"da1d54ce2dc9878a9207beb30a1b0c50a50404b56c9696de8117fd2fea62f862"}
  *
- * Go source: (uses parseTemplateTagTypeParameters / parseTrailingTagComments)
+ * Port note: (uses parseTemplateTagTypeParameters / parseTrailingTagComments)
  */
 export function Parser_parseTemplateTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   let constraint: GoPtr<Node>;

@@ -172,11 +172,11 @@ export const FileEmitKindJsInlineMap: FileEmitKind = (1 << 2) as FileEmitKind;
 export const FileEmitKindDtsErrors: FileEmitKind = (1 << 3) as FileEmitKind;
 export const FileEmitKindDtsEmit: FileEmitKind = (1 << 4) as FileEmitKind;
 export const FileEmitKindDtsMap: FileEmitKind = (1 << 5) as FileEmitKind;
-export const FileEmitKindDts: int = (FileEmitKindDtsErrors | FileEmitKindDtsEmit) as int;
-export const FileEmitKindAllJs: int = (FileEmitKindJs | FileEmitKindJsMap | FileEmitKindJsInlineMap) as int;
-export const FileEmitKindAllDtsEmit: int = (FileEmitKindDtsEmit | FileEmitKindDtsMap) as int;
-export const FileEmitKindAllDts: int = (FileEmitKindDts | FileEmitKindDtsMap) as int;
-export const FileEmitKindAll: int = (FileEmitKindAllJs | FileEmitKindAllDts) as int;
+export const FileEmitKindDts: FileEmitKind = (FileEmitKindDtsErrors | FileEmitKindDtsEmit) as int;
+export const FileEmitKindAllJs: FileEmitKind = (FileEmitKindJs | FileEmitKindJsMap | FileEmitKindJsInlineMap) as int;
+export const FileEmitKindAllDtsEmit: FileEmitKind = (FileEmitKindDtsEmit | FileEmitKindDtsMap) as int;
+export const FileEmitKindAllDts: FileEmitKind = (FileEmitKindDts | FileEmitKindDtsMap) as int;
+export const FileEmitKindAll: FileEmitKind = (FileEmitKindAllJs | FileEmitKindAllDts) as int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/snapshot.go::func::GetFileEmitKind","kind":"func","status":"implemented","sigHash":"2ffd60ee5a17179d3a4aff2c7f8cf173dad0e63a42537c54ad3509d5692f1761","bodyHash":"fccb32e4c8d796ed85e8b0fa51baf56fa803e3155e79bfa23426676d2432641f"}

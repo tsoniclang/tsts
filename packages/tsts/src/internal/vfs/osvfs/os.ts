@@ -247,7 +247,7 @@ export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoPtr<FileInfo> 
  * 	},
  * }
  */
-export let limitedWalkDirFuncPool: Pool<limitedWalkDirFunc> = new Pool<limitedWalkDirFunc>();
+export let limitedWalkDirFuncPool: Pool = new Pool<limitedWalkDirFunc>();
 limitedWalkDirFuncPool.New = () => {
   const w: limitedWalkDirFunc = { inner: undefined as never, walk: undefined as never };
   w.walk = ((path: string, d: DirEntry, err: GoError) => limitedWalkDirFunc_walker(w, path, d, err)) as unknown as WalkDirFunc;

@@ -83,12 +83,12 @@ export const NodeResolutionFeaturesExports: NodeResolutionFeatures = 1 << 2;
 export const NodeResolutionFeaturesExportsPatternTrailers: NodeResolutionFeatures = 1 << 3;
 export const NodeResolutionFeaturesImportsPatternRoot: NodeResolutionFeatures = 1 << 4;
 export const NodeResolutionFeaturesNone: NodeResolutionFeatures = 0;
-export const NodeResolutionFeaturesAll: int =
+export const NodeResolutionFeaturesAll: NodeResolutionFeatures =
   NodeResolutionFeaturesImports | NodeResolutionFeaturesSelfName | NodeResolutionFeaturesExports | NodeResolutionFeaturesExportsPatternTrailers | NodeResolutionFeaturesImportsPatternRoot;
-export const NodeResolutionFeaturesNode16Default: int =
+export const NodeResolutionFeaturesNode16Default: NodeResolutionFeatures =
   NodeResolutionFeaturesImports | NodeResolutionFeaturesSelfName | NodeResolutionFeaturesExports | NodeResolutionFeaturesExportsPatternTrailers;
-export const NodeResolutionFeaturesNodeNextDefault: int = NodeResolutionFeaturesAll;
-export const NodeResolutionFeaturesBundlerDefault: int =
+export const NodeResolutionFeaturesNodeNextDefault: NodeResolutionFeatures = NodeResolutionFeaturesAll;
+export const NodeResolutionFeaturesBundlerDefault: NodeResolutionFeatures =
   NodeResolutionFeaturesImports | NodeResolutionFeaturesSelfName | NodeResolutionFeaturesExports | NodeResolutionFeaturesExportsPatternTrailers | NodeResolutionFeaturesImportsPatternRoot;
 
 /**
@@ -253,7 +253,7 @@ export const extensionsTypeScript: extensions = 1 << 0;
 export const extensionsJavaScript: extensions = 1 << 1;
 export const extensionsDeclaration: extensions = 1 << 2;
 export const extensionsJson: extensions = 1 << 3;
-export const extensionsImplementationFiles: int = extensionsTypeScript | extensionsJavaScript;
+export const extensionsImplementationFiles: extensions = extensionsTypeScript | extensionsJavaScript;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/types.go::method::extensions.String","kind":"method","status":"implemented","sigHash":"07c9b49ec98b86cccfff9d2d466581e555912d4ff447fb9314c2d5a239c0b035","bodyHash":"ed85dc3fb27e85045b5d5a019f7720a3964acac3e1622c07b90fb71bff154ba1"}

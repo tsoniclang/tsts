@@ -76,7 +76,7 @@ import { EFNoComments } from "../../printer/emitflags.js";
  * }
  */
 export interface optionalChainTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
 }
 
 /**

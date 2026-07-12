@@ -48,18 +48,18 @@ import { newUsingDeclarationTransformer } from "./using.js";
  * 	NewES2016Transformer = transformers.Chain(NewES2017Transformer, newExponentiationTransformer)
  * )
  */
-export const esDecoratorAndClassFields: TransformerFactory = Chain(newESDecoratorTransformer, newClassFieldsTransformer);
-export const NewESNextTransformer: TransformerFactory = Chain(newUsingDeclarationTransformer, esDecoratorAndClassFields);
+export let esDecoratorAndClassFields: TransformerFactory = Chain(newESDecoratorTransformer, newClassFieldsTransformer);
+export let NewESNextTransformer: TransformerFactory = Chain(newUsingDeclarationTransformer, esDecoratorAndClassFields);
 // 2025: only module system syntax (import attributes, json modules), untransformed regex modifiers
 // 2024: no new downlevel syntax
 // 2023: no new downlevel syntax
 // 2022: class static blocks and class fields are handled by newClassFieldsTransformer
-export const NewES2021Transformer: TransformerFactory = Chain(NewESNextTransformer, newLogicalAssignmentTransformer);
-export const NewES2020Transformer: TransformerFactory = Chain(NewES2021Transformer, newNullishCoalescingTransformer, newOptionalChainTransformer);
-export const NewES2019Transformer: TransformerFactory = Chain(NewES2020Transformer, newOptionalCatchTransformer);
-export const NewES2018Transformer: TransformerFactory = Chain(NewES2019Transformer, newObjectRestSpreadTransformer, newforawaitTransformer, newTaggedTemplateLiftRestrictionTransformer);
-export const NewES2017Transformer: TransformerFactory = Chain(NewES2018Transformer, newAsyncTransformer);
-export const NewES2016Transformer: TransformerFactory = Chain(NewES2017Transformer, newExponentiationTransformer);
+export let NewES2021Transformer: TransformerFactory = Chain(NewESNextTransformer, newLogicalAssignmentTransformer);
+export let NewES2020Transformer: TransformerFactory = Chain(NewES2021Transformer, newNullishCoalescingTransformer, newOptionalChainTransformer);
+export let NewES2019Transformer: TransformerFactory = Chain(NewES2020Transformer, newOptionalCatchTransformer);
+export let NewES2018Transformer: TransformerFactory = Chain(NewES2019Transformer, newObjectRestSpreadTransformer, newforawaitTransformer, newTaggedTemplateLiftRestrictionTransformer);
+export let NewES2017Transformer: TransformerFactory = Chain(NewES2018Transformer, newAsyncTransformer);
+export let NewES2016Transformer: TransformerFactory = Chain(NewES2017Transformer, newExponentiationTransformer);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::func::GetESTransformer","kind":"func","status":"implemented","sigHash":"4a230e67717c0e5f8565aaaa3cdd441426d3011e691956574b0738fb83a76068","bodyHash":"890c167a79d0f363bd81ab7c4c34c88e793072922aa695f5976feda606108478"}

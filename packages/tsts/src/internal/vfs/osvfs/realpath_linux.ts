@@ -43,7 +43,7 @@ export const _procSelfFD: string = "/proc/self/fd/";
  * 	return unix.Stat(_procSelfFD, &stat) == nil
  * })
  */
-export const hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
+export let hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
   const stat: unknown = {}; // var stat unix.Stat_t
   return (unix.Stat(_procSelfFD, stat) === undefined) as bool;
 });

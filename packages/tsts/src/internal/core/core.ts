@@ -1360,7 +1360,7 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
   let bestDistance = math.Floor(runeName.length * 0.4) + 0.9; // If the best result is worse than this, don't bother.
   // Go: levenshteinBuffersPool.Get().(*levenshteinBuffers) — the New factory is
   // always set, so the pool never yields nil and the type assertion holds.
-  const buffers = levenshteinBuffersPool.Get()!;
+  const buffers = levenshteinBuffersPool.Get() as levenshteinBuffers;
   try {
     let bestCandidate = undefined as T;
     let hasBest = false;
@@ -1437,7 +1437,7 @@ export interface levenshteinBuffers {
  * 	},
  * }
  */
-export const levenshteinBuffersPool: Pool<levenshteinBuffers> = globalThis.Object.assign(new Pool<levenshteinBuffers>(), {
+export let levenshteinBuffersPool: Pool = globalThis.Object.assign(new Pool<levenshteinBuffers>(), {
   New: (): levenshteinBuffers => {
     return { previous: [], current: [] };
   },

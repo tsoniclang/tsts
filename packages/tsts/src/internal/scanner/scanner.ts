@@ -388,7 +388,7 @@ export type ErrorCallback = (diagnostic: GoPtr<Message>, start: int, length: int
  * 	"of":          ast.KindOfKeyword,
  * }
  */
-export const textToKeyword: GoMap<string, Kind> = new globalThis.Map<string, Kind>([
+export let textToKeyword: GoMap<string, Kind> = new globalThis.Map<string, Kind>([
   ["abstract", kinds.KindAbstractKeyword],
   ["accessor", kinds.KindAccessorKeyword],
   ["any", kinds.KindAnyKeyword],
@@ -548,7 +548,7 @@ export const textToKeyword: GoMap<string, Kind> = new globalThis.Map<string, Kin
  * 	return m
  * }()
  */
-export const textToToken: GoMap<string, Kind> = ((): GoMap<string, Kind> => {
+export let textToToken: GoMap<string, Kind> = ((): GoMap<string, Kind> => {
   const m = new globalThis.Map<string, Kind>([
     ["{", KindOpenBraceToken],
     ["}", KindCloseBraceToken],
@@ -1475,7 +1475,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 	s.pos += i
  * }
  */
-export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (b: byte) => bool): void {
+export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (arg0: byte) => bool): void {
   const s = receiver!;
   // Scan in place over s.text rather than materializing s.text[pos:end] each call. The byte-string
   // slice is O(rest-of-file) (decode/copy) per call, which is O(n^2) over a large source such as the
@@ -5451,12 +5451,12 @@ export function IsIdentifierPartEx(ch: GoRune, languageVariant: LanguageVariant)
 // by the ported kinds module, so we mirror the same total kind->string mapping as a
 // GoMap (the identical representation already used for textToToken/textToKeyword);
 // TokenToString supplies the "" default for unmapped kinds, matching the array.
-export const tokenToText: GoArray<string, "ast.KindCount"> = ((): GoArray<string, "ast.KindCount"> => {
+export let tokenToText: GoArray<string, "351"> = ((): GoArray<string, "351"> => {
   const result: Array<string> = [];
   for (const [text, kind] of textToToken) {
     result[kind as number] = text;
   }
-  return result as GoArray<string, "ast.KindCount">;
+  return result as GoArray<string, "351">;
 })();
 
 /**
@@ -5810,8 +5810,8 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
  * 	maxAsciiCharacter         byte = 127
  * )
  */
-export const mergeConflictMarkerLength: int = byteLen("<<<<<<<");
-export const maxAsciiCharacter: byte = 127 as byte;
+export let mergeConflictMarkerLength: int = byteLen("<<<<<<<");
+export let maxAsciiCharacter: byte = 127 as byte;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"9ea6f9f957b7886eeeb5b9323e900e44d6ace7d03a8b8a1b27df3442b47addc4","bodyHash":"8d05e9232b29f7976a75551535369a390faa47616116f73064629084f3a2ae3e"}

@@ -10,7 +10,7 @@ import {
 } from "../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::computeCommonSourceDirectoryOfFilenames","kind":"func","status":"implemented","sigHash":"4239085a76e414c3bc2d225bca263ee0fdb177ca3c2f317fd883f6bd2075ecee","bodyHash":"4d14dbf06ddec1e393fa6148971c980f674629b338d92277cd22652c87587038"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func computeCommonSourceDirectoryOfFilenames(fileNames []string, currentDirectory string, useCaseSensitiveFileNames bool) string {
@@ -103,6 +103,9 @@ const computeNextComponents = (
   return commonPathComponents;
 };
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::computeCommonSourceDirectoryOfFilenames","kind":"func","status":"implemented","sigHash":"4239085a76e414c3bc2d225bca263ee0fdb177ca3c2f317fd883f6bd2075ecee","bodyHash":"4d14dbf06ddec1e393fa6148971c980f674629b338d92277cd22652c87587038"}
+ */
 export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool): string {
   const commonPathComponents = fileNames.reduce(
     (acc: GoSlice<string> | null | undefined, sourceFile: string) =>

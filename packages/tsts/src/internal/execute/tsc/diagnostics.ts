@@ -60,7 +60,7 @@ export type DiagnosticReporter = (arg0: GoPtr<Diagnostic>) => void;
  * Go source:
  * func QuietDiagnosticReporter(diagnostic *ast.Diagnostic) {}
  */
-export function QuietDiagnosticReporter(_diagnostic: GoPtr<Diagnostic>): void {}
+export function QuietDiagnosticReporter(diagnostic: GoPtr<Diagnostic>): void {}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::CreateDiagnosticReporter","kind":"func","status":"implemented","sigHash":"de120b44738395e97dcd6175ae1bfb9413decd18e84119eddef8cf178a3633d0","bodyHash":"af3ba2a8d264815f64774254bcc66ef12d483e622c3d8f7b179ff610a3ba2fa6"}
@@ -312,7 +312,7 @@ export type DiagnosticsReporter = (diagnostics: GoSlice<GoPtr<Diagnostic>>) => v
  * Go source:
  * func QuietDiagnosticsReporter(diagnostics []*ast.Diagnostic) {}
  */
-export function QuietDiagnosticsReporter(_diagnostics: GoSlice<GoPtr<Diagnostic>>): void {}
+export function QuietDiagnosticsReporter(diagnostics: GoSlice<GoPtr<Diagnostic>>): void {}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/diagnostics.go::func::CreateReportErrorSummary","kind":"func","status":"implemented","sigHash":"36b641688fde56b26213a3941e5ab3f3137a6483ffe4a73af4b16ad75e068f02","bodyHash":"9f36ed7889632c95ebe2ee5390933292a284e14533a38fb233f83b71568fa672"}

@@ -74,7 +74,7 @@ const byteSlice = StringByteSlice;
  * }
  */
 export interface JSXTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   emitResolver: EmitResolver;
   importSpecifier: string;

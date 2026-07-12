@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -332,7 +333,7 @@ export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
  * Go source:
  * var EmptyCompilerOptions = &CompilerOptions{}
  */
-export const EmptyCompilerOptions: GoPtr<CompilerOptions> = {} as CompilerOptions;
+export let EmptyCompilerOptions: GoPtr<CompilerOptions> = {} as CompilerOptions;
 
 const compilerOptionStringFields = [
   "DeclarationDir",
@@ -491,7 +492,7 @@ export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr
  * Go source:
  * var optionsType = reflect.TypeFor[CompilerOptions]()
  */
-export const optionsType: Type = TypeFor<CompilerOptions>();
+export let optionsType: Type = TypeFor<CompilerOptions>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"implemented","sigHash":"f7d4a926a50c11b48bf433a036d815a2acc0c65ae5238d38c2ccf8340be890b1","bodyHash":"3bedcaaecca6dcc7cad2f15a08f5ea19fa8855978b0ff2013714458ad0cc3e19"}
@@ -1433,3 +1434,140 @@ export function JsxEmit_String(receiver: JsxEmit): string {
       throw new globalThis.Error("unhandled case in JsxEmit.String");
   }
 }
+
+type CompilerOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  CompilerOptions,
+  "github.com/microsoft/typescript-go::internal/core/compileroptions.go::type::CompilerOptions",
+  {
+    readonly AllowJs: { readonly name: "allowJs"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowArbitraryExtensions: { readonly name: "allowArbitraryExtensions"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowImportingTsExtensions: { readonly name: "allowImportingTsExtensions"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowNonTsExtensions: { readonly name: "allowNonTsExtensions"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowUmdGlobalAccess: { readonly name: "allowUmdGlobalAccess"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowUnreachableCode: { readonly name: "allowUnreachableCode"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowUnusedLabels: { readonly name: "allowUnusedLabels"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AssumeChangesOnlyAffectDirectDependencies: { readonly name: "assumeChangesOnlyAffectDirectDependencies"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly CheckJs: { readonly name: "checkJs"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly CustomConditions: { readonly name: "customConditions"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Composite: { readonly name: "composite"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EmitDeclarationOnly: { readonly name: "emitDeclarationOnly"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EmitBOM: { readonly name: "emitBOM"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly EmitDecoratorMetadata: { readonly name: "emitDecoratorMetadata"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Declaration: { readonly name: "declaration"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DeclarationDir: { readonly name: "declarationDir"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DeclarationMap: { readonly name: "declarationMap"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DeduplicatePackages: { readonly name: "deduplicatePackages"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DisableSizeLimit: { readonly name: "disableSizeLimit"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DisableSourceOfProjectReferenceRedirect: { readonly name: "disableSourceOfProjectReferenceRedirect"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DisableSolutionSearching: { readonly name: "disableSolutionSearching"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DisableReferencedProjectLoad: { readonly name: "disableReferencedProjectLoad"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ErasableSyntaxOnly: { readonly name: "erasableSyntaxOnly"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExactOptionalPropertyTypes: { readonly name: "exactOptionalPropertyTypes"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExperimentalDecorators: { readonly name: "experimentalDecorators"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ForceConsistentCasingInFileNames: { readonly name: "forceConsistentCasingInFileNames"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IsolatedModules: { readonly name: "isolatedModules"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IsolatedDeclarations: { readonly name: "isolatedDeclarations"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IgnoreConfig: { readonly name: "ignoreConfig"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly IgnoreDeprecations: { readonly name: "ignoreDeprecations"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ImportHelpers: { readonly name: "importHelpers"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly InlineSourceMap: { readonly name: "inlineSourceMap"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly InlineSources: { readonly name: "inlineSources"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Init: { readonly name: "init"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Incremental: { readonly name: "incremental"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Jsx: { readonly name: "jsx"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly JsxFactory: { readonly name: "jsxFactory"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly JsxFragmentFactory: { readonly name: "jsxFragmentFactory"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly JsxImportSource: { readonly name: "jsxImportSource"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Lib: { readonly name: "lib"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly LibReplacement: { readonly name: "libReplacement"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Locale: { readonly name: "locale"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly MapRoot: { readonly name: "mapRoot"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Module: { readonly name: "module"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ModuleResolution: { readonly name: "moduleResolution"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ModuleSuffixes: { readonly name: "moduleSuffixes"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ModuleDetection: { readonly name: "moduleDetection"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NewLine: { readonly name: "newLine"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoEmit: { readonly name: "noEmit"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoCheck: { readonly name: "noCheck"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoErrorTruncation: { readonly name: "noErrorTruncation"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoFallthroughCasesInSwitch: { readonly name: "noFallthroughCasesInSwitch"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoImplicitAny: { readonly name: "noImplicitAny"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoImplicitThis: { readonly name: "noImplicitThis"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoImplicitReturns: { readonly name: "noImplicitReturns"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoEmitHelpers: { readonly name: "noEmitHelpers"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoLib: { readonly name: "noLib"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoPropertyAccessFromIndexSignature: { readonly name: "noPropertyAccessFromIndexSignature"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoUncheckedIndexedAccess: { readonly name: "noUncheckedIndexedAccess"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoEmitOnError: { readonly name: "noEmitOnError"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoUnusedLocals: { readonly name: "noUnusedLocals"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoUnusedParameters: { readonly name: "noUnusedParameters"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoResolve: { readonly name: "noResolve"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoImplicitOverride: { readonly name: "noImplicitOverride"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoUncheckedSideEffectImports: { readonly name: "noUncheckedSideEffectImports"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly OutDir: { readonly name: "outDir"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Paths: { readonly name: "paths"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PreserveConstEnums: { readonly name: "preserveConstEnums"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PreserveSymlinks: { readonly name: "preserveSymlinks"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Project: { readonly name: "project"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ResolveJsonModule: { readonly name: "resolveJsonModule"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ResolvePackageJsonExports: { readonly name: "resolvePackageJsonExports"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ResolvePackageJsonImports: { readonly name: "resolvePackageJsonImports"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RemoveComments: { readonly name: "removeComments"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RewriteRelativeImportExtensions: { readonly name: "rewriteRelativeImportExtensions"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ReactNamespace: { readonly name: "reactNamespace"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RootDir: { readonly name: "rootDir"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly RootDirs: { readonly name: "rootDirs"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SkipLibCheck: { readonly name: "skipLibCheck"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StableTypeOrdering: { readonly name: "stableTypeOrdering"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Strict: { readonly name: "strict"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StrictBindCallApply: { readonly name: "strictBindCallApply"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StrictBuiltinIteratorReturn: { readonly name: "strictBuiltinIteratorReturn"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StrictFunctionTypes: { readonly name: "strictFunctionTypes"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StrictNullChecks: { readonly name: "strictNullChecks"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StrictPropertyInitialization: { readonly name: "strictPropertyInitialization"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly StripInternal: { readonly name: "stripInternal"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SkipDefaultLibCheck: { readonly name: "skipDefaultLibCheck"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SourceMap: { readonly name: "sourceMap"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SourceRoot: { readonly name: "sourceRoot"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SuppressOutputPathCheck: { readonly name: "suppressOutputPathCheck"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Target: { readonly name: "target"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TraceResolution: { readonly name: "traceResolution"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TsBuildInfoFile: { readonly name: "tsBuildInfoFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly TypeRoots: { readonly name: "typeRoots"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Types: { readonly name: "types"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly UseDefineForClassFields: { readonly name: "useDefineForClassFields"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly UseUnknownInCatchVariables: { readonly name: "useUnknownInCatchVariables"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly VerbatimModuleSyntax: { readonly name: "verbatimModuleSyntax"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly MaxNodeModuleJsDepth: { readonly name: "maxNodeModuleJsDepth"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AllowSyntheticDefaultImports: { readonly name: "allowSyntheticDefaultImports"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly AlwaysStrict: { readonly name: "alwaysStrict"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly BaseUrl: { readonly name: "baseUrl"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly DownlevelIteration: { readonly name: "downlevelIteration"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ESModuleInterop: { readonly name: "esModuleInterop"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly OutFile: { readonly name: "outFile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ConfigFilePath: { readonly name: "configFilePath"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoDtsResolution: { readonly name: "noDtsResolution"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PathsBasePath: { readonly name: "pathsBasePath"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Diagnostics: { readonly name: "diagnostics"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExtendedDiagnostics: { readonly name: "extendedDiagnostics"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly GenerateCpuProfile: { readonly name: "generateCpuProfile"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly GenerateTrace: { readonly name: "generateTrace"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ListEmittedFiles: { readonly name: "listEmittedFiles"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ListFiles: { readonly name: "listFiles"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ExplainFiles: { readonly name: "explainFiles"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ListFilesOnly: { readonly name: "listFilesOnly"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly NoEmitForJsFiles: { readonly name: "noEmitForJsFiles"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PreserveWatchOutput: { readonly name: "preserveWatchOutput"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Pretty: { readonly name: "pretty"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Version: { readonly name: "version"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Watch: { readonly name: "watch"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly ShowConfig: { readonly name: "showConfig"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Build: { readonly name: "build"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Help: { readonly name: "help"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly All: { readonly name: "all"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly PprofDir: { readonly name: "pprofDir"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly SingleThreaded: { readonly name: "singleThreaded"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Quiet: { readonly name: "quiet"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Checkers: { readonly name: "checkers"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

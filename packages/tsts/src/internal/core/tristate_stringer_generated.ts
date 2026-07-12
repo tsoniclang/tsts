@@ -40,7 +40,7 @@ export const _Tristate_name: string = "TSUnknownTSFalseTSTrue";
  * Go source:
  * var _Tristate_index = [...]uint8{0, 9, 16, 22}
  */
-export let _Tristate_index: GoArray<byte, "..."> = [0, 9, 16, 22];
+export let _Tristate_index: GoArray<byte, "4"> = [0, 9, 16, 22];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::method::Tristate.String","kind":"method","status":"implemented","sigHash":"84afbd18fe2faba0a015cf2bb386824ef2422b824f3f6b4c93d389637118b956","bodyHash":"dbcc2fcee22d9cbeae79dca426ff5f9b324cc9bd8df99b02b5df058d91719369"}

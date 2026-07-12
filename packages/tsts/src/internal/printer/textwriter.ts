@@ -70,7 +70,7 @@ function textWriter_as_EmitTextWriter(receiver: GoPtr<textWriter>): EmitTextWrit
  * Go source:
  * var _ EmitTextWriter = &textWriter{}
  */
-export const __f8aeeddb_0: EmitTextWriter = textWriter_as_EmitTextWriter({
+export let __f8aeeddb_0: EmitTextWriter = textWriter_as_EmitTextWriter({
   newLine: "",
   indentSize: 0,
   builder: new Builder(),

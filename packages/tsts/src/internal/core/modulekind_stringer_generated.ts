@@ -87,9 +87,9 @@ export const _ModuleKind_name_2: string = "NodeNextPreserve";
  * 	_ModuleKind_index_2 = [...]uint8{0, 8, 16}
  * )
  */
-export let _ModuleKind_index_0: GoArray<byte, "..."> = [0, 4, 12, 15, 18, 24, 30, 36, 42];
-export let _ModuleKind_index_1: GoArray<byte, "..."> = [0, 6, 12, 18, 24];
-export let _ModuleKind_index_2: GoArray<byte, "..."> = [0, 8, 16];
+export let _ModuleKind_index_0: GoArray<byte, "9"> = [0, 4, 12, 15, 18, 24, 30, 36, 42];
+export let _ModuleKind_index_1: GoArray<byte, "5"> = [0, 6, 12, 18, 24];
+export let _ModuleKind_index_2: GoArray<byte, "3"> = [0, 8, 16];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::method::ModuleKind.String","kind":"method","status":"implemented","sigHash":"8aa7f80eb17c3c5d757a999866a748b612aa92bb32ff7ec95524e5bd82572456","bodyHash":"1628b9c62c47d51c4b7851bd3be691fa93295be250c495864973c0c2e64c9c7b"}

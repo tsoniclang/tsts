@@ -696,7 +696,7 @@ export const InferencePriorityMaxValue: InferencePriority = 1 << 11; // Seed for
 export const InferencePriorityCircularity: InferencePriority = -1; // Inference circularity (value less than all other priorities)
 
 // These priorities imply that the resulting type should be a combination of all candidates
-export const InferencePriorityPriorityImpliesCombination: int =
+export const InferencePriorityPriorityImpliesCombination: InferencePriority =
   InferencePriorityReturnType | InferencePriorityMappedTypeConstraint | InferencePriorityLiteralKeyof;
 
 /**
@@ -740,8 +740,8 @@ export const DeclarationMeaningSetAccessor: DeclarationMeaning = 1 << 1;
 export const DeclarationMeaningPropertyAssignment: DeclarationMeaning = 1 << 2;
 export const DeclarationMeaningMethod: DeclarationMeaning = 1 << 3;
 export const DeclarationMeaningPrivateStatic: DeclarationMeaning = 1 << 4;
-export const DeclarationMeaningGetOrSetAccessor: int = DeclarationMeaningGetAccessor | DeclarationMeaningSetAccessor;
-export const DeclarationMeaningPropertyAssignmentOrMethod: int = DeclarationMeaningPropertyAssignment | DeclarationMeaningMethod;
+export const DeclarationMeaningGetOrSetAccessor: DeclarationMeaning = DeclarationMeaningGetAccessor | DeclarationMeaningSetAccessor;
+export const DeclarationMeaningPropertyAssignmentOrMethod: DeclarationMeaning = DeclarationMeaningPropertyAssignment | DeclarationMeaningMethod;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::DeclarationSpaces","kind":"type","status":"implemented","sigHash":"e0271a9d4adf0b61f79c8ced4962aa6ef43095b2b826e5822d73cd6ccab1362b","bodyHash":"77a7d4d4fb3c22253b83140b95864e61563c2b4f4e60d2564de50cf99b7dac38"}
@@ -1132,15 +1132,15 @@ export const IterationUseDestructuringFlag: IterationUse = 1 << 6;
 export const IterationUsePossiblyOutOfBounds: IterationUse = 1 << 7;
 // Spread, Destructuring, Array element assignment
 export const IterationUseElement: IterationUse = IterationUseAllowsSyncIterablesFlag;
-export const IterationUseSpread: int = IterationUseAllowsSyncIterablesFlag | IterationUseSpreadFlag;
-export const IterationUseDestructuring: int = IterationUseAllowsSyncIterablesFlag | IterationUseDestructuringFlag;
-export const IterationUseForOf: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
-export const IterationUseForAwaitOf: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
-export const IterationUseYieldStar: int = IterationUseAllowsSyncIterablesFlag | IterationUseYieldStarFlag;
-export const IterationUseAsyncYieldStar: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseYieldStarFlag;
+export const IterationUseSpread: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseSpreadFlag;
+export const IterationUseDestructuring: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseDestructuringFlag;
+export const IterationUseForOf: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
+export const IterationUseForAwaitOf: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseAllowsStringInputFlag | IterationUseForOfFlag;
+export const IterationUseYieldStar: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseYieldStarFlag;
+export const IterationUseAsyncYieldStar: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseYieldStarFlag;
 export const IterationUseGeneratorReturnType: IterationUse = IterationUseAllowsSyncIterablesFlag;
 export const IterationUseAsyncGeneratorReturnType: IterationUse = IterationUseAllowsAsyncIterablesFlag;
-export const IterationUseCacheFlags: int = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseForOfFlag;
+export const IterationUseCacheFlags: IterationUse = IterationUseAllowsSyncIterablesFlag | IterationUseAllowsAsyncIterablesFlag | IterationUseForOfFlag;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::IterationTypes","kind":"type","status":"implemented","sigHash":"5d181dfd9bbb5e27de9315b5d772ee92cf03d9039decc36934b37551c28cf0a3","bodyHash":"0df72a9873639112f79d9a514da280ab2aa858fc94dc43700d3a1e8491fc02f8"}
@@ -1266,20 +1266,7 @@ export interface WideningContext {
  * 	CommonSourceDirectory() string
  * }
  */
-export interface Program {
-  readonly __tsgoEmbedded0?: Host;
-  GetSymlinkCache(): GoPtr<KnownSymlinks>;
-  GetGlobalTypingsCacheLocation(): string;
-  UseCaseSensitiveFileNames(): bool;
-  GetCurrentDirectory(): string;
-  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
-  GetRedirectTargets(path: Path): GoSlice<string>;
-  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
-  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
-  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
-  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
-  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
-  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
+export interface Program extends Host {
   Options(): GoPtr<CompilerOptions>;
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
   BindSourceFiles(): void;
@@ -2629,7 +2616,7 @@ export function isES2015OrLaterConstructorName(s: string): bool {
 let _primitiveTypeAliasSuggestionsCache: GoMap<string, GoPtr<Symbol>> | undefined;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"implemented","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376","bodyHash":"2c24498cd0e6cd6c1fd27a069bea95a46ae4db6ad6f60b012a30e9a81742a211"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * var primitiveTypeAliasSuggestions = sync.OnceValue(func() map[string]*ast.Symbol {
@@ -2669,6 +2656,9 @@ function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
   }
   return _primitiveTypeAliasSuggestionsCache;
 }
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"implemented","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376","bodyHash":"2c24498cd0e6cd6c1fd27a069bea95a46ae4db6ad6f60b012a30e9a81742a211"}
+ */
 export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _getPrimitiveTypeAliasSuggestionsMap;
 
 /**
@@ -3303,7 +3293,7 @@ export type PredicateSemantics = uint;
 export const PredicateSemanticsNone: PredicateSemantics = 0;
 export const PredicateSemanticsAlways: PredicateSemantics = 1 << 0;
 export const PredicateSemanticsNever: PredicateSemantics = 1 << 1;
-export const PredicateSemanticsSometimes: int = PredicateSemanticsAlways | PredicateSemanticsNever;
+export const PredicateSemanticsSometimes: PredicateSemantics = PredicateSemanticsAlways | PredicateSemanticsNever;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createDiagnosticForNode","kind":"func","status":"implemented","sigHash":"6cf225f51d25f062d9fd1b3c0bb27fe6744e9d928f43e08b3167e655a83fe1b6","bodyHash":"332b0e58fb8f40e54da2b97f929c157b3b9305cba31cbfc93c8cc3105780df18"}

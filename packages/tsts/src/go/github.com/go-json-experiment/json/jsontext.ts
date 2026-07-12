@@ -18,15 +18,17 @@ export function AllowInvalidUTF8(allow: bool): Option {
   return { name: "AllowInvalidUTF8", value: allow };
 }
 
-export class Kind {
+export type Kind = string;
+
+export class Token {
   readonly #value: string;
 
   constructor(value: string) {
     this.#value = value;
   }
 
-  Kind(): string {
-    return this.#value;
+  Kind(): Kind {
+    return this.#value as Kind;
   }
 
   String(): string {
@@ -34,22 +36,22 @@ export class Kind {
   }
 }
 
-export const BeginArray = new Kind("[");
-export const BeginObject = new Kind("{");
-export const EndArray = new Kind("]");
-export const EndObject = new Kind("}");
-export const Null = new Kind("n");
+export const BeginArray = new Token("[");
+export const BeginObject = new Token("{");
+export const EndArray = new Token("]");
+export const EndObject = new Token("}");
+export const Null = new Token("n");
 
 export type Value = GoSlice<byte>;
 
 export interface Decoder {
-  PeekKind(): string;
-  ReadToken(): [Kind, GoError];
+  PeekKind(): Kind;
+  ReadToken(): [Token, GoError];
   ReadValue(): [unknown, GoError];
 }
 
 export interface Encoder {
-  WriteToken(kind: Kind): GoError;
+  WriteToken(token: Token): GoError;
   WriteValue(value: unknown): GoError;
   Bytes(): GoSlice<byte>;
 }
@@ -62,16 +64,16 @@ class JsonDecoder implements Decoder {
     this.#value = parseInput(input);
   }
 
-  PeekKind(): string {
-    return kindOf(this.#value);
+  PeekKind(): Kind {
+    return kindOf(this.#value) as Kind;
   }
 
-  ReadToken(): [Kind, GoError] {
+  ReadToken(): [Token, GoError] {
     if (this.#consumed) {
-      return [new Kind(""), new Error("json decoder exhausted")];
+      return [new Token(""), new Error("json decoder exhausted")];
     }
     this.#consumed = true;
-    return [new Kind(kindOf(this.#value)), undefined];
+    return [new Token(kindOf(this.#value)), undefined];
   }
 
   ReadValue(): [unknown, GoError] {
@@ -87,9 +89,9 @@ class JsonEncoder implements Encoder {
   readonly #chunks: Array<string> = [];
   readonly #stack: Array<JsonContainerFrame> = [];
 
-  WriteToken(kind: Kind): GoError {
+  WriteToken(token: Token): GoError {
     try {
-      const value = kind.Kind();
+      const value = token.Kind();
       switch (value) {
         case "{":
           this.#writeValuePrefix();

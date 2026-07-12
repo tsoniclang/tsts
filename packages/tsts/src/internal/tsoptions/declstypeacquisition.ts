@@ -51,7 +51,7 @@ export let typeAcquisitionDeclaration: GoPtr<CommandLineOption> = undefined;
  * 	},
  * }
  */
-export const typeAcquisitionDecls: GoSlice<GoPtr<CommandLineOption>> = [
+export let typeAcquisitionDecls: GoSlice<GoPtr<CommandLineOption>> = [
   newCommandLineOption({
     Name: "enable",
     Kind: CommandLineOptionTypeBoolean,

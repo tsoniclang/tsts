@@ -182,7 +182,7 @@ export const TypeFormatFlagsInTypeAlias: TypeFormatFlags = 1 << 23;
  * 	TypeFormatFlagsUseInstantiationExpressions |
  * 	TypeFormatFlagsUseSingleQuotesForStringLiteralType | TypeFormatFlagsNoTypeReduction | TypeFormatFlagsOmitThisParameter
  */
-export const TypeFormatFlagsNodeBuilderFlagsMask: int =
+export const TypeFormatFlagsNodeBuilderFlagsMask: TypeFormatFlags =
   TypeFormatFlagsNoTruncation |
   TypeFormatFlagsWriteArrayAsGenericType |
   TypeFormatFlagsGenerateNamesForShadowedTypeParams |
@@ -313,15 +313,15 @@ export const ExternalEmitHelpersSetFunctionName: ExternalEmitHelpers = 1 << 16; 
 export const ExternalEmitHelpersPropKey: ExternalEmitHelpers = 1 << 17; // __propKey (used by class fields and ECMAScript decorators)
 export const ExternalEmitHelpersAddDisposableResourceAndDisposeResources: ExternalEmitHelpers = 1 << 18; // __addDisposableResource and __disposeResources (used by ESNext transformations)
 export const ExternalEmitHelpersRewriteRelativeImportExtension: ExternalEmitHelpers = 1 << 19; // __rewriteRelativeImportExtension (used by --rewriteRelativeImportExtensions)
-export const ExternalEmitHelpersESDecorateAndRunInitializers: int = ExternalEmitHelpersDecorate; // __esDecorate and __runInitializers (used by ECMAScript decorators transformation)
-export const ExternalEmitHelpersFirstEmitHelper: int = ExternalEmitHelpersRest;
-export const ExternalEmitHelpersLastEmitHelper: int = ExternalEmitHelpersRewriteRelativeImportExtension;
+export const ExternalEmitHelpersESDecorateAndRunInitializers: ExternalEmitHelpers = ExternalEmitHelpersDecorate; // __esDecorate and __runInitializers (used by ECMAScript decorators transformation)
+export const ExternalEmitHelpersFirstEmitHelper: ExternalEmitHelpers = ExternalEmitHelpersRest;
+export const ExternalEmitHelpersLastEmitHelper: ExternalEmitHelpers = ExternalEmitHelpersRewriteRelativeImportExtension;
 // Helpers included by ES2017 for..await..of
-export const ExternalEmitHelpersForAwaitOfIncludes: int = ExternalEmitHelpersAsyncValues;
+export const ExternalEmitHelpersForAwaitOfIncludes: ExternalEmitHelpers = ExternalEmitHelpersAsyncValues;
 // Helpers included by ES2017 async generators
-export const ExternalEmitHelpersAsyncGeneratorIncludes: int = (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncGenerator) >>> 0;
+export const ExternalEmitHelpersAsyncGeneratorIncludes: ExternalEmitHelpers = (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncGenerator) >>> 0;
 // Helpers included by yield* in ES2017 async generators
-export const ExternalEmitHelpersAsyncDelegatorIncludes: int =
+export const ExternalEmitHelpersAsyncDelegatorIncludes: ExternalEmitHelpers =
   (ExternalEmitHelpersAwait | ExternalEmitHelpersAsyncDelegator | ExternalEmitHelpersAsyncValues) >>> 0;
 
 /**
@@ -667,7 +667,7 @@ export const VarianceFlagsVarianceMask: VarianceFlags =
   VarianceFlagsInvariant | VarianceFlagsCovariant | VarianceFlagsContravariant | VarianceFlagsIndependent;
 export const VarianceFlagsUnmeasurable: VarianceFlags = 1 << 3;
 export const VarianceFlagsUnreliable: VarianceFlags = 1 << 4;
-export const VarianceFlagsAllowsStructuralFallback: int = VarianceFlagsUnmeasurable | VarianceFlagsUnreliable;
+export const VarianceFlagsAllowsStructuralFallback: VarianceFlags = VarianceFlagsUnmeasurable | VarianceFlagsUnreliable;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::MarkedAssignmentSymbolLinks","kind":"type","status":"implemented","sigHash":"a1edd3b0155b4555e9e68c8e58b5045653059808fa1bedde3391c95865d93f23","bodyHash":"62deb588e15217b368c23fa93e1c4dfdcdddd3e846fd10a646a0f5e7e06d143a"}
@@ -1029,17 +1029,17 @@ export const TypeFlagsIntersection: TypeFlags = 1 << 28;
 export const TypeFlagsReserved1: TypeFlags = 1 << 29;
 export const TypeFlagsReserved2: TypeFlags = 1 << 30;
 export const TypeFlagsReserved3: TypeFlags = 2147483648;
-export const TypeFlagsAnyOrUnknown: int = (TypeFlagsAny | TypeFlagsUnknown) >>> 0;
-export const TypeFlagsNullable: int = (TypeFlagsUndefined | TypeFlagsNull) >>> 0;
-export const TypeFlagsLiteral: int =
+export const TypeFlagsAnyOrUnknown: TypeFlags = (TypeFlagsAny | TypeFlagsUnknown) >>> 0;
+export const TypeFlagsNullable: TypeFlags = (TypeFlagsUndefined | TypeFlagsNull) >>> 0;
+export const TypeFlagsLiteral: TypeFlags =
   (TypeFlagsStringLiteral | TypeFlagsNumberLiteral | TypeFlagsBigIntLiteral | TypeFlagsBooleanLiteral) >>> 0;
-export const TypeFlagsUnit: int =
+export const TypeFlagsUnit: TypeFlags =
   (TypeFlagsEnum | TypeFlagsLiteral | TypeFlagsUniqueESSymbol | TypeFlagsNullable) >>> 0;
-export const TypeFlagsFreshable: int = (TypeFlagsEnum | TypeFlagsLiteral) >>> 0;
-export const TypeFlagsStringOrNumberLiteral: int = (TypeFlagsStringLiteral | TypeFlagsNumberLiteral) >>> 0;
-export const TypeFlagsStringOrNumberLiteralOrUnique: int =
+export const TypeFlagsFreshable: TypeFlags = (TypeFlagsEnum | TypeFlagsLiteral) >>> 0;
+export const TypeFlagsStringOrNumberLiteral: TypeFlags = (TypeFlagsStringLiteral | TypeFlagsNumberLiteral) >>> 0;
+export const TypeFlagsStringOrNumberLiteralOrUnique: TypeFlags =
   (TypeFlagsStringLiteral | TypeFlagsNumberLiteral | TypeFlagsUniqueESSymbol) >>> 0;
-export const TypeFlagsDefinitelyFalsy: int =
+export const TypeFlagsDefinitelyFalsy: TypeFlags =
   (TypeFlagsStringLiteral |
     TypeFlagsNumberLiteral |
     TypeFlagsBigIntLiteral |
@@ -1048,14 +1048,14 @@ export const TypeFlagsDefinitelyFalsy: int =
     TypeFlagsUndefined |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsPossiblyFalsy: int =
+export const TypeFlagsPossiblyFalsy: TypeFlags =
   (TypeFlagsDefinitelyFalsy |
     TypeFlagsString |
     TypeFlagsNumber |
     TypeFlagsBigInt |
     TypeFlagsBoolean) >>>
   0;
-export const TypeFlagsIntrinsic: int =
+export const TypeFlagsIntrinsic: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsString |
@@ -1068,15 +1068,15 @@ export const TypeFlagsIntrinsic: int =
     TypeFlagsNever |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsStringLike: int =
+export const TypeFlagsStringLike: TypeFlags =
   (TypeFlagsString | TypeFlagsStringLiteral | TypeFlagsTemplateLiteral | TypeFlagsStringMapping) >>> 0;
-export const TypeFlagsNumberLike: int = (TypeFlagsNumber | TypeFlagsNumberLiteral | TypeFlagsEnum) >>> 0;
-export const TypeFlagsBigIntLike: int = (TypeFlagsBigInt | TypeFlagsBigIntLiteral) >>> 0;
-export const TypeFlagsBooleanLike: int = (TypeFlagsBoolean | TypeFlagsBooleanLiteral) >>> 0;
-export const TypeFlagsEnumLike: int = (TypeFlagsEnum | TypeFlagsEnumLiteral) >>> 0;
-export const TypeFlagsESSymbolLike: int = (TypeFlagsESSymbol | TypeFlagsUniqueESSymbol) >>> 0;
-export const TypeFlagsVoidLike: int = (TypeFlagsVoid | TypeFlagsUndefined) >>> 0;
-export const TypeFlagsPrimitive: int =
+export const TypeFlagsNumberLike: TypeFlags = (TypeFlagsNumber | TypeFlagsNumberLiteral | TypeFlagsEnum) >>> 0;
+export const TypeFlagsBigIntLike: TypeFlags = (TypeFlagsBigInt | TypeFlagsBigIntLiteral) >>> 0;
+export const TypeFlagsBooleanLike: TypeFlags = (TypeFlagsBoolean | TypeFlagsBooleanLiteral) >>> 0;
+export const TypeFlagsEnumLike: TypeFlags = (TypeFlagsEnum | TypeFlagsEnumLiteral) >>> 0;
+export const TypeFlagsESSymbolLike: TypeFlags = (TypeFlagsESSymbol | TypeFlagsUniqueESSymbol) >>> 0;
+export const TypeFlagsVoidLike: TypeFlags = (TypeFlagsVoid | TypeFlagsUndefined) >>> 0;
+export const TypeFlagsPrimitive: TypeFlags =
   (TypeFlagsStringLike |
     TypeFlagsNumberLike |
     TypeFlagsBigIntLike |
@@ -1086,7 +1086,7 @@ export const TypeFlagsPrimitive: int =
     TypeFlagsVoidLike |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsDefinitelyNonNullable: int =
+export const TypeFlagsDefinitelyNonNullable: TypeFlags =
   (TypeFlagsStringLike |
     TypeFlagsNumberLike |
     TypeFlagsBigIntLike |
@@ -1096,7 +1096,7 @@ export const TypeFlagsDefinitelyNonNullable: int =
     TypeFlagsObject |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsDisjointDomains: int =
+export const TypeFlagsDisjointDomains: TypeFlags =
   (TypeFlagsNonPrimitive |
     TypeFlagsStringLike |
     TypeFlagsNumberLike |
@@ -1106,18 +1106,18 @@ export const TypeFlagsDisjointDomains: int =
     TypeFlagsVoidLike |
     TypeFlagsNull) >>>
   0;
-export const TypeFlagsUnionOrIntersection: int = (TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
-export const TypeFlagsStructuredType: int = (TypeFlagsObject | TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
-export const TypeFlagsTypeVariable: int = (TypeFlagsTypeParameter | TypeFlagsIndexedAccess) >>> 0;
-export const TypeFlagsInstantiableNonPrimitive: int =
+export const TypeFlagsUnionOrIntersection: TypeFlags = (TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
+export const TypeFlagsStructuredType: TypeFlags = (TypeFlagsObject | TypeFlagsUnion | TypeFlagsIntersection) >>> 0;
+export const TypeFlagsTypeVariable: TypeFlags = (TypeFlagsTypeParameter | TypeFlagsIndexedAccess) >>> 0;
+export const TypeFlagsInstantiableNonPrimitive: TypeFlags =
   (TypeFlagsTypeVariable | TypeFlagsConditional | TypeFlagsSubstitution) >>> 0;
-export const TypeFlagsInstantiablePrimitive: int =
+export const TypeFlagsInstantiablePrimitive: TypeFlags =
   (TypeFlagsIndex | TypeFlagsTemplateLiteral | TypeFlagsStringMapping) >>> 0;
-export const TypeFlagsInstantiable: int =
+export const TypeFlagsInstantiable: TypeFlags =
   (TypeFlagsInstantiableNonPrimitive | TypeFlagsInstantiablePrimitive) >>> 0;
-export const TypeFlagsStructuredOrInstantiable: int =
+export const TypeFlagsStructuredOrInstantiable: TypeFlags =
   (TypeFlagsStructuredType | TypeFlagsInstantiable) >>> 0;
-export const TypeFlagsObjectFlagsType: int =
+export const TypeFlagsObjectFlagsType: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsNullable |
     TypeFlagsNever |
@@ -1125,9 +1125,9 @@ export const TypeFlagsObjectFlagsType: int =
     TypeFlagsUnion |
     TypeFlagsIntersection) >>>
   0;
-export const TypeFlagsSimplifiable: int =
+export const TypeFlagsSimplifiable: TypeFlags =
   (TypeFlagsIndexedAccess | TypeFlagsConditional | TypeFlagsIndex) >>> 0;
-export const TypeFlagsSingleton: int =
+export const TypeFlagsSingleton: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsString |
@@ -1141,7 +1141,7 @@ export const TypeFlagsSingleton: int =
     TypeFlagsNever |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsNarrowable: int =
+export const TypeFlagsNarrowable: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsStructuredOrInstantiable |
@@ -1153,7 +1153,7 @@ export const TypeFlagsNarrowable: int =
     TypeFlagsUniqueESSymbol |
     TypeFlagsNonPrimitive) >>>
   0;
-export const TypeFlagsIncludesMask: int =
+export const TypeFlagsIncludesMask: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsPrimitive |
@@ -1172,7 +1172,7 @@ export const TypeFlagsIncludesEmptyObject: TypeFlags = TypeFlagsConditional;
 export const TypeFlagsIncludesInstantiable: TypeFlags = TypeFlagsSubstitution;
 export const TypeFlagsIncludesConstrainedTypeVariable: TypeFlags = TypeFlagsReserved1;
 export const TypeFlagsIncludesError: TypeFlags = TypeFlagsReserved2;
-export const TypeFlagsNotPrimitiveUnion: int =
+export const TypeFlagsNotPrimitiveUnion: TypeFlags =
   (TypeFlagsAny |
     TypeFlagsUnknown |
     TypeFlagsVoid |
@@ -1221,7 +1221,7 @@ export const TypeFlagsNotPrimitiveUnion: int =
  * 	{TypeFlagsIntersection, "Intersection"},
  * }
  */
-export const typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "..."> = [
+export let typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "29"> = [
   { flag: TypeFlagsAny, name: "Any" },
   { flag: TypeFlagsUnknown, name: "Unknown" },
   { flag: TypeFlagsUndefined, name: "Undefined" },
@@ -1251,7 +1251,7 @@ export const typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "..."> = 
   { flag: TypeFlagsConditional, name: "Conditional" },
   { flag: TypeFlagsUnion, name: "Union" },
   { flag: TypeFlagsIntersection, name: "Intersection" },
-] as GoArray<{ flag: TypeFlags; name: string }, "...">;
+] as GoArray<{ flag: TypeFlags; name: string }, "29">;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::func::FormatTypeFlags","kind":"func","status":"implemented","sigHash":"e927368847a2a91161816e5cb84351d111911678d373a466bf7d6ec7e8f3fd10","bodyHash":"ef37e91a659a9939e009b4ace805de296079a2d2c5f7c3b0e2b23676166193f7"}
@@ -1435,18 +1435,13 @@ export const ObjectFlagsNonInferrableType: ObjectFlags = 1 << 18;
 export const ObjectFlagsCouldContainTypeVariablesComputed: ObjectFlags = 1 << 19;
 export const ObjectFlagsCouldContainTypeVariables: ObjectFlags = 1 << 20;
 export const ObjectFlagsMembersResolved: ObjectFlags = 1 << 21;
-export const ObjectFlagsClassOrInterface: int = (ObjectFlagsClass | ObjectFlagsInterface) >>> 0;
-export const ObjectFlagsRequiresWidening: int =
+export const ObjectFlagsClassOrInterface: ObjectFlags = (ObjectFlagsClass | ObjectFlagsInterface) >>> 0;
+export const ObjectFlagsRequiresWidening: ObjectFlags =
   (ObjectFlagsContainsWideningType | ObjectFlagsContainsObjectOrArrayLiteral) >>> 0;
-export const ObjectFlagsPropagatingFlags: int =
+export const ObjectFlagsPropagatingFlags: ObjectFlags =
   (ObjectFlagsContainsWideningType | ObjectFlagsContainsObjectOrArrayLiteral | ObjectFlagsNonInferrableType) >>> 0;
-export const ObjectFlagsInstantiatedMapped: int = (ObjectFlagsMapped | ObjectFlagsInstantiated) >>> 0;
-export const ObjectFlagsContainsSpread: int = 1 << 22;
-export const ObjectFlagsObjectRestType: int = 1 << 23;
-export const ObjectFlagsInstantiationExpressionType: int = 1 << 24;
-export const ObjectFlagsSingleSignatureType: int = 1 << 25;
-export const ObjectFlagsIsClassInstanceClone: int = 1 << 26;
-export const ObjectFlagsObjectTypeKindMask: int =
+export const ObjectFlagsInstantiatedMapped: ObjectFlags = (ObjectFlagsMapped | ObjectFlagsInstantiated) >>> 0;
+export const ObjectFlagsObjectTypeKindMask: ObjectFlags =
   (ObjectFlagsClassOrInterface |
     ObjectFlagsReference |
     ObjectFlagsTuple |
@@ -1454,9 +1449,14 @@ export const ObjectFlagsObjectTypeKindMask: int =
     ObjectFlagsMapped |
     ObjectFlagsReverseMapped |
     ObjectFlagsEvolvingArray |
-    ObjectFlagsInstantiationExpressionType |
-    ObjectFlagsSingleSignatureType) >>>
+    (1 << 24) |
+    (1 << 25)) >>>
   0;
+export const ObjectFlagsContainsSpread: int = 1 << 22;
+export const ObjectFlagsObjectRestType: int = 1 << 23;
+export const ObjectFlagsInstantiationExpressionType: int = 1 << 24;
+export const ObjectFlagsSingleSignatureType: int = 1 << 25;
+export const ObjectFlagsIsClassInstanceClone: int = 1 << 26;
 export const ObjectFlagsIdenticalBaseTypeCalculated: int = 1 << 27;
 export const ObjectFlagsIdenticalBaseTypeExists: int = 1 << 28;
 export const ObjectFlagsUnresolvedMembers: int = 1 << 29;
@@ -2169,7 +2169,7 @@ export interface TypeData extends GoInterfaceValue<unknown> {
  * }
  */
 export interface TypeBase {
-  readonly __tsgoEmbedded0?: Type;
+  __tsgoEmbedded0: Type;
 }
 
 /**
@@ -2252,7 +2252,7 @@ export function TypeBase_AsUnionOrIntersectionType(receiver: GoPtr<TypeBase>): G
  * }
  */
 export interface IntrinsicType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   intrinsicName: string;
 }
 
@@ -2278,7 +2278,7 @@ export function IntrinsicType_IntrinsicName(receiver: GoPtr<IntrinsicType>): str
  * }
  */
 export interface LiteralType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   value: unknown;
   freshType: GoPtr<Type>;
   regularType: GoPtr<Type>;
@@ -2342,7 +2342,7 @@ export function LiteralType_String(receiver: GoPtr<LiteralType>): string {
  * }
  */
 export interface UniqueESSymbolType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   name: string;
 }
 
@@ -2356,7 +2356,7 @@ export interface UniqueESSymbolType {
  * }
  */
 export interface ConstrainedType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   resolvedBaseConstraint: GoPtr<Type>;
 }
 
@@ -2386,7 +2386,7 @@ export function ConstrainedType_AsConstrainedType(receiver: GoPtr<ConstrainedTyp
  * }
  */
 export interface StructuredType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   members: SymbolTable;
   properties: GoSlice<GoPtr<Symbol_62f2f8bf>>;
   signatures: GoSlice<GoPtr<Signature>>;
@@ -2453,7 +2453,7 @@ export function StructuredType_Properties(receiver: GoPtr<StructuredType>): GoSl
  * }
  */
 export interface ObjectType {
-  readonly __tsgoEmbedded0?: StructuredType;
+  __tsgoEmbedded0: StructuredType;
   target: GoPtr<Type>;
   mapper: GoPtr<TypeMapper>;
   instantiations: GoMap<CacheHashKey, GoPtr<Type>>;
@@ -2480,7 +2480,7 @@ export function ObjectType_AsObjectType(receiver: GoPtr<ObjectType>): GoPtr<Obje
  * }
  */
 export interface TypeReference {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   node: GoPtr<Node>;
   resolvedTypeArguments: GoSlice<GoPtr<Type>>;
 }
@@ -2515,7 +2515,7 @@ export function TypeReference_AsTypeReference(receiver: GoPtr<TypeReference>): G
  * }
  */
 export interface InterfaceType {
-  readonly __tsgoEmbedded0?: TypeReference;
+  __tsgoEmbedded0: TypeReference;
   allTypeParameters: GoSlice<GoPtr<Type>>;
   outerTypeParameterCount: int;
   thisType: GoPtr<Type>;
@@ -2622,10 +2622,10 @@ export const ElementFlagsRequired: ElementFlags = 1 << 0;
 export const ElementFlagsOptional: ElementFlags = 1 << 1;
 export const ElementFlagsRest: ElementFlags = 1 << 2;
 export const ElementFlagsVariadic: ElementFlags = 1 << 3;
-export const ElementFlagsFixed: int = (ElementFlagsRequired | ElementFlagsOptional) >>> 0;
-export const ElementFlagsVariable: int = (ElementFlagsRest | ElementFlagsVariadic) >>> 0;
-export const ElementFlagsNonRequired: int = (ElementFlagsOptional | ElementFlagsRest | ElementFlagsVariadic) >>> 0;
-export const ElementFlagsNonRest: int = (ElementFlagsRequired | ElementFlagsOptional | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsFixed: ElementFlags = (ElementFlagsRequired | ElementFlagsOptional) >>> 0;
+export const ElementFlagsVariable: ElementFlags = (ElementFlagsRest | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsNonRequired: ElementFlags = (ElementFlagsOptional | ElementFlagsRest | ElementFlagsVariadic) >>> 0;
+export const ElementFlagsNonRest: ElementFlags = (ElementFlagsRequired | ElementFlagsOptional | ElementFlagsVariadic) >>> 0;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TupleElementInfo","kind":"type","status":"implemented","sigHash":"b0e3725aee7eb05c6512f213d449b4219ef8d185d3f0c7de27323318e7acecc1","bodyHash":"1571113b5527514f78d28f8ff301066429517ca40498bb57d38ce3002c001052"}
@@ -2675,7 +2675,7 @@ export function TupleElementInfo_LabeledDeclaration(receiver: GoPtr<TupleElement
  * }
  */
 export interface TupleType {
-  readonly __tsgoEmbedded0?: InterfaceType;
+  __tsgoEmbedded0: InterfaceType;
   elementInfos: GoSlice<TupleElementInfo>;
   minLength: int;
   fixedLength: int;
@@ -2739,7 +2739,7 @@ export function TupleType_ElementInfos(receiver: GoPtr<TupleType>): GoSlice<Tupl
  * }
  */
 export interface InstantiationExpressionType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   node: GoPtr<Node>;
 }
 
@@ -2760,7 +2760,7 @@ export interface InstantiationExpressionType {
  * }
  */
 export interface MappedType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   declaration: GoPtr<MappedTypeNode>;
   typeParameter: GoPtr<Type>;
   constraintType: GoPtr<Type>;
@@ -2783,7 +2783,7 @@ export interface MappedType {
  * }
  */
 export interface ReverseMappedType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   source: GoPtr<Type>;
   mappedType: GoPtr<Type>;
   constraintType: GoPtr<Type>;
@@ -2800,7 +2800,7 @@ export interface ReverseMappedType {
  * }
  */
 export interface EvolvingArrayType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   elementType: GoPtr<Type>;
   finalArrayType: GoPtr<Type>;
 }
@@ -2818,7 +2818,7 @@ export interface EvolvingArrayType {
  * }
  */
 export interface UnionOrIntersectionType {
-  readonly __tsgoEmbedded0?: StructuredType;
+  __tsgoEmbedded0: StructuredType;
   types: GoSlice<GoPtr<Type>>;
   propertyCache: SymbolTable;
   propertyCacheWithoutFunctionPropertyAugment: SymbolTable;
@@ -2861,7 +2861,7 @@ export function UnionOrIntersectionType_Types(receiver: GoPtr<UnionOrIntersectio
  * }
  */
 export interface UnionType {
-  readonly __tsgoEmbedded0?: UnionOrIntersectionType;
+  __tsgoEmbedded0: UnionOrIntersectionType;
   resolvedReducedType: GoPtr<Type>;
   regularType: GoPtr<Type>;
   origin: GoPtr<Type>;
@@ -2880,7 +2880,7 @@ export interface UnionType {
  * }
  */
 export interface IntersectionType {
-  readonly __tsgoEmbedded0?: UnionOrIntersectionType;
+  __tsgoEmbedded0: UnionOrIntersectionType;
   resolvedApparentType: GoPtr<Type>;
   uniqueLiteralFilledInstantiation: GoPtr<Type>;
 }
@@ -2899,7 +2899,7 @@ export interface IntersectionType {
  * }
  */
 export interface TypeParameter {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   constraint: GoPtr<Type>;
   target: GoPtr<Type>;
   mapper: GoPtr<TypeMapper>;
@@ -2952,7 +2952,7 @@ export const IndexFlagsNoReducibleCheck: IndexFlags = 1 << 2;
  * }
  */
 export interface IndexType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   target: GoPtr<Type>;
   indexFlags: IndexFlags;
 }
@@ -2979,7 +2979,7 @@ export function IndexType_Target(receiver: GoPtr<IndexType>): GoPtr<Type> {
  * }
  */
 export interface IndexedAccessType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   objectType: GoPtr<Type>;
   indexType: GoPtr<Type>;
   accessFlags: AccessFlags;
@@ -3016,7 +3016,7 @@ export function IndexedAccessType_IndexType(receiver: GoPtr<IndexedAccessType>):
  * }
  */
 export interface TemplateLiteralType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   texts: GoSlice<string>;
   types: GoSlice<GoPtr<Type>>;
 }
@@ -3051,7 +3051,7 @@ export function TemplateLiteralType_Types(receiver: GoPtr<TemplateLiteralType>):
  * }
  */
 export interface StringMappingType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   target: GoPtr<Type>;
 }
 
@@ -3076,7 +3076,7 @@ export function StringMappingType_Target(receiver: GoPtr<StringMappingType>): Go
  * }
  */
 export interface SubstitutionType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   baseType: GoPtr<Type>;
   constraint: GoPtr<Type>;
 }
@@ -3146,7 +3146,7 @@ export interface ConditionalRoot {
  * }
  */
 export interface ConditionalType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   root: GoPtr<ConditionalRoot>;
   checkType: GoPtr<Type>;
   extendsType: GoPtr<Type>;
@@ -3221,7 +3221,7 @@ export const SignatureFlagsIsOuterCallChain: SignatureFlags = 1 << 5;
 export const SignatureFlagsIsUntypedSignatureInJSFile: SignatureFlags = 1 << 6;
 export const SignatureFlagsIsNonInferrable: SignatureFlags = 1 << 7;
 export const SignatureFlagsIsSignatureCandidateForOverloadFailure: SignatureFlags = 1 << 8;
-export const SignatureFlagsPropagatingFlags: int =
+export const SignatureFlagsPropagatingFlags: SignatureFlags =
   (SignatureFlagsHasRestParameter |
     SignatureFlagsHasLiteralTypes |
     SignatureFlagsConstruct |
@@ -3229,7 +3229,7 @@ export const SignatureFlagsPropagatingFlags: int =
     SignatureFlagsIsUntypedSignatureInJSFile |
     SignatureFlagsIsSignatureCandidateForOverloadFailure) >>>
   0;
-export const SignatureFlagsCallChainFlags: int =
+export const SignatureFlagsCallChainFlags: SignatureFlags =
   (SignatureFlagsIsInnerCallChain | SignatureFlagsIsOuterCallChain) >>> 0;
 
 /**
@@ -3647,7 +3647,7 @@ export interface LanguageFeatureMinimumTargetMap {
  * 	RegularExpressionFlagsUnicodeSets: core.ScriptTargetESNext,
  * }
  */
-export const LanguageFeatureMinimumTarget: LanguageFeatureMinimumTargetMap = {
+export let LanguageFeatureMinimumTarget: LanguageFeatureMinimumTargetMap = {
   Exponentiation: ScriptTargetES2016,
   AsyncFunctions: ScriptTargetES2017,
   ForAwaitOf: ScriptTargetES2018,

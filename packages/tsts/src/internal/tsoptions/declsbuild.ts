@@ -24,7 +24,7 @@ import { commonOptionsWithBuild } from "./declscompiler.js";
  * 	DefaultValueDescription:  false,
  * }
  */
-export const TscBuildOption: CommandLineOption = newCommandLineOption({
+export let TscBuildOption: CommandLineOption = newCommandLineOption({
   Name: "build",
   Kind: "boolean",
   ShortName: "b",
@@ -88,7 +88,7 @@ export const TscBuildOption: CommandLineOption = newCommandLineOption({
  * 	},
  * }
  */
-export const OptionsForBuild: GoSlice<GoPtr<CommandLineOption>> = [
+export let OptionsForBuild: GoSlice<GoPtr<CommandLineOption>> = [
   TscBuildOption,
   newCommandLineOption({
     Name: "verbose",
@@ -144,4 +144,4 @@ export const OptionsForBuild: GoSlice<GoPtr<CommandLineOption>> = [
  * Go source:
  * var BuildOpts = slices.Concat(commonOptionsWithBuild, OptionsForBuild)
  */
-export const BuildOpts: GoSlice<GoPtr<CommandLineOption>> = Concat(commonOptionsWithBuild, OptionsForBuild);
+export let BuildOpts: GoSlice<GoPtr<CommandLineOption>> = Concat(commonOptionsWithBuild, OptionsForBuild);

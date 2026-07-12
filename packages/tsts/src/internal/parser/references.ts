@@ -1,6 +1,7 @@
 import type { bool } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
 import { AsSourceFile, Node_Body, Node_Text, SourceFile_Imports } from "../ast/ast.js";
+import type { SourceFile } from "../ast/ast.js";
 import { AsModuleDeclaration } from "../ast/generated/casts.js";
 import { IsModuleDeclaration, IsStringLiteral } from "../ast/generated/predicates.js";
 import { ModifierFlagsAmbient } from "../ast/modifierflags.js";
@@ -14,7 +15,7 @@ import {
   IsInJSFile,
   SetImportsOfSourceFile,
 } from "../ast/utilities.js";
-import type { SourceFileNode, Statement, Expression } from "../ast/generated/unions.js";
+import type { Statement, Expression } from "../ast/generated/unions.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Statements } from "../ast/ast.js";
 import { NodeFlagsPossiblyContainsDynamicImport } from "../ast/generated/flags.js";
@@ -39,7 +40,7 @@ import { IsExternalModuleNameRelative } from "../tspath/path.js";
  * 	}
  * }
  */
-export function collectExternalModuleReferences(file: GoPtr<SourceFileNode>): void {
+export function collectExternalModuleReferences(file: GoPtr<SourceFile>): void {
   const sf = AsSourceFile(file)!;
   for (const node of sf.Statements!.Nodes) {
     collectModuleReferences(file, node as GoPtr<Statement>, false /*inAmbientModule*/);
@@ -106,7 +107,7 @@ export function collectExternalModuleReferences(file: GoPtr<SourceFileNode>): vo
  * 	}
  * }
  */
-export function collectModuleReferences(file: GoPtr<SourceFileNode>, node: GoPtr<Statement>, inAmbientModule: bool): void {
+export function collectModuleReferences(file: GoPtr<SourceFile>, node: GoPtr<Statement>, inAmbientModule: bool): void {
   const sf = AsSourceFile(file)!;
   if (IsAnyImportOrReExport(node)) {
     const moduleNameExpr = GetExternalModuleName(node);

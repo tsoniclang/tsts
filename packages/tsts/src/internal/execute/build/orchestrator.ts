@@ -872,7 +872,7 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
+ * Port note: upstream implementation source follows.
  *
  * Go source:
  * func NewOrchestrator(opts Options) *Orchestrator {
@@ -911,6 +911,9 @@ function newParseCache(): parseCache {
   return { entries: newSyncMap() };
 }
 
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
+ */
 export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
   const orchestrator: Orchestrator = {
     opts,

@@ -1,4 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
@@ -101,7 +102,7 @@ export interface impliedOption {
  * 	{name: "AllowImportingTsExtensions", dependencies: []string{"RewriteRelativeImportExtensions"}, compute: computeFn((*core.CompilerOptions).GetAllowImportingTsExtensions)},
  * }
  */
-export const impliedOptions: GoSlice<impliedOption> = [
+export let impliedOptions: GoSlice<impliedOption> = [
   { name: "Module", dependencies: ["Target"], compute: computeFn(CompilerOptions_GetEmitModuleKind) },
   { name: "ModuleResolution", dependencies: ["Module", "Target"], compute: computeFn(CompilerOptions_GetModuleResolutionKind) },
   { name: "ModuleDetection", dependencies: ["Module", "Target"], compute: computeFn(CompilerOptions_GetEmitModuleDetectionKind) },
@@ -809,3 +810,16 @@ export function serializeImpliedOptionValue(optionDecl: GoPtr<CommandLineOption>
   }
   return value;
 }
+
+type TSConfigJsonFields = JsonFieldNamesForGoStructContract<
+  TSConfig,
+  "github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::type::TSConfig",
+  {
+    readonly CompilerOptions: { readonly name: "compilerOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly References: { readonly name: "references"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Files: { readonly name: "files"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Include: { readonly name: "include"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly Exclude: { readonly name: "exclude"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+    readonly CompileOnSave: { readonly name: "compileOnSave"; readonly omitZero: true; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

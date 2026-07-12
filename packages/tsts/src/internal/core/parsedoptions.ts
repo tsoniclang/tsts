@@ -1,4 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { CompilerOptions } from "./compileroptions.js";
 import type { ProjectReference } from "./projectreference.js";
 import type { TypeAcquisition } from "./typeacquisition.js";
@@ -24,3 +25,15 @@ export interface ParsedOptions {
   FileNames: GoSlice<string>;
   ProjectReferences: GoSlice<GoPtr<ProjectReference>>;
 }
+
+type ParsedOptionsJsonFields = JsonFieldNamesForGoStructContract<
+  ParsedOptions,
+  "github.com/microsoft/typescript-go::internal/core/parsedoptions.go::type::ParsedOptions",
+  {
+    readonly CompilerOptions: { readonly name: "compilerOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly WatchOptions: { readonly name: "watchOptions"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly TypeAcquisition: { readonly name: "typeAcquisition"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly FileNames: { readonly name: "fileNames"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+    readonly ProjectReferences: { readonly name: "projectReferences"; readonly omitZero: false; readonly omitEmpty: false; readonly ignored: false };
+  }
+>;

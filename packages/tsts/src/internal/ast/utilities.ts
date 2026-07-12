@@ -574,8 +574,8 @@ import { Pool as PoolValue } from "../../go/sync.js";
  * 	nextSymbolId atomic.Uint64
  * )
  */
-export const nextNodeId: Uint64 = new Uint64();
-export const nextSymbolId: Uint64 = new Uint64();
+export let nextNodeId: Uint64 = new Uint64();
+export let nextSymbolId: Uint64 = new Uint64();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetNodeId","kind":"func","status":"implemented","sigHash":"58bcc87f850cfc42a561e116eb0669459f0b60dfaeb2c779e28f2a06e2005d7a","bodyHash":"9075ab2290f73a01a27bb39d34c1bb7dca25dcc3845910c3e2dcf85217268716"}
@@ -2445,8 +2445,8 @@ export const OEKPartiallyEmittedExpressions: OuterExpressionKinds = (1 << 3) as 
 export const OEKExpressionsWithTypeArguments: OuterExpressionKinds = (1 << 4) as OuterExpressionKinds;
 export const OEKSatisfies: OuterExpressionKinds = (1 << 5) as OuterExpressionKinds;
 export const OEKExcludeJSDocTypeAssertion: int = (1 << 6) as int;
-export const OEKAssertions: int = (OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies) as int;
-export const OEKAll: int = (OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments) as int;
+export const OEKAssertions: OuterExpressionKinds = (OEKTypeAssertions | OEKNonNullAssertions | OEKSatisfies) as int;
+export const OEKAll: OuterExpressionKinds = (OEKParentheses | OEKAssertions | OEKPartiallyEmittedExpressions | OEKExpressionsWithTypeArguments) as int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::IsOuterExpression","kind":"func","status":"implemented","sigHash":"28b42343fb8505a97d8f6a58ddb129a754951cd4660b560ebc97695d5ae2808b","bodyHash":"a22d786b0e208217f92f631828167a00f8b78e1a87677e5adc8650fad2a9a24f"}
@@ -2623,7 +2623,7 @@ export function GetSourceFileOfNode(node: GoPtr<Node>): GoPtr<SourceFile> {
  * 	},
  * }
  */
-export const setParentInChildrenPool: Pool<(node: GoPtr<Node>) => bool> = ((): Pool<(node: GoPtr<Node>) => bool> => {
+export let setParentInChildrenPool: Pool = ((): Pool<(node: GoPtr<Node>) => bool> => {
   const pool = new PoolValue<(node: GoPtr<Node>) => bool>();
   pool.New = (): ((node: GoPtr<Node>) => bool) => {
     return newParentInChildrenSetter();

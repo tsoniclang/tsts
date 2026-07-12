@@ -13,7 +13,7 @@ import * as strings from "../../go/strings.js";
  * Go source:
  * var versionRegexp = regexp.MustCompile(`(?i)^(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$`)
  */
-export const versionRegexp: regexp.Regexp = regexp.MustCompile(
+export let versionRegexp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:-([a-z0-9-.]+))?(?:\\+([a-z0-9-.]+))?)?)?$`,
 );
 
@@ -26,10 +26,10 @@ export const versionRegexp: regexp.Regexp = regexp.MustCompile(
  * 	prereleasePartRegexp = regexp.MustCompile(`(?i)^(?:0|[1-9]\d*|[a-z-][a-z0-9-]*)$`)
  * )
  */
-export const prereleaseRegexp: regexp.Regexp = regexp.MustCompile(
+export let prereleaseRegexp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^(?:0|[1-9]\\d*|[a-z-][a-z0-9-]*)(?:\\.(?:0|[1-9]\\d*|[a-zA-Z-][a-zA-Z0-9-]*))*$`,
 );
-export const prereleasePartRegexp: regexp.Regexp = regexp.MustCompile(
+export let prereleasePartRegexp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^(?:0|[1-9]\\d*|[a-z-][a-z0-9-]*)$`,
 );
 
@@ -42,10 +42,10 @@ export const prereleasePartRegexp: regexp.Regexp = regexp.MustCompile(
  * 	buildPartRegExp = regexp.MustCompile(`(?i)^[a-z0-9-]+$`)
  * )
  */
-export const buildRegExp: regexp.Regexp = regexp.MustCompile(
+export let buildRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^[a-z0-9-]+(?:\\.[a-z0-9-]+)*$`,
 );
-export const buildPartRegExp: regexp.Regexp = regexp.MustCompile(
+export let buildPartRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `(?i)^[a-z0-9-]+$`,
 );
 
@@ -55,7 +55,7 @@ export const buildPartRegExp: regexp.Regexp = regexp.MustCompile(
  * Go source:
  * var numericIdentifierRegExp = regexp.MustCompile(`^(?:0|[1-9]\d*)$`)
  */
-export const numericIdentifierRegExp: regexp.Regexp = regexp.MustCompile(
+export let numericIdentifierRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
   `^(?:0|[1-9]\\d*)$`,
 );
 
@@ -87,7 +87,7 @@ export interface Version {
  * 	prerelease: []string{"0"},
  * }
  */
-export const versionZero: Version = {
+export let versionZero: Version = {
   major: 0,
   minor: 0,
   patch: 0,
@@ -364,8 +364,8 @@ export function comparePreReleaseIdentifier(left: string, right: string): int {
     return compareResult;
   }
 
-  const leftIsNumeric: boolean = numericIdentifierRegExp.MatchString(left);
-  const rightIsNumeric: boolean = numericIdentifierRegExp.MatchString(right);
+  const leftIsNumeric: boolean = numericIdentifierRegExp!.MatchString(left);
+  const rightIsNumeric: boolean = numericIdentifierRegExp!.MatchString(right);
 
   if (leftIsNumeric || rightIsNumeric) {
     // https://semver.org/#spec-item-11
@@ -521,7 +521,7 @@ export function TryParseVersion(text: string): [Version, GoError] {
     build: [],
   };
 
-  const match: GoSlice<string> | undefined = versionRegexp.FindStringSubmatch(text);
+  const match: GoSlice<string> | undefined = versionRegexp!.FindStringSubmatch(text);
   if (match === undefined) {
     return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
   }
@@ -555,14 +555,14 @@ export function TryParseVersion(text: string): [Version, GoError] {
   }
 
   if (prereleaseStr !== "") {
-    if (!prereleaseRegexp.MatchString(prereleaseStr)) {
+    if (!prereleaseRegexp!.MatchString(prereleaseStr)) {
       return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
     }
 
     result.prerelease = strings.Split(prereleaseStr, ".");
   }
   if (buildStr !== "") {
-    if (!buildRegExp.MatchString(buildStr)) {
+    if (!buildRegExp!.MatchString(buildStr)) {
       return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
     }
 

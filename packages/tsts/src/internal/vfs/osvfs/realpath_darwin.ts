@@ -36,9 +36,9 @@ import { ignoringEINTR } from "./eintr_unix.js";
  * 	return err == nil
  * })
  */
-export const hasFGetPath: () => bool = OnceValue<bool>((): bool => {
+export let hasFGetPath: () => bool = OnceValue<bool>((): bool => {
   // Verify that F_GETPATH is supported by this kernel version.
-  const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "unix.PathMax">;
+  const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "1024">;
   const [fd, err] = unix.Open(".", (unix.O_EVTONLY as number) | (unix.O_NONBLOCK as number) | (unix.O_CLOEXEC as number), 0) as [int, GoError];
   if (err !== undefined) {
     return false as bool;
@@ -61,7 +61,7 @@ export const hasFGetPath: () => bool = OnceValue<bool>((): bool => {
  * 	})
  * }
  */
-export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "unix.PathMax">>): [int, GoError] {
+export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "1024">>): [int, GoError] {
   return ignoringEINTR<int>((): [int, GoError] => {
     return fcntlGetPathPtr(fd as unknown as nuint, buf as unknown as nuint);
   });
@@ -113,7 +113,7 @@ export function realpath(path: string): [string, GoError] {
     return ["", err];
   }
   try {
-    const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "unix.PathMax">;
+    const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "1024">;
     const [, getPathErr] = fcntlGetPath(fd, buf);
     if (getPathErr !== undefined) {
       return ["", getPathErr];

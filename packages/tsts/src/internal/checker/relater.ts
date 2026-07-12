@@ -285,7 +285,7 @@ export type RecursionFlags = uint;
 export const RecursionFlagsNone: RecursionFlags = 0;
 export const RecursionFlagsSource: RecursionFlags = 1 << 0;
 export const RecursionFlagsTarget: RecursionFlags = 1 << 1;
-export const RecursionFlagsBoth: int = RecursionFlagsSource | RecursionFlagsTarget;
+export const RecursionFlagsBoth: RecursionFlags = RecursionFlagsSource | RecursionFlagsTarget;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::ExpandingFlags","kind":"type","status":"implemented","sigHash":"5536216ecf64736cd3b789854e16d643bb47b752bb45bec66b6f0bde6fd3e25a","bodyHash":"b9a45ece5eeda1ec67b69d9d1e9f57cc6eca212168cbb7225b47725f73edd850"}
@@ -309,7 +309,7 @@ export type ExpandingFlags = byte;
 export const ExpandingFlagsNone: ExpandingFlags = 0;
 export const ExpandingFlagsSource: ExpandingFlags = 1 << 0;
 export const ExpandingFlagsTarget: ExpandingFlags = 1 << 1;
-export const ExpandingFlagsBoth: int = ExpandingFlagsSource | ExpandingFlagsTarget;
+export const ExpandingFlagsBoth: ExpandingFlags = ExpandingFlagsSource | ExpandingFlagsTarget;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::RelationComparisonResult","kind":"type","status":"implemented","sigHash":"acda68ec8eae2b817f42aa23ea91ff183231b03a3b99bff758ccf12487f95de4","bodyHash":"dc159a52d0eb40150213ff9f6b54d0f839383f7db8c070291cf688456e2e63f7"}
@@ -342,8 +342,8 @@ export const RelationComparisonResultReportsUnmeasurable: RelationComparisonResu
 export const RelationComparisonResultReportsUnreliable: RelationComparisonResult = 1 << 4;
 export const RelationComparisonResultComplexityOverflow: RelationComparisonResult = 1 << 5;
 export const RelationComparisonResultStackDepthOverflow: RelationComparisonResult = 1 << 6;
-export const RelationComparisonResultReportsMask: int = RelationComparisonResultReportsUnmeasurable | RelationComparisonResultReportsUnreliable;
-export const RelationComparisonResultOverflow: int = RelationComparisonResultComplexityOverflow | RelationComparisonResultStackDepthOverflow;
+export const RelationComparisonResultReportsMask: RelationComparisonResult = RelationComparisonResultReportsUnmeasurable | RelationComparisonResultReportsUnreliable;
+export const RelationComparisonResultOverflow: RelationComparisonResult = RelationComparisonResultComplexityOverflow | RelationComparisonResultStackDepthOverflow;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::DiagnosticAndArguments","kind":"type","status":"implemented","sigHash":"1718f0fa121536480425484094f4a54afb0724c4eb5512dc080e451626ede2f5","bodyHash":"3585c49a0087cd18dc85ef80de058b359f9325d2d92dfe7e3690789f62c5e8fe"}

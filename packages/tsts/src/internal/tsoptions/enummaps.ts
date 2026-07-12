@@ -194,7 +194,7 @@ import { ToFileNameLowerCase } from "../tspath/path.js";
  * 	{Key: "decorators.legacy", Value: "lib.decorators.legacy.d.ts"},
  * })
  */
-export const LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   // JavaScript only
   { Key: "es5", Value: "lib.es5.d.ts" },
   { Key: "es6", Value: "lib.es2015.d.ts" },
@@ -319,8 +319,8 @@ export const LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<
  * 	LibFilesSet = collections.NewSetFromItems(core.Map(slices.Collect(LibMap.Values()), func(s any) string { return s.(string) })...)
  * )
  */
-export const Libs: GoSlice<string> = slices.Collect(OrderedMap_Keys(LibMap));
-export const LibFilesSet: GoPtr<Set<string>> = NewSetFromItems<string>(
+export let Libs: GoSlice<string> = slices.Collect(OrderedMap_Keys(LibMap));
+export let LibFilesSet: GoPtr<Set<string>> = NewSetFromItems<string>(
   ...core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: unknown): string => {
     return s as string;
   }),
@@ -369,7 +369,7 @@ export function GetLibFileName(libName: string): [string, bool] {
  * 	{Key: "node10", Value: core.ModuleResolutionKindNode10},
  * })
  */
-export const moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "node16", Value: ModuleResolutionKindNode16 },
   { Key: "nodenext", Value: ModuleResolutionKindNodeNext },
   { Key: "bundler", Value: ModuleResolutionKindBundler },
@@ -399,7 +399,7 @@ export const moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = New
  * 	{Key: "esnext", Value: core.ScriptTargetESNext},
  * })
  */
-export const targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "es5", Value: ScriptTargetES5 },
   { Key: "es6", Value: ScriptTargetES2015 },
   { Key: "es2015", Value: ScriptTargetES2015 },
@@ -437,7 +437,7 @@ export const targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMap
  * 	{Key: "preserve", Value: core.ModuleKindPreserve},
  * })
  */
-export const moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "commonjs", Value: ModuleKindCommonJS },
   { Key: "amd", Value: ModuleKindAMD },
   { Key: "system", Value: ModuleKindSystem },
@@ -464,7 +464,7 @@ export const moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMap
  * 	{Key: "force", Value: core.ModuleDetectionKindForce},
  * })
  */
-export const moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "auto", Value: ModuleDetectionKindAuto },
   { Key: "legacy", Value: ModuleDetectionKindLegacy },
   { Key: "force", Value: ModuleDetectionKindForce },
@@ -482,7 +482,7 @@ export const moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewO
  * 	{Key: "react", Value: core.JsxEmitReact},
  * })
  */
-export const jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "preserve", Value: JsxEmitPreserve },
   { Key: "react-native", Value: JsxEmitReactNative },
   { Key: "react-jsx", Value: JsxEmitReactJSX },
@@ -499,7 +499,7 @@ export const jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFro
  * 	{Key: "lf", Value: core.NewLineKindLF},
  * })
  */
-export const newLineOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let newLineOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "crlf", Value: NewLineKindCRLF },
   { Key: "lf", Value: NewLineKindLF },
 ]);
@@ -523,7 +523,7 @@ export const newLineOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMa
  * 	core.ScriptTargetES2015: "lib.es6.d.ts", // We don't use lib.es2015.full.d.ts due to breaking change.
  * }
  */
-export const targetToLibMap: GoMap<ScriptTarget, string> = new globalThis.Map<ScriptTarget, string>([
+export let targetToLibMap: GoMap<ScriptTarget, string> = new globalThis.Map<ScriptTarget, string>([
   [ScriptTargetESNext, "lib.esnext.full.d.ts"],
   [ScriptTargetES2025, "lib.es2025.full.d.ts"],
   [ScriptTargetES2024, "lib.es2024.full.d.ts"],
@@ -585,7 +585,7 @@ export function GetDefaultLibFileName(options: GoPtr<CompilerOptions>): string {
  * 	{Key: "usefseventsonparentdirectory", Value: core.WatchFileKindUseFsEventsOnParentDirectory},
  * })
  */
-export const watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "fixedpollinginterval", Value: WatchFileKindFixedPollingInterval },
   { Key: "prioritypollinginterval", Value: WatchFileKindPriorityPollingInterval },
   { Key: "dynamicprioritypolling", Value: WatchFileKindDynamicPriorityPolling },
@@ -605,7 +605,7 @@ export const watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMa
  * 	{Key: "fixedchunksizepolling", Value: core.WatchDirectoryKindFixedChunkSizePolling},
  * })
  */
-export const watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "usefsevents", Value: WatchDirectoryKindUseFsEvents },
   { Key: "fixedpollinginterval", Value: WatchDirectoryKindFixedPollingInterval },
   { Key: "dynamicprioritypolling", Value: WatchDirectoryKindDynamicPriorityPolling },
@@ -623,7 +623,7 @@ export const watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrde
  * 	{Key: "fixedchunksize", Value: core.PollingKindFixedChunkSize},
  * })
  */
-export const fallbackEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let fallbackEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
   { Key: "fixedinterval", Value: PollingKindFixedInterval },
   { Key: "priorityinterval", Value: PollingKindPriorityInterval },
   { Key: "dynamicpriority", Value: PollingKindDynamicPriority },

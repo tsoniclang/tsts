@@ -3822,7 +3822,7 @@ export function Printer_generateName(receiver: GoPtr<Printer>, name: GoPtr<Membe
  * 	}
  * }
  */
-export function Printer_isFileLevelUniqueNameInCurrentFile(receiver: GoPtr<Printer>, name: string, _arg: bool): bool {
+export function Printer_isFileLevelUniqueNameInCurrentFile(receiver: GoPtr<Printer>, name: string, arg: bool): bool {
   if (receiver!.currentSourceFile !== undefined) {
     return IsFileLevelUniqueName(receiver!.currentSourceFile, name, receiver!.__tsgoEmbedded0?.HasGlobalName);
   } else {

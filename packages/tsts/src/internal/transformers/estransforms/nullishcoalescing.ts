@@ -25,7 +25,7 @@ import { createNotNullCondition } from "./utilities.js";
  * }
  */
 export interface nullishCoalescingTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
 }
 
 /**

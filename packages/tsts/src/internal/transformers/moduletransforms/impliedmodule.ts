@@ -27,7 +27,7 @@ import { Transformer_TransformSourceFile } from "../transformer.js";
  * }
  */
 export interface ImpliedModuleTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   opts: GoPtr<TransformOptions>;
   resolver: ReferenceResolver;
   getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;

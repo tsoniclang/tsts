@@ -1,7 +1,8 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoMap, GoPtr } from "../../../go/compat.js";
-import type { Node, NodeList, SourceFile } from "../../ast/ast.js";
-import type { IdentifierNode, TokenNode } from "../../ast/ast_generated.js";
+import type { SourceFile } from "../../ast/ast.js";
+import type { Node, NodeList } from "../../ast/spine.js";
+import type { IdentifierNode, TokenNode } from "../../ast/generated/unions.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Arena } from "../../core/arena.js";
 import type { NewLineKind, ScriptTarget } from "../../core/compileroptions.js";
@@ -164,7 +165,7 @@ export interface PrintHandlers {
  * }
  */
 export interface Printer {
-  readonly __tsgoEmbedded0?: PrintHandlers;
+  __tsgoEmbedded0: PrintHandlers;
   Options: PrinterOptions;
   emitContext: GoPtr<EmitContext>;
   currentSourceFile: GoPtr<SourceFile>;

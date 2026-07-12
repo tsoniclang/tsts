@@ -42,7 +42,7 @@ export const objectKindInvalid: objectKind = 4 as objectKind;
  * }
  */
 export interface ExportsOrImports {
-  __tsgoEmbedded0?: JSONValue;
+  __tsgoEmbedded0: JSONValue;
   objectKind: objectKind;
 }
 
@@ -52,7 +52,7 @@ export interface ExportsOrImports {
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)
  */
-export const __fac7894a_0: UnmarshalerFrom = ExportsOrImports_as_json_UnmarshalerFrom(undefined);
+export let __fac7894a_0: UnmarshalerFrom = ExportsOrImports_as_json_UnmarshalerFrom(undefined);
 
 export function ExportsOrImports_as_json_UnmarshalerFrom(receiver: GoPtr<ExportsOrImports>): UnmarshalerFrom {
   return {

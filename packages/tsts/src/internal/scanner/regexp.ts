@@ -145,7 +145,7 @@ export const regularExpressionFlagsModifiers: regularExpressionFlags =
  * 	'y': regularExpressionFlagsSticky,
  * }
  */
-export const charCodeToRegExpFlag: GoMap<GoRune, regularExpressionFlags> = new globalThis.Map<
+export let charCodeToRegExpFlag: GoMap<GoRune, regularExpressionFlags> = new globalThis.Map<
   GoRune,
   regularExpressionFlags
 >([
@@ -169,7 +169,7 @@ export const charCodeToRegExpFlag: GoMap<GoRune, regularExpressionFlags> = new g
  * 	regularExpressionFlagsUnicodeSets: core.ScriptTargetES2024,
  * }
  */
-export const regExpFlagToFirstAvailableLanguageVersion: GoMap<regularExpressionFlags, ScriptTarget> =
+export let regExpFlagToFirstAvailableLanguageVersion: GoMap<regularExpressionFlags, ScriptTarget> =
   new globalThis.Map<regularExpressionFlags, ScriptTarget>([
     [regularExpressionFlagsHasIndices, ScriptTargetES2022],
     [regularExpressionFlagsDotAll, ScriptTargetES2018],

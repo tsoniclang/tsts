@@ -33,7 +33,7 @@ export const _Usage_name: string = "FilesDirectoriesExclude";
  * Go source:
  * var _Usage_index = [...]uint8{0, 5, 16, 23}
  */
-export let _Usage_index: GoArray<byte, "..."> = [0, 5, 16, 23];
+export let _Usage_index: GoArray<byte, "4"> = [0, 5, 16, 23];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/stringer_generated.go::method::Usage.String","kind":"method","status":"implemented","sigHash":"d149a1f4f9c91fdc61cdbf0e026481329aad1a45c3f255873dcba36745ad7343","bodyHash":"4a85f21dd9a00442c37e2e5651a392010c0e4b3508a9dacaaaa45f6c785f1966"}

@@ -102,7 +102,7 @@ import {
  * 	},
  * }
  */
-export const OptionsForWatch: GoSlice<GoPtr<CommandLineOption>> = [
+export let OptionsForWatch: GoSlice<GoPtr<CommandLineOption>> = [
   newCommandLineOption({
     Name: "watchInterval",
     Kind: CommandLineOptionTypeNumber,

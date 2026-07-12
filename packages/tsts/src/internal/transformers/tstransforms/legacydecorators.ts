@@ -52,7 +52,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_Vis
  * }
  */
 export interface LegacyDecoratorsTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   languageVersion: ScriptTarget;
   referenceResolver: ReferenceResolver;
   classAliases: GoMap<GoPtr<Node>, GoPtr<Node>>;

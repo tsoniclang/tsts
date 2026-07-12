@@ -19,9 +19,9 @@ import * as strconv from "../../go/strconv.js";
  * 	ErrNoContentLength      = errors.New("jsonrpc: no content length")
  * )
  */
-export const ErrInvalidHeader: GoError = errors.New("jsonrpc: invalid header");
-export const ErrInvalidContentLength: GoError = errors.New("jsonrpc: invalid content length");
-export const ErrNoContentLength: GoError = errors.New("jsonrpc: no content length");
+export let ErrInvalidHeader: GoError = errors.New("jsonrpc: invalid header");
+export let ErrInvalidContentLength: GoError = errors.New("jsonrpc: invalid content length");
+export let ErrNoContentLength: GoError = errors.New("jsonrpc: no content length");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/baseproto.go::type::Reader","kind":"type","status":"implemented","sigHash":"63b33221a9a2526b999143ae8173671fdbe4c32d4047c49ae6127f204a6cdda5","bodyHash":"ef29dd1e525f91fab999ed8cd0845ca162d773c10d9ad73ef307052f4814dadb"}

@@ -152,15 +152,15 @@ export interface PseudoTypeBase extends PseudoTypeDefault {
  * 	PseudoTypeTrue      = newPseudoType(PseudoTypeKindTrue, &PseudoTypeBase{})
  * )
  */
-export const PseudoTypeUndefined: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindUndefined, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeNull: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNull, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeAny: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindAny, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeString: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindString, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeNumber: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNumber, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeBigInt: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBigInt, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeBoolean: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBoolean, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeFalse: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindFalse, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export const PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeUndefined: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindUndefined, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeNull: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNull, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeAny: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindAny, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeString: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindString, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeNumber: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNumber, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeBigInt: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBigInt, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeBoolean: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBoolean, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeFalse: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindFalse, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
+export let PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
 
 // Interface satisfaction: a `*PseudoTypeBase`/concrete pseudo-type satisfies
 // `pseudoTypeData`. The concrete struct object IS the embedded `PseudoType`

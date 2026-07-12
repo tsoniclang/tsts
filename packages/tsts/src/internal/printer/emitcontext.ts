@@ -149,7 +149,7 @@ export function NewEmitContext(): GoPtr<EmitContext> {
  * 	},
  * }
  */
-export const emitContextPool: Pool<GoPtr<EmitContext>> = (() => {
+export let emitContextPool: Pool = (() => {
   const p = new Pool<GoPtr<EmitContext>>();
   p.New = () => NewEmitContext();
   return p;
@@ -168,7 +168,7 @@ export const emitContextPool: Pool<GoPtr<EmitContext>> = (() => {
  * }
  */
 export function GetEmitContext(): [GoPtr<EmitContext>, () => void] {
-  const c = emitContextPool.Get()!;
+  const c = emitContextPool.Get() as EmitContext;
   return [c, () => {
     EmitContext_Reset(c);
     emitContextPool.Put(c);
@@ -930,7 +930,7 @@ export interface AutoGenerateOptions {
  * Go source:
  * var nextAutoGenerateId atomic.Uint32
  */
-export const nextAutoGenerateId: Uint32 = new Uint32();
+export let nextAutoGenerateId: Uint32 = new Uint32();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateId","kind":"type","status":"implemented","sigHash":"22b430b286a3594ead6596c4569e738bac99d6628924f6ca4f0ce42f95246271","bodyHash":"9f2be36e96e0cbe37d003c9ab771d961db8d8c50827b81f4b4d389759cc3e672"}

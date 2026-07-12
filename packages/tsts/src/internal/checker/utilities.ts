@@ -3604,7 +3604,7 @@ let featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> | undefined;
  * 	}
  * })
  */
-export const getFeatureMap: () => GoMap<string, GoSlice<FeatureMapEntry>> = (): GoMap<string, GoSlice<FeatureMapEntry>> => (featureMapValue ??= new Map<string, GoSlice<FeatureMapEntry>>([
+export let getFeatureMap: () => GoMap<string, GoSlice<FeatureMapEntry>> = (): GoMap<string, GoSlice<FeatureMapEntry>> => (featureMapValue ??= new Map<string, GoSlice<FeatureMapEntry>>([
   ["Array", [
     { lib: "es2015", props: ["find", "findIndex", "fill", "copyWithin", "entries", "keys", "values"] },
     { lib: "es2016", props: ["includes"] },
