@@ -214,6 +214,7 @@ function declarationDescriptorContext(api, module, initialValueEnvironment) {
     text: module.text,
     imports: module.descriptorImports ?? module.structure.imports,
     localTypes: module.structure.localTypeNames,
+    localValues: module.structure.localValueNames,
     localNamespaces: module.structure.localNamespaceNames,
     moduleId: module.moduleId,
     valueEnvironment: initialValueEnvironment,

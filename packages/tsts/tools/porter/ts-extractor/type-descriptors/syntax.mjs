@@ -295,26 +295,50 @@ function entityNameParts(api, node) {
 }
 
 function resolveIdentity(ctx, qualifier, name, space) {
+  if (!new Set(["type", "value"]).has(space)) {
+    throw new Error(`identity in '${ctx.moduleId}' requires an exact type/value namespace`);
+  }
   if (qualifier) {
     const [head, ...tail] = qualifier.split(".");
+    const reference = `${qualifier}.${name}`;
     const namespace = ctx.imports?.namespaces?.get(head);
-    if (namespace) return `${resolveModuleId(namespace.module, ctx.moduleId)}::${[namespace.local, ...tail, name].filter(Boolean).join(".")}`;
-    if (ctx.localNamespaces?.has(head)) return `${ctx.moduleId}::${qualifier}.${name}`;
-    return `unresolved::${qualifier}.${name}`;
+    if (namespace) {
+      const targetParts = [namespace.local, ...tail, name].filter(Boolean);
+      if (space === "value" && namespace.typeOnly) return unresolvedTypeOnlyValueIdentity(ctx, reference, namespace, targetParts);
+      return `${resolveModuleId(namespace.module, ctx.moduleId)}::${targetParts.join(".")}`;
+    }
+    if (ctx.localNamespaces?.has(head)) {
+      const locals = space === "type" ? ctx.localTypes : ctx.localValues;
+      return locals?.has(reference) ? `${ctx.moduleId}::${reference}` : unresolvedIdentity(reference, space);
+    }
+    return unresolvedIdentity(reference, space);
   }
   const imported = ctx.imports?.named?.get(name);
-  if (imported) return `${resolveModuleId(imported.module, ctx.moduleId)}::${imported.imported}`;
+  if (imported) {
+    if (space === "value" && imported.typeOnly) return unresolvedTypeOnlyValueIdentity(ctx, name, imported, [imported.imported]);
+    return `${resolveModuleId(imported.module, ctx.moduleId)}::${imported.imported}`;
+  }
   if (space === "type" && ctx.localTypes?.has(name) || space === "value" && ctx.localValues?.has(name)) return `${ctx.moduleId}::${name}`;
-  return space === "type" ? `global::${name}` : `unresolved-value::${name}`;
+  return space === "type" ? `global::${name}` : unresolvedIdentity(name, space);
 }
 
-export function canonicalizeHeritageType(node, ctx) {
+function unresolvedIdentity(reference, space) {
+  return space === "type" ? `unresolved::${reference}` : `unresolved-value::${reference}`;
+}
+
+function unresolvedTypeOnlyValueIdentity(ctx, reference, binding, targetParts) {
+  const target = resolveModuleId(binding.module, ctx.moduleId);
+  return `unresolved-value::type-only-import:${ctx.moduleId}::${reference}->${target}::${targetParts.join(".")}`;
+}
+
+export function canonicalizeHeritageType(node, ctx, space) {
+  if (!new Set(["type", "value"]).has(space)) throw new Error(`heritage identity in '${ctx.moduleId}' requires an exact type/value namespace`);
   const expression = ctx.api.Casts.AsExpressionWithTypeArguments(node);
   const parts = expressionEntityParts(ctx.api, expression.Expression);
   if (parts.length === 0) return unsupportedNode(expression.Expression, ctx, "HeritageExpression");
   return {
     t: "ref",
-    id: resolveIdentity(ctx, parts.length > 1 ? parts.slice(0, -1).join(".") : undefined, parts.at(-1), "type"),
+    id: resolveIdentity(ctx, parts.length > 1 ? parts.slice(0, -1).join(".") : undefined, parts.at(-1), space),
     args: nodes(expression.TypeArguments).map((argument) => canonicalizeType(argument, ctx)),
   };
 }
@@ -426,11 +450,23 @@ function functionMember(api, declaration, ctx, kind) {
   if (name === undefined) return unsupportedMember(api, declaration, ctx, "ComputedPropertyName");
   const signature = functionDescriptor(api, declaration, ctx);
   return {
-    kind, name, optional: declaration.PostfixToken?.Kind === api.Kinds.KindQuestionToken || undefined,
+    kind, name, role: callableMemberRole(api, declaration),
+    optional: declaration.PostfixToken?.Kind === api.Kinds.KindQuestionToken || undefined,
     modifiers: memberModifiers(api, declaration),
     type: { t: "fn", params: signature.params, ret: signature.ret, missingReturnType: signature.missingReturnType,
       returnTypePolicy: signature.returnTypePolicy, typeParams: signature.typeParams, signatureModifiers: signature.signatureModifiers },
   };
+}
+
+function callableMemberRole(api, declaration) {
+  const signatures = new Set([
+    api.Kinds.KindMethodSignature,
+    api.Kinds.KindCallSignature,
+    api.Kinds.KindConstructSignature,
+    api.Kinds.KindIndexSignature,
+  ]);
+  if (signatures.has(declaration.Kind)) return "signature";
+  return declaration.Body === undefined ? "declaration" : "implementation";
 }
 
 function propertyNameText(api, name) {

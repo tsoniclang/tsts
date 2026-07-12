@@ -34,7 +34,9 @@ const PARAMETER_KEYS = new Set([
   "name", "role", "modifiers", "type", "rest", "optional", "optionalSyntax", "question", "missingType",
   "initializerStatus", "initializer", "initializerIssue",
 ]);
-const MEMBER_KEYS = new Set(["kind", "name", "modifiers", "type", "optional", "definite", "readonly", "missingType", "unsupported", "text"]);
+const MEMBER_KEYS = new Set(["kind", "name", "role", "modifiers", "type", "optional", "definite", "readonly", "missingType", "unsupported", "text"]);
+const CALLABLE_MEMBER_KINDS = new Set(["method", "call", "construct", "index", "constructor", "get", "set"]);
+const CALLABLE_MEMBER_ROLES = new Set(["signature", "declaration", "implementation"]);
 
 export const isCurrentDescriptorKind = (kind) => DESCRIPTOR_KEYS.has(kind) && kind !== "unsupported";
 
@@ -156,6 +158,9 @@ function memberArrayIssue(members, label) {
     if (unknown.length > 0) return `${label}[${index}] has unknown key(s): ${unknown.join(", ")}`;
     if (typeof member.name !== "string") return `${label}[${index}].name must be a string`;
     if (member.kind !== undefined && typeof member.kind !== "string") return `${label}[${index}].kind must be a string when present`;
+    if (CALLABLE_MEMBER_KINDS.has(member.kind)) {
+      if (!CALLABLE_MEMBER_ROLES.has(member.role)) return `${label}[${index}].role must identify the callable declaration role`;
+    } else if (member.role !== undefined) return `${label}[${index}].role is valid only for callable members`;
     if (member.modifiers !== undefined && (!Array.isArray(member.modifiers) || member.modifiers.some((modifier) => typeof modifier !== "string"))) return `${label}[${index}].modifiers must be a string array`;
     for (const key of ["readonly", "optional", "definite", "missingType"]) if (member[key] !== undefined && typeof member[key] !== "boolean") return `${label}[${index}].${key} must be boolean when present`;
     if (member.unsupported !== undefined) {

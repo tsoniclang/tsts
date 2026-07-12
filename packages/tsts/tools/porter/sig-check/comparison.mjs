@@ -7,6 +7,7 @@ import {
   typesEqual,
 } from "../ts-extractor/ast-signatures.mjs";
 import { normalizeDescriptor } from "../ts-extractor/conventions.mjs";
+import { compareDeclarationFragments } from "./declaration-fragment-comparison.mjs";
 
 const PARAMETER_FIELDS = [
   "name", "role", "modifiers", "type", "rest", "optional", "optionalSyntax", "question", "missingType",
@@ -14,7 +15,9 @@ const PARAMETER_FIELDS = [
 ];
 const CALLABLE_FIELDS = ["params", "ret", "missingReturnType", "returnTypePolicy", "typeParams", "signatureModifiers"];
 const TYPE_PARAMETER_FIELDS = ["name", "binding", "modifiers", "constraint", "default", "invalidConstraint"];
-const MEMBER_FIELDS = ["kind", "name", "modifiers", "type", "optional", "definite", "readonly", "missingType", "unsupported", "text"];
+const MEMBER_FIELDS = ["kind", "name", "role", "modifiers", "type", "optional", "definite", "readonly", "missingType", "unsupported", "text"];
+const CALLABLE_MEMBER_KINDS = new Set(["method", "call", "construct", "index", "constructor", "get", "set"]);
+const CALLABLE_MEMBER_ROLES = new Set(["signature", "declaration", "implementation"]);
 const VALUE_FIELDS = ["name", "type", "missing", "declarationKind", "definite", "modifiers", "initializerStatus", "value", "valueIssue"];
 const UNIT_FIELDS = new Map([
   ["func", ["kind", "name", "modifiers", "signatures", "metadataIssues"]],
@@ -61,6 +64,12 @@ export function compareSignatures(
     normalizeDescriptor(right, conventions, "constraint"),
     canon,
   );
+  const equalHeritageType = (left, right, space) => typesEqual(
+    normalizeDescriptor(left, conventions, "type"),
+    normalizeDescriptor(right, conventions, "type"),
+    canon,
+    space,
+  );
 
   if (!actual) {
     push("actual-missing", "no TS declaration found for this @tsgo-unit");
@@ -89,8 +98,8 @@ export function compareSignatures(
 
   if (actual.kind !== "value") compareModifiers(expected.modifiers, actual.modifiers, "declaration", push);
   if (actual.kind === "func") compareFunction(expected, actual, push, equalType, equalConstraint);
-  else if (actual.kind === "interface") compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint);
-  else if (actual.kind === "class") compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint);
+  else if (actual.kind === "interface") compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint, equalHeritageType);
+  else if (actual.kind === "class") compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint, equalHeritageType);
   else if (actual.kind === "enum") compareEnum(expected, actual, push);
   else if (actual.kind === "alias") {
     compareTypeParameters(expected.typeParams, actual.typeParams, push, equalConstraint, "declaration");
@@ -224,33 +233,24 @@ function compareCallable(expected, actual, push, equalType) {
   if (!equalType(expected.ret, actual.ret)) push("return-type", "return type differs", keyOf(expected.ret), keyOf(actual.ret));
 }
 
-function compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint) {
+function compareStructuredDeclaration(expected, actual, push, equalType, equalConstraint, equalHeritageType) {
   compareTypeParameters(expected.typeParams, actual.typeParams, push, equalConstraint, "declaration");
-  compareFragments(expected, actual, push);
-  compareHeritage(expected.heritage ?? [], actual.heritage ?? [], push, equalType);
+  const fragmented = compareDeclarationFragments(expected, actual, push, (left, right, index, fragmentPush) => {
+    validateFragment(left, expected.kind, "expected fragment contract", fragmentPush);
+    validateFragment(right, actual.kind, "TypeScript fragment contract", fragmentPush);
+    compareModifiers(left.modifiers, right.modifiers, "declaration", fragmentPush, "declaration-fragment-modifier");
+    if (expected.kind === "interface") {
+      compareTypeParameters(left.typeParams, right.typeParams, fragmentPush, equalConstraint, `fragment #${index}`);
+      compareHeritage(left.heritage ?? [], right.heritage ?? [], fragmentPush, equalHeritageType);
+      compareMembers(left.members ?? [], right.members ?? [], fragmentPush, equalType, equalConstraint);
+    }
+  });
+  if (fragmented) return;
+  compareHeritage(expected.heritage ?? [], actual.heritage ?? [], push, equalHeritageType);
   compareMembers(expected.members ?? [], actual.members ?? [], push, equalType, equalConstraint);
 }
 
-function compareFragments(expectedDeclaration, actualDeclaration, push) {
-  const expected = expectedDeclaration.fragments;
-  const actual = actualDeclaration.fragments;
-  if (!Array.isArray(expected) && !Array.isArray(actual)) return;
-  if (!Array.isArray(expected) || !Array.isArray(actual)) {
-    push("declaration-fragment-contract", "declaration fragments must use the current array contract", expected, actual);
-    return;
-  }
-  if (expected.length !== actual.length) push("declaration-fragment-count", "declaration fragment count differs", expected.length, actual.length);
-  const count = Math.min(expected.length, actual.length);
-  for (let index = 0; index < count; index++) {
-    validateFragment(expected[index], expectedDeclaration.kind, `fragment #${index} expected contract`, push);
-    validateFragment(actual[index], actualDeclaration.kind, `fragment #${index} TypeScript contract`, push);
-    compareModifiers(expected[index].modifiers, actual[index].modifiers, `fragment #${index}`, push, "declaration-fragment-modifier");
-  }
-  validateFragmentAggregate(expectedDeclaration, "expected declaration", push);
-  validateFragmentAggregate(actualDeclaration, "TypeScript declaration", push);
-}
-
-function compareHeritage(expected, actual, push, equalType) {
+function compareHeritage(expected, actual, push, equalHeritageType) {
   if (expected.length !== actual.length) {
     push("interface-heritage", "interface heritage clause count differs", expected.length, actual.length);
     return;
@@ -258,10 +258,16 @@ function compareHeritage(expected, actual, push, equalType) {
   for (let index = 0; index < expected.length; index++) {
     const left = expected[index];
     const right = actual[index];
-    validateCompleteFields(left, ["token", "types"], `heritage clause #${index} expected contract`, push);
-    validateCompleteFields(right, ["token", "types"], `heritage clause #${index} TypeScript contract`, push);
+    validateCompleteFields(left, ["token", "space", "types"], `heritage clause #${index} expected contract`, push);
+    validateCompleteFields(right, ["token", "space", "types"], `heritage clause #${index} TypeScript contract`, push);
     if (!Array.isArray(left?.types) || !Array.isArray(right?.types)) continue;
-    if (left.token !== right.token || left.types.length !== right.types.length || left.types.some((type, typeIndex) => !equalType(type, right.types[typeIndex]))) {
+    const validSpace = new Set(["type", "value"]);
+    if (!validSpace.has(left.space) || !validSpace.has(right.space)) {
+      push("invalid-signature-contract", `heritage clause #${index} has an invalid identity namespace`, left.space, right.space);
+      continue;
+    }
+    if (left.token !== right.token || left.space !== right.space || left.types.length !== right.types.length ||
+        left.types.some((type, typeIndex) => !equalHeritageType(type, right.types[typeIndex], left.space))) {
       push("interface-heritage", `interface heritage clause #${index} differs`, left, right);
     }
   }
@@ -324,6 +330,8 @@ function compareMember(expected, actual, push, equalType, equalConstraint, overl
   const label = `member '${expected.name}' overload #${overloadIndex}`;
   validateNoUnknownFields(expected, MEMBER_FIELDS, `${label} expected contract`, push);
   validateNoUnknownFields(actual, MEMBER_FIELDS, `${label} TypeScript contract`, push);
+  validateMemberRole(expected, `${label} expected contract`, push);
+  validateMemberRole(actual, `${label} TypeScript contract`, push);
   if (actual.unsupported) {
     push("unsupported-member", `${label} is an unsupported shape (${actual.unsupported})`, expected.name);
     return;
@@ -335,6 +343,9 @@ function compareMember(expected, actual, push, equalType, equalConstraint, overl
   if (expected.definite !== actual.definite && (owns(expected, "definite") || owns(actual, "definite"))) {
     push("member-definite", `${label} definite-assignment semantics differ`, expected.definite, actual.definite);
   }
+  if (expected.role !== actual.role && (owns(expected, "role") || owns(actual, "role"))) {
+    push("member-declaration-role", `${label} declaration role differs`, expected.role, actual.role);
+  }
   compareModifiers(expected.modifiers, actual.modifiers, label, push, "member-modifier");
   if (actual.missingType || actual.type?.missingReturnType) push("member-annotation-missing", `${label} has a missing type annotation`);
   if (expected.type?.t === "fn" && actual.type?.t === "fn") {
@@ -343,6 +354,16 @@ function compareMember(expected, actual, push, equalType, equalConstraint, overl
     compareCallable(expected.type, actual.type, memberPush, equalType);
   } else if (!equalType(expected.type, actual.type)) {
     push("member-type", `${label} type differs`, keyOf(expected.type), keyOf(actual.type));
+  }
+}
+
+function validateMemberRole(member, label, push) {
+  if (CALLABLE_MEMBER_KINDS.has(member.kind)) {
+    if (!CALLABLE_MEMBER_ROLES.has(member.role)) {
+      push("invalid-signature-contract", `${label} must identify its callable declaration role`, [...CALLABLE_MEMBER_ROLES], member.role);
+    }
+  } else if (owns(member, "role")) {
+    push("invalid-signature-contract", `${label} has a declaration role on a non-callable member`, undefined, member.role);
   }
 }
 
@@ -401,9 +422,17 @@ function compareValueInitializer(expected, actual, label, push) {
 }
 
 function compareEnum(expected, actual, push) {
-  compareFragments(expected, actual, push);
-  const expectedMembers = expected.members ?? [];
-  const actualMembers = actual.members ?? [];
+  const fragmented = compareDeclarationFragments(expected, actual, push, (left, right, _index, fragmentPush) => {
+    validateFragment(left, "enum", "expected fragment contract", fragmentPush);
+    validateFragment(right, "enum", "TypeScript fragment contract", fragmentPush);
+    compareModifiers(left.modifiers, right.modifiers, "declaration", fragmentPush, "declaration-fragment-modifier");
+    compareEnumMembers(left.members ?? [], right.members ?? [], fragmentPush);
+  });
+  if (fragmented) return;
+  compareEnumMembers(expected.members ?? [], actual.members ?? [], push);
+}
+
+function compareEnumMembers(expectedMembers, actualMembers, push) {
   if (expectedMembers.length !== actualMembers.length) push("enum-member-count", "enum member count differs", expectedMembers.length, actualMembers.length);
   const count = Math.min(expectedMembers.length, actualMembers.length);
   for (let index = 0; index < count; index++) {
@@ -481,26 +510,6 @@ function validateFragment(value, declarationKind, label, push) {
     return;
   }
   validateCompleteFields(value, fields, label, push);
-}
-
-function validateFragmentAggregate(declaration, label, push) {
-  if (!Array.isArray(declaration.fragments)) return;
-  const fragments = declaration.fragments;
-  if (fragments.length === 0) {
-    push("invalid-signature-contract", `${label} fragments must contain at least one declaration fragment`);
-    return;
-  }
-  if (declaration.kind === "interface") {
-    const firstTypeParameters = fragments[0].typeParams;
-    if (!sameJson(declaration.typeParams, firstTypeParameters) ||
-        !sameJson(declaration.heritage, fragments.flatMap((fragment) => fragment.heritage ?? [])) ||
-        !sameJson(declaration.members, fragments.flatMap((fragment) => fragment.members ?? []))) {
-      push("invalid-signature-contract", `${label} interface fragments do not reconstruct the declaration contract`);
-    }
-  } else if (declaration.kind === "enum" &&
-      !sameJson(declaration.members, fragments.flatMap((fragment) => fragment.members ?? []))) {
-    push("invalid-signature-contract", `${label} enum fragments do not reconstruct the declaration contract`);
-  }
 }
 
 function isPlainDataRecord(value) {

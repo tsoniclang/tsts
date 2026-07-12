@@ -48,7 +48,11 @@ const callable = (signature = {}) => {
 };
 const func = (signature) => ({ kind: "func", modifiers: ["export"], signatures: [exactSignature(signature)] });
 const funcSet = (signatures) => ({ kind: "func", modifiers: ["export"], signatures: signatures.map(exactSignature) });
-const member = (name, type, options = {}) => ({ kind: "property", name, modifiers: [], type, ...options });
+const member = (name, type, options = {}) => {
+  const kind = options.kind ?? "property";
+  const callable = new Set(["method", "call", "construct", "index", "constructor", "get", "set"]).has(kind);
+  return { kind, name, ...(callable ? { role: options.role ?? "signature" } : {}), modifiers: [], type, ...options };
+};
 const iface = (members, options = {}) => {
   const descriptor = {
     kind: "interface",
@@ -207,6 +211,7 @@ test("exact member and value state includes declaration-only fields", () => {
   const expectedInterface = iface([property]);
   const definiteMember = structuredClone(expectedInterface);
   definiteMember.members[0].definite = true;
+  definiteMember.fragments[0].members[0].definite = true;
   assert.ok(kinds(compareSignatures(expectedInterface, definiteMember, null)).has("member-definite"));
 
   const expectedValue = { kind: "value", decls: [value("item", kw("number"))] };
@@ -267,7 +272,9 @@ test("interface heritage and member modifiers compare exactly", () => {
   const property = member("value", kw("number"));
   const expected = iface([property]);
   assert.equal(compareSignatures(expected, { ...expected, members: [{ ...property }] }, null).length, 0);
-  const actual = { ...expected, heritage: [{ token: "extends", types: [ref("m::Base")] }], members: [{ ...property, readonly: true, optional: true }] };
+  const heritage = [{ token: "extends", space: "type", types: [ref("m::Base")] }];
+  const members = [{ ...property, readonly: true, optional: true }];
+  const actual = { ...expected, heritage, members, fragments: [{ ...expected.fragments[0], heritage, members }] };
   const mismatches = kinds(compareSignatures(expected, actual, null));
   assert.ok(mismatches.has("interface-heritage"));
   assert.ok(mismatches.has("member-readonly"));

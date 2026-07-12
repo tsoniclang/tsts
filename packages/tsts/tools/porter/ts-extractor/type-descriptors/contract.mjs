@@ -6,15 +6,15 @@ export function canonicalKey(descriptor) {
   return JSON.stringify(descriptorForm(descriptor, (identity) => identity));
 }
 
-function descriptorForm(descriptor, canonicalIdentity) {
+function descriptorForm(descriptor, canonicalIdentity, rootReferenceSpace = "type") {
   if (!descriptor || typeof descriptor !== "object") return ["invalid", descriptor];
   const form = (value) => descriptorForm(value, canonicalIdentity);
-  const typeParameter = (parameter) => [parameter.binding, parameter.modifiers, parameter.constraint ? form(parameter.constraint) : null,
+  const typeParameter = (parameter) => [parameter.name, parameter.binding, parameter.modifiers, parameter.constraint ? form(parameter.constraint) : null,
     parameter.default ? form(parameter.default) : null, parameter.invalidConstraint];
   const parameter = (value) => [value.name, value.role, value.rest, value.optional, value.optionalSyntax, value.question,
     value.missingType, value.modifiers, value.initializerStatus, value.initializer, value.initializerIssue, form(value.type)];
   switch (descriptor.t) {
-    case "ref": return ["ref", canonicalIdentity(descriptor.id), descriptor.args.map(form)];
+    case "ref": return ["ref", canonicalIdentity(descriptor.id, rootReferenceSpace), descriptor.args.map(form)];
     case "array": return ["array", form(descriptor.element)];
     case "tuple": return ["tuple", descriptor.elements.map(form)];
     case "namedTuple": return ["namedTuple", descriptor.name, !!descriptor.rest, !!descriptor.optional, form(descriptor.type)];
@@ -28,7 +28,7 @@ function descriptorForm(descriptor, canonicalIdentity) {
       ? ["typeParameter", descriptor.depth, descriptor.index] : ["invalidTypeParameter", descriptor];
     case "literal": return ["literal", descriptor.kind, descriptor.value];
     case "predicate": return ["predicate", !!descriptor.asserts, descriptor.subject, descriptor.type ? form(descriptor.type) : null];
-    case "query": return ["query", canonicalIdentity(descriptor.id), descriptor.args.map(form)];
+    case "query": return ["query", canonicalIdentity(descriptor.id, "value"), descriptor.args.map(form)];
     case "conditional": return ["conditional", form(descriptor.check), form(descriptor.extends), form(descriptor.trueType), form(descriptor.falseType)];
     case "infer": return ["infer", typeParameter(descriptor.parameter)];
     case "this": return ["this"];
@@ -55,7 +55,7 @@ function objectMemberForms(descriptor, form) {
     const entries = groups.get(key) ?? [];
     entries.push(member.unsupported
       ? ["unsupported", member.unsupported, member.text ?? ""]
-      : [member.modifiers ?? [], !!member.readonly, !!member.optional, !!member.definite, !!member.missingType, form(member.type)]);
+      : [member.role ?? null, member.modifiers ?? [], !!member.readonly, !!member.optional, !!member.definite, !!member.missingType, form(member.type)]);
     groups.set(key, entries);
   }
   return [...groups].sort(([left], [right]) => compareText(left, right));
@@ -63,9 +63,10 @@ function objectMemberForms(descriptor, form) {
 
 const compareForms = (left, right) => compareText(JSON.stringify(left), JSON.stringify(right));
 
-export function typesEqual(left, right, canonicalIdentity = (identity) => identity) {
+export function typesEqual(left, right, canonicalIdentity = (identity) => identity, rootReferenceSpace = "type") {
   return !descriptorHasUnsupported(left) && !descriptorHasUnsupported(right) &&
-    JSON.stringify(descriptorForm(left, canonicalIdentity)) === JSON.stringify(descriptorForm(right, canonicalIdentity));
+    JSON.stringify(descriptorForm(left, canonicalIdentity, rootReferenceSpace)) ===
+      JSON.stringify(descriptorForm(right, canonicalIdentity, rootReferenceSpace));
 }
 
 function descriptorHasUnsupported(descriptor) {

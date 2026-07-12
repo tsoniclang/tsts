@@ -125,10 +125,70 @@ type Renamed<Outer> = <Inner>(input: Inner) => Outer;
   assert.deepEqual(parsed.Variance.typeParams[1].default, { t: "tp", depth: 0, index: 0 });
   assert.deepEqual(parsed.ConstGeneric.type.typeParams[0].modifiers, { const: true, variance: null, unsupported: [] });
   assert.equal(typesEqual(parsed.ConstGeneric.type, parsed.PlainGeneric.type), false);
-  assert.equal(typesEqual(parsed.Captured.type, parsed.Renamed.type), true);
+  assert.equal(typesEqual(parsed.Captured.type, parsed.Renamed.type), false);
   assert.equal(typesEqual(parsed.Shadowed.type, parsed.Captured.type), false);
   assert.deepEqual(parsed.Shadowed.type.params[0].type, { t: "tp", depth: 1, index: 0 });
   assert.deepEqual(parsed.Captured.type.ret, { t: "tp", depth: 0, index: 0 });
+});
+
+test("type and value identities remain distinct across imports, locals, and heritage", async () => {
+  const parsed = await descriptors(`
+import type { Base as TypeOnlyBase, runtimeValue as typeOnlyValue } from "./dependency.js";
+import { Base as RuntimeBase, Shape } from "./dependency.js";
+type LocalQuery = typeof localValue;
+type RejectedQuery = typeof typeOnlyValue;
+class Derived extends RuntimeBase {}
+class RejectedDerived extends TypeOnlyBase {}
+interface Contract extends Shape {}
+`, new Set(["localValue"]));
+
+  assert.deepEqual(parsed.LocalQuery.type, { t: "query", id: `${MODULE_ID}::localValue`, args: [] });
+  assert.match(parsed.RejectedQuery.type.id, /^unresolved-value::type-only-import:/);
+  assert.deepEqual(parsed.Derived.heritage, [{
+    token: "extends",
+    space: "value",
+    types: [{ t: "ref", id: "fixture/dependency.ts::Base", args: [] }],
+  }]);
+  assert.match(parsed.RejectedDerived.heritage[0].types[0].id, /^unresolved-value::type-only-import:/);
+  assert.deepEqual(parsed.Contract.heritage, [{
+    token: "extends",
+    space: "type",
+    types: [{ t: "ref", id: "fixture/dependency.ts::Shape", args: [] }],
+  }]);
+});
+
+test("canonical identities receive the exact descriptor namespace", () => {
+  const seen = [];
+  const canonical = (identity, space) => {
+    seen.push([identity, space]);
+    return `${space}:${identity}`;
+  };
+  assert.ok(typesEqual(
+    { t: "query", id: "pkg/barrel.ts::Value", args: [] },
+    { t: "query", id: "pkg/barrel.ts::Value", args: [] },
+    canonical,
+  ));
+  assert.ok(typesEqual(
+    { t: "ref", id: "pkg/barrel.ts::Value", args: [] },
+    { t: "ref", id: "pkg/barrel.ts::Value", args: [] },
+    canonical,
+  ));
+  assert.deepEqual(new Set(seen.map((entry) => entry[1])), new Set(["type", "value"]));
+});
+
+test("nested callable members retain their declaration role", async () => {
+  const parsed = await descriptors(`
+type CallableMembers = {
+  method(): void;
+  (): void;
+  new (): object;
+  [key: string]: unknown;
+};
+`);
+  assert.deepEqual(parsed.CallableMembers.type.members.map((member) => member.role), [
+    "signature", "signature", "signature", "signature",
+  ]);
+  assert.doesNotMatch(canonicalKey(parsed.CallableMembers.type), /invalidDescriptor/);
 });
 
 test("function descriptors retain initializer optionality, explicit this, parameter modifiers, and signature modifiers", async () => {
