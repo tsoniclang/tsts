@@ -6,6 +6,8 @@
 // the actual side reads the TSTS Go-port AST. A project using a different TS
 // parser supplies a parser adapter. Everything else below is config.)
 
+import { loadConventions } from "./conventions.mjs";
+
 export const TSTS_PROFILE = {
   annotation: { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" },
   parser: {
@@ -21,8 +23,11 @@ export const TSTS_PROFILE = {
     core: "packages/tsts/src/go/scalars.ts",
     compat: "packages/tsts/src/go/compat.ts",
   },
-  // Go composite kinds -> bridge generic name (resolved in `modules.compat`).
-  bridge: { pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray", map: "GoMap", chan: "GoChan" },
+  // Go representation carriers -> exact generic name (resolved in `modules.compat`).
+  bridge: {
+    nilable: "GoNilable", pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray",
+    map: "GoMap", chan: "GoChan", func: "GoFunc", interface: "GoInterface", unsafePointer: "GoUnsafePointer",
+  },
   primitives: {
     keyword: { string: "string", any: "unknown" },
     core: {
@@ -32,87 +37,28 @@ export const TSTS_PROFILE = {
     },
     compat: { rune: "GoRune", error: "GoError", complex64: "GoComplex64", complex128: "GoComplex128" },
   },
-  // Qualified Go stdlib types that map to compat helpers (pkg.Name -> compat name).
-  stdlibTypes: {
-    "iter.Seq": "GoSeq", "iter.Seq2": "GoSeq2",
-    "cmp.Ordered": "GoOrdered", "constraints.Ordered": "GoOrdered",
-    "unsafe.Pointer": "GoUnsafePointer",
+  constantRepresentations: {
+    bigintBasics: ["uint64"],
+    bigintNamedTypes: [],
   },
   // Stdlib/runtime package -> facade module path. {importPath} is the full Go
   // import path (e.g. sync/atomic -> packages/tsts/src/go/sync/atomic.ts).
   facadeTemplate: "packages/tsts/src/go/{importPath}.ts",
-  // One canonical module per GLOBALLY-UNIQUE type name that is declared in more
-  // than one TS module (a generated copy + a hand-ported copy, or a brand +
-  // full interface). Both declarations are the same logical (same Go-origin)
-  // type; the checker collapses every reference to the canonical module. Narrow
-  // and named — NOT broad module-path equivalence. Only add names that are
-  // unique across the tree.
-  canonicalTypes: {
-    "SymbolFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
-    "NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
-    "NodeVisitor": "packages/tsts/src/internal/ast/spine.ts",
-    "ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts",
+  conventions: {
+    goConstraintId: "packages/tsts/src/go/compat.ts::GoConstraint",
   },
-  // TSTS represents TS-Go AST nodes as a Node envelope plus generated data
-  // interfaces. A Go `*SourceFile` in signature position corresponds to the TS
-  // node-envelope alias `SourceFileNode`, not the data interface `SourceFile`.
-  nodeFormAliases: {
-    unionModule: "packages/tsts/src/internal/ast/generated/unions.ts",
-    sourceModulePrefixes: [
-      "packages/tsts/src/internal/ast/ast.ts",
-    ],
-    dataModule: "packages/tsts/src/internal/ast/generated/data.ts",
-    dataTypeNames: ["ConditionalTypeNode", "MappedTypeNode"],
-  },
-  // Ambient TypeScript/host globals that are intentional signature surface.
-  // Everything else under global::/name::/unresolved:: remains a hard
-  // unresolved-ref mismatch.
-  allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
-  // External Go interface aliases whose zero value is nil and therefore may be
-  // represented as GoPtr<Alias> in the TypeScript port.
-  externalNilableTypes: ["io/fs.FileInfo", "io/fs.DirEntry", "io.Writer"],
-  externalInterfaceMembers: {
-    "io/fs.FileInfo": [
-      { name: "Name", type: { t: "fn", params: [], ret: { t: "kw", kw: "string" } } },
-      { name: "Size", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::int", args: [] } } },
-      { name: "Mode", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/io/fs.ts::FileMode", args: [] } } },
-      { name: "ModTime", type: { t: "fn", params: [], ret: { t: "ref", id: "global::Date", args: [] } } },
-      { name: "IsDir", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::bool", args: [] } } },
-      { name: "Sys", type: { t: "fn", params: [], ret: { t: "kw", kw: "unknown" } } }
-    ]
-  },
-  // Exact return/value types for authored Go facades. These are explicit
-  // facade contracts, not name guesses; internal TS-Go symbols still resolve
-  // from the Go snapshot.
-  externalFunctionReturns: {
-    "regexp.MustCompile": { module: "packages/tsts/src/go/regexp.ts", name: "Regexp" },
-    "strings.NewReplacer": { module: "packages/tsts/src/go/strings.ts", name: "Replacer" },
-    "reflect.TypeFor": { module: "packages/tsts/src/go/reflect.ts", name: "Type" },
-  },
-  externalValueTypes: {
-    "fs.ErrInvalid": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrPermission": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrNotExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.ErrClosed": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.SkipAll": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "fs.SkipDir": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
-    "jsontext.BeginArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "jsontext.BeginObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "jsontext.EndArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "jsontext.EndObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "jsontext.Null": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "math.MaxInt": { module: "packages/tsts/src/go/scalars.ts", name: "int" },
-    "time.Millisecond": { module: "packages/tsts/src/go/time.ts", name: "Duration" },
+  jsonTags: {
+    contractModules: ["packages/tsts/src/internal/json/json.ts"],
   },
 };
 
 function isPlainObject(v) {
-  return v && typeof v === "object" && !Array.isArray(v);
+  return v && typeof v === "object" && !Array.isArray(v) && [Object.prototype, null].includes(Object.getPrototypeOf(v));
 }
 
 function deepMerge(base, override) {
-  if (!isPlainObject(override)) return override ?? base;
+  if (override === undefined) return base;
+  if (!isPlainObject(override)) return override;
   const out = { ...base };
   for (const [k, v] of Object.entries(override)) {
     out[k] = isPlainObject(v) && isPlainObject(base?.[k]) ? deepMerge(base[k], v) : v;
@@ -121,5 +67,86 @@ function deepMerge(base, override) {
 }
 
 export function loadProfile(config) {
-  return deepMerge(TSTS_PROFILE, config?.signatureCheck ?? {});
+  const override = config?.signatureCheck === undefined ? {} : config.signatureCheck;
+  requireKnownKeys(override, new Set(Object.keys(TSTS_PROFILE)), "signatureCheck");
+  for (const [key, allowed] of [
+    ["annotation", ["tag", "idSeparator", "methodNameJoin"]],
+    ["parser", ["distRoot", "freshnessSrcDirs"]],
+    ["modules", ["core", "compat"]],
+    ["bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]],
+    ["primitives", ["keyword", "core", "compat"]],
+    ["constantRepresentations", ["bigintBasics", "bigintNamedTypes"]],
+    ["conventions", ["goConstraintId"]],
+    ["jsonTags", ["contractModules"]],
+  ]) {
+    if (override[key] !== undefined) requireKnownKeys(override[key], new Set(allowed), `signatureCheck.${key}`);
+  }
+  const profile = deepMerge(TSTS_PROFILE, override);
+  validateProfile(profile);
+  return profile;
+}
+
+function requireKnownKeys(value, allowed, label) {
+  requirePlainRecord(value, label);
+  const unknown = Reflect.ownKeys(value).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
+  if (unknown.length > 0) throw new Error(`${label} contains unknown current-contract key(s): ${unknown.join(", ")}`);
+}
+
+function validateProfile(profile) {
+  requireKnownKeys(profile, new Set(Object.keys(TSTS_PROFILE)), "signatureCheck");
+  requireStringRecord(profile.annotation, "signatureCheck.annotation", ["tag", "idSeparator", "methodNameJoin"]);
+  requireStringRecord(profile.modules, "signatureCheck.modules", ["core", "compat"]);
+  requireStringRecord(profile.bridge, "signatureCheck.bridge", ["nilable", "pointer", "ref", "slice", "array", "map", "chan", "func", "interface", "unsafePointer"]);
+  requirePlainRecord(profile.parser, "signatureCheck.parser");
+  requireNonEmptyString(profile.parser.distRoot, "signatureCheck.parser.distRoot");
+  requireStringArray(profile.parser.freshnessSrcDirs, "signatureCheck.parser.freshnessSrcDirs");
+  requirePlainRecord(profile.primitives, "signatureCheck.primitives");
+  for (const key of ["keyword", "core", "compat"]) requireStringRecord(profile.primitives[key], `signatureCheck.primitives.${key}`);
+  requirePlainRecord(profile.constantRepresentations, "signatureCheck.constantRepresentations");
+  requireStringArray(profile.constantRepresentations.bigintBasics, "signatureCheck.constantRepresentations.bigintBasics");
+  requireStringArray(profile.constantRepresentations.bigintNamedTypes, "signatureCheck.constantRepresentations.bigintNamedTypes");
+  validateFacadeTemplate(profile.facadeTemplate);
+  loadConventions(profile.conventions);
+  requirePlainRecord(profile.jsonTags, "signatureCheck.jsonTags");
+  requireStringArray(profile.jsonTags.contractModules, "signatureCheck.jsonTags.contractModules");
+}
+
+function validateFacadeTemplate(value) {
+  requireNonEmptyString(value, "signatureCheck.facadeTemplate");
+  const placeholder = "{importPath}";
+  const first = value.indexOf(placeholder);
+  if (first < 0 || first !== value.lastIndexOf(placeholder)) {
+    throw new Error("signatureCheck.facadeTemplate must contain exactly one {importPath} placeholder");
+  }
+  const remainder = `${value.slice(0, first)}${value.slice(first + placeholder.length)}`;
+  if (remainder.includes("{") || remainder.includes("}")) {
+    throw new Error("signatureCheck.facadeTemplate contains an unsupported placeholder");
+  }
+}
+
+function requireStringRecord(value, label, exactKeys = undefined) {
+  requirePlainRecord(value, label);
+  if (exactKeys !== undefined) {
+    requireKnownKeys(value, new Set(exactKeys), label);
+    const missing = exactKeys.filter((key) => !Object.hasOwn(value, key));
+    if (missing.length > 0) throw new Error(`${label} is missing current-contract key(s): ${missing.join(", ")}`);
+  }
+  for (const [key, entry] of Object.entries(value)) requireNonEmptyString(entry, `${label}.${key}`);
+}
+
+function requireStringArray(value, label) {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.length === 0) || new Set(value).size !== value.length) {
+    throw new Error(`${label} must be an array of unique non-empty strings`);
+  }
+}
+
+function requireNonEmptyString(value, label) {
+  if (typeof value !== "string" || value.length === 0) throw new Error(`${label} must be a non-empty string`);
+}
+
+function requirePlainRecord(value, label) {
+  if (!isPlainObject(value) || Reflect.ownKeys(value).some((key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return typeof key !== "string" || descriptor?.enumerable !== true || !("value" in descriptor);
+  })) throw new Error(`${label} must be a plain enumerable own-data-property object`);
 }

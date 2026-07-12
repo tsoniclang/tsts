@@ -58,9 +58,24 @@ export class AstSchema {
 
     // Instantiation alias name -> node name.
     this.instantiationAliasMap = new Map();
+    this.syntaxKindToNodeInfo = new Map();
     for (const [nodeName, def] of Object.entries(this.definitions)) {
-      for (const aliasName of Object.keys(def.instantiationAliases || {})) {
+      for (const [aliasName, typeArg] of Object.entries(def.instantiationAliases || {})) {
         this.instantiationAliasMap.set(aliasName, nodeName);
+        if (this.hasKindAlias(typeArg)) {
+          for (const kindName of this.expandKindAliasMembers(typeArg)) {
+            if (!this.syntaxKindToNodeInfo.has(kindName)) this.syntaxKindToNodeInfo.set(kindName, { aliasName, nodeName });
+          }
+        } else if (!this.syntaxKindToNodeInfo.has(typeArg)) {
+          this.syntaxKindToNodeInfo.set(typeArg, { aliasName, nodeName });
+        }
+      }
+      const primaryKind = Array.isArray(def.kind) ? def.kind[0] : (def.kind || nodeName);
+      if (!this.syntaxKindToNodeInfo.has(primaryKind)) this.syntaxKindToNodeInfo.set(primaryKind, { nodeName });
+      if (Array.isArray(def.kind)) {
+        for (const kindName of def.kind.slice(1)) {
+          if (!this.syntaxKindToNodeInfo.has(kindName)) this.syntaxKindToNodeInfo.set(kindName, { nodeName });
+        }
       }
     }
   }
@@ -107,7 +122,7 @@ export class AstSchema {
     const firstIdx = elements.indexOf(first);
     const lastIdx = elements.indexOf(last);
     if (firstIdx === -1 || lastIdx === -1) {
-      throw new Error(`Range alias ${name}: could not resolve [${value.range[0]}, ${value.range[1]}]`);
+      throw new Error(`Range alias ${name}: could not resolve range [${value.range[0]}, ${value.range[1]}]`);
     }
     return elements.slice(firstIdx, lastIdx + 1);
   }
@@ -256,9 +271,9 @@ export class AstSchema {
   formatTsReference(rawType, listKind) {
     if (listKind === "raw") {
       // Go raw lists are []*Node for node elements, []T for scalar elements.
-      if (this._baseKindOf(rawType) === "node") return "GoSlice<GoPtr<Node>>";
+      if (this._baseKindOf(rawType) === "node") return "GoPtr<GoSlice<GoPtr<Node>>>";
       const elem = this._scalarTsRef(rawType);
-      return `GoSlice<${elem.ref}>`;
+      return `GoPtr<GoSlice<${elem.ref}>>`;
     }
     if (listKind === "ModifierList") {
       return "GoPtr<ModifierList>";
@@ -342,6 +357,91 @@ export class AstSchema {
     }
     return "primitive";
   }
+
+  validate() {
+    for (const baseName of this.baseNames()) {
+      for (const extended of this.extendsKeysOf(baseName)) {
+        if (!(extended in this.bases)) throw new Error(`Unknown base extends target ${extended} from ${baseName}`);
+      }
+      for (const field of this.baseFields(baseName)) this._resolveTypeForValidation(field.rawType);
+    }
+
+    for (const nodeName of this.nodeNames()) {
+      const definition = this.definitions[nodeName];
+      for (const extended of this.extendsKeysOf(nodeName)) {
+        if (!(extended in this.bases)) throw new Error(`Unknown node extends target ${extended} from ${nodeName}`);
+      }
+      for (const member of this.members(nodeName)) {
+        this._resolveTypeForValidation(member.rawType, definition);
+        if (member._baseField) this._resolveTypeForValidation(member._baseField.rawType);
+      }
+    }
+
+    for (const [aliasName, alias] of Object.entries(this.aliases)) {
+      if (!Array.isArray(alias)) {
+        if (!(alias.base in this.bases)) throw new Error(`Unknown alias base ${alias.base} from ${aliasName}`);
+        continue;
+      }
+      for (const memberName of alias) this._resolveTypeForValidation(memberName, undefined, "node");
+    }
+
+    for (const [aliasName, elementType] of Object.entries(this.listAliases)) {
+      if (elementType === undefined) throw new Error(`List alias ${aliasName} is missing an element type`);
+      this._resolveTypeForValidation(elementType);
+    }
+
+    const kindElements = new Set(this.kindElementNames());
+    const markerNames = new Set((this.kinds.markers || []).map((marker) => marker.name));
+    for (const marker of this.kinds.markers || []) {
+      if (!kindElements.has(marker.value) && !markerNames.has(marker.value)) {
+        throw new Error(`Kind marker ${marker.name} references undefined kind or marker ${marker.value}`);
+      }
+    }
+
+    for (const aliasName of this.kindAliasNames()) {
+      for (const member of this.kindAliasMembers(aliasName)) {
+        if (!this.hasKindAlias(member) && !kindElements.has(member)) {
+          throw new Error(`Unknown kind alias member ${member} in ${aliasName}`);
+        }
+      }
+    }
+  }
+
+  _resolveTypeForValidation(typeName, nodeDefinition, resolveAs) {
+    if (Array.isArray(typeName)) {
+      for (const member of typeName) this._resolveTypeForValidation(member, nodeDefinition, resolveAs);
+      return;
+    }
+    if (typeof typeName !== "string") throw new Error(`AST schema type must be a string or string array, got ${JSON.stringify(typeName)}`);
+
+    const typeParameter = (nodeDefinition?.typeParameters || []).find((parameter) => parameter.name === typeName);
+    if (typeParameter) {
+      if (typeParameter.constraint !== typeName) this._resolveTypeForValidation(typeParameter.constraint, nodeDefinition);
+      return;
+    }
+
+    if (this.hasKindAlias(typeName)) {
+      const members = this.expandKindAliasMembers(typeName);
+      if (resolveAs === "node") {
+        for (const kindName of members) {
+          if (!this.syntaxKindToNodeInfo.has(kindName)) {
+            throw new Error(`Kind alias member "${kindName}" (from "${typeName}") does not resolve to a node type`);
+          }
+        }
+      }
+      return;
+    }
+
+    if (typeName in this.listAliases) {
+      this._resolveTypeForValidation(this.listAliases[typeName], nodeDefinition);
+      return;
+    }
+    if (!(typeName in this.aliases)) return;
+    const alias = this.aliases[typeName];
+    if (Array.isArray(alias)) {
+      for (const memberName of alias) this._resolveTypeForValidation(memberName, nodeDefinition, "node");
+    }
+  }
 }
 
 export class AstMember {
@@ -369,7 +469,7 @@ export class AstMember {
     if (this.member.type !== undefined) return this.member.type;
     const bf = this._baseField;
     if (bf) return bf.rawType;
-    return this.member.type;
+    throw new Error(`Member ${this.name} has no raw type source`);
   }
 
   get listKind() {
