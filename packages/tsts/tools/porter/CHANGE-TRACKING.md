@@ -61,9 +61,14 @@ envelope is rejected unless it is also the exact result of those checkouts.
 Both commands reject hidden Git index state. Delta output must be outside the
 source checkouts so publishing evidence cannot invalidate its own provenance.
 The CLI checks the clean Porter implementation before dynamically importing the
-command graph. Evidence is published through one descriptor-relative,
-no-follow, exclusive staging directory and atomic rename. Verification rejects
-noncanonical UTF-8 before checking the byte-length/SHA-256 completion envelope.
+command graph. Evidence is published into one descriptor-relative, no-follow
+directory created atomically and exclusively at the final path. Every payload
+is synced before `COMPLETE.json` is written and synced last; a failed run remains
+visibly incomplete and can never replace prior evidence. Verification rejects
+noncanonical UTF-8 before checking the byte-length/SHA-256 completion envelope
+and exact recomputed bytes. Repeated extraction is proven by a byte-for-byte
+comparison of the raw extractor outputs, whose temporary files are released
+after that comparison.
 
 ## TypeScript Reconciliation
 

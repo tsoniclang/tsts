@@ -105,11 +105,11 @@ export function renderStatusMarkdown(status) {
   }
   if (localOverrides.units.length === 0) lines.push("| _None_ |  |  |  |");
   lines.push("");
-  lines.push("## Largest Missing Modules");
+  lines.push("## Missing Modules");
   lines.push("");
   lines.push("| Module | Units |");
   lines.push("|---|---:|");
-  for (const [name, count] of Object.entries(status.missingModules).sort((a, b) => b[1] - a[1]).slice(0, 30)) {
+  for (const [name, count] of Object.entries(status.missingModules).sort((a, b) => b[1] - a[1])) {
     lines.push(`| ${name} | ${count} |`);
   }
   lines.push("");

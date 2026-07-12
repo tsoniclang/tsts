@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { runScan } from "./core/scan-runner.mjs";
+import { releaseScanEvidence, runScan, runScanEvidence } from "./core/scan-runner.mjs";
 import { loadConfig } from "./core/runtime.mjs";
 
 test("runScan executes end to end with a scrubbed child environment", () => {
@@ -33,6 +33,22 @@ test("runScan executes end to end with a scrubbed child environment", () => {
   assert.equal(snapshot.semantic.externalPackageSurface.declarations[0].object.id, "errors::func::New");
   assert.equal(snapshot.semantic.externalPackageSurface.declarations[0].signature.results.variables[0].type.kind, "named");
   assert.equal(snapshot.semantic.externalPackageSurface.declarations[0].signature.results.variables[0].type.reference.objectId, "builtin::type::error");
+});
+
+test("scan evidence has one explicit bounded lifetime", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-scan-evidence-"));
+  mkdirSync(path.join(root, "sample"));
+  writeFileSync(path.join(root, "go.mod"), "module example.test/evidence\n\ngo 1.26\n");
+  writeFileSync(path.join(root, "sample", "sample.go"), "package sample\n\nconst Value = 1\n");
+  git(root, ["init", "--quiet"]);
+  git(root, ["add", "."]);
+  git(root, ["-c", "user.name=TSTS", "-c", "user.email=tsts@example.invalid", "commit", "--quiet", "-m", "fixture"]);
+  const evidence = runScanEvidence({ ...loadConfig(), sourceRoot: root, goModulePath: "example.test/evidence" });
+  assert.equal(existsSync(evidence.file), true);
+  assert.equal(evidence.snapshot.files[0].units[0].name, "Value");
+  releaseScanEvidence(evidence);
+  assert.equal(existsSync(evidence.file), false);
+  assert.throws(() => releaseScanEvidence(evidence), /already released/);
 });
 
 function git(root, args) {

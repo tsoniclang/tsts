@@ -76,7 +76,7 @@ test("buildStatus rejects partial and forged TS-unit status evidence before matc
   assert.throws(() => buildStatus(duplicateEvidence), /tsUnits\.units duplicates id/);
 });
 
-test("renderStatusMarkdown reports largest missing modules from missing rows only", () => {
+test("renderStatusMarkdown reports every missing module from missing rows only", () => {
   const snapshot = snapshotWith([
     fileRecord({
       path: "internal/checker/checker.go",
@@ -127,6 +127,8 @@ test("renderStatusMarkdown reports largest missing modules from missing rows onl
   assert.match(markdown, /unmatched TypeScript declaration audit: not run/);
   assert.match(markdown, /Go struct JSON-tag declaration audit: not run/);
   assert.doesNotMatch(markdown, /Authored facades checked\/bound methods\/unselected Go\/TS-only: 0\/0\/0\/0/);
+  status.missingModules = Object.fromEntries(Array.from({ length: 31 }, (_, index) => [`module-${String(index).padStart(2, "0")}`, 31 - index]));
+  assert.match(renderStatusMarkdown(status), /\| module-30 \| 1 \|/);
 });
 
 test("signature summaries retain audit state and every concrete inventory row", () => {

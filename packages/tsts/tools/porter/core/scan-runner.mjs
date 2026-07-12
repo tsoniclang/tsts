@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { constants as bufferConstants } from "node:buffer";
-import { closeSync, constants, fstatSync, mkdirSync, mkdtempSync, openSync, readSync } from "node:fs";
+import { closeSync, constants, fstatSync, mkdirSync, mkdtempSync, openSync, readSync, unlinkSync } from "node:fs";
 import path from "node:path";
 
 import { assertPinnedGoToolchainStable } from "../go-toolchain-pin.mjs";
@@ -17,8 +17,18 @@ import { assertDirectory, fail, repoRoot, resolveRepo, walk } from "./runtime.mj
 
 const OUTPUT_FLAGS = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0);
 const OUTPUT_STABILITY_FIELDS = ["dev", "ino", "mode", "nlink", "size", "mtimeNs", "ctimeNs"];
+const activeScanEvidence = new WeakSet();
 
 export function runScan(config) {
+  const evidence = runScanEvidence(config);
+  try {
+    return evidence.snapshot;
+  } finally {
+    releaseScanEvidence(evidence);
+  }
+}
+
+export function runScanEvidence(config) {
   const sourceRoot = resolveRepo(config.sourceRoot);
   const helperDir = resolveRepo("packages/tsts/tools/porter/go-extractor");
   assertDirectory(sourceRoot, "TS-Go source root");
@@ -57,12 +67,20 @@ export function runScan(config) {
     if (snapshot.gitRevision !== sourceBefore.revision) throw new Error("extractor source revision differs from independently validated checkout revision");
     const sourceAfter = requireCleanSourceCheckout(sourceRoot, "after extraction");
     if (sourceAfter.revision !== sourceBefore.revision) throw new Error(`source revision changed during extraction: ${sourceBefore.revision} -> ${sourceAfter.revision}`);
-    return snapshot;
+    const evidence = Object.freeze({ file: output.file, snapshot });
+    activeScanEvidence.add(evidence);
+    return evidence;
   } catch (error) {
     fail(`Go extractor produced invalid evidence: ${error.message}`);
   } finally {
     closeSync(output.fd);
   }
+}
+
+export function releaseScanEvidence(evidence) {
+  if (!activeScanEvidence.has(evidence)) throw new Error("scan evidence is not active or was already released");
+  unlinkSync(evidence.file);
+  activeScanEvidence.delete(evidence);
 }
 
 function activeSemanticFiles(config, sourceRoot) {

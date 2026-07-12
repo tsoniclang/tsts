@@ -93,6 +93,16 @@ test("canonical snapshots are deterministic and include source hashes", () => {
   assert.match(canonicalSnapshot(value), /source-digest/);
 });
 
+test("delta Markdown enumerates every changed module without truncation", () => {
+  const value = snapshot("c".repeat(40), []);
+  const report = buildPorterDelta(value, value, deltaOptions(value, value, {
+    policyForUnit: () => ({ category: "literal-port", active: true }),
+    isActivePortPolicy: () => true,
+  }));
+  report.activeUnits.addedByModule = Array.from({ length: 31 }, (_, index) => [`module-${String(index).padStart(2, "0")}`, 1]);
+  assert.match(renderDeltaMarkdown(reviewReport(report)), /module-30: 1/);
+});
+
 test("portable snapshots normalize incidental toolchain and cache locations", () => {
   const left = snapshot("c".repeat(40), []);
   const right = structuredClone(left);
@@ -352,9 +362,11 @@ function treeEntries(value) {
 
 function deltaOptions(from, to, callbacks) {
   return {
+    fromSnapshotDigest: snapshotDigest(from),
     fromTreeEntries: treeEntries(from),
     isActivePortPolicy: callbacks.isActivePortPolicy,
     policyForUnit: callbacks.policyForUnit,
+    toSnapshotDigest: snapshotDigest(to),
     toTreeEntries: treeEntries(to),
   };
 }

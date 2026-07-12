@@ -154,8 +154,8 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
   const semanticState = compareRecordMaps(semanticStateRecords(fromSnapshot), semanticStateRecords(toSnapshot));
   return {
     schemaVersion: 7,
-    from: snapshotIdentity(fromSnapshot),
-    to: snapshotIdentity(toSnapshot),
+    from: snapshotIdentity(fromSnapshot, options.fromSnapshotDigest),
+    to: snapshotIdentity(toSnapshot, options.toSnapshotDigest),
     extractionEnvironment: {
       from: fromEnvironment,
       to: toEnvironment,
@@ -212,18 +212,22 @@ export function renderDeltaMarkdown(report) {
     "",
     ...moduleLines(report.activeUnits.removedByModule),
     "",
-    "## File Changes",
+    "## Raw Unit Changes",
     "",
-    ...moduleLines(report.trackedFiles.changedByModule),
+    ...categorizedModuleLines(report.rawUnits),
+    "",
+    "## Tracked File Changes",
+    "",
+    ...categorizedModuleLines(report.trackedFiles),
     "",
   ];
   return `${lines.join("\n")}\n`;
 }
 
-function snapshotIdentity(snapshot) {
+function snapshotIdentity(snapshot, digest) {
   return {
     gitRevision: snapshot.gitRevision,
-    digest: snapshotDigest(snapshot),
+    digest,
     environment: snapshot.environment,
     summary: snapshot.summary,
   };
@@ -523,12 +527,15 @@ function requireDeltaOptions(value) {
   if (value === null || typeof value !== "object" || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
     throw new Error("Porter delta options must be one exact object");
   }
-  const expected = ["fromTreeEntries", "isActivePortPolicy", "policyForUnit", "toTreeEntries"];
+  const expected = ["fromSnapshotDigest", "fromTreeEntries", "isActivePortPolicy", "policyForUnit", "toSnapshotDigest", "toTreeEntries"];
   const actual = Reflect.ownKeys(value).map(String).sort();
   if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
     throw new Error(`Porter delta option keys must be exactly ${expected.join(", ")}; got ${actual.join(", ")}`);
   }
   if (!Array.isArray(value.fromTreeEntries) || !Array.isArray(value.toTreeEntries)) throw new Error("Porter delta requires complete from/to tree entries");
+  for (const key of ["fromSnapshotDigest", "toSnapshotDigest"]) {
+    if (typeof value[key] !== "string" || !/^[0-9a-f]{64}$/.test(value[key])) throw new Error(`Porter delta ${key} must be lowercase SHA-256`);
+  }
   if (typeof value.policyForUnit !== "function" || typeof value.isActivePortPolicy !== "function") {
     throw new Error("Porter delta requires exact policy callbacks");
   }
@@ -544,7 +551,20 @@ function declarationChangeLine(summary) {
 
 function moduleLines(entries) {
   if (entries.length === 0) return ["- None"];
-  return entries.slice(0, 30).map(([module, count]) => `- ${module}: ${count}`);
+  return entries.map(([module, count]) => `- ${module}: ${count}`);
+}
+
+function categorizedModuleLines(summary) {
+  return [
+    "### Added",
+    ...moduleLines(summary.addedByModule),
+    "",
+    "### Removed",
+    ...moduleLines(summary.removedByModule),
+    "",
+    "### Changed",
+    ...moduleLines(summary.changedByModule),
+  ];
 }
 
 function identityLines(summary) {

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { decodeCanonicalUtf8, publishStableFlatDirectory, readStableFlatDirectory } from "./core/provenance-filesystem.mjs";
+import { decodeCanonicalUtf8, publishStableFlatDirectory, readStableFlatDirectory, stableRegularFilesEqual } from "./core/provenance-filesystem.mjs";
 
 test("stable flat-directory evidence rejects links and nested entries", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-flat-evidence-"));
@@ -29,12 +29,23 @@ test("text evidence rejects invalid and noncanonical UTF-8 bytes", () => {
   assert.throws(() => decodeCanonicalUtf8(Buffer.from([0xef, 0xbb, 0xbf, 0x7b, 0x7d]), "fixture"), /not canonical UTF-8/);
 });
 
+test("stable file comparison is byte-exact", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-file-comparison-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const left = path.join(root, "left");
+  const right = path.join(root, "right");
+  writeFileSync(left, "same\0bytes\n");
+  writeFileSync(right, "same\0bytes\n");
+  assert.equal(stableRegularFilesEqual(left, right, "fixture comparison"), true);
+  writeFileSync(right, "same\0byteX\n");
+  assert.equal(stableRegularFilesEqual(left, right, "fixture comparison"), false);
+});
+
 test("flat evidence publication is exclusive and descriptor-relative", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-flat-publish-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const output = path.join(root, "evidence");
-  const staging = path.join(root, "evidence.partial");
-  const records = publishStableFlatDirectory(output, staging, new Map([
+  const records = publishStableFlatDirectory(output, new Map([
     ["report.json", "{}\n"],
     ["COMPLETE.json", ({ files }) => `${JSON.stringify(files)}\n`],
   ]), "fixture publication");
@@ -42,7 +53,19 @@ test("flat evidence publication is exclusive and descriptor-relative", (t) => {
   assert.equal(records["COMPLETE.json"].bytes > records["report.json"].bytes, true);
   assert.deepEqual([...readStableFlatDirectory(output)].map(([name]) => name), ["COMPLETE.json", "report.json"]);
   assert.throws(
-    () => publishStableFlatDirectory(output, `${staging}-second`, new Map([["COMPLETE.json", "{}\n"]]), "fixture publication"),
+    () => publishStableFlatDirectory(output, new Map([["COMPLETE.json", "{}\n"]]), "fixture publication"),
     /already exists/,
   );
+});
+
+test("failed evidence publication remains visibly incomplete", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-incomplete-publish-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const output = path.join(root, "evidence");
+  assert.throws(() => publishStableFlatDirectory(output, new Map([
+    ["report.json", "{}\n"],
+    ["broken.json", () => { throw new Error("fixture failure"); }],
+    ["COMPLETE.json", "{}\n"],
+  ]), "fixture publication"), /fixture failure/);
+  assert.deepEqual([...readStableFlatDirectory(output)].map(([name]) => name), ["report.json"]);
 });
