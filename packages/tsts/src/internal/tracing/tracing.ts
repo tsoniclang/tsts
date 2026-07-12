@@ -1,7 +1,7 @@
 import type { bool, byte, double, int, uint, ulong } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
 import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
 import { SortFunc } from "../../go/slices.js";
 import { Builder, Compare } from "../../go/strings.js";
@@ -315,7 +315,15 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
     tracers: [],
     traceContent: traceContent,
     traceStarted: traceStarted,
-    threadIDs: NewGoStructMap<traceThreadKey, int>(),
+    threadIDs: NewGoStructMap<traceThreadKey, int>(GoStructKey(
+      [
+        GoStructField((value: traceThreadKey) => value.kind, GoStringKey),
+        GoStructField((value: traceThreadKey) => value.text, GoStringKey),
+        GoStructField((value: traceThreadKey) => value.index, GoNumberKey),
+        GoStructField((value: traceThreadKey) => value.hasIndex, GoBooleanKey),
+      ],
+      ([kind, text, index, hasIndex]) => ({ kind, text, index, hasIndex }),
+    )),
     threadKeys: new globalThis.Map<int, traceThreadKey>(),
     metadataTS: 0 as double,
     deterministic: deterministic,

@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../go/scalars.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import { recordExtensionPostCheckAssignabilityObservation } from "../../extensions/checker-integration.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
@@ -445,7 +445,10 @@ export function Relation_get(receiver: GoPtr<Relation>, key: CacheHashKey): Rela
  */
 export function Relation_set(receiver: GoPtr<Relation>, key: CacheHashKey, result: RelationComparisonResult): void {
   if (receiver!.results === undefined) {
-    receiver!.results = NewGoStructMap<CacheHashKey, RelationComparisonResult>();
+    receiver!.results = NewGoStructMap<CacheHashKey, RelationComparisonResult>(GoStructKey(
+      [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+      ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+    ));
   }
   receiver!.results.set(key, result);
 }
@@ -5637,7 +5640,10 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
 
 function newCacheHashKeySet(): Set<CacheHashKey> {
   return {
-    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(),
+    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(GoStructKey(
+      [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+      ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+    )),
   };
 }
 

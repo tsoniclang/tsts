@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
@@ -135,7 +135,10 @@ const flowLoopKeys = new WeakMap<FlowNode, globalThis.Map<CacheHashKey, FlowLoop
 function getFlowLoopKey(flow: GoPtr<FlowNode>, refKey: CacheHashKey): FlowLoopKey {
   let byRefKey = flowLoopKeys.get(flow!);
   if (byRefKey === undefined) {
-    byRefKey = NewGoStructMap<CacheHashKey, FlowLoopKey>();
+    byRefKey = NewGoStructMap<CacheHashKey, FlowLoopKey>(GoStructKey(
+      [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+      ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+    ));
     flowLoopKeys.set(flow!, byRefKey);
   }
   let key = byRefKey.get(refKey);

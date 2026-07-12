@@ -1,10 +1,6 @@
-import type { int } from "../../../go/scalars.js";
 import type { GoError } from "../../../go/compat.js";
-import * as goErrors from "../../../go/errors.js";
-import * as goOs from "../../../go/os.js";
-import * as syscall from "../../../go/syscall.js";
-import * as windows from "../../../go/golang.org/x/sys/windows.js";
 import type { Handle } from "../../../go/golang.org/x/sys/windows.js";
+import * as nodeFs from "node:fs";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_windows.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721","bodyHash":"c6685bdb1c35701c8c4197feecd86a69e6eed5e8699e492c064c93b8c5e06ad9"}
@@ -61,57 +57,14 @@ import type { Handle } from "../../../go/golang.org/x/sys/windows.js";
  * }
  */
 export function realpath(path: string): [string, GoError] {
-  let h: Handle;
-  if (path.length < 248) {
-    const [hResult, err] = openMetadata(path);
-    if (err !== undefined) {
-      return ["", err];
-    }
-    h = hResult;
-    // defer windows.CloseHandle(h) — in TS we call it after the loop below
-    const result = realpathWithHandle(h, path);
-    windows.CloseHandle(h);
-    return result;
-  } else {
-    // For long paths, defer to os.Open to run the path through fixLongPath.
-    const [f, openErr] = goOs.Open(path) as [goOs.File, GoError];
-    if (openErr !== undefined) {
-      return ["", openErr];
-    }
-    // Works on directories too since https://go.dev/cl/405275.
-    h = f as unknown as Handle;
-    const result = realpathWithHandle(h, path);
-    (f as unknown as { Close(): GoError }).Close();
-    return result;
+  try {
+    let resolved = nodeFs.realpathSync.native(path);
+    if (resolved.startsWith("\\\\?\\UNC\\")) resolved = "\\\\" + resolved.slice(8);
+    else if (resolved.startsWith("\\\\?\\")) resolved = resolved.slice(4);
+    return [resolved, undefined];
+  } catch (error) {
+    return ["", error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }
-}
-
-function realpathWithHandle(h: Handle, _path: string): [string, GoError] {
-  const _VOLUME_NAME_DOS = 0;
-
-  let buf = new Array<number>(310);
-  for (;;) {
-    const [n, err] = windows.GetFinalPathNameByHandle(h, buf[0], buf.length as int, _VOLUME_NAME_DOS as int) as [int, GoError];
-    if (err !== undefined) {
-      return ["", err];
-    }
-    if (n < (buf.length as int)) {
-      break;
-    }
-    buf = new Array<number>(n as number);
-  }
-
-  let s = syscall.UTF16ToString(buf) as string;
-  if (s.length > 4 && s.slice(0, 4) === "\\\\?\\") {
-    s = s.slice(4);
-    if (s.length > 3 && s.slice(0, 3) === "UNC") {
-      // return path like \\server\share\...
-      return ["\\" + s.slice(3), undefined];
-    }
-    return [s, undefined];
-  }
-
-  return ["", goErrors.New("GetFinalPathNameByHandle returned unexpected path: " + s)];
 }
 
 /**
@@ -158,31 +111,9 @@ function realpathWithHandle(h: Handle, _path: string): [string, GoError] {
  * }
  */
 export function openMetadata(path: string): [Handle, GoError] {
-  // based on https://github.com/microsoft/go-winio/blob/3c9576c9346a1892dee136329e7e15309e82fb4f/pkg/fs/resolve.go#L113
-
-  const [pathUTF16, pathUTF16Err] = windows.UTF16PtrFromString(path) as [unknown, GoError];
-  if (pathUTF16Err !== undefined) {
-    return [windows.InvalidHandle as Handle, pathUTF16Err];
+  try {
+    return [nodeFs.openSync(path, nodeFs.constants.O_RDONLY) as Handle, undefined];
+  } catch (error) {
+    return [0 as Handle, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }
-
-  const _FILE_ANY_ACCESS = 0;
-  const _FILE_SHARE_READ = 0x01;
-  const _FILE_SHARE_WRITE = 0x02;
-  const _FILE_SHARE_DELETE = 0x04;
-  const _OPEN_EXISTING = 0x03;
-  const _FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
-
-  const [h, createErr] = windows.CreateFile(
-    pathUTF16,
-    _FILE_ANY_ACCESS,
-    (_FILE_SHARE_READ | _FILE_SHARE_WRITE | _FILE_SHARE_DELETE),
-    undefined,
-    _OPEN_EXISTING,
-    _FILE_FLAG_BACKUP_SEMANTICS,
-    0,
-  ) as [Handle, GoError];
-  if (createErr !== undefined) {
-    return [0 as unknown as Handle, new globalThis.Error(`CreateFile ${path}: ${createErr.message}`)];
-  }
-  return [h, undefined];
 }

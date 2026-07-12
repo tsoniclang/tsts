@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Regexp } from "../../go/regexp.js";
 import { Compile } from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -49,7 +49,10 @@ export interface regexPatternCacheKey {
  * )
  */
 export let regexPatternCacheMu: RWMutex = new RWMutex();
-export let regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>();
+export let regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>(GoStructKey(
+  [GoStructField((value: regexPatternCacheKey) => value.pattern, GoStringKey), GoStructField((value: regexPatternCacheKey) => value.caseInsensitive, GoBooleanKey)],
+  ([pattern, caseInsensitive]) => ({ pattern, caseInsensitive }),
+));
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"fdfc55605498de1fa827e50b1eda9800918b2bab712c7736842daf17ba308196"}

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -4874,7 +4874,10 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * }
  */
 const emptyResolutionCache: GoMap<Path, ModeAwareCache<unknown>> = new globalThis.Map<Path, ModeAwareCache<unknown>>();
-const emptyModeAwareCache: ModeAwareCache<unknown> = NewGoStructMap<ModeAwareCacheKey, unknown>();
+const emptyModeAwareCache: ModeAwareCache<unknown> = NewGoStructMap<ModeAwareCacheKey, unknown>(GoStructKey(
+  [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
+  ([Name, Mode]) => ({ Name, Mode }),
+));
 
 const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
   map !== undefined ? map : empty;

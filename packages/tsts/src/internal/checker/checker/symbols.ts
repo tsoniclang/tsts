@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
 import { isShorthandAmbientModuleSymbol } from "../utilities.js";
@@ -54,7 +54,7 @@ import { FromString, Number_String } from "../../jsnum/string.js";
 import type { TypeMapper } from "../mapper.js";
 import { Checker_combineTypeMappers, appendTypeMapping, newTypeMapper, newSimpleTypeMapper } from "../mapper.js";
 import type { AccessFlags, AliasSymbolLinks, ContextFlags, DeclaredTypeLinks, DeferredSymbolLinks, IndexedAccessType, IndexFlags, IndexInfo, IndexType, InterfaceType, LateBoundLinks, MembersAndExportsLinks, MembersOrExportsResolutionKind, ModuleSymbolLinks, NodeLinks, ObjectFlags, Signature, SourceFileLinks, StructuredType, SymbolFormatFlags, SymbolReferenceLinks, Type, TypeAlias, TypeAliasLinks, TypeData, TypeFlags, TypeReference, UniqueESSymbolType, ValueSymbolLinks, SymbolNodeLinks, TypeNodeLinks, MappedSymbolLinks } from "../types.js";
-import type { Checker, CheckMode, DeclarationSpaces, DiscriminatedContextualTypeKey, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, NonExistentPropertyKey, ObjectLiteralDiscriminator, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext, CachedTypeKey } from "./state.js";
+import type { CacheHashKey, Checker, CheckMode, DeclarationSpaces, DiscriminatedContextualTypeKey, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, NonExistentPropertyKey, ObjectLiteralDiscriminator, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext, CachedTypeKey } from "./state.js";
 import { SymbolFlagsNone, SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsExportValue, SymbolFlagsLateBindingContainer, SymbolFlagsModule, SymbolFlagsModuleMember, SymbolFlagsReplaceableByMethod, SymbolFlagsType, SymbolFlagsValue, SymbolFlagsNamespace, SymbolFlagsTransient, SymbolFlagsBlockScopedVariable, SymbolFlagsClass, SymbolFlagsEnum, SymbolFlagsFunction, SymbolFlagsFunctionScopedVariable, SymbolFlagsAssignment, SymbolFlagsRegularEnum, SymbolFlagsConstEnum, SymbolFlagsVariable, SymbolFlagsInterface, SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, SymbolFlagsGlobalLookup, SymbolFlagsMethod, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsSetAccessor, SymbolFlagsGetAccessor, SymbolFlagsAccessor, SymbolFlagsEnumMember, NodeFlagsAwaitUsing, NodeFlagsConstant, NodeFlagsNone, NodeFlagsOptionalChain, NodeFlagsInWithStatement, SymbolFlagsValueModule, SymbolFlagsNamespaceModule, SymbolFlagsConstEnumOnlyModule, SymbolFlagsObjectLiteral, SymbolFlagsBlockScoped, SymbolFlagsModuleExports, SymbolFlagsTypeLiteral, SymbolFlagsPrototype, SymbolFlagsPropertyOrAccessor } from "../../ast/generated/flags.js";
 import { NodeFlagsPossiblyContainsImportMeta, NodeFlagsBlockScoped } from "../../ast/generated/flags.js";
 import { InternalSymbolNameComputed, InternalSymbolNameAssignmentDeclaration, InternalSymbolNameExportEquals, InternalSymbolNameImportAttributes, InternalSymbolNameExportStar, InternalSymbolNameIndex, InternalSymbolNameMissing, InternalSymbolNameDefault, InternalSymbolNameType, InternalSymbolNameCall, InternalSymbolNameNew, InternalSymbolNameModuleExports, InternalSymbolNamePrefix, InternalSymbolNameThis, InternalSymbolNameConstructor, SymbolName } from "../../ast/symbol.js";
@@ -15285,7 +15285,10 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
       const typeParameters = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, symbol_);
       if (typeParameters.length !== 0) {
         links!.typeParameters = typeParameters;
-        links!.instantiations = NewGoStructMap();
+        links!.instantiations = NewGoStructMap(GoStructKey(
+          [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+          ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+        ));
         links!.instantiations.set(getTypeListKey(typeParameters), t);
       }
       if (t === receiver!.intrinsicMarkerType && symbol_!.Name === "BuiltinIteratorReturn") {
@@ -15914,7 +15917,7 @@ export function Checker_isGenericIndexType(receiver: GoPtr<Checker>, t: GoPtr<Ty
  * }
  */
 export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, name: string): GoPtr<Type> {
-  const data: UniqueESSymbolType = { name };
+  const data: UniqueESSymbolType = { __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type }, name };
   const t = Checker_newType(receiver, TypeFlagsUniqueESSymbol, ObjectFlagsNone, data as unknown as TypeData);
   t!["symbol"] = symbol_;
   return t;
@@ -15987,7 +15990,15 @@ export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_newIndexedAccessType(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, indexType: GoPtr<Type>, accessFlags: AccessFlags): GoPtr<Type> {
-  const data: IndexedAccessType = { objectType, indexType, accessFlags };
+  const data: IndexedAccessType = {
+    __tsgoEmbedded0: {
+      __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
+      resolvedBaseConstraint: undefined,
+    },
+    objectType,
+    indexType,
+    accessFlags,
+  };
   return Checker_newType(receiver, TypeFlagsIndexedAccess, ObjectFlagsNone, data as unknown as TypeData);
 }
 
@@ -16003,7 +16014,14 @@ export function Checker_newIndexedAccessType(receiver: GoPtr<Checker>, objectTyp
  * }
  */
 export function Checker_newIndexType(receiver: GoPtr<Checker>, target: GoPtr<Type>, indexFlags: IndexFlags): GoPtr<Type> {
-  const data: IndexType = { target, indexFlags };
+  const data: IndexType = {
+    __tsgoEmbedded0: {
+      __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
+      resolvedBaseConstraint: undefined,
+    },
+    target,
+    indexFlags,
+  };
   return Checker_newType(receiver, TypeFlagsIndex, ObjectFlagsNone, data as unknown as TypeData);
 }
 

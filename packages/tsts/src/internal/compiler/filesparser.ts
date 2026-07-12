@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -1213,7 +1213,10 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       loader!.pathForLibFileResolutions as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<libResolution>>,
       key,
     );
-    const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
+    const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(GoStructKey(
+      [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],
+      ([Name, Mode]) => ({ Name, Mode }),
+    ));
     modeAwareCache.set({ Name: value!.libraryName, Mode: ModuleKindCommonJS }, value!.resolution);
     resolvedModules.set(key, modeAwareCache as ModeAwareCache<GoPtr<ResolvedModule>>);
     for (const trace of value!.trace) {

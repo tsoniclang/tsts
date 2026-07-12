@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -6042,7 +6042,14 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
       throw new globalThis.Error(`Cannot create token from reparsed node of kind ${KindString(parent!.Kind)}`);
     }
     if (receiver!.tokenCache === undefined) {
-      receiver!.tokenCache = NewGoStructMap<TokenCacheKey, GoPtr<Node>>();
+      const textRangeKey = GoStructKey<TextRange, readonly [TextPos, TextPos]>(
+        [GoStructField((value) => value.pos, GoNumberKey), GoStructField((value) => value.end, GoNumberKey)],
+        ([pos, end]) => ({ pos, end }),
+      );
+      receiver!.tokenCache = NewGoStructMap<TokenCacheKey, GoPtr<Node>>(GoStructKey(
+        [GoStructField((value: TokenCacheKey) => value.parent, GoPointerKey<Node>()), GoStructField((value: TokenCacheKey) => value.loc, textRangeKey)],
+        ([parent, loc]) => ({ parent, loc }),
+      ));
     }
     const token = createToken(kind, receiver, pos, end, flags);
     token!.Loc = loc;

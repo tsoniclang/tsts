@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -328,7 +328,10 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
     bivariant: false,
     expandingFlags: 0,
     propagationType: undefined,
-    visited: NewGoStructMap<InferenceKey, InferencePriority>(),
+    visited: NewGoStructMap<InferenceKey, InferencePriority>(GoStructKey(
+      [GoStructField((value: InferenceKey) => value.s, GoNumberKey), GoStructField((value: InferenceKey) => value.t, GoNumberKey)],
+      ([s, t]) => ({ s, t }),
+    )),
     sourceStack: [],
     targetStack: [],
     next: undefined,
@@ -997,7 +1000,10 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
     return;
   }
   if (state.visited === undefined) {
-    state.visited = NewGoStructMap<InferenceKey, InferencePriority>();
+    state.visited = NewGoStructMap<InferenceKey, InferencePriority>(GoStructKey(
+      [GoStructField((value: InferenceKey) => value.s, GoNumberKey), GoStructField((value: InferenceKey) => value.t, GoNumberKey)],
+      ([s, t]) => ({ s, t }),
+    ));
   }
   state.visited.set(key, InferencePriorityCircularity);
   const saveInferencePriority = state.inferencePriority;

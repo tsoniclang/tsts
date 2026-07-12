@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindClassDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindModuleDeclaration } from "../ast/generated/kinds.js";
@@ -22,7 +22,7 @@ import { Checker_getSignatureFromDeclaration } from "./checker/signatures.js";
 import { Checker_getDeclaredTypeOfSymbol, Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import { NewSymbolTrackerImpl, SymbolTrackerImpl_as_SymbolTracker } from "./symboltracker.js";
 import { newNodeBuilderImpl } from "./nodebuilderimpl.js";
-import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
+import type { CompositeSymbolIdentity, NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
 import {
   NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper,
   NodeBuilderImpl_serializeReturnTypeForSignature,
@@ -165,7 +165,14 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     enclosingFile: GetSourceFileOfNode(enclosingDeclaration),
     inferTypeParameters: [],
     visitedTypes: { M: new globalThis.Map() },
-    symbolDepth: NewGoStructMap(),
+    symbolDepth: NewGoStructMap(GoStructKey(
+      [
+        GoStructField((value: CompositeSymbolIdentity) => value.isConstructorNode, GoBooleanKey),
+        GoStructField((value: CompositeSymbolIdentity) => value.symbolId, GoNumberKey),
+        GoStructField((value: CompositeSymbolIdentity) => value.nodeId, GoNumberKey),
+      ],
+      ([isConstructorNode, symbolId, nodeId]) => ({ isConstructorNode, symbolId, nodeId }),
+    )),
     trackedSymbols: [],
     mapper: undefined,
     reverseMappedStack: [],

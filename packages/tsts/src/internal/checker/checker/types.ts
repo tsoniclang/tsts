@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -52,7 +52,7 @@ import { IsExternalModuleNameRelative } from "../../tspath/path.js";
 import type { TypeMapper } from "../mapper.js";
 import { TypeMapper_Map, appendTypeMapping, Checker_combineTypeMappers, newSimpleTypeMapper, prependTypeMapping } from "../mapper.js";
 import { Checker_createNormalizedTupleTypeEx, Checker_createTypeReferenceEx, Checker_addDiagnostic } from "../checker.js";
-import type { AccessFlags, ConditionalRoot, ContextFlags, ElementFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeComparer, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UnionType, IntersectionType, TemplateLiteralType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType, ExportTypeLinks, DeclaredTypeLinks } from "../types.js";
+import type { AccessFlags, ConditionalRoot, ContextFlags, ElementFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeBase, TypeComparer, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UnionType, IntersectionType, TemplateLiteralType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType, ExportTypeLinks, DeclaredTypeLinks } from "../types.js";
 import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition, AccessFlagsNone, ElementFlagsNone, ElementFlagsNonRequired, ElementFlagsFixed, ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ElementFlagsVariable, ObjectFlagsReference, ObjectFlagsObjectLiteral, ObjectFlagsObjectLiteralPatternWithComputedProperties, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, InterfaceType_LocalTypeParameters, InterfaceType_OuterTypeParameters, Type_Mapper, Type_AsIndexType, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsContextChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClass, ObjectFlagsInterface, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, Type_AsTypeParameter, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, TypeFlagsStringOrNumberLiteralOrUnique, ObjectFlagsNone, ObjectFlagsFromTypeNode, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ContextFlagsNoConstraints, ContextFlagsSignature, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType, TypeFormatFlagsWriteArrayAsGenericType, TypeFlagsPrimitive, ObjectFlagsArrayLiteral, ObjectFlagsContainsObjectOrArrayLiteral, Type_AsTupleType, SignatureKindConstruct, SignatureFlagsIsNonInferrable, TypeFormatFlagsNoTypeReduction, ObjectFlagsIsUnknownLikeUnionComputed, ObjectFlagsIsUnknownLikeUnion, TypeFlagsSimplifiable, ContextFlagsSkipBindingPatterns, TypeFlagsUniqueESSymbol, TypeFlagsESSymbol, TypeFlagsIncludesMask, TypeFlagsIncludesInstantiable, TypeFlagsIncludesConstrainedTypeVariable, TypeFlagsIncludesWildcard, TypeFlagsIncludesError, TypeFlagsIncludesNonWideningType, TypeFlagsIncludesEmptyObject, TypeFlagsIncludesMissingType, TypeFlagsUnit, ObjectFlagsIsConstrainedTypeVariable, ObjectFlagsObjectRestType, TypeFlagsBoolean, ObjectFlagsFreshLiteral, TypeFlagsNotPrimitiveUnion, TypeFlagsDisjointDomains, TypeFlagsVoidLike, TypeFlagsDefinitelyNonNullable, ObjectFlagsUnresolvedMembers, IndexFlagsNone, ObjectFlagsIsGenericTypeComputed, ObjectFlagsIsGenericType, ObjectFlagsIsGenericIndexType, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsRequiresWidening, Type_AsInstantiationExpressionType, Type_AsReverseMappedType, Type_AsStringMappingType, TypeAlias_Symbol, ObjectFlagsContainsSpread } from "../types.js";
 import { SignatureFlagsNone } from "../types.js";
 import type { orderedSet } from "../utilities.js";
@@ -120,6 +120,12 @@ function installTypeData(data: TypeData, t: GoPtr<Type>, flags: TypeFlags, objec
   const isTypeReference =
     isObject && (objectFlags & (ObjectFlagsReference | ObjectFlagsClassOrInterface | ObjectFlagsTuple)) !== 0;
   const isInterface = isObject && (objectFlags & (ObjectFlagsClassOrInterface | ObjectFlagsTuple)) !== 0;
+  const embedded = (data as TypeData & { __tsgoEmbedded0?: TypeBase | ConstrainedType }).__tsgoEmbedded0;
+  const dataIdentity = data as unknown;
+  if (embedded !== undefined && embedded !== dataIdentity) {
+    const typeBase = isConstrained ? (embedded as ConstrainedType).__tsgoEmbedded0 : embedded as TypeBase;
+    if (typeBase !== dataIdentity) typeBase.__tsgoEmbedded0 = t!;
+  }
   runtime.AsType = () => t;
   runtime.AsConstrainedType = () => isConstrained ? data as unknown as GoPtr<ConstrainedType> : undefined;
   runtime.AsStructuredType = () => (isObject || isUnionOrIntersection) ? data as unknown as GoPtr<StructuredType> : undefined;
@@ -4501,7 +4507,10 @@ export function Checker_getDeclaredTypeOfClassOrInterface(receiver: GoPtr<Checke
       d.outerTypeParameterCount = outerTypeParameters.length;
       const typeReference = Type_AsTypeReference(t)!;
       typeReference.resolvedTypeArguments = InterfaceType_TypeParameters(d);
-      Type_AsObjectType(t)!.instantiations = NewGoStructMap();
+      Type_AsObjectType(t)!.instantiations = NewGoStructMap(GoStructKey(
+        [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+        ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+      ));
       Type_AsObjectType(t)!.instantiations.set(getTypeListKey(typeReference.resolvedTypeArguments), t);
       Type_AsObjectType(t)!.target = t;
     }
@@ -9257,7 +9266,10 @@ export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>,
     };
     links!.resolvedType = Checker_getConditionalType(receiver, root, undefined, false, undefined);
     if (outerTypeParameters.length !== 0) {
-      root.instantiations = NewGoStructMap();
+      root.instantiations = NewGoStructMap(GoStructKey(
+        [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+        ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+      ));
       root.instantiations.set(getConditionalTypeKey(outerTypeParameters, undefined, false), links!.resolvedType);
     }
   }
@@ -9871,7 +9883,10 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
   Type_AsTypeParameter(interfaceType.thisType)!.isThisType = true;
   Type_AsTypeParameter(interfaceType.thisType)!.constraint = t;
   interfaceType.allTypeParameters = [...typeParameters, interfaceType.thisType];
-  objectType.instantiations = NewGoStructMap();
+  objectType.instantiations = NewGoStructMap(GoStructKey(
+    [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
+    ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
+  ));
   objectType.instantiations.set(getTypeListKey(InterfaceType_TypeParameters(interfaceType)), t);
   objectType.target = t;
   typeReference.resolvedTypeArguments = InterfaceType_TypeParameters(interfaceType);
@@ -10179,6 +10194,7 @@ export function Checker_newIntrinsicType(receiver: GoPtr<Checker>, flags: TypeFl
  */
 export function Checker_newIntrinsicTypeEx(receiver: GoPtr<Checker>, flags: TypeFlags, intrinsicName: string, objectFlags: ObjectFlags): GoPtr<Type> {
   const data: IntrinsicType = {
+    __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
     intrinsicName,
   };
   return Checker_newType(receiver, flags, objectFlags, data as unknown as TypeData);
@@ -10242,6 +10258,7 @@ export function Checker_createUnknownUnionType(receiver: GoPtr<Checker>): GoPtr<
  */
 export function Checker_newLiteralType(receiver: GoPtr<Checker>, flags: TypeFlags, value: unknown, regularType: GoPtr<Type>): GoPtr<Type> {
   const data: LiteralType = {
+    __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
     value,
     freshType: undefined,
     regularType: undefined,

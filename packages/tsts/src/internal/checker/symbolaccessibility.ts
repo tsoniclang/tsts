@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId, GetReparsedNodeForNode } from "../ast/utilities.js";
@@ -1010,7 +1010,14 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
   const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol) as ContainingSymbolLinks;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
-    links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>();
+    links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>(GoStructKey(
+      [
+        GoStructField((value: accessibleChainCacheKey) => value.useOnlyExternalAliasing, GoBooleanKey),
+        GoStructField((value: accessibleChainCacheKey) => value.location, GoPointerKey<Node>()),
+        GoStructField((value: accessibleChainCacheKey) => value.meaning, GoNumberKey),
+      ],
+      ([useOnlyExternalAliasing, location, meaning]) => ({ useOnlyExternalAliasing, location, meaning }),
+    ));
   }
   const existing = links.accessibleChainCache.get(linkKey);
   if (existing !== undefined) {

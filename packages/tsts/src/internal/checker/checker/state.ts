@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
@@ -2267,29 +2267,146 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.arrayVariances = [VarianceFlagsCovariant];
   checker.globals = new globalThis.Map<string, GoPtr<Symbol>>();
   checker.evaluate = NewEvaluator((expr, location): Result => Checker_evaluateEntity(checker, expr, location), OEKParentheses);
+  const pseudoBigIntKey = GoStructKey<PseudoBigInt, readonly [bool, string]>(
+    [
+      GoStructField((value) => value.Negative, GoBooleanKey),
+      GoStructField((value) => value.Base10Value, GoStringKey),
+    ],
+    ([Negative, Base10Value]) => ({ Negative, Base10Value }),
+  );
+  const cacheHashKey = GoStructKey<CacheHashKey, readonly [bigint, bigint]>(
+    [
+      GoStructField((value) => value.Hi, GoBigIntKey),
+      GoStructField((value) => value.Lo, GoBigIntKey),
+    ],
+    ([Hi, Lo], source) => globalThis.Object.assign(
+      globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey,
+      source,
+      { Hi, Lo },
+    ),
+  );
+  const enumValueKey = GoInterfaceKey<unknown>(
+    (value) => {
+      if (typeof value === "string") return GoDynamicValue(GoStringKey, value);
+      if (typeof value === "number") return GoDynamicValue(GoNumberKey, value);
+      throw new TypeError("enum literal map key must be a string or number");
+    },
+    (dynamic) => dynamic?.value,
+  );
+  const enumLiteralKey = GoStructKey<EnumLiteralKey, readonly [GoPtr<Symbol>, unknown]>(
+    [
+      GoStructField((value) => value.enumSymbol, GoPointerKey<Symbol>()),
+      GoStructField((value) => value.value, enumValueKey),
+    ],
+    ([enumSymbol, value]) => ({ enumSymbol, value }),
+  );
+  const cachedTypeKey = GoStructKey<CachedTypeKey, readonly [CachedTypeKind, TypeId]>(
+    [
+      GoStructField((value) => value.kind, GoNumberKey),
+      GoStructField((value) => value.typeId, GoNumberKey),
+    ],
+    ([kind, typeId]) => ({ kind, typeId }),
+  );
+  const cachedSignatureKey = GoStructKey<CachedSignatureKey, readonly [GoPtr<Signature>, CacheHashKey]>(
+    [
+      GoStructField((value) => value.sig, GoPointerKey<Signature>()),
+      GoStructField((value) => value.key, cacheHashKey),
+    ],
+    ([sig, key]) => ({ sig, key }),
+  );
+  const narrowedTypeKey = GoStructKey<NarrowedTypeKey, readonly [GoPtr<Type>, GoPtr<Type>, bool, bool]>(
+    [
+      GoStructField((value) => value.t, GoPointerKey<Type>()),
+      GoStructField((value) => value.candidate, GoPointerKey<Type>()),
+      GoStructField((value) => value.assumeTrue, GoBooleanKey),
+      GoStructField((value) => value.checkDerived, GoBooleanKey),
+    ],
+    ([t, candidate, assumeTrue, checkDerived]) => ({ t, candidate, assumeTrue, checkDerived }),
+  );
+  const stringMappingKey = GoStructKey<StringMappingKey, readonly [GoPtr<Symbol>, GoPtr<Type>]>(
+    [
+      GoStructField((value) => value.s, GoPointerKey<Symbol>()),
+      GoStructField((value) => value.t, GoPointerKey<Type>()),
+    ],
+    ([s, t]) => ({ s, t }),
+  );
+  const twoTypeIds = <K extends { id1: TypeId; id2: TypeId }>() => GoStructKey<K, readonly [TypeId, TypeId]>(
+    [
+      GoStructField((value) => value.id1, GoNumberKey),
+      GoStructField((value) => value.id2, GoNumberKey),
+    ],
+    ([id1, id2]) => ({ id1, id2 }) as K,
+  );
+  const nodeAndTypeId = <K extends { nodeId: NodeId; typeId: TypeId }>() => GoStructKey<K, readonly [NodeId, TypeId]>(
+    [
+      GoStructField((value) => value.nodeId, GoNumberKey),
+      GoStructField((value) => value.typeId, GoNumberKey),
+    ],
+    ([nodeId, typeId]) => ({ nodeId, typeId }) as K,
+  );
+  const substitutionTypeKey = GoStructKey<SubstitutionTypeKey, readonly [TypeId, TypeId]>(
+    [
+      GoStructField((value) => value.baseId, GoNumberKey),
+      GoStructField((value) => value.constraintId, GoNumberKey),
+    ],
+    ([baseId, constraintId]) => ({ baseId, constraintId }),
+  );
+  const reverseMappedTypeKey = GoStructKey<ReverseMappedTypeKey, readonly [TypeId, TypeId, TypeId]>(
+    [
+      GoStructField((value) => value.sourceId, GoNumberKey),
+      GoStructField((value) => value.targetId, GoNumberKey),
+      GoStructField((value) => value.constraintId, GoNumberKey),
+    ],
+    ([sourceId, targetId, constraintId]) => ({ sourceId, targetId, constraintId }),
+  );
+  const iterationTypesKey = GoStructKey<IterationTypesKey, readonly [TypeId, IterationUse]>(
+    [
+      GoStructField((value) => value.typeId, GoNumberKey),
+      GoStructField((value) => value.use, GoNumberKey),
+    ],
+    ([typeId, use]) => ({ typeId, use }),
+  );
+  const unionOfUnionKey = GoStructKey<UnionOfUnionKey, readonly [TypeId, TypeId, UnionReduction, CacheHashKey]>(
+    [
+      GoStructField((value) => value.id1, GoNumberKey),
+      GoStructField((value) => value.id2, GoNumberKey),
+      GoStructField((value) => value.r, GoNumberKey),
+      GoStructField((value) => value.a, cacheHashKey),
+    ],
+    ([id1, id2, r, a]) => ({ id1, id2, r, a }),
+  );
+  const propertiesTypesKey = GoStructKey<PropertiesTypesKey, readonly [TypeId, TypeFlags, bool, bool]>(
+    [
+      GoStructField((value) => value.typeId, GoNumberKey),
+      GoStructField((value) => value.include, GoNumberKey),
+      GoStructField((value) => value.includeOrigin, GoBooleanKey),
+      GoStructField((value) => value.unresolvedMembers, GoBooleanKey),
+    ],
+    ([typeId, include, includeOrigin, unresolvedMembers]) => ({ typeId, include, includeOrigin, unresolvedMembers }),
+  );
   checker.stringLiteralTypes = new globalThis.Map();
   checker.numberLiteralTypes = new globalThis.Map();
-  checker.bigintLiteralTypes = NewGoStructMap();
-  checker.enumLiteralTypes = NewGoStructMap();
+  checker.bigintLiteralTypes = NewGoStructMap(pseudoBigIntKey);
+  checker.enumLiteralTypes = NewGoStructMap(enumLiteralKey);
   checker.enumNaNLiteralTypes = new globalThis.Map();
-  checker.indexedAccessTypes = NewGoStructMap();
-  checker.templateLiteralTypes = NewGoStructMap();
-  checker.stringMappingTypes = NewGoStructMap();
+  checker.indexedAccessTypes = NewGoStructMap(cacheHashKey);
+  checker.templateLiteralTypes = NewGoStructMap(cacheHashKey);
+  checker.stringMappingTypes = NewGoStructMap(stringMappingKey);
   checker.uniqueESSymbolTypes = new globalThis.Map();
   checker.thisExpandoKinds = new globalThis.Map();
   checker.thisExpandoLocations = new globalThis.Map();
-  checker.subtypeReductionCache = NewGoStructMap();
-  checker.cachedTypes = NewGoStructMap();
-  checker.cachedSignatures = NewGoStructMap();
+  checker.subtypeReductionCache = NewGoStructMap(cacheHashKey);
+  checker.cachedTypes = NewGoStructMap(cachedTypeKey);
+  checker.cachedSignatures = NewGoStructMap(cachedSignatureKey);
   checker.undefinedProperties = new globalThis.Map();
-  checker.narrowedTypes = NewGoStructMap();
-  checker.assignmentReducedTypes = NewGoStructMap();
-  checker.discriminatedContextualTypes = NewGoStructMap();
-  checker.instantiationExpressionTypes = NewGoStructMap();
-  checker.substitutionTypes = NewGoStructMap();
-  checker.reverseMappedCache = NewGoStructMap();
-  checker.reverseHomomorphicMappedCache = NewGoStructMap();
-  checker.iterationTypesCache = NewGoStructMap();
+  checker.narrowedTypes = NewGoStructMap(narrowedTypeKey);
+  checker.assignmentReducedTypes = NewGoStructMap(twoTypeIds<AssignmentReducedKey>());
+  checker.discriminatedContextualTypes = NewGoStructMap(nodeAndTypeId<DiscriminatedContextualTypeKey>());
+  checker.instantiationExpressionTypes = NewGoStructMap(nodeAndTypeId<InstantiationExpressionKey>());
+  checker.substitutionTypes = NewGoStructMap(substitutionTypeKey);
+  checker.reverseMappedCache = NewGoStructMap(reverseMappedTypeKey);
+  checker.reverseHomomorphicMappedCache = NewGoStructMap(reverseMappedTypeKey);
+  checker.iterationTypesCache = NewGoStructMap(iterationTypesKey);
   checker.markerTypes = newCheckerSet<GoPtr<Type>>();
   checker.symbolArena = newArena<Symbol>();
   checker.signatureArena = newArena<Signature>();
@@ -2299,7 +2416,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.requireSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "require");
   checker.unknownSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "unknown");
   checker.unresolvedSymbols = new globalThis.Map();
-  checker.errorTypes = NewGoStructMap();
+  checker.errorTypes = NewGoStructMap(cacheHashKey);
   checker.moduleSymbols = new globalThis.Map();
   checker.globalThisSymbol = Checker_newSymbolEx(checker, SymbolFlagsModule as SymbolFlags, "globalThis", CheckFlagsReadonly);
   checker.globalThisSymbol!.Exports = checker.globals;
@@ -2310,11 +2427,11 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
     NameResolver_Resolve(nameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
   checker.resolveNameForSymbolSuggestion = (location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals): GoPtr<Symbol> =>
     NameResolver_Resolve(suggestionNameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
-  checker.tupleTypes = NewGoStructMap();
-  checker.unionTypes = NewGoStructMap();
-  checker.unionOfUnionTypes = NewGoStructMap();
-  checker.intersectionTypes = NewGoStructMap();
-  checker.propertiesTypes = NewGoStructMap();
+  checker.tupleTypes = NewGoStructMap(cacheHashKey);
+  checker.unionTypes = NewGoStructMap(cacheHashKey);
+  checker.unionOfUnionTypes = NewGoStructMap(unionOfUnionKey);
+  checker.intersectionTypes = NewGoStructMap(cacheHashKey);
+  checker.propertiesTypes = NewGoStructMap(propertiesTypesKey);
   checker.diagnostics = newDiagnosticsCollection();
   checker.suggestionDiagnostics = newDiagnosticsCollection();
   checker.mergedSymbols = new globalThis.Map();
@@ -2401,7 +2518,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.unknownEmptyObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
   checker.unknownUnionType = Checker_createUnknownUnionType(checker);
   checker.emptyGenericType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
-  Type_AsObjectType(checker.emptyGenericType)!.instantiations = NewGoStructMap();
+  Type_AsObjectType(checker.emptyGenericType)!.instantiations = NewGoStructMap(cacheHashKey);
   checker.anyFunctionType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
   checker.anyFunctionType!.objectFlags |= ObjectFlagsNonInferrableType;
   checker.noConstraintType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);

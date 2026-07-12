@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../ast/spine.js";
 import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -6681,7 +6681,14 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   if (canUseCache && !receiver!.ctx!.reportedDiagnostic && !receiver!.ctx!.encounteredError) {
     const links = LinkStore_Get(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration);
     if (links!.serializedTypes === undefined) {
-      links!.serializedTypes = NewGoStructMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>();
+      links!.serializedTypes = NewGoStructMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>(GoStructKey(
+        [
+          GoStructField((value: CompositeTypeCacheIdentity) => value.typeId, GoNumberKey),
+          GoStructField((value: CompositeTypeCacheIdentity) => value.flags, GoNumberKey),
+          GoStructField((value: CompositeTypeCacheIdentity) => value.internalFlags, GoNumberKey),
+        ],
+        ([typeId, flags, internalFlags]) => ({ typeId, flags, internalFlags }),
+      ));
     }
     links!.serializedTypes.set(key, {
       node: result,

@@ -1,5 +1,6 @@
 import type { int, bool } from "./scalars.js";
-import { GoStructMap, NewGoStructMap } from "./compat.js";
+import type { GoMapKeyDescriptor } from "./compat.js";
+import { NewGoStructMap } from "./compat.js";
 
 // Go: package sync
 //
@@ -109,8 +110,12 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
   private readonly primitive = new globalThis.Map<K, V>();
-  private readonly structured: GoStructMap<K, V> = NewGoStructMap<K, V>();
+  private readonly structured: globalThis.Map<K, V>;
   private readonly nanNumberEntries: [K, V][] = [];
+
+  constructor(keyDescriptor?: GoMapKeyDescriptor<K>) {
+    this.structured = keyDescriptor === undefined ? new globalThis.Map<K, V>() : NewGoStructMap<K, V>(keyDescriptor);
+  }
 
   // Load returns the value stored for key, and whether it was present.
   Load(key: K): [V | undefined, bool] {
@@ -122,7 +127,8 @@ export class Map<K = unknown, V = unknown> {
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
     }
-    return this.structured.load(key);
+    const value = this.structured.get(key);
+    return [value, value !== undefined || this.structured.has(key)];
   }
 
   // Store sets the value for a key.
@@ -155,7 +161,10 @@ export class Map<K = unknown, V = unknown> {
       this.nanNumberEntries.push([key, value]);
       return [value, false];
     }
-    return this.structured.loadOrStore(key, value);
+    const existing = this.structured.get(key);
+    if (existing !== undefined || this.structured.has(key)) return [existing as V, true];
+    this.structured.set(key, value);
+    return [value, false];
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
@@ -170,7 +179,10 @@ export class Map<K = unknown, V = unknown> {
     if (bucket === mapKeyBucketNanNumber) {
       return [undefined, false];
     }
-    return this.structured.loadAndDelete(key);
+    const existing = this.structured.get(key);
+    const ok = existing !== undefined || this.structured.has(key);
+    this.structured.delete(key);
+    return [existing, ok];
   }
 
   // Delete deletes the value for a key.
