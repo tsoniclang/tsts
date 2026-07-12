@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "upstream": "microsoft/typescript-go",
   "sourceRoot": "packages/tsts/_vendor/typescript-go",
   "goModulePath": "github.com/microsoft/typescript-go",
@@ -48,9 +48,52 @@
   ],
   "sourceFiles": [
     {
+      "path": "internal/ast/ast.go",
+      "sha256": "b11aaf6ed87a6f544037fbb08a377f4ed187eb1e106ead9e4e64c188625e1341",
+      "purpose": "AST nodeData method-order cross-check"
+    },
+    {
       "path": "_packages/native-preview/src/api/node/protocol.generated.ts",
       "sha256": "e22fa883d199c0cb11c6bf5961dbae322e36c3bccb3ef9679555e9d1e3d1acc1",
       "purpose": "AST child-property and single-child ordering cross-check"
+    }
+  ],
+  "generatorInputs": [
+    {
+      "generator": "porter:ast",
+      "id": "ast",
+      "inventory": "schemaFiles",
+      "path": "ast.json"
+    },
+    {
+      "generator": "porter:ast",
+      "id": "astSchema",
+      "inventory": "schemaFiles",
+      "path": "ast.schema.json"
+    },
+    {
+      "generator": "porter:ast",
+      "id": "nodeFlags",
+      "inventory": "schemaFiles",
+      "path": "nodeflags.go"
+    },
+    {
+      "generator": "porter:ast",
+      "id": "symbolFlags",
+      "inventory": "schemaFiles",
+      "path": "symbolflags.go"
+    },
+    {
+      "generator": "porter:ast",
+      "id": "nodeData",
+      "inventory": "sourceFiles",
+      "path": "internal/ast/ast.go"
+    },
+    {
+      "generator": "porter:ast",
+      "id": "protocolGenerated",
+      "inventory": "sourceFiles",
+      "path": "_packages/native-preview/src/api/node/protocol.generated.ts"
     }
   ],
   "extractor": {

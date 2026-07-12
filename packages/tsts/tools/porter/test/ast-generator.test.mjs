@@ -33,10 +33,12 @@ import {
   writeTextSafely,
 } from "../porter.mjs";
 import {
+  astConfig,
   buildAstGeneratedArtifactStatus,
   buildAstGeneratedFiles,
   buildGeneratedAstSkips,
   emitKinds,
+  loadAstSchema,
   parseGoNodeDataMethods,
   parseGoFlagFile,
   writeAstGenerated,
@@ -134,30 +136,132 @@ function astFixtureConfig(root) {
   const sourceRoot = path.join(root, "source");
   mkdirSync(schemaDir, { recursive: true });
   mkdirSync(path.join(sourceRoot, "_packages/native-preview/src/api/node"), { recursive: true });
+  mkdirSync(path.join(sourceRoot, "internal/ast"), { recursive: true });
   writeFileSync(
     path.join(schemaDir, "ast.json"),
     JSON.stringify({ kinds: { elements: ["Unknown", "EndOfFile"], markers: [] }, bases: {}, nodes: { definitions: {}, aliases: {} } }),
   );
+  writeFileSync(
+    path.join(schemaDir, "ast.schema.json"),
+    readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.schema.json"), "utf8"),
+  );
   writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\n\ntype NodeFlags uint32\n\nconst (\n\tNodeFlagsNone NodeFlags = 0\n)\n");
   writeFileSync(path.join(schemaDir, "symbolflags.go"), "package ast\n\ntype SymbolFlags uint32\n\nconst (\n\tSymbolFlagsNone SymbolFlags = 0\n)\n");
+  writeFileSync(
+    path.join(sourceRoot, "internal/ast/ast.go"),
+    readFileSync(resolveRepo("packages/tsts/_vendor/typescript-go/internal/ast/ast.go"), "utf8"),
+  );
   writeFileSync(
     path.join(sourceRoot, "_packages/native-preview/src/api/node/protocol.generated.ts"),
     "export const childProperties = {\n};\nexport const singleChildNodePropertyNames = {\n};\n",
   );
+  const sourcePinManifest = path.join(root, "source-pin.json");
+  writeFileSync(sourcePinManifest, `${JSON.stringify({
+    schemaVersion: 3,
+    schemaDirectory: rel(schemaDir),
+    sourceRoot: rel(sourceRoot),
+    schemaFiles: ["ast.json", "ast.schema.json", "nodeflags.go", "symbolflags.go"].map((file) => ({ path: file })),
+    sourceFiles: [
+      { path: "internal/ast/ast.go" },
+      { path: "_packages/native-preview/src/api/node/protocol.generated.ts" },
+    ],
+    generatorInputs: [
+      { generator: "porter:ast", id: "ast", inventory: "schemaFiles", path: "ast.json" },
+      { generator: "porter:ast", id: "astSchema", inventory: "schemaFiles", path: "ast.schema.json" },
+      { generator: "porter:ast", id: "nodeFlags", inventory: "schemaFiles", path: "nodeflags.go" },
+      { generator: "porter:ast", id: "symbolFlags", inventory: "schemaFiles", path: "symbolflags.go" },
+      { generator: "porter:ast", id: "nodeData", inventory: "sourceFiles", path: "internal/ast/ast.go" },
+      { generator: "porter:ast", id: "protocolGenerated", inventory: "sourceFiles", path: "_packages/native-preview/src/api/node/protocol.generated.ts" },
+    ],
+  }, null, 2)}\n`);
   return {
-    protocolGeneratedInput: rel(path.join(sourceRoot, "_packages/native-preview/src/api/node/protocol.generated.ts")),
+    sourceRoot: rel(sourceRoot),
+    sourcePinManifest: rel(sourcePinManifest),
     tsRoot: rel(path.join(root, "src")),
     astSchemaDir: rel(schemaDir),
     astGeneratedDir: "internal/ast/generated",
-    astSchemaInputs: [
-      rel(path.join(schemaDir, "ast.json")),
-      rel(path.join(schemaDir, "nodeflags.go")),
-      rel(path.join(schemaDir, "symbolflags.go")),
-    ],
   };
 }
 
 const cleanAstStatus = { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+const repositoryAstConfig = {
+  ...baseConfig,
+  sourceRoot: "packages/tsts/_vendor/typescript-go",
+  sourcePinManifest: "packages/tsts/tools/porter/source-pin.json",
+  astSchemaDir: "packages/tsts/schema/tsgo",
+};
+
+test("ast-generator: one registry declares every consumed input", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const registry = astConfig(config).inputRegistry;
+    assert.deepEqual(registry.map((input) => input.id), [
+      "ast",
+      "astSchema",
+      "nodeFlags",
+      "symbolFlags",
+      "nodeData",
+      "protocolGenerated",
+    ]);
+    const files = buildAstGeneratedFiles(config, "rev-input-registry");
+    const metadata = JSON.parse(/^\/\/ @tsgo-generated (.+)$/m.exec(files.get("internal/ast/generated/kinds.ts"))[1]);
+    assert.deepEqual(metadata.schemaInputs.map((input) => input.path), registry.map((input) => input.path));
+    const manifestPath = resolveRepo(config.sourcePinManifest);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    manifest.generatorInputs.pop();
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    assert.throws(() => astConfig(config), /porter:ast source pin inputs must be exactly/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ast-generator: ast.json must conform to the pinned JSON schema", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const astPath = path.join(root, "schema/ast.json");
+    const ast = JSON.parse(readFileSync(astPath, "utf8"));
+    ast.undeclaredContract = true;
+    writeFileSync(astPath, JSON.stringify(ast));
+    assert.throws(
+      () => loadAstSchema(config),
+      /ast\.json does not conform to .*ast\.schema\.json:[\s\S]*forbidden additional property 'undeclaredContract'/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ast-generator: schema semantic invariants match TS-Go SchemaAPI validation", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const astPath = path.join(root, "schema/ast.json");
+    const original = JSON.parse(readFileSync(astPath, "utf8"));
+    const cases = [
+      [(ast) => { ast.bases.Broken = { extends: ["MissingBase"] }; }, /Unknown base extends target MissingBase from Broken/],
+      [(ast) => { ast.nodes.definitions.Broken = { extends: ["MissingBase"] }; }, /Unknown node extends target MissingBase from Broken/],
+      [(ast) => { ast.nodes.aliases.Broken = { base: "MissingBase" }; }, /Unknown alias base MissingBase from Broken/],
+      [(ast) => { ast.kinds.markers.push({ name: "BrokenMarker", value: "MissingKind" }); }, /Kind marker BrokenMarker references undefined kind or marker MissingKind/],
+      [(ast) => { ast.kinds.aliases = { BrokenKinds: ["MissingKind"] }; }, /Unknown kind alias member MissingKind in BrokenKinds/],
+      [(ast) => {
+        ast.kinds.elements.push("DetachedKind");
+        ast.kinds.aliases = { DetachedKinds: ["DetachedKind"] };
+        ast.nodes.aliases.Broken = ["DetachedKinds"];
+      }, /Kind alias member "DetachedKind" \(from "DetachedKinds"\) does not resolve to a node type/],
+    ];
+    for (const [mutate, expected] of cases) {
+      const ast = structuredClone(original);
+      mutate(ast);
+      writeFileSync(astPath, JSON.stringify(ast));
+      assert.throws(() => loadAstSchema(config), expected);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("porter:ast --check detects missing/stale/orphan/untracked/invalid generated files", () => {
   const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
@@ -237,8 +341,22 @@ test("ast-generator: a schema input content change makes committed output stale"
   }
 });
 
+test("ast-generator: a protocol.generated.ts content change makes committed output stale", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    writeAstGenerated(config, "rev-fixture-protocol");
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-protocol").stale.length, 0);
+    const protocolPath = path.join(root, "source/_packages/native-preview/src/api/node/protocol.generated.ts");
+    writeFileSync(protocolPath, `${readFileSync(protocolPath, "utf8")}\n// pinned input changed\n`);
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-protocol").stale.length, 10);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("ast-generator preserves nil NodeList slices in generated visitors", async () => {
-  const output = buildAstGeneratedFiles(baseConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
+  const output = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
   assert.match(output, /if \(nodes === undefined \|\| nodes\.length !== 1\)/);
   assert.match(output, /updated = \[\.\.\.updated, \.\.\.\(AsSyntaxList\(visited\)!\.Children \?\? \[\]\)\]/);
   assert.match(output, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
@@ -262,7 +380,7 @@ test("ast-generator preserves nil NodeList slices in generated visitors", async 
 });
 
 test("ast-generator preserves nil raw slices in fields, factories, and visitors", () => {
-  const generated = buildAstGeneratedFiles(baseConfig, "rev-ast-raw-nil-slice");
+  const generated = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-raw-nil-slice");
   const nodeOutput = generated.get("internal/ast/generated/node.ts");
   const factoryOutput = generated.get("internal/ast/generated/factory.ts");
   const dataOutput = generated.get("internal/ast/generated/data.ts");
@@ -312,7 +430,7 @@ test("ast-generator maps every schema goOnly compiler-state field without an own
     ["node", "FunctionExpression", "ReturnFlowNode", "*FlowNode"],
   ]);
 
-  const files = buildAstGeneratedFiles(baseConfig, "abc123");
+  const files = buildAstGeneratedFiles(repositoryAstConfig, "abc123");
   const node = files.get("internal/ast/generated/node.ts");
   const data = files.get("internal/ast/generated/data.ts");
 
@@ -336,7 +454,7 @@ test("ast-generator parses the exact upstream nodeData method order", () => {
 });
 
 test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion, not NodeDefault", () => {
-  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-1");
+  const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-1");
   const data = files.get("internal/ast/generated/data.ts");
   assert.ok(data.includes("export interface Identifier extends PrimaryExpressionBase, FlowNodeBase {"));
   // Promotion: Identifier embeds FlowNodeBase, so FlowNodeData -> FlowNodeBase_FlowNodeData.
@@ -357,14 +475,14 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
 });
 
 test("ast-generator: named concrete nodes expose their generated Name override", () => {
-  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-name");
+  const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-name");
   const data = files.get("internal/ast/generated/data.ts");
   assert.match(data, /export function ParameterDeclaration_Name\(receiver: GoPtr<ParameterDeclaration>\): GoPtr<Node> \{\s*return receiver!\.name;\s*\}/);
   assert.match(data, /const ParameterDeclaration_nodeDataPrototype: nodeData & ThisType<GoPtr<ParameterDeclaration>> = \{[\s\S]*?Name\(\) \{ return ParameterDeclaration_Name\(this\); \},/);
 });
 
 test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
-  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-2");
+  const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-2");
   const factory = files.get("internal/ast/generated/factory.ts");
   assert.match(factory, /export interface NodeFactory \{[\s\S]*?AsNodeFactory\(\): GoPtr<NodeFactory>;/);
   assert.match(
@@ -399,7 +517,7 @@ test("ast-generator: pointer slots preserve reviewed storage representation", ()
 });
 
 test("ast-generator: multi-kind and type-parameter Is functions follow ast_generated.go", () => {
-  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-3");
+  const files = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-3");
   const predicates = files.get("internal/ast/generated/predicates.ts");
   // ForInOrOfStatement is multi-kind -> per-kind Is functions, no IsForInOrOfStatement.
   assert.ok(predicates.includes("export function IsForInStatement("));
@@ -410,7 +528,7 @@ test("ast-generator: multi-kind and type-parameter Is functions follow ast_gener
 });
 
 test("ast-generator: generatedAstSkips records handWritten without visitEachChild deferral", () => {
-  const skips = buildGeneratedAstSkips(baseConfig);
+  const skips = buildGeneratedAstSkips(repositoryAstConfig);
   assert.deepEqual(skips.handWritten, ["SourceFile"]);
   assert.deepEqual(skips.handWrittenVisitor, ["JSDocParameterOrPropertyTag"]);
   assert.deepEqual(skips.visitEachChildDeferred, []);

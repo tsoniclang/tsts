@@ -73,6 +73,46 @@ test("source pin rejects unknown manifest fields instead of accepting schema dri
   assert.ok(status.issues.some((issue) => issue.reason.includes("keys must be exactly") && issue.reason.includes("futureField")));
 });
 
+test("source pin fails closed when required documentation is missing", (t) => {
+  const fixture = sourcePinFixture();
+  t.after(() => rmSync(fixture.root, { recursive: true, force: true }));
+  rmSync(path.join(fixture.root, "SOURCE-PIN.md"));
+  const status = buildSourcePinStatus(fixture.root, fixture.config, fixture.snapshot);
+  assert.ok(status.issues.some((issue) => (
+    issue.path === "SOURCE-PIN.md" &&
+    issue.reason.includes("required source pin documentation cannot be read") &&
+    issue.reason.includes("disappeared during filesystem traversal")
+  )));
+});
+
+test("source pin fails closed when required documentation is nonregular", (t) => {
+  const fixture = sourcePinFixture();
+  t.after(() => rmSync(fixture.root, { recursive: true, force: true }));
+  const documentation = path.join(fixture.root, "SOURCE-PIN.md");
+  rmSync(documentation);
+  mkdirSync(documentation);
+  const status = buildSourcePinStatus(fixture.root, fixture.config, fixture.snapshot);
+  assert.ok(status.issues.some((issue) => (
+    issue.path === "SOURCE-PIN.md" &&
+    issue.reason.includes("required source pin documentation cannot be read") &&
+    issue.reason.includes("must be a regular non-symlink file")
+  )));
+});
+
+test("source pin fails closed when required documentation is unreadable", (t) => {
+  const fixture = sourcePinFixture();
+  t.after(() => rmSync(fixture.root, { recursive: true, force: true }));
+  const documentation = path.join(fixture.root, "SOURCE-PIN.md");
+  chmodSync(documentation, 0o000);
+  const status = buildSourcePinStatus(fixture.root, fixture.config, fixture.snapshot);
+  chmodSync(documentation, 0o600);
+  assert.ok(status.issues.some((issue) => (
+    issue.path === "SOURCE-PIN.md" &&
+    issue.reason.includes("required source pin documentation cannot be read") &&
+    issue.reason.includes("EACCES")
+  )));
+});
+
 function sourcePinFixture(options = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-source-pin-"));
   const sourceRoot = path.join(root, "source");
@@ -116,7 +156,7 @@ function sourcePinFixture(options = {}) {
   writeFileSync(path.join(extractorRoot, "go.mod"), "module example-extractor\n\ngo 1.26\n\ntoolchain go1.26.4\n");
 
   const manifest = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     upstream: "example/source",
     sourceRoot: "source",
     goModulePath: "example/source",
@@ -128,6 +168,7 @@ function sourcePinFixture(options = {}) {
     schemaMetadata: [],
     schemaFiles: [{ path: "schema.go", source: "schema.go", sha256: digest }],
     sourceFiles: [],
+    generatorInputs: [],
     extractor: {
       module: "extractor",
       goVersion: "go1.26.4",

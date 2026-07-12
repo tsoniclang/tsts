@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "sourceRoot": "packages/tsts/_vendor/typescript-go",
   "tsRoot": "packages/tsts/src",
   "goModulePath": "github.com/microsoft/typescript-go",
@@ -20,12 +20,6 @@
   "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
   "astSchemaDir": "packages/tsts/schema/tsgo",
   "astGeneratedDir": "internal/ast/generated",
-  "astSchemaInputs": [
-    "packages/tsts/schema/tsgo/ast.json",
-    "packages/tsts/schema/tsgo/ast.schema.json",
-    "packages/tsts/schema/tsgo/nodeflags.go",
-    "packages/tsts/schema/tsgo/symbolflags.go"
-  ],
   "diagnosticsGeneratedDir": "internal/diagnostics/generated",
   "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
   "unitPolicies": [

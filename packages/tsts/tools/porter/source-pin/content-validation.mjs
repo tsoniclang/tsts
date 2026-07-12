@@ -100,8 +100,17 @@ export function validateVersionDocument(repoRoot, manifest, status) {
     status.issues.push({ path: status.manifestPath, reason: error.message });
     return;
   }
-  if (!existsSync(file)) return;
-  const fields = markdownTable(readStableRegularFile(file, "Porter source pin documentation").toString("utf8"));
+  let text;
+  try {
+    text = readStableRegularFile(file, "Porter source pin documentation").toString("utf8");
+  } catch (error) {
+    status.issues.push({
+      path: relativePath(repoRoot, file),
+      reason: `required source pin documentation cannot be read: ${error.message}`,
+    });
+    return;
+  }
+  const fields = markdownTable(text);
   const expected = new Map([
     ["Upstream", manifest.upstream],
     ["Commit", manifest.revision],

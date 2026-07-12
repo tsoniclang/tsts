@@ -1,8 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
-import { resolveRepo } from "../porter.mjs";
-
 // ───────────────────────────────────────────────────────────────────────────
 // AST node/data/factory/etc emitters (free-fn/adapter model).
 //
@@ -61,9 +56,8 @@ export function parseGoNodeDataMethods(source) {
   return methods;
 }
 
-export function assertNodeDataMethodsMatchUpstream(config) {
-  const sourcePath = resolveRepo(path.join(config.sourceRoot ?? "packages/tsts/_vendor/typescript-go", "internal/ast/ast.go"));
-  const actual = parseGoNodeDataMethods(readFileSync(sourcePath, "utf8"));
+export function assertNodeDataMethodsMatchUpstream(source) {
+  const actual = parseGoNodeDataMethods(source);
   if (JSON.stringify(actual) !== JSON.stringify(NODE_DATA_METHODS)) {
     throw new Error(
       `TS-Go nodeData method set drifted; update the generator from upstream\nexpected: ${NODE_DATA_METHODS.join(", ")}\nactual: ${actual.join(", ")}`,

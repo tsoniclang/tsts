@@ -1,7 +1,6 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-import { AstSchema } from "../ast-schema-model.mjs";
 import { hashText, resolveRepo, writeTextSafely } from "../porter.mjs";
 import { astConfig, loadAstSchema } from "./config.mjs";
 import { emitData } from "./data-emitter.mjs";
@@ -29,8 +28,7 @@ export function buildGeneratedAstSkips(config) {
 }
 
 function loadSchemaModel(config) {
-  const schema = loadAstSchema(config);
-  return new AstSchema(schema.ast);
+  return loadAstSchema(config).model;
 }
 
 function emitIndex() {
@@ -68,10 +66,10 @@ const EMITTERS = [
 
 // Deterministic digest of each declared schema input, so porter:ast --check can
 // fail with a useful diagnostic when a specific input changes.
-function schemaInputDigests(ac) {
-  return ac.schemaInputs.map((relativePath) => ({
-    path: relativePath,
-    contentHash: hashText(readFileSync(resolveRepo(relativePath), "utf8")),
+function schemaInputDigests(schema) {
+  return schema.inputs.map((input) => ({
+    path: input.path,
+    contentHash: hashText(input.text),
   }));
 }
 
@@ -90,12 +88,12 @@ function generatedHeader(relativePath, body, sourceRevision, schemaInputs) {
 
 // Returns Map<tsRootRelativePath, fullFileText>.
 export function buildAstGeneratedFiles(config, sourceRevision) {
-  assertNodeDataMethodsMatchUpstream(config);
   const ac = astConfig(config);
   const schema = loadAstSchema(config);
-  const model = new AstSchema(schema.ast);
-  assertProtocolGeneratedMatchesSchema(config, model);
-  const schemaInputs = schemaInputDigests(ac);
+  const model = schema.model;
+  assertNodeDataMethodsMatchUpstream(schema.nodeDataSource);
+  assertProtocolGeneratedSourceMatchesSchema(schema.protocolGeneratedSource, model);
+  const schemaInputs = schemaInputDigests(schema);
   const files = new Map();
   for (const emitter of EMITTERS) {
     const relativePath = `${ac.generatedDir}/${emitter.file}`;
@@ -106,15 +104,12 @@ export function buildAstGeneratedFiles(config, sourceRevision) {
   return files;
 }
 
-export function assertProtocolGeneratedMatchesSchema(config, model = new AstSchema(loadAstSchema(config).ast)) {
-  const input = config.protocolGeneratedInput === undefined
-    ? resolveRepo(path.join(
-      config.sourceRoot ?? "packages/tsts/_vendor/typescript-go",
-      "_packages/native-preview/src/api/node/protocol.generated.ts",
-    ))
-    : resolveRepo(config.protocolGeneratedInput);
-  if (!existsSync(input)) throw new Error(`missing native-preview protocol generated input: ${input}`);
-  const source = readFileSync(input, "utf8");
+export function assertProtocolGeneratedMatchesSchema(config) {
+  const schema = loadAstSchema(config);
+  assertProtocolGeneratedSourceMatchesSchema(schema.protocolGeneratedSource, schema.model);
+}
+
+function assertProtocolGeneratedSourceMatchesSchema(source, model) {
   const actualChildren = parseProtocolPropertyMap(source, "childProperties", true);
   const actualSingle = parseProtocolPropertyMap(source, "singleChildNodePropertyNames", false);
   const expectedChildren = new Map();

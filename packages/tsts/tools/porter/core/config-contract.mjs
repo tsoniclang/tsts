@@ -6,7 +6,6 @@ import { activityForConfiguredPortCategory } from "./policies.mjs";
 const allowedKeys = new Set([
   "astGeneratedDir",
   "astSchemaDir",
-  "astSchemaInputs",
   "authoredFacadeModules",
   "diagnosticsCatalogInput",
   "diagnosticsGeneratedDir",
@@ -23,7 +22,6 @@ const allowedKeys = new Set([
   "nonGoDeclarationManifestPath",
   "overrideCategories",
   "policies",
-  "protocolGeneratedInput",
   "reportOut",
   "schemaFilePolicies",
   "schemaVersion",
@@ -44,7 +42,7 @@ export function assertPorterConfig(config) {
   if (!isPlainObject(config)) throw new Error("Porter config must be one plain object");
   const unknown = Object.keys(config).filter((key) => !allowedKeys.has(key)).sort();
   if (unknown.length > 0) throw new Error(`Porter config contains unknown current-contract key(s): ${unknown.join(", ")}`);
-  if (config.schemaVersion !== 2) throw new Error(`Porter config schemaVersion must be 2, got ${JSON.stringify(config.schemaVersion)}`);
+  if (config.schemaVersion !== 3) throw new Error(`Porter config schemaVersion must be 3, got ${JSON.stringify(config.schemaVersion)}`);
   for (const key of requiredStrings) {
     if (typeof config[key] !== "string" || config[key] === "") throw new Error(`Porter config ${key} must be a non-empty string`);
   }

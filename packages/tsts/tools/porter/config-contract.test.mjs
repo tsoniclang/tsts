@@ -4,7 +4,7 @@ import test from "node:test";
 import { assertPorterConfig } from "./core/config-contract.mjs";
 
 const base = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   sourceRoot: "vendor/go",
   tsRoot: "src",
   goModulePath: "example.test/project",
@@ -15,14 +15,14 @@ const base = {
 };
 
 test("Porter config rejects unknown and retired top-level contracts", () => {
-  assert.equal(assertPorterConfig(structuredClone(base)).schemaVersion, 2);
-  for (const key of ["astGeneratedStatusOut", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "schemaSourceSyncChecks", "futureGuess"]) {
+  assert.equal(assertPorterConfig(structuredClone(base)).schemaVersion, 3);
+  for (const key of ["astGeneratedStatusOut", "astSchemaInputs", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "protocolGeneratedInput", "schemaSourceSyncChecks", "futureGuess"]) {
     assert.throws(() => assertPorterConfig({ ...base, [key]: true }), /unknown current-contract key/);
   }
 });
 
 test("Porter config requires exact core identity and policy fields", () => {
-  assert.throws(() => assertPorterConfig({ ...base, schemaVersion: 1 }), /schemaVersion must be 2/);
+  assert.throws(() => assertPorterConfig({ ...base, schemaVersion: 2 }), /schemaVersion must be 3/);
   assert.throws(() => assertPorterConfig({ ...base, goModulePath: "" }), /goModulePath must be a non-empty string/);
   assert.throws(() => assertPorterConfig({ ...base, nonGoDeclarationManifestPath: "../manifest.json" }), /canonical repository-relative/);
   assert.throws(() => assertPorterConfig({ ...base, policies: [{ match: "internal/**", category: "typo", reason: "invalid" }] }), /unknown configured Porter policy category/);

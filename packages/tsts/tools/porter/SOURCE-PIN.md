@@ -18,4 +18,5 @@ update this evidence deliberately after the Porter-only change is merged.
 | `protocol.ts` SHA-256 | `02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830` |
 | `nodeflags.go` SHA-256 | `8be5737c5cfe5478fcef3f0b50847d7ca4045157a6d039ffaac658977a181dc2` |
 | `symbolflags.go` SHA-256 | `eb2c56aac8513ac676f48313eb5c3fa65ba90990474b7e873ff9ec6cdb35ebca` |
+| Source `internal/ast/ast.go` SHA-256 | `b11aaf6ed87a6f544037fbb08a377f4ed187eb1e106ead9e4e64c188625e1341` |
 | Source `_packages/native-preview/src/api/node/protocol.generated.ts` SHA-256 | `e22fa883d199c0cb11c6bf5961dbae322e36c3bccb3ef9679555e9d1e3d1acc1` |

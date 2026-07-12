@@ -14,6 +14,7 @@ import {
 } from "./source-pin/git.mjs";
 import {
   readSourcePinManifest,
+  normalizeGeneratorInputs,
   schemaPoliciesFromSourcePin,
   validateExactKeys,
   validateRevision,
@@ -25,6 +26,7 @@ export {
   gitTreeEntries,
   inspectGitCheckout,
   readSourcePinManifest,
+  normalizeGeneratorInputs,
   resolvePinnedGoToolchain,
   schemaPoliciesFromSourcePin,
 };
@@ -60,11 +62,16 @@ export function buildSourcePinStatus(repoRoot, config, snapshot = undefined) {
     return status;
   }
   validateExactKeys(manifest, [
-    "documentation", "extractor", "gitObjectFormat", "goModulePath", "nestedSources", "revision",
+    "documentation", "extractor", "generatorInputs", "gitObjectFormat", "goModulePath", "nestedSources", "revision",
     "schemaDirectory", "schemaFiles", "schemaMetadata", "schemaVersion", "sourceFiles", "sourceRoot", "upstream",
   ], "source pin manifest", status);
-  if (manifest.schemaVersion !== 2) {
-    status.issues.push({ path: status.manifestPath, reason: "source pin manifest schemaVersion must be 2" });
+  if (manifest.schemaVersion !== 3) {
+    status.issues.push({ path: status.manifestPath, reason: "source pin manifest schemaVersion must be 3" });
+  }
+  try {
+    normalizeGeneratorInputs(manifest);
+  } catch (error) {
+    status.issues.push({ path: status.manifestPath, reason: error.message });
   }
   if (manifest.sourceRoot !== config.sourceRoot) {
     status.issues.push({ path: status.manifestPath, reason: `manifest sourceRoot '${manifest.sourceRoot}' does not match porter config '${config.sourceRoot}'` });
