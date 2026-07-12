@@ -24,6 +24,8 @@ import { buildIndexedModuleValueEnvironments } from "./ts-extractor/extract-sign
 import { indexTypeScriptModuleSources } from "./ts-extractor/module-index.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
+const parser = await loadParser();
+
 test("external facade identity and signatures come only from extracted go/types declarations", () => {
   const snapshot = externalSnapshot([
     externalType({ packagePath: "io", name: "Writer", rhs: interfaceType([
@@ -65,13 +67,8 @@ test("external facade identity and signatures come only from extracted go/types 
   assert.doesNotMatch(modules.get("go/example.com/native.ts"), /Nilable extends boolean|, true>|, false>/);
 });
 
-test("authored facade audit checks same-name signatures and reports both directional member gaps", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored facade audit checks same-name signatures and reports both directional member gaps", () => {
+  const api = parser;
   const objectId = "example.com/native::type::Reader";
   const readId = `${objectId}::method::Read`;
   const closeId = `${objectId}::method::Close`;
@@ -138,13 +135,8 @@ test("authored facade audit checks same-name signatures and reports both directi
     .mismatches.some((mismatch) => mismatch.kind === "interface-heritage"));
 });
 
-test("authored Go interfaces retain unexported nominal method seals", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored Go interfaces retain unexported nominal method seals", () => {
+  const api = parser;
   const objectId = "example.com/native::type::Sealed";
   const publicMethod = method(`${objectId}::rhs::explicitMethod::0::Read`, `${objectId}::rhs`, "Read", signature([], []));
   const privateMethod = {
@@ -174,13 +166,8 @@ test("authored Go interfaces retain unexported nominal method seals", async (t) 
   assert.ok(result.mismatches.some((mismatch) => mismatch.kind === "missing-member" && mismatch.detail.includes("__goUnexported")));
 });
 
-test("authored facade aliases cannot share one declaration storage origin", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored facade aliases cannot share one declaration storage origin", () => {
+  const api = parser;
   const firstId = "example.com/native::type::First";
   const secondId = "example.com/native::type::Second";
   const declaration = (objectId, name) => externalType({
@@ -216,13 +203,8 @@ test("authored facade aliases cannot share one declaration storage origin", asyn
     mismatch.detail.includes("share authored declaration storage")).length, 1);
 });
 
-test("authored scalar adaptation accepts one exact branded scalar storage type", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored scalar adaptation accepts one exact branded scalar storage type", () => {
+  const api = parser;
   const objectId = "example.com/native::type::Tag";
   const snapshot = externalSnapshot([
     externalType({ packagePath: "example.com/native", name: "Tag", rhs: basic("string") }),
@@ -293,13 +275,8 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
   }, snapshot), /Go declaration snapshot drifted/);
 });
 
-test("authored method bindings map one exact Go method signature to one top-level function", async (t) => {
-  let api;
-  try {
-    api = await loadParser();
-  } catch {
-    return t.skip("TSTS dist not built/fresh");
-  }
+test("authored method bindings map one exact Go method signature to one top-level function", () => {
+  const api = parser;
   const objectId = "example.com/native::type::Code";
   const methodId = `${objectId}::method::Valid`;
   const receiver = variable(`${methodId}::signature::receiver`, "code", namedType(objectId, "example.com/native", "Code"));
