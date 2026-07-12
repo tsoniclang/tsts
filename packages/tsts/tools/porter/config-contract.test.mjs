@@ -16,7 +16,7 @@ const base = {
 
 test("Porter config rejects unknown and retired top-level contracts", () => {
   assert.equal(assertPorterConfig(structuredClone(base)).schemaVersion, 3);
-  for (const key of ["astGeneratedStatusOut", "astSchemaInputs", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "protocolGeneratedInput", "schemaSourceSyncChecks", "futureGuess"]) {
+  for (const key of ["astGeneratedDir", "astGeneratedStatusOut", "astSchemaInputs", "bundledGeneratedDir", "diagnosticsGeneratedDir", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "overrides", "primaryUnitKinds", "protocolGeneratedInput", "schemaSourceSyncChecks", "futureGuess"]) {
     assert.throws(() => assertPorterConfig({ ...base, [key]: true }), /unknown current-contract key/);
   }
 });

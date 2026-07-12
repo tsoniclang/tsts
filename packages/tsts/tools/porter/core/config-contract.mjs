@@ -4,11 +4,9 @@ import { validateNonGoDeclarationManifestPath } from "./non-go-declaration-manif
 import { activityForConfiguredPortCategory } from "./policies.mjs";
 
 const allowedKeys = new Set([
-  "astGeneratedDir",
   "astSchemaDir",
   "authoredFacadeModules",
   "diagnosticsCatalogInput",
-  "diagnosticsGeneratedDir",
   "diagnosticsLocaleDir",
   "diagnosticsLocaleInput",
   "externalFacadePolicies",

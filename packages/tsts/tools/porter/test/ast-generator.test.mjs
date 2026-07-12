@@ -179,7 +179,6 @@ function astFixtureConfig(root) {
     sourcePinManifest: rel(sourcePinManifest),
     tsRoot: rel(path.join(root, "src")),
     astSchemaDir: rel(schemaDir),
-    astGeneratedDir: "internal/ast/generated",
   };
 }
 

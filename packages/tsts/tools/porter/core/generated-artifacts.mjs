@@ -1,27 +1,25 @@
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
-import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
+import { hashText, resolveRepo } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
+import { inventoryGeneratedArtifactsForProvider } from "../generated-artifact-registry.mjs";
 import { readFileSync } from "node:fs";
-import path from "node:path";
 import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
+import { tsFilePolicyFor } from "./policies.mjs";
 
 export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
   requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot);
   const authored = authoredFacadePathSet(config);
   const expected = renderExpectedGeneratedArtifacts(config, snapshot, catalog);
   const expectedPaths = new Set(expected.keys());
-  const actualRoot = resolveRepo(`${config.tsRoot.replace(/\/$/, "")}/go`);
-  const actualFiles = walk(actualRoot)
-    // Test files (*.test.ts) co-located with facades are authored test infra, not
-    // facade artifacts; they are covered by the go-compat-layer tsFilePolicy.
-    .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
-    .map((file) => path.relative(repoRoot, file).split(path.sep).join("/"));
+  const tsRoot = config.tsRoot.replace(/\/$/, "");
+  const inventory = inventoryGeneratedArtifactsForProvider(resolveRepo(tsRoot), "porter:facades");
+  const actualFiles = inventory.files.map((relativePath) => `${tsRoot}/${relativePath}`);
   const actualPaths = new Set(actualFiles);
   const missing = [];
   const stale = [];
   const orphan = [];
   const untracked = [];
-  const invalid = [];
+  const invalid = inventory.invalid.map((entry) => ({ ...entry, path: `${tsRoot}/${entry.path}` }));
 
   for (const relativePath of [...expectedPaths].sort()) {
     if (!actualPaths.has(relativePath)) {
@@ -35,12 +33,13 @@ export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
   for (const relativePath of actualFiles) {
     const absolutePath = resolveRepo(relativePath);
     const text = readFileSync(absolutePath, "utf8");
+    const artifactPath = relativePath.slice(`${tsRoot}/`.length);
+    const registration = inspectGeneratedArtifactRegistration(artifactPath, text);
     // Authored facade modules are hand-written compatibility layers classified by
     // explicit `authoredFacadeModules` policy. They are exempt from generated-artifact
     // checks, but must NOT carry @tsgo-generated metadata (one module is either
     // generated or authored, never both).
     if (authored.has(relativePath)) {
-      const registration = inspectGeneratedArtifactRegistration(relativePath.slice(`${config.tsRoot.replace(/\/$/, "")}/`.length), text);
       if (registration.metadata !== undefined || registration.error !== undefined) {
         invalid.push({
           path: relativePath,
@@ -49,8 +48,16 @@ export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
       }
       continue;
     }
-    const artifactPath = relativePath.slice(`${config.tsRoot.replace(/\/$/, "")}/`.length);
-    const metadataResult = inspectGeneratedArtifactRegistration(artifactPath, text);
+    if (tsFilePolicyFor(config, relativePath).category === "test-parity") {
+      if (registration.metadata !== undefined || registration.error !== undefined) {
+        invalid.push({
+          path: relativePath,
+          reason: "Test-parity facade module must not carry @tsgo-generated metadata; test declarations remain independently audited.",
+        });
+      }
+      continue;
+    }
+    const metadataResult = registration;
     if (metadataResult.error) {
       invalid.push({ path: relativePath, reason: metadataResult.error });
       continue;

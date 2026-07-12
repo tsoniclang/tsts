@@ -31,7 +31,7 @@ export function astConfig(config) {
     tsRoot,
     schemaDir: manifest.schemaDirectory,
     sourceRoot: manifest.sourceRoot,
-    generatedDir: config.astGeneratedDir ?? "internal/ast/generated",
+    generatedDir: "internal/ast/generated",
     inputRegistry,
   };
 }

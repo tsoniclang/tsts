@@ -64,7 +64,7 @@ export async function main() {
   if (command === "unicode") {
     runPinnedScan(config);
     if (options.write === true) {
-      const count = await writeUnicodeGenerated();
+      const count = await writeUnicodeGenerated(config);
       console.log(`unicode generated files written (${count})`);
     } else {
       const status = await buildUnicodeGeneratedArtifactStatusDeep(config);

@@ -41,13 +41,7 @@ export async function preparePorterWorkspaceState(input) {
   const localOverrides = buildLocalOverrideStatus(config, tsUnits);
   const sourcePin = buildSourcePinStatus(repositoryRoot, config, snapshot);
   const generatedSourceCoverage = buildGeneratedSourceCoverageStatus(repositoryRoot, config, snapshot);
-  const globalGeneratedArtifacts = buildGlobalGeneratedArtifactStatus(repositoryRoot, config, {
-    generatedArtifacts,
-    astGeneratedArtifacts,
-    diagnosticsGeneratedArtifacts,
-    bundledGeneratedArtifacts,
-    unicodeGeneratedArtifacts,
-  });
+  const globalGeneratedArtifacts = buildGlobalGeneratedArtifactStatus(repositoryRoot, config);
   const status = buildStatus({
     config,
     snapshot,

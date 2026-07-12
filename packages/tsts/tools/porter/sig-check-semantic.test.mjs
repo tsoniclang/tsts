@@ -44,11 +44,19 @@ test("expected type index resolves one exact generated declaration and rejects a
 test("generated type identities require exact object and registered artifact ownership", () => {
   const generatedModule = "src/internal/ast/generated/types.ts";
   const authoredModule = "src/pkg/authored.ts";
-  const metadata = '// @tsgo-generated {"schemaVersion":1,"kind":"ast-generated","generator":"porter:ast","sourceRevision":"rev","path":"internal/ast/generated/types.ts","contentHash":"hash"}';
+  const metadata = `// @tsgo-generated ${JSON.stringify({
+    schemaVersion: 1,
+    kind: "ast-generated",
+    generator: "porter:ast",
+    sourceRevision: "rev",
+    schemaInputs: [{ path: "schema/ast.json", contentHash: "b".repeat(64) }],
+    path: "internal/ast/generated/types.ts",
+    contentHash: "a".repeat(64),
+  })}`;
   const moduleIndex = {
     modules: new Map([
       [generatedModule, {
-        text: `// Code generated. DO NOT EDIT.\n${metadata}\nexport type Generated = unknown;`,
+        text: `// Code generated. DO NOT EDIT.\n${metadata}\n\nexport type Generated = unknown;`,
         structure: { exportedTypeNames: new Set(["Generated"]) },
       }],
       [authoredModule, {

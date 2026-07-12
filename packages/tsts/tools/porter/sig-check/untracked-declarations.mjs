@@ -35,7 +35,7 @@ export function collectUntrackedTypeScriptDeclarations({
     const filePolicy = tsFilePolicyFor(config, moduleId);
     const generated = inspectGeneratedArtifactRegistration(moduleId.slice(sourceRoot.length), module.text);
     if (generated.error !== undefined) throw new Error(`TypeScript source '${moduleId}' has invalid generated-artifact evidence: ${generated.error}`);
-    if (generated.metadata !== undefined) continue;
+    if (generated.metadata !== undefined && filePolicy.category !== "test-parity") continue;
     const tracked = trackedDeclarationStatements(api, module, annotation);
     const fragmentCounts = new Map();
     const moduleDeclarations = [];

@@ -104,11 +104,13 @@ const SAMPLE_CATALOG = [
 ].join("\n");
 
 function withSampleCatalog(run) {
-  const dir = mkdtempSync(path.join(tmpdir(), "tsts-diag-catalog-"));
+  const dir = mkdtempSync(path.join(repoRoot, ".temp/tsts-diag-catalog-"));
   const goPath = path.join(dir, "diagnostics_generated.go");
   writeFileSync(goPath, SAMPLE_CATALOG);
-  // resolveRepo(path.resolve(...)) keeps absolute paths intact.
-  const config = { tsRoot: "packages/tsts/src", diagnosticsCatalogInput: goPath };
+  const config = {
+    tsRoot: "packages/tsts/src",
+    diagnosticsCatalogInput: path.relative(repoRoot, goPath).split(path.sep).join("/"),
+  };
   try {
     return run(config, dir);
   } finally {

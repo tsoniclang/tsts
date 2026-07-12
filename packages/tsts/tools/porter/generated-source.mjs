@@ -7,7 +7,7 @@ import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import {
   generatedArtifactProviders,
   inspectGeneratedArtifactRegistration,
-  walkGeneratedArtifactFiles,
+  walkExactRegularFiles,
 } from "./generated-artifact-registry.mjs";
 import { matchGlob } from "./path-policy.mjs";
 
@@ -176,21 +176,21 @@ export function collectGeneratedSourceCoverageFailures(status) {
   return status.issues.length === 0 ? [] : [`${status.issues.length} generated-source coverage evidence issues`];
 }
 
-export function buildGlobalGeneratedArtifactStatus(repoRoot, config, artifactStatuses = undefined) {
+export function buildGlobalGeneratedArtifactStatus(repoRoot, config) {
   const issues = [];
   const tsRoot = path.resolve(repoRoot, config.tsRoot);
-  for (const provider of generatedArtifactProviders) {
-    if (artifactStatuses !== undefined && artifactStatuses[provider.statusKey] === undefined) {
-      issues.push({ path: provider.id, reason: `artifact status provider '${provider.statusKey}' was not supplied` });
-    }
-  }
-  for (const file of walkGeneratedArtifactFiles(tsRoot)) {
+  for (const file of walkExactRegularFiles(tsRoot)) {
     const text = readFileSync(file, "utf8");
     const relative = path.relative(tsRoot, file).split(path.sep).join("/");
     const registration = inspectGeneratedArtifactRegistration(relative, text);
-    if (registration.metadata === undefined && registration.error === undefined) continue;
-    if (registration.provider !== undefined) continue;
-    issues.push({ path: relative, reason: `${registration.error}; fix the registered generator output` });
+    if (registration.error !== undefined) {
+      issues.push({ path: relative, reason: `${registration.error}; fix the registered generator output` });
+      continue;
+    }
+    if (registration.metadata !== undefined) continue;
+    if (/^\/\/ Code generated[^\n\r]*(?:\r?\n|$)/.test(text)) {
+      issues.push({ path: relative, reason: "generated-file header has no exact @tsgo-generated registration; fix the registered generator output" });
+    }
   }
   return { issues, providerCount: generatedArtifactProviders.length };
 }

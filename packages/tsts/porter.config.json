@@ -19,8 +19,6 @@
   "largeFileSplitPlanPath": "packages/tsts/porter.large-splits.json",
   "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
   "astSchemaDir": "packages/tsts/schema/tsgo",
-  "astGeneratedDir": "internal/ast/generated",
-  "diagnosticsGeneratedDir": "internal/diagnostics/generated",
   "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
   "unitPolicies": [
     {
