@@ -60,6 +60,10 @@ consistent replacement snapshot, tree list, policy summary, or completion
 envelope is rejected unless it is also the exact result of those checkouts.
 Both commands reject hidden Git index state. Delta output must be outside the
 source checkouts so publishing evidence cannot invalidate its own provenance.
+The CLI checks the clean Porter implementation before dynamically importing the
+command graph. Evidence is published through one descriptor-relative,
+no-follow, exclusive staging directory and atomic rename. Verification rejects
+noncanonical UTF-8 before checking the byte-length/SHA-256 completion envelope.
 
 ## TypeScript Reconciliation
 

@@ -15,15 +15,22 @@ export function canonicalSnapshot(snapshot) {
 export function portableSnapshot(snapshot, label = "source") {
   const portable = structuredClone(snapshot);
   portable.sourceRoot = `<${label}-root>`;
-  if (portable.semantic && snapshot.semantic) {
-    const goroot = snapshot.semantic.goroot;
-    portable.semantic.goroot = "<go-root>";
-    portable.semantic.toolchainExecutable = "<go-root>/bin/go";
-    for (const profile of portable.semantic.profiles ?? []) {
-      profile.environment = (profile.environment ?? []).map((entry) => portableEnvironmentEntry(entry, goroot));
-    }
-  }
+  if (snapshot.semantic) normalizePortableSemantic(portable.semantic, snapshot.semantic.goroot);
   return portable;
+}
+
+function portableSemantic(semantic) {
+  const portable = structuredClone(semantic);
+  normalizePortableSemantic(portable, semantic.goroot);
+  return portable;
+}
+
+function normalizePortableSemantic(portable, goroot) {
+  portable.goroot = "<go-root>";
+  portable.toolchainExecutable = "<go-root>/bin/go";
+  for (const profile of portable.profiles ?? []) {
+    profile.environment = (profile.environment ?? []).map((entry) => portableEnvironmentEntry(entry, goroot));
+  }
 }
 
 function portableEnvironmentEntry(entry, goroot) {
@@ -53,8 +60,13 @@ export function buildDeltaCompletion(artifacts, report) {
     if (typeof contents !== "string") throw new Error(`delta evidence is missing ${name}`);
     files[name] = { bytes: Buffer.byteLength(contents), sha256: sha256(contents) };
   }
+  return buildDeltaCompletionFromRecords(files, report);
+}
+
+export function buildDeltaCompletionFromRecords(files, report) {
+  requireCompletionFileRecords(files);
   const identity = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     fromRevision: report.from.gitRevision,
     toRevision: report.to.gitRevision,
     files,
@@ -63,6 +75,15 @@ export function buildDeltaCompletion(artifacts, report) {
 }
 
 export function verifyDeltaCompletion(artifacts, completion) {
+  const files = {};
+  for (const name of DELTA_EVIDENCE_ARTIFACTS) {
+    const contents = artifacts.get(name);
+    if (typeof contents === "string") files[name] = { bytes: Buffer.byteLength(contents), sha256: sha256(contents) };
+  }
+  return verifyDeltaCompletionFromRecords(files, completion);
+}
+
+export function verifyDeltaCompletionFromRecords(files, completion) {
   const issues = [];
   const exactKeys = (value, expected, label) => {
     const actual = value && typeof value === "object" && !Array.isArray(value) ? Object.keys(value).sort() : [];
@@ -70,18 +91,18 @@ export function verifyDeltaCompletion(artifacts, completion) {
     if (JSON.stringify(actual) !== JSON.stringify(wanted)) issues.push(`${label} keys must be exactly ${wanted.join(", ")}`);
   };
   exactKeys(completion, ["evidenceHash", "files", "fromRevision", "schemaVersion", "toRevision"], "COMPLETE.json");
-  if (completion?.schemaVersion !== 6) issues.push("COMPLETE.json schemaVersion must be 6");
+  if (completion?.schemaVersion !== 7) issues.push("COMPLETE.json schemaVersion must be 7");
   exactKeys(completion?.files, DELTA_EVIDENCE_ARTIFACTS, "COMPLETE.json files");
   for (const name of DELTA_EVIDENCE_ARTIFACTS) {
     const record = completion?.files?.[name];
     exactKeys(record, ["bytes", "sha256"], `COMPLETE.json files.${name}`);
-    const contents = artifacts.get(name);
-    if (typeof contents !== "string") {
+    const actual = files[name];
+    if (actual === undefined) {
       issues.push(`missing evidence artifact ${name}`);
       continue;
     }
-    if (record?.bytes !== Buffer.byteLength(contents)) issues.push(`${name} byte length does not match COMPLETE.json`);
-    if (record?.sha256 !== sha256(contents)) issues.push(`${name} SHA-256 does not match COMPLETE.json`);
+    if (record?.bytes !== actual.bytes) issues.push(`${name} byte length does not match COMPLETE.json`);
+    if (record?.sha256 !== actual.sha256) issues.push(`${name} SHA-256 does not match COMPLETE.json`);
   }
   if (completion?.files && typeof completion.files === "object") {
     const identity = {
@@ -95,6 +116,24 @@ export function verifyDeltaCompletion(artifacts, completion) {
   return issues;
 }
 
+function requireCompletionFileRecords(files) {
+  if (files === null || typeof files !== "object" || Array.isArray(files) || ![Object.prototype, null].includes(Object.getPrototypeOf(files))) {
+    throw new Error("delta completion file records must be one plain object");
+  }
+  const actual = Object.keys(files).sort();
+  const expected = [...DELTA_EVIDENCE_ARTIFACTS].sort();
+  if (actual.length !== expected.length || actual.some((name, index) => name !== expected[index])) {
+    throw new Error(`delta completion file record keys must be exactly ${expected.join(", ")}`);
+  }
+  for (const name of expected) {
+    const record = files[name];
+    if (record === null || typeof record !== "object" || Array.isArray(record) || Object.keys(record).sort().join(",") !== "bytes,sha256" ||
+        !Number.isSafeInteger(record.bytes) || record.bytes < 0 || typeof record.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.sha256)) {
+      throw new Error(`delta completion file record ${name} is invalid`);
+    }
+  }
+}
+
 export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
   requireDeltaOptions(options);
   const fromTreeEntries = requireGitTreeEntries(options.fromTreeEntries, "Porter delta from tree entries");
@@ -104,6 +143,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
     activeUnitRecords(fromSnapshot, options),
     activeUnitRecords(toSnapshot, options),
   );
+  const policies = compareRecordMaps(policyRecords(fromSnapshot, options), policyRecords(toSnapshot, options));
   const files = compareRecordMaps(fileRecords(fromSnapshot), fileRecords(toSnapshot));
   const trackedFiles = compareRecordMaps(
     trackedTreeRecords(fromTreeEntries),
@@ -113,7 +153,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
   const toEnvironment = extractionEnvironmentIdentity(toSnapshot);
   const semanticState = compareRecordMaps(semanticStateRecords(fromSnapshot), semanticStateRecords(toSnapshot));
   return {
-    schemaVersion: 6,
+    schemaVersion: 7,
     from: snapshotIdentity(fromSnapshot),
     to: snapshotIdentity(toSnapshot),
     extractionEnvironment: {
@@ -124,6 +164,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
     trackedFiles: summarizeComparison(trackedFiles),
     goFiles: summarizeComparison(files),
     semanticState: summarizeComparison(semanticState),
+    policyState: summarizeComparison(policies),
     rawUnits: summarizeComparison(raw),
     activeUnits: summarizeComparison(active),
   };
@@ -133,12 +174,16 @@ export function renderDeltaMarkdown(report) {
   const lines = [
     "# TS-Go Porter Delta",
     "",
+    `- Porter implementation: \`${report.porterImplementation.revision}\``,
     `- From: \`${report.from.gitRevision}\``,
     `- To: \`${report.to.gitRevision}\``,
     `- Extractor environment equal: ${report.extractionEnvironment.matches}`,
     `- Complete tracked source tree: ${summaryLine(report.trackedFiles)}`,
     `- Go files: ${summaryLine(report.goFiles)}`,
     `- Complete semantic state: ${summaryLine(report.semanticState)}`,
+    `- Effective unit policies: ${summaryLine(report.policyState)}`,
+    `- Generated-source files: ${inventorySummaryLine(report.generatedSourcePolicies.delta.files)}`,
+    `- Generated-source policy status changed: ${report.generatedSourcePolicies.delta.policyStatusChanged}`,
     `- Raw units: ${summaryLine(report.rawUnits)}`,
     `- Active porter units: ${summaryLine(report.activeUnits)}`,
     `- Active declaration changes: ${declarationChangeLine(report.activeUnits)}`,
@@ -146,6 +191,18 @@ export function renderDeltaMarkdown(report) {
     "## Active Changed Modules",
     "",
     ...moduleLines(report.activeUnits.changedByModule),
+    "",
+    "## Semantic State Changes",
+    "",
+    ...identityLines(report.semanticState),
+    "",
+    "## Effective Policy Changes",
+    "",
+    ...identityLines(report.policyState),
+    "",
+    "## Generated-Source Changes",
+    "",
+    ...identityLines(report.generatedSourcePolicies.delta.files),
     "",
     "## Active Added Modules",
     "",
@@ -173,11 +230,10 @@ function snapshotIdentity(snapshot) {
 }
 
 function extractionEnvironmentIdentity(snapshot) {
-  const portable = portableSnapshot(snapshot);
-  const semantic = portable.semantic;
+  const semantic = portableSemantic(snapshot.semantic);
   return {
-    environment: portable.environment,
-    modulePath: portable.modulePath,
+    environment: structuredClone(snapshot.environment),
+    modulePath: snapshot.modulePath,
     compiler: semantic.compiler,
     toolchain: semantic.toolchain,
     toolchainHash: semantic.toolchainHash,
@@ -219,7 +275,7 @@ function trackedTreeRecords(entries) {
 }
 
 function semanticStateRecords(snapshot) {
-  const semantic = portableSnapshot(snapshot).semantic;
+  const semantic = portableSemantic(snapshot.semantic);
   return new Map(Object.keys(semantic).sort(compareText).map((key) => {
     const value = semantic[key];
     return [key, {
@@ -256,7 +312,31 @@ function activeUnitRecords(snapshot, options) {
       records.set(unit.id, {
         ...declaration,
         policy,
+        policyHash: hashObject(policy),
         comparisonHash: hashObject({ declaration: declaration.comparisonHash, policy }),
+      });
+    }
+  }
+  return records;
+}
+
+function policyRecords(snapshot, options) {
+  const records = new Map();
+  for (const file of snapshot.files ?? []) {
+    for (const unit of file.units ?? []) {
+      if (!isSemanticPrimaryUnitKind(unit.kind)) continue;
+      const policy = options.policyForUnit(snapshot, unit, file);
+      const active = options.isActivePortPolicy(policy);
+      records.set(unit.id, {
+        id: unit.id,
+        path: file.path,
+        importPath: file.importPath,
+        kind: unit.kind,
+        name: unit.qualifiedName ?? unit.name,
+        policy,
+        active,
+        policyHash: hashObject(policy),
+        comparisonHash: hashObject({ policy, active }),
       });
     }
   }
@@ -337,6 +417,7 @@ function compareRecordMaps(fromRecords, toRecords) {
         semanticDeclarationChanged: previous.semanticHash !== next.semanticHash,
         signatureChanged: previous.sigHash !== next.sigHash || previous.semanticHash !== next.semanticHash,
         constantsChanged: JSON.stringify(previous.constantValues) !== JSON.stringify(next.constantValues),
+        policyChanged: previous.policyHash !== next.policyHash,
         previous,
       });
     }
@@ -388,6 +469,7 @@ function summarizeComparison(comparison) {
     sourceSignatureChangedCount: comparison.changed.filter((record) => record.sourceSignatureChanged).length,
     semanticDeclarationChangedCount: comparison.changed.filter((record) => record.semanticDeclarationChanged).length,
     constantsChangedCount: comparison.changed.filter((record) => record.constantsChanged).length,
+    policyChangedCount: comparison.changed.filter((record) => record.policyChanged).length,
     moveCandidateCount: comparison.moves.length,
     addedByModule: countByModule(comparison.added),
     removedByModule: countByModule(comparison.removed),
@@ -463,4 +545,17 @@ function declarationChangeLine(summary) {
 function moduleLines(entries) {
   if (entries.length === 0) return ["- None"];
   return entries.slice(0, 30).map(([module, count]) => `- ${module}: ${count}`);
+}
+
+function identityLines(summary) {
+  const entries = [
+    ...summary.added.map((entry) => `- Added: ${entry.id}`),
+    ...summary.removed.map((entry) => `- Removed: ${entry.id}`),
+    ...summary.changed.map((entry) => `- Changed: ${entry.id}`),
+  ];
+  return entries.length === 0 ? ["- None"] : entries;
+}
+
+function inventorySummaryLine(summary) {
+  return `${summary.fromCount} → ${summary.toCount}; ${summary.addedCount} added, ${summary.removedCount} removed, ${summary.changedCount} changed`;
 }

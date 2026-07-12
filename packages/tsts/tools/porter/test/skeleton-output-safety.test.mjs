@@ -83,7 +83,7 @@ test("skeleton-check CLI rejects arbitrary output before touching it", (t) => {
 
   const result = spawnSync(
     process.execPath,
-    [resolveRepo("packages/tsts/tools/porter/porter.mjs"), "skeleton-check", "--out", target],
+    [resolveRepo("packages/tsts/tools/porter/porter-cli.mjs"), "skeleton-check", "--out", target],
     { cwd: repoRoot, encoding: "utf8" },
   );
   assert.equal(result.status, 1);

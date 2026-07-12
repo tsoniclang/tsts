@@ -1,9 +1,4 @@
-#!/usr/bin/env node
-import process from "node:process";
-import path from "node:path";
-
 import { main } from "./core/commands.mjs";
-import { fail } from "./core/runtime.mjs";
 
 export { buildGeneratedSourcePolicyStatus } from "./generated-source.mjs";
 export { matchGlob } from "./path-policy.mjs";
@@ -64,11 +59,3 @@ export {
   verifyStatus,
 } from "./core/verification.mjs";
 export { printScanSummary, printStatus, renderStatusMarkdown } from "./core/reporting.mjs";
-
-if (process.argv[1] !== undefined && path.basename(process.argv[1]) === "porter.mjs") {
-  try {
-    await main();
-  } catch (error) {
-    fail(error?.message ?? String(error));
-  }
-}

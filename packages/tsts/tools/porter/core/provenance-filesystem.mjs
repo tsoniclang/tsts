@@ -2,15 +2,22 @@ import {
   closeSync,
   constants,
   fstatSync,
+  fsyncSync,
   lstatSync,
+  mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
+  renameSync,
+  writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { TextDecoder } from "node:util";
+import { createHash } from "node:crypto";
 
 const FILE_FLAGS = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0);
 const DIRECTORY_FLAGS = FILE_FLAGS | (constants.O_DIRECTORY ?? 0);
+const OUTPUT_FILE_FLAGS = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0);
 const STABLE_FIELDS = ["dev", "ino", "mode", "nlink", "size", "mtimeNs", "ctimeNs"];
 const DESCRIPTOR_ROOTS = ["/proc/self/fd", "/dev/fd"];
 let descriptorRoot;
@@ -42,12 +49,35 @@ export function readStableRegularFile(file, label = "regular file") {
     try {
       const bytes = readFileSync(opened.fd);
       assertStableOpenFile(parent, opened, label);
+      assertDirectoryPathMatches(parent, `${label} parent path changed while reading`);
       return Buffer.from(bytes);
     } finally {
       closeSync(opened.fd);
     }
   } finally {
     closeSync(parent.fd);
+  }
+}
+
+export function decodeCanonicalUtf8(bytes, label = "UTF-8 evidence") {
+  assertCanonicalUtf8Bytes(bytes, label);
+  return bytes.toString("utf8");
+}
+
+export function assertCanonicalUtf8Bytes(bytes, label = "UTF-8 evidence") {
+  if (!Buffer.isBuffer(bytes)) throw new Error(`${label} must be bytes`);
+  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    throw new Error(`${label} is not canonical UTF-8`);
+  }
+  const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+  try {
+    const chunkSize = 1024 * 1024;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+      decoder.decode(bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)), { stream: true });
+    }
+    decoder.decode();
+  } catch (error) {
+    throw new Error(`${label} is not valid UTF-8`, { cause: error });
   }
 }
 
@@ -74,6 +104,61 @@ export function readStableFlatDirectory(directory, label = "flat directory") {
   } finally {
     for (const opened of openedFiles) closeSync(opened.fd);
     closeSync(openedDirectory.fd);
+  }
+}
+
+export function publishStableFlatDirectory(outputRoot, stagingRoot, files, label = "flat evidence directory") {
+  if (!(files instanceof Map) || files.size === 0) throw new Error(`${label} files must be one non-empty Map`);
+  const output = path.resolve(outputRoot);
+  const staging = path.resolve(stagingRoot);
+  const parentPath = path.dirname(output);
+  if (path.dirname(staging) !== parentPath) throw new Error(`${label} output and staging directories must have the same parent`);
+  const outputName = validatedEntryName(path.basename(output), `${label} output`);
+  const stagingName = validatedEntryName(path.basename(staging), `${label} staging`);
+  if (outputName === stagingName) throw new Error(`${label} output and staging names must differ`);
+  const parent = openSecureDirectory(parentPath);
+  let stagingDirectory;
+  try {
+    requireAbsentEntry(parent.fd, outputName, `${label} output`);
+    requireAbsentEntry(parent.fd, stagingName, `${label} staging`);
+    mkdirSync(entryPath(parent.fd, stagingName), { mode: 0o700 });
+    stagingDirectory = openDirectoryAt(parent.fd, stagingName, `${label} staging`);
+    const names = [...files.keys()];
+    if (names.length !== files.size) throw new Error(`${label} file names must be unique`);
+    const records = {};
+    for (const name of names) {
+      validatedEntryName(name, `${label} file`);
+      const source = files.get(name);
+      const contents = typeof source === "function" ? source({ files: structuredClone(records) }) : source;
+      if (typeof contents !== "string" && !Buffer.isBuffer(contents)) throw new Error(`${label} file '${name}' must contain text or bytes`);
+      let fd;
+      try {
+        fd = openSync(entryPath(stagingDirectory.fd, name), OUTPUT_FILE_FLAGS, 0o600);
+        writeFileSync(fd, contents);
+        fsyncSync(fd);
+        const opened = fstatSync(fd, { bigint: true });
+        assertStableStat(opened, lstatEntry(stagingDirectory.fd, name, `${label} file '${name}'`), `${label} file '${name}' changed while publishing`);
+        records[name] = {
+          bytes: Buffer.byteLength(contents),
+          sha256: createHash("sha256").update(contents).digest("hex"),
+        };
+      } finally {
+        if (fd !== undefined) closeSync(fd);
+      }
+    }
+    fsyncSync(stagingDirectory.fd);
+    renameSync(entryPath(parent.fd, stagingName), entryPath(parent.fd, outputName));
+    fsyncSync(parent.fd);
+    assertSameIdentity(
+      fstatSync(stagingDirectory.fd, { bigint: true }),
+      lstatEntry(parent.fd, outputName, `${label} output`),
+      `${label} output changed while publishing`,
+    );
+    assertDirectoryPathMatches(parent, `${label} parent path changed while publishing`);
+    return records;
+  } finally {
+    if (stagingDirectory !== undefined) closeSync(stagingDirectory.fd);
+    closeSync(parent.fd);
   }
 }
 
@@ -109,6 +194,23 @@ function readDirectoryNames(fd, label) {
     }
   }
   return names.sort();
+}
+
+function validatedEntryName(name, label) {
+  if (typeof name !== "string" || name === "" || name === "." || name === ".." || name.includes("/") || name.includes("\\") || name.includes("\0")) {
+    throw new Error(`${label} name must be one canonical path segment`);
+  }
+  return name;
+}
+
+function requireAbsentEntry(parentFd, name, label) {
+  try {
+    lstatSync(entryPath(parentFd, name));
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
+  }
+  throw new Error(`${label} already exists`);
 }
 
 function openSecureDirectory(directory) {

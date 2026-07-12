@@ -49,6 +49,15 @@ test("authoritative Porter gate includes Go extractor tests", () => {
   });
 });
 
+test("delta CLI checks implementation provenance before loading command modules", () => {
+  const cli = readFileSync(resolveRepo("packages/tsts/tools/porter/porter-cli.mjs"), "utf8");
+  const preflight = cli.indexOf("inspectGitCheckout(repoRoot)");
+  const commandLoad = cli.indexOf('await import("./core/commands.mjs")');
+  assert.ok(preflight >= 0);
+  assert.ok(commandLoad > preflight);
+  assert.doesNotMatch(cli, /from "\.\/core\/commands\.mjs"/);
+});
+
 function collectTestFilesIndependently(directory) {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {

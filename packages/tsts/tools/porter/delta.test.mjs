@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 
-import { buildDeltaCompletion, buildPorterDelta, canonicalSnapshot, portableSnapshot, renderDeltaMarkdown, snapshotDigest, verifyDeltaCompletion } from "./delta.mjs";
+import { buildDeltaCompletion, buildDeltaCompletionFromRecords, buildPorterDelta, canonicalSnapshot, portableSnapshot, renderDeltaMarkdown, snapshotDigest, verifyDeltaCompletion, verifyDeltaCompletionFromRecords } from "./delta.mjs";
 import { verifyDeltaEvidence } from "./core/delta-command.mjs";
 import { buildDeltaSupplementalEvidence } from "./core/delta-report-evidence.mjs";
 import { buildGitCommitTreeEvidence, gitObjectHash, gitTreeHash, requireGitCommitTreeEvidence } from "./core/git-commit-tree-evidence.mjs";
@@ -31,7 +31,7 @@ test("porter delta reports file, raw-unit, active-unit, and move changes", () =>
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.moveCandidateCount, 1);
   assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
-  assert.match(renderDeltaMarkdown(report), /Active porter units/);
+  assert.match(renderDeltaMarkdown(reviewReport(report)), /Active porter units/);
   assert.throws(
     () => buildPorterDelta(from, to, { policyForUnit: () => ({ category: "literal-port", active: true }), isActivePortPolicy: () => true }),
     /option keys must be exactly/,
@@ -65,13 +65,13 @@ test("porter delta treats canonical declaration and constant drift as signature 
       isActivePortPolicy: () => true,
     }),
   );
-  assert.equal(report.schemaVersion, 6);
+  assert.equal(report.schemaVersion, 7);
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.sourceSignatureChangedCount, 0);
   assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
   assert.equal(report.activeUnits.signatureChangedCount, 1);
   assert.equal(report.activeUnits.constantsChangedCount, 1);
-  assert.match(renderDeltaMarkdown(report), /1 canonical declarations/);
+  assert.match(renderDeltaMarkdown(reviewReport(report)), /1 canonical declarations/);
 });
 
 test("compact profile indexes compare by canonical profile identity across snapshots", () => {
@@ -118,6 +118,12 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
     ["to-tree.json", "[]\n"],
   ]);
   const completion = buildDeltaCompletion(artifacts, report);
+  const records = Object.fromEntries([...artifacts].map(([name, contents]) => [name, {
+    bytes: Buffer.byteLength(contents),
+    sha256: createHash("sha256").update(contents).digest("hex"),
+  }]));
+  assert.deepEqual(buildDeltaCompletionFromRecords(records, report), completion);
+  assert.deepEqual(verifyDeltaCompletionFromRecords(records, completion), []);
   assert.deepEqual(verifyDeltaCompletion(artifacts, completion), []);
   const tampered = new Map(artifacts);
   tampered.set("summary.md", "changed\n");
@@ -146,7 +152,7 @@ test("delta evidence rejects regenerated report tampering against exact checkout
     })),
     provenance: { from: provenance(from), to: provenance(to) },
     effectivePolicies: { contract: { digest: "policy" }, from: { units: [] }, to: { units: [] } },
-    generatedSourcePolicies: { mechanisms: [{ id: "tracked-generated-port" }], fromCoverage: {}, toCoverage: {} },
+    generatedSourcePolicies: generatedSourceReviewEvidence(),
     porterImplementation: { revision: porterGitEvidence.revision },
   };
   assert.equal(report.rawUnits.changedCount, 2);
@@ -170,7 +176,7 @@ test("delta evidence rejects regenerated report tampering against exact checkout
     ["active unit count", (value) => { value.activeUnits.changedCount = 0; }],
     ["signature change count", (value) => { value.activeUnits.signatureChangedCount = 0; }],
     ["signature change evidence", (value) => { value.activeUnits.changed[0].signatureChanged = false; }],
-    ["missing generated-source policies", (value) => { delete value.generatedSourcePolicies; }],
+    ["generated-source classification", (value) => { value.generatedSourcePolicies.delta.matches = false; }],
     ["legacy delta shape", (value) => { value.unitChanges = structuredClone(value.activeUnits); }],
   ];
   for (const [label, mutate] of mutations) {
@@ -243,7 +249,18 @@ test("policy, complete extractor-environment, and global semantic drift are visi
     isActivePortPolicy: () => true,
   }));
   assert.equal(policyChanged.activeUnits.changedCount, 1);
+  assert.equal(policyChanged.activeUnits.policyChangedCount, 1);
+  assert.equal(policyChanged.activeUnits.changed[0].policyChanged, true);
+  assert.equal(policyChanged.policyState.changedCount, 1);
   assert.notEqual(policyChanged.activeUnits.changed[0].policy.category, policyChanged.activeUnits.changed[0].previous.policy.category);
+  const deactivated = buildPorterDelta(from, to, deltaOptions(from, to, {
+    policyForUnit: (candidate) => ({ category: candidate === from ? "literal-port" : "test", active: candidate === from }),
+    isActivePortPolicy: (policy) => policy.active,
+  }));
+  assert.equal(deactivated.activeUnits.removedCount, 1);
+  assert.equal(deactivated.policyState.changedCount, 1);
+  assert.equal(deactivated.policyState.changed[0].previous.active, true);
+  assert.equal(deactivated.policyState.changed[0].active, false);
   to.semantic.toolchainHash = "f".repeat(64);
   to.semantic.moduleGraph = [{ path: "example.test/dependency", version: "v1.2.3" }];
   const environmentChanged = buildPorterDelta(from, to, deltaOptions(from, to, {
@@ -265,11 +282,19 @@ test("delta supplemental evidence binds generated-source coverage and policy con
   const tracked = evidence.generatedSourcePolicies.fromCoverage.mechanisms.find((entry) => entry.id === "tracked-generated-port");
   assert.deepEqual(tracked.files.map((entry) => entry.path), ["internal/checker/stringer_generated.go"]);
   assert.deepEqual(evidence.generatedSourcePolicies.from.issues, []);
+  assert.equal(evidence.generatedSourcePolicies.delta.matches, true);
+
+  const changedGenerated = structuredClone(to);
+  changedGenerated.files[0].sourceHash = "f".repeat(64);
+  const changedEvidence = buildDeltaSupplementalEvidence(config, from, changedGenerated);
+  assert.equal(changedEvidence.generatedSourcePolicies.delta.matches, false);
+  assert.equal(changedEvidence.generatedSourcePolicies.delta.files.changedCount, 1);
 
   const unclassified = structuredClone(from);
   unclassified.files[0].path = "internal/checker/unclassified_generated.go";
   const rejected = buildDeltaSupplementalEvidence(config, unclassified, to);
   assert.ok(rejected.generatedSourcePolicies.from.issues.some((issue) => issue.reason.includes("no registered mechanism")));
+  assert.equal(rejected.generatedSourcePolicies.delta.matches, false);
 
   const policyChanged = buildDeltaSupplementalEvidence({
     ...config,
@@ -288,6 +313,32 @@ function deltaArtifacts(from, to, fromGitEvidence, porterGitEvidence, toGitEvide
     ["to-snapshot.json", `${JSON.stringify(portableSnapshot(to, "to"), null, 2)}\n`],
     ["to-tree.json", `${JSON.stringify(toGitEvidence, null, 2)}\n`],
   ]);
+}
+
+function reviewReport(report) {
+  return {
+    ...report,
+    porterImplementation: { revision: "c".repeat(40) },
+    generatedSourcePolicies: generatedSourceReviewEvidence(),
+  };
+}
+
+function generatedSourceReviewEvidence() {
+  return {
+    mechanisms: [{ id: "tracked-generated-port" }],
+    fromCoverage: {},
+    toCoverage: {},
+    delta: {
+      matches: true,
+      policyStatusChanged: false,
+      mechanisms: emptyInventoryComparison(),
+      files: emptyInventoryComparison(),
+    },
+  };
+}
+
+function emptyInventoryComparison() {
+  return { fromCount: 0, toCount: 0, addedCount: 0, removedCount: 0, changedCount: 0, added: [], removed: [], changed: [] };
 }
 
 function treeEntries(value) {

@@ -6,7 +6,7 @@ it claims to port. It closes the gap where a hand-edited TS signature can drift
 while the Go hash, `tsc` build, and conformance baselines all stay green.
 
 ```
-node packages/tsts/tools/porter/porter.mjs sig-check [--id <glob>] [--json] [--no-gate]
+node packages/tsts/tools/porter/porter-cli.mjs sig-check [--id <glob>] [--json] [--no-gate]
 # or
 npm run porter:sig-check
 ```
