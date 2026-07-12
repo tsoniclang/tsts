@@ -52,6 +52,12 @@ export function validateStringArray(value, label, issues, options = {}) {
 }
 
 export const SEMANTIC_PRIMARY_UNIT_KINDS = new Set(["constGroup", "func", "method", "type", "varGroup"]);
+
+export function isSemanticPrimaryFile(file) {
+  return typeof file?.path === "string"
+    && Array.isArray(file?.units)
+    && file.units.some((unit) => SEMANTIC_PRIMARY_UNIT_KINDS.has(unit?.kind));
+}
 const architectureVariableByGoarch = Object.freeze({
   "386": "GO386", amd64: "GOAMD64", arm: "GOARM", arm64: "GOARM64", mips: "GOMIPS", mipsle: "GOMIPS",
   mips64: "GOMIPS64", mips64le: "GOMIPS64", ppc64: "GOPPC64", ppc64le: "GOPPC64", riscv64: "GORISCV64", wasm: "GOWASM",
@@ -80,10 +86,7 @@ export function validateSemanticProvenance(snapshot, issues) {
   const semantic = snapshot?.semantic;
   const files = Array.isArray(snapshot?.files) ? snapshot.files : [];
   const existingFiles = new Set(files.flatMap((file) => typeof file?.path === "string" ? [file.path] : []));
-  const primaryFiles = new Set(files.flatMap((file) =>
-    Array.isArray(file?.units) && file.units.some((unit) => SEMANTIC_PRIMARY_UNIT_KINDS.has(unit?.kind)) && typeof file.path === "string"
-      ? [file.path]
-      : []));
+  const primaryFiles = new Set(files.flatMap((file) => isSemanticPrimaryFile(file) ? [file.path] : []));
   const required = new Set(Array.isArray(semantic?.requiredFiles) ? semantic.requiredFiles : []);
   const covered = new Set(Array.isArray(semantic?.coveredFiles) ? semantic.coveredFiles : []);
   const excluded = new Set(Array.isArray(semantic?.excludedFiles) ? semantic.excludedFiles : []);

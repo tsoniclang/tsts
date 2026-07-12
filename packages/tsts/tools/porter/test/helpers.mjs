@@ -64,6 +64,8 @@ export function testSemanticProfile({ coveredFiles = [], packageIds = [] } = {})
   };
 }
 export function snapshotWith(files) {
+  const primaryKinds = new Set(baseConfig.primaryUnitKinds);
+  const requiredFiles = files.filter((file) => file.units.some((unit) => primaryKinds.has(unit.kind)));
   return {
     sourceRoot: "/tmp/tsgo",
     gitRevision: "abc123",
@@ -73,14 +75,14 @@ export function snapshotWith(files) {
       unitCount: files.reduce((sum, file) => sum + file.units.length, 0),
     },
     semantic: {
-      requiredFiles: files.map((file) => file.path).sort(),
+      requiredFiles: requiredFiles.map((file) => file.path).sort(),
       excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
       profiles: [testSemanticProfile({
-        coveredFiles: files.map((file) => file.path),
-        packageIds: files.map((file) => file.importPath),
+        coveredFiles: requiredFiles.map((file) => file.path),
+        packageIds: requiredFiles.map((file) => file.importPath),
       })],
     },
     files,

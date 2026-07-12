@@ -1,3 +1,5 @@
+import { isSemanticPrimaryFile } from "./snapshot-validation.mjs";
+
 export function buildSemanticUnitEligibility(snapshot) {
   const required = exactPathSet(snapshot?.semantic?.requiredFiles, "snapshot.semantic.requiredFiles");
   const excluded = exactPathSet(snapshot?.semantic?.excludedFiles, "snapshot.semantic.excludedFiles");
@@ -5,8 +7,12 @@ export function buildSemanticUnitEligibility(snapshot) {
     if (excluded.has(path)) throw new Error(`semantic source file '${path}' is both required and excluded`);
   }
   for (const file of snapshot?.files ?? []) {
-    if (required.has(file.path) === excluded.has(file.path)) {
-      throw new Error(`semantic source file '${file.path}' must be classified exactly once as required or excluded`);
+    const memberships = Number(required.has(file.path)) + Number(excluded.has(file.path));
+    if (isSemanticPrimaryFile(file) && memberships !== 1) {
+      throw new Error(`primary semantic source file '${file.path}' must be classified exactly once as required or excluded`);
+    }
+    if (!isSemanticPrimaryFile(file) && required.has(file.path)) {
+      throw new Error(`snapshot.semantic.requiredFiles includes non-primary file '${file.path}'`);
     }
   }
   return {
@@ -15,11 +21,18 @@ export function buildSemanticUnitEligibility(snapshot) {
     },
     policyFor(file, configuredPolicy) {
       if (required.has(file.path)) return configuredPolicy;
-      if (!excluded.has(file.path)) throw new Error(`semantic source file '${file.path}' has no exact disposition`);
+      if (excluded.has(file.path)) {
+        return {
+          active: false,
+          category: "semantic-excluded",
+          reason: "The pinned Go toolchain excludes this source file from every audited semantic profile.",
+        };
+      }
+      if (isSemanticPrimaryFile(file)) throw new Error(`primary semantic source file '${file.path}' has no exact disposition`);
       return {
         active: false,
-        category: "semantic-excluded",
-        reason: "The pinned Go toolchain excludes this source file from every audited semantic profile.",
+        category: "semantic-declarationless",
+        reason: "The source file contains no declaration kind in Porter's exact signature scope.",
       };
     },
   };
