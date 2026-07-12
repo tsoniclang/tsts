@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import ts from "typescript";
 
 import { renderGoCompatModule } from "./core/runtime-templates.mjs";
 import { semanticNilabilityIssue } from "./core/semantic-type-nilability.mjs";
@@ -77,9 +78,15 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /type GoPointerMethods<T> = typeof __tsgoPointerMethodSet extends keyof T/);
   assert.match(source, /export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;/);
   assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \} & GoPointerMethods<T>>;/);
-  assert.match(source, /export type GoSlice<T> = GoNilable<T\[]>;/);
-  assert.match(source, /export type GoMap<K, V> = GoNilable<Map<K, V>>;/);
-  assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = GoNilable<\{/);
+  assert.match(source, /export type GoSlice<T> = T\[];/);
+  assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
+  assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
+  assert.match(source, /export type GoMap<K, V> = Map<K, V>;/);
+  assert.match(source, /export function GoNilMap<K, V>\(\): GoMap<K, V>/);
+  assert.match(source, /assignment to entry in nil map/);
+  assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = \{/);
+  assert.match(source, /export function GoNilChan<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
+  assert.match(source, /if \(GoChanIsNil\(channel\)\) return false as bool;/);
   assert.match(source, /export type GoFunc<F> = GoNilable<F>;/);
   assert.match(source, /export type GoInterface<I> = GoNilable<I>;/);
   assert.match(source, /export type GoSeq<T> = GoFunc<\(yieldValue: \(value: T\) => bool\) => void>;/);
@@ -87,9 +94,39 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export type GoError = GoInterface<Error>;/);
   assert.match(source, /export type GoUnsafePointer = GoNilable<\{ readonly \[goUnsafePointerBrand\]: never \}>;/);
   assert.doesNotMatch(source, /Nilable extends boolean/);
-  assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): NonNullable<GoChan<T>>/);
+  assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(source, /GoMapGetExisting<K, V>\(map: NonNullable<GoMap<K, V>>/);
   assert.match(source, /GoAppend<T>\(slice: GoSlice<T>, \.\.\.items: T\[]\): NonNullable<GoSlice<T>>/);
+});
+
+test("operation-bearing nil carriers execute their Go zero-value operations", async () => {
+  const javascript = ts.transpileModule(renderGoCompatModule(), {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const runtime = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString("base64")}`);
+  const nilSlice = runtime.GoNilSlice();
+  assert.equal(nilSlice.length, 0);
+  assert.equal(runtime.GoSliceIsNil(nilSlice), true);
+  assert.equal(runtime.GoSliceIsNil([]), false);
+  assert.equal(runtime.GoAppend(nilSlice), nilSlice);
+  assert.deepEqual(runtime.GoAppend(nilSlice, 1), [1]);
+
+  const nilMap = runtime.GoNilMap();
+  assert.equal(nilMap.size, 0);
+  assert.equal(nilMap.get("missing"), undefined);
+  assert.equal(nilMap.delete("missing"), false);
+  nilMap.clear();
+  assert.equal(runtime.GoMapIsNil(nilMap), true);
+  assert.throws(() => nilMap.set("key", 1), /assignment to entry in nil map/);
+
+  const nilChannel = runtime.GoNilChan();
+  assert.equal(runtime.GoChanIsNil(nilChannel), true);
+  assert.equal(runtime.GoChanTrySend(nilChannel, 1), false);
+  let received = false;
+  runtime.GoChanReceive(nilChannel, () => { received = true; });
+  await Promise.resolve();
+  assert.equal(received, false);
+  assert.throws(() => runtime.GoChanClose(nilChannel), /close of nil channel/);
 });
 
 test("direct nilable kinds use their exact carriers", () => {

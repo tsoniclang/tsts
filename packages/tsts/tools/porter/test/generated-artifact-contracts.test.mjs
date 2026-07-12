@@ -63,7 +63,7 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
   assert.match(compat, /export function GoInterfaceTryAssert<T>/);
   assert.match(compat, /export function GoInterfaceAssert<T>/);
-  assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): NonNullable<GoChan<T>>/);
+  assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(compat, /export function GoRequireNonNilAfterSuccess<T>/);
   assert.match(compat, /export function GoMapLookup<K, V>/);
   assert.match(compat, /export function GoChanSelect\(cases: readonly GoChanSelectCase\[\]\)/);
