@@ -10,7 +10,7 @@ export type nuint = number;
 export type sbyte = number;
 export type short = number;
 export type uint = number;
-export type ulong = bigint;
+export type ulong = number;
 export type ushort = number;
 `;
 }
