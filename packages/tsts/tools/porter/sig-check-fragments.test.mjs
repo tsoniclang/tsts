@@ -80,6 +80,25 @@ test("callable member implementation roles compare exactly", () => {
     .some((mismatch) => mismatch.kind === "member-declaration-role"), true);
 });
 
+test("merged enum fragments retain exact member placement", () => {
+  const zero = { name: "Zero", value: { kind: "number", value: "0" }, valueIssue: undefined };
+  const one = { name: "One", value: { kind: "number", value: "1" }, valueIssue: undefined };
+  const expected = {
+    kind: "enum",
+    modifiers: ["export"],
+    members: [zero, one],
+    fragments: [
+      { modifiers: ["export"], members: [zero] },
+      { modifiers: ["export"], members: [one] },
+    ],
+  };
+  const redistributed = structuredClone(expected);
+  redistributed.fragments[0].members = structuredClone(expected.members);
+  redistributed.fragments[1].members = [];
+  const mismatches = compareSignatures(expected, redistributed, null);
+  assert.equal(mismatches.some((mismatch) => mismatch.kind === "enum-member-count"), true);
+});
+
 test("heritage roots use constructor space while nested arguments use type space", () => {
   const descriptor = {
     kind: "class",

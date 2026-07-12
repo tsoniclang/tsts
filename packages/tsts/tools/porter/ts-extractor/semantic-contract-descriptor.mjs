@@ -134,6 +134,7 @@ function interfaceDescriptor(contract, context, operations) {
   const methods = contract.methods.map((method) => ({
     kind: "method",
     name: method.name,
+    role: "signature",
     modifiers: [],
     type: { t: "fn", ...semanticSignatureDescriptor(method.signature, context, operations) },
   }));

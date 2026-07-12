@@ -198,6 +198,10 @@ function initialized(value: number = implementationDefault()): void { implementa
 function predicate(this: Guard, value: unknown): value is string { return implementationBody(); }
 async function* generate(value: number): AsyncIterable<number> { implementationBody(); }
 class Holder { constructor(public readonly value: string) { implementationBody(); } }
+class MethodRoles {
+  read(value: string): string;
+  read(value: string): string { return implementationBody(); }
+}
 `);
   assert.equal(parsed.initialized.params[0].optional, true);
   assert.equal(parsed.initialized.params[0].optionalSyntax, "initializer");
@@ -206,11 +210,13 @@ class Holder { constructor(public readonly value: string) { implementationBody()
   assert.deepEqual(parsed.generate.signatureModifiers, ["async", "generator"]);
   assert.equal(parsed.generate.returnTypePolicy, "required");
   const constructor = parsed.Holder.members.find((member) => member.kind === "constructor");
+  assert.equal(constructor.role, "implementation");
   assert.deepEqual(constructor.type.params[0].modifiers, ["public", "readonly"]);
   assert.equal(constructor.type.missingReturnType, false);
   assert.equal(constructor.type.returnTypePolicy, "forbidden");
+  assert.deepEqual(parsed.MethodRoles.members.map((member) => member.role), ["declaration", "implementation"]);
   assert.doesNotMatch(canonicalKey(constructor.type), /invalidDescriptor/);
-  assert.equal(JSON.stringify([parsed.initialized, parsed.predicate, parsed.generate, parsed.Holder]).includes("implementationBody"), false);
+  assert.equal(JSON.stringify([parsed.initialized, parsed.predicate, parsed.generate, parsed.Holder, parsed.MethodRoles]).includes("implementationBody"), false);
 });
 
 test("normalization traverses every structured child and preserves signature metadata", async () => {

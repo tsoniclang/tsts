@@ -44,7 +44,7 @@ function interfaceDescriptor(api, node, baseCtx) {
     name: declaration.name?.Text,
     modifiers: declarationModifiers(api, declaration, new Set(["export", "default", "declare"])),
     typeParams: typeParamDescriptors(api, declaration.TypeParameters, ctx),
-    heritage: heritageDescriptors(api, declaration.HeritageClauses, ctx),
+    heritage: heritageDescriptors(api, declaration.HeritageClauses, ctx, "interface"),
     members: (declaration.Members?.Nodes ?? []).map((member) => declarationMemberDescriptor(api, member, ctx)).filter(Boolean),
   };
 }
@@ -69,7 +69,7 @@ function classDescriptor(api, node, baseCtx) {
     name: declaration.name?.Text,
     modifiers: declarationModifiers(api, declaration, new Set(["export", "default", "declare", "abstract"])),
     typeParams: typeParamDescriptors(api, declaration.TypeParameters, ctx),
-    heritage: heritageDescriptors(api, declaration.HeritageClauses, ctx),
+    heritage: heritageDescriptors(api, declaration.HeritageClauses, ctx, "class"),
     members: (declaration.Members?.Nodes ?? []).map((member) => declarationMemberDescriptor(api, member, ctx)).filter(Boolean),
   };
 }
@@ -201,6 +201,7 @@ function callableMember(api, declaration, ctx, kind, returnPolicy, fixedName = u
   return {
     kind,
     name: fixedName ?? propertyIdentity(api, declaration.name, ctx),
+    role: callableMemberRole(api, declaration),
     modifiers: memberModifiers(api, declaration, allowedModifiers).filter((modifier) => modifier !== "async"),
     optional: declaration.PostfixToken?.Kind === api.Kinds.KindQuestionToken || undefined,
     type: {
@@ -213,6 +214,17 @@ function callableMember(api, declaration, ctx, kind, returnPolicy, fixedName = u
       signatureModifiers: signature.signatureModifiers,
     },
   };
+}
+
+function callableMemberRole(api, declaration) {
+  const signatureKinds = new Set([
+    api.Kinds.KindMethodSignature,
+    api.Kinds.KindCallSignature,
+    api.Kinds.KindConstructSignature,
+    api.Kinds.KindIndexSignature,
+  ]);
+  if (signatureKinds.has(declaration.Kind)) return "signature";
+  return declaration.Body === undefined ? "declaration" : "implementation";
 }
 
 function callableDescriptor(api, declaration, baseCtx, returnPolicy, allowParameterProperties) {
@@ -269,12 +281,16 @@ function declarationContext(api, typeParameters, baseCtx) {
   return { ...baseCtx, typeParamIndex: typeParamIndexOf(api, typeParameters, baseCtx.typeParamIndex) };
 }
 
-function heritageDescriptors(api, clauses, ctx) {
+function heritageDescriptors(api, clauses, ctx, ownerKind) {
   return (clauses?.Nodes ?? []).map((node) => {
     const clause = api.Casts.AsHeritageClause(node);
+    const token = clause.Token === api.Kinds.KindExtendsKeyword ? "extends" :
+      clause.Token === api.Kinds.KindImplementsKeyword ? "implements" : `kind${clause.Token}`;
+    const space = ownerKind === "class" && token === "extends" ? "value" : "type";
     return {
-      token: clause.Token === api.Kinds.KindExtendsKeyword ? "extends" : clause.Token === api.Kinds.KindImplementsKeyword ? "implements" : `kind${clause.Token}`,
-      types: (clause.Types?.Nodes ?? []).map((type) => canonicalizeHeritageType(type, ctx)),
+      token,
+      space,
+      types: (clause.Types?.Nodes ?? []).map((type) => canonicalizeHeritageType(type, ctx, space)),
     };
   });
 }

@@ -17,7 +17,11 @@ export function createCanonicalTypeResolver({
   externalModules = new Set(),
   typeNamespaceReexport = new Map(),
   canonicalTypeAliases = {},
+  declarationSpace = "type",
 }) {
+  if (!new Set(["type", "value"]).has(declarationSpace)) {
+    throw new Error(`canonical declaration resolver has invalid namespace '${declarationSpace}'`);
+  }
   const cache = new Map();
   const exactAliases = new Map(Object.entries(canonicalTypeAliases));
   for (const [source, target] of exactAliases) {
@@ -113,11 +117,46 @@ export function createCanonicalTypeResolver({
     const id = resolveNamespaceQualifiedId(inputId);
     if (isSoftId(id) || !splitTypeId(id)) return id;
     const name = id.slice(id.lastIndexOf("::") + 2);
+    if (typeNamespaceReexport.has(id) && declarationSpace === "value") {
+      const target = typeNamespaceReexport.get(id);
+      return `namespace-value:${target.module}::${target.local ?? "*"}`;
+    }
     if (typeNamespaceReexport.has(id)) {
       throw new Error(`TypeScript namespace re-export '${id}' cannot be compared as a terminal type`);
     }
     if (namedReexport.has(id)) return resolveExactAlias(resolveExport(id, [], true).id);
     if (definedTypes.has(id) && (!name.includes(".") || exportedTypes.has(id))) return resolveExactAlias(id);
     return resolveExactAlias(resolveExport(id, [], true).id);
+  };
+}
+
+export function createCanonicalDeclarationResolver(index, canonicalTypeAliases = {}) {
+  const shared = {
+    knownModules: new Set(index.modules.keys()),
+    externalModules: index.externalModules,
+  };
+  const typeResolver = createCanonicalTypeResolver({
+    ...shared,
+    namedReexport: index.namedReexport,
+    starReexport: index.starReexport,
+    definedTypes: index.definedTypes,
+    exportedTypes: index.exportedTypes,
+    typeNamespaceReexport: index.typeNamespaceReexport,
+    canonicalTypeAliases,
+  });
+  const valueResolver = createCanonicalTypeResolver({
+    ...shared,
+    namedReexport: index.valueNamedReexport,
+    starReexport: index.valueStarReexport,
+    definedTypes: index.definedValues,
+    exportedTypes: index.exportedValues,
+    typeNamespaceReexport: index.valueNamespaceReexport,
+    canonicalTypeAliases: {},
+    declarationSpace: "value",
+  });
+  return (identity, space = "type") => {
+    if (space === "type") return typeResolver(identity);
+    if (space === "value") return valueResolver(identity);
+    throw new Error(`unknown TypeScript declaration namespace '${space}' for '${identity}'`);
   };
 }

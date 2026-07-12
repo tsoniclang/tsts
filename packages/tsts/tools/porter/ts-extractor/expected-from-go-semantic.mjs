@@ -221,6 +221,7 @@ function interfaceDeclarationShape(shape, sourceMembers, context, operations, un
       members.push({
         kind: "method",
         name: method.name,
+        role: "signature",
         modifiers: [],
         type: { t: "fn", ...semanticSignatureDescriptor(method.signature, context, operations) },
       });
@@ -237,7 +238,7 @@ function interfaceDeclarationShape(shape, sourceMembers, context, operations, un
     throw new Error(`Go interface unit '${unitId}' syntax/semantic member counts differ`);
   }
   if (members.length === 0) members.push(emptyDeclarationMember());
-  return { heritage: heritageTypes.length === 0 ? [] : [{ token: "extends", types: heritageTypes }], members };
+  return { heritage: heritageTypes.length === 0 ? [] : [{ token: "extends", space: "type", types: heritageTypes }], members };
 }
 
 function declarationTypeParameterDescriptors(parameters, context, sourceParameters, index) {

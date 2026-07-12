@@ -17,7 +17,7 @@ import { loadConventions } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { collectJsonTagMismatches } from "./ts-extractor/json-tags.mjs";
 import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/module-index.mjs";
-import { createCanonicalTypeResolver } from "./ts-extractor/module-resolution.mjs";
+import { createCanonicalDeclarationResolver } from "./ts-extractor/module-resolution.mjs";
 import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
 import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
@@ -53,26 +53,9 @@ export async function computeSignatureReport(deps, options = {}) {
   }
 
   const moduleIndex = loadTypeScriptModuleIndex(api, deps.repoRoot, deps.config.tsRoot);
-  const {
-    namedReexport,
-    starReexport,
-    sources,
-    definedTypes,
-    exportedTypes,
-    typeNamespaceReexport,
-    externalModules,
-  } = moduleIndex;
+  const { sources } = moduleIndex;
   const valueEnvironments = buildIndexedModuleValueEnvironments(api, moduleIndex);
-  const canonicalIdentity = createCanonicalTypeResolver({
-    namedReexport,
-    starReexport,
-    definedTypes,
-    exportedTypes,
-    knownModules: new Set(moduleIndex.modules.keys()),
-    externalModules,
-    typeNamespaceReexport,
-    canonicalTypeAliases: profile.canonicalTypeAliases ?? {},
-  });
+  const canonicalIdentity = createCanonicalDeclarationResolver(moduleIndex, profile.canonicalTypeAliases ?? {});
   const expectedIndex = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, generatedTypeDeclarations(deps.config, moduleIndex));
   const idPattern = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];

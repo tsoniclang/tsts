@@ -241,18 +241,19 @@ function compareStructuredDeclaration(expected, actual, push, equalType, equalCo
     compareModifiers(left.modifiers, right.modifiers, "declaration", fragmentPush, "declaration-fragment-modifier");
     if (expected.kind === "interface") {
       compareTypeParameters(left.typeParams, right.typeParams, fragmentPush, equalConstraint, `fragment #${index}`);
-      compareHeritage(left.heritage ?? [], right.heritage ?? [], fragmentPush, equalHeritageType);
+      compareHeritage(left.heritage ?? [], right.heritage ?? [], fragmentPush, equalHeritageType, expected.kind);
       compareMembers(left.members ?? [], right.members ?? [], fragmentPush, equalType, equalConstraint);
     }
   });
   if (fragmented) return;
-  compareHeritage(expected.heritage ?? [], actual.heritage ?? [], push, equalHeritageType);
+  compareHeritage(expected.heritage ?? [], actual.heritage ?? [], push, equalHeritageType, expected.kind);
   compareMembers(expected.members ?? [], actual.members ?? [], push, equalType, equalConstraint);
 }
 
-function compareHeritage(expected, actual, push, equalHeritageType) {
+function compareHeritage(expected, actual, push, equalHeritageType, declarationKind) {
+  const mismatchKind = `${declarationKind}-heritage`;
   if (expected.length !== actual.length) {
-    push("interface-heritage", "interface heritage clause count differs", expected.length, actual.length);
+    push(mismatchKind, `${declarationKind} heritage clause count differs`, expected.length, actual.length);
     return;
   }
   for (let index = 0; index < expected.length; index++) {
@@ -268,7 +269,7 @@ function compareHeritage(expected, actual, push, equalHeritageType) {
     }
     if (left.token !== right.token || left.space !== right.space || left.types.length !== right.types.length ||
         left.types.some((type, typeIndex) => !equalHeritageType(type, right.types[typeIndex], left.space))) {
-      push("interface-heritage", `interface heritage clause #${index} differs`, left, right);
+      push(mismatchKind, `${declarationKind} heritage clause #${index} differs`, left, right);
     }
   }
 }

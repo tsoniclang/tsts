@@ -201,7 +201,7 @@ test("expected-from-go: interface descriptors contain only source-declared membe
 
   const descriptor = goUnitDescriptor(closer, index);
   assert.deepEqual(descriptor.members.map((member) => member.name), ["Close"]);
-  assert.deepEqual(descriptor.heritage, [{ token: "extends", types: [{ t: "ref", id: "pkg/contracts.ts::Reader", args: [] }] }]);
+  assert.deepEqual(descriptor.heritage, [{ token: "extends", space: "type", types: [{ t: "ref", id: "pkg/contracts.ts::Reader", args: [] }] }]);
   assert.deepEqual(descriptor.members[0].type, {
     t: "fn",
     params: [],
@@ -241,7 +241,7 @@ test("expected-from-go: interface syntax order survives semantic extraction and 
 
   const expected = goUnitDescriptor(ordered, index);
   assert.deepEqual(expected.members.map((member) => member.name), ["Zulu", "Alpha"]);
-  assert.deepEqual(expected.heritage, [{ token: "extends", types: [{ t: "ref", id: "pkg/contracts.ts::Embedded", args: [] }] }]);
+  assert.deepEqual(expected.heritage, [{ token: "extends", space: "type", types: [{ t: "ref", id: "pkg/contracts.ts::Embedded", args: [] }] }]);
 
   const reordered = structuredClone(expected);
   reordered.members = [reordered.members[1], reordered.members[0]];
@@ -274,6 +274,7 @@ test("expected-from-go: interface embeddings use heritage and struct embeddings 
   assert.deepEqual(multiExpected.members.map((member) => member.name), ["__tsgoEmpty"]);
   assert.deepEqual(multiExpected.heritage, [{
     token: "extends",
+    space: "type",
     types: [
       { t: "ref", id: "pkg/embedding.ts::Base", args: [] },
       { t: "ref", id: "pkg/embedding.ts::Extra", args: [] },
