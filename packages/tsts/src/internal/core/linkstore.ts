@@ -32,7 +32,6 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * 	s.entries[key] = value
  * 	return value
  * }
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"TSTS constructs all in-scope LinkStores with an eager Map, so Get does not need Go's per-call nil-map branch; JS object references stored in that Map are already stable, so link objects also do not need duplicate retention through the Go arena slice. This preserves observable semantics for constructed stores while removing hot checker map-initialization and arena-retention overhead."}
  */
 export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
   const entries = receiver!.entries;

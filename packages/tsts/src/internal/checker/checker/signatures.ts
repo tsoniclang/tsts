@@ -2278,7 +2278,6 @@ export function Checker_checkImportCallExpression(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkCallExpression","kind":"method","status":"implemented","sigHash":"c7077a9359a5dabbb7b33b07409cf7ae319dc8d4ee9862f71076afb9296c19cc"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go call resolution, extension-enabled programs may record provider-selected target call, parameter mode, and argument conversion facts for consumers; no-extension programs and unowned calls remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -11067,7 +11066,6 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol","kind":"method","status":"implemented","sigHash":"a40817fe1af41ea59c2da8e72d9850088ef890ade45f2e789374df947fa9e7c5"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-selected element-access evidence needs a stable synthetic symbol for mapped index signatures, whose TS-Go index infos have no concrete IndexSignatureDeclaration; normal index-type selection and diagnostics remain unchanged."}
  *
  * Go source:
  * func (c *Checker) getApplicableIndexSymbol(t *Type, keyType *Type) *ast.Symbol {

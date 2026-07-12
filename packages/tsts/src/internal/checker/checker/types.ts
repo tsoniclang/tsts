@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap, goReceiverKey } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -8,7 +8,7 @@ import { MaxInt } from "../../../go/math.js";
 import * as maps from "../../../go/maps.js";
 import * as strconv from "../../../go/strconv.js";
 import type { Node } from "../../ast/spine.js";
-import { Node_End, Node_ForEachChild, Node_Name, Node_Pos, NodeList_Pos, goReceiverKey, Node_FunctionLikeData } from "../../ast/spine.js";
+import { Node_End, Node_ForEachChild, Node_Name, Node_Pos, NodeList_Pos, Node_FunctionLikeData } from "../../ast/spine.js";
 import { Node_Type, Node_Expression, Node_Initializer, Node_Symbol, Node_Elements, Node_QuestionToken, Node_Members, Node_Properties, Node_Text, Node_TypeArgumentList, Node_TypeArguments, Node_TypeParameters, Node_Parameters, Node_TagName, SourceFile_Text, SourceFile_Path, Node_Body, Node_PropertyNameOrName, AsSourceFile } from "../../ast/ast.js";
 import type { EntityName, Expression, TypeNode } from "../../ast/generated/unions.js";
 import { IsParenthesizedExpression, IsElementAccessExpression, IsParameterDeclaration, IsInterfaceDeclaration, IsClassDeclaration, IsTypeAliasDeclaration, IsJSTypeAliasDeclaration, IsTypeLiteralNode, IsTupleTypeNode, IsOptionalTypeNode, IsRestTypeNode, IsNamedTupleMember, IsTypeOperatorNode, IsComputedPropertyName, IsPropertySignatureDeclaration, IsPropertyAssignment, IsShorthandPropertyAssignment, IsSpreadAssignment, IsJsxAttribute, IsJSDocNonNullableType, IsJSDocNullableType, IsIdentifier, IsObjectBindingPattern, IsArrayBindingPattern, IsObjectLiteralExpression, IsArrayLiteralExpression, IsPropertyAccessExpression, IsJsxOpeningElement, IsJsxSelfClosingElement, IsJsxAttributes, IsTypeReferenceNode, IsBinaryExpression, IsAwaitExpression, IsCallExpression, IsNewExpression, IsQualifiedName, IsTypeQueryNode, IsExportSpecifier, IsMethodSignatureDeclaration, IsBlock, IsBindingElement, IsOmittedExpression, IsSourceFile, IsExpressionWithTypeArguments, IsJSDocAugmentsTag, IsMetaProperty, IsImportAttributes } from "../../ast/generated/predicates.js";
@@ -13864,7 +13864,6 @@ export function Checker_getTemplateStringForType(receiver: GoPtr<Checker>, t: Go
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getContextualType","kind":"method","status":"implemented","sigHash":"17a991b5a2e659d0add81ab93bf361c392c9a7ec1cd3b40b327dbcb0c90eaca1"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go computes contextual types, extension-enabled programs may attach provider-owned contextual target facts for consumers. The returned TS-Go contextual type is unchanged, and no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) getContextualType(node *ast.Node, contextFlags ContextFlags) *Type {

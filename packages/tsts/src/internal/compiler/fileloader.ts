@@ -1293,7 +1293,6 @@ export function fileLoader_getDefaultLibFilePriority(receiver: GoPtr<fileLoader>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.loadSourceFileMetaData","kind":"method","status":"implemented","sigHash":"52b29481881acea04f31c6031f028ef2d8dd0bb77e94245bbfa6d3738f7b12a2"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider virtual modules have no package.json scope; physical files still use the exact TS-Go metadata path."}
  *
  * Go source:
  * func (p *fileLoader) loadSourceFileMetaData(fileName string) ast.SourceFileMetaData {
@@ -1353,7 +1352,6 @@ export function fileLoader_loadSourceFileMetaData(receiver: GoPtr<fileLoader>, f
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.parseSourceFile","kind":"method","status":"implemented","sigHash":"45c6977d82282b19c08f6059d643aa2034209ab4ddf126043c0fffae9e981589"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider virtual modules are parsed from structured provider source text instead of the host filesystem; physical files still call Host.GetSourceFile exactly as TS-Go does."}
  *
  * Go source:
  * func (p *fileLoader) parseSourceFile(t *parseTask) *ast.SourceFile {
@@ -1721,7 +1719,6 @@ export const externalHelpersModuleNameText: string = "tslib";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider-owned module specifiers resolve through TargetBindingProvider before physical module resolution; unowned modules and no-extension programs remain on the exact TS-Go path, and owned rejection does not fall back to files."}
  *
  * Go source:
  * func (p *fileLoader) resolveImportsAndModuleAugmentations(t *parseTask) {

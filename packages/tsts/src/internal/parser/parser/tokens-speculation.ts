@@ -1005,7 +1005,6 @@ export function Parser_createIdentifier(receiver: GoPtr<Parser>, isIdentifier: b
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.internIdentifier","kind":"method","status":"implemented","sigHash":"c15ecffe0c2c1ec045b943a5c2478888baf2de40d37e997a4c09a8c5c2c56ef4"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"TSTS stores each interned identifier string as its own map value, so a single Map.get distinguishes cached identifiers from misses; this preserves Go's intern table semantics while avoiding a has+get double lookup on every repeated identifier."}
  *
  * Go source:
  * func (p *Parser) internIdentifier(text string) string {

@@ -695,7 +695,6 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkForOfStatement","kind":"method","status":"implemented","sigHash":"e566e597fa7d439638d7e79f7f6a58beadd26a29858a11cc0387de04ffb22181"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go for-of checking, extension-enabled programs record the selected source element type for both declaration and assignment initializers; no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkForOfStatement(node *ast.Node) {
@@ -2276,7 +2275,6 @@ export function Checker_checkAwaitExpression(receiver: GoPtr<Checker>, node: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"c610d53b7cece49af9ecbed7367a4ec98979f304bdc5698b85a78a39c58ffbc8"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go prefix unary checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkPrefixUnaryExpression(node *ast.Node) *Type {
@@ -2406,7 +2404,6 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"dba67508ee9c8a5bcaa20ee59c4a3f3c5130a2ecd6afbf976d8dd27550468ce4"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go postfix unary checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkPostfixUnaryExpression(node *ast.Node) *Type {
@@ -2776,7 +2773,6 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryExpression","kind":"method","status":"implemented","sigHash":"7789a2bf27bb77f18361e12bbc4e9dd02304e6f162df1c874f94945d2d4b1bcf"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binary expression checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkBinaryExpression(node *ast.Node, checkMode CheckMode) *Type {

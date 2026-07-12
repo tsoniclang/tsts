@@ -6949,7 +6949,6 @@ function sourceTextByteViewHasBytes(text: string, view: utf8.StringByteView, sta
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::findImportOrRequire","kind":"func","status":"implemented","sigHash":"dc74ebd84691acdaa23ed9ecd060a4e3f0c4eff44bc25a50aa1e7dbd8a2233a2"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan import/require candidates over one shared source byte view instead of materializing text[index:] and text[index:index+size] strings on each probe; byte offsets and match semantics remain TS-Go exact."}
  *
  * Go source:
  * func findImportOrRequire(text string, start int) (index int, size int) {

@@ -746,7 +746,6 @@ export function NewScanner(): GoPtr<Scanner> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Reset","kind":"method","status":"implemented","sigHash":"81860126af7e9c4c3c1d20c1029c54c99c301e87d978c5bec8e14b1fe7606692"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Clear the scanner-local source byte-view cache when the scanner text is reset; the observable Scanner state remains TS-Go exact."}
  *
  * Go source:
  * func (s *Scanner) Reset() {
@@ -1138,7 +1137,6 @@ export function Scanner_HasPrecedingJSDocWithSeeOrLink(receiver: GoPtr<Scanner>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanJSDocCommentForTags","kind":"method","status":"implemented","sigHash":"6bdaeea7925c4dc0dd4e55cc5c1b1b46e28041eb30226cbdde9795967bb0aecc"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the existing UTF-8 byte view by range instead of repeatedly slicing and re-encoding JSDoc comment text; tag detection and TS-Go byte-offset semantics are unchanged."}
  *
  * Go source:
  * func (s *Scanner) scanJSDocCommentForTags(commentText string) {
@@ -1212,7 +1210,6 @@ function stringByteViewIndexByteInRange(text: string, view: utf8.StringByteView,
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::hasJSDocTag","kind":"func","status":"implemented","sigHash":"f361aaea4875a620ff76aa9e159099efa0daae87a2b07cf5f788d1bd3193644f"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Share the UTF-8 byte-view prefix check used by scanner JSDoc range scanning, avoiding temporary substring views while preserving TS-Go tag-boundary behavior."}
  *
  * Go source:
  * func hasJSDocTag(text string, tags ...string) bool {
@@ -1262,7 +1259,6 @@ function hasJSDocTagAt(text: string, view: utf8.StringByteView, start: int, end:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetText","kind":"method","status":"implemented","sigHash":"82064155a55a75a9b3e24e3a8f91ca17729da58c43eff21848500a222365a84d"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Pin one UTF-8 byte view per scanner source text so byte-offset scanning does not repeatedly reclassify the same JS/.NET UTF-16 string."}
  *
  * Go source:
  * func (s *Scanner) SetText(text string) {
@@ -1377,7 +1373,6 @@ export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Mess
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.char","kind":"method","status":"implemented","sigHash":"83b9f5c499d55cb42ecff92a9698b5d07b83e98bfc19ce7e8d9464bd49aed11a"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every byte access."}
  *
  * Go source:
  * func (s *Scanner) char() rune {
@@ -1397,7 +1392,6 @@ export function Scanner_char(receiver: GoPtr<Scanner>): GoRune {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAt","kind":"method","status":"implemented","sigHash":"da7fb8267c9d51bb48b7ab642034a5e6b9ba11614d5be412238c0917f439a26f"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every offset probe."}
  *
  * Go source:
  * func (s *Scanner) charAt(offset int) rune {
@@ -1417,7 +1411,6 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode from the scanner-local source byte view while preserving TS-Go byte-offset rune size semantics."}
  *
  * Go source:
  * func (s *Scanner) charAndSize() (rune, int) {
@@ -1456,7 +1449,6 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanASCIIWhile","kind":"method","status":"implemented","sigHash":"43b4e929d6def6f9ba2bd93f8ceb888db4e5dffbbc6a805e447a79074d942f12"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan directly over the scanner-local source byte view instead of materializing Go-style string slices; byte advancement remains TS-Go exact."}
  *
  * Go source:
  * // scanASCIIWhile advances s.pos over the longest run of ASCII bytes for which
@@ -3965,7 +3957,6 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the simple-string fast path over the scanner byte view before materializing token text; Go string slices are O(1), but JS/.NET text slices allocate."}
  *
  * Go source:
  * func (s *Scanner) scanString(jsxAttributeString bool) string {
@@ -5321,7 +5312,6 @@ export function Scanner_scanInvalidCharacter(receiver: GoPtr<Scanner>): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetIdentifierToken","kind":"func","status":"implemented","sigHash":"a5e7f979cfd8a669e6b4be3494c2953ad7fbec7fd2e111b3f38f2ee61f5282c7"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Keyword spellings are ASCII-only, so JS/.NET UTF-16 length and first code unit are sufficient to decide whether a textToKeyword probe can succeed; non-ASCII identifiers cannot equal a keyword and do not need UTF-8 byte-view materialization."}
  *
  * Go source:
  * func GetIdentifierToken(str string) ast.Kind {
@@ -5346,7 +5336,6 @@ export function GetIdentifierToken(str: string): Kind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsValidIdentifier","kind":"func","status":"implemented","sigHash":"6f2f2e0fa3f0726fd3acac525f61e6739551580772c0110f3bd049ad7184f931"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode identifier text by byte offset over one UTF-8 byte view; Go's s[i:] slice is O(1), but JS substring/decode would allocate each iteration."}
  *
  * Go source:
  * func IsValidIdentifier(s string) bool {
@@ -6037,7 +6026,6 @@ export function GetShebang(text: string): string {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetScannerForSourceFile","kind":"func","status":"implemented","sigHash":"720bc4aa046156e241c1cc279919d890b8d4aab6a56c0fd5ec1af0aa9b3b8865"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Route source-file scanner initialization through SetText so the scanner-local source byte-view cache is refreshed with the new text."}
  *
  * Go source:
  * func GetScannerForSourceFile(sourceFile *ast.SourceFile, pos int) *Scanner {
@@ -6477,7 +6465,6 @@ export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndUTF16CharacterOfPosition","kind":"func","status":"implemented","sigHash":"3053c689ece6d87b64937f35b03ebebae053b2951b4d2af6800fa0daf5c7dead"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Compute UTF-16 length for a byte range over the source byte view instead of allocating sourceFile.Text()[lineStart:pos]."}
  *
  * Go source:
  * func GetECMALineAndUTF16CharacterOfPosition(sourceFile ast.SourceFileLike, pos int) (line int, character core.UTF16Offset) {
@@ -6731,7 +6718,6 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Search comment terminators and test bounds against a cached byte view instead of materializing text[pos:] slices; comment ranges remain TS-Go byte-offset exact."}
  *
  * Go source:
  * func iterateCommentRanges(f *ast.NodeFactory, text string, pos int, trailing bool) iter.Seq[ast.CommentRange] {

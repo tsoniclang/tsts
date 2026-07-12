@@ -717,7 +717,6 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"a124c4f6a47008ca4e3457fd95247b6cb4c9c33b70716c69b709067d1bb2518e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-enabled ProgramOptions attach their ExtensionHost to the constructed Program so checker and consumer seams are program-scoped; no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func NewProgram(opts ProgramOptions) *Program {
@@ -1210,7 +1209,6 @@ export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.BindSourceFiles","kind":"method","status":"implemented","sigHash":"adbb681ce817a1474ae6c753e2045b27ef0b0ead57fdc141f8e63bb8642fd42f"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binding, provider virtual modules publish canonical identity and target binding facts for consumers; programs without an attached extension host remain on the direct TS-Go path."}
  *
  * Go source:
  * func (p *Program) BindSourceFiles() {
@@ -1608,7 +1606,6 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetBindDiagnostics","kind":"method","status":"implemented","sigHash":"095da506f9a3fd3269680f3ea12f04dfced3daec560c8cc8df2fe01d23a70933"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Single-file binding also records provider virtual module facts after normal TS-Go binding; no-extension programs remain unchanged."}
  *
  * Go source:
  * func (p *Program) GetBindDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1636,7 +1633,6 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnostics","kind":"method","status":"implemented","sigHash":"bcc981c426c3f57d04542f3263562ddee4d27f91f7f301bdb982d72820e92c2a"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended to the normal TSTS semantic diagnostic channel after TS-Go checking; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1654,7 +1650,6 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Co
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnosticsWithoutNoEmitFiltering","kind":"method","status":"implemented","sigHash":"d3d9c2f85f878717309d4b733bc00728a9022c33d1c199c86ccdf25566f1b67a"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended per source file before final sort/deduplication; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnosticsWithoutNoEmitFiltering(ctx context.Context, sourceFiles []*ast.SourceFile) map[*ast.SourceFile][]*ast.Diagnostic {
@@ -3030,7 +3025,6 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"58024f4d99ada564df7a23698f4cc8b6567aebe9250892ed517fdaae0f7ab8be"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Checker diagnostics force binding in TS-Go; extension-enabled programs must also publish bound-source lifecycle facts before checker hooks consume them. No-extension programs return immediately through the existing extension integration guard."}
  *
  * Go source:
  * func (p *Program) getBindAndCheckDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {

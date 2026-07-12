@@ -1,7 +1,7 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
-import type { GoArray, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import type { GoInterfaceValue, Node } from "../ast/spine.js";
-import { goReceiverKey } from "../ast/spine.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
 import type { ConditionalTypeNode, MappedTypeNode } from "../ast/generated/data.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";

@@ -1485,7 +1485,6 @@ export function Checker_checkAccessorDeclaration(receiver: GoPtr<Checker>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypeReferenceOrImport","kind":"method","status":"implemented","sigHash":"04b368dc482ffe366538f2c25eef6b3d9e8871a15205960541f052fc94c89c38"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go type-reference checking, extension-enabled programs may ask the registered provider to validate target-only generic constraints and record runtime carrier facts carried by provider virtual modules; no-extension programs and unowned types remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkTypeReferenceOrImport(node *ast.Node) {
@@ -5444,7 +5443,6 @@ export function Checker_checkQualifiedName(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIndexedAccess","kind":"method","status":"implemented","sigHash":"32fa0a002cb05468dc7def68493137d7aedba03aeb689f7a70ba4ca9a71ad6b7"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go element access checking, extension-enabled programs may record provider-selected surface/target indexer facts for consumers; no-extension programs and unowned accesses remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkIndexedAccess(node *ast.Node, checkMode CheckMode) *Type {
@@ -5465,7 +5463,6 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkElementAccessChain","kind":"method","status":"implemented","sigHash":"87c91ac1dd6b496bfe2958fdb3dd1e0df6978e08f1f8ab4c9f61519478895348"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go optional-chain element access checking, extension-enabled programs record the same selected source evidence exposed for non-optional element access."}
  *
  * Go source:
  * func (c *Checker) checkElementAccessChain(node *ast.Node, checkMode CheckMode) *Type {
@@ -6093,7 +6090,6 @@ export function Checker_checkMetaPropertyKeyword(receiver: GoPtr<Checker>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIdentifier","kind":"method","status":"implemented","sigHash":"e9a0175eaea65200220166cc3e50540931a8a88829684e8eeacf1be5a4eaeba7"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go identifier symbol resolution, extension-enabled programs may validate provider-owned flow/ownership facts attached by source-semantics markers; no-extension programs and unmarked symbols remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkIdentifier(node *ast.Node, checkMode CheckMode) *Type {
@@ -6436,7 +6432,6 @@ export function Checker_isSameScopedBindingElement(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"febcba979df4bee97ff9b0d6a44f3b1d8f0f4d8f43952819b5bcda4e8c2e880e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go property access checking, extension-enabled programs may record provider-selected surface/target member facts for consumers; no-extension programs and unowned accesses remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessExpression(node *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
@@ -6459,7 +6454,6 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessChain","kind":"method","status":"implemented","sigHash":"8fddaeae38c55291a27039fd3e34d4f23b91a1185f6450fd8a87c8ef77aeb85e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go optional-chain property access checking, extension-enabled programs record the same selected source evidence exposed for non-optional property access."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessChain(node *ast.Node, checkMode CheckMode) *Type {
@@ -6478,7 +6472,6 @@ export function Checker_checkPropertyAccessChain(receiver: GoPtr<Checker>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAccessExpressionOrQualifiedName","kind":"method","status":"implemented","sigHash":"9215f415f7607d418e5a3a390b0bf838e9a2f44b6cd177065016f5a85a4714b1"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for property access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
  *
  * Go source:
  * func (c *Checker) checkPropertyAccessExpressionOrQualifiedName(node *ast.Node, left *ast.Node, leftType *Type, right *ast.Node, checkMode CheckMode, writeOnly bool) *Type {
@@ -16678,7 +16671,6 @@ export function Checker_getIndexedAccessTypeOrUndefined(receiver: GoPtr<Checker>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getPropertyTypeForIndexType","kind":"method","status":"implemented","sigHash":"b165e26df1bd4167798c456fec8881582ad4a6c35f9d23dd470b4c9da80f6f58"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"When TS-Go selects an index signature for element access, extension-selected evidence needs the same resolved-symbol cache that TS-Go already creates for public symbol queries."}
  *
  * Go source:
  * func (c *Checker) getPropertyTypeForIndexType(originalObjectType *Type, objectType *Type, indexType *Type, fullIndexType *Type, accessNode *ast.Node, accessFlags AccessFlags) *Type {

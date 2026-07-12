@@ -148,7 +148,6 @@ export function parseTask_Path(receiver: GoPtr<parseTask>): Path_65a900c3 {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::method::parseTask.load","kind":"method","status":"implemented","sigHash":"af7c55efe5242848312d3c1b0508d2b9ec9c78063b2547aea4383cb82d2555ac"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"New Hope provider virtual modules are compiler-owned in-memory source files; when no extension host owns the path this remains the direct TS-Go load path."}
  *
  * Go source:
  * func (t *parseTask) load(loader *fileLoader) {

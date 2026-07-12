@@ -1,7 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { goReceiverKey } from "../ast/spine.js";
-import type { GoInterfaceValue } from "../ast/spine.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
 import * as core from "../core/core.js";
 import type { Checker, InferenceContext, InferenceInfo } from "./checker/state.js";
 import { Checker_instantiateType } from "./checker/types.js";

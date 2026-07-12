@@ -1,5 +1,6 @@
 import type { bool, int, short } from "../../go/scalars.js";
-import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { GoInterfaceValue, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
@@ -46,13 +47,6 @@ import { ModifierFlagsAmbient } from "./modifierflags.js";
 // `x, ok := v.(*Concrete)` / `v.(*Concrete)`), the generated `Concrete_as_nodeData`
 // adapter attaches the concrete receiver under this brand. `casts.ts` reads it.
 // ──────────────────────────────────────────────────────────────────────
-
-// The brand key is a real runtime symbol whose `unique symbol` type is inferred
-// directly from the `Symbol(...)` initializer (no cast needed). `GoInterfaceValue`
-// keys an optional receiver slot by that symbol type so adapters can attach, and
-// casts.ts can recover, the concrete receiver.
-export const goReceiverKey: unique symbol = Symbol("goReceiver");
-export type GoInterfaceValue<C> = { readonly [goReceiverKey]?: C };
 
 // Re-export the @tsgo-unit spine units below.
 

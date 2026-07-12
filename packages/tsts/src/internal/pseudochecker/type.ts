@@ -1,7 +1,7 @@
 import type { bool, sbyte, short } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { GoInterfaceValue, Node } from "../ast/spine.js";
-import { goReceiverKey } from "../ast/spine.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
+import type { Node } from "../ast/spine.js";
 import type { TypeParameterDeclaration } from "../ast/generated/data.js";
 
 /**

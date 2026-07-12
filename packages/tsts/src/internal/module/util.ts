@@ -303,7 +303,6 @@ export function ComparePatternKeys(a: string, b: string): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic","kind":"func","status":"implemented","sigHash":"81cbc2857ca9604da7d6e28d7de3263b92890e0a3a40c727e75e14832c72fe0b"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider virtual modules are compiler-owned in-memory TypeScript source created by TargetBindingProvider resolution, not arbitrary physical extensions; physical module diagnostics stay on the exact TS-Go switch."}
  *
  * Go source:
  * func GetResolutionDiagnostic(options *core.CompilerOptions, resolvedModule *ResolvedModule, file *ast.SourceFile) *diagnostics.Message {

@@ -1,8 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr } from "../../go/compat.js";
+import { goReceiverKey } from "../../go/compat.js";
+import type { GoInterfaceValue, GoMap, GoPtr } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
-import { goReceiverKey } from "../ast/spine.js";
-import type { GoInterfaceValue, ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
+import type { ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
 import { Node_Clone, Node_End, Node_ForEachChild, Node_Pos, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone, NodeList_End, NodeList_Pos } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { NodeVisitor } from "../ast/visitor.js";

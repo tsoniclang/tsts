@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
+import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap, goReceiverKey } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -225,7 +225,7 @@ import {
 } from "./generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsUsing, NodeFlagsHasJSDoc, NodeFlagsReparsed } from "./generated/flags.js";
 import type { NodeFlags } from "./generated/flags.js";
-import { goReceiverKey, NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
+import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
 import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
 import { ModifierFlagsParameterPropertyModifier } from "./modifierflags.js";
@@ -6063,7 +6063,6 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::createToken","kind":"func","status":"implemented","sigHash":"5de2094d9a107a1a3508ac0414666f642fa8ab577f11758b31a281c3f1bcc510"}
- * @tsgo-override {"category":"runtime-correctness-performance","allow":["body"],"reason":"Use TS-Go byte-offset slicing over JS/.NET UTF-16 source storage; direct JS slice would mis-handle non-ASCII positions and bypass the shared byte-view cache."}
  *
  * Go source:
  * func createToken(kind Kind, file *SourceFile, pos, end int, flags TokenFlags) *Node {

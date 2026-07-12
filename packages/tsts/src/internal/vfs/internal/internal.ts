@@ -350,7 +350,6 @@ export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: Wa
  *
  * 	return decodeBytes(s)
  * }
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode bytes returned by the JS FS helper directly instead of materializing Go's unsafe.String intermediate as a binary JS string; observable BOM and UTF-8/UTF-16 decoding semantics remain TS-Go exact."}
  */
 export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string, bool] {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);

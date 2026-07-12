@@ -1056,7 +1056,6 @@ export function ComputeECMALineStarts(text: string): ECMALineStarts {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::ComputeECMALineStartsSeq","kind":"func","status":"implemented","sigHash":"911fb066c24cc7312e67a544bedd9232d274063c961ddc2bacdafd2fc1a900f1"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Walk the native JS/.NET UTF-16 source text while maintaining TS-Go UTF-8 byte offsets, avoiding a full UTF-8 byte-view allocation for every line-map computation."}
  *
  * Go source:
  * func ComputeECMALineStartsSeq(text string) iter.Seq[TextPos] {
@@ -1175,7 +1174,6 @@ export type UTF16Offset = int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len","kind":"func","status":"implemented","sigHash":"08a30f04fbc495b785be284545417ab70df1fd4079f69a0b09fc73ce87fb4254"}
- * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Use the native JS/.NET UTF-16 code-unit length directly; it is the value this TS-Go helper computes after decoding valid source text."}
  *
  * Go source:
  * func UTF16Len(s string) UTF16Offset {
