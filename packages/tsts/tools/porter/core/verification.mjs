@@ -112,9 +112,10 @@ function requireCompleteSignatureAudit(audit) {
   if (audit?.state === "not-run") {
     requireExactPlainObject(audit, [
       "ambientReferenceRelations", "authoredFacades", "declarationOwnership", "externalPackageSurface", "reason", "state",
-      "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript",
+      "selection", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript",
     ], "Porter status.signatureCheck");
     requireNotRunReason(audit, "Porter status.signatureCheck");
+    requireSignatureSelection(audit.selection);
     for (const key of ["ambientReferenceRelations", "authoredFacades", "declarationOwnership", "externalPackageSurface", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript"]) {
       requireNotRunAudit(audit[key], `Porter status.signatureCheck.${key}`);
     }
@@ -126,12 +127,7 @@ function requireCompleteSignatureAudit(audit) {
     "selection", "state", "typeEquivalenceRelations", "typeStoragePolicies", "untrackedTypeScript",
   ], "Porter status.signatureCheck");
   if (audit.state !== "complete") throw new Error("Porter status.signatureCheck.state must be 'complete'");
-  if (audit.selection?.kind === "all-active") requireExactPlainObject(audit.selection, ["kind"], "Porter status.signatureCheck.selection");
-  else if (audit.selection?.kind === "id-filter") {
-    requireExactPlainObject(audit.selection, ["kind", "matchedUnitCount", "pattern"], "Porter status.signatureCheck.selection");
-    requireCount(audit.selection.matchedUnitCount, "Porter status.signatureCheck.selection.matchedUnitCount");
-    if (typeof audit.selection.pattern !== "string" || audit.selection.pattern.length === 0) throw new Error("Porter status.signatureCheck.selection.pattern must be non-empty");
-  } else throw new Error("Porter status.signatureCheck.selection.kind is invalid");
+  requireSignatureSelection(audit.selection);
   for (const key of ["checked", "descriptors", "mismatchCount", "overrideIssueCount", "overriddenUnits"]) requireCount(audit[key], `Porter status.signatureCheck.${key}`);
   requireEvidenceArray(audit.mismatches, "Porter status.signatureCheck.mismatches", "kind");
   requireEvidenceArray(audit.overrideIssues, "Porter status.signatureCheck.overrideIssues", "reason");
@@ -144,6 +140,20 @@ function requireCompleteSignatureAudit(audit) {
     requireInventoryAudit(audit[key], ["checked", "inventory", "mismatchCount", "state"], key);
   }
   requireUntrackedTypeScriptAudit(audit.untrackedTypeScript);
+}
+
+function requireSignatureSelection(selection) {
+  if (selection?.kind === "all-active") {
+    requireExactPlainObject(selection, ["kind"], "Porter status.signatureCheck.selection");
+    return;
+  }
+  if (selection?.kind === "id-filter") {
+    requireExactPlainObject(selection, ["kind", "matchedUnitCount", "pattern"], "Porter status.signatureCheck.selection");
+    requireCount(selection.matchedUnitCount, "Porter status.signatureCheck.selection.matchedUnitCount");
+    if (typeof selection.pattern !== "string" || selection.pattern.length === 0) throw new Error("Porter status.signatureCheck.selection.pattern must be non-empty");
+    return;
+  }
+  throw new Error("Porter status.signatureCheck.selection.kind is invalid");
 }
 
 function requireCompleteJsonTagAudit(audit) {
