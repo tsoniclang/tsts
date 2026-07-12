@@ -119,6 +119,21 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(runtime.GoMapIsNil(nilMap), true);
   assert.throws(() => nilMap.set("key", 1), /assignment to entry in nil map/);
 
+  class StructuredKey {
+    constructor(value) { this.value = value; }
+    text() { return String(this.value); }
+  }
+  const structuredKey = runtime.GoStructKey(
+    [runtime.GoStructField((value) => value.value, runtime.GoNumberKey)],
+    ([value], source) => Object.assign(Object.create(Object.getPrototypeOf(source)), source, { value }),
+  );
+  const structuredMap = runtime.NewGoStructMap(structuredKey);
+  const sourceKey = new StructuredKey(1);
+  structuredMap.set(sourceKey, "stored");
+  sourceKey.value = 2;
+  assert.equal(structuredMap.get(new StructuredKey(1)), "stored");
+  assert.equal(structuredMap.keys().next().value.text(), "1");
+
   const nilChannel = runtime.GoNilChan();
   assert.equal(runtime.GoChanIsNil(nilChannel), true);
   assert.equal(runtime.GoChanTrySend(nilChannel, 1), false);
