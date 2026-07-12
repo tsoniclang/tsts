@@ -4,7 +4,11 @@ import {
   renderCanonicalTypeParameters,
 } from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { authoredFacadeModuleSet, buildExternalFacadeMap } from "./external-facades.mjs";
+import {
+  authoredFacadeModuleSet,
+  buildExternalFacadeMap,
+  buildExternalFacadeStorageCatalog,
+} from "./external-facades.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
@@ -20,6 +24,7 @@ import {
   semanticTypeParameterKey,
 } from "../ts-extractor/semantic-type-contract.mjs";
 import path from "node:path";
+import { externalMethodById } from "./external-facade-method-bindings.mjs";
 
 export function authoredFacadePathSet(config) {
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
@@ -147,6 +152,127 @@ export function renderExternalFacadePolicy(facade, declaration, profileIndex, co
   return `export type ${name}${typeParameters} = ${body};`;
 }
 
+export function createExternalFacadeContractRenderer(config, snapshot, facades = buildExternalFacadeMap(config, snapshot)) {
+  const environment = externalContractEnvironment(config, snapshot, facades);
+  return (facade, declaration, profileIndex) => {
+    const context = environment.contextFor(facade);
+    const body = renderExternalFacadeContractPolicy(facade, declaration, profileIndex, context);
+    return `${externalContractPrefix(environment, facade, context)}${body}\n`;
+  };
+}
+
+export function createExternalMethodBindingContractRenderer(config, snapshot, facades = buildExternalFacadeMap(config, snapshot)) {
+  const environment = externalContractEnvironment(config, snapshot, facades);
+  return (facade, declaration, binding, profileIndex) => {
+    const method = externalMethodById(declaration, binding.methodId);
+    if (method === undefined) throw new Error(`external Go method binding '${binding.methodId}' is missing from '${facade.objectId}'`);
+    const context = environment.contextFor(facade);
+    const semanticContext = semanticContextWithTypeParameters(
+      { index: context.semanticIndex, profile: profileIndex },
+      declaration.typeParameters,
+    );
+    const operations = semanticRendererOperations(context, { id: `external-method:${binding.methodId}`, semantic: [{ profiles: [profileIndex] }] });
+    const lowered = lowerSemanticSignature(method.signature, semanticContext, { includeReceiver: true });
+    const typeParameters = renderCanonicalTypeParameters(
+      [...lowered.receiverTypeParameters, ...lowered.typeParameters],
+      operations,
+    );
+    const rendered = renderCanonicalSignature(lowered, operations, {
+      includeReceiver: true,
+      receiverName: binding.receiverName,
+    });
+    const body = `export function ${safeIdentifier(binding.tsName)}${typeParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType} { throw new globalThis.Error("TSGO_EXTERNAL_METHOD_CONTRACT"); }`;
+    return `${externalContractPrefix(environment, facade, context)}${externalFacadeScaffold(facade)}\n${body}\n`;
+  };
+}
+
+function externalContractEnvironment(config, snapshot, facades) {
+  const profile = loadProfile(config);
+  const storageFacades = buildExternalFacadeStorageCatalog(config, snapshot);
+  for (const [objectId, facade] of facades) if (!storageFacades.has(objectId)) storageFacades.set(objectId, facade);
+  const evidence = addProfileSemanticStorageEvidence(buildTypeRepresentationEvidence(config, snapshot, storageFacades), profile);
+  const byModule = new Map();
+  for (const facade of storageFacades.values()) {
+    const group = byModule.get(facade.tsModule) ?? [];
+    group.push(facade);
+    byModule.set(facade.tsModule, group);
+  }
+  for (const group of byModule.values()) group.sort((left, right) => compareText(left.tsName, right.tsName));
+  return {
+    byModule,
+    contextFor(facade) {
+      const relativeTargetPath = `${config.tsRoot.replace(/\/+$/, "")}/${facade.tsModule}`;
+      return facadeRendererContext(
+        config,
+        snapshot,
+        relativeTargetPath,
+        byModule.get(facade.tsModule) ?? [facade],
+        storageFacades,
+        profile,
+        evidence,
+      );
+    },
+  };
+}
+
+function externalContractPrefix(environment, facade, context) {
+  const localTypeScaffolds = (environment.byModule.get(facade.tsModule) ?? [])
+    .filter((entry) => entry.objectId !== facade.objectId)
+    .map((entry) => {
+      const parameters = Array.from({ length: entry.arity }, (_unused, index) => `T${index}`).join(", ");
+      return `type ${safeIdentifier(entry.tsName)}${parameters === "" ? "" : `<${parameters}>`} = never;`;
+    });
+  return `${renderImports(context)}${localTypeScaffolds.length === 0 ? "" : `${localTypeScaffolds.join("\n")}\n`}`;
+}
+
+function externalFacadeScaffold(facade) {
+  const parameters = Array.from({ length: facade.arity }, (_unused, index) => `T${index}`).join(", ");
+  return `type ${safeIdentifier(facade.tsName)}${parameters === "" ? "" : `<${parameters}>`} = never;`;
+}
+
+export function renderExternalFacadeContractPolicy(facade, declaration, profileIndex, context) {
+  const representation = facade.runtimeAdaptation?.representation;
+  const unit = { id: `external-facade:${facade.objectId}`, semantic: [{ profiles: [profileIndex] }] };
+  const semanticContext = semanticContextWithTypeParameters({ index: context.semanticIndex, profile: profileIndex }, declaration.typeParameters);
+  const operations = semanticRendererOperations(context, unit);
+  const parameters = lowerSemanticTypeParameters(declaration.typeParameters, semanticContext);
+  const typeParameters = renderCanonicalTypeParameters(parameters, operations);
+  const name = safeIdentifier(facade.tsName);
+  if (representation === "scalar") return `export type ${name}${typeParameters} = unknown;`;
+  if (representation === "class") {
+    if (declaration.rhs.kind !== "struct" || declaration.alias) {
+      throw new Error(`external facade ${facade.objectId} can use class runtime adaptation only for a defined Go struct`);
+    }
+    return renderAuthoredClassContract(name, typeParameters, facade, declaration, semanticContext, operations);
+  }
+  if (representation !== "structural") {
+    if (!declaration.alias && declaration.rhs.kind === "interface" && externalInterfaceCanUseDeclaration(declaration.rhs)) {
+      return renderExternalInterfaceDeclaration(name, typeParameters, declaration.rhs, semanticContext, operations);
+    }
+    return `export type ${name}${typeParameters} = ${renderExternalDeclarationBody(declaration, semanticContext, operations)};`;
+  }
+  const members = [];
+  let hidden = 0;
+  for (const field of declaration.rhs.struct?.fields ?? []) {
+    const variable = field.variable;
+    if (!variable.exported) continue;
+    members.push(`  ${safePropertyName(variable.name)}: ${renderExternalType(variable.type, semanticContext, semanticTypeContexts.value, operations)};`);
+  }
+  const methods = declaration.rhs.kind === "interface"
+    ? declaration.rhs.interface?.explicitMethods ?? []
+    : declaration.methods;
+  for (const method of methods) {
+    if (!method.exported) {
+      members.push(`  readonly ${unexportedMethodProperty(method, hidden++)}: never;`);
+      continue;
+    }
+    const aliases = declaration.rhs.kind === "struct" ? receiverTypeParameterAliases(declaration, method) : new Map();
+    members.push(`  ${renderMethodSignature(method.name, method.signature, semanticContext, operations, aliases)};`);
+  }
+  if (members.length === 0) members.push("  readonly __tsgoEmpty?: never;");
+  return `export interface ${safeIdentifier(facade.tsName)}${typeParameters} {\n${members.join("\n")}\n}`;
+}
+
 function renderInvariantExternalFacade(facade, sharedContext, config, snapshot, policies, facades, profile, evidence) {
   const outputs = new Map();
   for (const { declaration, profiles } of facade.variants) {
@@ -217,8 +343,11 @@ function renderExternalInterfaceDeclaration(name, typeParameters, type, semantic
   const members = [];
   let hidden = 0;
   for (const method of type.interface?.explicitMethods ?? []) {
-    if (method.exported) members.push(`  ${renderMethodSignature(method.name, method.signature, semanticContext, operations)};`);
-    else members.push(`  readonly ${unexportedMethodProperty(method, hidden++)}: never;`);
+    if (!method.exported) {
+      members.push(`  readonly ${unexportedMethodProperty(method, hidden++)}: never;`);
+      continue;
+    }
+    members.push(`  ${renderMethodSignature(method.name, method.signature, semanticContext, operations)};`);
   }
   if (members.length === 0) members.push("  readonly __tsgoEmpty?: never;");
   const extendsClause = heritage.length === 0 ? "" : ` extends ${heritage.join(", ")}`;
@@ -268,11 +397,34 @@ function renderExternalClass(name, typeParameters, facade, declaration, semantic
     };
     const methodParameters = renderCanonicalTypeParameters(lowered.typeParameters, methodOperations);
     const rendered = renderCanonicalSignature(lowered, methodOperations);
-    const body = facade.memberBodies.get(method.id)
-      ?? `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${facade.goDisplayName}.${method.name}`)});`;
+    const body = `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${facade.goDisplayName}.${method.name}`)});`;
     lines.push(`  ${safePropertyName(method.name)}${methodParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType} {\n    ${body}\n  }`);
   }
   if (lines.length === 0) lines.push("  readonly __tsgoEmpty?: never;");
+  return `export class ${name}${typeParameters} {\n${lines.join("\n")}\n}`;
+}
+
+function renderAuthoredClassContract(name, typeParameters, facade, declaration, semanticContext, operations) {
+  const lines = [];
+  for (const field of declaration.rhs.struct?.fields ?? []) {
+    const variable = field.variable;
+    if (!variable.exported) continue;
+    const rendered = renderExternalType(variable.type, semanticContext, semanticTypeContexts.value, operations);
+    lines.push(`  ${safePropertyName(variable.name)}!: ${rendered};`);
+  }
+  for (const method of declaration.methods) {
+    if (!method.exported) continue;
+    const aliases = receiverTypeParameterAliases(declaration, method);
+    const lowered = lowerSemanticSignature(method.signature, semanticContext, { includeReceiver: false });
+    const methodOperations = {
+      ...operations,
+      typeParameter: (reference) => aliases.get(semanticTypeParameterKey(reference)) ?? safeIdentifier(reference.name),
+    };
+    const methodParameters = renderCanonicalTypeParameters(lowered.typeParameters, methodOperations);
+    const rendered = renderCanonicalSignature(lowered, methodOperations);
+    const body = `throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_METHOD_CONTRACT ${facade.goDisplayName}.${method.name}`)});`;
+    lines.push(`  ${safePropertyName(method.name)}${methodParameters}(${rendered.parameters.join(", ")}): ${rendered.returnType} {\n    ${body}\n  }`);
+  }
   return `export class ${name}${typeParameters} {\n${lines.join("\n")}\n}`;
 }
 

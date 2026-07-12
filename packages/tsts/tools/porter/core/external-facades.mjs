@@ -3,9 +3,11 @@ import { safeIdentifier } from "./names.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { canonicalSchemaValue } from "./semantic-variants.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
+import { normalizeExternalMethodBindings } from "./external-facade-method-bindings.mjs";
+import { normalizeRuntimeAdaptation } from "./external-facade-runtime-adaptation.mjs";
 
 const policyKeys = new Set([
-  "memberBodies", "objectId", "runtimeAdaptation", "storageStrategy", "tsModule", "tsName",
+  "methodBindings", "objectId", "runtimeAdaptation", "storageStrategy", "tsModule", "tsName",
 ]);
 const storageStrategies = new Set(["authored", "generated"]);
 
@@ -42,22 +44,43 @@ export function buildExternalFacadeMap(config, snapshot) {
     const semantic = semanticIndex.get(objectId);
     const policy = policies.get(objectId);
     if (semantic === undefined || policy === undefined) throw new Error(`external facade '${objectId}' has no exact semantic/policy join`);
-    const { tsModule, tsName, storageStrategy } = policy;
-    const facade = {
-      ...semantic,
-      tsModule,
-      tsName,
-      storageStrategy,
-      runtimeAdaptation: policy.runtimeAdaptation,
-      memberBodies: policy.memberBodies,
-      storageIdentity: `${config.tsRoot.replace(/\/+$/, "")}/${tsModule}::${tsName}`,
-    };
+    const facade = materializeExternalFacade(config, semantic, policy);
     if (storageOwners.get(facade.storageIdentity) !== facade.objectId) throw new Error(`external facade '${facade.objectId}' lost its exact TypeScript storage ownership`);
     const previous = facades.get(facade.objectId);
     if (previous !== undefined) throw new Error(`duplicate external facade Go object identity '${facade.objectId}'`);
     facades.set(facade.objectId, facade);
   }
   return facades;
+}
+
+export function buildExternalFacadeStorageCatalog(config, snapshot) {
+  const semanticIndex = buildExternalSemanticTypeIndex(snapshot);
+  const profile = loadProfile(config);
+  const profileStorage = externalProfileStorage(profile);
+  const authoredModules = authoredFacadeModuleSet(config);
+  const policies = normalizedExternalFacadePolicies(config, semanticIndex, profileStorage, authoredModules);
+  const storageOwners = externalStorageOwners(config, policies, profileStorage);
+  const facades = new Map();
+  for (const [objectId, policy] of [...policies].sort(([left], [right]) => compareText(left, right))) {
+    const semantic = semanticIndex.get(objectId);
+    if (semantic === undefined) throw new Error(`external facade storage policy '${objectId}' has no exact semantic declaration`);
+    const facade = materializeExternalFacade(config, semantic, policy);
+    if (storageOwners.get(facade.storageIdentity) !== objectId) throw new Error(`external facade '${objectId}' lost its exact TypeScript storage ownership`);
+    facades.set(objectId, facade);
+  }
+  return facades;
+}
+
+function materializeExternalFacade(config, semantic, policy) {
+  return {
+    ...semantic,
+    tsModule: policy.tsModule,
+    tsName: policy.tsName,
+    storageStrategy: policy.storageStrategy,
+    runtimeAdaptation: policy.runtimeAdaptation,
+    methodBindings: policy.methodBindings,
+    storageIdentity: `${config.tsRoot.replace(/\/+$/, "")}/${policy.tsModule}::${policy.tsName}`,
+  };
 }
 
 export function buildExternalSemanticTypeIndex(snapshot) {
@@ -324,12 +347,12 @@ function normalizedExternalFacadePolicies(config, semanticIndex, profileStorage,
       throw new Error(`${label}.storageStrategy must be 'authored' or 'generated'`);
     }
     if (policies.has(objectId)) throw new Error(`${label}.objectId duplicates external facade policy '${objectId}'`);
-    const runtimeAdaptation = normalizeRuntimeAdaptation(policy.runtimeAdaptation, objectId);
-    const memberBodies = normalizeMemberBodies(policy.memberBodies, semantic);
+    const runtimeAdaptation = normalizeRuntimeAdaptation(policy.runtimeAdaptation, semantic, objectId);
+    const methodBindings = normalizeExternalMethodBindings(policy.methodBindings, semantic, label);
     const normalized = {
       ...policy,
       runtimeAdaptation,
-      memberBodies,
+      methodBindings,
     };
     validateExternalFacadePolicy(normalized, semantic, authoredModules, label);
     policies.set(objectId, normalized);
@@ -352,7 +375,7 @@ function resolveExternalFacadePolicy(config, profile, semantic, policies, author
     tsName: semantic.name,
     storageStrategy: "generated",
     runtimeAdaptation: undefined,
-    memberBodies: new Map(),
+    methodBindings: [],
   };
   validateExternalFacadePolicy(generated, semantic, authoredModules, `automatic external facade '${semantic.objectId}'`);
   policies.set(semantic.objectId, generated);
@@ -368,6 +391,9 @@ function validateExternalFacadePolicy(policy, semantic, authoredModules, label) 
     throw new Error(`${label} declares generated storage for authored module '${policy.tsModule}'`);
   }
   const representation = policy.runtimeAdaptation?.representation;
+  if (policy.methodBindings.length > 0 && policy.storageStrategy !== "authored") {
+    throw new Error(`${label}.methodBindings require authored storage`);
+  }
   if (policy.storageStrategy === "generated" && representation !== undefined && representation !== "class") {
     throw new Error(`${label} generated storage supports only class runtime adaptation; '${representation}' storage must be authored`);
   }
@@ -378,12 +404,6 @@ function validateExternalFacadePolicy(policy, semantic, authoredModules, label) 
   if (policy.storageStrategy === "generated" && representation !== "class"
     && semantic.variants.some(({ declaration }) => declaration.methods.length > 0)) {
     throw new Error(`external facade ${semantic.objectId} has declared Go methods but no generated class runtime adaptation`);
-  }
-  if (policy.memberBodies.size > 0 && (policy.storageStrategy !== "generated" || representation !== "class")) {
-    throw new Error(`${label}.memberBodies requires generated storage with class runtime adaptation`);
-  }
-  if (policy.memberBodies.size > 0 && semantic.variants.length !== 1) {
-    throw new Error(`${label}.memberBodies cannot implement profile-dependent go/types declarations with one runtime body`);
   }
 }
 
@@ -451,55 +471,6 @@ function externalDeclarationKind(declaration) {
   if (declaration.rhs.kind === "interface") return "interface";
   if (declaration.rhs.kind === "struct") return "struct";
   return "type";
-}
-
-function normalizeRuntimeAdaptation(value, objectId) {
-  if (value === undefined) return undefined;
-  requirePlainObject(value, `external facade '${objectId}' runtimeAdaptation`);
-  const allowed = new Set(["pointer", "representation"]);
-  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
-  if (unknown.length > 0) throw new Error(`external facade '${objectId}' runtimeAdaptation contains unknown key(s): ${unknown.sort().join(", ")}`);
-  if (value.representation !== undefined && !new Set(["class", "scalar", "structural"]).has(value.representation)) {
-    throw new Error(`external facade '${objectId}' runtimeAdaptation.representation must be 'class', 'scalar', or 'structural'`);
-  }
-  if (value.pointer !== undefined && value.pointer !== "aggregate" && value.pointer !== "slot") {
-    throw new Error(`external facade '${objectId}' runtimeAdaptation.pointer must be 'aggregate' or 'slot'`);
-  }
-  if (value.representation === "scalar" && value.pointer === "aggregate") {
-    throw new Error(`external facade '${objectId}' scalar runtime storage cannot use aggregate pointer storage`);
-  }
-  if (value.representation === "class" && value.pointer === "slot") {
-    throw new Error(`external facade '${objectId}' class runtime storage cannot use replaceable-slot pointer storage`);
-  }
-  if (value.representation === undefined && value.pointer === undefined) {
-    throw new Error(`external facade '${objectId}' runtimeAdaptation must define representation or pointer storage`);
-  }
-  return { ...(value.representation === undefined ? {} : { representation: value.representation }), ...(value.pointer === undefined ? {} : { pointer: value.pointer }) };
-}
-
-function normalizeMemberBodies(value, semantic) {
-  if (value === undefined) return new Map();
-  requirePlainObject(value, `external facade '${semantic.objectId}' memberBodies`);
-  const methodsByVariant = semantic.variants.map(({ declaration }) => new Map(
-    (declaration.methods ?? []).map((method) => [method.id, method]),
-  ));
-  const bodies = new Map();
-  for (const [methodId, body] of Object.entries(value)) {
-    let canonicalMethod;
-    for (const methods of methodsByVariant) {
-      const method = methods.get(methodId);
-      if (method === undefined) throw new Error(`external facade '${semantic.objectId}' supplies a body for method '${methodId}' missing from an active semantic profile`);
-      if (!method.exported) throw new Error(`external facade '${semantic.objectId}' cannot supply a body for inaccessible method object '${methodId}'`);
-      const canonical = canonicalSchemaValue(method);
-      if (canonicalMethod !== undefined && canonicalMethod !== canonical) {
-        throw new Error(`external facade '${semantic.objectId}' method '${methodId}' changes across active semantic profiles`);
-      }
-      canonicalMethod = canonical;
-    }
-    if (typeof body !== "string" || body.trim() === "") throw new Error(`external facade method '${methodId}' body must be non-empty TypeScript source`);
-    bodies.set(methodId, body);
-  }
-  return bodies;
 }
 
 export function authoredFacadeModuleSet(config) {

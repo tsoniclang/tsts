@@ -41,7 +41,6 @@ export type GoError = GoInterface<Error>;
 export type GoComparable = unknown;
 export type GoOrdered = string | number | bigint | bool;
 export type GoConstraint<Text extends string> = unknown;
-export type GoUnresolved<Name extends string> = { readonly [__goBrand]: { readonly unresolved: Name } };
 export type GoUnsupported<Text extends string> = { readonly [__goBrand]: { readonly unsupported: Text } };
 export type GoComplex64 = { readonly real: number; readonly imag: number };
 export type GoComplex128 = { readonly real: number; readonly imag: number };

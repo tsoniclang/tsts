@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { buildEmbeddedGoSourceUpdates, buildStatus, collectVerifyFailures, renderStub, renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
-import { baseConfig, fileRecord, identType, instantiationType, mapType, pointerType, sliceType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
+import { baseConfig, fileRecord, identType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
 
 test("buildStatus rejects stale embedded Go source blocks", () => {
   const unit = unitRecord({ id: "m::internal/debug/debug.go::func::Fail", kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: "sig", bodyHash: "body", snippet: "func Fail()" });
@@ -63,12 +63,57 @@ test("renderStub rejects non-portable unit kinds", () => {
   assert.throws(() => renderStub(unitRecord({ kind: "importGroup" })), /cannot render scaffold for non-portable Go unit kind 'importGroup'/);
 });
 
-test("renderUnitGroup emits typed generic method skeletons with Go result tuples", () => {
-  const orderedMapType = unitRecord({ id: "m::internal/collections/ordered_map.go::type::OrderedMap", kind: "type", name: "OrderedMap", qualifiedName: "OrderedMap", goPath: "internal/collections/ordered_map.go", typeKind: "struct", typeParameterDetails: [{ name: "K", constraint: identType("comparable") }, { name: "V", constraint: identType("any") }], members: [{ kind: "field", name: "keys", typeExpr: sliceType(identType("K")) }, { kind: "field", name: "mp", typeExpr: mapType(identType("K"), identType("V")) }] });
-  const getMethod = unitRecord({ id: "m::internal/collections/ordered_map.go::method::OrderedMap.Get", kind: "method", name: "Get", qualifiedName: "OrderedMap.Get", receiver: "OrderedMap", receiverMode: "pointer", receiverType: pointerType(instantiationType(identType("OrderedMap"), [identType("K"), identType("V")])), goPath: "internal/collections/ordered_map.go", parameters: [{ names: ["key"], type: identType("K") }], results: [{ type: identType("V") }, { type: identType("bool") }] });
-  const text = renderUnitGroup(baseConfig, snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", units: [orderedMapType, getMethod] })]), "packages/tsts/src/internal/collections/ordered_map.ts", [orderedMapType, getMethod]);
+test("renderUnitGroup emits typed generic function skeletons with Go result tuples", () => {
+  const packagePath = "m/internal/collections";
+  const objectId = `${packagePath}::func::Pair`;
+  const makeSignature = (ownerId) => {
+    const parameter = (index, name, constraint) => ({ reference: { ownerId, role: "type", index, name }, constraint });
+    const key = parameter(0, "K", {
+      kind: "named", nilable: true,
+      reference: { objectId: "builtin::type::comparable", packagePath: "", name: "comparable", typeArgs: [] },
+    });
+    const value = parameter(1, "V", {
+      kind: "interface", nilable: true,
+      interface: { explicitMethods: [], embeddedTypes: [], embeddedKinds: [], completeMethods: [], comparable: false, implicit: true, methodSetOnly: true },
+    });
+    const typeParameter = (entry) => ({ kind: "typeParameter", nilable: false, typeParameter: entry.reference });
+    const variable = (role, index, name, type) => ({ id: `${ownerId}::${role}::${index}`, name, packagePath, exported: false, type });
+    return {
+      receiverTypeParameters: [],
+      typeParameters: [key, value],
+      parameters: { variables: [
+        variable("parameters", 0, "key", typeParameter(key)),
+        variable("parameters", 1, "value", typeParameter(value)),
+      ] },
+      results: { variables: [
+        variable("results", 0, "", typeParameter(value)),
+        variable("results", 1, "", { kind: "basic", nilable: false, basic: { name: "bool", untyped: false } }),
+      ] },
+      variadic: false,
+    };
+  };
+  const declarationSignature = makeSignature(`${objectId}::signature`);
+  const objectSignature = makeSignature(`${objectId}::type`);
+  const pair = unitRecord({
+    id: "m::internal/collections/pair.go::func::Pair",
+    kind: "func",
+    name: "Pair",
+    qualifiedName: "Pair",
+    goPath: "internal/collections/pair.go",
+    typeParameters: ["K", "V"],
+    typeParameterDetails: [{ name: "K", constraint: identType("comparable") }, { name: "V", constraint: identType("any") }],
+    parameters: [{ names: ["key"], type: identType("K") }, { names: ["value"], type: identType("V") }],
+    results: [{ type: identType("V") }, { type: identType("bool") }],
+    semantic: [{
+      kind: "func",
+      packagePath,
+      object: { id: objectId, name: "Pair", packagePath, exported: true, type: { kind: "signature", nilable: true, signature: objectSignature } },
+      signature: declarationSignature,
+      profiles: [0],
+    }],
+  });
+  const text = renderUnitGroup(baseConfig, snapshotWith([fileRecord({ path: "internal/collections/pair.go", units: [pair] })]), "packages/tsts/src/internal/collections/pair.ts", [pair]);
   assert.match(text, /import type \{ bool \} from "..\/..\/go\/scalars\.js";/);
-  assert.match(text, /import type \{ GoComparable, GoMap, GoPtr, GoSlice \}/);
-  assert.match(text, /export interface OrderedMap<K extends GoComparable = unknown, V = unknown>/);
-  assert.match(text, /export function OrderedMap_Get<K, V>\(receiver: GoPtr<OrderedMap<K, V>>, key: K\): \[V, bool\]/);
+  assert.match(text, /import type \{ GoComparable \}/);
+  assert.match(text, /export function Pair<K extends GoComparable, V>\(key: K, value: V\): \[V, bool\]/);
 });

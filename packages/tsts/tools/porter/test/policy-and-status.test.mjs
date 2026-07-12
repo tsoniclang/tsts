@@ -458,6 +458,56 @@ test("expectedTsPath uses semantic large-file split plans without repeating sour
   );
 });
 
+test("buildStatus rejects tracked units outside their semantic split targets", () => {
+  const unit = unitRecord({
+    id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
+    kind: "method",
+    qualifiedName: "Checker.checkSourceFile",
+    goPath: "internal/checker/checker.go",
+    sigHash: "sig-1",
+    bodyHash: "body-1",
+  });
+  const config = {
+    ...baseConfig,
+    largeFileSplitPlan: {
+      schemaVersion: 1,
+      files: {
+        "internal/checker/checker.go": {
+          targetRoot: "packages/tsts/src/internal/checker/checker",
+          targets: [{
+            file: "source-files.ts",
+            description: "Source-file checking methods",
+            declarations: ["method::Checker.checkSourceFile"],
+          }],
+        },
+      },
+    },
+  };
+  const status = buildStatus(config, snapshotWith([fileRecord({
+    path: "internal/checker/checker.go",
+    lineCount: 6000,
+    units: [unit],
+  })]), {
+    fileCount: 1,
+    files: [{ path: "packages/tsts/src/internal/checker/wrong.ts", metadataCount: 1 }],
+    units: [{
+      id: unit.id,
+      path: "packages/tsts/src/internal/checker/wrong.ts",
+      status: "implemented",
+      sigHash: "sig-1",
+      bodyHash: "body-1",
+    }],
+  });
+
+  assert.deepEqual(status.splitPathMismatches, [{
+    id: unit.id,
+    actualPath: "packages/tsts/src/internal/checker/wrong.ts",
+    expectedPath: "packages/tsts/src/internal/checker/checker/source-files.ts",
+  }]);
+  assert.ok(collectVerifyFailures(status, {}).includes("1 units outside their semantic split targets"));
+  assert.match(renderStatusMarkdown(status), /Semantic Split Placement Mismatches/);
+});
+
 test("buildStatus reports missing, stale, orphan, unitless, and untracked TS files", () => {
   const snapshot = snapshotWith([
     fileRecord({
@@ -508,46 +558,4 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
   assert.equal(status.counts.untrackedTsFiles, 1);
   assert.equal(status.counts.forbiddenTsFiles, 1);
   assert.match(renderStatusMarkdown(status), /Coverage Diagnostics/);
-});
-
-test("renderStatusMarkdown reports largest missing modules from missing rows only", () => {
-  const snapshot = snapshotWith([
-    fileRecord({
-      path: "internal/checker/checker.go",
-      units: [unitRecord({
-        id: "m::internal/checker/checker.go::func::Implemented",
-        kind: "func",
-        qualifiedName: "Implemented",
-        goPath: "internal/checker/checker.go",
-        sigHash: "sig-1",
-        bodyHash: "body-1",
-      })],
-    }),
-    fileRecord({
-      path: "internal/parser/parser.go",
-      units: [unitRecord({
-        id: "m::internal/parser/parser.go::func::Missing",
-        kind: "func",
-        qualifiedName: "Missing",
-        goPath: "internal/parser/parser.go",
-        sigHash: "sig-2",
-        bodyHash: "body-2",
-      })],
-    }),
-  ]);
-  const status = buildStatus(baseConfig, snapshot, {
-    fileCount: 1,
-    files: [{ path: "packages/tsts/src/internal/checker/checker.ts", metadataCount: 1 }],
-    units: [{
-      id: "m::internal/checker/checker.go::func::Implemented",
-      path: "packages/tsts/src/internal/checker/checker.ts",
-      status: "implemented",
-      sigHash: "sig-1",
-      bodyHash: "body-1",
-    }],
-  });
-  const markdown = renderStatusMarkdown(status);
-
-  assert.match(markdown, /\| internal\/parser \| 1 \|/);
-  assert.doesNotMatch(markdown, /\| internal\/checker \| 1 \|/);
 });

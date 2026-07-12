@@ -41,7 +41,7 @@ are hard errors.
 
 Expected Go constants and inferred top-level variable types come directly from `go/types` and `go/constant`; Porter never reconstructs them from Go source text. Actual TypeScript declaration initializers use the closed evaluator contract below. Unsupported declaration/type variants fail rather than becoming approximate evidence. Build-profile selection covers every declaration-bearing source file and fails if a profile changes a declaration contract.
 
-Every accepted divergence is local to the affected TypeScript declaration through `@tsgo-override`, names a registered category, gives a durable reason, and snapshots the exact Go and TypeScript contract for the allowed aspect. There is no global waiver and no compatibility fallback.
+Every accepted divergence in a mechanically ported `@tsgo-unit` is local to that TypeScript declaration through `@tsgo-override`, names a registered category, gives a durable reason, and snapshots the exact Go and TypeScript contract for the allowed aspect. External Go facade storage has the separate closed policy described below because it has no local TS-Go source unit. There is no global waiver and no compatibility fallback.
 
 ## TypeScript Declaration Constants
 
@@ -259,10 +259,27 @@ Generated artifacts are not hand-editable. `porter:verify` fails on:
 Facade generation has declaration inputs only:
 
 - External type identity, alias state, type parameters and constraints, declaration RHS/underlying type, intrinsic nilability, interface composition, and method signatures come only from the snapshot's `go/types` evidence.
-- External facade policy may choose only the exact Go object ID's TypeScript module/name, authored-versus-generated storage, reviewed runtime adaptation, and opaque generated-class member bodies keyed by exact Go method object ID. It cannot restate Go names, arity, members, embeddings, or types.
+- External facade policy may choose only the exact Go object ID's TypeScript module/name, authored-versus-generated storage, and reviewed runtime adaptation. Every adaptation requires a specific durable reason. Policy cannot provide implementation bodies or restate Go names, arity, members, embeddings, or types.
+- Every runtime adaptation snapshots all canonical external Go declaration variants and their profile sets with `goDeclarationHash`. A pin that changes fields, underlying type, methods, constraints, profile coverage, or any other declaration evidence invalidates the adaptation even when the public TypeScript storage still happens to type-check.
+- A Go method stored as a top-level authored TypeScript function requires one exact `methodBindings` row: canonical Go method ID, TypeScript export name, and the receiver parameter's local TypeScript name. The function signature is still rendered only from Go evidence, including the promoted receiver type; policy cannot restate parameters, generics, or results.
 - Type identities in active Go signatures produce typed facades such as `io.Writer`, `io.Reader`, `time.Duration`, and `context.Context`; policy presence is not a usage root.
 - External callable/value facades exist only through explicit reviewed configuration or authored modules. Porter never discovers them by scanning implementation bodies.
 - Authored facade modules are removed from the generation set before rendering. They are never rendered and discarded afterward.
+- Every configured authored facade is checked, including facades not reached by the current active source declarations. An authored facade export may be reached through an exact barrel re-export, but it must resolve to one indexed declaration origin. Ambiguous origins, cross-kind merges, storage shared by two facade policies, generated storage masquerading as authored storage, and storage also owned by `@tsgo-unit` fail closed.
+- Authored facade checking is bidirectional: every public Go member omitted by TypeScript and every public TypeScript member without a Go identity is reported. Same-name members retain full structural signature comparison. Constructors and private/protected storage are inventoried separately and do not become Go members.
+
+In every file governed by `requires-tsgo-unit`, including a file with zero
+metadata records, Porter also accounts for complete
+declaration ownership. Overload groups, merged declarations, and contiguous Go
+const/var groups share their exact attached unit ownership. Any additional
+exported TypeScript declaration is rejected as a source-surface addition with
+no Go unit. Module-private helpers remain implementation details and are
+reported separately without entering Go signature comparison. Intentional
+public TypeScript APIs belong in an explicitly reviewed non-Go source-policy
+module; they must not be hidden among mechanically ported declarations.
+Export declarations are not duplicate declarations: named, namespace, and star
+re-export routes are inventoried separately and validated by the exact module
+index for missing or ambiguous targets.
 
 Examples:
 
@@ -339,6 +356,7 @@ The porter enforces this flow:
 5. A declaration listed in the plan that no longer exists upstream is reported as stale.
 6. A declaration claimed by two targets is reported as a duplicate assignment.
 7. A random-looking target such as `part-001.ts`, `chunk-002.ts`, or `lines-5000.ts` is rejected.
+8. Every existing `@tsgo-unit` from a planned split must physically live at its assigned target path; correct metadata in the wrong split file is a verification failure.
 
 Example:
 

@@ -7,6 +7,16 @@ import {
   validateStructTagContract,
 } from "./snapshot-validation.mjs";
 import { semanticNilabilityIssue } from "./semantic-type-nilability.mjs";
+import {
+  declarationObjectId,
+  isGoExported,
+  isObject,
+  objectId,
+  profileDescription,
+  receiverTypeReference,
+  typeParameterIdentity,
+  validateProfileIndexes,
+} from "./semantic-snapshot-validation-identity.mjs";
 
 const semanticBasicNames = new Set([
   "Pointer", "bool", "byte", "complex128", "complex64", "float32", "float64", "int", "int16", "int32", "int64", "int8",
@@ -586,53 +596,4 @@ function validateUnion(union, label, issues, scope, ownerPath) {
     if (typeof term?.tilde !== "boolean") issues.push(`${termLabel}.tilde must be boolean`);
     validateType(term?.type, `${termLabel}.type`, issues, scope, `${ownerPath}::term::${index}`);
   }
-}
-
-function typeParameterIdentity(reference) {
-  return `${reference?.ownerId ?? ""}\u0000${reference?.role ?? ""}\u0000${reference?.index ?? ""}\u0000${reference?.name ?? ""}`;
-}
-
-function validateProfileIndexes(value, label, issues, profileCount) {
-  if (!Array.isArray(value) || value.length === 0) {
-    issues.push(`${label} must be a non-empty array of profile indexes`);
-    return;
-  }
-  for (const [index, profileIndex] of value.entries()) {
-    if (!Number.isSafeInteger(profileIndex) || profileIndex < 0) issues.push(`${label}[${index}] must be a non-negative safe integer`);
-    else if (profileIndex >= profileCount) issues.push(`${label}[${index}] profile index ${profileIndex} is out of bounds for ${profileCount} profiles`);
-    if (index > 0 && value[index - 1] >= profileIndex) issues.push(`${label} must be numerically sorted with no duplicates`);
-  }
-}
-
-function profileDescription(index, labels) {
-  const key = Array.isArray(labels) && Number.isSafeInteger(index) ? labels[index] : undefined;
-  return key === undefined ? `profile index ${index}` : `profile index ${index} ('${key}')`;
-}
-
-function declarationObjectId(semantic, kind, unit) {
-  if (kind === "func") {
-    return unit?.name === "init" ? `${unit.id}::object` : objectId(semantic?.packagePath, "func", unit?.name);
-  }
-  const receiverId = receiverTypeReference(semantic?.signature?.receiver?.type)?.objectId;
-  return receiverId === undefined
-    ? objectId(semantic?.packagePath, "method", unit?.name)
-    : `${receiverId}::method::${unit?.name}`;
-}
-
-function receiverTypeReference(type) {
-  let current = type;
-  while (current?.kind === "pointer") current = current.element;
-  return current?.kind === "named" || current?.kind === "alias" ? current.reference : undefined;
-}
-
-function objectId(packagePath, kind, name) {
-  return `${packagePath === "" ? "builtin" : packagePath}::${kind}::${name}`;
-}
-
-function isGoExported(name) {
-  return /^\p{Lu}/u.test(name);
-}
-
-function isObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

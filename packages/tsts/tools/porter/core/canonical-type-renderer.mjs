@@ -42,7 +42,11 @@ export function renderCanonicalSignature(signature, operations, options = {}) {
   const usedNames = new Set();
   if (options.includeReceiver === true) {
     if (!isObject(signature.receiver)) throw new Error("canonical semantic method signature has no receiver");
-    parameters.push(renderParameter({ ...signature.receiver, name: uniqueParameterName("receiver", usedNames), variadic: false }, operations));
+    const receiverName = options.receiverName ?? "receiver";
+    if (typeof receiverName !== "string" || receiverName.length === 0) {
+      throw new Error("canonical semantic method receiver requires one exact TypeScript parameter name");
+    }
+    parameters.push(renderParameter({ ...signature.receiver, name: uniqueParameterName(safeIdentifier(receiverName), usedNames), variadic: false }, operations));
   }
   let syntheticIndex = 0;
   for (const parameter of requireArray(signature.parameters, "canonical semantic signature parameters")) {

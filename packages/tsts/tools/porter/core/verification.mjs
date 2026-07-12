@@ -23,6 +23,7 @@ export function collectVerifyFailures(status, options) {
   if (status.counts.duplicateGoIDs > 0) failures.push(`${status.counts.duplicateGoIDs} duplicate Go IDs`);
   if (status.counts.duplicateTsIDs > 0) failures.push(`${status.counts.duplicateTsIDs} duplicate TS IDs`);
   if ((status.counts.largeFileSplitFailures ?? 0) > 0) failures.push(`${status.counts.largeFileSplitFailures} large-file split plan failures`);
+  if ((status.counts.splitPathMismatches ?? 0) > 0) failures.push(`${status.counts.splitPathMismatches} units outside their semantic split targets`);
   if (status.counts.orphan > 0) failures.push(`${status.counts.orphan} orphan TS units`);
   if (status.counts.forbiddenTsFiles > 0) failures.push(`${status.counts.forbiddenTsFiles} forbidden TS files`);
   if (status.counts.untrackedTsFiles > 0) failures.push(`${status.counts.untrackedTsFiles} TS files without @tsgo-unit metadata`);

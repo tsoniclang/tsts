@@ -73,6 +73,7 @@ import {
   interfaceType,
   mapType,
   pointerType,
+  semanticFunctionDeclaration,
   selectorType,
   sliceType,
   snapshotWith,
@@ -297,7 +298,7 @@ test("buildStatus excludes generated and Go test units from production scaffold 
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
 });
 
-test("renderUnitGroup treats references to excluded LS/LSP types as opaque boundary types", () => {
+test("renderUnitGroup requires explicit storage for excluded source-boundary types", () => {
   const config = {
     ...baseConfig,
     policies: [
@@ -313,6 +314,7 @@ test("renderUnitGroup treats references to excluded LS/LSP types as opaque bound
     goPath: "internal/ls/lsutil/formatcodeoptions.go",
     typeKind: "struct",
   });
+  delete formatCodeSettings.semantic;
   const withFormatCodeSettings = unitRecord({
     id: "m::internal/format/api.go::func::WithFormatCodeSettings",
     kind: "func",
@@ -322,10 +324,14 @@ test("renderUnitGroup treats references to excluded LS/LSP types as opaque bound
     parameters: [
       { names: ["options"], type: selectorType("lsutil", "FormatCodeSettings") },
     ],
+    semantic: semanticFunctionDeclaration({
+      name: "WithFormatCodeSettings",
+      packagePath: "github.com/microsoft/typescript-go/internal/format",
+      parameters: [{ names: ["options"], type: selectorType("lsutil", "FormatCodeSettings") }],
+      packages: { lsutil: "github.com/microsoft/typescript-go/internal/ls/lsutil" },
+    }),
   });
-  const text = renderUnitGroup(
-    config,
-    snapshotWith([
+  const snapshot = snapshotWith([
       fileRecord({
         path: "internal/ls/lsutil/formatcodeoptions.go",
         importPath: "github.com/microsoft/typescript-go/internal/ls/lsutil",
@@ -339,14 +345,32 @@ test("renderUnitGroup treats references to excluded LS/LSP types as opaque bound
         imports: [{ name: "lsutil", path: "github.com/microsoft/typescript-go/internal/ls/lsutil" }],
         units: [withFormatCodeSettings],
       }),
-    ]),
+    ]);
+  assert.throws(() => renderUnitGroup(
+    config,
+    snapshot,
+    "packages/tsts/src/internal/format/api.ts",
+    [withFormatCodeSettings],
+  ), /has no exact semantic lowering contract/);
+
+  const mapped = {
+    ...config,
+    signatureCheck: {
+      namedTypeMappings: {
+        "github.com/microsoft/typescript-go/internal/ls/lsutil::type::FormatCodeSettings":
+          "packages/tsts/src/internal/format/source-boundaries.ts::FormatCodeSettings",
+      },
+    },
+  };
+  const text = renderUnitGroup(
+    mapped,
+    snapshot,
     "packages/tsts/src/internal/format/api.ts",
     [withFormatCodeSettings],
   );
-
-  assert.doesNotMatch(text, /from ".*internal\/ls/);
-  assert.match(text, /import type \{ GoUnresolved \}/);
-  assert.ok(text.includes('options: GoUnresolved<"github.com/microsoft/typescript-go/internal/ls/lsutil.FormatCodeSettings">'));
+  assert.match(text, /import type \{ FormatCodeSettings \} from "\.\/source-boundaries\.js";/);
+  assert.match(text, /options: FormatCodeSettings/);
+  assert.doesNotMatch(text, /GoUnresolved/);
 });
 
 test("verifyStatus fails hard on coverage and metadata defects", () => {

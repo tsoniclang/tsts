@@ -299,14 +299,15 @@ function renderReference(reference, argumentsList, context, unit) {
   if (reference.packagePath === "") {
     base = renderBasic(reference.name, context);
   } else {
-    if (isInternal(reference.packagePath, context.config.goModulePath)) {
+    const storageIdentity = context.semanticIndex.namedTypeStorage.get(reference.objectId);
+    if (storageIdentity !== undefined) {
+      base = renderStorageIdentity(storageIdentity, context, unit);
+    } else if (isInternal(reference.packagePath, context.config.goModulePath)) {
       base = resolvePackageSymbol(context, reference.packagePath, reference.name, unit);
       if (base === undefined) throw new Error(`internal canonical Go type '${reference.objectId}' has no exact scaffold symbol`);
     } else {
       if (context.semanticIndex.externalTypeContracts.has(reference.objectId)) return tsExternalType(context, reference, argumentsList, unit);
-      const storageIdentity = context.semanticIndex.namedTypeStorage.get(reference.objectId);
-      if (storageIdentity === undefined) throw new Error(`canonical Go type '${reference.objectId}' has no exact profile storage identity`);
-      base = renderStorageIdentity(storageIdentity, context, unit);
+      throw new Error(`canonical Go type '${reference.objectId}' has no exact profile storage identity`);
     }
   }
   return argumentsList.length === 0 ? base : `${base}<${argumentsList.join(", ")}>`;

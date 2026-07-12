@@ -85,6 +85,14 @@ Any reviewed declaration divergence must use one local `@tsgo-override` with:
   `value-order`);
 - exact Go and TypeScript snapshots for every allowed aspect.
 
+This local override rule governs mechanically ported `@tsgo-unit`
+declarations. External Go facade storage has no local TS-Go source unit and uses
+one separate closed policy: exact Go object identity, exact TypeScript storage
+identity, durable adaptation reason, and a hash of every complete canonical Go
+declaration variant plus its profile set. A method
+stored as a top-level function is bound by exact Go method identity; its
+signature is still derived from Go rather than restated in policy.
+
 Parameter defaults belong to `signature`. `initializer` applies only to
 top-level `constGroup` values. Member implementation initializers and function,
 method, accessor, constructor, and static-block bodies have no Porter override
@@ -106,6 +114,8 @@ Strict verification fails on any:
 - malformed or unsupported declaration-constant evidence;
 - source-pin, schema, generated-artifact, or toolchain drift;
 - declaration or JSON-tag mismatch;
+- omitted/extra authored facade members, stale scalar facade snapshots, or invalid facade method bindings;
+- exported TypeScript declarations without a Go unit in a `requires-tsgo-unit` module;
 - invalid, stale, broad, or unused local override;
 - nondeterministic scan or delta evidence.
 

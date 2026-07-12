@@ -41,8 +41,11 @@ the same signature check as a hard gate.
   to the TS module where its `@tsgo-unit` actually lives (split-aware).
 - **Compare** (`sig-check.mjs`): structural equality (`ast-signatures.typesEqual`)
   with re-export-aware identity. Only exact, constraint-scoped spelling mappings
-  are global. Runtime representation differences require local snapshotted
-  overrides on every affected declaration.
+  are global. Runtime representation differences on `@tsgo-unit` declarations
+  require local snapshotted overrides. External facade storage is checked by its
+  separate exact object/storage policy; every adaptation pins all complete Go
+  declaration variants, and bound top-level method functions derive their full
+  signature from the selected Go method ID.
 
 ## Declaration-Constant Contract
 

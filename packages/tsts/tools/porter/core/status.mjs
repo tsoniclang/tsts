@@ -216,6 +216,7 @@ export function buildStatus(
   const stubbed = [];
   const excluded = [];
   const embeddedSourceMismatches = [];
+  const splitPathMismatches = [];
 
   for (const unit of goUnits) {
     if (!unit.portable) continue;
@@ -271,6 +272,14 @@ export function buildStatus(
     row.tsPath = tsUnit.path;
     row.tsStatus = tsUnit.status;
     row.kind = tsUnit.kind;
+    const plannedSplitPath = largeFileSplits.assignments?.[unit.id];
+    if (plannedSplitPath !== undefined && tsUnit.path !== plannedSplitPath) {
+      splitPathMismatches.push({
+        id: unit.id,
+        actualPath: tsUnit.path,
+        expectedPath: plannedSplitPath,
+      });
+    }
     const sigMatches = tsUnit.sigHash === unit.sigHash;
     const bodyMatches = tsUnit.bodyHash === unit.bodyHash;
     if (!sigMatches || !bodyMatches) {
@@ -367,6 +376,7 @@ export function buildStatus(
       untrackedUnicodeArtifacts: unicodeGeneratedArtifacts.untracked.length,
       invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
+      splitPathMismatches: splitPathMismatches.length,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
       schemaFilePolicyIssues: (schemaSourceSync.policyIssues ?? []).length,
       localOverrideIssues: localOverrides.failureCount,
@@ -402,6 +412,7 @@ export function buildStatus(
     globalGeneratedArtifacts,
     sourceInterpretationIssues,
     largeFileSplits,
+    splitPathMismatches,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
     excluded: excluded.slice(0, 500),

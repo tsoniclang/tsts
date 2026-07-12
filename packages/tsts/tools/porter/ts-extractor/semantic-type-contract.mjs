@@ -161,6 +161,12 @@ function lowerBasic(type) {
 function lowerNamed(type, context, typeContext) {
   const reference = type.reference;
   if (!isObject(reference) || !Array.isArray(reference.typeArgs)) throw new Error("canonical named/alias Go type has no exact reference arguments");
+  if (reference.objectId === "builtin::type::comparable") {
+    if (reference.typeArgs.length !== 0) throw new Error("builtin comparable constraint cannot have type arguments");
+    if (type.nilable !== true) throw new Error("builtin comparable constraint must retain nilable=true go/types evidence");
+    if (typeContext !== semanticTypeContexts.constraint) throw new Error(`builtin comparable cannot be lowered in ${typeContext} context`);
+    return { kind: "interfaceShape", methods: [], embedded: [], comparable: true };
+  }
   const typeArguments = reference.typeArgs.map((argument) => lowerValue(argument, context));
   const base = { kind: "reference", reference, typeArguments };
   const disposition = semanticNamedNilabilityDisposition(type, context);

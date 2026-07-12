@@ -8,6 +8,8 @@ import {
   buildIndexedModuleValueEnvironments,
   buildModuleValueEnvironments,
   extractFileDescriptors,
+  extractIndexedTypeExportDescriptor,
+  extractNamedDeclarationDescriptor,
   extractParsedFileDescriptors,
 } from "./extract-signatures.mjs";
 import { createCanonicalTypeResolver } from "./module-resolution.mjs";
@@ -130,6 +132,46 @@ export type Alias = ns.T;
   )[0].descriptor.type.id;
   assert.equal(extractId(second), "cache/source-b.ts::T");
   assert.equal(extractId(first), "cache/source-a.ts::T");
+});
+
+test("named declaration extraction requires exact local public storage and merges interface fragments", async (t) => {
+  const counted = await parserWithCount(t);
+  if (!counted) return;
+  const index = indexTypeScriptModuleSources(counted.api, new Map([
+    ["facade/local.ts", `
+export interface Exact { Read(value: string): number; }
+export interface Exact { readonly Closed: boolean; }
+interface Hidden { value: string; }
+export { Hidden as Alias };
+export class Runtime { Read(): number { return 1; } }
+/** @tsgo-unit {"id":"m::owned.go::type::Owned","kind":"type"} */
+export interface Owned { value: string; }
+`],
+    ["facade/value-barrel.ts", 'export { Runtime as Alias } from "./local.js";'],
+    ["facade/type-barrel.ts", 'export type { Runtime as Alias } from "./local.js";'],
+  ]));
+  const module = index.modules.get("facade/local.ts");
+  const exact = extractNamedDeclarationDescriptor(counted.api, module, "Exact");
+  assert.equal(exact.kind, "interface");
+  assert.deepEqual(exact.members.map((member) => member.name), ["Read", "Closed"]);
+  assert.equal(exact.fragments.length, 2);
+  const environments = buildIndexedModuleValueEnvironments(counted.api, index);
+  const alias = extractIndexedTypeExportDescriptor(counted.api, index, "facade/local.ts", "Alias", environments);
+  assert.equal(alias.exportId, "facade/local.ts::Alias");
+  assert.equal(alias.declarationId, "facade/local.ts::Hidden");
+  assert.equal(alias.descriptor.name, "Hidden");
+  const runtimeAlias = extractIndexedTypeExportDescriptor(counted.api, index, "facade/value-barrel.ts", "Alias", environments);
+  assert.equal(runtimeAlias.declarationId, "facade/local.ts::Runtime");
+  assert.equal(runtimeAlias.valueDeclarationId, "facade/local.ts::Runtime");
+  assert.throws(
+    () => extractIndexedTypeExportDescriptor(counted.api, index, "facade/type-barrel.ts", "Alias", environments),
+    /no matching runtime value export/,
+  );
+  assert.throws(() => extractNamedDeclarationDescriptor(counted.api, module, "Alias"), /authored facade storage must be one exact local declaration/);
+  assert.throws(
+    () => extractNamedDeclarationDescriptor(counted.api, module, "Owned"),
+    /cannot be both authored facade storage and @tsgo-unit storage/,
+  );
 });
 
 test("module index rejects parser recovery and conflicting export identities", async (t) => {

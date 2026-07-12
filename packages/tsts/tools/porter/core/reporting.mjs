@@ -43,6 +43,8 @@ export function printStatus(config, status) {
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   console.log(`JSON tagged structs/fields declaration contracts/fields/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.contractUnits ?? 0}/${status.jsonTagCheck?.contractFields ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
+  console.log(`Authored facades checked/bound methods/Go-only/TS-only: ${status.signatureCheck?.authoredFacades?.checked ?? 0}/${status.signatureCheck?.authoredFacades?.methodBindingCount ?? 0}/${status.signatureCheck?.authoredFacades?.goOnlyMemberCount ?? 0}/${status.signatureCheck?.authoredFacades?.tsOnlyMemberCount ?? 0}`);
+  console.log(`Unmatched TypeScript exported/private/re-export routes: ${status.signatureCheck?.untrackedTypeScript?.exportedDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.privateDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.reExportCount ?? 0}`);
   console.log(`Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   console.log(`Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
@@ -86,6 +88,8 @@ export function renderStatusMarkdown(status) {
   const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
   lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   lines.push(`- JSON tagged structs/fields declaration contracts/fields/issues: ${status.jsonTagCheck?.taggedUnits ?? 0}/${status.jsonTagCheck?.taggedFields ?? 0} ${status.jsonTagCheck?.contractUnits ?? 0}/${status.jsonTagCheck?.contractFields ?? 0}/${status.jsonTagCheck?.mismatches ?? 0}`);
+  lines.push(`- Authored facades checked/bound methods/Go-only/TS-only: ${status.signatureCheck?.authoredFacades?.checked ?? 0}/${status.signatureCheck?.authoredFacades?.methodBindingCount ?? 0}/${status.signatureCheck?.authoredFacades?.goOnlyMemberCount ?? 0}/${status.signatureCheck?.authoredFacades?.tsOnlyMemberCount ?? 0}`);
+  lines.push(`- Unmatched TypeScript exported/private/re-export routes: ${status.signatureCheck?.untrackedTypeScript?.exportedDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.privateDeclarationCount ?? 0}/${status.signatureCheck?.untrackedTypeScript?.reExportCount ?? 0}`);
   lines.push(`- Embedded Go source mismatches: ${status.counts.embeddedSourceMismatches ?? 0}`);
   lines.push(`- Schema file policy issues: ${status.counts.schemaFilePolicyIssues ?? 0}`);
   lines.push(`- Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
@@ -124,6 +128,7 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
   lines.push(`- Bundled generated artifact defects: ${status.counts.missingBundledArtifacts + status.counts.staleBundledArtifacts + status.counts.orphanBundledArtifacts + status.counts.untrackedBundledArtifacts + status.counts.invalidBundledArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  lines.push(`- Units outside semantic split targets: ${status.counts.splitPathMismatches ?? 0}`);
   if ((status.embeddedSourceMismatches?.length ?? 0) > 0) {
     lines.push("");
     lines.push("## Embedded Go Source Mismatches");
@@ -155,6 +160,16 @@ export function renderStatusMarkdown(status) {
     lines.push("|---|---|---|---|---|");
     for (const issue of status.largeFileSplits.issues.slice(0, 100)) {
       lines.push(`| ${issue.file} | ${issue.kind} | ${escapeMd(issue.declaration ?? "")} | ${escapeMd(issue.target ?? "")} | ${escapeMd(issue.message)} |`);
+    }
+  }
+  if ((status.splitPathMismatches?.length ?? 0) > 0) {
+    lines.push("");
+    lines.push("### Semantic Split Placement Mismatches");
+    lines.push("");
+    lines.push("| Unit | Expected TS path | Actual TS path |");
+    lines.push("|---|---|---|");
+    for (const issue of status.splitPathMismatches.slice(0, 100)) {
+      lines.push(`| ${escapeMd(issue.id)} | ${issue.expectedPath} | ${issue.actualPath} |`);
     }
   }
   if (status.localOverrides?.failureCount > 0) {

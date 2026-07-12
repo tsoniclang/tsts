@@ -20,6 +20,8 @@ import { loadTypeScriptModuleIndex, requireIndexedModule } from "./ts-extractor/
 import { createCanonicalTypeResolver } from "./ts-extractor/module-resolution.mjs";
 import { inspectGeneratedArtifactRegistration } from "./generated-source.mjs";
 import { compareSignatures } from "./sig-check/comparison.mjs";
+import { collectAuthoredFacadeMismatches } from "./sig-check/authored-facades.mjs";
+import { collectUntrackedTypeScriptDeclarations } from "./sig-check/untracked-declarations.mjs";
 import {
   resolveOverride,
   unitSignatureSnapshot,
@@ -101,6 +103,34 @@ export async function computeSignatureReport(deps, options = {}) {
     api,
     moduleIndex,
   });
+  const authoredFacades = options.idFilter === undefined
+    ? collectAuthoredFacadeMismatches({
+      api,
+      canonicalIdentity,
+      config: deps.config,
+      conventions,
+      moduleIndex,
+      profile,
+      snapshot: deps.snapshot,
+      valueEnvironments,
+    })
+    : {
+      checked: 0,
+      inventory: { constructors: [], goOnlyMembers: [], methodBindings: [], privateStorageMembers: [], tsOnlyMembers: [] },
+      mismatches: [],
+      ownedDeclarationIds: new Set(),
+    };
+  mismatches.push(...authoredFacades.mismatches);
+  const untrackedTypeScript = options.idFilter === undefined
+    ? collectUntrackedTypeScriptDeclarations({
+      api,
+      annotation: profile.annotation,
+      accountedDeclarationIds: authoredFacades.ownedDeclarationIds,
+      config: deps.config,
+      moduleIndex,
+    })
+    : { exportedDeclarations: [], privateDeclarations: [], reExports: [], mismatches: [] };
+  mismatches.push(...untrackedTypeScript.mismatches);
 
   for (const id of [...expectedIds].sort(compareText)) {
     const go = goById.get(id);
@@ -129,6 +159,20 @@ export async function computeSignatureReport(deps, options = {}) {
     overriddenUnits,
     overrideIssues,
     jsonTags: { ...jsonTags, mismatchCount: jsonTags.mismatches.length },
+    authoredFacades: {
+      checked: authoredFacades.checked,
+      mismatchCount: authoredFacades.mismatches.length,
+      constructorCount: authoredFacades.inventory.constructors.length,
+      goOnlyMemberCount: authoredFacades.inventory.goOnlyMembers.length,
+      methodBindingCount: authoredFacades.inventory.methodBindings.length,
+      privateStorageMemberCount: authoredFacades.inventory.privateStorageMembers.length,
+      tsOnlyMemberCount: authoredFacades.inventory.tsOnlyMembers.length,
+    },
+    untrackedTypeScript: {
+      exportedDeclarationCount: untrackedTypeScript.exportedDeclarations.length,
+      privateDeclarationCount: untrackedTypeScript.privateDeclarations.length,
+      reExportCount: untrackedTypeScript.reExports.length,
+    },
   };
 }
 
