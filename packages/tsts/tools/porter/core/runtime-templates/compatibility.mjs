@@ -234,7 +234,7 @@ export function GoStructField<K, V>(read: (value: K) => V, descriptor: GoMapKeyD
 
 export function GoStructKey<K, const Values extends readonly unknown[]>(
   fields: { readonly [Index in keyof Values]: GoStructKeyField<K, Values[Index]> },
-  construct: (values: Values) => K,
+  construct: (values: Values, source: K) => K,
 ): GoMapKeyDescriptor<K> {
   return createGoMapKeyDescriptor((parts, value) => {
     if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
@@ -242,7 +242,7 @@ export function GoStructKey<K, const Values extends readonly unknown[]>(
   }, (value) => {
     if (typeof value !== "object" || value === null) throw new TypeError("Go struct map key must be an object value");
     const snapshots = fields.map((field) => field.snapshot(value)) as unknown as Values;
-    return construct(snapshots);
+    return construct(snapshots, value);
   });
 }
 
