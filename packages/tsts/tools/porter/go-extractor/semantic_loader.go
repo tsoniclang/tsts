@@ -53,7 +53,6 @@ type declarationPackageChecker struct {
 	exportFiles      map[string]string
 	checkedByID      map[string]*declarationCheckedPackage
 	checkingByID     map[string]bool
-	importNames      map[string]string
 	externalImporter types.ImporterFrom
 	externalByPath   map[string]*types.Package
 }
@@ -186,7 +185,7 @@ func loadSemanticProfile(root string, modulePath string, profile semanticBuildPr
 	checker := newDeclarationPackageChecker(root, modulePath, profile, graph)
 	checked := checker.checkRequiredPackages(requiredFiles)
 	declarations, covered := semanticDeclarations(root, modulePath, checked, locations, requiredFiles)
-	externalDeclarations := semanticExternalTypeDeclarations(modulePath, checker, declarations)
+	externalDeclarations := semanticExternalDeclarations(root, modulePath, checker, checked, declarations, requiredFiles)
 	return semanticProfileLoad{
 		declarations:         declarations,
 		externalDeclarations: externalDeclarations,
@@ -209,7 +208,7 @@ func newDeclarationPackageChecker(root string, modulePath string, profile semant
 	checker := &declarationPackageChecker{
 		root: root, modulePath: modulePath, profile: profile, fileSet: token.NewFileSet(),
 		localByID:   map[string]*packages.Package{},
-		exportFiles: map[string]string{}, checkedByID: map[string]*declarationCheckedPackage{}, checkingByID: map[string]bool{}, importNames: map[string]string{},
+		exportFiles: map[string]string{}, checkedByID: map[string]*declarationCheckedPackage{}, checkingByID: map[string]bool{},
 		externalByPath: map[string]*types.Package{},
 	}
 	for _, metadata := range graph {
@@ -327,18 +326,8 @@ func (checker *declarationPackageChecker) check(metadata *packages.Package) *dec
 	}
 	pruneDeclarationOnlyImports(checker, metadata, files)
 	blanks := renameBlankValueDeclarations(files, metadata)
-	info := &types.Info{
-		Types: map[ast.Expr]types.TypeAndValue{}, Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{},
-		Implicits: map[ast.Node]types.Object{}, Instances: map[*ast.Ident]types.Instance{}, Selections: map[*ast.SelectorExpr]*types.Selection{},
-	}
-	sizes := types.SizesFor(exactSemanticToolchain().compiler, checker.profile.GOARCH)
-	if sizes == nil {
-		fatalf("exact Go type sizes are unavailable for compiler=%s GOARCH=%s", exactSemanticToolchain().compiler, checker.profile.GOARCH)
-	}
-	configuration := &types.Config{
-		GoVersion: moduleGoVersion(metadata.Module), IgnoreFuncBodies: true, Importer: declarationPackageImporter{checker: checker, metadata: metadata},
-		Sizes: sizes,
-	}
+	info := newDeclarationTypeInfo()
+	configuration := checker.declarationTypeConfig(metadata, false)
 	typedPackage, err := configuration.Check(metadata.PkgPath, checker.fileSet, files, info)
 	if err != nil {
 		fatalf("declaration-only Go type check failed for %s (%s) under %s: %v", metadata.PkgPath, metadata.ID, semanticProfileKey(checker.profile), err)
@@ -348,6 +337,24 @@ func (checker *declarationPackageChecker) check(metadata *packages.Package) *dec
 	}
 	checker.checkedByID[metadata.ID] = checked
 	return checked
+}
+
+func newDeclarationTypeInfo() *types.Info {
+	return &types.Info{
+		Types: map[ast.Expr]types.TypeAndValue{}, Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{},
+		Implicits: map[ast.Node]types.Object{}, Instances: map[*ast.Ident]types.Instance{}, Selections: map[*ast.SelectorExpr]*types.Selection{},
+	}
+}
+
+func (checker *declarationPackageChecker) declarationTypeConfig(metadata *packages.Package, disableUnusedImportCheck bool) *types.Config {
+	sizes := types.SizesFor(exactSemanticToolchain().compiler, checker.profile.GOARCH)
+	if sizes == nil {
+		fatalf("exact Go type sizes are unavailable for compiler=%s GOARCH=%s", exactSemanticToolchain().compiler, checker.profile.GOARCH)
+	}
+	return &types.Config{
+		GoVersion: moduleGoVersion(metadata.Module), IgnoreFuncBodies: true, DisableUnusedImportCheck: disableUnusedImportCheck,
+		Importer: declarationPackageImporter{checker: checker, metadata: metadata}, Sizes: sizes,
+	}
 }
 
 func moduleGoVersion(module *packages.Module) string {

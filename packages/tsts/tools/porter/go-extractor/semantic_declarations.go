@@ -17,8 +17,11 @@ func semanticDeclarations(root string, modulePath string, checkedPackages []*dec
 		}
 		encoder := newSemanticTypeEncoder()
 		files := semanticPackageFiles(root, checked, requiredFiles)
+		for _, file := range semanticAllPackageFiles(root, checked) {
+			registerSemanticTypeObjects(encoder, checked.info, file.syntax)
+		}
 		for _, file := range files {
-			registerSemanticObjects(encoder, checked.info, checked.fileSet, file.relative, file.syntax, locations)
+			registerSemanticFunctionObjects(encoder, checked.info, checked.fileSet, file.relative, file.syntax, locations)
 		}
 		for _, file := range files {
 			covered[file.relative] = true
@@ -40,6 +43,20 @@ func semanticDeclarations(root string, modulePath string, checkedPackages []*dec
 	return reports, covered
 }
 
+func semanticAllPackageFiles(root string, checked *declarationCheckedPackage) []semanticPackageFile {
+	files := []semanticPackageFile{}
+	for _, file := range checked.files {
+		position := checked.fileSet.PositionFor(file.Pos(), false)
+		relative, ok := relativeSemanticPath(root, position.Filename)
+		if !ok {
+			continue
+		}
+		files = append(files, semanticPackageFile{relative: relative, syntax: file})
+	}
+	sort.Slice(files, func(left, right int) bool { return files[left].relative < files[right].relative })
+	return files
+}
+
 type semanticPackageFile struct {
 	relative string
 	syntax   *ast.File
@@ -59,39 +76,95 @@ func semanticPackageFiles(root string, checked *declarationCheckedPackage, requi
 	return files
 }
 
-func registerSemanticObjects(encoder *semanticTypeEncoder, info *types.Info, fileSet *token.FileSet, relative string, file *ast.File, locations map[string]string) {
+func registerSemanticTypeObjects(encoder *semanticTypeEncoder, info *types.Info, file *ast.File) {
 	for _, declaration := range file.Decls {
-		switch typed := declaration.(type) {
-		case *ast.FuncDecl:
-			object := requireSemanticObject(info, typed.Name)
-			if _, ok := object.(*types.Func); !ok {
-				fatalf("Go function declaration %s resolved to %T", typed.Name.Name, object)
+		general, ok := declaration.(*ast.GenDecl)
+		if !ok || general.Tok != token.TYPE {
+			continue
+		}
+		for _, specification := range general.Specs {
+			typeSpec, ok := specification.(*ast.TypeSpec)
+			if !ok {
+				fatalf("Go type declaration contains unsupported specification %T", specification)
 			}
-			if typed.Recv == nil && typed.Name.Name == "init" {
-				offset := fileSet.PositionFor(typed.Pos(), false).Offset
-				unitID, ok := locations[semanticLocationKey(relative, "func", "init", offset)]
-				if !ok {
-					fatalf("Go init declaration has no syntax unit in %s at byte offset %d", relative, offset)
-				}
-				encoder.registerObjectID(object, unitID+"::object")
+			object := requireSemanticObject(info, typeSpec.Name)
+			typeName, ok := object.(*types.TypeName)
+			if !ok {
+				fatalf("Go type declaration %s resolved to %T", typeSpec.Name.Name, object)
 			}
-			encoder.registerObject(object)
-		case *ast.GenDecl:
-			if typed.Tok != token.TYPE {
-				continue
+			encoder.registerObject(typeName)
+			registerTypeParameterConstraintSyntax(encoder, declaredTypeParameters(typeName), typeSpec.TypeParams)
+		}
+	}
+}
+
+func registerSemanticFunctionObjects(encoder *semanticTypeEncoder, info *types.Info, fileSet *token.FileSet, relative string, file *ast.File, locations map[string]string) {
+	for _, declaration := range file.Decls {
+		functionDeclaration, ok := declaration.(*ast.FuncDecl)
+		if !ok {
+			continue
+		}
+		object := requireSemanticObject(info, functionDeclaration.Name)
+		function, ok := object.(*types.Func)
+		if !ok {
+			fatalf("Go function declaration %s resolved to %T", functionDeclaration.Name.Name, object)
+		}
+		if functionDeclaration.Recv == nil && functionDeclaration.Name.Name == "init" {
+			offset := fileSet.PositionFor(functionDeclaration.Pos(), false).Offset
+			unitID, ok := locations[semanticLocationKey(relative, "func", "init", offset)]
+			if !ok {
+				fatalf("Go init declaration has no syntax unit in %s at byte offset %d", relative, offset)
 			}
-			for _, specification := range typed.Specs {
-				typeSpec, ok := specification.(*ast.TypeSpec)
-				if !ok {
-					fatalf("Go type declaration contains unsupported specification %T", specification)
+			encoder.registerObjectID(object, unitID+"::object")
+		}
+		encoder.registerObject(object)
+		signature, ok := function.Type().(*types.Signature)
+		if !ok {
+			fatalf("Go function declaration %s has non-signature type %T", function.Name(), function.Type())
+		}
+		registerTypeParameterConstraintSyntax(encoder, signature.TypeParams(), functionDeclaration.Type.TypeParams)
+		if signature.RecvTypeParams() != nil && signature.RecvTypeParams().Len() > 0 {
+			receiverObject := receiverTypeObject(signature.Recv().Type())
+			if receiverObject == nil {
+				fatalf("generic Go method %s has no named receiver object", function.Name())
+			}
+			encoder.copyTypeParameterConstraintSyntax(signature.RecvTypeParams(), declaredTypeParameters(receiverObject))
+		}
+	}
+}
+
+func registerTypeParameterConstraintSyntax(encoder *semanticTypeEncoder, parameters *types.TypeParamList, fields *ast.FieldList) {
+	count := 0
+	if fields != nil {
+		for _, field := range fields.List {
+			constraintSyntax := printed(field.Type)
+			for _, name := range field.Names {
+				if parameters == nil || count >= parameters.Len() {
+					fatalf("Go type-parameter syntax has more names than go/types evidence")
 				}
-				object := requireSemanticObject(info, typeSpec.Name)
-				if _, ok := object.(*types.TypeName); !ok {
-					fatalf("Go type declaration %s resolved to %T", typeSpec.Name.Name, object)
+				parameter := parameters.At(count)
+				if name.Name != parameter.Obj().Name() {
+					fatalf("Go type-parameter syntax name %s disagrees with go/types name %s", name.Name, parameter.Obj().Name())
 				}
-				encoder.registerObject(object)
+				encoder.registerTypeParameterConstraintSyntax(parameter, constraintSyntax)
+				count++
 			}
 		}
+	}
+	if parameters != nil && count != parameters.Len() {
+		fatalf("Go type-parameter syntax has %d names but go/types has %d", count, parameters.Len())
+	}
+}
+
+func declaredTypeParameters(object *types.TypeName) *types.TypeParamList {
+	switch declared := object.Type().(type) {
+	case *types.Named:
+		return declared.TypeParams()
+	case *types.Alias:
+		return declared.TypeParams()
+	default:
+		fatalf("Go type declaration %s has unsupported object type %T", object.Name(), object.Type())
+		return nil
 	}
 }
 
@@ -181,9 +254,16 @@ func semanticTypeDeclarationItem(encoder *semanticTypeEncoder, checked *declarat
 	if rhs == nil {
 		fatalf("Go type declaration %s has no go/types RHS", specification.Name.Name)
 	}
+	methods := externalDeclaredMethods(typeName)
+	valueMethodSet := types.NewMethodSet(typeName.Type())
+	pointerMethodSet := types.NewMethodSet(types.NewPointer(typeName.Type()))
+	registerExternalMethods(encoder, methods, valueMethodSet, pointerMethodSet)
 	objectReport := semanticObjectReport(encoder, typeName)
 	declaration := &SemanticTypeDeclaration{
-		Alias: typeName.IsAlias(), Object: objectReport, TypeParameters: semanticDeclaredTypeParameters(encoder, typeName), RHS: encoder.typeReportAt(rhs, objectReport.ID+"::rhs"),
+		Alias: typeName.IsAlias(), Object: objectReport, TypeParameters: semanticDeclaredTypeParameters(encoder, typeName),
+		RHS: encoder.typeReportAt(rhs, objectReport.ID+"::rhs"), Methods: semanticExternalMethodReports(encoder, objectReport.ID, methods),
+		ValueMethodSet:   semanticExternalMethodSet(encoder, objectReport.ID, "valueMethodSet", valueMethodSet),
+		PointerMethodSet: semanticExternalMethodSet(encoder, objectReport.ID, "pointerMethodSet", pointerMethodSet),
 	}
 	return semanticDeclarationItem{
 		kind: "type", name: specification.Name.Name, offset: checked.fileSet.PositionFor(specification.Pos(), false).Offset,
@@ -194,15 +274,7 @@ func semanticTypeDeclarationItem(encoder *semanticTypeEncoder, checked *declarat
 }
 
 func semanticDeclaredTypeParameters(encoder *semanticTypeEncoder, object *types.TypeName) []SemanticTypeParameterReport {
-	switch declared := object.Type().(type) {
-	case *types.Named:
-		return encoder.typeParameterReports(declared.TypeParams())
-	case *types.Alias:
-		return encoder.typeParameterReports(declared.TypeParams())
-	default:
-		fatalf("Go type declaration %s has unsupported object type %T", object.Name(), object.Type())
-		return nil
-	}
+	return encoder.typeParameterReports(declaredTypeParameters(object))
 }
 
 func semanticValueSpecs(encoder *semanticTypeEncoder, info *types.Info, declaration *ast.GenDecl, blanks map[*ast.Ident]bool, ownerPath string) []SemanticValueSpecReport {

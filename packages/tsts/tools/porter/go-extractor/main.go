@@ -38,7 +38,7 @@ func main() {
 	}
 
 	snapshot := Snapshot{
-		SchemaVersion: 7,
+		SchemaVersion: 8,
 		SourceRoot:    filepath.ToSlash(absRoot),
 		ModulePath:    *modulePath,
 		GitRevision:   *revision,

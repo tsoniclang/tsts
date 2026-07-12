@@ -2,33 +2,38 @@ package main
 
 import (
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
-	"path/filepath"
+	"go/types"
 	"testing"
-
-	"golang.org/x/tools/go/packages"
 )
 
-func TestDeclarationImportPruningIgnoresBodiesButKeepsSignatureImports(t *testing.T) {
-	root := t.TempDir()
-	modulePath := "example.test/prune"
-	writeTestFile(t, filepath.Join(root, "bodydep", "dep.go"), "package runtimeapi\ntype Token struct{}\n")
-	writeTestFile(t, filepath.Join(root, "typedep", "dep.go"), "package declaredapi\ntype Token struct{}\n")
+func TestDeclarationImportPruningUsesResolvedPackageObjectsOutsideBodies(t *testing.T) {
 	source := `package sample
 import (
-	"example.test/prune/bodydep"
-	"example.test/prune/typedep"
+	runtimeapi "fmt"
+	declaredapi "time"
+	. "io"
+	. "math"
+	_ "embed"
 )
-func Read(value declaredapi.Token) { _ = runtimeapi.Token{} }
+type Record struct { runtimeapi int }
+func Read(value declaredapi.Duration, writer Writer) {}
+func execute() { runtimeapi.Println("body only"); _ = Sqrt(4) }
 `
-	parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(root, "sample.go"), source, parser.ParseComments)
+	fileSet := token.NewFileSet()
+	parsed, err := parser.ParseFile(fileSet, "sample.go", source, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
-	checker := &declarationPackageChecker{root: root, modulePath: modulePath, profile: semanticBuildProfile{GOOS: "linux", GOARCH: "amd64"}}
-	pruneDeclarationOnlyImports(checker, &packages.Package{Imports: map[string]*packages.Package{}}, []*ast.File{parsed})
-	if len(parsed.Imports) != 1 || parsed.Imports[0].Path.Value != `"example.test/prune/typedep"` {
+	info := newDeclarationTypeInfo()
+	configuration := &types.Config{Importer: importer.Default(), IgnoreFuncBodies: true, DisableUnusedImportCheck: true}
+	if _, err := configuration.Check("example.test/prune", fileSet, []*ast.File{parsed}, info); err != nil {
+		t.Fatalf("resolve declaration imports: %v", err)
+	}
+	pruneDeclarationOnlyImportsFromInfo([]*ast.File{parsed}, info)
+	if len(parsed.Imports) != 2 || parsed.Imports[0].Path.Value != `"time"` || parsed.Imports[1].Path.Value != `"io"` {
 		t.Fatalf("declaration-only imports = %#v", parsed.Imports)
 	}
 }

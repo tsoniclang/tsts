@@ -192,13 +192,14 @@ type TypeExprReport struct {
 }
 
 type SemanticDeclarationReport struct {
-	Kind        string                    `json:"kind"`
-	PackagePath string                    `json:"packagePath"`
-	Object      *SemanticObjectReport     `json:"object,omitempty"`
-	Type        *SemanticTypeDeclaration  `json:"type,omitempty"`
-	ValueSpecs  []SemanticValueSpecReport `json:"valueSpecs,omitempty"`
-	Signature   *SemanticSignatureReport  `json:"signature,omitempty"`
-	Profiles    []int                     `json:"profiles"`
+	Kind         string                    `json:"kind"`
+	PackagePath  string                    `json:"packagePath"`
+	ExternalRole string                    `json:"externalRole,omitempty"`
+	Object       *SemanticObjectReport     `json:"object,omitempty"`
+	Type         *SemanticTypeDeclaration  `json:"type,omitempty"`
+	ValueSpecs   []SemanticValueSpecReport `json:"valueSpecs,omitempty"`
+	Signature    *SemanticSignatureReport  `json:"signature,omitempty"`
+	Profiles     []int                     `json:"profiles"`
 }
 
 type SemanticObjectReport struct {
@@ -206,15 +207,17 @@ type SemanticObjectReport struct {
 	Name        string              `json:"name"`
 	PackagePath string              `json:"packagePath"`
 	Exported    bool                `json:"exported"`
-	Type        *SemanticTypeReport `json:"type"`
+	Type        *SemanticTypeReport `json:"type,omitempty"`
 }
 
 type SemanticTypeDeclaration struct {
-	Alias          bool                          `json:"alias"`
-	Object         SemanticObjectReport          `json:"object"`
-	TypeParameters []SemanticTypeParameterReport `json:"typeParameters"`
-	RHS            *SemanticTypeReport           `json:"rhs"`
-	Methods        []SemanticMethodReport         `json:"methods,omitempty"`
+	Alias            bool                            `json:"alias"`
+	Object           SemanticObjectReport            `json:"object"`
+	TypeParameters   []SemanticTypeParameterReport   `json:"typeParameters"`
+	RHS              *SemanticTypeReport             `json:"rhs"`
+	Methods          []SemanticMethodReport          `json:"methods,omitempty"`
+	ValueMethodSet   []SemanticMethodSelectionReport `json:"valueMethodSet,omitempty"`
+	PointerMethodSet []SemanticMethodSelectionReport `json:"pointerMethodSet,omitempty"`
 }
 
 type SemanticValueSpecReport struct {
@@ -274,12 +277,15 @@ type SemanticTypeParameterRef struct {
 }
 
 type SemanticTypeParameterReport struct {
-	Reference  SemanticTypeParameterRef `json:"reference"`
-	Constraint *SemanticTypeReport      `json:"constraint"`
+	Reference        SemanticTypeParameterRef  `json:"reference"`
+	Constraint       *SemanticTypeReport       `json:"constraint"`
+	ConstraintSource *SemanticTypeParameterRef `json:"constraintSource,omitempty"`
+	ConstraintSyntax string                    `json:"constraintSyntax,omitempty"`
 }
 
 type SemanticSignatureReport struct {
 	Receiver               *SemanticVariableReport       `json:"receiver,omitempty"`
+	ReceiverMode           string                        `json:"receiverMode,omitempty"`
 	ReceiverTypeParameters []SemanticTypeParameterReport `json:"receiverTypeParameters"`
 	TypeParameters         []SemanticTypeParameterReport `json:"typeParameters"`
 	Parameters             SemanticTupleReport           `json:"parameters"`
@@ -294,6 +300,7 @@ type SemanticTupleReport struct {
 type SemanticVariableReport struct {
 	ID          string              `json:"id"`
 	Name        string              `json:"name"`
+	NameKind    string              `json:"nameKind"`
 	PackagePath string              `json:"packagePath"`
 	Embedded    bool                `json:"embedded,omitempty"`
 	Exported    bool                `json:"exported"`
@@ -328,6 +335,15 @@ type SemanticMethodReport struct {
 	PackagePath string                   `json:"packagePath"`
 	Exported    bool                     `json:"exported"`
 	Signature   *SemanticSignatureReport `json:"signature"`
+}
+
+type SemanticMethodSelectionReport struct {
+	Key       string                   `json:"key"`
+	Method    SemanticMethodReport     `json:"method"`
+	Index     []int                    `json:"index"`
+	Indirect  bool                     `json:"indirect"`
+	Promoted  bool                     `json:"promoted"`
+	Signature *SemanticSignatureReport `json:"signature"`
 }
 
 type SemanticUnionReport struct {

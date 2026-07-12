@@ -2,19 +2,39 @@ package main
 
 import (
 	"go/ast"
-	"go/parser"
 	"go/token"
-	"path/filepath"
-	"sort"
-	"strconv"
-	"strings"
+	"go/types"
 
 	"golang.org/x/tools/go/packages"
 )
 
 func pruneDeclarationOnlyImports(checker *declarationPackageChecker, metadata *packages.Package, files []*ast.File) {
+	info := newDeclarationTypeInfo()
+	configuration := checker.declarationTypeConfig(metadata, true)
+	if _, err := configuration.Check(metadata.PkgPath, checker.fileSet, files, info); err != nil {
+		fatalf("resolve declaration-only Go imports for %s (%s) under %s: %v", metadata.PkgPath, metadata.ID, semanticProfileKey(checker.profile), err)
+	}
+	pruneDeclarationOnlyImportsFromInfo(files, info)
+}
+
+func pruneDeclarationOnlyImportsFromInfo(files []*ast.File, info *types.Info) {
+	declarationIdentifiers := declarationSyntaxIdentifiers(files)
+	usedPackageNames := map[*types.PkgName]bool{}
+	usedPackages := map[*types.Package]bool{}
+	for identifier := range declarationIdentifiers {
+		object := info.Uses[identifier]
+		if object == nil {
+			continue
+		}
+		if packageName, ok := object.(*types.PkgName); ok {
+			usedPackageNames[packageName] = true
+			continue
+		}
+		if object.Pkg() != nil {
+			usedPackages[object.Pkg()] = true
+		}
+	}
 	for _, file := range files {
-		used := declarationIdentifierNames(file)
 		keptImports := []*ast.ImportSpec{}
 		keptDeclarations := make([]ast.Decl, 0, len(file.Decls))
 		for _, declaration := range file.Decls {
@@ -29,8 +49,12 @@ func pruneDeclarationOnlyImports(checker *declarationPackageChecker, metadata *p
 				if !ok {
 					fatalf("Go import declaration contains unsupported specification %T", specification)
 				}
-				name := declarationImportName(checker, metadata, imported)
-				if name == "_" || name != "." && !used[name] {
+				packageName := declarationImportObject(info, imported)
+				used := usedPackageNames[packageName]
+				if packageName.Name() == "." {
+					used = usedPackages[packageName.Imported()]
+				}
+				if packageName.Name() == "_" || !used {
 					continue
 				}
 				keptSpecifications = append(keptSpecifications, imported)
@@ -46,96 +70,37 @@ func pruneDeclarationOnlyImports(checker *declarationPackageChecker, metadata *p
 	}
 }
 
-func declarationIdentifierNames(file *ast.File) map[string]bool {
-	used := map[string]bool{}
-	for _, declaration := range file.Decls {
-		if general, ok := declaration.(*ast.GenDecl); ok && general.Tok == token.IMPORT {
-			continue
-		}
-		ast.Inspect(declaration, func(node ast.Node) bool {
-			switch typed := node.(type) {
-			case *ast.BlockStmt:
-				return false
-			case *ast.Ident:
-				used[typed.Name] = true
+func declarationSyntaxIdentifiers(files []*ast.File) map[*ast.Ident]bool {
+	identifiers := map[*ast.Ident]bool{}
+	for _, file := range files {
+		for _, declaration := range file.Decls {
+			if general, ok := declaration.(*ast.GenDecl); ok && general.Tok == token.IMPORT {
+				continue
 			}
-			return true
-		})
+			ast.Inspect(declaration, func(node ast.Node) bool {
+				switch typed := node.(type) {
+				case *ast.BlockStmt:
+					return false
+				case *ast.Ident:
+					identifiers[typed] = true
+				}
+				return true
+			})
+		}
 	}
-	return used
+	return identifiers
 }
 
-func declarationImportName(checker *declarationPackageChecker, metadata *packages.Package, imported *ast.ImportSpec) string {
-	if imported.Name != nil {
-		return imported.Name.Name
+func declarationImportObject(info *types.Info, imported *ast.ImportSpec) *types.PkgName {
+	var object types.Object
+	if imported.Name == nil {
+		object = info.Implicits[imported]
+	} else {
+		object = info.Defs[imported.Name]
 	}
-	path, err := strconv.Unquote(imported.Path.Value)
-	if err != nil {
-		fatalf("invalid Go import path %s: %v", imported.Path.Value, err)
+	packageName, ok := object.(*types.PkgName)
+	if !ok || packageName == nil || packageName.Imported() == nil {
+		fatalf("Go import %s has no exact go/types package object", imported.Path.Value)
 	}
-	if dependency := metadata.Imports[path]; dependency != nil && dependency.Name != "" {
-		return dependency.Name
-	}
-	if packagePathWithinModule(path, checker.modulePath) {
-		return exactLocalImportPackageName(checker.root, checker.modulePath, checker.profile, path)
-	}
-	return checker.exactExternalImportPackageName(path)
-}
-
-func (checker *declarationPackageChecker) exactExternalImportPackageName(importPath string) string {
-	if name := checker.importNames[importPath]; name != "" {
-		return name
-	}
-	config := &packages.Config{
-		Mode: packages.NeedName | packages.NeedModule,
-		Dir:  checker.root, Env: semanticEnvironment(checker.profile), BuildFlags: append(semanticBuildFlags(checker.profile), "-e"),
-	}
-	loaded, err := packages.Load(config, importPath)
-	if err != nil {
-		fatalf("load exact package name for external Go import %s under %s: %v", importPath, semanticProfileKey(checker.profile), err)
-	}
-	names := map[string]bool{}
-	for _, candidate := range loaded {
-		if candidate != nil && candidate.PkgPath == importPath && candidate.Name != "" {
-			names[candidate.Name] = true
-		}
-	}
-	if len(names) != 1 {
-		fatalf("external Go import %s has %d exact package names under %s: %s", importPath, len(names), semanticProfileKey(checker.profile), strings.Join(sortedBoolKeys(names), ","))
-	}
-	name := sortedBoolKeys(names)[0]
-	checker.importNames[importPath] = name
-	return name
-}
-
-func exactLocalImportPackageName(root string, modulePath string, profile semanticBuildProfile, importPath string) string {
-	relative := strings.TrimPrefix(importPath, modulePath)
-	if relative == importPath || relative == "" || !strings.HasPrefix(relative, "/") {
-		fatalf("local Go import %s is outside module %s", importPath, modulePath)
-	}
-	directory := filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(relative, "/")))
-	entries, err := filepath.Glob(filepath.Join(directory, "*.go"))
-	if err != nil {
-		fatalf("enumerate local Go import %s: %v", importPath, err)
-	}
-	sort.Strings(entries)
-	names := map[string]bool{}
-	for _, filename := range entries {
-		if strings.HasSuffix(filename, "_test.go") {
-			continue
-		}
-		relativePath, ok := relativeSemanticPath(root, filename)
-		if !ok || !profileMatchesFile(root, profile, relativePath) {
-			continue
-		}
-		parsed, err := parser.ParseFile(token.NewFileSet(), filename, nil, parser.PackageClauseOnly)
-		if err != nil {
-			fatalf("parse package clause for local Go import %s: %v", importPath, err)
-		}
-		names[parsed.Name.Name] = true
-	}
-	if len(names) != 1 {
-		fatalf("local Go import %s has %d exact package names under %s: %s", importPath, len(names), semanticProfileKey(profile), strings.Join(sortedBoolKeys(names), ","))
-	}
-	return sortedBoolKeys(names)[0]
+	return packageName
 }

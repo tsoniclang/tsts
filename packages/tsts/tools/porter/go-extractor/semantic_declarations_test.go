@@ -29,6 +29,9 @@ func TestDeclarationOnlyExtractorCapturesExactGoSemantics(t *testing.T) {
 	assertSemanticConstant(t, constants[1].Names[0], "Typed", "Int", "7", "uint16")
 	assertSemanticConstant(t, constants[2].Names[0], "Ratio", "Float", "1/3", "untyped float")
 	assertSemanticConstant(t, constants[3].Names[0], "ComplexValue", "Complex", "(2 + 3i)", "untyped complex")
+	if !constants[0].Names[0].Type.Basic.Untyped || constants[1].Names[0].Type.Basic.Untyped {
+		t.Fatalf("constant typedness = untyped:%#v typed:%#v", constants[0].Names[0], constants[1].Names[0])
+	}
 
 	sequence := singleSemanticVariant(t, requireSemanticUnit(t, snapshot, "constGroup", "Sequence0+_+Sequence2")).ValueSpecs
 	blank := sequence[1].Names[0]
@@ -115,6 +118,16 @@ func TestDeclarationOnlyExtractorCapturesExactGoSemantics(t *testing.T) {
 	}
 	if method.ReceiverTypeParameters[0].Reference.Role != "receiver" {
 		t.Fatalf("receiver type parameter owner = %#v", method.ReceiverTypeParameters)
+	}
+	if method.ReceiverTypeParameters[0].Reference.Name != "Item" || method.ReceiverTypeParameters[0].ConstraintSyntax != "Constraint" || method.Receiver.Name != "generic" || method.Receiver.NameKind != "named" || method.ReceiverMode != "value" {
+		t.Fatalf("receiver source constraint/name/mode evidence = %#v", method)
+	}
+	constraintSource := method.ReceiverTypeParameters[0].ConstraintSource
+	if constraintSource == nil || constraintSource.OwnerID != "example.test/declarations::type::Generic" || constraintSource.Role != "type" || constraintSource.Index != 0 || constraintSource.Name != "T" {
+		t.Fatalf("receiver constraint source identity = %#v", constraintSource)
+	}
+	if transform.TypeParameters[0].ConstraintSyntax != "Constraint" || transform.Results.Variables[0].NameKind != "named" || transform.Results.Variables[1].NameKind != "named" {
+		t.Fatalf("function type-parameter/result source evidence = %#v", transform)
 	}
 
 	callback := singleSemanticVariant(t, requireSemanticUnit(t, snapshot, "type", "CallbackType")).Type.RHS
@@ -445,7 +458,7 @@ func TestCanonicalTypeEncoderCoversTupleVariant(t *testing.T) {
 
 func declarationSnapshot(t *testing.T, root string, modulePath string) Snapshot {
 	t.Helper()
-	snapshot := Snapshot{SchemaVersion: 6, SourceRoot: root, ModulePath: modulePath}
+	snapshot := Snapshot{SchemaVersion: 8, SourceRoot: root, ModulePath: modulePath}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -573,7 +586,7 @@ func Transform[T Constraint](input [Width]T, receive <-chan T, send chan<- T, re
 	return undefinedInsideFunction(input, receive, send, rest)
 }
 
-func (generic Generic[T]) Apply(value T) T {
+func (generic Generic[Item]) Apply(value Item) Item {
 	return undefinedInsideMethod(value)
 }
 `

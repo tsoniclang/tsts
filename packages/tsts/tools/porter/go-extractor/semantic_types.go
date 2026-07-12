@@ -9,18 +9,45 @@ import (
 )
 
 type semanticTypeEncoder struct {
-	typeParameterOwners                map[*types.TypeParam]SemanticTypeParameterRef
-	objectIDs                          map[types.Object]string
-	referencedTypes                    map[string]*types.TypeName
+	typeParameterOwners               map[*types.TypeParam]SemanticTypeParameterRef
+	typeParameterConstraintSources    map[*types.TypeParam]SemanticTypeParameterRef
+	typeParameterConstraintSyntax     map[*types.TypeParam]string
+	objectIDs                         map[types.Object]string
+	referencedTypes                   map[string]*types.TypeName
 	preserveInterfaceDeclarationOrder bool
 }
 
 func newSemanticTypeEncoder() *semanticTypeEncoder {
 	return &semanticTypeEncoder{
-		typeParameterOwners:                map[*types.TypeParam]SemanticTypeParameterRef{},
-		objectIDs:                          map[types.Object]string{},
-		referencedTypes:                    map[string]*types.TypeName{},
+		typeParameterOwners:               map[*types.TypeParam]SemanticTypeParameterRef{},
+		typeParameterConstraintSources:    map[*types.TypeParam]SemanticTypeParameterRef{},
+		typeParameterConstraintSyntax:     map[*types.TypeParam]string{},
+		objectIDs:                         map[types.Object]string{},
+		referencedTypes:                   map[string]*types.TypeName{},
 		preserveInterfaceDeclarationOrder: true,
+	}
+}
+
+func (encoder *semanticTypeEncoder) registerTypeParameterConstraintSyntax(parameter *types.TypeParam, syntax string) {
+	if parameter == nil || syntax == "" {
+		fatalf("cannot register empty Go type-parameter constraint syntax")
+	}
+	if previous := encoder.typeParameterConstraintSyntax[parameter]; previous != "" && previous != syntax {
+		fatalf("Go type parameter %s has conflicting constraint syntax %q and %q", parameter.Obj().Name(), previous, syntax)
+	}
+	encoder.typeParameterConstraintSyntax[parameter] = syntax
+}
+
+func (encoder *semanticTypeEncoder) copyTypeParameterConstraintSyntax(target *types.TypeParamList, source *types.TypeParamList) {
+	if target == nil || source == nil || target.Len() != source.Len() {
+		fatalf("Go receiver type-parameter lists have inconsistent lengths")
+	}
+	for index := 0; index < target.Len(); index++ {
+		syntax := encoder.typeParameterConstraintSyntax[source.At(index)]
+		if syntax == "" {
+			fatalf("Go receiver type parameter %s has no declaration constraint syntax", target.At(index).Obj().Name())
+		}
+		encoder.registerTypeParameterConstraintSyntax(target.At(index), syntax)
 	}
 }
 
@@ -71,6 +98,7 @@ func (encoder *semanticTypeEncoder) registerObject(object types.Object) {
 		ownerID := encoder.objectID(typed)
 		encoder.registerTypeParameters(ownerID, "receiver", signature.RecvTypeParams())
 		encoder.registerTypeParameters(ownerID, "type", signature.TypeParams())
+		encoder.registerReceiverTypeParameterConstraintSources(signature)
 	case *types.TypeName:
 		switch declared := typed.Type().(type) {
 		case *types.Named:
@@ -84,6 +112,43 @@ func (encoder *semanticTypeEncoder) registerObject(object types.Object) {
 			fatalf("Go defined type %s has unsupported object type %T", typed.Name(), typed.Type())
 		}
 	}
+}
+
+func (encoder *semanticTypeEncoder) registerReceiverTypeParameterConstraintSources(signature *types.Signature) {
+	parameters := signature.RecvTypeParams()
+	if parameters == nil || parameters.Len() == 0 {
+		return
+	}
+	if signature.Recv() == nil {
+		fatalf("Go signature has receiver type parameters without a receiver")
+	}
+	receiverObject := receiverTypeObject(signature.Recv().Type())
+	if receiverObject == nil {
+		fatalf("generic Go receiver has no exact declared type object")
+	}
+	encoder.registerObject(receiverObject)
+	sources := declaredTypeParameters(receiverObject)
+	if sources == nil || sources.Len() != parameters.Len() {
+		fatalf("Go receiver type parameter count %d disagrees with declared type %s count %d", parameters.Len(), semanticObjectID(receiverObject), typeParameterListLength(sources))
+	}
+	for index := 0; index < parameters.Len(); index++ {
+		source, ok := encoder.typeParameterOwners[sources.At(index)]
+		if !ok {
+			fatalf("Go receiver constraint source %s[%d] has no exact type-parameter identity", semanticObjectID(receiverObject), index)
+		}
+		target := parameters.At(index)
+		if previous, exists := encoder.typeParameterConstraintSources[target]; exists && previous != source {
+			fatalf("Go receiver type parameter %s has conflicting constraint sources: %#v and %#v", target.Obj().Name(), previous, source)
+		}
+		encoder.typeParameterConstraintSources[target] = source
+	}
+}
+
+func typeParameterListLength(parameters *types.TypeParamList) int {
+	if parameters == nil {
+		return 0
+	}
+	return parameters.Len()
 }
 
 func (encoder *semanticTypeEncoder) typeReport(value types.Type) *SemanticTypeReport {
@@ -185,6 +250,7 @@ func (encoder *semanticTypeEncoder) signatureReportAt(signature *types.Signature
 	if includeReceiver && signature.Recv() != nil {
 		receiver := encoder.variableReportAt(signature.Recv(), ownerPath+"::receiver")
 		report.Receiver = &receiver
+		report.ReceiverMode = semanticReceiverMode(signature.Recv().Type())
 	}
 	return report
 }
@@ -201,11 +267,20 @@ func (encoder *semanticTypeEncoder) typeParameterReports(parameters *types.TypeP
 			fatalf("Go type parameter %s has no registered owner", parameter.Obj().Name())
 		}
 		reports = append(reports, SemanticTypeParameterReport{
-			Reference:  reference,
-			Constraint: encoder.typeReportAt(parameter.Constraint(), reference.OwnerID+"::"+reference.Role+"::"+itoa(reference.Index)+"::constraint"),
+			Reference: reference, Constraint: encoder.typeReportAt(parameter.Constraint(), reference.OwnerID+"::"+reference.Role+"::"+itoa(reference.Index)+"::constraint"),
+			ConstraintSource: semanticTypeParameterConstraintSource(encoder.typeParameterConstraintSources, parameter),
+			ConstraintSyntax: encoder.typeParameterConstraintSyntax[parameter],
 		})
 	}
 	return reports
+}
+
+func semanticTypeParameterConstraintSource(sources map[*types.TypeParam]SemanticTypeParameterRef, parameter *types.TypeParam) *SemanticTypeParameterRef {
+	source, ok := sources[parameter]
+	if !ok {
+		return nil
+	}
+	return &source
 }
 
 func (encoder *semanticTypeEncoder) tupleReportAt(tuple *types.Tuple, ownerPath string) SemanticTupleReport {
@@ -224,8 +299,31 @@ func (encoder *semanticTypeEncoder) variableReportAt(variable *types.Var, ownerP
 		fatalf("cannot encode a nil Go variable at %s", ownerPath)
 	}
 	return SemanticVariableReport{
-		ID: ownerPath, Name: variable.Name(), PackagePath: semanticPackagePath(variable.Pkg()), Embedded: variable.Embedded(),
-		Exported: token.IsExported(variable.Name()), Type: encoder.typeReportAt(variable.Type(), ownerPath+"::type"),
+		ID: ownerPath, Name: variable.Name(), NameKind: semanticVariableNameKind(variable.Name()), PackagePath: semanticPackagePath(variable.Pkg()), Embedded: variable.Embedded(),
+		Exported: variable.Exported(), Type: encoder.typeReportAt(variable.Type(), ownerPath+"::type"),
+	}
+}
+
+func semanticVariableNameKind(name string) string {
+	switch name {
+	case "":
+		return "unnamed"
+	case "_":
+		return "blank"
+	default:
+		return "named"
+	}
+}
+
+func semanticReceiverMode(value types.Type) string {
+	switch value.(type) {
+	case *types.Pointer:
+		return "pointer"
+	case *types.Named, *types.Alias:
+		return "value"
+	default:
+		fatalf("Go method receiver has unsupported type %T", value)
+		return ""
 	}
 }
 
@@ -310,7 +408,7 @@ func (encoder *semanticTypeEncoder) methodReportAt(method *types.Func, ownerPath
 	methodID := ownerPath + "::" + role + "::" + itoa(index) + "::" + types.Id(method.Pkg(), method.Name())
 	return SemanticMethodReport{
 		ID: methodID, OwnerID: ownerPath, Name: method.Name(), PackagePath: semanticPackagePath(method.Pkg()),
-		Exported: token.IsExported(method.Name()), Signature: encoder.signatureReportAt(signature, methodID+"::signature", false),
+		Exported: method.Exported(), Signature: encoder.signatureReportAt(signature, methodID+"::signature", false),
 	}
 }
 
@@ -364,6 +462,8 @@ func semanticObjectID(object types.Object) string {
 		return prefix + "::const::" + typed.Name()
 	case *types.Var:
 		return prefix + "::var::" + typed.Name()
+	case *types.Builtin:
+		return prefix + "::builtin::" + typed.Name()
 	default:
 		fatalf("unsupported go/types.Object implementation %T", object)
 		return ""
