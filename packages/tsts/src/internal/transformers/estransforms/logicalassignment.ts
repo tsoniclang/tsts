@@ -28,7 +28,7 @@ import { IsSimpleCopiableExpression } from "../utilities.js";
  * }
  */
 export interface logicalAssignmentTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
 }
 
 /**

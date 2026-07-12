@@ -22,7 +22,7 @@ import { NodeFactory_NewTempVariable } from "../../printer/factory.js";
  * }
  */
 export interface optionalCatchTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
 }
 
 /**

@@ -69,7 +69,7 @@ import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, Generat
  * }
  */
 export interface NodeFactory {
-  readonly __tsgoEmbedded0?: NodeFactory_88523d1c;
+  __tsgoEmbedded0: NodeFactory_88523d1c;
   AsNodeFactory(): GoPtr<NodeFactory_88523d1c>;
   emitContext: GoPtr<EmitContext>;
 }

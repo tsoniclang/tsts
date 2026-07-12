@@ -165,7 +165,7 @@ export interface PrintHandlers {
  * }
  */
 export interface Printer {
-  readonly __tsgoEmbedded0?: PrintHandlers;
+  __tsgoEmbedded0: PrintHandlers;
   Options: PrinterOptions;
   emitContext: GoPtr<EmitContext>;
   currentSourceFile: GoPtr<SourceFile>;

@@ -17,8 +17,7 @@ import type { Entries, FileInfo, FS as FS_f717df58, WalkDirFunc } from "../vfs.j
  * 	Realpath(path string) (string, error)
  * }
  */
-export interface RealpathFS {
-  readonly __tsgoEmbedded0?: FS;
+export interface RealpathFS extends FS {
   Realpath(path: string): [string, GoError];
 }
 
@@ -36,8 +35,7 @@ export interface RealpathFS {
  * 	Chtimes(path string, aTime time.Time, mTime time.Time) error
  * }
  */
-export interface WritableFS {
-  readonly __tsgoEmbedded0?: FS;
+export interface WritableFS extends FS {
   WriteFile(path: string, data: string, perm: FileMode): GoError;
   AppendFile(path: string, data: string, perm: FileMode): GoError;
   MkdirAll(path: string, perm: FileMode): GoError;

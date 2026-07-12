@@ -63,34 +63,13 @@ import type { Program } from "./program.js";
  * 	IsEmitBlocked(file string) bool
  * }
  */
-export interface EmitHost {
-  readonly __tsgoEmbedded0?: EmitHost_cf9bdcc7;
-  readonly __tsgoEmbedded1?: DeclarationEmitHost;
+export interface EmitHost extends EmitHost_cf9bdcc7, DeclarationEmitHost {
   Options(): GoPtr<CompilerOptions>;
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
   UseCaseSensitiveFileNames(): bool;
   GetCurrentDirectory(): string;
   CommonSourceDirectory(): string;
   IsEmitBlocked(file: string): bool;
-  GetSymlinkCache(): GoPtr<KnownSymlinks>;
-  GetGlobalTypingsCacheLocation(): string;
-  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
-  GetRedirectTargets(path: Path): GoSlice<string>;
-  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
-  FileExists(path: string): bool;
-  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
-  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
-  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
-  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
-  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
-  GetSourceFileFromReference(origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile>;
-  GetOutputPathsFor(file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths;
-  GetResolutionModeOverride(node: GoPtr<Node>): ResolutionMode;
-  GetEffectiveDeclarationFlags(node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags;
-  GetEmitResolver(): EmitResolver;
-  WriteFile(fileName: string, text: string): GoError;
-  GetEmitModuleFormatOfFile(file: HasFileName): ModuleKind;
-  IsSourceFileFromExternalLibrary(file: GoPtr<SourceFile>): bool;
 }
 
 /**
@@ -102,11 +81,11 @@ export interface EmitHost {
 export let __6e5ea12b_0: EmitHost = emitHost_as_compiler_EmitHost(undefined);
 
 export function EmitHost_as_printer_EmitHost(receiver: EmitHost): EmitHost_cf9bdcc7 {
-  return receiver.__tsgoEmbedded0!;
+  return receiver;
 }
 
 export function EmitHost_as_declarations_DeclarationEmitHost(receiver: EmitHost): DeclarationEmitHost {
-  return receiver.__tsgoEmbedded1!;
+  return receiver;
 }
 
 export function emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver: GoPtr<emitHost>): ModuleSpecifierGenerationHost {
@@ -179,8 +158,6 @@ export function emitHost_as_outputpaths_OutputPathsHost(receiver: GoPtr<emitHost
 
 export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHost {
   return {
-    __tsgoEmbedded0: emitHost_as_printer_EmitHost(receiver),
-    __tsgoEmbedded1: emitHost_as_declarations_DeclarationEmitHost(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
     GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),

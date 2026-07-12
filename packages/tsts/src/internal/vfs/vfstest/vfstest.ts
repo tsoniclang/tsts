@@ -1020,7 +1020,7 @@ export function MapFS_mkdirAll(receiver: GoPtr<MapFS>, p: string, perm: FileMode
  * }
  */
 export interface fileInfo {
-  readonly __tsgoEmbedded0?: FileInfo;
+  __tsgoEmbedded0: FileInfo;
   sys: unknown;
   realpath: string;
   Name(): string;
@@ -1065,7 +1065,7 @@ export function fileInfo_Sys(receiver: GoPtr<fileInfo>): unknown {
  * }
  */
 export interface file {
-  readonly __tsgoEmbedded0?: File;
+  __tsgoEmbedded0: File;
   fileInfo: GoPtr<fileInfo>;
 }
 
@@ -1091,7 +1091,7 @@ export function file_Stat(receiver: GoPtr<file>): [FileInfo, GoError] {
  * }
  */
 export interface readDirFile {
-  readonly __tsgoEmbedded0?: ReadDirFile;
+  __tsgoEmbedded0: ReadDirFile;
   fileInfo: GoPtr<fileInfo>;
 }
 

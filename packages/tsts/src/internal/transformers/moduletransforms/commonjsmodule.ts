@@ -76,7 +76,7 @@ import { OrderedSet_Values } from "../../collections/ordered_set.js";
  * }
  */
 export interface CommonJSModuleTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   topLevelVisitor: GoPtr<NodeVisitor>;
   topLevelNestedVisitor: GoPtr<NodeVisitor>;
   discardedValueVisitor: GoPtr<NodeVisitor>;

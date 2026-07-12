@@ -17,7 +17,7 @@ import { Transformer_NewTransformer } from "./transformer.js";
  * }
  */
 export interface modifierVisitor {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   AllowedModifiers: ModifierFlags;
 }
 

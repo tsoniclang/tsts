@@ -470,7 +470,7 @@ export function GetCompilerOptionsWithRedirect(compilerOptions: GoPtr<CompilerOp
  * }
  */
 export interface Resolver {
-  readonly __tsgoEmbedded0?: caches;
+  __tsgoEmbedded0: caches;
   host: ResolutionHost;
   compilerOptions: GoPtr<CompilerOptions>;
   typingsLocation: string;

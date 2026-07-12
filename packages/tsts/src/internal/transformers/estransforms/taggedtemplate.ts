@@ -58,7 +58,7 @@ export let newlineNormalizer: GoPtr<strings.Replacer> = strings.NewReplacer("\r\
  * }
  */
 export interface taggedTemplateTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   currentSourceFile: GoPtr<SourceFile>;
   taggedTemplateStringDeclarations: GoSlice<GoPtr<Node>>;
 }

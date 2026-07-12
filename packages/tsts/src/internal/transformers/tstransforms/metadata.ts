@@ -52,7 +52,7 @@ export const USE_NEW_TYPE_METADATA_FORMAT: bool = false;
  * }
  */
 export interface MetadataTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   legacyDecorators: bool;
   resolver: EmitResolver;
   serializer: GoPtr<metadataSerializer>;

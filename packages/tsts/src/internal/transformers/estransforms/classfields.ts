@@ -243,7 +243,7 @@ export interface classLexicalEnv {
  * }
  */
 export interface classFieldsTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   resolver: ReferenceResolver;
   shouldTransformInitializersUsingSet: bool;

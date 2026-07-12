@@ -26,7 +26,7 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/vis
  * }
  */
 export interface exponentiationTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
 }
 
 /**

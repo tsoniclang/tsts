@@ -415,7 +415,7 @@ export interface classInfo {
  * }
  */
 export interface esDecoratorTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   top: GoPtr<lexicalEntry>;
   classInfoStack: GoPtr<classInfo>;

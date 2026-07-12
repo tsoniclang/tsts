@@ -46,7 +46,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
  * }
  */
 export interface ImportElisionTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   currentSourceFile: GoPtr<SourceFile>;
   emitResolver: EmitResolver;

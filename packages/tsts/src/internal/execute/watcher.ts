@@ -180,8 +180,19 @@ export interface cachedSourceFile {
  * }
  */
 export interface watchCompilerHost {
-  readonly __tsgoEmbedded0?: CompilerHost;
+  __tsgoEmbedded0: CompilerHost;
   cache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
+}
+
+function watchCompilerHost_as_compiler_CompilerHost(receiver: GoPtr<watchCompilerHost>): CompilerHost {
+  return {
+    FS: () => receiver!.__tsgoEmbedded0.FS(),
+    DefaultLibraryPath: () => receiver!.__tsgoEmbedded0.DefaultLibraryPath(),
+    GetCurrentDirectory: () => receiver!.__tsgoEmbedded0.GetCurrentDirectory(),
+    Trace: (msg, ...args) => receiver!.__tsgoEmbedded0.Trace(msg, ...args),
+    GetSourceFile: (opts) => watchCompilerHost_GetSourceFile(receiver, opts),
+    GetResolvedProjectReference: (fileName, path) => receiver!.__tsgoEmbedded0.GetResolvedProjectReference(fileName, path),
+  };
 }
 
 /**
@@ -1395,6 +1406,10 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
     ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
+  const host: watchCompilerHost = {
+    __tsgoEmbedded0: innerHost,
+    cache: receiver!.sourceFileCache,
+  };
 
   let wildcardDirs: GoMap<string, bool> | undefined;
   if (receiver!.config!.ConfigFile !== undefined) {
@@ -1411,7 +1426,7 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   }
 
   receiver!.program = IncrementalNewProgram(
-    NewProgram({ Config: receiver!.config, Host: innerHost } as ProgramOptions),
+    NewProgram({ Config: receiver!.config, Host: watchCompilerHost_as_compiler_CompilerHost(host) } as ProgramOptions),
     receiver!.program,
     undefined as unknown as IncrementalHost,
     receiver!.testing !== undefined,

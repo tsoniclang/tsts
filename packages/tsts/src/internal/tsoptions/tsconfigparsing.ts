@@ -1634,7 +1634,7 @@ export interface ParseConfigHost {
  * }
  */
 export interface resolverHost {
-  readonly __tsgoEmbedded0?: ParseConfigHost;
+  __tsgoEmbedded0: ParseConfigHost;
 }
 
 /**

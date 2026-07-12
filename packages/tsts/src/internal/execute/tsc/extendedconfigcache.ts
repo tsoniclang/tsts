@@ -29,7 +29,7 @@ export interface ExtendedConfigCache {
  * }
  */
 export interface extendedConfigCacheEntry {
-  __tsgoEmbedded0?: GoPtr<ExtendedConfigCacheEntry>;
+  __tsgoEmbedded0: GoPtr<ExtendedConfigCacheEntry>;
   mu: Mutex;
 }
 

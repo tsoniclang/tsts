@@ -48,7 +48,7 @@ export let typeScriptVersion: SemverVersion = MustParse(Version());
  * }
  */
 export interface PackageJson {
-  readonly __tsgoEmbedded0?: Fields;
+  __tsgoEmbedded0: Fields;
   Parseable: bool;
   versionPaths: VersionPaths;
   versionTraces: GoSlice<diagnosticAndArgs>;

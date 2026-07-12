@@ -2169,7 +2169,7 @@ export interface TypeData extends GoInterfaceValue<unknown> {
  * }
  */
 export interface TypeBase {
-  readonly __tsgoEmbedded0?: Type;
+  __tsgoEmbedded0: Type;
 }
 
 /**
@@ -2252,7 +2252,7 @@ export function TypeBase_AsUnionOrIntersectionType(receiver: GoPtr<TypeBase>): G
  * }
  */
 export interface IntrinsicType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   intrinsicName: string;
 }
 
@@ -2278,7 +2278,7 @@ export function IntrinsicType_IntrinsicName(receiver: GoPtr<IntrinsicType>): str
  * }
  */
 export interface LiteralType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   value: unknown;
   freshType: GoPtr<Type>;
   regularType: GoPtr<Type>;
@@ -2342,7 +2342,7 @@ export function LiteralType_String(receiver: GoPtr<LiteralType>): string {
  * }
  */
 export interface UniqueESSymbolType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   name: string;
 }
 
@@ -2356,7 +2356,7 @@ export interface UniqueESSymbolType {
  * }
  */
 export interface ConstrainedType {
-  readonly __tsgoEmbedded0?: TypeBase;
+  __tsgoEmbedded0: TypeBase;
   resolvedBaseConstraint: GoPtr<Type>;
 }
 
@@ -2386,7 +2386,7 @@ export function ConstrainedType_AsConstrainedType(receiver: GoPtr<ConstrainedTyp
  * }
  */
 export interface StructuredType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   members: SymbolTable;
   properties: GoSlice<GoPtr<Symbol_62f2f8bf>>;
   signatures: GoSlice<GoPtr<Signature>>;
@@ -2453,7 +2453,7 @@ export function StructuredType_Properties(receiver: GoPtr<StructuredType>): GoSl
  * }
  */
 export interface ObjectType {
-  readonly __tsgoEmbedded0?: StructuredType;
+  __tsgoEmbedded0: StructuredType;
   target: GoPtr<Type>;
   mapper: GoPtr<TypeMapper>;
   instantiations: GoMap<CacheHashKey, GoPtr<Type>>;
@@ -2480,7 +2480,7 @@ export function ObjectType_AsObjectType(receiver: GoPtr<ObjectType>): GoPtr<Obje
  * }
  */
 export interface TypeReference {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   node: GoPtr<Node>;
   resolvedTypeArguments: GoSlice<GoPtr<Type>>;
 }
@@ -2515,7 +2515,7 @@ export function TypeReference_AsTypeReference(receiver: GoPtr<TypeReference>): G
  * }
  */
 export interface InterfaceType {
-  readonly __tsgoEmbedded0?: TypeReference;
+  __tsgoEmbedded0: TypeReference;
   allTypeParameters: GoSlice<GoPtr<Type>>;
   outerTypeParameterCount: int;
   thisType: GoPtr<Type>;
@@ -2675,7 +2675,7 @@ export function TupleElementInfo_LabeledDeclaration(receiver: GoPtr<TupleElement
  * }
  */
 export interface TupleType {
-  readonly __tsgoEmbedded0?: InterfaceType;
+  __tsgoEmbedded0: InterfaceType;
   elementInfos: GoSlice<TupleElementInfo>;
   minLength: int;
   fixedLength: int;
@@ -2739,7 +2739,7 @@ export function TupleType_ElementInfos(receiver: GoPtr<TupleType>): GoSlice<Tupl
  * }
  */
 export interface InstantiationExpressionType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   node: GoPtr<Node>;
 }
 
@@ -2760,7 +2760,7 @@ export interface InstantiationExpressionType {
  * }
  */
 export interface MappedType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   declaration: GoPtr<MappedTypeNode>;
   typeParameter: GoPtr<Type>;
   constraintType: GoPtr<Type>;
@@ -2783,7 +2783,7 @@ export interface MappedType {
  * }
  */
 export interface ReverseMappedType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   source: GoPtr<Type>;
   mappedType: GoPtr<Type>;
   constraintType: GoPtr<Type>;
@@ -2800,7 +2800,7 @@ export interface ReverseMappedType {
  * }
  */
 export interface EvolvingArrayType {
-  readonly __tsgoEmbedded0?: ObjectType;
+  __tsgoEmbedded0: ObjectType;
   elementType: GoPtr<Type>;
   finalArrayType: GoPtr<Type>;
 }
@@ -2818,7 +2818,7 @@ export interface EvolvingArrayType {
  * }
  */
 export interface UnionOrIntersectionType {
-  readonly __tsgoEmbedded0?: StructuredType;
+  __tsgoEmbedded0: StructuredType;
   types: GoSlice<GoPtr<Type>>;
   propertyCache: SymbolTable;
   propertyCacheWithoutFunctionPropertyAugment: SymbolTable;
@@ -2861,7 +2861,7 @@ export function UnionOrIntersectionType_Types(receiver: GoPtr<UnionOrIntersectio
  * }
  */
 export interface UnionType {
-  readonly __tsgoEmbedded0?: UnionOrIntersectionType;
+  __tsgoEmbedded0: UnionOrIntersectionType;
   resolvedReducedType: GoPtr<Type>;
   regularType: GoPtr<Type>;
   origin: GoPtr<Type>;
@@ -2880,7 +2880,7 @@ export interface UnionType {
  * }
  */
 export interface IntersectionType {
-  readonly __tsgoEmbedded0?: UnionOrIntersectionType;
+  __tsgoEmbedded0: UnionOrIntersectionType;
   resolvedApparentType: GoPtr<Type>;
   uniqueLiteralFilledInstantiation: GoPtr<Type>;
 }
@@ -2899,7 +2899,7 @@ export interface IntersectionType {
  * }
  */
 export interface TypeParameter {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   constraint: GoPtr<Type>;
   target: GoPtr<Type>;
   mapper: GoPtr<TypeMapper>;
@@ -2952,7 +2952,7 @@ export const IndexFlagsNoReducibleCheck: IndexFlags = 1 << 2;
  * }
  */
 export interface IndexType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   target: GoPtr<Type>;
   indexFlags: IndexFlags;
 }
@@ -2979,7 +2979,7 @@ export function IndexType_Target(receiver: GoPtr<IndexType>): GoPtr<Type> {
  * }
  */
 export interface IndexedAccessType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   objectType: GoPtr<Type>;
   indexType: GoPtr<Type>;
   accessFlags: AccessFlags;
@@ -3016,7 +3016,7 @@ export function IndexedAccessType_IndexType(receiver: GoPtr<IndexedAccessType>):
  * }
  */
 export interface TemplateLiteralType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   texts: GoSlice<string>;
   types: GoSlice<GoPtr<Type>>;
 }
@@ -3051,7 +3051,7 @@ export function TemplateLiteralType_Types(receiver: GoPtr<TemplateLiteralType>):
  * }
  */
 export interface StringMappingType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   target: GoPtr<Type>;
 }
 
@@ -3076,7 +3076,7 @@ export function StringMappingType_Target(receiver: GoPtr<StringMappingType>): Go
  * }
  */
 export interface SubstitutionType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   baseType: GoPtr<Type>;
   constraint: GoPtr<Type>;
 }
@@ -3146,7 +3146,7 @@ export interface ConditionalRoot {
  * }
  */
 export interface ConditionalType {
-  readonly __tsgoEmbedded0?: ConstrainedType;
+  __tsgoEmbedded0: ConstrainedType;
   root: GoPtr<ConditionalRoot>;
   checkType: GoPtr<Type>;
   extendsType: GoPtr<Type>;

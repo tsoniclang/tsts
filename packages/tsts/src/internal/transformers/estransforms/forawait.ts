@@ -115,8 +115,8 @@ export const forAwaitHierarchyFactsIterationStatementExcludes: forAwaitHierarchy
  * }
  */
 export interface forawaitTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
-  readonly __tsgoEmbedded1?: superAccessState;
+  __tsgoEmbedded0: Transformer;
+  __tsgoEmbedded1: superAccessState;
   compilerOptions: GoPtr<CompilerOptions>;
   enclosingFunctionFlags: FunctionFlags;
   forAwaitHierarchyFacts: forAwaitHierarchyFacts;

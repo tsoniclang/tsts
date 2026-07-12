@@ -52,7 +52,7 @@ const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
  * }
  */
 export interface ConstEnumInliningTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   currentSourceFile: GoPtr<SourceFile>;
   emitResolver: EmitResolver;

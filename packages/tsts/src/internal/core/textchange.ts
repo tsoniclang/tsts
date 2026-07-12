@@ -25,7 +25,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
  * }
  */
 export interface TextChange {
-  readonly __tsgoEmbedded0?: TextRange;
+  __tsgoEmbedded0: TextRange;
   NewText: string;
 }
 

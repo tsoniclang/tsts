@@ -1266,20 +1266,7 @@ export interface WideningContext {
  * 	CommonSourceDirectory() string
  * }
  */
-export interface Program {
-  readonly __tsgoEmbedded0?: Host;
-  GetSymlinkCache(): GoPtr<KnownSymlinks>;
-  GetGlobalTypingsCacheLocation(): string;
-  UseCaseSensitiveFileNames(): bool;
-  GetCurrentDirectory(): string;
-  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
-  GetRedirectTargets(path: Path): GoSlice<string>;
-  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
-  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
-  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
-  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
-  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
-  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
+export interface Program extends Host {
   Options(): GoPtr<CompilerOptions>;
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
   BindSourceFiles(): void;

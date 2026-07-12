@@ -260,7 +260,7 @@ export interface Program {
   checkerPool: CheckerPool | undefined;
   compilerCheckerPool: GoPtr<checkerPool>;
   comparePathsOptions: ComparePathsOptions;
-  readonly __tsgoEmbedded0?: processedFiles;
+  __tsgoEmbedded0: processedFiles;
   usesUriStyleNodeCoreModules: Tristate;
   commonSourceDirectory: string;
   commonSourceDirectoryOnce: Once;

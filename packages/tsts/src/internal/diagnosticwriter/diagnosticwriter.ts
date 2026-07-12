@@ -107,7 +107,7 @@ export interface Diagnostic {
  * }
  */
 export interface ASTDiagnostic extends Diagnostic {
-  readonly __tsgoEmbedded0?: GoPtr<Diagnostic_34a9f76f>;
+  __tsgoEmbedded0: GoPtr<Diagnostic_34a9f76f>;
 }
 
 /**
@@ -281,7 +281,7 @@ export function CompareASTDiagnostics(a: GoPtr<ASTDiagnostic>, b: GoPtr<ASTDiagn
  */
 export interface FormattingOptions {
   Locale: Locale;
-  readonly __tsgoEmbedded0?: ComparePathsOptions;
+  __tsgoEmbedded0: ComparePathsOptions;
   NewLine: string;
 }
 

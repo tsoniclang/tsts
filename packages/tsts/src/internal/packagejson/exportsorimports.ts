@@ -42,7 +42,7 @@ export const objectKindInvalid: objectKind = 4 as objectKind;
  * }
  */
 export interface ExportsOrImports {
-  __tsgoEmbedded0?: JSONValue;
+  __tsgoEmbedded0: JSONValue;
   objectKind: objectKind;
 }
 

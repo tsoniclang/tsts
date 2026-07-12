@@ -63,7 +63,7 @@ const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
  * }
  */
 export interface ChangeTrackerWriter {
-  readonly __tsgoEmbedded0?: textWriter;
+  __tsgoEmbedded0: textWriter;
   lastNonTriviaPosition: int;
   pos: GoMap<triviaPositionKey, int>;
   end: GoMap<triviaPositionKey, int>;

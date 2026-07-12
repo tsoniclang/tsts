@@ -249,9 +249,9 @@ export function DependencyFields_GetRuntimeDependencyNames(receiver: GoPtr<Depen
  * }
  */
 export interface Fields {
-  readonly __tsgoEmbedded0?: HeaderFields;
-  readonly __tsgoEmbedded1?: PathFields;
-  readonly __tsgoEmbedded2?: DependencyFields;
+  __tsgoEmbedded0: HeaderFields;
+  __tsgoEmbedded1: PathFields;
+  __tsgoEmbedded2: DependencyFields;
 }
 
 /**
@@ -267,15 +267,15 @@ export interface Fields {
  * }
  */
 export function Parse(data: GoSlice<byte>): [Fields, GoError] {
-  const f: Fields = {};
+  const f = decodeFields(undefined);
   const err = Unmarshal(data, f, AllowDuplicateNames(true));
   if (err !== undefined) {
-    return [{}, err];
+    return [decodeFields(undefined), err];
   }
   try {
     return [decodeFields(globalThis.JSON.parse(new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as Array<number>)))), undefined];
   } catch (error) {
-    return [{}, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
+    return [decodeFields(undefined), error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }
 }
 

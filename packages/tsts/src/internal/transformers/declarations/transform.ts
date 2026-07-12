@@ -148,7 +148,7 @@ export interface DeclarationEmitHost extends ModuleSpecifierGenerationHost {
  * }
  */
 export interface DeclarationTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   host: DeclarationEmitHost;
   compilerOptions: GoPtr<CompilerOptions>;
   tracker: GoPtr<SymbolTrackerImpl>;

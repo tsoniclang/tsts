@@ -178,7 +178,7 @@ import { Tristate_IsTrue } from "../../core/tristate.js";
  * }
  */
 export interface RuntimeSyntaxTransformer {
-  readonly __tsgoEmbedded0?: Transformer;
+  __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   parentNode: GoPtr<Node>;
   currentNode: GoPtr<Node>;
