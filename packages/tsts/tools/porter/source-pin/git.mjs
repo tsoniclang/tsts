@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, statSync } from "node:fs";
+import path from "node:path";
 import { canonicalGitEnvironment } from "../core/provenance-filesystem.mjs";
 
 export function inspectGitCheckout(root) {
@@ -14,6 +15,12 @@ export function inspectGitCheckout(root) {
   const objectFormatResult = runGit(root, ["rev-parse", "--show-object-format"]);
   if (objectFormatResult.status !== 0) {
     issues.push(`cannot resolve Git object format: ${objectFormatResult.stderr || objectFormatResult.stdout}`.trim());
+  }
+  const topLevelResult = runGit(root, ["rev-parse", "--show-toplevel"]);
+  if (topLevelResult.status !== 0) {
+    issues.push(`cannot resolve Git checkout root: ${topLevelResult.stderr || topLevelResult.stdout}`.trim());
+  } else if (path.resolve(topLevelResult.stdout.trim()) !== path.resolve(root)) {
+    issues.push(`source root is not the Git checkout root (${topLevelResult.stdout.trim()})`);
   }
   const statusResult = runGit(root, ["status", "--porcelain=v1", "--untracked-files=all", "--ignore-submodules=none"]);
   if (statusResult.status !== 0) {
@@ -76,43 +83,62 @@ export function gitlinkEntries(root) {
 }
 
 export function gitTreeEntries(root, revision = "HEAD") {
-  const result = runGit(root, ["ls-tree", "-r", "-z", revision]);
-  if (result.status !== 0) return [];
+  const result = runGit(root, ["ls-tree", "--full-tree", "-r", "-z", revision]);
+  if (result.status !== 0) {
+    throw new Error(`cannot read Git tree '${revision}': ${result.stderr || result.stdout || "git ls-tree failed"}`.trim());
+  }
   const entries = [];
   for (const record of result.stdout.split("\0")) {
     if (!record) continue;
     const match = /^(\d+)\s+(\w+)\s+([0-9a-f]+)\t(.+)$/.exec(record);
-    if (match) entries.push({ mode: match[1], type: match[2], hash: match[3], path: match[4] });
+    if (match === null) throw new Error(`git ls-tree returned an unparseable record for '${revision}'`);
+    entries.push({ mode: match[1], type: match[2], hash: match[3], path: match[4] });
   }
   return entries;
 }
 
+export function readGitCommitObjectBody(root, revision) {
+  const result = spawnGit(root, ["cat-file", "commit", revision], { encoding: null });
+  if ((result.status ?? 1) !== 0 || !Buffer.isBuffer(result.stdout)) {
+    const stderr = Buffer.isBuffer(result.stderr) ? result.stderr.toString("utf8") : String(result.stderr ?? "");
+    throw new Error(`cannot read Git commit object '${revision}': ${stderr || result.error?.message || "git cat-file failed"}`.trim());
+  }
+  return result.stdout;
+}
+
 function gitIndexEntries(root, sourcePath = undefined) {
-  const args = ["ls-files", "--stage"];
+  const args = ["ls-files", "--stage", "-z"];
   if (sourcePath !== undefined) args.push("--", sourcePath);
   const result = runGit(root, args);
-  if (result.status !== 0) return [];
+  if (result.status !== 0) {
+    throw new Error(`cannot read Git index: ${result.stderr || result.stdout || "git ls-files failed"}`.trim());
+  }
   const entries = [];
-  for (const line of result.stdout.split(/\r?\n/)) {
-    if (!line) continue;
-    const match = /^(\d+)\s+([0-9a-f]+)\s+\d+\t(.+)$/.exec(line);
-    if (match) entries.push({ mode: match[1], hash: match[2], path: match[3] });
+  for (const record of result.stdout.split("\0")) {
+    if (!record) continue;
+    const match = /^(\d+)\s+([0-9a-f]+)\s+\d+\t([\s\S]+)$/.exec(record);
+    if (match === null) throw new Error("git ls-files returned an unparseable index record");
+    entries.push({ mode: match[1], hash: match[2], path: match[3] });
   }
   return entries;
 }
 
 function runGit(root, args) {
-  const result = spawnSync("git", [
+  const result = spawnGit(root, args, { encoding: "utf8" });
+  return {
+    status: result.status ?? 1,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? result.error?.message ?? "",
+  };
+}
+
+function spawnGit(root, args, options) {
+  return spawnSync("git", [
     "--no-replace-objects",
     "-c", "core.fsmonitor=false",
     "-c", "core.hooksPath=/dev/null",
     "-c", "diff.external=",
     "-C", root,
     ...args,
-  ], { encoding: "utf8", maxBuffer: 512 * 1024 * 1024, env: canonicalGitEnvironment() });
-  return {
-    status: result.status ?? 1,
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? result.error?.message ?? "",
-  };
+  ], { ...options, maxBuffer: 512 * 1024 * 1024, env: canonicalGitEnvironment() });
 }

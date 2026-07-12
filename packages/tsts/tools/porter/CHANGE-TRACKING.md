@@ -37,10 +37,14 @@ classification, or semantic comparison.
 `porter delta` scans both source trees twice and fails if either scan is
 nondeterministic. The resulting immutable evidence records:
 
-- complete file additions, removals, and byte changes;
+- complete file additions, removals, and byte changes, rooted in the exact Git
+  commit objects and reconstructed root trees;
 - declaration additions, removals, moves, and signature changes;
 - canonical semantic declaration changes by build profile;
 - exact constant changes;
+- the full normalized extractor/toolchain profile;
+- every effective file/unit policy and the exact policy contract;
+- every generated-source mechanism and its per-revision coverage.
 
 Body-only edits remain visible in the complete tracked-tree and Go-file change
 sets. They do not create declaration-unit changes.
@@ -48,8 +52,10 @@ sets. They do not create declaration-unit changes.
 Move candidates are evidence only. Porter never treats an orphan/missing pair as
 equivalent and never rewrites or re-stamps authored TypeScript.
 
-`porter delta-verify` independently validates the evidence inventory, hashes,
-source identities, and deterministic report rendering.
+`porter delta-verify` requires the same explicit old and new clean checkouts. It
+reruns each extractor twice and recomputes every artifact; an internally
+consistent replacement snapshot, tree list, policy summary, or completion
+envelope is rejected unless it is also the exact result of those checkouts.
 
 ## TypeScript Reconciliation
 

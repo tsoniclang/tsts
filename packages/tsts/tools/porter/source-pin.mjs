@@ -10,6 +10,7 @@ import {
   gitlinkEntries,
   gitTreeEntries,
   inspectGitCheckout,
+  readGitCommitObjectBody,
   validateGitlink,
 } from "./source-pin/git.mjs";
 import {
@@ -25,6 +26,7 @@ export {
   buildSnapshotSourceIntegrityStatus,
   gitTreeEntries,
   inspectGitCheckout,
+  readGitCommitObjectBody,
   readSourcePinManifest,
   normalizeGeneratorInputs,
   resolvePinnedGoToolchain,

@@ -8,6 +8,7 @@ import test from "node:test";
 
 import { GO_TOOLCHAIN_ROOT_HASH_CONTRACT, hashGoToolchainRoot } from "./go-toolchain-pin.mjs";
 import { buildSourcePinStatus, readSourcePinManifest, resolvePinnedGoToolchain } from "./source-pin.mjs";
+import { gitlinkEntries } from "./source-pin/git.mjs";
 import { loadConfig, repoRoot } from "./porter.mjs";
 
 test("checked-in source pin proves source, nested source, schema, documentation, and extractor", () => {
@@ -71,6 +72,12 @@ test("source pin rejects unknown manifest fields instead of accepting schema dri
   writeFileSync(fixture.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const status = buildSourcePinStatus(fixture.root, fixture.config, fixture.snapshot);
   assert.ok(status.issues.some((issue) => issue.reason.includes("keys must be exactly") && issue.reason.includes("futureField")));
+});
+
+test("Git index inspection fails closed outside a repository", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-source-pin-no-git-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  assert.throws(() => gitlinkEntries(root), /cannot read Git index/);
 });
 
 test("source pin fails closed when required documentation is missing", (t) => {

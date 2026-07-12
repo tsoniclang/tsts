@@ -4,11 +4,11 @@ const valueOption = "value";
 const commandSchemas = Object.freeze({
   delta: schema(
     { from: valueOption, to: valueOption, out: valueOption },
-    { required: ["from", "out"] },
+    { required: ["from", "out", "to"] },
   ),
   "delta-verify": schema(
-    { dir: valueOption },
-    { required: ["dir"] },
+    { dir: valueOption, from: valueOption, to: valueOption },
+    { required: ["dir", "from", "to"] },
   ),
   "generated-source-coverage": schema({ force: booleanOption }),
   bundled: schema({ write: booleanOption }),

@@ -141,7 +141,7 @@ export function buildGeneratedSourceCoverage(snapshot) {
     return {
       id: candidate.id,
       mode: candidate.mode,
-      statusKey: candidate.statusKey,
+      ...(candidate.statusKey === undefined ? {} : { statusKey: candidate.statusKey }),
       files,
       coverageHash: hashJson(files),
     };

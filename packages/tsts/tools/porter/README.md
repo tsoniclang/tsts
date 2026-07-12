@@ -57,8 +57,8 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 
 ## Commands
 
-- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, and exact `go/constant` values. Body-only edits remain visible in tracked-tree and Go-file evidence but never become declaration-unit drift. `--to` defaults to the pinned source root. Evidence directories are immutable and are never overwritten; a completion marker is published last.
-- `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir>` independently validates the exact evidence-file inventory, every byte length and SHA-256 digest, both complete extractor snapshots, report/snapshot identities, clean deterministic provenance, and the exact Markdown rendering.
+- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both explicitly named clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and effective policy changes. The evidence carries SHA-1 commit objects whose root trees are mechanically reconstructed from every tracked entry, complete generated-source mechanism/coverage evidence, and the full normalized extractor environment. Body-only edits remain visible in tracked-tree and Go-file evidence but never become declaration-unit drift. Evidence directories are immutable and are never overwritten; a completion marker is published last.
+- `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir> --from <old-tsgo-root> --to <new-tsgo-root>` independently rechecks both clean source trees, reruns each extractor twice, reconstructs both Git commit trees, recomputes every artifact, and then validates the exact inventory, byte lengths, SHA-256 envelope, policy/mechanism evidence, snapshots, report, and Markdown. Submitted snapshots and tree listings are never treated as trusted source evidence.
 - `npm run porter:scan` extracts a full TS-Go snapshot into `.temp/porter/tsgo-snapshot.json`.
 - `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute declaration subaudits, so every signature, facade, external-package, storage-policy, relation, ownership, unmatched-TypeScript, and JSON-tag subaudit is recorded separately as `not-run`; absent evidence is never rendered as zero findings.
 - `npm run porter:verify` always fails on missing/stub/stale/orphan/duplicate units, untracked TypeScript, generated-artifact drift, source-pin drift, an invalid override, any incomplete declaration subaudit, or a filtered signature selection. There is no weaker verification mode. Source read/parse failures stop extraction before a snapshot exists. Its JSON and Markdown reports retain every concrete subaudit inventory row, not only aggregate counts.
@@ -376,10 +376,10 @@ Example:
   "schemaVersion": 1,
   "files": {
     "internal/checker/checker.go": {
-      "targetRoot": "packages/tsts/src/internal/checker/checker",
+      "reason": "Semantic split of checker declarations by compiler responsibility.",
       "targets": [
         {
-          "file": "relations.ts",
+          "path": "packages/tsts/src/internal/checker/checker/relations.ts",
           "description": "Assignability, comparability, relation checks, identity checks, and excess-property logic.",
           "declarations": [
             "method::Checker.checkTypeAssignableTo",

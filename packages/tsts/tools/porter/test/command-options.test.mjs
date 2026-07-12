@@ -7,7 +7,7 @@ import { parseArgs } from "../core/runtime.mjs";
 test("Porter command option schemas accept only their typed options", () => {
   const cases = [
     ["delta", ["--from", "old", "--to", "new", "--out", "evidence"], { from: "old", to: "new", out: "evidence" }],
-    ["delta-verify", ["--dir", "evidence"], { dir: "evidence" }],
+    ["delta-verify", ["--dir", "evidence", "--from", "old", "--to", "new"], { dir: "evidence", from: "old", to: "new" }],
     ["generated-source-coverage", ["--force"], { force: true }],
     ["bundled", ["--write"], { write: true }],
     ["unicode", ["--write"], { write: true }],
@@ -54,6 +54,8 @@ test("Porter command option schemas reject malformed arguments", () => {
   assert.throws(() => parseArgs("skeleton-check", ["--out", "elsewhere"]), /unknown option '--out'/);
   assert.throws(() => parseArgs("large-files", ["--check"]), /unknown option '--check'/);
   assert.throws(() => parseArgs("delta", []), /required option '--from' is missing/);
+  assert.throws(() => parseArgs("delta", ["--from", "old", "--out", "evidence"]), /required option '--to' is missing/);
+  assert.throws(() => parseArgs("delta-verify", ["--dir", "evidence"]), /required option '--from' is missing/);
 });
 
 test("Porter command option schemas reject ignored combinations", () => {

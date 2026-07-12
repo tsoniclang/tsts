@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
 import { compareText } from "./core/deterministic-order.mjs";
+import { requireGitTreeEntries } from "./core/git-commit-tree-evidence.mjs";
 import { buildSemanticUnitEligibility } from "./core/semantic-unit-eligibility.mjs";
 import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import { semanticProfileKey } from "./core/snapshot-validation.mjs";
 
-export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "summary.md", "to-snapshot.json"]);
+export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "from-tree.json", "summary.md", "to-snapshot.json", "to-tree.json"]);
 
 export function canonicalSnapshot(snapshot) {
   return JSON.stringify(portableSnapshot(snapshot));
@@ -53,7 +54,7 @@ export function buildDeltaCompletion(artifacts, report) {
     files[name] = { bytes: Buffer.byteLength(contents), sha256: sha256(contents) };
   }
   const identity = {
-    schemaVersion: 3,
+    schemaVersion: 5,
     fromRevision: report.from.gitRevision,
     toRevision: report.to.gitRevision,
     files,
@@ -69,7 +70,7 @@ export function verifyDeltaCompletion(artifacts, completion) {
     if (JSON.stringify(actual) !== JSON.stringify(wanted)) issues.push(`${label} keys must be exactly ${wanted.join(", ")}`);
   };
   exactKeys(completion, ["evidenceHash", "files", "fromRevision", "schemaVersion", "toRevision"], "COMPLETE.json");
-  if (completion?.schemaVersion !== 3) issues.push("COMPLETE.json schemaVersion must be 3");
+  if (completion?.schemaVersion !== 5) issues.push("COMPLETE.json schemaVersion must be 5");
   exactKeys(completion?.files, DELTA_EVIDENCE_ARTIFACTS, "COMPLETE.json files");
   for (const name of DELTA_EVIDENCE_ARTIFACTS) {
     const record = completion?.files?.[name];
@@ -95,6 +96,9 @@ export function verifyDeltaCompletion(artifacts, completion) {
 }
 
 export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
+  requireDeltaOptions(options);
+  const fromTreeEntries = requireGitTreeEntries(options.fromTreeEntries, "Porter delta from tree entries");
+  const toTreeEntries = requireGitTreeEntries(options.toTreeEntries, "Porter delta to tree entries");
   const raw = compareRecordMaps(unitRecords(fromSnapshot), unitRecords(toSnapshot));
   const active = compareRecordMaps(
     activeUnitRecords(fromSnapshot, options),
@@ -102,14 +106,20 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
   );
   const files = compareRecordMaps(fileRecords(fromSnapshot), fileRecords(toSnapshot));
   const trackedFiles = compareRecordMaps(
-    trackedTreeRecords(options.fromTreeEntries ?? []),
-    trackedTreeRecords(options.toTreeEntries ?? []),
+    trackedTreeRecords(fromTreeEntries),
+    trackedTreeRecords(toTreeEntries),
   );
+  const fromEnvironment = extractionEnvironmentIdentity(fromSnapshot);
+  const toEnvironment = extractionEnvironmentIdentity(toSnapshot);
   return {
-    schemaVersion: 3,
+    schemaVersion: 5,
     from: snapshotIdentity(fromSnapshot),
     to: snapshotIdentity(toSnapshot),
-    environmentMatches: JSON.stringify(fromSnapshot.environment) === JSON.stringify(toSnapshot.environment),
+    extractionEnvironment: {
+      from: fromEnvironment,
+      to: toEnvironment,
+      matches: JSON.stringify(fromEnvironment) === JSON.stringify(toEnvironment),
+    },
     trackedFiles: summarizeComparison(trackedFiles),
     goFiles: summarizeComparison(files),
     rawUnits: summarizeComparison(raw),
@@ -123,7 +133,7 @@ export function renderDeltaMarkdown(report) {
     "",
     `- From: \`${report.from.gitRevision}\``,
     `- To: \`${report.to.gitRevision}\``,
-    `- Extractor environment equal: ${report.environmentMatches}`,
+    `- Extractor environment equal: ${report.extractionEnvironment.matches}`,
     `- Complete tracked source tree: ${summaryLine(report.trackedFiles)}`,
     `- Go files: ${summaryLine(report.goFiles)}`,
     `- Raw units: ${summaryLine(report.rawUnits)}`,
@@ -156,6 +166,22 @@ function snapshotIdentity(snapshot) {
     digest: snapshotDigest(snapshot),
     environment: snapshot.environment,
     summary: snapshot.summary,
+  };
+}
+
+function extractionEnvironmentIdentity(snapshot) {
+  const portable = portableSnapshot(snapshot);
+  const semantic = portable.semantic;
+  return {
+    environment: portable.environment,
+    modulePath: portable.modulePath,
+    compiler: semantic.compiler,
+    toolchain: semantic.toolchain,
+    toolchainHash: semantic.toolchainHash,
+    gorootHash: semantic.gorootHash,
+    gorootHashContract: semantic.gorootHashContract,
+    releaseTags: semantic.releaseTags,
+    profiles: semantic.profiles.map(({ coveredFiles: _coveredFiles, packageIds: _packageIds, ...profile }) => profile),
   };
 }
 
@@ -210,7 +236,12 @@ function activeUnitRecords(snapshot, options) {
       if (!isSemanticPrimaryUnitKind(unit.kind)) continue;
       const policy = options.policyForUnit(snapshot, unit, file);
       if (!options.isActivePortPolicy(policy)) continue;
-      records.set(unit.id, { ...unitRecord(file, unit, profileKeys), policy });
+      const declaration = unitRecord(file, unit, profileKeys);
+      records.set(unit.id, {
+        ...declaration,
+        policy,
+        comparisonHash: hashObject({ declaration: declaration.comparisonHash, policy }),
+      });
     }
   }
   return records;
@@ -388,6 +419,21 @@ function hashObject(value) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function requireDeltaOptions(value) {
+  if (value === null || typeof value !== "object" || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+    throw new Error("Porter delta options must be one exact object");
+  }
+  const expected = ["fromTreeEntries", "isActivePortPolicy", "policyForUnit", "toTreeEntries"];
+  const actual = Reflect.ownKeys(value).map(String).sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new Error(`Porter delta option keys must be exactly ${expected.join(", ")}; got ${actual.join(", ")}`);
+  }
+  if (!Array.isArray(value.fromTreeEntries) || !Array.isArray(value.toTreeEntries)) throw new Error("Porter delta requires complete from/to tree entries");
+  if (typeof value.policyForUnit !== "function" || typeof value.isActivePortPolicy !== "function") {
+    throw new Error("Porter delta requires exact policy callbacks");
+  }
 }
 
 function summaryLine(summary) {
