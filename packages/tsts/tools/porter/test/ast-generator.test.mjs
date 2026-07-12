@@ -363,11 +363,17 @@ test("ast-generator: a protocol.generated.ts content change makes committed outp
   }
 });
 
-test("ast-generator preserves nil NodeList slices in generated visitors", async () => {
+test("ast-generator preserves intrinsic nil-slice carriers in generated visitors", async () => {
   const output = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-nil-slice").get("internal/ast/generated/data.ts");
-  assert.match(output, /if \(nodes === undefined \|\| nodes\.length !== 1\)/);
-  assert.match(output, /updated = \[\.\.\.updated, \.\.\.\(AsSyntaxList\(visited\)!\.Children \?\? \[\]\)\]/);
-  assert.match(output, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
+  assert.match(output, /if \(nodes\.length !== 1\)/);
+  assert.match(output, /updated = \[\.\.\.updated, \.\.\.AsSyntaxList\(visited\)!\.Children\]/);
+  assert.match(output, /let nodes: GoSlice<GoPtr<Node>> = GoNilSlice\(\);/);
+  const visitSliceStart = output.indexOf("function generatedVisitSlice(");
+  const visitRawStart = output.indexOf("function generatedVisitRawNodes(");
+  const visitNodesBaseStart = output.indexOf("function generatedVisitNodesBase(");
+  assert.ok(visitSliceStart >= 0 && visitRawStart > visitSliceStart && visitNodesBaseStart > visitRawStart);
+  assert.doesNotMatch(output.slice(visitSliceStart, visitRawStart), /nodes === undefined/);
+  assert.doesNotMatch(output.slice(visitRawStart, visitNodesBaseStart), /nodes === undefined/);
   assert.doesNotMatch(output, /GoPtr<GoSlice</);
   const sourceFile = ts.createSourceFile("data.ts", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const declaration = sourceFile.statements.find((statement) =>
@@ -378,9 +384,8 @@ test("ast-generator preserves nil NodeList slices in generated visitors", async 
     { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2024 } },
   ).outputText;
   const generatedModule = await import(`data:text/javascript;base64,${Buffer.from(executable).toString("base64")}`);
-  const visitor = { Visit: () => { throw new Error("nil and empty slices must not invoke Visit"); } };
+  const visitor = { Visit: () => { throw new Error("nil-slice carriers and empty slices must not invoke Visit"); } };
 
-  assert.deepEqual(generatedModule.generatedVisitSlice(visitor, undefined), [undefined, false]);
   const emptyNodes = [];
   const [emptyResult, emptyChanged] = generatedModule.generatedVisitSlice(visitor, emptyNodes);
   assert.equal(emptyResult, emptyNodes);
@@ -475,7 +480,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /export function ExpressionStatement_VisitEachChild\(receiver: GoPtr<ExpressionStatement>, v: GoPtr<NodeVisitor>\): GoPtr<Node> \{\s*return Factory\.NodeFactory_UpdateExpressionStatement\(generatedVisitorFactory\(v\), receiver, generatedVisitNode\(v, receiver!\.Expression\) as GoPtr<Expression>\);\s*\}/);
   assert.match(data, /const ExpressionStatement_nodeDataPrototype: nodeData & ThisType<GoPtr<ExpressionStatement>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \},/);
   // The brand carries the concrete receiver.
-  assert.match(data, /import \{ goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(data, /import \{ GoNilSlice, goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.doesNotMatch(data, /import \{ goReceiverKey \} from "\.\.\/spine\.js";/);
   assert.match(data, /get \[goReceiverKey\]\(\): GoPtr<Identifier> \{ return this; \},/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
@@ -509,6 +514,12 @@ test("ast-generator: raw slices use their intrinsic carrier", () => {
   const textField = schema.baseFields("JSDocCommentBase").find((f) => f.name === "text");
   assert.equal(textField.isChild(), false);
   assert.equal(astMemberTsType(textField), "GoSlice<string>");
+
+  const data = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-slices").get("internal/ast/generated/data.ts");
+  assert.match(data, /import \{ GoNilSlice, goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(data, /let nodes: GoSlice<GoPtr<Node>> = GoNilSlice\(\);/);
+  assert.doesNotMatch(data, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
+  assert.doesNotMatch(data, /AsSyntaxList\(visited\)!\.Children \?\? \[\]/);
 });
 
 test("ast-generator: pointer slots preserve reviewed storage representation", () => {

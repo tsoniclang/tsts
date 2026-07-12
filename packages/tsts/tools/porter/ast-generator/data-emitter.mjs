@@ -14,7 +14,7 @@ export function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { ${dataCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
-  lines.push(`import { goReceiverKey } from "../../../go/compat.js";`);
+  lines.push(`import { GoNilSlice, goReceiverKey } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -167,7 +167,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  let visited = receiver!.Visit(node);`);
   lines.push(`  if (visited !== undefined && visited.Kind === KindSyntaxList) {`);
   lines.push(`    const nodes = AsSyntaxList(visited)!.Children;`);
-  lines.push(`    if (nodes === undefined || nodes.length !== 1) {`);
+  lines.push(`    if (nodes.length !== 1) {`);
   lines.push(`      throw new globalThis.Error("Expected only a single node to be written to output");`);
   lines.push(`    }`);
   lines.push(`    visited = nodes[0];`);
@@ -188,7 +188,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push("");
   lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
-  lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`  if (receiver!.Visit === undefined) {`);
   lines.push(`    return [nodes, false as bool];`);
   lines.push(`  }`);
   lines.push("");
@@ -206,7 +206,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`        if (visited === undefined) {`);
   lines.push(`          // do nothing`);
   lines.push(`        } else if (visited.Kind === KindSyntaxList) {`);
-  lines.push(`          updated = [...updated, ...(AsSyntaxList(visited)!.Children ?? [])];`);
+  lines.push(`          updated = [...updated, ...AsSyntaxList(visited)!.Children];`);
   lines.push(`        } else {`);
   lines.push(`          updated = [...updated, visited];`);
   lines.push(`        }`);
@@ -233,9 +233,6 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`}`);
   lines.push("");
   lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {`);
-  lines.push(`  if (nodes === undefined) {`);
-  lines.push(`    return nodes;`);
-  lines.push(`  }`);
   lines.push(`  for (let i = 0; i < nodes.length; i++) {`);
   lines.push(`    const node = nodes[i];`);
   lines.push(`    const visited = generatedVisitNode(v, node);`);
@@ -299,7 +296,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push("");
   lines.push(`function generatedLiftToBlock(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
   lines.push(`  const receiver = generatedVisitor(v);`);
-  lines.push(`  let nodes: GoSlice<GoPtr<Node>> = undefined;`);
+  lines.push(`  let nodes: GoSlice<GoPtr<Node>> = GoNilSlice();`);
   lines.push(`  if (node !== undefined) {`);
   lines.push(`    if (node.Kind === KindSyntaxList) {`);
   lines.push(`      nodes = AsSyntaxList(node)!.Children;`);
@@ -307,7 +304,7 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`      nodes = [node];`);
   lines.push(`    }`);
   lines.push(`  }`);
-  lines.push(`  if (nodes !== undefined && nodes.length === 1) {`);
+  lines.push(`  if (nodes.length === 1) {`);
   lines.push(`    node = nodes[0];`);
   lines.push(`  } else {`);
   lines.push(`    node = Factory.NewBlock(receiver!.Factory, NodeFactory_NewNodeList(receiver!.Factory, nodes), true as bool);`);
