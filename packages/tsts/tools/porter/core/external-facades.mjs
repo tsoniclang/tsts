@@ -31,51 +31,14 @@ import {
   unsafePointerReference,
 } from "./external-facades/dependency-closure.mjs";
 import { buildAuthoredContractSurface } from "./authored-contract-surface.mjs";
+import {
+  createFinalizedExternalFacadeStorageCatalog,
+  immutableFacadeEvidenceCopy,
+} from "./external-facades/catalog.mjs";
 
 export { authoredFacadeModuleSet, externalFacadeModulePath } from "./external-facade-policies.mjs";
 
 const externalFacadeStoragePlanState = Symbol("externalFacadeStoragePlanState");
-
-class FinalizedExternalFacadeStorageCatalog {
-  #artifactView;
-  #authoredSurfaces;
-  #auditView;
-
-  constructor(artifactFacades, auditFacades, authoredSurfaces) {
-    this.#artifactView = new ImmutableFacadeView(artifactFacades);
-    this.#auditView = new ImmutableFacadeView(auditFacades);
-    this.#authoredSurfaces = new Map([...authoredSurfaces].map(([objectId, surface]) => [objectId, immutableCopy(surface)]));
-    Object.freeze(this);
-  }
-
-  artifactFacades() { return this.#artifactView; }
-  auditFacades() { return this.#auditView; }
-  authoredSurface(objectId) { return this.#authoredSurfaces.get(objectId); }
-  authoredSurfaceEntries() { return this.#authoredSurfaces.entries(); }
-}
-
-class ImmutableFacadeView {
-  #facades;
-
-  constructor(facades) {
-    this.#facades = new Map(facades);
-    Object.freeze(this);
-  }
-
-  get size() { return this.#facades.size; }
-  get(objectId) { return this.#facades.get(objectId); }
-  has(objectId) { return this.#facades.has(objectId); }
-  entries() { return this.#facades.entries(); }
-  keys() { return this.#facades.keys(); }
-  values() { return this.#facades.values(); }
-  [Symbol.iterator]() { return this.#facades[Symbol.iterator](); }
-}
-
-export function buildExternalTypeStorageMap(config, snapshot) {
-  const context = buildExternalFacadeContext(config, snapshot, false);
-  const selectedObjectIds = selectExternalFacadeObjectIds(context, undefined);
-  return materializeExternalFacadeMap(context, selectedObjectIds);
-}
 
 export function buildExternalFacadeStoragePlan(config, snapshot) {
   const artifactContext = buildExternalFacadeContext(config, snapshot, false);
@@ -106,14 +69,13 @@ export function finalizeExternalFacadeStorageCatalog(plan, authoredSurfaces) {
     if (facade === undefined) throw new Error(`artifact facade '${objectId}' is absent from the complete audit closure`);
     artifactFacades.set(objectId, facade);
   }
-  return new FinalizedExternalFacadeStorageCatalog(artifactFacades, auditFacades, surfaces);
-}
-
-export function requireFinalizedExternalFacadeStorageCatalog(value) {
-  if (!(value instanceof FinalizedExternalFacadeStorageCatalog)) {
-    throw new Error("operation requires one finalized external facade storage catalog");
-  }
-  return value;
+  return createFinalizedExternalFacadeStorageCatalog(
+    artifactContext.config,
+    artifactContext.snapshot,
+    artifactFacades,
+    auditFacades,
+    surfaces,
+  );
 }
 
 function buildExternalFacadeContext(config, snapshot, includeExternalPackageSurface) {
@@ -222,7 +184,7 @@ function materializeExternalFacadeMap(context, selectedObjectIds) {
 }
 
 function materializeExternalFacade(config, semantic, policy) {
-  return immutableCopy({
+  return immutableFacadeEvidenceCopy({
     arity: semantic.arity,
     goDisplayName: semantic.goDisplayName,
     name: semantic.name,
@@ -239,6 +201,7 @@ function materializeExternalFacade(config, semantic, policy) {
 }
 
 export function buildDependencySemanticTypeIndex(snapshot, options = {}) {
+  requireExactOptionKeys(options, new Set(["includeExternalPackageSurface"]), "dependency semantic type index");
   if (!Array.isArray(snapshot?.semantic?.dependencyTypeDeclarations)) {
     throw new Error("Porter snapshot has no exact dependency go/types declaration index");
   }
@@ -307,6 +270,7 @@ export function collectDependencyTypeUsages(
   declarations = undefined,
   options = {},
 ) {
+  requireExactOptionKeys(options, new Set(["typeDeclarationSurface"]), "dependency type usage collection");
   if (options.typeDeclarationSurface !== undefined && options.typeDeclarationSurface !== "identity") {
     throw new Error(`unknown dependency type declaration root surface '${options.typeDeclarationSurface}'`);
   }
@@ -402,6 +366,14 @@ export function collectDependencyTypeUsages(
       profiles: new Set(profiles),
     });
   }
+}
+
+function requireExactOptionKeys(options, allowed, label) {
+  if (options === null || typeof options !== "object" || Array.isArray(options)) {
+    throw new Error(`${label} options must be one exact object`);
+  }
+  const unknown = Reflect.ownKeys(options).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
+  if (unknown.length > 0) throw new Error(`${label} options contain unknown current-contract key(s): ${unknown.join(", ")}`);
 }
 
 function selectExternalFacadeObjectIds(context, authoredSurfaces) {
@@ -579,19 +551,10 @@ function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures)
     for (const variant of root.variants) {
       buildAuthoredContractSurface(root, variant.declaration, methodSetSignatures, surface);
     }
-    surfaces.set(objectId, immutableCopy(surface));
+    surfaces.set(objectId, immutableFacadeEvidenceCopy(surface));
   }
   for (const objectId of authoredRoots.keys()) {
     if (!surfaces.has(objectId)) throw new Error(`authored facade root '${objectId}' has no source declaration surface`);
   }
   return surfaces;
-}
-
-function immutableCopy(value) {
-  if (value === null || typeof value !== "object") return value;
-  if (Array.isArray(value)) return Object.freeze(value.map(immutableCopy));
-  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
-    throw new Error("finalized external facade evidence contains a non-canonical mutable object");
-  }
-  return Object.freeze(Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, immutableCopy(entry)])));
 }

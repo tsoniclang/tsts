@@ -21,7 +21,6 @@ import {
   policyFor,
   renderExpectedGeneratedArtifacts,
   renderExternalFacadeModules,
-  renderStub,
   renderUnitGroup,
   renderStatusMarkdown,
   localTsName,

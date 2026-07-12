@@ -77,9 +77,6 @@ export function collectVerifyFailures(status, options = {}) {
   }
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort && status.counts.stubbed > 0) failures.push(`${status.counts.stubbed} stub Go units`);
-  if (strictPort && (status.generatedArtifacts?.unresolved?.length ?? 0) > 0) {
-    failures.push(`${status.generatedArtifacts.unresolved.length} unresolved generated facade obligations`);
-  }
   return failures;
 }
 

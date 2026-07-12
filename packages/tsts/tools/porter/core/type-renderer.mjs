@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { buildExternalTypeStorageMap } from "./external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
 import {
   renderCanonicalSignature,
   renderCanonicalType,
@@ -25,6 +25,7 @@ import { loadProfile } from "../ts-extractor/profile.mjs";
 import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 
 export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
+  requireOnlyRendererOptions(options);
   for (const unit of units) {
     if (!["constGroup", "func", "method", "type", "varGroup"].includes(unit.kind)) {
       throw new Error(`cannot render scaffold for non-portable Go unit kind '${unit.kind}': ${unit.id}`);
@@ -35,13 +36,20 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
   return `${renderImports(context)}${body}`.replace(/\s*$/, "\n");
 }
 
-export function rendererContext(config, snapshot, relativeTargetPath, units, options) {
+function requireOnlyRendererOptions(options) {
+  const allowed = new Set(["diagnostics", "externalFacadeCatalog", "filesByPath", "largeFileSplits", "symbolIndex"]);
+  const unknown = Reflect.ownKeys(options).filter((key) => typeof key !== "string" || !allowed.has(key)).map(String).sort();
+  if (unknown.length > 0) throw new Error(`unit renderer options contain unknown current-contract key(s): ${unknown.join(", ")}`);
+}
+
+function rendererContext(config, snapshot, relativeTargetPath, units, options) {
   const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = options.largeFileSplits ?? buildLargeFileSplitStatus(config, snapshot);
   const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
   const file = filesByPath.get(firstUnit?.metadata?.goPath ?? "") ?? fileFromUnit(firstUnit);
-  const externalFacades = options.externalFacades ?? buildExternalTypeStorageMap(config, snapshot);
+  const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(options.externalFacadeCatalog, config, snapshot);
+  const externalFacades = externalFacadeCatalog.artifactFacades(config, snapshot);
   const profile = loadProfile(config);
   const evidence = addProfileSemanticStorageEvidence(
     buildTypeRepresentationEvidence(config, snapshot, externalFacades),
@@ -81,17 +89,6 @@ export function rendererContext(config, snapshot, relativeTargetPath, units, opt
     importAliases: rendererImportAliases(file.imports ?? []),
     externalFacades,
     bridge: profile.bridge,
-  };
-}
-
-export function buildRenderIndexes(config, snapshot) {
-  const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
-  const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
-  return {
-    filesByPath,
-    largeFileSplits,
-    symbolIndex: buildSymbolIndex(config, snapshot, largeFileSplits),
-    externalFacades: buildExternalTypeStorageMap(config, snapshot),
   };
 }
 

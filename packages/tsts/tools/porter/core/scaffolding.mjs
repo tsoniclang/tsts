@@ -4,8 +4,7 @@ import { matchGlob } from "../path-policy.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts } from "./facade-artifacts.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
-import { expectedTsPath } from "./policies.mjs";
-import { fileFromUnit, skeletonTsConfig, unitsByIDMap } from "./render-indexes.mjs";
+import { skeletonTsConfig, unitsByIDMap } from "./render-indexes.mjs";
 import { renderStatusMarkdown } from "./reporting.mjs";
 import { fail, repoRoot, resolveRepo, writeJson, writeText } from "./runtime.mjs";
 import { buildStatus } from "./status.mjs";
@@ -16,7 +15,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-export async function scaffoldMissing(config, status, snapshot, options) {
+export async function scaffoldMissing(config, status, snapshot, externalFacadeCatalog, options) {
   assertLargeFileSplitPlanClean(status);
   const write = options.write === true;
   const scaffoldAll = options.all === true;
@@ -61,7 +60,10 @@ export async function scaffoldMissing(config, status, snapshot, options) {
       if (!unit) fail(`internal error: missing snapshot unit for ${row.id}`);
       return unit;
     });
-    const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { largeFileSplits: status.largeFileSplits });
+    const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, {
+      externalFacadeCatalog,
+      largeFileSplits: status.largeFileSplits,
+    });
     const targetLabel = path.relative(repoRoot, targetPath);
 
     if (!write) {
@@ -110,17 +112,7 @@ export async function scaffoldMissing(config, status, snapshot, options) {
   }
 }
 
-export function renderStub(unit) {
-  const stubConfig = { goModulePath: "github.com/microsoft/typescript-go", tsRoot: "packages/tsts/src", primaryUnitKinds: ["constGroup", "func", "method", "type", "varGroup"] };
-  return renderUnitGroup(
-    stubConfig,
-    { files: [fileFromUnit(unit)] },
-    expectedTsPath(stubConfig, unit),
-    [unit],
-  );
-}
-
-export function checkSkeletons(config, status, snapshot, facades, options) {
+export function checkSkeletons(config, status, snapshot, externalFacadeCatalog, options) {
   assertLargeFileSplitPlanClean(status);
   const emitTemp = options["emit-temp"] !== false;
   const compile = options.compile !== false && options.compile !== "false";
@@ -143,7 +135,7 @@ export function checkSkeletons(config, status, snapshot, facades, options) {
   if (emitTemp) {
     rmSync(outRoot, { recursive: true, force: true });
     mkdirSync(targetRoot, { recursive: true });
-    for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot, facades)) {
+    for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot, externalFacadeCatalog)) {
       const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
         ? repoRelativePath.slice(tsRootPrefix.length)
         : repoRelativePath;
@@ -164,7 +156,11 @@ export function checkSkeletons(config, status, snapshot, facades, options) {
   const diagnostics = [];
   for (const [relativeTargetPath, units] of groups) {
     try {
-      const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { diagnostics, largeFileSplits: status.largeFileSplits });
+      const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, {
+        diagnostics,
+        externalFacadeCatalog,
+        largeFileSplits: status.largeFileSplits,
+      });
       renderedFiles++;
       renderedUnits += units.length;
       if (emitTemp) {

@@ -137,8 +137,7 @@ test("external package surfaces are explicit and never seed generated facade art
       config,
       conventions: loadConventions(profile.conventions),
       expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
-        externalFacades: facades.auditFacades(),
-        includeExternalPackageSurface: true,
+        externalFacadeStorageView: facades.auditFacades(config, snapshot),
       }),
       moduleIndex,
       snapshot,
@@ -186,7 +185,7 @@ test("selected external types reuse the authored-facade comparison without becom
   const seedIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, "export type Token = string;\n"]]));
   const seedFacades = finalizedCatalog(config, snapshot, seedIndex);
   assert.equal(renderExternalFacadeModules(config, snapshot, seedFacades).size, 0);
-  const facade = seedFacades.auditFacades().get(`${packagePath}::type::Token`);
+  const facade = seedFacades.auditFacades(config, snapshot).get(`${packagePath}::type::Token`);
   assert.equal(facade?.storageStrategy, "authored");
   const source = createExternalFacadeContractRenderer(config, snapshot, seedFacades)(facade, token.type, 0).source;
   const audit = (text) => {
@@ -269,8 +268,7 @@ export let CurrentCallback: GoFunc<(currentValue: ${callbackParameterType}) => v
       config,
       conventions: loadConventions(profile.conventions),
       expectedIndex: buildExpectedIndex(config, snapshot, new Map(), profile, new Map(), {
-        externalFacades: facades.auditFacades(),
-        includeExternalPackageSurface: true,
+        externalFacadeStorageView: facades.auditFacades(config, snapshot),
       }),
       moduleIndex,
       snapshot,
@@ -326,9 +324,9 @@ test("selected external type members close audit-only dependencies without gener
     "export type Container = { Token: unknown };\n",
   ]]));
   const catalog = finalizedCatalog(config, snapshot, moduleIndex);
-  const auditFacades = catalog.auditFacades();
+  const auditFacades = catalog.auditFacades(config, snapshot);
   assert.equal(auditFacades.get(container.object.id)?.storageStrategy, "authored");
   assert.equal(auditFacades.get(token.object.id)?.storageStrategy, "generated");
-  assert.equal(catalog.artifactFacades().size, 0);
+  assert.equal(catalog.artifactFacades(config, snapshot).size, 0);
   assert.equal(renderExternalFacadeModules(config, snapshot, catalog).size, 0);
 });

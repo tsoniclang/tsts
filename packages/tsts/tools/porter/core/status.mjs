@@ -360,7 +360,6 @@ export function buildStatus(
       orphanGeneratedArtifacts: generatedArtifacts.orphan.length,
       untrackedGeneratedArtifacts: generatedArtifacts.untracked.length,
       invalidGeneratedArtifacts: generatedArtifacts.invalid.length,
-      unresolvedGeneratedFacadeObligations: (generatedArtifacts.unresolved ?? []).length,
       missingAstArtifacts: astGeneratedArtifacts.missing.length,
       staleAstArtifacts: astGeneratedArtifacts.stale.length,
       orphanAstArtifacts: astGeneratedArtifacts.orphan.length,

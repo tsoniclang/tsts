@@ -3,7 +3,6 @@ import test from "node:test";
 
 import {
   buildExternalFacadeStoragePlan,
-  buildExternalTypeStorageMap,
   finalizeExternalFacadeStorageCatalog,
 } from "./core/external-facades.mjs";
 import {
@@ -16,6 +15,7 @@ import {
   externalSnapshot,
   externalType,
   finalizeExternalFacadeFixtureCatalog,
+  finalizeGeneratedFacadeFixtureCatalog,
   interfaceType,
   method,
   namedType,
@@ -35,7 +35,7 @@ test("the full authored policy catalog is validated before active facade selecti
   const used = externalType({ packagePath: "example.com/native", name: "Used", rhs: basic("int") });
   const unused = externalType({ packagePath: "example.com/native", name: "Unused", rhs: basic("int") });
   const snapshot = externalSnapshot([used, unused], [used.object.id]);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...baseConfig,
     externalFacadePolicies: [{
       objectId: unused.object.id,
@@ -44,12 +44,12 @@ test("the full authored policy catalog is validated before active facade selecti
       storageStrategy: "authored",
     }],
   }, snapshot), /authored storage outside config\.authoredFacadeModules/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...baseConfig,
     authoredFacadeModules: ["go/example.com/native.ts", "go/example.com/native.ts"],
   }, snapshot), /authoredFacadeModules duplicates/);
   assert.throws(
-    () => buildExternalTypeStorageMap(baseConfig, snapshot),
+    () => buildExternalFacadeStoragePlan(baseConfig, snapshot),
     /is not recursively reachable from an active Go declaration/,
   );
 });
@@ -57,10 +57,14 @@ test("the full authored policy catalog is validated before active facade selecti
 test("authored modules never imply same-name type storage", () => {
   const declaration = externalType({ packagePath: "example.com/native", name: "Thing", rhs: interfaceType() });
   const snapshot = externalSnapshot([declaration]);
-  assert.throws(() => buildExternalTypeStorageMap({
+  const config = {
     ...baseConfig,
     authoredFacadeModules: ["go/example.com/native.ts"],
-  }, snapshot), /requires one explicit externalFacadePolicies storage identity/);
+  };
+  assert.throws(
+    () => finalizeGeneratedFacadeFixtureCatalog(config, snapshot),
+    /requires one explicit externalFacadePolicies storage identity/,
+  );
 });
 
 test("generated storage closure ignores private representation dependencies", () => {
@@ -82,7 +86,8 @@ test("generated storage closure ignores private representation dependencies", ()
     ...baseConfig,
     authoredFacadeModules: ["go/private.example/internal.ts"],
   };
-  assert.deepEqual([...buildExternalTypeStorageMap(config, snapshot).keys()], [publicType.object.id]);
+  const catalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
+  assert.deepEqual([...catalog.artifactFacades(config, snapshot).keys()], [publicType.object.id]);
 });
 
 test("policy presence is not a root, while active authored storage closes only selected members", () => {
@@ -123,7 +128,6 @@ test("policy presence is not a root, while active authored storage closes only s
       { objectId: token.object.id, tsModule: "go/example.com/native-token.ts", tsName: "Token", storageStrategy: "generated" },
     ],
   };
-  assert.deepEqual([...buildExternalTypeStorageMap(config, snapshot).keys()], [wrapper.object.id]);
   const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[
     `${config.tsRoot}/go/example.com/native.ts`,
     "export interface Reader { Read(): unknown; }\n",
@@ -133,8 +137,8 @@ test("policy presence is not a root, while active authored storage closes only s
     moduleIndex,
     valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
   });
-  assert.deepEqual([...inactive.artifactFacades().keys()], [wrapper.object.id]);
-  assert.deepEqual([...inactive.auditFacades().keys()], [wrapper.object.id]);
+  assert.deepEqual([...inactive.artifactFacades(config, snapshot).keys()], [wrapper.object.id]);
+  assert.deepEqual([...inactive.auditFacades(config, snapshot).keys()], [wrapper.object.id]);
   const wrongKindIndex = indexTypeScriptModuleSources(parser, new Map([[
     `${config.tsRoot}/go/example.com/native.ts`,
     "export class Reader { Read(): unknown { return undefined; } }\n",
@@ -150,7 +154,7 @@ test("policy presence is not a root, while active authored storage closes only s
     moduleIndex,
     valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
   });
-  assert.deepEqual([...selected.artifactFacades().keys()], [reader.object.id, token.object.id]);
+  assert.deepEqual([...selected.artifactFacades(config, activeSnapshot).keys()], [reader.object.id, token.object.id]);
   const modules = renderExternalFacadeModules(config, activeSnapshot, selected);
   assert.ok(modules.has("go/example.com/native-token.ts"));
   assert.equal([...modules.values()].some((source) => source.includes("Options")), false);
@@ -249,8 +253,8 @@ test("authored object aliases root exactly their selected field dependencies and
     moduleIndex,
     valueEnvironments: buildIndexedModuleValueEnvironments(parser, moduleIndex),
   });
-  const artifactFacades = catalog.artifactFacades();
-  const auditFacades = catalog.auditFacades();
+  const artifactFacades = catalog.artifactFacades(config, snapshot);
+  const auditFacades = catalog.auditFacades(config, snapshot);
   assert.deepEqual([...artifactFacades.keys()], [root.object.id, range16.object.id, range32.object.id, rangeTable.object.id]);
   assert.equal(artifactFacades.has(hidden.object.id), false);
   assert.equal(artifactFacades.get(rangeTable.object.id), auditFacades.get(rangeTable.object.id));
@@ -259,7 +263,7 @@ test("authored object aliases root exactly their selected field dependencies and
   assert.equal(Object.isFrozen(immutableFacade), true);
   assert.equal(Object.isFrozen(immutableFacade.variants), true);
   assert.throws(() => { immutableFacade.storageStrategy = "generated"; }, TypeError);
-  const immutableSurface = catalog.authoredSurface(rangeTable.object.id);
+  const immutableSurface = catalog.authoredSurface(config, snapshot, rangeTable.object.id);
   assert.equal(Object.isFrozen(immutableSurface), true);
   assert.equal(Object.isFrozen(immutableSurface.memberKeys), true);
   assert.throws(() => immutableSurface.memberKeys.push("property\0Hidden"), TypeError);

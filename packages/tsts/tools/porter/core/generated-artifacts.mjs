@@ -1,14 +1,12 @@
-import { buildAuthoredFacadeExportIndex } from "./authored-facade-exports.mjs";
-import { compareText } from "./deterministic-order.mjs";
 import { authoredFacadePathSet, renderExpectedGeneratedArtifacts, stripGeneratedArtifactHeader } from "./facade-artifacts.mjs";
 import { hashText, repoRoot, resolveRepo, walk } from "./runtime.mjs";
 import { inspectGeneratedArtifactRegistration } from "../generated-source.mjs";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
 
 export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
-  const facades = requireFinalizedExternalFacadeStorageCatalog(catalog).artifactFacades();
+  requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot);
   const authored = authoredFacadePathSet(config);
   const expected = renderExpectedGeneratedArtifacts(config, snapshot, catalog);
   const expectedPaths = new Set(expected.keys());
@@ -24,30 +22,6 @@ export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
   const orphan = [];
   const untracked = [];
   const invalid = [];
-  const unresolved = [];
-
-  const authoredObligations = [];
-  for (const facade of facades.values()) {
-    if (facade.storageStrategy !== "authored") continue;
-    const relativePath = `${config.tsRoot.replace(/\/$/, "")}/${facade.tsModule}`;
-    if (authored.has(relativePath)) authoredObligations.push({ facade, namespace: "type", relativePath });
-  }
-  const authoredExports = buildAuthoredFacadeExportIndex(authoredObligations.map((obligation) => obligation.relativePath));
-  const seenAuthoredObligations = new Set();
-  for (const obligation of authoredObligations) {
-    const key = `${obligation.relativePath}\0${obligation.facade.tsName}\0${obligation.namespace}`;
-    if (seenAuthoredObligations.has(key)) continue;
-    seenAuthoredObligations.add(key);
-    const moduleExports = authoredExports.get(obligation.relativePath);
-    const exported = moduleExports?.symbols.get(obligation.facade.tsName);
-    if (moduleExports?.error === undefined && exported?.[obligation.namespace] === true) continue;
-    unresolved.push({
-      path: obligation.relativePath,
-      symbol: obligation.facade.goDisplayName,
-      reason: moduleExports?.error
-        ?? `Authored facade must publicly export exact ${obligation.namespace} symbol '${obligation.facade.tsName}' for active Go dependency '${obligation.facade.objectId}'.`,
-    });
-  }
 
   for (const relativePath of [...expectedPaths].sort()) {
     if (!actualPaths.has(relativePath)) {
@@ -108,10 +82,9 @@ export function buildGeneratedArtifactStatus(config, snapshot, catalog) {
     }
   }
 
-  unresolved.sort((left, right) => compareText(left.path, right.path) || compareText(left.symbol, right.symbol));
-  return { missing, stale, orphan, untracked, invalid, unresolved };
+  return { missing, stale, orphan, untracked, invalid };
 }
 
 export function emptyGeneratedArtifactStatus() {
-  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] };
+  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
 }

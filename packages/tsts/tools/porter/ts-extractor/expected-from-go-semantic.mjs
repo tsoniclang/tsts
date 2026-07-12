@@ -27,10 +27,9 @@ import { buildTypeStorageIdentityMap } from "../core/type-storage-policies.mjs";
 export const ref = (id, args = []) => ({ t: "ref", id, args });
 
 export function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map(), options = {}) {
+  requireOnlyOptions(options, new Set(["externalFacadeStorageView"]), "expected signature index");
   const evidence = addProfileSemanticStorageEvidence(
-    buildTypeRepresentationEvidence(config, snapshot, options.externalFacades, {
-      includeExternalPackageSurface: options.includeExternalPackageSurface === true,
-    }),
+    buildTypeRepresentationEvidence(config, snapshot, options.externalFacadeStorageView),
     profile,
     buildTypeStorageIdentityMap(config, snapshot),
   );

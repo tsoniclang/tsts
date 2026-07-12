@@ -244,7 +244,7 @@ export async function main() {
       return;
     }
     if (command === "scaffold") {
-      await scaffoldMissing(config, status, snapshot, options);
+      await scaffoldMissing(config, status, snapshot, externalFacadeCatalog, options);
       return;
     }
     if (command === "skeleton-check") {

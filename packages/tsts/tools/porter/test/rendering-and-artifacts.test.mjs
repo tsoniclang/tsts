@@ -34,6 +34,7 @@ import {
   semanticTypeParameterType,
   writerTypeFixture,
 } from "./rendering-semantic-fixtures.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "./external-facade-fixtures.mjs";
 
 test("renderUnitGroup emits higher-order function and inline interface signatures", () => {
   const config = { ...baseConfig, goModulePath: "m" };
@@ -89,17 +90,21 @@ test("renderUnitGroup emits higher-order function and inline interface signature
       { name: "onAdded", type: semanticFunctionType(`${diffOwner}::signature::parameters::1::type`, collectionsPackage, [{ name: "key", type: keyType }, { name: "value", type: valueType }], []) },
     ], { typeParameters: [keyParameter, valueParameter] }),
   });
+  const debugSnapshot = snapshotWith([fileRecord({ path: "internal/debug/debug.go", importPath: debugPackage, units: [nodeAssert] })]);
   const debugText = renderUnitGroup(
     config,
-    snapshotWith([fileRecord({ path: "internal/debug/debug.go", importPath: debugPackage, units: [nodeAssert] })]),
+    debugSnapshot,
     "packages/tsts/src/internal/debug/debug.ts",
     [nodeAssert],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, debugSnapshot) },
   );
+  const diffSnapshot = snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", importPath: collectionsPackage, units: [diffFunc] })]);
   const diffText = renderUnitGroup(
     config,
-    snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", importPath: collectionsPackage, units: [diffFunc] })]),
+    diffSnapshot,
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [diffFunc],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, diffSnapshot) },
   );
   assert.match(debugText, /node: GoInterface<\{ KindString\(\): string \}>, \.\.\.message: GoInterface<unknown>\[\]/);
   assert.match(diffText, /equalValues: GoFunc<\(a: V, b: V\) => bool>/);
@@ -146,6 +151,7 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
     snapshot,
     "packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts",
     [diagnosticWriter],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
   );
 
   assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
@@ -217,7 +223,7 @@ test("renderUnitGroup imports symbols from semantic split targets", () => {
     snapshot,
     "packages/tsts/src/internal/checker/emitresolver.ts",
     [emitResolverFactory],
-    { largeFileSplits: splitStatus },
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot), largeFileSplits: splitStatus },
   );
 
   assert.match(text, /import type \{ Checker \} from "\.\/checker\/state\.js";/);
@@ -270,11 +276,13 @@ test("renderUnitGroup uses canonical declaration value types", () => {
       { names: ["err"], type: identType("error") },
     ],
   }));
+  const snapshot = snapshotWith([fileRecord({ path: "internal/ast/kind_generated.go", importPath: "m/internal/ast", units: [kindType, values, kindBounds, channels] })]);
   const text = renderUnitGroup(
     config,
-    snapshotWith([fileRecord({ path: "internal/ast/kind_generated.go", importPath: "m/internal/ast", units: [kindType, values, kindBounds, channels] })]),
+    snapshot,
     "packages/tsts/src/internal/ast/kind_generated.ts",
     [kindType, values, kindBounds, channels],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
   );
 
   assert.match(text, /export const handlePrefixProject: GoRune = undefined as never;/);

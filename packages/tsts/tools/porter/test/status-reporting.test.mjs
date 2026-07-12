@@ -214,7 +214,7 @@ function minimalStatus() {
       generatedSourceCoverageIssues: 0, sourcePinIssues: 0, invalidTsMetadata: 0,
       globalGeneratedArtifactIssues: 0, sourceInterpretationIssues: 0, missingGeneratedArtifacts: 0,
       staleGeneratedArtifacts: 0, orphanGeneratedArtifacts: 0, untrackedGeneratedArtifacts: 0,
-      invalidGeneratedArtifacts: 0, unresolvedGeneratedFacadeObligations: 0, missingAstArtifacts: 0,
+      invalidGeneratedArtifacts: 0, missingAstArtifacts: 0,
       staleAstArtifacts: 0, orphanAstArtifacts: 0, untrackedAstArtifacts: 0, invalidAstArtifacts: 0,
       missingDiagnosticsArtifacts: 0, staleDiagnosticsArtifacts: 0, orphanDiagnosticsArtifacts: 0,
       untrackedDiagnosticsArtifacts: 0, invalidDiagnosticsArtifacts: 0, missingBundledArtifacts: 0,

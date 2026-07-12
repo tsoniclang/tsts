@@ -102,7 +102,7 @@ export function emptyCounts() {
 }
 
 export function emptyGeneratedArtifacts() {
-  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] };
+  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
 }
 
 export function fileRecord(overrides) {

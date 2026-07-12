@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDependencySemanticTypeIndex, buildExternalTypeStorageMap } from "../../core/external-facades.mjs";
+import { buildDependencySemanticTypeIndex, buildExternalFacadeStoragePlan } from "../../core/external-facades.mjs";
 import { externalTypeScriptDeclarationHash } from "../../core/external-facade-runtime-adaptation.mjs";
 import { semanticDeclarationVariantsHash } from "../../core/semantic-declaration-hash.mjs";
 import { buildSemanticTypeCatalog } from "../../core/type-storage-policies.mjs";
@@ -134,7 +134,7 @@ export function Code_Valid(value: EquivalentCode, prefix: string): bool { return
 `, (identity) => identity.endsWith("::EquivalentCode") ? `${moduleId}::Code` : identity);
   assert.ok(equivalentReceiver.mismatches.some((mismatch) =>
     mismatch.id === `external-method:${methodId}` && mismatch.kind === "authored-facade-receiver-storage"));
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],
@@ -146,7 +146,7 @@ export function Code_Valid(value: EquivalentCode, prefix: string): bool { return
       }],
     }],
   }, snapshot), /not present in every active semantic profile/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],
@@ -283,12 +283,13 @@ test("scalar method bindings are authored-surface roots even when the type selec
   };
   const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, source]]));
   const withBinding = finalizedCatalog(config, snapshot, moduleIndex);
-  assert.equal(withBinding.artifactFacades().has(needed.object.id), true);
-  const withoutBinding = finalizedCatalog({
+  assert.equal(withBinding.artifactFacades(config, snapshot).has(needed.object.id), true);
+  const withoutBindingConfig = {
     ...config,
     externalFacadePolicies: [{ ...policy, methodBindings: [] }],
-  }, snapshot, moduleIndex);
-  assert.equal(withoutBinding.artifactFacades().has(needed.object.id), false);
+  };
+  const withoutBinding = finalizedCatalog(withoutBindingConfig, snapshot, moduleIndex);
+  assert.equal(withoutBinding.artifactFacades(withoutBindingConfig, snapshot).has(needed.object.id), false);
 });
 
 test("scalar authored storage does not turn private aggregate layout or unexported methods into policy roots", () => {
@@ -349,7 +350,7 @@ test("scalar authored storage does not turn private aggregate layout or unexport
   };
   const moduleIndex = indexTypeScriptModuleSources(parser, new Map([[moduleId, source]]));
   const catalog = finalizedCatalog(config, snapshot, moduleIndex);
-  assert.deepEqual([...catalog.artifactFacades().keys()], [objectId]);
+  assert.deepEqual([...catalog.artifactFacades(config, snapshot).keys()], [objectId]);
   const rendered = renderExternalFacadeModules(config, snapshot, catalog);
   assert.equal([...rendered.values()].some((text) => text.includes("hiddenState") || text.includes("State")), false);
 });
@@ -357,14 +358,14 @@ test("scalar authored storage does not turn private aggregate layout or unexport
 test("external facade policy rejects hand-authored Go semantics and unknown objects", () => {
   const snapshot = externalSnapshot([externalType({ packagePath: "time", name: "Duration", rhs: basic("int64") })]);
   assert.throws(
-    () => buildExternalTypeStorageMap({
+    () => buildExternalFacadeStoragePlan({
       ...baseConfig,
       externalFacadePolicies: [{ objectId: "time::type::Duration", arity: 0, kind: "type", typeExpression: basic("int64") }],
     }, snapshot),
     /forbidden hand-authored Go semantic field/,
   );
   assert.throws(
-    () => buildExternalTypeStorageMap({
+    () => buildExternalFacadeStoragePlan({
       ...baseConfig,
       authoredFacadeModules: ["go/time.ts"],
       externalFacadePolicies: [{ objectId: "time::type::Missing", tsModule: "go/time.ts", tsName: "Missing", storageStrategy: "authored" }],
@@ -376,7 +377,7 @@ test("external facade policy rejects hand-authored Go semantics and unknown obje
     { embeddings: ["io::type::Writer"] },
   ]) {
     assert.throws(
-      () => buildExternalTypeStorageMap({
+      () => buildExternalFacadeStoragePlan({
         ...baseConfig,
         authoredFacadeModules: ["go/time.ts"],
         externalFacadePolicies: [{
@@ -419,7 +420,7 @@ test("generated method-bearing types remain declaration-only and reject runtime 
   assert.match(source, /export type Thing =/);
   assert.match(source, /Use\(\): void/);
   assert.doesNotMatch(source, /export class Thing|TSGO_EXTERNAL_FACADE_UNIMPLEMENTED/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...baseConfig,
     externalFacadePolicies: [{
       ...generatedPolicy,
@@ -432,7 +433,7 @@ test("generated method-bearing types remain declaration-only and reject runtime 
       },
     }],
   }, snapshot), /generated declaration storage cannot define runtime adaptation/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...baseConfig,
     externalFacadePolicies: [{
       ...generatedPolicy,
@@ -457,7 +458,7 @@ test("one generated storage contract rejects profile-dependent external semantic
     },
     /renders differently across active semantic profiles/,
   );
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...baseConfig,
     semanticRelations: [{
       kind: "go-type-storage",

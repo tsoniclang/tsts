@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { buildEmbeddedGoSourceUpdates, buildStatus, collectVerifyFailures, renderStub, renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
+import { buildEmbeddedGoSourceUpdates, buildStatus, collectVerifyFailures, renderUnitGroup, repoRoot, writeTextSafely } from "../porter.mjs";
 import { baseConfig, fileRecord, identType, instantiationType, pointerType, snapshotWith, testBodyHash, testSigHash, unitRecord } from "./helpers.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "./external-facade-fixtures.mjs";
 
 test("buildStatus rejects stale embedded Go source blocks", () => {
   const unit = unitRecord({ id: "m::internal/debug/debug.go::func::Fail", kind: "func", qualifiedName: "Fail", goPath: "internal/debug/debug.go", sigHash: "sig", bodyHash: "body", snippet: "func Fail()" });
@@ -59,10 +60,6 @@ test("writeTextSafely refuses to overwrite edited files without force", () => {
   }
 });
 
-test("renderStub rejects non-portable unit kinds", () => {
-  assert.throws(() => renderStub(unitRecord({ kind: "importGroup" })), /cannot render scaffold for non-portable Go unit kind 'importGroup'/);
-});
-
 test("renderUnitGroup preserves generic and pointer receiver method skeletons", () => {
   const packagePath = "m/internal/collections";
   const goPath = "internal/collections/ordered_map.go";
@@ -70,11 +67,14 @@ test("renderUnitGroup preserves generic and pointer receiver method skeletons", 
   const methodId = `${objectId}::method::Get`;
   const orderedMap = genericOrderedMapType({ goPath, objectId, packagePath });
   const get = genericOrderedMapMethod({ goPath, methodId, objectId, packagePath });
+  const config = { ...baseConfig, goModulePath: "m" };
+  const snapshot = snapshotWith([fileRecord({ path: goPath, importPath: packagePath, units: [orderedMap, get] })]);
   const text = renderUnitGroup(
-    { ...baseConfig, goModulePath: "m" },
-    snapshotWith([fileRecord({ path: goPath, importPath: packagePath, units: [orderedMap, get] })]),
+    config,
+    snapshot,
     "packages/tsts/src/internal/collections/ordered_map.ts",
     [orderedMap, get],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(config, snapshot) },
   );
   assert.match(text, /import type \{ bool \} from "\.\.\/\.\.\/go\/scalars\.js";/);
   assert.match(text, /import type \{ GoComparable, GoPtr \}/);

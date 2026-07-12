@@ -6,10 +6,10 @@ import test from "node:test";
 import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
+  prepareExternalFacadeStorageCatalog,
   renderExpectedGeneratedArtifacts,
   repoRoot,
 } from "../porter.mjs";
-import { buildExternalTypeStorageMap } from "../core/external-facades.mjs";
 import {
   buildBundledGeneratedArtifactStatus,
   buildExpectedBundledArtifacts,
@@ -32,12 +32,8 @@ import {
   writerTypeFixture,
 } from "./rendering-semantic-fixtures.mjs";
 import {
-  finalizeExternalFacadeFixtureCatalog,
   finalizeGeneratedFacadeFixtureCatalog,
 } from "./external-facade-fixtures.mjs";
-import { loadParser } from "../ts-extractor/ast-signatures.mjs";
-import { buildIndexedModuleValueEnvironments } from "../ts-extractor/extract-signatures.mjs";
-import { loadTypeScriptModuleIndex } from "../ts-extractor/module-index.mjs";
 
 test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata", () => {
   const snapshot = snapshotWith([]);
@@ -106,8 +102,11 @@ test("host-native source signatures create only declaration-level facade obligat
   ]);
   snapshot.semantic.dependencyTypeDeclarations = [semanticTypeFixture("example.com/syscall", "Handle", semanticBasicType("uintptr"))];
 
-  const facades = buildExternalTypeStorageMap(config, snapshot);
-  assert.ok(facades.has("example.com/syscall::type::Handle"), "host-native source signatures remain exact facade obligations");
+  const catalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
+  assert.ok(
+    catalog.artifactFacades(config, snapshot).has("example.com/syscall::type::Handle"),
+    "host-native source signatures remain exact facade obligations",
+  );
 });
 
 test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, and invalid generated files", () => {
@@ -124,7 +123,7 @@ test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, an
       writeFileSync(targetPath, text);
     }
     let clean = buildGeneratedArtifactStatus(config, snapshot, facades);
-    assert.deepEqual(clean, { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] });
+    assert.deepEqual(clean, { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
 
     writeFileSync(
       path.join(generatedRoot, "compat.ts"),
@@ -223,13 +222,8 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
     const generatedRoot = path.join(root, "src/go");
     mkdirSync(generatedRoot, { recursive: true });
     writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(): void; }\n");
-    const api = await loadParser();
-    const moduleIndex = loadTypeScriptModuleIndex(api, repoRoot, config.tsRoot);
-    const facades = finalizeExternalFacadeFixtureCatalog(config, snapshot, {
-      api,
-      moduleIndex,
-      valueEnvironments: buildIndexedModuleValueEnvironments(api, moduleIndex),
-    });
+    const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
+    assert.throws(() => facades.artifactFacades({ ...config }, snapshot), /different config or snapshot/);
 
     // The policy resolves "go/io.ts" to a full repo-relative path.
     assert.ok(authoredFacadePathSet(config).has(`${config.tsRoot}/go/io.ts`));
@@ -244,14 +238,12 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
       writeFileSync(targetPath, text);
     }
 
-    // The module path alone cannot discharge a symbol obligation.
+    // Authored declaration validity belongs to finalized catalog construction, not generated-artifact status.
     writeFileSync(path.join(generatedRoot, "io.ts"), "export const Other = 1;\n");
-    const missingSymbol = buildGeneratedArtifactStatus(config, snapshot, facades);
-    assert.deepEqual(missingSymbol.unresolved.map((entry) => entry.symbol), ["io.Writer"]);
-    assert.match(missingSymbol.unresolved[0].reason, /exact type symbol 'Writer'/);
+    assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot, facades), { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
 
-    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: GoSlice<byte>): [int, GoError]; }\n");
-    assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot, facades), { missing: [], stale: [], orphan: [], untracked: [], invalid: [], unresolved: [] });
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(): void; }\n");
+    assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot, facades), { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
 
     // An authored module that still carries @tsgo-generated metadata is invalid (never both).
     writeFileSync(

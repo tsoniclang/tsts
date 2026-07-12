@@ -21,7 +21,6 @@ import {
   policyFor,
   renderExpectedGeneratedArtifacts,
   renderExternalFacadeModules,
-  renderStub,
   renderUnitGroup,
   renderStatusMarkdown,
   localTsName,
@@ -33,6 +32,7 @@ import {
   validatePorterSnapshot,
   writeTextSafely,
 } from "../porter.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "./external-facade-fixtures.mjs";
 import {
   buildAstGeneratedArtifactStatus,
   buildAstGeneratedFiles,
@@ -377,12 +377,10 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
       }),
     ]);
   snapshot.semantic.dependencyTypeDeclarations = [sourceBoundaryDeclaration];
-  assert.throws(() => renderUnitGroup(
-    config,
-    snapshot,
-    "packages/tsts/src/internal/format/api.ts",
-    [withFormatCodeSettings],
-  ), /requires an explicit go-type-storage relation/);
+  assert.throws(
+    () => finalizeGeneratedFacadeFixtureCatalog(config, snapshot),
+    /requires an explicit go-type-storage relation/,
+  );
 
   const mapped = {
     ...config,
@@ -400,6 +398,7 @@ test("renderUnitGroup requires explicit storage for excluded source-boundary typ
     snapshot,
     "packages/tsts/src/internal/format/api.ts",
     [withFormatCodeSettings],
+    { externalFacadeCatalog: finalizeGeneratedFacadeFixtureCatalog(mapped, snapshot) },
   );
   assert.match(text, /import type \{ FormatCodeSettings \} from "\.\/source-boundaries\.js";/);
   assert.match(text, /options: FormatCodeSettings/);
@@ -424,7 +423,6 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
       orphan: [{ path: "packages/tsts/src/go/old.ts" }],
       untracked: [{ path: "packages/tsts/src/go/manual.ts" }],
       invalid: [{ path: "packages/tsts/src/go/bad.ts" }],
-      unresolved: [{ path: "packages/tsts/src/go/runtime.ts", symbol: "runtime.Future" }],
     },
   };
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
@@ -440,7 +438,6 @@ test("verifyStatus fails hard on coverage and metadata defects", () => {
     "1 untracked generated artifacts",
     "1 invalid generated artifacts",
     "1 missing Go units",
-    "1 unresolved generated facade obligations",
   ]);
 });
 
@@ -462,18 +459,14 @@ test("trusted verification requires every whole-program declaration subaudit", (
   ]);
 });
 
-test("strict verification rejects traceable stubs and generated runtime scaffolds", () => {
+test("strict verification rejects traceable stubs", () => {
   const status = {
     ...completeDeclarationAuditStatus(),
     counts: { ...emptyCounts(), stubbed: 4 },
-    generatedArtifacts: {
-      ...emptyGeneratedArtifacts(),
-      unresolved: [{ path: "packages/tsts/src/go/example.ts", symbol: "example.Run" }],
-    },
+    generatedArtifacts: emptyGeneratedArtifacts(),
   };
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
     "4 stub Go units",
-    "1 unresolved generated facade obligations",
   ]);
   assert.deepEqual(collectVerifyFailures(status, {}), []);
 });

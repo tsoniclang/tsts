@@ -27,7 +27,7 @@ import { collectTypeStoragePolicyMismatches } from "./sig-check/type-storage-pol
 import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalence-relations.mjs";
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-facades/catalog.mjs";
 import { loadNonGoDeclarationManifest } from "./core/non-go-declaration-manifest.mjs";
 import {
   resolveOverride,
@@ -44,7 +44,7 @@ function globToRegExp(glob) {
 }
 
 export async function computeSignatureReport(deps, options = {}) {
-  const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(deps.externalFacadeCatalog);
+  const externalFacadeCatalog = requireFinalizedExternalFacadeStorageCatalog(deps.externalFacadeCatalog, deps.config, deps.snapshot);
   const idFilter = options.idFilter;
   if (idFilter !== undefined && (typeof idFilter !== "string" || idFilter.trim() === "")) {
     throw new Error("signature audit idFilter must be a non-empty glob when provided");
@@ -92,7 +92,7 @@ export async function computeSignatureReport(deps, options = {}) {
     deps.tsById,
     profile,
     generatedTypeDeclarations(deps.config, moduleIndex),
-    { externalFacades: externalFacadeCatalog.artifactFacades() },
+    { externalFacadeStorageView: externalFacadeCatalog.artifactFacades(deps.config, deps.snapshot) },
   );
   const externalExpectedIndex = wholeProgramAudit
     ? buildExpectedIndex(
@@ -101,7 +101,7 @@ export async function computeSignatureReport(deps, options = {}) {
       deps.tsById,
       profile,
       generatedTypeDeclarations(deps.config, moduleIndex),
-      { externalFacades: externalFacadeCatalog.auditFacades(), includeExternalPackageSurface: true },
+      { externalFacadeStorageView: externalFacadeCatalog.auditFacades(deps.config, deps.snapshot) },
     )
     : undefined;
   const idPattern = idFilter === undefined ? undefined : globToRegExp(idFilter);
@@ -315,7 +315,7 @@ export async function computeSignatureReport(deps, options = {}) {
 export function generatedArtifactPrerequisiteMismatches(status) {
   if (status === undefined) return [];
   const rows = [];
-  for (const category of ["missing", "stale", "orphan", "untracked", "invalid", "unresolved"]) {
+  for (const category of ["missing", "stale", "orphan", "untracked", "invalid"]) {
     const entries = status?.[category];
     if (!Array.isArray(entries)) throw new Error(`generated artifact prerequisite status.${category} must be an array`);
     for (const entry of entries) {

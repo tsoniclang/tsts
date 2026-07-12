@@ -7,14 +7,15 @@ import { compareSignatures, generatedTypeDeclarations } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
 import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
 import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
-import { buildExternalTypeStorageMap } from "./core/external-facades.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fixtures.mjs";
 
 const modulePath = "example.com/proj";
 const packagePath = `${modulePath}/pkg`;
 
 function buildExpectedIndex(config, snapshot, tsById, profile, generatedTypeDeclarations = new Map()) {
+  const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
   return buildExpectedIndexRaw(config, snapshot, tsById, profile, generatedTypeDeclarations, {
-    externalFacades: buildExternalTypeStorageMap(config, snapshot),
+    externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, snapshot),
   });
 }
 

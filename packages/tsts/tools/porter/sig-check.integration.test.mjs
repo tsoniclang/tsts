@@ -9,6 +9,7 @@ import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-fr
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { compareSignatures } from "./sig-check.mjs";
 import { testSemanticProfile } from "./test/helpers.mjs";
+import { finalizeGeneratedFacadeFixtureCatalog } from "./test/external-facade-fixtures.mjs";
 
 const ANNO = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
 const parser = await loadParser();
@@ -137,13 +138,15 @@ export const mask: bigint = 0x8000000000000000n;
     value: "9223372036854775808",
   });
   const profile = loadProfile({});
+  const config = { goModulePath: "m", tsRoot: "pkg" };
+  const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, EMPTY_SEMANTIC_SNAPSHOT);
   const index = buildExpectedIndex(
-    { goModulePath: "m", tsRoot: "pkg" },
+    config,
     EMPTY_SEMANTIC_SNAPSHOT,
     new Map(),
     profile,
     new Map(),
-    { externalFacades: new Map() },
+    { externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, EMPTY_SEMANTIC_SNAPSHOT) },
   );
   const expected = goUnitDescriptor({
     id: "m::v.go::constGroup::mask",
@@ -165,6 +168,19 @@ export const mask: bigint = 0x8000000000000000n;
     }],
   }, index);
   assert.deepEqual(expected.decls[0].value, units[0].descriptor.decls[0].value);
+});
+
+test("integration: expected indexes reject provisional and retired facade inputs", () => {
+  const config = { goModulePath: "m", tsRoot: "pkg" };
+  const profile = loadProfile(config);
+  assert.throws(
+    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacades: new Map() }),
+    /unsupported option.*externalFacades/,
+  );
+  assert.throws(
+    () => buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacadeStorageView: new Map() }),
+    /finalized external facade storage view/,
+  );
 });
 
 test("integration: number constants use IEEE-754 semantics", () => {
@@ -201,7 +217,10 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   // Self-consistent profile: GoRef lives in the same module the fixture imports it from.
   const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);
-  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), { externalFacades: new Map() });
+  const externalFacadeCatalog = finalizeGeneratedFacadeFixtureCatalog(config, EMPTY_SEMANTIC_SNAPSHOT);
+  const index = buildExpectedIndex(config, EMPTY_SEMANTIC_SNAPSHOT, new Map(), profile, new Map(), {
+    externalFacadeStorageView: externalFacadeCatalog.artifactFacades(config, EMPTY_SEMANTIC_SNAPSHOT),
+  });
   // Go: func f(a string, b *int) — expected [string, GoRef<int>].
   const goUnit = {
     id: "m::pkg/f.go::func::f",

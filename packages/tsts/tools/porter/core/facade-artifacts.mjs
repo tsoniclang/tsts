@@ -3,7 +3,7 @@ import {
   renderCanonicalTypeParameters,
 } from "./canonical-type-renderer.mjs";
 import { compareText } from "./deterministic-order.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "./external-facades/catalog.mjs";
 import { safeIdentifier, safePropertyName } from "./names.mjs";
 import { renderGoCompatModule, renderGoScalarsModule } from "./runtime-templates.mjs";
 import { hashText, repoRoot, resolveRepo, writeTextSafely } from "./runtime.mjs";
@@ -39,7 +39,7 @@ export { renderGeneratedArtifact, stripGeneratedArtifactHeader } from "./facade-
 export { authoredFacadePathSet } from "./facade-artifacts/authored-paths.mjs";
 
 export function writeExternalFacades(config, snapshot, facades, options) {
-  requireFinalizedExternalFacadeStorageCatalog(facades);
+  requireFinalizedExternalFacadeStorageCatalog(facades, config, snapshot);
   const outRoot = resolveRepo(options.out ?? config.tsRoot);
   const artifacts = renderExpectedGeneratedArtifacts(config, snapshot, facades);
   const sourceRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
@@ -56,7 +56,7 @@ export function writeExternalFacades(config, snapshot, facades, options) {
 }
 
 export function renderExpectedGeneratedArtifacts(config, snapshot, facades) {
-  requireFinalizedExternalFacadeStorageCatalog(facades);
+  requireFinalizedExternalFacadeStorageCatalog(facades, config, snapshot);
   const artifacts = new Map();
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
   artifacts.set(
@@ -74,7 +74,7 @@ export function renderExpectedGeneratedArtifacts(config, snapshot, facades) {
 }
 
 export function renderExternalFacadeModules(config, snapshot, catalog) {
-  const facades = requireFinalizedExternalFacadeStorageCatalog(catalog).artifactFacades();
+  const facades = requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot).artifactFacades(config, snapshot);
   const groups = new Map();
   for (const facade of facades.values()) {
     if (facade.storageStrategy !== "generated") continue;
@@ -151,12 +151,12 @@ export function renderExternalFacadePolicy(facade, declaration, profileIndex, co
 }
 
 export function createExternalFacadeContractRenderer(config, snapshot, catalog) {
-  requireFinalizedExternalFacadeStorageCatalog(catalog);
-  const facades = catalog.auditFacades();
+  requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot);
+  const facades = catalog.auditFacades(config, snapshot);
   const environment = externalContractEnvironment(config, snapshot, facades);
   return (facade, declaration, profileIndex) => {
     const context = environment.contextFor(facade);
-    const authoredSurface = catalog.authoredSurface(facade.objectId);
+    const authoredSurface = catalog.authoredSurface(config, snapshot, facade.objectId);
     const contractSurface = buildAuthoredContractSurface(
       facade,
       declaration,
@@ -182,8 +182,8 @@ export function createExternalFacadeContractRenderer(config, snapshot, catalog) 
 }
 
 export function createExternalMethodBindingContractRenderer(config, snapshot, catalog) {
-  requireFinalizedExternalFacadeStorageCatalog(catalog);
-  const facades = catalog.auditFacades();
+  requireFinalizedExternalFacadeStorageCatalog(catalog, config, snapshot);
+  const facades = catalog.auditFacades(config, snapshot);
   const environment = externalContractEnvironment(config, snapshot, facades);
   return (facade, declaration, binding, profileIndex) => {
     const method = externalMethodById(declaration, binding.methodId);
@@ -222,7 +222,7 @@ function externalContractEnvironment(config, snapshot, facades) {
   const profile = loadProfile(config);
   const storageFacades = new Map(facades);
   const evidence = addProfileSemanticStorageEvidence(
-    buildTypeRepresentationEvidence(config, snapshot, storageFacades, { includeExternalPackageSurface: true }),
+    buildTypeRepresentationEvidence(config, snapshot, facades),
     profile,
     buildTypeStorageIdentityMap(config, snapshot),
   );

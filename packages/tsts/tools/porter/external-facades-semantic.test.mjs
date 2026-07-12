@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDependencySemanticTypeIndex, buildExternalTypeStorageMap } from "./core/external-facades.mjs";
+import { buildDependencySemanticTypeIndex, buildExternalFacadeStoragePlan } from "./core/external-facades.mjs";
 import { externalTypeScriptDeclarationHash } from "./core/external-facade-runtime-adaptation.mjs";
 import { semanticDeclarationVariantsHash } from "./core/semantic-declaration-hash.mjs";
 import { buildSemanticTypeCatalog } from "./core/type-storage-policies.mjs";
@@ -81,7 +81,7 @@ test("external facade identity and signatures come only from extracted go/types 
     [`${config.tsRoot}/go/time.ts`, "export type Duration = number;\n"],
   ]));
   const facades = finalizedCatalog(config, snapshot, moduleIndex);
-  const auditFacades = facades.auditFacades();
+  const auditFacades = facades.auditFacades(config, snapshot);
   assert.equal(auditFacades.get("io::type::Writer").storageStrategy, "authored");
   assert.equal(auditFacades.get("io::type::Writer").arity, 0);
   assert.equal(auditFacades.get("time::type::Duration").variants[0].declaration.rhs.kind, "basic");
@@ -99,7 +99,7 @@ test("excluded module-local dependency types require reviewed storage and never 
   const declaration = externalType({ packagePath, name: "HiddenState", rhs: structType([]) });
   const snapshot = externalSnapshot([declaration]);
   assert.throws(
-    () => buildExternalTypeStorageMap(baseConfig, snapshot),
+    () => finalizeGeneratedFacadeFixtureCatalog(baseConfig, snapshot),
     /excluded module-local dependency type .* requires an explicit go-type-storage relation/,
   );
 
@@ -115,7 +115,8 @@ test("excluded module-local dependency types require reviewed storage and never 
       reason: "The excluded module-local declaration has one reviewed TypeScript storage owner.",
     }],
   };
-  assert.deepEqual([...buildExternalTypeStorageMap(config, snapshot)], []);
+  const catalog = finalizeGeneratedFacadeFixtureCatalog(config, snapshot);
+  assert.deepEqual([...catalog.artifactFacades(config, snapshot)], []);
   assert.equal(renderExternalFacadeModules(config, snapshot, finalizeGeneratedFacadeFixtureCatalog(config, snapshot)).size, 0);
 });
 
@@ -266,7 +267,7 @@ test("aggregate authored storage exposes pointer methods and replaces private Go
   assert.deepEqual(result.inventory.tsOnlyMembers, []);
   assert.deepEqual(result.inventory.unselectedGoMembers.map((member) => member.name), ["Value"]);
   assert.deepEqual(result.inventory.privateStorageMembers.map((member) => member.name), ["state"]);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],
@@ -332,7 +333,7 @@ test("slot-authored aggregate storage carries pointer-only methods through exact
   ]));
   const provisionalFacades = finalizedCatalog(provisionalConfig, snapshot, seedIndex);
   const source = createExternalFacadeContractRenderer(provisionalConfig, snapshot, provisionalFacades)(
-    provisionalFacades.auditFacades().get(objectId),
+    provisionalFacades.auditFacades(provisionalConfig, snapshot).get(objectId),
     thing.type,
     0,
   ).source;
@@ -387,7 +388,7 @@ test("authored Go interfaces retain unexported nominal method seals", () => {
     "export interface Sealed { Read(): void; }\n",
   ]]));
   const seedFacades = finalizedCatalog(config, snapshot, seedIndex);
-  const facade = seedFacades.auditFacades().get(objectId);
+  const facade = seedFacades.auditFacades(config, snapshot).get(objectId);
   const exactSource = createExternalFacadeContractRenderer(config, snapshot, seedFacades)(
     facade,
     snapshot.semantic.dependencyTypeDeclarations[0].type,
@@ -479,7 +480,7 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
       },
     }],
   };
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       objectId,
@@ -510,7 +511,7 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
   assert.deepEqual(audit(exactSource).mismatches, []);
   assert.throws(() => audit("export type Tag = number;"), /reviewed TypeScript declaration hash/);
   assert.throws(() => audit('export type Tag = string & { mutable: "Tag" };'), /reviewed TypeScript declaration hash/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],
@@ -521,8 +522,8 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
     externalType({ packagePath: "example.com/native", name: "Tag", rhs: basic("string"), profiles: [0] }),
     externalType({ packagePath: "example.com/native", name: "Tag", rhs: basic("int"), profiles: [1] }),
   ]);
-  assert.throws(() => buildExternalTypeStorageMap(config, profileDrift), /cannot erase profile-dependent Go declaration semantics/);
-  assert.throws(() => buildExternalTypeStorageMap({
+  assert.throws(() => buildExternalFacadeStoragePlan(config, profileDrift), /cannot erase profile-dependent Go declaration semantics/);
+  assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,
     externalFacadePolicies: [{
       ...config.externalFacadePolicies[0],

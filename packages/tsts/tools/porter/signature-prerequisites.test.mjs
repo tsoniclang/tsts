@@ -10,7 +10,6 @@ test("generated declaration artifacts block signature comparison once per root a
     orphan: [],
     untracked: [],
     invalid: [],
-    unresolved: [],
   });
   assert.deepEqual(mismatches.map((row) => row.id), [
     "generated-artifact:missing:packages/tsts/src/go/compat.ts",
@@ -18,7 +17,7 @@ test("generated declaration artifacts block signature comparison once per root a
   ]);
   assert.ok(mismatches.every((row) => row.kind === "signature-generated-artifact-prerequisite"));
   assert.throws(() => generatedArtifactPrerequisiteMismatches({
-    missing: null, stale: [], orphan: [], untracked: [], invalid: [], unresolved: [],
+    missing: null, stale: [], orphan: [], untracked: [], invalid: [],
   }), /status\.missing must be an array/);
 });
 

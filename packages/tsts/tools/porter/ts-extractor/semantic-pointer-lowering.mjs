@@ -1,13 +1,12 @@
 import { buildDependencySemanticTypeIndex } from "../core/external-facades.mjs";
+import { requireExternalFacadeStorageView } from "../core/external-facades/catalog.mjs";
 import { assertSemanticNilability } from "../core/semantic-type-nilability.mjs";
 import { buildDeclaredTypeContractIndex } from "./semantic-named-nilability.mjs";
 
 const directReferenceTerminals = new Set(["basic", "channel", "interface", "map", "pointer", "signature", "slice"]);
 
-export function buildTypeRepresentationEvidence(config, snapshot, facades, options = {}) {
-  if (facades === undefined || facades === null || typeof facades[Symbol.iterator] !== "function") {
-    throw new Error("semantic type representation evidence requires one explicit external storage map or finalized catalog");
-  }
+export function buildTypeRepresentationEvidence(config, snapshot, facades) {
+  const facadeScope = requireExternalFacadeStorageView(facades, config, snapshot);
   const externalTypeContracts = new Map();
   const dependencyTypeContractsByProfile = new Map();
   const dependencyPointerTerminalsByProfile = new Map();
@@ -19,7 +18,7 @@ export function buildTypeRepresentationEvidence(config, snapshot, facades, optio
     facadeByObjectId.set(objectId, facade);
   }
   const semanticIndex = buildDependencySemanticTypeIndex(snapshot, {
-    includeExternalPackageSurface: options.includeExternalPackageSurface === true,
+    includeExternalPackageSurface: facadeScope === "audit",
   });
   for (const semantic of semanticIndex.values()) {
     const facade = facadeByObjectId.get(semantic.objectId);

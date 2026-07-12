@@ -5,7 +5,7 @@ import {
 import { compareText } from "../core/deterministic-order.mjs";
 import { hashText } from "../core/runtime.mjs";
 import { canonicalSchemaValue } from "../core/semantic-variants.mjs";
-import { requireFinalizedExternalFacadeStorageCatalog } from "../core/external-facades.mjs";
+import { requireFinalizedExternalFacadeStorageCatalog } from "../core/external-facades/catalog.mjs";
 import { externalTypeScriptDeclarationHash } from "../core/external-facade-runtime-adaptation.mjs";
 import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "../core/semantic-method-sets.mjs";
 import {
@@ -44,8 +44,8 @@ export function collectAuthoredFacadeMismatches({
   facades,
   ambientReferences = { accept: () => false },
 }) {
-  const catalog = requireFinalizedExternalFacadeStorageCatalog(facades);
-  const auditFacades = catalog.auditFacades();
+  const catalog = requireFinalizedExternalFacadeStorageCatalog(facades, config, snapshot);
+  const auditFacades = catalog.auditFacades(config, snapshot);
   const renderContract = createExternalFacadeContractRenderer(config, snapshot, catalog);
   const renderMethodContract = createExternalMethodBindingContractRenderer(config, snapshot, catalog);
   const methodSetSignatures = buildSemanticMethodSetSignatureIndex(snapshot);
@@ -83,7 +83,7 @@ export function collectAuthoredFacadeMismatches({
       continue;
     }
     const storageActual = actual;
-    const authoredSurface = catalog.authoredSurface(facade.objectId);
+    const authoredSurface = catalog.authoredSurface(config, snapshot, facade.objectId);
     const actualTsHash = externalTypeScriptDeclarationHash(storageActual);
     if (authoredSurface === undefined || authoredSurface.declarationId !== declarationId ||
         authoredSurface.declarationHash !== actualTsHash) {

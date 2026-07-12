@@ -57,8 +57,8 @@ export {
 } from "./core/facade-artifacts.mjs";
 export { buildGeneratedArtifactStatus, emptyGeneratedArtifactStatus } from "./core/generated-artifacts.mjs";
 export { buildDraftLargeFileSplitPlan, buildLargeFileSplitStatus } from "./core/large-files.mjs";
-export { checkSkeletons, renderStub, scaffoldMissing } from "./core/scaffolding.mjs";
-export { buildRenderIndexes, renderUnitGroup } from "./core/type-renderer.mjs";
+export { checkSkeletons, scaffoldMissing } from "./core/scaffolding.mjs";
+export { renderUnitGroup } from "./core/type-renderer.mjs";
 export { prepareExternalFacadeStorageCatalog } from "./core/authored-facade-selections.mjs";
 export { localTsName } from "./core/names.mjs";
 export {
