@@ -208,7 +208,7 @@ function activeUnitRecords(snapshot, options) {
     if (!eligibility.includes(file)) continue;
     for (const unit of file.units ?? []) {
       if (!isSemanticPrimaryUnitKind(unit.kind)) continue;
-      const policy = options.policyForUnit(unit, file);
+      const policy = options.policyForUnit(snapshot, unit, file);
       if (!options.isActivePortPolicy(policy)) continue;
       records.set(unit.id, { ...unitRecord(file, unit, profileKeys), policy });
     }

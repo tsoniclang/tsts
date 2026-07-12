@@ -1,5 +1,6 @@
 import { compareText } from "./deterministic-order.mjs";
-import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
+import { isActivePortPolicy } from "./policies.mjs";
 import { loadProfile } from "../ts-extractor/profile.mjs";
 import { buildTypeStorageIdentityMap } from "./type-storage-policies.mjs";
 import { buildSemanticMethodSetSignatureIndex, materializeSemanticMethodSet } from "./semantic-method-sets.mjs";
@@ -286,9 +287,10 @@ export function collectDependencyTypeUsages(
   }
   const usages = new Map();
   if (declarations === undefined) {
+    const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
     for (const file of snapshot.files ?? []) {
       for (const unit of file.units ?? []) {
-        if (!isActivePortPolicy(policyForUnit(config, unit, file))) continue;
+        if (!isActivePortPolicy(effectivePolicies.unit(unit, file))) continue;
         for (const declaration of unit.semantic ?? []) visitDeclaration(declaration);
       }
     }

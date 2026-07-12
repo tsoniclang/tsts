@@ -1,10 +1,10 @@
 import { computeSignatureReport } from "../sig-check.mjs";
 import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
 import { prepareExternalFacadeStorageCatalog } from "./authored-facade-selections.mjs";
-import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { isActivePortPolicy } from "./policies.mjs";
 import { repoRoot, resolveRepo } from "./runtime.mjs";
 import { runPinnedScan } from "./scan-runner.mjs";
-import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
 import { signatureAuditSummaryLines } from "./signature-reporting.mjs";
 import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
@@ -41,12 +41,11 @@ export async function runSigCheck(config, options = {}) {
 }
 
 export function activeSignatureUnitIds(config, snapshot) {
-  const eligibility = buildSemanticUnitEligibility(snapshot);
+  const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   const ids = new Set();
   for (const file of snapshot.files ?? []) {
-    if (!eligibility.includes(file)) continue;
     for (const unit of file.units ?? []) {
-      if (isSemanticPrimaryUnitKind(unit.kind) && isActivePortPolicy(policyForUnit(config, unit, file))) ids.add(unit.id);
+      if (isSemanticPrimaryUnitKind(unit.kind) && isActivePortPolicy(effectivePolicies.unit(unit, file))) ids.add(unit.id);
     }
   }
   return ids;

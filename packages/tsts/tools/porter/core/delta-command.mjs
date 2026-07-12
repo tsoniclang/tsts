@@ -1,7 +1,8 @@
 import { buildDeltaCompletion, buildPorterDelta, canonicalSnapshot, DELTA_EVIDENCE_ARTIFACTS, portableSnapshot, renderDeltaMarkdown, snapshotDigest, verifyDeltaCompletion } from "../delta.mjs";
 import { buildGeneratedSourcePolicyStatus } from "../generated-source.mjs";
 import { buildSnapshotSourceIntegrityStatus, gitTreeEntries, inspectGitCheckout } from "../source-pin.mjs";
-import { inactiveSourcePolicyFor, isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { inactiveSourcePolicyFor, isActivePortPolicy } from "./policies.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
 import { assertDirectory, fail, hashText, repoRoot, resolveRepo, writeText } from "./runtime.mjs";
 import { runScan } from "./scan-runner.mjs";
 import { validatePorterSnapshot } from "./snapshot.mjs";
@@ -55,8 +56,10 @@ export function runDelta(config, options) {
   ];
   if (postScanIssues.length > 0) fail(`porter delta source changed or diverged during extraction (${postScanIssues.join("; ")})`);
 
+  const fromPolicies = buildEffectivePolicyResolver(config, fromSnapshot);
+  const toPolicies = buildEffectivePolicyResolver(config, toSnapshot);
   const report = buildPorterDelta(fromSnapshot, toSnapshot, {
-    policyForUnit: (unit, file) => policyForUnit(config, unit, file),
+    policyForUnit: (snapshot, unit, file) => (snapshot === fromSnapshot ? fromPolicies : toPolicies).unit(unit, file),
     isActivePortPolicy,
     fromTreeEntries: gitTreeEntries(fromRoot, fromSnapshot.gitRevision),
     toTreeEntries: gitTreeEntries(toRoot, toSnapshot.gitRevision),

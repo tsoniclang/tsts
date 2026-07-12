@@ -1,5 +1,6 @@
 import { compareText } from "./deterministic-order.mjs";
-import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
+import { isActivePortPolicy } from "./policies.mjs";
 import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { fail, resolveRepo } from "./runtime.mjs";
 import { existsSync, readFileSync } from "node:fs";
@@ -19,7 +20,7 @@ export function buildLargeFileSplitStatus(config, snapshot) {
   const requiredPaths = new Set();
 
   for (const file of snapshot.files ?? []) {
-    const portableUnits = largeLiteralUnitsForFile(config, file, threshold);
+    const portableUnits = largeLiteralUnitsForFile(config, snapshot, file, threshold);
     if (portableUnits.length === 0) continue;
     requiredPaths.add(file.path);
     const filePlan = plan.files?.[file.path];
@@ -70,7 +71,7 @@ export function buildDraftLargeFileSplitPlan(config, snapshot) {
   const threshold = Number(config.largeFileLineThreshold ?? 5000);
   const files = {};
   for (const file of snapshot.files ?? []) {
-    const units = largeLiteralUnitsForFile(config, file, threshold);
+    const units = largeLiteralUnitsForFile(config, snapshot, file, threshold);
     if (units.length === 0) continue;
     const targetRoot = defaultLargeFileTargetRoot(config, file.path);
     const groups = new Map();
@@ -104,11 +105,12 @@ export function buildDraftLargeFileSplitPlan(config, snapshot) {
   };
 }
 
-export function largeLiteralUnitsForFile(config, file, threshold) {
+export function largeLiteralUnitsForFile(config, snapshot, file, threshold) {
   if (file.lineCount < threshold) return [];
+  const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   return (file.units ?? []).filter((unit) => {
     if (!isSemanticPrimaryUnitKind(unit.kind)) return false;
-    const policy = policyForUnit(config, unit, file);
+    const policy = effectivePolicies.unit(unit, file);
     return policy.category === "literal-port" && isActivePortPolicy(policy);
   });
 }

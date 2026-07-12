@@ -1,13 +1,15 @@
 import { safeIdentifier } from "./names.mjs";
-import { expectedTsPath, isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
+import { expectedTsPath, isActivePortPolicy } from "./policies.mjs";
 import path from "node:path";
 
 export function buildSymbolIndex(config, snapshot, largeFileSplits = undefined) {
   const index = new Map();
+  const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
       if (unit.kind !== "type") continue;
-      const policy = policyForUnit(config, unit, file);
+      const policy = effectivePolicies.unit(unit, file);
       index.set(`${file.importPath}::${unit.name}`, {
         exportName: safeIdentifier(unit.name),
         targetPath: expectedTsPath(config, unit, largeFileSplits),

@@ -1,4 +1,5 @@
-import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
+import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
+import { isActivePortPolicy } from "./policies.mjs";
 
 export function isExternalPackage(packagePath, modulePath) {
   return packagePath !== "" && packagePath !== modulePath && !packagePath.startsWith(`${modulePath}/`);
@@ -50,9 +51,10 @@ export function buildAllSemanticLocalTypeProfileKeys(snapshot) {
 
 function buildLocalTypeProfileKeys(config, snapshot, include) {
   const keys = new Set();
+  const effectivePolicies = buildEffectivePolicyResolver(config, snapshot);
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
-      if (!include(policyForUnit(config, unit, file))) continue;
+      if (!include(effectivePolicies.unit(unit, file))) continue;
       for (const declaration of unit.semantic ?? []) {
         if (declaration?.kind !== "type" || typeof declaration.object?.id !== "string") continue;
         for (const profile of exactProfiles(declaration.profiles, `active local Go type '${declaration.object.id}'`)) {
