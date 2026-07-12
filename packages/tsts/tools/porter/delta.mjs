@@ -6,7 +6,7 @@ import { buildSemanticUnitEligibility } from "./core/semantic-unit-eligibility.m
 import { isSemanticPrimaryUnitKind } from "./core/unit-kinds.mjs";
 import { semanticProfileKey } from "./core/snapshot-validation.mjs";
 
-export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "from-tree.json", "summary.md", "to-snapshot.json", "to-tree.json"]);
+export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "from-tree.json", "porter-tree.json", "summary.md", "to-snapshot.json", "to-tree.json"]);
 
 export function canonicalSnapshot(snapshot) {
   return JSON.stringify(portableSnapshot(snapshot));
@@ -54,7 +54,7 @@ export function buildDeltaCompletion(artifacts, report) {
     files[name] = { bytes: Buffer.byteLength(contents), sha256: sha256(contents) };
   }
   const identity = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     fromRevision: report.from.gitRevision,
     toRevision: report.to.gitRevision,
     files,
@@ -70,7 +70,7 @@ export function verifyDeltaCompletion(artifacts, completion) {
     if (JSON.stringify(actual) !== JSON.stringify(wanted)) issues.push(`${label} keys must be exactly ${wanted.join(", ")}`);
   };
   exactKeys(completion, ["evidenceHash", "files", "fromRevision", "schemaVersion", "toRevision"], "COMPLETE.json");
-  if (completion?.schemaVersion !== 5) issues.push("COMPLETE.json schemaVersion must be 5");
+  if (completion?.schemaVersion !== 6) issues.push("COMPLETE.json schemaVersion must be 6");
   exactKeys(completion?.files, DELTA_EVIDENCE_ARTIFACTS, "COMPLETE.json files");
   for (const name of DELTA_EVIDENCE_ARTIFACTS) {
     const record = completion?.files?.[name];
@@ -111,8 +111,9 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
   );
   const fromEnvironment = extractionEnvironmentIdentity(fromSnapshot);
   const toEnvironment = extractionEnvironmentIdentity(toSnapshot);
+  const semanticState = compareRecordMaps(semanticStateRecords(fromSnapshot), semanticStateRecords(toSnapshot));
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     from: snapshotIdentity(fromSnapshot),
     to: snapshotIdentity(toSnapshot),
     extractionEnvironment: {
@@ -122,6 +123,7 @@ export function buildPorterDelta(fromSnapshot, toSnapshot, options) {
     },
     trackedFiles: summarizeComparison(trackedFiles),
     goFiles: summarizeComparison(files),
+    semanticState: summarizeComparison(semanticState),
     rawUnits: summarizeComparison(raw),
     activeUnits: summarizeComparison(active),
   };
@@ -136,6 +138,7 @@ export function renderDeltaMarkdown(report) {
     `- Extractor environment equal: ${report.extractionEnvironment.matches}`,
     `- Complete tracked source tree: ${summaryLine(report.trackedFiles)}`,
     `- Go files: ${summaryLine(report.goFiles)}`,
+    `- Complete semantic state: ${summaryLine(report.semanticState)}`,
     `- Raw units: ${summaryLine(report.rawUnits)}`,
     `- Active porter units: ${summaryLine(report.activeUnits)}`,
     `- Active declaration changes: ${declarationChangeLine(report.activeUnits)}`,
@@ -213,6 +216,19 @@ function trackedTreeRecords(entries) {
     objectHash: entry.hash,
     comparisonHash: hashObject({ mode: entry.mode, type: entry.type, objectHash: entry.hash }),
   }]));
+}
+
+function semanticStateRecords(snapshot) {
+  const semantic = portableSnapshot(snapshot).semantic;
+  return new Map(Object.keys(semantic).sort(compareText).map((key) => {
+    const value = semantic[key];
+    return [key, {
+      id: key,
+      path: `semantic/${key}`,
+      value,
+      comparisonHash: hashObject(value),
+    }];
+  }));
 }
 
 function unitRecords(snapshot) {

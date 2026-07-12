@@ -4,6 +4,7 @@ import {
   fstatSync,
   lstatSync,
   openSync,
+  readdirSync,
   readFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -37,31 +38,77 @@ export function readStableRegularFile(file, label = "regular file") {
   const absolute = path.resolve(file);
   const parent = openSecureDirectory(path.dirname(absolute));
   try {
-    const name = path.basename(absolute);
-    const before = lstatEntry(parent.fd, name, label);
-    if (before.isSymbolicLink() || !before.isFile()) throw new Error(`${label} must be a regular non-symlink file`);
-    let fd;
+    const opened = openRegularFileAt(parent.fd, path.basename(absolute), label);
     try {
-      fd = openSync(entryPath(parent.fd, name), FILE_FLAGS);
-      const opened = fstatSync(fd, { bigint: true });
-      assertUsableStat(opened, label);
-      if (!opened.isFile()) throw new Error(`${label} must be a regular file`);
-      assertSameIdentity(before, opened, `${label} changed before it could be opened safely`);
-      const bytes = readFileSync(fd);
-      const finalStat = fstatSync(fd, { bigint: true });
-      assertStableStat(opened, finalStat, `${label} changed while reading`);
-      assertStableStat(finalStat, lstatEntry(parent.fd, name, label), `${label} path changed while reading`);
-      assertDirectoryPathMatches(parent, `${label} parent path changed while reading`);
+      const bytes = readFileSync(opened.fd);
+      assertStableOpenFile(parent, opened, label);
       return Buffer.from(bytes);
-    } catch (error) {
-      if (error?.code === "ELOOP") throw new Error(`${label} became a symlink while opening`, { cause: error });
-      throw error;
     } finally {
-      if (fd !== undefined) closeSync(fd);
+      closeSync(opened.fd);
     }
   } finally {
     closeSync(parent.fd);
   }
+}
+
+export function readStableFlatDirectory(directory, label = "flat directory") {
+  const openedDirectory = openSecureDirectory(directory);
+  const openedFiles = [];
+  try {
+    const initialDirectoryStat = fstatSync(openedDirectory.fd, { bigint: true });
+    const names = readDirectoryNames(openedDirectory.fd, label);
+    const files = new Map();
+    for (const name of names) {
+      const opened = openRegularFileAt(openedDirectory.fd, name, `${label} entry '${name}'`);
+      openedFiles.push(opened);
+      files.set(name, Buffer.from(readFileSync(opened.fd)));
+    }
+    for (const opened of openedFiles) assertStableOpenFile(openedDirectory, opened, `${label} entry '${opened.name}'`);
+    const finalNames = readDirectoryNames(openedDirectory.fd, label);
+    if (names.length !== finalNames.length || names.some((name, index) => name !== finalNames[index])) {
+      throw new Error(`${label} entries changed while reading`);
+    }
+    assertStableStat(initialDirectoryStat, fstatSync(openedDirectory.fd, { bigint: true }), `${label} changed while reading`);
+    assertDirectoryPathMatches(openedDirectory, `${label} path changed while reading`);
+    return files;
+  } finally {
+    for (const opened of openedFiles) closeSync(opened.fd);
+    closeSync(openedDirectory.fd);
+  }
+}
+
+function openRegularFileAt(parentFd, name, label) {
+  const before = lstatEntry(parentFd, name, label);
+  if (before.isSymbolicLink() || !before.isFile()) throw new Error(`${label} must be a regular non-symlink file`);
+  let fd;
+  try {
+    fd = openSync(entryPath(parentFd, name), FILE_FLAGS);
+    const opened = fstatSync(fd, { bigint: true });
+    assertUsableStat(opened, label);
+    if (!opened.isFile()) throw new Error(`${label} must be a regular file`);
+    assertSameIdentity(before, opened, `${label} changed before it could be opened safely`);
+    return { fd, name, opened };
+  } catch (error) {
+    if (fd !== undefined) closeSync(fd);
+    if (error?.code === "ELOOP") throw new Error(`${label} became a symlink while opening`, { cause: error });
+    throw error;
+  }
+}
+
+function assertStableOpenFile(parent, file, label) {
+  const finalStat = fstatSync(file.fd, { bigint: true });
+  assertStableStat(file.opened, finalStat, `${label} changed while reading`);
+  assertStableStat(finalStat, lstatEntry(parent.fd, file.name, label), `${label} path changed while reading`);
+}
+
+function readDirectoryNames(fd, label) {
+  const names = readdirSync(entryPath(fd, "."));
+  for (const name of names) {
+    if (typeof name !== "string" || name === "" || name === "." || name === ".." || name.includes(path.sep)) {
+      throw new Error(`${label} contains an invalid entry name`);
+    }
+  }
+  return names.sort();
 }
 
 function openSecureDirectory(directory) {

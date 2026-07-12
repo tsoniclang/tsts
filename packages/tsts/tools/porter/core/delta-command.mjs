@@ -1,14 +1,15 @@
 import { buildDeltaCompletion, buildPorterDelta, canonicalSnapshot, DELTA_EVIDENCE_ARTIFACTS, portableSnapshot, renderDeltaMarkdown, snapshotDigest, verifyDeltaCompletion } from "../delta.mjs";
-import { buildGeneratedSourceCoverage, buildGeneratedSourcePolicyStatus, generatedSourceMechanisms } from "../generated-source.mjs";
-import { buildSnapshotSourceIntegrityStatus, gitTreeEntries, inspectGitCheckout, readGitCommitObjectBody } from "../source-pin.mjs";
-import { inactiveSourcePolicyFor, isActivePortPolicy } from "./policies.mjs";
+import { buildSnapshotSourceIntegrityStatus, buildSnapshotTreeIntegrityStatus, gitTreeEntries, inspectGitCheckout, readGitCommitObjectBody } from "../source-pin.mjs";
+import { isActivePortPolicy } from "./policies.mjs";
 import { buildEffectivePolicyResolver } from "./effective-policies.mjs";
-import { compareText } from "./deterministic-order.mjs";
+import { buildDeltaSupplementalEvidence } from "./delta-report-evidence.mjs";
+import { requireSafeDeltaOutputRoot } from "./delta-paths.mjs";
 import { buildGitCommitTreeEvidence, requireGitCommitTreeEvidence } from "./git-commit-tree-evidence.mjs";
+import { readStableFlatDirectory } from "./provenance-filesystem.mjs";
 import { assertDirectory, fail, hashText, repoRoot, writeText } from "./runtime.mjs";
-import { isSemanticPrimaryUnitKind } from "./unit-kinds.mjs";
 import { runScan } from "./scan-runner.mjs";
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync } from "node:fs";
+import { assertPorterSnapshot } from "./snapshot.mjs";
+import { existsSync, mkdirSync, renameSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
@@ -17,8 +18,9 @@ export function runDelta(config, options) {
   const fromRoot = path.resolve(repoRoot, options.from);
   const toRoot = path.resolve(repoRoot, options.to);
   const outRoot = path.resolve(repoRoot, options.out);
+  requireSafeDeltaOutputRoot(outRoot, [fromRoot, toRoot]);
   const prepared = prepareDeltaComparison(config, { fromRoot, toRoot });
-  const { from, to, report } = prepared;
+  const { from, porter, to, report } = prepared;
 
   const gateIssues = [
     ...(report.extractionEnvironment.matches ? [] : ["extractor environments differ"]),
@@ -32,8 +34,8 @@ export function runDelta(config, options) {
   if (existsSync(outRoot)) fail(`porter delta evidence directory already exists: ${path.relative(repoRoot, outRoot)}`);
   const stagingRoot = `${outRoot}.partial-${process.pid}-${hashText(`${report.from.digest}:${report.to.digest}`).slice(0, 12)}`;
   if (existsSync(stagingRoot)) fail(`porter delta staging directory already exists: ${path.relative(repoRoot, stagingRoot)}`);
-  mkdirSync(stagingRoot, { recursive: true });
-  const evidence = buildDeltaArtifacts(from.snapshot, to.snapshot, from.gitEvidence, to.gitEvidence, report);
+  mkdirSync(stagingRoot);
+  const evidence = buildDeltaArtifacts(from.snapshot, to.snapshot, from.gitEvidence, porter.gitEvidence, to.gitEvidence, report);
   const completion = buildDeltaCompletion(evidence, report);
   const artifacts = [...evidence, ["COMPLETE.json", `${JSON.stringify(completion, null, 2)}\n`]];
   for (const [name, contents] of artifacts) writeText(path.join(stagingRoot, name), contents);
@@ -47,12 +49,15 @@ export function runDelta(config, options) {
   console.log(`Go files added/removed/changed: ${report.goFiles.addedCount}/${report.goFiles.removedCount}/${report.goFiles.changedCount}`);
 }
 
-export function buildExactDeltaReport(config, fromSnapshot, toSnapshot, input) {
-  requireExactObject(input, ["fromGitEvidence", "fromProvenance", "toGitEvidence", "toProvenance"], "delta report inputs");
+function buildDeltaReport(config, fromSnapshot, toSnapshot, input) {
+  requireExactObject(input, ["fromGitEvidence", "fromProvenance", "porterGitEvidence", "toGitEvidence", "toProvenance"], "delta report inputs");
   const fromGitEvidence = requireGitCommitTreeEvidence(input.fromGitEvidence, "from Git evidence");
+  const porterGitEvidence = requireGitCommitTreeEvidence(input.porterGitEvidence, "Porter implementation Git evidence");
   const toGitEvidence = requireGitCommitTreeEvidence(input.toGitEvidence, "to Git evidence");
   const fromProvenance = requireDeltaProvenance(input.fromProvenance, "from provenance");
   const toProvenance = requireDeltaProvenance(input.toProvenance, "to provenance");
+  assertPorterSnapshot(fromSnapshot, { ...config, sourceRoot: fromSnapshot.sourceRoot });
+  assertPorterSnapshot(toSnapshot, { ...config, sourceRoot: toSnapshot.sourceRoot });
   if (fromGitEvidence.revision !== fromSnapshot.gitRevision || fromProvenance.revision !== fromSnapshot.gitRevision) {
     throw new Error("from Git/provenance evidence does not match the from snapshot revision");
   }
@@ -62,6 +67,11 @@ export function buildExactDeltaReport(config, fromSnapshot, toSnapshot, input) {
   if (fromProvenance.snapshotDigest !== snapshotDigest(fromSnapshot) || toProvenance.snapshotDigest !== snapshotDigest(toSnapshot)) {
     throw new Error("delta provenance snapshot digests do not match the supplied snapshots");
   }
+  const treeIssues = [
+    ...buildSnapshotTreeIntegrityStatus(fromSnapshot, fromGitEvidence.entries).issues.map((issue) => `from ${issue.path}: ${issue.reason}`),
+    ...buildSnapshotTreeIntegrityStatus(toSnapshot, toGitEvidence.entries).issues.map((issue) => `to ${issue.path}: ${issue.reason}`),
+  ];
+  if (treeIssues.length > 0) throw new Error(`delta snapshots do not close over their Git trees: ${treeIssues.join("; ")}`);
   const fromPolicies = buildEffectivePolicyResolver(config, fromSnapshot);
   const toPolicies = buildEffectivePolicyResolver(config, toSnapshot);
   const report = buildPorterDelta(fromSnapshot, toSnapshot, {
@@ -70,39 +80,14 @@ export function buildExactDeltaReport(config, fromSnapshot, toSnapshot, input) {
     fromTreeEntries: fromGitEvidence.entries,
     toTreeEntries: toGitEvidence.entries,
   });
-  const generatedMechanisms = generatedSourceMechanisms.map((mechanism) => ({
-    id: mechanism.id,
-    mode: mechanism.mode,
-    category: mechanism.category,
-    active: mechanism.active,
-    ...(mechanism.statusKey === undefined ? {} : { statusKey: mechanism.statusKey }),
-    patterns: [...mechanism.patterns],
-    reason: mechanism.reason,
-  }));
   return {
     ...report,
+    porterImplementation: gitEvidenceIdentity(porterGitEvidence),
     provenance: {
       from: fromProvenance,
       to: toProvenance,
     },
-    effectivePolicies: {
-      contract: effectivePolicyContract(config, generatedMechanisms),
-      from: effectivePolicyEvidence(fromSnapshot, fromPolicies),
-      to: effectivePolicyEvidence(toSnapshot, toPolicies),
-    },
-    generatedSourcePolicies: {
-      mechanisms: generatedMechanisms,
-      from: buildGeneratedSourcePolicyStatus(fromSnapshot, {
-        isInactive: (sourcePath) => inactiveSourcePolicyFor(config, sourcePath) !== undefined,
-        requireAllMechanisms: false,
-      }),
-      to: buildGeneratedSourcePolicyStatus(toSnapshot, {
-        isInactive: (sourcePath) => inactiveSourcePolicyFor(config, sourcePath) !== undefined,
-        requireAllMechanisms: false,
-      }),
-      fromCoverage: buildGeneratedSourceCoverage(fromSnapshot),
-      toCoverage: buildGeneratedSourceCoverage(toSnapshot),
-    },
+    ...buildDeltaSupplementalEvidence(config, fromSnapshot, toSnapshot),
   };
 }
 
@@ -111,24 +96,20 @@ export function runDeltaVerify(config, options) {
   const evidenceRoot = path.resolve(repoRoot, options.dir);
   const fromRoot = path.resolve(repoRoot, options.from);
   const toRoot = path.resolve(repoRoot, options.to);
-  assertDirectory(evidenceRoot, "delta evidence directory");
   const expectedNames = [...DELTA_EVIDENCE_ARTIFACTS, "COMPLETE.json"].sort();
-  const entries = readdirSync(evidenceRoot, { withFileTypes: true });
-  const actualNames = entries.map((entry) => entry.name).sort();
+  const evidenceFiles = readStableFlatDirectory(evidenceRoot, "delta evidence directory");
+  const actualNames = [...evidenceFiles.keys()].sort();
   const issues = [];
-  if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames) || entries.some((entry) => !entry.isFile())) {
+  if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {
     issues.push(`evidence directory entries must be exactly ${expectedNames.join(", ")}`);
   }
 
   const artifacts = new Map();
   for (const name of DELTA_EVIDENCE_ARTIFACTS) {
-    const file = path.join(evidenceRoot, name);
-    if (existsSync(file) && statSync(file).isFile()) artifacts.set(name, readFileSync(file, "utf8"));
+    const bytes = evidenceFiles.get(name);
+    if (bytes !== undefined) artifacts.set(name, bytes.toString("utf8"));
   }
-  const completionPath = path.join(evidenceRoot, "COMPLETE.json");
-  const completionText = existsSync(completionPath) && statSync(completionPath).isFile()
-    ? readFileSync(completionPath, "utf8")
-    : undefined;
+  const completionText = evidenceFiles.get("COMPLETE.json")?.toString("utf8");
   let completion;
   try {
     completion = JSON.parse(completionText);
@@ -144,6 +125,7 @@ export function runDeltaVerify(config, options) {
     prepared.from.snapshot,
     prepared.to.snapshot,
     prepared.from.gitEvidence,
+    prepared.porter.gitEvidence,
     prepared.to.gitEvidence,
     prepared.report,
   );
@@ -186,10 +168,11 @@ export function verifyDeltaEvidence(input) {
   }
   return issues;
 }
-function buildDeltaArtifacts(fromSnapshot, toSnapshot, fromGitEvidence, toGitEvidence, report) {
+function buildDeltaArtifacts(fromSnapshot, toSnapshot, fromGitEvidence, porterGitEvidence, toGitEvidence, report) {
   return new Map([
     ["from-snapshot.json", `${JSON.stringify(portableSnapshot(fromSnapshot, "from"), null, 2)}\n`],
     ["from-tree.json", `${JSON.stringify(fromGitEvidence, null, 2)}\n`],
+    ["porter-tree.json", `${JSON.stringify(porterGitEvidence, null, 2)}\n`],
     ["to-snapshot.json", `${JSON.stringify(portableSnapshot(toSnapshot, "to"), null, 2)}\n`],
     ["to-tree.json", `${JSON.stringify(toGitEvidence, null, 2)}\n`],
     ["delta.json", `${JSON.stringify(report, null, 2)}\n`],
@@ -199,58 +182,49 @@ function buildDeltaArtifacts(fromSnapshot, toSnapshot, fromGitEvidence, toGitEvi
 
 function prepareDeltaComparison(config, input) {
   requireExactObject(input, ["fromRoot", "toRoot"], "delta source roots");
+  const porterBefore = prepareExactGitState(repoRoot, "Porter implementation before extraction");
   const from = prepareDeltaSide(config, input.fromRoot, "from");
   const to = prepareDeltaSide(config, input.toRoot, "to");
-  const report = buildExactDeltaReport(config, from.snapshot, to.snapshot, {
+  const porter = prepareExactGitState(repoRoot, "Porter implementation after extraction");
+  if (JSON.stringify(porterBefore.gitEvidence) !== JSON.stringify(porter.gitEvidence)) {
+    throw new Error("Porter implementation changed while delta evidence was extracted");
+  }
+  const report = buildDeltaReport(config, from.snapshot, to.snapshot, {
     fromGitEvidence: from.gitEvidence,
     fromProvenance: from.provenance,
+    porterGitEvidence: porter.gitEvidence,
     toGitEvidence: to.gitEvidence,
     toProvenance: to.provenance,
   });
-  return { from, to, report };
+  return { from, porter, to, report };
 }
 
 function prepareDeltaSide(config, root, label) {
   assertDirectory(root, `delta --${label} source root`);
-  const before = inspectGitCheckout(root);
-  if (before.issues.length > 0) {
-    throw new Error(`${label} delta source must be one clean Git checkout: ${before.issues.join("; ")}`);
-  }
-  if (before.objectFormat !== "sha1") {
-    throw new Error(`${label} delta source Git object format must be sha1, got ${JSON.stringify(before.objectFormat)}`);
-  }
+  const before = prepareExactGitState(root, `${label} delta source before extraction`);
   const sideConfig = { ...config, sourceRoot: root };
   const snapshot = runScan(sideConfig);
   const repeatSnapshot = runScan(sideConfig);
-  const after = inspectGitCheckout(root);
+  const after = prepareExactGitState(root, `${label} delta source after extraction`);
   const deterministic = canonicalSnapshot(snapshot) === canonicalSnapshot(repeatSnapshot);
   const integrityIssues = buildSnapshotSourceIntegrityStatus(root, snapshot).issues;
   const issues = [
-    ...after.issues,
-    ...(before.revision === after.revision ? [] : [`revision changed during extraction (${before.revision} -> ${after.revision})`]),
-    ...(before.objectFormat === after.objectFormat ? [] : [`object format changed during extraction (${before.objectFormat} -> ${after.objectFormat})`]),
-    ...(snapshot.gitRevision === before.revision ? [] : [`snapshot revision ${snapshot.gitRevision} does not match checkout ${before.revision}`]),
-    ...(repeatSnapshot.gitRevision === before.revision ? [] : [`repeat snapshot revision ${repeatSnapshot.gitRevision} does not match checkout ${before.revision}`]),
+    ...(JSON.stringify(before.gitEvidence) === JSON.stringify(after.gitEvidence) ? [] : ["Git commit/tree evidence changed during extraction"]),
+    ...(snapshot.gitRevision === before.checkout.revision ? [] : [`snapshot revision ${snapshot.gitRevision} does not match checkout ${before.checkout.revision}`]),
+    ...(repeatSnapshot.gitRevision === before.checkout.revision ? [] : [`repeat snapshot revision ${repeatSnapshot.gitRevision} does not match checkout ${before.checkout.revision}`]),
     ...(deterministic ? [] : ["extractor snapshots differ across repeated runs"]),
     ...integrityIssues.map((issue) => `${issue.path}: ${issue.reason}`),
   ];
   if (issues.length > 0) throw new Error(`${label} delta source failed exact extraction provenance: ${issues.join("; ")}`);
-  const treeEntries = gitTreeEntries(root, snapshot.gitRevision);
-  const gitEvidence = buildGitCommitTreeEvidence({
-    objectFormat: before.objectFormat,
-    revision: snapshot.gitRevision,
-    commitBody: readGitCommitObjectBody(root, snapshot.gitRevision),
-    entries: treeEntries,
-  });
   return {
     snapshot,
-    gitEvidence,
+    gitEvidence: after.gitEvidence,
     provenance: requireDeltaProvenance({
       schemaVersion: 1,
       revision: snapshot.gitRevision,
-      objectFormat: before.objectFormat,
-      dirtyBefore: before.dirty,
-      dirtyAfter: after.dirty,
+      objectFormat: before.checkout.objectFormat,
+      dirtyBefore: before.checkout.dirty,
+      dirtyAfter: after.checkout.dirty,
       deterministic,
       snapshotDigest: snapshotDigest(snapshot),
       repeatSnapshotDigest: snapshotDigest(repeatSnapshot),
@@ -258,33 +232,32 @@ function prepareDeltaSide(config, root, label) {
   };
 }
 
-function effectivePolicyContract(config, generatedMechanisms) {
-  const contract = {
-    schemaVersion: 1,
-    goModulePath: config.goModulePath,
-    policies: structuredClone(config.policies ?? []),
-    unitPolicies: structuredClone(config.unitPolicies ?? []),
-    generatedSourceMechanisms: generatedMechanisms,
-  };
-  return { ...contract, digest: hashText(JSON.stringify(contract)) };
+function prepareExactGitState(root, label) {
+  const before = inspectGitCheckout(root);
+  if (before.issues.length > 0) throw new Error(`${label} must be one clean Git checkout: ${before.issues.join("; ")}`);
+  if (before.objectFormat !== "sha1") throw new Error(`${label} Git object format must be sha1, got ${JSON.stringify(before.objectFormat)}`);
+  const gitEvidence = buildGitCommitTreeEvidence({
+    objectFormat: before.objectFormat,
+    revision: before.revision,
+    commitBody: readGitCommitObjectBody(root, before.revision),
+    entries: gitTreeEntries(root, before.revision),
+  });
+  const after = inspectGitCheckout(root);
+  if (after.issues.length > 0) throw new Error(`${label} changed while Git evidence was read: ${after.issues.join("; ")}`);
+  if (after.revision !== before.revision || after.objectFormat !== before.objectFormat) {
+    throw new Error(`${label} identity changed while Git evidence was read`);
+  }
+  return { checkout: after, gitEvidence };
 }
 
-function effectivePolicyEvidence(snapshot, resolver) {
-  const files = snapshot.files.map((file) => ({
-    path: file.path,
-    included: resolver.includes(file),
-    policy: resolver.file(file),
-  }));
-  const units = [];
-  for (const file of snapshot.files) {
-    for (const unit of file.units) {
-      if (!isSemanticPrimaryUnitKind(unit.kind)) continue;
-      units.push({ id: unit.id, path: file.path, policy: resolver.unit(unit, file) });
-    }
-  }
-  units.sort((left, right) => compareText(left.id, right.id));
-  const evidence = { files, units };
-  return { ...evidence, digest: hashText(JSON.stringify(evidence)) };
+function gitEvidenceIdentity(evidence) {
+  return {
+    schemaVersion: 1,
+    revision: evidence.revision,
+    objectFormat: evidence.objectFormat,
+    entryCount: evidence.entries.length,
+    evidenceDigest: hashText(JSON.stringify(evidence)),
+  };
 }
 
 function requireDeltaProvenance(value, label) {

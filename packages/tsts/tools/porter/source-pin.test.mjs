@@ -7,7 +7,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { GO_TOOLCHAIN_ROOT_HASH_CONTRACT, hashGoToolchainRoot } from "./go-toolchain-pin.mjs";
-import { buildSourcePinStatus, readSourcePinManifest, resolvePinnedGoToolchain } from "./source-pin.mjs";
+import { buildSourcePinStatus, inspectGitCheckout, readSourcePinManifest, resolvePinnedGoToolchain } from "./source-pin.mjs";
 import { gitlinkEntries } from "./source-pin/git.mjs";
 import { loadConfig, repoRoot } from "./porter.mjs";
 
@@ -78,6 +78,16 @@ test("Git index inspection fails closed outside a repository", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "tsts-source-pin-no-git-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   assert.throws(() => gitlinkEntries(root), /cannot read Git index/);
+});
+
+test("Git checkout inspection rejects hidden index state", (t) => {
+  const fixture = sourcePinFixture();
+  t.after(() => rmSync(fixture.root, { recursive: true, force: true }));
+  runGit(fixture.sourceRoot, ["update-index", "--assume-unchanged", "schema.go"]);
+  assert.ok(inspectGitCheckout(fixture.sourceRoot).issues.some((issue) => issue.includes("hidden worktree state")));
+  runGit(fixture.sourceRoot, ["update-index", "--no-assume-unchanged", "schema.go"]);
+  runGit(fixture.sourceRoot, ["update-index", "--skip-worktree", "schema.go"]);
+  assert.ok(inspectGitCheckout(fixture.sourceRoot).issues.some((issue) => issue.includes("hidden worktree state")));
 });
 
 test("source pin fails closed when required documentation is missing", (t) => {

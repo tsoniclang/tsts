@@ -3,7 +3,8 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 import { buildDeltaCompletion, buildPorterDelta, canonicalSnapshot, portableSnapshot, renderDeltaMarkdown, snapshotDigest, verifyDeltaCompletion } from "./delta.mjs";
-import { buildExactDeltaReport, verifyDeltaEvidence } from "./core/delta-command.mjs";
+import { verifyDeltaEvidence } from "./core/delta-command.mjs";
+import { buildDeltaSupplementalEvidence } from "./core/delta-report-evidence.mjs";
 import { buildGitCommitTreeEvidence, gitObjectHash, gitTreeHash, requireGitCommitTreeEvidence } from "./core/git-commit-tree-evidence.mjs";
 
 test("porter delta reports file, raw-unit, active-unit, and move changes", () => {
@@ -64,7 +65,7 @@ test("porter delta treats canonical declaration and constant drift as signature 
       isActivePortPolicy: () => true,
     }),
   );
-  assert.equal(report.schemaVersion, 5);
+  assert.equal(report.schemaVersion, 6);
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.sourceSignatureChangedCount, 0);
   assert.equal(report.activeUnits.semanticDeclarationChangedCount, 1);
@@ -111,6 +112,7 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
     ["delta.json", "{}\n"],
     ["from-snapshot.json", "{}\n"],
     ["from-tree.json", "[]\n"],
+    ["porter-tree.json", "[]\n"],
     ["summary.md", "summary\n"],
     ["to-snapshot.json", "{}\n"],
     ["to-tree.json", "[]\n"],
@@ -124,12 +126,6 @@ test("delta completion binds every evidence artifact and rejects tampering", () 
 });
 
 test("delta evidence rejects regenerated report tampering against exact checkout-derived evidence", () => {
-  const config = {
-    goModulePath: "m",
-    policies: [{ match: "internal/inactive/**", category: "test", reason: "Test-only declarations are inactive." }],
-    sourceRoot: "/source",
-    unitPolicies: [],
-  };
   const activeId = "m::internal/a/value.go::func::Value";
   const inactiveId = "m::internal/inactive/helper.go::func::Helper";
   const from = snapshot("0".repeat(40), [
@@ -142,22 +138,24 @@ test("delta evidence rejects regenerated report tampering against exact checkout
   ]);
   const fromGitEvidence = gitEvidence(from, "from");
   const toGitEvidence = gitEvidence(to, "to");
-  const fromProvenance = provenance(from);
-  const toProvenance = provenance(to);
-  const report = buildExactDeltaReport(config, from, to, {
-    fromGitEvidence,
-    fromProvenance,
-    toGitEvidence,
-    toProvenance,
-  });
+  const porterGitEvidence = gitEvidence(snapshot("0".repeat(40), []), "porter");
+  const report = {
+    ...buildPorterDelta(from, to, deltaOptions(from, to, {
+      policyForUnit: (_snapshot, _unit, candidate) => ({ category: candidate.path.includes("/inactive/") ? "test" : "literal-port", active: !candidate.path.includes("/inactive/") }),
+      isActivePortPolicy: (policy) => policy.active,
+    })),
+    provenance: { from: provenance(from), to: provenance(to) },
+    effectivePolicies: { contract: { digest: "policy" }, from: { units: [] }, to: { units: [] } },
+    generatedSourcePolicies: { mechanisms: [{ id: "tracked-generated-port" }], fromCoverage: {}, toCoverage: {} },
+    porterImplementation: { revision: porterGitEvidence.revision },
+  };
   assert.equal(report.rawUnits.changedCount, 2);
   assert.equal(report.activeUnits.changedCount, 1);
   assert.equal(report.activeUnits.signatureChangedCount, 1);
   assert.equal(report.provenance.from.deterministic, true);
-  assert.equal(report.effectivePolicies.from.units.length, 2);
   assert.equal(report.generatedSourcePolicies.mechanisms.length > 0, true);
 
-  const artifacts = deltaArtifacts(from, to, fromGitEvidence, toGitEvidence, report);
+  const artifacts = deltaArtifacts(from, to, fromGitEvidence, porterGitEvidence, toGitEvidence, report);
   const completion = buildDeltaCompletion(artifacts, report);
   const verificationInput = {
     artifacts,
@@ -178,7 +176,7 @@ test("delta evidence rejects regenerated report tampering against exact checkout
   for (const [label, mutate] of mutations) {
     const tampered = structuredClone(report);
     mutate(tampered);
-    const tamperedArtifacts = deltaArtifacts(from, to, fromGitEvidence, toGitEvidence, tampered);
+    const tamperedArtifacts = deltaArtifacts(from, to, fromGitEvidence, porterGitEvidence, toGitEvidence, tampered);
     const tamperedCompletion = buildDeltaCompletion(tamperedArtifacts, tampered);
     assert.deepEqual(verifyDeltaCompletion(tamperedArtifacts, tamperedCompletion), [], `${label} has a regenerated valid envelope`);
     assert.equal(tamperedArtifacts.get("summary.md"), renderDeltaMarkdown(tampered), `${label} has regenerated Markdown`);
@@ -192,13 +190,15 @@ test("delta evidence rejects regenerated report tampering against exact checkout
 
   const forgedSnapshot = structuredClone(from);
   forgedSnapshot.files[0].units[0].sigHash = "forged-signature";
-  const forgedReport = buildExactDeltaReport(config, forgedSnapshot, to, {
-    fromGitEvidence,
-    fromProvenance: provenance(forgedSnapshot),
-    toGitEvidence,
-    toProvenance,
-  });
-  const forgedArtifacts = deltaArtifacts(forgedSnapshot, to, fromGitEvidence, toGitEvidence, forgedReport);
+  const forgedReport = {
+    ...report,
+    ...buildPorterDelta(forgedSnapshot, to, deltaOptions(forgedSnapshot, to, {
+      policyForUnit: () => ({ category: "literal-port", active: true }),
+      isActivePortPolicy: () => true,
+    })),
+    provenance: { from: provenance(forgedSnapshot), to: provenance(to) },
+  };
+  const forgedArtifacts = deltaArtifacts(forgedSnapshot, to, fromGitEvidence, porterGitEvidence, toGitEvidence, forgedReport);
   const forgedCompletion = buildDeltaCompletion(forgedArtifacts, forgedReport);
   const forgedIssues = verifyDeltaEvidence({
     ...verificationInput,
@@ -234,42 +234,56 @@ test("Git evidence binds every tracked path to the claimed commit object", () =>
   assert.throws(() => requireGitCommitTreeEvidence(omittedNonGo, "fixture"), /root tree/);
 });
 
-test("effective policy and complete extractor-environment drift are visible", () => {
+test("policy, complete extractor-environment, and global semantic drift are visible", () => {
   const id = "m::internal/a/value.go::func::Value";
   const from = snapshot("0".repeat(40), [file("internal/a/value.go", "same", [unit(id, "func", "Value", "same")])]);
   const to = structuredClone(from);
-  const fromGitEvidence = gitEvidence(from, "policy-from");
-  const toGitEvidence = gitEvidence(to, "policy-to");
-  const baseConfig = { goModulePath: "m", policies: [], sourceRoot: "/source", unitPolicies: [] };
-  const changedConfig = {
-    ...baseConfig,
-    unitPolicies: [{ id, category: "host-native", reason: "The exact declaration is supplied by a reviewed host-native boundary." }],
-  };
-  const exactInput = {
-    fromGitEvidence,
-    fromProvenance: provenance(from),
-    toGitEvidence,
-    toProvenance: provenance(to),
-  };
-  const baseline = buildExactDeltaReport(baseConfig, from, to, exactInput);
-  const changed = buildExactDeltaReport(changedConfig, from, to, exactInput);
-  assert.notEqual(baseline.effectivePolicies.contract.digest, changed.effectivePolicies.contract.digest);
-  assert.equal(baseline.effectivePolicies.from.units[0].policy.category, "literal-port");
-  assert.equal(changed.effectivePolicies.from.units[0].policy.category, "host-native");
-
+  const policyChanged = buildPorterDelta(from, to, deltaOptions(from, to, {
+    policyForUnit: (candidate) => ({ category: candidate === from ? "literal-port" : "host-native", active: true }),
+    isActivePortPolicy: () => true,
+  }));
+  assert.equal(policyChanged.activeUnits.changedCount, 1);
+  assert.notEqual(policyChanged.activeUnits.changed[0].policy.category, policyChanged.activeUnits.changed[0].previous.policy.category);
   to.semantic.toolchainHash = "f".repeat(64);
-  const environmentChanged = buildExactDeltaReport(baseConfig, from, to, {
-    ...exactInput,
-    toProvenance: provenance(to),
-  });
+  to.semantic.moduleGraph = [{ path: "example.test/dependency", version: "v1.2.3" }];
+  const environmentChanged = buildPorterDelta(from, to, deltaOptions(from, to, {
+    policyForUnit: () => ({ category: "literal-port", active: true }),
+    isActivePortPolicy: () => true,
+  }));
   assert.equal(environmentChanged.extractionEnvironment.matches, false);
+  assert.ok(environmentChanged.semanticState.changed.some((entry) => entry.id === "moduleGraph"));
+  assert.ok(environmentChanged.semanticState.changed.some((entry) => entry.id === "toolchainHash"));
 });
 
-function deltaArtifacts(from, to, fromGitEvidence, toGitEvidence, report) {
+test("delta supplemental evidence binds generated-source coverage and policy contracts", () => {
+  const generated = file("internal/checker/stringer_generated.go", "generated", []);
+  generated.generated = true;
+  const from = snapshot("a".repeat(40), [generated]);
+  const to = structuredClone(from);
+  const config = { goModulePath: "m", policies: [], unitPolicies: [] };
+  const evidence = buildDeltaSupplementalEvidence(config, from, to);
+  const tracked = evidence.generatedSourcePolicies.fromCoverage.mechanisms.find((entry) => entry.id === "tracked-generated-port");
+  assert.deepEqual(tracked.files.map((entry) => entry.path), ["internal/checker/stringer_generated.go"]);
+  assert.deepEqual(evidence.generatedSourcePolicies.from.issues, []);
+
+  const unclassified = structuredClone(from);
+  unclassified.files[0].path = "internal/checker/unclassified_generated.go";
+  const rejected = buildDeltaSupplementalEvidence(config, unclassified, to);
+  assert.ok(rejected.generatedSourcePolicies.from.issues.some((issue) => issue.reason.includes("no registered mechanism")));
+
+  const policyChanged = buildDeltaSupplementalEvidence({
+    ...config,
+    policies: [{ match: "internal/checker/**", category: "test", reason: "Fixture policy change." }],
+  }, from, to);
+  assert.notEqual(evidence.effectivePolicies.contract.digest, policyChanged.effectivePolicies.contract.digest);
+});
+
+function deltaArtifacts(from, to, fromGitEvidence, porterGitEvidence, toGitEvidence, report) {
   return new Map([
     ["delta.json", `${JSON.stringify(report, null, 2)}\n`],
     ["from-snapshot.json", `${JSON.stringify(portableSnapshot(from, "from"), null, 2)}\n`],
     ["from-tree.json", `${JSON.stringify(fromGitEvidence, null, 2)}\n`],
+    ["porter-tree.json", `${JSON.stringify(porterGitEvidence, null, 2)}\n`],
     ["summary.md", renderDeltaMarkdown(report)],
     ["to-snapshot.json", `${JSON.stringify(portableSnapshot(to, "to"), null, 2)}\n`],
     ["to-tree.json", `${JSON.stringify(toGitEvidence, null, 2)}\n`],
@@ -321,6 +335,7 @@ function provenance(value) {
 }
 
 function snapshot(gitRevision, files) {
+  const requiredFiles = files.filter((candidate) => candidate.units.length > 0).map((candidate) => candidate.path).sort();
   return {
     schemaVersion: 12,
     sourceRoot: "/source",
@@ -337,12 +352,13 @@ function snapshot(gitRevision, files) {
       gorootHashContract: "tsts-porter-goroot-tree-v1",
       releaseTags: ["go1.26"],
       modulePath: "m",
-      requiredFiles: files.map((file) => file.path).sort(),
+      requiredFiles,
       excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],
-      profiles: [profile("linux", "amd64", "GOAMD64=v1")],
+      moduleGraph: [],
+      profiles: [profile("linux", "amd64", "GOAMD64=v1", requiredFiles)],
     },
     summary: { goFileCount: files.length, unitCount: files.reduce((count, candidate) => count + candidate.units.length, 0) },
     files,
@@ -381,7 +397,7 @@ function semanticConstant(exact) {
   }];
 }
 
-function profile(goos, goarch, architecture) {
+function profile(goos, goarch, architecture, coveredFiles = []) {
   return {
     goos,
     goarch,
@@ -392,7 +408,7 @@ function profile(goos, goarch, architecture) {
     buildTags: [],
     buildFlags: ["-mod=readonly"],
     toolTags: [],
-    coveredFiles: [],
+    coveredFiles,
     environment: ["GOROOT=/go", "PATH=/go/bin"],
     packageIds: ["m/internal/a"],
   };

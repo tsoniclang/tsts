@@ -54,8 +54,11 @@ test("Porter command option schemas reject malformed arguments", () => {
   assert.throws(() => parseArgs("skeleton-check", ["--out", "elsewhere"]), /unknown option '--out'/);
   assert.throws(() => parseArgs("large-files", ["--check"]), /unknown option '--check'/);
   assert.throws(() => parseArgs("delta", []), /required option '--from' is missing/);
+  assert.throws(() => parseArgs("delta", ["--from", "old", "--to", "new"]), /required option '--out' is missing/);
   assert.throws(() => parseArgs("delta", ["--from", "old", "--out", "evidence"]), /required option '--to' is missing/);
+  assert.throws(() => parseArgs("delta-verify", ["--from", "old", "--to", "new"]), /required option '--dir' is missing/);
   assert.throws(() => parseArgs("delta-verify", ["--dir", "evidence"]), /required option '--from' is missing/);
+  assert.throws(() => parseArgs("delta-verify", ["--dir", "evidence", "--from", "old"]), /required option '--to' is missing/);
 });
 
 test("Porter command option schemas reject ignored combinations", () => {

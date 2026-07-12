@@ -39,7 +39,9 @@ nondeterministic. The resulting immutable evidence records:
 
 - complete file additions, removals, and byte changes, rooted in the exact Git
   commit objects and reconstructed root trees;
+- the exact clean Porter implementation commit and tree used for extraction;
 - declaration additions, removals, moves, and signature changes;
+- every changed top-level semantic snapshot inventory;
 - canonical semantic declaration changes by build profile;
 - exact constant changes;
 - the full normalized extractor/toolchain profile;
@@ -56,6 +58,8 @@ equivalent and never rewrites or re-stamps authored TypeScript.
 reruns each extractor twice and recomputes every artifact; an internally
 consistent replacement snapshot, tree list, policy summary, or completion
 envelope is rejected unless it is also the exact result of those checkouts.
+Both commands reject hidden Git index state. Delta output must be outside the
+source checkouts so publishing evidence cannot invalidate its own provenance.
 
 ## TypeScript Reconciliation
 

@@ -7,6 +7,7 @@ import {
 import { resolvePinnedGoToolchain, validateExtractor } from "./source-pin/extractor-validation.mjs";
 import {
   buildSnapshotSourceIntegrityStatus,
+  buildSnapshotTreeIntegrityStatus,
   gitlinkEntries,
   gitTreeEntries,
   inspectGitCheckout,
@@ -24,6 +25,7 @@ import { relativePath, requireRelativePath, resolveInside } from "./source-pin/p
 
 export {
   buildSnapshotSourceIntegrityStatus,
+  buildSnapshotTreeIntegrityStatus,
   gitTreeEntries,
   inspectGitCheckout,
   readGitCommitObjectBody,

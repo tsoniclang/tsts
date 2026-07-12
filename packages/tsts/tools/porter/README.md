@@ -57,7 +57,7 @@ Indexed resolution includes identifier-bound module/namespace `const` declaratio
 
 ## Commands
 
-- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both explicitly named clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and effective policy changes. The evidence carries SHA-1 commit objects whose root trees are mechanically reconstructed from every tracked entry, complete generated-source mechanism/coverage evidence, and the full normalized extractor environment. Body-only edits remain visible in tracked-tree and Go-file evidence but never become declaration-unit drift. Evidence directories are immutable and are never overwritten; a completion marker is published last.
+- `node packages/tsts/tools/porter/porter.mjs delta --from <old-tsgo-root> --to <new-tsgo-root> --out <new-evidence-dir>` scans both explicitly named clean Git checkouts twice, fails on nondeterminism, and atomically writes complete tracked-tree/Go-file/raw-unit/active-unit/semantic-state deltas without changing either checkout. Unit deltas distinguish source-signature text, canonical profile-aware `go/types` declaration semantics, exact `go/constant` values, and effective policy changes. The evidence carries SHA-1 commit objects whose root trees are mechanically reconstructed from every tracked entry for both source revisions and the clean Porter implementation revision, complete generated-source mechanism/coverage evidence, and the full normalized extractor environment. Git index flags that can hide worktree state are rejected. Source paths must be canonical UTF-8. Body-only edits remain visible in tracked-tree and Go-file evidence but never become declaration-unit drift. `--out` must have one existing real parent outside both source checkouts. Evidence directories are immutable and are never overwritten; a completion marker is published last.
 - `node packages/tsts/tools/porter/porter.mjs delta-verify --dir <evidence-dir> --from <old-tsgo-root> --to <new-tsgo-root>` independently rechecks both clean source trees, reruns each extractor twice, reconstructs both Git commit trees, recomputes every artifact, and then validates the exact inventory, byte lengths, SHA-256 envelope, policy/mechanism evidence, snapshots, report, and Markdown. Submitted snapshots and tree listings are never treated as trusted source evidence.
 - `npm run porter:scan` extracts a full TS-Go snapshot into `.temp/porter/tsgo-snapshot.json`.
 - `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`. It does not execute declaration subaudits, so every signature, facade, external-package, storage-policy, relation, ownership, unmatched-TypeScript, and JSON-tag subaudit is recorded separately as `not-run`; absent evidence is never rendered as zero findings.
@@ -333,13 +333,17 @@ The intended full-coverage bootstrap invariant is stronger: every active Go unit
 Before changing the pin, compare clean old and candidate checkouts:
 
 ```sh
-npm run porter:delta -- \
+node packages/tsts/tools/porter/porter.mjs delta \
   --from /path/to/old/typescript-go \
   --to /path/to/new/typescript-go \
   --out .temp/porter/deltas/<unique-review-id>
+node packages/tsts/tools/porter/porter.mjs delta-verify \
+  --dir .temp/porter/deltas/<unique-review-id> \
+  --from /path/to/old/typescript-go \
+  --to /path/to/new/typescript-go
 ```
 
-Review `summary.md` and `delta.json`. The report distinguishes complete-file changes, all Go declaration changes, and only the units active under the porter policy. Move candidates are advisory only; porter never guesses that two declarations are equivalent or rewrites metadata automatically.
+Review `summary.md` and `delta.json`. The report distinguishes complete-file changes, every top-level semantic snapshot inventory change (including dependencies, method-set signatures, external package surfaces, module graph, and profile coverage), all Go declaration changes, and only the units active under the porter policy. Move candidates are advisory only; porter never guesses that two declarations are equivalent or rewrites metadata automatically.
 
 After deliberately updating the submodules, schema copies, hashes, and `source-pin.json`, run:
 
