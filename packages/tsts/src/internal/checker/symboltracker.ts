@@ -9,7 +9,7 @@ import type { SymbolTracker } from "../nodebuilder/types.js";
 import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534","bodyHash":"27e1a5a4dd922451780ff5dccd97da42572e29cd8859ee5e60ca633255fc28f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534"}
  *
  * Go source:
  * SymbolTrackerImpl struct {
@@ -25,7 +25,7 @@ export interface SymbolTrackerImpl {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl","kind":"func","status":"implemented","sigHash":"aa81ec4495e050dfe9722a9c6f214546af9853725abde4bda16689746419bf26","bodyHash":"e8d00d40de29f34d80778f592a6d281380031b1cc81719624c605ebe420626c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl","kind":"func","status":"implemented","sigHash":"aa81ec4495e050dfe9722a9c6f214546af9853725abde4bda16689746419bf26"}
  *
  * Go source:
  * func NewSymbolTrackerImpl(context *NodeBuilderContext, tracker nodebuilder.SymbolTracker) *SymbolTrackerImpl {
@@ -81,7 +81,7 @@ export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTracker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"implemented","sigHash":"ff8227f8ec41ce48287f007f9f4b7ae28081554125ec42da7061b7337d30765f","bodyHash":"fc500489bfb106edc747ff6b322e4b66f8346b5931bd86b5d28fd5d16e2dd0f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"implemented","sigHash":"ff8227f8ec41ce48287f007f9f4b7ae28081554125ec42da7061b7337d30765f"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) TrackSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) bool {
@@ -114,7 +114,7 @@ export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInaccessibleThisError","kind":"method","status":"implemented","sigHash":"e965d5f3034b0b84df2fdd0e8a47f9d08c7f393b0ba6d3645a8bb8b1f79cba55","bodyHash":"1bcccf8bbfdbcfee615ba838ede8e946e7e6df55b94805c11cffe9262182bb08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInaccessibleThisError","kind":"method","status":"implemented","sigHash":"e965d5f3034b0b84df2fdd0e8a47f9d08c7f393b0ba6d3645a8bb8b1f79cba55"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportInaccessibleThisError() {
@@ -134,7 +134,7 @@ export function SymbolTrackerImpl_ReportInaccessibleThisError(receiver: GoPtr<Sy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportPrivateInBaseOfClassExpression","kind":"method","status":"implemented","sigHash":"bbffddfff61a4f7f7d67d2ed06822115d0ef34425a3eb3053b7a9705b7c9fbf1","bodyHash":"260338d3bb0c90538c35201fe057830dfb858d9f8b48cfcb00a6af8ec5da4bcd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportPrivateInBaseOfClassExpression","kind":"method","status":"implemented","sigHash":"bbffddfff61a4f7f7d67d2ed06822115d0ef34425a3eb3053b7a9705b7c9fbf1"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportPrivateInBaseOfClassExpression(propertyName string) {
@@ -154,7 +154,7 @@ export function SymbolTrackerImpl_ReportPrivateInBaseOfClassExpression(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInaccessibleUniqueSymbolError","kind":"method","status":"implemented","sigHash":"aa7534305ff2d0121552733f43bcf0fa090195342d46fc4c1090c4b94f01a912","bodyHash":"5bbda988bec16f771c3b8fa0874427fcbaa1d808b175a5ba0d7d23caaaaffcb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInaccessibleUniqueSymbolError","kind":"method","status":"implemented","sigHash":"aa7534305ff2d0121552733f43bcf0fa090195342d46fc4c1090c4b94f01a912"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportInaccessibleUniqueSymbolError() {
@@ -174,7 +174,7 @@ export function SymbolTrackerImpl_ReportInaccessibleUniqueSymbolError(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportCyclicStructureError","kind":"method","status":"implemented","sigHash":"6717336de444c995290150831891eb433479e60c8595401ed9cae80959ae5f98","bodyHash":"0b2526428e6ab79a8f918dc011235a483edc7e5187283bb8ec3afaa477af98dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportCyclicStructureError","kind":"method","status":"implemented","sigHash":"6717336de444c995290150831891eb433479e60c8595401ed9cae80959ae5f98"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportCyclicStructureError() {
@@ -194,7 +194,7 @@ export function SymbolTrackerImpl_ReportCyclicStructureError(receiver: GoPtr<Sym
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportLikelyUnsafeImportRequiredError","kind":"method","status":"implemented","sigHash":"5f558c6604ca55d543762f496cf3839ace68764fbe8e96338ed82f3b7bb554d9","bodyHash":"4f986884d28543c44eedd39c999ccb2ab3d3a130dd894dc0d1ed3ada2c4c2438"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportLikelyUnsafeImportRequiredError","kind":"method","status":"implemented","sigHash":"5f558c6604ca55d543762f496cf3839ace68764fbe8e96338ed82f3b7bb554d9"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportLikelyUnsafeImportRequiredError(specifier string, symbolName string) {
@@ -214,7 +214,7 @@ export function SymbolTrackerImpl_ReportLikelyUnsafeImportRequiredError(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportTruncationError","kind":"method","status":"implemented","sigHash":"69b9209ef021da33c3421e12824a76f6b20ab8b28b918429b64b71ecf0ea54ec","bodyHash":"ded8925c10879a7f3a92babefb65ae6418d4313cdae61100ccd2e23e928c3d51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportTruncationError","kind":"method","status":"implemented","sigHash":"69b9209ef021da33c3421e12824a76f6b20ab8b28b918429b64b71ecf0ea54ec"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportTruncationError() {
@@ -234,7 +234,7 @@ export function SymbolTrackerImpl_ReportTruncationError(receiver: GoPtr<SymbolTr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportNonlocalAugmentation","kind":"method","status":"implemented","sigHash":"9de78799a9637a4d223324b88f8d4693ed532045e708f87f8534d824504ee02f","bodyHash":"52a7a21aadfcbcd5677601b7d6e58f31de7eb3a8c92ef1171184880eb24684f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportNonlocalAugmentation","kind":"method","status":"implemented","sigHash":"9de78799a9637a4d223324b88f8d4693ed532045e708f87f8534d824504ee02f"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportNonlocalAugmentation(containingFile *ast.SourceFile, parentSymbol *ast.Symbol, augmentingSymbol *ast.Symbol) {
@@ -254,7 +254,7 @@ export function SymbolTrackerImpl_ReportNonlocalAugmentation(receiver: GoPtr<Sym
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportNonSerializableProperty","kind":"method","status":"implemented","sigHash":"fcf3c53eb788992c359fd7841a8a3c23b171d19fb37bd891598f1a300f991061","bodyHash":"7e4f673a4f0bb9c921844fea853e66559c07f4ed7f5bf00eb7f1f4dd46fbe8b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportNonSerializableProperty","kind":"method","status":"implemented","sigHash":"fcf3c53eb788992c359fd7841a8a3c23b171d19fb37bd891598f1a300f991061"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportNonSerializableProperty(propertyName string) {
@@ -274,7 +274,7 @@ export function SymbolTrackerImpl_ReportNonSerializableProperty(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.onDiagnosticReported","kind":"method","status":"implemented","sigHash":"364337cf4c4bd93b2aba150f26ae76cbadf150c3b409c12f2d3f53710b383972","bodyHash":"c95d3c036dcdf5470e50770ac6760deabd1308479c8968289e9807ac932eb53a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.onDiagnosticReported","kind":"method","status":"implemented","sigHash":"364337cf4c4bd93b2aba150f26ae76cbadf150c3b409c12f2d3f53710b383972"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) onDiagnosticReported() {
@@ -286,7 +286,7 @@ export function SymbolTrackerImpl_onDiagnosticReported(receiver: GoPtr<SymbolTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInferenceFallback","kind":"method","status":"implemented","sigHash":"48379893bf111bcab646d2f2ef21e1eda81589ae7961c20dbff418aedb31de41","bodyHash":"1546988393f3ab97b12671c2c2f2f8f75388313d294b2a3bbdad384ed3f3fc58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.ReportInferenceFallback","kind":"method","status":"implemented","sigHash":"48379893bf111bcab646d2f2ef21e1eda81589ae7961c20dbff418aedb31de41"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) ReportInferenceFallback(node *ast.Node) {
@@ -304,7 +304,7 @@ export function SymbolTrackerImpl_ReportInferenceFallback(receiver: GoPtr<Symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.PushErrorFallbackNode","kind":"method","status":"implemented","sigHash":"ba4fe003bcee4460e2f4216d9e9279b2b52a57ddca098fb64b3c699c4d94e007","bodyHash":"9ab586ff5546cc143ffb3a8be83af3c3985b46f4e02d29ebab5252e8a6172eb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.PushErrorFallbackNode","kind":"method","status":"implemented","sigHash":"ba4fe003bcee4460e2f4216d9e9279b2b52a57ddca098fb64b3c699c4d94e007"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) PushErrorFallbackNode(node *ast.Node) {
@@ -322,7 +322,7 @@ export function SymbolTrackerImpl_PushErrorFallbackNode(receiver: GoPtr<SymbolTr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.PopErrorFallbackNode","kind":"method","status":"implemented","sigHash":"f3ecda3ecdf05fbfae1a3dc25093494c108ac8167117902efb2dbcfc3918e2aa","bodyHash":"60b5cc686a6a30f46321bbb45f6c87805417a6c0b4950d4d5094ac6eb8c439bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.PopErrorFallbackNode","kind":"method","status":"implemented","sigHash":"f3ecda3ecdf05fbfae1a3dc25093494c108ac8167117902efb2dbcfc3918e2aa"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) PopErrorFallbackNode() {

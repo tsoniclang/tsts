@@ -37,7 +37,7 @@ import { IsLocalName } from "../utilities.js";
 import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693","bodyHash":"69ffa5434f6b92d92a7524fed146677b8665dec515f809f05197806eed50f016"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfo","kind":"type","status":"implemented","sigHash":"76ea936086f877ffb778dc08a937acc672aba64f64355b8fe64c36697d57f693"}
  *
  * Go source:
  * externalModuleInfo struct {
@@ -61,7 +61,7 @@ export interface externalModuleInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfoCollector","kind":"type","status":"implemented","sigHash":"c9a137d8bfba0f0c13f50050e30f778d45423b236f366907692de71560df2084","bodyHash":"618e94804bec52bfe0a95b1632cd33640be8b593ea2269f0e03989638d118355"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::type::externalModuleInfoCollector","kind":"type","status":"implemented","sigHash":"c9a137d8bfba0f0c13f50050e30f778d45423b236f366907692de71560df2084"}
  *
  * Go source:
  * externalModuleInfoCollector struct {
@@ -85,7 +85,7 @@ export interface externalModuleInfoCollector {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::collectExternalModuleInfo","kind":"func","status":"implemented","sigHash":"412bb115af275d25cda73a8696f2015c44619dfb967fbdd38fda8e2df432d9cd","bodyHash":"067453bc305d307046997405c10046b7032b363ae89fa6e6ecbd42cde5a15e31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::collectExternalModuleInfo","kind":"func","status":"implemented","sigHash":"412bb115af275d25cda73a8696f2015c44619dfb967fbdd38fda8e2df432d9cd"}
  *
  * Go source:
  * func collectExternalModuleInfo(sourceFile *ast.SourceFile, compilerOptions *core.CompilerOptions, emitContext *printer.EmitContext, resolver binder.ReferenceResolver) *externalModuleInfo {
@@ -121,7 +121,7 @@ export function collectExternalModuleInfo(sourceFile: GoPtr<SourceFile>, compile
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.collect","kind":"method","status":"implemented","sigHash":"f4e81911301c6b0daa2721132fd54ff9fa930dc097ffdb9c4f216ecf70b7a809","bodyHash":"a10ae382fc1750885ad8b748c47748fb24d7add150f36e3d6b8e076fd2bef92f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.collect","kind":"method","status":"implemented","sigHash":"f4e81911301c6b0daa2721132fd54ff9fa930dc097ffdb9c4f216ecf70b7a809"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) collect() *externalModuleInfo {
@@ -376,7 +376,7 @@ export function externalModuleInfoCollector_collect(receiver: GoPtr<externalModu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addUniqueExport","kind":"method","status":"implemented","sigHash":"55e8754e5b4f6cfadea5625329465f08b5a04d800ea685968a48eda4e6b29bc2","bodyHash":"3dd183869a5c53f887ff3f64264069ec3b12192637a6e832915c029168a528a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addUniqueExport","kind":"method","status":"implemented","sigHash":"55e8754e5b4f6cfadea5625329465f08b5a04d800ea685968a48eda4e6b29bc2"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addUniqueExport(name string) bool {
@@ -396,7 +396,7 @@ export function externalModuleInfoCollector_addUniqueExport(receiver: GoPtr<exte
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedBinding","kind":"method","status":"implemented","sigHash":"400fefe950c86ac54e2390013a22d89ea0e98c15d0cf1182ebf67d595f6a0568","bodyHash":"85063aa4b18f1a5f16265f531ce6e635f43d999f2e0eeffa6438fec0d828002f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedBinding","kind":"method","status":"implemented","sigHash":"400fefe950c86ac54e2390013a22d89ea0e98c15d0cf1182ebf67d595f6a0568"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addExportedBinding(decl *ast.Declaration, name *ast.ModuleExportName) {
@@ -408,7 +408,7 @@ export function externalModuleInfoCollector_addExportedBinding(receiver: GoPtr<e
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExternalImport","kind":"method","status":"implemented","sigHash":"543d9915f0dcb8323b5f1e06a8ce384675a17e0e467df06b44c876a84810b368","bodyHash":"4c2300bc384be9bb00680f842ce52eb811666ab5128a8e35d9a21889546e25b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExternalImport","kind":"method","status":"implemented","sigHash":"543d9915f0dcb8323b5f1e06a8ce384675a17e0e467df06b44c876a84810b368"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addExternalImport(node *ast.Node /*ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration* /) {
@@ -420,7 +420,7 @@ export function externalModuleInfoCollector_addExternalImport(receiver: GoPtr<ex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedName","kind":"method","status":"implemented","sigHash":"44929fe0897f6b70f034728853c9d2033c9c2289a61ecd949b0ef76d249088a6","bodyHash":"ad9ddfd67ea52997998a19e23bd2b7022939646d48b43e08a62d62919aa31c51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedName","kind":"method","status":"implemented","sigHash":"44929fe0897f6b70f034728853c9d2033c9c2289a61ecd949b0ef76d249088a6"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addExportedName(name *ast.ModuleExportName) {
@@ -432,7 +432,7 @@ export function externalModuleInfoCollector_addExportedName(receiver: GoPtr<exte
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedNamesForExportDeclaration","kind":"method","status":"implemented","sigHash":"79c5bd2917551805f39490e76b33b237bda88dbfaf6ed45d643d0739a05d398a","bodyHash":"0d2cb545e77762dd23c5c597c89e6d33b9b506de7a5a455f661df1273808d1a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedNamesForExportDeclaration","kind":"method","status":"implemented","sigHash":"79c5bd2917551805f39490e76b33b237bda88dbfaf6ed45d643d0739a05d398a"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addExportedNamesForExportDeclaration(node *ast.ExportDeclaration) {
@@ -497,7 +497,7 @@ export function externalModuleInfoCollector_addExportedNamesForExportDeclaration
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedFunctionDeclaration","kind":"method","status":"implemented","sigHash":"8e8c5c69cd47212161862af26f0b44b6ee7057b7def65edbf46738703690b77f","bodyHash":"ba8fa6add2fd24299f0bbfeda5ba8a03974258b1a17b13b7ddfc6b4dec44b1a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.addExportedFunctionDeclaration","kind":"method","status":"implemented","sigHash":"8e8c5c69cd47212161862af26f0b44b6ee7057b7def65edbf46738703690b77f"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) addExportedFunctionDeclaration(node *ast.FunctionDeclaration, name *ast.ModuleExportName, isDefault bool) {
@@ -553,7 +553,7 @@ export function externalModuleInfoCollector_addExportedFunctionDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.collectExportedVariableInfo","kind":"method","status":"implemented","sigHash":"cc752e20a6c44e80f76f6d28a5239dbf5e9fbefc1273df7cc4b579099745388c","bodyHash":"092ba5761d934e923f9adb53ae69a643cb799503a7155c913745c306783e4c77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::method::externalModuleInfoCollector.collectExportedVariableInfo","kind":"method","status":"implemented","sigHash":"cc752e20a6c44e80f76f6d28a5239dbf5e9fbefc1273df7cc4b579099745388c"}
  *
  * Go source:
  * func (c *externalModuleInfoCollector) collectExportedVariableInfo(decl *ast.Node /*VariableDeclaration | BindingElement* /) {
@@ -599,7 +599,7 @@ export function externalModuleInfoCollector_collectExportedVariableInfo(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"42b8d30f6cec123c960fc65215bb7957d60e1e2100a713e6f60422dd65ee175e","bodyHash":"3a84e0e3d22c1db0bc8672e8e58062771a665415a82256bcf69ae99de8d0f1f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::constGroup::externalHelpersModuleNameText","kind":"constGroup","status":"implemented","sigHash":"42b8d30f6cec123c960fc65215bb7957d60e1e2100a713e6f60422dd65ee175e"}
  *
  * Go source:
  * const externalHelpersModuleNameText = "tslib"
@@ -607,7 +607,7 @@ export function externalModuleInfoCollector_collectExportedVariableInfo(receiver
 export const externalHelpersModuleNameText: string = "tslib";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::createExternalHelpersImportDeclarationIfNeeded","kind":"func","status":"implemented","sigHash":"ee1c1d214f9e022612ed38acf0047ea515832a2e6a0b4c24a42474d4a6abe601","bodyHash":"222dbfde9ca376672ded42b89c595570dfc517e0d9958b88395aa31422c264d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::createExternalHelpersImportDeclarationIfNeeded","kind":"func","status":"implemented","sigHash":"ee1c1d214f9e022612ed38acf0047ea515832a2e6a0b4c24a42474d4a6abe601"}
  *
  * Go source:
  * func createExternalHelpersImportDeclarationIfNeeded(emitContext *printer.EmitContext, sourceFile *ast.SourceFile, compilerOptions *core.CompilerOptions, fileModuleKind core.ModuleKind, hasExportStarsToExportValues bool, hasImportStar bool, hasImportDefault bool) *ast.Node /*ImportDeclaration | ImportEqualsDeclaration* / {
@@ -731,7 +731,7 @@ export function createExternalHelpersImportDeclarationIfNeeded(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportedHelpers","kind":"func","status":"implemented","sigHash":"3473b45f27e47d7fd866d41edfc966096030c3d51af0f954237bd87eadb71d75","bodyHash":"ae061b50898d51a343902807985fdbecf08420b67421b6fe710d9f6bfb4c8edd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportedHelpers","kind":"func","status":"implemented","sigHash":"3473b45f27e47d7fd866d41edfc966096030c3d51af0f954237bd87eadb71d75"}
  *
  * Go source:
  * func getImportedHelpers(emitContext *printer.EmitContext, sourceFile *ast.SourceFile) []*printer.EmitHelper {
@@ -755,7 +755,7 @@ export function getImportedHelpers(emitContext: GoPtr<EmitContext>, sourceFile: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getOrCreateExternalHelpersModuleNameIfNeeded","kind":"func","status":"implemented","sigHash":"fd865c6562e4302dd96864b3c7b867860406cb1d5de983f8d0ec0362d404ef88","bodyHash":"b984ddad3391b3cebcd0ac508253944381cf48776c088bcb31501583ac8317a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getOrCreateExternalHelpersModuleNameIfNeeded","kind":"func","status":"implemented","sigHash":"fd865c6562e4302dd96864b3c7b867860406cb1d5de983f8d0ec0362d404ef88"}
  *
  * Go source:
  * func getOrCreateExternalHelpersModuleNameIfNeeded(emitContext *printer.EmitContext, node *ast.SourceFile, compilerOptions *core.CompilerOptions, helpers []*printer.EmitHelper, hasExportStarsToExportValues bool, hasImportStarOrImportDefault bool, fileModuleKind core.ModuleKind) *ast.IdentifierNode {
@@ -795,7 +795,7 @@ export function getOrCreateExternalHelpersModuleNameIfNeeded(emitContext: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::isNamedDefaultReference","kind":"func","status":"implemented","sigHash":"ca448cfc2cb22cd75c5fe871710304ec4a07fa11a04efeaba0c0e45cddce38f4","bodyHash":"549cf93c0e0bd5643cf90cc92698a85a7ddbf2ea91cd654fbc278cd110a027d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::isNamedDefaultReference","kind":"func","status":"implemented","sigHash":"ca448cfc2cb22cd75c5fe871710304ec4a07fa11a04efeaba0c0e45cddce38f4"}
  *
  * Go source:
  * func isNamedDefaultReference(e *ast.Node /*ImportSpecifier | ExportSpecifier* /) bool {
@@ -807,7 +807,7 @@ export function isNamedDefaultReference(e: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::containsDefaultReference","kind":"func","status":"implemented","sigHash":"2e176000f65ce3648785db08d3cdfdaaf9555479f6ebe6f164bc8310c8ec1019","bodyHash":"fa6389bc8b9a50d3608feebf9ef18773953439a5ca175ff277dc1154ea9d2cd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::containsDefaultReference","kind":"func","status":"implemented","sigHash":"2e176000f65ce3648785db08d3cdfdaaf9555479f6ebe6f164bc8310c8ec1019"}
  *
  * Go source:
  * func containsDefaultReference(node *ast.Node /*NamedImportBindings | NamedExportBindings* /) bool {
@@ -823,7 +823,7 @@ export function containsDefaultReference(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getExportNeedsImportStarHelper","kind":"func","status":"implemented","sigHash":"fc409e2c1dc13dc7439935147d2ba54ad051488bf43c610497b462be7b16f00c","bodyHash":"727ee745a4f8702069139b079ffa1c166d9f5dc4ed3648f3092e191b6c43cfa5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getExportNeedsImportStarHelper","kind":"func","status":"implemented","sigHash":"fc409e2c1dc13dc7439935147d2ba54ad051488bf43c610497b462be7b16f00c"}
  *
  * Go source:
  * func getExportNeedsImportStarHelper(node *ast.ExportDeclaration) bool {
@@ -835,7 +835,7 @@ export function getExportNeedsImportStarHelper(node: GoPtr<ExportDeclaration>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportNeedsImportStarHelper","kind":"func","status":"implemented","sigHash":"578444712dd16a45b87eafad7c6d097c89069984fd0d7987ef3cfa1cb4162327","bodyHash":"f973895a3fe54d612f6f6192d52bc4271f9c75c01df69fa93bff80ca79556227"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportNeedsImportStarHelper","kind":"func","status":"implemented","sigHash":"578444712dd16a45b87eafad7c6d097c89069984fd0d7987ef3cfa1cb4162327"}
  *
  * Go source:
  * func getImportNeedsImportStarHelper(node *ast.ImportDeclaration) bool {
@@ -889,7 +889,7 @@ export function getImportNeedsImportStarHelper(node: GoPtr<ImportDeclaration>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportNeedsImportDefaultHelper","kind":"func","status":"implemented","sigHash":"6bd1138106740f58bae2ac3a5f02c59c0c1e8211be15eefe636bd56dfcd3afa0","bodyHash":"b135fe81a173e73fbe351e3d3dc49b5beff9119a19ada7bea8c4e96b4daf4313"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/externalmoduleinfo.go::func::getImportNeedsImportDefaultHelper","kind":"func","status":"implemented","sigHash":"6bd1138106740f58bae2ac3a5f02c59c0c1e8211be15eefe636bd56dfcd3afa0"}
  *
  * Go source:
  * func getImportNeedsImportDefaultHelper(node *ast.ImportDeclaration) bool {

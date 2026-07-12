@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { GoAppend } from "./compat.js";
+import { GoAppend, GoNilSlice } from "./compat.js";
 
-test("GoAppend appends to an undefined slice like Go append(nil, ...)", () => {
-  assert.deepEqual(GoAppend<string>(undefined, "a", "b"), ["a", "b"]);
+test("GoAppend appends to a nil slice like Go append(nil, ...)", () => {
+  assert.deepEqual(GoAppend<string>(GoNilSlice(), "a", "b"), ["a", "b"]);
 });
 
 test("GoAppend returns an extended slice without mutating the input slice", () => {

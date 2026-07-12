@@ -104,7 +104,7 @@ const computeNextComponents = (
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::computeCommonSourceDirectoryOfFilenames","kind":"func","status":"implemented","sigHash":"4239085a76e414c3bc2d225bca263ee0fdb177ca3c2f317fd883f6bd2075ecee","bodyHash":"4d14dbf06ddec1e393fa6148971c980f674629b338d92277cd22652c87587038"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::computeCommonSourceDirectoryOfFilenames","kind":"func","status":"implemented","sigHash":"4239085a76e414c3bc2d225bca263ee0fdb177ca3c2f317fd883f6bd2075ecee"}
  */
 export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<string>, currentDirectory: string, useCaseSensitiveFileNames: bool): string {
   const commonPathComponents = fileNames.reduce(
@@ -127,7 +127,7 @@ export function computeCommonSourceDirectoryOfFilenames(fileNames: GoSlice<strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::GetComputedCommonSourceDirectory","kind":"func","status":"implemented","sigHash":"514fd7379da62c201eb92d26a6c0689f3db1331fff4a46f6e682c811bc8f2c7b","bodyHash":"624c5fd43c0f9da8df77048dce90d3d5239cd894faa9effabff80d66b75d6de2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::GetComputedCommonSourceDirectory","kind":"func","status":"implemented","sigHash":"514fd7379da62c201eb92d26a6c0689f3db1331fff4a46f6e682c811bc8f2c7b"}
  *
  * Go source:
  * func GetComputedCommonSourceDirectory(emittedFiles []string, currentDirectory string, useCaseSensitiveFileNames bool) string {
@@ -147,7 +147,7 @@ export function GetComputedCommonSourceDirectory(emittedFiles: GoSlice<string>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::GetCommonSourceDirectory","kind":"func","status":"implemented","sigHash":"2c7827f05d0d724bf245e7a3b1356d6464dafafd2dbd8feb9afaa8e05acd8542","bodyHash":"7589510d85e966ad258b4b4cf9da51f4be757c70fc484b0a5be68ec3fb267f8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/outputpaths/commonsourcedirectory.go::func::GetCommonSourceDirectory","kind":"func","status":"implemented","sigHash":"2c7827f05d0d724bf245e7a3b1356d6464dafafd2dbd8feb9afaa8e05acd8542"}
  *
  * Go source:
  * func GetCommonSourceDirectory(options *core.CompilerOptions, files func() []string, currentDirectory string, useCaseSensitiveFileNames bool, checkSourceFilesBelongToPath func([]string, string) bool) string {

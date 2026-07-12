@@ -17,7 +17,7 @@ import { includeProcessor_explainRedirectAndImpliedFormat, includeProcessor_getR
 import type { Program } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"206597e4b3e5492bed070fc03dfcc895035dc1bf0f57a065b6f6021deca831ee","bodyHash":"bb346ba4b5dd9c7c0d634136ea2a4939fb3cd88f82cacd0e7062c6e905c7e61e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnosticKind","kind":"type","status":"implemented","sigHash":"206597e4b3e5492bed070fc03dfcc895035dc1bf0f57a065b6f6021deca831ee"}
  *
  * Go source:
  * processingDiagnosticKind int
@@ -25,7 +25,7 @@ import type { Program } from "./program.js";
 export type processingDiagnosticKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::constGroup::processingDiagnosticKindUnknownReference+processingDiagnosticKindExplainingFileInclude","kind":"constGroup","status":"implemented","sigHash":"0bbaee3ac98202fdda68a622bce6be83c75296c40745866e45b6050179861b1c","bodyHash":"8ff9a38b63a994920cfdbb71f713b84527811dd6486208ecc272c20f47816a68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::constGroup::processingDiagnosticKindUnknownReference+processingDiagnosticKindExplainingFileInclude","kind":"constGroup","status":"implemented","sigHash":"0bbaee3ac98202fdda68a622bce6be83c75296c40745866e45b6050179861b1c"}
  *
  * Go source:
  * const (
@@ -37,7 +37,7 @@ export const processingDiagnosticKindUnknownReference: processingDiagnosticKind 
 export const processingDiagnosticKindExplainingFileInclude: processingDiagnosticKind = 1 as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnostic","kind":"type","status":"implemented","sigHash":"9ca2e25a43bc15f2b26a13d2229e98245f9edf1f09d0fb02d7f78c26fab3617c","bodyHash":"fd29f10b6c9ce54aed98ed951c87237fa96035d7ed0c6672e1f03e4264406557"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::processingDiagnostic","kind":"type","status":"implemented","sigHash":"9ca2e25a43bc15f2b26a13d2229e98245f9edf1f09d0fb02d7f78c26fab3617c"}
  *
  * Go source:
  * processingDiagnostic struct {
@@ -51,7 +51,7 @@ export interface processingDiagnostic {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.asFileIncludeReason","kind":"method","status":"implemented","sigHash":"ee23d712ecfd715d8f2d817f5fcd43a251eab053edc6e47b11840a5444bdf6b7","bodyHash":"828c7f480a1e40be07d940fc4998676b26f70487e0c4ba0e8e272620a8e59562"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.asFileIncludeReason","kind":"method","status":"implemented","sigHash":"ee23d712ecfd715d8f2d817f5fcd43a251eab053edc6e47b11840a5444bdf6b7"}
  *
  * Go source:
  * func (d *processingDiagnostic) asFileIncludeReason() *FileIncludeReason {
@@ -63,7 +63,7 @@ export function processingDiagnostic_asFileIncludeReason(receiver: GoPtr<process
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::includeExplainingDiagnostic","kind":"type","status":"implemented","sigHash":"963e6cf6b3050764ff4c10bcc83418ecf4f03b53e9d45cd71fc03bb35991a4d2","bodyHash":"c1ca20b604daa578d5ef3c558f92efb01327a665b4462feb0b1785db8cb919d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::type::includeExplainingDiagnostic","kind":"type","status":"implemented","sigHash":"963e6cf6b3050764ff4c10bcc83418ecf4f03b53e9d45cd71fc03bb35991a4d2"}
  *
  * Go source:
  * includeExplainingDiagnostic struct {
@@ -81,7 +81,7 @@ export interface includeExplainingDiagnostic {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.asIncludeExplainingDiagnostic","kind":"method","status":"implemented","sigHash":"ba2ea0181735299bb4eb7c8a2ebfe5208facaeecedbd7168200fcdf729f01d62","bodyHash":"17852444bce5ff4851af8539ecc91caa7a5588e36a252743b25b9c2beed49ed7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.asIncludeExplainingDiagnostic","kind":"method","status":"implemented","sigHash":"ba2ea0181735299bb4eb7c8a2ebfe5208facaeecedbd7168200fcdf729f01d62"}
  *
  * Go source:
  * func (d *processingDiagnostic) asIncludeExplainingDiagnostic() *includeExplainingDiagnostic {
@@ -93,7 +93,7 @@ export function processingDiagnostic_asIncludeExplainingDiagnostic(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.toDiagnostic","kind":"method","status":"implemented","sigHash":"f8a7bbbf4d642e66207b5d767ec108073772a4af46c03ec462321279da892744","bodyHash":"90321122e964a36111a1d2c666440924d392eea8ca150ab4d6ab3246989a55aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.toDiagnostic","kind":"method","status":"implemented","sigHash":"f8a7bbbf4d642e66207b5d767ec108073772a4af46c03ec462321279da892744"}
  *
  * Go source:
  * func (d *processingDiagnostic) toDiagnostic(program *Program) *ast.Diagnostic {
@@ -153,7 +153,7 @@ export function processingDiagnostic_toDiagnostic(receiver: GoPtr<processingDiag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.createDiagnosticExplainingFile","kind":"method","status":"implemented","sigHash":"3abad132f72cab5caac39e15a90a1d090228a6c2241a66bf4cbab3734e08d56b","bodyHash":"211ba4698725677f48335c75d8409431a433c5ee17f0f01d0d0558721219668c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/processingDiagnostic.go::method::processingDiagnostic.createDiagnosticExplainingFile","kind":"method","status":"implemented","sigHash":"3abad132f72cab5caac39e15a90a1d090228a6c2241a66bf4cbab3734e08d56b"}
  *
  * Go source:
  * func (d *processingDiagnostic) createDiagnosticExplainingFile(program *Program) *ast.Diagnostic {

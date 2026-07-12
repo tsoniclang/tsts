@@ -40,7 +40,7 @@ import { AsBinaryExpression } from "../ast/generated/casts.js";
 import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsTypeSymbolAccessible","kind":"method","status":"implemented","sigHash":"440a2ce92fa318d7affc71ef085015b5296f863b84860c64ce4cbc198626c4a9","bodyHash":"b1471e7486983ecf11d899c18aa8c14cddd7dae610557101d1f841c5bf959069"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsTypeSymbolAccessible","kind":"method","status":"implemented","sigHash":"440a2ce92fa318d7affc71ef085015b5296f863b84860c64ce4cbc198626c4a9"}
  *
  * Go source:
  * func (c *Checker) IsTypeSymbolAccessible(typeSymbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -54,7 +54,7 @@ export function Checker_IsTypeSymbolAccessible(receiver: GoPtr<Checker>, typeSym
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsValueSymbolAccessible","kind":"method","status":"implemented","sigHash":"be5158b8179811037e80f5bd92969182dc0884e6f8120d624954af84b056e061","bodyHash":"19327006c7aa497c7849b9ed0538c423e482d879c8fbd7e40a16310ca5c0b7f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsValueSymbolAccessible","kind":"method","status":"implemented","sigHash":"be5158b8179811037e80f5bd92969182dc0884e6f8120d624954af84b056e061"}
  *
  * Go source:
  * func (c *Checker) IsValueSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -68,7 +68,7 @@ export function Checker_IsValueSymbolAccessible(receiver: GoPtr<Checker>, symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsSymbolAccessibleByFlags","kind":"method","status":"implemented","sigHash":"2b43f21e2f45b6c7a63ad8db3295128663dafa3c1c061b659083eb2c40660739","bodyHash":"5a3222ff2f0fcc4f0985625234b779a6ad31dc208680a0c8818a1acc80641eaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsSymbolAccessibleByFlags","kind":"method","status":"implemented","sigHash":"2b43f21e2f45b6c7a63ad8db3295128663dafa3c1c061b659083eb2c40660739"}
  *
  * Go source:
  * func (c *Checker) IsSymbolAccessibleByFlags(symbol *ast.Symbol, enclosingDeclaration *ast.Node, flags ast.SymbolFlags) bool {
@@ -82,7 +82,7 @@ export function Checker_IsSymbolAccessibleByFlags(receiver: GoPtr<Checker>, symb
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsAnySymbolAccessible","kind":"method","status":"implemented","sigHash":"beed5d67cec121ec1a540ab7601fbb7ff790a26d42127607dad889562411aad7","bodyHash":"cba4981de48f601ab510cf1f52b77e7841a1de3ff7c8e6cab71eec98f78e7c28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsAnySymbolAccessible","kind":"method","status":"implemented","sigHash":"beed5d67cec121ec1a540ab7601fbb7ff790a26d42127607dad889562411aad7"}
  *
  * Go source:
  * func (c *Checker) IsAnySymbolAccessible(symbols []*ast.Symbol, enclosingDeclaration *ast.Node, initialSymbol *ast.Symbol, meaning ast.SymbolFlags, shouldComputeAliasesToMakeVisible bool, allowModules bool) *printer.SymbolAccessibilityResult {
@@ -231,7 +231,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::hasNonGlobalAugmentationExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"8129e08ce073f071d8beb4ae53fe9d8ff8f616c00e36124cff00b653373c2d72","bodyHash":"b1d9bc0ce5945b02f2c97c9debb41ee928935931e8c8f243ee2feb770df67f22"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::hasNonGlobalAugmentationExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"8129e08ce073f071d8beb4ae53fe9d8ff8f616c00e36124cff00b653373c2d72"}
  *
  * Go source:
  * func hasNonGlobalAugmentationExternalModuleSymbol(declaration *ast.Node) bool {
@@ -243,7 +243,7 @@ export function hasNonGlobalAugmentationExternalModuleSymbol(declaration: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::getQualifiedLeftMeaning","kind":"func","status":"implemented","sigHash":"ef67567c8235be554bdb2bf357aa089077414b4f7a37e8276a4babf0e88c2f85","bodyHash":"881405ecbafde53fa48307f6311cb92db16c2059c516bf229904e14476645ce7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::getQualifiedLeftMeaning","kind":"func","status":"implemented","sigHash":"ef67567c8235be554bdb2bf357aa089077414b4f7a37e8276a4babf0e88c2f85"}
  *
  * Go source:
  * func getQualifiedLeftMeaning(rightMeaning ast.SymbolFlags) ast.SymbolFlags {
@@ -263,7 +263,7 @@ export function getQualifiedLeftMeaning(rightMeaning: SymbolFlags): SymbolFlags 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getWithAlternativeContainers","kind":"method","status":"implemented","sigHash":"d43bad3406b231609766cef1db3cae37aa02f0c102c28c832dbbdec04909e62b","bodyHash":"24938ed34ba28154714718d7633dff07b193d24dffc2f5de5259003731258205"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getWithAlternativeContainers","kind":"method","status":"implemented","sigHash":"d43bad3406b231609766cef1db3cae37aa02f0c102c28c832dbbdec04909e62b"}
  *
  * Go source:
  * func (c *Checker) getWithAlternativeContainers(container *ast.Symbol, symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) []*ast.Symbol {
@@ -366,7 +366,7 @@ export function Checker_getWithAlternativeContainers(receiver: GoPtr<Checker>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAlternativeContainingModules","kind":"method","status":"implemented","sigHash":"404fc9a75bdf062460afd60963f1242e507fb3f8e8eb389c34c3c1a39abee0e2","bodyHash":"d6933642b32f9d403194d9807caa8b5bc05bbcb200cbb0b1472c5038cca604f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAlternativeContainingModules","kind":"method","status":"implemented","sigHash":"404fc9a75bdf062460afd60963f1242e507fb3f8e8eb389c34c3c1a39abee0e2"}
  *
  * Go source:
  * func (c *Checker) getAlternativeContainingModules(symbol *ast.Symbol, enclosingDeclaration *ast.Node) []*ast.Symbol {
@@ -487,7 +487,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getVariableDeclarationOfObjectLiteral","kind":"method","status":"implemented","sigHash":"02cc306de5f465be22092f68907a8883eedcde6f2e737172bbfb65430c1f8b53","bodyHash":"1f66a97aad34d92190d2346aab872a3a694510cbf2bc5dd1292c3786a9dfa7fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getVariableDeclarationOfObjectLiteral","kind":"method","status":"implemented","sigHash":"02cc306de5f465be22092f68907a8883eedcde6f2e737172bbfb65430c1f8b53"}
  *
  * Go source:
  * func (c *Checker) getVariableDeclarationOfObjectLiteral(symbol *ast.Symbol, meaning ast.SymbolFlags) *ast.Symbol {
@@ -537,7 +537,7 @@ export function Checker_getVariableDeclarationOfObjectLiteral(receiver: GoPtr<Ch
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::hasExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"59984e628de83074fabf37810f41cbe9c02eb70a7f319ca6d9844823817fbe96","bodyHash":"ee14558b9dd055b3b0881e4038149c85e05898eaf6d9b179e3b40df79add80fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::hasExternalModuleSymbol","kind":"func","status":"implemented","sigHash":"59984e628de83074fabf37810f41cbe9c02eb70a7f319ca6d9844823817fbe96"}
  *
  * Go source:
  * func hasExternalModuleSymbol(declaration *ast.Node) bool {
@@ -549,7 +549,7 @@ export function hasExternalModuleSymbol(declaration: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getExternalModuleContainer","kind":"method","status":"implemented","sigHash":"e2d1237f8c8aca720b5ae222e1fed2087d80607e17abd5b920530250aefa921d","bodyHash":"b8e36d4404edc37ddcdc67dca53a7c40b98c592ed80379bc9894e1a24700b360"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getExternalModuleContainer","kind":"method","status":"implemented","sigHash":"e2d1237f8c8aca720b5ae222e1fed2087d80607e17abd5b920530250aefa921d"}
  *
  * Go source:
  * func (c *Checker) getExternalModuleContainer(declaration *ast.Node) *ast.Symbol {
@@ -569,7 +569,7 @@ export function Checker_getExternalModuleContainer(receiver: GoPtr<Checker>, dec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getFileSymbolIfFileSymbolExportEqualsContainer","kind":"method","status":"implemented","sigHash":"befb72be60014d41f88e29b266894e20c680085e16f7c8034c3624a334f71368","bodyHash":"7ac93a6e290c0996db73951438f25a5e7f9a5211d610569d3b5bee90077d6248"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getFileSymbolIfFileSymbolExportEqualsContainer","kind":"method","status":"implemented","sigHash":"befb72be60014d41f88e29b266894e20c680085e16f7c8034c3624a334f71368"}
  *
  * Go source:
  * func (c *Checker) getFileSymbolIfFileSymbolExportEqualsContainer(d *ast.Node, container *ast.Symbol) *ast.Symbol {
@@ -603,7 +603,7 @@ export function Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getContainersOfSymbol","kind":"method","status":"implemented","sigHash":"d3d5199afeef6ea00c449a490b60a240a609f5d8d6a743236052752a804a0501","bodyHash":"7667bdbbcfca1d405becd9e5f4f5f4b9a7e14b340c8d7bc75e564f2444568047"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getContainersOfSymbol","kind":"method","status":"implemented","sigHash":"d3d5199afeef6ea00c449a490b60a240a609f5d8d6a743236052752a804a0501"}
  *
  * Go source:
  * func (c *Checker) getContainersOfSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) []*ast.Symbol {
@@ -731,7 +731,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAliasForSymbolInContainer","kind":"method","status":"implemented","sigHash":"99403912a0c86db211698ae264120df15b857203f91cf2b2bb83f41b026ff846","bodyHash":"f53d9e2d95f2803443e26bbe8d691bdfc3942ae7798363054268da1087e2bdac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAliasForSymbolInContainer","kind":"method","status":"implemented","sigHash":"99403912a0c86db211698ae264120df15b857203f91cf2b2bb83f41b026ff846"}
  *
  * Go source:
  * func (c *Checker) getAliasForSymbolInContainer(container *ast.Symbol, symbol *ast.Symbol) *ast.Symbol {
@@ -797,7 +797,7 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChain","kind":"method","status":"implemented","sigHash":"3172e3df25a783c2b929528a807d80632d5b7f4a320b4e62d8832750c801cf1a","bodyHash":"eaeaa2f57dde7fcad336d2ca771ff7d84d9dab9d34bd7d2c95c02e60a3a1152b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChain","kind":"method","status":"implemented","sigHash":"3172e3df25a783c2b929528a807d80632d5b7f4a320b4e62d8832750c801cf1a"}
  *
  * Go source:
  * func (c *Checker) getAccessibleSymbolChain(
@@ -814,7 +814,7 @@ export function Checker_getAccessibleSymbolChain(receiver: GoPtr<Checker>, symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.GetAccessibleSymbolChain","kind":"method","status":"implemented","sigHash":"e490d9286680028af20d9e205971511e00cb6058a2965fc7209c73134ce4b83d","bodyHash":"78f5f607f847a36a983669e0c3c5dadd027d0f9c7dbfeeac132788b00f280516"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.GetAccessibleSymbolChain","kind":"method","status":"implemented","sigHash":"e490d9286680028af20d9e205971511e00cb6058a2965fc7209c73134ce4b83d"}
  *
  * Go source:
  * func (c *Checker) GetAccessibleSymbolChain(
@@ -831,7 +831,7 @@ export function Checker_GetAccessibleSymbolChain(receiver: GoPtr<Checker>, symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::accessibleSymbolChainContext","kind":"type","status":"implemented","sigHash":"3e04eabddf95b2b08160376186b51804f33d8ef7a2d2575c9939183f645f7824","bodyHash":"9617e087602d543fb795e4df6414c0795002402cc2dc8150d045f374d6de713f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::accessibleSymbolChainContext","kind":"type","status":"implemented","sigHash":"3e04eabddf95b2b08160376186b51804f33d8ef7a2d2575c9939183f645f7824"}
  *
  * Go source:
  * accessibleSymbolChainContext struct {
@@ -851,7 +851,7 @@ export interface accessibleSymbolChainContext {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::symbolTableID","kind":"type","status":"implemented","sigHash":"7d916951f176c6805edfce9e2d5f9dac91e7f93f5cac7779cbd82c2eebe07a68","bodyHash":"e4d8f17a06214af5cbb86cf016de038b56ad098083e7441de2dd69142d2594a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::type::symbolTableID","kind":"type","status":"implemented","sigHash":"7d916951f176c6805edfce9e2d5f9dac91e7f93f5cac7779cbd82c2eebe07a68"}
  *
  * Go source:
  * symbolTableID uint64
@@ -859,7 +859,7 @@ export interface accessibleSymbolChainContext {
 export type symbolTableID = bigint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"9e80cf047656cb6660929f6a71794e6653a496233ab2dc2d14d96c7ea1b9a77a","bodyHash":"6dfba3df333f612a2ea0c88bc9a87f7584a686189f362c82ea8b3648ff8310de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindShift","kind":"constGroup","status":"implemented","sigHash":"9e80cf047656cb6660929f6a71794e6653a496233ab2dc2d14d96c7ea1b9a77a"}
  *
  * Go source:
  * const stKindShift = 61
@@ -867,7 +867,7 @@ export type symbolTableID = bigint;
 export const stKindShift: int = 61;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindLocals+stKindExports+stKindMembers+stKindGlobals+stKindResolvedExports+stKindMask","kind":"constGroup","status":"implemented","sigHash":"a4f80520523042c056f35ae1b40810f46b1c772d8257f6dea77920ec3ab6d3f2","bodyHash":"5d50e110b85907399cfad621ca87cb2c39781c4a01fc700114a27d0b5bc32443"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindLocals+stKindExports+stKindMembers+stKindGlobals+stKindResolvedExports+stKindMask","kind":"constGroup","status":"implemented","sigHash":"a4f80520523042c056f35ae1b40810f46b1c772d8257f6dea77920ec3ab6d3f2"}
  *
  * Go source:
  * const (
@@ -890,7 +890,7 @@ export const stKindResolvedExports: symbolTableID = 0x8000000000000000n; // 4 <<
 export const stKindMask: symbolTableID = 0x8000000000000000n; // (5 - 1) << 61
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromLocals","kind":"func","status":"implemented","sigHash":"ddb7a7e67dd745b636984a46c8f2c498d351cc6dce505161c74f29c31d7e90af","bodyHash":"f1a25251eb4bacfe964a69e28ec6e9fee67838fed9495d42726dce8982ae5366"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromLocals","kind":"func","status":"implemented","sigHash":"ddb7a7e67dd745b636984a46c8f2c498d351cc6dce505161c74f29c31d7e90af"}
  *
  * Go source:
  * func symbolTableIDFromLocals(node *ast.Node) symbolTableID {
@@ -902,7 +902,7 @@ export function symbolTableIDFromLocals(node: GoPtr<Node>): symbolTableID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromExports","kind":"func","status":"implemented","sigHash":"4995e36ac1e761b27fc93851b47bf1d3e2ae49faf903b296aa28e25660a864da","bodyHash":"42779ececd912743e17aa050db649e2a7d987eb201063d59abe5c5333a428b98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromExports","kind":"func","status":"implemented","sigHash":"4995e36ac1e761b27fc93851b47bf1d3e2ae49faf903b296aa28e25660a864da"}
  *
  * Go source:
  * func symbolTableIDFromExports(sym *ast.Symbol) symbolTableID {
@@ -914,7 +914,7 @@ export function symbolTableIDFromExports(sym: GoPtr<Symbol>): symbolTableID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromResolvedExports","kind":"func","status":"implemented","sigHash":"af01f8edd325464e56b73d21f8660f40ab679a8ed518ec8aa598b692b85f7282","bodyHash":"26238c84b7ec96be9dc3b1068af2bafa7602ec43b44071e5a9cdca0c3037f984"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromResolvedExports","kind":"func","status":"implemented","sigHash":"af01f8edd325464e56b73d21f8660f40ab679a8ed518ec8aa598b692b85f7282"}
  *
  * Go source:
  * // symbolTableIDFromResolvedExports returns an ID for resolved/derived export tables
@@ -930,7 +930,7 @@ export function symbolTableIDFromResolvedExports(sym: GoPtr<Symbol>): symbolTabl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromMembers","kind":"func","status":"implemented","sigHash":"47c1c84e17b88965d2ee097c8bc642e9dcd0e50066b0a3cad374edb045dc93a1","bodyHash":"b94ea1b0ec0a646154b7617626803d5a27b74de7f053b423d976612c1ca0bc88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromMembers","kind":"func","status":"implemented","sigHash":"47c1c84e17b88965d2ee097c8bc642e9dcd0e50066b0a3cad374edb045dc93a1"}
  *
  * Go source:
  * func symbolTableIDFromMembers(sym *ast.Symbol) symbolTableID {
@@ -942,7 +942,7 @@ export function symbolTableIDFromMembers(sym: GoPtr<Symbol>): symbolTableID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromGlobals","kind":"func","status":"implemented","sigHash":"463d80b9eb71617ad3dcd3c08273a8d74ead1edf82754ac66fe866fa17edad96","bodyHash":"7826fb603bfc8a2a17ba2da54efe69e43bb9018dd3cdba4655a7b2792714551a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::symbolTableIDFromGlobals","kind":"func","status":"implemented","sigHash":"463d80b9eb71617ad3dcd3c08273a8d74ead1edf82754ac66fe866fa17edad96"}
  *
  * Go source:
  * func symbolTableIDFromGlobals() symbolTableID {
@@ -954,7 +954,7 @@ export function symbolTableIDFromGlobals(): symbolTableID {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainEx","kind":"method","status":"implemented","sigHash":"43140cf3dfdb279f973bd87b28695e1c40dfd905cf03858721b7f3352b2a1ef5","bodyHash":"8be8db14e509306f75b69b57c53e96db6b895f8aca3d8c7546adcffe695411dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainEx","kind":"method","status":"implemented","sigHash":"43140cf3dfdb279f973bd87b28695e1c40dfd905cf03858721b7f3352b2a1ef5"}
  *
  * Go source:
  * func (c *Checker) getAccessibleSymbolChainEx(ctx accessibleSymbolChainContext) []*ast.Symbol {
@@ -1039,7 +1039,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainFromSymbolTable","kind":"method","status":"implemented","sigHash":"50288451713710d32338473d9fa4cac13be1b87024fe2aaec0a29e9af5be3e82","bodyHash":"e223bb5e8e10cd68f93ff89136d844778229950f5e0ac5488025bc3c53951b85"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getAccessibleSymbolChainFromSymbolTable","kind":"method","status":"implemented","sigHash":"50288451713710d32338473d9fa4cac13be1b87024fe2aaec0a29e9af5be3e82"}
  *
  * Go source:
  * func (c *Checker) getAccessibleSymbolChainFromSymbolTable(ctx accessibleSymbolChainContext, t ast.SymbolTable, tableId symbolTableID, ignoreQualification bool, isLocalNameLookup bool) []*ast.Symbol {
@@ -1082,7 +1082,7 @@ export function Checker_getAccessibleSymbolChainFromSymbolTable(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getSymbolTableAliases","kind":"method","status":"implemented","sigHash":"ebab701bc726232b245be52334ba272304034910b5683009dc8596a0c8f1099c","bodyHash":"aac6f0123a182ff28fa58fcd817adf8f9b21017158261e27d7f17271457549b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getSymbolTableAliases","kind":"method","status":"implemented","sigHash":"ebab701bc726232b245be52334ba272304034910b5683009dc8596a0c8f1099c"}
  *
  * Go source:
  * // getSymbolTableAliases returns only the alias symbols from a symbol table,
@@ -1151,7 +1151,7 @@ export function Checker_getSymbolTableAliases(receiver: GoPtr<Checker>, symbols:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.trySymbolTable","kind":"method","status":"implemented","sigHash":"2f13a9992506771cb74793c1f930d26c38cd3361b7a43ca9393f2d5fa09547f6","bodyHash":"7308a309890ce67c9ce75959609de0065778035016c4174eb50e7880902cd67d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.trySymbolTable","kind":"method","status":"implemented","sigHash":"2f13a9992506771cb74793c1f930d26c38cd3361b7a43ca9393f2d5fa09547f6"}
  *
  * Go source:
  * func (c *Checker) trySymbolTable(
@@ -1268,7 +1268,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.compareSymbolChainsWorker","kind":"method","status":"implemented","sigHash":"b70c44126c655774086bb9d8b90d04ea6438a32a48a177b67c6a8805748d6227","bodyHash":"e74099c7b1925f7389df272df559b97fb193a8f24e9b9df0a284cd2399f01112"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.compareSymbolChainsWorker","kind":"method","status":"implemented","sigHash":"b70c44126c655774086bb9d8b90d04ea6438a32a48a177b67c6a8805748d6227"}
  *
  * Go source:
  * func (c *Checker) compareSymbolChainsWorker(a []*ast.Symbol, b []*ast.Symbol) int {
@@ -1306,7 +1306,7 @@ export function Checker_compareSymbolChainsWorker(receiver: GoPtr<Checker>, a: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isUMDExportSymbol","kind":"func","status":"implemented","sigHash":"83979fc1ff5b1312713633f0181a4b210ab58095d550346ac65ed4e01e761f18","bodyHash":"1f118e4df37f9452b0b7d059d8b3e9774c1d704e085a66be2ccee531efca08fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isUMDExportSymbol","kind":"func","status":"implemented","sigHash":"83979fc1ff5b1312713633f0181a4b210ab58095d550346ac65ed4e01e761f18"}
  *
  * Go source:
  * func isUMDExportSymbol(symbol *ast.Symbol) bool {
@@ -1318,7 +1318,7 @@ export function isUMDExportSymbol(symbol_: GoPtr<Symbol>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isNamespaceReexportDeclaration","kind":"func","status":"implemented","sigHash":"6739ace25b3ca23858bf9b82faba73dcdef740f37abeaae0b47abc12d444d428","bodyHash":"a62e04577fed3132265ce1423b624066a55b7d5dfaf0d716952b5b9b8f411aac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isNamespaceReexportDeclaration","kind":"func","status":"implemented","sigHash":"6739ace25b3ca23858bf9b82faba73dcdef740f37abeaae0b47abc12d444d428"}
  *
  * Go source:
  * func isNamespaceReexportDeclaration(node *ast.Node) bool {
@@ -1330,7 +1330,7 @@ export function isNamespaceReexportDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getCandidateListForSymbol","kind":"method","status":"implemented","sigHash":"13aefa587d457fd99b9365cdab677d6b4023e88216076efafabf226f3acc5780","bodyHash":"cc245731f86611bbdb0a56f4fe4be0f34c79f6d64756bb6de62e1ccc38e10ced"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.getCandidateListForSymbol","kind":"method","status":"implemented","sigHash":"13aefa587d457fd99b9365cdab677d6b4023e88216076efafabf226f3acc5780"}
  *
  * Go source:
  * func (c *Checker) getCandidateListForSymbol(
@@ -1383,7 +1383,7 @@ export function Checker_getCandidateListForSymbol(receiver: GoPtr<Checker>, ctx:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.isAccessible","kind":"method","status":"implemented","sigHash":"3878a30e0c7b4a881edab68c10c1e1fdd752cac2139da2b048fa64f338cd4096","bodyHash":"52ecc705cc54d9268cb678498e1a5101f31280c7c7570e49eb6dd31d5196ca6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.isAccessible","kind":"method","status":"implemented","sigHash":"3878a30e0c7b4a881edab68c10c1e1fdd752cac2139da2b048fa64f338cd4096"}
  *
  * Go source:
  * func (c *Checker) isAccessible(
@@ -1442,7 +1442,7 @@ export function Checker_isAccessible(receiver: GoPtr<Checker>, ctx: accessibleSy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.canQualifySymbol","kind":"method","status":"implemented","sigHash":"d5b68c2d0fd2d8dda02c090c35318ad0292b1f269d0cfd136473c414bb750f3c","bodyHash":"397af9c1afe7627e9d2c0bddd9ab4b6393526a2af33366adfb0d1728f82bb9fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.canQualifySymbol","kind":"method","status":"implemented","sigHash":"d5b68c2d0fd2d8dda02c090c35318ad0292b1f269d0cfd136473c414bb750f3c"}
  *
  * Go source:
  * func (c *Checker) canQualifySymbol(
@@ -1464,7 +1464,7 @@ export function Checker_canQualifySymbol(receiver: GoPtr<Checker>, ctx: accessib
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.needsQualification","kind":"method","status":"implemented","sigHash":"3e7a188b4685b6c27bd723978e4408b775e823427f9f9f56601b7057a4cc76a9","bodyHash":"676300f6ed170d2daff702493056b3c6601c3a7081238e83cf6312d46ca668f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.needsQualification","kind":"method","status":"implemented","sigHash":"3e7a188b4685b6c27bd723978e4408b775e823427f9f9f56601b7057a4cc76a9"}
  *
  * Go source:
  * func (c *Checker) needsQualification(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) bool {
@@ -1548,7 +1548,7 @@ export function Checker_needsQualification(receiver: GoPtr<Checker>, symbol_: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isPropertyOrMethodDeclarationSymbol","kind":"func","status":"implemented","sigHash":"63f9b081998e01af8b56b0a76488a087c4470ea2c65d39f9c85b8ef23a2a4b1c","bodyHash":"a1ae3177e6f080e936fd9e9c3a2f1f6eb969c6aa688fc1cd298cf07f4c867c24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::func::isPropertyOrMethodDeclarationSymbol","kind":"func","status":"implemented","sigHash":"63f9b081998e01af8b56b0a76488a087c4470ea2c65d39f9c85b8ef23a2a4b1c"}
  *
  * Go source:
  * func isPropertyOrMethodDeclarationSymbol(symbol *ast.Symbol) bool {
@@ -1588,7 +1588,7 @@ export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.someSymbolTableInScope","kind":"method","status":"implemented","sigHash":"104479f1509bdc3a2737399b431fe194d408c34a7e53bcd1929ab4ff7359006b","bodyHash":"3e8d05b11b68ac3412824c2aa51707b8b9036da0718aab8b09b1510845627727"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.someSymbolTableInScope","kind":"method","status":"implemented","sigHash":"104479f1509bdc3a2737399b431fe194d408c34a7e53bcd1929ab4ff7359006b"}
  *
  * Go source:
  * func (c *Checker) someSymbolTableInScope(
@@ -1687,7 +1687,7 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsSymbolAccessible","kind":"method","status":"implemented","sigHash":"86d7e73193f7600cf44c2098d28229353de49d2801b80e73823007c7e854fab6","bodyHash":"e377f1c8b9206f449479466a15d3d0b9465917f5f26aeb75d07247c0236418b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsSymbolAccessible","kind":"method","status":"implemented","sigHash":"86d7e73193f7600cf44c2098d28229353de49d2801b80e73823007c7e854fab6"}
  *
  * Go source:
  * func (c *Checker) IsSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasesToMakeVisible bool) printer.SymbolAccessibilityResult {
@@ -1699,7 +1699,7 @@ export function Checker_IsSymbolAccessible(receiver: GoPtr<Checker>, symbol_: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.isSymbolAccessibleWorker","kind":"method","status":"implemented","sigHash":"c10693b2331715b2ca9c13464bbb92e23eb6e79044b73b2262be5aac60aa46a5","bodyHash":"698f630ae422b966dca51b0a8b8c152173ce3b7cb88e0a2945710e1f8a22369c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.isSymbolAccessibleWorker","kind":"method","status":"implemented","sigHash":"c10693b2331715b2ca9c13464bbb92e23eb6e79044b73b2262be5aac60aa46a5"}
  *
  * Go source:
  * func (c *Checker) isSymbolAccessibleWorker(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasesToMakeVisible bool, allowModules bool) printer.SymbolAccessibilityResult {

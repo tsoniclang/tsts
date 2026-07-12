@@ -8,7 +8,7 @@ import { ParseExtendedConfig } from "../../tsoptions/tsconfigparsing.js";
 import type { Path } from "../../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"1b52b82667615aefc15acf9d7aa6dbe59c12376e0718375a18c85e3a9f6ade13","bodyHash":"16b956a0a6c87fb4d8a04cedc5d547a2e935e0ee4f0e23c018e9fd01ed1689f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"1b52b82667615aefc15acf9d7aa6dbe59c12376e0718375a18c85e3a9f6ade13"}
  *
  * Go source:
  * ExtendedConfigCache struct {
@@ -20,7 +20,7 @@ export interface ExtendedConfigCache {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::type::extendedConfigCacheEntry","kind":"type","status":"implemented","sigHash":"33a3944620d039898ebd8313ee2d0cb396b0ab0d9619ccba4171a54509d2a8ab","bodyHash":"5ce44b7f0e315e1081d9bdf8aa47d454ecc9782902b2bc261033f4c9ec2c07dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::type::extendedConfigCacheEntry","kind":"type","status":"implemented","sigHash":"33a3944620d039898ebd8313ee2d0cb396b0ab0d9619ccba4171a54509d2a8ab"}
  *
  * Go source:
  * extendedConfigCacheEntry struct {
@@ -34,7 +34,7 @@ export interface extendedConfigCacheEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"432e0955e75e4de536c3dd0938aa4ffecd753ec31b3f156120e01786bfce3543"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ tsoptions.ExtendedConfigCache = (*ExtendedConfigCache)(nil)
@@ -49,7 +49,7 @@ export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::method::ExtendedConfigCache.GetExtendedConfig","kind":"method","status":"implemented","sigHash":"8e57132a1193eeffdb2a9ec5d5afe5e80ec35eec864063ee085f3613b4e87015","bodyHash":"e3c5e1e9c0eeb39d38c8e2f90c2dd976f7810d53798257858b0fc2a10092f8a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::method::ExtendedConfigCache.GetExtendedConfig","kind":"method","status":"implemented","sigHash":"8e57132a1193eeffdb2a9ec5d5afe5e80ec35eec864063ee085f3613b4e87015"}
  *
  * Go source:
  * func (e *ExtendedConfigCache) GetExtendedConfig(fileName string, path tspath.Path, resolutionStack []tspath.Path, host tsoptions.ParseConfigHost) *tsoptions.ExtendedConfigCacheEntry {
@@ -74,7 +74,7 @@ export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedCo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::method::ExtendedConfigCache.loadOrStoreNewLockedEntry","kind":"method","status":"implemented","sigHash":"ab2e292ce94004a8cf826497b03adb48e3f1dfca4ed7e0ae01cff17354af5869","bodyHash":"e75a005fa9ff77f0b0a6d9a52f457bfb46a548c53a75b7af3af866f17b24a793"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::method::ExtendedConfigCache.loadOrStoreNewLockedEntry","kind":"method","status":"implemented","sigHash":"ab2e292ce94004a8cf826497b03adb48e3f1dfca4ed7e0ae01cff17354af5869"}
  *
  * Go source:
  * func (c *ExtendedConfigCache) loadOrStoreNewLockedEntry(path tspath.Path) (*extendedConfigCacheEntry, bool) {

@@ -53,7 +53,7 @@ import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, File
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"31f6da710657a6cf30883c75b819cbb029dc74228219b5ef999776b1d3e26e59","bodyHash":"b514029a6cc46f502243219e2a3c85568fca34dadd062aa2a02a0ca0bd34f46e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"31f6da710657a6cf30883c75b819cbb029dc74228219b5ef999776b1d3e26e59"}
  *
  * Go source:
  * emitUpdate struct {
@@ -69,7 +69,7 @@ export interface emitUpdate {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitFilesHandler","kind":"type","status":"implemented","sigHash":"641c2242c0bbd61cdb0125738752919a03f29a2aac06b2b5b4ecb8b86fb70512","bodyHash":"bdf74c91c73866c87bf90476ae3ad5ca75eaaa2313a1e5c68c36fee7ab3d7ac9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitFilesHandler","kind":"type","status":"implemented","sigHash":"641c2242c0bbd61cdb0125738752919a03f29a2aac06b2b5b4ecb8b86fb70512"}
  *
  * Go source:
  * emitFilesHandler struct {
@@ -97,7 +97,7 @@ export interface emitFilesHandler {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.getPendingEmitKindForEmitOptions","kind":"method","status":"implemented","sigHash":"71c9abb4f704230ce9d3c421d06aa0d99ac298d12e7907d3329ea0a88908d317","bodyHash":"3d49e0d4497061ea11daa73eae97d477b4074505ad087d3ea48b7fa59a1f8eac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.getPendingEmitKindForEmitOptions","kind":"method","status":"implemented","sigHash":"71c9abb4f704230ce9d3c421d06aa0d99ac298d12e7907d3329ea0a88908d317"}
  *
  * Go source:
  * func (h *emitFilesHandler) getPendingEmitKindForEmitOptions(emitKind FileEmitKind, options compiler.EmitOptions) FileEmitKind {
@@ -123,7 +123,7 @@ export function emitFilesHandler_getPendingEmitKindForEmitOptions(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitAllAffectedFiles","kind":"method","status":"implemented","sigHash":"693a69404b60b64335936450eda86838aee783c76edccaaa2cc8f18ab1c3cccb","bodyHash":"dc0f0a41ddeab4c2ec59a3daef86d8cbe64c6df62a0f77cb343720fd97aeb9ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitAllAffectedFiles","kind":"method","status":"implemented","sigHash":"693a69404b60b64335936450eda86838aee783c76edccaaa2cc8f18ab1c3cccb"}
  *
  * Go source:
  * func (h *emitFilesHandler) emitAllAffectedFiles(options compiler.EmitOptions) *compiler.EmitResult {
@@ -224,7 +224,7 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.updateHasEmitDiagnostics","kind":"method","status":"implemented","sigHash":"7343a65eab3249e36bd520e46203928833f0c161ed8bd40cea32080b64304654","bodyHash":"7e480667ab6b0b1dc78e8d7baec97e26289d08271bdd0cd4c9363ee0ca402c61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.updateHasEmitDiagnostics","kind":"method","status":"implemented","sigHash":"7343a65eab3249e36bd520e46203928833f0c161ed8bd40cea32080b64304654"}
  *
  * Go source:
  * func (h *emitFilesHandler) updateHasEmitDiagnostics(result *compiler.EmitResult) {
@@ -240,7 +240,7 @@ export function emitFilesHandler_updateHasEmitDiagnostics(receiver: GoPtr<emitFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitBuildInfo","kind":"method","status":"implemented","sigHash":"209c276792f309f9dfedac0aea3a67dbe60ffc14f2c4c6bf3c152d3bc132b865","bodyHash":"2901ec246aaddc2c722cff94145ce00e31abae529fc54cdc875e1cda04798333"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitBuildInfo","kind":"method","status":"implemented","sigHash":"209c276792f309f9dfedac0aea3a67dbe60ffc14f2c4c6bf3c152d3bc132b865"}
  *
  * Go source:
  * func (h *emitFilesHandler) emitBuildInfo(options compiler.EmitOptions, result *compiler.EmitResult) {
@@ -260,7 +260,7 @@ export function emitFilesHandler_emitBuildInfo(receiver: GoPtr<emitFilesHandler>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitFilesIncremental","kind":"method","status":"implemented","sigHash":"84b023c59ee6b24b6903d5f902f6a8d8418707943db49df2b2165ff38b473ce5","bodyHash":"0cadfad93b339fda2effedbc80aa76c359490bc20a9f9e6fc85a4745e607eca2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.emitFilesIncremental","kind":"method","status":"implemented","sigHash":"84b023c59ee6b24b6903d5f902f6a8d8418707943db49df2b2165ff38b473ce5"}
  *
  * Go source:
  * func (h *emitFilesHandler) emitFilesIncremental(options compiler.EmitOptions) []*compiler.EmitResult {
@@ -441,7 +441,7 @@ export function emitFilesHandler_emitFilesIncremental(receiver: GoPtr<emitFilesH
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.getEmitOptions","kind":"method","status":"implemented","sigHash":"633754844181eb4783be72fffe98840d53ba104a71987010466c99e25eb7e2b7","bodyHash":"89ed75dee539ff603df55777165c7bde3eeabd765562882b9ce06c9baa923490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.getEmitOptions","kind":"method","status":"implemented","sigHash":"633754844181eb4783be72fffe98840d53ba104a71987010466c99e25eb7e2b7"}
  *
  * Go source:
  * func (h *emitFilesHandler) getEmitOptions(options compiler.EmitOptions) compiler.EmitOptions {
@@ -545,7 +545,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.skipDtsOutputOfComposite","kind":"method","status":"implemented","sigHash":"7240360e91e809fc2ed741ce9ca6fe8e27683d21d8ab3947f0496fecd480c78a","bodyHash":"05ce1ca3e3dc9735d3c20a9fb97e6b901db45dec647c06ec9fdb4b7a7ae89707"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.skipDtsOutputOfComposite","kind":"method","status":"implemented","sigHash":"7240360e91e809fc2ed741ce9ca6fe8e27683d21d8ab3947f0496fecd480c78a"}
  *
  * Go source:
  * func (h *emitFilesHandler) skipDtsOutputOfComposite(file *ast.SourceFile, outputFileName string, text string, data *compiler.WriteFileData, newSignature string, differsOnlyInMap *bool) bool {
@@ -620,7 +620,7 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.updateSnapshot","kind":"method","status":"implemented","sigHash":"d746a8744172bdd615efa10298af1a71a60321eb4d38fb478c2e861093f54551","bodyHash":"c16c104bcdb1f2e01fd684c072d2953351f7faa5da996453390ad740f809fca9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::method::emitFilesHandler.updateSnapshot","kind":"method","status":"implemented","sigHash":"d746a8744172bdd615efa10298af1a71a60321eb4d38fb478c2e861093f54551"}
  *
  * Go source:
  * func (h *emitFilesHandler) updateSnapshot() []*compiler.EmitResult {
@@ -761,7 +761,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::func::emitFiles","kind":"func","status":"implemented","sigHash":"075ee0bdedb2935bed38f8f79ff52b742ca43133b48bac8676c4b36dde01a7d8","bodyHash":"c9ac4fdcb7350b5da041aaad9e7d300338617dc78e4dcfa8259cff7200506b59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::func::emitFiles","kind":"func","status":"implemented","sigHash":"075ee0bdedb2935bed38f8f79ff52b742ca43133b48bac8676c4b36dde01a7d8"}
  *
  * Go source:
  * func emitFiles(ctx context.Context, program *Program, options compiler.EmitOptions, isForDtsErrors bool) *compiler.EmitResult {

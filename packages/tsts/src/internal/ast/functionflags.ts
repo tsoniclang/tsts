@@ -7,7 +7,7 @@ import { ModifierFlagsAsync } from "./modifierflags.js";
 import { HasSyntacticModifier } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::type::FunctionFlags","kind":"type","status":"implemented","sigHash":"ad2a4b940b1e5651fc938d16a803f2cce0d2eab389ccc956b19be9af960624bd","bodyHash":"e25f657560858fec2beb1c2b5a90b43445f28c936d70ad4cf8d406bfc0211079"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::type::FunctionFlags","kind":"type","status":"implemented","sigHash":"ad2a4b940b1e5651fc938d16a803f2cce0d2eab389ccc956b19be9af960624bd"}
  *
  * Go source:
  * FunctionFlags uint32
@@ -15,7 +15,7 @@ import { HasSyntacticModifier } from "./utilities.js";
 export type FunctionFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::constGroup::FunctionFlagsNormal+FunctionFlagsGenerator+FunctionFlagsAsync+FunctionFlagsInvalid+FunctionFlagsAsyncGenerator","kind":"constGroup","status":"implemented","sigHash":"36408568466780a8965ed541ad519fce884d222c21ef20ab21dc183c408dc5e6","bodyHash":"21c439a0fda25149ef7795ac581dfd5a9d9943f3096683c599eb5d2ea20f754a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::constGroup::FunctionFlagsNormal+FunctionFlagsGenerator+FunctionFlagsAsync+FunctionFlagsInvalid+FunctionFlagsAsyncGenerator","kind":"constGroup","status":"implemented","sigHash":"36408568466780a8965ed541ad519fce884d222c21ef20ab21dc183c408dc5e6"}
  *
  * Go source:
  * const (
@@ -33,7 +33,7 @@ export const FunctionFlagsInvalid: FunctionFlags = 1 << 2;
 export const FunctionFlagsAsyncGenerator: FunctionFlags = FunctionFlagsAsync | FunctionFlagsGenerator;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::func::GetFunctionFlags","kind":"func","status":"implemented","sigHash":"a00807b6371ab714f00d0abe6825c69e5724a2d81c0f10fd6978b964b6277e68","bodyHash":"79ef5ff003ff4dddad67958efb705c62428f60ec5ec4d17dc840afa506731e0a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/functionflags.go::func::GetFunctionFlags","kind":"func","status":"implemented","sigHash":"a00807b6371ab714f00d0abe6825c69e5724a2d81c0f10fd6978b964b6277e68"}
  *
  * Go source:
  * func GetFunctionFlags(node *Node) FunctionFlags {

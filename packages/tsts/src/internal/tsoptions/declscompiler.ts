@@ -23,7 +23,7 @@ import type { CommandLineOption } from "./commandlineoption.js";
 
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"13c9568bcd832d79be6deb0428dad16819ed913e5ca1740d1c9811ec04b9d830","bodyHash":"250634e4ab39e833a421c31ec41040c09200eb172d38f436f33829244ceebbb1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"13c9568bcd832d79be6deb0428dad16819ed913e5ca1740d1c9811ec04b9d830"}
  *
  * Go source:
  * var OptionsDeclarations = slices.Concat(commonOptionsWithBuild, optionsForCompiler)
@@ -34,7 +34,7 @@ import type { CommandLineOption } from "./commandlineoption.js";
 export let OptionsDeclarations: GoSlice<GoPtr<CommandLineOption>> = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::commonOptionsWithBuild","kind":"varGroup","status":"implemented","sigHash":"2c17198da8a392c5648ccb2c395f017b90231ded77bd50210550ea220477854b","bodyHash":"f160ff5b514596093f18a27bc5cc6acf24c64dcdae1099e5513290d1b094cc28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::commonOptionsWithBuild","kind":"varGroup","status":"implemented","sigHash":"2c17198da8a392c5648ccb2c395f017b90231ded77bd50210550ea220477854b"}
  *
  * Go source:
  * var commonOptionsWithBuild = []*CommandLineOption{
@@ -522,7 +522,7 @@ export let commonOptionsWithBuild: GoSlice<GoPtr<CommandLineOption>> = [
 ];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsForCompiler","kind":"varGroup","status":"implemented","sigHash":"fa4bb14e8d99112772f4e0b52ac9a7c0a496523ef68f5707540008ac53356a71","bodyHash":"2ec3d10dffaaa980a091340cb0d53a1b89dca6c6f4f325c7ebe0a79c9d0e983b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsForCompiler","kind":"varGroup","status":"implemented","sigHash":"fa4bb14e8d99112772f4e0b52ac9a7c0a496523ef68f5707540008ac53356a71"}
  *
  * Go source:
  * var optionsForCompiler = []*CommandLineOption{
@@ -2426,7 +2426,7 @@ export let optionsForCompiler: GoSlice<GoPtr<CommandLineOption>> = [
 OptionsDeclarations = Concat(commonOptionsWithBuild, optionsForCompiler);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4","bodyHash":"b13bc69109aed716705453512dcfaaa3ee67c6aad075f6d70f0be54c1f4ba73f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4"}
  *
  * Go source:
  * var optionsType = reflect.TypeFor[core.CompilerOptions]()
@@ -2435,7 +2435,7 @@ export let optionsType: Type = reflect_TypeFor<CompilerOptions>();
 const compilerOptionFieldMap: ReadonlyMap<string, GoPtr<CommandLineOption>> = buildCompilerOptionFieldMap();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::optionsHaveChanges","kind":"func","status":"implemented","sigHash":"8f8f7713f04420647b7a1527c6c51ba7240f567a9749f7e8dd55855f20013b78","bodyHash":"348d3e9cc9eddf323b8cd92d8978c61042f5c378c468e2405af468d846b6d020"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::optionsHaveChanges","kind":"func","status":"implemented","sigHash":"8f8f7713f04420647b7a1527c6c51ba7240f567a9749f7e8dd55855f20013b78"}
  *
  * Go source:
  * func optionsHaveChanges(oldOptions *core.CompilerOptions, newOptions *core.CompilerOptions, declFilter func(*CommandLineOption) bool) bool {
@@ -2481,7 +2481,7 @@ export function optionsHaveChanges(oldOptions: GoPtr<CompilerOptions>, newOption
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::ForEachCompilerOptionValue","kind":"func","status":"implemented","sigHash":"92b8bca505ce1ea2d8828aff5574d9575b28bfba99b5fb3b9577a2cdf066367f","bodyHash":"be4dd049b46c7ea416c9d998e55ed8d32f0009e7247b3ee1f8c5bcb314ce2ef9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::ForEachCompilerOptionValue","kind":"func","status":"implemented","sigHash":"92b8bca505ce1ea2d8828aff5574d9575b28bfba99b5fb3b9577a2cdf066367f"}
  *
  * Go source:
  * func ForEachCompilerOptionValue(options *core.CompilerOptions, declFilter func(*CommandLineOption) bool, fn func(option *CommandLineOption, value reflect.Value, i int) bool) bool {
@@ -2518,7 +2518,7 @@ export function ForEachCompilerOptionValue(options: GoPtr<CompilerOptions>, decl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectSemanticDiagnostics","kind":"func","status":"implemented","sigHash":"1826ecc157f3ff1ce7bc4ac0796460a2f99c10e0b8746910d415b33928227632","bodyHash":"ad78d2d224f2d1c43fffaa7d5e4e51eed27761ab415802365ad583e3ce8efa34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectSemanticDiagnostics","kind":"func","status":"implemented","sigHash":"1826ecc157f3ff1ce7bc4ac0796460a2f99c10e0b8746910d415b33928227632"}
  *
  * Go source:
  * func CompilerOptionsAffectSemanticDiagnostics(
@@ -2535,7 +2535,7 @@ export function CompilerOptionsAffectSemanticDiagnostics(oldOptions: GoPtr<Compi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectDeclarationPath","kind":"func","status":"implemented","sigHash":"589d73a3730301685b5684d38c58d5449af1ea447ea79e39570217be465f7593","bodyHash":"421d3ab13485658a6200b877acf024eb0fbf1ef152abaad2d4f07a1e42871320"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectDeclarationPath","kind":"func","status":"implemented","sigHash":"589d73a3730301685b5684d38c58d5449af1ea447ea79e39570217be465f7593"}
  *
  * Go source:
  * func CompilerOptionsAffectDeclarationPath(
@@ -2552,7 +2552,7 @@ export function CompilerOptionsAffectDeclarationPath(oldOptions: GoPtr<CompilerO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectEmit","kind":"func","status":"implemented","sigHash":"a1bdd4a65f865bb208842a8f1ba8b1b3aeac5f1987cba3a1709b5f6398bec549","bodyHash":"83b1296cba121d21086449e447e5d90b3e58776479c2825bb1029c820487ca25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::func::CompilerOptionsAffectEmit","kind":"func","status":"implemented","sigHash":"a1bdd4a65f865bb208842a8f1ba8b1b3aeac5f1987cba3a1709b5f6398bec549"}
  *
  * Go source:
  * func CompilerOptionsAffectEmit(oldOptions *core.CompilerOptions, newOptions *core.CompilerOptions) bool {

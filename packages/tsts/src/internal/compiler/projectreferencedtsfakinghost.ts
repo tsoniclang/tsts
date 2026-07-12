@@ -33,7 +33,7 @@ import {
 } from "./projectreferencefilemapper.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingHost","kind":"type","status":"implemented","sigHash":"99a59785b073b41d30212b9f83c4afba08c180bd8b61ba139673f890dfe7054d","bodyHash":"0a74f14d6611f9a4617321f7aa2f3e0eed6b114afb055660222a8547f1901867"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingHost","kind":"type","status":"implemented","sigHash":"99a59785b073b41d30212b9f83c4afba08c180bd8b61ba139673f890dfe7054d"}
  *
  * Go source:
  * projectReferenceDtsFakingHost struct {
@@ -47,7 +47,7 @@ export interface projectReferenceDtsFakingHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"1cef503f05dfcffb796e2ef6587f72aba4cfd076455a452610e42da898746249"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ module.ResolutionHost = (*projectReferenceDtsFakingHost)(nil)
@@ -62,7 +62,7 @@ export function projectReferenceDtsFakingHost_as_module_ResolutionHost(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::func::newProjectReferenceDtsFakingHost","kind":"func","status":"implemented","sigHash":"4729644a2e27a6113e16ed92d375b4bb743e69147d5a180f71446f8e22512ce6","bodyHash":"fb845c84f6f3d6b6531115a99968c587b1da976c9f7b028ac071d6bc23ef7c60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::func::newProjectReferenceDtsFakingHost","kind":"func","status":"implemented","sigHash":"4729644a2e27a6113e16ed92d375b4bb743e69147d5a180f71446f8e22512ce6"}
  *
  * Go source:
  * func newProjectReferenceDtsFakingHost(loader *fileLoader) module.ResolutionHost {
@@ -99,7 +99,7 @@ export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): Res
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingHost.FS","kind":"method","status":"implemented","sigHash":"0a19f206431dabeed665e48b50af6e35976d660ca595c7857208bfbace4be30a","bodyHash":"f9a74a07bdea00d4c9cf09d56a61400e86592e5985ea4a3c2fb567886ccdbff7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingHost.FS","kind":"method","status":"implemented","sigHash":"0a19f206431dabeed665e48b50af6e35976d660ca595c7857208bfbace4be30a"}
  *
  * Go source:
  * func (h *projectReferenceDtsFakingHost) FS() vfs.FS {
@@ -111,7 +111,7 @@ export function projectReferenceDtsFakingHost_FS(receiver: GoPtr<projectReferenc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingHost.GetCurrentDirectory","kind":"method","status":"implemented","sigHash":"d840f402b061850b65ae141431dd3121adb67b4182f1f4c6eee0d9d2d086845c","bodyHash":"b80ed5cf1fab63dbf418ba0f7a33b9c14ee33d2fd734ce5b03486fb6853305f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingHost.GetCurrentDirectory","kind":"method","status":"implemented","sigHash":"d840f402b061850b65ae141431dd3121adb67b4182f1f4c6eee0d9d2d086845c"}
  *
  * Go source:
  * func (h *projectReferenceDtsFakingHost) GetCurrentDirectory() string {
@@ -123,7 +123,7 @@ export function projectReferenceDtsFakingHost_GetCurrentDirectory(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingVfs","kind":"type","status":"implemented","sigHash":"0dc96e6b8608ebbcec0e98108f04fb3157bb0b34edd29bd8809bd1cc8220d29c","bodyHash":"89a8f4525d10411227ce22b5aa444b49bab73cec93a68f4d7d3a4252a71148f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingVfs","kind":"type","status":"implemented","sigHash":"0dc96e6b8608ebbcec0e98108f04fb3157bb0b34edd29bd8809bd1cc8220d29c"}
  *
  * Go source:
  * projectReferenceDtsFakingVfs struct {
@@ -139,7 +139,7 @@ export interface projectReferenceDtsFakingVfs {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"ec4db191ffd6c018fdababeedd9f0a8b4d994ae42c3cfb70fc410966dfd0d21b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ vfs.FS = (*projectReferenceDtsFakingVfs)(nil)
@@ -164,7 +164,7 @@ export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"8af5ab81dae25f2eef6026113bd0204057925d04b33c1ae5c645d486b6933456","bodyHash":"ca477bdeb90ea815faee2d7587e38d1246933170e6ece26398781eebdf7606f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"8af5ab81dae25f2eef6026113bd0204057925d04b33c1ae5c645d486b6933456"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) UseCaseSensitiveFileNames() bool {
@@ -176,7 +176,7 @@ export function projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.FileExists","kind":"method","status":"implemented","sigHash":"dd85faa29af68fca5ddc21c11a07b033a2df11b212db731abf9bf6f0251c5a96","bodyHash":"2c32074c469dc1923264a7d1340dad245256348a5a3d5f04a70783dfc276960a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.FileExists","kind":"method","status":"implemented","sigHash":"dd85faa29af68fca5ddc21c11a07b033a2df11b212db731abf9bf6f0251c5a96"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) FileExists(path string) bool {
@@ -202,7 +202,7 @@ export function projectReferenceDtsFakingVfs_FileExists(receiver: GoPtr<projectR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.ReadFile","kind":"method","status":"implemented","sigHash":"5cd4a0451ceaefd606cbb2432d4671cd1123a6bc7b43b476da2a7740798a24e0","bodyHash":"53cebd89d8c625918c2279cef8ba0e4d152559111ceb753c58828ed149ea3608"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.ReadFile","kind":"method","status":"implemented","sigHash":"5cd4a0451ceaefd606cbb2432d4671cd1123a6bc7b43b476da2a7740798a24e0"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) ReadFile(path string) (contents string, ok bool) {
@@ -216,7 +216,7 @@ export function projectReferenceDtsFakingVfs_ReadFile(receiver: GoPtr<projectRef
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.WriteFile","kind":"method","status":"implemented","sigHash":"750904321c8162e6acd92661bf01a4cd28d16ca1108e083eb63ed8bbd22f1391","bodyHash":"436fb58a1b389e46e3ac2260944639febf957b342770bf7ec4f1ad0472a6e691"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.WriteFile","kind":"method","status":"implemented","sigHash":"750904321c8162e6acd92661bf01a4cd28d16ca1108e083eb63ed8bbd22f1391"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) WriteFile(path string, data string) error {
@@ -228,7 +228,7 @@ export function projectReferenceDtsFakingVfs_WriteFile(receiver: GoPtr<projectRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.AppendFile","kind":"method","status":"implemented","sigHash":"f71e26bbe11a85cedca4875f3e07a36eff3afac9f5c9d69d0097287a23df271a","bodyHash":"f5e4c3da0590ef965b04cf6eb0928503e0a2b79965c25cd662670932501d1645"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.AppendFile","kind":"method","status":"implemented","sigHash":"f71e26bbe11a85cedca4875f3e07a36eff3afac9f5c9d69d0097287a23df271a"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) AppendFile(path string, data string) error {
@@ -240,7 +240,7 @@ export function projectReferenceDtsFakingVfs_AppendFile(receiver: GoPtr<projectR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Remove","kind":"method","status":"implemented","sigHash":"7657dc77aa5833b25969b54da649af55cf2267754bb264e2e090dfda2b745e95","bodyHash":"690e2b328837995e1eb983f66ff2557cfd96eb151d2b8c78cc9b9184e911b721"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Remove","kind":"method","status":"implemented","sigHash":"7657dc77aa5833b25969b54da649af55cf2267754bb264e2e090dfda2b745e95"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) Remove(path string) error {
@@ -252,7 +252,7 @@ export function projectReferenceDtsFakingVfs_Remove(receiver: GoPtr<projectRefer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Chtimes","kind":"method","status":"implemented","sigHash":"a1452aa883021503e0d82e4e62c838d362214da9224e1ebedcfca752b5ff04fa","bodyHash":"1a2cf522104f40641870aceb62d90880f980271553ca8601e54e795f14d8397e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Chtimes","kind":"method","status":"implemented","sigHash":"a1452aa883021503e0d82e4e62c838d362214da9224e1ebedcfca752b5ff04fa"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) Chtimes(path string, aTime time.Time, mTime time.Time) error {
@@ -264,7 +264,7 @@ export function projectReferenceDtsFakingVfs_Chtimes(receiver: GoPtr<projectRefe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.DirectoryExists","kind":"method","status":"implemented","sigHash":"264b608deae4a4e80d06de2e22c549a43cf87acd606b0509af36aa15e46b911c","bodyHash":"878f4bbd320307a3f79edb10900a53b16aaf6ae8ce7e33c4f009d5886823b6da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.DirectoryExists","kind":"method","status":"implemented","sigHash":"264b608deae4a4e80d06de2e22c549a43cf87acd606b0509af36aa15e46b911c"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) DirectoryExists(path string) bool {
@@ -284,7 +284,7 @@ export function projectReferenceDtsFakingVfs_DirectoryExists(receiver: GoPtr<pro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"f196a731dd4203c982755968e7a27fa72b847c534095403def64a7ebd2cfa8f8","bodyHash":"82b45572cb6839a7865636e6c781192c3274d25bbda55121b639546d95c21cba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"f196a731dd4203c982755968e7a27fa72b847c534095403def64a7ebd2cfa8f8"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) GetAccessibleEntries(path string) vfs.Entries {
@@ -296,7 +296,7 @@ export function projectReferenceDtsFakingVfs_GetAccessibleEntries(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Stat","kind":"method","status":"implemented","sigHash":"f930f0d78fee817b6c00120721634c280d595206a11c63708f4175c74ae9ae34","bodyHash":"80ae5f19b1d4f340ec5292aae1cc17439db8eb6d5324811764b588eba21ff1cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Stat","kind":"method","status":"implemented","sigHash":"f930f0d78fee817b6c00120721634c280d595206a11c63708f4175c74ae9ae34"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) Stat(path string) vfs.FileInfo {
@@ -308,7 +308,7 @@ export function projectReferenceDtsFakingVfs_Stat(receiver: GoPtr<projectReferen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.WalkDir","kind":"method","status":"implemented","sigHash":"024439ce5ae380ece225e7c5b5ca167ff4257409a82f5e56a82baf136d5f5033","bodyHash":"a6567fc32ce90ad582abba529fef6130c593823d3526373b18c4bdcd8481b3bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.WalkDir","kind":"method","status":"implemented","sigHash":"024439ce5ae380ece225e7c5b5ca167ff4257409a82f5e56a82baf136d5f5033"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
@@ -320,7 +320,7 @@ export function projectReferenceDtsFakingVfs_WalkDir(receiver: GoPtr<projectRefe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Realpath","kind":"method","status":"implemented","sigHash":"dbe1b71fba9a21233841c674785c5289a935dd87bbadda3ae10e636502fb767d","bodyHash":"cc1aa4cf8a56fe8c697d62da5f73d904407685bde9f6a2ea9647b4cd7652ebbd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.Realpath","kind":"method","status":"implemented","sigHash":"dbe1b71fba9a21233841c674785c5289a935dd87bbadda3ae10e636502fb767d"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) Realpath(path string) string {
@@ -341,7 +341,7 @@ export function projectReferenceDtsFakingVfs_Realpath(receiver: GoPtr<projectRef
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.toPath","kind":"method","status":"implemented","sigHash":"485b44d12ff16c1f0db96cce95a6a54ce823efb644ac83869aab47d762a804be","bodyHash":"d38c2bdf23abc71563253ba4f173a0bb48616775e730ae6c487dd08af73e0df3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.toPath","kind":"method","status":"implemented","sigHash":"485b44d12ff16c1f0db96cce95a6a54ce823efb644ac83869aab47d762a804be"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) toPath(path string) tspath.Path {
@@ -353,7 +353,7 @@ export function projectReferenceDtsFakingVfs_toPath(receiver: GoPtr<projectRefer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.handleDirectoryCouldBeSymlink","kind":"method","status":"implemented","sigHash":"a733ee074a3635cfbc7951db675ce52ff5fa0386086af122eb5cf2e19c1d222a","bodyHash":"f31d71adea6b74ae543e0acf8c98d0f19b229910433e3e1304e862ad13c35fd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.handleDirectoryCouldBeSymlink","kind":"method","status":"implemented","sigHash":"a733ee074a3635cfbc7951db675ce52ff5fa0386086af122eb5cf2e19c1d222a"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) handleDirectoryCouldBeSymlink(directory string) {
@@ -421,7 +421,7 @@ export function projectReferenceDtsFakingVfs_handleDirectoryCouldBeSymlink(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileOrDirectoryExistsUsingSource","kind":"method","status":"implemented","sigHash":"1bf711f3786a780f72535cded662a9497e16a8b70f0cf9ec20baf52f3a4c8449","bodyHash":"8a53d725807e92eb4c163a9f57caa1361bb5f4e0899c617ffe3f1f8afde7aca3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileOrDirectoryExistsUsingSource","kind":"method","status":"implemented","sigHash":"1bf711f3786a780f72535cded662a9497e16a8b70f0cf9ec20baf52f3a4c8449"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) fileOrDirectoryExistsUsingSource(fileOrDirectory string, isFile bool) bool {
@@ -525,7 +525,7 @@ export function projectReferenceDtsFakingVfs_fileOrDirectoryExistsUsingSource(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileExistsIfProjectReferenceDts","kind":"method","status":"implemented","sigHash":"fe737e70a5ca94667b7177ca80a4a9fae2ab8882bf8563df6ab06ffa19b1d1ae","bodyHash":"88635f86d0d1d1af200b4540556639d3db9805f6253ce5ab35cf1b1c39ace70b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.fileExistsIfProjectReferenceDts","kind":"method","status":"implemented","sigHash":"fe737e70a5ca94667b7177ca80a4a9fae2ab8882bf8563df6ab06ffa19b1d1ae"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) fileExistsIfProjectReferenceDts(file string) core.Tristate {
@@ -545,7 +545,7 @@ export function projectReferenceDtsFakingVfs_fileExistsIfProjectReferenceDts(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.directoryExistsIfProjectReferenceDeclDir","kind":"method","status":"implemented","sigHash":"f32d392dae9d3de1c29669b38b65b363fa4617e62232a635e3f08e61a1035496","bodyHash":"96218a003e900f259218e21482984115694efe8c335a7ed141bb5c10a4a71425"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.directoryExistsIfProjectReferenceDeclDir","kind":"method","status":"implemented","sigHash":"f32d392dae9d3de1c29669b38b65b363fa4617e62232a635e3f08e61a1035496"}
  *
  * Go source:
  * func (fs *projectReferenceDtsFakingVfs) directoryExistsIfProjectReferenceDeclDir(dir string) core.Tristate {

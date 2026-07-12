@@ -56,7 +56,7 @@ import { ExtensionJson } from "../tspath/extension.js";
 import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"1958d246a44daf492c65aec0fb6b1cf3442407dc6463b06769a367a0c26e08ff","bodyHash":"0c69bbca4873981b8ee4a7bb25a2066b98a917dfd9499551f3df14e6760e7c67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::EmitOnly","kind":"type","status":"implemented","sigHash":"1958d246a44daf492c65aec0fb6b1cf3442407dc6463b06769a367a0c26e08ff"}
  *
  * Go source:
  * EmitOnly byte
@@ -64,7 +64,7 @@ import { EncodeURI, AddUTF8ByteOrderMark } from "../stringutil/util.js";
 export type EmitOnly = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::constGroup::EmitAll+EmitOnlyJs+EmitOnlyDts+EmitOnlyForcedDts","kind":"constGroup","status":"implemented","sigHash":"af569816f62f664fc9a4574da2e01107440b04234f2882eb1b60a90f3e23bee2","bodyHash":"46862dcc306e15ddbf5c6c7480a2b0376ac0561e06341b412deae4ec82385137"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::constGroup::EmitAll+EmitOnlyJs+EmitOnlyDts+EmitOnlyForcedDts","kind":"constGroup","status":"implemented","sigHash":"af569816f62f664fc9a4574da2e01107440b04234f2882eb1b60a90f3e23bee2"}
  *
  * Go source:
  * const (
@@ -80,7 +80,7 @@ export const EmitOnlyDts: EmitOnly = 2;
 export const EmitOnlyForcedDts: EmitOnly = 3;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::emitter","kind":"type","status":"implemented","sigHash":"454673fa184afd6cc516ef23c6f14be2056fde32c5285194140584c8d2a3f1d9","bodyHash":"c0c17e1e1093155fed2b36136c3f63b4451e74b2627fb3a8d664b62615e55a2a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::emitter","kind":"type","status":"implemented","sigHash":"454673fa184afd6cc516ef23c6f14be2056fde32c5285194140584c8d2a3f1d9"}
  *
  * Go source:
  * emitter struct {
@@ -108,7 +108,7 @@ export interface emitter {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emit","kind":"method","status":"implemented","sigHash":"0c7c66cc05bd2f2c7ecc6cccbdddbe41483897a5e3bb4b485c80e447f16f22fe","bodyHash":"97fd61a75ce72765ab2f44eb59e0af574ed303fbbad47b041152085ca1b3e85d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emit","kind":"method","status":"implemented","sigHash":"0c7c66cc05bd2f2c7ecc6cccbdddbe41483897a5e3bb4b485c80e447f16f22fe"}
  *
  * Go source:
  * func (e *emitter) emit() {
@@ -136,7 +136,7 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getDeclarationTransformers","kind":"method","status":"implemented","sigHash":"f61988fe726112c0a0cda088a6e24b6d791d9debc7ece7d7e9030abaa09fce49","bodyHash":"1d0ea39aefc946443843195c57f2462c1198de6666641532538a5d5ba223b82d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getDeclarationTransformers","kind":"method","status":"implemented","sigHash":"f61988fe726112c0a0cda088a6e24b6d791d9debc7ece7d7e9030abaa09fce49"}
  *
  * Go source:
  * func (e *emitter) getDeclarationTransformers(emitContext *printer.EmitContext, declarationFilePath string, declarationMapPath string) []*declarations.DeclarationTransformer {
@@ -151,7 +151,7 @@ export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.runScriptTransformers","kind":"method","status":"implemented","sigHash":"4ac8779ee086685c0955fb283f4e994ab17295f4132baa376fb8df914733cc5e","bodyHash":"ede515a30b656f36776f9417047dbe60b4995c49009a9f5a2a8bcb400069dd3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.runScriptTransformers","kind":"method","status":"implemented","sigHash":"4ac8779ee086685c0955fb283f4e994ab17295f4132baa376fb8df914733cc5e"}
  *
  * Go source:
  * func (e *emitter) runScriptTransformers(emitContext *printer.EmitContext, sourceFile *ast.SourceFile) *ast.SourceFile {
@@ -182,7 +182,7 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.runDeclarationTransformers","kind":"method","status":"implemented","sigHash":"ee77c7dc30add2b807bb8fd1717ad9bfb88c8848802128f762cc14fd56cb430d","bodyHash":"a7335ea41618bd76bd32e530b057b92bfbfef2a0e28dbcea835fe9e30b39d267"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.runDeclarationTransformers","kind":"method","status":"implemented","sigHash":"ee77c7dc30add2b807bb8fd1717ad9bfb88c8848802128f762cc14fd56cb430d"}
  *
  * Go source:
  * func (e *emitter) runDeclarationTransformers(emitContext *printer.EmitContext, sourceFile *ast.SourceFile, declarationFilePath, declarationMapPath string) (*ast.SourceFile, []*ast.Diagnostic) {
@@ -217,7 +217,7 @@ export function emitter_runDeclarationTransformers(receiver: GoPtr<emitter>, emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getModuleTransformer","kind":"func","status":"implemented","sigHash":"9b7f759fe1a0490c1beff7b562486af6a7d9ab85991b7a8fbbe2e259dc285744","bodyHash":"51c8389a4e1524fd75ce38060ff96efff5b9d3580916c26a7eb18654e47baa33"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getModuleTransformer","kind":"func","status":"implemented","sigHash":"9b7f759fe1a0490c1beff7b562486af6a7d9ab85991b7a8fbbe2e259dc285744"}
  *
  * Go source:
  * func getModuleTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -265,7 +265,7 @@ export function getModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Trans
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getScriptTransformers","kind":"func","status":"implemented","sigHash":"6434cac1fca3cba843a83cdc6ecd9d1b1b9b7373f82be41ce7193c133fc01c1e","bodyHash":"09f63cd5016acf0d9166879de5e05b0596a5e50860f14c84916626fefbed9d6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getScriptTransformers","kind":"func","status":"implemented","sigHash":"6434cac1fca3cba843a83cdc6ecd9d1b1b9b7373f82be41ce7193c133fc01c1e"}
  *
  * Go source:
  * func getScriptTransformers(emitContext *printer.EmitContext, host printer.EmitHost, sourceFile *ast.SourceFile) []*transformers.Transformer {
@@ -409,7 +409,7 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emitJSFile","kind":"method","status":"implemented","sigHash":"48c35cf58379c75d20e7027257a6c585c17e057a4d5b48b1afa70715d47a797a","bodyHash":"cd29496225758685c60205c2f1c09087ef053b50feb63e9eeade4b76d80a8566"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emitJSFile","kind":"method","status":"implemented","sigHash":"48c35cf58379c75d20e7027257a6c585c17e057a4d5b48b1afa70715d47a797a"}
  *
  * Go source:
  * func (e *emitter) emitJSFile(sourceFile *ast.SourceFile, jsFilePath string, sourceMapFilePath string) {
@@ -504,7 +504,7 @@ export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emitDeclarationFile","kind":"method","status":"implemented","sigHash":"6d491c974ae023bad1223b5e586fa4d1b7c289cd44aca89d4cf3e8eec522a18f","bodyHash":"c3551b193b04074a2d82589acf48aa745bd69532c686936b96bcc75c326d6eb1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.emitDeclarationFile","kind":"method","status":"implemented","sigHash":"6d491c974ae023bad1223b5e586fa4d1b7c289cd44aca89d4cf3e8eec522a18f"}
  *
  * Go source:
  * func (e *emitter) emitDeclarationFile(sourceFile *ast.SourceFile, declarationFilePath string, declarationMapPath string) {
@@ -638,7 +638,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.printSourceFile","kind":"method","status":"implemented","sigHash":"1420a7b2cd5e3740e34c3e43eaa1bc1efa6e2edce1d206f06670737feee6c758","bodyHash":"432b6266097dd9973560b9ce0ed09a0289c73909c5940392ca8d962bc9e9b102"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.printSourceFile","kind":"method","status":"implemented","sigHash":"1420a7b2cd5e3740e34c3e43eaa1bc1efa6e2edce1d206f06670737feee6c758"}
  *
  * Go source:
  * func (e *emitter) printSourceFile(jsFilePath string, sourceMapFilePath string, sourceFile *ast.SourceFile, printer_ *printer.Printer, mapOptions *core.CompilerOptions, shouldEmitSourceMaps bool) {
@@ -806,7 +806,7 @@ export function emitter_printSourceFile(receiver: GoPtr<emitter>, jsFilePath: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.writeText","kind":"method","status":"implemented","sigHash":"9aac04b1bbe12883854aeb318218ae862c3a628a81b257ff5997b30fd514bfe2","bodyHash":"4ed9f7731e85fe250661eac53be38cbf03842fbfd94c01fc172688dffe0baa54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.writeText","kind":"method","status":"implemented","sigHash":"9aac04b1bbe12883854aeb318218ae862c3a628a81b257ff5997b30fd514bfe2"}
  *
  * Go source:
  * func (e *emitter) writeText(fileName string, text string, data *WriteFileData) error {
@@ -825,7 +825,7 @@ export function emitter_writeText(receiver: GoPtr<emitter>, fileName: string, te
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::shouldEmitSourceMaps","kind":"func","status":"implemented","sigHash":"bdb653e6ca3d07136c362984a46dfb4482b1d6afea4822b56271536a7fc3579a","bodyHash":"174c9c32357b91a6b910888c4eedc6cae65d97ae9c49ef57e23c92f5607f8514"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::shouldEmitSourceMaps","kind":"func","status":"implemented","sigHash":"bdb653e6ca3d07136c362984a46dfb4482b1d6afea4822b56271536a7fc3579a"}
  *
  * Go source:
  * func shouldEmitSourceMaps(mapOptions *core.CompilerOptions, sourceFile *ast.SourceFile) bool {
@@ -839,7 +839,7 @@ export function shouldEmitSourceMaps(mapOptions: GoPtr<CompilerOptions>, sourceF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getSourceRoot","kind":"func","status":"implemented","sigHash":"4b3326ca6ab67a8b5b6006de83888c129f670bdb1a1e9560d7a58f83bc51849d","bodyHash":"64d136d9b52eae2574124190f98f9aa66e9cbe4d1191f9fe45cc16bab0d402a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getSourceRoot","kind":"func","status":"implemented","sigHash":"4b3326ca6ab67a8b5b6006de83888c129f670bdb1a1e9560d7a58f83bc51849d"}
  *
  * Go source:
  * func getSourceRoot(mapOptions *core.CompilerOptions) string {
@@ -863,7 +863,7 @@ export function getSourceRoot(mapOptions: GoPtr<CompilerOptions>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getSourceMapDirectory","kind":"method","status":"implemented","sigHash":"ea8428e7fd05d47526b6f8eddfdc651ebac2b12f7a458bce4379196355f6e79e","bodyHash":"e868f9321ad051ee1e35211287f5820dabd5773e6ca5efa0246e14a841a4c58b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getSourceMapDirectory","kind":"method","status":"implemented","sigHash":"ea8428e7fd05d47526b6f8eddfdc651ebac2b12f7a458bce4379196355f6e79e"}
  *
  * Go source:
  * func (e *emitter) getSourceMapDirectory(mapOptions *core.CompilerOptions, filePath string, sourceFile *ast.SourceFile) string {
@@ -920,7 +920,7 @@ export function emitter_getSourceMapDirectory(receiver: GoPtr<emitter>, mapOptio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getSourceMappingURL","kind":"method","status":"implemented","sigHash":"5256d3ad354dcf7ae3485c254ec9a120879e4785c8213f2fb0bfa53a353d99c4","bodyHash":"341c169861d8322dd18001280728587a7bc2ee4189d90762ff17837cbefda7ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::method::emitter.getSourceMappingURL","kind":"method","status":"implemented","sigHash":"5256d3ad354dcf7ae3485c254ec9a120879e4785c8213f2fb0bfa53a353d99c4"}
  *
  * Go source:
  * func (e *emitter) getSourceMappingURL(mapOptions *core.CompilerOptions, sourceMapGenerator *sourcemap.Generator, filePath string, sourceMapFilePath string, sourceFile *ast.SourceFile) string {
@@ -1007,7 +1007,7 @@ export function emitter_getSourceMappingURL(receiver: GoPtr<emitter>, mapOptions
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::SourceFileMayBeEmittedHost","kind":"type","status":"implemented","sigHash":"3234fb95de035e8140a4c0e6bc550036b5e6dce06888b191a2973d1e57e2f02b","bodyHash":"02eccd3d9ada9bcedde7e60d107ae713805b21eed3b1a0728307bc21227017b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::type::SourceFileMayBeEmittedHost","kind":"type","status":"implemented","sigHash":"3234fb95de035e8140a4c0e6bc550036b5e6dce06888b191a2973d1e57e2f02b"}
  *
  * Go source:
  * SourceFileMayBeEmittedHost interface {
@@ -1040,7 +1040,7 @@ export function EmitHost_as_emitter_SourceFileMayBeEmittedHost(receiver: EmitHos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::sourceFileMayBeEmitted","kind":"func","status":"implemented","sigHash":"d118009010869662095554f8b30ef9c13c4fe5ffeacba94989f117f844d4f559","bodyHash":"a3de80753eb2a856af8f019de9e7c5da784a223c6a9bc98daab001d42e8a306f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::sourceFileMayBeEmitted","kind":"func","status":"implemented","sigHash":"d118009010869662095554f8b30ef9c13c4fe5ffeacba94989f117f844d4f559"}
  *
  * Go source:
  * func sourceFileMayBeEmitted(sourceFile *ast.SourceFile, host SourceFileMayBeEmittedHost, forceDtsEmit bool) bool {
@@ -1154,7 +1154,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getSourceFilesToEmit","kind":"func","status":"implemented","sigHash":"5edceb1093bf34a3ab05e3852ba63ac3b274db891d0903a56ff02b0cd13c223f","bodyHash":"545d196a9cb86cc12878f08147673cbf642a8174a2915e1a28ecac8ef0d94ffb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getSourceFilesToEmit","kind":"func","status":"implemented","sigHash":"5edceb1093bf34a3ab05e3852ba63ac3b274db891d0903a56ff02b0cd13c223f"}
  *
  * Go source:
  * func getSourceFilesToEmit(host SourceFileMayBeEmittedHost, targetSourceFile *ast.SourceFile, forceDtsEmit bool) []*ast.SourceFile {
@@ -1182,7 +1182,7 @@ export function getSourceFilesToEmit(host: SourceFileMayBeEmittedHost, targetSou
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::isSourceFileNotJson","kind":"func","status":"implemented","sigHash":"450dcf9bc3ff6f1a0b2a1793149374cb79543a5c54cf0eb89a0b1359d9bf1dcb","bodyHash":"81ffe16f59ca6324407f03cd181b2f2dd11b23d03b6e46c6d95f2ede9fc56fb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::isSourceFileNotJson","kind":"func","status":"implemented","sigHash":"450dcf9bc3ff6f1a0b2a1793149374cb79543a5c54cf0eb89a0b1359d9bf1dcb"}
  *
  * Go source:
  * func isSourceFileNotJson(file *ast.SourceFile) bool {
@@ -1194,7 +1194,7 @@ export function isSourceFileNotJson(file: GoPtr<SourceFile>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getDeclarationDiagnostics","kind":"func","status":"implemented","sigHash":"89db86d46713a1be0836322521b8df64d17b4753cc5ea6b3caec1062d7c6eb32","bodyHash":"7c81f713a5cd3989dacc8fa87331982f14779f7552b41b71e4b862dad2f7b46c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::getDeclarationDiagnostics","kind":"func","status":"implemented","sigHash":"89db86d46713a1be0836322521b8df64d17b4753cc5ea6b3caec1062d7c6eb32"}
  *
  * Go source:
  * func getDeclarationDiagnostics(host EmitHost, file *ast.SourceFile) []*ast.Diagnostic {

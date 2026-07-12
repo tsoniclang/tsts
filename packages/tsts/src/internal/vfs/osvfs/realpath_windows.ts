@@ -3,7 +3,7 @@ import type { Handle } from "../../../go/golang.org/x/sys/windows.js";
 import * as nodeFs from "node:fs";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_windows.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721","bodyHash":"c6685bdb1c35701c8c4197feecd86a69e6eed5e8699e492c064c93b8c5e06ad9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_windows.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721"}
  *
  * Go source:
  * func realpath(path string) (string, error) {
@@ -68,7 +68,7 @@ export function realpath(path: string): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_windows.go::func::openMetadata","kind":"func","status":"implemented","sigHash":"aa6e140f5928eb206baa4f9223a2bfcda7c0aaa3d5b94f7e0c88f1a39e96e455","bodyHash":"44ec667118d3f6395aa38229790831db3f6e030485014cbd5509f86798cad518"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_windows.go::func::openMetadata","kind":"func","status":"implemented","sigHash":"aa6e140f5928eb206baa4f9223a2bfcda7c0aaa3d5b94f7e0c88f1a39e96e455"}
  *
  * Go source:
  * func openMetadata(path string) (windows.Handle, error) {

@@ -16,7 +16,7 @@ import { Checker_getTypeFromTypeNode, Checker_isArrayType } from "./checker/type
 import { entityNameToString } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::method::Checker.checkUnmatchedJSDocParameters","kind":"method","status":"implemented","sigHash":"2921bfbb0d5749e0b07664d20c5321dcdb700d68c9c0ee7ba882b0ad6f06011b","bodyHash":"e1f2c56a7992eece4ecfa071805cfc15413e41089116c5811606e3a7ef289f62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::method::Checker.checkUnmatchedJSDocParameters","kind":"method","status":"implemented","sigHash":"2921bfbb0d5749e0b07664d20c5321dcdb700d68c9c0ee7ba882b0ad6f06011b"}
  *
  * Go source:
  * func (c *Checker) checkUnmatchedJSDocParameters(node *ast.Node) {
@@ -179,7 +179,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags","kind":"func","status":"implemented","sigHash":"64e6a55ef6d0d498291e6a741c2d0231176ba9e6069c1771ce7875c29458684e","bodyHash":"d6ffeae36195eb45eee0b5ac8556d73b53e0677bc5936fa5d8ed17e446268912"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags","kind":"func","status":"implemented","sigHash":"64e6a55ef6d0d498291e6a741c2d0231176ba9e6069c1771ce7875c29458684e"}
  *
  * Go source:
  * func getAllJSDocTags(node *ast.Node) []*ast.Node {

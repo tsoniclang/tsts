@@ -15,7 +15,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::type::Pattern","kind":"type","status":"implemented","sigHash":"dd03a266349ffcf77c90546d0a6342b073443c33b70aa03df6d2d76f28737166","bodyHash":"5fd75a7ccfe7ddd30cc5a7bcc8d9b1201ccda54850f42e5a7c187db17951f7fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::type::Pattern","kind":"type","status":"implemented","sigHash":"dd03a266349ffcf77c90546d0a6342b073443c33b70aa03df6d2d76f28737166"}
  *
  * Go source:
  * Pattern struct {
@@ -29,7 +29,7 @@ export interface Pattern {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::TryParsePattern","kind":"func","status":"implemented","sigHash":"02725d3904ee7a8ca695073dcea673da0b21e54761ff7d0f241fa669d83b003d","bodyHash":"b2ae1e0a8f7cb3a2ec540050eb12483e73b523bb2304befb5c5b075b99176c3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::TryParsePattern","kind":"func","status":"implemented","sigHash":"02725d3904ee7a8ca695073dcea673da0b21e54761ff7d0f241fa669d83b003d"}
  *
  * Go source:
  * func TryParsePattern(pattern string) Pattern {
@@ -49,7 +49,7 @@ export function TryParsePattern(pattern: string): Pattern {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.IsValid","kind":"method","status":"implemented","sigHash":"2a53381f9e629d07c93e254ff97380fa4001e02d13cde6d16c96e35cb6458070","bodyHash":"30e8f5fdea9f2df45be4676fd8157ff1fd8de602cd12cd217bc79e701ffce50c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.IsValid","kind":"method","status":"implemented","sigHash":"2a53381f9e629d07c93e254ff97380fa4001e02d13cde6d16c96e35cb6458070"}
  *
  * Go source:
  * func (p *Pattern) IsValid() bool {
@@ -62,7 +62,7 @@ export function Pattern_IsValid(receiver: GoPtr<Pattern>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.Matches","kind":"method","status":"implemented","sigHash":"a3ec44c05de1eded892f96c3debcb3682317b700dd7c6d323cd34416002d4f54","bodyHash":"4bd59eb093ea857f03dee4e2059e8fcc22c101d546eb80bd48b119ea97a8bde0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.Matches","kind":"method","status":"implemented","sigHash":"a3ec44c05de1eded892f96c3debcb3682317b700dd7c6d323cd34416002d4f54"}
  *
  * Go source:
  * func (p *Pattern) Matches(candidate string) bool {
@@ -87,7 +87,7 @@ export function Pattern_Matches(receiver: GoPtr<Pattern>, candidate: string): bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.MatchedText","kind":"method","status":"implemented","sigHash":"5935931459d8f837801507ed9bcdb7778e7fc5005e73d33740ae11ee5c24da81","bodyHash":"c5f7998631855961bb7430aa3947689a5fa6a9ad30d75d8ec4c215d3c9f2bf4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::method::Pattern.MatchedText","kind":"method","status":"implemented","sigHash":"5935931459d8f837801507ed9bcdb7778e7fc5005e73d33740ae11ee5c24da81"}
  *
  * Go source:
  * func (p *Pattern) MatchedText(candidate string) string {
@@ -112,7 +112,7 @@ export function Pattern_MatchedText(receiver: GoPtr<Pattern>, candidate: string)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::FindBestPatternMatch","kind":"func","status":"implemented","sigHash":"ee5f33df4d5e42a42ee65593218eaeb0eefa4c62b87d10f487d894afc491329c","bodyHash":"733cfbb1e35126d494633f02fe8a128cd6f84f0500b2dd5e316ec73e547de4c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/pattern.go::func::FindBestPatternMatch","kind":"func","status":"implemented","sigHash":"ee5f33df4d5e42a42ee65593218eaeb0eefa4c62b87d10f487d894afc491329c"}
  *
  * Go source:
  * func FindBestPatternMatch[T any](values []T, getPattern func(v T) Pattern, candidate string) T {

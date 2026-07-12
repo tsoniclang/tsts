@@ -114,7 +114,7 @@ import {
 } from "./state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::isMissingNodeList","kind":"func","status":"implemented","sigHash":"ef01f56717a6fef68fa90b7c8e0d0661d60d9b4e006200f3148352792a8db128","bodyHash":"b53c8f6553b7a6726bb00719752ad20830f42dca147da8eb3d665c6e7c603bb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::isMissingNodeList","kind":"func","status":"implemented","sigHash":"ef01f56717a6fef68fa90b7c8e0d0661d60d9b4e006200f3148352792a8db128"}
  *
  * Go source:
  * func isMissingNodeList(list *ast.NodeList) bool {
@@ -126,7 +126,7 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseListIndex","kind":"method","status":"implemented","sigHash":"1d1024ac238a1e697aeefe86d57f12bb4cacec3322cbbcc395f5234bae911a77","bodyHash":"86567cedd0ff7297dfbd74b9ec0e4d0146c770ea24602e14ba29fa6da7e6892a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseListIndex","kind":"method","status":"implemented","sigHash":"1d1024ac238a1e697aeefe86d57f12bb4cacec3322cbbcc395f5234bae911a77"}
  *
  * Go source:
  * func (p *Parser) parseListIndex(kind ParsingContext, parseElement func(p *Parser, index int) *ast.Node) []*ast.Node {
@@ -194,7 +194,7 @@ export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingCont
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseList","kind":"method","status":"implemented","sigHash":"63dbd3ed7db8673c7bd7ba4e100ecb3c3810f665b0c7ae1fa30a3d22372a4101","bodyHash":"0f7849bd39848f2d9f5e4add9248d3484cea9e66768683ae36937f2261928078"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseList","kind":"method","status":"implemented","sigHash":"63dbd3ed7db8673c7bd7ba4e100ecb3c3810f665b0c7ae1fa30a3d22372a4101"}
  *
  * Go source:
  * func (p *Parser) parseList(kind ParsingContext, parseElement func(p *Parser) *ast.Node) *ast.NodeList {
@@ -210,7 +210,7 @@ export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"implemented","sigHash":"535b3a85ba41764406588faf13e3a1fd9335d6ae51b44086d6a294f9079abf54","bodyHash":"2f9ddfe81301f5e980596969bf910138bb1a6d5dbfea0d023e53d1bfc5dcdf8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"implemented","sigHash":"535b3a85ba41764406588faf13e3a1fd9335d6ae51b44086d6a294f9079abf54"}
  *
  * Go source:
  * func (p *Parser) parseDelimitedList(kind ParsingContext, parseElement func(p *Parser) *ast.Node) *ast.NodeList {
@@ -328,7 +328,7 @@ export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: Parsing
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseBracketedList","kind":"method","status":"implemented","sigHash":"07036af7a3f3bf3b22bcc19333ef4da4b325369cbfded5339b717ab6b25c6baa","bodyHash":"e7d9182ee2b6b7e04fe1abae9f9f21996ed90979cbf8150b3ae74091315c1e4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseBracketedList","kind":"method","status":"implemented","sigHash":"07036af7a3f3bf3b22bcc19333ef4da4b325369cbfded5339b717ab6b25c6baa"}
  *
  * Go source:
  * func (p *Parser) parseBracketedList(kind ParsingContext, parseElement func(p *Parser) *ast.Node, opening ast.Kind, closing ast.Kind) *ast.NodeList {
@@ -350,7 +350,7 @@ export function Parser_parseBracketedList(receiver: GoPtr<Parser>, kind: Parsing
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseEmptyNodeList","kind":"method","status":"implemented","sigHash":"f0a2bb7854645c36d592d6fdc929b45f00e723690b48cbac72094c8e76401b8f","bodyHash":"ac2ff8b87d4a2763ee0db5811c2e90eccbac43c6554d9a19efdde39a582c248a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseEmptyNodeList","kind":"method","status":"implemented","sigHash":"f0a2bb7854645c36d592d6fdc929b45f00e723690b48cbac72094c8e76401b8f"}
  *
  * Go source:
  * func (p *Parser) parseEmptyNodeList() *ast.NodeList {
@@ -362,7 +362,7 @@ export function Parser_parseEmptyNodeList(receiver: GoPtr<Parser>): GoPtr<NodeLi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.createMissingList","kind":"method","status":"implemented","sigHash":"b12492fba945c25b89b51b6baa3f4adf7982bd2b1907367238dc406d7a895e1d","bodyHash":"d9c98cb6259a1a59bdcd046aae4aca0767dc3233f7f333f3af0660830ae73a89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.createMissingList","kind":"method","status":"implemented","sigHash":"b12492fba945c25b89b51b6baa3f4adf7982bd2b1907367238dc406d7a895e1d"}
  *
  * Go source:
  * func (p *Parser) createMissingList() *ast.NodeList {
@@ -378,7 +378,7 @@ export function Parser_createMissingList(receiver: GoPtr<Parser>): GoPtr<NodeLis
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.abortParsingListOrMoveToNextToken","kind":"method","status":"implemented","sigHash":"8cadcb46e30521780f9d7774ed43145c8160d6bb30fc487b4c2ca9b4133558e1","bodyHash":"f196188cae24a17a29f7abfe450b424dd3a5c28aea7255b794f6e43e988f54ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.abortParsingListOrMoveToNextToken","kind":"method","status":"implemented","sigHash":"8cadcb46e30521780f9d7774ed43145c8160d6bb30fc487b4c2ca9b4133558e1"}
  *
  * Go source:
  * func (p *Parser) abortParsingListOrMoveToNextToken(kind ParsingContext) bool {
@@ -400,7 +400,7 @@ export function Parser_abortParsingListOrMoveToNextToken(receiver: GoPtr<Parser>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isListElement","kind":"method","status":"implemented","sigHash":"35e90415b6599f8ea4ae8477fbdec61cf6e51d08ffca026b087ff07f1a2d2ffe","bodyHash":"2386183d422832b6152c45c35b1901d3e8fb2ae1c25f66133fc3ecfd02cf0ad6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isListElement","kind":"method","status":"implemented","sigHash":"35e90415b6599f8ea4ae8477fbdec61cf6e51d08ffca026b087ff07f1a2d2ffe"}
  *
  * Go source:
  * func (p *Parser) isListElement(parsingContext ParsingContext, inErrorRecovery bool) bool {
@@ -595,7 +595,7 @@ export function Parser_isListElement(receiver: GoPtr<Parser>, parsingContext: Pa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isListTerminator","kind":"method","status":"implemented","sigHash":"13905823b0e99a2d3d885493b0b8c7af34d08377f24c24810b537c75cb1aa434","bodyHash":"c93442572ecafb279cc89ff3d4460ae3f85ee7b7078f6e332dc4a75d5d7753c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isListTerminator","kind":"method","status":"implemented","sigHash":"13905823b0e99a2d3d885493b0b8c7af34d08377f24c24810b537c75cb1aa434"}
  *
  * Go source:
  * func (p *Parser) isListTerminator(kind ParsingContext) bool {
@@ -702,7 +702,7 @@ export function Parser_isListTerminator(receiver: GoPtr<Parser>, kind: ParsingCo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::modifierListHasAsync","kind":"func","status":"implemented","sigHash":"3255ec3ff81e19c6800292dc3dbe125453cc5985ff0018f09677942566e38b3c","bodyHash":"22987060e26178e7ee0f46b293b814e06ea676d7f2cbb3acb5e5ee4508767362"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::modifierListHasAsync","kind":"func","status":"implemented","sigHash":"3255ec3ff81e19c6800292dc3dbe125453cc5985ff0018f09677942566e38b3c"}
  *
  * Go source:
  * func modifierListHasAsync(modifiers *ast.ModifierList) bool {
@@ -714,7 +714,7 @@ export function modifierListHasAsync(modifiers: GoPtr<ModifierList>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseParameters","kind":"method","status":"implemented","sigHash":"b5a86a362f8286de69cfe9e3d7c74329636de858bf8a59c8639a6b341f5fcd09","bodyHash":"60045d79a78448603d230e952e2f8efc2fdb7a28d7fae224c5820b4c5fbaf72b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseParameters","kind":"method","status":"implemented","sigHash":"b5a86a362f8286de69cfe9e3d7c74329636de858bf8a59c8639a6b341f5fcd09"}
  *
  * Go source:
  * func (p *Parser) parseParameters(flags ParseFlags) *ast.NodeList {
@@ -762,7 +762,7 @@ export function Parser_parseParameters(receiver: GoPtr<Parser>, flags: ParseFlag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseParametersWorker","kind":"method","status":"implemented","sigHash":"91879b119b8189b32908c1983588977ffda60f16b9960e4bd32782a1c6b1ee1c","bodyHash":"a6d246e548f419e452a48b3394d48b86cdbf70b0950a176f35f27c3736c9bff2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseParametersWorker","kind":"method","status":"implemented","sigHash":"91879b119b8189b32908c1983588977ffda60f16b9960e4bd32782a1c6b1ee1c"}
  *
  * Go source:
  * func (p *Parser) parseParametersWorker(flags ParseFlags, allowAmbiguity bool) *ast.NodeList {
@@ -824,7 +824,7 @@ export function Parser_parseParametersWorker(receiver: GoPtr<Parser>, flags: Par
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseArgumentList","kind":"method","status":"implemented","sigHash":"ab4315505c00ca4e6676f4981544a74385b03f6ee76e485eef3f9a3b135c99b6","bodyHash":"35d627c7ffa705ff53a7a3492e6bd8b42eb54eb4aca51121a31dcc9ade91535b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseArgumentList","kind":"method","status":"implemented","sigHash":"ab4315505c00ca4e6676f4981544a74385b03f6ee76e485eef3f9a3b135c99b6"}
  *
  * Go source:
  * func (p *Parser) parseArgumentList() *ast.NodeList {
@@ -842,7 +842,7 @@ export function Parser_parseArgumentList(receiver: GoPtr<Parser>): GoPtr<NodeLis
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.newNodeList","kind":"method","status":"implemented","sigHash":"f618ee4bcd2b10c3800dfc5e0fb29375f7c1baf8eeaa25e3bd10132a69b79a6c","bodyHash":"70c77f5b625e6ccf2938b58c07b82cf82ad5baffd94a47112c572fdf2cc5eb39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.newNodeList","kind":"method","status":"implemented","sigHash":"f618ee4bcd2b10c3800dfc5e0fb29375f7c1baf8eeaa25e3bd10132a69b79a6c"}
  *
  * Go source:
  * func (p *Parser) newNodeList(loc core.TextRange, nodes []*ast.Node) *ast.NodeList {
@@ -858,7 +858,7 @@ export function Parser_newNodeList(receiver: GoPtr<Parser>, loc: TextRange, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.newModifierList","kind":"method","status":"implemented","sigHash":"421eedeeaff9c4d4153e8435ca7a6fef5172a9fdbade934476670ac6b7da3a04","bodyHash":"cc54a0c2f7716d27189edd2d524a96cf2b2c895341ad03ba495d2f336f4d2c21"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.newModifierList","kind":"method","status":"implemented","sigHash":"421eedeeaff9c4d4153e8435ca7a6fef5172a9fdbade934476670ac6b7da3a04"}
  *
  * Go source:
  * func (p *Parser) newModifierList(loc core.TextRange, nodes []*ast.Node) *ast.ModifierList {

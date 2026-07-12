@@ -34,7 +34,7 @@ import { statisticsFromProgram, Statistics_Report } from "./statistics.js";
 import type { Statistics } from "./statistics.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124","bodyHash":"76b0ac1f82c5140960e3030c49fb947d1cfb8ec5538145aa47b05d3011859c09"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124"}
  *
  * Go source:
  * func GetTraceWithWriterFromSys(w io.Writer, locale locale.Locale, testing CommandLineTesting) func(msg *diagnostics.Message, args ...any) {
@@ -58,7 +58,7 @@ export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642","bodyHash":"4f076a1f5307477c5cfd12bb558a34129ff8d11e1855b22c33d0486d04d4cbb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642"}
  *
  * Go source:
  * EmitInput struct {
@@ -92,7 +92,7 @@ export interface EmitInput {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitAndReportStatistics","kind":"func","status":"implemented","sigHash":"0b6652d302c0ecd13cc0e43a0892d4fe5e1af322263827515001ca00f9320be2","bodyHash":"6942f5466c22b3dee2dfc58f230f798a08fba0f3e3187ba534b77c3a103ee9d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitAndReportStatistics","kind":"func","status":"implemented","sigHash":"0b6652d302c0ecd13cc0e43a0892d4fe5e1af322263827515001ca00f9320be2"}
  *
  * Go source:
  * func EmitAndReportStatistics(input EmitInput) (CompileAndEmitResult, *Statistics) {
@@ -147,7 +147,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"implemented","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559","bodyHash":"6d90ae6ffaff1722e0a0fb6244dfeeba85fd98688819688ff62470c0bc3c1490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"implemented","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559"}
  *
  * Go source:
  * func EmitFilesAndReportErrors(input EmitInput) (result CompileAndEmitResult) {
@@ -282,7 +282,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::listFiles","kind":"func","status":"implemented","sigHash":"c1f5f67217ce85c6c591d40b9ac34c43184044573f9c9b4a988d0f9bcaa411fc","bodyHash":"56b9fcccc04558ed5ee238c6254c1064e649b5471a5c0fcbe2e5b115f88cbc63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::listFiles","kind":"func","status":"implemented","sigHash":"c1f5f67217ce85c6c591d40b9ac34c43184044573f9c9b4a988d0f9bcaa411fc"}
  *
  * Go source:
  * func listFiles(input EmitInput, emitResult *compiler.EmitResult) {

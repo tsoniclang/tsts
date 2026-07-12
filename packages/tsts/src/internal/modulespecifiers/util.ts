@@ -26,7 +26,7 @@ import type { ModulePath, ModuleSpecifierEnding, ModuleSpecifierGenerationHost, 
 import { ModuleSpecifierEndingIndex, ModuleSpecifierEndingJsExtension, ModuleSpecifierEndingMinimal, ModuleSpecifierEndingTsExtension } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::regexPatternCacheKey","kind":"type","status":"implemented","sigHash":"6cf9e1799f70755daf645d55437ce8e3421da2ff8fddba8a26cfcd6873f8587b","bodyHash":"63f8dffdde16d3c433e1fb857a621811381ec4edabce90ea5657ef97194fce9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::regexPatternCacheKey","kind":"type","status":"implemented","sigHash":"6cf9e1799f70755daf645d55437ce8e3421da2ff8fddba8a26cfcd6873f8587b"}
  *
  * Go source:
  * regexPatternCacheKey struct {
@@ -40,7 +40,7 @@ export interface regexPatternCacheKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::varGroup::regexPatternCacheMu+regexPatternCache","kind":"varGroup","status":"implemented","sigHash":"9aa64f47467bebf8cb5b1a1b9d133408f03862539e109acd33e64e21801860c4","bodyHash":"ab41eec103afbd8f2e6d0700874b0bbd6630c1281f4561292c47e087f435e010"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::varGroup::regexPatternCacheMu+regexPatternCache","kind":"varGroup","status":"implemented","sigHash":"9aa64f47467bebf8cb5b1a1b9d133408f03862539e109acd33e64e21801860c4"}
  *
  * Go source:
  * var (
@@ -55,7 +55,7 @@ export let regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGo
 ));
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"fdfc55605498de1fa827e50b1eda9800918b2bab712c7736842daf17ba308196"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca"}
  *
  * Go source:
  * func comparePathsByRedirect(a ModulePath, b ModulePath, useCaseSensitiveFileNames bool) int {
@@ -87,7 +87,7 @@ export function comparePathsByRedirect(a: ModulePath, b: ModulePath, useCaseSens
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::PathIsBareSpecifier","kind":"func","status":"implemented","sigHash":"e59b4811fe0e34ed3b74950fc46499f254549350ae7d13280b2d9f4fff06438b","bodyHash":"61cd1c107caa1c2536bd2012042871d4a3c07ffe8240fd19784b8af753d740ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::PathIsBareSpecifier","kind":"func","status":"implemented","sigHash":"e59b4811fe0e34ed3b74950fc46499f254549350ae7d13280b2d9f4fff06438b"}
  *
  * Go source:
  * func PathIsBareSpecifier(path string) bool {
@@ -99,7 +99,7 @@ export function PathIsBareSpecifier(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::IsExcludedByRegex","kind":"func","status":"implemented","sigHash":"d77979a7983433a8c124750563e010d31e2e8efc64386b59c2c56d3a0b4aee38","bodyHash":"8cd304bfec550ded5f379473b23ea14a65614d616b0cc701d93e9078b9863587"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::IsExcludedByRegex","kind":"func","status":"implemented","sigHash":"d77979a7983433a8c124750563e010d31e2e8efc64386b59c2c56d3a0b4aee38"}
  *
  * Go source:
  * func IsExcludedByRegex(moduleSpecifier string, excludes []string) bool {
@@ -201,7 +201,7 @@ export function IsExcludedByRegex(moduleSpecifier: string, excludes: GoSlice<str
 const _regexPatternCacheInternal = new Map<string, GoPtr<Regexp>>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::stringToRegex","kind":"func","status":"implemented","sigHash":"98e2fa5bb16ffdc03a7579f0c689e066e1489319a37a366d4f1077123e53ed09","bodyHash":"48ec5cf3b473926d08fd0b76e35fa9ca0803f5bac804c3ce984fb77d1735bf01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::stringToRegex","kind":"func","status":"implemented","sigHash":"98e2fa5bb16ffdc03a7579f0c689e066e1489319a37a366d4f1077123e53ed09"}
  */
 export function stringToRegex(pattern: string): GoPtr<Regexp> {
   let caseInsensitive = false;
@@ -254,7 +254,7 @@ export function stringToRegex(pattern: string): GoPtr<Regexp> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::ensurePathIsNonModuleName","kind":"func","status":"implemented","sigHash":"386342ce11d16d6684c275ef553033719f84bec9e63fe84dcb34a1948216b9f9","bodyHash":"2b915b2bc7f3bb9e8a9e509bd37a42ebcc135f811b59272ead17a8f475fc7122"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::ensurePathIsNonModuleName","kind":"func","status":"implemented","sigHash":"386342ce11d16d6684c275ef553033719f84bec9e63fe84dcb34a1948216b9f9"}
  *
  * Go source:
  * func ensurePathIsNonModuleName(path string) string {
@@ -272,7 +272,7 @@ export function ensurePathIsNonModuleName(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetJSExtensionForDeclarationFileExtension","kind":"func","status":"implemented","sigHash":"8b21c9b04ee113cb934ce555238dba65f6e5dd03a0c67ee95e7042466a4c73a7","bodyHash":"d199d8cc20e26bb47cbd344bb6c62537ba65463b884252732594d0c825106398"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetJSExtensionForDeclarationFileExtension","kind":"func","status":"implemented","sigHash":"8b21c9b04ee113cb934ce555238dba65f6e5dd03a0c67ee95e7042466a4c73a7"}
  *
  * Go source:
  * func GetJSExtensionForDeclarationFileExtension(ext string) string {
@@ -304,7 +304,7 @@ export function GetJSExtensionForDeclarationFileExtension(ext: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::TryGetRealFileNameForNonJSDeclarationFileName","kind":"func","status":"implemented","sigHash":"afc447100640847c4bd64eda9e82d71088ce73bfa2f52ca64de070d599d07745","bodyHash":"402a0fcda7f348347ef6eb45c4a06bdbc541a8d977040e085f4a7e45e2edfe69"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::TryGetRealFileNameForNonJSDeclarationFileName","kind":"func","status":"implemented","sigHash":"afc447100640847c4bd64eda9e82d71088ce73bfa2f52ca64de070d599d07745"}
  *
  * Go source:
  * func TryGetRealFileNameForNonJSDeclarationFileName(fileName string) string {
@@ -338,7 +338,7 @@ export function TryGetRealFileNameForNonJSDeclarationFileName(fileName: string):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getJSExtensionForFile","kind":"func","status":"implemented","sigHash":"9126c08bec1e238bb1410328f11e9a883788db20301c6a5dfd9ce7c149e9d929","bodyHash":"d5e50961d0c62f4f7b0be92c6d1e6630b4cea737d4fdbb67525a25f4b782a421"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getJSExtensionForFile","kind":"func","status":"implemented","sigHash":"9126c08bec1e238bb1410328f11e9a883788db20301c6a5dfd9ce7c149e9d929"}
  *
  * Go source:
  * func getJSExtensionForFile(fileName string, options *core.CompilerOptions) string {
@@ -358,7 +358,7 @@ export function getJSExtensionForFile(fileName: string, options: GoPtr<CompilerO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::extensionFromPath","kind":"func","status":"implemented","sigHash":"7508b784e333e0f622d78d17f2ba7597327389ebb55af53a52cf989613892b81","bodyHash":"9dfc1fefbe9699e5cd998a816135501092b5684421b10a7434a8129de173103a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::extensionFromPath","kind":"func","status":"implemented","sigHash":"7508b784e333e0f622d78d17f2ba7597327389ebb55af53a52cf989613892b81"}
  *
  * Go source:
  * func extensionFromPath(path string) string {
@@ -378,7 +378,7 @@ export function extensionFromPath(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::tryGetAnyFileFromPath","kind":"func","status":"implemented","sigHash":"541dbc1ea92bd9de4c7a3d0064593109947b80011ebc08efb1291cf75500351d","bodyHash":"19edef099f4422cd891912518ac9444ababda4a5c648d27e68e2131556b869da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::tryGetAnyFileFromPath","kind":"func","status":"implemented","sigHash":"541dbc1ea92bd9de4c7a3d0064593109947b80011ebc08efb1291cf75500351d"}
  *
  * Go source:
  * func tryGetAnyFileFromPath(host ModuleSpecifierGenerationHost, path string) bool {
@@ -442,7 +442,7 @@ export function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost, path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getPathsRelativeToRootDirs","kind":"func","status":"implemented","sigHash":"d6d5537ab878449108d49d28c8d9905405110a0ac7b953a8154da83967f93fbe","bodyHash":"138aae75db3f2a38f76b2b171e1f68fd12accab4fe4d8f5178796b67eab15020"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getPathsRelativeToRootDirs","kind":"func","status":"implemented","sigHash":"d6d5537ab878449108d49d28c8d9905405110a0ac7b953a8154da83967f93fbe"}
  *
  * Go source:
  * func getPathsRelativeToRootDirs(path string, rootDirs []string, useCaseSensitiveFileNames bool) []string {
@@ -468,7 +468,7 @@ export function getPathsRelativeToRootDirs(path: string, rootDirs: GoSlice<strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::isPathRelativeToParent","kind":"func","status":"implemented","sigHash":"58a8a5550c8c2a3d9f4a40ca1ff903ae991a245c6b223aeee7c9ec72f5d26961","bodyHash":"8a60d30bf6d9f43487ce96e862c0c727215e3d8ca8050061fbfde5b7777fa381"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::isPathRelativeToParent","kind":"func","status":"implemented","sigHash":"58a8a5550c8c2a3d9f4a40ca1ff903ae991a245c6b223aeee7c9ec72f5d26961"}
  *
  * Go source:
  * func isPathRelativeToParent(path string) bool {
@@ -480,7 +480,7 @@ export function isPathRelativeToParent(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getRelativePathIfInSameVolume","kind":"func","status":"implemented","sigHash":"6040e78b03b84605583949d1c472133636db53cbe8b4d50fdaaa7db205765494","bodyHash":"094edaaa2bc32eeee9b66932539bc2d18339d6b7a4725235cff849655e11cbb5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::getRelativePathIfInSameVolume","kind":"func","status":"implemented","sigHash":"6040e78b03b84605583949d1c472133636db53cbe8b4d50fdaaa7db205765494"}
  *
  * Go source:
  * func getRelativePathIfInSameVolume(path string, directoryPath string, useCaseSensitiveFileNames bool) string {
@@ -506,7 +506,7 @@ export function getRelativePathIfInSameVolume(path: string, directoryPath: strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::packageJsonPathsAreEqual","kind":"func","status":"implemented","sigHash":"83030f2af64b2fec7efe3ff10c17b7cb9d2e219a3c8e2a59acc1eb2ae7bfc94e","bodyHash":"109f3063524b454b9e46f00290a784ea596a189ec83d607b6f4d85d0f0af6d63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::packageJsonPathsAreEqual","kind":"func","status":"implemented","sigHash":"83030f2af64b2fec7efe3ff10c17b7cb9d2e219a3c8e2a59acc1eb2ae7bfc94e"}
  *
  * Go source:
  * func packageJsonPathsAreEqual(a string, b string, options tspath.ComparePathsOptions) bool {
@@ -530,7 +530,7 @@ export function packageJsonPathsAreEqual(a: string, b: string, options: CompareP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::prefersTsExtension","kind":"func","status":"implemented","sigHash":"e5024ba6bb6cb39fcda5e8d225edce1100732a540592a9a7d74f279f7c3bda77","bodyHash":"a7df49bdf9b8022c001d735f6d4c85379a1354c65c4e9572dc8cde101735f894"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::prefersTsExtension","kind":"func","status":"implemented","sigHash":"e5024ba6bb6cb39fcda5e8d225edce1100732a540592a9a7d74f279f7c3bda77"}
  *
  * Go source:
  * func prefersTsExtension(allowedEndings []ModuleSpecifierEnding) bool {
@@ -552,7 +552,7 @@ export function prefersTsExtension(allowedEndings: GoSlice<ModuleSpecifierEnding
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::replaceFirstStar","kind":"func","status":"implemented","sigHash":"4f49d9372d7ff3145ef69e0e99af26e1de7c253cf22edb11ad3b353f2d1fe5fe","bodyHash":"390d725d99e3c353e7cf21081db44931a14de7f2ecc190056346aaf06ae74ec7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::replaceFirstStar","kind":"func","status":"implemented","sigHash":"4f49d9372d7ff3145ef69e0e99af26e1de7c253cf22edb11ad3b353f2d1fe5fe"}
  *
  * Go source:
  * func replaceFirstStar(s string, replacement string) string {
@@ -564,7 +564,7 @@ export function replaceFirstStar(s: string, replacement: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::NodeModulePathParts","kind":"type","status":"implemented","sigHash":"b5b1cb01bfc5393dcce61ab60ef38adbc62a27daea33325719a4f99ae2e1f2ec","bodyHash":"8ff5af92e2086ff0ddaf52d0a7a4e62f2d7b728000ebf6f87223fb7f0f59768b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::NodeModulePathParts","kind":"type","status":"implemented","sigHash":"b5b1cb01bfc5393dcce61ab60ef38adbc62a27daea33325719a4f99ae2e1f2ec"}
  *
  * Go source:
  * NodeModulePathParts struct {
@@ -582,7 +582,7 @@ export interface NodeModulePathParts {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::nodeModulesPathParseState","kind":"type","status":"implemented","sigHash":"c7e33d4d1d27a2a7752f47b946cee24ae2ff3b5eedae3bed43cfff2b86b1f30f","bodyHash":"b05bf61b23d305f8385e94b756f3438334561a1892f455a44d76116610b2c95a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::type::nodeModulesPathParseState","kind":"type","status":"implemented","sigHash":"c7e33d4d1d27a2a7752f47b946cee24ae2ff3b5eedae3bed43cfff2b86b1f30f"}
  *
  * Go source:
  * nodeModulesPathParseState uint8
@@ -590,7 +590,7 @@ export interface NodeModulePathParts {
 export type nodeModulesPathParseState = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::constGroup::nodeModulesPathParseStateBeforeNodeModules+nodeModulesPathParseStateNodeModules+nodeModulesPathParseStateScope+nodeModulesPathParseStatePackageContent","kind":"constGroup","status":"implemented","sigHash":"753250fdf882228fe5327d20747e9e160fd30dec4a9e6d4c57084ae1110288f1","bodyHash":"b1766c5c6fff88a0a3b75b734c5f1a5e42a16104ac10fb56889308db3dc1817b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::constGroup::nodeModulesPathParseStateBeforeNodeModules+nodeModulesPathParseStateNodeModules+nodeModulesPathParseStateScope+nodeModulesPathParseStatePackageContent","kind":"constGroup","status":"implemented","sigHash":"753250fdf882228fe5327d20747e9e160fd30dec4a9e6d4c57084ae1110288f1"}
  *
  * Go source:
  * const (
@@ -606,7 +606,7 @@ export const nodeModulesPathParseStateScope: nodeModulesPathParseState = 2 as no
 export const nodeModulesPathParseStatePackageContent: nodeModulesPathParseState = 3 as nodeModulesPathParseState;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetNodeModulePathParts","kind":"func","status":"implemented","sigHash":"0961c5f0b343f13e819fe5d56f9be2c49ab4a9030236c73015ebe892f2f1ec65","bodyHash":"4b625131d14340319fda0199e956969168702cfbbe7f3fb86bee9f8c2cbd9b37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetNodeModulePathParts","kind":"func","status":"implemented","sigHash":"0961c5f0b343f13e819fe5d56f9be2c49ab4a9030236c73015ebe892f2f1ec65"}
  *
  * Go source:
  * func GetNodeModulePathParts(fullPath string) *NodeModulePathParts {
@@ -720,7 +720,7 @@ export function GetNodeModulePathParts(fullPath: string): GoPtr<NodeModulePathPa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetNodeModulesPackageName","kind":"func","status":"implemented","sigHash":"5cd549e10f17cb8a849869e457a62a71542819f5867c4dc7319fe1be6b0f83cd","bodyHash":"2a9af476d9942b8b7e5708ba43fb05f2606813dea9fa8d1f3fd288f2af2ae24d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetNodeModulesPackageName","kind":"func","status":"implemented","sigHash":"5cd549e10f17cb8a849869e457a62a71542819f5867c4dc7319fe1be6b0f83cd"}
  *
  * Go source:
  * func GetNodeModulesPackageName(
@@ -754,7 +754,7 @@ export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::allKeysStartWithDot","kind":"func","status":"implemented","sigHash":"dfa5c55d4674d12fc3b95a141a92945a864c82bd85523123c90b446a77c056f0","bodyHash":"9a7ec67e9db7e3cab7c1dab3a81a8c35ec99fb2fbdaf86759e2f50d18c9d165f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::allKeysStartWithDot","kind":"func","status":"implemented","sigHash":"dfa5c55d4674d12fc3b95a141a92945a864c82bd85523123c90b446a77c056f0"}
  *
  * Go source:
  * func allKeysStartWithDot(obj *collections.OrderedMap[string, packagejson.ExportsOrImports]) bool {
@@ -777,7 +777,7 @@ export function allKeysStartWithDot(obj: GoPtr<OrderedMap<string, ExportsOrImpor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetPackageNameFromDirectory","kind":"func","status":"implemented","sigHash":"3b2e3fcad19d78ba20ab33a0053b33a11058268a0a83345145900fbb7d12f693","bodyHash":"6197a9da9db26234fda13ea631f59833c711508d930f132f9a5e5a8b0fd79d8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::GetPackageNameFromDirectory","kind":"func","status":"implemented","sigHash":"3b2e3fcad19d78ba20ab33a0053b33a11058268a0a83345145900fbb7d12f693"}
  *
  * Go source:
  * func GetPackageNameFromDirectory(fileOrDirectoryPath string) string {
@@ -837,7 +837,7 @@ export function GetPackageNameFromDirectory(fileOrDirectoryPath: string): string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::ProcessEntrypointEnding","kind":"func","status":"implemented","sigHash":"9868fe736421f3848b18b83dc1538893cf8f892b2361de5d6f0555d8ec7ad21b","bodyHash":"1e00589f7b6405538b4eaa1ac5109e73cd61a808582daa32aad6ca624ae45b27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::ProcessEntrypointEnding","kind":"func","status":"implemented","sigHash":"9868fe736421f3848b18b83dc1538893cf8f892b2361de5d6f0555d8ec7ad21b"}
  *
  * Go source:
  * func ProcessEntrypointEnding(

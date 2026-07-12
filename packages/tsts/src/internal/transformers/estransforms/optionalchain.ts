@@ -68,7 +68,7 @@ import {
 import { EFNoComments } from "../../printer/emitflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::optionalChainTransformer","kind":"type","status":"implemented","sigHash":"d38d23852b1698ae2acf33196bbbfcae52ccc17ab55d3fedbb0a02da11237873","bodyHash":"10b20e1c69798f894fafbbc4c1e6f26faa1771126b608bea5b7823d5d73c2fd9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::optionalChainTransformer","kind":"type","status":"implemented","sigHash":"d38d23852b1698ae2acf33196bbbfcae52ccc17ab55d3fedbb0a02da11237873"}
  *
  * Go source:
  * optionalChainTransformer struct {
@@ -80,7 +80,7 @@ export interface optionalChainTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visit","kind":"method","status":"implemented","sigHash":"dbb11e0033208825634aece952d75819462fbb7c6e8d785fca71f6caacf62093","bodyHash":"9f78a1f31c76bb8b8b79810c44e5e073547a39ede886ac9c6135895e87efb98c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visit","kind":"method","status":"implemented","sigHash":"dbb11e0033208825634aece952d75819462fbb7c6e8d785fca71f6caacf62093"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visit(node *ast.Node) *ast.Node {
@@ -125,7 +125,7 @@ export function optionalChainTransformer_visit(receiver: GoPtr<optionalChainTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"8e52b576b86b10d39a329d1c7115fe17d6f6f744b1c1e9bcf38367f964754ff0","bodyHash":"1e99d888a3323ecca2ee93c729d2dae1c636535ce8329b72c39f7246f515a068"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"8e52b576b86b10d39a329d1c7115fe17d6f6f744b1c1e9bcf38367f964754ff0"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitCallExpression(node *ast.CallExpression, captureThisArg bool) *ast.Node {
@@ -179,7 +179,7 @@ export function optionalChainTransformer_visitCallExpression(receiver: GoPtr<opt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"d08a7e3ba35bf3d75a14002752b47a96a6ffcabcf1c0d624421089772abdaef9","bodyHash":"b860e7e7b05a15d0ede33fa53d14bbc1f37a2e10cd466d46c5eba65c29736ab0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"d08a7e3ba35bf3d75a14002752b47a96a6ffcabcf1c0d624421089772abdaef9"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitParenthesizedExpression(node *ast.ParenthesizedExpression, captureThisArg bool, isDelete bool) *ast.Node {
@@ -212,7 +212,7 @@ export function optionalChainTransformer_visitParenthesizedExpression(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitPropertyOrElementAccessExpression","kind":"method","status":"implemented","sigHash":"0e4be773ba8ce1f858b94c481a9730d55fa8b72d4183a4924499106221ad6e1e","bodyHash":"d1bbdb71cf54834188bfca5c199b04cc2eac463295e05c2c40481e90ae6515bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitPropertyOrElementAccessExpression","kind":"method","status":"implemented","sigHash":"0e4be773ba8ce1f858b94c481a9730d55fa8b72d4183a4924499106221ad6e1e"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitPropertyOrElementAccessExpression(node *ast.Expression, captureThisArg bool, isDelete bool) *ast.Expression {
@@ -291,7 +291,7 @@ export function optionalChainTransformer_visitPropertyOrElementAccessExpression(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitDeleteExpression","kind":"method","status":"implemented","sigHash":"ecff27c43020084217a3ce4eb5892931fb7163ca3a6c46910b18501143e0c88a","bodyHash":"a464412ab36bfc37ceb5624a56e09fdef1ee428eb955bd908e96be4b49e8b200"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitDeleteExpression","kind":"method","status":"implemented","sigHash":"ecff27c43020084217a3ce4eb5892931fb7163ca3a6c46910b18501143e0c88a"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitDeleteExpression(node *ast.DeleteExpression) *ast.Node {
@@ -313,7 +313,7 @@ export function optionalChainTransformer_visitDeleteExpression(receiver: GoPtr<o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitNonOptionalExpression","kind":"method","status":"implemented","sigHash":"3f9ab6a96fbc99844d4abd3b579deb944cf64b8f779cfde9e14bc2e14ac26db1","bodyHash":"ed923f7442c7ec212e9496ca7f44f1b20775897473a206d14723ea8ade578cec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitNonOptionalExpression","kind":"method","status":"implemented","sigHash":"3f9ab6a96fbc99844d4abd3b579deb944cf64b8f779cfde9e14bc2e14ac26db1"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitNonOptionalExpression(node *ast.Expression, captureThisArg bool, isDelete bool) *ast.Expression {
@@ -346,7 +346,7 @@ export function optionalChainTransformer_visitNonOptionalExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::flattenResult","kind":"type","status":"implemented","sigHash":"3e6c9bbcacabbb8224fae64714c1e84d2fb7c5a4451bb47747312943363477bf","bodyHash":"126af5dbbb83b6513dce8bd36b01f8f0bed6be9d583cc0bc757ff61e5e587790"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::flattenResult","kind":"type","status":"implemented","sigHash":"3e6c9bbcacabbb8224fae64714c1e84d2fb7c5a4451bb47747312943363477bf"}
  *
  * Go source:
  * flattenResult struct {
@@ -360,7 +360,7 @@ export interface flattenResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::isNonNullChain","kind":"func","status":"implemented","sigHash":"e0b4568e2ce0258afd2f552f9873d429a7766f9f06d50ce6ed39de300a0bf561","bodyHash":"c295cb1694d9848b5367fc6f625b2b5213ec0531614d57f921a91235c062106b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::isNonNullChain","kind":"func","status":"implemented","sigHash":"e0b4568e2ce0258afd2f552f9873d429a7766f9f06d50ce6ed39de300a0bf561"}
  *
  * Go source:
  * func isNonNullChain(node *ast.Node) bool {
@@ -372,7 +372,7 @@ export function isNonNullChain(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::flattenChain","kind":"func","status":"implemented","sigHash":"d6e09ae3909143e2579daf7ad3d6ea00b6bae59f6e433c0682e34e13a2afe0f9","bodyHash":"1f3670a7ee716151575ee2b95c8342fb8bdcbafed9787e1d486046b506a171ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::flattenChain","kind":"func","status":"implemented","sigHash":"d6e09ae3909143e2579daf7ad3d6ea00b6bae59f6e433c0682e34e13a2afe0f9"}
  *
  * Go source:
  * func flattenChain(chain *ast.Node) flattenResult {
@@ -396,7 +396,7 @@ export function flattenChain(chain: GoPtr<Node>): flattenResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::isCallChain","kind":"func","status":"implemented","sigHash":"86b2ae21ffee1c312ea7ea061f782a06855803fada2bbb1f9b83c23840bafc9a","bodyHash":"18ac8f0180a6246c8cd91f949cd8c5bbc4793dee9f4ace217eb7cff5aabc8038"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::isCallChain","kind":"func","status":"implemented","sigHash":"86b2ae21ffee1c312ea7ea061f782a06855803fada2bbb1f9b83c23840bafc9a"}
  *
  * Go source:
  * func isCallChain(node *ast.Node) bool {
@@ -408,7 +408,7 @@ export function isCallChain(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitOptionalExpression","kind":"method","status":"implemented","sigHash":"e65de19f41c10f036300881c45dfd469cbc92b8c4ad23a1e49207799ac524d11","bodyHash":"9ab21c6b97a9426377bfc20a1eb85e2eade41f1dbf791dd56cf5862283b31e1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::method::optionalChainTransformer.visitOptionalExpression","kind":"method","status":"implemented","sigHash":"e65de19f41c10f036300881c45dfd469cbc92b8c4ad23a1e49207799ac524d11"}
  *
  * Go source:
  * func (ch *optionalChainTransformer) visitOptionalExpression(node *ast.Node, captureThisArg bool, isDelete bool) *ast.Node {
@@ -610,7 +610,7 @@ export function optionalChainTransformer_visitOptionalExpression(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::newOptionalChainTransformer","kind":"func","status":"implemented","sigHash":"cbad995a2b745db86987da159e9e4ea78e4faa8ef2f0a4ce7f2dd39c3895a899","bodyHash":"99abb9eb2b2142fb47eaa44e3d7a30dd4037b0e4cf1ab349adcd6975c1d0f439"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::func::newOptionalChainTransformer","kind":"func","status":"implemented","sigHash":"cbad995a2b745db86987da159e9e4ea78e4faa8ef2f0a4ce7f2dd39c3895a899"}
  *
  * Go source:
  * func newOptionalChainTransformer(opts *transformers.TransformOptions) *transformers.Transformer {

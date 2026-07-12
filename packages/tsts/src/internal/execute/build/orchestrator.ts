@@ -44,7 +44,7 @@ import { Builder } from "../../../go/strings.js";
 import type { parseCache } from "./parseCache.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f"}
  *
  * Go source:
  * Options struct {
@@ -60,7 +60,7 @@ export interface Options {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"implemented","sigHash":"8ed1815afef001927a40cb48a20d8e8330f1a075fcfae11e8581fd64a39186c9","bodyHash":"a1ed589b2a0d747bea2ec47282401deff0ac2f3a723cabe23cd94ac831dca679"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"implemented","sigHash":"8ed1815afef001927a40cb48a20d8e8330f1a075fcfae11e8581fd64a39186c9"}
  *
  * Go source:
  * orchestratorResult struct {
@@ -78,7 +78,7 @@ export interface orchestratorResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::orchestratorResult.report","kind":"method","status":"implemented","sigHash":"0a59edbd01202a17ebdb418c50376b520766b371a8e8f72da922342822877d92","bodyHash":"025b45545cb40bbb15ca144e1d379a0aeb57b810b8f9bf637f2e43f07113dcaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::orchestratorResult.report","kind":"method","status":"implemented","sigHash":"0a59edbd01202a17ebdb418c50376b520766b371a8e8f72da922342822877d92"}
  *
  * Go source:
  * func (b *orchestratorResult) report(o *Orchestrator) {
@@ -128,7 +128,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"e05f5ba48f3744ecc8508f03d5b85fa7b27841fc13a92d0513c3cdfe66c8b8eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e"}
  *
  * Go source:
  * Orchestrator struct {
@@ -157,7 +157,7 @@ export interface Orchestrator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8df5ee902b902bae8873b016f2fdb528c344be93f113c5f408fde2185f0ff258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Orchestrator)(nil)
@@ -171,7 +171,7 @@ export function Orchestrator_as_tsc_Watcher(receiver: GoPtr<Orchestrator>): Watc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.relativeFileName","kind":"method","status":"implemented","sigHash":"72ff97cf7be6af75d0bcb0a972d3c887eec0137ae80fdd7bf9ec0abf11edc9b4","bodyHash":"ff945d4da9c439fd6783fed02507cb9daab99b679d06699e3d94c0ebfe74591a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.relativeFileName","kind":"method","status":"implemented","sigHash":"72ff97cf7be6af75d0bcb0a972d3c887eec0137ae80fdd7bf9ec0abf11edc9b4"}
  *
  * Go source:
  * func (o *Orchestrator) relativeFileName(fileName string) string {
@@ -183,7 +183,7 @@ export function Orchestrator_relativeFileName(receiver: GoPtr<Orchestrator>, fil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.toPath","kind":"method","status":"implemented","sigHash":"9e61b62a405e313d1ad17028e975890f0df3e6fd78ea274d85c7a5b9cc01edf0","bodyHash":"27d7a1b912fa68839612692b556aa464ef54d9b75be35d445a69f2b54dfa83b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.toPath","kind":"method","status":"implemented","sigHash":"9e61b62a405e313d1ad17028e975890f0df3e6fd78ea274d85c7a5b9cc01edf0"}
  *
  * Go source:
  * func (o *Orchestrator) toPath(fileName string) tspath.Path {
@@ -195,7 +195,7 @@ export function Orchestrator_toPath(receiver: GoPtr<Orchestrator>, fileName: str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Order","kind":"method","status":"implemented","sigHash":"1301e30f674ef1c608aefd50ccd0739e9612b69d9bfa3960f0ef286873c97219","bodyHash":"4d8ffbdd713ca06f0061502658a991f0f4b41925550afae89b90caedec18b6c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Order","kind":"method","status":"implemented","sigHash":"1301e30f674ef1c608aefd50ccd0739e9612b69d9bfa3960f0ef286873c97219"}
  *
  * Go source:
  * func (o *Orchestrator) Order() []string {
@@ -207,7 +207,7 @@ export function Orchestrator_Order(receiver: GoPtr<Orchestrator>): GoSlice<strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Upstream","kind":"method","status":"implemented","sigHash":"7f3b0fb743b122979e2b074f6444231c3de0eb3ea6cb87465543694f936a5c96","bodyHash":"23c05c9394d5ca6d1c76bbdc069efae890cad6211b8c439e6aaf7b5a493d34be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Upstream","kind":"method","status":"implemented","sigHash":"7f3b0fb743b122979e2b074f6444231c3de0eb3ea6cb87465543694f936a5c96"}
  *
  * Go source:
  * func (o *Orchestrator) Upstream(configName string) []string {
@@ -225,7 +225,7 @@ export function Orchestrator_Upstream(receiver: GoPtr<Orchestrator>, configName:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Downstream","kind":"method","status":"implemented","sigHash":"0fa4b32ce78c45e5133b8fb53e268a74704700b01972ead882fc5c003b17aecc","bodyHash":"03be9d1de6a867a66869ac312c9957bbc6b03232bf02d21178bc49708106611e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Downstream","kind":"method","status":"implemented","sigHash":"0fa4b32ce78c45e5133b8fb53e268a74704700b01972ead882fc5c003b17aecc"}
  *
  * Go source:
  * func (o *Orchestrator) Downstream(configName string) []string {
@@ -243,7 +243,7 @@ export function Orchestrator_Downstream(receiver: GoPtr<Orchestrator>, configNam
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.getTask","kind":"method","status":"implemented","sigHash":"4b2b5e6cba576241e54fc1ab31c9ede92bcb74dad862d5ecdc3676ff0de82092","bodyHash":"3a1a10a118892df43330e92f0f3df5571c3669d7f320c7cf0b7fd82acd1e116d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.getTask","kind":"method","status":"implemented","sigHash":"4b2b5e6cba576241e54fc1ab31c9ede92bcb74dad862d5ecdc3676ff0de82092"}
  *
  * Go source:
  * func (o *Orchestrator) getTask(path tspath.Path) *BuildTask {
@@ -263,7 +263,7 @@ export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createBuildTasks","kind":"method","status":"implemented","sigHash":"329dee7541b89ead2d2bbc950f66b9ac5355421b6feb4025adf54d1652414d57","bodyHash":"e9072f6f2ffedf70a1212c48bb2a9a80bdc89d01adeaa6a2a1401f84c8fb1a3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createBuildTasks","kind":"method","status":"implemented","sigHash":"329dee7541b89ead2d2bbc950f66b9ac5355421b6feb4025adf54d1652414d57"}
  *
  * Go source:
  * func (o *Orchestrator) createBuildTasks(oldTasks *collections.SyncMap[tspath.Path, *BuildTask], configs []string, wg core.WorkGroup) {
@@ -357,7 +357,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.setupBuildTask","kind":"method","status":"implemented","sigHash":"66425ad7812e87b4684055d1970a30cb40f0863fef9394515cbb0c54bdf123e2","bodyHash":"5c7444a439956b4871099f7866500401575250c81213dd03e31f5c8c534afc42"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.setupBuildTask","kind":"method","status":"implemented","sigHash":"66425ad7812e87b4684055d1970a30cb40f0863fef9394515cbb0c54bdf123e2"}
  *
  * Go source:
  * func (o *Orchestrator) setupBuildTask(
@@ -449,7 +449,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.GenerateGraphReusingOldTasks","kind":"method","status":"implemented","sigHash":"169d3ccca94606a2a402942539df2105a48962d215156c2d8c57714504cbb3ca","bodyHash":"d2f511d69049e087e9db651d732b979d6313bd4b0bcec8abfd688cb0536221b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.GenerateGraphReusingOldTasks","kind":"method","status":"implemented","sigHash":"169d3ccca94606a2a402942539df2105a48962d215156c2d8c57714504cbb3ca"}
  *
  * Go source:
  * func (o *Orchestrator) GenerateGraphReusingOldTasks() {
@@ -469,7 +469,7 @@ export function Orchestrator_GenerateGraphReusingOldTasks(receiver: GoPtr<Orches
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.GenerateGraph","kind":"method","status":"implemented","sigHash":"279f8f4940231b9f3a890093603ccd86df99c79f77cdc4ff810389693aee4527","bodyHash":"2bb6f987d23dcbb34ebbb64effb83fa4d3b2fbba960f585e03c3e385e2ba611a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.GenerateGraph","kind":"method","status":"implemented","sigHash":"279f8f4940231b9f3a890093603ccd86df99c79f77cdc4ff810389693aee4527"}
  *
  * Go source:
  * func (o *Orchestrator) GenerateGraph(oldTasks *collections.SyncMap[tspath.Path, *BuildTask]) {
@@ -503,7 +503,7 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Start","kind":"method","status":"implemented","sigHash":"0262ef5622e64e786c5441a5853ea21c76e8a20aa686c24179e144412a923b89","bodyHash":"9b1c7dea303633b2c3b13b0619e942ee19321e384be7627900742afec2c87dfe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Start","kind":"method","status":"implemented","sigHash":"0262ef5622e64e786c5441a5853ea21c76e8a20aa686c24179e144412a923b89"}
  *
  * Go source:
  * func (o *Orchestrator) Start(ctx context.Context) tsc.CommandLineResult {
@@ -533,7 +533,7 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"3a5d894f9edb920da49f99bb7ba9f2c595d97d3d4fcd5f67246ea84066ad4839","bodyHash":"b50b16f6fc23b9e22cbdf28744e5dd67df3de1c59667fcbde9f7a031f6042df2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"3a5d894f9edb920da49f99bb7ba9f2c595d97d3d4fcd5f67246ea84066ad4839"}
  *
  * Go source:
  * func (o *Orchestrator) Watch(ctx context.Context) {
@@ -568,7 +568,7 @@ export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>, ctx: Context):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.updateWatch","kind":"method","status":"implemented","sigHash":"218642ad6c3469aad6172a9e74ede9f4e4b3fdbaa9b0d8bb5632c9fc24105acb","bodyHash":"e12c9ed62a55b971ba42148f882fa9177c659094ad824046eb9ed92650e96cbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.updateWatch","kind":"method","status":"implemented","sigHash":"218642ad6c3469aad6172a9e74ede9f4e4b3fdbaa9b0d8bb5632c9fc24105acb"}
  *
  * Go source:
  * func (o *Orchestrator) updateWatch() {
@@ -588,7 +588,7 @@ export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.resetCaches","kind":"method","status":"implemented","sigHash":"6f412b8cdfba3231f801add4772a3c2119ffe5da7faf908703e3f75f0a233891","bodyHash":"fe4d07e47deb072bbe6569496a0a2327ccfda4d89b66f833660a2d86f5c70898"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.resetCaches","kind":"method","status":"implemented","sigHash":"6f412b8cdfba3231f801add4772a3c2119ffe5da7faf908703e3f75f0a233891"}
  *
  * Go source:
  * func (o *Orchestrator) resetCaches() {
@@ -609,7 +609,7 @@ export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.DoCycle","kind":"method","status":"implemented","sigHash":"640ff407c09d9786aebcad8d144723150eab5e178d0af93c3f933d63211b0fc1","bodyHash":"bc85a31c27c89f3120b5e823a12c49dc5bd468a6384f3c77a907db2b214badf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.DoCycle","kind":"method","status":"implemented","sigHash":"640ff407c09d9786aebcad8d144723150eab5e178d0af93c3f933d63211b0fc1"}
  *
  * Go source:
  * func (o *Orchestrator) DoCycle() {
@@ -673,7 +673,7 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrClean","kind":"method","status":"implemented","sigHash":"7d5f56d191ca2a8f9d05270b4da82798ad439398eca2dc68d650841d8dc293df","bodyHash":"88ac0456847aa9d5045c16d1a9046e9534c7dce6b3f83c5cdec3e43990285fcc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrClean","kind":"method","status":"implemented","sigHash":"7d5f56d191ca2a8f9d05270b4da82798ad439398eca2dc68d650841d8dc293df"}
  *
  * Go source:
  * func (o *Orchestrator) buildOrClean() tsc.CommandLineResult {
@@ -740,7 +740,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.rangeTask","kind":"method","status":"implemented","sigHash":"c4b50a219b88c1e7ec3b1256d39ac98a97be09a55a8454631350f17e5bc19ad4","bodyHash":"659a424cabd1c3239753710c7f79a5ba56041d2200f577e3c31f3e8d52e50805"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.rangeTask","kind":"method","status":"implemented","sigHash":"c4b50a219b88c1e7ec3b1256d39ac98a97be09a55a8454631350f17e5bc19ad4"}
  *
  * Go source:
  * func (o *Orchestrator) rangeTask(f func(path tspath.Path, task *BuildTask)) {
@@ -793,7 +793,7 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrCleanProject","kind":"method","status":"implemented","sigHash":"1fe90a62f3e8d0f67ade2d3b056d1511c739e6bce2ef44d2f38b28503225a083","bodyHash":"9c8b3bb4a7a120085a1feb0288f06bd91c55c47c1aff26cd1f56e21b46963b7f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrCleanProject","kind":"method","status":"implemented","sigHash":"1fe90a62f3e8d0f67ade2d3b056d1511c739e6bce2ef44d2f38b28503225a083"}
  *
  * Go source:
  * func (o *Orchestrator) buildOrCleanProject(task *BuildTask, path tspath.Path, buildResult *orchestratorResult) {
@@ -830,7 +830,7 @@ export function Orchestrator_buildOrCleanProject(receiver: GoPtr<Orchestrator>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.getWriter","kind":"method","status":"implemented","sigHash":"eb31e4ddd1f9d2150d9180a488576cad040605f79e0fc3515053d60ad08a916b","bodyHash":"d2bf80af84724134737bd5fd3fb39b774a888effd1f2f0c0372acd83cae2bd23"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.getWriter","kind":"method","status":"implemented","sigHash":"eb31e4ddd1f9d2150d9180a488576cad040605f79e0fc3515053d60ad08a916b"}
  *
  * Go source:
  * func (o *Orchestrator) getWriter(task *BuildTask) io.Writer {
@@ -848,7 +848,7 @@ export function Orchestrator_getWriter(receiver: GoPtr<Orchestrator>, task: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createBuilderStatusReporter","kind":"method","status":"implemented","sigHash":"6e00f36032a39c9ef392399b0e87a956867a3efb0a14c29e98ec6711d7c6316b","bodyHash":"60499118067602279b4673b4653c9d6af2bf4b4f5412899c6630632eb483fcea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createBuilderStatusReporter","kind":"method","status":"implemented","sigHash":"6e00f36032a39c9ef392399b0e87a956867a3efb0a14c29e98ec6711d7c6316b"}
  *
  * Go source:
  * func (o *Orchestrator) createBuilderStatusReporter(task *BuildTask) tsc.DiagnosticReporter {
@@ -860,7 +860,7 @@ export function Orchestrator_createBuilderStatusReporter(receiver: GoPtr<Orchest
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createDiagnosticReporter","kind":"method","status":"implemented","sigHash":"737739d0bc4bc0efb4d794ff61c7d898082f295487378cb9bc77eb1f84fd2dc9","bodyHash":"fc665a57c15d5bafd44fec3d7c45c3e77dd42e2562e984a7a502c66dfed8275c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.createDiagnosticReporter","kind":"method","status":"implemented","sigHash":"737739d0bc4bc0efb4d794ff61c7d898082f295487378cb9bc77eb1f84fd2dc9"}
  *
  * Go source:
  * func (o *Orchestrator) createDiagnosticReporter(task *BuildTask) tsc.DiagnosticReporter {
@@ -912,7 +912,7 @@ function newParseCache(): parseCache {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175"}
  */
 export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
   const orchestrator: Orchestrator = {

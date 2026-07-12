@@ -28,7 +28,7 @@ import { Node_Modifiers } from "../../ast/spine.js";
 import { getDecoratorsOfParameters } from "./legacydecorators.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"1894d9bf8ed1a1868a2c3b304b8ced2e4c9d440b32fbdb8bb4035c3bb2a8ac7d","bodyHash":"4e17399c6ef1528bc329ec7cd4a6526a1e79de90637dc1a9797d0726418ef13c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"1894d9bf8ed1a1868a2c3b304b8ced2e4c9d440b32fbdb8bb4035c3bb2a8ac7d"}
  *
  * Go source:
  * const USE_NEW_TYPE_METADATA_FORMAT = false
@@ -36,7 +36,7 @@ import { getDecoratorsOfParameters } from "./legacydecorators.js";
 export const USE_NEW_TYPE_METADATA_FORMAT: bool = false;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::type::MetadataTransformer","kind":"type","status":"implemented","sigHash":"f9d49b88053dd59d91367a47d26bcedaaa2e7a18d5e57a2dc3e300438c166f2b","bodyHash":"d6679af0816e053c4df3bdb0a1958133b76480ce6eb12bf3f8e2f704be44e59e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::type::MetadataTransformer","kind":"type","status":"implemented","sigHash":"f9d49b88053dd59d91367a47d26bcedaaa2e7a18d5e57a2dc3e300438c166f2b"}
  *
  * Go source:
  * MetadataTransformer struct {
@@ -63,7 +63,7 @@ export interface MetadataTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::func::NewMetadataTransformer","kind":"func","status":"implemented","sigHash":"ded46d7397187561b63f38a4e609ea34fab1e7a3a80471cef2632d8fa1c5ec5c","bodyHash":"761c3fa6bf142eb0d2048fd8f6c1a1ba59bd5786e3f4aa15d73905cccea64026"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::func::NewMetadataTransformer","kind":"func","status":"implemented","sigHash":"ded46d7397187561b63f38a4e609ea34fab1e7a3a80471cef2632d8fa1c5ec5c"}
  *
  * Go source:
  * func NewMetadataTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -91,7 +91,7 @@ export function NewMetadataTransformer(opt: GoPtr<TransformOptions>): GoPtr<Tran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visit","kind":"method","status":"implemented","sigHash":"6a725d7bfb78b92078fb10e6132a5e66bf179077ef4c6ac427734c98f4df72fe","bodyHash":"0f77098237b711b845dae1c658fe98c6adc1a2b6124c47ffdb7ac19631dff1f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visit","kind":"method","status":"implemented","sigHash":"6a725d7bfb78b92078fb10e6132a5e66bf179077ef4c6ac427734c98f4df72fe"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visit(node *ast.Node) *ast.Node {
@@ -187,7 +187,7 @@ export function MetadataTransformer_visit(receiver: GoPtr<MetadataTransformer>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.setParent","kind":"method","status":"implemented","sigHash":"9d22518f2eda3506462926e737dabb279c82339ab65a8e42a3a56262468ff4fb","bodyHash":"fd5959f7c287278ee4c3b47083dd9cfe2a698f8c7badd98240c5b3db72457cae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.setParent","kind":"method","status":"implemented","sigHash":"9d22518f2eda3506462926e737dabb279c82339ab65a8e42a3a56262468ff4fb"}
  *
  * Go source:
  * func (tx *MetadataTransformer) setParent(node *ast.Node) {
@@ -200,7 +200,7 @@ export function MetadataTransformer_setParent(receiver: GoPtr<MetadataTransforme
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.setCurrentLexicalScope","kind":"method","status":"implemented","sigHash":"2bd038f1e3871586ee907962770a9b87c38969f6a115a1b24bef4c3ec18e4052","bodyHash":"c35e8b9054da6ab631cc25621bcc12bd9fdfa46b568847575aa6dfe1edcc07d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.setCurrentLexicalScope","kind":"method","status":"implemented","sigHash":"2bd038f1e3871586ee907962770a9b87c38969f6a115a1b24bef4c3ec18e4052"}
  *
  * Go source:
  * func (tx *MetadataTransformer) setCurrentLexicalScope(node *ast.Node) {
@@ -213,7 +213,7 @@ export function MetadataTransformer_setCurrentLexicalScope(receiver: GoPtr<Metad
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"7e4b84c111b963fb5f8d4d91d149dd25956f736b6be4b924caa6013b785a0a12","bodyHash":"8f925d9ae5c4c5d40e3aed23b792c1a70bd90843d5cb18d6d62d334d4c886274"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"7e4b84c111b963fb5f8d4d91d149dd25956f736b6be4b924caa6013b785a0a12"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitClassExpression(node *ast.ClassExpression) *ast.Node {
@@ -265,7 +265,7 @@ export function MetadataTransformer_visitClassExpression(receiver: GoPtr<Metadat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"c7ffec6275286e3dbc7a5f0daeadcde48684520b1906086d1ca1df4c47a33f75","bodyHash":"710300997cb471008e1656bc9b08ecdae915308beebc62679732591ac9f693ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"c7ffec6275286e3dbc7a5f0daeadcde48684520b1906086d1ca1df4c47a33f75"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitClassDeclaration(node *ast.ClassDeclaration) *ast.Node {
@@ -317,7 +317,7 @@ export function MetadataTransformer_visitClassDeclaration(receiver: GoPtr<Metada
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitPropertyDeclaration","kind":"method","status":"implemented","sigHash":"6c409a23d811c0e933edeef15c2e20f1f49a40f6fd609de60a6e6eec11b84bba","bodyHash":"0a572a106f668a6e2710f658ec8301e41560c97c1264d84c26205340917da9ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitPropertyDeclaration","kind":"method","status":"implemented","sigHash":"6c409a23d811c0e933edeef15c2e20f1f49a40f6fd609de60a6e6eec11b84bba"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitPropertyDeclaration(node *ast.PropertyDeclaration) *ast.Node {
@@ -358,7 +358,7 @@ export function MetadataTransformer_visitPropertyDeclaration(receiver: GoPtr<Met
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"d647cf2a2af6fbe0399365c96373a7a60385762e0bc7ae359938f525e40bf306","bodyHash":"f8ab9c16c6f7ef1b4e827f01a6118d5335623e1efa40b4d7b1f1524f1a08284c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"d647cf2a2af6fbe0399365c96373a7a60385762e0bc7ae359938f525e40bf306"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitMethodDeclaration(node *ast.MethodDeclaration) *ast.Node {
@@ -407,7 +407,7 @@ export function MetadataTransformer_visitMethodDeclaration(receiver: GoPtr<Metad
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitSetAccessor","kind":"method","status":"implemented","sigHash":"382125188ded0fe0bb9529e7636ef67bfd044508dc0ac0a58afbc6bb97a9317f","bodyHash":"fed6a81dd12d56d9f94ee576040502b4bb73b8fc20659a1ccf5b759f2fcdd7a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitSetAccessor","kind":"method","status":"implemented","sigHash":"382125188ded0fe0bb9529e7636ef67bfd044508dc0ac0a58afbc6bb97a9317f"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitSetAccessor(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -452,7 +452,7 @@ export function MetadataTransformer_visitSetAccessor(receiver: GoPtr<MetadataTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitGetAccessor","kind":"method","status":"implemented","sigHash":"7f918208b108e38fefeaea0bea0b5e936c48952a2500384906ef485e6cea7a99","bodyHash":"8737ec17561ec79903fc58eb16a8fad03079f80e2cbe6f8b5edcccc722574a4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitGetAccessor","kind":"method","status":"implemented","sigHash":"7f918208b108e38fefeaea0bea0b5e936c48952a2500384906ef485e6cea7a99"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitGetAccessor(node *ast.GetAccessorDeclaration) *ast.Node {
@@ -497,7 +497,7 @@ export function MetadataTransformer_visitGetAccessor(receiver: GoPtr<MetadataTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassTypeMetadata","kind":"method","status":"implemented","sigHash":"c2589e88b72f0183dfc7e49fdf632c95322e40d5524c7055e92d38af54407cfe","bodyHash":"e0c1479c394a3dff006ffb7147d21bac4f48989a5918a6b6ea3c8c4fbdb41de8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassTypeMetadata","kind":"method","status":"implemented","sigHash":"c2589e88b72f0183dfc7e49fdf632c95322e40d5524c7055e92d38af54407cfe"}
  *
  * Go source:
  * func (tx *MetadataTransformer) injectClassTypeMetadata(list *ast.ModifierList, node *ast.Node) *ast.ModifierList {
@@ -570,7 +570,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassElementTypeMetadata","kind":"method","status":"implemented","sigHash":"19991ff546382a19f8e46712294792407118d309e10333360f96d46eb7fd25ef","bodyHash":"231ab6ab869444bfd4aa6aa3f7e6d25a2af0ad0d4799d73a349e0b42f099f4f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassElementTypeMetadata","kind":"method","status":"implemented","sigHash":"19991ff546382a19f8e46712294792407118d309e10333360f96d46eb7fd25ef"}
  *
  * Go source:
  * func (tx *MetadataTransformer) injectClassElementTypeMetadata(list *ast.ModifierList, node *ast.Node, container *ast.Node) *ast.ModifierList {
@@ -641,7 +641,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getTypeMetadata","kind":"method","status":"implemented","sigHash":"4df51fcdac33a208c396d34d13aee26c908c7435d1e915666b1c348749044032","bodyHash":"9ff5b83829e4cae1dff0138b0929d067e42826f0fcd64afd3b78082884b623ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getTypeMetadata","kind":"method","status":"implemented","sigHash":"4df51fcdac33a208c396d34d13aee26c908c7435d1e915666b1c348749044032"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -668,7 +668,7 @@ export function MetadataTransformer_getTypeMetadata(receiver: GoPtr<MetadataTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getOldTypeMetadata","kind":"method","status":"implemented","sigHash":"fd69259336c3735edfb929389125202f9ca9b1c53c97964128fe841ede873ad8","bodyHash":"49e0e434212378e5e5082c5562613def519a24b714da6b9609dd301bc0268d56"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getOldTypeMetadata","kind":"method","status":"implemented","sigHash":"fd69259336c3735edfb929389125202f9ca9b1c53c97964128fe841ede873ad8"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getOldTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -734,7 +734,7 @@ export function MetadataTransformer_getOldTypeMetadata(receiver: GoPtr<MetadataT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getNewTypeMetadata","kind":"method","status":"implemented","sigHash":"7f1ddab31565ba659f7714542c8a580c1d15074a0fdeb024aeb95f1bc7cc093a","bodyHash":"9351a47d8aacabd8b12ae83f85b1803674fe3eccddd21f5c0eba9cb309f06347"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.getNewTypeMetadata","kind":"method","status":"implemented","sigHash":"7f1ddab31565ba659f7714542c8a580c1d15074a0fdeb024aeb95f1bc7cc093a"}
  *
  * Go source:
  * func (tx *MetadataTransformer) getNewTypeMetadata(node *ast.Node, container *ast.Node) []*ast.Node {
@@ -894,7 +894,7 @@ export function MetadataTransformer_getNewTypeMetadata(receiver: GoPtr<MetadataT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddTypeMetadata","kind":"method","status":"implemented","sigHash":"7dcf930529e923d1200c01f3b22f42295a37bfd5ef03d704c70d618edb6000d8","bodyHash":"e427b93a559fafa7a07a8d5e8647b6b11bd8fc9ba803cfae186d5f9b2dc4738a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddTypeMetadata","kind":"method","status":"implemented","sigHash":"7dcf930529e923d1200c01f3b22f42295a37bfd5ef03d704c70d618edb6000d8"}
  *
  * Go source:
  * func (tx *MetadataTransformer) shouldAddTypeMetadata(node *ast.Node) bool {
@@ -917,7 +917,7 @@ export function MetadataTransformer_shouldAddTypeMetadata(receiver: GoPtr<Metada
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddReturnTypeMetadata","kind":"method","status":"implemented","sigHash":"f2f653c220ded49041176471e2866ab15f895ea14e9c35f5649d6ca169bc33db","bodyHash":"6658d95a6840701c26b33f1c031f1e0b61b260493460eacbcd9c1df075335f10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddReturnTypeMetadata","kind":"method","status":"implemented","sigHash":"f2f653c220ded49041176471e2866ab15f895ea14e9c35f5649d6ca169bc33db"}
  *
  * Go source:
  * func (tx *MetadataTransformer) shouldAddReturnTypeMetadata(node *ast.Node) bool {
@@ -929,7 +929,7 @@ export function MetadataTransformer_shouldAddReturnTypeMetadata(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddParamTypesMetadata","kind":"method","status":"implemented","sigHash":"2c8548a7e392dcc928f8c9a343f1294535aa1a0c7e5fe4db2b3f3d41e1877952","bodyHash":"a85ef58600661a030405c64347ca050b6acfd14489fe5152a2586e1ca866323d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddParamTypesMetadata","kind":"method","status":"implemented","sigHash":"2c8548a7e392dcc928f8c9a343f1294535aa1a0c7e5fe4db2b3f3d41e1877952"}
  *
  * Go source:
  * func (tx *MetadataTransformer) shouldAddParamTypesMetadata(node *ast.Node) bool {

@@ -28,7 +28,7 @@ import { NodeVisitor_VisitNode, NodeVisitor_VisitEachChild, NodeVisitor_VisitNod
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"bbe05073778a62bda93186b24f160901f4fa35f78b8e08de61bd627c1c896fff","bodyHash":"90b5de35b19b85c86c591b1f38d85961c5b02bbd88058844381230313cabdf4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"implemented","sigHash":"bbe05073778a62bda93186b24f160901f4fa35f78b8e08de61bd627c1c896fff"}
  *
  * Go source:
  * objectRestSpreadTransformer struct {
@@ -50,7 +50,7 @@ export interface objectRestSpreadTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visit","kind":"method","status":"implemented","sigHash":"517e37e65a5ecb1af73e2e271f78b6eda94dc219ba3b596f9fcb63dc1080c3fe","bodyHash":"0a1c0192e7f4a59f6cd69f4948d573b09d3be5a5c6763435605ff257c2f9bc23"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visit","kind":"method","status":"implemented","sigHash":"517e37e65a5ecb1af73e2e271f78b6eda94dc219ba3b596f9fcb63dc1080c3fe"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visit(node *ast.Node) *ast.Node {
@@ -158,7 +158,7 @@ export function objectRestSpreadTransformer_visit(receiver: GoPtr<objectRestSpre
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"3ad9564380d2783b079072fbb26edd9cbf1c0f38b44a690af069acacd1955348","bodyHash":"1789b0792c6edfc2a5f1b326201cc8657cdccb0ca80ed264343bab9afced2b01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"3ad9564380d2783b079072fbb26edd9cbf1c0f38b44a690af069acacd1955348"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -176,7 +176,7 @@ export function objectRestSpreadTransformer_visitSourceFile(receiver: GoPtr<obje
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitParameter","kind":"method","status":"implemented","sigHash":"0de9b319b3c0018f13263dd60451f34e8c08e6848281c70dcbeef9d1dfe44827","bodyHash":"194073c78e3bfa018db1f76e5f3ff99e5add27c2f530c6df9bdee1c60a129952"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitParameter","kind":"method","status":"implemented","sigHash":"0de9b319b3c0018f13263dd60451f34e8c08e6848281c70dcbeef9d1dfe44827"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitParameter(node *ast.ParameterDeclaration) *ast.Node {
@@ -252,7 +252,7 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread","kind":"method","status":"implemented","sigHash":"0a5da916bcc5432b50def7216ef06d8c73ee8653aa211f3544ec6143e5c7af9e","bodyHash":"2261f4cefedda8bb72e85f802bbb7e86c24e71b8c39cc836fc403775d6337114"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread","kind":"method","status":"implemented","sigHash":"0a5da916bcc5432b50def7216ef06d8c73ee8653aa211f3544ec6143e5c7af9e"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) collectParametersWithPrecedingObjectRestOrSpread(node *ast.Node) map[*ast.Node]struct{} {
@@ -281,7 +281,7 @@ export function objectRestSpreadTransformer_collectParametersWithPrecedingObject
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::oldParamScope","kind":"type","status":"implemented","sigHash":"9b4c34839620e59d8cc882160f7d7cac4ece220cfc51b56f63bf2a50cb6a75d8","bodyHash":"4136d1eac74cc0ec38c279f6295c4e910ac899d1ce6721e2ef7b90e6e3bbe21e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::oldParamScope","kind":"type","status":"implemented","sigHash":"9b4c34839620e59d8cc882160f7d7cac4ece220cfc51b56f63bf2a50cb6a75d8"}
  *
  * Go source:
  * oldParamScope map[*ast.Node]struct{}
@@ -289,7 +289,7 @@ export function objectRestSpreadTransformer_collectParametersWithPrecedingObject
 export type oldParamScope = GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext","kind":"method","status":"implemented","sigHash":"c5aa4db999a23612c13ee2bba9da70de79b4e6e67a2c214a0b7d17711a6bb75c","bodyHash":"f57eb7571a9acad994bea403a35fd235e0190b07f097a5400b7ae17bd938e509"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext","kind":"method","status":"implemented","sigHash":"c5aa4db999a23612c13ee2bba9da70de79b4e6e67a2c214a0b7d17711a6bb75c"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) enterParameterListContext(node *ast.Node) oldParamScope {
@@ -305,7 +305,7 @@ export function objectRestSpreadTransformer_enterParameterListContext(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.exitParameterListContext","kind":"method","status":"implemented","sigHash":"c779dba462e37b40a75b57892483ab220bd8bf842d93d5539eab4d3e6f266bf3","bodyHash":"3c259d32c56b14445acdc28aacbf4ed8f420a0ea37b50a93d8a9f28010522726"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.exitParameterListContext","kind":"method","status":"implemented","sigHash":"c779dba462e37b40a75b57892483ab220bd8bf842d93d5539eab4d3e6f266bf3"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) exitParameterListContext(scope oldParamScope) {
@@ -317,7 +317,7 @@ export function objectRestSpreadTransformer_exitParameterListContext(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitContructorDeclaration","kind":"method","status":"implemented","sigHash":"f7326fbe1578bf0036aef32da45312eef0eac83ccaac54d7e70d52d3b8f48aa9","bodyHash":"bd14a364e3bd94c2137c1c967c72e7ef51aa35da4ff9eb1cc91febf898ab2ec8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitContructorDeclaration","kind":"method","status":"implemented","sigHash":"f7326fbe1578bf0036aef32da45312eef0eac83ccaac54d7e70d52d3b8f48aa9"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitContructorDeclaration(node *ast.ConstructorDeclaration) *ast.Node {
@@ -356,7 +356,7 @@ export function objectRestSpreadTransformer_visitContructorDeclaration(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitGetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"50b453ba1b772a9eb01199658f3b6575a3d3150b003f01a6a998a0b2b9b736f2","bodyHash":"f301f651100141111a7f33608d32e934170d3a88b17e462b527999f855e311ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitGetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"50b453ba1b772a9eb01199658f3b6575a3d3150b003f01a6a998a0b2b9b736f2"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitGetAccessorDeclaration(node *ast.GetAccessorDeclaration) *ast.Node {
@@ -397,7 +397,7 @@ export function objectRestSpreadTransformer_visitGetAccessorDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitSetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"36dd975ef28fc63e653f20fd47e830a1461abaa4aa5be4c4b286e00aa640ac86","bodyHash":"3a7cbc8888e5854f91024f993878f94449ed1a325dad25f41873fb889f7f67db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitSetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"36dd975ef28fc63e653f20fd47e830a1461abaa4aa5be4c4b286e00aa640ac86"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitSetAccessorDeclaration(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -438,7 +438,7 @@ export function objectRestSpreadTransformer_visitSetAccessorDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"d2f93649e7853f552266945cf565df6ff249ef9153a347f017a9904da1e7c1b9","bodyHash":"cb9647996f586ec476282ebb8815f03468c15120d61cd5d87decf5204084e1d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"d2f93649e7853f552266945cf565df6ff249ef9153a347f017a9904da1e7c1b9"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitMethodDeclaration(node *ast.MethodDeclaration) *ast.Node {
@@ -483,7 +483,7 @@ export function objectRestSpreadTransformer_visitMethodDeclaration(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitFunctionDeclaration","kind":"method","status":"implemented","sigHash":"82b3b42b9979ce20cb9d3a254149e0679572768125cc728808cec910b32b182d","bodyHash":"0d97e3fb7a275f794e8acf55a6ddfd38bf65c94e5f989a00c6263ed0ef0215d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitFunctionDeclaration","kind":"method","status":"implemented","sigHash":"82b3b42b9979ce20cb9d3a254149e0679572768125cc728808cec910b32b182d"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitFunctionDeclaration(node *ast.FunctionDeclaration) *ast.Node {
@@ -526,7 +526,7 @@ export function objectRestSpreadTransformer_visitFunctionDeclaration(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitArrowFunction","kind":"method","status":"implemented","sigHash":"f8b7ea736d398bedf6484bd5a9a495f0924f5a2dd55bb10bb792d3a426ca231f","bodyHash":"863a83e2f8b21cc9cdca8340d53a634e0257756d28431983f287c74378b5905c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitArrowFunction","kind":"method","status":"implemented","sigHash":"f8b7ea736d398bedf6484bd5a9a495f0924f5a2dd55bb10bb792d3a426ca231f"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitArrowFunction(node *ast.ArrowFunction) *ast.Node {
@@ -567,7 +567,7 @@ export function objectRestSpreadTransformer_visitArrowFunction(receiver: GoPtr<o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitFunctionExpression","kind":"method","status":"implemented","sigHash":"763aa3a367c0c047f961ea7426d986a9e720d9c4ab731631e22e3d92c7200ae1","bodyHash":"6bcb5ed375194154cd36cb26765b457f7394d52ca893b784b95fb938b82736bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitFunctionExpression","kind":"method","status":"implemented","sigHash":"763aa3a367c0c047f961ea7426d986a9e720d9c4ab731631e22e3d92c7200ae1"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitFunctionExpression(node *ast.FunctionExpression) *ast.Node {
@@ -610,7 +610,7 @@ export function objectRestSpreadTransformer_visitFunctionExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.transformFunctionBody","kind":"method","status":"implemented","sigHash":"ab9b9ea6776df0ea9bf3bcdd7692ed3eee111bd2a6c5584d2ae123f37c42bdbc","bodyHash":"bf28ba28d153cfd38d0ec5e9cd7227a5b17f2c3e74e32d125166f749fed16830"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.transformFunctionBody","kind":"method","status":"implemented","sigHash":"ab9b9ea6776df0ea9bf3bcdd7692ed3eee111bd2a6c5584d2ae123f37c42bdbc"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) transformFunctionBody(node *ast.Node) *ast.Node {
@@ -708,7 +708,7 @@ export function objectRestSpreadTransformer_transformFunctionBody(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectObjectRestAssignments","kind":"method","status":"implemented","sigHash":"9e4ffea39eea074002c804f032309dd9d292a08b5aa358b9c67ba292ddd5c2bb","bodyHash":"83ecc400e79a64bc8fbaa5538abcf6245ef579fb62c4d4a0d310a435316337e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectObjectRestAssignments","kind":"method","status":"implemented","sigHash":"9e4ffea39eea074002c804f032309dd9d292a08b5aa358b9c67ba292ddd5c2bb"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) collectObjectRestAssignments(node *ast.Node) []*ast.Node {
@@ -872,7 +872,7 @@ export function objectRestSpreadTransformer_collectObjectRestAssignments(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitCatchClause","kind":"method","status":"implemented","sigHash":"ca6e5c954dc01197dade0bedc2ba2d2e351adc50747fc04f3fc23d0660176052","bodyHash":"fb4057a36acb703be1a4e634158ded3646cf3f49eda9516bb71a908af3edcbbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitCatchClause","kind":"method","status":"implemented","sigHash":"ca6e5c954dc01197dade0bedc2ba2d2e351adc50747fc04f3fc23d0660176052"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitCatchClause(node *ast.CatchClause) *ast.Node {
@@ -952,7 +952,7 @@ export function objectRestSpreadTransformer_visitCatchClause(receiver: GoPtr<obj
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableStatement","kind":"method","status":"implemented","sigHash":"7cf9fdd623d1ea37267cd890e9281ac9b65ef922e9636879be1e463c37f65b67","bodyHash":"3f2870d86ff820bb7d639847ab030f19d231dec3bfa5b065ba4a604edd784c61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableStatement","kind":"method","status":"implemented","sigHash":"7cf9fdd623d1ea37267cd890e9281ac9b65ef922e9636879be1e463c37f65b67"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitVariableStatement(node *ast.VariableStatement) *ast.Node {
@@ -980,7 +980,7 @@ export function objectRestSpreadTransformer_visitVariableStatement(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableDeclaration","kind":"method","status":"implemented","sigHash":"0db5ef4f2568297df820428878da79df030d75764170607b5c2fb6a320c8759c","bodyHash":"48145c138c2e242c61678188b8f77c5347b342cfaf818e3021b6303c8e7d9a50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableDeclaration","kind":"method","status":"implemented","sigHash":"0db5ef4f2568297df820428878da79df030d75764170607b5c2fb6a320c8759c"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitVariableDeclaration(node *ast.VariableDeclaration) *ast.Node {
@@ -1004,7 +1004,7 @@ export function objectRestSpreadTransformer_visitVariableDeclaration(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableDeclarationWorker","kind":"method","status":"implemented","sigHash":"db4d0812e0611b36ffb235095141916ce1a9e1428a402626e955b2af994faf12","bodyHash":"3bf323b8e1130c9ca6cef8f3558216a1b95c2323f26267e44dd821aafe2c82ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitVariableDeclarationWorker","kind":"method","status":"implemented","sigHash":"db4d0812e0611b36ffb235095141916ce1a9e1428a402626e955b2af994faf12"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitVariableDeclarationWorker(node *ast.VariableDeclaration, exported bool) *ast.Node {
@@ -1033,7 +1033,7 @@ export function objectRestSpreadTransformer_visitVariableDeclarationWorker(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitForOftatement","kind":"method","status":"implemented","sigHash":"c50ad20482775ec52fe48e5dda365d7603c2c2b74e1c3a239ea13b3821ca8b8b","bodyHash":"7c3661e094ca2f9316500f8736c81de0a214a57780c1e8cea8cba57a3544ec79"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitForOftatement","kind":"method","status":"implemented","sigHash":"c50ad20482775ec52fe48e5dda365d7603c2c2b74e1c3a239ea13b3821ca8b8b"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitForOftatement(node *ast.ForInOrOfStatement) *ast.Node {
@@ -1152,7 +1152,7 @@ export function objectRestSpreadTransformer_visitForOftatement(receiver: GoPtr<o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"6cab8a634a14955cce5cc80c003b4069ed2295ef1b505c343e3e2e470b728c99","bodyHash":"2196d06c57a84e7ac934e7eac62e93350317949a0ff61bd5043f7fdf30cf56cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"6cab8a634a14955cce5cc80c003b4069ed2295ef1b505c343e3e2e470b728c99"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitBinaryExpression(node *ast.BinaryExpression, expressionResultIsUnused bool) *ast.Node {
@@ -1195,7 +1195,7 @@ export function objectRestSpreadTransformer_visitBinaryExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitObjectLiteralExpression","kind":"method","status":"implemented","sigHash":"c2d165e0069df8f5ad6a97f342cd59c2cfe2b41240b5f19417fc00b95f900cb4","bodyHash":"791c1b4c71e8dfafe15599cb4d5f55d2d21186ca6131da06a2ffa58998586828"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.visitObjectLiteralExpression","kind":"method","status":"implemented","sigHash":"c2d165e0069df8f5ad6a97f342cd59c2cfe2b41240b5f19417fc00b95f900cb4"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) visitObjectLiteralExpression(node *ast.ObjectLiteralExpression) *ast.Node {
@@ -1245,7 +1245,7 @@ export function objectRestSpreadTransformer_visitObjectLiteralExpression(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.chunkObjectLiteralElements","kind":"method","status":"implemented","sigHash":"14947bb2a31c8a38f4300a21a1c3a1f0ea3020abd7777fedf62f5fd1ac71bea3","bodyHash":"007ca13a18f7c34c16fc53d60005ac97a4252d9476d6e8f475cbfca2e0a43538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.chunkObjectLiteralElements","kind":"method","status":"implemented","sigHash":"14947bb2a31c8a38f4300a21a1c3a1f0ea3020abd7777fedf62f5fd1ac71bea3"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) chunkObjectLiteralElements(list *ast.NodeList) []*ast.Node {
@@ -1313,7 +1313,7 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::func::newObjectRestSpreadTransformer","kind":"func","status":"implemented","sigHash":"74be8eb7e2ec7f4bad0ca2d45f1bc72c822b0e59f135184c58ff75f817bb5e3d","bodyHash":"14fb65a58c82276e2b6074a54110c77dd9668ca6cfa9929d0d35772d802fd16e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::func::newObjectRestSpreadTransformer","kind":"func","status":"implemented","sigHash":"74be8eb7e2ec7f4bad0ca2d45f1bc72c822b0e59f135184c58ff75f817bb5e3d"}
  *
  * Go source:
  * func newObjectRestSpreadTransformer(opts *transformers.TransformOptions) *transformers.Transformer {

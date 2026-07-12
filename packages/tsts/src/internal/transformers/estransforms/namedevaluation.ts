@@ -31,7 +31,7 @@ import { isClassThisAssignmentBlock } from "./classthis.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"6237d8463b0ae001fda9291aeee2d73a8fd801211e0a23674e97802ef7b8c569","bodyHash":"62e2f5e07d210a350a4f297648f084ea9d398afaf7219b63b7ae3dc40e41362e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"6237d8463b0ae001fda9291aeee2d73a8fd801211e0a23674e97802ef7b8c569"}
  *
  * Go source:
  * func isClassNamedEvaluationHelperBlock(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -75,7 +75,7 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"5eb0191f9c13b270588fd746d07b37f97cc90eb30f17ee06adb0f61e99cc9642","bodyHash":"7ef0855c78b00276698046b4c09f99ce663834689d05f0157c2bd86c499e25f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"5eb0191f9c13b270588fd746d07b37f97cc90eb30f17ee06adb0f61e99cc9642"}
  *
  * Go source:
  * func classHasExplicitlyAssignedName(emitContext *printer.EmitContext, node *ast.ClassLikeDeclaration) bool {
@@ -101,7 +101,7 @@ export function classHasExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasDeclaredOrExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"b6168342e8fcff30827e8e7ee1aeac1d0fa7c47caedb045e6f2ee42a384488ed","bodyHash":"764a9d8831d376a0ef398e9f2b4d14701abd642ed6d61ea2c9471d44a7a73926"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasDeclaredOrExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"b6168342e8fcff30827e8e7ee1aeac1d0fa7c47caedb045e6f2ee42a384488ed"}
  *
  * Go source:
  * func classHasDeclaredOrExplicitlyAssignedName(emitContext *printer.EmitContext, node *ast.ClassLikeDeclaration) bool {
@@ -113,7 +113,7 @@ export function classHasDeclaredOrExplicitlyAssignedName(emitContext: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::type::anonymousFunctionDefinition","kind":"type","status":"implemented","sigHash":"a06030e4e97b936889eef47204d77e1153123fe98e6da0d2d93be7ca95017de0","bodyHash":"b5cf797ef907817d68922dde0629a4e105e0e4d33f925eb63d5bf679ee48c826"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::type::anonymousFunctionDefinition","kind":"type","status":"implemented","sigHash":"a06030e4e97b936889eef47204d77e1153123fe98e6da0d2d93be7ca95017de0"}
  *
  * Go source:
  * anonymousFunctionDefinition = ast.Node
@@ -121,7 +121,7 @@ export function classHasDeclaredOrExplicitlyAssignedName(emitContext: GoPtr<Emit
 export type anonymousFunctionDefinition = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition","kind":"func","status":"implemented","sigHash":"837c166f1b0fe809c982161dd9d4fba0fad539484530366ef517fb80f50a3f75","bodyHash":"6469512651378f6a29f1d7ce40ed4b4a47ac140495c340c3b9f50c94a152b7e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition","kind":"func","status":"implemented","sigHash":"837c166f1b0fe809c982161dd9d4fba0fad539484530366ef517fb80f50a3f75"}
  *
  * Go source:
  * func isAnonymousFunctionDefinition(emitContext *printer.EmitContext, node *ast.Expression, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -173,7 +173,7 @@ export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluation","kind":"func","status":"implemented","sigHash":"c1b0e9007fae51c9bab3cb0b3b5a8ae8cdb3aafc811d57d419069e6890a396fa","bodyHash":"1b9a87034890eb02ed74ffdc0186856a9b68e1fd95c11a17e8e9cf942ecf59af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluation","kind":"func","status":"implemented","sigHash":"c1b0e9007fae51c9bab3cb0b3b5a8ae8cdb3aafc811d57d419069e6890a396fa"}
  *
  * Go source:
  * func isNamedEvaluation(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -185,7 +185,7 @@ export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd","kind":"func","status":"implemented","sigHash":"5cc7c91b9e6c5a560d4cb2edf14f7ee220f9d9c506e85f9b0b312b46c1d6a79c","bodyHash":"16a0eeaf7e3930cfeeb9055c506d02e992027f576942d5c6910bb475bf5d328d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd","kind":"func","status":"implemented","sigHash":"5cc7c91b9e6c5a560d4cb2edf14f7ee220f9d9c506e85f9b0b312b46c1d6a79c"}
  *
  * Go source:
  * func isNamedEvaluationAnd(emitContext *printer.EmitContext, node *ast.Node, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -230,7 +230,7 @@ export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfIdentifier","kind":"func","status":"implemented","sigHash":"3b1b68a8baab172bab7ce4ae3e5c9642dbab06120e9cca69a5af92dc89bd82a6","bodyHash":"02cf63a626012ab995c8c460104bfb908d1988d1cbdf84860829f9d58f404755"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfIdentifier","kind":"func","status":"implemented","sigHash":"3b1b68a8baab172bab7ce4ae3e5c9642dbab06120e9cca69a5af92dc89bd82a6"}
  *
  * Go source:
  * func getAssignedNameOfIdentifier(emitContext *printer.EmitContext, name *ast.IdentifierNode, expression *ast.Node /*WrappedExpression<AnonymousFunctionDefinition>* /) *ast.StringLiteralNode {
@@ -252,7 +252,7 @@ export function getAssignedNameOfIdentifier(emitContext: GoPtr<EmitContext>, nam
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfPropertyName","kind":"func","status":"implemented","sigHash":"137767135a816cbb95f56242de3b7867806340b64a06929c971e19b8800cb54a","bodyHash":"cece49563fe947ca1eda3fa274a40cdfae5f80d823bd05598d19a4a7304678c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfPropertyName","kind":"func","status":"implemented","sigHash":"137767135a816cbb95f56242de3b7867806340b64a06929c971e19b8800cb54a"}
  *
  * Go source:
  * func getAssignedNameOfPropertyName(emitContext *printer.EmitContext, name *ast.PropertyName, assignedNameText string) (assignedName *ast.Expression, updatedName *ast.PropertyName) {
@@ -309,7 +309,7 @@ export function getAssignedNameOfPropertyName(emitContext: GoPtr<EmitContext>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::createClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"9feb917f7e94207e1242d09e3e3892104c1f7da3ade6fed43210d85ce6ae2b88","bodyHash":"4eeba07e82f041eb281dba4835d7c80c0654ad3026ed3ea8872b83e8debe5567"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::createClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"9feb917f7e94207e1242d09e3e3892104c1f7da3ade6fed43210d85ce6ae2b88"}
  *
  * Go source:
  * func createClassNamedEvaluationHelperBlock(emitContext *printer.EmitContext, assignedName *ast.Expression, thisExpression *ast.Expression) *ast.Node {
@@ -349,7 +349,7 @@ export function createClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitCon
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::injectClassNamedEvaluationHelperBlockIfMissing","kind":"func","status":"implemented","sigHash":"c2280e4d7d8329c8b920350fc323776c6159bfa0673a9643a109d66e7ef29006","bodyHash":"0235789f14ada301491bc8e1c53ad3579e52372112ca1a7fb1843ed2474f4e7b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::injectClassNamedEvaluationHelperBlockIfMissing","kind":"func","status":"implemented","sigHash":"c2280e4d7d8329c8b920350fc323776c6159bfa0673a9643a109d66e7ef29006"}
  *
  * Go source:
  * func injectClassNamedEvaluationHelperBlockIfMissing(
@@ -487,7 +487,7 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::finishTransformNamedEvaluation","kind":"func","status":"implemented","sigHash":"dc6c9d465c871d9938d2ba4dc82eb87a2d7f3b606d658bde4f2bd66d50ccf459","bodyHash":"8dc02bbedcfba1bff65bdfb8941f2d0b10b645d35708bab20a7ce15c57f8b624"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::finishTransformNamedEvaluation","kind":"func","status":"implemented","sigHash":"dc6c9d465c871d9938d2ba4dc82eb87a2d7f3b606d658bde4f2bd66d50ccf459"}
  *
  * Go source:
  * func finishTransformNamedEvaluation(
@@ -529,7 +529,7 @@ export function finishTransformNamedEvaluation(emitContext: GoPtr<EmitContext>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfPropertyAssignment","kind":"func","status":"implemented","sigHash":"e4a106ff9860c8f747e47bb708f1ff64a8c92fb696a51210eadb9372f1149789","bodyHash":"6fd1b0e1a5c415cdd2e4f174bea1fad7ae1c9e0e82ab1f6ca2d5dc33b3d9e2db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfPropertyAssignment","kind":"func","status":"implemented","sigHash":"e4a106ff9860c8f747e47bb708f1ff64a8c92fb696a51210eadb9372f1149789"}
  *
  * Go source:
  * func transformNamedEvaluationOfPropertyAssignment(context *printer.EmitContext, node *ast.PropertyAssignment /*NamedEvaluation & PropertyAssignment* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -562,7 +562,7 @@ export function transformNamedEvaluationOfPropertyAssignment(context: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfShorthandAssignmentProperty","kind":"func","status":"implemented","sigHash":"a514e52d703c6d2bc1eb069e9b4801fa4cbdaceb49a3a60dae5e292787543994","bodyHash":"168cb052d5ef7ad1fa2a3fa888020ffa66a089f189757739d6e382a10767a0c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfShorthandAssignmentProperty","kind":"func","status":"implemented","sigHash":"a514e52d703c6d2bc1eb069e9b4801fa4cbdaceb49a3a60dae5e292787543994"}
  *
  * Go source:
  * func transformNamedEvaluationOfShorthandAssignmentProperty(emitContext *printer.EmitContext, node *ast.ShorthandPropertyAssignment /*NamedEvaluation & ShorthandPropertyAssignment* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -615,7 +615,7 @@ export function transformNamedEvaluationOfShorthandAssignmentProperty(emitContex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfVariableDeclaration","kind":"func","status":"implemented","sigHash":"1319f8ece9972c6db3ea36a71dc60d96f4d30f4750c8e2d7999ae08b22178713","bodyHash":"1d3313daa742c2467ae97e44a1ce101345b05ae492b1515e980d92a22a329898"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfVariableDeclaration","kind":"func","status":"implemented","sigHash":"1319f8ece9972c6db3ea36a71dc60d96f4d30f4750c8e2d7999ae08b22178713"}
  *
  * Go source:
  * func transformNamedEvaluationOfVariableDeclaration(emitContext *printer.EmitContext, node *ast.VariableDeclaration /*NamedEvaluation & VariableDeclaration* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -670,7 +670,7 @@ export function transformNamedEvaluationOfVariableDeclaration(emitContext: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfParameterDeclaration","kind":"func","status":"implemented","sigHash":"a541201ba2897aaeef753471e5be3d915569b4ab1846dda74a8f3cee3ce11442","bodyHash":"64c0c0c12628b2a1e4f9ce6f2f12f0422ef5fe5cb5d6a443f3039c92a1c3ce0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfParameterDeclaration","kind":"func","status":"implemented","sigHash":"a541201ba2897aaeef753471e5be3d915569b4ab1846dda74a8f3cee3ce11442"}
  *
  * Go source:
  * func transformNamedEvaluationOfParameterDeclaration(emitContext *printer.EmitContext, node *ast.ParameterDeclaration /*NamedEvaluation & ParameterDeclaration* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -731,7 +731,7 @@ export function transformNamedEvaluationOfParameterDeclaration(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfBindingElement","kind":"func","status":"implemented","sigHash":"0f3f5cd58d544785b718556069aa103e2a0c7c331c5ba0e8979865252ef5e95b","bodyHash":"0a3013d02938384750b54a1312020ff822d0aceb1e59831d44759f965ccbbfed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfBindingElement","kind":"func","status":"implemented","sigHash":"0f3f5cd58d544785b718556069aa103e2a0c7c331c5ba0e8979865252ef5e95b"}
  *
  * Go source:
  * func transformNamedEvaluationOfBindingElement(emitContext *printer.EmitContext, node *ast.BindingElement /*NamedEvaluation & BindingElement* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -788,7 +788,7 @@ export function transformNamedEvaluationOfBindingElement(emitContext: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfPropertyDeclaration","kind":"func","status":"implemented","sigHash":"ccb2710ac7806bda769e48ed95509bf8343c6c8743a3b4f014755b0662ad4bcb","bodyHash":"00fd34d1599b23be009ea7d4ec19dcb33428d4f2b37ca6636cbfed34deea4ea2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfPropertyDeclaration","kind":"func","status":"implemented","sigHash":"ccb2710ac7806bda769e48ed95509bf8343c6c8743a3b4f014755b0662ad4bcb"}
  *
  * Go source:
  * func transformNamedEvaluationOfPropertyDeclaration(emitContext *printer.EmitContext, node *ast.PropertyDeclaration /*NamedEvaluation & PropertyDeclaration* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -828,7 +828,7 @@ export function transformNamedEvaluationOfPropertyDeclaration(emitContext: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfAssignmentExpression","kind":"func","status":"implemented","sigHash":"5836781cf2bc2f5c33b8752b79a0c34746f49ba4a2bf55b200cbbb954cd5a0c7","bodyHash":"be825a2a404450e3e22871c3d2d8d0d52e3fa70071a3e93846805919fcbd4038"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfAssignmentExpression","kind":"func","status":"implemented","sigHash":"5836781cf2bc2f5c33b8752b79a0c34746f49ba4a2bf55b200cbbb954cd5a0c7"}
  *
  * Go source:
  * func transformNamedEvaluationOfAssignmentExpression(emitContext *printer.EmitContext, node *ast.BinaryExpression /*NamedEvaluation & BinaryExpression* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -897,7 +897,7 @@ export function transformNamedEvaluationOfAssignmentExpression(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfExportAssignment","kind":"func","status":"implemented","sigHash":"8cd5158cc5fd6aa78feb49e410a8da221081bd17a67eaff0058dfc1ffe81bb4e","bodyHash":"9cbac9ccb1735aaecdf3f3ab235be35aaf321f56c0091873c7671d62460bad5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluationOfExportAssignment","kind":"func","status":"implemented","sigHash":"8cd5158cc5fd6aa78feb49e410a8da221081bd17a67eaff0058dfc1ffe81bb4e"}
  *
  * Go source:
  * func transformNamedEvaluationOfExportAssignment(emitContext *printer.EmitContext, node *ast.ExportAssignment /*NamedEvaluation & ExportAssignment* /, ignoreEmptyStringLiteral bool, assignedNameText string) *ast.Expression {
@@ -951,7 +951,7 @@ export function transformNamedEvaluationOfExportAssignment(emitContext: GoPtr<Em
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluation","kind":"func","status":"implemented","sigHash":"340c5fdfb8aaff13a9e4e5e652ece444fa019271bd60bc7a41a1b890d1a1b2ea","bodyHash":"def92be0282ed57cafb739c99a5a2ecd82d39d60d3137298f200dd421946c5fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::transformNamedEvaluation","kind":"func","status":"implemented","sigHash":"340c5fdfb8aaff13a9e4e5e652ece444fa019271bd60bc7a41a1b890d1a1b2ea"}
  *
  * Go source:
  * func transformNamedEvaluation(context *printer.EmitContext, node *ast.Node /*NamedEvaluation* /, ignoreEmptyStringLiteral bool, assignedName string) *ast.Expression {

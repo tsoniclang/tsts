@@ -17,7 +17,7 @@ import { IsSimpleCopiableExpression } from "../utilities.js";
 import { createNotNullCondition } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::type::nullishCoalescingTransformer","kind":"type","status":"implemented","sigHash":"3cbb08b43eaffc212fdb16daf22e8185498e1b6191c6c891ddf1dceb57555aa3","bodyHash":"f4065d25347ac4061b7af6d3bf42592df0bc8bbfec61f56c03593dbb7e4f8b62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::type::nullishCoalescingTransformer","kind":"type","status":"implemented","sigHash":"3cbb08b43eaffc212fdb16daf22e8185498e1b6191c6c891ddf1dceb57555aa3"}
  *
  * Go source:
  * nullishCoalescingTransformer struct {
@@ -29,7 +29,7 @@ export interface nullishCoalescingTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::method::nullishCoalescingTransformer.visit","kind":"method","status":"implemented","sigHash":"a39451f7bffd2d9f965f4475e2105cc0b2ba9ca3607309a415ded3a733de7552","bodyHash":"b380e17afdfc6dd467d12eda3af996931ce4e87c11ef089df05cd95ee56dcdea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::method::nullishCoalescingTransformer.visit","kind":"method","status":"implemented","sigHash":"a39451f7bffd2d9f965f4475e2105cc0b2ba9ca3607309a415ded3a733de7552"}
  *
  * Go source:
  * func (ch *nullishCoalescingTransformer) visit(node *ast.Node) *ast.Node {
@@ -57,7 +57,7 @@ export function nullishCoalescingTransformer_visit(receiver: GoPtr<nullishCoales
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::method::nullishCoalescingTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"611efa27abe4213570f4419936858063218b97635130c33b8e236b046c24114e","bodyHash":"5101da77664c9276d9162065fc58df9efd480d3b103104628af4dd39142795b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::method::nullishCoalescingTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"611efa27abe4213570f4419936858063218b97635130c33b8e236b046c24114e"}
  *
  * Go source:
  * func (ch *nullishCoalescingTransformer) visitBinaryExpression(node *ast.BinaryExpression) *ast.Node {
@@ -112,7 +112,7 @@ export function nullishCoalescingTransformer_visitBinaryExpression(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::func::newNullishCoalescingTransformer","kind":"func","status":"implemented","sigHash":"4e9f9607161ee0db118659b729bc627d12ea4f44d6c82e4994c3a6a159f5da36","bodyHash":"cf07f8e210e734f1bfd588411207e1ec863cfd21145f40380dce7a6e49cc17c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/nullishcoalescing.go::func::newNullishCoalescingTransformer","kind":"func","status":"implemented","sigHash":"4e9f9607161ee0db118659b729bc627d12ea4f44d6c82e4994c3a6a159f5da36"}
  *
  * Go source:
  * func newNullishCoalescingTransformer(opts *transformers.TransformOptions) *transformers.Transformer {

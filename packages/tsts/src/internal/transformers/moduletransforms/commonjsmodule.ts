@@ -55,7 +55,7 @@ import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFil
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::type::CommonJSModuleTransformer","kind":"type","status":"implemented","sigHash":"6d4c0901945b9e8638e5f6f227099900201a96ea3928cc98c41cdb0923078648","bodyHash":"e0eeaed36f030134bee4d976d10ead60bbddbba34241020f13ddb7378a7f29c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::type::CommonJSModuleTransformer","kind":"type","status":"implemented","sigHash":"6d4c0901945b9e8638e5f6f227099900201a96ea3928cc98c41cdb0923078648"}
  *
  * Go source:
  * CommonJSModuleTransformer struct {
@@ -93,7 +93,7 @@ export interface CommonJSModuleTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::func::NewCommonJSModuleTransformer","kind":"func","status":"implemented","sigHash":"632f889e84474a37b13cf54af97ee34c2092af798bfed81d73ed2c9967119b2b","bodyHash":"807e3734c2fb13888541a8dd2c8d165bc1fd05269263a9508eb1733f5af1ab6a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::func::NewCommonJSModuleTransformer","kind":"func","status":"implemented","sigHash":"632f889e84474a37b13cf54af97ee34c2092af798bfed81d73ed2c9967119b2b"}
  *
  * Go source:
  * func NewCommonJSModuleTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -136,7 +136,7 @@ export function NewCommonJSModuleTransformer(opts: GoPtr<TransformOptions>): GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.pushNode","kind":"method","status":"implemented","sigHash":"52c6ddb1b68bf87c80488d5ea74c1c3616208245b2ace59ac78bb413ef42e514","bodyHash":"b5cb93ef696ec2f17164f11c27638594c3022ce5aecf3c2963785b11124b29f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.pushNode","kind":"method","status":"implemented","sigHash":"52c6ddb1b68bf87c80488d5ea74c1c3616208245b2ace59ac78bb413ef42e514"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) pushNode(node *ast.Node) (grandparentNode *ast.Node) {
@@ -154,7 +154,7 @@ export function CommonJSModuleTransformer_pushNode(receiver: GoPtr<CommonJSModul
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.popNode","kind":"method","status":"implemented","sigHash":"f8570ac4729da2089101a9082e5e3b22be66e8861d38b2d0be0ad46296a81ea4","bodyHash":"25f4196ebf13cd5266d68bf90cef9a2ffa3b9b57e208c015229b16e13cbacc08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.popNode","kind":"method","status":"implemented","sigHash":"f8570ac4729da2089101a9082e5e3b22be66e8861d38b2d0be0ad46296a81ea4"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) popNode(grandparentNode *ast.Node) {
@@ -168,7 +168,7 @@ export function CommonJSModuleTransformer_popNode(receiver: GoPtr<CommonJSModule
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevel","kind":"method","status":"implemented","sigHash":"59fd263b1f35f73cba38e443e97c5bbbd980a30520e2d35531a5c0d93a51cbf9","bodyHash":"25f8f3f8a726edd0b1540411513803e2b0a0deba67f60ead86f33a49ebacd88e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevel","kind":"method","status":"implemented","sigHash":"59fd263b1f35f73cba38e443e97c5bbbd980a30520e2d35531a5c0d93a51cbf9"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevel(node *ast.Node) *ast.Node {
@@ -232,7 +232,7 @@ export function CommonJSModuleTransformer_visitTopLevel(receiver: GoPtr<CommonJS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNested","kind":"method","status":"implemented","sigHash":"b8e821e682f2066833fd6066f7b3397b6542c453ef4dd2b4c3d0dd22eef8c654","bodyHash":"cc53ca116f8f50aff563ac6254b40830c07a967181a5bb2174f44de00b4321d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNested","kind":"method","status":"implemented","sigHash":"b8e821e682f2066833fd6066f7b3397b6542c453ef4dd2b4c3d0dd22eef8c654"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNested(node *ast.Node) *ast.Node {
@@ -252,7 +252,7 @@ export function CommonJSModuleTransformer_visitTopLevelNested(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedNoStack","kind":"method","status":"implemented","sigHash":"f958e2fec85bd486349c7485d0713fe49db9162c22b14ffe83b1f20c3931c010","bodyHash":"ff41309d2d85d495090fe016413775905a49b96084ab2332faf872ce6737c9b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedNoStack","kind":"method","status":"implemented","sigHash":"f958e2fec85bd486349c7485d0713fe49db9162c22b14ffe83b1f20c3931c010"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedNoStack(node *ast.Node) *ast.Node {
@@ -345,7 +345,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedNoStack(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"eaef52a9188bdad117782da9eb2f2615e6990323b7deeb597e16b26e92d750ab","bodyHash":"9803b846057bdda509b5ea186925631f238e9149976029bb8da26ffac0550e98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"eaef52a9188bdad117782da9eb2f2615e6990323b7deeb597e16b26e92d750ab"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visit(node *ast.Node) *ast.Node {
@@ -365,7 +365,7 @@ export function CommonJSModuleTransformer_visit(receiver: GoPtr<CommonJSModuleTr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitNoStack","kind":"method","status":"implemented","sigHash":"3784a1a990ff90674d498e772080b7539ef874d53220a83171b673e2fdeb741c","bodyHash":"d97780b0a94ed50189c28d25de22ca487bcdb6f0c3fa1a14d5fbe6c709b34fb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitNoStack","kind":"method","status":"implemented","sigHash":"3784a1a990ff90674d498e772080b7539ef874d53220a83171b673e2fdeb741c"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitNoStack(node *ast.Node, resultIsDiscarded bool) *ast.Node {
@@ -469,7 +469,7 @@ export function CommonJSModuleTransformer_visitNoStack(receiver: GoPtr<CommonJSM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDiscardedValue","kind":"method","status":"implemented","sigHash":"ab67adfcf56cc3a226ce24043ffec9c851d5656a40bfe247a7b6fcb57a51a062","bodyHash":"0ed9fa2686eb3919656df6aca2af4d81993e5d0fa44ea08a2031a371df8713ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDiscardedValue","kind":"method","status":"implemented","sigHash":"ab67adfcf56cc3a226ce24043ffec9c851d5656a40bfe247a7b6fcb57a51a062"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitDiscardedValue(node *ast.Node) *ast.Node {
@@ -489,7 +489,7 @@ export function CommonJSModuleTransformer_visitDiscardedValue(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentPattern","kind":"method","status":"implemented","sigHash":"64aa914c8b12d9cece3c2badf8f8ea191129379a747d211dcf85ae48ebb01398","bodyHash":"229b06429210d1d3a65adb37569b200eedfff09c770644aba3d6accec0c6a93a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentPattern","kind":"method","status":"implemented","sigHash":"64aa914c8b12d9cece3c2badf8f8ea191129379a747d211dcf85ae48ebb01398"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentPattern(node *ast.Node) *ast.Node {
@@ -509,7 +509,7 @@ export function CommonJSModuleTransformer_visitAssignmentPattern(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentPatternNoStack","kind":"method","status":"implemented","sigHash":"2f2612e24ec84df3a00f73ca5a8fdf297396c93f477879233798d3570429dbfd","bodyHash":"b45162c4f4e64bd5bb9c1c79cd16af8dae5fb1c3a7f1937ede4a904e34317fdc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentPatternNoStack","kind":"method","status":"implemented","sigHash":"2f2612e24ec84df3a00f73ca5a8fdf297396c93f477879233798d3570429dbfd"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentPatternNoStack(node *ast.Node) *ast.Node {
@@ -579,7 +579,7 @@ export function CommonJSModuleTransformer_visitAssignmentPatternNoStack(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"3f4e09887bc9830c8695830b5c575e16d5980ef9597c40204f9bec1db5416dfd","bodyHash":"537d9d7737682cd5f3159b93d9e2bda75b9938212f0ecdc6ea59b5b92bd3d549"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"3f4e09887bc9830c8695830b5c575e16d5980ef9597c40204f9bec1db5416dfd"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -613,7 +613,7 @@ export function CommonJSModuleTransformer_visitSourceFile(receiver: GoPtr<Common
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shouldEmitUnderscoreUnderscoreESModule","kind":"method","status":"implemented","sigHash":"40a25537a03ad80d41492779056b66860eab323d1b214b0ccf180407d9219445","bodyHash":"747e64997af90311bcddcd784f0d35660226f4d6e4ce45323746e67553a186ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shouldEmitUnderscoreUnderscoreESModule","kind":"method","status":"implemented","sigHash":"40a25537a03ad80d41492779056b66860eab323d1b214b0ccf180407d9219445"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) shouldEmitUnderscoreUnderscoreESModule() bool {
@@ -641,7 +641,7 @@ export function CommonJSModuleTransformer_shouldEmitUnderscoreUnderscoreESModule
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createUnderscoreUnderscoreESModule","kind":"method","status":"implemented","sigHash":"978526624f96af912542dba91dd2e5df2e0d3d359fc51f4f83bbff2d1f024d2b","bodyHash":"6cadc654b492fdd6b3b3e4ae6283339e1946f7688760042718d458a2c00efc86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createUnderscoreUnderscoreESModule","kind":"method","status":"implemented","sigHash":"978526624f96af912542dba91dd2e5df2e0d3d359fc51f4f83bbff2d1f024d2b"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createUnderscoreUnderscoreESModule() *ast.Statement {
@@ -716,7 +716,7 @@ export function CommonJSModuleTransformer_createUnderscoreUnderscoreESModule(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformCommonJSModule","kind":"method","status":"implemented","sigHash":"01428906557fa8f8071cae186c96e58678754ad31b5c71759c52418c9d620617","bodyHash":"7571a2cd16922eebb8a50a967e559d9461092d4d75b7cc4e6470c3124a261d97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformCommonJSModule","kind":"method","status":"implemented","sigHash":"01428906557fa8f8071cae186c96e58678754ad31b5c71759c52418c9d620617"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) transformCommonJSModule(node *ast.SourceFile) *ast.Node {
@@ -911,7 +911,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportEqualsIfNeeded","kind":"method","status":"implemented","sigHash":"ac3856b278d37ebe10b47a9dc29cb1d9efb3c0f1117247d997822f358d157127","bodyHash":"5fc337ce18b00b2ffff32a93a6b5013d06ea1645dcc720ef63d2509a38295a60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportEqualsIfNeeded","kind":"method","status":"implemented","sigHash":"ac3856b278d37ebe10b47a9dc29cb1d9efb3c0f1117247d997822f358d157127"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportEqualsIfNeeded(statements []*ast.Statement) []*ast.Statement {
@@ -965,7 +965,7 @@ export function CommonJSModuleTransformer_appendExportEqualsIfNeeded(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExportEquals","kind":"method","status":"implemented","sigHash":"a42886e76297cee7598c1b41b297a9b00a475f7e0d0d1f99e52302130eb7390d","bodyHash":"5f65302112450be1f27924734d35233c54326e4ad09008c3c8bd728b78d22233"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExportEquals","kind":"method","status":"implemented","sigHash":"a42886e76297cee7598c1b41b297a9b00a475f7e0d0d1f99e52302130eb7390d"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitExportEquals(node *ast.ExportAssignment) *ast.Expression {
@@ -984,7 +984,7 @@ export function CommonJSModuleTransformer_visitExportEquals(receiver: GoPtr<Comm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfImportDeclaration","kind":"method","status":"implemented","sigHash":"144b9b8a59d92cb2078041cf61fc080fa57225c9b1073b8e8c43c38bbe9bfe09","bodyHash":"f6199d0c6d3646660fc7c7b88809103439c7e3899c00fda4ccf49b755d39f1aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfImportDeclaration","kind":"method","status":"implemented","sigHash":"144b9b8a59d92cb2078041cf61fc080fa57225c9b1073b8e8c43c38bbe9bfe09"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfImportDeclaration(statements []*ast.Statement, decl *ast.ImportDeclaration) []*ast.Statement {
@@ -1051,7 +1051,7 @@ export function CommonJSModuleTransformer_appendExportsOfImportDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableStatement","kind":"method","status":"implemented","sigHash":"f00b79906d296357cd0b115d7ab7d78dc89abfccc34c7aedee864377caa12716","bodyHash":"f82d8d88397ef61ebba919d9c92e7f61b313ece74c51cd1ee6feb550ce06201d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableStatement","kind":"method","status":"implemented","sigHash":"f00b79906d296357cd0b115d7ab7d78dc89abfccc34c7aedee864377caa12716"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfVariableStatement(statements []*ast.Statement, node *ast.VariableStatement) []*ast.Statement {
@@ -1063,7 +1063,7 @@ export function CommonJSModuleTransformer_appendExportsOfVariableStatement(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableDeclarationList","kind":"method","status":"implemented","sigHash":"66a0b4f4dffb5a1cdceab9999397a6ac09ed324b5446f63fc98abf886b341c41","bodyHash":"fc262d86dbec55af9c3a6d6df90f12091b02ff7fd335fa2d6d9a19d6ea2bc6ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfVariableDeclarationList","kind":"method","status":"implemented","sigHash":"66a0b4f4dffb5a1cdceab9999397a6ac09ed324b5446f63fc98abf886b341c41"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfVariableDeclarationList(statements []*ast.Statement, node *ast.VariableDeclarationList, isForInOrOfInitializer bool) []*ast.Statement {
@@ -1091,7 +1091,7 @@ export function CommonJSModuleTransformer_appendExportsOfVariableDeclarationList
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfBindingElement","kind":"method","status":"implemented","sigHash":"c127fe1c3b8a4aef2bda22b27875580aa23729b9dc8f8a90fc26153fdbd872d2","bodyHash":"86be654ebb90ce235a82b715eacc860ef8d104fbe2ec728a4f2a19fbcc0a637f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfBindingElement","kind":"method","status":"implemented","sigHash":"c127fe1c3b8a4aef2bda22b27875580aa23729b9dc8f8a90fc26153fdbd872d2"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfBindingElement(statements []*ast.Statement, decl *ast.Node /*VariableDeclaration | BindingElement* /, isForInOrOfInitializer bool) []*ast.Statement {
@@ -1133,7 +1133,7 @@ export function CommonJSModuleTransformer_appendExportsOfBindingElement(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfClassOrFunctionDeclaration","kind":"method","status":"implemented","sigHash":"d9e5b0050af5356d3ca9aef34aa63297df9a7cf7af0c8e6a649cf95718c4bb49","bodyHash":"1d2f202042728e0b2628baa793e1fe2c4ff5023a03dfb55ec2618b6a30d18496"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfClassOrFunctionDeclaration","kind":"method","status":"implemented","sigHash":"d9e5b0050af5356d3ca9aef34aa63297df9a7cf7af0c8e6a649cf95718c4bb49"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfClassOrFunctionDeclaration(statements []*ast.Statement, decl *ast.Declaration) []*ast.Statement {
@@ -1188,7 +1188,7 @@ export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclarat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfDeclaration","kind":"method","status":"implemented","sigHash":"c946a9180e804d3ab5cc332648d9c384080a51a16ae36199b62e94d85e8f748f","bodyHash":"b7739f092738ee566c795913dfd9400f68b2a44d5070159f5fb4c49aef9249de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportsOfDeclaration","kind":"method","status":"implemented","sigHash":"c946a9180e804d3ab5cc332648d9c384080a51a16ae36199b62e94d85e8f748f"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportsOfDeclaration(statements []*ast.Statement, decl *ast.Declaration, seen *collections.Set[string], liveBinding bool) []*ast.Statement {
@@ -1240,7 +1240,7 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportStatement","kind":"method","status":"implemented","sigHash":"9330324b7ca26a97098d5c365a66a0da4cdb6169094c82528b77742aa8235ed3","bodyHash":"dbb909ba6c6962450d59013e574106c7f10531c4d8e53733d3a49e735a79a88d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.appendExportStatement","kind":"method","status":"implemented","sigHash":"9330324b7ca26a97098d5c365a66a0da4cdb6169094c82528b77742aa8235ed3"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) appendExportStatement(statements []*ast.Statement, seen *collections.Set[string], exportName *ast.ModuleExportName, expression *ast.Expression, location *core.TextRange, allowComments bool, liveBinding bool) []*ast.Statement {
@@ -1265,7 +1265,7 @@ export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createExportStatement","kind":"method","status":"implemented","sigHash":"9724eaf175199472ab36bddd05ee297ed394926cfa2aa4743509e9b30de261a4","bodyHash":"f082b0891b3ecb17d191f418a0ca521887271a6fe56611b9a6935f4c867d3970"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createExportStatement","kind":"method","status":"implemented","sigHash":"9724eaf175199472ab36bddd05ee297ed394926cfa2aa4743509e9b30de261a4"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createExportStatement(name *ast.ModuleExportName, value *ast.Expression, location *core.TextRange, allowComments bool, liveBinding bool) *ast.Statement {
@@ -1296,7 +1296,7 @@ export function CommonJSModuleTransformer_createExportStatement(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createExportExpression","kind":"method","status":"implemented","sigHash":"525c18108219b6c130c6d2227e7a0e8d28c5561839a86a4192dbadb254ac8467","bodyHash":"342c900bd4dffa59ad3559612f0531a325e1987fc3116173c44bb4dec0b77143"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createExportExpression","kind":"method","status":"implemented","sigHash":"525c18108219b6c130c6d2227e7a0e8d28c5561839a86a4192dbadb254ac8467"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createExportExpression(name *ast.ModuleExportName, value *ast.Expression, location *core.TextRange, liveBinding bool) *ast.Expression {
@@ -1469,7 +1469,7 @@ export function CommonJSModuleTransformer_createExportExpression(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createRequireCall","kind":"method","status":"implemented","sigHash":"1b07b57d3d763ea0f30a1fb704fb3cda2a0a95d978a9760c98eedd24590db84b","bodyHash":"340d3a13a83d6c009cc34b97d55c4d52e33fe8d5998aa68762d567d12679a051"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createRequireCall","kind":"method","status":"implemented","sigHash":"1b07b57d3d763ea0f30a1fb704fb3cda2a0a95d978a9760c98eedd24590db84b"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createRequireCall(node *ast.Node /*ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration* /) *ast.Node {
@@ -1505,7 +1505,7 @@ export function CommonJSModuleTransformer_createRequireCall(receiver: GoPtr<Comm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getHelperExpressionForExport","kind":"method","status":"implemented","sigHash":"f2c44e3e3aec1cfee468e7248d6edea35009460301a52e267e8d19d8886f4b6f","bodyHash":"ea5d476b611eb742847d770c3dced2e44b5813e1318530679c2fa6317618bca9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getHelperExpressionForExport","kind":"method","status":"implemented","sigHash":"f2c44e3e3aec1cfee468e7248d6edea35009460301a52e267e8d19d8886f4b6f"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) getHelperExpressionForExport(node *ast.ExportDeclaration, innerExpr *ast.Expression) *ast.Expression {
@@ -1524,7 +1524,7 @@ export function CommonJSModuleTransformer_getHelperExpressionForExport(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getHelperExpressionForImport","kind":"method","status":"implemented","sigHash":"2ce1e3ebea538d85fcc6bf4df8d570a123ad75523fc7db3e6d8f107ffa3e12ff","bodyHash":"9e9761c3944ad4d4109599cd64a6b543fe5f7709114e30470b48028dacf8932c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getHelperExpressionForImport","kind":"method","status":"implemented","sigHash":"2ce1e3ebea538d85fcc6bf4df8d570a123ad75523fc7db3e6d8f107ffa3e12ff"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) getHelperExpressionForImport(node *ast.ImportDeclaration, innerExpr *ast.Expression) *ast.Expression {
@@ -1549,7 +1549,7 @@ export function CommonJSModuleTransformer_getHelperExpressionForImport(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelImportDeclaration","kind":"method","status":"implemented","sigHash":"727c427297512fa984f273f17b55934dc078501832364bea8de26e9f70b5ff50","bodyHash":"13d89de8f137452095b7bd5a819775b4a40e41d9b76045143329f9b3b7c43cde"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelImportDeclaration","kind":"method","status":"implemented","sigHash":"727c427297512fa984f273f17b55934dc078501832364bea8de26e9f70b5ff50"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelImportDeclaration(node *ast.ImportDeclaration) *ast.Node {
@@ -1683,7 +1683,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportDeclaration(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"8efe95a803418788a5dcbe5906af9742d41d6951cb13e0fb8611abd00d00bc95","bodyHash":"763f085699cba44db7f992bc163a2f074f2ba0065ddb2fa3c62da63028286319"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"8efe95a803418788a5dcbe5906af9742d41d6951cb13e0fb8611abd00d00bc95"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) *ast.Node {
@@ -1783,7 +1783,7 @@ export function CommonJSModuleTransformer_visitTopLevelImportEqualsDeclaration(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelExportDeclaration","kind":"method","status":"implemented","sigHash":"fdfebe3a88bb448d337734da3353ab512405e7fe7432673c461d7a65e23913c7","bodyHash":"fb4a1e3990403fe357a358602d5097a1641285b0f70adb5cc333e3d75fa3d61d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelExportDeclaration","kind":"method","status":"implemented","sigHash":"fdfebe3a88bb448d337734da3353ab512405e7fe7432673c461d7a65e23913c7"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelExportDeclaration(node *ast.ExportDeclaration) *ast.Node {
@@ -2000,7 +2000,7 @@ export function CommonJSModuleTransformer_visitTopLevelExportDeclaration(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelExportAssignment","kind":"method","status":"implemented","sigHash":"0bc36049ab7c7f69b5984725b1066118de8f5618c8dd47016c8e8117d00bbb5e","bodyHash":"605bb1cdf6cccb225b17bbbb9311f4c189fc84bdf900ddf651909d0e681c9131"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelExportAssignment","kind":"method","status":"implemented","sigHash":"0bc36049ab7c7f69b5984725b1066118de8f5618c8dd47016c8e8117d00bbb5e"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelExportAssignment(node *ast.ExportAssignment) *ast.Node {
@@ -2035,7 +2035,7 @@ export function CommonJSModuleTransformer_visitTopLevelExportAssignment(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelFunctionDeclaration","kind":"method","status":"implemented","sigHash":"de1f742b46e9191f1ea4f977692958c63b4499a61f00662b9152f4a2c2b0afa9","bodyHash":"fdcdbf2e0ca135d35d9f507cfd600b7908e2011a2cb82ec2b26839d9c69f335c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelFunctionDeclaration","kind":"method","status":"implemented","sigHash":"de1f742b46e9191f1ea4f977692958c63b4499a61f00662b9152f4a2c2b0afa9"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelFunctionDeclaration(node *ast.FunctionDeclaration) *ast.Node {
@@ -2080,7 +2080,7 @@ export function CommonJSModuleTransformer_visitTopLevelFunctionDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelClassDeclaration","kind":"method","status":"implemented","sigHash":"ce047fdd8c9d1a66249c19748b9a7ed52b86ac9de33c95e165f4f7bf98693352","bodyHash":"a572e71590e20f603d3eebdd74481caa16265568ca46b97ac07f20af18fb495b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelClassDeclaration","kind":"method","status":"implemented","sigHash":"ce047fdd8c9d1a66249c19748b9a7ed52b86ac9de33c95e165f4f7bf98693352"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelClassDeclaration(node *ast.ClassDeclaration) *ast.Node {
@@ -2126,7 +2126,7 @@ export function CommonJSModuleTransformer_visitTopLevelClassDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelVariableStatement","kind":"method","status":"implemented","sigHash":"a29bff1f93c9c07a6245772550ad5070a00163f12b909071c200969dc6db609f","bodyHash":"71c3fd54114af88b66e1ad76079edaea8bb83b37f5621c18ffb556ac8ff806c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelVariableStatement","kind":"method","status":"implemented","sigHash":"a29bff1f93c9c07a6245772550ad5070a00163f12b909071c200969dc6db609f"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelVariableStatement(node *ast.VariableStatement) *ast.Node {
@@ -2395,7 +2395,7 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformInitializedVariable","kind":"method","status":"implemented","sigHash":"78eb78c1cdd835f3c0cb10f0e029f1cb6214f5b84486a1ef29b1f3f4a15bf6ec","bodyHash":"1bbbfa0fb36cc1f1fcaff7f32e8efd89bbf7d17dea09c76024e59a96d8629a77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.transformInitializedVariable","kind":"method","status":"implemented","sigHash":"78eb78c1cdd835f3c0cb10f0e029f1cb6214f5b84486a1ef29b1f3f4a15bf6ec"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) transformInitializedVariable(node *ast.VariableDeclaration) *ast.Expression {
@@ -2452,7 +2452,7 @@ export function CommonJSModuleTransformer_transformInitializedVariable(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedVariableStatement","kind":"method","status":"implemented","sigHash":"1a363a47920386cead9f0d57b2957b439fb6e35c573fe8d045714bd26f7cedf9","bodyHash":"cc1d544c444639fb5985e0e5424ba7f803be5a4b3f713759d29a05ec00f55919"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedVariableStatement","kind":"method","status":"implemented","sigHash":"1a363a47920386cead9f0d57b2957b439fb6e35c573fe8d045714bd26f7cedf9"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedVariableStatement(node *ast.VariableStatement) *ast.Node {
@@ -2472,7 +2472,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedForStatement","kind":"method","status":"implemented","sigHash":"e11fe067291537174074038cd2d5ecb433a475a49643a63b6c0f676b43d9de7b","bodyHash":"17d322823b747a6e1caf5224914176245b2f63e91ac2e1eff2e0b4b346e607de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedForStatement","kind":"method","status":"implemented","sigHash":"e11fe067291537174074038cd2d5ecb433a475a49643a63b6c0f676b43d9de7b"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedForStatement(node *ast.ForStatement) *ast.Node {
@@ -2557,7 +2557,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForStatement(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedForInOrOfStatement","kind":"method","status":"implemented","sigHash":"2d62dca89619ea627cf325e445abd410ca6379e554173c146849f780153ed365","bodyHash":"3153e801c264b7ee720fac8b0366723f7088405bb5c2ba56a3489af436ae4728"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedForInOrOfStatement","kind":"method","status":"implemented","sigHash":"2d62dca89619ea627cf325e445abd410ca6379e554173c146849f780153ed365"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedForInOrOfStatement(node *ast.ForInOrOfStatement) *ast.Node {
@@ -2638,7 +2638,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedForInOrOfStatement(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedDoStatement","kind":"method","status":"implemented","sigHash":"1a52fc21cd5ce909ac3ab23bc1e5abdfa2b87e2e9ddf3e2ff35339ab516fbacd","bodyHash":"4ee7d3c0d3b489ff733cc292f74e35a9d7189e333a9a2c5adcef7a8ab8c68808"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedDoStatement","kind":"method","status":"implemented","sigHash":"1a52fc21cd5ce909ac3ab23bc1e5abdfa2b87e2e9ddf3e2ff35339ab516fbacd"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedDoStatement(node *ast.DoStatement) *ast.Node {
@@ -2663,7 +2663,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedDoStatement(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedWhileStatement","kind":"method","status":"implemented","sigHash":"40e2156ed78130149b6523f0763980721783bf2de23b444485afb6a3b4bd2da9","bodyHash":"b2f2910693e9c9a62091bd2fe534e04d48c1ca5383e0dda6bb1952808ec70704"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedWhileStatement","kind":"method","status":"implemented","sigHash":"40e2156ed78130149b6523f0763980721783bf2de23b444485afb6a3b4bd2da9"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedWhileStatement(node *ast.WhileStatement) *ast.Node {
@@ -2688,7 +2688,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedWhileStatement(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedLabeledStatement","kind":"method","status":"implemented","sigHash":"5bc10d83027114b85d93f1452423f91dc7bcbd9cbc9be0bf8e1ba2d27f6f1b6a","bodyHash":"06669a1a51c62daa8a73b01c0cee971491651e683d1923c02d1b2fe352f9d028"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedLabeledStatement","kind":"method","status":"implemented","sigHash":"5bc10d83027114b85d93f1452423f91dc7bcbd9cbc9be0bf8e1ba2d27f6f1b6a"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedLabeledStatement(node *ast.LabeledStatement) *ast.Node {
@@ -2710,7 +2710,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedLabeledStatement(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedWithStatement","kind":"method","status":"implemented","sigHash":"9c3410cb74cd179c7ac033a34b20d846a3da4272ecd4b80772c694aa17f7d3b0","bodyHash":"b475283f5d63df03124ebc6af55f85d419db38f35b73591ec83344ea2fdf6a0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedWithStatement","kind":"method","status":"implemented","sigHash":"9c3410cb74cd179c7ac033a34b20d846a3da4272ecd4b80772c694aa17f7d3b0"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedWithStatement(node *ast.WithStatement) *ast.Node {
@@ -2734,7 +2734,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedWithStatement(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedIfStatement","kind":"method","status":"implemented","sigHash":"9274818fdb55e5799f6d9f624a4d6d5bca70e339112f39f72800e749a9ba1e74","bodyHash":"255692db810da3db98ec30e1a4cce90f753078c7cea6d312b525af24f546e6ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedIfStatement","kind":"method","status":"implemented","sigHash":"9274818fdb55e5799f6d9f624a4d6d5bca70e339112f39f72800e749a9ba1e74"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedIfStatement(node *ast.IfStatement) *ast.Node {
@@ -2761,7 +2761,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedIfStatement(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedSwitchStatement","kind":"method","status":"implemented","sigHash":"5690037136edbf04fe9d590917deffe4d76ebd22fe9338b6c8ebe622ff3df814","bodyHash":"4871fa5cd22342494e45f13dd07545affd021919ed55edae51415278e73cd96d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedSwitchStatement","kind":"method","status":"implemented","sigHash":"5690037136edbf04fe9d590917deffe4d76ebd22fe9338b6c8ebe622ff3df814"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedSwitchStatement(node *ast.SwitchStatement) *ast.Node {
@@ -2785,7 +2785,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedSwitchStatement(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCaseBlock","kind":"method","status":"implemented","sigHash":"8d1144ae9b9882e5f1f24c82a4e565821fe4cf01969499ceb94137ab337ce803","bodyHash":"d30d9c7de117eb32386e9693c9431c1545685ad42ddd806547da930695db36fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCaseBlock","kind":"method","status":"implemented","sigHash":"8d1144ae9b9882e5f1f24c82a4e565821fe4cf01969499ceb94137ab337ce803"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedCaseBlock(node *ast.CaseBlock) *ast.Node {
@@ -2798,7 +2798,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedCaseBlock(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCaseOrDefaultClause","kind":"method","status":"implemented","sigHash":"4f48c07d1c4f9c70d057607c2fa7ab3d741f3481e614ea38ccd62a06690e9e4e","bodyHash":"b2601e94979e5a08d7a15f0aba221cbd9afab9eb21b34ffbbbd163c7f14f4531"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCaseOrDefaultClause","kind":"method","status":"implemented","sigHash":"4f48c07d1c4f9c70d057607c2fa7ab3d741f3481e614ea38ccd62a06690e9e4e"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedCaseOrDefaultClause(node *ast.CaseOrDefaultClause) *ast.Node {
@@ -2822,7 +2822,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedCaseOrDefaultClause
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedTryStatement","kind":"method","status":"implemented","sigHash":"b2a286556dbef83a3bb26af004f6d39ba1c5228f9a2875905dd64d4718f3a188","bodyHash":"3018fd293aa755f84d43f299273fd37189e55147f967967ba86db5d747cb285a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedTryStatement","kind":"method","status":"implemented","sigHash":"b2a286556dbef83a3bb26af004f6d39ba1c5228f9a2875905dd64d4718f3a188"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedTryStatement(node *ast.TryStatement) *ast.Node {
@@ -2835,7 +2835,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedTryStatement(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCatchClause","kind":"method","status":"implemented","sigHash":"7c0ce1f0522e5dd82646a57e9dfb5edecef01686cbf47d79ecfb9b3b7ffbc558","bodyHash":"13f0328ebc8cfc2900c1e6ae8c2fb98ef3fabf4dfa66ab14859fa24c71315856"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedCatchClause","kind":"method","status":"implemented","sigHash":"7c0ce1f0522e5dd82646a57e9dfb5edecef01686cbf47d79ecfb9b3b7ffbc558"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedCatchClause(node *ast.CatchClause) *ast.Node {
@@ -2858,7 +2858,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedCatchClause(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedBlock","kind":"method","status":"implemented","sigHash":"5ab40b31872c201cd4c5a187a04f9a0a1ec60cde40152659459e3ae3ca24155d","bodyHash":"53c738876f7055367b41589288a7802feec5151b3d7c2edfdd0c8242869d7599"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTopLevelNestedBlock","kind":"method","status":"implemented","sigHash":"5ab40b31872c201cd4c5a187a04f9a0a1ec60cde40152659459e3ae3ca24155d"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTopLevelNestedBlock(node *ast.Block) *ast.Node {
@@ -2871,7 +2871,7 @@ export function CommonJSModuleTransformer_visitTopLevelNestedBlock(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitForStatement","kind":"method","status":"implemented","sigHash":"4df9513ebbb9418bb32655184f34ff57355b332b1397a0752150de5326a7161a","bodyHash":"89bc826335cb09685c6cc347fe68ac311f91795f00f1db1f27826dcaff2b374b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitForStatement","kind":"method","status":"implemented","sigHash":"4df9513ebbb9418bb32655184f34ff57355b332b1397a0752150de5326a7161a"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitForStatement(node *ast.ForStatement) *ast.Node {
@@ -2902,7 +2902,7 @@ export function CommonJSModuleTransformer_visitForStatement(receiver: GoPtr<Comm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitForInOrOfStatement","kind":"method","status":"implemented","sigHash":"f7138ab7d95abae13dacf66bdaac1c431e09d8d45e9927460354007f6a760c91","bodyHash":"d430bf88ca8f813a3c42326be7be33d033189246eb6c8a18b3cbc7c1285608d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitForInOrOfStatement","kind":"method","status":"implemented","sigHash":"f7138ab7d95abae13dacf66bdaac1c431e09d8d45e9927460354007f6a760c91"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitForInOrOfStatement(node *ast.ForInOrOfStatement) *ast.Node {
@@ -2933,7 +2933,7 @@ export function CommonJSModuleTransformer_visitForInOrOfStatement(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExpressionStatement","kind":"method","status":"implemented","sigHash":"20e09d1699dc55ec9d8fd34a7555f8b885451e84152c6710ccd567ca2935b194","bodyHash":"7db14343cbb225156063f0d032163a474b5057d0e3c7a1c986779cd85c27dfa1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExpressionStatement","kind":"method","status":"implemented","sigHash":"20e09d1699dc55ec9d8fd34a7555f8b885451e84152c6710ccd567ca2935b194"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitExpressionStatement(node *ast.ExpressionStatement) *ast.Node {
@@ -2946,7 +2946,7 @@ export function CommonJSModuleTransformer_visitExpressionStatement(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitVoidExpression","kind":"method","status":"implemented","sigHash":"94c63df2d9bfa43acd675ae4a08e32de6abac114cfd0887f3957e407abbeabc4","bodyHash":"95182af303d252acd4f02dd4ff6a416a0cf7fc55146c07ea083cb1a4e2334f8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitVoidExpression","kind":"method","status":"implemented","sigHash":"94c63df2d9bfa43acd675ae4a08e32de6abac114cfd0887f3957e407abbeabc4"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitVoidExpression(node *ast.VoidExpression) *ast.Node {
@@ -2959,7 +2959,7 @@ export function CommonJSModuleTransformer_visitVoidExpression(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"cd60b5689766090e1c17c5a1ec727e684469909242db867d28116028266c7f77","bodyHash":"84e07e9e35fd99241e531cb083780b63a23428871e41812ec5fbe2b336e2846c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"cd60b5689766090e1c17c5a1ec727e684469909242db867d28116028266c7f77"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitParenthesizedExpression(node *ast.ParenthesizedExpression, resultIsDiscarded bool) *ast.Node {
@@ -2977,7 +2977,7 @@ export function CommonJSModuleTransformer_visitParenthesizedExpression(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPartiallyEmittedExpression","kind":"method","status":"implemented","sigHash":"5c569e9e2f3c21578aa6fe1895c43064cc5312f395a849399528595055065035","bodyHash":"83bef4bd1816165c70c0f4c014ce6a82db27bfeac6768116e1ed595f950d2829"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPartiallyEmittedExpression","kind":"method","status":"implemented","sigHash":"5c569e9e2f3c21578aa6fe1895c43064cc5312f395a849399528595055065035"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitPartiallyEmittedExpression(node *ast.PartiallyEmittedExpression, resultIsDiscarded bool) *ast.Node {
@@ -2995,7 +2995,7 @@ export function CommonJSModuleTransformer_visitPartiallyEmittedExpression(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"f5c0156063fdd9afb250e6b8d7f76019e8acc2c9647f1159df7543eeedf2737c","bodyHash":"cf244677585c77433a0f3d90bc8ba995a8376ea7919021e767c789e02c93385e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"f5c0156063fdd9afb250e6b8d7f76019e8acc2c9647f1159df7543eeedf2737c"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitBinaryExpression(node *ast.BinaryExpression, resultIsDiscarded bool) *ast.Node {
@@ -3029,7 +3029,7 @@ export function CommonJSModuleTransformer_visitBinaryExpression(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentExpression","kind":"method","status":"implemented","sigHash":"f4b5a459376d3e4d78b75de87709f424a409c30e1f775c8bf361ce2ea24657db","bodyHash":"4d19b0b7301b30a970efcb7adc74b16024942b9015334e642f1b37e8e6bea7a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentExpression","kind":"method","status":"implemented","sigHash":"f4b5a459376d3e4d78b75de87709f424a409c30e1f775c8bf361ce2ea24657db"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentExpression(node *ast.BinaryExpression) *ast.Node {
@@ -3075,7 +3075,7 @@ export function CommonJSModuleTransformer_visitAssignmentExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignment","kind":"method","status":"implemented","sigHash":"c85f0fdd62fe6256735882d0c11757427073a58efff3ed3539acf5915c1e4966","bodyHash":"2d20b469b0c85335097a43c6a387072b0a8dd2abe6f8d94d1d67dde434f699c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignment","kind":"method","status":"implemented","sigHash":"c85f0fdd62fe6256735882d0c11757427073a58efff3ed3539acf5915c1e4966"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitDestructuringAssignment(node *ast.BinaryExpression, valueIsDiscarded bool) *ast.Node {
@@ -3106,7 +3106,7 @@ export function CommonJSModuleTransformer_visitDestructuringAssignment(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.destructuringNeedsFlattening","kind":"method","status":"implemented","sigHash":"eed0d8a80cbac31da6548beea1813aaba3c53c8245df06a4c1a3d5a1cc06db9f","bodyHash":"f4e8340be77aef3a540af98bf22a52f0f01a21eb219d50d26ff8ff565e6a6c84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.destructuringNeedsFlattening","kind":"method","status":"implemented","sigHash":"eed0d8a80cbac31da6548beea1813aaba3c53c8245df06a4c1a3d5a1cc06db9f"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) destructuringNeedsFlattening(node *ast.Node) bool {
@@ -3220,7 +3220,7 @@ export function CommonJSModuleTransformer_destructuringNeedsFlattening(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createAllExportExpressions","kind":"method","status":"implemented","sigHash":"af9f96aa074eefbf95fb16a86a8f0d82e21b6ff518b7a4a49d8fc8542cb1b272","bodyHash":"824570576eb02c5291628d3b4ed3edd40ab27f0c5bd44c45214906b5102f6ad3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createAllExportExpressions","kind":"method","status":"implemented","sigHash":"af9f96aa074eefbf95fb16a86a8f0d82e21b6ff518b7a4a49d8fc8542cb1b272"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createAllExportExpressions(name *ast.IdentifierNode, value *ast.Expression, location *core.TextRange) *ast.Expression {
@@ -3318,7 +3318,7 @@ export function CommonJSModuleTransformer_createAllExportExpressions(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.isDirectExport","kind":"method","status":"implemented","sigHash":"5144d6a695c361c83c6ebff5a82968d5c27daf02d5546c124ecf02d544f20906","bodyHash":"01b62bd786c90da4e3ef250047affca91763a134d71d58c1e27ac4e471ba01bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.isDirectExport","kind":"method","status":"implemented","sigHash":"5144d6a695c361c83c6ebff5a82968d5c27daf02d5546c124ecf02d544f20906"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) isDirectExport(name *ast.IdentifierNode) bool {
@@ -3333,7 +3333,7 @@ export function CommonJSModuleTransformer_isDirectExport(receiver: GoPtr<CommonJ
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentProperty","kind":"method","status":"implemented","sigHash":"a9813cbc8a2e4d483da46a576162c3164fb354e2867e43e12681cfa44109013e","bodyHash":"44963748e6c3b674ce6cd3fc8563d7f39d047f912f2dbb09f7d5b0001495b9c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentProperty","kind":"method","status":"implemented","sigHash":"a9813cbc8a2e4d483da46a576162c3164fb354e2867e43e12681cfa44109013e"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentProperty(node *ast.PropertyAssignment) *ast.Node {
@@ -3364,7 +3364,7 @@ export function CommonJSModuleTransformer_visitAssignmentProperty(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitShorthandAssignmentProperty","kind":"method","status":"implemented","sigHash":"f1fab4c9d293b81138bdb6770f7156083332665349883e0af7e42fe42c634da8","bodyHash":"e16246b3bac443abae173fca13701f4d0149fba6d1f9bea7c13a7980b2d6467f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitShorthandAssignmentProperty","kind":"method","status":"implemented","sigHash":"f1fab4c9d293b81138bdb6770f7156083332665349883e0af7e42fe42c634da8"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitShorthandAssignmentProperty(node *ast.ShorthandPropertyAssignment) *ast.Node {
@@ -3452,7 +3452,7 @@ export function CommonJSModuleTransformer_visitShorthandAssignmentProperty(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentRestProperty","kind":"method","status":"implemented","sigHash":"03f2fcdd023a70936ca658338f86ff98a7113aebc9c8a903ea2514ec6b667ba4","bodyHash":"6ef63d664d379a7d95d090ca489a6718c5d2e6bb679aa06b80345c71a3bf4416"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentRestProperty","kind":"method","status":"implemented","sigHash":"03f2fcdd023a70936ca658338f86ff98a7113aebc9c8a903ea2514ec6b667ba4"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentRestProperty(node *ast.SpreadAssignment) *ast.Node {
@@ -3473,7 +3473,7 @@ export function CommonJSModuleTransformer_visitAssignmentRestProperty(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentRestElement","kind":"method","status":"implemented","sigHash":"d8497cbde4bb9a7c3db622398304e70d29bc3d2d622655bf785a465bc0f6a460","bodyHash":"63c6ab617562f8a7d89040f9dcc334a7c63b9f7eed8d98a8777c5c21848ff186"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentRestElement","kind":"method","status":"implemented","sigHash":"d8497cbde4bb9a7c3db622398304e70d29bc3d2d622655bf785a465bc0f6a460"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentRestElement(node *ast.SpreadElement) *ast.Node {
@@ -3494,7 +3494,7 @@ export function CommonJSModuleTransformer_visitAssignmentRestElement(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentElement","kind":"method","status":"implemented","sigHash":"0e5945b78898fc076456bbc20c0fccb050df039db6bd6e3a03eb2e61ad26ed69","bodyHash":"f63bddbeb7e8b5a641f9cefdea33f448cb0f90b38b9a0018d9a2406d52f24a0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitAssignmentElement","kind":"method","status":"implemented","sigHash":"0e5945b78898fc076456bbc20c0fccb050df039db6bd6e3a03eb2e61ad26ed69"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitAssignmentElement(node *ast.Node) *ast.Node {
@@ -3537,7 +3537,7 @@ export function CommonJSModuleTransformer_visitAssignmentElement(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignmentTarget","kind":"method","status":"implemented","sigHash":"98dba6c5b0baaf6285c123643cfe898ee516cd4bb757bd972294ca5b30f2371b","bodyHash":"87653f4dcb7582fbf39bff06e2e1a0950c9af48dcc9aa6c0734c58bb4c871db1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignmentTarget","kind":"method","status":"implemented","sigHash":"98dba6c5b0baaf6285c123643cfe898ee516cd4bb757bd972294ca5b30f2371b"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitDestructuringAssignmentTarget(node *ast.Node) *ast.Node {
@@ -3572,7 +3572,7 @@ export function CommonJSModuleTransformer_visitDestructuringAssignmentTarget(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignmentTargetNoStack","kind":"method","status":"implemented","sigHash":"ceb44a68d1ba7b2da06d6bd94c523dd8d5579a9a22ca36ce30da47edc6d7cd60","bodyHash":"43cd266e5e6c444a27ba74e44abb7181863bedcd1bba5a38d58dca45b1fdc666"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitDestructuringAssignmentTargetNoStack","kind":"method","status":"implemented","sigHash":"ceb44a68d1ba7b2da06d6bd94c523dd8d5579a9a22ca36ce30da47edc6d7cd60"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitDestructuringAssignmentTargetNoStack(node *ast.Node) *ast.Node {
@@ -3673,7 +3673,7 @@ export function CommonJSModuleTransformer_visitDestructuringAssignmentTargetNoSt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitCommaExpression","kind":"method","status":"implemented","sigHash":"06435417edd8dd54849bef70ac07a19799c0b23181fa72607e70ed06cd377980","bodyHash":"5e26d57484319ff35b8b076d8de3bb87e28afed5750917b0ddebadc58d27d4c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitCommaExpression","kind":"method","status":"implemented","sigHash":"06435417edd8dd54849bef70ac07a19799c0b23181fa72607e70ed06cd377980"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitCommaExpression(node *ast.BinaryExpression, resultIsDiscarded bool) *ast.Node {
@@ -3693,7 +3693,7 @@ export function CommonJSModuleTransformer_visitCommaExpression(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"44c4626c1ccf5e2a12515ddef537c3956297ab0db487c1158fc6753aaf09550b","bodyHash":"703e9830960edc2527ee2c987b27a80c0f6fc90cc5b0e8875c3f6ea381a70c6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"44c4626c1ccf5e2a12515ddef537c3956297ab0db487c1158fc6753aaf09550b"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitPrefixUnaryExpression(node *ast.PrefixUnaryExpression, resultIsDiscarded bool) *ast.Node {
@@ -3755,7 +3755,7 @@ export function CommonJSModuleTransformer_visitPrefixUnaryExpression(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"fa2d1663c3cdcbc47cae86b3201ba29bea58c6461e7479e1a08b9f93d0021bc7","bodyHash":"b411efb137006917b8262fa53f2e9de849f283fb09ffed463aa023ffb7b90d37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"fa2d1663c3cdcbc47cae86b3201ba29bea58c6461e7479e1a08b9f93d0021bc7"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitPostfixUnaryExpression(node *ast.PostfixUnaryExpression, resultIsDiscarded bool) *ast.Node {
@@ -3862,7 +3862,7 @@ export function CommonJSModuleTransformer_visitPostfixUnaryExpression(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"20118c281a35afab38890a291dc5b7b3431a7d12e4ca6377e0d2e67b9529c6b2","bodyHash":"bc2124cae19d19c5baeb151a14019c22d3583fcb59febfa4e3e0c72bfa61e446"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"20118c281a35afab38890a291dc5b7b3431a7d12e4ca6377e0d2e67b9529c6b2"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitCallExpression(node *ast.CallExpression) *ast.Node {
@@ -3943,7 +3943,7 @@ export function CommonJSModuleTransformer_visitCallExpression(receiver: GoPtr<Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shouldTransformImportCall","kind":"method","status":"implemented","sigHash":"284051ca1c178f531186b1db86d14cdec447b153d7665a0845f0b045f1a59f12","bodyHash":"07b02d0147a55c838e4ec857edf85f0758ff9a14d36e0d167b06a22d4ba60aa3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shouldTransformImportCall","kind":"method","status":"implemented","sigHash":"284051ca1c178f531186b1db86d14cdec447b153d7665a0845f0b045f1a59f12"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) shouldTransformImportCall() bool {
@@ -3955,7 +3955,7 @@ export function CommonJSModuleTransformer_shouldTransformImportCall(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitImportCallExpression","kind":"method","status":"implemented","sigHash":"9fe9fd62e26001e71284a9a1a0fa49470f5c1cd349b45d59b591a98105ec87e6","bodyHash":"cc64c3a2de6c056e355a5dd266c8ccf0bb39816a6b64df9472e5a5a2ec118d6c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitImportCallExpression","kind":"method","status":"implemented","sigHash":"9fe9fd62e26001e71284a9a1a0fa49470f5c1cd349b45d59b591a98105ec87e6"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitImportCallExpression(node *ast.CallExpression, rewriteOrShim bool) *ast.Node {
@@ -4006,7 +4006,7 @@ export function CommonJSModuleTransformer_visitImportCallExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createImportCallExpressionCommonJS","kind":"method","status":"implemented","sigHash":"866b1ace8f07ae83cfa328d7c43e63151a6ea678c4ee55947f21dd3bb4097ebc","bodyHash":"35d335f954d3067403672277b3ebd52f618699e919e43de059b34cd6891c7373"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.createImportCallExpressionCommonJS","kind":"method","status":"implemented","sigHash":"866b1ace8f07ae83cfa328d7c43e63151a6ea678c4ee55947f21dd3bb4097ebc"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) createImportCallExpressionCommonJS(arg *ast.Expression) *ast.Expression {
@@ -4191,7 +4191,7 @@ export function CommonJSModuleTransformer_createImportCallExpressionCommonJS(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shimOrRewriteImportOrRequireCall","kind":"method","status":"implemented","sigHash":"3cbd9de93cac0b716f261687c9bd8447b5f112742fa2e86e576f4dfe5bb53ce2","bodyHash":"af1d81a27a89a309d2b56dd543854763d03b3e8b4fa5732e1e73134095254683"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.shimOrRewriteImportOrRequireCall","kind":"method","status":"implemented","sigHash":"3cbd9de93cac0b716f261687c9bd8447b5f112742fa2e86e576f4dfe5bb53ce2"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) shimOrRewriteImportOrRequireCall(node *ast.CallExpression) *ast.Node {
@@ -4264,7 +4264,7 @@ export function CommonJSModuleTransformer_shimOrRewriteImportOrRequireCall(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTaggedTemplateExpression","kind":"method","status":"implemented","sigHash":"5342bd9c513c5512d6e7d31aadf5219bc1bd47e75408355efd49a062d3b17ffc","bodyHash":"4b6d4f396bf2b9cbf2866bfc1d4f85da979c73f198eca0444d6e5cafd3227b31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitTaggedTemplateExpression","kind":"method","status":"implemented","sigHash":"5342bd9c513c5512d6e7d31aadf5219bc1bd47e75408355efd49a062d3b17ffc"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitTaggedTemplateExpression(node *ast.TaggedTemplateExpression) *ast.Node {
@@ -4320,7 +4320,7 @@ export function CommonJSModuleTransformer_visitTaggedTemplateExpression(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitShorthandPropertyAssignment","kind":"method","status":"implemented","sigHash":"5b04c73512d9044f3a54e7d344c8dee5ad4bc39856a89e35e61d48ba62a7cac2","bodyHash":"e953cf921191590e24056eef612dc379bb7f66bcfb8157866f5334edcc13b4e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitShorthandPropertyAssignment","kind":"method","status":"implemented","sigHash":"5b04c73512d9044f3a54e7d344c8dee5ad4bc39856a89e35e61d48ba62a7cac2"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitShorthandPropertyAssignment(node *ast.ShorthandPropertyAssignment) *ast.Node {
@@ -4385,7 +4385,7 @@ export function CommonJSModuleTransformer_visitShorthandPropertyAssignment(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitIdentifier","kind":"method","status":"implemented","sigHash":"0a9397a2da1422d0327138c5a6a5fe93127d4337df6bdf252829023237c60878","bodyHash":"eedce2d4994c0d9e71746f782b129fb67b0485274f605a6c9bf38da1f8aaecba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitIdentifier","kind":"method","status":"implemented","sigHash":"0a9397a2da1422d0327138c5a6a5fe93127d4337df6bdf252829023237c60878"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitIdentifier(node *ast.IdentifierNode) *ast.Node {
@@ -4403,7 +4403,7 @@ export function CommonJSModuleTransformer_visitIdentifier(receiver: GoPtr<Common
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExpressionIdentifier","kind":"method","status":"implemented","sigHash":"d01af9be4738da617017078d8c96a6932a8357dc54a0dd29cf1f63178bb7af14","bodyHash":"a557f00334bb4adc9c5dd248486d9687ce6f6f5901b682b220930f533dac4e13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.visitExpressionIdentifier","kind":"method","status":"implemented","sigHash":"d01af9be4738da617017078d8c96a6932a8357dc54a0dd29cf1f63178bb7af14"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) visitExpressionIdentifier(node *ast.IdentifierNode) *ast.Node {
@@ -4538,7 +4538,7 @@ export function CommonJSModuleTransformer_visitExpressionIdentifier(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getExports","kind":"method","status":"implemented","sigHash":"8fb5874af1703bbfe2b108cf4d439033709a48e8c74c7d577f8a0f6aae158d45","bodyHash":"7e0a2fc9612905c1f02039004b054cd586b3a916f01daede37f73d61ad0c69dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/commonjsmodule.go::method::CommonJSModuleTransformer.getExports","kind":"method","status":"implemented","sigHash":"8fb5874af1703bbfe2b108cf4d439033709a48e8c74c7d577f8a0f6aae158d45"}
  *
  * Go source:
  * func (tx *CommonJSModuleTransformer) getExports(name *ast.IdentifierNode) []*ast.ModuleExportName {

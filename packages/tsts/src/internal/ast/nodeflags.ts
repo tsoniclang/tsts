@@ -1,7 +1,7 @@
 import type { int, uint } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::type::NodeFlags","kind":"type","status":"implemented","sigHash":"1ab8cedf51e53d4d4a76535f180fa467201a4ee1d08d7a155aaeb2a90ab16ad7","bodyHash":"5197d1ac139ca86c7af2d2cefe73128e846310afb8e0533c210c8308c6d55e12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::type::NodeFlags","kind":"type","status":"implemented","sigHash":"1ab8cedf51e53d4d4a76535f180fa467201a4ee1d08d7a155aaeb2a90ab16ad7"}
  *
  * Go source:
  * NodeFlags uint32
@@ -9,7 +9,7 @@ import type { int, uint } from "../../go/scalars.js";
 export type NodeFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::constGroup::NodeFlagsNone+NodeFlagsLet+NodeFlagsConst+NodeFlagsUsing+NodeFlagsReparsed+NodeFlagsSynthesized+NodeFlagsOptionalChain+NodeFlagsExportContext+NodeFlagsContainsThis+NodeFlagsHasImplicitReturn+NodeFlagsHasExplicitReturn+NodeFlagsDisallowInContext+NodeFlagsYieldContext+NodeFlagsDecoratorContext+NodeFlagsAwaitContext+NodeFlagsDisallowConditionalTypesContext+NodeFlagsThisNodeHasError+NodeFlagsJavaScriptFile+NodeFlagsThisNodeOrAnySubNodesHasError+NodeFlagsHasAsyncFunctions+NodeFlagsPossiblyContainsDynamicImport+NodeFlagsPossiblyContainsImportMeta+NodeFlagsHasJSDoc+NodeFlagsJSDoc+NodeFlagsAmbient+NodeFlagsInWithStatement+NodeFlagsJsonFile+NodeFlagsPossiblyContainsDeprecatedTag+NodeFlagsUnreachable+NodeFlagsReparserTransformedLiteral+NodeFlagsBlockScoped+NodeFlagsConstant+NodeFlagsAwaitUsing+NodeFlagsReachabilityCheckFlags+NodeFlagsReachabilityAndEmitFlags+NodeFlagsContextFlags+NodeFlagsTypeExcludesFlags+NodeFlagsPermanentlySetIncrementalFlags+NodeFlagsIdentifierHasExtendedUnicodeEscape+NodeFlagsIdentifierIsInJSDocNamespace+NodeFlagsNestedNamespace","kind":"constGroup","status":"implemented","sigHash":"5f7d883710e53a47dfde1d85856df1d169e7d7d185fe376ca9d16616b5713606","bodyHash":"62e4941f6289e84d8e3f5d52ca8d29377d26ad54eb24cd175f340a44de8043fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::constGroup::NodeFlagsNone+NodeFlagsLet+NodeFlagsConst+NodeFlagsUsing+NodeFlagsReparsed+NodeFlagsSynthesized+NodeFlagsOptionalChain+NodeFlagsExportContext+NodeFlagsContainsThis+NodeFlagsHasImplicitReturn+NodeFlagsHasExplicitReturn+NodeFlagsDisallowInContext+NodeFlagsYieldContext+NodeFlagsDecoratorContext+NodeFlagsAwaitContext+NodeFlagsDisallowConditionalTypesContext+NodeFlagsThisNodeHasError+NodeFlagsJavaScriptFile+NodeFlagsThisNodeOrAnySubNodesHasError+NodeFlagsHasAsyncFunctions+NodeFlagsPossiblyContainsDynamicImport+NodeFlagsPossiblyContainsImportMeta+NodeFlagsHasJSDoc+NodeFlagsJSDoc+NodeFlagsAmbient+NodeFlagsInWithStatement+NodeFlagsJsonFile+NodeFlagsPossiblyContainsDeprecatedTag+NodeFlagsUnreachable+NodeFlagsReparserTransformedLiteral+NodeFlagsBlockScoped+NodeFlagsConstant+NodeFlagsAwaitUsing+NodeFlagsReachabilityCheckFlags+NodeFlagsReachabilityAndEmitFlags+NodeFlagsContextFlags+NodeFlagsTypeExcludesFlags+NodeFlagsPermanentlySetIncrementalFlags+NodeFlagsIdentifierHasExtendedUnicodeEscape+NodeFlagsIdentifierIsInJSDocNamespace+NodeFlagsNestedNamespace","kind":"constGroup","status":"implemented","sigHash":"5f7d883710e53a47dfde1d85856df1d169e7d7d185fe376ca9d16616b5713606"}
  *
  * Go source:
  * const (

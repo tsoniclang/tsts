@@ -8,7 +8,7 @@ const textDecoder = new globalThis.TextDecoder();
 type JSONValueElementFactory<T> = (value: JSONValue) => T;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::type::JSONValueType","kind":"type","status":"implemented","sigHash":"48653e3c18d9ae537114c84f85b8ef7b7ac29743e73e629426344b1a042b4309","bodyHash":"ed9c1aa8a995103f20039dc7ed6c47cdd05ec05009f5f7c1992464de231577f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::type::JSONValueType","kind":"type","status":"implemented","sigHash":"48653e3c18d9ae537114c84f85b8ef7b7ac29743e73e629426344b1a042b4309"}
  *
  * Go source:
  * JSONValueType int8
@@ -16,7 +16,7 @@ type JSONValueElementFactory<T> = (value: JSONValue) => T;
 export type JSONValueType = sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::constGroup::JSONValueTypeNotPresent+JSONValueTypeNull+JSONValueTypeString+JSONValueTypeNumber+JSONValueTypeBoolean+JSONValueTypeArray+JSONValueTypeObject","kind":"constGroup","status":"implemented","sigHash":"0eb60a470b3f577cf37bd143dabb9eb1d3e738598ed65d83bae8302c50fc7895","bodyHash":"7272b0a6b9d35fb1d9352f9052180978cc89028de5d47b5852cf470334c65cb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::constGroup::JSONValueTypeNotPresent+JSONValueTypeNull+JSONValueTypeString+JSONValueTypeNumber+JSONValueTypeBoolean+JSONValueTypeArray+JSONValueTypeObject","kind":"constGroup","status":"implemented","sigHash":"0eb60a470b3f577cf37bd143dabb9eb1d3e738598ed65d83bae8302c50fc7895"}
  *
  * Go source:
  * const (
@@ -38,7 +38,7 @@ export const JSONValueTypeArray: JSONValueType = 5 as JSONValueType;
 export const JSONValueTypeObject: JSONValueType = 6 as JSONValueType;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValueType.String","kind":"method","status":"implemented","sigHash":"9f29d0e7fd171bcb5305baf2783ac6d97c258224a33da9dc759530e12081cc85","bodyHash":"3306dbcbf1ad6fe7c910439ed7d43f9f63cd0fb044cb3e69893ac432cbe0df06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValueType.String","kind":"method","status":"implemented","sigHash":"9f29d0e7fd171bcb5305baf2783ac6d97c258224a33da9dc759530e12081cc85"}
  *
  * Go source:
  * func (t JSONValueType) String() string {
@@ -80,7 +80,7 @@ export function JSONValueType_String(receiver: JSONValueType): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::type::JSONValue","kind":"type","status":"implemented","sigHash":"cfb3148c7eb9df24e19fdcf5f408a8bdcf46409505c6d31ba3d6cfb8df68ee4d","bodyHash":"4b82e38636bc8b15041aa588862be99dbceb304c10feec42dd9fb09283356223"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::type::JSONValue","kind":"type","status":"implemented","sigHash":"cfb3148c7eb9df24e19fdcf5f408a8bdcf46409505c6d31ba3d6cfb8df68ee4d"}
  *
  * Go source:
  * JSONValue struct {
@@ -94,7 +94,7 @@ export interface JSONValue {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.IsPresent","kind":"method","status":"implemented","sigHash":"8152b5707bade6933856986d12995c0f40301f3ee1988634c730b997a1e90b68","bodyHash":"fa691614d98cb671d5f1a6a871b3db47f5931917dc517f80c8a444a10b758735"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.IsPresent","kind":"method","status":"implemented","sigHash":"8152b5707bade6933856986d12995c0f40301f3ee1988634c730b997a1e90b68"}
  *
  * Go source:
  * func (v *JSONValue) IsPresent() bool {
@@ -106,7 +106,7 @@ export function JSONValue_IsPresent(receiver: GoPtr<JSONValue>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.IsFalsy","kind":"method","status":"implemented","sigHash":"865efc9dbf31b58ae0931b4222f66803df8e2d3f92b0feff43fe2eb64512f560","bodyHash":"bf86312e17df46c8fda5bdc1d47db32be952513caf8ae64577288865f08b9830"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.IsFalsy","kind":"method","status":"implemented","sigHash":"865efc9dbf31b58ae0931b4222f66803df8e2d3f92b0feff43fe2eb64512f560"}
  *
  * Go source:
  * func (v *JSONValue) IsFalsy() bool {
@@ -142,7 +142,7 @@ export function JSONValue_IsFalsy(receiver: GoPtr<JSONValue>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsObject","kind":"method","status":"implemented","sigHash":"18a437dc320aabda941cc0411cc7ddfe4e33b354344a01fd3078ce5ba61361ac","bodyHash":"b833fcad137cfcfd39f0937ae6a19de97a0e92da51b80ecf2aa5051a06c25a16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsObject","kind":"method","status":"implemented","sigHash":"18a437dc320aabda941cc0411cc7ddfe4e33b354344a01fd3078ce5ba61361ac"}
  *
  * Go source:
  * func (v JSONValue) AsObject() *collections.OrderedMap[string, JSONValue] {
@@ -160,7 +160,7 @@ export function JSONValue_AsObject(receiver: JSONValue): GoPtr<OrderedMap<string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsArray","kind":"method","status":"implemented","sigHash":"240e82a60832f3396545ba113bd50df49b5611a74aa3b9d386ff3c24e0bd52ce","bodyHash":"a5e746846d9e8f12a033a29f2362fa39b9e8b957015aaa5d238ac60ce6f3798b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsArray","kind":"method","status":"implemented","sigHash":"240e82a60832f3396545ba113bd50df49b5611a74aa3b9d386ff3c24e0bd52ce"}
  *
  * Go source:
  * func (v JSONValue) AsArray() []JSONValue {
@@ -178,7 +178,7 @@ export function JSONValue_AsArray(receiver: JSONValue): GoSlice<JSONValue> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsString","kind":"method","status":"implemented","sigHash":"fd92820770b9889501609ec2790176e422e07101a3e7e19b23ca4799649fd8a9","bodyHash":"e497d4921f208e18ad135c797ee7ec07a644e88e86cfa96dbc7894fd51f670d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.AsString","kind":"method","status":"implemented","sigHash":"fd92820770b9889501609ec2790176e422e07101a3e7e19b23ca4799649fd8a9"}
  *
  * Go source:
  * func (v JSONValue) AsString() string {
@@ -196,7 +196,7 @@ export function JSONValue_AsString(receiver: JSONValue): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"d74600c87224b4da6556fa3430fcbde298e7369f7760524bd9cdb130acd0ed8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*JSONValue)(nil)
@@ -210,7 +210,7 @@ export function JSONValue_as_json_UnmarshalerFrom(receiver: GoPtr<JSONValue>): U
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"58ef06a751824f99c92048a67b7f9d966b45b19de3cf4d80037651e90d90c95d","bodyHash":"0594928fcdea39e2c2de53a060bedc345134654336b84437caa9bca3158cf30b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"58ef06a751824f99c92048a67b7f9d966b45b19de3cf4d80037651e90d90c95d"}
  *
  * Go source:
  * func (v *JSONValue) UnmarshalJSONFrom(dec *json.Decoder) error {
@@ -222,7 +222,7 @@ export function JSONValue_UnmarshalJSONFrom(receiver: GoPtr<JSONValue>, dec: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValue","kind":"func","status":"implemented","sigHash":"e14ac71ae617061d90e60613b0171bad28ca5fc385c0eb9c85e7e805c398342c","bodyHash":"1a0095c62aaf75543dc4fd0e481a9f3921b01c64ebf97db5d07b1256a92cd5c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValue","kind":"func","status":"implemented","sigHash":"e14ac71ae617061d90e60613b0171bad28ca5fc385c0eb9c85e7e805c398342c"}
  *
  * Go source:
  * func unmarshalJSONValue[T any](v *JSONValue, data []byte) error {
@@ -272,7 +272,7 @@ export function unmarshalJSONValueWithFactory<T>(v: GoPtr<JSONValue>, data: GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValueV2","kind":"func","status":"implemented","sigHash":"5cd9da10854a2c2a8b607f1f3c44f2ecda6a0c361d9e711befbdb497f489a826","bodyHash":"82f81414a91c00076a1b1fcf80794e84b2f0c77babd5c96311d630c61c8d6859"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValueV2","kind":"func","status":"implemented","sigHash":"5cd9da10854a2c2a8b607f1f3c44f2ecda6a0c361d9e711befbdb497f489a826"}
  *
  * Go source:
  * func unmarshalJSONValueV2[T any](v *JSONValue, dec *json.Decoder) error {

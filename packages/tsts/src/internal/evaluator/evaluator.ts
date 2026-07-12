@@ -48,7 +48,7 @@ import { PseudoBigInt_String } from "../jsnum/pseudobigint.js";
 import { FromString, Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"a3a9d32c3240f54837956a383b258f44f9026492dadd7240384a097b26b6d6ca","bodyHash":"cd145909ea83e547879d8fed4cb79259fcdd3e81aa150c04e711b7e67dad21c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Result","kind":"type","status":"implemented","sigHash":"a3a9d32c3240f54837956a383b258f44f9026492dadd7240384a097b26b6d6ca"}
  *
  * Go source:
  * Result struct {
@@ -66,7 +66,7 @@ export interface Result {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewResult","kind":"func","status":"implemented","sigHash":"a7d1123ccb3a776d722f05482385eeed88c35b337bec96779612586823f85f64","bodyHash":"9d17774cfa52ac50f85b6124ac7ffd3b2f30562c15d64fb27b6b45a03e379a30"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewResult","kind":"func","status":"implemented","sigHash":"a7d1123ccb3a776d722f05482385eeed88c35b337bec96779612586823f85f64"}
  *
  * Go source:
  * func NewResult(value any, isSyntacticallyString bool, resolvedOtherFiles bool, hasExternalReferences bool) Result {
@@ -83,7 +83,7 @@ export function NewResult(value: unknown, isSyntacticallyString: bool, resolvedO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Evaluator","kind":"type","status":"implemented","sigHash":"f594ca3f1ce7909d0008027e88ba1127240136fcb93450fbb1a39342caeeeab0","bodyHash":"357e603396eb62091101745635d91e01cdcefeae63247e08b328af2df4a9f916"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::type::Evaluator","kind":"type","status":"implemented","sigHash":"f594ca3f1ce7909d0008027e88ba1127240136fcb93450fbb1a39342caeeeab0"}
  *
  * Go source:
  * Evaluator func(expr *ast.Node, location *ast.Node) Result
@@ -91,7 +91,7 @@ export function NewResult(value: unknown, isSyntacticallyString: bool, resolvedO
 export type Evaluator = (expr: GoPtr<Node>, location: GoPtr<Node>) => Result;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator","kind":"func","status":"implemented","sigHash":"c788e7be8c5a4a7b604fc445b31bf83a466c0b2ab9747563519c09d25af6b42b","bodyHash":"b6e2b80e11d91c71127807eb17266c7286a377aadb316adc67362dd67ec2213d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator","kind":"func","status":"implemented","sigHash":"c788e7be8c5a4a7b604fc445b31bf83a466c0b2ab9747563519c09d25af6b42b"}
  *
  * Go source:
  * func NewEvaluator(evaluateEntity Evaluator, outerExpressionsToSkip ast.OuterExpressionKinds) Evaluator {
@@ -309,7 +309,7 @@ export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::evaluateTemplateExpression","kind":"func","status":"implemented","sigHash":"6c29c77ddc6dad3fe14851dfd638b973dfce35e64ae865b7b9eb2a4ed74873d1","bodyHash":"289189194c5aeaa963b81e7420205e134470572d1a9817d2f6d63f8e5f8379bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::evaluateTemplateExpression","kind":"func","status":"implemented","sigHash":"6c29c77ddc6dad3fe14851dfd638b973dfce35e64ae865b7b9eb2a4ed74873d1"}
  *
  * Go source:
  * func evaluateTemplateExpression(expr *ast.Node, location *ast.Node, evaluate Evaluator) Result {
@@ -351,7 +351,7 @@ export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::AnyToString","kind":"func","status":"implemented","sigHash":"f9d183c37dd2985faab5464559e31ea071a960043772a653d8d02b7704bc620a","bodyHash":"783b785da087aa339110f1b2d2deb24f8f893f3aee83cdb75125956cefe75a61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::AnyToString","kind":"func","status":"implemented","sigHash":"f9d183c37dd2985faab5464559e31ea071a960043772a653d8d02b7704bc620a"}
  *
  * Go source:
  * func AnyToString(v any) string {
@@ -385,7 +385,7 @@ export function AnyToString(v: unknown): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::IsTruthy","kind":"func","status":"implemented","sigHash":"fcbb13ee14800f3342731fb7ae1f47e0128fd4f88f02782c598e7be4098dc2b5","bodyHash":"bed8314f4d4215bfde56b61d5f7f4fb185e22c899298e49dbbe7394f5e96b3e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::IsTruthy","kind":"func","status":"implemented","sigHash":"fcbb13ee14800f3342731fb7ae1f47e0128fd4f88f02782c598e7be4098dc2b5"}
  *
  * Go source:
  * func IsTruthy(v any) bool {

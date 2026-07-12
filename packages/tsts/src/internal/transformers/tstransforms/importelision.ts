@@ -35,7 +35,7 @@ import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804","bodyHash":"8f403613429078b6e07765c1b176cbb4bdb3238c22b9f630d78f4eac74b994f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804"}
  *
  * Go source:
  * ImportElisionTransformer struct {
@@ -53,7 +53,7 @@ export interface ImportElisionTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::func::NewImportElisionTransformer","kind":"func","status":"implemented","sigHash":"92c3f33218c099370dac2fc118f028d545e9e07523969a97b2ab2500fb873b83","bodyHash":"0588a42f168a20e0332480dac94c841ad1e42daa9066e9cf426afb55a368e41e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::func::NewImportElisionTransformer","kind":"func","status":"implemented","sigHash":"92c3f33218c099370dac2fc118f028d545e9e07523969a97b2ab2500fb873b83"}
  *
  * Go source:
  * func NewImportElisionTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -82,7 +82,7 @@ export function NewImportElisionTransformer(opt: GoPtr<TransformOptions>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"implemented","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1","bodyHash":"3192f19d9eca37402d140cfcbae3afcbf32cb595848840ad3d373973e4a64be8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"implemented","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) visit(node *ast.Node) *ast.Node {
@@ -292,7 +292,7 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitAliasDeclaration","kind":"method","status":"implemented","sigHash":"bd112039fa72cc3f82274f00ded7bcb39f9944946787bc9341e97c160bf4a951","bodyHash":"0e4a1a6a031d694f2edaabc074a73eb00bbbdd6c5fae016d15ecd04837ea3f60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitAliasDeclaration","kind":"method","status":"implemented","sigHash":"bd112039fa72cc3f82274f00ded7bcb39f9944946787bc9341e97c160bf4a951"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) shouldEmitAliasDeclaration(node *ast.Node) bool {
@@ -304,7 +304,7 @@ export function ImportElisionTransformer_shouldEmitAliasDeclaration(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"07f0dadb5746f49c795d0e5410e14ef3f8ebffaba6af8c82de5fc9504a8dfca7","bodyHash":"a59eeb24bf1d5301beecfd4bde085155bd81eaa1150ff3e879a8a84f6ee80989"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"07f0dadb5746f49c795d0e5410e14ef3f8ebffaba6af8c82de5fc9504a8dfca7"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) shouldEmitImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) bool {
@@ -323,7 +323,7 @@ export function ImportElisionTransformer_shouldEmitImportEqualsDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isReferencedAliasDeclaration","kind":"method","status":"implemented","sigHash":"dd870428eccad309d51edc3b866876bb005f2e9e93c81465a2e143208bdeb014","bodyHash":"06661ce7e6b275084fc2d9d4ea08a627b1eeda37eba14af8176b8d9973e0e582"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isReferencedAliasDeclaration","kind":"method","status":"implemented","sigHash":"dd870428eccad309d51edc3b866876bb005f2e9e93c81465a2e143208bdeb014"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) isReferencedAliasDeclaration(node *ast.Node) bool {
@@ -337,7 +337,7 @@ export function ImportElisionTransformer_isReferencedAliasDeclaration(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isValueAliasDeclaration","kind":"method","status":"implemented","sigHash":"d3da0a034818baf5657f3bb79c9d6d77609868f1db416c1a55ea44dd28087e5a","bodyHash":"8b02b4c4702861ca028b9dcb09e54a9d3a3983bf39c8174318a6041e547e52de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isValueAliasDeclaration","kind":"method","status":"implemented","sigHash":"d3da0a034818baf5657f3bb79c9d6d77609868f1db416c1a55ea44dd28087e5a"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) isValueAliasDeclaration(node *ast.Node) bool {
@@ -351,7 +351,7 @@ export function ImportElisionTransformer_isValueAliasDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isTopLevelValueImportEqualsWithEntityName","kind":"method","status":"implemented","sigHash":"8ea9f02d72f88cbe5632b722230dc26cfff19aa8dfb68cc0eaaed1d6ee2ae5a7","bodyHash":"66fe4d35a19450fe69f118cd4fd40446623d896c938e70b71e6a31afe2ce4142"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.isTopLevelValueImportEqualsWithEntityName","kind":"method","status":"implemented","sigHash":"8ea9f02d72f88cbe5632b722230dc26cfff19aa8dfb68cc0eaaed1d6ee2ae5a7"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) isTopLevelValueImportEqualsWithEntityName(node *ast.Node) bool {

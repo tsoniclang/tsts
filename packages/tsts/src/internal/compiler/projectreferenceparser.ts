@@ -15,7 +15,7 @@ import { newProjectReferenceDtsFakingHost } from "./projectreferencedtsfakinghos
 import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617","bodyHash":"61316d916f103188ce2627a23ecbc6ee00c8b0b96c663aa59faec2ba5bf0bbea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParseTask","kind":"type","status":"implemented","sigHash":"9514d364f391763c424a5d6d9a870f7696a4a0508cf83e21635c4aa906ea5617"}
  *
  * Go source:
  * projectReferenceParseTask struct {
@@ -31,7 +31,7 @@ export interface projectReferenceParseTask {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParseTask.parse","kind":"method","status":"implemented","sigHash":"01f4a2692f3c05edad6fbcf0a75c1a33f952e05c46780f2c6dc927159117716d","bodyHash":"eebc81de7165a5d5e11ae41636a29dfa93dddd1ab1366fb03a94483dcb11dc09"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParseTask.parse","kind":"method","status":"implemented","sigHash":"01f4a2692f3c05edad6fbcf0a75c1a33f952e05c46780f2c6dc927159117716d"}
  *
  * Go source:
  * func (t *projectReferenceParseTask) parse(projectReferenceParser *projectReferenceParser) {
@@ -63,7 +63,7 @@ export function projectReferenceParseTask_parse(receiver: GoPtr<projectReference
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::func::createProjectReferenceParseTasks","kind":"func","status":"implemented","sigHash":"87bd6887212bc1e174a4fc5c2c83a0d3222051b7e64ef23576e1aeb7acc5e302","bodyHash":"637ba93f58a168856f04607ef9a1e38a11731f4c2fddb7afd631e7371a3f82d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::func::createProjectReferenceParseTasks","kind":"func","status":"implemented","sigHash":"87bd6887212bc1e174a4fc5c2c83a0d3222051b7e64ef23576e1aeb7acc5e302"}
  *
  * Go source:
  * func createProjectReferenceParseTasks(projectReferences []string) []*projectReferenceParseTask {
@@ -83,7 +83,7 @@ export function createProjectReferenceParseTasks(projectReferences: GoSlice<stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParser","kind":"type","status":"implemented","sigHash":"c64552523723c535e1cb26bff3953c5eb82adf8f795bbdf0062ed743f83f0b5e","bodyHash":"531a7505b3fff5943224f1141e5a6780c43a499d36704d73d5e91cd2a86d436f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::type::projectReferenceParser","kind":"type","status":"implemented","sigHash":"c64552523723c535e1cb26bff3953c5eb82adf8f795bbdf0062ed743f83f0b5e"}
  *
  * Go source:
  * projectReferenceParser struct {
@@ -99,7 +99,7 @@ export interface projectReferenceParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.parse","kind":"method","status":"implemented","sigHash":"fabca0594513acc562a1de3803d3edb823a809b562b7d846a3da5de2ce25541b","bodyHash":"155e641e27bd745cac80f977648dcd1dcd4a0be34c31b5c93daabd0b058f595a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.parse","kind":"method","status":"implemented","sigHash":"fabca0594513acc562a1de3803d3edb823a809b562b7d846a3da5de2ce25541b"}
  *
  * Go source:
  * func (p *projectReferenceParser) parse(tasks []*projectReferenceParseTask) {
@@ -117,7 +117,7 @@ export function projectReferenceParser_parse(receiver: GoPtr<projectReferencePar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.start","kind":"method","status":"implemented","sigHash":"bbd5662f4ee68086118e0ace4b02a494ea625fb38fc900592e84d0aa29e68ed7","bodyHash":"9c6c18aec3ce73766f76e79736edb824c855a5dbdaa3831cf8adc8841e3f263a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.start","kind":"method","status":"implemented","sigHash":"bbd5662f4ee68086118e0ace4b02a494ea625fb38fc900592e84d0aa29e68ed7"}
  *
  * Go source:
  * func (p *projectReferenceParser) start(tasks []*projectReferenceParseTask) {
@@ -153,7 +153,7 @@ export function projectReferenceParser_start(receiver: GoPtr<projectReferencePar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.initMapper","kind":"method","status":"implemented","sigHash":"744b692876244e1f5a7259f071c2df8d37d25fe56420231219ac3e34dfc91d2e","bodyHash":"d2363da29aa7fdf625a040251059488933f82c68609eba160eef033ca09ee5fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.initMapper","kind":"method","status":"implemented","sigHash":"744b692876244e1f5a7259f071c2df8d37d25fe56420231219ac3e34dfc91d2e"}
  *
  * Go source:
  * func (p *projectReferenceParser) initMapper(tasks []*projectReferenceParseTask) {
@@ -186,7 +186,7 @@ export function projectReferenceParser_initMapper(receiver: GoPtr<projectReferen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.initMapperWorker","kind":"method","status":"implemented","sigHash":"79d107e75e614f4bac7db48e20a7ce041020fa8c75a28916513778386f1606c0","bodyHash":"53d62c81467632820dc995b276c26e85c699bf5b22a8181229c67bd73ba73784"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferenceparser.go::method::projectReferenceParser.initMapperWorker","kind":"method","status":"implemented","sigHash":"79d107e75e614f4bac7db48e20a7ce041020fa8c75a28916513778386f1606c0"}
  *
  * Go source:
  * func (p *projectReferenceParser) initMapperWorker(tasks []*projectReferenceParseTask, seen *collections.Set[*projectReferenceParseTask]) []tspath.Path {

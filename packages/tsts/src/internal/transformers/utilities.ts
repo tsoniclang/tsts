@@ -168,7 +168,7 @@ import type { NodeFactory } from "../printer/factory.js";
 import { NodeFactory_NewAssignmentExpression } from "../printer/factory.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsGeneratedIdentifier","kind":"func","status":"implemented","sigHash":"89b194486f69ad37d24c7661662a26d9ae8d9d5f19a36185615b0c10f61bf8c8","bodyHash":"a2f0859edccfba196fe5bcc1bc7dda1d71aa8b81c69b25b4ffee4aec52b7845d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsGeneratedIdentifier","kind":"func","status":"implemented","sigHash":"89b194486f69ad37d24c7661662a26d9ae8d9d5f19a36185615b0c10f61bf8c8"}
  *
  * Go source:
  * func IsGeneratedIdentifier(emitContext *printer.EmitContext, name *ast.IdentifierNode) bool {
@@ -180,7 +180,7 @@ export function IsGeneratedIdentifier(emitContext: GoPtr<EmitContext>, name: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsHelperName","kind":"func","status":"implemented","sigHash":"fc6d94c942aed0bbeb19aa85622bb9b9bf6c37a3fbf79141f0f4fa3a58d6ba3f","bodyHash":"42fa45f922d6cc8b0fdee3e6b7109efcf56f73ca10620988da0253d9deee8f98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsHelperName","kind":"func","status":"implemented","sigHash":"fc6d94c942aed0bbeb19aa85622bb9b9bf6c37a3fbf79141f0f4fa3a58d6ba3f"}
  *
  * Go source:
  * func IsHelperName(emitContext *printer.EmitContext, name *ast.IdentifierNode) bool {
@@ -192,7 +192,7 @@ export function IsHelperName(emitContext: GoPtr<EmitContext>, name: GoPtr<Identi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsLocalName","kind":"func","status":"implemented","sigHash":"d12a51db8828e768693b82e1a87dbd3e77e313149052a0090ba03e0bb3b6cc44","bodyHash":"b09aed4bfb23801d3cb63df01118e91a6eb2d00d90d9ecc1f5472e3ff96af36a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsLocalName","kind":"func","status":"implemented","sigHash":"d12a51db8828e768693b82e1a87dbd3e77e313149052a0090ba03e0bb3b6cc44"}
  *
  * Go source:
  * func IsLocalName(emitContext *printer.EmitContext, name *ast.IdentifierNode) bool {
@@ -204,7 +204,7 @@ export function IsLocalName(emitContext: GoPtr<EmitContext>, name: GoPtr<Identif
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsExportName","kind":"func","status":"implemented","sigHash":"3727bc900c73f1a4e305fc30f39297b33dde1f5deadbe2fd8f14678bea8ded6d","bodyHash":"d7309fe5dab27ce13f2e1077afe2f30d7299712debb725e0c164ab112cc14aff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsExportName","kind":"func","status":"implemented","sigHash":"3727bc900c73f1a4e305fc30f39297b33dde1f5deadbe2fd8f14678bea8ded6d"}
  *
  * Go source:
  * func IsExportName(emitContext *printer.EmitContext, name *ast.IdentifierNode) bool {
@@ -216,7 +216,7 @@ export function IsExportName(emitContext: GoPtr<EmitContext>, name: GoPtr<Identi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsIdentifierReference","kind":"func","status":"implemented","sigHash":"b6e5fc8d0502c6d60bfa0f602489341025ccbb87b981203c1a32f14123c64bda","bodyHash":"c446ea25f41e58e4fbae874d66ff67cc131caa463c5a88a5e1b82257d6b188f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsIdentifierReference","kind":"func","status":"implemented","sigHash":"b6e5fc8d0502c6d60bfa0f602489341025ccbb87b981203c1a32f14123c64bda"}
  *
  * Go source:
  * func IsIdentifierReference(name *ast.IdentifierNode, parent *ast.Node) bool {
@@ -397,7 +397,7 @@ export function IsIdentifierReference(name: GoPtr<IdentifierNode>, parent: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToArrayAssignmentElement","kind":"func","status":"implemented","sigHash":"8ec740e4db353a95e857ecb7d30a93e9a6775d35da7e172abcda7fec5a29d39d","bodyHash":"0afd60149e984b89d837eeb21a381ee83211d2df590c1c2d70bdd0bc643985ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToArrayAssignmentElement","kind":"func","status":"implemented","sigHash":"8ec740e4db353a95e857ecb7d30a93e9a6775d35da7e172abcda7fec5a29d39d"}
  *
  * Go source:
  * func convertBindingElementToArrayAssignmentElement(emitContext *printer.EmitContext, element *ast.BindingElement) *ast.Expression {
@@ -449,7 +449,7 @@ export function convertBindingElementToArrayAssignmentElement(emitContext: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToObjectAssignmentElement","kind":"func","status":"implemented","sigHash":"d80ec62d1a4b87d12528f8c0cd24bcec4488b55cece838c90c68fe0940aa9319","bodyHash":"94ad9d93b5da25e31ecce2ea8bcaae5c5346f5a912b0b4db8b0849e9109d2825"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToObjectAssignmentElement","kind":"func","status":"implemented","sigHash":"d80ec62d1a4b87d12528f8c0cd24bcec4488b55cece838c90c68fe0940aa9319"}
  *
  * Go source:
  * func convertBindingElementToObjectAssignmentElement(emitContext *printer.EmitContext, element *ast.BindingElement) *ast.ObjectLiteralElement {
@@ -513,7 +513,7 @@ export function convertBindingElementToObjectAssignmentElement(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::ConvertBindingPatternToAssignmentPattern","kind":"func","status":"implemented","sigHash":"acd49ec13ab9a48882e668f919d01f09fac20e67bbb298fa9d182aebb9b92fb3","bodyHash":"7f12ddee7bf21ff0a85034ba6b3f5dc2b76f6af228ced142b0099ce311c027b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::ConvertBindingPatternToAssignmentPattern","kind":"func","status":"implemented","sigHash":"acd49ec13ab9a48882e668f919d01f09fac20e67bbb298fa9d182aebb9b92fb3"}
  *
  * Go source:
  * func ConvertBindingPatternToAssignmentPattern(emitContext *printer.EmitContext, element *ast.BindingPattern) *ast.Expression {
@@ -539,7 +539,7 @@ export function ConvertBindingPatternToAssignmentPattern(emitContext: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToObjectAssignmentPattern","kind":"func","status":"implemented","sigHash":"48e025825653c19fac062b91ce9342e88193e6d6cd681aaea29763ff5ebb3f3a","bodyHash":"e0ab494fd7c5f5978c4ef827bee67e7bd372f796f317cb2936a56287978122e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToObjectAssignmentPattern","kind":"func","status":"implemented","sigHash":"48e025825653c19fac062b91ce9342e88193e6d6cd681aaea29763ff5ebb3f3a"}
  *
  * Go source:
  * func convertBindingElementToObjectAssignmentPattern(emitContext *printer.EmitContext, element *ast.BindingPattern) *ast.Expression {
@@ -570,7 +570,7 @@ export function convertBindingElementToObjectAssignmentPattern(emitContext: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToArrayAssignmentPattern","kind":"func","status":"implemented","sigHash":"d68c5906819512d9d7be25f7e12356f30d1915771b4b7c399df4c60069ac9b74","bodyHash":"c778e9220d1333f428a724479a503c2c861687b3f3fc69f4ef6fb894518002bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingElementToArrayAssignmentPattern","kind":"func","status":"implemented","sigHash":"d68c5906819512d9d7be25f7e12356f30d1915771b4b7c399df4c60069ac9b74"}
  *
  * Go source:
  * func convertBindingElementToArrayAssignmentPattern(emitContext *printer.EmitContext, element *ast.BindingPattern) *ast.Expression {
@@ -601,7 +601,7 @@ export function convertBindingElementToArrayAssignmentPattern(emitContext: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingNameToAssignmentElementTarget","kind":"func","status":"implemented","sigHash":"e3791f2d2288402efbedb1c3dff635c57703dda1eff8e097e9ad3478824d228e","bodyHash":"3fdc72c7c10434ff9ac4aa57ab66f5f8f95c5c9d467348fd92575d8b48e25ae2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::convertBindingNameToAssignmentElementTarget","kind":"func","status":"implemented","sigHash":"e3791f2d2288402efbedb1c3dff635c57703dda1eff8e097e9ad3478824d228e"}
  *
  * Go source:
  * func convertBindingNameToAssignmentElementTarget(emitContext *printer.EmitContext, element *ast.Node) *ast.Expression {
@@ -619,7 +619,7 @@ export function convertBindingNameToAssignmentElementTarget(emitContext: GoPtr<E
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::ConvertVariableDeclarationToAssignmentExpression","kind":"func","status":"implemented","sigHash":"ce8b77782a32fefc66d14ee1226208da6e4207abbc208edb1f79b6645e48f77b","bodyHash":"5c0c4bb6e95b0d8e15e3920c16ee9eb32c1efe3f39b9f6b05362cc256139cff9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::ConvertVariableDeclarationToAssignmentExpression","kind":"func","status":"implemented","sigHash":"ce8b77782a32fefc66d14ee1226208da6e4207abbc208edb1f79b6645e48f77b"}
  *
  * Go source:
  * func ConvertVariableDeclarationToAssignmentExpression(emitContext *printer.EmitContext, element *ast.VariableDeclaration) *ast.Expression {
@@ -645,7 +645,7 @@ export function ConvertVariableDeclarationToAssignmentExpression(emitContext: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::SingleOrMany","kind":"func","status":"implemented","sigHash":"cddfa4ce97dd905cf844b8a7a93df3aa13b96c7a2c829708e9003e7f149a56f1","bodyHash":"b40cf81412825da56d808a07e37958ec1887eb6fe0f795f2091600819bc94984"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::SingleOrMany","kind":"func","status":"implemented","sigHash":"cddfa4ce97dd905cf844b8a7a93df3aa13b96c7a2c829708e9003e7f149a56f1"}
  *
  * Go source:
  * func SingleOrMany(nodes []*ast.Node, factory *printer.NodeFactory) *ast.Node {
@@ -669,7 +669,7 @@ export function SingleOrMany(nodes: GoSlice<GoPtr<Node>> | undefined, factory: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleCopiableExpression","kind":"func","status":"implemented","sigHash":"dadb0d705d09414897911bb44f8f66e447b2b22c993dccd1d0081dc7e2fc9e58","bodyHash":"75a6c768813fe0711cb02ccbc69e28b23396c52fa56c5c47d253069d74b772f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleCopiableExpression","kind":"func","status":"implemented","sigHash":"dadb0d705d09414897911bb44f8f66e447b2b22c993dccd1d0081dc7e2fc9e58"}
  *
  * Go source:
  * func IsSimpleCopiableExpression(expression *ast.Expression) bool {
@@ -689,7 +689,7 @@ export function IsSimpleCopiableExpression(expression: GoPtr<Expression>): bool 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsOriginalNodeSingleLine","kind":"func","status":"implemented","sigHash":"26b015a14457cf5965cf2c8fe9b6e369ae16d29eb6ed263d016b9dbb9f97338f","bodyHash":"a3b0d7ad904b633c00f71bcaa3f8ca43429df0070831fb9c78faa325de03614a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsOriginalNodeSingleLine","kind":"func","status":"implemented","sigHash":"26b015a14457cf5965cf2c8fe9b6e369ae16d29eb6ed263d016b9dbb9f97338f"}
  *
  * Go source:
  * func IsOriginalNodeSingleLine(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -728,7 +728,7 @@ export function IsOriginalNodeSingleLine(emitContext: GoPtr<EmitContext>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"63052de82991e08086e0f7f61b9926ae944cef2a2aefdf41e05d4885f9d71b08","bodyHash":"b0cf373ae2fefa9d41ee4be6f2fac94cead8a45022797481327fb8ac152295d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::IsSimpleInlineableExpression","kind":"func","status":"implemented","sigHash":"63052de82991e08086e0f7f61b9926ae944cef2a2aefdf41e05d4885f9d71b08"}
  *
  * Go source:
  * func IsSimpleInlineableExpression(expression *ast.Expression) bool {
@@ -740,7 +740,7 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"06a1a964ffba2254943ddd89593d332359c5daba36cd696e67af086050c8f98a","bodyHash":"52d08eedf70f43de9ec227529fb74d1b29765de19c08a616b60e18fff2e42649"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::FindSuperStatementIndexPath","kind":"func","status":"implemented","sigHash":"06a1a964ffba2254943ddd89593d332359c5daba36cd696e67af086050c8f98a"}
  *
  * Go source:
  * func FindSuperStatementIndexPath(statements []*ast.Statement, start int) []int {
@@ -758,7 +758,7 @@ export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::findSuperStatementIndexPathWorker","kind":"func","status":"implemented","sigHash":"1e6e07707b338822ea858ad0162a92f59155b8854f0f27786ee83fd02282dbac","bodyHash":"5d3c0b9647cb9064c7c2a1df75adf4b18d0c2791e5c0e2d52d85711cc1077e4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::findSuperStatementIndexPathWorker","kind":"func","status":"implemented","sigHash":"1e6e07707b338822ea858ad0162a92f59155b8854f0f27786ee83fd02282dbac"}
  *
  * Go source:
  * func findSuperStatementIndexPathWorker(statements []*ast.Statement, start int, indices []int) []int {
@@ -795,7 +795,7 @@ export function findSuperStatementIndexPathWorker(statements: GoSlice<GoPtr<Stat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetSuperCallFromStatement","kind":"func","status":"implemented","sigHash":"251a76ee540a4a800c2ee02b12ad5a1e101d24ba7b962ba4b6a3cccb23b3ecb4","bodyHash":"f6aedf29f0133ff3696030a7d0fbbd480d9ff4e86fba0bec28290ecf229737ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetSuperCallFromStatement","kind":"func","status":"implemented","sigHash":"251a76ee540a4a800c2ee02b12ad5a1e101d24ba7b962ba4b6a3cccb23b3ecb4"}
  *
  * Go source:
  * func GetSuperCallFromStatement(statement *ast.Statement) *ast.Node {
@@ -821,7 +821,7 @@ export function GetSuperCallFromStatement(statement: GoPtr<Statement>): GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastModifiers","kind":"func","status":"implemented","sigHash":"a849b768e9f6d7159aaf524a7e9ed8937544fb7d4afda0aa942c69676e411092","bodyHash":"35ac1d1cd38ecb3166392d78ea983fc21b0ca68cec5fb3ba6c3b83b6235ece86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastModifiers","kind":"func","status":"implemented","sigHash":"a849b768e9f6d7159aaf524a7e9ed8937544fb7d4afda0aa942c69676e411092"}
  *
  * Go source:
  * func MoveRangePastModifiers(node *ast.Node) core.TextRange {
@@ -855,7 +855,7 @@ export function MoveRangePastModifiers(node: GoPtr<Node>): TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastDecorators","kind":"func","status":"implemented","sigHash":"eb03ee113a32994745a2e378e9ef5b5aa2a8a4f81b88fa926cb2605568766fa0","bodyHash":"377aee4ff173da1e0e18cbfe48e0eb046923c86a06fbd1775e0cd08966da4541"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::MoveRangePastDecorators","kind":"func","status":"implemented","sigHash":"eb03ee113a32994745a2e378e9ef5b5aa2a8a4f81b88fa926cb2605568766fa0"}
  *
  * Go source:
  * func MoveRangePastDecorators(node *ast.Node) core.TextRange {
@@ -888,7 +888,7 @@ export function MoveRangePastDecorators(node: GoPtr<Node>): TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetNonAssignmentOperatorForCompoundAssignment","kind":"func","status":"implemented","sigHash":"b42d56ffea6071669475d40585658b1e67ae27ddbd197f85f7b094e4d4ebeb46","bodyHash":"bf69b3782109b37b0381262aacbcbde8461b4254d9b29c1c2f9b35e9fdf8207b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/utilities.go::func::GetNonAssignmentOperatorForCompoundAssignment","kind":"func","status":"implemented","sigHash":"b42d56ffea6071669475d40585658b1e67ae27ddbd197f85f7b094e4d4ebeb46"}
  *
  * Go source:
  * func GetNonAssignmentOperatorForCompoundAssignment(kind ast.Kind) ast.Kind {

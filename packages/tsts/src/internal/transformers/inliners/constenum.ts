@@ -41,7 +41,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 const byteLen = (s: string): int => utf8Encoder.encode(s).length as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::type::ConstEnumInliningTransformer","kind":"type","status":"implemented","sigHash":"ecdbca83f63930f40db6a6ae877fa8d363d0ce5820a063479cbd7a397c1a33e5","bodyHash":"c2fccfbdedb669f62fdf04ab70fbcc081c6139452239bd1e1fc42183fda9d06c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::type::ConstEnumInliningTransformer","kind":"type","status":"implemented","sigHash":"ecdbca83f63930f40db6a6ae877fa8d363d0ce5820a063479cbd7a397c1a33e5"}
  *
  * Go source:
  * ConstEnumInliningTransformer struct {
@@ -59,7 +59,7 @@ export interface ConstEnumInliningTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::func::NewConstEnumInliningTransformer","kind":"func","status":"implemented","sigHash":"861521886af5886f8f9d602e1005ac4ae1ddb59336f6ad96160fd49fd3f6f73a","bodyHash":"eb8fda72a538e530968692e27f7c2342aab6521080d04ff2060cfd4bc52ca4f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::func::NewConstEnumInliningTransformer","kind":"func","status":"implemented","sigHash":"861521886af5886f8f9d602e1005ac4ae1ddb59336f6ad96160fd49fd3f6f73a"}
  *
  * Go source:
  * func NewConstEnumInliningTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -88,7 +88,7 @@ export function NewConstEnumInliningTransformer(opt: GoPtr<TransformOptions>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::method::ConstEnumInliningTransformer.visit","kind":"method","status":"implemented","sigHash":"35aa6753d09b1c46da81bb717bb90e4fa9770fccbee16e4692a5a94fcca89b66","bodyHash":"e31d926fe05494c1c4c64d12f6a1babec522b9d03e2a465bd26cd1bd12357bb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::method::ConstEnumInliningTransformer.visit","kind":"method","status":"implemented","sigHash":"35aa6753d09b1c46da81bb717bb90e4fa9770fccbee16e4692a5a94fcca89b66"}
  *
  * Go source:
  * func (tx *ConstEnumInliningTransformer) visit(node *ast.Node) *ast.Node {
@@ -305,7 +305,7 @@ function ConstEnumInliningTransformer_visitBinaryExpression(node: GoPtr<Node>, v
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::func::safeMultiLineComment","kind":"func","status":"implemented","sigHash":"0a059f8de7a03ba6a3f0fb48247500c6844d5422cf1ae3bf00ea434876521113","bodyHash":"28e28a3c4763b3379c6c33405cf7f58d2d67cdf8ccdbdd14630e6978eb2eae49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::func::safeMultiLineComment","kind":"func","status":"implemented","sigHash":"0a059f8de7a03ba6a3f0fb48247500c6844d5422cf1ae3bf00ea434876521113"}
  *
  * Go source:
  * func safeMultiLineComment(text string) string {

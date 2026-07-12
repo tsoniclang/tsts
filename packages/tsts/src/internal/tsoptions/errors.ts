@@ -42,7 +42,7 @@ import type { commandLineParser } from "./commandlineparser.js";
 import type { AlternateModeDiagnostics } from "./diagnostics.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createDiagnosticForInvalidEnumType","kind":"func","status":"implemented","sigHash":"03fe639bfd85437ff755cd68f1279354ff634a63a2c793ac24273db2e134d40f","bodyHash":"7a2f9cc2015958551877c480ef9288cde97f01f315edce44827e6c6785745fa9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createDiagnosticForInvalidEnumType","kind":"func","status":"implemented","sigHash":"03fe639bfd85437ff755cd68f1279354ff634a63a2c793ac24273db2e134d40f"}
  *
  * Go source:
  * func createDiagnosticForInvalidEnumType(opt *CommandLineOption, sourceFile *ast.SourceFile, node *ast.Node) *ast.Diagnostic {
@@ -60,7 +60,7 @@ export function createDiagnosticForInvalidEnumType(opt: GoPtr<CommandLineOption>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::formatEnumTypeKeys","kind":"func","status":"implemented","sigHash":"927a7704e01378e3809c9092262aacc20f26ffc1ad2fb1601e0fc7bc64dd5003","bodyHash":"9eae661149ef312f65a42f44c3be1745355f76ae75643c1307feca70d685144b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::formatEnumTypeKeys","kind":"func","status":"implemented","sigHash":"927a7704e01378e3809c9092262aacc20f26ffc1ad2fb1601e0fc7bc64dd5003"}
  *
  * Go source:
  * func formatEnumTypeKeys(opt *CommandLineOption, keys []string) string {
@@ -79,7 +79,7 @@ export function formatEnumTypeKeys(opt: GoPtr<CommandLineOption>, keys: GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::getCompilerOptionValueTypeString","kind":"func","status":"implemented","sigHash":"78db46be27cd23bd7714e4ca88c563ddab576ecf24d5ab9165d07e055bbdf505","bodyHash":"d09666917f44e1c0e2633dfc98afcf0448142d3d5aecd3f38cbff4a3ddea4ddb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::getCompilerOptionValueTypeString","kind":"func","status":"implemented","sigHash":"78db46be27cd23bd7714e4ca88c563ddab576ecf24d5ab9165d07e055bbdf505"}
  *
  * Go source:
  * func getCompilerOptionValueTypeString(option *CommandLineOption) string {
@@ -105,7 +105,7 @@ export function getCompilerOptionValueTypeString(option: GoPtr<CommandLineOption
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::method::commandLineParser.createUnknownOptionError","kind":"method","status":"implemented","sigHash":"0dee86ecdf3af153093684f4163f78599afd58b4d432fdf051599a5821e6691a","bodyHash":"46f30d3d4ddde845500823f85f5301c1c55e4a4b8eb9cbbaf6f6b7d05b019a9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::method::commandLineParser.createUnknownOptionError","kind":"method","status":"implemented","sigHash":"0dee86ecdf3af153093684f4163f78599afd58b4d432fdf051599a5821e6691a"}
  *
  * Go source:
  * func (parser *commandLineParser) createUnknownOptionError(
@@ -136,7 +136,7 @@ export function commandLineParser_createUnknownOptionError(receiver: GoPtr<comma
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createUnknownOptionError","kind":"func","status":"implemented","sigHash":"56b100f696629e7b52712870caea559e0447003d0ba5c44351502afaed622674","bodyHash":"ff48bdaf533829f08d2cc00560db48234982fe077c43400cb4d6e1700375885c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createUnknownOptionError","kind":"func","status":"implemented","sigHash":"56b100f696629e7b52712870caea559e0447003d0ba5c44351502afaed622674"}
  *
  * Go source:
  * func createUnknownOptionError(
@@ -180,7 +180,7 @@ export function createUnknownOptionError(unknownOption: string, unknownOptionDia
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFile","kind":"func","status":"implemented","sigHash":"9f9766e09406c94acb5f0eaa2d5094eaf93011bb588bab6f00e30c17e7d04a59","bodyHash":"afd49e02933d09f8d81ff1b2f165766b109378664d0c6b720bfa4203f95345c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFile","kind":"func","status":"implemented","sigHash":"9f9766e09406c94acb5f0eaa2d5094eaf93011bb588bab6f00e30c17e7d04a59"}
  *
  * Go source:
  * func CreateDiagnosticForNodeInSourceFile(sourceFile *ast.SourceFile, node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -194,7 +194,7 @@ export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic","kind":"func","status":"implemented","sigHash":"bd11e000677b2f612495a12a668dbcc100f234c47b854c84831bc386df1f2a47","bodyHash":"507646fe087da5ba25b1893861ee96411341e0d46332a274dc6125065eec0bd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic","kind":"func","status":"implemented","sigHash":"bd11e000677b2f612495a12a668dbcc100f234c47b854c84831bc386df1f2a47"}
  *
  * Go source:
  * func CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile *ast.SourceFile, node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -212,7 +212,7 @@ export function CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::extraKeyDiagnostics","kind":"func","status":"implemented","sigHash":"93153553c6909a3f537fadd4f059108a43a0b260f882a6592bf27f5f2127974c","bodyHash":"5fffce888f45e2cf90cc81a39ef2e4323ae6b46eb53639c1795d745954384283"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::extraKeyDiagnostics","kind":"func","status":"implemented","sigHash":"93153553c6909a3f537fadd4f059108a43a0b260f882a6592bf27f5f2127974c"}
  *
  * Go source:
  * func extraKeyDiagnostics(s string) *diagnostics.Message {
@@ -246,7 +246,7 @@ export function extraKeyDiagnostics(s: string): GoPtr<Message> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::extraKeyDidYouMeanDiagnostics","kind":"func","status":"implemented","sigHash":"d29991ca5ba5a0e1e6050cf1433f62af4fbc9862f759392b04452b9266b60ea6","bodyHash":"0d5f9b156a85ae4a49189a55c681ba64bffc1de94922a0d441a51d831678de59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::extraKeyDidYouMeanDiagnostics","kind":"func","status":"implemented","sigHash":"d29991ca5ba5a0e1e6050cf1433f62af4fbc9862f759392b04452b9266b60ea6"}
  *
  * Go source:
  * func extraKeyDidYouMeanDiagnostics(s string) *diagnostics.Message {

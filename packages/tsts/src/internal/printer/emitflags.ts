@@ -1,7 +1,7 @@
 import type { uint } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::type::EmitFlags","kind":"type","status":"implemented","sigHash":"ee59f590d3720aa14847f8b36b602f63cf53c9ed0889cdb41f1d322c3b09de2b","bodyHash":"87bef90f852c48705ef5683f813808b557f897cd4dd50b366a8940f6053fa84d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::type::EmitFlags","kind":"type","status":"implemented","sigHash":"ee59f590d3720aa14847f8b36b602f63cf53c9ed0889cdb41f1d322c3b09de2b"}
  *
  * Go source:
  * EmitFlags uint32
@@ -9,7 +9,7 @@ import type { uint } from "../../go/scalars.js";
 export type EmitFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::constGroup::EFSingleLine+EFMultiLine+EFNoLeadingSourceMap+EFNoTrailingSourceMap+EFNoNestedSourceMaps+EFNoTokenLeadingSourceMaps+EFNoTokenTrailingSourceMaps+EFNoLeadingComments+EFNoTrailingComments+EFNoNestedComments+EFHelperName+EFExportName+EFLocalName+EFIndented+EFNoIndentation+EFReuseTempVariableScope+EFCustomPrologue+EFNoAsciiEscaping+EFExternalHelpers+EFStartOnNewLine+EFIndirectCall+EFAsyncFunctionBody+EFNoLexicalArguments+EFTransformPrivateStaticElements+EFNoLexicalThis","kind":"constGroup","status":"implemented","sigHash":"0790eb588abf3125c1927af63feb9f6bfbf32dd47052e5c6f95423cfb55dbc95","bodyHash":"d55710a28560dfd58f6ec0325b05f95737f83f13adb51b010984af7b55dc4a98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::constGroup::EFSingleLine+EFMultiLine+EFNoLeadingSourceMap+EFNoTrailingSourceMap+EFNoNestedSourceMaps+EFNoTokenLeadingSourceMaps+EFNoTokenTrailingSourceMaps+EFNoLeadingComments+EFNoTrailingComments+EFNoNestedComments+EFHelperName+EFExportName+EFLocalName+EFIndented+EFNoIndentation+EFReuseTempVariableScope+EFCustomPrologue+EFNoAsciiEscaping+EFExternalHelpers+EFStartOnNewLine+EFIndirectCall+EFAsyncFunctionBody+EFNoLexicalArguments+EFTransformPrivateStaticElements+EFNoLexicalThis","kind":"constGroup","status":"implemented","sigHash":"0790eb588abf3125c1927af63feb9f6bfbf32dd47052e5c6f95423cfb55dbc95"}
  *
  * Go source:
  * const (
@@ -67,7 +67,7 @@ export const EFTransformPrivateStaticElements: EmitFlags = 1 << 23; // Indicates
 export const EFNoLexicalThis: EmitFlags = 1 << 24; // Do not capture `this` for this node's subtree. Set on relocated static initializers, where `this` is handled by the class fields transform.
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::constGroup::EFNone+EFNoSourceMap+EFNoTokenSourceMaps+EFNoComments","kind":"constGroup","status":"implemented","sigHash":"a700daeebdaad66b66ac5279de5363afb1864ca17d4a4095fc3bbd44de0237f2","bodyHash":"f465f44a026a29c9b31524728c12067da13ae28a8485b93d6feef87df4a0f9dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitflags.go::constGroup::EFNone+EFNoSourceMap+EFNoTokenSourceMaps+EFNoComments","kind":"constGroup","status":"implemented","sigHash":"a700daeebdaad66b66ac5279de5363afb1864ca17d4a4095fc3bbd44de0237f2"}
  *
  * Go source:
  * const (

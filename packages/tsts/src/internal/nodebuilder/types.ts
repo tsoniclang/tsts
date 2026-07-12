@@ -5,7 +5,7 @@ import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::SymbolTracker","kind":"type","status":"implemented","sigHash":"26b43a48169d1c79acfa978c9744770335c5a2d9095fdf93009281e487346220","bodyHash":"9d29dcb20ae9b48d48e110f003a56d95043ec4b923b7bbcbb944be964c029061"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::SymbolTracker","kind":"type","status":"implemented","sigHash":"26b43a48169d1c79acfa978c9744770335c5a2d9095fdf93009281e487346220"}
  *
  * Go source:
  * SymbolTracker interface {
@@ -40,7 +40,7 @@ export interface SymbolTracker {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::Flags","kind":"type","status":"implemented","sigHash":"35e85ac044b21065a025313a94bcdb2debbcca435127893fa7bbb32bd19c7904","bodyHash":"de79cc4f5e88e1a6633bf979d13ad1c2ce5ef161b52bdb56e87abbc1c317fcc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::Flags","kind":"type","status":"implemented","sigHash":"35e85ac044b21065a025313a94bcdb2debbcca435127893fa7bbb32bd19c7904"}
  *
  * Go source:
  * Flags uint32
@@ -48,7 +48,7 @@ export interface SymbolTracker {
 export type Flags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::FlagsNone+FlagsNoTruncation+FlagsWriteArrayAsGenericType+FlagsGenerateNamesForShadowedTypeParams+FlagsUseStructuralFallback+FlagsForbidIndexedAccessSymbolReferences+FlagsWriteTypeArgumentsOfSignature+FlagsUseFullyQualifiedType+FlagsUseOnlyExternalAliasing+FlagsSuppressAnyReturnType+FlagsWriteTypeParametersInQualifiedName+FlagsMultilineObjectLiterals+FlagsWriteClassExpressionAsTypeLiteral+FlagsUseTypeOfFunction+FlagsOmitParameterModifiers+FlagsUseAliasDefinedOutsideCurrentScope+FlagsUseSingleQuotesForStringLiteralType+FlagsNoTypeReduction+FlagsUseInstantiationExpressions+FlagsOmitThisParameter+FlagsWriteCallStyleSignature+FlagsAllowThisInObjectLiteral+FlagsAllowQualifiedNameInPlaceOfIdentifier+FlagsAllowAnonymousIdentifier+FlagsAllowEmptyUnionOrIntersection+FlagsAllowEmptyTuple+FlagsAllowUniqueESSymbolType+FlagsAllowEmptyIndexInfoType+FlagsAllowNodeModulesRelativePaths+FlagsIgnoreErrors+FlagsInObjectTypeLiteral+FlagsInTypeAlias+FlagsInInitialEntityName","kind":"constGroup","status":"implemented","sigHash":"6c6eab77a2768c9d09f2fbc10657c1f230c8f7acd402219f8feb2ddd81f59828","bodyHash":"cccd0ddbcef32023a14b92216596e6af65b23c8dddee08383c865a41025474d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::FlagsNone+FlagsNoTruncation+FlagsWriteArrayAsGenericType+FlagsGenerateNamesForShadowedTypeParams+FlagsUseStructuralFallback+FlagsForbidIndexedAccessSymbolReferences+FlagsWriteTypeArgumentsOfSignature+FlagsUseFullyQualifiedType+FlagsUseOnlyExternalAliasing+FlagsSuppressAnyReturnType+FlagsWriteTypeParametersInQualifiedName+FlagsMultilineObjectLiterals+FlagsWriteClassExpressionAsTypeLiteral+FlagsUseTypeOfFunction+FlagsOmitParameterModifiers+FlagsUseAliasDefinedOutsideCurrentScope+FlagsUseSingleQuotesForStringLiteralType+FlagsNoTypeReduction+FlagsUseInstantiationExpressions+FlagsOmitThisParameter+FlagsWriteCallStyleSignature+FlagsAllowThisInObjectLiteral+FlagsAllowQualifiedNameInPlaceOfIdentifier+FlagsAllowAnonymousIdentifier+FlagsAllowEmptyUnionOrIntersection+FlagsAllowEmptyTuple+FlagsAllowUniqueESSymbolType+FlagsAllowEmptyIndexInfoType+FlagsAllowNodeModulesRelativePaths+FlagsIgnoreErrors+FlagsInObjectTypeLiteral+FlagsInTypeAlias+FlagsInInitialEntityName","kind":"constGroup","status":"implemented","sigHash":"6c6eab77a2768c9d09f2fbc10657c1f230c8f7acd402219f8feb2ddd81f59828"}
  *
  * Go source:
  * const (
@@ -126,7 +126,7 @@ export const FlagsInTypeAlias: Flags = 1 << 23 as Flags;
 export const FlagsInInitialEntityName: Flags = 1 << 24 as Flags;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::InternalFlags","kind":"type","status":"implemented","sigHash":"8b43ac46a51e12a9ff91c6cf16502b78b6eeff4b5f5f3c574ffa73379f437e26","bodyHash":"ea17b00948a4185cf12714173de63f900f5f4637f2d01943a86305bbd1b6c86e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::InternalFlags","kind":"type","status":"implemented","sigHash":"8b43ac46a51e12a9ff91c6cf16502b78b6eeff4b5f5f3c574ffa73379f437e26"}
  *
  * Go source:
  * InternalFlags int32
@@ -134,7 +134,7 @@ export const FlagsInInitialEntityName: Flags = 1 << 24 as Flags;
 export type InternalFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::InternalFlagsNone+InternalFlagsWriteComputedProps+InternalFlagsNoSyntacticPrinter+InternalFlagsDoNotIncludeSymbolChain+InternalFlagsAllowUnresolvedNames","kind":"constGroup","status":"implemented","sigHash":"e338c3597dbc4f56f75a060492fea22a6194cc4f55d746a1850ab3de52719d98","bodyHash":"8982e89bc683b60bb18506efa7b2a2021f26e0f5385c071c6739f0bd5145308f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::InternalFlagsNone+InternalFlagsWriteComputedProps+InternalFlagsNoSyntacticPrinter+InternalFlagsDoNotIncludeSymbolChain+InternalFlagsAllowUnresolvedNames","kind":"constGroup","status":"implemented","sigHash":"e338c3597dbc4f56f75a060492fea22a6194cc4f55d746a1850ab3de52719d98"}
  *
  * Go source:
  * const (

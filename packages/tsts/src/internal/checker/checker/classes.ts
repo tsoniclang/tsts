@@ -54,7 +54,7 @@ import type { Checker } from "./state.js";
 import { Checker_checkClassExpressionExternalHelpers } from "../checker.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0c42fe06d7edb996ccecf014152878148d7b5a6adaa597f78189aa937c483a","bodyHash":"533ae420ff24ef963f94d704452831f7f33c7f85d7cf220232ec2ba973cee1e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0c42fe06d7edb996ccecf014152878148d7b5a6adaa597f78189aa937c483a"}
  *
  * Go source:
  * func (c *Checker) getResolutionModeOverride(node *ast.ImportAttributes, reportErrors bool) core.ResolutionMode {
@@ -124,7 +124,7 @@ export function Checker_getResolutionModeOverride(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.arePropertiesAbstractOrInterface","kind":"method","status":"implemented","sigHash":"01937021dd3fe6a0bf9564d8d2beda1239172f783261fbb04670d72246921e16","bodyHash":"ce1fc3daf48ff53e41d2ba719e21a077e6723a65930b7f5472bbb36ea5d1da88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.arePropertiesAbstractOrInterface","kind":"method","status":"implemented","sigHash":"01937021dd3fe6a0bf9564d8d2beda1239172f783261fbb04670d72246921e16"}
  *
  * Go source:
  * func (c *Checker) arePropertiesAbstractOrInterface(base *ast.Symbol, baseDeclarationFlags ast.ModifierFlags) bool {
@@ -142,7 +142,7 @@ export function Checker_arePropertiesAbstractOrInterface(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkClassExpression","kind":"method","status":"implemented","sigHash":"9a545536ff28711ea40162393524a13ba58e2fec0b4b23bb36cf09742f33b23c","bodyHash":"ac8a6e9a6acddc165cdbb53262c62c9f1373e49106f5a871441b9e557e116f25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkClassExpression","kind":"method","status":"implemented","sigHash":"9a545536ff28711ea40162393524a13ba58e2fec0b4b23bb36cf09742f33b23c"}
  *
  * Go source:
  * func (c *Checker) checkClassExpression(node *ast.Node) *Type {
@@ -160,7 +160,7 @@ export function Checker_checkClassExpression(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkClassExpressionDeferred","kind":"method","status":"implemented","sigHash":"144cca04f17a5d11426b1bcb3ec77be7da6b04fd31f8461248860aeddc7bb688","bodyHash":"cd1b04f0eda2f7b46660e0f42ad8501762c2d9a6b4954d31f51fccfd3a724263"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkClassExpressionDeferred","kind":"method","status":"implemented","sigHash":"144cca04f17a5d11426b1bcb3ec77be7da6b04fd31f8461248860aeddc7bb688"}
  *
  * Go source:
  * func (c *Checker) checkClassExpressionDeferred(node *ast.Node) {
@@ -174,7 +174,7 @@ export function Checker_checkClassExpressionDeferred(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringClass","kind":"method","status":"implemented","sigHash":"1019caa2db368cd6c0bc0cc7db250a478a73d05ecfc45d8a5418b61174d2e7c6","bodyHash":"14e6669adf5c9e38af54d39af3958a79eac366141455e34026badb9f15249cee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringClass","kind":"method","status":"implemented","sigHash":"1019caa2db368cd6c0bc0cc7db250a478a73d05ecfc45d8a5418b61174d2e7c6"}
  *
  * Go source:
  * func (c *Checker) getDeclaringClass(prop *ast.Symbol) *Type {
@@ -192,7 +192,7 @@ export function Checker_getDeclaringClass(receiver: GoPtr<Checker>, prop: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isValidOverrideOf","kind":"method","status":"implemented","sigHash":"427f7bb664f409a417a4fb3a0b3f5c09aeef0153961bb90f3ef0709e6e4fe653","bodyHash":"c1cc144221acaa770b376fe717fae0e02d9a6ae39d83ccbd70cec0ecbbf84e0a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isValidOverrideOf","kind":"method","status":"implemented","sigHash":"427f7bb664f409a417a4fb3a0b3f5c09aeef0153961bb90f3ef0709e6e4fe653"}
  *
  * Go source:
  * func (c *Checker) isValidOverrideOf(sourceProp *ast.Symbol, targetProp *ast.Symbol) bool {
@@ -214,7 +214,7 @@ export function Checker_isValidOverrideOf(receiver: GoPtr<Checker>, sourceProp: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isNodeUsedDuringClassInitialization","kind":"method","status":"implemented","sigHash":"562764416302843dffdaf044f977d79b8034f6261ee34ba473da928f193ca6ea","bodyHash":"d42f8a0376a93aa48037d2e7a8578b5f630ed45facbec6a41d432bbc2fa904ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isNodeUsedDuringClassInitialization","kind":"method","status":"implemented","sigHash":"562764416302843dffdaf044f977d79b8034f6261ee34ba473da928f193ca6ea"}
  *
  * Go source:
  * func (c *Checker) isNodeUsedDuringClassInitialization(node *ast.Node) bool {
@@ -240,7 +240,7 @@ export function Checker_isNodeUsedDuringClassInitialization(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isNodeWithinClass","kind":"method","status":"implemented","sigHash":"1c43417bac561d9afbfcd113abd1dcd1bc742cd242df0998742a72313b7620d8","bodyHash":"c8fe01deb9b0d569d39cea3a7f056e2431f58f96ad723312b526c7f6a91818f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isNodeWithinClass","kind":"method","status":"implemented","sigHash":"1c43417bac561d9afbfcd113abd1dcd1bc742cd242df0998742a72313b7620d8"}
  *
  * Go source:
  * func (c *Checker) isNodeWithinClass(node *ast.Node, classDeclaration *ast.Node) bool {
@@ -252,7 +252,7 @@ export function Checker_isNodeWithinClass(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.forEachEnclosingClass","kind":"method","status":"implemented","sigHash":"34d0ab9e2c969c9319a4cdab5ced974d2bbda073f564c6dfc59a766d52cb588d","bodyHash":"902b71ca107b8d4ba760269734928c4622d94c7c5a9fa0e14956cb9e8af2d51b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.forEachEnclosingClass","kind":"method","status":"implemented","sigHash":"34d0ab9e2c969c9319a4cdab5ced974d2bbda073f564c6dfc59a766d52cb588d"}
  *
  * Go source:
  * func (c *Checker) forEachEnclosingClass(node *ast.Node, callback func(node *ast.Node) bool) bool {
@@ -283,7 +283,7 @@ export function Checker_forEachEnclosingClass(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isClassDerivedFromDeclaringClasses","kind":"method","status":"implemented","sigHash":"e1dab0bade28a4036019033395962abbadab5bf022cfc8e554cd9f3da902d26b","bodyHash":"c20a9954688e63dd9fd285af50075b2ecd79b65689cdd2fd6e3442db3a7a5ca2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isClassDerivedFromDeclaringClasses","kind":"method","status":"implemented","sigHash":"e1dab0bade28a4036019033395962abbadab5bf022cfc8e554cd9f3da902d26b"}
  *
  * Go source:
  * func (c *Checker) isClassDerivedFromDeclaringClasses(checkClass *Type, prop *ast.Symbol, writing bool) bool {
@@ -305,7 +305,7 @@ export function Checker_isClassDerivedFromDeclaringClasses(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkThisInStaticClassFieldInitializerInDecoratedClass","kind":"method","status":"implemented","sigHash":"e2500996bcbd2817a8c5a429b30ae59ffc477c267fc4033c02a041feaec33ea5","bodyHash":"c7e2abe1839f2634eb55d33b49526ebb7bf25887db89bd3306defd5d2add3716"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkThisInStaticClassFieldInitializerInDecoratedClass","kind":"method","status":"implemented","sigHash":"e2500996bcbd2817a8c5a429b30ae59ffc477c267fc4033c02a041feaec33ea5"}
  *
  * Go source:
  * func (c *Checker) checkThisInStaticClassFieldInitializerInDecoratedClass(thisExpression *ast.Node, container *ast.Node) {
@@ -327,7 +327,7 @@ export function Checker_checkThisInStaticClassFieldInitializerInDecoratedClass(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSpreadPropOverrides","kind":"method","status":"implemented","sigHash":"5cbf43942ade7f24a44b8e857aaad6046c344e96f3e4ed13ea8f70cee1888e6b","bodyHash":"2af551bbb4b1c45db0175c25ace546b35a9e3a0bcaf6128a03d47fdeaebcdb08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSpreadPropOverrides","kind":"method","status":"implemented","sigHash":"5cbf43942ade7f24a44b8e857aaad6046c344e96f3e4ed13ea8f70cee1888e6b"}
  *
  * Go source:
  * func (c *Checker) checkSpreadPropOverrides(t *Type, props ast.SymbolTable, spread *ast.Node) {
@@ -354,7 +354,7 @@ export function Checker_checkSpreadPropOverrides(receiver: GoPtr<Checker>, t: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThislessInterface","kind":"method","status":"implemented","sigHash":"0183ae3f5bc64c1e1ce6818eadc2ead8a7c1dd1a454b2171222710b82181cc36","bodyHash":"9289c3ad16cce503af78b741e3ec128626aadbb9bc17dcfcda523e4b783cef54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThislessInterface","kind":"method","status":"implemented","sigHash":"0183ae3f5bc64c1e1ce6818eadc2ead8a7c1dd1a454b2171222710b82181cc36"}
  *
  * Go source:
  * func (c *Checker) isThislessInterface(symbol *ast.Symbol) bool {

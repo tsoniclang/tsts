@@ -124,7 +124,7 @@ import {
 import type { NodeModulePathParts } from "./util.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiers","kind":"func","status":"implemented","sigHash":"641b2e3d5872a25627b6cdbba77e7300466b63adde2a5ec47c7c9bda998c6190","bodyHash":"65747655a6fe6d4649b0a0823b3bf0a1379382f9566e1f139207a70ad484134e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiers","kind":"func","status":"implemented","sigHash":"641b2e3d5872a25627b6cdbba77e7300466b63adde2a5ec47c7c9bda998c6190"}
  *
  * Go source:
  * func GetModuleSpecifiers(
@@ -156,7 +156,7 @@ export function GetModuleSpecifiers(moduleSymbol: GoPtr<Symbol>, checker: Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiersWithInfo","kind":"func","status":"implemented","sigHash":"b4c16680e05aad371e8123f399c4b10a68c477a2ad4f5cd5406105d5ebb0f45c","bodyHash":"0cb959f7813a1beed94900406644d48413e070f3c0d25021346126051e765d24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiersWithInfo","kind":"func","status":"implemented","sigHash":"b4c16680e05aad371e8123f399c4b10a68c477a2ad4f5cd5406105d5ebb0f45c"}
  *
  * Go source:
  * func GetModuleSpecifiersWithInfo(
@@ -217,7 +217,7 @@ export function GetModuleSpecifiersWithInfo(moduleSymbol: GoPtr<Symbol>, checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiersForFileWithInfo","kind":"func","status":"implemented","sigHash":"2d1fc447927a975d13a3ce2e1a71498076a672752c1504b169c85c78341e52f0","bodyHash":"f997f6087d6738ca81f90a09d50cf4f510c953a79c5a3995d935dfc8028a6f72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifiersForFileWithInfo","kind":"func","status":"implemented","sigHash":"2d1fc447927a975d13a3ce2e1a71498076a672752c1504b169c85c78341e52f0"}
  *
  * Go source:
  * func GetModuleSpecifiersForFileWithInfo(
@@ -261,7 +261,7 @@ export function GetModuleSpecifiersForFileWithInfo(importingSourceFile: SourceFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromAmbientModule","kind":"func","status":"implemented","sigHash":"84a8254235362004915af9b659f61e2fe36ae84d9b04de87333354b5b61b9c66","bodyHash":"9e24a00c8a86347ebd4cbdc955308f12c9c367fa35fe65ce6091ea6f2f97a5e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromAmbientModule","kind":"func","status":"implemented","sigHash":"84a8254235362004915af9b659f61e2fe36ae84d9b04de87333354b5b61b9c66"}
  *
  * Go source:
  * func tryGetModuleNameFromAmbientModule(moduleSymbol *ast.Symbol, checker CheckerShape) string {
@@ -356,7 +356,7 @@ export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::Info","kind":"type","status":"implemented","sigHash":"eb63543f7710295da2879fd147c1d7cea45be5164d7914a6ea65e0f6de72c038","bodyHash":"1372b91dbe62ce1542b42e460cf53a4cee8e06c18eed95dd9d32eb669d366bb4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::Info","kind":"type","status":"implemented","sigHash":"eb63543f7710295da2879fd147c1d7cea45be5164d7914a6ea65e0f6de72c038"}
  *
  * Go source:
  * Info struct {
@@ -372,7 +372,7 @@ export interface Info {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getInfo","kind":"func","status":"implemented","sigHash":"021037fd7616487dd420d8f0a43166880c71a1d978e395cd1b03ae9e551b2812","bodyHash":"6f40efb429d1c517e688350a6c4d5c222bbc25731e2291a6295f23e07cea654f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getInfo","kind":"func","status":"implemented","sigHash":"021037fd7616487dd420d8f0a43166880c71a1d978e395cd1b03ae9e551b2812"}
  *
  * Go source:
  * func getInfo(
@@ -397,7 +397,7 @@ export function getInfo(importingSourceFileName: string, host: ModuleSpecifierGe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getAllModulePaths","kind":"func","status":"implemented","sigHash":"2e9b343da27b4a7087e24b8523c43e7e4bcb171497d1a80d5f16871e4b27e14a","bodyHash":"ec79fff2ea7e310af3780f42d49a0bdbbf14f4a7938d23ebdb1e3f56e600a01a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getAllModulePaths","kind":"func","status":"implemented","sigHash":"2e9b343da27b4a7087e24b8523c43e7e4bcb171497d1a80d5f16871e4b27e14a"}
  *
  * Go source:
  * func getAllModulePaths(
@@ -429,7 +429,7 @@ export function getAllModulePaths(info: Info, importedFileName: string, host: Mo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getAllModulePathsWorker","kind":"func","status":"implemented","sigHash":"4a5a91117c8e5aa8053319825b8e35b6ca85e4290e8269fbc7a0cc8bb44be298","bodyHash":"4cf48d84362cee9cf754d3ba5a0d6de07a5764fc12868f7c65b8d05045d49cbb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getAllModulePathsWorker","kind":"func","status":"implemented","sigHash":"4a5a91117c8e5aa8053319825b8e35b6ca85e4290e8269fbc7a0cc8bb44be298"}
  *
  * Go source:
  * func getAllModulePathsWorker(
@@ -520,7 +520,7 @@ export function getAllModulePathsWorker(info: Info, importedFileName: string, ho
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::containsIgnoredPath","kind":"func","status":"implemented","sigHash":"99211a466cfc8320188023cf635992dacd3253558ecd6ab619b5d51491a8d7d1","bodyHash":"07b9c9ba015b31dcbe428e66c0e52e9bb859cbb07fd183c249548e2b369393ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::containsIgnoredPath","kind":"func","status":"implemented","sigHash":"99211a466cfc8320188023cf635992dacd3253558ecd6ab619b5d51491a8d7d1"}
  *
  * Go source:
  * func containsIgnoredPath(s string) bool {
@@ -536,7 +536,7 @@ export function containsIgnoredPath(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::ContainsNodeModules","kind":"func","status":"implemented","sigHash":"7dcef2e597b85b226a57d2199783fc84b2e6613a1f893adb7322ea294fb4be07","bodyHash":"65e7aea6a7a1ea0d9e8401fca04ac97633bb5e70928be475f070a109ea7568f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::ContainsNodeModules","kind":"func","status":"implemented","sigHash":"7dcef2e597b85b226a57d2199783fc84b2e6613a1f893adb7322ea294fb4be07"}
  *
  * Go source:
  * func ContainsNodeModules(s string) bool {
@@ -548,7 +548,7 @@ export function ContainsNodeModules(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetEachFileNameOfModule","kind":"func","status":"implemented","sigHash":"d6eda310d1cd3299d373dd6daa150cebeec7ff1ed481947445f3bfc41bec796a","bodyHash":"6d964a62314ecb7b8a36ecffc274ce9cff865569c4d3c8db60a709c3b2545877"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetEachFileNameOfModule","kind":"func","status":"implemented","sigHash":"d6eda310d1cd3299d373dd6daa150cebeec7ff1ed481947445f3bfc41bec796a"}
  *
  * Go source:
  * func GetEachFileNameOfModule(
@@ -740,7 +740,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::computeModuleSpecifiers","kind":"func","status":"implemented","sigHash":"a9bd933fcebdb018c70d2755a8d99c21857e222fc54d0ed94a902abbd965290c","bodyHash":"f91a0fbf79ab3320c3ea3a9b62052d7a3febe1f1f93c77c8762c196efb1c2bf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::computeModuleSpecifiers","kind":"func","status":"implemented","sigHash":"a9bd933fcebdb018c70d2755a8d99c21857e222fc54d0ed94a902abbd965290c"}
  *
  * Go source:
  * func computeModuleSpecifiers(
@@ -975,7 +975,7 @@ export function computeModuleSpecifiers(modulePaths: GoSlice<ModulePath>, compil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getLocalModuleSpecifier","kind":"func","status":"implemented","sigHash":"99ba6b7baa12d7710567d4f9318b82448f7dabe3a093e95104866044e1d75f0f","bodyHash":"514b6a4badd50aa54818aaba9cb136a9160d9065c6cab55207f72f37de64791f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getLocalModuleSpecifier","kind":"func","status":"implemented","sigHash":"99ba6b7baa12d7710567d4f9318b82448f7dabe3a093e95104866044e1d75f0f"}
  *
  * Go source:
  * func getLocalModuleSpecifier(
@@ -1244,7 +1244,7 @@ export function getLocalModuleSpecifier(moduleFileName: string, info: Info, comp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::processEnding","kind":"func","status":"implemented","sigHash":"3bf1adc24e522d479f320aad0777024bb067d8cb90270e084d50ec056232d8a9","bodyHash":"c4ce61567693b4e32b05a4f9c61375fa531f4705b6770d9f61a5f970a742abf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::processEnding","kind":"func","status":"implemented","sigHash":"3bf1adc24e522d479f320aad0777024bb067d8cb90270e084d50ec056232d8a9"}
  *
  * Go source:
  * func processEnding(
@@ -1387,7 +1387,7 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromRootDirs","kind":"func","status":"implemented","sigHash":"56f3c191ceba44b2d13d8f562ef8ab1b4258747ed4b80b51b91101cc3622b74c","bodyHash":"d5671bd628bcca105272e50dcf7cded92f6913aa236abb9c307fddeeef53e060"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromRootDirs","kind":"func","status":"implemented","sigHash":"56f3c191ceba44b2d13d8f562ef8ab1b4258747ed4b80b51b91101cc3622b74c"}
  *
  * Go source:
  * func tryGetModuleNameFromRootDirs(
@@ -1456,7 +1456,7 @@ export function tryGetModuleNameFromRootDirs(rootDirs: GoSlice<string>, moduleFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameAsNodeModule","kind":"func","status":"implemented","sigHash":"94effa29d72c657a282472ffae38f2d857f3bba2508b52933f43138270c5d354","bodyHash":"ccf2c86abac02a5b29fc97976c5f0c362ff9ba52dd3acc1ab2ad0bceb710a70a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameAsNodeModule","kind":"func","status":"implemented","sigHash":"94effa29d72c657a282472ffae38f2d857f3bba2508b52933f43138270c5d354"}
  *
  * Go source:
  * func tryGetModuleNameAsNodeModule(
@@ -1608,7 +1608,7 @@ export function tryGetModuleNameAsNodeModule(pathObj: ModulePath, info: Info, im
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::pkgJsonDirAttemptResult","kind":"type","status":"implemented","sigHash":"f2ded6c6bf537ddeb47c8cd80e94af121b1199f225cb89ea3a7523bcd514775a","bodyHash":"70ff71664f21fe7adf73e3137c0029e4705324247f8853c625a20855a98b8e0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::pkgJsonDirAttemptResult","kind":"type","status":"implemented","sigHash":"f2ded6c6bf537ddeb47c8cd80e94af121b1199f225cb89ea3a7523bcd514775a"}
  *
  * Go source:
  * pkgJsonDirAttemptResult struct {
@@ -1626,7 +1626,7 @@ export interface pkgJsonDirAttemptResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryDirectoryWithPackageJson","kind":"func","status":"implemented","sigHash":"3aef2489b80213acbe5700e53ec88657ba1e30bf0ed08f69f475a54cc894e697","bodyHash":"b442e4835a9459e504f175160890d1c684ecd4a24f66de5a3c55254c3c224986"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryDirectoryWithPackageJson","kind":"func","status":"implemented","sigHash":"3aef2489b80213acbe5700e53ec88657ba1e30bf0ed08f69f475a54cc894e697"}
  *
  * Go source:
  * func tryDirectoryWithPackageJson(
@@ -1888,7 +1888,7 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromExports","kind":"func","status":"implemented","sigHash":"407e8d116cf2c6786dfea608c488faa5d3be87f4cc47dfbaf3a18a6a48d8c4fc","bodyHash":"7b10362bd7c7494276f02236599a34738c0158fdf207fa3b8b443ae6e9d2bf28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromExports","kind":"func","status":"implemented","sigHash":"407e8d116cf2c6786dfea608c488faa5d3be87f4cc47dfbaf3a18a6a48d8c4fc"}
  *
  * Go source:
  * func tryGetModuleNameFromExports(
@@ -1966,7 +1966,7 @@ export function tryGetModuleNameFromExports(options: GoPtr<CompilerOptions>, hos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromPackageJsonImports","kind":"func","status":"implemented","sigHash":"5f50ae81233fdf6a5cd8406c5bb69d10ec8151cf5f857489cbc9b7ab1bbbe4fa","bodyHash":"4385b677685e3d9d132434d1b700fc4b8304ee0dff8cd1eb307e8ed97f3fdbc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromPackageJsonImports","kind":"func","status":"implemented","sigHash":"5f50ae81233fdf6a5cd8406c5bb69d10ec8151cf5f857489cbc9b7ab1bbbe4fa"}
  *
  * Go source:
  * func tryGetModuleNameFromPackageJsonImports(
@@ -2100,7 +2100,7 @@ export function tryGetModuleNameFromPackageJsonImports(moduleFileName: string, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::specPair","kind":"type","status":"implemented","sigHash":"523426c96d6c554e07f74e909eaa93c612fed4655c70e387aff8ba9180f0c226","bodyHash":"6dfba63ef847f0df9a90283d7df9ebafefd6e9262e7b4fb1b7b63cd7a9ae6dae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::type::specPair","kind":"type","status":"implemented","sigHash":"523426c96d6c554e07f74e909eaa93c612fed4655c70e387aff8ba9180f0c226"}
  *
  * Go source:
  * specPair struct {
@@ -2114,7 +2114,7 @@ export interface specPair {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromPaths","kind":"func","status":"implemented","sigHash":"155bd2b8ba1b306cd53470a3c220c22ce3de39f28616c46ad781613dc66e09cb","bodyHash":"fd4e6ad6e1d6d52402bac0676d26f681d1aa9c187c402d9cceb46d56836982d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromPaths","kind":"func","status":"implemented","sigHash":"155bd2b8ba1b306cd53470a3c220c22ce3de39f28616c46ad781613dc66e09cb"}
  *
  * Go source:
  * func tryGetModuleNameFromPaths(
@@ -2266,7 +2266,7 @@ export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::validateEnding","kind":"func","status":"implemented","sigHash":"e59b65f0e285d6bea68061d7b014c344e5ba30e23359e2979a392e438f3c115e","bodyHash":"b655ad0b76d31b41c4cfb9169e20b5e5beebad7e26f2abf4479cb39aa5ccf906"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::validateEnding","kind":"func","status":"implemented","sigHash":"e59b65f0e285d6bea68061d7b014c344e5ba30e23359e2979a392e438f3c115e"}
  *
  * Go source:
  * func validateEnding(c specPair, relativeToBaseUrl string, compilerOptions *core.CompilerOptions, host ModuleSpecifierGenerationHost) bool {
@@ -2285,7 +2285,7 @@ export function validateEnding(c: specPair, relativeToBaseUrl: string, compilerO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromExportsOrImports","kind":"func","status":"implemented","sigHash":"e7fdac31419aa5d04cf172c5a5a88593645d947900ce7f212d5275334aea437d","bodyHash":"8a91cf0cb532beac261f2a502f04b17e7114c2e2ee2e0c7f46a2cc127a751c9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::tryGetModuleNameFromExportsOrImports","kind":"func","status":"implemented","sigHash":"e7fdac31419aa5d04cf172c5a5a88593645d947900ce7f212d5275334aea437d"}
  *
  * Go source:
  * func tryGetModuleNameFromExportsOrImports(
@@ -2537,7 +2537,7 @@ export function tryGetModuleNameFromExportsOrImports(options: GoPtr<CompilerOpti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifier","kind":"func","status":"implemented","sigHash":"89a63e1eb58b22939cef661eb12ab626f2620401ef89821831ca7828b58cbec8","bodyHash":"cd624544f46a1bd3923539ce1d09397b01e2a191d2404e0f2589ef558119a086"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::GetModuleSpecifier","kind":"func","status":"implemented","sigHash":"89a63e1eb58b22939cef661eb12ab626f2620401ef89821831ca7828b58cbec8"}
  *
  * Go source:
  * func GetModuleSpecifier(
@@ -2575,7 +2575,7 @@ export function GetModuleSpecifier(compilerOptions: GoPtr<CompilerOptions>, host
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::UpdateModuleSpecifier","kind":"func","status":"implemented","sigHash":"c5bfc9dfe9abdd81d861686931206ebface74b05656e0647902c00ca9dc764cb","bodyHash":"6779825feda5050164c4dbe478720800f68cad05667d8a106cc0df5f9c212324"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::UpdateModuleSpecifier","kind":"func","status":"implemented","sigHash":"c5bfc9dfe9abdd81d861686931206ebface74b05656e0647902c00ca9dc764cb"}
  *
  * Go source:
  * func UpdateModuleSpecifier(
@@ -2614,7 +2614,7 @@ export function UpdateModuleSpecifier(compilerOptions: GoPtr<CompilerOptions>, h
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getModuleSpecifierWithPreferences","kind":"func","status":"implemented","sigHash":"97acdb045dba89be42ee14ccbbb5239f0626624a431fa86572dd1093fd37b4c3","bodyHash":"791cd53e3d7815aa09a1262eede6e6d2f75a34ee820b7fbd2989dc7f39f9c6ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/specifiers.go::func::getModuleSpecifierWithPreferences","kind":"func","status":"implemented","sigHash":"97acdb045dba89be42ee14ccbbb5239f0626624a431fa86572dd1093fd37b4c3"}
  *
  * Go source:
  * func getModuleSpecifierWithPreferences(

@@ -6,7 +6,7 @@ import type { FS } from "../vfs/vfs.js";
 import { embedded, wrapFS, libPath } from "./embed.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"f83bb3a895de36d262628c2ffa89238eeb5aeda78485d347176df8c732d05e94","bodyHash":"c0c88de3f5fa3856e1b5d7df4b38835b244b4e3f4a34b5c6b85ea4276e844d05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::constGroup::Embedded","kind":"constGroup","status":"implemented","sigHash":"f83bb3a895de36d262628c2ffa89238eeb5aeda78485d347176df8c732d05e94"}
  *
  * Go source:
  * const Embedded = embedded
@@ -14,7 +14,7 @@ import { embedded, wrapFS, libPath } from "./embed.js";
 export const Embedded: bool = embedded;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::WrapFS","kind":"func","status":"implemented","sigHash":"fbf63e8f5730e4d4ad448c39a6c9dda36bacb6620125539a16dba50e8b31bd5b","bodyHash":"64205eed3f120c5e605fb6e96d5ddc64e4b7ca2609e468b84f54535bd9d748ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::WrapFS","kind":"func","status":"implemented","sigHash":"fbf63e8f5730e4d4ad448c39a6c9dda36bacb6620125539a16dba50e8b31bd5b"}
  *
  * Go source:
  * func WrapFS(fs vfs.FS) vfs.FS {
@@ -26,7 +26,7 @@ export function WrapFS(fs: FS): FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::LibPath","kind":"func","status":"implemented","sigHash":"9a8bb91147a81a624745284df1b9a8267be434906aaaaebb60cd8f93f5e43e9e","bodyHash":"42ee928c425567b9bac8a8ccb258870acbf8c7e42342d3f325134bfd0718cebc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::LibPath","kind":"func","status":"implemented","sigHash":"9a8bb91147a81a624745284df1b9a8267be434906aaaaebb60cd8f93f5e43e9e"}
  *
  * Go source:
  * func LibPath() string {
@@ -38,7 +38,7 @@ export function LibPath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"implemented","sigHash":"b04d87ddb555f4f8ab4973fdb51e25a7181608b9b4ed6b381d65b9c27c293de1","bodyHash":"1afe1a7d5b5a23cb62cadfb28bc42e133b78ac4345432515b8ec6dea78cddddf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"implemented","sigHash":"b04d87ddb555f4f8ab4973fdb51e25a7181608b9b4ed6b381d65b9c27c293de1"}
  *
  * Go source:
  * var bundledSourceDir = sync.OnceValue(func() string {
@@ -66,7 +66,7 @@ export let bundledSourceDir: () => string = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe","bodyHash":"5d62285376c54a8572ae6d31b9f99a3aee5ecd1901c8df08f73e7f49ff21f53b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe"}
  *
  * Go source:
  * var testingLibPath = sync.OnceValue(func() string {
@@ -85,7 +85,7 @@ export let testingLibPath: () => string = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4","bodyHash":"7e27d547d53c817b225620915e89b5f7fe053a36aa36b6249c34652f03147aaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4"}
  *
  * Go source:
  * func TestingLibPath() string {

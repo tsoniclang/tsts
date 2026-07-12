@@ -33,7 +33,7 @@ const decodeRuneAt = (str: string, i: int): [GoRune, int] => {
 const fromCodePoint = (r: GoRune): string => globalThis.String.fromCodePoint(r);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToLowerJS","kind":"func","status":"implemented","sigHash":"cd8ed802f5c1cfe38864641827bffcede83a8a90ebebfe9f83d5c90dafca3927","bodyHash":"5fbf8e670bae9fe1490b3c26ca1d20167c75d2c401dad1fbd1dcc05a82f60e67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToLowerJS","kind":"func","status":"implemented","sigHash":"cd8ed802f5c1cfe38864641827bffcede83a8a90ebebfe9f83d5c90dafca3927"}
  *
  * Go source:
  * func ToLowerJS(str string) string {
@@ -103,7 +103,7 @@ export function ToLowerJS(str: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToUpperJS","kind":"func","status":"implemented","sigHash":"30f4ab61ad8a8a0201d284e9c8a312b61139335b5d26428bd5f7393da2ec3aa9","bodyHash":"f5a2289ccba23250edd6a31fcfab536be500d291d0a680a2d517b349ed47f8ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::ToUpperJS","kind":"func","status":"implemented","sigHash":"30f4ab61ad8a8a0201d284e9c8a312b61139335b5d26428bd5f7393da2ec3aa9"}
  *
  * Go source:
  * func ToUpperJS(str string) string {
@@ -154,7 +154,7 @@ export function ToUpperJS(str: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::toLowerASCII","kind":"func","status":"implemented","sigHash":"d9e1302cc9923aa8b480164d1482868acaeb93ddac0d25f54bde406a4aeae6f7","bodyHash":"e92a7162d2e1692a205dd4aeec5c7f35fedff6150e23ba7127765793ba671a97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::toLowerASCII","kind":"func","status":"implemented","sigHash":"d9e1302cc9923aa8b480164d1482868acaeb93ddac0d25f54bde406a4aeae6f7"}
  *
  * Go source:
  * func toLowerASCII(str string) (string, bool) {
@@ -202,7 +202,7 @@ export function toLowerASCII(str: string): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::toUpperASCII","kind":"func","status":"implemented","sigHash":"8ea898ecf2d2594d9bb53fa24466cfecd6e6294e2b6fcaa377aaab8c8b908d50","bodyHash":"d9e1556632044551c01221556e9d1c164bac279a6768b97ae6b48fe6d770948f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::toUpperASCII","kind":"func","status":"implemented","sigHash":"8ea898ecf2d2594d9bb53fa24466cfecd6e6294e2b6fcaa377aaab8c8b908d50"}
  *
  * Go source:
  * func toUpperASCII(str string) (string, bool) {
@@ -248,7 +248,7 @@ export function toUpperASCII(str: string): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isFinalSigmaContext","kind":"func","status":"implemented","sigHash":"166c32d717be37b0daadd1b44e39b6c5d384cd0d72a6bb4a9c41f382c85a3062","bodyHash":"64dae59bdbf97e04efc2840322f05253a5b135adc10114b7a5440be56615c625"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isFinalSigmaContext","kind":"func","status":"implemented","sigHash":"166c32d717be37b0daadd1b44e39b6c5d384cd0d72a6bb4a9c41f382c85a3062"}
  *
  * Go source:
  * func isFinalSigmaContext(casedBefore bool, str string, afterOffset int) bool {
@@ -260,7 +260,7 @@ export function isFinalSigmaContext(casedBefore: bool, str: string, afterOffset:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::hasSigmaCasedAfter","kind":"func","status":"implemented","sigHash":"96943ca6b2a503684441480d9ddfe9470eeb090c443ea3814b2a4c05fb7a829e","bodyHash":"aeb7814736dd6664b303b839362490231516297d23db12f2c5ed6478a238c5db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::hasSigmaCasedAfter","kind":"func","status":"implemented","sigHash":"96943ca6b2a503684441480d9ddfe9470eeb090c443ea3814b2a4c05fb7a829e"}
  *
  * Go source:
  * func hasSigmaCasedAfter(str string, start int) bool {
@@ -289,7 +289,7 @@ export function hasSigmaCasedAfter(str: string, start: int): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isSigmaCased","kind":"func","status":"implemented","sigHash":"e8d71cb5af1ad705d3d42ccfb7c680c798beb8581251f1c72edf59c8ee31f4fd","bodyHash":"929a8f717f3038a197d6c93fd35d53ec003bfcd475a5ece9318aaef1bbd5e07a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isSigmaCased","kind":"func","status":"implemented","sigHash":"e8d71cb5af1ad705d3d42ccfb7c680c798beb8581251f1c72edf59c8ee31f4fd"}
  *
  * Go source:
  * func isSigmaCased(r rune) bool {
@@ -301,7 +301,7 @@ export function isSigmaCased(r: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isUnicodeCaseIgnorable","kind":"func","status":"implemented","sigHash":"3e499f7110d6310aeede2f60016c817d3973c4e8000fd37a24dabe7a18935736","bodyHash":"24502edff7e1c844f35b0d2f09825229fb5812089638bfdae7ea11ebff3c0665"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/js_case.go::func::isUnicodeCaseIgnorable","kind":"func","status":"implemented","sigHash":"3e499f7110d6310aeede2f60016c817d3973c4e8000fd37a24dabe7a18935736"}
  *
  * Go source:
  * func isUnicodeCaseIgnorable(r rune) bool {

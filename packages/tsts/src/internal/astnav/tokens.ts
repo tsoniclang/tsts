@@ -20,7 +20,7 @@ import { GetScannerForSourceFile, GetTokenPosOfNode, Scanner_ReScanJsxToken, Sca
 import type { TokenFlags } from "../ast/tokenflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldRescanLessThanLessThanToken","kind":"func","status":"implemented","sigHash":"027e136379acde7957dacce28399aee470574eaa534d282f4d10a947c386695d","bodyHash":"8a83d3aa232356571ecf109bd3e41869f3467bcaa8404c3b6144dbaa39c23742"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldRescanLessThanLessThanToken","kind":"func","status":"implemented","sigHash":"027e136379acde7957dacce28399aee470574eaa534d282f4d10a947c386695d"}
  *
  * Go source:
  * func shouldRescanLessThanLessThanToken(s *scanner.Scanner, containingNode *ast.Node, token ast.Kind) bool {
@@ -32,7 +32,7 @@ export function shouldRescanLessThanLessThanToken(s: GoPtr<Scanner>, containingN
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::scanNavigationToken","kind":"func","status":"implemented","sigHash":"ccb74a2af5949e6e264e5672dceb4db4bb1145ee28da97efacec1d68fccb47cb","bodyHash":"a9084f6f95c59612c4c4411366aed16189cd52c27485889a90aa85d257e3ac32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::scanNavigationToken","kind":"func","status":"implemented","sigHash":"ccb74a2af5949e6e264e5672dceb4db4bb1145ee28da97efacec1d68fccb47cb"}
  *
  * Go source:
  * func scanNavigationToken(s *scanner.Scanner, containingNode *ast.Node) ast.Kind {
@@ -52,7 +52,7 @@ export function scanNavigationToken(s: GoPtr<Scanner>, containingNode: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTouchingPropertyName","kind":"func","status":"implemented","sigHash":"8b33bd131ce2aa3cde76ded97fef5444895aa8510ed8a0bee63cdb256e29f6fd","bodyHash":"beb86579f18c4e10edc95ccf8f01ba208353134835c8f12b3e6824567950d1a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTouchingPropertyName","kind":"func","status":"implemented","sigHash":"8b33bd131ce2aa3cde76ded97fef5444895aa8510ed8a0bee63cdb256e29f6fd"}
  *
  * Go source:
  * func GetTouchingPropertyName(sourceFile *ast.SourceFile, position int) *ast.Node {
@@ -68,7 +68,7 @@ export function GetTouchingPropertyName(sourceFile: GoPtr<SourceFile>, position:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTouchingToken","kind":"func","status":"implemented","sigHash":"c07d3176a13f1bb371f51c7d1fb976a10161a6c782ac14840447baf40153aa65","bodyHash":"568e4e03bd66e63f3a757082b415c1578144aa93ea2093addba2050a4cb76da9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTouchingToken","kind":"func","status":"implemented","sigHash":"c07d3176a13f1bb371f51c7d1fb976a10161a6c782ac14840447baf40153aa65"}
  *
  * Go source:
  * func GetTouchingToken(sourceFile *ast.SourceFile, position int) *ast.Node {
@@ -80,7 +80,7 @@ export function GetTouchingToken(sourceFile: GoPtr<SourceFile>, position: int): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTokenAtPosition","kind":"func","status":"implemented","sigHash":"699149b51222a5f13d162e47cdfcc39f1d8dc3f52733f22d56fa762c6a914f6c","bodyHash":"3bae288a26448371c9895df023649172d635d5db0eb6053a00bb721bd2335c52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetTokenAtPosition","kind":"func","status":"implemented","sigHash":"699149b51222a5f13d162e47cdfcc39f1d8dc3f52733f22d56fa762c6a914f6c"}
  *
  * Go source:
  * func GetTokenAtPosition(sourceFile *ast.SourceFile, position int) *ast.Node {
@@ -92,7 +92,7 @@ export function GetTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getTokenAtPosition","kind":"func","status":"implemented","sigHash":"563d8d71be2eae8e3d04988705a3778a857db560c3a2eab99d2113efab2ad4ec","bodyHash":"bb253a90654d4092785f4ced321a4a070df86d68d33f55cfc835f817ff49d315"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getTokenAtPosition","kind":"func","status":"implemented","sigHash":"563d8d71be2eae8e3d04988705a3778a857db560c3a2eab99d2113efab2ad4ec"}
  *
  * Go source:
  * func getTokenAtPosition(
@@ -498,7 +498,7 @@ export function getTokenAtPosition(sourceFile: GoPtr<SourceFile>, position: int,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getPosition","kind":"func","status":"implemented","sigHash":"68b53544318f188b29871d1f93170ca779a016d1b1836c72f92ca6c13e361d2a","bodyHash":"08340acfbb821ee8df250d8ad3cf12569e98a7073fe98fb7a80dc27e661b50fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getPosition","kind":"func","status":"implemented","sigHash":"68b53544318f188b29871d1f93170ca779a016d1b1836c72f92ca6c13e361d2a"}
  *
  * Go source:
  * func getPosition(node *ast.Node, sourceFile *ast.SourceFile, allowPositionInLeadingTrivia bool) int {
@@ -516,7 +516,7 @@ export function getPosition(node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, al
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostNode","kind":"func","status":"implemented","sigHash":"e7d0c8f012ab4c76046b86bbc5739ee82d2c73c3b0e76e859b757385ff581fdd","bodyHash":"a9f5f01a40294310d21509dde46744b2ac4451d7dccfa1b3a392bd13bb7651a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostNode","kind":"func","status":"implemented","sigHash":"e7d0c8f012ab4c76046b86bbc5739ee82d2c73c3b0e76e859b757385ff581fdd"}
  *
  * Go source:
  * func findRightmostNode(node *ast.Node) *ast.Node {
@@ -579,7 +579,7 @@ export function findRightmostNode(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::VisitEachChildAndJSDoc","kind":"func","status":"implemented","sigHash":"4fe20e31ee2c4ec396334d4a173e048fb3223a33bb16a743e58bf8452aa7c847","bodyHash":"a0a0640b84de1e9c9a96d3e22392d8f51a6208a1aba28b7308542a9111f875fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::VisitEachChildAndJSDoc","kind":"func","status":"implemented","sigHash":"4fe20e31ee2c4ec396334d4a173e048fb3223a33bb16a743e58bf8452aa7c847"}
  *
  * Go source:
  * func VisitEachChildAndJSDoc(
@@ -615,7 +615,7 @@ export function VisitEachChildAndJSDoc(node: GoPtr<Node>, sourceFile: GoPtr<Sour
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::constGroup::comparisonLessThan+comparisonEqualTo+comparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"0083704aec81dce43d9f8c8d04f56e165772696e6d5fea1f7ab2d14f2adf749d","bodyHash":"909b59afa8625afe1d60aafc6870397e2b4b7804b69a5a4400a5f2aa5484ccd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::constGroup::comparisonLessThan+comparisonEqualTo+comparisonGreaterThan","kind":"constGroup","status":"implemented","sigHash":"0083704aec81dce43d9f8c8d04f56e165772696e6d5fea1f7ab2d14f2adf749d"}
  *
  * Go source:
  * const (
@@ -629,7 +629,7 @@ export const comparisonEqualTo: int = 0;
 export const comparisonGreaterThan: int = 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingToken","kind":"func","status":"implemented","sigHash":"e1b82d882aaa1c83ac0b7f50920c724a86c7c2877d77a54c9af5854f46bf339e","bodyHash":"35ae8b547781f24ba609cb7aa38b1b7e3bce8f352ee337c9d914e18ede0efe4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingToken","kind":"func","status":"implemented","sigHash":"e1b82d882aaa1c83ac0b7f50920c724a86c7c2877d77a54c9af5854f46bf339e"}
  *
  * Go source:
  * func FindPrecedingToken(sourceFile *ast.SourceFile, position int) *ast.Node {
@@ -641,7 +641,7 @@ export function FindPrecedingToken(sourceFile: GoPtr<SourceFile>, position: int)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingTokenEx","kind":"func","status":"implemented","sigHash":"5f6f10073037f2fbafba997cb6cfee4a9d727b2556cd10242552ed35a2bd5056","bodyHash":"864fd5435acc0fc1329a6d2ce2dd3929a00bfbe53553dc6653dd35b75b4ca88e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindPrecedingTokenEx","kind":"func","status":"implemented","sigHash":"5f6f10073037f2fbafba997cb6cfee4a9d727b2556cd10242552ed35a2bd5056"}
  *
  * Go source:
  * func FindPrecedingTokenEx(sourceFile *ast.SourceFile, position int, startNode *ast.Node, excludeJSDoc bool) *ast.Node {
@@ -882,7 +882,7 @@ export function FindPrecedingTokenEx(sourceFile: GoPtr<SourceFile>, position: in
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::isValidPrecedingNode","kind":"func","status":"implemented","sigHash":"89224758b8ffc08c7bffc07766c51f1d7550aaa115708b33880b5711de7acf1a","bodyHash":"fcb4986bbcd979419f64df334a69692470a3cfc5419f3e73580bbfed5cd61094"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::isValidPrecedingNode","kind":"func","status":"implemented","sigHash":"89224758b8ffc08c7bffc07766c51f1d7550aaa115708b33880b5711de7acf1a"}
  *
  * Go source:
  * func isValidPrecedingNode(node *ast.Node, sourceFile *ast.SourceFile) bool {
@@ -904,7 +904,7 @@ export function isValidPrecedingNode(node: GoPtr<Node>, sourceFile: GoPtr<Source
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetStartOfNode","kind":"func","status":"implemented","sigHash":"6dc07695844b03ac075df2a12c68b0c8084bf3e1204c324ab43cbb53c5974e1d","bodyHash":"03efb26bf4c0d769981fb0fdd13c3de1a7a734cb4510742aa18b8db1c6041f1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::GetStartOfNode","kind":"func","status":"implemented","sigHash":"6dc07695844b03ac075df2a12c68b0c8084bf3e1204c324ab43cbb53c5974e1d"}
  *
  * Go source:
  * func GetStartOfNode(node *ast.Node, file *ast.SourceFile, includeJSDoc bool) int {
@@ -916,7 +916,7 @@ export function GetStartOfNode(node: GoPtr<Node>, file: GoPtr<SourceFile>, inclu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostValidToken","kind":"func","status":"implemented","sigHash":"3c27e7e331076f224ecf02af9372f4c1141f6e13d7aaa74b6b1708de0d6099b3","bodyHash":"b89bf824c3231e54b8a8904ec0294c14195219d175c4fcb9be19be814ac84409"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::findRightmostValidToken","kind":"func","status":"implemented","sigHash":"3c27e7e331076f224ecf02af9372f4c1141f6e13d7aaa74b6b1708de0d6099b3"}
  *
  * Go source:
  * func findRightmostValidToken(endPos int, sourceFile *ast.SourceFile, containingNode *ast.Node, position int, excludeJSDoc bool) *ast.Node {
@@ -1204,7 +1204,7 @@ export function findRightmostValidToken(endPos: int, sourceFile: GoPtr<SourceFil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindNextToken","kind":"func","status":"implemented","sigHash":"3a4e76064f9762a95ef6173efe71a551bb650a75a2fc670c647edcf3d04adc08","bodyHash":"d0e847c5c875cb688c7e529582f12a9f5bcc4b748c28894e1547670692ec212b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindNextToken","kind":"func","status":"implemented","sigHash":"3a4e76064f9762a95ef6173efe71a551bb650a75a2fc670c647edcf3d04adc08"}
  *
  * Go source:
  * func FindNextToken(previousToken *ast.Node, parent *ast.Node, file *ast.SourceFile) *ast.Node {
@@ -1345,7 +1345,7 @@ export function FindNextToken(previousToken: GoPtr<Node>, parent: GoPtr<Node>, f
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getNodeVisitor","kind":"func","status":"implemented","sigHash":"6eed77c40beaa6e549a5940e25abc0c12a1784067f9f709b2b65de0904ad936f","bodyHash":"56334010435a791deb938272fd8a31944bfc77bad1f267222665bd8090ce26ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::getNodeVisitor","kind":"func","status":"implemented","sigHash":"6eed77c40beaa6e549a5940e25abc0c12a1784067f9f709b2b65de0904ad936f"}
  *
  * Go source:
  * func getNodeVisitor(
@@ -1426,7 +1426,7 @@ export function getNodeVisitor(visitNode: (arg0: GoPtr<Node>, arg1: GoPtr<NodeVi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldSkipChild","kind":"func","status":"implemented","sigHash":"a69cd500216e0fce6e0896ba67c68fe1568950b1d4e92833c0f7babdb632f3aa","bodyHash":"effaa98d5ad2ede653f250c6c644d123dab92aa5ae9177f76945d452544dbe83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::shouldSkipChild","kind":"func","status":"implemented","sigHash":"a69cd500216e0fce6e0896ba67c68fe1568950b1d4e92833c0f7babdb632f3aa"}
  *
  * Go source:
  * func shouldSkipChild(node *ast.Node) bool {
@@ -1448,7 +1448,7 @@ export function shouldSkipChild(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindChildOfKind","kind":"func","status":"implemented","sigHash":"0c7cae39410c1ae972d7ba0dff3ce3c7bc14072b77b46956f4a7f39fcd5ff423","bodyHash":"c42ddcf06c98c413d0cf3fbe79f275a03c390c9c522cd1971836c50b369bff9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/astnav/tokens.go::func::FindChildOfKind","kind":"func","status":"implemented","sigHash":"0c7cae39410c1ae972d7ba0dff3ce3c7bc14072b77b46956f4a7f39fcd5ff423"}
  *
  * Go source:
  * func FindChildOfKind(containingNode *ast.Node, kind ast.Kind, sourceFile *ast.SourceFile) *ast.Node {

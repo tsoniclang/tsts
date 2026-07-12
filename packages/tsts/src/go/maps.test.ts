@@ -69,7 +69,7 @@ test("maps.Keys yields all keys", () => {
     ["b", 2],
   ]);
   const collected: string[] = [];
-  Keys(m)((k) => {
+  Keys(m)!((k) => {
     collected.push(k);
     return true;
   });
@@ -83,7 +83,7 @@ test("maps.Keys honors early termination", () => {
     ["c", 3],
   ]);
   const collected: string[] = [];
-  Keys(m)((k) => {
+  Keys(m)!((k) => {
     collected.push(k);
     return false;
   });
@@ -96,7 +96,7 @@ test("maps.Values yields all values", () => {
     ["b", 2],
   ]);
   const collected: number[] = [];
-  Values(m)((v) => {
+  Values(m)!((v) => {
     collected.push(v);
     return true;
   });

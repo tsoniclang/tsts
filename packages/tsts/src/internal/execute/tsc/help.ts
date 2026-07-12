@@ -74,7 +74,7 @@ import type { colors } from "./diagnostics.js";
 import { createColors, colors_blue, colors_bold, colors_blueBackground, colors_brightWhite } from "./diagnostics.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintVersion","kind":"func","status":"implemented","sigHash":"81f4b3a8da37e32b22c37f209f6f87ec0f65daff59fe4062f2f5a2db67408068","bodyHash":"2055f3eb7f297d4bfe7990343954ef458d89e7184c3662900463a9af1a189d50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintVersion","kind":"func","status":"implemented","sigHash":"81f4b3a8da37e32b22c37f209f6f87ec0f65daff59fe4062f2f5a2db67408068"}
  *
  * Go source:
  * func PrintVersion(sys System, locale locale.Locale) {
@@ -86,7 +86,7 @@ export function PrintVersion(sys: System, locale: Locale): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintHelp","kind":"func","status":"implemented","sigHash":"15fcc448486dd047538b29c64cd55f1b8410350f2d58947ae5821cdcae99e7bb","bodyHash":"0f76f8d83bc14736044afa07c5beee05d95cc7a8d0717374c1cc1166776c9d06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintHelp","kind":"func","status":"implemented","sigHash":"15fcc448486dd047538b29c64cd55f1b8410350f2d58947ae5821cdcae99e7bb"}
  *
  * Go source:
  * func PrintHelp(sys System, locale locale.Locale, commandLine *tsoptions.ParsedCommandLine) {
@@ -107,7 +107,7 @@ export function PrintHelp(sys: System, locale: Locale, commandLine: GoPtr<Parsed
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getOptionsForHelp","kind":"func","status":"implemented","sigHash":"084b13b5d5efec4f8e4551a68047978f5c9364a04efaf078cd081e3de4d85197","bodyHash":"46fc1313f83d7a666f311135caeed4b4aa60fc46c96b11d7879489961a2dad5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getOptionsForHelp","kind":"func","status":"implemented","sigHash":"084b13b5d5efec4f8e4551a68047978f5c9364a04efaf078cd081e3de4d85197"}
  *
  * Go source:
  * func getOptionsForHelp(commandLine *tsoptions.ParsedCommandLine) []*tsoptions.CommandLineOption {
@@ -142,7 +142,7 @@ export function getOptionsForHelp(commandLine: GoPtr<ParsedCommandLine>): GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getHeader","kind":"func","status":"implemented","sigHash":"375a359485bc3674b4ffa35f2d049559598efcfb10fdd1f0cb4f8b33c29d3d5c","bodyHash":"d58a16c9bf8a921e218130e3c0951eda9457df678cd040a6bd87a537c7ee70ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getHeader","kind":"func","status":"implemented","sigHash":"375a359485bc3674b4ffa35f2d049559598efcfb10fdd1f0cb4f8b33c29d3d5c"}
  *
  * Go source:
  * func getHeader(sys System, message string) []string {
@@ -197,7 +197,7 @@ export function getHeader(sys: System, message: string): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::printEasyHelp","kind":"func","status":"implemented","sigHash":"abdfa5e9aae31210286678b0b7d47ec27ce18e687249fe0673b4648dca21443b","bodyHash":"ff4902875ce058b940902a407f64a19cde6d6a1b70dbbfba50155d08716f9d47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::printEasyHelp","kind":"func","status":"implemented","sigHash":"abdfa5e9aae31210286678b0b7d47ec27ce18e687249fe0673b4648dca21443b"}
  *
  * Go source:
  * func printEasyHelp(sys System, locale locale.Locale, simpleOptions []*tsoptions.CommandLineOption) {
@@ -287,7 +287,7 @@ export function printEasyHelp(sys: System, locale: Locale, simpleOptions: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::printAllHelp","kind":"func","status":"implemented","sigHash":"77c9c5864e1610b01bda4f74a0a8ae6dbc2f1c3af3d23528f774e1c79b201c4c","bodyHash":"b4fb9ea2d0863f540b4aef297c2b15fc073df1155140f84e81730d4a9dd5abca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::printAllHelp","kind":"func","status":"implemented","sigHash":"77c9c5864e1610b01bda4f74a0a8ae6dbc2f1c3af3d23528f774e1c79b201c4c"}
  *
  * Go source:
  * func printAllHelp(sys System, locale locale.Locale, options []*tsoptions.CommandLineOption) {
@@ -339,7 +339,7 @@ export function printAllHelp(sys: System, locale: Locale, options: GoSlice<GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintBuildHelp","kind":"func","status":"implemented","sigHash":"0d33de96405c464d5d89089d6affd92c18544d5d5fc2f5648f0471edca4a479f","bodyHash":"4bdc47f3647a25d7ceccc6b35a6e83cb4cfe31551451dc54316b5e89fa876e74"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::PrintBuildHelp","kind":"func","status":"implemented","sigHash":"0d33de96405c464d5d89089d6affd92c18544d5d5fc2f5648f0471edca4a479f"}
  *
  * Go source:
  * func PrintBuildHelp(sys System, locale locale.Locale, buildOptions []*tsoptions.CommandLineOption) {
@@ -369,7 +369,7 @@ export function PrintBuildHelp(sys: System, locale: Locale, buildOptions: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateSectionOptionsOutput","kind":"func","status":"implemented","sigHash":"dbf4cc7423f11e00d1e6a954e2b0cf91d1b83e684f61ff9ddec93496732e0a33","bodyHash":"aac0c23bdd8671ff06a31c3fc0413323f20a85147d00219fb56ba25623ce5d0e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateSectionOptionsOutput","kind":"func","status":"implemented","sigHash":"dbf4cc7423f11e00d1e6a954e2b0cf91d1b83e684f61ff9ddec93496732e0a33"}
  *
  * Go source:
  * func generateSectionOptionsOutput(
@@ -457,7 +457,7 @@ export function generateSectionOptionsOutput(sys: System, locale: Locale, sectio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateGroupOptionOutput","kind":"func","status":"implemented","sigHash":"fa34285a13fa86751478d60f41ed7165c15e5fc33e8285e42518aeb6e5e9f479","bodyHash":"d28629f43b7e84f8c2f0db274f2e308e0549cfe5611dea399fb39260c6d19eb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateGroupOptionOutput","kind":"func","status":"implemented","sigHash":"fa34285a13fa86751478d60f41ed7165c15e5fc33e8285e42518aeb6e5e9f479"}
  *
  * Go source:
  * func generateGroupOptionOutput(sys System, locale locale.Locale, optionsList []*tsoptions.CommandLineOption) []string {
@@ -517,7 +517,7 @@ export function generateGroupOptionOutput(sys: System, locale: Locale, optionsLi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateOptionOutput","kind":"func","status":"implemented","sigHash":"f0629ccbea288710c170299f4827a5a92f4fcb531dfdee63a703eb81a8133e57","bodyHash":"ac53d68b66a08f6514efa9d83da67e5fc87582d07972de6e5c07664e73cfcbae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::generateOptionOutput","kind":"func","status":"implemented","sigHash":"f0629ccbea288710c170299f4827a5a92f4fcb531dfdee63a703eb81a8133e57"}
  *
  * Go source:
  * func generateOptionOutput(
@@ -661,7 +661,7 @@ export function generateOptionOutput(sys: System, locale: Locale, option: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::formatDefaultValue","kind":"func","status":"implemented","sigHash":"22f96a3650c73616e8356486679056ec572e92089eb51b186f1f1a9f983935c9","bodyHash":"53bb36939e164266679f7de8a4a53efc609697b6e6719231763a1e0a803fb1bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::formatDefaultValue","kind":"func","status":"implemented","sigHash":"22f96a3650c73616e8356486679056ec572e92089eb51b186f1f1a9f983935c9"}
  *
  * Go source:
  * func formatDefaultValue(defaultValue any, option *tsoptions.CommandLineOption) string {
@@ -703,7 +703,7 @@ export function formatDefaultValue(defaultValue: unknown, option: GoPtr<CommandL
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::type::valueCandidate","kind":"type","status":"implemented","sigHash":"909e3d632acdc7c017c0b6cdcff6ebebc5061a6f1d4e972d12a0cbc0d9314281","bodyHash":"602ea54be0fb38d29e6719985296787c12bd448bd120179610126ad68119a50c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::type::valueCandidate","kind":"type","status":"implemented","sigHash":"909e3d632acdc7c017c0b6cdcff6ebebc5061a6f1d4e972d12a0cbc0d9314281"}
  *
  * Go source:
  * valueCandidate struct {
@@ -718,7 +718,7 @@ export interface valueCandidate {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::showAdditionalInfoOutput","kind":"func","status":"implemented","sigHash":"66aa789c987b8b0a9890b901b996dd92739fef988760258f917b34c4808527a1","bodyHash":"7497a0f4800bcdfc9b6358c58d83984b5d17bbdc14b724574f49e63ac39c1970"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::showAdditionalInfoOutput","kind":"func","status":"implemented","sigHash":"66aa789c987b8b0a9890b901b996dd92739fef988760258f917b34c4808527a1"}
  *
  * Go source:
  * func showAdditionalInfoOutput(valueCandidates *valueCandidate, option *tsoptions.CommandLineOption) bool {
@@ -749,7 +749,7 @@ export function showAdditionalInfoOutput(valueCandidates: GoPtr<valueCandidate>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getValueCandidate","kind":"func","status":"implemented","sigHash":"9142fe95cdf47ec0e739ad3fb60441fa560a436bd75c617d769f53b0c6962659","bodyHash":"526541ff62687f065c36b5ceb5f32ad6532b6091c75f3464982ae2f6d2df5332"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getValueCandidate","kind":"func","status":"implemented","sigHash":"9142fe95cdf47ec0e739ad3fb60441fa560a436bd75c617d769f53b0c6962659"}
  *
  * Go source:
  * func getValueCandidate(sys System, locale locale.Locale, option *tsoptions.CommandLineOption) *valueCandidate {
@@ -808,7 +808,7 @@ export function getValueCandidate(sys: System, locale: Locale, option: GoPtr<Com
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getPossibleValues","kind":"func","status":"implemented","sigHash":"01509938872ae5c9f445f67f05c92565533107500401575291542cfda732c78e","bodyHash":"83aec6a69c310f6ed0ecbe6fda305e7b7bd24e96f48a47897dcfdc5800ca7811"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getPossibleValues","kind":"func","status":"implemented","sigHash":"01509938872ae5c9f445f67f05c92565533107500401575291542cfda732c78e"}
  *
  * Go source:
  * func getPossibleValues(option *tsoptions.CommandLineOption) string {
@@ -877,7 +877,7 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getPrettyOutput","kind":"func","status":"implemented","sigHash":"4c46b3ad7eb089fafaf7b255db69930138ebba5202964b96ec683b88d28df0cc","bodyHash":"aa24ca4e37abdc54af65611b450f93da21f747bfe2712ee45d3769d4f13e7d5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getPrettyOutput","kind":"func","status":"implemented","sigHash":"4c46b3ad7eb089fafaf7b255db69930138ebba5202964b96ec683b88d28df0cc"}
  *
  * Go source:
  * func getPrettyOutput(colors *colors, left string, right string, rightAlignOfLeft int, leftAlignOfRight int, terminalWidth int, colorLeft bool) []string {
@@ -933,7 +933,7 @@ export function getPrettyOutput(colors: GoPtr<colors>, left: string, right: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getDisplayNameTextOfOption","kind":"func","status":"implemented","sigHash":"3bde92cee2fca1d7a112b73dcc052b5cc8626e5d3fea680c1d775cdccca3fdcd","bodyHash":"72f6f488c58e091afd6e3e15be8df732b4cb9ab5a0642c758026353f83345b8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/help.go::func::getDisplayNameTextOfOption","kind":"func","status":"implemented","sigHash":"3bde92cee2fca1d7a112b73dcc052b5cc8626e5d3fea680c1d775cdccca3fdcd"}
  *
  * Go source:
  * func getDisplayNameTextOfOption(option *tsoptions.CommandLineOption) string {

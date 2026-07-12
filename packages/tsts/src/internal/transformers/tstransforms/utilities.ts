@@ -9,7 +9,7 @@ import { Number_String } from "../../jsnum/string.js";
 import type { NodeFactory } from "../../printer/factory.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/utilities.go::func::constantExpression","kind":"func","status":"implemented","sigHash":"e65e6e90096edac52c1042408a6c297dceaee868456eb7e28fd2ebeb788f9201","bodyHash":"4e5d3e4f0056677f1f81777fae423608bede970c2421ce02496d01a4f229ade4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/utilities.go::func::constantExpression","kind":"func","status":"implemented","sigHash":"e65e6e90096edac52c1042408a6c297dceaee868456eb7e28fd2ebeb788f9201"}
  *
  * Go source:
  * func constantExpression(value any, factory *printer.NodeFactory) *ast.Expression {

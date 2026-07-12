@@ -105,7 +105,7 @@ import { Checker_markExportAssignmentAliasReferenced } from "./relations.js";
 import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIteratorResult","kind":"method","status":"implemented","sigHash":"c68abca3eb06cf808f42dbcbaa7b5579291a43e12a0eda979bc92ec57c49ee0a","bodyHash":"a948f5c897e476bee78001ddb233ed427012e1ed328d507cb9bae7c1ec73bb34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIteratorResult","kind":"method","status":"implemented","sigHash":"c68abca3eb06cf808f42dbcbaa7b5579291a43e12a0eda979bc92ec57c49ee0a"}
  *
  * Go source:
  * func (c *Checker) isIteratorResult(t *Type, kind IterationTypeKind) bool {
@@ -127,7 +127,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isReferenced","kind":"method","status":"implemented","sigHash":"390daabce7265ea8383203e8fadf2740bccab724d3d7184c2aa1a677c50d67dd","bodyHash":"11336ae57cf6638cb5739f5c13a125aba4cf3672d041038461124398e91da8b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isReferenced","kind":"method","status":"implemented","sigHash":"390daabce7265ea8383203e8fadf2740bccab724d3d7184c2aa1a677c50d67dd"}
  *
  * Go source:
  * func (c *Checker) isReferenced(symbol *ast.Symbol) bool {
@@ -139,7 +139,7 @@ export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addImplementationSuccessElaboration","kind":"method","status":"implemented","sigHash":"acb7d88587e2e89c8fd34143e26626149e1f899f42bf2c704f814544ee3b2fbf","bodyHash":"3e3a9a82c6e7104e19b9175e41aa07778df7343f379c060a8e8b5f4a1761e715"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addImplementationSuccessElaboration","kind":"method","status":"implemented","sigHash":"acb7d88587e2e89c8fd34143e26626149e1f899f42bf2c704f814544ee3b2fbf"}
  *
  * Go source:
  * func (c *Checker) addImplementationSuccessElaboration(s *CallState, failed *Signature, diagnostic *ast.Diagnostic) {
@@ -191,7 +191,7 @@ export function Checker_addImplementationSuccessElaboration(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisContainer","kind":"method","status":"implemented","sigHash":"ce7df68de5061be4bf843ae77fc2d67b8f6e60ed1d64ff80b2e01e79094cfebc","bodyHash":"e2fecaf518e1c9b17b8f6b9ebd8402360781926eda1cc78ad87be33fc743afbb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisContainer","kind":"method","status":"implemented","sigHash":"ce7df68de5061be4bf843ae77fc2d67b8f6e60ed1d64ff80b2e01e79094cfebc"}
  *
  * Go source:
  * func (c *Checker) getThisContainer(node *ast.Node, includeArrowFunctions bool, includeClassComputedPropertyName bool) *ast.Node {
@@ -289,7 +289,7 @@ export function Checker_getThisContainer(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedBooleanOperator","kind":"method","status":"implemented","sigHash":"317fc9966aecefe72bc97f8ba26a6d16ffba8834bd8bca3b804c3520ad873a82","bodyHash":"6204ca175116d8edebc40b358fcb0e7b13bd71defaa732b7c14f78b0960ca950"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedBooleanOperator","kind":"method","status":"implemented","sigHash":"317fc9966aecefe72bc97f8ba26a6d16ffba8834bd8bca3b804c3520ad873a82"}
  *
  * Go source:
  * func (c *Checker) getSuggestedBooleanOperator(operator ast.Kind) ast.Kind {
@@ -320,7 +320,7 @@ export function Checker_getSuggestedBooleanOperator(receiver: GoPtr<Checker>, op
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSideEffectFree","kind":"method","status":"implemented","sigHash":"c040ba7413b2ad899a9f69de6b98cc7135fa28b7bceac3fa04cce95bee749778","bodyHash":"9c582a11e43dc96996e64c5f093135067906472338787e36708d586cd4a05270"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSideEffectFree","kind":"method","status":"implemented","sigHash":"c040ba7413b2ad899a9f69de6b98cc7135fa28b7bceac3fa04cce95bee749778"}
  *
  * Go source:
  * func (c *Checker) isSideEffectFree(node *ast.Node) bool {
@@ -401,7 +401,7 @@ export function Checker_isSideEffectFree(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getExactOptionalUnassignableProperties","kind":"method","status":"implemented","sigHash":"ed00e23887662d8c26e623b8733738664819675d548936a91c311e71cf9285e5","bodyHash":"4965f017d414479b3e9f0d86822329f0134d776609910983f4220f6a9d1b0d4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getExactOptionalUnassignableProperties","kind":"method","status":"implemented","sigHash":"ed00e23887662d8c26e623b8733738664819675d548936a91c311e71cf9285e5"}
  *
  * Go source:
  * func (c *Checker) getExactOptionalUnassignableProperties(source *Type, target *Type) []*ast.Symbol {
@@ -427,7 +427,7 @@ export function Checker_getExactOptionalUnassignableProperties(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasDefaultValue","kind":"method","status":"implemented","sigHash":"390924be90bd5165629aff40393161e371d5019103557eb160622439eb70f6da","bodyHash":"8c846925cd04e73e410241494892824848ab7974b61fad0f6f81604848dfae24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasDefaultValue","kind":"method","status":"implemented","sigHash":"390924be90bd5165629aff40393161e371d5019103557eb160622439eb70f6da"}
  *
  * Go source:
  * func (c *Checker) hasDefaultValue(node *ast.Node) bool {
@@ -447,7 +447,7 @@ export function Checker_hasDefaultValue(receiver: GoPtr<Checker>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isConstContext","kind":"method","status":"implemented","sigHash":"23cd6c8b976e2b2de21f1310a0d6558b776d54d502f7d427e2750a1b6cc51469","bodyHash":"dc530136653c59b3f2c42b348d8fe334b2cea3e84174f3571c8ab83c0df3cc8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isConstContext","kind":"method","status":"implemented","sigHash":"23cd6c8b976e2b2de21f1310a0d6558b776d54d502f7d427e2750a1b6cc51469"}
  *
  * Go source:
  * func (c *Checker) isConstContext(node *ast.Node) bool {
@@ -469,7 +469,7 @@ export function Checker_isConstContext(receiver: GoPtr<Checker>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createModeMismatchDetails","kind":"method","status":"implemented","sigHash":"9fa3af61056e73f5061e3db5b2191c33d6490cc54f6901794675558bbd5c4a6e","bodyHash":"3f860b13be46053a07e83940f8eeb639a0e6e6200c1bb28f4959e9778448cad2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createModeMismatchDetails","kind":"method","status":"implemented","sigHash":"9fa3af61056e73f5061e3db5b2191c33d6490cc54f6901794675558bbd5c4a6e"}
  *
  * Go source:
  * func (c *Checker) createModeMismatchDetails(sourceFile *ast.SourceFile, errorNode *ast.Node) *ast.Diagnostic {
@@ -494,7 +494,7 @@ export function Checker_createModeMismatchDetails(receiver: GoPtr<Checker>, sour
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isCommonJSRequire","kind":"method","status":"implemented","sigHash":"909461d3e7faaf3e9ce67876713da2c68abf4b15eba7fae53f5984a275e8898f","bodyHash":"d97d96a0846889696331e21c5322711e8f94518ac00fc303db8a0c1bbe91c4cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isCommonJSRequire","kind":"method","status":"implemented","sigHash":"909461d3e7faaf3e9ce67876713da2c68abf4b15eba7fae53f5984a275e8898f"}
  *
  * Go source:
  * func (c *Checker) isCommonJSRequire(node *ast.Node) bool {
@@ -562,7 +562,7 @@ export function Checker_isCommonJSRequire(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.hash","kind":"method","status":"implemented","sigHash":"2104c6c9cd93d3129bc35a7c933f72b8dcee8db01810f0e4b6ad7eb8af63e0e1","bodyHash":"4bf1c89469142c06f771ce0a7b30c2162807d095480f3504efe4dca66116e573"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.hash","kind":"method","status":"implemented","sigHash":"2104c6c9cd93d3129bc35a7c933f72b8dcee8db01810f0e4b6ad7eb8af63e0e1"}
  *
  * Go source:
  * func (b *keyBuilder) hash() CacheHashKey {
@@ -574,7 +574,7 @@ export function keyBuilder_hash(receiver: GoPtr<keyBuilder>): CacheHashKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getPropertiesOfContext","kind":"method","status":"implemented","sigHash":"1a23e0780b454b5da5e41f8d8b76d27cf056d0dcc6f258c8cae786e64389455a","bodyHash":"448795a77b3b76b0d93fc8900dbbb4811ecb4c4d6155a563cbe3cf220a517f9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getPropertiesOfContext","kind":"method","status":"implemented","sigHash":"1a23e0780b454b5da5e41f8d8b76d27cf056d0dcc6f258c8cae786e64389455a"}
  *
  * Go source:
  * func (c *Checker) getPropertiesOfContext(context *WideningContext) []*ast.Symbol {
@@ -608,7 +608,7 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSiblingsOfContext","kind":"method","status":"implemented","sigHash":"41393137298475abfd74ae04a0ef2fa9ad34e0bd6e3cde2a538c5ba385aab8fa","bodyHash":"08d6cf59b8a38107437ecc54383dedf6590a9ffb9450b834e6da89d85d1a67c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSiblingsOfContext","kind":"method","status":"implemented","sigHash":"41393137298475abfd74ae04a0ef2fa9ad34e0bd6e3cde2a538c5ba385aab8fa"}
  *
  * Go source:
  * func (c *Checker) getSiblingsOfContext(context *WideningContext) []*Type {
@@ -644,7 +644,7 @@ export function Checker_getSiblingsOfContext(receiver: GoPtr<Checker>, context: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addOptionality","kind":"method","status":"implemented","sigHash":"482049c3f4b17a1ff05599e171d898e953f5911ddbe56ecf07fb76b87bdc9ae9","bodyHash":"9446346c2f538dccf40f5c232d617b5939d5ae5adca5233542253067a714100e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addOptionality","kind":"method","status":"implemented","sigHash":"482049c3f4b17a1ff05599e171d898e953f5911ddbe56ecf07fb76b87bdc9ae9"}
  *
  * Go source:
  * func (c *Checker) addOptionality(t *Type) *Type {
@@ -656,7 +656,7 @@ export function Checker_addOptionality(receiver: GoPtr<Checker>, t: GoPtr<Type>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addOptionalityEx","kind":"method","status":"implemented","sigHash":"0f378c67ce04156fa0a8ac28be2b6af75e77e5b80e177e78d4f62d9ace1a01ed","bodyHash":"54239a4c2b4f378ee3c928bd1ed9d48e42747d3ebaecbcd421eacfabcfe7f53b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addOptionalityEx","kind":"method","status":"implemented","sigHash":"0f378c67ce04156fa0a8ac28be2b6af75e77e5b80e177e78d4f62d9ace1a01ed"}
  *
  * Go source:
  * func (c *Checker) addOptionalityEx(t *Type, isProperty bool, isOptional bool) *Type {
@@ -674,7 +674,7 @@ export function Checker_addOptionalityEx(receiver: GoPtr<Checker>, t: GoPtr<Type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isVarConstLike","kind":"method","status":"implemented","sigHash":"ed45b4077927d926ef190ba4b5f8a3ac862a28f8664cf8f81b5220695514ef87","bodyHash":"b42d5f720663aca512553a0495425c70ec6ae18b453bc74292eb4a1b3ecb51c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isVarConstLike","kind":"method","status":"implemented","sigHash":"ed45b4077927d926ef190ba4b5f8a3ac862a28f8664cf8f81b5220695514ef87"}
  *
  * Go source:
  * func (c *Checker) isVarConstLike(node *ast.Node) bool {
@@ -688,7 +688,7 @@ export function Checker_isVarConstLike(receiver: GoPtr<Checker>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCombinedModifierFlagsCached","kind":"method","status":"implemented","sigHash":"74f3dac4d88be57c7d1233acc69633a741dab86e6be174d2c0c684d99b88b62d","bodyHash":"171c85c87c43ec6121b7de5f09837814cee9779788637785b0ee728524419c6b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCombinedModifierFlagsCached","kind":"method","status":"implemented","sigHash":"74f3dac4d88be57c7d1233acc69633a741dab86e6be174d2c0c684d99b88b62d"}
  *
  * Go source:
  * func (c *Checker) getCombinedModifierFlagsCached(node *ast.Node) ast.ModifierFlags {
@@ -711,7 +711,7 @@ export function Checker_getCombinedModifierFlagsCached(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTailRecursionRoot","kind":"method","status":"implemented","sigHash":"a0fe74d52afc45c7b9cfffcb7e48f271349c9c194a244b1bd721fe9ff8505501","bodyHash":"846fb43c49270cbafd41a27b1b535ae74501b266155b401479d3be2ad8b8d877"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTailRecursionRoot","kind":"method","status":"implemented","sigHash":"a0fe74d52afc45c7b9cfffcb7e48f271349c9c194a244b1bd721fe9ff8505501"}
  *
  * Go source:
  * func (c *Checker) getTailRecursionRoot(newType *Type, newMapper *TypeMapper) (*ConditionalRoot, *TypeMapper) {
@@ -750,7 +750,7 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"implemented","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a","bodyHash":"c7ad211d7a4abb12fe7ff041b0fa8aa1c1429c37a1896387180a157094ff3f83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"implemented","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a"}
  *
  * Go source:
  * func (c *Checker) markLinkedReferences(location *ast.Node, hint ReferenceHint, propSymbol *ast.Symbol, parentType *Type) {
@@ -942,7 +942,7 @@ export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSpreadIndices","kind":"method","status":"implemented","sigHash":"df037ff12f24f15a35e54c86020e0941409f30ac261a7036b52d32f324d39197","bodyHash":"5ecfe64992fe3d3b9a2273e93a6efcff2b4dfdfbd395c47d27cbe3166fcff065"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSpreadIndices","kind":"method","status":"implemented","sigHash":"df037ff12f24f15a35e54c86020e0941409f30ac261a7036b52d32f324d39197"}
  *
  * Go source:
  * func (c *Checker) getSpreadIndices(node *ast.Node) (int, int) {
@@ -988,7 +988,7 @@ export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitive","kind":"method","status":"implemented","sigHash":"24fe0d73fcb505ece3b2fe654fb31801120fedd7d1deaf1bf62fb363d8b74e84","bodyHash":"7c30b43402182a4da2e551443fb9ebbf73318f536b3abe30b0b274ef82b3eeb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitive","kind":"method","status":"implemented","sigHash":"24fe0d73fcb505ece3b2fe654fb31801120fedd7d1deaf1bf62fb363d8b74e84"}
  *
  * Go source:
  * func (c *Checker) isContextSensitive(node *ast.Node) bool {

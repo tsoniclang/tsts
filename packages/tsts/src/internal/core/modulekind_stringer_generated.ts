@@ -20,7 +20,7 @@ import {
 import type { ModuleKind } from "./compileroptions.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6","bodyHash":"e16ef510b7522f68ed731bd455decf0ad16d54d442a4189e1189eee117234fd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6"}
  *
  * Go source:
  * func _() {
@@ -64,7 +64,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::constGroup::_ModuleKind_name_0+_ModuleKind_name_1+_ModuleKind_name_2","kind":"constGroup","status":"implemented","sigHash":"56c7707ab8862bc45ebb0154f450d1d645e43bb9961428ebbe1dcc1ffb13fd40","bodyHash":"9238b2a6e3937082ea7766a1824a889292e60d5915c2e3faf1a62a47bc8b0b82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::constGroup::_ModuleKind_name_0+_ModuleKind_name_1+_ModuleKind_name_2","kind":"constGroup","status":"implemented","sigHash":"56c7707ab8862bc45ebb0154f450d1d645e43bb9961428ebbe1dcc1ffb13fd40"}
  *
  * Go source:
  * const (
@@ -78,7 +78,7 @@ export const _ModuleKind_name_1: string = "ESNextNode16Node18Node20";
 export const _ModuleKind_name_2: string = "NodeNextPreserve";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::varGroup::_ModuleKind_index_0+_ModuleKind_index_1+_ModuleKind_index_2","kind":"varGroup","status":"implemented","sigHash":"35366ea9281031227a960aa4cea4c9efe6645aa17ef400a181490950471f184f","bodyHash":"7e1a207ee360928469ca1c9ece4d1575823446b33186c710b54e3b07fca5de7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::varGroup::_ModuleKind_index_0+_ModuleKind_index_1+_ModuleKind_index_2","kind":"varGroup","status":"implemented","sigHash":"35366ea9281031227a960aa4cea4c9efe6645aa17ef400a181490950471f184f"}
  *
  * Go source:
  * var (
@@ -92,7 +92,7 @@ export let _ModuleKind_index_1: GoArray<byte, "5"> = [0, 6, 12, 18, 24];
 export let _ModuleKind_index_2: GoArray<byte, "3"> = [0, 8, 16];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::method::ModuleKind.String","kind":"method","status":"implemented","sigHash":"8aa7f80eb17c3c5d757a999866a748b612aa92bb32ff7ec95524e5bd82572456","bodyHash":"1628b9c62c47d51c4b7851bd3be691fa93295be250c495864973c0c2e64c9c7b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/modulekind_stringer_generated.go::method::ModuleKind.String","kind":"method","status":"implemented","sigHash":"8aa7f80eb17c3c5d757a999866a748b612aa92bb32ff7ec95524e5bd82572456"}
  *
  * Go source:
  * func (i ModuleKind) String() string {

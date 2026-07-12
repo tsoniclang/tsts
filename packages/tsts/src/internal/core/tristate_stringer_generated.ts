@@ -5,7 +5,7 @@ import { TSFalse, TSTrue, TSUnknown } from "./tristate.js";
 import type { Tristate } from "./tristate.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6","bodyHash":"38864ad16535dd5de07fdd8c54b56e986d2755dce54b26f61dba18a9d1baa6ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6"}
  *
  * Go source:
  * func _() {
@@ -27,7 +27,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::constGroup::_Tristate_name","kind":"constGroup","status":"implemented","sigHash":"dcf6d5ff93293e544ad6aea1868f996fc3597c832a9c3566226ebd2354dac8cb","bodyHash":"be4afed3595dee3df5186d3f3385d6589cadb35b7d9990a1479a92b7711db83b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::constGroup::_Tristate_name","kind":"constGroup","status":"implemented","sigHash":"dcf6d5ff93293e544ad6aea1868f996fc3597c832a9c3566226ebd2354dac8cb"}
  *
  * Go source:
  * const _Tristate_name = "TSUnknownTSFalseTSTrue"
@@ -35,7 +35,7 @@ export function _(): void {
 export const _Tristate_name: string = "TSUnknownTSFalseTSTrue";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::varGroup::_Tristate_index","kind":"varGroup","status":"implemented","sigHash":"1a0dd53935750af8cb9c15648a0870d2092ad9631e65c132299e2a25569a4048","bodyHash":"09b3f420830623343b80b6011fc7465cdfc5add1e87e3a367050a3bc3236d5e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::varGroup::_Tristate_index","kind":"varGroup","status":"implemented","sigHash":"1a0dd53935750af8cb9c15648a0870d2092ad9631e65c132299e2a25569a4048"}
  *
  * Go source:
  * var _Tristate_index = [...]uint8{0, 9, 16, 22}
@@ -43,7 +43,7 @@ export const _Tristate_name: string = "TSUnknownTSFalseTSTrue";
 export let _Tristate_index: GoArray<byte, "4"> = [0, 9, 16, 22];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::method::Tristate.String","kind":"method","status":"implemented","sigHash":"84afbd18fe2faba0a015cf2bb386824ef2422b824f3f6b4c93d389637118b956","bodyHash":"dbcc2fcee22d9cbeae79dca426ff5f9b324cc9bd8df99b02b5df058d91719369"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate_stringer_generated.go::method::Tristate.String","kind":"method","status":"implemented","sigHash":"84afbd18fe2faba0a015cf2bb386824ef2422b824f3f6b4c93d389637118b956"}
  *
  * Go source:
  * func (i Tristate) String() string {

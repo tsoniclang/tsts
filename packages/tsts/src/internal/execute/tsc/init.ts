@@ -48,7 +48,7 @@ import {
 } from "../../collections/ordered_map.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/init.go::func::WriteConfigFile","kind":"func","status":"implemented","sigHash":"ededadbb731410ca8ab2ac74c43f9222fa97522188b4b8c08ddb49ca345b0ef2","bodyHash":"12c85bede8a97db069328c67d0778b834dea07db54690522e70a02e2bad68378"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/init.go::func::WriteConfigFile","kind":"func","status":"implemented","sigHash":"ededadbb731410ca8ab2ac74c43f9222fa97522188b4b8c08ddb49ca345b0ef2"}
  *
  * Go source:
  * func WriteConfigFile(sys System, locale locale.Locale, reportDiagnostic DiagnosticReporter, options *collections.OrderedMap[string, any]) {
@@ -80,7 +80,7 @@ export function WriteConfigFile(sys: System, locale: Locale, reportDiagnostic: D
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/init.go::func::generateTSConfig","kind":"func","status":"implemented","sigHash":"a42918323f68a18908487174831abddda142413e3f4d969857a607cbb420a0fd","bodyHash":"1b6a2d11397118cec077eb08e95ef4d564e44736bb7aa6f6f6a250d07f56637d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/init.go::func::generateTSConfig","kind":"func","status":"implemented","sigHash":"a42918323f68a18908487174831abddda142413e3f4d969857a607cbb420a0fd"}
  *
  * Go source:
  * func generateTSConfig(options *collections.OrderedMap[string, any], locale locale.Locale) string {

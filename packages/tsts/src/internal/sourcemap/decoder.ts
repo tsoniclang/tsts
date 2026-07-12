@@ -15,7 +15,7 @@ const byteLenOf = (s: string): int => utf8Encoder.encode(s).length;
 const byteAtOf = (s: string, i: int): byte => utf8Encoder.encode(s)[i]!;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::Mapping","kind":"type","status":"implemented","sigHash":"bd841521f01c848dc826ea94cec7f3ffecf995df4d0214f41418f6f021b944e6","bodyHash":"a4dc4d99ab173be3ab1d79b138f717b599478ebe163bc0b01b918bd4ab044eb9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::Mapping","kind":"type","status":"implemented","sigHash":"bd841521f01c848dc826ea94cec7f3ffecf995df4d0214f41418f6f021b944e6"}
  *
  * Go source:
  * Mapping struct {
@@ -37,7 +37,7 @@ export interface Mapping {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::Mapping.Equals","kind":"method","status":"implemented","sigHash":"206387b36f011946248cc914011541d2bedb97cf76548957f8f4a8a9581aee5a","bodyHash":"34536d79934d2ed29b4c500045f0afee39827c72c88a77b2753ac8aeff009e76"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::Mapping.Equals","kind":"method","status":"implemented","sigHash":"206387b36f011946248cc914011541d2bedb97cf76548957f8f4a8a9581aee5a"}
  *
  * Go source:
  * func (m *Mapping) Equals(other *Mapping) bool {
@@ -61,7 +61,7 @@ export function Mapping_Equals(receiver: GoPtr<Mapping>, other: GoPtr<Mapping>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::Mapping.IsSourceMapping","kind":"method","status":"implemented","sigHash":"ba3aeb4f44b2fa95ec28f238a2723e20395f08ec8f09df7ae68f6466ae4211b8","bodyHash":"f58d7233b0164bcbaede960a66f8148738914beb750e95741475a7403cdd60fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::Mapping.IsSourceMapping","kind":"method","status":"implemented","sigHash":"ba3aeb4f44b2fa95ec28f238a2723e20395f08ec8f09df7ae68f6466ae4211b8"}
  *
  * Go source:
  * func (m *Mapping) IsSourceMapping() bool {
@@ -78,7 +78,7 @@ export function Mapping_IsSourceMapping(receiver: GoPtr<Mapping>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::constGroup::MissingSource+MissingName+MissingLineOrColumn+MissingUTF16Column","kind":"constGroup","status":"implemented","sigHash":"62c89211d5982e97d9e61d4d1ecbd8604e535ef2dde3259b49e17ef62f2f11a2","bodyHash":"e50f668287fd046299f78615885cf7de3eeb14abe5bd34a6481d7d30ea599aef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::constGroup::MissingSource+MissingName+MissingLineOrColumn+MissingUTF16Column","kind":"constGroup","status":"implemented","sigHash":"62c89211d5982e97d9e61d4d1ecbd8604e535ef2dde3259b49e17ef62f2f11a2"}
  *
  * Go source:
  * const (
@@ -94,7 +94,7 @@ export const MissingLineOrColumn: int = -1;
 export const MissingUTF16Column: UTF16Offset = -1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::MappingsDecoder","kind":"type","status":"implemented","sigHash":"6b80851acc4c1c102e5b85dbba34bfce95f220f38579502e12509f8ab28852d9","bodyHash":"ede3b585a4c58ace9bcedd3930b337ed3ffc5d9b8d4ed68cbdd1d2a6eebf56fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::type::MappingsDecoder","kind":"type","status":"implemented","sigHash":"6b80851acc4c1c102e5b85dbba34bfce95f220f38579502e12509f8ab28852d9"}
  *
  * Go source:
  * MappingsDecoder struct {
@@ -126,7 +126,7 @@ export interface MappingsDecoder {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::func::DecodeMappings","kind":"func","status":"implemented","sigHash":"e8b9e010ac156e3ed39bab8d5f56fce4971cdafe43b42658456a53b3a61f25ca","bodyHash":"a31bf2a62ff8e3ffed430f7b41cc483cea93d3d90e69ab2691d60ad8e995b215"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::func::DecodeMappings","kind":"func","status":"implemented","sigHash":"e8b9e010ac156e3ed39bab8d5f56fce4971cdafe43b42658456a53b3a61f25ca"}
  *
  * Go source:
  * func DecodeMappings(mappings string) *MappingsDecoder {
@@ -150,7 +150,7 @@ export function DecodeMappings(mappings: string): GoPtr<MappingsDecoder> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.MappingsString","kind":"method","status":"implemented","sigHash":"22002a7f060723a1bc467a46cdf9fd9faebd14549d8d89f2f7bd719a995b942e","bodyHash":"160c7916a443fcf335fb0d3b56835fd541b0d4c057bdaaad639268f16e30dd70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.MappingsString","kind":"method","status":"implemented","sigHash":"22002a7f060723a1bc467a46cdf9fd9faebd14549d8d89f2f7bd719a995b942e"}
  *
  * Go source:
  * func (d *MappingsDecoder) MappingsString() string {
@@ -163,7 +163,7 @@ export function MappingsDecoder_MappingsString(receiver: GoPtr<MappingsDecoder>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Pos","kind":"method","status":"implemented","sigHash":"00b172d77e2906a84eebc2f4e5f7c83ecab480fb112b60bf8fbc1eacfdc796a5","bodyHash":"69789cfbb727687802c8376ad3c0ccf2f3a4541cc5f697af1e0155304d6db5b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Pos","kind":"method","status":"implemented","sigHash":"00b172d77e2906a84eebc2f4e5f7c83ecab480fb112b60bf8fbc1eacfdc796a5"}
  *
  * Go source:
  * func (d *MappingsDecoder) Pos() int {
@@ -176,7 +176,7 @@ export function MappingsDecoder_Pos(receiver: GoPtr<MappingsDecoder>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Error","kind":"method","status":"implemented","sigHash":"39ec8268c2f1eda2d67a3f92cfdc35c7f64c19639334661b9b6a5842b4c83f13","bodyHash":"64b549f0c4c04afb06d6356be46991ac13e4ee18e58043e1349dcc32c5fe8d36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Error","kind":"method","status":"implemented","sigHash":"39ec8268c2f1eda2d67a3f92cfdc35c7f64c19639334661b9b6a5842b4c83f13"}
  *
  * Go source:
  * func (d *MappingsDecoder) Error() error {
@@ -189,7 +189,7 @@ export function MappingsDecoder_Error(receiver: GoPtr<MappingsDecoder>): GoError
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.State","kind":"method","status":"implemented","sigHash":"5f6a0b9be7446633362e091f562e75addd78adf3a4fafd0b89ffb350b5ca1cfd","bodyHash":"d448ffe448b6d90ab2df5789e86451ef14f84de1aee3f6d6296fdfc057e4a1d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.State","kind":"method","status":"implemented","sigHash":"5f6a0b9be7446633362e091f562e75addd78adf3a4fafd0b89ffb350b5ca1cfd"}
  *
  * Go source:
  * func (d *MappingsDecoder) State() *Mapping {
@@ -202,7 +202,7 @@ export function MappingsDecoder_State(receiver: GoPtr<MappingsDecoder>): GoPtr<M
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Values","kind":"method","status":"implemented","sigHash":"67838f77a79c4b37fdc25503f157263c36153f0cb5705f1a376e313f57ff4d96","bodyHash":"496d2322fc2f88c4da2f65d9ca86017bc3ab67789174a70c8cb7fdb1676d2c4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Values","kind":"method","status":"implemented","sigHash":"67838f77a79c4b37fdc25503f157263c36153f0cb5705f1a376e313f57ff4d96"}
  *
  * Go source:
  * func (d *MappingsDecoder) Values() iter.Seq[*Mapping] {
@@ -227,7 +227,7 @@ export function MappingsDecoder_Values(receiver: GoPtr<MappingsDecoder>): GoSeq<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Next","kind":"method","status":"implemented","sigHash":"ccf40ea0a918018b8468ace2187c3f4d1d5de970e4aa360f3e2f3cb48655532a","bodyHash":"bef82f7154c0312fc75bb07ee24a802feba7368978d3e0d25300a3a7d64149a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.Next","kind":"method","status":"implemented","sigHash":"ccf40ea0a918018b8468ace2187c3f4d1d5de970e4aa360f3e2f3cb48655532a"}
  *
  * Go source:
  * func (d *MappingsDecoder) Next() (value *Mapping, done bool) {
@@ -396,7 +396,7 @@ export function MappingsDecoder_Next(receiver: GoPtr<MappingsDecoder>): [GoPtr<M
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.captureMapping","kind":"method","status":"implemented","sigHash":"6e3a544bc41e17f1b940b715caf942841b26aa9d8a77b854cee17373ac50d584","bodyHash":"77f73a7f0728fc9ffc806ca3889622ea7f93c84296e4b67686ea503540e64f34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.captureMapping","kind":"method","status":"implemented","sigHash":"6e3a544bc41e17f1b940b715caf942841b26aa9d8a77b854cee17373ac50d584"}
  *
  * Go source:
  * func (d *MappingsDecoder) captureMapping(hasSource bool, hasName bool) *Mapping {
@@ -423,7 +423,7 @@ export function MappingsDecoder_captureMapping(receiver: GoPtr<MappingsDecoder>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.stopIterating","kind":"method","status":"implemented","sigHash":"13ddcc69dc018cfda5eeeef426123516fe1390bb318c445c9b4151eee2b43aea","bodyHash":"f2ca4e57d29d2996a9349829729b85fa1e35d04eb77ff6b64c4fe5435b80d3c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.stopIterating","kind":"method","status":"implemented","sigHash":"13ddcc69dc018cfda5eeeef426123516fe1390bb318c445c9b4151eee2b43aea"}
  *
  * Go source:
  * func (d *MappingsDecoder) stopIterating() (*Mapping, bool) {
@@ -438,7 +438,7 @@ export function MappingsDecoder_stopIterating(receiver: GoPtr<MappingsDecoder>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.setError","kind":"method","status":"implemented","sigHash":"ed8930a77b35ebe60f87144c5c98fe304d1963e2aea58ac4e4f1b89e935571e2","bodyHash":"c98afde13c3447b210bd4eabc361265a4df1d9e2379a4ddcd611caad0858f975"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.setError","kind":"method","status":"implemented","sigHash":"ed8930a77b35ebe60f87144c5c98fe304d1963e2aea58ac4e4f1b89e935571e2"}
  *
  * Go source:
  * func (d *MappingsDecoder) setError(err string) {
@@ -451,7 +451,7 @@ export function MappingsDecoder_setError(receiver: GoPtr<MappingsDecoder>, err: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.setErrorAndStopIterating","kind":"method","status":"implemented","sigHash":"cfe8f6c0f97fd4ce078273d5240f6f5814f6a88879fb31448e7e366b7ba50f74","bodyHash":"40b5faa79f1843bd9076b7f267db38fc704abba619671c9c51c5f9141ec1e65b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.setErrorAndStopIterating","kind":"method","status":"implemented","sigHash":"cfe8f6c0f97fd4ce078273d5240f6f5814f6a88879fb31448e7e366b7ba50f74"}
  *
  * Go source:
  * func (d *MappingsDecoder) setErrorAndStopIterating(err string) (*Mapping, bool) {
@@ -466,7 +466,7 @@ export function MappingsDecoder_setErrorAndStopIterating(receiver: GoPtr<Mapping
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.hasReportedError","kind":"method","status":"implemented","sigHash":"a5c3cc5c490b9494e8e6801172b0ced7b9b8eaa86d7ea24123db34982d13e0a9","bodyHash":"48ac7f890c45ed7878823beb2024fbee92f43f1e75b61c46f5c401a725935b19"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.hasReportedError","kind":"method","status":"implemented","sigHash":"a5c3cc5c490b9494e8e6801172b0ced7b9b8eaa86d7ea24123db34982d13e0a9"}
  *
  * Go source:
  * func (d *MappingsDecoder) hasReportedError() bool {
@@ -479,7 +479,7 @@ export function MappingsDecoder_hasReportedError(receiver: GoPtr<MappingsDecoder
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.isSourceMappingSegmentEnd","kind":"method","status":"implemented","sigHash":"52ac435c49ab3189e1dae8dab2a2e595ad1071739bf8311d75dbbf699046c92c","bodyHash":"70324f30876de32a4d57647adc8e26b9686c0236f951551b56b25c2a6fdf1f5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.isSourceMappingSegmentEnd","kind":"method","status":"implemented","sigHash":"52ac435c49ab3189e1dae8dab2a2e595ad1071739bf8311d75dbbf699046c92c"}
  *
  * Go source:
  * func (d *MappingsDecoder) isSourceMappingSegmentEnd() bool {
@@ -492,7 +492,7 @@ export function MappingsDecoder_isSourceMappingSegmentEnd(receiver: GoPtr<Mappin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.base64VLQFormatDecode","kind":"method","status":"implemented","sigHash":"64ab8108a2e98f5654993149b2834f58ef1844f90bfdca9d09f2cb2146615f09","bodyHash":"ef5c5a1002de10c5fc0e9c3f2762498f9ad80e24edd5974ffd4f6988de251fc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::method::MappingsDecoder.base64VLQFormatDecode","kind":"method","status":"implemented","sigHash":"64ab8108a2e98f5654993149b2834f58ef1844f90bfdca9d09f2cb2146615f09"}
  *
  * Go source:
  * func (d *MappingsDecoder) base64VLQFormatDecode() int {
@@ -573,7 +573,7 @@ export function MappingsDecoder_base64VLQFormatDecode(receiver: GoPtr<MappingsDe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::func::base64FormatDecode","kind":"func","status":"implemented","sigHash":"66e128933cd210a92ab84896028cfcdd0152d9dc20764060f57cfb94d196e988","bodyHash":"0c87c8713847c4d4f49892f4935df81a6bd7bf9bffd36de602568ba420fe51a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/decoder.go::func::base64FormatDecode","kind":"func","status":"implemented","sigHash":"66e128933cd210a92ab84896028cfcdd0152d9dc20764060f57cfb94d196e988"}
  *
  * Go source:
  * func base64FormatDecode(ch byte) int {

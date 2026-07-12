@@ -58,7 +58,7 @@ import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, 
 import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxFlags","kind":"type","status":"implemented","sigHash":"bf33d850d9ce92d74d7ae47047276dff2682895a11571cf45456cd974c50ef00","bodyHash":"6beb053f234184782603299db6a5ebc5ec000ad404b32524fb1c92e5141e8b33"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxFlags","kind":"type","status":"implemented","sigHash":"bf33d850d9ce92d74d7ae47047276dff2682895a11571cf45456cd974c50ef00"}
  *
  * Go source:
  * JsxFlags uint32
@@ -66,7 +66,7 @@ import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 export type JsxFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::constGroup::JsxFlagsNone+JsxFlagsIntrinsicNamedElement+JsxFlagsIntrinsicIndexedElement+JsxFlagsIntrinsicElement","kind":"constGroup","status":"implemented","sigHash":"7a9eeec3e804d8353742f875ba4a2dcd2218774fab234381fe8a31d6c49da6bd","bodyHash":"0dd251742629c9e8f0868e96a86efc568ba9f72c096c6a064713693b29b88022"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::constGroup::JsxFlagsNone+JsxFlagsIntrinsicNamedElement+JsxFlagsIntrinsicIndexedElement+JsxFlagsIntrinsicElement","kind":"constGroup","status":"implemented","sigHash":"7a9eeec3e804d8353742f875ba4a2dcd2218774fab234381fe8a31d6c49da6bd"}
  *
  * Go source:
  * const (
@@ -82,7 +82,7 @@ export const JsxFlagsIntrinsicIndexedElement: JsxFlags = 1 << 1; // An element i
 export const JsxFlagsIntrinsicElement: JsxFlags = JsxFlagsIntrinsicNamedElement | JsxFlagsIntrinsicIndexedElement;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxReferenceKind","kind":"type","status":"implemented","sigHash":"1fcb3c60296f4a6f995ef61b89118eded6ec4813661a4c5d11b4718a125dcd72","bodyHash":"3eedc6abaf27bb625328daffbc14cce3f3d5fb1cf9ebbc6ec634e40e62eb52e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxReferenceKind","kind":"type","status":"implemented","sigHash":"1fcb3c60296f4a6f995ef61b89118eded6ec4813661a4c5d11b4718a125dcd72"}
  *
  * Go source:
  * JsxReferenceKind int32
@@ -90,7 +90,7 @@ export const JsxFlagsIntrinsicElement: JsxFlags = JsxFlagsIntrinsicNamedElement 
 export type JsxReferenceKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::constGroup::JsxReferenceKindComponent+JsxReferenceKindFunction+JsxReferenceKindMixed","kind":"constGroup","status":"implemented","sigHash":"8395fc0dce29dcb7bb7e30875e0c6c5269bb68f922c8fd052117f4f21fd54c2e","bodyHash":"43403e0116a9645d9969cc7604c37db50249611b1d2c23d51c519363fcafd1d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::constGroup::JsxReferenceKindComponent+JsxReferenceKindFunction+JsxReferenceKindMixed","kind":"constGroup","status":"implemented","sigHash":"8395fc0dce29dcb7bb7e30875e0c6c5269bb68f922c8fd052117f4f21fd54c2e"}
  *
  * Go source:
  * const (
@@ -104,7 +104,7 @@ export const JsxReferenceKindFunction: JsxReferenceKind = 1;
 export const JsxReferenceKindMixed: JsxReferenceKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxElementLinks","kind":"type","status":"implemented","sigHash":"d81c56a8aa08a556972740152d03817c4738374e6bb8105a3547dd69b83d8dff","bodyHash":"10ee2170b598628808e9b8d5a0cf1123243f76c56275ccf73fb9c8a69b3efe8d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxElementLinks","kind":"type","status":"implemented","sigHash":"d81c56a8aa08a556972740152d03817c4738374e6bb8105a3547dd69b83d8dff"}
  *
  * Go source:
  * JsxElementLinks struct {
@@ -122,7 +122,7 @@ export interface JsxElementLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::varGroup::JsxNames","kind":"varGroup","status":"implemented","sigHash":"dca4d24c3bd7db61e7f749fb11091e88ec54d6fcfae458c0c4b1b94ada65f173","bodyHash":"0af300b61fb82f1e86c6f0a27b1bd915e397ae5727f268035789eb365e998856"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::varGroup::JsxNames","kind":"varGroup","status":"implemented","sigHash":"dca4d24c3bd7db61e7f749fb11091e88ec54d6fcfae458c0c4b1b94ada65f173"}
  *
  * Go source:
  * var JsxNames = struct {
@@ -163,7 +163,7 @@ export let JsxNames: { JSX: string; IntrinsicElements: string; ElementClass: str
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::varGroup::ReactNames","kind":"varGroup","status":"implemented","sigHash":"5615270f6b4ccbaee444c95866486e1c6d7cdef97592ced0c2b4ba9166185b44","bodyHash":"2cd0d1c72c2573a72915556bb05a2818f9bfb8e7b23c82ea526bd6385922caa0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::varGroup::ReactNames","kind":"varGroup","status":"implemented","sigHash":"5615270f6b4ccbaee444c95866486e1c6d7cdef97592ced0c2b4ba9166185b44"}
  *
  * Go source:
  * var ReactNames = struct {
@@ -177,7 +177,7 @@ export let ReactNames: { Fragment: string } = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxElement","kind":"method","status":"implemented","sigHash":"e093a24af5a87fcca323c5071144df7899f4409d34c04dd60a9d108d8cb7f5cf","bodyHash":"b6cd338af822f02712d611c3196706b3c3b11d2cad33ce6bf643866933e39b8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxElement","kind":"method","status":"implemented","sigHash":"e093a24af5a87fcca323c5071144df7899f4409d34c04dd60a9d108d8cb7f5cf"}
  *
  * Go source:
  * func (c *Checker) checkJsxElement(node *ast.Node, checkMode CheckMode) *Type {
@@ -191,7 +191,7 @@ export function Checker_checkJsxElement(receiver: GoPtr<Checker>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxElementDeferred","kind":"method","status":"implemented","sigHash":"a7e02d168cee553a3c3c07e2b0ffe8ee4d886ecc25a78c27dd752d800fe92857","bodyHash":"451589fd0bbca8f111705d25784870940f0ca91fde677ba9668d90e623874b85"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxElementDeferred","kind":"method","status":"implemented","sigHash":"a7e02d168cee553a3c3c07e2b0ffe8ee4d886ecc25a78c27dd752d800fe92857"}
  *
  * Go source:
  * func (c *Checker) checkJsxElementDeferred(node *ast.Node) {
@@ -219,7 +219,7 @@ export function Checker_checkJsxElementDeferred(receiver: GoPtr<Checker>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxExpression","kind":"method","status":"implemented","sigHash":"642441e383ca2157826529cd8807460e7d728bfc87f09b266cd108a9fa33d574","bodyHash":"b6e7b9c13078a64dae3193ef8115c5af2c166b7a9ade2c4b83fef36c88549133"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxExpression","kind":"method","status":"implemented","sigHash":"642441e383ca2157826529cd8807460e7d728bfc87f09b266cd108a9fa33d574"}
  *
  * Go source:
  * func (c *Checker) checkJsxExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -247,7 +247,7 @@ export function Checker_checkJsxExpression(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxSelfClosingElement","kind":"method","status":"implemented","sigHash":"84e12a25933dc97a674f04b4c96df1fc2c80105336a887455d8f2fac392bb9d7","bodyHash":"bcc1693324e67d97653041e48548dfd475bda24e78cbc565202a53b8974a8266"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxSelfClosingElement","kind":"method","status":"implemented","sigHash":"84e12a25933dc97a674f04b4c96df1fc2c80105336a887455d8f2fac392bb9d7"}
  *
  * Go source:
  * func (c *Checker) checkJsxSelfClosingElement(node *ast.Node, checkMode CheckMode) *Type {
@@ -261,7 +261,7 @@ export function Checker_checkJsxSelfClosingElement(receiver: GoPtr<Checker>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxSelfClosingElementDeferred","kind":"method","status":"implemented","sigHash":"93519f6e6e8483084d9f3095878752a2b33e272941b3c21a3563332c951c9859","bodyHash":"5724601ecebedd7197aa957e89297297a3170d0c239dca0366be989cec2ae1c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxSelfClosingElementDeferred","kind":"method","status":"implemented","sigHash":"93519f6e6e8483084d9f3095878752a2b33e272941b3c21a3563332c951c9859"}
  *
  * Go source:
  * func (c *Checker) checkJsxSelfClosingElementDeferred(node *ast.Node) {
@@ -273,7 +273,7 @@ export function Checker_checkJsxSelfClosingElementDeferred(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxFragment","kind":"method","status":"implemented","sigHash":"726a1f3d86fbe9a9e0abdf623bb03a0b13d9471a53a65a0da48adbc68728e256","bodyHash":"6879d8646c38020b6f59868853d2f69e2e5ba88449f30855d364905967c8b1ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxFragment","kind":"method","status":"implemented","sigHash":"726a1f3d86fbe9a9e0abdf623bb03a0b13d9471a53a65a0da48adbc68728e256"}
  *
  * Go source:
  * func (c *Checker) checkJsxFragment(node *ast.Node) *Type {
@@ -309,7 +309,7 @@ export function Checker_checkJsxFragment(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttributes","kind":"method","status":"implemented","sigHash":"82416eae2418c55e1a0f7f3222f2d070c3b0cbfed5abeb68787bfc07f2ca3819","bodyHash":"58d8b3cfbeab9a72599ab3596e5d7f3aaa6ebac01682916987a7d442a3349226"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttributes","kind":"method","status":"implemented","sigHash":"82416eae2418c55e1a0f7f3222f2d070c3b0cbfed5abeb68787bfc07f2ca3819"}
  *
  * Go source:
  * func (c *Checker) checkJsxAttributes(node *ast.Node, checkMode CheckMode) *Type {
@@ -321,7 +321,7 @@ export function Checker_checkJsxAttributes(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxOpeningLikeElementOrOpeningFragment","kind":"method","status":"implemented","sigHash":"852b0e25ae1ce9d3e69d23da4363182b2320bbe3eaebb580f52961acc5299a85","bodyHash":"bd09d8264da69690fd3da9831f49626368e7ac652f25374100063e3243a08716"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxOpeningLikeElementOrOpeningFragment","kind":"method","status":"implemented","sigHash":"852b0e25ae1ce9d3e69d23da4363182b2320bbe3eaebb580f52961acc5299a85"}
  *
  * Go source:
  * func (c *Checker) checkJsxOpeningLikeElementOrOpeningFragment(node *ast.Node) {
@@ -383,7 +383,7 @@ export function Checker_checkJsxOpeningLikeElementOrOpeningFragment(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxPreconditions","kind":"method","status":"implemented","sigHash":"56b00c0d7bded8adfd1acbfa47aeafeb4fda138a79650b572f85d792e9881819","bodyHash":"3161db6a4f7983a8a39451b7201d4a4f80b9b113d863f059f8678a87fd60db1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxPreconditions","kind":"method","status":"implemented","sigHash":"56b00c0d7bded8adfd1acbfa47aeafeb4fda138a79650b572f85d792e9881819"}
  *
  * Go source:
  * func (c *Checker) checkJsxPreconditions(errorNode *ast.Node) {
@@ -407,7 +407,7 @@ export function Checker_checkJsxPreconditions(receiver: GoPtr<Checker>, errorNod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxReturnAssignableToAppropriateBound","kind":"method","status":"implemented","sigHash":"136c323163f21b619e5969f01bb526f508fa742f03f0f7ae7fd983c1abc51441","bodyHash":"c36333fbf3b07c60d311f5c5b1e9032c1ff71e5b92b94c255aa73abde57e3621"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxReturnAssignableToAppropriateBound","kind":"method","status":"implemented","sigHash":"136c323163f21b619e5969f01bb526f508fa742f03f0f7ae7fd983c1abc51441"}
  *
  * Go source:
  * func (c *Checker) checkJsxReturnAssignableToAppropriateBound(refKind JsxReferenceKind, elemInstanceType *Type, openingLikeElement *ast.Node) {
@@ -473,7 +473,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"implemented","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102","bodyHash":"20174532fdbd2a02cf9e4286d4f514f1d9ae294d7d10c761caf1be42cce6c20d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"implemented","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102"}
  *
  * Go source:
  * func (c *Checker) inferJsxTypeArguments(node *ast.Node, signature *Signature, checkMode CheckMode, context *InferenceContext) []*Type {
@@ -491,7 +491,7 @@ export function Checker_inferJsxTypeArguments(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForJsxExpression","kind":"method","status":"implemented","sigHash":"9bbb93ae013d74d55e40cb0fdf3793bc7a05b76af917194e0cbf7dbf743d792e","bodyHash":"b13c10fd3b9ba407cfb05577125421aed34d9c98cb540ad9e8b9d149207fe940"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForJsxExpression","kind":"method","status":"implemented","sigHash":"9bbb93ae013d74d55e40cb0fdf3793bc7a05b76af917194e0cbf7dbf743d792e"}
  *
  * Go source:
  * func (c *Checker) getContextualTypeForJsxExpression(node *ast.Node, contextFlags ContextFlags) *Type {
@@ -515,7 +515,7 @@ export function Checker_getContextualTypeForJsxExpression(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForJsxAttribute","kind":"method","status":"implemented","sigHash":"e7232c6fc47c24b1399b1aee875ee432bffc847dcc3d0c000b77eeabe367b0e7","bodyHash":"a65e1cf31a8f1efe8d91c8118a6c24e0b557feb9d623c3ec832f3ce78b911934"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForJsxAttribute","kind":"method","status":"implemented","sigHash":"e7232c6fc47c24b1399b1aee875ee432bffc847dcc3d0c000b77eeabe367b0e7"}
  *
  * Go source:
  * func (c *Checker) getContextualTypeForJsxAttribute(attribute *ast.Node, contextFlags ContextFlags) *Type {
@@ -547,7 +547,7 @@ export function Checker_getContextualTypeForJsxAttribute(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualJsxElementAttributesType","kind":"method","status":"implemented","sigHash":"e73be151003692a4f183b6ea3f1f455ed9bad316db58c9aa054a6b940567614e","bodyHash":"ddba78fb6d90a5210ca93f9450ab04b3286a9570af5d234dabaa9e7e96745acd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualJsxElementAttributesType","kind":"method","status":"implemented","sigHash":"e73be151003692a4f183b6ea3f1f455ed9bad316db58c9aa054a6b940567614e"}
  *
  * Go source:
  * func (c *Checker) getContextualJsxElementAttributesType(node *ast.Node, contextFlags ContextFlags) *Type {
@@ -577,7 +577,7 @@ export function Checker_getContextualJsxElementAttributesType(receiver: GoPtr<Ch
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForChildJsxExpression","kind":"method","status":"implemented","sigHash":"882c3475fc496d740d9b969161159595b69dd080b1bb30cd4fa5289b323700ce","bodyHash":"2f5a1afcf48397c01929f29ec5dfa44dccef78dfe5a952890ac932ab9cc1f930"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getContextualTypeForChildJsxExpression","kind":"method","status":"implemented","sigHash":"882c3475fc496d740d9b969161159595b69dd080b1bb30cd4fa5289b323700ce"}
  *
  * Go source:
  * func (c *Checker) getContextualTypeForChildJsxExpression(node *ast.Node, child *ast.JsxChild, contextFlags ContextFlags) *Type {
@@ -629,7 +629,7 @@ export function Checker_getContextualTypeForChildJsxExpression(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.discriminateContextualTypeByJSXAttributes","kind":"method","status":"implemented","sigHash":"080f008bcde6844d0a881a7365fce752c271c4d2dc0eee32b4b7f9463238dbbb","bodyHash":"8c200baa7afd6095b10f5e1638d9fa7e82a31d9c3c624806074584802781f266"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.discriminateContextualTypeByJSXAttributes","kind":"method","status":"implemented","sigHash":"080f008bcde6844d0a881a7365fce752c271c4d2dc0eee32b4b7f9463238dbbb"}
  *
  * Go source:
  * func (c *Checker) discriminateContextualTypeByJSXAttributes(node *ast.Node, contextualType *Type) *Type {
@@ -700,7 +700,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateJsxComponents","kind":"method","status":"implemented","sigHash":"fdb4c5ff5495c4adc0249f62b1b3552a14f6fdfb14afed9304ba0942825fb7b4","bodyHash":"870408902dc7c2885dda20a0428d5858581b6817c9fe69362e49403b7116481f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateJsxComponents","kind":"method","status":"implemented","sigHash":"fdb4c5ff5495c4adc0249f62b1b3552a14f6fdfb14afed9304ba0942825fb7b4"}
  *
  * Go source:
  * func (c *Checker) elaborateJsxComponents(node *ast.Node, source *Type, target *Type, relation *Relation, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -846,7 +846,7 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxElaborationElement","kind":"type","status":"implemented","sigHash":"763107e270ca9709f579aa66ea96e1afd98e47a75dd1edea618bb89d40c0916b","bodyHash":"a23946421a908d1e0e2a0c2cd50666f690b349d58c01c69d702bca27833d0e48"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxElaborationElement","kind":"type","status":"implemented","sigHash":"763107e270ca9709f579aa66ea96e1afd98e47a75dd1edea618bb89d40c0916b"}
  *
  * Go source:
  * JsxElaborationElement struct {
@@ -864,7 +864,7 @@ export interface JsxElaborationElement {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"implemented","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c","bodyHash":"77c725595328ecf8a43861623fca68bfaaf1132889a73bfd45d52a7b63a59f20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"implemented","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c"}
  *
  * Go source:
  * func (c *Checker) generateJsxChildren(node *ast.Node, getInvalidTextDiagnostic func() (*diagnostics.Message, []any)) iter.Seq[JsxElaborationElement] {
@@ -904,7 +904,7 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getElaborationElementForJsxChild","kind":"method","status":"implemented","sigHash":"cfcaf07f3e077794d0dba0009a45bd038dfafa42dbb6a55125b2b36bab290e2d","bodyHash":"2629f5d69170ac491f374875c47fce5a9c2742a5e29c84cc42a516660ef4c7fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getElaborationElementForJsxChild","kind":"method","status":"implemented","sigHash":"cfcaf07f3e077794d0dba0009a45bd038dfafa42dbb6a55125b2b36bab290e2d"}
  *
  * Go source:
  * func (c *Checker) getElaborationElementForJsxChild(child *ast.Node, nameType *Type, getInvalidTextDiagnostic func() (*diagnostics.Message, []any)) JsxElaborationElement {
@@ -964,7 +964,7 @@ export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateIterableOrArrayLikeTargetElementwise","kind":"method","status":"implemented","sigHash":"fbf41ffb15006925c2ca4e737bfa290ed00be17bfa98e667b9059860572f981e","bodyHash":"7cda1252005d6e8487dfca7c692b8ac78e882cb116e210a1516624cd74c35ec6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateIterableOrArrayLikeTargetElementwise","kind":"method","status":"implemented","sigHash":"fbf41ffb15006925c2ca4e737bfa290ed00be17bfa98e667b9059860572f981e"}
  *
  * Go source:
  * func (c *Checker) elaborateIterableOrArrayLikeTargetElementwise(iterator iter.Seq[JsxElaborationElement], source *Type, target *Type, relation *Relation, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -1095,7 +1095,7 @@ export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getSuggestedSymbolForNonexistentJSXAttribute","kind":"method","status":"implemented","sigHash":"5ed45ea8b4c54a6be9bb80c1b28aeb6039c500d5495a6cf2ee9ac93671fbf3bb","bodyHash":"33276b8de3bfd12a576ab4698dd3a3b1c860406f999e098bdfb1514d5c9b2855"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getSuggestedSymbolForNonexistentJSXAttribute","kind":"method","status":"implemented","sigHash":"5ed45ea8b4c54a6be9bb80c1b28aeb6039c500d5495a6cf2ee9ac93671fbf3bb"}
  *
  * Go source:
  * func (c *Checker) getSuggestedSymbolForNonexistentJSXAttribute(name string, containingType *Type) *ast.Symbol {
@@ -1131,7 +1131,7 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJSXFragmentType","kind":"method","status":"implemented","sigHash":"77ea16688774cdad4fdb6c48280b094b58be6bfc2c6ef14cd24f28c2da973086","bodyHash":"21621091cbe027655aa939b3051d85248f03914815783b8c1a2fcd49e95fdb19"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJSXFragmentType","kind":"method","status":"implemented","sigHash":"77ea16688774cdad4fdb6c48280b094b58be6bfc2c6ef14cd24f28c2da973086"}
  *
  * Go source:
  * func (c *Checker) getJSXFragmentType(node *ast.Node) *Type {
@@ -1222,7 +1222,7 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9","bodyHash":"f0d05870cc795a0298e7de4b62bc99ae48664d3a9bf2526a78f340e55b0b065f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9"}
  *
  * Go source:
  * func (c *Checker) resolveJsxOpeningLikeElement(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -1317,7 +1317,7 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"implemented","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0","bodyHash":"0f1c831ad8b7bbb5626c05e117b889664970b3b598bc63bf8ec933fb542aa9d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"implemented","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0"}
  *
  * Go source:
  * func (c *Checker) checkApplicableSignatureForJsxCallLikeElement(node *ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -1536,7 +1536,7 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"implemented","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94","bodyHash":"36cc949a1bd0733901e68380c392d08b1634c465ea17f1b09f192e6ebef40c6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"implemented","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94"}
  *
  * Go source:
  * func (c *Checker) createJsxAttributesTypeFromAttributesProperty(openingLikeElement *ast.Node, checkMode CheckMode) *Type {
@@ -1860,7 +1860,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"implemented","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3","bodyHash":"4503d6dd87c16cd6bd3f163626097723e1411dd9723368e38cba4c344c3bc4fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"implemented","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3"}
  *
  * Go source:
  * func (c *Checker) checkJsxAttribute(node *ast.Node, checkMode CheckMode) *Type {
@@ -1880,7 +1880,7 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"implemented","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9","bodyHash":"fd91d770e52747679b729e2e11ca54f8bcf6c2c4628bfbc20a50158acec92430"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"implemented","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9"}
  *
  * Go source:
  * func (c *Checker) checkJsxChildren(node *ast.Node, checkMode CheckMode) []*Type {
@@ -1922,7 +1922,7 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType","kind":"method","status":"implemented","sigHash":"b221f9824a63e36f8f29b3b19c401bfd294187381de96d86fe8a192d3ef0f296","bodyHash":"0de4734eee222b49d4a5b6299d2651198c7dc940a76f8a2f67ea20685764a671"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType","kind":"method","status":"implemented","sigHash":"b221f9824a63e36f8f29b3b19c401bfd294187381de96d86fe8a192d3ef0f296"}
  *
  * Go source:
  * func (c *Checker) getUninstantiatedJsxSignaturesOfType(elementType *Type, caller *ast.Node) []*Signature {
@@ -1984,7 +1984,7 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"implemented","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426","bodyHash":"295bdf9e42d624bbe827a9708278fa8e19cec6602d5fe47263c378b61a5f0734"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"implemented","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426"}
  *
  * Go source:
  * func (c *Checker) getEffectiveFirstArgumentForJsxSignature(signature *Signature, node *ast.Node) *Type {
@@ -2002,7 +2002,7 @@ export function Checker_getEffectiveFirstArgumentForJsxSignature(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeFromCallSignature","kind":"method","status":"implemented","sigHash":"dc0a70e58c258c8b8bfa7fbe3ef28343b9dcaae6c237e137eed9841b66ae6649","bodyHash":"90f18b46342679f0663dc38957600099235a850ad9fc109b8ecc5fdfd0951e52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeFromCallSignature","kind":"method","status":"implemented","sigHash":"dc0a70e58c258c8b8bfa7fbe3ef28343b9dcaae6c237e137eed9841b66ae6649"}
  *
  * Go source:
  * func (c *Checker) getJsxPropsTypeFromCallSignature(sig *Signature, context *ast.Node) *Type {
@@ -2026,7 +2026,7 @@ export function Checker_getJsxPropsTypeFromCallSignature(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeFromClassType","kind":"method","status":"implemented","sigHash":"b9d19a2382da043f267e814000900dfff1d5a587913a87bf8c54e9bc525679d8","bodyHash":"9ee861da827f16d43005b14c49afbc9a5aaf881b1d35bcc0c24fae6152377b3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeFromClassType","kind":"method","status":"implemented","sigHash":"b9d19a2382da043f267e814000900dfff1d5a587913a87bf8c54e9bc525679d8"}
  *
  * Go source:
  * func (c *Checker) getJsxPropsTypeFromClassType(sig *Signature, context *ast.Node) *Type {
@@ -2123,7 +2123,7 @@ export function Checker_getJsxPropsTypeFromClassType(receiver: GoPtr<Checker>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeForSignatureFromMember","kind":"method","status":"implemented","sigHash":"04efed6f16af5c285ddbf0f182f3c8236a90a9a6ab0753650d35b6b2df50f3cf","bodyHash":"149aad248d56467c0c5254ed2703cc3c57e269f9c7b1d539156a74620a81ef64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxPropsTypeForSignatureFromMember","kind":"method","status":"implemented","sigHash":"04efed6f16af5c285ddbf0f182f3c8236a90a9a6ab0753650d35b6b2df50f3cf"}
  *
  * Go source:
  * func (c *Checker) getJsxPropsTypeForSignatureFromMember(sig *Signature, forcedLookupLocation string) *Type {
@@ -2185,7 +2185,7 @@ export function Checker_getJsxPropsTypeForSignatureFromMember(receiver: GoPtr<Ch
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxManagedAttributesFromLocatedAttributes","kind":"method","status":"implemented","sigHash":"84a0090e3e787ebd6cae8c3af37f968bfcf0ca780af65b85b33581222a346c77","bodyHash":"edf05f261e97701ddb0f4c94ebe3521877a485f069b3c9701e99fb60e2252d6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxManagedAttributesFromLocatedAttributes","kind":"method","status":"implemented","sigHash":"84a0090e3e787ebd6cae8c3af37f968bfcf0ca780af65b85b33581222a346c77"}
  *
  * Go source:
  * func (c *Checker) getJsxManagedAttributesFromLocatedAttributes(context *ast.Node, ns *ast.Symbol, attributesType *Type) *Type {
@@ -2213,7 +2213,7 @@ export function Checker_getJsxManagedAttributesFromLocatedAttributes(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.instantiateAliasOrInterfaceWithDefaults","kind":"method","status":"implemented","sigHash":"2c5fb9ea101c19494e0b3f14fb32b8b0a3c40082f874baa2a32245863d47095b","bodyHash":"527e9a6cdc423ee173ce39cec603dd058c829b44eeed4ce86ba637fda05fbbc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.instantiateAliasOrInterfaceWithDefaults","kind":"method","status":"implemented","sigHash":"2c5fb9ea101c19494e0b3f14fb32b8b0a3c40082f874baa2a32245863d47095b"}
  *
  * Go source:
  * func (c *Checker) instantiateAliasOrInterfaceWithDefaults(managedSym *ast.Symbol, typeArguments []*Type, inJavaScript bool) *Type {
@@ -2258,7 +2258,7 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxLibraryManagedAttributes","kind":"method","status":"implemented","sigHash":"947ab254d781e129b3fe0778fb90d6fd40df3babe91f38fdfb5677ba18abc0a8","bodyHash":"72d9652a32eb4959b3a452b140a272c60db938f2ebc8f5fcf343695c52cc21e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxLibraryManagedAttributes","kind":"method","status":"implemented","sigHash":"947ab254d781e129b3fe0778fb90d6fd40df3babe91f38fdfb5677ba18abc0a8"}
  *
  * Go source:
  * func (c *Checker) getJsxLibraryManagedAttributes(jsxNamespace *ast.Symbol) *ast.Symbol {
@@ -2276,7 +2276,7 @@ export function Checker_getJsxLibraryManagedAttributes(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeSymbol","kind":"method","status":"implemented","sigHash":"e2761a879f89c06b650455d7e805a8673126a9d051af2af37bb9aeadf240cecf","bodyHash":"0c13707cd1637b313083f3296786477d73c22059afe670157e2f4cea94f52f55"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeSymbol","kind":"method","status":"implemented","sigHash":"e2761a879f89c06b650455d7e805a8673126a9d051af2af37bb9aeadf240cecf"}
  *
  * Go source:
  * func (c *Checker) getJsxElementTypeSymbol(jsxNamespace *ast.Symbol) *ast.Symbol {
@@ -2295,7 +2295,7 @@ export function Checker_getJsxElementTypeSymbol(receiver: GoPtr<Checker>, jsxNam
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementPropertiesName","kind":"method","status":"implemented","sigHash":"7af944361b07b95426e6d76d8de7c102d44a94b013868d82976b1dbc48e44b39","bodyHash":"6859cef2c9e5f0082b1d6aa9f286ec38e08309d430d300a65fcc208237790798"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementPropertiesName","kind":"method","status":"implemented","sigHash":"7af944361b07b95426e6d76d8de7c102d44a94b013868d82976b1dbc48e44b39"}
  *
  * Go source:
  * func (c *Checker) getJsxElementPropertiesName(jsxNamespace *ast.Symbol) string {
@@ -2307,7 +2307,7 @@ export function Checker_getJsxElementPropertiesName(receiver: GoPtr<Checker>, js
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementChildrenPropertyName","kind":"method","status":"implemented","sigHash":"efab044b8cd7acfbcb49200e5d8bde56d4fe8d3bc5c998643abc74a3bcadf215","bodyHash":"eb42261790dc9f9d631e297e7960d6b18276e8467e4042af54ee3bc601c4a08e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementChildrenPropertyName","kind":"method","status":"implemented","sigHash":"efab044b8cd7acfbcb49200e5d8bde56d4fe8d3bc5c998643abc74a3bcadf215"}
  *
  * Go source:
  * func (c *Checker) getJsxElementChildrenPropertyName(jsxNamespace *ast.Symbol) string {
@@ -2326,7 +2326,7 @@ export function Checker_getJsxElementChildrenPropertyName(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getNameFromJsxElementAttributesContainer","kind":"method","status":"implemented","sigHash":"97d202914c4acbdc8a24f33a3f395bd8fa49b88b40ffd056fa6da42ed495e508","bodyHash":"a00583785f29b343c9b03bbc23bfcb7ac2ddd4274ee91d6986dcb2ad5eb41fc4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getNameFromJsxElementAttributesContainer","kind":"method","status":"implemented","sigHash":"97d202914c4acbdc8a24f33a3f395bd8fa49b88b40ffd056fa6da42ed495e508"}
  *
  * Go source:
  * func (c *Checker) getNameFromJsxElementAttributesContainer(nameOfAttribPropContainer string, jsxNamespace *ast.Symbol) string {
@@ -2373,7 +2373,7 @@ export function Checker_getNameFromJsxElementAttributesContainer(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getStaticTypeOfReferencedJsxConstructor","kind":"method","status":"implemented","sigHash":"954126eee445e9b4ea85f12ac0f26e9dd10a77fb2b7d02151f86199b0656617a","bodyHash":"f9d373c4da80341d04222c8975e5f8bfd8a2b42c44c14aa9cff3358d0a2d6e38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getStaticTypeOfReferencedJsxConstructor","kind":"method","status":"implemented","sigHash":"954126eee445e9b4ea85f12ac0f26e9dd10a77fb2b7d02151f86199b0656617a"}
  *
  * Go source:
  * func (c *Checker) getStaticTypeOfReferencedJsxConstructor(context *ast.Node) *Type {
@@ -2419,7 +2419,7 @@ export function Checker_getStaticTypeOfReferencedJsxConstructor(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicAttributesTypeFromStringLiteralType","kind":"method","status":"implemented","sigHash":"4aaca5a95b4f56cc1af348109435106f12e1f7653f906458857fa8ee4836a16d","bodyHash":"4f53bd550febdaca9e461ce5bd12fd2a2a0d7914ee55b9ef7b63440c618303f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicAttributesTypeFromStringLiteralType","kind":"method","status":"implemented","sigHash":"4aaca5a95b4f56cc1af348109435106f12e1f7653f906458857fa8ee4836a16d"}
  *
  * Go source:
  * func (c *Checker) getIntrinsicAttributesTypeFromStringLiteralType(t *Type, location *ast.Node) *Type {
@@ -2462,7 +2462,7 @@ export function Checker_getIntrinsicAttributesTypeFromStringLiteralType(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxReferenceKind","kind":"method","status":"implemented","sigHash":"606fdd55ebcb1761241f81eacccadc7345505e588ee5a3f85947bfeae581fa36","bodyHash":"ea6208927aa1849b98142048d49389f22c66fb6ab5c2ab3cfc27b0a167e853ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxReferenceKind","kind":"method","status":"implemented","sigHash":"606fdd55ebcb1761241f81eacccadc7345505e588ee5a3f85947bfeae581fa36"}
  *
  * Go source:
  * func (c *Checker) getJsxReferenceKind(node *ast.Node) JsxReferenceKind {
@@ -2494,7 +2494,7 @@ export function Checker_getJsxReferenceKind(receiver: GoPtr<Checker>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createSignatureForJSXIntrinsic","kind":"method","status":"implemented","sigHash":"a70781bce242ba67d5421d91500ffa2736c6858a85eba9c4de6ba6047b00597a","bodyHash":"1a7d81a1c076491239e2f5aed3ec6c1eb6b260947aa232c09a6c9ab1dcaf2018"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createSignatureForJSXIntrinsic","kind":"method","status":"implemented","sigHash":"a70781bce242ba67d5421d91500ffa2736c6858a85eba9c4de6ba6047b00597a"}
  *
  * Go source:
  * func (c *Checker) createSignatureForJSXIntrinsic(node *ast.Node, result *Type) *Signature {
@@ -2528,7 +2528,7 @@ export function Checker_createSignatureForJSXIntrinsic(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicAttributesTypeFromJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"29e3be6469930ce3ba51c0f4958a577be88e4bba16d0fbb71a3817b6bbc1866e","bodyHash":"3d074b6b267651537229248017388a13cef0d42cadb68f5a7c2e5ec1004ed5a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicAttributesTypeFromJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"29e3be6469930ce3ba51c0f4958a577be88e4bba16d0fbb71a3817b6bbc1866e"}
  *
  * Go source:
  * func (c *Checker) getIntrinsicAttributesTypeFromJsxOpeningLikeElement(node *ast.Node) *Type {
@@ -2576,7 +2576,7 @@ export function Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicTagSymbol","kind":"method","status":"implemented","sigHash":"8c2d4aa9a6eae60cdb430adae6151234e3d41d583ea4d0f03075439367458c77","bodyHash":"6e61020629021364f0db9e5e947e8f7bf6fcd82fa6288bc64c9df17c48d3a69d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicTagSymbol","kind":"method","status":"implemented","sigHash":"8c2d4aa9a6eae60cdb430adae6151234e3d41d583ea4d0f03075439367458c77"}
  *
  * Go source:
  * func (c *Checker) getIntrinsicTagSymbol(node *ast.Node) *ast.Symbol {
@@ -2666,7 +2666,7 @@ export function Checker_getIntrinsicTagSymbol(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxStatelessElementTypeAt","kind":"method","status":"implemented","sigHash":"ab86987c90270e83abd1264a0fe16f7e95f48310c13b5aed54d11ecac003064b","bodyHash":"15f035e2932e227cc36455a437fc673ed8bf1fbefd742d6025f4a273ffd97347"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxStatelessElementTypeAt","kind":"method","status":"implemented","sigHash":"ab86987c90270e83abd1264a0fe16f7e95f48310c13b5aed54d11ecac003064b"}
  *
  * Go source:
  * func (c *Checker) getJsxStatelessElementTypeAt(location *ast.Node) *Type {
@@ -2686,7 +2686,7 @@ export function Checker_getJsxStatelessElementTypeAt(receiver: GoPtr<Checker>, l
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementClassTypeAt","kind":"method","status":"implemented","sigHash":"3871a7d74bdcb43c6957800d8f85949f3b56ea3db9eb13883d69cbc7ca1453ec","bodyHash":"20cfff63e745a91580dbb87357a6c664ea9fad1a361b6a8138a4bc97a2c90a69"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementClassTypeAt","kind":"method","status":"implemented","sigHash":"3871a7d74bdcb43c6957800d8f85949f3b56ea3db9eb13883d69cbc7ca1453ec"}
  *
  * Go source:
  * func (c *Checker) getJsxElementClassTypeAt(location *ast.Node) *Type {
@@ -2706,7 +2706,7 @@ export function Checker_getJsxElementClassTypeAt(receiver: GoPtr<Checker>, locat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeAt","kind":"method","status":"implemented","sigHash":"d63e42785400ff1a4236db566fd27627f1479ab046d88ce32091178e0d7ff3c5","bodyHash":"2fab698e3c6ccd7df906d98d8a3a0214f0c39436c9a8c48822e36c5d3d31f7ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeAt","kind":"method","status":"implemented","sigHash":"d63e42785400ff1a4236db566fd27627f1479ab046d88ce32091178e0d7ff3c5"}
  *
  * Go source:
  * func (c *Checker) getJsxElementTypeAt(location *ast.Node) *Type {
@@ -2718,7 +2718,7 @@ export function Checker_getJsxElementTypeAt(receiver: GoPtr<Checker>, location: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeTypeAt","kind":"method","status":"implemented","sigHash":"bd88e72517b694cd7e59131748f448873117a5e72ceb3f947f47ed2766b98659","bodyHash":"20c1dc9bbc1760e238008eb5c0babfc222114ad6b54d10b5efcf8188c0fcc3a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxElementTypeTypeAt","kind":"method","status":"implemented","sigHash":"bd88e72517b694cd7e59131748f448873117a5e72ceb3f947f47ed2766b98659"}
  *
  * Go source:
  * func (c *Checker) getJsxElementTypeTypeAt(location *ast.Node) *Type {
@@ -2754,7 +2754,7 @@ export function Checker_getJsxElementTypeTypeAt(receiver: GoPtr<Checker>, locati
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxType","kind":"method","status":"implemented","sigHash":"e6a4933036053cd3f95a58171cd20acae0280ab3055339321bc3e81d7faaecaa","bodyHash":"8e34c402bca341e5c9b6bdfd6079739627c3fb0d03b3faf5ab5bec21c39f033e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxType","kind":"method","status":"implemented","sigHash":"e6a4933036053cd3f95a58171cd20acae0280ab3055339321bc3e81d7faaecaa"}
  *
  * Go source:
  * func (c *Checker) getJsxType(name string, location *ast.Node) *Type {
@@ -2783,7 +2783,7 @@ export function Checker_getJsxType(receiver: GoPtr<Checker>, name: string, locat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespaceAt","kind":"method","status":"implemented","sigHash":"be30bd826150c3a3e41be5aece72fc7b02833f87338ed9c1e2d9963d3c8988be","bodyHash":"94b879bfe3e882dd9e4e8d3a2452a54f49f5f79f061aaffc42af68f7fb48faf7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespaceAt","kind":"method","status":"implemented","sigHash":"be30bd826150c3a3e41be5aece72fc7b02833f87338ed9c1e2d9963d3c8988be"}
  *
  * Go source:
  * func (c *Checker) getJsxNamespaceAt(location *ast.Node) *ast.Symbol {
@@ -2857,7 +2857,7 @@ export function Checker_getJsxNamespaceAt(receiver: GoPtr<Checker>, location: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespace","kind":"method","status":"implemented","sigHash":"3ff6fb85815fe02b68adab7c862ad2dcf4dfac8f07f503aef154e77077bf4c8f","bodyHash":"4fceb733a934848fb207d3c404110bf77aa054f1ce3f5dbc85ac9f0497a27fbd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespace","kind":"method","status":"implemented","sigHash":"3ff6fb85815fe02b68adab7c862ad2dcf4dfac8f07f503aef154e77077bf4c8f"}
  *
  * Go source:
  * func (c *Checker) getJsxNamespace(location *ast.Node) string {
@@ -2959,7 +2959,7 @@ export function Checker_getJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getLocalJsxNamespace","kind":"method","status":"implemented","sigHash":"0193d8ce8faba3eebd2392363d3366f6d0e959bbdb3db5646a45081ee948e697","bodyHash":"e496eda9f830959a8b2ee6d4d9214eca903aee543b223be4ab93d2729c8df2cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getLocalJsxNamespace","kind":"method","status":"implemented","sigHash":"0193d8ce8faba3eebd2392363d3366f6d0e959bbdb3db5646a45081ee948e697"}
  *
  * Go source:
  * func (c *Checker) getLocalJsxNamespace(file *ast.SourceFile) string {
@@ -2995,7 +2995,7 @@ export function Checker_getLocalJsxNamespace(receiver: GoPtr<Checker>, file: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxFactoryEntity","kind":"method","status":"implemented","sigHash":"3e2b426635e24d55b10fa40958a6a6ff7d94a58d9671a0124b546e8f46f945f0","bodyHash":"e40033931978e14d0813decc073080d6cda382b271ce65fcffe857234777d522"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxFactoryEntity","kind":"method","status":"implemented","sigHash":"3e2b426635e24d55b10fa40958a6a6ff7d94a58d9671a0124b546e8f46f945f0"}
  *
  * Go source:
  * func (c *Checker) getJsxFactoryEntity(location *ast.Node) *ast.Node {
@@ -3020,7 +3020,7 @@ export function Checker_getJsxFactoryEntity(receiver: GoPtr<Checker>, location: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxFragmentFactoryEntity","kind":"method","status":"implemented","sigHash":"ce5eae41a3fde2392dc09ed36cdd7e244c3a78cca68354a727dbd72b0e332749","bodyHash":"9732c8ecf4f1d8e9dcc81b91597a25d3b679e84e449834aad4eae3069760af76"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxFragmentFactoryEntity","kind":"method","status":"implemented","sigHash":"ce5eae41a3fde2392dc09ed36cdd7e244c3a78cca68354a727dbd72b0e332749"}
  *
  * Go source:
  * func (c *Checker) getJsxFragmentFactoryEntity(location *ast.Node) *ast.EntityName {
@@ -3066,7 +3066,7 @@ export function Checker_getJsxFragmentFactoryEntity(receiver: GoPtr<Checker>, lo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.parseIsolatedEntityName","kind":"method","status":"implemented","sigHash":"1376eafb693ff906e32328c9ac475526174d6931789aaf6a63cc68d248525269","bodyHash":"f1d7affd9be46a3db416e7ec5a6ad876d6d3e1f48b9ef08c3e8d9e19d50b33d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.parseIsolatedEntityName","kind":"method","status":"implemented","sigHash":"1376eafb693ff906e32328c9ac475526174d6931789aaf6a63cc68d248525269"}
  *
  * Go source:
  * func (c *Checker) parseIsolatedEntityName(name string) *ast.Node {
@@ -3086,7 +3086,7 @@ export function Checker_parseIsolatedEntityName(receiver: GoPtr<Checker>, name: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::func::markAsSynthetic","kind":"func","status":"implemented","sigHash":"80b06cd1a434e82058c4c058ef673dadeae7a908bc201562e00ab41abd372ba8","bodyHash":"399a045673ad88b23634330e710f1d636fb89d63f88201c04f633094bb56569c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::func::markAsSynthetic","kind":"func","status":"implemented","sigHash":"80b06cd1a434e82058c4c058ef673dadeae7a908bc201562e00ab41abd372ba8"}
  *
  * Go source:
  * func markAsSynthetic(node *ast.Node) bool {
@@ -3102,7 +3102,7 @@ export function markAsSynthetic(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespaceContainerForImplicitImport","kind":"method","status":"implemented","sigHash":"18edcf6b972559a539175b87408ba4ae1cd2eb7736408d4d6cdef0812f3d4992","bodyHash":"2636c0f4926529ea4e90c747d2370f3c78beee080d81e9f7b4798e43e1fe45b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJsxNamespaceContainerForImplicitImport","kind":"method","status":"implemented","sigHash":"18edcf6b972559a539175b87408ba4ae1cd2eb7736408d4d6cdef0812f3d4992"}
  *
  * Go source:
  * func (c *Checker) getJsxNamespaceContainerForImplicitImport(location *ast.Node) *ast.Symbol {
@@ -3161,7 +3161,7 @@ export function Checker_getJsxNamespaceContainerForImplicitImport(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJSXRuntimeImportSpecifier","kind":"method","status":"implemented","sigHash":"099c021238c98a63ca106641b947a8b3943e9cbe7cc725526df50576f98342b0","bodyHash":"083244663a6a40269a7ed0e581687e8ab77167027a11c3c266602bb4e20159ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getJSXRuntimeImportSpecifier","kind":"method","status":"implemented","sigHash":"099c021238c98a63ca106641b947a8b3943e9cbe7cc725526df50576f98342b0"}
  *
  * Go source:
  * func (c *Checker) getJSXRuntimeImportSpecifier(file *ast.SourceFile) (moduleReference string, specifier *ast.Node) {

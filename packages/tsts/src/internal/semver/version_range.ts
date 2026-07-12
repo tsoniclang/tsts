@@ -15,7 +15,7 @@ import {
 } from "./version.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::logicalOrRegExp+whitespaceRegExp","kind":"varGroup","status":"implemented","sigHash":"c4143a9b132bfe536baac7b48479abe43b574c1f10ebf9e15a19eea5302c6b3d","bodyHash":"804ffc7201af901236d19c4fe0d25d52ac105339b17919c2d3237e9c72a796e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::logicalOrRegExp+whitespaceRegExp","kind":"varGroup","status":"implemented","sigHash":"c4143a9b132bfe536baac7b48479abe43b574c1f10ebf9e15a19eea5302c6b3d"}
  *
  * Go source:
  * var (
@@ -27,7 +27,7 @@ export let logicalOrRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(`\\|\\|`);
 export let whitespaceRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(`\\s+`);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::partialRegExp","kind":"varGroup","status":"implemented","sigHash":"c87b5064a228e96d391a2dafbc9c1da48a39065877dc6ec80a4dc2ce343252e4","bodyHash":"7c8cf43c0671c3b8f83ea4dd1d291e929876dd3491bdd68039f687ff0e97ab1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::partialRegExp","kind":"varGroup","status":"implemented","sigHash":"c87b5064a228e96d391a2dafbc9c1da48a39065877dc6ec80a4dc2ce343252e4"}
  *
  * Go source:
  * var partialRegExp = regexp.MustCompile(`(?i)^([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$`)
@@ -37,7 +37,7 @@ export let partialRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::hyphenRegExp","kind":"varGroup","status":"implemented","sigHash":"ea236cd7d57fef41dff98eb58593a5ffa8a0385b76a6419a75babdafcc47672a","bodyHash":"5a5ca68ac1d0532ce557bc084469cb4ae79ebd8bfcc5558b61f5fb1829abc0c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::hyphenRegExp","kind":"varGroup","status":"implemented","sigHash":"ea236cd7d57fef41dff98eb58593a5ffa8a0385b76a6419a75babdafcc47672a"}
  *
  * Go source:
  * var hyphenRegExp = regexp.MustCompile(`(?i)^\s*([a-z0-9-+.*]+)\s+-\s+([a-z0-9-+.*]+)\s*$`)
@@ -47,7 +47,7 @@ export let hyphenRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::rangeRegExp","kind":"varGroup","status":"implemented","sigHash":"9bbc5aeb01c54c3013535b9c1312cb9adf041bf9c01587b96ddfd0abd9fc1daf","bodyHash":"3755cf03989dbc9788bbd741fa071a6947170c63ab0a3f853d0405f423bcb01d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::rangeRegExp","kind":"varGroup","status":"implemented","sigHash":"9bbc5aeb01c54c3013535b9c1312cb9adf041bf9c01587b96ddfd0abd9fc1daf"}
  *
  * Go source:
  * var rangeRegExp = regexp.MustCompile(`(?i)^([~^<>=]|<=|>=)?\s*([a-z0-9-+.*]+)$`)
@@ -57,7 +57,7 @@ export let rangeRegExp: GoPtr<regexp.Regexp> = regexp.MustCompile(
 );
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::VersionRange","kind":"type","status":"implemented","sigHash":"b70871df9c79a339d2dc4635ecf9d7c020271cac07d9469bec67eaf45343d883","bodyHash":"eaf86841360cd4c02aaa41e0e2b3b73879512b9808c17ccb27c24d538b5a2183"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::VersionRange","kind":"type","status":"implemented","sigHash":"b70871df9c79a339d2dc4635ecf9d7c020271cac07d9469bec67eaf45343d883"}
  *
  * Go source:
  * VersionRange struct {
@@ -69,7 +69,7 @@ export interface VersionRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::versionComparator","kind":"type","status":"implemented","sigHash":"c4e85f9a083a78bff8522fe037017903a5bfaa3202fc4d49c551e243dbaedc37","bodyHash":"c137885dda5f73079828f0cb333c11bd80ce3e793acf45af264b9eb0d076b4c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::versionComparator","kind":"type","status":"implemented","sigHash":"c4e85f9a083a78bff8522fe037017903a5bfaa3202fc4d49c551e243dbaedc37"}
  *
  * Go source:
  * versionComparator struct {
@@ -83,7 +83,7 @@ export interface versionComparator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::comparatorOperator","kind":"type","status":"implemented","sigHash":"680980db370b21a39d61572290b5671dbd5c0531c0afdc6cd9ddfbb10198426f","bodyHash":"c399bc7c4ccd344b6fa568133ae3fcd68b45ba10fdd767b6262ed123195a70de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::comparatorOperator","kind":"type","status":"implemented","sigHash":"680980db370b21a39d61572290b5671dbd5c0531c0afdc6cd9ddfbb10198426f"}
  *
  * Go source:
  * comparatorOperator string
@@ -91,7 +91,7 @@ export interface versionComparator {
 export type comparatorOperator = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::constGroup::rangeLessThan+rangeLessThanEqual+rangeEqual+rangeGreaterThanEqual+rangeGreaterThan","kind":"constGroup","status":"implemented","sigHash":"e9008dfa3ec0248ce77f73984d8ac1cc99fca7fdc6f8ff695e3444b6098c29a8","bodyHash":"dbdb808e992e08759c518e7770bf05250540d64869baf0d0e072c97ffd6fae4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::constGroup::rangeLessThan+rangeLessThanEqual+rangeEqual+rangeGreaterThanEqual+rangeGreaterThan","kind":"constGroup","status":"implemented","sigHash":"e9008dfa3ec0248ce77f73984d8ac1cc99fca7fdc6f8ff695e3444b6098c29a8"}
  *
  * Go source:
  * const (
@@ -109,7 +109,7 @@ export const rangeGreaterThanEqual: comparatorOperator = ">=";
 export const rangeGreaterThan: comparatorOperator = ">";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::method::VersionRange.String","kind":"method","status":"implemented","sigHash":"1ab7ad7850543ac741f22bb145a02b17e3e57a06d793110047096cfdd2a39391","bodyHash":"51f4b971b6f3b6bd8f711df57b3c22bc60b35708a21bebd1c03521fe2a5e16b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::method::VersionRange.String","kind":"method","status":"implemented","sigHash":"1ab7ad7850543ac741f22bb145a02b17e3e57a06d793110047096cfdd2a39391"}
  *
  * Go source:
  * func (v *VersionRange) String() string {
@@ -126,7 +126,7 @@ export function VersionRange_String(receiver: GoPtr<VersionRange>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatDisjunction","kind":"func","status":"implemented","sigHash":"6dc0a55e5fdf6108908ed83a1448e4a80a133d1f5f5b81b39a8857e47dcb4905","bodyHash":"44188c4065c0653056f22a9b6f43e9352fe6dd04177f7f505c31080c785180e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatDisjunction","kind":"func","status":"implemented","sigHash":"6dc0a55e5fdf6108908ed83a1448e4a80a133d1f5f5b81b39a8857e47dcb4905"}
  *
  * Go source:
  * func formatDisjunction(sb *strings.Builder, alternatives [][]versionComparator) {
@@ -162,7 +162,7 @@ export function formatDisjunction(sb: GoPtr<Builder>, alternatives: GoSlice<GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatAlternative","kind":"func","status":"implemented","sigHash":"fcfd3172d99bebcd8e7a5e26b197f4d7b70d49818c0f6656ed73c1f9def47765","bodyHash":"97a040bffa50ab262300a53852e406c352c5e2842a3fc732af07ec20999e8665"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatAlternative","kind":"func","status":"implemented","sigHash":"fcfd3172d99bebcd8e7a5e26b197f4d7b70d49818c0f6656ed73c1f9def47765"}
  *
  * Go source:
  * func formatAlternative(sb *strings.Builder, comparators []versionComparator) {
@@ -186,7 +186,7 @@ export function formatAlternative(sb: GoPtr<Builder>, comparators: GoSlice<versi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatComparator","kind":"func","status":"implemented","sigHash":"27531fbba73ef080e219e9123db53523ecaa7bdd1044a3ca322961aece0d0b2f","bodyHash":"c2716da9ab5440ade6c1189bca35384eb90e6319fbf288a9162fc548d7f40e90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::formatComparator","kind":"func","status":"implemented","sigHash":"27531fbba73ef080e219e9123db53523ecaa7bdd1044a3ca322961aece0d0b2f"}
  *
  * Go source:
  * func formatComparator(sb *strings.Builder, comparator versionComparator) {
@@ -201,7 +201,7 @@ export function formatComparator(sb: GoPtr<Builder>, comparator: versionComparat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::method::VersionRange.Test","kind":"method","status":"implemented","sigHash":"e4fb00bab43bb1e06d358c3423d9c3f849144a658ef3212c122a43f8178ca4d3","bodyHash":"96ca2986026349f68eabbf35e06cab73d1847b1e7735fc4eaeedbd2787f9072c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::method::VersionRange.Test","kind":"method","status":"implemented","sigHash":"e4fb00bab43bb1e06d358c3423d9c3f849144a658ef3212c122a43f8178ca4d3"}
  *
  * Go source:
  * func (v *VersionRange) Test(version *Version) bool {
@@ -214,7 +214,7 @@ export function VersionRange_Test(receiver: GoPtr<VersionRange>, version: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testDisjunction","kind":"func","status":"implemented","sigHash":"16e413eb2fd0b781f316c50b3d74b5a67fcace3685b3ef3e32ffef5db0a1609f","bodyHash":"f53493fce59d8189a1507e6483427d23d9fb117a7b25e2bfb0dc85c76c649319"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testDisjunction","kind":"func","status":"implemented","sigHash":"16e413eb2fd0b781f316c50b3d74b5a67fcace3685b3ef3e32ffef5db0a1609f"}
  *
  * Go source:
  * func testDisjunction(alternatives [][]versionComparator, version *Version) bool {
@@ -248,7 +248,7 @@ export function testDisjunction(alternatives: GoSlice<GoSlice<versionComparator>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testAlternative","kind":"func","status":"implemented","sigHash":"29a767bdf53420b183993063125154351c467e1b5cce761844099d54f9db46d5","bodyHash":"bc4e6780d28f5e285b34e50eaa3515f7f39240b3190d5c66fc69c0e7f00aa0b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testAlternative","kind":"func","status":"implemented","sigHash":"29a767bdf53420b183993063125154351c467e1b5cce761844099d54f9db46d5"}
  *
  * Go source:
  * func testAlternative(alternative []versionComparator, version *Version) bool {
@@ -270,7 +270,7 @@ export function testAlternative(alternative: GoSlice<versionComparator>, version
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testComparator","kind":"func","status":"implemented","sigHash":"04e85e4776d2c53933cfaf00a1041693a9458648b299cfcae7bcca78711a2b21","bodyHash":"cd1db55cdc56b89bd35354226c55232b723fb5f8e9d73d62cf1ce8b84f0b6ed7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::testComparator","kind":"func","status":"implemented","sigHash":"04e85e4776d2c53933cfaf00a1041693a9458648b299cfcae7bcca78711a2b21"}
  *
  * Go source:
  * func testComparator(comparator versionComparator, version *Version) bool {
@@ -310,7 +310,7 @@ export function testComparator(comparator: versionComparator, version: GoPtr<Ver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::TryParseVersionRange","kind":"func","status":"implemented","sigHash":"e0a0971c2e5f595d9fb4db24477e3952d09bfaac41384657e878f60b2200e5ac","bodyHash":"b89e4151fd8fd218486635179481e33fbd57f7a080451a576754fa073425c4b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::TryParseVersionRange","kind":"func","status":"implemented","sigHash":"e0a0971c2e5f595d9fb4db24477e3952d09bfaac41384657e878f60b2200e5ac"}
  *
  * Go source:
  * func TryParseVersionRange(text string) (VersionRange, bool) {
@@ -324,7 +324,7 @@ export function TryParseVersionRange(text: string): [VersionRange, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseAlternatives","kind":"func","status":"implemented","sigHash":"bfd48c56558d28564b697a14e5427ecb029419e4250a43df4933e71e959880ef","bodyHash":"0ce8b419cbc4b40420c5c9d57e738b83822af9bbd2d8ad771bbdb302cef26df0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseAlternatives","kind":"func","status":"implemented","sigHash":"bfd48c56558d28564b697a14e5427ecb029419e4250a43df4933e71e959880ef"}
  *
  * Go source:
  * func parseAlternatives(text string) ([][]versionComparator, bool) {
@@ -417,7 +417,7 @@ export function parseAlternatives(text: string): [GoSlice<GoSlice<versionCompara
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseHyphen","kind":"func","status":"implemented","sigHash":"42e7c805f85927282e13135fe4153c667a5051fa194e29d5b3b541f577135e23","bodyHash":"405a37da493e0f2e88cace9603a1fe45ee554593624b7b99851da956743b1eda"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseHyphen","kind":"func","status":"implemented","sigHash":"42e7c805f85927282e13135fe4153c667a5051fa194e29d5b3b541f577135e23"}
  *
  * Go source:
  * func parseHyphen(left, right string) ([]versionComparator, bool) {
@@ -514,7 +514,7 @@ export function parseHyphen(left: string, right: string): [GoSlice<versionCompar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::partialVersion","kind":"type","status":"implemented","sigHash":"0a3ffd45ac0591411d95f5bbc37f889614e8a26fc4f00f7cc031a76638b957de","bodyHash":"5d58b97ede1050e72ae9bd9a33da4fc7e4459710b42c1257c94a105516a4a26a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::type::partialVersion","kind":"type","status":"implemented","sigHash":"0a3ffd45ac0591411d95f5bbc37f889614e8a26fc4f00f7cc031a76638b957de"}
  *
  * Go source:
  * partialVersion struct {
@@ -532,7 +532,7 @@ export interface partialVersion {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parsePartial","kind":"func","status":"implemented","sigHash":"d860ad856dba7ae9eccb404699f8d3a47bc2d843d2c47ac8ea9d64ffea52235d","bodyHash":"3d18e7828736b1d511fe3c3f663cff3b1b09e0aeb0208f09baf06ec0b9c12961"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parsePartial","kind":"func","status":"implemented","sigHash":"d860ad856dba7ae9eccb404699f8d3a47bc2d843d2c47ac8ea9d64ffea52235d"}
  *
  * Go source:
  * func parsePartial(text string) (partialVersion, bool) {
@@ -711,7 +711,7 @@ export function parsePartial(text: string): [partialVersion, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseComparator","kind":"func","status":"implemented","sigHash":"2dbd07f54f81b0de794b72d671394e3c30d75b59360f8c1954646c9d4b44249a","bodyHash":"35af3c872b228b3db126c30f81ce9874a8820d347581616cc9bdbbcd3a877e8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseComparator","kind":"func","status":"implemented","sigHash":"2dbd07f54f81b0de794b72d671394e3c30d75b59360f8c1954646c9d4b44249a"}
  *
  * Go source:
  * func parseComparator(op string, text string) ([]versionComparator, bool) {
@@ -952,7 +952,7 @@ export function parseComparator(op: string, text: string): [GoSlice<versionCompa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::isWildcard","kind":"func","status":"implemented","sigHash":"a6fe02a4c6e4f2c6cd7e09468071a37e59d04b96975396fab40af13010922a65","bodyHash":"7e832c5c6fff3ecb81857db60e4fc4a36a210bf925215d49e22165d5e51fc82c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::isWildcard","kind":"func","status":"implemented","sigHash":"a6fe02a4c6e4f2c6cd7e09468071a37e59d04b96975396fab40af13010922a65"}
  *
  * Go source:
  * func isWildcard(text string) bool {

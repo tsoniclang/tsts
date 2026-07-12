@@ -126,7 +126,7 @@ function semicolonRemoverWriter_as_EmitTextWriter(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"implemented","sigHash":"b0e99e4aac87cd803240e4fb6052e4d56ca8741de90fa3c742234c097250ef54","bodyHash":"837650bfbd3edbafc6e2815cef6d1535cfaed34eb000fbf9ee066307db5352e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"implemented","sigHash":"b0e99e4aac87cd803240e4fb6052e4d56ca8741de90fa3c742234c097250ef54"}
  *
  * Go source:
  * func createPrinterWithDefaults(emitContext *printer.EmitContext) *printer.Printer {
@@ -138,7 +138,7 @@ export function createPrinterWithDefaults(emitContext: GoPtr<EmitContext>): GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveComments","kind":"func","status":"implemented","sigHash":"aedf07f8226ded30c11589f6db0cb0542fed24811ae7c22b119580aa11d4c4eb","bodyHash":"ef854b67d3947bf5dfc19f386e07138e67adc2cb0beb1109efd5c23c68bcf43e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveComments","kind":"func","status":"implemented","sigHash":"aedf07f8226ded30c11589f6db0cb0542fed24811ae7c22b119580aa11d4c4eb"}
  *
  * Go source:
  * func createPrinterWithRemoveComments(emitContext *printer.EmitContext) *printer.Printer {
@@ -150,7 +150,7 @@ export function createPrinterWithRemoveComments(emitContext: GoPtr<EmitContext>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"e9e0496f9d454042ff3b93d735e220dc4dfecf630f2bfa0160607bb5972cc642","bodyHash":"d7b7e1c77fa97cdebbf1898cf25e569137e35a80d676742dc9553d311dbba2ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"e9e0496f9d454042ff3b93d735e220dc4dfecf630f2bfa0160607bb5972cc642"}
  *
  * Go source:
  * func createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape(emitContext *printer.EmitContext) *printer.Printer {
@@ -167,7 +167,7 @@ export function createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEs
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"7641f0f3fb6a54f494d6f06c640696e7f1f9e6de3fad7bbf753120fd94c7972a","bodyHash":"a9c521877814141fb4aca3e59bd293ed047f7742debb81b0686042b8ca3824ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"7641f0f3fb6a54f494d6f06c640696e7f1f9e6de3fad7bbf753120fd94c7972a"}
  *
  * Go source:
  * func createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext *printer.EmitContext) *printer.Printer {
@@ -182,7 +182,7 @@ export function createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::type::semicolonRemoverWriter","kind":"type","status":"implemented","sigHash":"7a216135612f5869d2ce8a5907db5c91a0932ea6f7353ebf46e714c0d29d3817","bodyHash":"595a72733470815a9973d595c6c6d4f5bb13f572c45753aedc46f2c7589d22b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::type::semicolonRemoverWriter","kind":"type","status":"implemented","sigHash":"7a216135612f5869d2ce8a5907db5c91a0932ea6f7353ebf46e714c0d29d3817"}
  *
  * Go source:
  * semicolonRemoverWriter struct {
@@ -196,7 +196,7 @@ export interface semicolonRemoverWriter {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.commitSemicolon","kind":"method","status":"implemented","sigHash":"a2fde3d16d6b05771ab1d890dad7f6c65e67dc8d97ef7d569e08d828864655b3","bodyHash":"6aa9843eaee904e0641c1e52b4f77d3b0de4cf44ddb700a535070a7a6d354104"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.commitSemicolon","kind":"method","status":"implemented","sigHash":"a2fde3d16d6b05771ab1d890dad7f6c65e67dc8d97ef7d569e08d828864655b3"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) commitSemicolon() {
@@ -215,7 +215,7 @@ export function semicolonRemoverWriter_commitSemicolon(receiver: GoPtr<semicolon
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.Clear","kind":"method","status":"implemented","sigHash":"054c7d7235fd9794b612a71011b4fb7b9f37eed1b06b8baa2ed3ee43e5e7fad7","bodyHash":"28502c018a3c913ef1fafb5a990920d891d33be240ff27edb480dbe5d3ccf43f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.Clear","kind":"method","status":"implemented","sigHash":"054c7d7235fd9794b612a71011b4fb7b9f37eed1b06b8baa2ed3ee43e5e7fad7"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) Clear() {
@@ -228,7 +228,7 @@ export function semicolonRemoverWriter_Clear(receiver: GoPtr<semicolonRemoverWri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.DecreaseIndent","kind":"method","status":"implemented","sigHash":"5df0b50d2aaf18f02d33d79b22fd7007620f57401b9c8a1bf3e626a76577eaf4","bodyHash":"5bd19eeb2ff0c2f28efbc481e67a6f91e2faed2b497f3f189363f22df6985db9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.DecreaseIndent","kind":"method","status":"implemented","sigHash":"5df0b50d2aaf18f02d33d79b22fd7007620f57401b9c8a1bf3e626a76577eaf4"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) DecreaseIndent() {
@@ -243,7 +243,7 @@ export function semicolonRemoverWriter_DecreaseIndent(receiver: GoPtr<semicolonR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetColumn","kind":"method","status":"implemented","sigHash":"d5cba14b718415266ae18898e034c51e2adb4fbee523b9be3c58073187706bae","bodyHash":"3126215c6472c4326e628791e904fa73333717cac915a92f484f5849ba6e70ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetColumn","kind":"method","status":"implemented","sigHash":"d5cba14b718415266ae18898e034c51e2adb4fbee523b9be3c58073187706bae"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) GetColumn() core.UTF16Offset {
@@ -256,7 +256,7 @@ export function semicolonRemoverWriter_GetColumn(receiver: GoPtr<semicolonRemove
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetIndent","kind":"method","status":"implemented","sigHash":"26db095931010010db67618bcfa77ada9783e4ede99c3c0cece82907fdb60a49","bodyHash":"e868234f9b2e25044c6941d698409f91b448fc52c394add88c4a0c8a2df5dde6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetIndent","kind":"method","status":"implemented","sigHash":"26db095931010010db67618bcfa77ada9783e4ede99c3c0cece82907fdb60a49"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) GetIndent() int {
@@ -269,7 +269,7 @@ export function semicolonRemoverWriter_GetIndent(receiver: GoPtr<semicolonRemove
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetLine","kind":"method","status":"implemented","sigHash":"160731c04ed2487dce61b9d0f863e9f1df01370c1292868d2295754472c82b05","bodyHash":"4c46fe02cdc989c7e6eb87f0da67802a077a0fdf3ba56b3e1d8f679f080646ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetLine","kind":"method","status":"implemented","sigHash":"160731c04ed2487dce61b9d0f863e9f1df01370c1292868d2295754472c82b05"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) GetLine() int {
@@ -282,7 +282,7 @@ export function semicolonRemoverWriter_GetLine(receiver: GoPtr<semicolonRemoverW
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetTextPos","kind":"method","status":"implemented","sigHash":"4a434fa78a3d3eac5a589103c8d84d5715c8cede8ea128fd364bcac7e6cf1bb1","bodyHash":"6f4ab1cfb4b9c4c205a98bdb6eda48cedcb441a0041615b7fc6ead9676b4442c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.GetTextPos","kind":"method","status":"implemented","sigHash":"4a434fa78a3d3eac5a589103c8d84d5715c8cede8ea128fd364bcac7e6cf1bb1"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) GetTextPos() int {
@@ -295,7 +295,7 @@ export function semicolonRemoverWriter_GetTextPos(receiver: GoPtr<semicolonRemov
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.HasTrailingComment","kind":"method","status":"implemented","sigHash":"f6a05aff18f45ae7ed522897e8547dd43f34dfcbca4fa672b41807424772f6ca","bodyHash":"b94cff7f0b795ec3d183fd293907d40c5cc18f4acf1be497d0c4fc850a00bd59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.HasTrailingComment","kind":"method","status":"implemented","sigHash":"f6a05aff18f45ae7ed522897e8547dd43f34dfcbca4fa672b41807424772f6ca"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) HasTrailingComment() bool {
@@ -308,7 +308,7 @@ export function semicolonRemoverWriter_HasTrailingComment(receiver: GoPtr<semico
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.HasTrailingWhitespace","kind":"method","status":"implemented","sigHash":"169fe109ae561b7fda94b2af424e30fc8b626d3ebabfdb783064822894f80e17","bodyHash":"dadad410175d392f8f2bc8ddc39fbfbdb1e2622bdb8b61b0e2b22a4cf0bc9d63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.HasTrailingWhitespace","kind":"method","status":"implemented","sigHash":"169fe109ae561b7fda94b2af424e30fc8b626d3ebabfdb783064822894f80e17"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) HasTrailingWhitespace() bool {
@@ -321,7 +321,7 @@ export function semicolonRemoverWriter_HasTrailingWhitespace(receiver: GoPtr<sem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.IncreaseIndent","kind":"method","status":"implemented","sigHash":"d7945e6d184fb0374fad237107777211113f622ecd4c6b330cb32c3ecebb7689","bodyHash":"345dd72e2543c5ccd1d113b095ee0f193e0ead30fdb4b59853f1ab19f5eb92f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.IncreaseIndent","kind":"method","status":"implemented","sigHash":"d7945e6d184fb0374fad237107777211113f622ecd4c6b330cb32c3ecebb7689"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) IncreaseIndent() {
@@ -336,7 +336,7 @@ export function semicolonRemoverWriter_IncreaseIndent(receiver: GoPtr<semicolonR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.IsAtStartOfLine","kind":"method","status":"implemented","sigHash":"8c4756a234387be5cc618b79ea1e77faa547178b968c3bf43618e81fca3d027c","bodyHash":"5f2908ec36092bac7d8fe9797dad5e3ad532400def5a5aca75e8acf0dd90dafd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.IsAtStartOfLine","kind":"method","status":"implemented","sigHash":"8c4756a234387be5cc618b79ea1e77faa547178b968c3bf43618e81fca3d027c"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) IsAtStartOfLine() bool {
@@ -349,7 +349,7 @@ export function semicolonRemoverWriter_IsAtStartOfLine(receiver: GoPtr<semicolon
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.RawWrite","kind":"method","status":"implemented","sigHash":"c98d0201adc14713085b1376cdaea749dd891e781fb97b02aa0e0f8cfc8e3397","bodyHash":"59a2911f092f28ba9ea52da4686f7a9078d29144e1e88c053caf473dc6be8aa9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.RawWrite","kind":"method","status":"implemented","sigHash":"c98d0201adc14713085b1376cdaea749dd891e781fb97b02aa0e0f8cfc8e3397"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) RawWrite(s1 string) {
@@ -364,7 +364,7 @@ export function semicolonRemoverWriter_RawWrite(receiver: GoPtr<semicolonRemover
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.String","kind":"method","status":"implemented","sigHash":"c1abe1858d49897dd068507cd8721ffefd3a89b20943fd409d89e9ccf2667348","bodyHash":"d672ddbb33f75b1730a3b07977e5bdc7f9d5a8b02457d29d6f9925da842e8504"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.String","kind":"method","status":"implemented","sigHash":"c1abe1858d49897dd068507cd8721ffefd3a89b20943fd409d89e9ccf2667348"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) String() string {
@@ -379,7 +379,7 @@ export function semicolonRemoverWriter_String(receiver: GoPtr<semicolonRemoverWr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.Write","kind":"method","status":"implemented","sigHash":"de66cd219aa9b76f30191c18a37e69b95bde372fa85ebb8524547f2504a6e90d","bodyHash":"5b3eed44ac9e1b0d613a25f52b7ec1906ef1e7da457d5af1914328b0f29abaf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.Write","kind":"method","status":"implemented","sigHash":"de66cd219aa9b76f30191c18a37e69b95bde372fa85ebb8524547f2504a6e90d"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) Write(s1 string) {
@@ -394,7 +394,7 @@ export function semicolonRemoverWriter_Write(receiver: GoPtr<semicolonRemoverWri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteComment","kind":"method","status":"implemented","sigHash":"a27122e08105588efd2b0e52ce8f7f8577182845cb2c64e1d900a91590f4cb4e","bodyHash":"12ad27973095345b4691fb9f1b148c10768914cc21f52c676c72b42fced59b19"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteComment","kind":"method","status":"implemented","sigHash":"a27122e08105588efd2b0e52ce8f7f8577182845cb2c64e1d900a91590f4cb4e"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteComment(text string) {
@@ -409,7 +409,7 @@ export function semicolonRemoverWriter_WriteComment(receiver: GoPtr<semicolonRem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteKeyword","kind":"method","status":"implemented","sigHash":"37baa12a4e0f26fe46d93b1446a27db86076fa9ca071edf2c7b68ce6f040bdcf","bodyHash":"dbc88c4410f72953626be962530668948ee26d333784d88d66ed5998ce68bebb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteKeyword","kind":"method","status":"implemented","sigHash":"37baa12a4e0f26fe46d93b1446a27db86076fa9ca071edf2c7b68ce6f040bdcf"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteKeyword(text string) {
@@ -424,7 +424,7 @@ export function semicolonRemoverWriter_WriteKeyword(receiver: GoPtr<semicolonRem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLine","kind":"method","status":"implemented","sigHash":"fd74fee523eaf1a8ab5e1721e1951541832ba847aea34b421b0ea51a7f22b392","bodyHash":"5389e5c343754fa47bcc72ef56f828d64f89c69b2519f1e8244430febaf8993f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLine","kind":"method","status":"implemented","sigHash":"fd74fee523eaf1a8ab5e1721e1951541832ba847aea34b421b0ea51a7f22b392"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteLine() {
@@ -439,7 +439,7 @@ export function semicolonRemoverWriter_WriteLine(receiver: GoPtr<semicolonRemove
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLineForce","kind":"method","status":"implemented","sigHash":"07ecb1cc856f22922c470a2a363c4356de9143fb48eb92c41f64e14c2071e974","bodyHash":"1936e7aa63ef96ebbbd7ed31de77d2bade31cfe617c8dbceb0aeeb57b4b2adaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLineForce","kind":"method","status":"implemented","sigHash":"07ecb1cc856f22922c470a2a363c4356de9143fb48eb92c41f64e14c2071e974"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteLineForce(force bool) {
@@ -454,7 +454,7 @@ export function semicolonRemoverWriter_WriteLineForce(receiver: GoPtr<semicolonR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLiteral","kind":"method","status":"implemented","sigHash":"79ab15dbbf2afcbf0739c342640f69093781a4c60457d59d4a82fbb71186d4fb","bodyHash":"97097c75fd234da905eb793afa494cea87113647bf031b2905e86741cfb620c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteLiteral","kind":"method","status":"implemented","sigHash":"79ab15dbbf2afcbf0739c342640f69093781a4c60457d59d4a82fbb71186d4fb"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteLiteral(s1 string) {
@@ -469,7 +469,7 @@ export function semicolonRemoverWriter_WriteLiteral(receiver: GoPtr<semicolonRem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteOperator","kind":"method","status":"implemented","sigHash":"21558da69613f1c61e0800b20c71d753a4ad4cf3089e99c84c0d431e6eca3b10","bodyHash":"99fd6577998503289670b657df225a0ec2be9c9418e0583600c087d2b0b06c88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteOperator","kind":"method","status":"implemented","sigHash":"21558da69613f1c61e0800b20c71d753a4ad4cf3089e99c84c0d431e6eca3b10"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteOperator(text string) {
@@ -484,7 +484,7 @@ export function semicolonRemoverWriter_WriteOperator(receiver: GoPtr<semicolonRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteParameter","kind":"method","status":"implemented","sigHash":"b647086a2f62f5f54eba1944df5182ba5d11e8ab16fbd8606c2de769950e45cc","bodyHash":"f67a33a6388798911d3b4a07feadad502c4cb0011729bdffed720a2c649c5ae8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteParameter","kind":"method","status":"implemented","sigHash":"b647086a2f62f5f54eba1944df5182ba5d11e8ab16fbd8606c2de769950e45cc"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteParameter(text string) {
@@ -499,7 +499,7 @@ export function semicolonRemoverWriter_WriteParameter(receiver: GoPtr<semicolonR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteProperty","kind":"method","status":"implemented","sigHash":"903f4a201c0d3d0bb26e26491c5935a725775de510844aafcea7b8526bdc118e","bodyHash":"8593178e5502c79d0eef373edf607f617f3519e5b866fc3ae16911a0f2da119d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteProperty","kind":"method","status":"implemented","sigHash":"903f4a201c0d3d0bb26e26491c5935a725775de510844aafcea7b8526bdc118e"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteProperty(text string) {
@@ -514,7 +514,7 @@ export function semicolonRemoverWriter_WriteProperty(receiver: GoPtr<semicolonRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WritePunctuation","kind":"method","status":"implemented","sigHash":"68fb72d6b7d022fda18ae3ff8d369b152e12faefda18b0bdfbd6e7266ad37ecb","bodyHash":"3a08f250d0b21dc86a9df31dfe60cb7c562a75a83363b827ce48b9c9e25eae07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WritePunctuation","kind":"method","status":"implemented","sigHash":"68fb72d6b7d022fda18ae3ff8d369b152e12faefda18b0bdfbd6e7266ad37ecb"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WritePunctuation(text string) {
@@ -529,7 +529,7 @@ export function semicolonRemoverWriter_WritePunctuation(receiver: GoPtr<semicolo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteSpace","kind":"method","status":"implemented","sigHash":"923f6cf4ef931aa57063fd965d749afeef44cc2d6f19b9b1eac61457f7c9386d","bodyHash":"41d07259277728916a02b1af47f6f4046861204a70c15fdd223a6a8e0d3f5262"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteSpace","kind":"method","status":"implemented","sigHash":"923f6cf4ef931aa57063fd965d749afeef44cc2d6f19b9b1eac61457f7c9386d"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteSpace(text string) {
@@ -544,7 +544,7 @@ export function semicolonRemoverWriter_WriteSpace(receiver: GoPtr<semicolonRemov
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteStringLiteral","kind":"method","status":"implemented","sigHash":"253151aade1ef3e813d1636d4f4c65b4a2b54f17ebfcaf686a8be6fa4fd4f1af","bodyHash":"2a6d31b0e23710503e3d96a5c41402766ae98534df2617746efadde8ccd3402c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteStringLiteral","kind":"method","status":"implemented","sigHash":"253151aade1ef3e813d1636d4f4c65b4a2b54f17ebfcaf686a8be6fa4fd4f1af"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteStringLiteral(text string) {
@@ -559,7 +559,7 @@ export function semicolonRemoverWriter_WriteStringLiteral(receiver: GoPtr<semico
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteSymbol","kind":"method","status":"implemented","sigHash":"0eb94bf9b77dc4df5fdc15b6d8261bd6565dcc45b714907c1376208879775b7e","bodyHash":"e4856dd92dbdbf250a499db0d91bcab55e1d0f6d14dae56b3aa12ba3b6041378"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteSymbol","kind":"method","status":"implemented","sigHash":"0eb94bf9b77dc4df5fdc15b6d8261bd6565dcc45b714907c1376208879775b7e"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteSymbol(text string, symbol *ast.Symbol) {
@@ -574,7 +574,7 @@ export function semicolonRemoverWriter_WriteSymbol(receiver: GoPtr<semicolonRemo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteTrailingSemicolon","kind":"method","status":"implemented","sigHash":"0dd245b299715995dacb73fd1d57117501a6d9fcd173400d375865f75927aeed","bodyHash":"3cf9bbc1338a1f6eccf373bc8856a3c8adfb095baf66653bd4241fa214ba8f18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::semicolonRemoverWriter.WriteTrailingSemicolon","kind":"method","status":"implemented","sigHash":"0dd245b299715995dacb73fd1d57117501a6d9fcd173400d375865f75927aeed"}
  *
  * Go source:
  * func (s *semicolonRemoverWriter) WriteTrailingSemicolon(text string) {
@@ -587,7 +587,7 @@ export function semicolonRemoverWriter_WriteTrailingSemicolon(receiver: GoPtr<se
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::getTrailingSemicolonDeferringWriter","kind":"func","status":"implemented","sigHash":"ce0f3daa7f1e7c0a7490d7ad4cbd00808c9f6ea71f8441732494af1193aa8253","bodyHash":"b6f2d214ba17cfcfaa47656f5be08000795f3b501b23091205179aeffe75bc73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::getTrailingSemicolonDeferringWriter","kind":"func","status":"implemented","sigHash":"ce0f3daa7f1e7c0a7490d7ad4cbd00808c9f6ea71f8441732494af1193aa8253"}
  *
  * Go source:
  * func getTrailingSemicolonDeferringWriter(writer printer.EmitTextWriter) printer.EmitTextWriter {
@@ -602,7 +602,7 @@ export function getTrailingSemicolonDeferringWriter(writer: EmitTextWriter): Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToString","kind":"method","status":"implemented","sigHash":"8fe8596af99793ccd3bebd1f22b768a783c59a0eadf38cdc7ce1c3cde5445d71","bodyHash":"c6797a1dfa216d834259cb0ca62efdea411a75e5eb5eee2a8b159eb02890e8dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToString","kind":"method","status":"implemented","sigHash":"8fe8596af99793ccd3bebd1f22b768a783c59a0eadf38cdc7ce1c3cde5445d71"}
  *
  * Go source:
  * func (c *Checker) TypeToString(t *Type) string {
@@ -614,7 +614,7 @@ export function Checker_TypeToString(receiver: GoPtr<Checker>, t: GoPtr<Type>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToString","kind":"method","status":"implemented","sigHash":"b9a21458a2fbd9062ce8e15f0033ef85dfea58ddd4ab341681627a164ba06188","bodyHash":"291104950f4c69e8d2b7bae5eb6da0aa0cc46919ff98e1625a367422c2c0a468"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToString","kind":"method","status":"implemented","sigHash":"b9a21458a2fbd9062ce8e15f0033ef85dfea58ddd4ab341681627a164ba06188"}
  *
  * Go source:
  * func (c *Checker) typeToString(t *Type, enclosingDeclaration *ast.Node) string {
@@ -632,7 +632,7 @@ export function Checker_typeToString(receiver: GoPtr<Checker>, t: GoPtr<Type>, e
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::toNodeBuilderFlags","kind":"func","status":"implemented","sigHash":"e2d4002b95356ba89e149cbdbbe088be55f93dcfca614a773069eeb8bfc3b053","bodyHash":"090f9f320b18614f0c71a7a8e6fa3d5bb95716fec9efbe4d1f43cb95ec24df1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::toNodeBuilderFlags","kind":"func","status":"implemented","sigHash":"e2d4002b95356ba89e149cbdbbe088be55f93dcfca614a773069eeb8bfc3b053"}
  *
  * Go source:
  * func toNodeBuilderFlags(flags TypeFormatFlags) nodebuilder.Flags {
@@ -644,7 +644,7 @@ export function toNodeBuilderFlags(flags: TypeFormatFlags): Flags {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToStringEx","kind":"method","status":"implemented","sigHash":"67dc425d8a4e4b89aa0e752f5be659e2301aebb6bc43151c01a49fabbd069491","bodyHash":"137dfba6934c25c90fee5a835724e4631a4bafdc487d0bdd8667070a81023855"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToStringEx","kind":"method","status":"implemented","sigHash":"67dc425d8a4e4b89aa0e752f5be659e2301aebb6bc43151c01a49fabbd069491"}
  *
  * Go source:
  * func (c *Checker) TypeToStringEx(t *Type, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -656,7 +656,7 @@ export function Checker_TypeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToStringEx","kind":"method","status":"implemented","sigHash":"3e47a901a8692ae677c394ff74f227bfe286d7b0dcc6c17979e30a793458758d","bodyHash":"b3bc2467ce5cb1d5eb8fab4e219fb371129ee8e4c76e7a06c2c3447bdf7e6206"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToStringEx","kind":"method","status":"implemented","sigHash":"3e47a901a8692ae677c394ff74f227bfe286d7b0dcc6c17979e30a793458758d"}
  *
  * Go source:
  * func (c *Checker) typeToStringEx(t *Type, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -783,7 +783,7 @@ export function Checker_typeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SymbolToString","kind":"method","status":"implemented","sigHash":"016d9673a3e69a95538735b198118ac5aed63aa2675f1faa1bc037effa2a0202","bodyHash":"3dc6d2f8ce5e6ddd77d71fd85bf42e536b4f0bd6f2facde647893989ef0f3380"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SymbolToString","kind":"method","status":"implemented","sigHash":"016d9673a3e69a95538735b198118ac5aed63aa2675f1faa1bc037effa2a0202"}
  *
  * Go source:
  * func (c *Checker) SymbolToString(s *ast.Symbol) string {
@@ -795,7 +795,7 @@ export function Checker_SymbolToString(receiver: GoPtr<Checker>, s: GoPtr<Symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToString","kind":"method","status":"implemented","sigHash":"6c93ba58853adafe84e8687a5e2e83d754885a5349272450e62e4249db711901","bodyHash":"30010ca4e799ff45efcedd4b2ebe94709cf2682b78fda80b3dcc57f51a0a115a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToString","kind":"method","status":"implemented","sigHash":"6c93ba58853adafe84e8687a5e2e83d754885a5349272450e62e4249db711901"}
  *
  * Go source:
  * func (c *Checker) symbolToString(symbol *ast.Symbol) string {
@@ -813,7 +813,7 @@ export function Checker_symbolToString(receiver: GoPtr<Checker>, symbol_: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SymbolToStringEx","kind":"method","status":"implemented","sigHash":"cb6707c7f4149453ad38a7e6d5e59cd1763293f017d82ae290a38135f7346275","bodyHash":"a4f8565c0410321e415ce5aff44c3ad38011395a5093b5a4bb472d8e2ff0adc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SymbolToStringEx","kind":"method","status":"implemented","sigHash":"cb6707c7f4149453ad38a7e6d5e59cd1763293f017d82ae290a38135f7346275"}
  *
  * Go source:
  * func (c *Checker) SymbolToStringEx(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, flags SymbolFormatFlags) string {
@@ -825,7 +825,7 @@ export function Checker_SymbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToStringEx","kind":"method","status":"implemented","sigHash":"160d46046728c584ad91eb84e05dbbad353c8b88b8430426e4850068a4c9cca2","bodyHash":"7c098c2b30ccfe63b7a71e2af0fc9695f18e4ec4dd3378ab7c20117e30a40006"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToStringEx","kind":"method","status":"implemented","sigHash":"160d46046728c584ad91eb84e05dbbad353c8b88b8430426e4850068a4c9cca2"}
  *
  * Go source:
  * func (c *Checker) symbolToStringEx(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, flags SymbolFormatFlags) string {
@@ -927,7 +927,7 @@ export function Checker_symbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToString","kind":"method","status":"implemented","sigHash":"d67a57d1947553ff45216a0576ca04ae30f4a02c3a7bfa13780d9736ed9d0092","bodyHash":"a44e6c073cd2a8acc70f95ed4579216bc14fa933b46376713df901cb3b6a8e9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToString","kind":"method","status":"implemented","sigHash":"d67a57d1947553ff45216a0576ca04ae30f4a02c3a7bfa13780d9736ed9d0092"}
  *
  * Go source:
  * func (c *Checker) signatureToString(signature *Signature) string {
@@ -939,7 +939,7 @@ export function Checker_signatureToString(receiver: GoPtr<Checker>, signature: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SignatureToStringEx","kind":"method","status":"implemented","sigHash":"3d7fc99f392227c2404418dcf2899dca4920e57e961bef07ff50a3ec19da4d30","bodyHash":"3e20bbde20c5c48df27d1fec2782c89823a4a384f005fff221214fc74b817dae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SignatureToStringEx","kind":"method","status":"implemented","sigHash":"3d7fc99f392227c2404418dcf2899dca4920e57e961bef07ff50a3ec19da4d30"}
  *
  * Go source:
  * func (c *Checker) SignatureToStringEx(signature *Signature, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -951,7 +951,7 @@ export function Checker_SignatureToStringEx(receiver: GoPtr<Checker>, signature:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToStringEx","kind":"method","status":"implemented","sigHash":"1847ac6f0789b15f1ae1847f8507a7c4a5e885c63ee2fb4979e18e6b1db33726","bodyHash":"9a24160d39f84afd2b1641630c233077b32b7b118aa5f6dcf5e8f5a869964e3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToStringEx","kind":"method","status":"implemented","sigHash":"1847ac6f0789b15f1ae1847f8507a7c4a5e885c63ee2fb4979e18e6b1db33726"}
  *
  * Go source:
  * func (c *Checker) signatureToStringEx(signature *Signature, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -1038,7 +1038,7 @@ export function Checker_signatureToStringEx(receiver: GoPtr<Checker>, signature:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToString","kind":"method","status":"implemented","sigHash":"e2054984d35734e50e5a5a492e31f5e3c81dee2bd9c9a8478dc6ca1258a30b6b","bodyHash":"077f08a240d77b4a1fa96a4df4edb8073d61a43a28378840944420bfb43ad7ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToString","kind":"method","status":"implemented","sigHash":"e2054984d35734e50e5a5a492e31f5e3c81dee2bd9c9a8478dc6ca1258a30b6b"}
  *
  * Go source:
  * func (c *Checker) typePredicateToString(typePredicate *TypePredicate) string {
@@ -1055,7 +1055,7 @@ export function Checker_typePredicateToString(receiver: GoPtr<Checker>, typePred
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToStringEx","kind":"method","status":"implemented","sigHash":"a105208e1418bf27198898f0e83ef9d845b7f085617bb553145450ca5b67d47a","bodyHash":"d5b45236a4bd8200d35cbf28501f6bfbe00b4752401e52c27ea4e602d7e98710"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToStringEx","kind":"method","status":"implemented","sigHash":"a105208e1418bf27198898f0e83ef9d845b7f085617bb553145450ca5b67d47a"}
  *
  * Go source:
  * func (c *Checker) typePredicateToStringEx(typePredicate *TypePredicate, enclosingDeclaration *ast.Node, flags TypeFormatFlags) string {
@@ -1097,7 +1097,7 @@ export function Checker_typePredicateToStringEx(receiver: GoPtr<Checker>, typePr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.valueToString","kind":"method","status":"implemented","sigHash":"68dfe5b34d04da7a39cbb0ff8deee94bcb1777d7b9d0c3cc022be3f2853bbfcb","bodyHash":"3bd792c76e3d31ee74432466094a156d03530a8d43de338c4bd3baa11df3f9b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.valueToString","kind":"method","status":"implemented","sigHash":"68dfe5b34d04da7a39cbb0ff8deee94bcb1777d7b9d0c3cc022be3f2853bbfcb"}
  *
  * Go source:
  * func (c *Checker) valueToString(value any) string {
@@ -1109,7 +1109,7 @@ export function Checker_valueToString(receiver: GoPtr<Checker>, value: unknown):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.formatUnionTypes","kind":"method","status":"implemented","sigHash":"a35bf869964e0e1302471ca053a5bf815ee8dd5621aa234719e61947c1d12e62","bodyHash":"cb3f6e35893d08364caaa2994944b74c3b333459e6e4af3720fb39dc88a4d260"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.formatUnionTypes","kind":"method","status":"implemented","sigHash":"a35bf869964e0e1302471ca053a5bf815ee8dd5621aa234719e61947c1d12e62"}
  *
  * Go source:
  * func (c *Checker) formatUnionTypes(types []*Type, expandingEnum bool) []*Type {
@@ -1188,7 +1188,7 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNode","kind":"method","status":"implemented","sigHash":"5578e0b4de78b8a94ab1e88dc6a2234f08f1f7898611a316a19bed63329da563","bodyHash":"9ab56ff1f7ecf7e1c4cb37158bd466d9fe2dcd5a41c4f5ef062b6b69c96feb43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNode","kind":"method","status":"implemented","sigHash":"5578e0b4de78b8a94ab1e88dc6a2234f08f1f7898611a316a19bed63329da563"}
  *
  * Go source:
  * func (c *Checker) TypeToTypeNode(t *Type, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypeNode {
@@ -1202,7 +1202,7 @@ export function Checker_TypeToTypeNode(receiver: GoPtr<Checker>, t: GoPtr<Type>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SignatureToSignatureDeclaration","kind":"method","status":"implemented","sigHash":"3bf9f03b324650b2303d82cf53c7923799f0d97e25b32ebab64f58120b2c2d3d","bodyHash":"da07dd6a4223ebce875829b45a0546e91e4ab329b9c54a392d9cb97b2401833c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.SignatureToSignatureDeclaration","kind":"method","status":"implemented","sigHash":"3bf9f03b324650b2303d82cf53c7923799f0d97e25b32ebab64f58120b2c2d3d"}
  *
  * Go source:
  * func (c *Checker) SignatureToSignatureDeclaration(signature *Signature, kind ast.Kind, enclosingDeclaration *ast.Node, flags nodebuilder.Flags) *ast.Node {
@@ -1221,7 +1221,7 @@ export function Checker_SignatureToSignatureDeclaration(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e","bodyHash":"05039c9db4b9e2b9c3b2fd11116348c34a39578431cda11a7084075998dcbc01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e"}
  *
  * Go source:
  * // ExpandSymbolForHover produces declaration strings for a symbol with verbosity support for expandable hover.
@@ -1284,7 +1284,7 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7","bodyHash":"0d7b58082bb95398066b84f4ef1a8ccb995f9d3600f90821d5ecb4da6f05f021"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7"}
  *
  * Go source:
  * // TypeParameterToStringEx renders a type parameter declaration (e.g. "T extends Foo") with optional verbosity support.
@@ -1333,7 +1333,7 @@ export function Checker_TypeParameterToStringEx(receiver: GoPtr<Checker>, t: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNodeEx","kind":"method","status":"implemented","sigHash":"6762c56c158f38000e5082405cdf1920d21200d4bca67c67ff16e07c4d7f1d5e","bodyHash":"4380f5a1c5b11612e59130e1a8ea12b0f20555c143f4960d859c1b0ef53453d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNodeEx","kind":"method","status":"implemented","sigHash":"6762c56c158f38000e5082405cdf1920d21200d4bca67c67ff16e07c4d7f1d5e"}
  *
  * Go source:
  * func (c *Checker) TypeToTypeNodeEx(t *Type, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypeNode {
@@ -1347,7 +1347,7 @@ export function Checker_TypeToTypeNodeEx(receiver: GoPtr<Checker>, t: GoPtr<Type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypePredicateToTypePredicateNode","kind":"method","status":"implemented","sigHash":"854a133b25e03725f4ec44d1364fac5e53331efd51745285fe92bd2e9802dfa6","bodyHash":"8b9a23d7a8ed3b3ace2ca824a60cb50de30b5638ab74903b6d69d1afd400fd9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypePredicateToTypePredicateNode","kind":"method","status":"implemented","sigHash":"854a133b25e03725f4ec44d1364fac5e53331efd51745285fe92bd2e9802dfa6"}
  *
  * Go source:
  * func (c *Checker) TypePredicateToTypePredicateNode(t *TypePredicate, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypePredicateNodeNode {

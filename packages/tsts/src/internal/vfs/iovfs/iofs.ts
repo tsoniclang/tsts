@@ -9,7 +9,7 @@ import { GetDirectoryPath, IsUrl, NormalizePath, RemoveTrailingDirectorySeparato
 import type { Entries, FileInfo, FS as FS_f717df58, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::RealpathFS","kind":"type","status":"implemented","sigHash":"76ddb6e93f7dad5be898b3b18f1ba22aa1dfc580f92fb7545edfb26a2713e621","bodyHash":"15614cdd3fb827948194860908c43827aed8cd4a3973cbb98a578549b0f79b4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::RealpathFS","kind":"type","status":"implemented","sigHash":"76ddb6e93f7dad5be898b3b18f1ba22aa1dfc580f92fb7545edfb26a2713e621"}
  *
  * Go source:
  * RealpathFS interface {
@@ -22,7 +22,7 @@ export interface RealpathFS extends FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::WritableFS","kind":"type","status":"implemented","sigHash":"6ce04594308ab5fa0ebbf08aa3fd990ca8e1e160e7bb1fd9c39b7d20f80dbde4","bodyHash":"c5aae079c6bececaecce6e640856380c307a270cf0199c73ae72154f15a97f18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::WritableFS","kind":"type","status":"implemented","sigHash":"6ce04594308ab5fa0ebbf08aa3fd990ca8e1e160e7bb1fd9c39b7d20f80dbde4"}
  *
  * Go source:
  * WritableFS interface {
@@ -44,7 +44,7 @@ export interface WritableFS extends FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::FsWithSys","kind":"type","status":"implemented","sigHash":"a4f7395d1d5e7a021a5851aed59db62000930987923d6a1d0c7a64dfbd864ef2","bodyHash":"b0cc740fae0aa3b8c5b1888541e702074fc95c7b953bcede968c218e271bcfb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::FsWithSys","kind":"type","status":"implemented","sigHash":"a4f7395d1d5e7a021a5851aed59db62000930987923d6a1d0c7a64dfbd864ef2"}
  *
  * Go source:
  * FsWithSys interface {
@@ -57,7 +57,7 @@ export interface FsWithSys extends FS_f717df58 {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::func::From","kind":"func","status":"implemented","sigHash":"c9c32302129a5b9ff936d581edf737c2c714b403d118a05d392b48f43430357c","bodyHash":"21982e1bcd22d97919310f4bfa7a22868b7de7b2ce4da5fd5462962134ac4051"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::func::From","kind":"func","status":"implemented","sigHash":"c9c32302129a5b9ff936d581edf737c2c714b403d118a05d392b48f43430357c"}
  *
  * Go source:
  * func From(fsys fs.FS, useCaseSensitiveFileNames bool) FsWithSys {
@@ -251,7 +251,7 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::ioFS","kind":"type","status":"implemented","sigHash":"c23b6ead9b463c20231d0c25d72369a607c5d1665dc5671ddac01f359c6ebb1f","bodyHash":"4ad44ab4d2811468b7431604d4a56bac03456c47acdff3bfdcc5c7c766770f47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::type::ioFS","kind":"type","status":"implemented","sigHash":"c23b6ead9b463c20231d0c25d72369a607c5d1665dc5671ddac01f359c6ebb1f"}
  *
  * Go source:
  * ioFS struct {
@@ -280,7 +280,7 @@ export interface ioFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"023410109c89679104b8e7f9320817f5a3a5332db28e25dc0c947f9a063a5e22"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ FsWithSys = (*ioFS)(nil)
@@ -312,7 +312,7 @@ export function ioFS_as_FsWithSys(receiver: GoPtr<ioFS>): FsWithSys {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"81df6f6759fef0aa41afeeb986d4e25141847b8799dd8ed704195a2bb8c42839","bodyHash":"536622fb3cbb19cad130e8b6234afc2739624b6069af48f202c0e5f9fc334446"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"81df6f6759fef0aa41afeeb986d4e25141847b8799dd8ed704195a2bb8c42839"}
  *
  * Go source:
  * func (vfs *ioFS) UseCaseSensitiveFileNames() bool {
@@ -324,7 +324,7 @@ export function ioFS_UseCaseSensitiveFileNames(receiver: GoPtr<ioFS>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.DirectoryExists","kind":"method","status":"implemented","sigHash":"8ee043f22d06ab08f6e7a2c9a613ee122abe66bd9fe2395080ecc2c55f6eed03","bodyHash":"9a0472543c8ff23105c55b9aad9b01a220b80b35f9542b3c3d457beac5e75422"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.DirectoryExists","kind":"method","status":"implemented","sigHash":"8ee043f22d06ab08f6e7a2c9a613ee122abe66bd9fe2395080ecc2c55f6eed03"}
  *
  * Go source:
  * func (vfs *ioFS) DirectoryExists(path string) bool {
@@ -336,7 +336,7 @@ export function ioFS_DirectoryExists(receiver: GoPtr<ioFS>, path: string): bool 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.FileExists","kind":"method","status":"implemented","sigHash":"70099b15a076fbba4b804acd8744d08ebb194f4407714ad885686c3d3e7e63b8","bodyHash":"f0b11994566058b62f6dbcf96346390383955c39ea4b76a744cca7a7a69fea24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.FileExists","kind":"method","status":"implemented","sigHash":"70099b15a076fbba4b804acd8744d08ebb194f4407714ad885686c3d3e7e63b8"}
  *
  * Go source:
  * func (vfs *ioFS) FileExists(path string) bool {
@@ -348,7 +348,7 @@ export function ioFS_FileExists(receiver: GoPtr<ioFS>, path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"6d4c664e824e358d52fc1799e937259c0b97a9194a1d0e055d61ba8a87025dbd","bodyHash":"61ff1a6a50d65cb4aa4389401aed97e657d394b877ae02bf5d3a77cfcb271ce4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"6d4c664e824e358d52fc1799e937259c0b97a9194a1d0e055d61ba8a87025dbd"}
  *
  * Go source:
  * func (vfs *ioFS) GetAccessibleEntries(path string) vfs.Entries {
@@ -360,7 +360,7 @@ export function ioFS_GetAccessibleEntries(receiver: GoPtr<ioFS>, path: string): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Stat","kind":"method","status":"implemented","sigHash":"cc9ed4bdaa06db574da15f9e8889a50bc57c76d53a64db4404bacf1a590950f9","bodyHash":"ff34b3eb521a95c3f59707c40ed8e3c25a90b64cdd7abbf9f603f91e1e3621b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Stat","kind":"method","status":"implemented","sigHash":"cc9ed4bdaa06db574da15f9e8889a50bc57c76d53a64db4404bacf1a590950f9"}
  *
  * Go source:
  * func (vfs *ioFS) Stat(path string) vfs.FileInfo {
@@ -374,7 +374,7 @@ export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): GoPtr<FileInfo> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.ReadFile","kind":"method","status":"implemented","sigHash":"13e6d859ff995185067f192a767e06264b4f8f2c98d971e7eaa9579c9df3b4db","bodyHash":"4782381b2984122e3b7174d673cdff8052bf1f0063f22ea9a733bd605e03ed20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.ReadFile","kind":"method","status":"implemented","sigHash":"13e6d859ff995185067f192a767e06264b4f8f2c98d971e7eaa9579c9df3b4db"}
  *
  * Go source:
  * func (vfs *ioFS) ReadFile(path string) (contents string, ok bool) {
@@ -386,7 +386,7 @@ export function ioFS_ReadFile(receiver: GoPtr<ioFS>, path: string): [string, boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.WalkDir","kind":"method","status":"implemented","sigHash":"795c72a332832757c5d4ffa6fc3cd52dd286aa3e8488616cd4b9a820f0ad2ef8","bodyHash":"770ff0563c57857495385e1b43afd5eff541cc36713a604f02c287b722fd8a7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.WalkDir","kind":"method","status":"implemented","sigHash":"795c72a332832757c5d4ffa6fc3cd52dd286aa3e8488616cd4b9a820f0ad2ef8"}
  *
  * Go source:
  * func (vfs *ioFS) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
@@ -398,7 +398,7 @@ export function ioFS_WalkDir(receiver: GoPtr<ioFS>, root: string, walkFn: WalkDi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Remove","kind":"method","status":"implemented","sigHash":"a1af85e10ff3b93fe381607556a5a66bf54e125eacf30be825fc37e7bc91f065","bodyHash":"5641a9bbb865f015bd1f5ceef1b894f72433bced44fbc9189401009e7978906d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Remove","kind":"method","status":"implemented","sigHash":"a1af85e10ff3b93fe381607556a5a66bf54e125eacf30be825fc37e7bc91f065"}
  *
  * Go source:
  * func (vfs *ioFS) Remove(path string) error {
@@ -412,7 +412,7 @@ export function ioFS_Remove(receiver: GoPtr<ioFS>, path: string): GoError {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Chtimes","kind":"method","status":"implemented","sigHash":"1d69b76ffeff85c51a64d327335aed7e35dab6a0acc0913dc3c18002f2393542","bodyHash":"4d8a9493706243542f611e07e952396004fe413e5e4b2e3d12cdbbf3b2f183eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Chtimes","kind":"method","status":"implemented","sigHash":"1d69b76ffeff85c51a64d327335aed7e35dab6a0acc0913dc3c18002f2393542"}
  *
  * Go source:
  * func (vfs *ioFS) Chtimes(path string, aTime time.Time, mTime time.Time) error {
@@ -426,7 +426,7 @@ export function ioFS_Chtimes(receiver: GoPtr<ioFS>, path: string, aTime: Time, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Realpath","kind":"method","status":"implemented","sigHash":"18a4a859efe0c3edae994f659c0a801ad5b6e4cf59fa3a67822950fc10411942","bodyHash":"0c681dc9c95285b44a70a3b79f7db1a14fb0a767d14b57efe3e6611f2a0be30e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.Realpath","kind":"method","status":"implemented","sigHash":"18a4a859efe0c3edae994f659c0a801ad5b6e4cf59fa3a67822950fc10411942"}
  *
  * Go source:
  * func (vfs *ioFS) Realpath(path string) string {
@@ -450,7 +450,7 @@ export function ioFS_Realpath(receiver: GoPtr<ioFS>, path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.writeFileEnsuringDir","kind":"method","status":"implemented","sigHash":"6eac3eaa1093296c29d932bf2f8a10d665dcb18b2b35fbf71979093ea4c1f8e5","bodyHash":"e08bec271bfb216dfaea44ce9e4b3a0b5624163b10d18fa14257a93204c7983b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.writeFileEnsuringDir","kind":"method","status":"implemented","sigHash":"6eac3eaa1093296c29d932bf2f8a10d665dcb18b2b35fbf71979093ea4c1f8e5"}
  *
  * Go source:
  * func (vfs *ioFS) writeFileEnsuringDir(path string, content string, write func(path, content string) error) error {
@@ -478,7 +478,7 @@ export function ioFS_writeFileEnsuringDir(receiver: GoPtr<ioFS>, path: string, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.WriteFile","kind":"method","status":"implemented","sigHash":"c28a99d306da8fe0adb6a1c745a1af22a8001db5530be5bf49b31e84c117962c","bodyHash":"b08e0c72c6f462ac4e400fcf1a159a5e39239b48903bd6e4ccc0d0e836ff34e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.WriteFile","kind":"method","status":"implemented","sigHash":"c28a99d306da8fe0adb6a1c745a1af22a8001db5530be5bf49b31e84c117962c"}
  *
  * Go source:
  * func (vfs *ioFS) WriteFile(path string, content string) error {
@@ -490,7 +490,7 @@ export function ioFS_WriteFile(receiver: GoPtr<ioFS>, path: string, content: str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.AppendFile","kind":"method","status":"implemented","sigHash":"975ba3f205d540d2213cd55a4844c33c84fcb58b9c21742fb0e046fbeb4eb72d","bodyHash":"d9c21f0efb4f548cd7d0cb843ad933622986ced388fa24ac3cd9268852173106"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.AppendFile","kind":"method","status":"implemented","sigHash":"975ba3f205d540d2213cd55a4844c33c84fcb58b9c21742fb0e046fbeb4eb72d"}
  *
  * Go source:
  * func (vfs *ioFS) AppendFile(path string, content string) error {
@@ -502,7 +502,7 @@ export function ioFS_AppendFile(receiver: GoPtr<ioFS>, path: string, content: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.FSys","kind":"method","status":"implemented","sigHash":"be5f1951e8becfe2bd5d1ee5f3c8250ca9ebeadbb863606ad2935b0393e0e432","bodyHash":"44f73c0727a35287681d2565ac5e8f8db91beadcc887732f1707aecece5a19f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.FSys","kind":"method","status":"implemented","sigHash":"be5f1951e8becfe2bd5d1ee5f3c8250ca9ebeadbb863606ad2935b0393e0e432"}
  *
  * Go source:
  * func (vfs *ioFS) FSys() fs.FS {

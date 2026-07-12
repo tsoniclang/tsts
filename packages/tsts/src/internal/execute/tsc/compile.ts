@@ -12,7 +12,7 @@ import type { FS } from "../../vfs/vfs.js";
 import type { Program } from "../incremental/program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::System","kind":"type","status":"implemented","sigHash":"9796f5a63a81e48716f70a9ce1144968740f12fb78d508829d5be302b9df34ef","bodyHash":"c2ff63c72675a9a96cdc414b1ad1441d1a0be811b19cce61267900f7eb28877f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::System","kind":"type","status":"implemented","sigHash":"9796f5a63a81e48716f70a9ce1144968740f12fb78d508829d5be302b9df34ef"}
  *
  * Go source:
  * System interface {
@@ -41,7 +41,7 @@ export interface System {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::ExitStatus","kind":"type","status":"implemented","sigHash":"c0840dbe90bb4876ee4e540d172b1eb93656f499a857f85fd99a816fd93f7a1a","bodyHash":"bb1a402ad350bf55de73a4095262d87132bbd26d59e9bf5266a453ea95f7e5e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::ExitStatus","kind":"type","status":"implemented","sigHash":"c0840dbe90bb4876ee4e540d172b1eb93656f499a857f85fd99a816fd93f7a1a"}
  *
  * Go source:
  * ExitStatus int
@@ -49,7 +49,7 @@ export interface System {
 export type ExitStatus = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::constGroup::ExitStatusSuccess+ExitStatusDiagnosticsPresent_OutputsSkipped+ExitStatusDiagnosticsPresent_OutputsGenerated+ExitStatusInvalidProject_OutputsSkipped+ExitStatusProjectReferenceCycle_OutputsSkipped+ExitStatusNotImplemented","kind":"constGroup","status":"implemented","sigHash":"f52247fde3d4e8d3add4ff1e6ca9beea887ece14578762bbf56f8323ec9c6a80","bodyHash":"95e9a712a75534ad85c464c6f72eb5f9d92af9cb6cc89eb05a2e29ab67d6c606"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::constGroup::ExitStatusSuccess+ExitStatusDiagnosticsPresent_OutputsSkipped+ExitStatusDiagnosticsPresent_OutputsGenerated+ExitStatusInvalidProject_OutputsSkipped+ExitStatusProjectReferenceCycle_OutputsSkipped+ExitStatusNotImplemented","kind":"constGroup","status":"implemented","sigHash":"f52247fde3d4e8d3add4ff1e6ca9beea887ece14578762bbf56f8323ec9c6a80"}
  *
  * Go source:
  * const (
@@ -69,7 +69,7 @@ export const ExitStatusProjectReferenceCycle_OutputsSkipped: ExitStatus = 4;
 export const ExitStatusNotImplemented: ExitStatus = 5;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::Watcher","kind":"type","status":"implemented","sigHash":"2a47ad3c74e0776aadddcb18d437342520fd225743cc17fef59eb9009038eb8e","bodyHash":"17e6ef4e73d8d8f418b1f79abcd01374fd0b5a2f02bdd2a17470cc10370fae16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::Watcher","kind":"type","status":"implemented","sigHash":"2a47ad3c74e0776aadddcb18d437342520fd225743cc17fef59eb9009038eb8e"}
  *
  * Go source:
  * Watcher interface {
@@ -81,7 +81,7 @@ export interface Watcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CommandLineResult","kind":"type","status":"implemented","sigHash":"e50a93841ad66672ce21962a3d4d374bb2472aff8487ed7239bc95d44088fdcb","bodyHash":"8cd421d8a62457b8fc3ecdb7160c29500d3f538fcb2bd182c1d4dbe861068538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CommandLineResult","kind":"type","status":"implemented","sigHash":"e50a93841ad66672ce21962a3d4d374bb2472aff8487ed7239bc95d44088fdcb"}
  *
  * Go source:
  * CommandLineResult struct {
@@ -95,7 +95,7 @@ export interface CommandLineResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CommandLineTesting","kind":"type","status":"implemented","sigHash":"c68bf842b676a83b41e9a25f1564182e8348f701ec950e9bff1f53068f919941","bodyHash":"b2597debb345a85beeeb66cae85a2f4470853ec010e3493466c40df26a59b258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CommandLineTesting","kind":"type","status":"implemented","sigHash":"c68bf842b676a83b41e9a25f1564182e8348f701ec950e9bff1f53068f919941"}
  *
  * Go source:
  * CommandLineTesting interface {
@@ -128,7 +128,7 @@ export interface CommandLineTesting {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CompileTimes","kind":"type","status":"implemented","sigHash":"9906ca36f4bae5428c5e3f3c53973bba22c52cfed4027df640ee9a609c353512","bodyHash":"ab3d71092115450d43e7f298ebc89262f2ca319312c70032e5f91e61124f5990"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CompileTimes","kind":"type","status":"implemented","sigHash":"9906ca36f4bae5428c5e3f3c53973bba22c52cfed4027df640ee9a609c353512"}
  *
  * Go source:
  * CompileTimes struct {
@@ -154,7 +154,7 @@ export interface CompileTimes {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CompileAndEmitResult","kind":"type","status":"implemented","sigHash":"9e44889df73aa495b668edc0282e0de265c1c102acd25cbe4fe4491fc8f9be52","bodyHash":"b418faf0039c51a6aad673581b4b115809ad67583506c827ccb4ee9d095b8a0a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::CompileAndEmitResult","kind":"type","status":"implemented","sigHash":"9e44889df73aa495b668edc0282e0de265c1c102acd25cbe4fe4491fc8f9be52"}
  *
  * Go source:
  * CompileAndEmitResult struct {

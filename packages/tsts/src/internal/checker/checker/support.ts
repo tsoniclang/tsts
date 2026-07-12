@@ -161,7 +161,7 @@ import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_mergeModuleA
 import { Checker_addDiagnostic, Checker_addSuggestionDiagnostic, Checker_mergeGlobalSymbol } from "../checker.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnreliableWorker","kind":"method","status":"implemented","sigHash":"f90db0ec4a1e83322abe295dd0931dd486677de0bc0daa2547e75d4b77b49bea","bodyHash":"8d084b2ab50308dd75d05babeaa46f57acd50919a51e340f5ef60f79180a97f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnreliableWorker","kind":"method","status":"implemented","sigHash":"f90db0ec4a1e83322abe295dd0931dd486677de0bc0daa2547e75d4b77b49bea"}
  *
  * Go source:
  * func (c *Checker) reportUnreliableWorker(t *Type) *Type {
@@ -179,7 +179,7 @@ export function Checker_reportUnreliableWorker(receiver: GoPtr<Checker>, t: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnmeasurableWorker","kind":"method","status":"implemented","sigHash":"5d5e2b6772444b92994ff5cb3edeb7acef48ada17fd1985a6ba1e703752fe871","bodyHash":"61f9e2339a5be311c34e28edd9ed45651be746140c6683fc066c5cbf0f3ee491"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnmeasurableWorker","kind":"method","status":"implemented","sigHash":"5d5e2b6772444b92994ff5cb3edeb7acef48ada17fd1985a6ba1e703752fe871"}
  *
  * Go source:
  * func (c *Checker) reportUnmeasurableWorker(t *Type) *Type {
@@ -197,7 +197,7 @@ export function Checker_reportUnmeasurableWorker(receiver: GoPtr<Checker>, t: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeClosures","kind":"method","status":"implemented","sigHash":"6b39b265d7e91408b4a1f7565b22b968f73ccd50192d093d036a295bb5e34156","bodyHash":"a0bee21fac4421ff1231109d00cb8356ef5659286ca7759cdb0879e0abcf6532"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeClosures","kind":"method","status":"implemented","sigHash":"6b39b265d7e91408b4a1f7565b22b968f73ccd50192d093d036a295bb5e34156"}
  *
  * Go source:
  * func (c *Checker) initializeClosures() {
@@ -228,7 +228,7 @@ export function Checker_initializeClosures(receiver: GoPtr<Checker>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeIterationResolvers","kind":"method","status":"implemented","sigHash":"8a872a7dea5689ae143df68cd6d1470054e2aa60f81dc6e07bc6a9b1b6b6f403","bodyHash":"f16a1445b73ffe9127886e3e2480abab48f8a5a6cd74e98eaccc95c34acb34dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeIterationResolvers","kind":"method","status":"implemented","sigHash":"8a872a7dea5689ae143df68cd6d1470054e2aa60f81dc6e07bc6a9b1b6b6f403"}
  *
  * Go source:
  * func (c *Checker) initializeIterationResolvers() {
@@ -302,7 +302,7 @@ export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeChecker","kind":"method","status":"implemented","sigHash":"354ce66dc08c8b1ca3e621b8c9dd2830798117e69953308e1dd6998571784bb2","bodyHash":"f2b86c4af0e16155fd21855d683715467db351e9e54bec2232bf539a31188d9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeChecker","kind":"method","status":"implemented","sigHash":"354ce66dc08c8b1ca3e621b8c9dd2830798117e69953308e1dd6998571784bb2"}
  *
  * Go source:
  * func (c *Checker) initializeChecker() {
@@ -475,7 +475,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolReferenced","kind":"method","status":"implemented","sigHash":"9d559ba705bd71a30f81d3ff86c7c3fd070af0c3b829dc3a2f1a8a765a19b850","bodyHash":"092dec53d97117e547064affd2a6356b852a4daad74c51ba6fc8087eb21bc901"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolReferenced","kind":"method","status":"implemented","sigHash":"9d559ba705bd71a30f81d3ff86c7c3fd070af0c3b829dc3a2f1a8a765a19b850"}
  *
  * Go source:
  * func (c *Checker) symbolReferenced(symbol *ast.Symbol, meaning ast.SymbolFlags) {
@@ -487,7 +487,7 @@ export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElements","kind":"method","status":"implemented","sigHash":"e90c6a3b735d0641fd58be4c7885a93495e07f4e69433afdd1810ec0e95e6d11","bodyHash":"f7f45356a90c2e5e019118f0ec71201a07d6d63f5add6a21b2435deefd0ca792"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElements","kind":"method","status":"implemented","sigHash":"e90c6a3b735d0641fd58be4c7885a93495e07f4e69433afdd1810ec0e95e6d11"}
  *
  * Go source:
  * func (c *Checker) checkSourceElements(nodes []*ast.Node) {
@@ -509,7 +509,7 @@ export function Checker_checkSourceElements(receiver: GoPtr<Checker>, nodes: GoS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElement","kind":"method","status":"implemented","sigHash":"423b837552ee1d318a7c606386a1af9cc9e8c0d4d5d8a46a1d03e3ae75086334","bodyHash":"9b459177c1588a7e614bc9663b8a3afaaa922e634da3893056ef5ae533f6bf9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElement","kind":"method","status":"implemented","sigHash":"423b837552ee1d318a7c606386a1af9cc9e8c0d4d5d8a46a1d03e3ae75086334"}
  *
  * Go source:
  * func (c *Checker) checkSourceElement(node *ast.Node) bool {
@@ -539,7 +539,7 @@ export function Checker_checkSourceElement(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementWorker","kind":"method","status":"implemented","sigHash":"7a7a80c7c468f1b601b722525a3ea6553ca95bf0d5546e820a1a0d8ce614dd0f","bodyHash":"20e8f840bc1422138f2013bec3412fe97aba68534d4005747b7f4d72d11cb59a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementWorker","kind":"method","status":"implemented","sigHash":"7a7a80c7c468f1b601b722525a3ea6553ca95bf0d5546e820a1a0d8ce614dd0f"}
  *
  * Go source:
  * func (c *Checker) checkSourceElementWorker(node *ast.Node) {
@@ -895,7 +895,7 @@ export function Checker_checkSourceElementWorker(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.shouldCheckErasableSyntax","kind":"method","status":"implemented","sigHash":"836956af34b9fa5bd7e018c3bdaa57e0544f5749f957348a71d96f504bc20fda","bodyHash":"ae6b82a11fbe7bcdcd6327f61a8a1e552a241651edb8543b1eadc1a306497b7b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.shouldCheckErasableSyntax","kind":"method","status":"implemented","sigHash":"836956af34b9fa5bd7e018c3bdaa57e0544f5749f957348a71d96f504bc20fda"}
  *
  * Go source:
  * func (c *Checker) shouldCheckErasableSyntax(node *ast.Node) bool {
@@ -907,7 +907,7 @@ export function Checker_shouldCheckErasableSyntax(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBindingElement","kind":"method","status":"implemented","sigHash":"56e08921498addcf28e2e88231327fb337667618da7a88ba5dc74586dfb34b2d","bodyHash":"b5a085a4c34c048c8bb4c4e92d516e4b4189a99d0aaa53af8ecc8ab43d8e9b9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBindingElement","kind":"method","status":"implemented","sigHash":"56e08921498addcf28e2e88231327fb337667618da7a88ba5dc74586dfb34b2d"}
  *
  * Go source:
  * func (c *Checker) checkBindingElement(node *ast.Node) {
@@ -921,7 +921,7 @@ export function Checker_checkBindingElement(receiver: GoPtr<Checker>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnused","kind":"method","status":"implemented","sigHash":"d0fdcd4a2f4df123542070547530a1c6ad6fce1b1a2ad9757927538f325a555d","bodyHash":"f66883edb6524b8d3986048a9d6b7224eaf3a50611ffe5a722dc94fd720ab89b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnused","kind":"method","status":"implemented","sigHash":"d0fdcd4a2f4df123542070547530a1c6ad6fce1b1a2ad9757927538f325a555d"}
  *
  * Go source:
  * func (c *Checker) reportUnused(location *ast.Node, kind UnusedKind, diagnostic *ast.Diagnostic) {
@@ -951,7 +951,7 @@ export function Checker_reportUnused(receiver: GoPtr<Checker>, location: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnusedBindingElements","kind":"method","status":"implemented","sigHash":"79d8c5c3039cd02cab17851ce4902610d4245e0df2544112deb6644f58d3afdc","bodyHash":"e95c11c050c584e1eba13d636f913cac1c3db6862a2cae1b0683a561853dcadf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnusedBindingElements","kind":"method","status":"implemented","sigHash":"79d8c5c3039cd02cab17851ce4902610d4245e0df2544112deb6644f58d3afdc"}
  *
  * Go source:
  * func (c *Checker) reportUnusedBindingElements(node *ast.Node) {
@@ -973,7 +973,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedRenamedBindingElements","kind":"method","status":"implemented","sigHash":"f889348068bd3340278d76c67ae38aa138de5cfe292db30af0747b6e41e48cf4","bodyHash":"6b5e37d575bb027c55a23f0925cc86b6d617d85c60c0145c521901b5cb30738e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedRenamedBindingElements","kind":"method","status":"implemented","sigHash":"f889348068bd3340278d76c67ae38aa138de5cfe292db30af0747b6e41e48cf4"}
  *
  * Go source:
  * func (c *Checker) checkUnusedRenamedBindingElements() {
@@ -1022,7 +1022,7 @@ export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkWeakMapSetCollision","kind":"method","status":"implemented","sigHash":"bb7888e1a365ce23ba310b30d195d2c7c2eb8f74938e6962d0f135c3f952807a","bodyHash":"6e89d07f86b96b1f09b994c0ec4672a9e308f5250489aa231f9434cd6b7850c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkWeakMapSetCollision","kind":"method","status":"implemented","sigHash":"bb7888e1a365ce23ba310b30d195d2c7c2eb8f74938e6962d0f135c3f952807a"}
  *
  * Go source:
  * func (c *Checker) checkWeakMapSetCollision(node *ast.Node) {
@@ -1046,7 +1046,7 @@ export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReflectCollision","kind":"method","status":"implemented","sigHash":"ca71b7a9ade89378f0b429ad5f1d50853b1d96405dcdf923ab93edb7c3b08a5d","bodyHash":"e82080bf9c42ce416ca8516953760cfdb50a1c33432571918aa38283faae822f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReflectCollision","kind":"method","status":"implemented","sigHash":"ca71b7a9ade89378f0b429ad5f1d50853b1d96405dcdf923ab93edb7c3b08a5d"}
  *
  * Go source:
  * func (c *Checker) checkReflectCollision(node *ast.Node) {
@@ -1106,7 +1106,7 @@ export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkThisBeforeSuper","kind":"method","status":"implemented","sigHash":"33f64a4439dba3e8f7c87fb48ad95dea955ae149e07cd41163a41ef7dc2ca2d4","bodyHash":"9083e934801ce3d0fd25b26e5fb2ed47d2c2f837401f9c1ecc500ac6c5b0cee2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkThisBeforeSuper","kind":"method","status":"implemented","sigHash":"33f64a4439dba3e8f7c87fb48ad95dea955ae149e07cd41163a41ef7dc2ca2d4"}
  *
  * Go source:
  * func (c *Checker) checkThisBeforeSuper(node *ast.Node, container *ast.Node, diagnosticMessage *diagnostics.Message) {
@@ -1134,7 +1134,7 @@ export function Checker_checkThisBeforeSuper(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertion","kind":"method","status":"implemented","sigHash":"8464743512d29959302858e3075f01cc43e601f1a4b21ef39b69bc0cb695c540","bodyHash":"e997c75a1c6e80c9259da66ee139073966373c1729d084fbd268ebcbdd26721e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertion","kind":"method","status":"implemented","sigHash":"8464743512d29959302858e3075f01cc43e601f1a4b21ef39b69bc0cb695c540"}
  *
  * Go source:
  * func (c *Checker) checkAssertion(node *ast.Node, checkMode CheckMode) *Type {
@@ -1185,7 +1185,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertionDeferred","kind":"method","status":"implemented","sigHash":"973986c5f4c38a69995010d50136da4ea65daa63e67317dca64da6668fe1478e","bodyHash":"c115a1f302f9fed0371ebbe0074d0264037323087907d6494f44ee0cbaa89d46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertionDeferred","kind":"method","status":"implemented","sigHash":"973986c5f4c38a69995010d50136da4ea65daa63e67317dca64da6668fe1478e"}
  *
  * Go source:
  * func (c *Checker) checkAssertionDeferred(node *ast.Node) {
@@ -1221,7 +1221,7 @@ export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNaNEquality","kind":"method","status":"implemented","sigHash":"b00c0bfa7bb79f26330352cb2040868edefdf7e36c98263438fd24e07eae377b","bodyHash":"b53e4176e9e5ebaefa236d598f7b0e05827ab38068187b8d3bc53c7d2328e752"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNaNEquality","kind":"method","status":"implemented","sigHash":"b00c0bfa7bb79f26330352cb2040868edefdf7e36c98263438fd24e07eae377b"}
  *
  * Go source:
  * func (c *Checker) checkNaNEquality(errorNode *ast.Node, operator ast.Kind, left *ast.Expression, right *ast.Expression) {
@@ -1282,7 +1282,7 @@ export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.error","kind":"method","status":"implemented","sigHash":"a1b3e7b0921a4a0464969d9cacee61da47b0195b35a5116cc39b62275a55e276","bodyHash":"4dabf35984bae7b29cf602ac8b8f555b1d1469836d9d7a9a7fc44be88f52bc27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.error","kind":"method","status":"implemented","sigHash":"a1b3e7b0921a4a0464969d9cacee61da47b0195b35a5116cc39b62275a55e276"}
  *
  * Go source:
  * func (c *Checker) error(location *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -1298,7 +1298,7 @@ export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorSkippedOnNoEmit","kind":"method","status":"implemented","sigHash":"eccf4deda6506c03ac1cd814106663bb77ea66de5f93cb7bf6f7b406f463d2be","bodyHash":"71393a7fc60e9de9b5ec25e754804e405bb4572c4cc09cebfe29abf835d75982"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorSkippedOnNoEmit","kind":"method","status":"implemented","sigHash":"eccf4deda6506c03ac1cd814106663bb77ea66de5f93cb7bf6f7b406f463d2be"}
  *
  * Go source:
  * func (c *Checker) errorSkippedOnNoEmit(location *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -1314,7 +1314,7 @@ export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorOrSuggestion","kind":"method","status":"implemented","sigHash":"71dbc475f4dde8bddb12c0eece37fdb596119300f9162c2e631a818d5e676fee","bodyHash":"5cba5302220b40779cacbff7a6e2a7698097b7d83001e8623a27a6759468b357"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorOrSuggestion","kind":"method","status":"implemented","sigHash":"71dbc475f4dde8bddb12c0eece37fdb596119300f9162c2e631a818d5e676fee"}
  *
  * Go source:
  * func (c *Checker) errorOrSuggestion(isError bool, location *ast.Node, message *diagnostics.Message, args ...any) {
@@ -1326,7 +1326,7 @@ export function Checker_errorOrSuggestion(receiver: GoPtr<Checker>, isError: boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.canHaveSyntheticDefault","kind":"method","status":"implemented","sigHash":"80232f30dcc21464113deb4491dc5aea86d8acf7817387f46f61eb14b16d241c","bodyHash":"4e4e0dddf6751d96bf5b6715322c995a9df8bfea22868307c85219ab7a6d0550"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.canHaveSyntheticDefault","kind":"method","status":"implemented","sigHash":"80232f30dcc21464113deb4491dc5aea86d8acf7817387f46f61eb14b16d241c"}
  *
  * Go source:
  * func (c *Checker) canHaveSyntheticDefault(file *ast.Node, moduleSymbol *ast.Symbol, dontResolveAlias bool, usage *ast.Node) bool {
@@ -1431,7 +1431,7 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero","kind":"method","status":"implemented","sigHash":"ac1a5c1faca99b9a97e6772498eab9bc1349ba8c98bf3dacab2b2f77c66c86ea","bodyHash":"90031db923a48be39fb2e01727e39a91e077521e7bdb81cccad6846cbc82bb37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero","kind":"method","status":"implemented","sigHash":"ac1a5c1faca99b9a97e6772498eab9bc1349ba8c98bf3dacab2b2f77c66c86ea"}
  *
  * Go source:
  * func (k CacheHashKey) IsZero() bool {
@@ -1443,7 +1443,7 @@ export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeByte","kind":"method","status":"implemented","sigHash":"fc12495863b0fd20991d4ebc290cc639d805be5af031695c424cf49059909a06","bodyHash":"ebf03d0a97ceb51b4985ad169f26de74ad220a93746b1584fde9148971658cf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeByte","kind":"method","status":"implemented","sigHash":"fc12495863b0fd20991d4ebc290cc639d805be5af031695c424cf49059909a06"}
  *
  * Go source:
  * func (b *keyBuilder) writeByte(c byte) {
@@ -1455,7 +1455,7 @@ export function keyBuilder_writeByte(receiver: GoPtr<keyBuilder>, c: byte): void
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeString","kind":"method","status":"implemented","sigHash":"95571fcfb2a8b2695b7b921db1bd622beda7b1524e7d968ef4cf63b0ad3ec5ed","bodyHash":"8f6c6e72fd1ec0edb3a6c2274538756757d912411c0b5f4611de32d82b534c1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeString","kind":"method","status":"implemented","sigHash":"95571fcfb2a8b2695b7b921db1bd622beda7b1524e7d968ef4cf63b0ad3ec5ed"}
  *
  * Go source:
  * func (b *keyBuilder) writeString(s string) {
@@ -1467,7 +1467,7 @@ export function keyBuilder_writeString(receiver: GoPtr<keyBuilder>, s: string): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeInt","kind":"method","status":"implemented","sigHash":"6a27d4019053a9b9464c4ad39c418c4839cd67fe9c32baacce7edcdd9f464b4f","bodyHash":"08f3854fb5ab326842de4bedce29a4504dd8e57bf226152899fe5782217ea994"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeInt","kind":"method","status":"implemented","sigHash":"6a27d4019053a9b9464c4ad39c418c4839cd67fe9c32baacce7edcdd9f464b4f"}
  *
  * Go source:
  * func (b *keyBuilder) writeInt(value int) {
@@ -1485,7 +1485,7 @@ export function keyBuilder_writeInt(receiver: GoPtr<keyBuilder>, value: int): vo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findMixins","kind":"method","status":"implemented","sigHash":"bdbf82c863f236f77744213ba95ed37ac81771c71d6160dbb69739a2d532f478","bodyHash":"875051043bc97210c4528d673bd99af57d1e2d53aa4e5bbe173654ea2f6d621e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findMixins","kind":"method","status":"implemented","sigHash":"bdbf82c863f236f77744213ba95ed37ac81771c71d6160dbb69739a2d532f478"}
  *
  * Go source:
  * func (c *Checker) findMixins(types []*Type) ([]bool, int) {
@@ -1535,7 +1535,7 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValue","kind":"method","status":"implemented","sigHash":"3679edde4f705b718f1763ecab39b4c4b5c48a0ddf616d617f2b9178fdf86661","bodyHash":"3394a62fb49e253e435824e1291c66be6f02e8635202a06c4f5042ff0a0f8bfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValue","kind":"method","status":"implemented","sigHash":"3679edde4f705b718f1763ecab39b4c4b5c48a0ddf616d617f2b9178fdf86661"}
  *
  * Go source:
  * func (c *Checker) symbolIsValue(symbol *ast.Symbol) bool {
@@ -1547,7 +1547,7 @@ export function Checker_symbolIsValue(receiver: GoPtr<Checker>, symbol_: GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValueEx","kind":"method","status":"implemented","sigHash":"b03686c80f420fe22dc9b2903a30fcbeff743c2310e91ca6d1f6983624e5ef46","bodyHash":"7462b7d1c3165216c6077c1eeeac583d063ba43f009a0b0a4a09bcf200314267"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValueEx","kind":"method","status":"implemented","sigHash":"b03686c80f420fe22dc9b2903a30fcbeff743c2310e91ca6d1f6983624e5ef46"}
  *
  * Go source:
  * func (c *Checker) symbolIsValueEx(symbol *ast.Symbol, includeTypeOnlyMembers bool) bool {
@@ -1561,7 +1561,7 @@ export function Checker_symbolIsValueEx(receiver: GoPtr<Checker>, symbol_: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.evaluateEntity","kind":"method","status":"implemented","sigHash":"793c899a55517825eeaad08d1faf5db58abe6868b30521803c4be00adf565e33","bodyHash":"38d996c3a08392145692111537aa13fe64ce176807e87c7be0825d0037bbf5a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.evaluateEntity","kind":"method","status":"implemented","sigHash":"793c899a55517825eeaad08d1faf5db58abe6868b30521803c4be00adf565e33"}
  *
  * Go source:
  * func (c *Checker) evaluateEntity(expr *ast.Node, location *ast.Node) evaluator.Result {
@@ -1677,7 +1677,7 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.compareProperties","kind":"method","status":"implemented","sigHash":"2b1210c14cc57ff655b13d795825b79d727c16e52325cc535a1fd45dbc33494c","bodyHash":"8a6cbe97379645d2a7e4a142d3acaa56e0511dd3047c4e7bb73e908256e00956"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.compareProperties","kind":"method","status":"implemented","sigHash":"2b1210c14cc57ff655b13d795825b79d727c16e52325cc535a1fd45dbc33494c"}
  *
  * Go source:
  * func (c *Checker) compareProperties(sourceProp *ast.Symbol, targetProp *ast.Symbol, compareTypes func(source *Type, target *Type) Ternary) Ternary {
@@ -1735,7 +1735,7 @@ export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetEmitResolver","kind":"method","status":"implemented","sigHash":"d72845b5f723508c7b6d66847c6598449bca7bb43bab7e4837a745464993f86c","bodyHash":"27e58a94ababc2542166185255bb1cc1cb419a356f6744098698b79b994ab63d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetEmitResolver","kind":"method","status":"implemented","sigHash":"d72845b5f723508c7b6d66847c6598449bca7bb43bab7e4837a745464993f86c"}
  *
  * Go source:
  * func (c *Checker) GetEmitResolver() *EmitResolver {

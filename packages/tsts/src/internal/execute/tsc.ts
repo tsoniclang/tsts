@@ -69,7 +69,7 @@ import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.
 import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017","bodyHash":"5f6e018002e7f04d00870f5ff47c7da112138a4523fe860bc9a0ad20c70a064a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::startTracingIfNeeded","kind":"func","status":"implemented","sigHash":"42f5eed2c85a5deb3027e6f19fe244c4decd9026a0423e345d4350618fe06017"}
  *
  * Go source:
  * func startTracingIfNeeded(sys tsc.System, config *tsoptions.ParsedCommandLine, testing tsc.CommandLineTesting) *tracing.Tracing {
@@ -105,7 +105,7 @@ export function startTracingIfNeeded(sys: System, config: GoPtr<ParsedCommandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::stopTracing","kind":"func","status":"implemented","sigHash":"a7be03439973a163aed48797f2aa5538cf18b0311c47062c9efe57dc3f67fdc9","bodyHash":"b807c42bacad338d92451f9380bfccf602a36879e7096b7dfe058850304b56a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::stopTracing","kind":"func","status":"implemented","sigHash":"a7be03439973a163aed48797f2aa5538cf18b0311c47062c9efe57dc3f67fdc9"}
  *
  * Go source:
  * func stopTracing(sys tsc.System, tr *tracing.Tracing) {
@@ -128,7 +128,7 @@ export function stopTracing(sys: System, tr: GoPtr<Tracing>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::CommandLine","kind":"func","status":"implemented","sigHash":"3a208e3a9c96e7c8034b72e4604c502f4f0c9f9b585cb027b24f0ae032a8f286","bodyHash":"52f0414c6d29ff8174e17bf7322503f8d3f8fdb0154f0e2ec8e17e3b58b48e8f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::CommandLine","kind":"func","status":"implemented","sigHash":"3a208e3a9c96e7c8034b72e4604c502f4f0c9f9b585cb027b24f0ae032a8f286"}
  *
  * Go source:
  * func CommandLine(ctx context.Context, sys tsc.System, commandLineArgs []string, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -158,7 +158,7 @@ export function CommandLine(ctx: Context, sys: System, commandLineArgs: GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain","kind":"func","status":"implemented","sigHash":"da127cff3293af38cd957b37a51b78581941a59bee0bbd029f7d33fd43104037","bodyHash":"b51a441f80594e1b419fa6072455251dab4311d66e51b0dbe8dc3e84297bb067"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain","kind":"func","status":"implemented","sigHash":"da127cff3293af38cd957b37a51b78581941a59bee0bbd029f7d33fd43104037"}
  *
  * Go source:
  * func fmtMain(sys tsc.System, input, output string) tsc.ExitStatus {
@@ -192,7 +192,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"implemented","sigHash":"4bb367e07c320fa321bae542eadbd4c2f8885cfa2e187327a27b90dbf1363695","bodyHash":"1085d6a2f2bccddca81ec3f1e39627d471af1e496eb26cad345e8ce8fbdfdc4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"implemented","sigHash":"4bb367e07c320fa321bae542eadbd4c2f8885cfa2e187327a27b90dbf1363695"}
  *
  * Go source:
  * func tscBuildCompilation(ctx context.Context, sys tsc.System, buildCommand *tsoptions.ParsedBuildCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -260,7 +260,7 @@ export function tscBuildCompilation(ctx: Context, sys: System, buildCommand: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation","kind":"func","status":"implemented","sigHash":"4cfc67a51dc65422489b2bff627706eeb09e78308acefd4b9b523152ad189f9e","bodyHash":"ddadfa54cfa27644cf238dda5e7387ea302c08b095816dd6b6e3705c3a2e2224"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation","kind":"func","status":"implemented","sigHash":"4cfc67a51dc65422489b2bff627706eeb09e78308acefd4b9b523152ad189f9e"}
  *
  * Go source:
  * func tscCompilation(ctx context.Context, sys tsc.System, commandLine *tsoptions.ParsedCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -565,7 +565,7 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::findConfigFile","kind":"func","status":"implemented","sigHash":"d702bbf4bc17ebc59dee27e9e80ab2c611032cf4bd330c93db068c1c72532ebb","bodyHash":"960b9b07852c4d9cc57a187241abf5479aa51424b8d34deb71b9d4d72db2e993"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::findConfigFile","kind":"func","status":"implemented","sigHash":"d702bbf4bc17ebc59dee27e9e80ab2c611032cf4bd330c93db068c1c72532ebb"}
  *
  * Go source:
  * func findConfigFile(searchPath string, fileExists func(string) bool, configName string) string {
@@ -597,7 +597,7 @@ export function findConfigFile(searchPath: string, fileExists: (arg0: string) =>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::getTraceFromSys","kind":"func","status":"implemented","sigHash":"26a8b1e54054f27c17d5a0e2a6253c861e66ba3abcc1087307625fa0b57ef2a0","bodyHash":"ae54e619360e678865b25c086b9d9d08cfe7b87d54a02af94635f11027be9c47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::getTraceFromSys","kind":"func","status":"implemented","sigHash":"26a8b1e54054f27c17d5a0e2a6253c861e66ba3abcc1087307625fa0b57ef2a0"}
  *
  * Go source:
  * func getTraceFromSys(sys tsc.System, locale locale.Locale, testing tsc.CommandLineTesting) func(msg *diagnostics.Message, args ...any) {
@@ -609,7 +609,7 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"implemented","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"implemented","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80"}
  *
  * Go source:
  * func performIncrementalCompilation(
@@ -700,7 +700,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"implemented","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"implemented","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606"}
  *
  * Go source:
  * func performCompilation(
@@ -773,7 +773,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::showConfig","kind":"func","status":"implemented","sigHash":"fb31fc22d8a290c2c2e43d2f600b70396b98e43b992e9f6c4b247f9a204035b4","bodyHash":"24a2edb0efd5abdc7a5461dc8d3e8b39e5957f44e4f25935b792dcefb383172d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::showConfig","kind":"func","status":"implemented","sigHash":"fb31fc22d8a290c2c2e43d2f600b70396b98e43b992e9f6c4b247f9a204035b4"}
  *
  * Go source:
  * func showConfig(sys tsc.System, config *tsoptions.ParsedCommandLine, configFileName string) {

@@ -154,7 +154,7 @@ import { Checker_addDiagnostic } from "../checker.js";
 import { Checker_addOptionalityEx } from "./support-queries.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"implemented","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d","bodyHash":"ec6787ccb2faf06f7424909fe154523489d03211c89fd122393ed373e739f365"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"implemented","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d"}
  *
  * Go source:
  * func (c *Checker) checkTypePredicate(node *ast.Node) {
@@ -240,7 +240,7 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateParent","kind":"method","status":"implemented","sigHash":"5d5b47ef4c3a3d51ca7072a8acbc3731fff80ef845b93a50812dfb702beb6cd3","bodyHash":"9e8a1e75b418c00955c001a701658ac96ee1388e001004a72a94f24596170cc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateParent","kind":"method","status":"implemented","sigHash":"5d5b47ef4c3a3d51ca7072a8acbc3731fff80ef845b93a50812dfb702beb6cd3"}
  *
  * Go source:
  * func (c *Checker) getTypePredicateParent(node *ast.Node) *ast.SignatureDeclaration {
@@ -273,7 +273,7 @@ export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIfTypePredicateVariableIsDeclaredInBindingPattern","kind":"method","status":"implemented","sigHash":"3a053da61b0d243ae8c9547ac4b753424b376377356f06f2d1c173b63d23981d","bodyHash":"9ac8552d841ef25ec49f911c9d69a9fe2783049244a6d07f63a41e1a5897f66f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIfTypePredicateVariableIsDeclaredInBindingPattern","kind":"method","status":"implemented","sigHash":"3a053da61b0d243ae8c9547ac4b753424b376377356f06f2d1c173b63d23981d"}
  *
  * Go source:
  * func (c *Checker) checkIfTypePredicateVariableIsDeclaredInBindingPattern(pattern *ast.Node, predicateVariableNode *ast.Node, predicateVariableName string) bool {
@@ -315,7 +315,7 @@ export function Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType","kind":"method","status":"implemented","sigHash":"f32e8f874ec193984d57dfa4d6941de3f577248eba28ba7bc87bc05db42c849d","bodyHash":"c433da68a0b8b08451c540da563cb3bee121d9dd65f35e1661b51e56e5f11a1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType","kind":"method","status":"implemented","sigHash":"f32e8f874ec193984d57dfa4d6941de3f577248eba28ba7bc87bc05db42c849d"}
  *
  * Go source:
  * func (c *Checker) checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType(condExpr *ast.Node, condType *Type, body *ast.Node) {
@@ -333,7 +333,7 @@ export function Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberTy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyTypes","kind":"method","status":"implemented","sigHash":"89723afd90d8696f6daafdafede3e44a75f12409f701542fc417d60278056db8","bodyHash":"074c27d724fda68d64b8b253726a57c30ce811238962b2d27edbc425819cfa97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyTypes","kind":"method","status":"implemented","sigHash":"89723afd90d8696f6daafdafede3e44a75f12409f701542fc417d60278056db8"}
  *
  * Go source:
  * func (c *Checker) checkTestingKnownTruthyTypes(condExpr *ast.Node, condType *Type, body *ast.Node) {
@@ -359,7 +359,7 @@ export function Checker_checkTestingKnownTruthyTypes(receiver: GoPtr<Checker>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyType","kind":"method","status":"implemented","sigHash":"38a235308478e99e741b74f6c7d68c8ca0cf4a1b3fe0ad2a6659cb46a9bc22a1","bodyHash":"ddcc9ab8890761794f012a6da134ee6bd64dba8da29afefb2b34af086928b2fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyType","kind":"method","status":"implemented","sigHash":"38a235308478e99e741b74f6c7d68c8ca0cf4a1b3fe0ad2a6659cb46a9bc22a1"}
  *
  * Go source:
  * func (c *Checker) checkTestingKnownTruthyType(condExpr *ast.Node, condType *Type, body *ast.Node) {
@@ -483,7 +483,7 @@ export function Checker_checkTestingKnownTruthyType(receiver: GoPtr<Checker>, co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessExpression","kind":"method","status":"implemented","sigHash":"6e25990a1754e2ea8ba458bc7c48fae7fb2e6a7eb41df3c6d20c8c30b90b401e","bodyHash":"1c9d962ca70e1eedd75c1fdf70818c6faf2150c2758f0f48ac5d1407cdbc0c67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessExpression","kind":"method","status":"implemented","sigHash":"6e25990a1754e2ea8ba458bc7c48fae7fb2e6a7eb41df3c6d20c8c30b90b401e"}
  *
  * Go source:
  * func (c *Checker) checkTruthinessExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -495,7 +495,7 @@ export function Checker_checkTruthinessExpression(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfAccessExpression","kind":"method","status":"implemented","sigHash":"8594769a41457b2c78a2bec6476615602b76dc1b190dc10c87ead2dff597ceae","bodyHash":"1ee134993689e3d24490ce815928e98aa164f1b7d0677e763ca4bf89a4c88fa4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfAccessExpression","kind":"method","status":"implemented","sigHash":"8594769a41457b2c78a2bec6476615602b76dc1b190dc10c87ead2dff597ceae"}
  *
  * Go source:
  * func (c *Checker) getFlowTypeOfAccessExpression(node *ast.Node, prop *ast.Symbol, propType *Type, errorNode *ast.Node, checkMode CheckMode) *Type {
@@ -596,7 +596,7 @@ export function Checker_getFlowTypeOfAccessExpression(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getControlFlowContainer","kind":"method","status":"implemented","sigHash":"71ce273dd5b459bacd9e005ef2525b814d7330f10eaf79a4b482933e0171ba37","bodyHash":"b6f1b3ab08cfdc85445a1b718f55ebb4b923298a902d109371d15dc34c3ad7ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getControlFlowContainer","kind":"method","status":"implemented","sigHash":"71ce273dd5b459bacd9e005ef2525b814d7330f10eaf79a4b482933e0171ba37"}
  *
  * Go source:
  * func (c *Checker) getControlFlowContainer(node *ast.Node) *ast.Node {
@@ -615,7 +615,7 @@ export function Checker_getControlFlowContainer(receiver: GoPtr<Checker>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfProperty","kind":"method","status":"implemented","sigHash":"354301e8effd608a771096820e3e03be5adbce7d422ee8f6343307e84505e59a","bodyHash":"95e5fca9080cac1952527065a860d2ef4d7f8f8da1f2bb269f0a4d95d84c8cab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfProperty","kind":"method","status":"implemented","sigHash":"354301e8effd608a771096820e3e03be5adbce7d422ee8f6343307e84505e59a"}
  *
  * Go source:
  * func (c *Checker) getFlowTypeOfProperty(reference *ast.Node, prop *ast.Symbol) *Type {
@@ -640,7 +640,7 @@ export function Checker_getFlowTypeOfProperty(receiver: GoPtr<Checker>, referenc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessOfType","kind":"method","status":"implemented","sigHash":"57a888003555306acb8494d386081bf67c32f668cd7fb75925f1a0ef1321290f","bodyHash":"5977167b26e179fcbfbf4c7aa9fbf72187b22be1b5ba0302a4a15058ed03f10b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessOfType","kind":"method","status":"implemented","sigHash":"57a888003555306acb8494d386081bf67c32f668cd7fb75925f1a0ef1321290f"}
  *
  * Go source:
  * func (c *Checker) checkTruthinessOfType(t *Type, node *ast.Node) *Type {
@@ -668,7 +668,7 @@ export function Checker_checkTruthinessOfType(receiver: GoPtr<Checker>, t: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticTruthySemantics","kind":"method","status":"implemented","sigHash":"aafd356f28695e827a1259a861021e3831401335c8e3da0a20bae5d51ced09d1","bodyHash":"4ec6b5d3b3de70cd64a3d91386dceb76d96f68cca646025716c9617f7328589a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticTruthySemantics","kind":"method","status":"implemented","sigHash":"aafd356f28695e827a1259a861021e3831401335c8e3da0a20bae5d51ced09d1"}
  *
  * Go source:
  * func (c *Checker) getSyntacticTruthySemantics(node *ast.Node) PredicateSemantics {
@@ -739,7 +739,7 @@ export function Checker_getSyntacticTruthySemantics(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowedTypeOfSymbol","kind":"method","status":"implemented","sigHash":"f4c9e392b97bbeb538d53422c8b7eead4cda331c7d3d8f5ae3c1539625803c95","bodyHash":"1d8dbf8db55a016a69f8447dff4cedd089fe457213d909f5c0b77305ab2bea27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowedTypeOfSymbol","kind":"method","status":"implemented","sigHash":"f4c9e392b97bbeb538d53422c8b7eead4cda331c7d3d8f5ae3c1539625803c95"}
  *
  * Go source:
  * func (c *Checker) getNarrowedTypeOfSymbol(symbol *ast.Symbol, location *ast.Node) *Type {
@@ -918,7 +918,7 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfDestructuring","kind":"method","status":"implemented","sigHash":"58b13441bd433693174fb1238a017b0dbfa96fd7c0198dab8839918635019411","bodyHash":"0d7f67b352d0beb5d1e2d4b6bed7d674ce9bbd77a27912a3d14786538232c7b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getFlowTypeOfDestructuring","kind":"method","status":"implemented","sigHash":"58b13441bd433693174fb1238a017b0dbfa96fd7c0198dab8839918635019411"}
  *
  * Go source:
  * func (c *Checker) getFlowTypeOfDestructuring(node *ast.Node, declaredType *Type) *Type {
@@ -938,7 +938,7 @@ export function Checker_getFlowTypeOfDestructuring(receiver: GoPtr<Checker>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateFromBody","kind":"method","status":"implemented","sigHash":"0586cd4bbf72e06d5f659fe96eff5fa7be3dd21743651d6936ac58d2c3020178","bodyHash":"6d902d9eb10f50461609d91f2b6fbd7aa526db9ab71c74df54ee4d9d0c69252e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateFromBody","kind":"method","status":"implemented","sigHash":"0586cd4bbf72e06d5f659fe96eff5fa7be3dd21743651d6936ac58d2c3020178"}
  *
  * Go source:
  * func (c *Checker) getTypePredicateFromBody(fn *ast.Node) *TypePredicate {
@@ -1002,7 +1002,7 @@ export function Checker_getTypePredicateFromBody(receiver: GoPtr<Checker>, fn: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDiscriminantWithNeverType","kind":"method","status":"implemented","sigHash":"4fd66392a9407397da9e3d70b1261e390723f76767fda4539301bb2555f75e33","bodyHash":"f0bcb402918ffbf982f70518ebd820aa66a36b3d1b4ce0c9a1df1c77283a014d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDiscriminantWithNeverType","kind":"method","status":"implemented","sigHash":"4fd66392a9407397da9e3d70b1261e390723f76767fda4539301bb2555f75e33"}
  *
  * Go source:
  * func (c *Checker) isDiscriminantWithNeverType(prop *ast.Symbol) bool {
@@ -1020,7 +1020,7 @@ export function Checker_isDiscriminantWithNeverType(receiver: GoPtr<Checker>, pr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getConditionalFlowTypeOfType","kind":"method","status":"implemented","sigHash":"a886f17e04adc427e26659ba06f389ada132ffc40b090f626d0a1573dda00dd4","bodyHash":"6618f21feab1410d8eb729a36d258723a3ae4145aea944476e39f6a7841041cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getConditionalFlowTypeOfType","kind":"method","status":"implemented","sigHash":"a886f17e04adc427e26659ba06f389ada132ffc40b090f626d0a1573dda00dd4"}
  *
  * Go source:
  * func (c *Checker) getConditionalFlowTypeOfType(t *Type, node *ast.Node) *Type {
@@ -1107,7 +1107,7 @@ export function Checker_getConditionalFlowTypeOfType(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.removeDefinitelyFalsyTypes","kind":"method","status":"implemented","sigHash":"18185bceb221a18ced8d2e52a099ac3e3fbc882ca5b6b83f9032df76626da0e5","bodyHash":"929c812acf2e45554e6c20967ae8236ba123d944d641e27b3548dd76fb7813b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.removeDefinitelyFalsyTypes","kind":"method","status":"implemented","sigHash":"18185bceb221a18ced8d2e52a099ac3e3fbc882ca5b6b83f9032df76626da0e5"}
  *
  * Go source:
  * func (c *Checker) removeDefinitelyFalsyTypes(t *Type) *Type {
@@ -1119,7 +1119,7 @@ export function Checker_removeDefinitelyFalsyTypes(receiver: GoPtr<Checker>, t: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.extractDefinitelyFalsyTypes","kind":"method","status":"implemented","sigHash":"73395af2e8380f10ef5b0ea840053bc35cbe76e7eebe0a306dbc9a332adb3595","bodyHash":"83c0cfe7acd2ad3ec8d6dce96f28a8d9ebb6f125c83ab3f6d7cf4decc342ed10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.extractDefinitelyFalsyTypes","kind":"method","status":"implemented","sigHash":"73395af2e8380f10ef5b0ea840053bc35cbe76e7eebe0a306dbc9a332adb3595"}
  *
  * Go source:
  * func (c *Checker) extractDefinitelyFalsyTypes(t *Type) *Type {
@@ -1131,7 +1131,7 @@ export function Checker_extractDefinitelyFalsyTypes(receiver: GoPtr<Checker>, t:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDefinitelyFalsyPartOfType","kind":"method","status":"implemented","sigHash":"34b0e830798125942707794d1e639960671eca6f992d9c4b3e375578a4880c56","bodyHash":"6941e4dea735ddd47c5894bf84fe1d82bf427efeae596d8bde36bd613a68a773"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDefinitelyFalsyPartOfType","kind":"method","status":"implemented","sigHash":"34b0e830798125942707794d1e639960671eca6f992d9c4b3e375578a4880c56"}
  *
  * Go source:
  * func (c *Checker) getDefinitelyFalsyPartOfType(t *Type) *Type {
@@ -1173,7 +1173,7 @@ export function Checker_getDefinitelyFalsyPartOfType(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"implemented","sigHash":"e9a504f885ec16cafbd9323e6d8cdbc4d961da219c9fa4b14a3d2d0bc7317caa","bodyHash":"356c17428bc0d393e00939216b9b692a4ef873c6f6b271fa4158900141fdd22c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"implemented","sigHash":"e9a504f885ec16cafbd9323e6d8cdbc4d961da219c9fa4b14a3d2d0bc7317caa"}
  *
  * Go source:
  * func (c *Checker) isPossiblyDiscriminantValue(node *ast.Node) bool {
@@ -1214,7 +1214,7 @@ export function Checker_isPossiblyDiscriminantValue(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowableTypeForReference","kind":"method","status":"implemented","sigHash":"9309a25334e55699058d18b5bd9b59d8c5fcf6282a13ad9066895e7c52b329fd","bodyHash":"5e2cfdbcf85589d87b9aab820874e8f3907a3c388ef0a173b5ac7edb1f01e0a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowableTypeForReference","kind":"method","status":"implemented","sigHash":"9309a25334e55699058d18b5bd9b59d8c5fcf6282a13ad9066895e7c52b329fd"}
  *
  * Go source:
  * func (c *Checker) getNarrowableTypeForReference(t *Type, reference *ast.Node, checkMode CheckMode) *Type {

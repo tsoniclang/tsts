@@ -5,7 +5,7 @@ import type { ModifierList, Node, NodeList } from "./spine.js";
 import type { BindingElementNode, TypeArgumentList, TypeNode } from "./generated/unions.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::type::SubtreeFacts","kind":"type","status":"implemented","sigHash":"8f0fe631eec94e4ce88656c0643f0b256cb736f62c69243cc74dfaa5b3312d94","bodyHash":"6498a6b3e19a4606500cbe0758c0b3f1ddb5317ab94ee8a32106b0f2b37553dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::type::SubtreeFacts","kind":"type","status":"implemented","sigHash":"8f0fe631eec94e4ce88656c0643f0b256cb736f62c69243cc74dfaa5b3312d94"}
  *
  * Go source:
  * SubtreeFacts uint32
@@ -13,7 +13,7 @@ import type { BindingElementNode, TypeArgumentList, TypeNode } from "./generated
 export type SubtreeFacts = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::constGroup::SubtreeContainsTypeScript+SubtreeContainsJsx+SubtreeContainsESDecorators+SubtreeContainsUsing+SubtreeContainsClassStaticBlocks+SubtreeContainsESClassFields+SubtreeContainsLogicalAssignments+SubtreeContainsNullishCoalescing+SubtreeContainsOptionalChaining+SubtreeContainsMissingCatchClauseVariable+SubtreeContainsESObjectRestOrSpread+SubtreeContainsForAwaitOrAsyncGenerator+SubtreeContainsAnyAwait+SubtreeContainsExponentiationOperator+SubtreeContainsLexicalThis+SubtreeContainsLexicalSuper+SubtreeContainsRestOrSpread+SubtreeContainsObjectRestOrSpread+SubtreeContainsAwait+SubtreeContainsDynamicImport+SubtreeContainsClassFields+SubtreeContainsDecorators+SubtreeContainsIdentifier+SubtreeContainsPrivateIdentifierInExpression+SubtreeContainsInvalidTemplateEscape+SubtreeFactsComputed+SubtreeFactsNone+SubtreeContainsESNext+SubtreeContainsES2022+SubtreeContainsES2021+SubtreeContainsES2020+SubtreeContainsES2019+SubtreeContainsES2018+SubtreeContainsES2017+SubtreeContainsES2016+SubtreeExclusionsNode+SubtreeExclusionsEraseable+SubtreeExclusionsOuterExpression+SubtreeExclusionsPropertyAccess+SubtreeExclusionsElementAccess+SubtreeExclusionsArrowFunction+SubtreeExclusionsFunction+SubtreeExclusionsConstructor+SubtreeExclusionsMethod+SubtreeExclusionsAccessor+SubtreeExclusionsProperty+SubtreeExclusionsClass+SubtreeExclusionsModule+SubtreeExclusionsObjectLiteral+SubtreeExclusionsArrayLiteral+SubtreeExclusionsCall+SubtreeExclusionsNew+SubtreeExclusionsVariableDeclarationList+SubtreeExclusionsParameter+SubtreeExclusionsCatchClause+SubtreeExclusionsBindingPattern+SubtreeContainsLexicalThisOrSuper","kind":"constGroup","status":"implemented","sigHash":"67abaf6e7a488fa0b69a8e1adfb609de04baeaaf97876cc8b01993175c6d46f2","bodyHash":"c2260d4b53d45cccccc36f4f0a6655e2ad7e5b69d0972a3576f1b4064ffe062d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::constGroup::SubtreeContainsTypeScript+SubtreeContainsJsx+SubtreeContainsESDecorators+SubtreeContainsUsing+SubtreeContainsClassStaticBlocks+SubtreeContainsESClassFields+SubtreeContainsLogicalAssignments+SubtreeContainsNullishCoalescing+SubtreeContainsOptionalChaining+SubtreeContainsMissingCatchClauseVariable+SubtreeContainsESObjectRestOrSpread+SubtreeContainsForAwaitOrAsyncGenerator+SubtreeContainsAnyAwait+SubtreeContainsExponentiationOperator+SubtreeContainsLexicalThis+SubtreeContainsLexicalSuper+SubtreeContainsRestOrSpread+SubtreeContainsObjectRestOrSpread+SubtreeContainsAwait+SubtreeContainsDynamicImport+SubtreeContainsClassFields+SubtreeContainsDecorators+SubtreeContainsIdentifier+SubtreeContainsPrivateIdentifierInExpression+SubtreeContainsInvalidTemplateEscape+SubtreeFactsComputed+SubtreeFactsNone+SubtreeContainsESNext+SubtreeContainsES2022+SubtreeContainsES2021+SubtreeContainsES2020+SubtreeContainsES2019+SubtreeContainsES2018+SubtreeContainsES2017+SubtreeContainsES2016+SubtreeExclusionsNode+SubtreeExclusionsEraseable+SubtreeExclusionsOuterExpression+SubtreeExclusionsPropertyAccess+SubtreeExclusionsElementAccess+SubtreeExclusionsArrowFunction+SubtreeExclusionsFunction+SubtreeExclusionsConstructor+SubtreeExclusionsMethod+SubtreeExclusionsAccessor+SubtreeExclusionsProperty+SubtreeExclusionsClass+SubtreeExclusionsModule+SubtreeExclusionsObjectLiteral+SubtreeExclusionsArrayLiteral+SubtreeExclusionsCall+SubtreeExclusionsNew+SubtreeExclusionsVariableDeclarationList+SubtreeExclusionsParameter+SubtreeExclusionsCatchClause+SubtreeExclusionsBindingPattern+SubtreeContainsLexicalThisOrSuper","kind":"constGroup","status":"implemented","sigHash":"67abaf6e7a488fa0b69a8e1adfb609de04baeaaf97876cc8b01993175c6d46f2"}
  *
  * Go source:
  * const (
@@ -170,7 +170,7 @@ export const SubtreeExclusionsBindingPattern: SubtreeFacts = (SubtreeExclusionsN
 export const SubtreeContainsLexicalThisOrSuper: SubtreeFacts = (SubtreeContainsLexicalThis | SubtreeContainsLexicalSuper) >>> 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateEraseableSyntaxListSubtreeFacts","kind":"func","status":"implemented","sigHash":"16690848884935dacb7466b8e6cc1c202db7d61e6f08ea9dbc6faadf1abef5a1","bodyHash":"a323188389843a460c88cff80dc38fb937f060679097b4a0beee3b2e4928725f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateEraseableSyntaxListSubtreeFacts","kind":"func","status":"implemented","sigHash":"16690848884935dacb7466b8e6cc1c202db7d61e6f08ea9dbc6faadf1abef5a1"}
  *
  * Go source:
  * func propagateEraseableSyntaxListSubtreeFacts(children *TypeArgumentList) SubtreeFacts {
@@ -182,7 +182,7 @@ export function propagateEraseableSyntaxListSubtreeFacts(children: GoPtr<TypeArg
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateEraseableSyntaxSubtreeFacts","kind":"func","status":"implemented","sigHash":"bd7a9a020cf7ce66d2044b02c742cdecab1f0767e01502446485b5dd09e76ba7","bodyHash":"a8ea4df099b68b4027450a617352eacf989a99f17fbb5d8bf1bbaf16a572c544"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateEraseableSyntaxSubtreeFacts","kind":"func","status":"implemented","sigHash":"bd7a9a020cf7ce66d2044b02c742cdecab1f0767e01502446485b5dd09e76ba7"}
  *
  * Go source:
  * func propagateEraseableSyntaxSubtreeFacts(child *TypeNode) SubtreeFacts {
@@ -194,7 +194,7 @@ export function propagateEraseableSyntaxSubtreeFacts(child: GoPtr<TypeNode>): Su
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateObjectBindingElementSubtreeFacts","kind":"func","status":"implemented","sigHash":"4a0ac7f2524630929887fb55d5786b483f6a796c7fbe2bc1825e985fa8ff284c","bodyHash":"71de2b58795dab0f1600d489e96dec61b114eba1a1322c1276733e07b04fe7be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateObjectBindingElementSubtreeFacts","kind":"func","status":"implemented","sigHash":"4a0ac7f2524630929887fb55d5786b483f6a796c7fbe2bc1825e985fa8ff284c"}
  *
  * Go source:
  * func propagateObjectBindingElementSubtreeFacts(child *BindingElementNode) SubtreeFacts {
@@ -216,7 +216,7 @@ export function propagateObjectBindingElementSubtreeFacts(child: GoPtr<BindingEl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateBindingElementSubtreeFacts","kind":"func","status":"implemented","sigHash":"1c353e399673d38bbf4a5ba1a828d1338756f5533b6cc0f146d4c5d8372cc99e","bodyHash":"2026cca058da363f6c3ad1fc8ea2d44e1467e30830967446814c3c6a36c36d03"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateBindingElementSubtreeFacts","kind":"func","status":"implemented","sigHash":"1c353e399673d38bbf4a5ba1a828d1338756f5533b6cc0f146d4c5d8372cc99e"}
  *
  * Go source:
  * func propagateBindingElementSubtreeFacts(child *BindingElementNode) SubtreeFacts {
@@ -228,7 +228,7 @@ export function propagateBindingElementSubtreeFacts(child: GoPtr<BindingElementN
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateSubtreeFacts","kind":"func","status":"implemented","sigHash":"39fd03e71a1dc2565c8932de8e648c7cf6b1e7505a7d799abed5707d5cfe49c3","bodyHash":"ab0ef7a62b2c601f8a519077a66426da391ad03c5ea7164f314ddb7d9509db63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateSubtreeFacts","kind":"func","status":"implemented","sigHash":"39fd03e71a1dc2565c8932de8e648c7cf6b1e7505a7d799abed5707d5cfe49c3"}
  *
  * Go source:
  * func propagateSubtreeFacts(child *Node) SubtreeFacts {
@@ -246,7 +246,7 @@ export function propagateSubtreeFacts(child: GoPtr<Node>): SubtreeFacts {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateNodeListSubtreeFacts","kind":"func","status":"implemented","sigHash":"3ffa0ed363234c0dfd2441a8c8497672e999eb4530fb5a9ce96de317fd33ed12","bodyHash":"c1618dee1af1901518ec709b2d276ec9622d585e3bcf9fd360fbdee5f6b4e97c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateNodeListSubtreeFacts","kind":"func","status":"implemented","sigHash":"3ffa0ed363234c0dfd2441a8c8497672e999eb4530fb5a9ce96de317fd33ed12"}
  *
  * Go source:
  * func propagateNodeListSubtreeFacts(children *NodeList, propagate func(*Node) SubtreeFacts) SubtreeFacts {
@@ -272,7 +272,7 @@ export function propagateNodeListSubtreeFacts(children: GoPtr<NodeList>, propaga
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateModifierListSubtreeFacts","kind":"func","status":"implemented","sigHash":"80dd333c36851aff85081eee4e9bcd0870716de6c27f5c0b0d53f718e76b64ac","bodyHash":"4aa0ac3883447f11e458f0a42cb8d58d0b5197c92034462702c2c0105c53afdb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/subtreefacts.go::func::propagateModifierListSubtreeFacts","kind":"func","status":"implemented","sigHash":"80dd333c36851aff85081eee4e9bcd0870716de6c27f5c0b0d53f718e76b64ac"}
  *
  * Go source:
  * func propagateModifierListSubtreeFacts(children *ModifierList) SubtreeFacts {

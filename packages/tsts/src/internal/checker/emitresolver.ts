@@ -78,7 +78,7 @@ import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3"}
  *
  * Go source:
  * JSXLinks struct {
@@ -90,7 +90,7 @@ export interface JSXLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f","bodyHash":"4247c597fb66dc2dfad3458c2912b3b42c005bf1f8dea782fccf70811374cea3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f"}
  *
  * Go source:
  * DeclarationLinks struct {
@@ -102,7 +102,7 @@ export interface DeclarationLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548","bodyHash":"dc7bbcbb9771249fa55f7f164d48be2cd6184f594940d3f43789d52a0b05fa0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548"}
  *
  * Go source:
  * DeclarationFileLinks struct {
@@ -114,7 +114,7 @@ export interface DeclarationFileLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00"}
  *
  * Go source:
  * EmitResolver struct {
@@ -187,7 +187,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e1a5f15cb940355789a75a1e6811da03657057f2f3447bd2d7e304ca1756361f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ printer.EmitResolver = (*EmitResolver)(nil)
@@ -195,7 +195,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
 export let __69112d2a_0: EmitResolver_969b36a1 = EmitResolver_as_printer_EmitResolver(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::newEmitResolver","kind":"func","status":"implemented","sigHash":"e8ab1c6cca31adfe867b8620cfea290b7ce4f2d6e1342ae750685f5756b1de15","bodyHash":"ca19d30b08865c24a57e04c917429eba0e918d3edda07e6a54617098e0b9a378"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::newEmitResolver","kind":"func","status":"implemented","sigHash":"e8ab1c6cca31adfe867b8620cfea290b7ce4f2d6e1342ae750685f5756b1de15"}
  *
  * Go source:
  * func newEmitResolver(checker *Checker) *EmitResolver {
@@ -221,7 +221,7 @@ export function newEmitResolver(checker: GoPtr<Checker>): GoPtr<EmitResolver> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetJsxFactoryEntity","kind":"method","status":"implemented","sigHash":"48811d3b32a461b8e9260a5236c9e7eee2a91892b780a0e082e441ee484ba895","bodyHash":"99805f3b75a48e223134e452676fbae81002b0b2e31fa84d92fba3cd2bcdcf78"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetJsxFactoryEntity","kind":"method","status":"implemented","sigHash":"48811d3b32a461b8e9260a5236c9e7eee2a91892b780a0e082e441ee484ba895"}
  *
  * Go source:
  * func (r *EmitResolver) GetJsxFactoryEntity(location *ast.Node) *ast.Node {
@@ -238,7 +238,7 @@ export function EmitResolver_GetJsxFactoryEntity(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetJsxFragmentFactoryEntity","kind":"method","status":"implemented","sigHash":"391a5ece983dbdef0ed273a64947b54043948529d952cce3ad40f7a7b9ce6f9e","bodyHash":"bfec593eebf5482051797d3029d8e06ffd6376a4accbbc0c81e70ed07c251f93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetJsxFragmentFactoryEntity","kind":"method","status":"implemented","sigHash":"391a5ece983dbdef0ed273a64947b54043948529d952cce3ad40f7a7b9ce6f9e"}
  *
  * Go source:
  * func (r *EmitResolver) GetJsxFragmentFactoryEntity(location *ast.Node) *ast.Node {
@@ -255,7 +255,7 @@ export function EmitResolver_GetJsxFragmentFactoryEntity(receiver: GoPtr<EmitRes
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsOptionalParameter","kind":"method","status":"implemented","sigHash":"4be6bdc63134406a858bf6af28b8f909468ae7f98de164b837676eb6959535d5","bodyHash":"cbaba86465c794adc8280a0a5f6fba441a5cc00019fae04f584f16d6cde53088"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsOptionalParameter","kind":"method","status":"implemented","sigHash":"4be6bdc63134406a858bf6af28b8f909468ae7f98de164b837676eb6959535d5"}
  *
  * Go source:
  * func (r *EmitResolver) IsOptionalParameter(node *ast.Node) bool {
@@ -272,7 +272,7 @@ export function EmitResolver_IsOptionalParameter(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetBaseDeclarationsForPropertyDeclaration","kind":"method","status":"implemented","sigHash":"615a139be292cc3af844256e43ae6d33a7216a83504b7b5d0a8b64c4e1d64a21","bodyHash":"97d4300010e17b340b886d7cdd8c18f8b437ee4d6827c770fea7a437b575eb67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetBaseDeclarationsForPropertyDeclaration","kind":"method","status":"implemented","sigHash":"615a139be292cc3af844256e43ae6d33a7216a83504b7b5d0a8b64c4e1d64a21"}
  *
  * Go source:
  * func (r *EmitResolver) GetBaseDeclarationsForPropertyDeclaration(node *ast.Node) []*ast.Node {
@@ -333,7 +333,7 @@ export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLateBound","kind":"method","status":"implemented","sigHash":"8bc7b0142db1d96cbe36ebe5319f65d7fd7e44f761b1f2716e1ce5f8cefb8042","bodyHash":"0ceb8c2a66c059964c1df16236394698e84f28c435c8847e47470438a28f7453"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLateBound","kind":"method","status":"implemented","sigHash":"8bc7b0142db1d96cbe36ebe5319f65d7fd7e44f761b1f2716e1ce5f8cefb8042"}
  *
  * Go source:
  * func (r *EmitResolver) IsLateBound(node *ast.Node) bool {
@@ -365,7 +365,7 @@ export function EmitResolver_IsLateBound(receiver: GoPtr<EmitResolver>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEnumMemberValue","kind":"method","status":"implemented","sigHash":"000f02614ac21b848af114ba7d8b0665733da9c32031f0fa7032f298848bc576","bodyHash":"9197b906feb3b18d5fe4efe69b6807bae35ded4214e3888ebdf5299d7000ba75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEnumMemberValue","kind":"method","status":"implemented","sigHash":"000f02614ac21b848af114ba7d8b0665733da9c32031f0fa7032f298848bc576"}
  *
  * Go source:
  * func (r *EmitResolver) GetEnumMemberValue(node *ast.Node) evaluator.Result {
@@ -400,7 +400,7 @@ export function EmitResolver_GetEnumMemberValue(receiver: GoPtr<EmitResolver>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsDeclarationVisible","kind":"method","status":"implemented","sigHash":"fb5ee706d7525063da859419fae23cb14c4764dca6afb17d402083886f4f42ca","bodyHash":"e475576aa398dd3bc3d49c43487a44990a8ad870de475e9d0f7d06536512811b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsDeclarationVisible","kind":"method","status":"implemented","sigHash":"fb5ee706d7525063da859419fae23cb14c4764dca6afb17d402083886f4f42ca"}
  *
  * Go source:
  * func (r *EmitResolver) IsDeclarationVisible(node *ast.Node) bool {
@@ -418,7 +418,7 @@ export function EmitResolver_IsDeclarationVisible(receiver: GoPtr<EmitResolver>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isDeclarationVisible","kind":"method","status":"implemented","sigHash":"097e7a8746029b2299d4651cf03f87811dbe9c8d58f3ad8a06191d201e382ef8","bodyHash":"f1751c00390295497c6522c60cdd51e0b7fd963a06c6ca16e0a376a68b57aace"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isDeclarationVisible","kind":"method","status":"implemented","sigHash":"097e7a8746029b2299d4651cf03f87811dbe9c8d58f3ad8a06191d201e382ef8"}
  *
  * Go source:
  * func (r *EmitResolver) isDeclarationVisible(node *ast.Node) bool {
@@ -456,7 +456,7 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.determineIfDeclarationIsVisible","kind":"method","status":"implemented","sigHash":"6f08c0b5cf33c9224bd91083d723cb9406cb16c293c0c798c0ff0c21ad5d55d7","bodyHash":"411cc970503a2b3017b2a1fbca01d6845e4c4586e920fac86f5b00135ed7a7fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.determineIfDeclarationIsVisible","kind":"method","status":"implemented","sigHash":"6f08c0b5cf33c9224bd91083d723cb9406cb16c293c0c798c0ff0c21ad5d55d7"}
  *
  * Go source:
  * func (r *EmitResolver) determineIfDeclarationIsVisible(node *ast.Node) bool {
@@ -647,7 +647,7 @@ export function EmitResolver_determineIfDeclarationIsVisible(receiver: GoPtr<Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.PrecalculateDeclarationEmitVisibility","kind":"method","status":"implemented","sigHash":"f6f8f8a6684aeadd310cc11084a290147abba767b41286ec52550ae76a54d0b5","bodyHash":"30421fbc9cec649abe734babb4ba2a784255db8b8baf295dd59a32956f8e643b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.PrecalculateDeclarationEmitVisibility","kind":"method","status":"implemented","sigHash":"f6f8f8a6684aeadd310cc11084a290147abba767b41286ec52550ae76a54d0b5"}
  *
  * Go source:
  * func (r *EmitResolver) PrecalculateDeclarationEmitVisibility(file *ast.SourceFile) {
@@ -676,7 +676,7 @@ export function EmitResolver_PrecalculateDeclarationEmitVisibility(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isCommonJSModuleExports","kind":"func","status":"implemented","sigHash":"8ccb2e98766ce184a43abfe5143beefe8e4522fd7b88a85d15401897c8df4e0f","bodyHash":"a9ee055914debccf2dfa4e003b2b4e37a2eb567322ce5fc442f88d28af9482c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isCommonJSModuleExports","kind":"func","status":"implemented","sigHash":"8ccb2e98766ce184a43abfe5143beefe8e4522fd7b88a85d15401897c8df4e0f"}
  *
  * Go source:
  * func isCommonJSModuleExports(node *ast.Node) bool {
@@ -702,7 +702,7 @@ export function isCommonJSModuleExports(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.aliasMarkingVisitorWorker","kind":"method","status":"implemented","sigHash":"cf4d20b8590294141094f1debdc9d746b78a021b5edc7d0b6417ac08937c0222","bodyHash":"4ccefce07c29a742dd7c1cea7866be4e50db3a1c864bf033ece8ad02924b1b96"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.aliasMarkingVisitorWorker","kind":"method","status":"implemented","sigHash":"cf4d20b8590294141094f1debdc9d746b78a021b5edc7d0b6417ac08937c0222"}
  *
  * Go source:
  * func (r *EmitResolver) aliasMarkingVisitorWorker(node *ast.Node) bool {
@@ -743,7 +743,7 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.markLinkedAliases","kind":"method","status":"implemented","sigHash":"4e39c6dd2acfd1d1196df1191bdbca6603e0508ecd4234498bf101740dcd6d95","bodyHash":"956fd8a9123101fdcb8547f0a4c96233800982091cb7eae7f664abd7f75bf11c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.markLinkedAliases","kind":"method","status":"implemented","sigHash":"4e39c6dd2acfd1d1196df1191bdbca6603e0508ecd4234498bf101740dcd6d95"}
  *
  * Go source:
  * func (r *EmitResolver) markLinkedAliases(node *ast.Node) {
@@ -810,7 +810,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::getMeaningOfEntityNameReference","kind":"func","status":"implemented","sigHash":"3729dff87f8b2ea885b02693d35cd230bef54dcbe5652a8ef7517a74e70ff5ef","bodyHash":"0ec8ce458cc2f52786bcb535dda050f7887523f9492887228d0daec2c8af416b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::getMeaningOfEntityNameReference","kind":"func","status":"implemented","sigHash":"3729dff87f8b2ea885b02693d35cd230bef54dcbe5652a8ef7517a74e70ff5ef"}
  *
  * Go source:
  * func getMeaningOfEntityNameReference(entityName *ast.Node) ast.SymbolFlags {
@@ -853,7 +853,7 @@ export function getMeaningOfEntityNameReference(entityName: GoPtr<Node>): Symbol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsEntityNameVisible","kind":"method","status":"implemented","sigHash":"700d552adab0d278c6ca221fd7edd9d9628c9263db483124e69b68518e67b32a","bodyHash":"00470a143dafbcbe6a3c0fb46750af2a887b7c75b1a3c4da0ff78ee87e3ea48c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsEntityNameVisible","kind":"method","status":"implemented","sigHash":"700d552adab0d278c6ca221fd7edd9d9628c9263db483124e69b68518e67b32a"}
  *
  * Go source:
  * func (r *EmitResolver) IsEntityNameVisible(entityName *ast.Node, enclosingDeclaration *ast.Node) printer.SymbolAccessibilityResult {
@@ -870,7 +870,7 @@ export function EmitResolver_IsEntityNameVisible(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isEntityNameVisible","kind":"method","status":"implemented","sigHash":"f2b45853068ecd1c33b89a75d7eec11c0e0617e0401e84ea4815d30ac33ea794","bodyHash":"7939b2cab303dea54b79e2c1d760872b1c3dfeb0fa5c896efa8ab69736c80ae7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isEntityNameVisible","kind":"method","status":"implemented","sigHash":"f2b45853068ecd1c33b89a75d7eec11c0e0617e0401e84ea4815d30ac33ea794"}
  *
  * Go source:
  * func (r *EmitResolver) isEntityNameVisible(entityName *ast.Node, enclosingDeclaration *ast.Node, shouldComputeAliasToMakeVisible bool) printer.SymbolAccessibilityResult {
@@ -948,7 +948,7 @@ export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::noopAddVisibleAlias","kind":"func","status":"implemented","sigHash":"fc2ad9fda54b706c25a9356c5575abc4f7d3f2526a7085fda654fec76520c55d","bodyHash":"b533e171de09ba8ce7a0b6b751184b6f8862a5b41d3c56eb460650ab818ee45d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::noopAddVisibleAlias","kind":"func","status":"implemented","sigHash":"fc2ad9fda54b706c25a9356c5575abc4f7d3f2526a7085fda654fec76520c55d"}
  *
  * Go source:
  * func noopAddVisibleAlias(declaration *ast.Node, aliasingStatement *ast.Node) {}
@@ -956,7 +956,7 @@ export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, 
 export function noopAddVisibleAlias(declaration: GoPtr<Node>, aliasingStatement: GoPtr<Node>): void {}
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.hasVisibleDeclarations","kind":"method","status":"implemented","sigHash":"7f6f6b0f5d5a418367521d600da9f364fb3d1a87ebb112c0bf3ec672aa9af8dc","bodyHash":"f32ac17609006397967a769f19a3a2a35ea2ad1e189c8dd521b43bfcf3f6d561"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.hasVisibleDeclarations","kind":"method","status":"implemented","sigHash":"7f6f6b0f5d5a418367521d600da9f364fb3d1a87ebb112c0bf3ec672aa9af8dc"}
  *
  * Go source:
  * func (r *EmitResolver) hasVisibleDeclarations(symbol *ast.Symbol, shouldComputeAliasToMakeVisible bool) *printer.SymbolAccessibilityResult {
@@ -1115,7 +1115,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsImplementationOfOverload","kind":"method","status":"implemented","sigHash":"66c3ad541e51fe25a94d32832151e888cbe0878952ed16a395891f0353e579e8","bodyHash":"a1b24b955988a91b6b95a5ae4d16a54df6a4a61d12896c55c0718174a28b46e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsImplementationOfOverload","kind":"method","status":"implemented","sigHash":"66c3ad541e51fe25a94d32832151e888cbe0878952ed16a395891f0353e579e8"}
  *
  * Go source:
  * func (r *EmitResolver) IsImplementationOfOverload(node *ast.SignatureDeclaration) bool {
@@ -1177,7 +1177,7 @@ export function EmitResolver_IsImplementationOfOverload(receiver: GoPtr<EmitReso
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsImportRequiredByAugmentation","kind":"method","status":"implemented","sigHash":"4647631fa3bf2e4bebe392ae2967b466e0b1249e785afaccdf8257f36f47af20","bodyHash":"6c3b0856e274935f2964e7091d736eafde209515c4bc93e5e375f28dd562012f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsImportRequiredByAugmentation","kind":"method","status":"implemented","sigHash":"4647631fa3bf2e4bebe392ae2967b466e0b1249e785afaccdf8257f36f47af20"}
  *
  * Go source:
  * func (r *EmitResolver) IsImportRequiredByAugmentation(decl *ast.ImportDeclaration) bool {
@@ -1244,7 +1244,7 @@ export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsDefinitelyReferenceToGlobalSymbolObject","kind":"method","status":"implemented","sigHash":"da1baeedd0c8da5b0a26c499b2daebb1cae5efb2311a07f7223dbdecd2439bf3","bodyHash":"54ffa4beaac204ecc601b969303a11d8b5f0466fd4f1122db64029816280c196"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsDefinitelyReferenceToGlobalSymbolObject","kind":"method","status":"implemented","sigHash":"da1baeedd0c8da5b0a26c499b2daebb1cae5efb2311a07f7223dbdecd2439bf3"}
  *
  * Go source:
  * func (r *EmitResolver) IsDefinitelyReferenceToGlobalSymbolObject(node *ast.Node) bool {
@@ -1294,7 +1294,7 @@ export function EmitResolver_IsDefinitelyReferenceToGlobalSymbolObject(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.RequiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"eb5111ea421498d8e4b45b5e374dd93dee124ac25c7782e47fe828d6a504f700","bodyHash":"dae3caf67f226bac3b7a09d0e194c6a05b75b541abdf9147b909a4f64f398c6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.RequiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"eb5111ea421498d8e4b45b5e374dd93dee124ac25c7782e47fe828d6a504f700"}
  *
  * Go source:
  * func (r *EmitResolver) RequiresAddingImplicitUndefined(declaration *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -1315,7 +1315,7 @@ export function EmitResolver_RequiresAddingImplicitUndefined(receiver: GoPtr<Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.RequiresAddingImplicitUndefinedUnsafe","kind":"method","status":"implemented","sigHash":"b076fb4e59621c7f6956a8c130f18b787a52cfe5a578156b57895cedbb18e5b7","bodyHash":"5bcd1c3e273bcaded67ad8deedbfc543a2ca42423eea3e27f5a0fca10ea6ade3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.RequiresAddingImplicitUndefinedUnsafe","kind":"method","status":"implemented","sigHash":"b076fb4e59621c7f6956a8c130f18b787a52cfe5a578156b57895cedbb18e5b7"}
  *
  * Go source:
  * func (r *EmitResolver) RequiresAddingImplicitUndefinedUnsafe(declaration *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -1332,7 +1332,7 @@ export function EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"00a49f3511a7d9bb6d8adff81ad7f071eddcab42983eb6fdcafaef69e079489b","bodyHash":"634b0a127b317f4be0c942e1000ac4e55841fa53f347dc19644caa99647eb2c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"00a49f3511a7d9bb6d8adff81ad7f071eddcab42983eb6fdcafaef69e079489b"}
  *
  * Go source:
  * func (r *EmitResolver) requiresAddingImplicitUndefined(declaration *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -1381,7 +1381,7 @@ export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefinedWorker","kind":"method","status":"implemented","sigHash":"7c4d341cd258348d4b1fbf88b8b220f3d027c6044447d1d359df2a50066fa16b","bodyHash":"53237a8b50798adba0585a36172ddce293d633622c0441dd4845db490856687e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefinedWorker","kind":"method","status":"implemented","sigHash":"7c4d341cd258348d4b1fbf88b8b220f3d027c6044447d1d359df2a50066fa16b"}
  *
  * Go source:
  * func (r *EmitResolver) requiresAddingImplicitUndefinedWorker(parameter *ast.Node, enclosingDeclaration *ast.Node) bool {
@@ -1393,7 +1393,7 @@ export function EmitResolver_requiresAddingImplicitUndefinedWorker(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.declaredParameterTypeContainsUndefined","kind":"method","status":"implemented","sigHash":"9aebeb6532826c197c29671210921fa9ffe23c7eddf515d412ea13195987fc52","bodyHash":"b0ee11d123c7e7a03b6f782015a32fab3b761a5724a0f06e8d64c79ff5214cf7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.declaredParameterTypeContainsUndefined","kind":"method","status":"implemented","sigHash":"9aebeb6532826c197c29671210921fa9ffe23c7eddf515d412ea13195987fc52"}
  *
  * Go source:
  * func (r *EmitResolver) declaredParameterTypeContainsUndefined(parameter *ast.Node) bool {
@@ -1417,7 +1417,7 @@ export function EmitResolver_declaredParameterTypeContainsUndefined(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalUninitializedParameterProperty","kind":"method","status":"implemented","sigHash":"28e7c6942fba0ceaf1b740ba85f6996f414baec006ae92f88cc3c3bf45b4ef7c","bodyHash":"31ef2b5b99a909987e95d8f225c84a48ad19e8ec80b05e04cf58c5c2c475b3bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalUninitializedParameterProperty","kind":"method","status":"implemented","sigHash":"28e7c6942fba0ceaf1b740ba85f6996f414baec006ae92f88cc3c3bf45b4ef7c"}
  *
  * Go source:
  * func (r *EmitResolver) isOptionalUninitializedParameterProperty(parameter *ast.Node) bool {
@@ -1435,7 +1435,7 @@ export function EmitResolver_isOptionalUninitializedParameterProperty(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isRequiredInitializedParameter","kind":"method","status":"implemented","sigHash":"6535d89b3fab6380348a900164647716e2ed4015f825a4303080983ad82bce31","bodyHash":"979526ec82b83eb74d0665dcf40029b7cbebcc4d866e59744c01bff78cf20317"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isRequiredInitializedParameter","kind":"method","status":"implemented","sigHash":"6535d89b3fab6380348a900164647716e2ed4015f825a4303080983ad82bce31"}
  *
  * Go source:
  * func (r *EmitResolver) isRequiredInitializedParameter(parameter *ast.Node, enclosingDeclaration *ast.Node) bool {
@@ -1459,7 +1459,7 @@ export function EmitResolver_isRequiredInitializedParameter(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalParameter","kind":"method","status":"implemented","sigHash":"cbdad5682cd469be2d6b817b518cdb94eef85b190e0e76e6c9b4e1ac0e13bff5","bodyHash":"8add18d817130b79a06c99b4e717dc51381f70920c0417951deee07ce3dfe105"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalParameter","kind":"method","status":"implemented","sigHash":"cbdad5682cd469be2d6b817b518cdb94eef85b190e0e76e6c9b4e1ac0e13bff5"}
  *
  * Go source:
  * func (r *EmitResolver) isOptionalParameter(node *ast.Node) bool {
@@ -1471,7 +1471,7 @@ export function EmitResolver_isOptionalParameter(receiver: GoPtr<EmitResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLiteralConstDeclaration","kind":"method","status":"implemented","sigHash":"b435651d1125685d2a357275bab64b122b2c8e923bd57f2841a8725acfb70a4e","bodyHash":"89e94b860c31440dc4100cb8348d620f9c33b535c799430f6927cd801f82b93a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLiteralConstDeclaration","kind":"method","status":"implemented","sigHash":"b435651d1125685d2a357275bab64b122b2c8e923bd57f2841a8725acfb70a4e"}
  *
  * Go source:
  * func (r *EmitResolver) IsLiteralConstDeclaration(node *ast.Node) bool {
@@ -1499,7 +1499,7 @@ export function EmitResolver_IsLiteralConstDeclaration(receiver: GoPtr<EmitResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclarationUnsafe","kind":"method","status":"implemented","sigHash":"d879c3cb5459a3775b59e7f71c0ef4120bd1c85910019c6dc8f04d5cfef6f410","bodyHash":"a969920964043f4c569643a69a0e533159df1091de5fa29a2f081c1e1e7d36f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclarationUnsafe","kind":"method","status":"implemented","sigHash":"d879c3cb5459a3775b59e7f71c0ef4120bd1c85910019c6dc8f04d5cfef6f410"}
  *
  * Go source:
  * func (r *EmitResolver) IsExpandoFunctionDeclarationUnsafe(node *ast.Node) bool {
@@ -1527,7 +1527,7 @@ export function EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclaration","kind":"method","status":"implemented","sigHash":"ef85f65cf3f392cd8bea618b857ab46b1a2b6b76d6ed3a060353568a2577d218","bodyHash":"7639c03b624c3f991535833de9ebe9c40ecdc71dc5d6a4dcf0d8e23aece9ea2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclaration","kind":"method","status":"implemented","sigHash":"ef85f65cf3f392cd8bea618b857ab46b1a2b6b76d6ed3a060353568a2577d218"}
  *
  * Go source:
  * func (r *EmitResolver) IsExpandoFunctionDeclaration(node *ast.Node) bool {
@@ -1544,7 +1544,7 @@ export function EmitResolver_IsExpandoFunctionDeclaration(receiver: GoPtr<EmitRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isSymbolAccessible","kind":"method","status":"implemented","sigHash":"1a060ae5a6cdfa7ed0c0274d6b40a47feaf66f8f6c3748adb0d349b9a78d83a6","bodyHash":"482f80e6b6325524081003d7f2af01ad4e5c916d36f612c84584bf2817c59ff5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isSymbolAccessible","kind":"method","status":"implemented","sigHash":"1a060ae5a6cdfa7ed0c0274d6b40a47feaf66f8f6c3748adb0d349b9a78d83a6"}
  *
  * Go source:
  * func (r *EmitResolver) isSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasToMarkVisible bool) printer.SymbolAccessibilityResult {
@@ -1556,7 +1556,7 @@ export function EmitResolver_isSymbolAccessible(receiver: GoPtr<EmitResolver>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsSymbolAccessible","kind":"method","status":"implemented","sigHash":"25a09ce277e54cfcae1d28a15d5af3ec5ce19d118ae88dd8de7629983c1cff28","bodyHash":"203ad94a55b328c6bea6e5726fd3e00f00e21d4041310edb3b1cca203430ac31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsSymbolAccessible","kind":"method","status":"implemented","sigHash":"25a09ce277e54cfcae1d28a15d5af3ec5ce19d118ae88dd8de7629983c1cff28"}
  *
  * Go source:
  * func (r *EmitResolver) IsSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasToMarkVisible bool) printer.SymbolAccessibilityResult {
@@ -1572,7 +1572,7 @@ export function EmitResolver_IsSymbolAccessible(receiver: GoPtr<EmitResolver>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsReferencedAliasDeclaration","kind":"method","status":"implemented","sigHash":"717f24e25b198ea905902e5cda747cbff3ba8b6d3aa86cafaaba334235f3d48f","bodyHash":"37852013bca78e03c6af2ec1602a79d633852eb992a50268562fa9ed7d7f1581"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsReferencedAliasDeclaration","kind":"method","status":"implemented","sigHash":"717f24e25b198ea905902e5cda747cbff3ba8b6d3aa86cafaaba334235f3d48f"}
  *
  * Go source:
  * func (r *EmitResolver) IsReferencedAliasDeclaration(node *ast.Node) bool {
@@ -1627,7 +1627,7 @@ export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsValueAliasDeclaration","kind":"method","status":"implemented","sigHash":"6eb06098100beddb69c05b21b1f82ac058a34aa8688bb865973d4f65252e1d29","bodyHash":"713d138434ef0b7ecd5c2ce8db971c9204b985bb1b504b24e796b48e71d1b4b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsValueAliasDeclaration","kind":"method","status":"implemented","sigHash":"6eb06098100beddb69c05b21b1f82ac058a34aa8688bb865973d4f65252e1d29"}
  *
  * Go source:
  * func (r *EmitResolver) IsValueAliasDeclaration(node *ast.Node) bool {
@@ -1652,7 +1652,7 @@ export function EmitResolver_IsValueAliasDeclaration(receiver: GoPtr<EmitResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isValueAliasDeclarationWorker","kind":"method","status":"implemented","sigHash":"650d97f1b4538d75dede6bc80cb02898b55bdb549d465bc418225789a66cc083","bodyHash":"0c1f3a58c356bfe8783c1a253ca3fe932dbd5448c17995cd428b375d4ee4044a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isValueAliasDeclarationWorker","kind":"method","status":"implemented","sigHash":"650d97f1b4538d75dede6bc80cb02898b55bdb549d465bc418225789a66cc083"}
  *
  * Go source:
  * func (r *EmitResolver) isValueAliasDeclarationWorker(node *ast.Node) bool {
@@ -1718,7 +1718,7 @@ export function EmitResolver_isValueAliasDeclarationWorker(receiver: GoPtr<EmitR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isAliasResolvedToValue","kind":"method","status":"implemented","sigHash":"b5795d926058ff57cae27d522ffbc91d550208b22e1532ec95646f7dfb851b43","bodyHash":"aabb566cc4e6b2f01a3fdbb34991c76dd5074350267826da3ec3691c14beee5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isAliasResolvedToValue","kind":"method","status":"implemented","sigHash":"b5795d926058ff57cae27d522ffbc91d550208b22e1532ec95646f7dfb851b43"}
  *
  * Go source:
  * func (r *EmitResolver) isAliasResolvedToValue(symbol *ast.Symbol, excludeTypeOnlyValues bool) bool {
@@ -1765,7 +1765,7 @@ export function EmitResolver_isAliasResolvedToValue(receiver: GoPtr<EmitResolver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsTopLevelValueImportEqualsWithEntityName","kind":"method","status":"implemented","sigHash":"d7740a9ec1a77e662fef5b7050f33bb691439aa61a55e83a0ec00e0898928802","bodyHash":"37c124c02032a5b721519b499521a81ffa90e400c32a954f4d7753f87d0d6007"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsTopLevelValueImportEqualsWithEntityName","kind":"method","status":"implemented","sigHash":"d7740a9ec1a77e662fef5b7050f33bb691439aa61a55e83a0ec00e0898928802"}
  *
  * Go source:
  * func (r *EmitResolver) IsTopLevelValueImportEqualsWithEntityName(node *ast.Node) bool {
@@ -1806,7 +1806,7 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"ff63d59a057dd43e7f41ad1a872b6fdeada0fa90704228268fd7a5470d38a590"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c"}
  *
  * Go source:
  * func (r *EmitResolver) MarkLinkedReferencesRecursively(file *ast.SourceFile) {
@@ -1872,7 +1872,7 @@ export function EmitResolver_MarkLinkedReferencesRecursively(receiver: GoPtr<Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetExternalModuleFileFromDeclaration","kind":"method","status":"implemented","sigHash":"f71583282ec6da51469717f1202d4fae5c11dc8e85065d015eb84f17a5128b7d","bodyHash":"66bbe4ce5b39d9a494b64409d08de979fbe910ffa140aa1980ae462f2088276d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetExternalModuleFileFromDeclaration","kind":"method","status":"implemented","sigHash":"f71583282ec6da51469717f1202d4fae5c11dc8e85065d015eb84f17a5128b7d"}
  *
  * Go source:
  * func (r *EmitResolver) GetExternalModuleFileFromDeclaration(declaration *ast.Node) *ast.SourceFile {
@@ -1894,7 +1894,7 @@ export function EmitResolver_GetExternalModuleFileFromDeclaration(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.getReferenceResolver","kind":"method","status":"implemented","sigHash":"9a7d1e2f7a6101fef19047756bfa994288dc43f36c7a16b6710d0f26af62619e","bodyHash":"3d16b11bd0b9143f43ed644052bba279ce9fde4cfe6f154a28df57519c42c766"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.getReferenceResolver","kind":"method","status":"implemented","sigHash":"9a7d1e2f7a6101fef19047756bfa994288dc43f36c7a16b6710d0f26af62619e"}
  *
  * Go source:
  * func (r *EmitResolver) getReferenceResolver() binder.ReferenceResolver {
@@ -1931,7 +1931,7 @@ export function EmitResolver_getReferenceResolver(receiver: GoPtr<EmitResolver>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedExportContainer","kind":"method","status":"implemented","sigHash":"3ca25ab164d051213a962f34d38323c06ec0ef2c68029cecb60892f7513dd9ad","bodyHash":"d87c2036c6993a2015ffbe297777de85fd7a2d456e2959de78c1d58d9d059965"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedExportContainer","kind":"method","status":"implemented","sigHash":"3ca25ab164d051213a962f34d38323c06ec0ef2c68029cecb60892f7513dd9ad"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedExportContainer(node *ast.IdentifierNode, prefixLocals bool) *ast.Node /*SourceFile|ModuleDeclaration|EnumDeclaration* / {
@@ -1954,7 +1954,7 @@ export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.SetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"b5b8412c2f0ef7be54ea2e7290ca9d4f3999d88e46509c479c9d3e66d0c77dba","bodyHash":"7aeb570c71739686b9b807ad8064f82ea31fb4560e25deecb2621ade1739e860"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.SetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"b5b8412c2f0ef7be54ea2e7290ca9d4f3999d88e46509c479c9d3e66d0c77dba"}
  *
  * Go source:
  * func (r *EmitResolver) SetReferencedImportDeclaration(node *ast.IdentifierNode, ref *ast.Declaration) {
@@ -1970,7 +1970,7 @@ export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedMemberValueDeclaration","kind":"method","status":"implemented","sigHash":"c70e3392c1f83d613660fb70bb502ef2c4f5ec1deb38881c42f7add9514e2772","bodyHash":"dcf691686c68eab4d7d31118e5f964ddc3038369148067c1d66b83a775debe9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedMemberValueDeclaration","kind":"method","status":"implemented","sigHash":"c70e3392c1f83d613660fb70bb502ef2c4f5ec1deb38881c42f7add9514e2772"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedMemberValueDeclaration(node *ast.Node) *ast.Declaration {
@@ -1993,7 +1993,7 @@ export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"9777eb7297cb07d97a36464f0547131283dd17a9d0dc18aabdb565192e36b5c5","bodyHash":"98df8d2c6b056e1e00281fb2c30cdbcabd40f498d7bf56cb6213d417da4124b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"9777eb7297cb07d97a36464f0547131283dd17a9d0dc18aabdb565192e36b5c5"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedImportDeclaration(node *ast.IdentifierNode) *ast.Declaration {
@@ -2027,7 +2027,7 @@ export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclaration","kind":"method","status":"implemented","sigHash":"803806a7359f7d4db410f9b3040a67107fb7b683612295599c65908a68d08546","bodyHash":"a8bf1e38bd7b83104c1823513c43e67653098f08488e96986e395a23fbfc1889"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclaration","kind":"method","status":"implemented","sigHash":"803806a7359f7d4db410f9b3040a67107fb7b683612295599c65908a68d08546"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedValueDeclaration(node *ast.IdentifierNode) *ast.Declaration {
@@ -2050,7 +2050,7 @@ export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitR
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa","bodyHash":"5e5adc4ee3583ab55fe00181c683b78596a409630cbafb6c93aa40f111942e1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedValueDeclarations(node *ast.IdentifierNode) []*ast.Declaration {
@@ -2073,7 +2073,7 @@ export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetElementAccessExpressionName","kind":"method","status":"implemented","sigHash":"b5d005c2b4dd3f43d471430fc55e53e10fd5357e33710abfd06d2247654f668a","bodyHash":"89f5953ca1d7ec68fc7ffbbb8d6b7b2aab44b38ccdebb889566543ef13b45226"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetElementAccessExpressionName","kind":"method","status":"implemented","sigHash":"b5d005c2b4dd3f43d471430fc55e53e10fd5357e33710abfd06d2247654f668a"}
  *
  * Go source:
  * func (r *EmitResolver) GetElementAccessExpressionName(expression *ast.ElementAccessExpression) string {
@@ -2096,7 +2096,7 @@ export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateReturnTypeOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"1a2680bf5618571ce947ed90902047c5033baed332592cc9f346e864102acc80","bodyHash":"e255af27842ef1b34f4421e8e46bb20e15bc0d96ea9bea546b2664d04c68171b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateReturnTypeOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"1a2680bf5618571ce947ed90902047c5033baed332592cc9f346e864102acc80"}
  *
  * Go source:
  * func (r *EmitResolver) CreateReturnTypeOfSignatureDeclaration(emitContext *printer.EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2124,7 +2124,7 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"6466a396d096c01f245287f104f1633a0e572256787db5e30693470a34eea12b","bodyHash":"f88b18ad8f3f0d47e4dfe7373c3a983abc31cad91eb94da0505d65e2daa0f368"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"6466a396d096c01f245287f104f1633a0e572256787db5e30693470a34eea12b"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeParametersOfSignatureDeclaration(emitContext *printer.EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -2152,7 +2152,7 @@ export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"002a759d421486c3c242547b4729cccdbad972368be538ab1db9d4cad356f4e4","bodyHash":"48f04ac22cbc427d5ef7e70b07e96f10552eed92eac74f519a8c3411b1a43c14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"002a759d421486c3c242547b4729cccdbad972368be538ab1db9d4cad356f4e4"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeOfDeclaration(emitContext *printer.EmitContext, declaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2183,7 +2183,7 @@ export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLiteralConstValue","kind":"method","status":"implemented","sigHash":"a794bda91b85e84d21a485fc3a7755da54ab0e72e126c175ece2179067231e63","bodyHash":"c75a8b46903824c77536a4baaaa8bd451c2da9ecd610e4ac802080c6266beacd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLiteralConstValue","kind":"method","status":"implemented","sigHash":"a794bda91b85e84d21a485fc3a7755da54ab0e72e126c175ece2179067231e63"}
  *
  * Go source:
  * func (r *EmitResolver) CreateLiteralConstValue(emitContext *printer.EmitContext, node *ast.Node, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2303,7 +2303,7 @@ export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfExpression","kind":"method","status":"implemented","sigHash":"9ed2ff39a8869ad7e1dd39470c2ac06db3aabb6af0cde5e5440237c6be11d6d2","bodyHash":"a70e60ebe798a1b737f90024ba0c716c9a550772ec14cbf603d72ff338561d36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfExpression","kind":"method","status":"implemented","sigHash":"9ed2ff39a8869ad7e1dd39470c2ac06db3aabb6af0cde5e5440237c6be11d6d2"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeOfExpression(emitContext *printer.EmitContext, expression *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2331,7 +2331,7 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures","kind":"method","status":"implemented","sigHash":"0d29f2b50850d24cede0425c1ece2503aa0e34e10d939d6a80b47870f30090c3","bodyHash":"b5a25f4a31e0fde34f7eb9d711b75a8baa76c96db0bfcebc0d21f5e76180e03e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures","kind":"method","status":"implemented","sigHash":"0d29f2b50850d24cede0425c1ece2503aa0e34e10d939d6a80b47870f30090c3"}
  *
  * Go source:
  * func (r *EmitResolver) CreateLateBoundIndexSignatures(emitContext *printer.EmitContext, container *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -2513,7 +2513,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEffectiveDeclarationFlags","kind":"method","status":"implemented","sigHash":"1e043b732317cd93874d4740b14f57712e4335a8afb6dca6cdddd39f38c48be4","bodyHash":"5e77199275d3e3525ed5bdf3485960b53755f4fa7a3b0aec677bd352131cfb94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEffectiveDeclarationFlags","kind":"method","status":"implemented","sigHash":"1e043b732317cd93874d4740b14f57712e4335a8afb6dca6cdddd39f38c48be4"}
  *
  * Go source:
  * func (r *EmitResolver) GetEffectiveDeclarationFlags(node *ast.Node, flags ast.ModifierFlags) ast.ModifierFlags {
@@ -2531,7 +2531,7 @@ export function EmitResolver_GetEffectiveDeclarationFlags(receiver: GoPtr<EmitRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetResolutionModeOverride","kind":"method","status":"implemented","sigHash":"14879ac14cac097914423faf8123a337a64b1dd0529f976802f7cf4de737bec7","bodyHash":"769115bc13bb8c1ea3c937f94c9c27157c3c68f0ffa69dfc92b327cf5b52681e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetResolutionModeOverride","kind":"method","status":"implemented","sigHash":"14879ac14cac097914423faf8123a337a64b1dd0529f976802f7cf4de737bec7"}
  *
  * Go source:
  * func (r *EmitResolver) GetResolutionModeOverride(node *ast.Node) core.ResolutionMode {
@@ -2549,7 +2549,7 @@ export function EmitResolver_GetResolutionModeOverride(receiver: GoPtr<EmitResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetConstantValue","kind":"method","status":"implemented","sigHash":"ff77f5b3959c6a3f74d72f5b42423dda582d2a92d36ef5994d8aa8101ca04cbc","bodyHash":"c7131a9edfa8c6f9c52a8e649d6211972bad1de2039d594cfe1d05efa65b2091"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetConstantValue","kind":"method","status":"implemented","sigHash":"ff77f5b3959c6a3f74d72f5b42423dda582d2a92d36ef5994d8aa8101ca04cbc"}
  *
  * Go source:
  * func (r *EmitResolver) GetConstantValue(node *ast.Node) any {
@@ -2567,7 +2567,7 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetTypeReferenceSerializationKind","kind":"method","status":"implemented","sigHash":"f415b56fd496cfc8d7577a3f4313d293be0d5f6a89d528a076072e36acf50491","bodyHash":"a8a3f0547d9dfe3786a577524386d46827c4fb082146cb8bfc1ba0a52dc7af2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetTypeReferenceSerializationKind","kind":"method","status":"implemented","sigHash":"f415b56fd496cfc8d7577a3f4313d293be0d5f6a89d528a076072e36acf50491"}
  *
  * Go source:
  * func (r *EmitResolver) GetTypeReferenceSerializationKind(typeName *ast.Node, location *ast.Node) printer.TypeReferenceSerializationKind {
@@ -2758,7 +2758,7 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction","kind":"method","status":"implemented","sigHash":"7e97da3a092cb9f8f383787ad8d6b688d469b559048c069fca1a57744db2d17d","bodyHash":"b8569f40bafa10f9d9fbeb46850ccf1a752c3005dcb8d1e95a6d71d701b45b83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction","kind":"method","status":"implemented","sigHash":"7e97da3a092cb9f8f383787ad8d6b688d469b559048c069fca1a57744db2d17d"}
  *
  * Go source:
  * func (r *EmitResolver) GetPropertiesOfContainerFunction(node *ast.Node) []*ast.Symbol {
@@ -2784,7 +2784,7 @@ export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<Em
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.TryJSTypeNodeToTypeNode","kind":"method","status":"implemented","sigHash":"ee8dc85998dd6dcb905630a62ebbab7edd668cac04808df9ff9d96185cf5c554","bodyHash":"22aa569defec857bdda9a59e482498445ce97a4cfd9a9a955916009f5a7e67ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.TryJSTypeNodeToTypeNode","kind":"method","status":"implemented","sigHash":"ee8dc85998dd6dcb905630a62ebbab7edd668cac04808df9ff9d96185cf5c554"}
  *
  * Go source:
  * func (r *EmitResolver) TryJSTypeNodeToTypeNode(emitContext *printer.EmitContext, typeNode *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {

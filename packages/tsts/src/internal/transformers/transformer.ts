@@ -8,7 +8,7 @@ import { EmitContext_NewNodeVisitor, NewEmitContext } from "../printer/emitconte
 import type { NodeFactory } from "../printer/factory.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::type::Transformer","kind":"type","status":"implemented","sigHash":"5fa010274cdfe50c30d5bc0081e251425ae74f7e76e7ef1a4923c0c6df44c813","bodyHash":"5b632586efde74a79176f2d3bd4d54e68ff683beca4b1058919178791dcdb75b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::type::Transformer","kind":"type","status":"implemented","sigHash":"5fa010274cdfe50c30d5bc0081e251425ae74f7e76e7ef1a4923c0c6df44c813"}
  *
  * Go source:
  * Transformer struct {
@@ -36,7 +36,7 @@ function resolveTransformer(receiver: GoPtr<Transformer | TransformerCarrier>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.NewTransformer","kind":"method","status":"implemented","sigHash":"eea5ad75fe651a3f5a4f134d075cc199ca0923570a303b33ea88ec5af90e92c2","bodyHash":"1a1dc3e5e465936245c2e337c5c3119892e4d9a1e7445e523f87804eb55c365f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.NewTransformer","kind":"method","status":"implemented","sigHash":"eea5ad75fe651a3f5a4f134d075cc199ca0923570a303b33ea88ec5af90e92c2"}
  *
  * Go source:
  * func (tx *Transformer) NewTransformer(visit func(node *ast.Node) *ast.Node, emitContext *printer.EmitContext) *Transformer {
@@ -65,7 +65,7 @@ export function Transformer_NewTransformer(receiver: GoPtr<Transformer>, visit: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.EmitContext","kind":"method","status":"implemented","sigHash":"47d14d9bb860a93156eff6efc3bff9633ae375b5a3c2df623a6810c9a6ec3e85","bodyHash":"1e6aaf06f8721820cc3f9d18a5ede6f55a56d517b5a774ca03b9c43e15c44cf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.EmitContext","kind":"method","status":"implemented","sigHash":"47d14d9bb860a93156eff6efc3bff9633ae375b5a3c2df623a6810c9a6ec3e85"}
  *
  * Go source:
  * func (tx *Transformer) EmitContext() *printer.EmitContext {
@@ -77,7 +77,7 @@ export function Transformer_EmitContext(receiver: GoPtr<Transformer>): GoPtr<Emi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.Visitor","kind":"method","status":"implemented","sigHash":"f7880904fbe3061fe2b5f18adf9e97f137bf0b5fc592f63baf89bb658e20968f","bodyHash":"db65fe97aab7511f38b1d7da7391faad1077590f10cabdbbbe8c6212a2a4fcd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.Visitor","kind":"method","status":"implemented","sigHash":"f7880904fbe3061fe2b5f18adf9e97f137bf0b5fc592f63baf89bb658e20968f"}
  *
  * Go source:
  * func (tx *Transformer) Visitor() *ast.NodeVisitor {
@@ -89,7 +89,7 @@ export function Transformer_Visitor(receiver: GoPtr<Transformer>): GoPtr<NodeVis
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.Factory","kind":"method","status":"implemented","sigHash":"823907beaacc0030c6fd2ba39bc5c944b2e45d995a5ad306405e4d2f9bceb61f","bodyHash":"edf1348205164a5bd2ae1cf7f1dde11439165acd383dfdd39ccdb7599857b3cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.Factory","kind":"method","status":"implemented","sigHash":"823907beaacc0030c6fd2ba39bc5c944b2e45d995a5ad306405e4d2f9bceb61f"}
  *
  * Go source:
  * func (tx *Transformer) Factory() *printer.NodeFactory {
@@ -101,7 +101,7 @@ export function Transformer_Factory(receiver: GoPtr<Transformer>): GoPtr<NodeFac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.TransformSourceFile","kind":"method","status":"implemented","sigHash":"593431a64895bff97778164c286001ce5d4fdff297017da63b743bae495c01e3","bodyHash":"06f6065f1f3357b6e630255ea0b7245eb139f3aa72d5e2350f1a9f95d771b6d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.TransformSourceFile","kind":"method","status":"implemented","sigHash":"593431a64895bff97778164c286001ce5d4fdff297017da63b743bae495c01e3"}
  *
  * Go source:
  * func (tx *Transformer) TransformSourceFile(file *ast.SourceFile) *ast.SourceFile {

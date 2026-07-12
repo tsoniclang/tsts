@@ -54,7 +54,7 @@ import { IsIdentifierText } from "../../scanner/utilities.js";
 import { Filter, Some } from "../../core/core.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFacts","kind":"type","status":"implemented","sigHash":"13a741db1e6964ac18f53134eb775f7a34d4093e7915d3598bb8218637998b35","bodyHash":"7439e6e0f2d4dad0d20d4ac1ba1ad9d972c9d139d3cbda2ec3da10b24c550f8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFacts","kind":"type","status":"implemented","sigHash":"13a741db1e6964ac18f53134eb775f7a34d4093e7915d3598bb8218637998b35"}
  *
  * Go source:
  * classFacts int
@@ -62,7 +62,7 @@ import { Filter, Some } from "../../core/core.js";
 export type classFacts = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::constGroup::classFactsNone+classFactsClassWasDecorated+classFactsNeedsClassConstructorReference+classFactsNeedsClassSuperReference+classFactsNeedsSubstitutionForThisInClassStaticField+classFactsWillHoistInitializersToConstructor","kind":"constGroup","status":"implemented","sigHash":"135a344148ef0ebd4af9954b2ff4d2f150c5169346d2f87a2faf4e50aafdad0f","bodyHash":"769b4ed3257b9e2956b6cda709bd7062659a95d4fc29ae5cde794fd0c701dc7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::constGroup::classFactsNone+classFactsClassWasDecorated+classFactsNeedsClassConstructorReference+classFactsNeedsClassSuperReference+classFactsNeedsSubstitutionForThisInClassStaticField+classFactsWillHoistInitializersToConstructor","kind":"constGroup","status":"implemented","sigHash":"135a344148ef0ebd4af9954b2ff4d2f150c5169346d2f87a2faf4e50aafdad0f"}
  *
  * Go source:
  * const (
@@ -82,7 +82,7 @@ export const classFactsNeedsSubstitutionForThisInClassStaticField: classFacts = 
 export const classFactsWillHoistInitializersToConstructor: classFacts = 1 << 4;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateIdentifierInfo","kind":"type","status":"implemented","sigHash":"d58149ef296b60280dfcf96777d28282653986c025b30fa085e06f5209df15ef","bodyHash":"0573db47d049964b00f6511ec7ba23ff267ef054373dcc8ed19bcba6ced9e335"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateIdentifierInfo","kind":"type","status":"implemented","sigHash":"d58149ef296b60280dfcf96777d28282653986c025b30fa085e06f5209df15ef"}
  *
  * Go source:
  * privateIdentifierInfo struct {
@@ -119,7 +119,7 @@ export interface privateIdentifierInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateEnvironmentData","kind":"type","status":"implemented","sigHash":"c030fe278812fcff31f9b78932f68beb033c9567928b51b8184703502dc74748","bodyHash":"c5e5625184e8fecfc98803d685b7d05c2448f7ec0dd6effc316b6aae3a11b006"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateEnvironmentData","kind":"type","status":"implemented","sigHash":"c030fe278812fcff31f9b78932f68beb033c9567928b51b8184703502dc74748"}
  *
  * Go source:
  * privateEnvironmentData struct {
@@ -135,7 +135,7 @@ export interface privateEnvironmentData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateEnvironment","kind":"type","status":"implemented","sigHash":"ac08a55ca837181211c0e3291b40044bff49898794901de1bfb5f2180984a23e","bodyHash":"e9098a1f393fa2bba4abd7746de87f6ca42962bfde2ddc2a89fdfbe062001051"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::privateEnvironment","kind":"type","status":"implemented","sigHash":"ac08a55ca837181211c0e3291b40044bff49898794901de1bfb5f2180984a23e"}
  *
  * Go source:
  * privateEnvironment struct {
@@ -151,7 +151,7 @@ export interface privateEnvironment {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classLexicalEnvironment","kind":"type","status":"implemented","sigHash":"51af5bdfb1ddfa63c6e75b2bf60844fccd4fdcdce644c28d96185b064579615b","bodyHash":"12d79bd7a22cc4862de7ad750cef74c115379c5c9804f1191dfccf297d56406f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classLexicalEnvironment","kind":"type","status":"implemented","sigHash":"51af5bdfb1ddfa63c6e75b2bf60844fccd4fdcdce644c28d96185b064579615b"}
  *
  * Go source:
  * classLexicalEnvironment struct {
@@ -171,7 +171,7 @@ export interface classLexicalEnvironment {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classLexicalEnv","kind":"type","status":"implemented","sigHash":"c28831f39dd05622e1200ee85a9ff3c62f288093fb6fab33058e94fd4a87d6ba","bodyHash":"8d1570294dd3bc7b333606aa1d396a32db23ede9345dc43a612fc673ed5ccaff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classLexicalEnv","kind":"type","status":"implemented","sigHash":"c28831f39dd05622e1200ee85a9ff3c62f288093fb6fab33058e94fd4a87d6ba"}
  *
  * Go source:
  * classLexicalEnv struct {
@@ -187,7 +187,7 @@ export interface classLexicalEnv {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFieldsTransformer","kind":"type","status":"implemented","sigHash":"112a3f8c2cfbce0110fdf9c9eb371e7ad8b214b91870630398f947346df2bd8c","bodyHash":"529f481332038f9abf50df6ba790b8a6e3411e0f80c51b77e298091edd6e92f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::type::classFieldsTransformer","kind":"type","status":"implemented","sigHash":"112a3f8c2cfbce0110fdf9c9eb371e7ad8b214b91870630398f947346df2bd8c"}
  *
  * Go source:
  * classFieldsTransformer struct {
@@ -279,7 +279,7 @@ export interface classFieldsTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::newClassFieldsTransformer","kind":"func","status":"implemented","sigHash":"893ceb2196ca839b53560510a9141d104fa57a573219a37c0df30301469d9093","bodyHash":"dfff463a89cde179616945dad5889fc3b9374cc5d5071b63144d67af652b606e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::newClassFieldsTransformer","kind":"func","status":"implemented","sigHash":"893ceb2196ca839b53560510a9141d104fa57a573219a37c0df30301469d9093"}
  *
  * Go source:
  * func newClassFieldsTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -405,7 +405,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.requiresBlockScopedVar","kind":"method","status":"implemented","sigHash":"5fc66be59f3b1d2a963ca72b48ec10465b2900af7b3a45c5856251a097c88809","bodyHash":"08b64d5f9e653d5c90ebaf8286feedeadddbe694fca73e5b14542f0faf279be7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.requiresBlockScopedVar","kind":"method","status":"implemented","sigHash":"5fc66be59f3b1d2a963ca72b48ec10465b2900af7b3a45c5856251a097c88809"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) requiresBlockScopedVar() bool {
@@ -417,7 +417,7 @@ export function classFieldsTransformer_requiresBlockScopedVar(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.classExpressionNeedsBlockScopedTemp","kind":"method","status":"implemented","sigHash":"30140d940ff900e131adbe3f72696fc1e1fe4cab9817179c1208cfe2c8d9ea68","bodyHash":"ea127b1775a5a08242bd42ea4b5ca96c432a67c567b1325038062a3080559979"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.classExpressionNeedsBlockScopedTemp","kind":"method","status":"implemented","sigHash":"30140d940ff900e131adbe3f72696fc1e1fe4cab9817179c1208cfe2c8d9ea68"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) classExpressionNeedsBlockScopedTemp() bool {
@@ -447,7 +447,7 @@ export function classFieldsTransformer_classExpressionNeedsBlockScopedTemp(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"6bf25d7be435ff711574cddb055d1d6e6ca25cf7199357f7b65fd39fc7b9c0b9","bodyHash":"9d2c8f2d18fbb1f6f09bdd17d11d5ac76da423bb0ea68d468bef9b80e55bca83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"6bf25d7be435ff711574cddb055d1d6e6ca25cf7199357f7b65fd39fc7b9c0b9"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -481,7 +481,7 @@ export function classFieldsTransformer_visitSourceFile(receiver: GoPtr<classFiel
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitModifier","kind":"method","status":"implemented","sigHash":"c202f08e6ab2726d541ae5a25e08002685a854105ff6b0a32a7ccd03c3f9aac6","bodyHash":"90dfebdbd836c6a4a224cdb49ed4be843c0af75e6bdf75602a8bfacb348242e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitModifier","kind":"method","status":"implemented","sigHash":"c202f08e6ab2726d541ae5a25e08002685a854105ff6b0a32a7ccd03c3f9aac6"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitModifier(node *ast.Node) *ast.Node {
@@ -511,7 +511,7 @@ export function classFieldsTransformer_visitModifier(receiver: GoPtr<classFields
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.pushNode","kind":"method","status":"implemented","sigHash":"0b4166e362aa4989672852af3087900d641c80b7b60eb09034f5a79bc7f71322","bodyHash":"22aa163fdcd8aabcb58969239ade44608b0a7f0e1773bd1ebe5a0437d880fe38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.pushNode","kind":"method","status":"implemented","sigHash":"0b4166e362aa4989672852af3087900d641c80b7b60eb09034f5a79bc7f71322"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) pushNode(node *ast.Node) (grandparentNode *ast.Node) {
@@ -529,7 +529,7 @@ export function classFieldsTransformer_pushNode(receiver: GoPtr<classFieldsTrans
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.popNode","kind":"method","status":"implemented","sigHash":"4b93101e438bcd0b71c79289109c7792efb1d65a728e801af9ecd480343620f1","bodyHash":"3c41bca9a5ab80ad540ed81aa48dd8055b05378d6d6fab349b530de5a31ddb39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.popNode","kind":"method","status":"implemented","sigHash":"4b93101e438bcd0b71c79289109c7792efb1d65a728e801af9ecd480343620f1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) popNode(grandparentNode *ast.Node) {
@@ -543,7 +543,7 @@ export function classFieldsTransformer_popNode(receiver: GoPtr<classFieldsTransf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitForSubstitution","kind":"method","status":"implemented","sigHash":"a868348a3c6115f72c09b21bd93fd98fe50d855c67181e04d343b00e832a030a","bodyHash":"e756b0854aad2d1e4b2120d3e92a2d805d0f4ad26617e538cf55c2f052c29246"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitForSubstitution","kind":"method","status":"implemented","sigHash":"a868348a3c6115f72c09b21bd93fd98fe50d855c67181e04d343b00e832a030a"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitForSubstitution(node *ast.Node) *ast.Node {
@@ -567,7 +567,7 @@ export function classFieldsTransformer_visitForSubstitution(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visit","kind":"method","status":"implemented","sigHash":"7194dfc9eea4d8dba8b78799f70d906a935fe3c7cd6d84a29a0c7e976fe17bfe","bodyHash":"3c3b9836589468451265c436de1f57e5092ae19d3cf7409484b2d250a32079ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visit","kind":"method","status":"implemented","sigHash":"7194dfc9eea4d8dba8b78799f70d906a935fe3c7cd6d84a29a0c7e976fe17bfe"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visit(node *ast.Node) *ast.Node {
@@ -714,7 +714,7 @@ export function classFieldsTransformer_visit(receiver: GoPtr<classFieldsTransfor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitDiscardedValue","kind":"method","status":"implemented","sigHash":"5c59b4320a57e99a73d43406fbb33c72488448940e04884716a96a32fefe1a0c","bodyHash":"9efc8a218be8916970872ba6562fdd52dcf47d09c523531f1f2ee144c5717ffe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitDiscardedValue","kind":"method","status":"implemented","sigHash":"5c59b4320a57e99a73d43406fbb33c72488448940e04884716a96a32fefe1a0c"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitDiscardedValue(node *ast.Node) *ast.Node {
@@ -745,7 +745,7 @@ export function classFieldsTransformer_visitDiscardedValue(receiver: GoPtr<class
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitHeritageClause","kind":"method","status":"implemented","sigHash":"802c16361a020d43fda9e103515690df0add2e02d1c14560729db984d8d87559","bodyHash":"29505836db696d48ed104b6f9033ce81f1dce6bff72afee4b67b2e2e4dcaf3a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitHeritageClause","kind":"method","status":"implemented","sigHash":"802c16361a020d43fda9e103515690df0add2e02d1c14560729db984d8d87559"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitHeritageClause(node *ast.Node) *ast.Node {
@@ -771,7 +771,7 @@ export function classFieldsTransformer_visitHeritageClause(receiver: GoPtr<class
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentTarget","kind":"method","status":"implemented","sigHash":"41cbde1a143c8751645b27ec44a17673f6a22660f17c5295cda34d8f5e2dfe74","bodyHash":"cf805c5222e1ec074031b01f7493632e10f1507bd55a9ae6305dbaaf63c8f47c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentTarget","kind":"method","status":"implemented","sigHash":"41cbde1a143c8751645b27ec44a17673f6a22660f17c5295cda34d8f5e2dfe74"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentTarget(node *ast.Node) *ast.Node {
@@ -794,7 +794,7 @@ export function classFieldsTransformer_visitAssignmentTarget(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitDestructuringAssignmentTarget","kind":"method","status":"implemented","sigHash":"23ac0aeb0e175b5d9a026610bce8da97961621b745296ddd5c9defe98868d083","bodyHash":"56008bdce30aed0f19c2ba8b457e3836528ae565f853aed377ad2d99d18de913"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitDestructuringAssignmentTarget","kind":"method","status":"implemented","sigHash":"23ac0aeb0e175b5d9a026610bce8da97961621b745296ddd5c9defe98868d083"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitDestructuringAssignmentTarget(node *ast.Node) *ast.Node {
@@ -876,7 +876,7 @@ export function classFieldsTransformer_visitDestructuringAssignmentTarget(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassElement","kind":"method","status":"implemented","sigHash":"4059c1684dbe7e5a618cf2c0cda6e21c1e80b0234b44985049489497bad82e7b","bodyHash":"d1eed747ff244c0c8ba317a2f8bdde41c73773b0572dbdd9bf9e3d7a2ef9e598"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassElement","kind":"method","status":"implemented","sigHash":"4059c1684dbe7e5a618cf2c0cda6e21c1e80b0234b44985049489497bad82e7b"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassElement(node *ast.Node) *ast.Node {
@@ -926,7 +926,7 @@ export function classFieldsTransformer_visitClassElement(receiver: GoPtr<classFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyName","kind":"method","status":"implemented","sigHash":"617e6d64bbb6cacfe48ab6d173670fb0a8b7e5a9905ab5e334cb357ee4d5b563","bodyHash":"baf45f7d9ed42871c1a5a6d70f93f625c5232684079650f6204b0b569649515c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyName","kind":"method","status":"implemented","sigHash":"617e6d64bbb6cacfe48ab6d173670fb0a8b7e5a9905ab5e334cb357ee4d5b563"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPropertyName(name *ast.PropertyName) *ast.PropertyName {
@@ -944,7 +944,7 @@ export function classFieldsTransformer_visitPropertyName(receiver: GoPtr<classFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAccessorFieldResult","kind":"method","status":"implemented","sigHash":"63c7c132b5dd13f9eaee54672bb1985b4c358ffd0633b827335a7e2c3dfef1a5","bodyHash":"ec05288113d2d85e50e23989542194d74d3d77122b1f2bd103932991338e7ae0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAccessorFieldResult","kind":"method","status":"implemented","sigHash":"63c7c132b5dd13f9eaee54672bb1985b4c358ffd0633b827335a7e2c3dfef1a5"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAccessorFieldResult(node *ast.Node) *ast.Node {
@@ -973,7 +973,7 @@ export function classFieldsTransformer_visitAccessorFieldResult(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitIdentifier","kind":"method","status":"implemented","sigHash":"252818a2b1b8459c44f90ed7f7d27d4e8f7d0278a2269c2f1c652c0cd8426310","bodyHash":"712158875c45f1f8a205908c86486c5bb52c9beea30768b54b4687f83a8e8a72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitIdentifier","kind":"method","status":"implemented","sigHash":"252818a2b1b8459c44f90ed7f7d27d4e8f7d0278a2269c2f1c652c0cd8426310"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitIdentifier(node *ast.Identifier) *ast.Node {
@@ -1004,7 +1004,7 @@ export function classFieldsTransformer_visitIdentifier(receiver: GoPtr<classFiel
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPrivateIdentifier","kind":"method","status":"implemented","sigHash":"784227a170395dfa87dba748f0f815796a8377e32f453e568cb5e7ed4fd31b4b","bodyHash":"c084a317c6f19175c66c6675bbbf5b0b51850bb2a79ffd5e5bf668fa268e1456"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPrivateIdentifier","kind":"method","status":"implemented","sigHash":"784227a170395dfa87dba748f0f815796a8377e32f453e568cb5e7ed4fd31b4b"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPrivateIdentifier(node *ast.Node) *ast.Node {
@@ -1032,7 +1032,7 @@ export function classFieldsTransformer_visitPrivateIdentifier(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPrivateIdentifierInInExpression","kind":"method","status":"implemented","sigHash":"4d1ba822e05851ae336f55c4b8c70f8c417f903774a20c6eb5608f4ccf6a623f","bodyHash":"b0c372b16d48d641fdef8047e5c19028267ed47e02a34c5a942952e3c9873ec1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPrivateIdentifierInInExpression","kind":"method","status":"implemented","sigHash":"4d1ba822e05851ae336f55c4b8c70f8c417f903774a20c6eb5608f4ccf6a623f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformPrivateIdentifierInInExpression(node *ast.BinaryExpression) *ast.Node {
@@ -1060,7 +1060,7 @@ export function classFieldsTransformer_transformPrivateIdentifierInInExpression(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAssignment","kind":"method","status":"implemented","sigHash":"e69a1d7dc91deeec54cb74e79f2e0c3fe966bfe0814c819f29542f9a921d49bf","bodyHash":"0c2919d535599ec219c2a769ef28f9570d547b990212a2b7515081b04d47ac7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAssignment","kind":"method","status":"implemented","sigHash":"e69a1d7dc91deeec54cb74e79f2e0c3fe966bfe0814c819f29542f9a921d49bf"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPropertyAssignment(node *ast.PropertyAssignment) *ast.Node {
@@ -1092,7 +1092,7 @@ export function classFieldsTransformer_visitPropertyAssignment(receiver: GoPtr<c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitVariableStatement","kind":"method","status":"implemented","sigHash":"b48e42229133e39f47c926ebdd53518cfbcc9dd49c6c3f2e8fcde70e24d7c6e4","bodyHash":"04cd2fdd872bca8ce888b1e17928d3597ee1859f30fdf8143f773a7deb468d52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitVariableStatement","kind":"method","status":"implemented","sigHash":"b48e42229133e39f47c926ebdd53518cfbcc9dd49c6c3f2e8fcde70e24d7c6e4"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitVariableStatement(node *ast.VariableStatement) *ast.Node {
@@ -1134,7 +1134,7 @@ export function classFieldsTransformer_visitVariableStatement(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitVariableDeclaration","kind":"method","status":"implemented","sigHash":"5bf70ac1ab77cd417fd2a6d20feb008eb2470a2996d79a0f93605c9d828486e1","bodyHash":"b8481a20f92c4aed3a3ffd0bbf55c9921c2270371c72b7f89384e96e348cb477"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitVariableDeclaration","kind":"method","status":"implemented","sigHash":"5bf70ac1ab77cd417fd2a6d20feb008eb2470a2996d79a0f93605c9d828486e1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitVariableDeclaration(node *ast.VariableDeclaration) *ast.Node {
@@ -1180,7 +1180,7 @@ export function classFieldsTransformer_visitVariableDeclaration(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitParameterDeclaration","kind":"method","status":"implemented","sigHash":"245a6cf02f7c04c27602ddd9787ce5e26142ee9e3d1767de699b589cd0d8d762","bodyHash":"66c9b865c38ac11fcc412234f4ee7123f45565f47e9edb497410a2223ff242a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitParameterDeclaration","kind":"method","status":"implemented","sigHash":"245a6cf02f7c04c27602ddd9787ce5e26142ee9e3d1767de699b589cd0d8d762"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitParameterDeclaration(node *ast.ParameterDeclaration) *ast.Node {
@@ -1230,7 +1230,7 @@ export function classFieldsTransformer_visitParameterDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitBindingElement","kind":"method","status":"implemented","sigHash":"2de519d84a6865070dc93d96647d72a32a5accd4fed58be07de93cef4b5a8efb","bodyHash":"de895ccc971000c4d561d67583e4f5d19e747c2344c28fb29c26d80bc5703514"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitBindingElement","kind":"method","status":"implemented","sigHash":"2de519d84a6865070dc93d96647d72a32a5accd4fed58be07de93cef4b5a8efb"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitBindingElement(node *ast.BindingElement) *ast.Node {
@@ -1280,7 +1280,7 @@ export function classFieldsTransformer_visitBindingElement(receiver: GoPtr<class
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExportAssignment","kind":"method","status":"implemented","sigHash":"0a878acd92f6a8d87877a1f359ccd002822e48ef44b31d017ec207b3483837f1","bodyHash":"5b2132fd4482f5a7b5f8454f0b406605826a377dbc9a5d7e30529c704768e35b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExportAssignment","kind":"method","status":"implemented","sigHash":"0a878acd92f6a8d87877a1f359ccd002822e48ef44b31d017ec207b3483837f1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitExportAssignment(node *ast.ExportAssignment) *ast.Node {
@@ -1321,7 +1321,7 @@ export function classFieldsTransformer_visitExportAssignment(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.injectPendingExpressions","kind":"method","status":"implemented","sigHash":"fd61df9e1edf07c940387a0d90953363157623f061013a92e1d69d9f49f994e6","bodyHash":"737f56d09355a779843a549cd32ac3a1aea1312f68552c38b382298cecbb9aba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.injectPendingExpressions","kind":"method","status":"implemented","sigHash":"fd61df9e1edf07c940387a0d90953363157623f061013a92e1d69d9f49f994e6"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) injectPendingExpressions(expression *ast.Expression) *ast.Expression {
@@ -1360,7 +1360,7 @@ export function classFieldsTransformer_injectPendingExpressions(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitComputedPropertyName","kind":"method","status":"implemented","sigHash":"c3ccba6ec93c85a0e84ba810dff98dd0bbd841528de3aaeb901fd9d4fff3df26","bodyHash":"a2a8f2967606ec851d725caf449390b3e7073ab9a759ee9a2955882acb6ae85e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitComputedPropertyName","kind":"method","status":"implemented","sigHash":"c3ccba6ec93c85a0e84ba810dff98dd0bbd841528de3aaeb901fd9d4fff3df26"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitComputedPropertyName(node *ast.ComputedPropertyName) *ast.Node {
@@ -1397,7 +1397,7 @@ export function classFieldsTransformer_visitComputedPropertyName(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitConstructorDeclaration","kind":"method","status":"implemented","sigHash":"55180be94eb99942cc81ba2a80be1a4111e63a5185da9f19c0be0ce360b2b22c","bodyHash":"6d6197c3bb689ea3b6164b300511ff0a29112ef861372839271f4021d954ac43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitConstructorDeclaration","kind":"method","status":"implemented","sigHash":"55180be94eb99942cc81ba2a80be1a4111e63a5185da9f19c0be0ce360b2b22c"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitConstructorDeclaration(node *ast.Node) *ast.Node {
@@ -1415,7 +1415,7 @@ export function classFieldsTransformer_visitConstructorDeclaration(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldTransformClassElementToWeakMap","kind":"method","status":"implemented","sigHash":"8355e977047f3b3730467f9500f07b500171cb3dd8ec70378719c77593bc2638","bodyHash":"963893127d96e20516976327924112750394e7b6266f95a0049eb5ff9bc45fa1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldTransformClassElementToWeakMap","kind":"method","status":"implemented","sigHash":"8355e977047f3b3730467f9500f07b500171cb3dd8ec70378719c77593bc2638"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) shouldTransformClassElementToWeakMap(node *ast.Node) bool {
@@ -1433,7 +1433,7 @@ export function classFieldsTransformer_shouldTransformClassElementToWeakMap(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldAlwaysTransformPrivateStaticElements","kind":"method","status":"implemented","sigHash":"c885b7a3f4f92c49a3d7c7f1b8389309be20bbae1c8a394af2276317400f9f9d","bodyHash":"f2e5fd36c6fb7307f423ed65c4acec7e654a5e91d9789db941b8ac59667f1c14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldAlwaysTransformPrivateStaticElements","kind":"method","status":"implemented","sigHash":"c885b7a3f4f92c49a3d7c7f1b8389309be20bbae1c8a394af2276317400f9f9d"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) shouldAlwaysTransformPrivateStaticElements(node *ast.Node) bool {
@@ -1445,7 +1445,7 @@ export function classFieldsTransformer_shouldAlwaysTransformPrivateStaticElement
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.nodeHasTransformPrivateStaticElementsFlag","kind":"method","status":"implemented","sigHash":"f916ecc002667b745fb1c040508bac56f1b9ebec10ed8e302e068f5d78ce0863","bodyHash":"d8daf44f7a30eb5069949d93908b3a1dcbccf4850f536e878c418cc1a5f52234"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.nodeHasTransformPrivateStaticElementsFlag","kind":"method","status":"implemented","sigHash":"f916ecc002667b745fb1c040508bac56f1b9ebec10ed8e302e068f5d78ce0863"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) nodeHasTransformPrivateStaticElementsFlag(node *ast.Node) bool {
@@ -1457,7 +1457,7 @@ export function classFieldsTransformer_nodeHasTransformPrivateStaticElementsFlag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitMethodOrAccessorDeclaration","kind":"method","status":"implemented","sigHash":"fc7ceead72a8650a04036ca2000705039b1f77a32542be678424494416a50f12","bodyHash":"97e9f77b04e92f8ea32baf641a6b1503cef82ec90e3c9246e0d4333df4b67594"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitMethodOrAccessorDeclaration","kind":"method","status":"implemented","sigHash":"fc7ceead72a8650a04036ca2000705039b1f77a32542be678424494416a50f12"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitMethodOrAccessorDeclaration(node *ast.Node) *ast.Node {
@@ -1537,7 +1537,7 @@ export function classFieldsTransformer_visitMethodOrAccessorDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.extractNonStaticNonAccessorModifiers","kind":"method","status":"implemented","sigHash":"a263a20d94302bb4cb65c3cb51e85d612c77fc05e5ad1ba953ce80bcb5cd6109","bodyHash":"2a5103e4e69fb6dd4380303320cc54f0a46de87ff543d89cd560567b5aa53f1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.extractNonStaticNonAccessorModifiers","kind":"method","status":"implemented","sigHash":"a263a20d94302bb4cb65c3cb51e85d612c77fc05e5ad1ba953ce80bcb5cd6109"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) extractNonStaticNonAccessorModifiers(node *ast.Node) *ast.ModifierList {
@@ -1549,7 +1549,7 @@ export function classFieldsTransformer_extractNonStaticNonAccessorModifiers(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setCurrentClassElementAnd","kind":"method","status":"implemented","sigHash":"5e0cbd6eedc79b94f5a54a9010f4448493b5d4cae948a9442905f17219f648dd","bodyHash":"6190d0076de2e8b9be30ab3b342bf15b7069c3c9a0aa04e529a32c7380cecd70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setCurrentClassElementAnd","kind":"method","status":"implemented","sigHash":"5e0cbd6eedc79b94f5a54a9010f4448493b5d4cae948a9442905f17219f648dd"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setCurrentClassElementAnd(classElement *ast.ClassElement, visitor func(tx *classFieldsTransformer, node *ast.Node) *ast.Node, node *ast.Node) *ast.Node {
@@ -1575,7 +1575,7 @@ export function classFieldsTransformer_setCurrentClassElementAnd(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitEachChildOfNode","kind":"method","status":"implemented","sigHash":"ddd06906b2d6f4fff4177885dff192cc5e9268e133f26c28e7f1c9a9f3b70bc1","bodyHash":"40d132e569eea723c0e35a29c2b0840e38369559b55d0cd0eefdbdae1c614b4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitEachChildOfNode","kind":"method","status":"implemented","sigHash":"ddd06906b2d6f4fff4177885dff192cc5e9268e133f26c28e7f1c9a9f3b70bc1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitEachChildOfNode(node *ast.Node) *ast.Node {
@@ -1587,7 +1587,7 @@ export function classFieldsTransformer_visitEachChildOfNode(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setInIterationStatementAnd","kind":"method","status":"implemented","sigHash":"752b0e4afbcbe03fbf6449d2aa856302d98fc8a9832f69281eae0c40952604bc","bodyHash":"43ea734115ad57bb225fd1223dbb17c49a7a0838bd4d538fd2e55624223669b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setInIterationStatementAnd","kind":"method","status":"implemented","sigHash":"752b0e4afbcbe03fbf6449d2aa856302d98fc8a9832f69281eae0c40952604bc"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setInIterationStatementAnd(inIteration bool, visitor func(tx *classFieldsTransformer, node *ast.Node) *ast.Node, node *ast.Node) *ast.Node {
@@ -1613,7 +1613,7 @@ export function classFieldsTransformer_setInIterationStatementAnd(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.clearClassElementAndVisitEachChild","kind":"method","status":"implemented","sigHash":"9da13706e0bc5e005ee7fdab73c42638b19796b66661e2ea8ebdc49726073f68","bodyHash":"4299d998d37f5cc42e6612dceacf173b174b8b8090c7ece2a7a81c4cc9b1b5c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.clearClassElementAndVisitEachChild","kind":"method","status":"implemented","sigHash":"9da13706e0bc5e005ee7fdab73c42638b19796b66661e2ea8ebdc49726073f68"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) clearClassElementAndVisitEachChild(node *ast.Node) *ast.Node {
@@ -1625,7 +1625,7 @@ export function classFieldsTransformer_clearClassElementAndVisitEachChild(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitFunctionExpressionOrDeclaration","kind":"method","status":"implemented","sigHash":"7789a614bf504c779a6a004cfc390e6cda94e796e102482c24cf9db02e028a59","bodyHash":"9cd2f019c9cac2c559e822f3c6b7dd3fb1876ebd75f188bbab26f2e5a57cea6a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitFunctionExpressionOrDeclaration","kind":"method","status":"implemented","sigHash":"7789a614bf504c779a6a004cfc390e6cda94e796e102482c24cf9db02e028a59"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitFunctionExpressionOrDeclaration(node *ast.Node) *ast.Node {
@@ -1663,7 +1663,7 @@ export function classFieldsTransformer_visitFunctionExpressionOrDeclaration(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setClassElementAndVisitEachChild","kind":"method","status":"implemented","sigHash":"d37be97835599f1ad197819c621a56255b095f006dd2c168a61225830bfdd936","bodyHash":"da50ffb6fd28adaa117400f1b3b76170e7712a7a55a1bb41a32fdc0c04a20745"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setClassElementAndVisitEachChild","kind":"method","status":"implemented","sigHash":"d37be97835599f1ad197819c621a56255b095f006dd2c168a61225830bfdd936"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setClassElementAndVisitEachChild(node *ast.Node) *ast.Node {
@@ -1675,7 +1675,7 @@ export function classFieldsTransformer_setClassElementAndVisitEachChild(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getHoistedFunctionName","kind":"method","status":"implemented","sigHash":"7b4931b55795d95e21551614217c06fd91dbeb4b193d3f2ef0b1c10db0b428aa","bodyHash":"8ba758e168eae06a32fd3ae812e948c8f37c70450eb0a870d601205f374c72ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getHoistedFunctionName","kind":"method","status":"implemented","sigHash":"7b4931b55795d95e21551614217c06fd91dbeb4b193d3f2ef0b1c10db0b428aa"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getHoistedFunctionName(node *ast.Node) *ast.IdentifierNode {
@@ -1715,7 +1715,7 @@ export function classFieldsTransformer_getHoistedFunctionName(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.tryGetClassThis","kind":"method","status":"implemented","sigHash":"3a2c569617d78e605a632054ca720df1941d1eb0f8c41694cd806760c195cbb8","bodyHash":"3edb074cfad63c277cf89c43438f3de3a2bcd8e560dde4a0c03ad09bf166dab8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.tryGetClassThis","kind":"method","status":"implemented","sigHash":"3a2c569617d78e605a632054ca720df1941d1eb0f8c41694cd806760c195cbb8"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) tryGetClassThis() *ast.Expression {
@@ -1740,7 +1740,7 @@ export function classFieldsTransformer_tryGetClassThis(receiver: GoPtr<classFiel
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.tryGetClassThisNoContainer","kind":"method","status":"implemented","sigHash":"8be71780686249cb3be2b1b631c81a924cf672c2e7e9510c9670b5d1acdbd370","bodyHash":"964302c15994c02cc7aa3ae8a9ba0c2ba8ca8dd039eb5a64fd513d093f429d04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.tryGetClassThisNoContainer","kind":"method","status":"implemented","sigHash":"8be71780686249cb3be2b1b631c81a924cf672c2e7e9510c9670b5d1acdbd370"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) tryGetClassThisNoContainer() *ast.Expression {
@@ -1766,7 +1766,7 @@ export function classFieldsTransformer_tryGetClassThisNoContainer(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformAutoAccessor","kind":"method","status":"implemented","sigHash":"e80d5175d2daac5579be25e70b5cc7491abcc83b65f508fe3db0b28ec66e0de0","bodyHash":"9875d4a4caa238515a4b9a5f6f6970111053ce8ed67a2ab627ac8b2b9544b94f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformAutoAccessor","kind":"method","status":"implemented","sigHash":"e80d5175d2daac5579be25e70b5cc7491abcc83b65f508fe3db0b28ec66e0de0"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformAutoAccessor(node *ast.PropertyDeclaration) *ast.Node {
@@ -1894,7 +1894,7 @@ export function classFieldsTransformer_transformAutoAccessor(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPrivateFieldInitializer","kind":"method","status":"implemented","sigHash":"82ecd01870c64d98f31d543dd542bd2a3a65433c44c5df5e7dfed47ffc4bc9aa","bodyHash":"aa6150bfed23a960df0f911419fe6d1708ccf5916a94e1ea49340f7cee561456"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPrivateFieldInitializer","kind":"method","status":"implemented","sigHash":"82ecd01870c64d98f31d543dd542bd2a3a65433c44c5df5e7dfed47ffc4bc9aa"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformPrivateFieldInitializer(node *ast.PropertyDeclaration) *ast.Node {
@@ -2009,7 +2009,7 @@ export function classFieldsTransformer_transformPrivateFieldInitializer(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPublicFieldInitializer","kind":"method","status":"implemented","sigHash":"2bc8394db88b072d35800221b7ae9fd6bfe0796c853f712aa46832ef728411e0","bodyHash":"988cb22f3a12824196b2f2281261b49291f03e6aab1ac94be276fda6201a8557"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPublicFieldInitializer","kind":"method","status":"implemented","sigHash":"2bc8394db88b072d35800221b7ae9fd6bfe0796c853f712aa46832ef728411e0"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformPublicFieldInitializer(node *ast.PropertyDeclaration) *ast.Node {
@@ -2105,7 +2105,7 @@ export function classFieldsTransformer_transformPublicFieldInitializer(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformFieldInitializer","kind":"method","status":"implemented","sigHash":"0d511be92ec0d3ee215617e1fe12a33b4a84c74ddd0b322571c72c7702e0853e","bodyHash":"2b1c2ac6b91ee4d78bda6d89325da1e6548d9ba2e4203ee95b95fa848c2e97f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformFieldInitializer","kind":"method","status":"implemented","sigHash":"0d511be92ec0d3ee215617e1fe12a33b4a84c74ddd0b322571c72c7702e0853e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformFieldInitializer(node *ast.PropertyDeclaration) *ast.Node {
@@ -2125,7 +2125,7 @@ export function classFieldsTransformer_transformFieldInitializer(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldTransformAutoAccessorsInCurrentClass","kind":"method","status":"implemented","sigHash":"8d5ebdfd61c121e4e2180bc7dfe97bce1d4bb4c547229bc87cf4f45e4073ccd2","bodyHash":"a6234fa49eed066f8064586003653810a6ac286ed002dea4e39cd4eff2bb6fcf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.shouldTransformAutoAccessorsInCurrentClass","kind":"method","status":"implemented","sigHash":"8d5ebdfd61c121e4e2180bc7dfe97bce1d4bb4c547229bc87cf4f45e4073ccd2"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) shouldTransformAutoAccessorsInCurrentClass() bool {
@@ -2149,7 +2149,7 @@ export function classFieldsTransformer_shouldTransformAutoAccessorsInCurrentClas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyDeclaration","kind":"method","status":"implemented","sigHash":"fa545bb4c95ea2928a452a11dbcc3e3c7574eb1d83cbd8e6c80241ec07441e14","bodyHash":"f8053c19cc76de992acfc4ac2cbebae12d22b71e0db9e244fc81e62128e2c55c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyDeclaration","kind":"method","status":"implemented","sigHash":"fa545bb4c95ea2928a452a11dbcc3e3c7574eb1d83cbd8e6c80241ec07441e14"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPropertyDeclaration(node *ast.Node) *ast.Node {
@@ -2175,7 +2175,7 @@ export function classFieldsTransformer_visitPropertyDeclaration(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAccess","kind":"method","status":"implemented","sigHash":"c0ed9d4236c4b262853ed316d4f13e526db753407ba9c5d6150f3770f8be2751","bodyHash":"6c8606e4c24c537abfcdc66aa9b91940c97ce37ab0bb44eed7b1b039a600dd8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAccess","kind":"method","status":"implemented","sigHash":"c0ed9d4236c4b262853ed316d4f13e526db753407ba9c5d6150f3770f8be2751"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createPrivateIdentifierAccess(info *privateIdentifierInfo, receiver *ast.Expression) *ast.Expression {
@@ -2189,7 +2189,7 @@ export function classFieldsTransformer_createPrivateIdentifierAccess(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAccessHelper","kind":"method","status":"implemented","sigHash":"15deb597b76a6c9cb2bf5af47e8e9391a11231f639c7f4703ce40ba46347b7ec","bodyHash":"39e8d01f207296f664dca36f4ff75d59c236f7670a82f66948dfa70b823bb486"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAccessHelper","kind":"method","status":"implemented","sigHash":"15deb597b76a6c9cb2bf5af47e8e9391a11231f639c7f4703ce40ba46347b7ec"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createPrivateIdentifierAccessHelper(info *privateIdentifierInfo, receiver *ast.Expression) *ast.Expression {
@@ -2268,7 +2268,7 @@ export function classFieldsTransformer_createPrivateIdentifierAccessHelper(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"c6b765168522ba8bcc55e4704cd7afc0522f245c47ea507aa664982acfd48de9","bodyHash":"a4dce1f351bd2a2d7c89cfcbf4ad097a80ab1e792b61b72cbbe6d508c602e4b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"c6b765168522ba8bcc55e4704cd7afc0522f245c47ea507aa664982acfd48de9"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPropertyAccessExpression(node *ast.PropertyAccessExpression) *ast.Node {
@@ -2354,7 +2354,7 @@ export function classFieldsTransformer_visitPropertyAccessExpression(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAccessExpressionForSubstitution","kind":"method","status":"implemented","sigHash":"7f8e6cf7ce24d29a43af6d3f11832d62eb8725c46d51f2b03f0780778cdf8582","bodyHash":"292561c5e85b0e8b7c1cd86433a364c566aa4bd60ef1ad6b2bb9a2467be7e084"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPropertyAccessExpressionForSubstitution","kind":"method","status":"implemented","sigHash":"7f8e6cf7ce24d29a43af6d3f11832d62eb8725c46d51f2b03f0780778cdf8582"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPropertyAccessExpressionForSubstitution(node *ast.PropertyAccessExpression) *ast.Node {
@@ -2374,7 +2374,7 @@ export function classFieldsTransformer_visitPropertyAccessExpressionForSubstitut
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitElementAccessExpression","kind":"method","status":"implemented","sigHash":"74bf27e87d7fe92a6cab433758f036f24491ebee22a93dcd5984f0b4cc617284","bodyHash":"1b6867a7993e55af7755c08360307e01538902c1e544b0ec206d15573ee642a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitElementAccessExpression","kind":"method","status":"implemented","sigHash":"74bf27e87d7fe92a6cab433758f036f24491ebee22a93dcd5984f0b4cc617284"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitElementAccessExpression(node *ast.ElementAccessExpression) *ast.Node {
@@ -2427,7 +2427,7 @@ export function classFieldsTransformer_visitElementAccessExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPreOrPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"506c57e39e41fcdcd89655848aa72720c0054604f20f6f91b1a016db36c90e83","bodyHash":"2d2abc02e4a3f709e1248436b32569878e27294c4d2c4b3d278e1af1edc2f68f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitPreOrPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"506c57e39e41fcdcd89655848aa72720c0054604f20f6f91b1a016db36c90e83"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitPreOrPostfixUnaryExpression(node *ast.Node, discarded bool) *ast.Node {
@@ -2628,7 +2628,7 @@ export function classFieldsTransformer_visitPreOrPostfixUnaryExpression(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitForStatement","kind":"method","status":"implemented","sigHash":"8db4c4876b90308fb266931948ab73c80f9f0764dab925e181fa498905ae3ce1","bodyHash":"f448372b789aee100e00cd250228ee3411ee116e3dc57563a18d0621071f33c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitForStatement","kind":"method","status":"implemented","sigHash":"8db4c4876b90308fb266931948ab73c80f9f0764dab925e181fa498905ae3ce1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitForStatement(node *ast.ForStatement) *ast.Node {
@@ -2654,7 +2654,7 @@ export function classFieldsTransformer_visitForStatement(receiver: GoPtr<classFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExpressionStatement","kind":"method","status":"implemented","sigHash":"f6063ed668fe7801d5f2608fd20da4a979055acb6f0b7de3c17b439b43368238","bodyHash":"1bf2ade0695a3bd8ba66ded95b2940281690e1a76ae25a21a9b3d927559e6921"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExpressionStatement","kind":"method","status":"implemented","sigHash":"f6063ed668fe7801d5f2608fd20da4a979055acb6f0b7de3c17b439b43368238"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitExpressionStatement(node *ast.ExpressionStatement) *ast.Node {
@@ -2686,7 +2686,7 @@ export function classFieldsTransformer_visitExpressionStatement(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createCopiableReceiverExpr","kind":"method","status":"implemented","sigHash":"5676e24fad7f6a1d69b1bab250aebd642568d2b3f309044b3af04c65068743b5","bodyHash":"86fbe7dbb81ac87d548644b75fde4965d9ddf030ad264d0738905179f6f23e07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createCopiableReceiverExpr","kind":"method","status":"implemented","sigHash":"5676e24fad7f6a1d69b1bab250aebd642568d2b3f309044b3af04c65068743b5"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createCopiableReceiverExpr(receiver *ast.Expression) (readExpression *ast.Expression, initializeExpression *ast.Expression) {
@@ -2718,7 +2718,7 @@ export function classFieldsTransformer_createCopiableReceiverExpr(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"5d45dc635efc5fa90d2d9bac2645b28a27fc9075da0474213490a6e2046b4014","bodyHash":"899b5e1b40759fa14705f5f2998d50f3be546a253ea8ad38bad2d49485ac4d41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"5d45dc635efc5fa90d2d9bac2645b28a27fc9075da0474213490a6e2046b4014"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitCallExpression(node *ast.CallExpression) *ast.Node {
@@ -2826,7 +2826,7 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitTaggedTemplateExpression","kind":"method","status":"implemented","sigHash":"7dd4923e2ff78033a22980c8e409b2e17e64d00e34ac5ba5d954c17d89e0dd8f","bodyHash":"49465b68f33ab911496078f1fdacc09c150d3db162aae48ce177369e18cf26df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitTaggedTemplateExpression","kind":"method","status":"implemented","sigHash":"7dd4923e2ff78033a22980c8e409b2e17e64d00e34ac5ba5d954c17d89e0dd8f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitTaggedTemplateExpression(node *ast.TaggedTemplateExpression) *ast.Node {
@@ -2928,7 +2928,7 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformClassStaticBlockDeclaration","kind":"method","status":"implemented","sigHash":"deb413c5f61b0065d00ee4812d843e992c576cd7fc5d30a603d42580ff5b5916","bodyHash":"408799f8fd32c4ab907422ac81da10ce3b7682a688fc8f428513f96215bf9d22"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformClassStaticBlockDeclaration","kind":"method","status":"implemented","sigHash":"deb413c5f61b0065d00ee4812d843e992c576cd7fc5d30a603d42580ff5b5916"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformClassStaticBlockDeclaration(node *ast.Node) *ast.Expression {
@@ -3012,7 +3012,7 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setCurrentClassElementAndVisitStatements","kind":"method","status":"implemented","sigHash":"785b1778adced7434fcb56eae76141dbbaa217cd5635241014f213b5b9af4a6f","bodyHash":"5ea742d99d50dcf301875fcbdaec0272cb571aa84b32db03514a50692cf4d8e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setCurrentClassElementAndVisitStatements","kind":"method","status":"implemented","sigHash":"785b1778adced7434fcb56eae76141dbbaa217cd5635241014f213b5b9af4a6f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setCurrentClassElementAndVisitStatements(classElement *ast.Node, statements []*ast.Statement) []*ast.Statement {
@@ -3032,7 +3032,7 @@ export function classFieldsTransformer_setCurrentClassElementAndVisitStatements(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.isAnonymousClassNeedingAssignedNameWorker","kind":"method","status":"implemented","sigHash":"bd9f55d70104d6d855dc84f13fdfa754437746cef34986f50998d7911fe5add0","bodyHash":"09d42176913ac7765786ceb49e4ccfe4b2de54a2b668d6fe000db3f228f4a7ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.isAnonymousClassNeedingAssignedNameWorker","kind":"method","status":"implemented","sigHash":"bd9f55d70104d6d855dc84f13fdfa754437746cef34986f50998d7911fe5add0"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) isAnonymousClassNeedingAssignedNameWorker(node *anonymousFunctionDefinition) bool {
@@ -3074,7 +3074,7 @@ export function classFieldsTransformer_isAnonymousClassNeedingAssignedNameWorker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"aeb3e83a6ea7d0f096545bbdb0620b23b56e358e26afe188e58999e1cfc31f3e","bodyHash":"7c3f92c14c32dac15a7d3aa70b1994730eab7e9cf24413b4e68071b4695e9df2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"aeb3e83a6ea7d0f096545bbdb0620b23b56e358e26afe188e58999e1cfc31f3e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitBinaryExpression(node *ast.BinaryExpression, discarded bool) *ast.Node {
@@ -3367,7 +3367,7 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"5ab3fba8261d07bdcae5549828115a88ebb078ef3f20d13b12a813bb5e69f11f","bodyHash":"bc33d491c936a1b1f04182aacb5ee848505af9ddd83bb6b8a939909a3c9bd4b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"5ab3fba8261d07bdcae5549828115a88ebb078ef3f20d13b12a813bb5e69f11f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitParenthesizedExpression(node *ast.ParenthesizedExpression, discarded bool) *ast.Node {
@@ -3393,7 +3393,7 @@ export function classFieldsTransformer_visitParenthesizedExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAssignment","kind":"method","status":"implemented","sigHash":"bacb2e17bd14bc535641229e4b66370aa7830eb7d1fa54e5dec4fb835b97dfcb","bodyHash":"23a30e34c3104d86f8fc88dd95b44161d353179ec37e9ffb2d61b1e256922030"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createPrivateIdentifierAssignment","kind":"method","status":"implemented","sigHash":"bacb2e17bd14bc535641229e4b66370aa7830eb7d1fa54e5dec4fb835b97dfcb"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createPrivateIdentifierAssignment(info *privateIdentifierInfo, receiver *ast.Expression, right *ast.Expression, operator ast.Kind) *ast.Expression {
@@ -3517,7 +3517,7 @@ export function classFieldsTransformer_createPrivateIdentifierAssignment(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateInstanceMethodsAndAccessors","kind":"method","status":"implemented","sigHash":"1379fbbfe28702b9abe481e4167a92a4c78191a6e0c4b876ab1cdd84eb4c7ab9","bodyHash":"ccada8cd22c15f342498d4784ed40bee19a8e51066feaea487f489dd1a6d7b55"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateInstanceMethodsAndAccessors","kind":"method","status":"implemented","sigHash":"1379fbbfe28702b9abe481e4167a92a4c78191a6e0c4b876ab1cdd84eb4c7ab9"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getPrivateInstanceMethodsAndAccessors(node *ast.Node) []*ast.Node {
@@ -3529,7 +3529,7 @@ export function classFieldsTransformer_getPrivateInstanceMethodsAndAccessors(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.memberContainsConstructorReference","kind":"method","status":"implemented","sigHash":"62bdf5def6eb976c4aad8b0dcae26acefdfccbf81b0451567f834c181328b32e","bodyHash":"5a4b172d4de73527ca48d0c4b897fd65c6dfd4e4f7c4af34b5ed905360370faa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.memberContainsConstructorReference","kind":"method","status":"implemented","sigHash":"62bdf5def6eb976c4aad8b0dcae26acefdfccbf81b0451567f834c181328b32e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) memberContainsConstructorReference(member *ast.Node, classDecl *ast.Node) bool {
@@ -3608,7 +3608,7 @@ export function classFieldsTransformer_memberContainsConstructorReference(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.classContainsConstructorReference","kind":"method","status":"implemented","sigHash":"001829555e36392b2683f01af4d52cbfb3a4c5a9f31a9552a9637064bfe9b284","bodyHash":"e0a870193ff2334feab7045fe90c97903b1ba41495f5d6d46a5ac3e664abbabc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.classContainsConstructorReference","kind":"method","status":"implemented","sigHash":"001829555e36392b2683f01af4d52cbfb3a4c5a9f31a9552a9637064bfe9b284"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) classContainsConstructorReference(node *ast.Node) bool {
@@ -3630,7 +3630,7 @@ export function classFieldsTransformer_classContainsConstructorReference(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getClassFacts","kind":"method","status":"implemented","sigHash":"aa6e1babfee98d6f19edd1dedb584ced79c62e2858e06408df3e76f1d1ffcce8","bodyHash":"8067f0bfa94c05879552b948da2463e97319909eef5ff549fe2a767e84588ee6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getClassFacts","kind":"method","status":"implemented","sigHash":"aa6e1babfee98d6f19edd1dedb584ced79c62e2858e06408df3e76f1d1ffcce8"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getClassFacts(node *ast.Node) classFacts {
@@ -3770,7 +3770,7 @@ export function classFieldsTransformer_getClassFacts(receiver: GoPtr<classFields
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExpressionWithTypeArgumentsInHeritageClause","kind":"method","status":"implemented","sigHash":"56081a641eedd8505435922f5cfc97104f9cba756fd3e08da09f9275b49bddf5","bodyHash":"6bf522ddde3f643676025932a47ef36a5697b03c31181580f82c5a1b955a2cd6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitExpressionWithTypeArgumentsInHeritageClause","kind":"method","status":"implemented","sigHash":"56081a641eedd8505435922f5cfc97104f9cba756fd3e08da09f9275b49bddf5"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitExpressionWithTypeArgumentsInHeritageClause(node *ast.ExpressionWithTypeArguments) *ast.Node {
@@ -3817,7 +3817,7 @@ export function classFieldsTransformer_visitExpressionWithTypeArgumentsInHeritag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"84db644818227fb25de4e6c07a0cb045ad71e2079df9de727b9a9aaead7e7417","bodyHash":"3412e0e2b321bbf54ff99c595e47a76b8f9a8114af4c044ad34581097eeb7e83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"84db644818227fb25de4e6c07a0cb045ad71e2079df9de727b9a9aaead7e7417"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitInNewClassLexicalEnvironment(node *ast.Node, visitor func(tx *classFieldsTransformer, node *ast.Node, facts classFacts) *ast.Node) *ast.Node {
@@ -3926,7 +3926,7 @@ export function classFieldsTransformer_visitInNewClassLexicalEnvironment(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"9aabe49d81957e5048536d912d9e0434aedc0b4b0b9400e421018173b879506f","bodyHash":"4cd39a4b60bfabf8851c46e659125b2c0ad9347c36cca994f13d5f339f14142e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"9aabe49d81957e5048536d912d9e0434aedc0b4b0b9400e421018173b879506f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassDeclaration(node *ast.ClassDeclaration) *ast.Node {
@@ -3938,7 +3938,7 @@ export function classFieldsTransformer_visitClassDeclaration(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassDeclarationInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"8b154390174f520d62c98e7c615fc5c5c81c6d5f6981148d624529e64195799c","bodyHash":"e2a6749aa34878029b1c8812a99f58ffbdfa2af719a9cac101920a3c5959f300"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassDeclarationInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"8b154390174f520d62c98e7c615fc5c5c81c6d5f6981148d624529e64195799c"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassDeclarationInNewClassLexicalEnvironment(node *ast.Node, facts classFacts) *ast.Node {
@@ -4161,7 +4161,7 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"34bbf3c22a0d97057828c0da22c0930dd83c7389d7ceea1d76ba30121073909c","bodyHash":"a5850a5523792400eac7725a77f0946c40f3374a6ea5d7bda10fbab7cf2b1eb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"34bbf3c22a0d97057828c0da22c0930dd83c7389d7ceea1d76ba30121073909c"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassExpression(node *ast.ClassExpression) *ast.Node {
@@ -4173,7 +4173,7 @@ export function classFieldsTransformer_visitClassExpression(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassExpressionInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"d0363f9ada1b6dd6df28de205d7a70eb5b92a8d2fddb2a869d2dd759a372ef7e","bodyHash":"96f636617d779e8a4de137cd3848d1f9dcf02a95c1d3abd76d23a509af3c84a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassExpressionInNewClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"d0363f9ada1b6dd6df28de205d7a70eb5b92a8d2fddb2a869d2dd759a372ef7e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassExpressionInNewClassLexicalEnvironment(node *ast.Node, facts classFacts) *ast.Node {
@@ -4500,7 +4500,7 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassStaticBlockDeclaration","kind":"method","status":"implemented","sigHash":"1eaf5ac914ee2b183f83c0cbf1647a88625b7a964bda25fd3629e646e2f02c01","bodyHash":"b28c468ab3cd692cb2a3c50f461df95637b373611b617e098b73363d38c95f28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitClassStaticBlockDeclaration","kind":"method","status":"implemented","sigHash":"1eaf5ac914ee2b183f83c0cbf1647a88625b7a964bda25fd3629e646e2f02c01"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitClassStaticBlockDeclaration(node *ast.Node) *ast.Node {
@@ -4520,7 +4520,7 @@ export function classFieldsTransformer_visitClassStaticBlockDeclaration(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitThisExpression","kind":"method","status":"implemented","sigHash":"c7c05ab1847d2455bd85c4d554a26e01d12b9e4ed27a890f68e4312f8e6a3e0b","bodyHash":"37d564069ad135339f0541f5fc4f770254611a3458165fee10b372c2bf1ceafa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitThisExpression","kind":"method","status":"implemented","sigHash":"c7c05ab1847d2455bd85c4d554a26e01d12b9e4ed27a890f68e4312f8e6a3e0b"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitThisExpression(node *ast.Node) *ast.Node {
@@ -4578,7 +4578,7 @@ export function classFieldsTransformer_visitThisExpression(receiver: GoPtr<class
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformClassMembers","kind":"method","status":"implemented","sigHash":"8b3993581e8830e44d0bbe87a464043b1b592039d41c338ea5b2e5bdb347f69f","bodyHash":"83e4870702779f5d7b9dbde5c869c9108e87e9edc9f6e7f0b53a1db5b6b30194"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformClassMembers","kind":"method","status":"implemented","sigHash":"8b3993581e8830e44d0bbe87a464043b1b592039d41c338ea5b2e5bdb347f69f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformClassMembers(node *ast.Node) (members *ast.NodeList, prologue *ast.Expression) {
@@ -4810,7 +4810,7 @@ export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createBrandCheckWeakSetForPrivateMethods","kind":"method","status":"implemented","sigHash":"eccafbd2f7bdce2d5eba49cee8bfe12b487e75093deb1f9755871b2a0c8f5e14","bodyHash":"64a14e604300187427b2e76010c84c44bf49e32c10b20955fe515cf9e32cd2bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createBrandCheckWeakSetForPrivateMethods","kind":"method","status":"implemented","sigHash":"eccafbd2f7bdce2d5eba49cee8bfe12b487e75093deb1f9755871b2a0c8f5e14"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createBrandCheckWeakSetForPrivateMethods() {
@@ -4850,7 +4850,7 @@ export function classFieldsTransformer_createBrandCheckWeakSetForPrivateMethods(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructor","kind":"method","status":"implemented","sigHash":"5f9b2d570f1868635086302b73001e9f5162af41eeabf11d5e337f0bf7e74667","bodyHash":"cee8c0853ccdd3b156cb4d3077f286f59ba046f15b3e92af1500c6ff1d6206ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructor","kind":"method","status":"implemented","sigHash":"5f9b2d570f1868635086302b73001e9f5162af41eeabf11d5e337f0bf7e74667"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformConstructor(constructor *ast.ConstructorDeclaration, container *ast.Node) *ast.Node {
@@ -4969,7 +4969,7 @@ export function classFieldsTransformer_transformConstructor(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructorBodyWorker","kind":"method","status":"implemented","sigHash":"1eb32ecb93f64e3fd709f23bebfdf1ec11d370679470da9b1433ad8363ed7646","bodyHash":"1e24b1ad42d080bd9e2e21b8714f9f5649c4fff3195f96ac0aa265ed0fa95066"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructorBodyWorker","kind":"method","status":"implemented","sigHash":"1eb32ecb93f64e3fd709f23bebfdf1ec11d370679470da9b1433ad8363ed7646"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformConstructorBodyWorker(
@@ -5119,7 +5119,7 @@ export function classFieldsTransformer_transformConstructorBodyWorker(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructorBody","kind":"method","status":"implemented","sigHash":"13bfec2b9b0be6a0874ea47291a45c2af829546d588eac0dfc7ec9a85dfd6e79","bodyHash":"8658ee7a30b4e04e8c32de85848e519b2d457cf5f323c6b0b57d79f19a015d12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformConstructorBody","kind":"method","status":"implemented","sigHash":"13bfec2b9b0be6a0874ea47291a45c2af829546d588eac0dfc7ec9a85dfd6e79"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformConstructorBody(container *ast.Node, constructor *ast.ConstructorDeclaration, isDerivedClass bool) *ast.Node {
@@ -5384,7 +5384,7 @@ export function classFieldsTransformer_transformConstructorBody(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPropertyOrClassStaticBlockStatements","kind":"method","status":"implemented","sigHash":"718f1f330e968303f1fde4708e4ae0bef3f5ac29d4d15439c79213862173efc4","bodyHash":"4ae2440cd93458ec4b89388d45d6bda91c0123358eeec645536a8d954c68e6d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPropertyOrClassStaticBlockStatements","kind":"method","status":"implemented","sigHash":"718f1f330e968303f1fde4708e4ae0bef3f5ac29d4d15439c79213862173efc4"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPropertyOrClassStaticBlockStatements(statements []*ast.Node, properties []*ast.Node, receiver *ast.Expression) []*ast.Node {
@@ -5415,7 +5415,7 @@ export function classFieldsTransformer_addPropertyOrClassStaticBlockStatements(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPropertyOrClassStaticBlock","kind":"method","status":"implemented","sigHash":"72dd137624ff6d089c7cb7da2021cab2aede121dfea21c32dc125fd3e598fe8f","bodyHash":"6ce560e8cdc16e1272826811364d4d85c955fa47a9ffe23c9d8e548b808cdfd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPropertyOrClassStaticBlock","kind":"method","status":"implemented","sigHash":"72dd137624ff6d089c7cb7da2021cab2aede121dfea21c32dc125fd3e598fe8f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformPropertyOrClassStaticBlock(property *ast.Node, receiver *ast.Expression) *ast.Node {
@@ -5497,7 +5497,7 @@ export function classFieldsTransformer_transformPropertyOrClassStaticBlock(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.generateInitializedPropertyExpressionsOrClassStaticBlock","kind":"method","status":"implemented","sigHash":"3406ac44c793fd2824e31df2f8146e3b6ce67706285f0cd8a92ef4f847c5f40c","bodyHash":"6a048f134bc3400778ce844c00804f6518960c04cc9ffa798e857b9abdf15b4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.generateInitializedPropertyExpressionsOrClassStaticBlock","kind":"method","status":"implemented","sigHash":"3406ac44c793fd2824e31df2f8146e3b6ce67706285f0cd8a92ef4f847c5f40c"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) generateInitializedPropertyExpressionsOrClassStaticBlock(
@@ -5542,7 +5542,7 @@ export function classFieldsTransformer_generateInitializedPropertyExpressionsOrC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformProperty","kind":"method","status":"implemented","sigHash":"f95c2f9d14ce6d9e28dab08220415f188b4e7bc7692a581a46760ce303ea7ee4","bodyHash":"68879cd56e0c201170bbeb3fbfd0e861ed0c09651253495228ae660561a0c7b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformProperty","kind":"method","status":"implemented","sigHash":"f95c2f9d14ce6d9e28dab08220415f188b4e7bc7692a581a46760ce303ea7ee4"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformProperty(property *ast.PropertyDeclaration, receiver *ast.Expression) *ast.Expression {
@@ -5578,7 +5578,7 @@ export function classFieldsTransformer_transformProperty(receiver: GoPtr<classFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPropertyWorker","kind":"method","status":"implemented","sigHash":"7a0ab99bf4d2a8d759f4021e689cfc1884bc9752dc854dee2f148de8da8395b9","bodyHash":"9ae13d91408130601aadffa8f756e4e71d95572a546156a0ea8355337834f74a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.transformPropertyWorker","kind":"method","status":"implemented","sigHash":"7a0ab99bf4d2a8d759f4021e689cfc1884bc9752dc854dee2f148de8da8395b9"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) transformPropertyWorker(property *ast.PropertyDeclaration, receiver *ast.Expression) *ast.Expression {
@@ -5800,7 +5800,7 @@ export function classFieldsTransformer_transformPropertyWorker(receiver: GoPtr<c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addInstanceMethodStatements","kind":"method","status":"implemented","sigHash":"eaf8d9325d7e8c67f4bfe69bf55a88e7e55376e010b420dbe9f093f2a92e34f0","bodyHash":"81bedcb1925c0a1fc402b741a656b1edaddd0d76b6a1c25514913979668cf7cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addInstanceMethodStatements","kind":"method","status":"implemented","sigHash":"eaf8d9325d7e8c67f4bfe69bf55a88e7e55376e010b420dbe9f093f2a92e34f0"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addInstanceMethodStatements(statements []*ast.Statement, methods []*ast.Node, receiver *ast.Expression) []*ast.Statement {
@@ -5836,7 +5836,7 @@ export function classFieldsTransformer_addInstanceMethodStatements(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitInvalidSuperProperty","kind":"method","status":"implemented","sigHash":"c0c221a6fa736ec20a6d4de8c5b731ecc2216bc62b230e509577963ba0465337","bodyHash":"d9ef04999b2bf771bd94f9221bd9e0d38224a59bd3cf8c4d4122c55eada68518"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitInvalidSuperProperty","kind":"method","status":"implemented","sigHash":"c0c221a6fa736ec20a6d4de8c5b731ecc2216bc62b230e509577963ba0465337"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitInvalidSuperProperty(node *ast.Node) *ast.Node {
@@ -5880,7 +5880,7 @@ export function classFieldsTransformer_visitInvalidSuperProperty(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPropertyNameExpressionIfNeeded","kind":"method","status":"implemented","sigHash":"ec1507efb6f05ab0fd8a1e510cae0daa97d74b2f6e0f1feb7ece4a59a899b613","bodyHash":"58fca504c0b7210d1215d7319f6282c092b354ae785db0223c9463be17e79ebd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPropertyNameExpressionIfNeeded","kind":"method","status":"implemented","sigHash":"ec1507efb6f05ab0fd8a1e510cae0daa97d74b2f6e0f1feb7ece4a59a899b613"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getPropertyNameExpressionIfNeeded(name *ast.PropertyName, shouldHoist bool) *ast.Expression {
@@ -5952,7 +5952,7 @@ export function classFieldsTransformer_getPropertyNameExpressionIfNeeded(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.startClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"b37f9fd33b2974d105218157774e7f75e72ae21b8ede073febe59fdcdd75bda4","bodyHash":"eb5123f2ee01fe9ff743f8556abdf8bf811d8c1e3969ce8cc0b8e68fbd9a835e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.startClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"b37f9fd33b2974d105218157774e7f75e72ae21b8ede073febe59fdcdd75bda4"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) startClassLexicalEnvironment() {
@@ -5964,7 +5964,7 @@ export function classFieldsTransformer_startClassLexicalEnvironment(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.endClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"cee8366cf6522da93bbfc2f80a06d463d0ab40f00053faa243d82df101871243","bodyHash":"27bf9ca4b494d6d217d21b9a96bd490f8be79663e8f13762501359cc41600062"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.endClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"cee8366cf6522da93bbfc2f80a06d463d0ab40f00053faa243d82df101871243"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) endClassLexicalEnvironment() {
@@ -5976,7 +5976,7 @@ export function classFieldsTransformer_endClassLexicalEnvironment(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"8bca5bfe34d5f42a1318173ed796d59a7d5ef27c3a49846780a02889da77ac0a","bodyHash":"54231e7129dfae08d5744df41ccb31a94fa850d3bb52129b501448ae093a5768"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getClassLexicalEnvironment","kind":"method","status":"implemented","sigHash":"8bca5bfe34d5f42a1318173ed796d59a7d5ef27c3a49846780a02889da77ac0a"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getClassLexicalEnvironment() *classLexicalEnvironment {
@@ -5996,7 +5996,7 @@ export function classFieldsTransformer_getClassLexicalEnvironment(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateIdentifierEnvironment","kind":"method","status":"implemented","sigHash":"6801eb0c74abf900b03ee3ab6011b9d10d180c59c128fb13370a7bc0789ab5bf","bodyHash":"de48d80100dd1cd5f926b2e6fc6172ed2a21c4b07c25c4a3906bc1f6bc0880cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateIdentifierEnvironment","kind":"method","status":"implemented","sigHash":"6801eb0c74abf900b03ee3ab6011b9d10d180c59c128fb13370a7bc0789ab5bf"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getPrivateIdentifierEnvironment() *privateEnvironment {
@@ -6022,7 +6022,7 @@ export function classFieldsTransformer_getPrivateIdentifierEnvironment(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPendingExpressions","kind":"method","status":"implemented","sigHash":"2ed367c4eedc17df21d1f72a03a7736adc80097d13552ed32e9c20b63c1ffe09","bodyHash":"22d13831bf5229304326acbb20a1379575ebe3d3d3e212a07252199c3ca56292"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPendingExpressions","kind":"method","status":"implemented","sigHash":"2ed367c4eedc17df21d1f72a03a7736adc80097d13552ed32e9c20b63c1ffe09"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPendingExpressions(exprs ...*ast.Expression) {
@@ -6034,7 +6034,7 @@ export function classFieldsTransformer_addPendingExpressions(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierPropertyDeclarationToEnvironment","kind":"method","status":"implemented","sigHash":"7b921cf97f1020a55f530b533b000af3bd1e77869746bd6efc38a2643afd1b58","bodyHash":"f2ad16a371a4d99b937e5032dd00fb047bf2609f6f0d7a6a93b4c2e995a2859c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierPropertyDeclarationToEnvironment","kind":"method","status":"implemented","sigHash":"7b921cf97f1020a55f530b533b000af3bd1e77869746bd6efc38a2643afd1b58"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierPropertyDeclarationToEnvironment(node *ast.Node, name *ast.Node) {
@@ -6130,7 +6130,7 @@ export function classFieldsTransformer_addPrivateIdentifierPropertyDeclarationTo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierMethodToEnvironment","kind":"method","status":"implemented","sigHash":"d8c4090855776663d570f1a9666b202b9100fbb8f3e7fb69c71b86fb42334b03","bodyHash":"e700b70b181e09c4ff2d4d37a2d0d386fad7035415f7ad5e410e8e3e8fe56e6c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierMethodToEnvironment","kind":"method","status":"implemented","sigHash":"d8c4090855776663d570f1a9666b202b9100fbb8f3e7fb69c71b86fb42334b03"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierMethodToEnvironment(name *ast.Node, lex *classLexicalEnvironment, env *privateEnvironment, isStatic bool, isValid bool) {
@@ -6179,7 +6179,7 @@ export function classFieldsTransformer_addPrivateIdentifierMethodToEnvironment(r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierGetAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"5a4b4ab0411a741fc5a88bbe3f064f88813d35b4f6a73d0bc1db80e879e162c3","bodyHash":"fdfac6d7596faa99641425946eb20d61e4f590b71576e150fec031f3b81072c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierGetAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"5a4b4ab0411a741fc5a88bbe3f064f88813d35b4f6a73d0bc1db80e879e162c3"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierGetAccessorToEnvironment(name *ast.Node, lex *classLexicalEnvironment, env *privateEnvironment, isStatic bool, isValid bool, previousInfo *privateIdentifierInfo) {
@@ -6240,7 +6240,7 @@ export function classFieldsTransformer_addPrivateIdentifierGetAccessorToEnvironm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierSetAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"b6a28f7a5a06307991db30303270dd3db2ef549e2e5a23e5b712f4835b710f40","bodyHash":"d83ef41c858223a2c3fa2dce2b7a57d03e755fd8b37c1c1c5b06936f88a4e887"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierSetAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"b6a28f7a5a06307991db30303270dd3db2ef549e2e5a23e5b712f4835b710f40"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierSetAccessorToEnvironment(name *ast.Node, lex *classLexicalEnvironment, env *privateEnvironment, isStatic bool, isValid bool, previousInfo *privateIdentifierInfo) {
@@ -6301,7 +6301,7 @@ export function classFieldsTransformer_addPrivateIdentifierSetAccessorToEnvironm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierAutoAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"04ada9a356c06d54c3f63dcb27f28d74d45d57492499be2aa0b619d1e769b85b","bodyHash":"5000fbc82464e4271fbcb070e734425f7ba59522c7379a88366093b2ec2cc561"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierAutoAccessorToEnvironment","kind":"method","status":"implemented","sigHash":"04ada9a356c06d54c3f63dcb27f28d74d45d57492499be2aa0b619d1e769b85b"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierAutoAccessorToEnvironment(node *ast.Node, name *ast.Node, lex *classLexicalEnvironment, env *privateEnvironment, isStatic bool, isValid bool) {
@@ -6357,7 +6357,7 @@ export function classFieldsTransformer_addPrivateIdentifierAutoAccessorToEnviron
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierToEnvironment","kind":"method","status":"implemented","sigHash":"9acf0ed53dcb6d7c89210b440e479226006baa321e142d4dc227b17931f0a64e","bodyHash":"110400401746ca0377eb0cb9a1d93a43c41588c1a7f36cdcb509dce59ce22d58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.addPrivateIdentifierToEnvironment","kind":"method","status":"implemented","sigHash":"9acf0ed53dcb6d7c89210b440e479226006baa321e142d4dc227b17931f0a64e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) addPrivateIdentifierToEnvironment(node *ast.Node) {
@@ -6403,7 +6403,7 @@ export function classFieldsTransformer_addPrivateIdentifierToEnvironment(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setPrivateIdentifier","kind":"method","status":"implemented","sigHash":"8727b31b918d85618e996c900fddbdbde4ec3a4df2012620f7a7272d57d5a446","bodyHash":"05c3b95852486a56db15af5f3b7742fe6c11b58d3ded573e46e30381c0a38542"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.setPrivateIdentifier","kind":"method","status":"implemented","sigHash":"8727b31b918d85618e996c900fddbdbde4ec3a4df2012620f7a7272d57d5a446"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) setPrivateIdentifier(env *privateEnvironment, name *ast.Node, info *privateIdentifierInfo) {
@@ -6429,7 +6429,7 @@ export function classFieldsTransformer_setPrivateIdentifier(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateIdentifier","kind":"method","status":"implemented","sigHash":"e7006043c46c709e8d5b6c37b1a87d4b33c3cd467cf72f0f228e43522201ee9e","bodyHash":"f56605b4a7aa4c36b30aad0a4a6dfd784f6bc42c0c7aaae40aa8298f4feb9b3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getPrivateIdentifier","kind":"method","status":"implemented","sigHash":"e7006043c46c709e8d5b6c37b1a87d4b33c3cd467cf72f0f228e43522201ee9e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getPrivateIdentifier(env *privateEnvironment, name *ast.Node) (*privateIdentifierInfo, bool) {
@@ -6455,7 +6455,7 @@ export function classFieldsTransformer_getPrivateIdentifier(receiver: GoPtr<clas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForClass","kind":"method","status":"implemented","sigHash":"af51e20e9fa218fc446eba0de0ee3f3065b9ca98a7ab7973501569304e7732af","bodyHash":"d569d53a466910bae35b32e9588c5b2698b89d77a61d74af6ac8c5540e5c9ea0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForClass","kind":"method","status":"implemented","sigHash":"af51e20e9fa218fc446eba0de0ee3f3065b9ca98a7ab7973501569304e7732af"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createHoistedVariableForClass(nameText string, node *ast.Node, suffix string) *ast.IdentifierNode {
@@ -6505,7 +6505,7 @@ export function classFieldsTransformer_createHoistedVariableForClass(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForClassFromNode","kind":"method","status":"implemented","sigHash":"6d81e2f8698ea44c58abd6f294b66af93296559478c06d9eb9dcefffd530e346","bodyHash":"1e57789e2f1dec34bdffa4889bde737a9261b23c3cac91ca06da1b1e1293adcd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForClassFromNode","kind":"method","status":"implemented","sigHash":"6d81e2f8698ea44c58abd6f294b66af93296559478c06d9eb9dcefffd530e346"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createHoistedVariableForClassFromNode(name *ast.Node, suffix string) *ast.IdentifierNode {
@@ -6551,7 +6551,7 @@ export function classFieldsTransformer_createHoistedVariableForClassFromNode(rec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForPrivateName","kind":"method","status":"implemented","sigHash":"27dc764d7fadbc743ed98836c351eeda7e2accbf93e85b4d75c1f7e613883a4a","bodyHash":"93db841f0ec2ac89272830dcc7e076e129d22901677ce5425a62d030586d55e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createHoistedVariableForPrivateName","kind":"method","status":"implemented","sigHash":"27dc764d7fadbc743ed98836c351eeda7e2accbf93e85b4d75c1f7e613883a4a"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createHoistedVariableForPrivateName(name *ast.Node, suffix string) *ast.IdentifierNode {
@@ -6581,7 +6581,7 @@ export function classFieldsTransformer_createHoistedVariableForPrivateName(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.accessPrivateIdentifier","kind":"method","status":"implemented","sigHash":"9615322212f734eefa227a06021a067d2c03cb86d4a672b0ca601b25b1be3b4d","bodyHash":"b4fb1475b1c7e70bda25b41f921b510fe21011db9b25cc6e8dbc9eef9c1a0291"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.accessPrivateIdentifier","kind":"method","status":"implemented","sigHash":"9615322212f734eefa227a06021a067d2c03cb86d4a672b0ca601b25b1be3b4d"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) accessPrivateIdentifier(name *ast.Node) *privateIdentifierInfo {
@@ -6614,7 +6614,7 @@ export function classFieldsTransformer_accessPrivateIdentifier(receiver: GoPtr<c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.wrapPrivateIdentifierForDestructuringTarget","kind":"method","status":"implemented","sigHash":"948eb156db68efe09e51d91f955c9409ab3bb191f47748be89f7df2a26ac9195","bodyHash":"129365b339b3deb8471b985ffc9414ea52cd09659cebd952481ce00b92db7c3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.wrapPrivateIdentifierForDestructuringTarget","kind":"method","status":"implemented","sigHash":"948eb156db68efe09e51d91f955c9409ab3bb191f47748be89f7df2a26ac9195"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) wrapPrivateIdentifierForDestructuringTarget(node *ast.Node) *ast.Node {
@@ -6668,7 +6668,7 @@ export function classFieldsTransformer_wrapPrivateIdentifierForDestructuringTarg
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentElement","kind":"method","status":"implemented","sigHash":"fba4848adfb300173a70325ca60aa6690c8c2399d67c5c1ca2b5d3666a65dec9","bodyHash":"0b200ff7840975b6e022640894b2944024c100c6f8a9c7e83334eaf9e9b3b1a4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentElement","kind":"method","status":"implemented","sigHash":"fba4848adfb300173a70325ca60aa6690c8c2399d67c5c1ca2b5d3666a65dec9"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentElement(node *ast.Node) *ast.Node {
@@ -6727,7 +6727,7 @@ export function classFieldsTransformer_visitAssignmentElement(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentRestElement","kind":"method","status":"implemented","sigHash":"06c37c44fd05197dcb219a2b56e1940b88dac2da5a4ea8c833bb7c9a4e5d2240","bodyHash":"eee58b309a62257be6f97bba1309fe39fcccd55ebc89ed04690c9b808108e1e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentRestElement","kind":"method","status":"implemented","sigHash":"06c37c44fd05197dcb219a2b56e1940b88dac2da5a4ea8c833bb7c9a4e5d2240"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentRestElement(node *ast.Node) *ast.Node {
@@ -6749,7 +6749,7 @@ export function classFieldsTransformer_visitAssignmentRestElement(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitArrayAssignmentElement","kind":"method","status":"implemented","sigHash":"991e2a0bbe936fd6665c3ed68932297a28762af9cd094cf5d63ae78629142212","bodyHash":"81d6cd1ed4880336465617269ac3e6916a7524f45734dc73da48ee3d612e6c57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitArrayAssignmentElement","kind":"method","status":"implemented","sigHash":"991e2a0bbe936fd6665c3ed68932297a28762af9cd094cf5d63ae78629142212"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitArrayAssignmentElement(node *ast.Node) *ast.Node {
@@ -6777,7 +6777,7 @@ export function classFieldsTransformer_visitArrayAssignmentElement(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentProperty","kind":"method","status":"implemented","sigHash":"c1d729344fe11afe2ee3bc1250cdc6b74d1d0f49accd6f8b10b145c0c90bc27f","bodyHash":"223f4baee3a3d8d4b0c7c5f12f3c1d0f48c4cd67edcb465329de188cbd8653ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentProperty","kind":"method","status":"implemented","sigHash":"c1d729344fe11afe2ee3bc1250cdc6b74d1d0f49accd6f8b10b145c0c90bc27f"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentProperty(node *ast.Node) *ast.Node {
@@ -6833,7 +6833,7 @@ export function classFieldsTransformer_visitAssignmentProperty(receiver: GoPtr<c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitShorthandAssignmentProperty","kind":"method","status":"implemented","sigHash":"a152111fe535e32ff45f14f77ce84f9bdb8fc0f4b44cdc09bd636d5ded53de7e","bodyHash":"3806adc714cc6f7783cf1b351dcebee1980b3c0597f7f575308fab16495493c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitShorthandAssignmentProperty","kind":"method","status":"implemented","sigHash":"a152111fe535e32ff45f14f77ce84f9bdb8fc0f4b44cdc09bd636d5ded53de7e"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitShorthandAssignmentProperty(node *ast.Node) *ast.Node {
@@ -6871,7 +6871,7 @@ export function classFieldsTransformer_visitShorthandAssignmentProperty(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentRestProperty","kind":"method","status":"implemented","sigHash":"307120399baa1bbef9a1b2237191059772404f7958df7941356b37b18b3d0388","bodyHash":"6f8f86a4d4aded47562156c654fdfb0a092a4c61322ba26705877ea6eb6e25f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentRestProperty","kind":"method","status":"implemented","sigHash":"307120399baa1bbef9a1b2237191059772404f7958df7941356b37b18b3d0388"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentRestProperty(node *ast.Node) *ast.Node {
@@ -6893,7 +6893,7 @@ export function classFieldsTransformer_visitAssignmentRestProperty(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitObjectAssignmentElement","kind":"method","status":"implemented","sigHash":"bafcfba3043cbc51547d76de1f2e95558539b0d3a55cfeb986668c36ca3e0244","bodyHash":"c7ee768063f95eb103733f4f0be4fe39f1693d5bb735f4520099b16ab3e315be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitObjectAssignmentElement","kind":"method","status":"implemented","sigHash":"bafcfba3043cbc51547d76de1f2e95558539b0d3a55cfeb986668c36ca3e0244"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitObjectAssignmentElement(node *ast.Node) *ast.Node {
@@ -6925,7 +6925,7 @@ export function classFieldsTransformer_visitObjectAssignmentElement(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentPattern","kind":"method","status":"implemented","sigHash":"149b72c0b1efdaf3e898ab3100beeec2f7153c0542487b34e10343c27c781ca1","bodyHash":"4820fc3324b2970e5a89f864394891fb20221e6091c3a0d846204a894629797d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.visitAssignmentPattern","kind":"method","status":"implemented","sigHash":"149b72c0b1efdaf3e898ab3100beeec2f7153c0542487b34e10343c27c781ca1"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) visitAssignmentPattern(node *ast.Node) *ast.Node {
@@ -6993,7 +6993,7 @@ export function classFieldsTransformer_visitAssignmentPattern(receiver: GoPtr<cl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateStaticFieldInitializer","kind":"func","status":"implemented","sigHash":"adb2e7776b774a69585bdfb6c5590f868a05a928132cb18e733696438b8b1af9","bodyHash":"5ee009617ef5f154e65979b0eb5c5685111d4b8be8464941a0825a1311f7e2e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateStaticFieldInitializer","kind":"func","status":"implemented","sigHash":"adb2e7776b774a69585bdfb6c5590f868a05a928132cb18e733696438b8b1af9"}
  *
  * Go source:
  * func createPrivateStaticFieldInitializer(factory *printer.NodeFactory, variableName *ast.IdentifierNode, initializer *ast.Expression) *ast.Expression {
@@ -7030,7 +7030,7 @@ export function createPrivateStaticFieldInitializer(factory: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateInstanceFieldInitializer","kind":"func","status":"implemented","sigHash":"c10bea194dc9e23a77ed834301b8925acf1f66d7e938e296b5fe7e7df506a677","bodyHash":"32188bfc9d5c3f9ca185643ba4bc766c2bde2550814340d24bc09a83b4fce926"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateInstanceFieldInitializer","kind":"func","status":"implemented","sigHash":"c10bea194dc9e23a77ed834301b8925acf1f66d7e938e296b5fe7e7df506a677"}
  *
  * Go source:
  * func createPrivateInstanceFieldInitializer(factory *printer.NodeFactory, receiver *ast.Expression, initializer *ast.Expression, weakMapName *ast.IdentifierNode) *ast.Expression {
@@ -7049,7 +7049,7 @@ export function createPrivateInstanceFieldInitializer(factory: GoPtr<NodeFactory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateInstanceMethodInitializer","kind":"func","status":"implemented","sigHash":"3280f47431f8029334d4d32ecede83f56824c3df3ba0d49d71c526d49756906a","bodyHash":"be5dc753463c208ecc03d2c72e77f7974f2a8dfcb73721bab4b44558af0e6b32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createPrivateInstanceMethodInitializer","kind":"func","status":"implemented","sigHash":"3280f47431f8029334d4d32ecede83f56824c3df3ba0d49d71c526d49756906a"}
  *
  * Go source:
  * func createPrivateInstanceMethodInitializer(factory *printer.NodeFactory, receiver *ast.Expression, weakSetName *ast.IdentifierNode) *ast.Expression {
@@ -7061,7 +7061,7 @@ export function createPrivateInstanceMethodInitializer(factory: GoPtr<NodeFactor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.isReservedPrivateName","kind":"method","status":"implemented","sigHash":"3c2f5c7c569643aa4d7124384da0036a28d71fc1779cd1017708900b4d9548ca","bodyHash":"f7f750a30824bab1de585ac8ac272f0096f812a5d57a955b3ac984948de50b29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.isReservedPrivateName","kind":"method","status":"implemented","sigHash":"3c2f5c7c569643aa4d7124384da0036a28d71fc1779cd1017708900b4d9548ca"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) isReservedPrivateName(node *ast.Node) bool {
@@ -7073,7 +7073,7 @@ export function classFieldsTransformer_isReservedPrivateName(receiver: GoPtr<cla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::isStaticPropertyDeclarationOrClassStaticBlock","kind":"func","status":"implemented","sigHash":"a58905c820ad01523c2302b8dd0187c01bef3aeaf415e04554c6474e3f90d385","bodyHash":"7985f81fa9aaa69f5614d3bef8c54d8e4ed5a9e9b096e1694decc7ccd0a5680e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::isStaticPropertyDeclarationOrClassStaticBlock","kind":"func","status":"implemented","sigHash":"a58905c820ad01523c2302b8dd0187c01bef3aeaf415e04554c6474e3f90d385"}
  *
  * Go source:
  * func isStaticPropertyDeclarationOrClassStaticBlock(node *ast.Node) bool {
@@ -7087,7 +7087,7 @@ export function isStaticPropertyDeclarationOrClassStaticBlock(node: GoPtr<Node>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getProperties","kind":"method","status":"implemented","sigHash":"28eda8fc204e6fbe117f6b773fbb6bd3588d6bfc3d96fd611af0c505317f50d2","bodyHash":"cb3297987e3c0f6e8de2f43ff6ea16384a4d454225b6415186075f1b604c8e49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getProperties","kind":"method","status":"implemented","sigHash":"28eda8fc204e6fbe117f6b773fbb6bd3588d6bfc3d96fd611af0c505317f50d2"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getProperties(node *ast.Node, requireInitializer bool, isStatic bool) []*ast.Node {
@@ -7115,7 +7115,7 @@ export function classFieldsTransformer_getProperties(receiver: GoPtr<classFields
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getStaticPropertiesAndClassStaticBlock","kind":"method","status":"implemented","sigHash":"4e68192b78d329f5684e1e880630a5d50d9d7bc50a2b981fbdb9739645d2d9bc","bodyHash":"28b48ef60bf25015ad0127bf9dffcba18b00c7ed413a19f9c6a386a375ebfdac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.getStaticPropertiesAndClassStaticBlock","kind":"method","status":"implemented","sigHash":"4e68192b78d329f5684e1e880630a5d50d9d7bc50a2b981fbdb9739645d2d9bc"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) getStaticPropertiesAndClassStaticBlock(node *ast.Node) []*ast.Node {
@@ -7139,7 +7139,7 @@ export function classFieldsTransformer_getStaticPropertiesAndClassStaticBlock(re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::classHasClassThisAssignment","kind":"func","status":"implemented","sigHash":"c47dae524d9c1bd3dd625c06c07940ac890587f83867be84dd9ef75d7c17f281","bodyHash":"5ba52987335c5c15d7ef595862d16c6c560d58caca3ee695100d7c6d4e9c1c2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::classHasClassThisAssignment","kind":"func","status":"implemented","sigHash":"c47dae524d9c1bd3dd625c06c07940ac890587f83867be84dd9ef75d7c17f281"}
  *
  * Go source:
  * func classHasClassThisAssignment(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -7161,7 +7161,7 @@ export function classHasClassThisAssignment(emitContext: GoPtr<EmitContext>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::isNonStaticMethodOrAccessorWithPrivateName","kind":"func","status":"implemented","sigHash":"32f8d288bb28d37f33f55e583ace239b487cd34f08529e26af3b882728cc091d","bodyHash":"0870aaace74433180b02ba97bbc49e0c13f4e2d70f6265912da1f2b290281f1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::isNonStaticMethodOrAccessorWithPrivateName","kind":"func","status":"implemented","sigHash":"32f8d288bb28d37f33f55e583ace239b487cd34f08529e26af3b882728cc091d"}
  *
  * Go source:
  * func isNonStaticMethodOrAccessorWithPrivateName(member *ast.Node) bool {
@@ -7177,7 +7177,7 @@ export function isNonStaticMethodOrAccessorWithPrivateName(member: GoPtr<Node>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createMemberAccessForPropertyName","kind":"func","status":"implemented","sigHash":"b8dc820912de338e5059e9e37213518c694e06fcec41f8f8ec59b08de5a6e86e","bodyHash":"0b7ba67b04ec7d6454c3236f111805c8a253b4670586ce82ca1f4ec14a19f195"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::createMemberAccessForPropertyName","kind":"func","status":"implemented","sigHash":"b8dc820912de338e5059e9e37213518c694e06fcec41f8f8ec59b08de5a6e86e"}
  *
  * Go source:
  * func createMemberAccessForPropertyName(factory *printer.NodeFactory, emitContext *printer.EmitContext, receiver *ast.Expression, name *ast.PropertyName, location *ast.PropertyName) *ast.Expression {
@@ -7219,7 +7219,7 @@ export function createMemberAccessForPropertyName(factory: GoPtr<NodeFactory>, e
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createCallBinding","kind":"method","status":"implemented","sigHash":"496aabcd13ba8f62c77b857e827937041232969d5f0038a6bce05f97f51b31a6","bodyHash":"3efb1f2be6f4f2d1912cc2123cbd7982bead734c2db4dd41536307b0960bbf44"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createCallBinding","kind":"method","status":"implemented","sigHash":"496aabcd13ba8f62c77b857e827937041232969d5f0038a6bce05f97f51b31a6"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createCallBinding(node *ast.Node) (thisArg *ast.Expression, target *ast.Expression) {
@@ -7275,7 +7275,7 @@ export function classFieldsTransformer_createCallBinding(receiver: GoPtr<classFi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::shouldBeCapturedInTempVariable","kind":"func","status":"implemented","sigHash":"4c22386fb05e554f59b94373e3e3a6a8a413cc7146bfc47343989c9b9d346f83","bodyHash":"bf1bd52c0eb76cc3606fb63e932feaebf3a4df26cb715af9e7138affdb977af1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::shouldBeCapturedInTempVariable","kind":"func","status":"implemented","sigHash":"4c22386fb05e554f59b94373e3e3a6a8a413cc7146bfc47343989c9b9d346f83"}
  *
  * Go source:
  * func shouldBeCapturedInTempVariable(node *ast.Node) bool {
@@ -7303,7 +7303,7 @@ export function shouldBeCapturedInTempVariable(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createAccessorPropertyGetRedirector","kind":"method","status":"implemented","sigHash":"e62f9ed8f593fdc764a4421342c8ca8be420247e429aec9923730e5d16f4231d","bodyHash":"7ec29fff38cbf250bf84e7e43909ba39c292e1383ec9422f57e6b9cc2f079538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createAccessorPropertyGetRedirector","kind":"method","status":"implemented","sigHash":"e62f9ed8f593fdc764a4421342c8ca8be420247e429aec9923730e5d16f4231d"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createAccessorPropertyGetRedirector(node *ast.PropertyDeclaration, modifiers *ast.ModifierList, name *ast.PropertyName, receiver *ast.Expression) *ast.Node {
@@ -7351,7 +7351,7 @@ export function classFieldsTransformer_createAccessorPropertyGetRedirector(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createAccessorPropertySetRedirector","kind":"method","status":"implemented","sigHash":"bea3631fb5644e0c1c792511038f39de54e02467cd9203226915640ffc2e0a07","bodyHash":"da07d86189cb8fc0c3045d26be590a40c209eeb62dcc7b9c49dadd6d57956043"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::method::classFieldsTransformer.createAccessorPropertySetRedirector","kind":"method","status":"implemented","sigHash":"bea3631fb5644e0c1c792511038f39de54e02467cd9203226915640ffc2e0a07"}
  *
  * Go source:
  * func (tx *classFieldsTransformer) createAccessorPropertySetRedirector(node *ast.PropertyDeclaration, modifiers *ast.ModifierList, name *ast.PropertyName, receiver *ast.Expression) *ast.Node {
@@ -7423,7 +7423,7 @@ export function classFieldsTransformer_createAccessorPropertySetRedirector(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::flattenCommaList","kind":"func","status":"implemented","sigHash":"95f8c6cce9f3c4acf3496c6a6c9a8ad0bef0e6bb85161c87bdcd5178e7f77b4d","bodyHash":"71fc207a7c8a2ae78b443396e51e25d123911d6626061364a9bf880b26711f58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::flattenCommaList","kind":"func","status":"implemented","sigHash":"95f8c6cce9f3c4acf3496c6a6c9a8ad0bef0e6bb85161c87bdcd5178e7f77b4d"}
  *
  * Go source:
  * func flattenCommaList(node *ast.Expression) iter.Seq[*ast.Expression] {
@@ -7439,7 +7439,7 @@ export function flattenCommaList(node: GoPtr<Expression>): GoSeq<GoPtr<Expressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::flattenCommaListWorker","kind":"func","status":"implemented","sigHash":"b3406ba247bc04bf28ab2a38ee8c6f3d6ae78b91103696974a8bfc2615e9ecb7","bodyHash":"389eb6ef2aa9f4547c7b5e4c7ff2b8eb0001888cbd975af2aaa01345475e1f8d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::flattenCommaListWorker","kind":"func","status":"implemented","sigHash":"b3406ba247bc04bf28ab2a38ee8c6f3d6ae78b91103696974a8bfc2615e9ecb7"}
  *
  * Go source:
  * func flattenCommaListWorker(node *ast.Expression, yield func(*ast.Expression) bool) bool {
@@ -7465,7 +7465,7 @@ export function flattenCommaListWorker(node: GoPtr<Expression>, yield_: (arg0: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::findComputedPropertyNameCacheAssignment","kind":"func","status":"implemented","sigHash":"04ee45a5ffe8b036d38755930d142ef677c3b93231acc82b30a09781bcb05d85","bodyHash":"a111274609334d15240c810b9d49cb28a7f131327f667a90c70effb68b6468fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::findComputedPropertyNameCacheAssignment","kind":"func","status":"implemented","sigHash":"04ee45a5ffe8b036d38755930d142ef677c3b93231acc82b30a09781bcb05d85"}
  *
  * Go source:
  * func findComputedPropertyNameCacheAssignment(emitContext *printer.EmitContext, name *ast.Node) *ast.BinaryExpression {
@@ -7501,7 +7501,7 @@ export function findComputedPropertyNameCacheAssignment(emitContext: GoPtr<EmitC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::expandPreOrPostfixIncrementOrDecrementExpression","kind":"func","status":"implemented","sigHash":"7e82674473f6492e57d5e43d216dd825bc7e8300c812ed41a34219c234d75e2f","bodyHash":"8ebed1ca61c0113059ec82a28a85018958a5c20fcddad99c79ed4ab73dfa61c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/classfields.go::func::expandPreOrPostfixIncrementOrDecrementExpression","kind":"func","status":"implemented","sigHash":"7e82674473f6492e57d5e43d216dd825bc7e8300c812ed41a34219c234d75e2f"}
  *
  * Go source:
  * func expandPreOrPostfixIncrementOrDecrementExpression(factory *printer.NodeFactory, emitContext *printer.EmitContext, node *ast.Node, expression *ast.Expression, resultVariable *ast.IdentifierNode) *ast.Expression {

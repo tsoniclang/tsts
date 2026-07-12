@@ -31,7 +31,7 @@ import type { Message } from "../diagnostics/diagnostics.js";
 import { Cannot_access_0_from_another_file_without_qualification_when_1_is_enabled_Use_2_instead, Static_members_cannot_reference_class_type_parameters, Base_class_expressions_cannot_reference_class_type_parameters, A_computed_property_name_cannot_reference_a_type_parameter_from_its_containing_type } from "../diagnostics/generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"d94405adce18614a3bbc95fd4d2e6a922712412fd7e622beb57b4a8a12dfc016","bodyHash":"19eada1e576611b431560f17e42127ad5d94199b35fc81585e1e566cbe9e761c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::type::NameResolver","kind":"type","status":"implemented","sigHash":"d94405adce18614a3bbc95fd4d2e6a922712412fd7e622beb57b4a8a12dfc016"}
  *
  * Go source:
  * NameResolver struct {
@@ -67,7 +67,7 @@ export interface NameResolver {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.Resolve","kind":"method","status":"implemented","sigHash":"0f4191719b08d3d15de2cc99cabc73488e5180e51315fa460d804c84d8b01a66","bodyHash":"0c2e96ad7cf683854f32ec77d555f59dce70168fa56b07f768ab2362298a6811"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.Resolve","kind":"method","status":"implemented","sigHash":"0f4191719b08d3d15de2cc99cabc73488e5180e51315fa460d804c84d8b01a66"}
  *
  * Go source:
  * func (r *NameResolver) Resolve(location *ast.Node, name string, meaning ast.SymbolFlags, nameNotFoundMessage *diagnostics.Message, isUse bool, excludeGlobals bool) *ast.Symbol {
@@ -743,7 +743,7 @@ export function NameResolver_Resolve(receiver: GoPtr<NameResolver>, location: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.useOuterVariableScopeInParameter","kind":"method","status":"implemented","sigHash":"1d4352ffc787afad433db6445d87a5eee41d0c86c9f57dd07406916dc7df45e5","bodyHash":"20cb52e53358e0861e7a5d8ff6bcc66b662b5c0ff304cbd1893a82762ac90268"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.useOuterVariableScopeInParameter","kind":"method","status":"implemented","sigHash":"1d4352ffc787afad433db6445d87a5eee41d0c86c9f57dd07406916dc7df45e5"}
  *
  * Go source:
  * func (r *NameResolver) useOuterVariableScopeInParameter(result *ast.Symbol, location *ast.Node, lastLocation *ast.Node) bool {
@@ -799,7 +799,7 @@ export function NameResolver_useOuterVariableScopeInParameter(receiver: GoPtr<Na
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.requiresScopeChange","kind":"method","status":"implemented","sigHash":"04b68182f1b735e2e10bdcf19dd17253605e7ba108f0b3b25c79eecbab54e2bf","bodyHash":"24fbd9e348dcf3085b990fe2b0982a80bee29f772c0bf5598c92619bd363069c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.requiresScopeChange","kind":"method","status":"implemented","sigHash":"04b68182f1b735e2e10bdcf19dd17253605e7ba108f0b3b25c79eecbab54e2bf"}
  *
  * Go source:
  * func (r *NameResolver) requiresScopeChange(node *ast.Node) bool {
@@ -813,7 +813,7 @@ export function NameResolver_requiresScopeChange(receiver: GoPtr<NameResolver>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.requiresScopeChangeWorker","kind":"method","status":"implemented","sigHash":"3c4707a71b853cce51eea068f7677b0bf653105cd32751021a0bd8ffd97d97a2","bodyHash":"83b51c657212ff3cef0c8f797b3974239f513e7af0a2df0a76360d67ab0222fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.requiresScopeChangeWorker","kind":"method","status":"implemented","sigHash":"3c4707a71b853cce51eea068f7677b0bf653105cd32751021a0bd8ffd97d97a2"}
  *
  * Go source:
  * func (r *NameResolver) requiresScopeChangeWorker(node *ast.Node) bool {
@@ -873,7 +873,7 @@ export function NameResolver_requiresScopeChangeWorker(receiver: GoPtr<NameResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.error","kind":"method","status":"implemented","sigHash":"d7da2e505aa14dc4e9f3d5f8e3825167291fa40566a2d25576627d08e98f3d84","bodyHash":"9f4e040f14b9604886bea086134b651590c43b3e61c39a9805d13d2c4e8ed820"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.error","kind":"method","status":"implemented","sigHash":"d7da2e505aa14dc4e9f3d5f8e3825167291fa40566a2d25576627d08e98f3d84"}
  *
  * Go source:
  * func (r *NameResolver) error(location *ast.Node, message *diagnostics.Message, args ...any) {
@@ -891,7 +891,7 @@ export function NameResolver_error(receiver: GoPtr<NameResolver>, location: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.getSymbolOfDeclaration","kind":"method","status":"implemented","sigHash":"178239d0bdfe145e610faab1221f806afa4ae6bff70494514c5d05af5ffa655d","bodyHash":"c01189d1efcdec8cb758721f0b77cc7a31b23ebbebc032bd14b3e69de6c54ae0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.getSymbolOfDeclaration","kind":"method","status":"implemented","sigHash":"178239d0bdfe145e610faab1221f806afa4ae6bff70494514c5d05af5ffa655d"}
  *
  * Go source:
  * func (r *NameResolver) getSymbolOfDeclaration(node *ast.Node) *ast.Symbol {
@@ -913,7 +913,7 @@ export function NameResolver_getSymbolOfDeclaration(receiver: GoPtr<NameResolver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.lookup","kind":"method","status":"implemented","sigHash":"01d17b8fbdf746d53b5016c7d7c4ea40455d0a3548b78944019dce2f1fc84d9c","bodyHash":"981e4e76773094204fcb081702d854f823979ad98c7d9874bd947647f35644d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.lookup","kind":"method","status":"implemented","sigHash":"01d17b8fbdf746d53b5016c7d7c4ea40455d0a3548b78944019dce2f1fc84d9c"}
  *
  * Go source:
  * func (r *NameResolver) lookup(symbols ast.SymbolTable, name string, meaning ast.SymbolFlags) *ast.Symbol {
@@ -949,7 +949,7 @@ export function NameResolver_lookup(receiver: GoPtr<NameResolver>, symbols: Symb
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.argumentsSymbol","kind":"method","status":"implemented","sigHash":"5330eec8752457d11769b8ad62bb1ae8439c2ebd53c477d13df92d3c4e577a33","bodyHash":"91d57b927f9552f5b33862825284535a65000a1642ff104762d1ae8e932b72bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::method::NameResolver.argumentsSymbol","kind":"method","status":"implemented","sigHash":"5330eec8752457d11769b8ad62bb1ae8439c2ebd53c477d13df92d3c4e577a33"}
  *
  * Go source:
  * func (r *NameResolver) argumentsSymbol() *ast.Symbol {
@@ -969,7 +969,7 @@ export function NameResolver_argumentsSymbol(receiver: GoPtr<NameResolver>): GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::GetLocalSymbolForExportDefault","kind":"func","status":"implemented","sigHash":"f7fb6e1de79999eb448c60e88565c15a9f5440891d2d50f583734f8fbee89df5","bodyHash":"7ae6def8e648da22a4fafb50b70e8a7ad91dfc822341f7108fba87d2fe4c7d80"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::GetLocalSymbolForExportDefault","kind":"func","status":"implemented","sigHash":"f7fb6e1de79999eb448c60e88565c15a9f5440891d2d50f583734f8fbee89df5"}
  *
  * Go source:
  * func GetLocalSymbolForExportDefault(symbol *ast.Symbol) *ast.Symbol {
@@ -1000,7 +1000,7 @@ export function GetLocalSymbolForExportDefault(symbol_: GoPtr<Symbol>): GoPtr<Sy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isExportDefaultSymbol","kind":"func","status":"implemented","sigHash":"c2c8a77c7b157eea6da378e923b373ad3056b6197ca83c0aea530f30c91c3f80","bodyHash":"6a9194a94131b612f0bf3dcab93961154b5e3acf9983dfef924e7b840c11b5f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isExportDefaultSymbol","kind":"func","status":"implemented","sigHash":"c2c8a77c7b157eea6da378e923b373ad3056b6197ca83c0aea530f30c91c3f80"}
  *
  * Go source:
  * func isExportDefaultSymbol(symbol *ast.Symbol) bool {
@@ -1013,7 +1013,7 @@ export function isExportDefaultSymbol(symbol_: GoPtr<Symbol>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::getIsDeferredContext","kind":"func","status":"implemented","sigHash":"b1aede0b87122e750056e2b63ca1ae73660286be6f3b71b3c42762e127a29621","bodyHash":"c37f3a372dfd02a70a88915cd848a3dc65166218c36a61e501193b6ac14dd02a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::getIsDeferredContext","kind":"func","status":"implemented","sigHash":"b1aede0b87122e750056e2b63ca1ae73660286be6f3b71b3c42762e127a29621"}
  *
  * Go source:
  * func getIsDeferredContext(location *ast.Node, lastLocation *ast.Node) bool {
@@ -1053,7 +1053,7 @@ export function getIsDeferredContext(location: GoPtr<Node>, lastLocation: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isTypeParameterSymbolDeclaredInContainer","kind":"func","status":"implemented","sigHash":"6ec59c88e748a97387ad99c5b41f2d7aac09781481d709370877cffa40d81e1f","bodyHash":"18a3d1ab902797dffbb7b5da951cae5215b228f16f215aef6731bd0f27863e1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isTypeParameterSymbolDeclaredInContainer","kind":"func","status":"implemented","sigHash":"6ec59c88e748a97387ad99c5b41f2d7aac09781481d709370877cffa40d81e1f"}
  *
  * Go source:
  * func isTypeParameterSymbolDeclaredInContainer(symbol *ast.Symbol, container *ast.Node) bool {
@@ -1081,7 +1081,7 @@ export function isTypeParameterSymbolDeclaredInContainer(symbol_: GoPtr<Symbol>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isSelfReferenceLocation","kind":"func","status":"implemented","sigHash":"30c193aacd1a43bce135c9f2ad764e1aa4363386ca557b9b44510289ef509941","bodyHash":"8c140a216e3ed171dee015bd9f9d980c2f431a08eef95656a846849e2df45676"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/nameresolver.go::func::isSelfReferenceLocation","kind":"func","status":"implemented","sigHash":"30c193aacd1a43bce135c9f2ad764e1aa4363386ca557b9b44510289ef509941"}
  *
  * Go source:
  * func isSelfReferenceLocation(node *ast.Node, lastLocation *ast.Node) bool {

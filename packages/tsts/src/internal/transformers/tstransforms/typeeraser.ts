@@ -110,7 +110,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { getInnermostModuleDeclarationFromDottedModule } from "./runtimesyntax.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"bdb90c2faa90cf896efb0849699ba9fae98beb7beb98d285e9da5884a17f7648","bodyHash":"058402a91184c90a80f6900dde5f432284290b1838798a9284c5e90ea71e461a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"bdb90c2faa90cf896efb0849699ba9fae98beb7beb98d285e9da5884a17f7648"}
  *
  * Go source:
  * TypeEraserTransformer struct {
@@ -128,7 +128,7 @@ export interface TypeEraserTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::func::NewTypeEraserTransformer","kind":"func","status":"implemented","sigHash":"53b3e285a69881af65a2487e556bd94560651a4b3806431a557f2e6039edd82f","bodyHash":"fec9e81a116ec6aa1009585bebe43017149a3f9b82bd9e0f6dc0226784ccbb97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::func::NewTypeEraserTransformer","kind":"func","status":"implemented","sigHash":"53b3e285a69881af65a2487e556bd94560651a4b3806431a557f2e6039edd82f"}
  *
  * Go source:
  * func NewTypeEraserTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -151,7 +151,7 @@ export function NewTypeEraserTransformer(opt: GoPtr<TransformOptions>): GoPtr<Tr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.pushNode","kind":"method","status":"implemented","sigHash":"66a52a570cf7e7f0e502f6dc1a0f30aaafd3e746b6a9972728c3d867453002ff","bodyHash":"dbf805bd336232b52ae2022d1b48bbafbbcde618e66432bcdcb6cfd766a6fb2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.pushNode","kind":"method","status":"implemented","sigHash":"66a52a570cf7e7f0e502f6dc1a0f30aaafd3e746b6a9972728c3d867453002ff"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) pushNode(node *ast.Node) (grandparentNode *ast.Node) {
@@ -169,7 +169,7 @@ export function TypeEraserTransformer_pushNode(receiver: GoPtr<TypeEraserTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.popNode","kind":"method","status":"implemented","sigHash":"8a0b52123ec70589eec9709e3fe44cbc0951e4966c6d1f57af1f41746390df9d","bodyHash":"99c5f021d2f47cc4a641b490507f7ba5fe392bf1ab01a8d264a8a30ae82261d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.popNode","kind":"method","status":"implemented","sigHash":"8a0b52123ec70589eec9709e3fe44cbc0951e4966c6d1f57af1f41746390df9d"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) popNode(grandparentNode *ast.Node) {
@@ -183,7 +183,7 @@ export function TypeEraserTransformer_popNode(receiver: GoPtr<TypeEraserTransfor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.elide","kind":"method","status":"implemented","sigHash":"d160929a2fd24ba0cb1d649dbdc7e6c185fddccb9bf4160ff303840cc7244186","bodyHash":"98fabb3a981f958fa0718753a59c97a59d3050270cdfeb79b6d5cad7bf9141a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.elide","kind":"method","status":"implemented","sigHash":"d160929a2fd24ba0cb1d649dbdc7e6c185fddccb9bf4160ff303840cc7244186"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) elide(node *ast.Statement) *ast.Statement {
@@ -195,7 +195,7 @@ export function TypeEraserTransformer_elide(receiver: GoPtr<TypeEraserTransforme
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.visit","kind":"method","status":"implemented","sigHash":"4f2cad082d0fa0662cb1701ceefd0650600ea695e15609c7856edb96ec19ac05","bodyHash":"2c50095f14c9e318f3e90872ea643e4fc6093f9206679681bd9ee78a6601b45c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::method::TypeEraserTransformer.visit","kind":"method","status":"implemented","sigHash":"4f2cad082d0fa0662cb1701ceefd0650600ea695e15609c7856edb96ec19ac05"}
  *
  * Go source:
  * func (tx *TypeEraserTransformer) visit(node *ast.Node) *ast.Node {

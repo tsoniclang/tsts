@@ -33,7 +33,7 @@ function jsonBytes(text: string): byte[] {
 
 function collectEntries<K, V>(map: OrderedMap<K, V>): Array<[K, V]> {
   const entries: Array<[K, V]> = [];
-  OrderedMap_Entries(map)((key: K, value: V): boolean => {
+  OrderedMap_Entries(map)!((key: K, value: V): boolean => {
     entries.push([key, value]);
     return true;
   });

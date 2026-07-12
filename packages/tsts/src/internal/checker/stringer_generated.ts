@@ -3,7 +3,7 @@ import type { GoArray } from "../../go/compat.js";
 import type { SignatureKind } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6","bodyHash":"f4d7a3b9fccf1308be78905118caf1eddd810ab78fc8e26fd115ad89bbef748d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::func::_","kind":"func","status":"implemented","sigHash":"c316d79b3f70efb48b99d2987b08743c8d4a739c9761bfa52b237422279585d6"}
  *
  * Go source:
  * func _() {
@@ -21,7 +21,7 @@ export function _(): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::constGroup::_SignatureKind_name","kind":"constGroup","status":"implemented","sigHash":"4302a5c0a64d4ddc3ebb17197733f3e9f494457d4546eb78879641a21beaa056","bodyHash":"9188bcfb794dfab7387d4a6c6006d60840bc345029c33a96a77b625429bdf19a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::constGroup::_SignatureKind_name","kind":"constGroup","status":"implemented","sigHash":"4302a5c0a64d4ddc3ebb17197733f3e9f494457d4546eb78879641a21beaa056"}
  *
  * Go source:
  * const _SignatureKind_name = "SignatureKindCallSignatureKindConstruct"
@@ -29,7 +29,7 @@ export function _(): void {
 export const _SignatureKind_name: string = "SignatureKindCallSignatureKindConstruct";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::varGroup::_SignatureKind_index","kind":"varGroup","status":"implemented","sigHash":"633e965e44938dfaaa7378c28e779e06e31450da5fb813371fcc9c50de517d54","bodyHash":"f18ef83c448cea16227a3d4242099db3e508ed643e0e72a9b43e317e065e3d25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::varGroup::_SignatureKind_index","kind":"varGroup","status":"implemented","sigHash":"633e965e44938dfaaa7378c28e779e06e31450da5fb813371fcc9c50de517d54"}
  *
  * Go source:
  * var _SignatureKind_index = [...]uint8{0, 17, 39}
@@ -37,7 +37,7 @@ export const _SignatureKind_name: string = "SignatureKindCallSignatureKindConstr
 export let _SignatureKind_index: GoArray<byte, "3"> = [0, 17, 39] as GoArray<byte, "3">;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::method::SignatureKind.String","kind":"method","status":"implemented","sigHash":"9c05bce595039d33dc85ac4993e7e65c8e1d135f000e0b65576ddae97eff31f0","bodyHash":"4cf085bcadf3ed1b1d792d8d5122d33338c2d9096e87bc60d210226bd11a2b8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/stringer_generated.go::method::SignatureKind.String","kind":"method","status":"implemented","sigHash":"9c05bce595039d33dc85ac4993e7e65c8e1d135f000e0b65576ddae97eff31f0"}
  *
  * Go source:
  * func (i SignatureKind) String() string {

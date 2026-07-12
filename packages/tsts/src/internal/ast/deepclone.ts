@@ -10,7 +10,7 @@ import type { NodeVisitor } from "./visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "./visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4bb96716323ea0bc24d6348cead293a463b42b52fd3a7bbfe9dd14416f7a0f52","bodyHash":"b4f577e5430740724ada7d9937b4c032f4fd4fb86c6f0f59e7c90854aff34088"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4bb96716323ea0bc24d6348cead293a463b42b52fd3a7bbfe9dd14416f7a0f52"}
  *
  * Go source:
  * func getDeepCloneVisitor(f *NodeFactory, syntheticLocation bool) *NodeVisitor {
@@ -133,7 +133,7 @@ export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneNode","kind":"method","status":"implemented","sigHash":"f27b342dc9969b51172b5787c46b5bbce493d3f306d8b598fed5462f00eb3960","bodyHash":"98bcca0a62ab9d9b4cc7df812845a9b3c7473fa1e0d4bee40a92a2cf24e843dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneNode","kind":"method","status":"implemented","sigHash":"f27b342dc9969b51172b5787c46b5bbce493d3f306d8b598fed5462f00eb3960"}
  *
  * Go source:
  * func (f *NodeFactory) DeepCloneNode(node *Node) *Node {
@@ -145,7 +145,7 @@ export function NodeFactory_DeepCloneNode(receiver: GoPtr<NodeFactory>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneReparse","kind":"method","status":"implemented","sigHash":"9b37b6765ae6f5366968cb83a31bbc977ad47c3bb9b58eb82fb928421046d6e3","bodyHash":"70b0f1c43a8a4406fe346cfe39002b08624280971251e85ab9d840a065d86c93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneReparse","kind":"method","status":"implemented","sigHash":"9b37b6765ae6f5366968cb83a31bbc977ad47c3bb9b58eb82fb928421046d6e3"}
  *
  * Go source:
  * func (f *NodeFactory) DeepCloneReparse(node *Node) *Node {
@@ -168,7 +168,7 @@ export function NodeFactory_DeepCloneReparse(receiver: GoPtr<NodeFactory>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneReparseModifiers","kind":"method","status":"implemented","sigHash":"8165a43916c5da5b416b3f9534854b9347ba66c4fe258f14077688d2b55ed582","bodyHash":"ec4572c52419123ff9a53016d2982b3cefb4272793288c761534b2974844d908"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::method::NodeFactory.DeepCloneReparseModifiers","kind":"method","status":"implemented","sigHash":"8165a43916c5da5b416b3f9534854b9347ba66c4fe258f14077688d2b55ed582"}
  *
  * Go source:
  * func (f *NodeFactory) DeepCloneReparseModifiers(modifiers *ModifierList) *ModifierList {

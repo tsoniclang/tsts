@@ -223,7 +223,7 @@ test("slices.Values / Collect / AppendSeq round-trip", () => {
 test("slices.Values honors early termination", () => {
   const s = [1, 2, 3];
   const got: number[] = [];
-  Values(s)((v) => {
+  Values(s)!((v) => {
     got.push(v);
     return v < 2;
   });

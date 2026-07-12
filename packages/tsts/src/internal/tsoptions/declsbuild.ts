@@ -11,7 +11,7 @@ import { commonOptionsWithBuild } from "./declscompiler.js";
 
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::TscBuildOption","kind":"varGroup","status":"implemented","sigHash":"a7881acbbdcfcb70d05e16008e560f35eade977ffd0215c8fde3220c1ec7ddca","bodyHash":"6311f138ea27d987e94990472cdb2432a30eb321845d20643db1e3648a73f1b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::TscBuildOption","kind":"varGroup","status":"implemented","sigHash":"a7881acbbdcfcb70d05e16008e560f35eade977ffd0215c8fde3220c1ec7ddca"}
  *
  * Go source:
  * var TscBuildOption = CommandLineOption{
@@ -35,7 +35,7 @@ export let TscBuildOption: CommandLineOption = newCommandLineOption({
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::OptionsForBuild","kind":"varGroup","status":"implemented","sigHash":"b827b0f153dfedb1e94b809019da58e3c535313ef9101cd71f9fc3db03470daa","bodyHash":"3efdcb832279bd04f3253b6fe07612f5a6eba6f546c05425ecf07ce972d321f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::OptionsForBuild","kind":"varGroup","status":"implemented","sigHash":"b827b0f153dfedb1e94b809019da58e3c535313ef9101cd71f9fc3db03470daa"}
  *
  * Go source:
  * var OptionsForBuild = []*CommandLineOption{
@@ -139,7 +139,7 @@ export let OptionsForBuild: GoSlice<GoPtr<CommandLineOption>> = [
 ];
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::BuildOpts","kind":"varGroup","status":"implemented","sigHash":"538a759bcc8d807f5ae582a703e9cd4ac8c3e62c00f33865de6929274b312c8c","bodyHash":"3dacbf001b6359464d01faaeb230a2d39730988b8c786245754485acab4d924d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declsbuild.go::varGroup::BuildOpts","kind":"varGroup","status":"implemented","sigHash":"538a759bcc8d807f5ae582a703e9cd4ac8c3e62c00f33865de6929274b312c8c"}
  *
  * Go source:
  * var BuildOpts = slices.Concat(commonOptionsWithBuild, OptionsForBuild)

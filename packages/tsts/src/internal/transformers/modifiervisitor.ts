@@ -8,7 +8,7 @@ import type { Transformer } from "./transformer.js";
 import { Transformer_NewTransformer } from "./transformer.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::type::modifierVisitor","kind":"type","status":"implemented","sigHash":"04d132d918160f7b08793e75f53c42347aae4a8358fe0344509a3c3bf6136ef1","bodyHash":"cdee65c2e92c5822528c8aba69758424ed1776ee3932033aab75078bced25447"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::type::modifierVisitor","kind":"type","status":"implemented","sigHash":"04d132d918160f7b08793e75f53c42347aae4a8358fe0344509a3c3bf6136ef1"}
  *
  * Go source:
  * modifierVisitor struct {
@@ -22,7 +22,7 @@ export interface modifierVisitor {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::method::modifierVisitor.visit","kind":"method","status":"implemented","sigHash":"a425495b08c15499f6537d493c29bb3f25b65e0031a10fda2c0c6f3adf5f78d0","bodyHash":"f7da016c16f5a2ec61279f105d0ad8f2bd5d01bebe82ba5d21f1f6f56d8951f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::method::modifierVisitor.visit","kind":"method","status":"implemented","sigHash":"a425495b08c15499f6537d493c29bb3f25b65e0031a10fda2c0c6f3adf5f78d0"}
  *
  * Go source:
  * func (v *modifierVisitor) visit(node *ast.Node) *ast.Node {
@@ -42,7 +42,7 @@ export function modifierVisitor_visit(receiver: GoPtr<modifierVisitor>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::func::ExtractModifiers","kind":"func","status":"implemented","sigHash":"fd15121c1ac8dc6af27c1e49c846a4cab79b95f5273335992aec0c4dd795ba76","bodyHash":"54545be35aad007d62aa6d48a472e63a4f6af68362df2614b6a91fb89502e735"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::func::ExtractModifiers","kind":"func","status":"implemented","sigHash":"fd15121c1ac8dc6af27c1e49c846a4cab79b95f5273335992aec0c4dd795ba76"}
  *
  * Go source:
  * func ExtractModifiers(emitContext *printer.EmitContext, modifiers *ast.ModifierList, allowed ast.ModifierFlags) *ast.ModifierList {

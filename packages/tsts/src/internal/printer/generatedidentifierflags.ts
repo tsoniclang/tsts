@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::type::GeneratedIdentifierFlags","kind":"type","status":"implemented","sigHash":"bee2677a88c9d3eaa01b18bbf3715991a891d97d5826e877f1c6190ba65ccfa2","bodyHash":"eccc0436f5d9572d1d6d5cce1d5c9208beb6459fb61b7949481ce72db427cb02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::type::GeneratedIdentifierFlags","kind":"type","status":"implemented","sigHash":"bee2677a88c9d3eaa01b18bbf3715991a891d97d5826e877f1c6190ba65ccfa2"}
  *
  * Go source:
  * GeneratedIdentifierFlags int
@@ -9,7 +9,7 @@ import type { bool, int } from "../../go/scalars.js";
 export type GeneratedIdentifierFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::constGroup::GeneratedIdentifierFlagsNone+GeneratedIdentifierFlagsAuto+GeneratedIdentifierFlagsLoop+GeneratedIdentifierFlagsUnique+GeneratedIdentifierFlagsNode+GeneratedIdentifierFlagsKindMask+GeneratedIdentifierFlagsReservedInNestedScopes+GeneratedIdentifierFlagsOptimistic+GeneratedIdentifierFlagsFileLevel+GeneratedIdentifierFlagsAllowNameSubstitution","kind":"constGroup","status":"implemented","sigHash":"14899bba80663a0f4ac65fbbf95bcdcc9a7d12c0047f7e3a74391461d9870777","bodyHash":"f763faae1fbe1e1f36f2b09da2343ab960941b5fc68af5443c71c479e9cd4781"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::constGroup::GeneratedIdentifierFlagsNone+GeneratedIdentifierFlagsAuto+GeneratedIdentifierFlagsLoop+GeneratedIdentifierFlagsUnique+GeneratedIdentifierFlagsNode+GeneratedIdentifierFlagsKindMask+GeneratedIdentifierFlagsReservedInNestedScopes+GeneratedIdentifierFlagsOptimistic+GeneratedIdentifierFlagsFileLevel+GeneratedIdentifierFlagsAllowNameSubstitution","kind":"constGroup","status":"implemented","sigHash":"14899bba80663a0f4ac65fbbf95bcdcc9a7d12c0047f7e3a74391461d9870777"}
  *
  * Go source:
  * const (
@@ -42,7 +42,7 @@ export const GeneratedIdentifierFlagsFileLevel: int = 1 << 5;
 export const GeneratedIdentifierFlagsAllowNameSubstitution: int = 1 << 6;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.Kind","kind":"method","status":"implemented","sigHash":"1ca78de9fab7026da2bae1875a93514bbd643338c7e4a64b511a6f898ca8e60f","bodyHash":"2e36ea2e3270c0421bbddec60031a077ae016a99d989ad904c01cb68f8c39e37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.Kind","kind":"method","status":"implemented","sigHash":"1ca78de9fab7026da2bae1875a93514bbd643338c7e4a64b511a6f898ca8e60f"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) Kind() GeneratedIdentifierFlags {
@@ -54,7 +54,7 @@ export function GeneratedIdentifierFlags_Kind(receiver: GeneratedIdentifierFlags
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsAuto","kind":"method","status":"implemented","sigHash":"7893119c6efc3f614b703ac731662a9d9eb6ba77dd7be26c55818b797f2ce281","bodyHash":"5f23c4aa5b26fbe3f257ae3b47fe2a365aa9c9d487700f1dae55c31873048d02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsAuto","kind":"method","status":"implemented","sigHash":"7893119c6efc3f614b703ac731662a9d9eb6ba77dd7be26c55818b797f2ce281"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsAuto() bool {
@@ -66,7 +66,7 @@ export function GeneratedIdentifierFlags_IsAuto(receiver: GeneratedIdentifierFla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsLoop","kind":"method","status":"implemented","sigHash":"88958ab25773d2c103bf0881cac251a97ef82292d82e0c5560965a6b2e8174e3","bodyHash":"b6687aada95db2d993a8b6924dbe44776eb64cf4f549b7a60721c9cc7eeb89ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsLoop","kind":"method","status":"implemented","sigHash":"88958ab25773d2c103bf0881cac251a97ef82292d82e0c5560965a6b2e8174e3"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsLoop() bool {
@@ -78,7 +78,7 @@ export function GeneratedIdentifierFlags_IsLoop(receiver: GeneratedIdentifierFla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsUnique","kind":"method","status":"implemented","sigHash":"8c1d9eecc978cfc76e83c3137fd684f3cf49afd90d375bd8d157ef514c0e0f2c","bodyHash":"a0cc6b4b518f0404870373a70265f799a37fb2b1f10c8be20ccbe26a9bf15c78"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsUnique","kind":"method","status":"implemented","sigHash":"8c1d9eecc978cfc76e83c3137fd684f3cf49afd90d375bd8d157ef514c0e0f2c"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsUnique() bool {
@@ -90,7 +90,7 @@ export function GeneratedIdentifierFlags_IsUnique(receiver: GeneratedIdentifierF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsNode","kind":"method","status":"implemented","sigHash":"0920ddedd3191e51e10390ea115c6da64df92dfaa64e2f662923c2821174e156","bodyHash":"9fb167ae6ed77f2a3daca6822b71af07dad85e877e19bc5a841ff337866a6cc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsNode","kind":"method","status":"implemented","sigHash":"0920ddedd3191e51e10390ea115c6da64df92dfaa64e2f662923c2821174e156"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsNode() bool {
@@ -102,7 +102,7 @@ export function GeneratedIdentifierFlags_IsNode(receiver: GeneratedIdentifierFla
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsReservedInNestedScopes","kind":"method","status":"implemented","sigHash":"51a5972e8c4a4ccafd5d1bd1e4c6021bbee77978857dabf0c4a0e3f57df56748","bodyHash":"0adf85d7fa9c07c5a4f93d58f60dcb91310baa7b3d1482a118e30c9b2cd667fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsReservedInNestedScopes","kind":"method","status":"implemented","sigHash":"51a5972e8c4a4ccafd5d1bd1e4c6021bbee77978857dabf0c4a0e3f57df56748"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsReservedInNestedScopes() bool {
@@ -114,7 +114,7 @@ export function GeneratedIdentifierFlags_IsReservedInNestedScopes(receiver: Gene
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsOptimistic","kind":"method","status":"implemented","sigHash":"475c52ea6331a84b862cc989ef92457d60cab3ee4fa2602a39d251c3adf9de6b","bodyHash":"5f67eefb14a5e0235c4acd5353d51478288fb91670bf2de5f3592812f26ce3b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsOptimistic","kind":"method","status":"implemented","sigHash":"475c52ea6331a84b862cc989ef92457d60cab3ee4fa2602a39d251c3adf9de6b"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsOptimistic() bool {
@@ -126,7 +126,7 @@ export function GeneratedIdentifierFlags_IsOptimistic(receiver: GeneratedIdentif
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsFileLevel","kind":"method","status":"implemented","sigHash":"58ca73582c783147573740b431256d59883270caa4d3e33128fb04574dfc60ce","bodyHash":"ce4372d9eac0da85fead72fd290c5c50af9474fd587684318373c2c6d372015e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.IsFileLevel","kind":"method","status":"implemented","sigHash":"58ca73582c783147573740b431256d59883270caa4d3e33128fb04574dfc60ce"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) IsFileLevel() bool {
@@ -138,7 +138,7 @@ export function GeneratedIdentifierFlags_IsFileLevel(receiver: GeneratedIdentifi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.HasAllowNameSubstitution","kind":"method","status":"implemented","sigHash":"33ec1118f17726c59590b13c3ba14b0dc9a1799a08e5ec8a41316abe85ec5511","bodyHash":"21b9b06a7f329dc04356837494ed98f365301b6470cd6b8b90e8e218c4689653"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/generatedidentifierflags.go::method::GeneratedIdentifierFlags.HasAllowNameSubstitution","kind":"method","status":"implemented","sigHash":"33ec1118f17726c59590b13c3ba14b0dc9a1799a08e5ec8a41316abe85ec5511"}
  *
  * Go source:
  * func (f GeneratedIdentifierFlags) HasAllowNameSubstitution() bool {

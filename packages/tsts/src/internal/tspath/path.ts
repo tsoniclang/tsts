@@ -22,7 +22,7 @@ const CHAR_A: int = 0x41; // 'A'
 const CHAR_Z: int = 0x5a; // 'Z'
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::type::Path","kind":"type","status":"implemented","sigHash":"48d9c069b22fce45bb0f6b728f90c9bd60249652541b54ea8ed8cca29efa985b","bodyHash":"9a9832518709a64e2da48d05b97cee0a925eb42e8db882c39201d075958dc410"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::type::Path","kind":"type","status":"implemented","sigHash":"48d9c069b22fce45bb0f6b728f90c9bd60249652541b54ea8ed8cca29efa985b"}
  *
  * Go source:
  * Path string
@@ -30,7 +30,7 @@ const CHAR_Z: int = 0x5a; // 'Z'
 export type Path = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::constGroup::DirectorySeparator+urlSchemeSeparator","kind":"constGroup","status":"implemented","sigHash":"e2202c0299e4fb0c19de05c0a4f2759e08de2c23fbd0f02c8137bb15134dc17d","bodyHash":"d69be34d2dad0f0c80881f60681c68a980d77a4bc3720dec29001d3f23dda212"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::constGroup::DirectorySeparator+urlSchemeSeparator","kind":"constGroup","status":"implemented","sigHash":"e2202c0299e4fb0c19de05c0a4f2759e08de2c23fbd0f02c8137bb15134dc17d"}
  *
  * Go source:
  * const (
@@ -42,7 +42,7 @@ export const DirectorySeparator: GoRune = 0x2f; // '/'
 export const urlSchemeSeparator: string = "://";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::isAnyDirectorySeparator","kind":"func","status":"implemented","sigHash":"e4f517d188bd478146a128c4d1afe09a12033a2bfb91dbf6582b2cf6d3d6683a","bodyHash":"1f9b8752191511277cd271ba504371830885fcd6980dd315c52a8df207c7171a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::isAnyDirectorySeparator","kind":"func","status":"implemented","sigHash":"e4f517d188bd478146a128c4d1afe09a12033a2bfb91dbf6582b2cf6d3d6683a"}
  *
  * Go source:
  * func isAnyDirectorySeparator(char byte) bool {
@@ -54,7 +54,7 @@ export function isAnyDirectorySeparator(char: byte): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsUrl","kind":"func","status":"implemented","sigHash":"ba5ed813e6938c9eaaf3db3757300a49a573a025d2d45c5260ba77eaf4562585","bodyHash":"2b3427cd6879b238004a26551afe06949fbe1645c0e1446ded0d16ea7f3f7a02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsUrl","kind":"func","status":"implemented","sigHash":"ba5ed813e6938c9eaaf3db3757300a49a573a025d2d45c5260ba77eaf4562585"}
  *
  * Go source:
  * func IsUrl(path string) bool {
@@ -66,7 +66,7 @@ export function IsUrl(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsRootedDiskPath","kind":"func","status":"implemented","sigHash":"3177572f6dd378edfb8f72b06add9145b24473f6235569dfa1a28f8016fd5efe","bodyHash":"a2dd413dccfc2e2e1227c1467d25e4f414b15042b39acf2192358b30d5fe2aa5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsRootedDiskPath","kind":"func","status":"implemented","sigHash":"3177572f6dd378edfb8f72b06add9145b24473f6235569dfa1a28f8016fd5efe"}
  *
  * Go source:
  * func IsRootedDiskPath(path string) bool {
@@ -78,7 +78,7 @@ export function IsRootedDiskPath(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsDiskPathRoot","kind":"func","status":"implemented","sigHash":"b13231f54d10ea7d76a88c7a830e7d80b2b37cee3efb172d3164b084bc50ca88","bodyHash":"7be18827c6c3ae24aea0aa8063a3d4fb4e8f1f613fa7d39421144a312b5865d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsDiskPathRoot","kind":"func","status":"implemented","sigHash":"b13231f54d10ea7d76a88c7a830e7d80b2b37cee3efb172d3164b084bc50ca88"}
  *
  * Go source:
  * func IsDiskPathRoot(path string) bool {
@@ -92,7 +92,7 @@ export function IsDiskPathRoot(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsDynamicFileName","kind":"func","status":"implemented","sigHash":"91a8bce6c32f23c48c9cc840e16a89b6697fa2d507743c24c0048cb1aa57ab56","bodyHash":"676d84bf5cfb545b56b85f35f231ac73dbed046929a62043bb362ef6cfacc6ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsDynamicFileName","kind":"func","status":"implemented","sigHash":"91a8bce6c32f23c48c9cc840e16a89b6697fa2d507743c24c0048cb1aa57ab56"}
  *
  * Go source:
  * func IsDynamicFileName(fileName string) bool {
@@ -104,7 +104,7 @@ export function IsDynamicFileName(fileName: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::PathIsAbsolute","kind":"func","status":"implemented","sigHash":"ef815213643b55785a4b56855920c6f3a56a3217bc07e85223b191ab3368f72f","bodyHash":"9c801a379e482bb6851d0de7eff8c76781f662255ecb695c6b4fad32900dd446"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::PathIsAbsolute","kind":"func","status":"implemented","sigHash":"ef815213643b55785a4b56855920c6f3a56a3217bc07e85223b191ab3368f72f"}
  *
  * Go source:
  * func PathIsAbsolute(path string) bool {
@@ -116,7 +116,7 @@ export function PathIsAbsolute(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::HasTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"f65ef4e9aeecf5b5e82c714705364cf846d460f43b98ba71f044c3a510b8584b","bodyHash":"167485e37641a1ffc5513b041a91a5c409d20d8297783d106120750198a79f5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::HasTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"f65ef4e9aeecf5b5e82c714705364cf846d460f43b98ba71f044c3a510b8584b"}
  *
  * Go source:
  * func HasTrailingDirectorySeparator(path string) bool {
@@ -128,7 +128,7 @@ export function HasTrailingDirectorySeparator(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::CombinePaths","kind":"func","status":"implemented","sigHash":"7da062a21dccc4ef5737ad2340bf86bdd0d1f6d04491b982b0e1daa8c8ee84c9","bodyHash":"ad3a26c3e046d81c0f729c63e52540e65eca3628ce0c46174e912f0b9535a386"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::CombinePaths","kind":"func","status":"implemented","sigHash":"7da062a21dccc4ef5737ad2340bf86bdd0d1f6d04491b982b0e1daa8c8ee84c9"}
  *
  * Go source:
  * func CombinePaths(firstPath string, paths ...string) string {
@@ -221,7 +221,7 @@ export function CombinePaths(firstPath: string, ...paths: Array<string>): string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathComponents","kind":"func","status":"implemented","sigHash":"3fd4194ec0012d7e3c1a8ce1e1c52df453326d6530ad55d7e146b35646584e79","bodyHash":"39f1cfcb5de0d643f3a3793a0b51502280f433b6ffa07d92662964b64dc1d3e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathComponents","kind":"func","status":"implemented","sigHash":"3fd4194ec0012d7e3c1a8ce1e1c52df453326d6530ad55d7e146b35646584e79"}
  *
  * Go source:
  * func GetPathComponents(path string, currentDirectory string) []string {
@@ -235,7 +235,7 @@ export function GetPathComponents(path: string, currentDirectory: string): GoSli
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::pathComponents","kind":"func","status":"implemented","sigHash":"2edb72fdb333f7a6f0f458cdc12f449eed5c4d41bb590d3bef41346428771453","bodyHash":"8cd88f033768b6fd636cf1f35f699e5ac5963336d5413e702d42db355853cb66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::pathComponents","kind":"func","status":"implemented","sigHash":"2edb72fdb333f7a6f0f458cdc12f449eed5c4d41bb590d3bef41346428771453"}
  *
  * Go source:
  * func pathComponents(path string, rootLength int) []string {
@@ -257,7 +257,7 @@ export function pathComponents(path: string, rootLength: int): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsVolumeCharacter","kind":"func","status":"implemented","sigHash":"bfd3815df675fabe7f78f3cf172462bbaf2ecde3559b469a44ee836577b04d7e","bodyHash":"90785bf39f8d53e8901f689a4c6e5aac1913fe5a6bcaeb1c95ada402af84fa34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsVolumeCharacter","kind":"func","status":"implemented","sigHash":"bfd3815df675fabe7f78f3cf172462bbaf2ecde3559b469a44ee836577b04d7e"}
  *
  * Go source:
  * func IsVolumeCharacter(char byte) bool {
@@ -269,7 +269,7 @@ export function IsVolumeCharacter(char: byte): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getFileUrlVolumeSeparatorEnd","kind":"func","status":"implemented","sigHash":"a81071c8d2c297dc2bcfcfc8b0c487a97acf4f5b14b799b271039b053055aca6","bodyHash":"ba1ead55f2fa543ba6f00435346bb1d103de17d54990922b75f72855fef6f3b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getFileUrlVolumeSeparatorEnd","kind":"func","status":"implemented","sigHash":"a81071c8d2c297dc2bcfcfc8b0c487a97acf4f5b14b799b271039b053055aca6"}
  *
  * Go source:
  * func getFileUrlVolumeSeparatorEnd(url string, start int) int {
@@ -307,7 +307,7 @@ export function getFileUrlVolumeSeparatorEnd(url: string, start: int): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetEncodedRootLength","kind":"func","status":"implemented","sigHash":"5af37d1c2fccbdaec3decb59645fdae723dfb9750b80245eac6f8dd108c774e8","bodyHash":"43dd93a314965a7ef03e90b911460ea9369da18c1989d6e2256b395cad1e5ea1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetEncodedRootLength","kind":"func","status":"implemented","sigHash":"5af37d1c2fccbdaec3decb59645fdae723dfb9750b80245eac6f8dd108c774e8"}
  *
  * Go source:
  * func GetEncodedRootLength(path string) int {
@@ -460,7 +460,7 @@ export function GetEncodedRootLength(path: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRootLength","kind":"func","status":"implemented","sigHash":"18d7dbfa5d0406aaa416710e604ea5ee7a23d18a06f8e4984ba6b52a57cbd2cf","bodyHash":"0b6a4fbd2202f90442e696ea7b690624e8f1636448d0c16212216123a452c403"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRootLength","kind":"func","status":"implemented","sigHash":"18d7dbfa5d0406aaa416710e604ea5ee7a23d18a06f8e4984ba6b52a57cbd2cf"}
  *
  * Go source:
  * func GetRootLength(path string) int {
@@ -480,7 +480,7 @@ export function GetRootLength(path: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetDirectoryPath","kind":"func","status":"implemented","sigHash":"5b5dcb5872b251b75b8d6dd153802a7c164b00c8e7f064ddfd565a26796da3a9","bodyHash":"3f10f8f6c1bf510102e5563ec6f7720d8ed86989af3bceb4a0a0663b3788fce4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetDirectoryPath","kind":"func","status":"implemented","sigHash":"5b5dcb5872b251b75b8d6dd153802a7c164b00c8e7f064ddfd565a26796da3a9"}
  *
  * Go source:
  * func GetDirectoryPath(path string) string {
@@ -514,7 +514,7 @@ export function GetDirectoryPath(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.GetDirectoryPath","kind":"method","status":"implemented","sigHash":"e774d02dfce390300776af2a557af9700d0516c289b32d9468c8634496709a7d","bodyHash":"6f0f978c83cf52072c2e356ad8af3c5e1f2b3a880fdfe44d2bc0f09fdc5c8bd9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.GetDirectoryPath","kind":"method","status":"implemented","sigHash":"e774d02dfce390300776af2a557af9700d0516c289b32d9468c8634496709a7d"}
  *
  * Go source:
  * func (p Path) GetDirectoryPath() Path {
@@ -526,7 +526,7 @@ export function Path_GetDirectoryPath(receiver: Path): Path {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathFromPathComponents","kind":"func","status":"implemented","sigHash":"e810e42fd22534b98a230c001734d81d82443786d2ed6a25a8349f9085183dce","bodyHash":"cdc33bb346dccaa249b76555239c7b6a037c6b731f1c99b369abc70f9d3835ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathFromPathComponents","kind":"func","status":"implemented","sigHash":"e810e42fd22534b98a230c001734d81d82443786d2ed6a25a8349f9085183dce"}
  *
  * Go source:
  * func GetPathFromPathComponents(pathComponents []string) string {
@@ -556,7 +556,7 @@ export function GetPathFromPathComponents(pathComponents: GoSlice<string>): stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::NormalizeSlashes","kind":"func","status":"implemented","sigHash":"3b19f70472000984bd76fed7419025c09ecc57ed21b43efeba48e3811e3f4fb8","bodyHash":"cc9cd174124faf5c38d600405aab1bd046683fd87ce2d25674c3803630770717"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::NormalizeSlashes","kind":"func","status":"implemented","sigHash":"3b19f70472000984bd76fed7419025c09ecc57ed21b43efeba48e3811e3f4fb8"}
  *
  * Go source:
  * func NormalizeSlashes(path string) string {
@@ -568,7 +568,7 @@ export function NormalizeSlashes(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::reducePathComponents","kind":"func","status":"implemented","sigHash":"ed6c27852680341a1afb2c43e44a042d9833a8f507a5c3d55d148d587af9cc07","bodyHash":"d5eab229151dc90b33b27b20128a3ee53bf4d5d05a71473d28758fe702d1cea4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::reducePathComponents","kind":"func","status":"implemented","sigHash":"ed6c27852680341a1afb2c43e44a042d9833a8f507a5c3d55d148d587af9cc07"}
  *
  * Go source:
  * func reducePathComponents(components []string) []string {
@@ -628,7 +628,7 @@ export function reducePathComponents(components: GoSlice<string>): GoSlice<strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ResolvePath","kind":"func","status":"implemented","sigHash":"44ae4957981c709649da7a834d4aca574944b47e8d2c05c0892835d3b7c7f443","bodyHash":"9829b3ad082cc004d3e46268020c6d47a7ba77a12d676fc32401d3842b532e46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ResolvePath","kind":"func","status":"implemented","sigHash":"44ae4957981c709649da7a834d4aca574944b47e8d2c05c0892835d3b7c7f443"}
  *
  * Go source:
  * func ResolvePath(path string, paths ...string) string {
@@ -652,7 +652,7 @@ export function ResolvePath(path: string, ...paths: Array<string>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ResolveTripleslashReference","kind":"func","status":"implemented","sigHash":"adb01261e0a68870f388e1117b7d7a21595d602b02c73fa9439b75a989313fde","bodyHash":"4005cfe268feca1d7a1fddb8723bdb75a7d655d4d215c1868bc7d7fdf5048cae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ResolveTripleslashReference","kind":"func","status":"implemented","sigHash":"adb01261e0a68870f388e1117b7d7a21595d602b02c73fa9439b75a989313fde"}
  *
  * Go source:
  * func ResolveTripleslashReference(moduleName string, containingFile string) string {
@@ -672,7 +672,7 @@ export function ResolveTripleslashReference(moduleName: string, containingFile: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedPathComponents","kind":"func","status":"implemented","sigHash":"e4a30b0057868bde1ed9c29443e92bc126ecf378134c4fb9e6c73d6406e4671c","bodyHash":"62adbad8a748ceae4a8810fa88dbe533b273d7977aa95bae625c8410a55cbd51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedPathComponents","kind":"func","status":"implemented","sigHash":"e4a30b0057868bde1ed9c29443e92bc126ecf378134c4fb9e6c73d6406e4671c"}
  *
  * Go source:
  * func GetNormalizedPathComponents(path string, currentDirectory string) []string {
@@ -686,7 +686,7 @@ export function GetNormalizedPathComponents(path: string, currentDirectory: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getNormalizedPathComponentsFromCombined","kind":"func","status":"implemented","sigHash":"592acdd689e57fbc2466ba35c5d142e63509cbc72c5bc020100936da2a36176d","bodyHash":"82b2ab2767a4076a3786ab5c5687356ecd0b7f54ef31c1ec52ae16a4c88cb974"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getNormalizedPathComponentsFromCombined","kind":"func","status":"implemented","sigHash":"592acdd689e57fbc2466ba35c5d142e63509cbc72c5bc020100936da2a36176d"}
  *
  * Go source:
  * func getNormalizedPathComponentsFromCombined(path string) []string {
@@ -773,7 +773,7 @@ export function getNormalizedPathComponentsFromCombined(path: string): GoSlice<s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedAbsolutePathWithoutRoot","kind":"func","status":"implemented","sigHash":"81980ebeb2e122b44237831207ebd0d87eb28c27bdf397dc0fa933b39412cad2","bodyHash":"5174ae1812d529b55090adf45f2b5a608ab03672da8bccbff2425d9b9490d560"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedAbsolutePathWithoutRoot","kind":"func","status":"implemented","sigHash":"81980ebeb2e122b44237831207ebd0d87eb28c27bdf397dc0fa933b39412cad2"}
  *
  * Go source:
  * func GetNormalizedAbsolutePathWithoutRoot(fileName string, currentDirectory string) string {
@@ -789,7 +789,7 @@ export function GetNormalizedAbsolutePathWithoutRoot(fileName: string, currentDi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedAbsolutePath","kind":"func","status":"implemented","sigHash":"4d11dab3da5ccbac23ddab0f9f08090ab7244c51215fc8d6fe1129e74b59a5a3","bodyHash":"3dc0e46d7c57c69291e363227b3c3db662096c4eae6ddda4015692a1bd8493e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetNormalizedAbsolutePath","kind":"func","status":"implemented","sigHash":"4d11dab3da5ccbac23ddab0f9f08090ab7244c51215fc8d6fe1129e74b59a5a3"}
  *
  * Go source:
  * func GetNormalizedAbsolutePath(fileName string, currentDirectory string) string {
@@ -1038,7 +1038,7 @@ export function GetNormalizedAbsolutePath(fileName: string, currentDirectory: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::simpleNormalizePath","kind":"func","status":"implemented","sigHash":"e45377aaf29f102c9642dba21ebb0efc22e34dad629535547f27b27d151d464e","bodyHash":"8719483a56e4d8860df6f5bd02452fa3fb82cd0775ce9ef5774f72a91f8741bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::simpleNormalizePath","kind":"func","status":"implemented","sigHash":"e45377aaf29f102c9642dba21ebb0efc22e34dad629535547f27b27d151d464e"}
  *
  * Go source:
  * func simpleNormalizePath(path string) (string, bool) {
@@ -1074,7 +1074,7 @@ export function simpleNormalizePath(path: string): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::hasRelativePathSegment","kind":"func","status":"implemented","sigHash":"630c8cb829872ef77ac96657875fd771a1d0430239175462c7cebfd45945153c","bodyHash":"e2f5c1b5e746beaf141e247805bc25a0f66f026dc7e12354e826dd8b80985095"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::hasRelativePathSegment","kind":"func","status":"implemented","sigHash":"630c8cb829872ef77ac96657875fd771a1d0430239175462c7cebfd45945153c"}
  *
  * Go source:
  * func hasRelativePathSegment(p string) bool {
@@ -1214,7 +1214,7 @@ export function hasRelativePathSegment(p: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::NormalizePath","kind":"func","status":"implemented","sigHash":"7e39610ff62d2b2c38a791fdb0ef023fe3321276a22df435a5880e5bde769c8c","bodyHash":"bf7267b0875a72c1dee3adc65b8e7068c3cd20b8e7cde35f10fe464637dd7b67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::NormalizePath","kind":"func","status":"implemented","sigHash":"7e39610ff62d2b2c38a791fdb0ef023fe3321276a22df435a5880e5bde769c8c"}
  *
  * Go source:
  * func NormalizePath(path string) string {
@@ -1245,7 +1245,7 @@ export function NormalizePath(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetCanonicalFileName","kind":"func","status":"implemented","sigHash":"e393c766b588520499698913e94ff7791ccb9fff71da476fa19998bda4c69e04","bodyHash":"eaa2fbdb5e708cae47aae73ed6c57d4ddbd59dd55528dc3e01bcc88fbc26eedb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetCanonicalFileName","kind":"func","status":"implemented","sigHash":"e393c766b588520499698913e94ff7791ccb9fff71da476fa19998bda4c69e04"}
  *
  * Go source:
  * func GetCanonicalFileName(fileName string, useCaseSensitiveFileNames bool) string {
@@ -1263,7 +1263,7 @@ export function GetCanonicalFileName(fileName: string, useCaseSensitiveFileNames
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ToFileNameLowerCase","kind":"func","status":"implemented","sigHash":"5bd84289e0a506f344d7b836e2ec7f04013b1b721c2272bf86de836e974d6926","bodyHash":"94acba966b5e3ae5a3c9e0087ea12db69732be4b6f242290b878ab2651613e7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ToFileNameLowerCase","kind":"func","status":"implemented","sigHash":"5bd84289e0a506f344d7b836e2ec7f04013b1b721c2272bf86de836e974d6926"}
  *
  * Go source:
  * func ToFileNameLowerCase(fileName string) string {
@@ -1358,7 +1358,7 @@ export function ToFileNameLowerCase(fileName: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ToPath","kind":"func","status":"implemented","sigHash":"b3c0ac5ada8ba1e74e607eaa537d8a037deb4af011eb65bc14b4c47c3dfe1e8a","bodyHash":"d24d755421a5e764241ae611e18b95a39ec3ce69029c19d5ff7111c59d0033ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ToPath","kind":"func","status":"implemented","sigHash":"b3c0ac5ada8ba1e74e607eaa537d8a037deb4af011eb65bc14b4c47c3dfe1e8a"}
  *
  * Go source:
  * func ToPath(fileName string, basePath string, useCaseSensitiveFileNames bool) Path {
@@ -1382,7 +1382,7 @@ export function ToPath(fileName: string, basePath: string, useCaseSensitiveFileN
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::RemoveTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"df8c8bb60d13c58ac3c95184bd3f58ec47765f2241cda6aee1c4aca91f3cb8d7","bodyHash":"766675e5b0352a26c88acfbc9580b69af6468aa9950c8d1c8ff1e36f492b03f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::RemoveTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"df8c8bb60d13c58ac3c95184bd3f58ec47765f2241cda6aee1c4aca91f3cb8d7"}
  *
  * Go source:
  * func RemoveTrailingDirectorySeparator(path string) string {
@@ -1400,7 +1400,7 @@ export function RemoveTrailingDirectorySeparator(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.RemoveTrailingDirectorySeparator","kind":"method","status":"implemented","sigHash":"3cd4a3caeca29fa522d8bc20332f8fc095cbc82ae91c86eb9b3a8ca01f07c9cc","bodyHash":"136f32cce92c9a000a2a12155ae449a0b538b0660cea6e04847d80789f49ed22"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.RemoveTrailingDirectorySeparator","kind":"method","status":"implemented","sigHash":"3cd4a3caeca29fa522d8bc20332f8fc095cbc82ae91c86eb9b3a8ca01f07c9cc"}
  *
  * Go source:
  * func (p Path) RemoveTrailingDirectorySeparator() Path {
@@ -1412,7 +1412,7 @@ export function Path_RemoveTrailingDirectorySeparator(receiver: Path): Path {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::RemoveTrailingDirectorySeparators","kind":"func","status":"implemented","sigHash":"47b5e01506fe75b92dc31d0b7b2034512c328400dc8bf76822ef57093c2960f5","bodyHash":"fff2c954c4e75a22e0fbcc6637b717bb4da2963593e74f03683f06f45b22895b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::RemoveTrailingDirectorySeparators","kind":"func","status":"implemented","sigHash":"47b5e01506fe75b92dc31d0b7b2034512c328400dc8bf76822ef57093c2960f5"}
  *
  * Go source:
  * func RemoveTrailingDirectorySeparators(path string) string {
@@ -1430,7 +1430,7 @@ export function RemoveTrailingDirectorySeparators(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::EnsureTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"3909b4617c5e93f72ed69074f1d47f18c09a512aa0569a80dbee6d79ba3c1535","bodyHash":"f5d1867b2c6f63538f93997e039f89a850553a4e102112bc2d90f49c3a0f0987"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::EnsureTrailingDirectorySeparator","kind":"func","status":"implemented","sigHash":"3909b4617c5e93f72ed69074f1d47f18c09a512aa0569a80dbee6d79ba3c1535"}
  *
  * Go source:
  * func EnsureTrailingDirectorySeparator(path string) string {
@@ -1450,7 +1450,7 @@ export function EnsureTrailingDirectorySeparator(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.EnsureTrailingDirectorySeparator","kind":"method","status":"implemented","sigHash":"cfbdef82a7efc517d401fbbd003e5a325e067e5211263defa20691fe4c33fe34","bodyHash":"beb46b3acafbf7cd53f402a3cab281d976c51abf5f9eeb357200569bc518eeab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.EnsureTrailingDirectorySeparator","kind":"method","status":"implemented","sigHash":"cfbdef82a7efc517d401fbbd003e5a325e067e5211263defa20691fe4c33fe34"}
  *
  * Go source:
  * func (p Path) EnsureTrailingDirectorySeparator() Path {
@@ -1462,7 +1462,7 @@ export function Path_EnsureTrailingDirectorySeparator(receiver: Path): Path {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathComponentsRelativeTo","kind":"func","status":"implemented","sigHash":"d3a2ac9f60ff4a22ceb9af74c7ced8830d7b5811b277aac213139cbf824a9b02","bodyHash":"5a6d85baece5181371cc1d6fdfd1dc244dee0747baf9e0e0785800d8f65242ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetPathComponentsRelativeTo","kind":"func","status":"implemented","sigHash":"d3a2ac9f60ff4a22ceb9af74c7ced8830d7b5811b277aac213139cbf824a9b02"}
  *
  * Go source:
  * func GetPathComponentsRelativeTo(from string, to string, options ComparePathsOptions) []string {
@@ -1554,7 +1554,7 @@ export function GetPathComponentsRelativeTo(from_: string, to: string, options: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathFromDirectory","kind":"func","status":"implemented","sigHash":"9f5553577ee9b895f01985504d2aaa43b4b10a71a6ffe25086c277ecfc4823c7","bodyHash":"056931acb4753e5e87a39c80220cec80ce275d6b1886be28c620ce455e2d5d99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathFromDirectory","kind":"func","status":"implemented","sigHash":"9f5553577ee9b895f01985504d2aaa43b4b10a71a6ffe25086c277ecfc4823c7"}
  *
  * Go source:
  * func GetRelativePathFromDirectory(fromDirectory string, to string, options ComparePathsOptions) string {
@@ -1574,7 +1574,7 @@ export function GetRelativePathFromDirectory(fromDirectory: string, to: string, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathFromFile","kind":"func","status":"implemented","sigHash":"aeb55ad508e389deacc1899e1ada8de6d6837bda950a5a1c83eb88711a5c3ccd","bodyHash":"94871ec554533fbae222d8d165b0856a7b23b22a2fa38e951f98d0e6d279f5b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathFromFile","kind":"func","status":"implemented","sigHash":"aeb55ad508e389deacc1899e1ada8de6d6837bda950a5a1c83eb88711a5c3ccd"}
  *
  * Go source:
  * func GetRelativePathFromFile(from string, to string, options ComparePathsOptions) string {
@@ -1586,7 +1586,7 @@ export function GetRelativePathFromFile(from_: string, to: string, options: Comp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ConvertToRelativePath","kind":"func","status":"implemented","sigHash":"7d4541b9d2ce9cda038820f2ac248d8789a1e54a9564d09374191a5652731e90","bodyHash":"1f3af44da4245c9ee823206f0227624c3697f466552e0ad651dd3b05412904d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ConvertToRelativePath","kind":"func","status":"implemented","sigHash":"7d4541b9d2ce9cda038820f2ac248d8789a1e54a9564d09374191a5652731e90"}
  *
  * Go source:
  * func ConvertToRelativePath(absoluteOrRelativePath string, options ComparePathsOptions) string {
@@ -1606,7 +1606,7 @@ export function ConvertToRelativePath(absoluteOrRelativePath: string, options: C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathToDirectoryOrUrl","kind":"func","status":"implemented","sigHash":"ef1cb18f03ba0c061edcc7ba7a81c528149657555e5c0d9268c9173887145260","bodyHash":"05a852e97fd16b924e001f6d67ff0fef402b361d3d9c7b82206953dc4f0266d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetRelativePathToDirectoryOrUrl","kind":"func","status":"implemented","sigHash":"ef1cb18f03ba0c061edcc7ba7a81c528149657555e5c0d9268c9173887145260"}
  *
  * Go source:
  * func GetRelativePathToDirectoryOrUrl(directoryPathOrUrl string, relativeOrAbsolutePath string, isAbsolutePathAnUrl bool, options ComparePathsOptions) string {
@@ -1648,7 +1648,7 @@ export function GetRelativePathToDirectoryOrUrl(directoryPathOrUrl: string, rela
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetBaseFileName","kind":"func","status":"implemented","sigHash":"6f5bd5289a3ccc61e47517fa302563516b6243f214d8344472340b3f85a90690","bodyHash":"8657bc5bd773adfe8d8c4f10ab4f0a098925052d1da0d485e6dd79fb9ec94a70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetBaseFileName","kind":"func","status":"implemented","sigHash":"6f5bd5289a3ccc61e47517fa302563516b6243f214d8344472340b3f85a90690"}
  *
  * Go source:
  * func GetBaseFileName(path string) string {
@@ -1682,7 +1682,7 @@ export function GetBaseFileName(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetAnyExtensionFromPath","kind":"func","status":"implemented","sigHash":"09845c4bb572210829a9da4f1c86d2ee47ca76b25c3a63fd38d4621bb0b15537","bodyHash":"be833ccc747e1710b2f9904926a0b7413a33fd3a8d4fc550e77118851e398bbd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetAnyExtensionFromPath","kind":"func","status":"implemented","sigHash":"09845c4bb572210829a9da4f1c86d2ee47ca76b25c3a63fd38d4621bb0b15537"}
  *
  * Go source:
  * func GetAnyExtensionFromPath(path string, extensions []string, ignoreCase bool) string {
@@ -1716,7 +1716,7 @@ export function GetAnyExtensionFromPath(path: string, extensions: GoSlice<string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getAnyExtensionFromPathWorker","kind":"func","status":"implemented","sigHash":"e0a93f066dea3c56624c155cf6f7aa5f4f760aba081a729202000bd2529e72ec","bodyHash":"e8de912987a5290bdebb7e1644516148a63b6ada2e728460af4f3c99c6b83c18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getAnyExtensionFromPathWorker","kind":"func","status":"implemented","sigHash":"e0a93f066dea3c56624c155cf6f7aa5f4f760aba081a729202000bd2529e72ec"}
  *
  * Go source:
  * func getAnyExtensionFromPathWorker(path string, extensions []string, stringEqualityComparer func(a, b string) bool) string {
@@ -1740,7 +1740,7 @@ export function getAnyExtensionFromPathWorker(path: string, extensions: GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::tryGetExtensionFromPath","kind":"func","status":"implemented","sigHash":"8f912eba982dc277454b5d20814ec09ca979808d4cb95ad2ff2ecc4f8df68f7b","bodyHash":"488385a7fa624dc5c2330df583e9b643d9ce0f36b821cef915bdf5f3cca499e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::tryGetExtensionFromPath","kind":"func","status":"implemented","sigHash":"8f912eba982dc277454b5d20814ec09ca979808d4cb95ad2ff2ecc4f8df68f7b"}
  *
  * Go source:
  * func tryGetExtensionFromPath(path string, extension string, stringEqualityComparer func(a, b string) bool) string {
@@ -1770,7 +1770,7 @@ export function tryGetExtensionFromPath(path: string, extension: string, stringE
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::PathIsRelative","kind":"func","status":"implemented","sigHash":"3dec5fb5afca07efec276397fdc8e4ae1b2c7331f997f61c31d92a9e7c207796","bodyHash":"d789e435d6283144b38c0b29f119e5ea7a8b55bdd25b6f0a2f0962861e135005"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::PathIsRelative","kind":"func","status":"implemented","sigHash":"3dec5fb5afca07efec276397fdc8e4ae1b2c7331f997f61c31d92a9e7c207796"}
  *
  * Go source:
  * func PathIsRelative(path string) bool {
@@ -1810,7 +1810,7 @@ export function PathIsRelative(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::EnsurePathIsNonModuleName","kind":"func","status":"implemented","sigHash":"beb07a45ca12ed9281725247063dd51e901c5cb4f974b5bd69f4bd16ca6ec028","bodyHash":"c0d7171c92ed0f710191471a9634b849d0152a53c618a4dfe92638eeba5f0e0e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::EnsurePathIsNonModuleName","kind":"func","status":"implemented","sigHash":"beb07a45ca12ed9281725247063dd51e901c5cb4f974b5bd69f4bd16ca6ec028"}
  *
  * Go source:
  * func EnsurePathIsNonModuleName(path string) string {
@@ -1828,7 +1828,7 @@ export function EnsurePathIsNonModuleName(path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsExternalModuleNameRelative","kind":"func","status":"implemented","sigHash":"20fc6a76f2efe330023e5482cea054c3ad8e1ebd6988ff4e7b13370d8a30a6f8","bodyHash":"6d163dad6eb2b74e7b6e16c5c04f4a89d9f9bf6e7705150e2abc8b324ddd935d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::IsExternalModuleNameRelative","kind":"func","status":"implemented","sigHash":"20fc6a76f2efe330023e5482cea054c3ad8e1ebd6988ff4e7b13370d8a30a6f8"}
  *
  * Go source:
  * func IsExternalModuleNameRelative(moduleName string) bool {
@@ -1846,7 +1846,7 @@ export function IsExternalModuleNameRelative(moduleName: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::type::ComparePathsOptions","kind":"type","status":"implemented","sigHash":"f1bee15ad327306037dcddc7a9d7f1b31a541df2637aba63470009cf663691fa","bodyHash":"d24dce2e69eb5d8b9dd83ce162ba3d7f2094b68dbc1657227df587eb5b9c94a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::type::ComparePathsOptions","kind":"type","status":"implemented","sigHash":"f1bee15ad327306037dcddc7a9d7f1b31a541df2637aba63470009cf663691fa"}
  *
  * Go source:
  * ComparePathsOptions struct {
@@ -1860,7 +1860,7 @@ export interface ComparePathsOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::ComparePathsOptions.GetComparer","kind":"method","status":"implemented","sigHash":"9ad42231c770e992cc56b1fc75e34a72649da194d7d2f672ec6eb1f7d2a72f38","bodyHash":"aa3bd9b99f999167b1a4e11af2c036931161538d73fa75815c3879bb899b1552"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::ComparePathsOptions.GetComparer","kind":"method","status":"implemented","sigHash":"9ad42231c770e992cc56b1fc75e34a72649da194d7d2f672ec6eb1f7d2a72f38"}
  *
  * Go source:
  * func (o ComparePathsOptions) GetComparer() func(a, b string) int {
@@ -1872,7 +1872,7 @@ export function ComparePathsOptions_GetComparer(receiver: ComparePathsOptions): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::ComparePathsOptions.getEqualityComparer","kind":"method","status":"implemented","sigHash":"f39b333ff1d28a5c02c18d721897e15d0382ff94f7dc08195c47c5ae0c01558d","bodyHash":"5e87bba8d7e3dff489795dba2b435c95542e107605499c9882d38e9a4bcf5bf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::ComparePathsOptions.getEqualityComparer","kind":"method","status":"implemented","sigHash":"f39b333ff1d28a5c02c18d721897e15d0382ff94f7dc08195c47c5ae0c01558d"}
  *
  * Go source:
  * func (o ComparePathsOptions) getEqualityComparer() func(a, b string) bool {
@@ -1884,7 +1884,7 @@ export function ComparePathsOptions_getEqualityComparer(receiver: ComparePathsOp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePaths","kind":"func","status":"implemented","sigHash":"f86450b607d533b0aed5dff222cfd4881f09bfe45045abeb76b207ef1be052c3","bodyHash":"152369f0cf7d90b050148734c60fe3c1ec8a9d8d3c18598d58f778ca947cba38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePaths","kind":"func","status":"implemented","sigHash":"f86450b607d533b0aed5dff222cfd4881f09bfe45045abeb76b207ef1be052c3"}
  *
  * Go source:
  * func ComparePaths(a string, b string, options ComparePathsOptions) int {
@@ -1978,7 +1978,7 @@ export function ComparePaths(a: string, b: string, options: ComparePathsOptions)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePathsCaseSensitive","kind":"func","status":"implemented","sigHash":"1e9da1b25ea5d46fc465c7ce2e4e85c31c7ea30b4e2fcce02d76a5317f5e5d4e","bodyHash":"be512da97e9a42d8dafd8e0e21bd9a3847cab9d2765dc4bbab5a72f29fd7aec2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePathsCaseSensitive","kind":"func","status":"implemented","sigHash":"1e9da1b25ea5d46fc465c7ce2e4e85c31c7ea30b4e2fcce02d76a5317f5e5d4e"}
  *
  * Go source:
  * func ComparePathsCaseSensitive(a string, b string, currentDirectory string) int {
@@ -1990,7 +1990,7 @@ export function ComparePathsCaseSensitive(a: string, b: string, currentDirectory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePathsCaseInsensitive","kind":"func","status":"implemented","sigHash":"9ff2c6519a08a03df3d83327a1d7cfa04b2982803d2aadb32eb2a76e941a9d1e","bodyHash":"aae3d3d3116edf9a6a217678cbde3293fda3f7a364ee632fa7d01d326c638166"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ComparePathsCaseInsensitive","kind":"func","status":"implemented","sigHash":"9ff2c6519a08a03df3d83327a1d7cfa04b2982803d2aadb32eb2a76e941a9d1e"}
  *
  * Go source:
  * func ComparePathsCaseInsensitive(a string, b string, currentDirectory string) int {
@@ -2002,7 +2002,7 @@ export function ComparePathsCaseInsensitive(a: string, b: string, currentDirecto
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ContainsPath","kind":"func","status":"implemented","sigHash":"18c7e3ac770f583a89c70218590949a1025ee02b40fb0ab6a616f0212e7c5589","bodyHash":"9c92556bb2d78104c343a48d693da8c9edd165129c3f057929691a93ff51460b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ContainsPath","kind":"func","status":"implemented","sigHash":"18c7e3ac770f583a89c70218590949a1025ee02b40fb0ab6a616f0212e7c5589"}
  *
  * Go source:
  * func ContainsPath(parent string, child string, options ComparePathsOptions) bool {
@@ -2069,7 +2069,7 @@ export function ContainsPath(parent: string, child: string, options: ComparePath
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.ContainsPath","kind":"method","status":"implemented","sigHash":"10a92167bfc70f8ac36f78defa1bcd7d83262b4ff1eb6577a5a7b28a78b12753","bodyHash":"41986d57b69c234608f4b76bda79d4e8c3d74fbd1fedcad86901ddda66986cfc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::method::Path.ContainsPath","kind":"method","status":"implemented","sigHash":"10a92167bfc70f8ac36f78defa1bcd7d83262b4ff1eb6577a5a7b28a78b12753"}
  *
  * Go source:
  * func (p Path) ContainsPath(child Path) bool {
@@ -2087,7 +2087,7 @@ export function Path_ContainsPath(receiver: Path, child: Path): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::FileExtensionIs","kind":"func","status":"implemented","sigHash":"52c8aa096f7d604ae5c3981388b1a109a833a3c9a2a6db5ca46cb7001db2cd91","bodyHash":"c6cd19dae0a3f5c1c3cb4c84a1eac8a58c74bf312a13034e965dab809b8a4269"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::FileExtensionIs","kind":"func","status":"implemented","sigHash":"52c8aa096f7d604ae5c3981388b1a109a833a3c9a2a6db5ca46cb7001db2cd91"}
  *
  * Go source:
  * func FileExtensionIs(path string, extension string) bool {
@@ -2099,7 +2099,7 @@ export function FileExtensionIs(path: string, extension: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryStoppingAtGlobalCache","kind":"func","status":"implemented","sigHash":"0356b04f3dd886a51f1660fe51149012eb4b73b4f58bb64b0a92961be4fab077","bodyHash":"d46ca6690f5d18214dba0c553ee6024f57ff84a44561af9ef15014a6a7ec3340"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryStoppingAtGlobalCache","kind":"func","status":"implemented","sigHash":"0356b04f3dd886a51f1660fe51149012eb4b73b4f58bb64b0a92961be4fab077"}
  *
  * Go source:
  * func ForEachAncestorDirectoryStoppingAtGlobalCache[T any](
@@ -2129,7 +2129,7 @@ export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLoca
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectory","kind":"func","status":"implemented","sigHash":"6c00ad2499515e2ef162ee822663fd2c811471a883b248d5d0d4bc804bc08aee","bodyHash":"0b47593ec6332f51a66c5e493570a6d67a531eacd66e277ae5cd0e5ef0aa8dd2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectory","kind":"func","status":"implemented","sigHash":"6c00ad2499515e2ef162ee822663fd2c811471a883b248d5d0d4bc804bc08aee"}
  *
  * Go source:
  * func ForEachAncestorDirectory[T any](directory string, callback func(directory string) (result T, stop bool)) (result T, ok bool) {
@@ -2167,7 +2167,7 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryPath","kind":"func","status":"implemented","sigHash":"4cec0fe3612f19afa164ee3ebd4ba0148e63660e69929d354ae5742cf2cf57d5","bodyHash":"dc2d231bacd797549bf4df38ddb12a2d17b0ed4dd4608f5d775594a4f1c34b9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::ForEachAncestorDirectoryPath","kind":"func","status":"implemented","sigHash":"4cec0fe3612f19afa164ee3ebd4ba0148e63660e69929d354ae5742cf2cf57d5"}
  *
  * Go source:
  * func ForEachAncestorDirectoryPath[T any](directory Path, callback func(directory Path) (result T, stop bool)) (result T, ok bool) {
@@ -2183,7 +2183,7 @@ export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (dire
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::HasExtension","kind":"func","status":"implemented","sigHash":"527600f113b3dbde28e74316227b595ea53b22454a346a7880a866083ca9e57f","bodyHash":"f3c54d35d9b46743683c24cf45aad32090cab01ad60a4b5327dc0ba35322815e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::HasExtension","kind":"func","status":"implemented","sigHash":"527600f113b3dbde28e74316227b595ea53b22454a346a7880a866083ca9e57f"}
  *
  * Go source:
  * func HasExtension(fileName string) bool {
@@ -2195,7 +2195,7 @@ export function HasExtension(fileName: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::SplitVolumePath","kind":"func","status":"implemented","sigHash":"9e788b75c992493bb053f5e1af0b1541c6cef04aa35c5669464e5b530912fd3d","bodyHash":"99b2964acc363f3bb2df44ee7ac61649613e6f0f396b597016e5926000097bf1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::SplitVolumePath","kind":"func","status":"implemented","sigHash":"9e788b75c992493bb053f5e1af0b1541c6cef04aa35c5669464e5b530912fd3d"}
  *
  * Go source:
  * func SplitVolumePath(path string) (volume string, rest string, ok bool) {
@@ -2213,7 +2213,7 @@ export function SplitVolumePath(path: string): [string, string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetCommonParents","kind":"func","status":"implemented","sigHash":"696b9ed205e7cf2a768c3a21cc6c5387bdee9f363fbfbb38daf36837f83a3d27","bodyHash":"9cd23a80ec2864bfddbbd2c711ad6a10605b68606ce965ac129c7089c483f462"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::GetCommonParents","kind":"func","status":"implemented","sigHash":"696b9ed205e7cf2a768c3a21cc6c5387bdee9f363fbfbb38daf36837f83a3d27"}
  *
  * Go source:
  * func GetCommonParents(
@@ -2292,7 +2292,7 @@ export function GetCommonParents(paths: GoSlice<string>, minComponents: int, get
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getCommonParentsWorker","kind":"func","status":"implemented","sigHash":"bf649fb8c7ac6e4ebf25b631d9c5c672e67748af4b4e7b8a0a8d64da62585e16","bodyHash":"8678e7842e09dfd07e6e8a44db995a3b077080ab0e6b4f14f5d212e4108ae5f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::getCommonParentsWorker","kind":"func","status":"implemented","sigHash":"bf649fb8c7ac6e4ebf25b631d9c5c672e67748af4b4e7b8a0a8d64da62585e16"}
  *
  * Go source:
  * func getCommonParentsWorker(componentGroups [][]string, minComponents int, options ComparePathsOptions) [][]string {
@@ -2410,7 +2410,7 @@ export function getCommonParentsWorker(componentGroups: GoSlice<GoSlice<string>>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::StartsWithDirectory","kind":"func","status":"implemented","sigHash":"15f26c08b4ca94c86f21f1981345179f0365fff0a9d8fd52a8075dd8fa2e6fdf","bodyHash":"8af4657e642b48dc223e38579ae61993dcf0576de0ab7502fcda61d4b94988b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::StartsWithDirectory","kind":"func","status":"implemented","sigHash":"15f26c08b4ca94c86f21f1981345179f0365fff0a9d8fd52a8075dd8fa2e6fdf"}
  *
  * Go source:
  * func StartsWithDirectory(fileName string, directoryName string, useCaseSensitiveFileNames bool) bool {
@@ -2441,7 +2441,7 @@ export function StartsWithDirectory(fileName: string, directoryName: string, use
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::CompareNumberOfDirectorySeparators","kind":"func","status":"implemented","sigHash":"f9dbd5a56140131ff21fa4b299d431889e849ea166fa118ed50aabd48dcba575","bodyHash":"54d538fdcad023f7f3b28590b7d2fa22171acd83f115cc2e11656fd69d1ba036"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/path.go::func::CompareNumberOfDirectorySeparators","kind":"func","status":"implemented","sigHash":"f9dbd5a56140131ff21fa4b299d431889e849ea166fa118ed50aabd48dcba575"}
  *
  * Go source:
  * func CompareNumberOfDirectorySeparators(path1, path2 string) int {

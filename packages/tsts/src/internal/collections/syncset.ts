@@ -4,7 +4,7 @@ import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151","bodyHash":"0e2e94afb12a20e228869161c6096511665888582db035691c74d3203f2f7238"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151"}
  *
  * Go source:
  * SyncSet[T comparable] struct {
@@ -16,7 +16,7 @@ export interface SyncSet<T extends GoComparable = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Has","kind":"method","status":"implemented","sigHash":"bda102f39a3640ceaf05f8aa32bb85c92ab9913ffd0914ca831c6bc00f2ca693","bodyHash":"43a64d33f845113bde9869f3cb5264c21a7464cf57847a260efe38a898f87af4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Has","kind":"method","status":"implemented","sigHash":"bda102f39a3640ceaf05f8aa32bb85c92ab9913ffd0914ca831c6bc00f2ca693"}
  *
  * Go source:
  * func (s *SyncSet[T]) Has(key T) bool {
@@ -30,7 +30,7 @@ export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Add","kind":"method","status":"implemented","sigHash":"17f2afbd26952225a4933765a22786cf85da3de557aa0e4effac67331f0fb0f7","bodyHash":"1a6f3e99f63b227da9e1d40174ece4601a37b7935e2421050ce678cc087cc4c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Add","kind":"method","status":"implemented","sigHash":"17f2afbd26952225a4933765a22786cf85da3de557aa0e4effac67331f0fb0f7"}
  *
  * Go source:
  * func (s *SyncSet[T]) Add(key T) {
@@ -42,7 +42,7 @@ export function SyncSet_Add<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.AddIfAbsent","kind":"method","status":"implemented","sigHash":"bb712274c5a0ac98bda050eecb8986c92464f878ee34bb7ca5c95040b0a1a1f4","bodyHash":"2a22f04d30de34881f69ef9894de73cd377271bc769e36a7cb52ea76f2e8be1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.AddIfAbsent","kind":"method","status":"implemented","sigHash":"bb712274c5a0ac98bda050eecb8986c92464f878ee34bb7ca5c95040b0a1a1f4"}
  *
  * Go source:
  * func (s *SyncSet[T]) AddIfAbsent(key T) bool {
@@ -56,7 +56,7 @@ export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Sync
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Delete","kind":"method","status":"implemented","sigHash":"0ba5a3353c582a1a670608fa549418d2bb31ec8fd3c886a1a4e72b77a65450db","bodyHash":"be5624217c4f9cafcb0efb1663f10cd9144529b9afff9592d78d6477be01ef4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Delete","kind":"method","status":"implemented","sigHash":"0ba5a3353c582a1a670608fa549418d2bb31ec8fd3c886a1a4e72b77a65450db"}
  *
  * Go source:
  * func (s *SyncSet[T]) Delete(key T) {
@@ -68,7 +68,7 @@ export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Range","kind":"method","status":"implemented","sigHash":"c9ffe2a2be8783687ef174652bf53f406b7cde65508c366a2b2fe704bd05ad68","bodyHash":"564acaf0c946098fde1b3190b0caccb55210755b6e8cf9605198295cee20afb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Range","kind":"method","status":"implemented","sigHash":"c9ffe2a2be8783687ef174652bf53f406b7cde65508c366a2b2fe704bd05ad68"}
  *
  * Go source:
  * func (s *SyncSet[T]) Range(fn func(key T) bool) {
@@ -84,7 +84,7 @@ export function SyncSet_Range<T extends GoComparable>(receiver: GoPtr<SyncSet<T>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Size","kind":"method","status":"implemented","sigHash":"1dd97f7397ceec060d9f095862765d569473855c18b14f26007b992f4abc89a6","bodyHash":"0d358c8f3ea07aafac27913dce6ba92e02952726116846594385a2c62dbedbdf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Size","kind":"method","status":"implemented","sigHash":"1dd97f7397ceec060d9f095862765d569473855c18b14f26007b992f4abc89a6"}
  *
  * Go source:
  * func (s *SyncSet[T]) Size() int {
@@ -106,7 +106,7 @@ export function SyncSet_Size<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.IsEmpty","kind":"method","status":"implemented","sigHash":"f6831d7dcf2b8e4cbfd13799246fa7f4708b9c74d51b2b515308fc05e3fb1a4c","bodyHash":"67212937a14947e8ccde60a4bfe8eefc341fa5664d9770fdd245996e79bda4fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.IsEmpty","kind":"method","status":"implemented","sigHash":"f6831d7dcf2b8e4cbfd13799246fa7f4708b9c74d51b2b515308fc05e3fb1a4c"}
  *
  * Go source:
  * func (s *SyncSet[T]) IsEmpty() bool {
@@ -124,7 +124,7 @@ export function SyncSet_IsEmpty<T extends GoComparable>(receiver: GoPtr<SyncSet<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.ToSlice","kind":"method","status":"implemented","sigHash":"95240efbe0e99cd342b5207fb7d850b032d4a6b5b142fc742ab56451a7805b83","bodyHash":"e8091298d26059431730ddb9627f4049ae5589ee4cc00374f0bc94d57f58641f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.ToSlice","kind":"method","status":"implemented","sigHash":"95240efbe0e99cd342b5207fb7d850b032d4a6b5b142fc742ab56451a7805b83"}
  *
  * Go source:
  * func (s *SyncSet[T]) ToSlice() []T {
@@ -147,7 +147,7 @@ export function SyncSet_ToSlice<T extends GoComparable>(receiver: GoPtr<SyncSet<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Keys","kind":"method","status":"implemented","sigHash":"b069d6abff87cf29e964fd68e251ba7f99107b29f09a0c4e0aba17289c162bc3","bodyHash":"89585e9785569f8e68ec631b5ba70f95a74efd35dc9604fa7267c36dfe0109de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Keys","kind":"method","status":"implemented","sigHash":"b069d6abff87cf29e964fd68e251ba7f99107b29f09a0c4e0aba17289c162bc3"}
  *
  * Go source:
  * func (s *SyncSet[T]) Keys() iter.Seq[T] {

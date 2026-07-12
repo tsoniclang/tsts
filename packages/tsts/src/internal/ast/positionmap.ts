@@ -9,7 +9,7 @@ const byteLen = StringByteLen;
 const byteAt = StringByteAt;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::type::PositionMap","kind":"type","status":"implemented","sigHash":"af42c60e448ed6f9beb9d484a182432f29f3f0756d741f9de9565477889ba3bf","bodyHash":"93e2eea0070b4da82e80eaad61950136ca088819c05d8f39d199cb5ca6474979"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::type::PositionMap","kind":"type","status":"implemented","sigHash":"af42c60e448ed6f9beb9d484a182432f29f3f0756d741f9de9565477889ba3bf"}
  *
  * Go source:
  * PositionMap struct {
@@ -33,7 +33,7 @@ export interface PositionMap {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::type::positionMapEntry","kind":"type","status":"implemented","sigHash":"54a3625843f1b8e8b0c381afea3533069bf08a1cc4d0cb93178a896bf7d482b6","bodyHash":"142b515a4f15e94c4a1a76c2601bceb3f9a7dd5a17ccd212a99d9329600bd0bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::type::positionMapEntry","kind":"type","status":"implemented","sigHash":"54a3625843f1b8e8b0c381afea3533069bf08a1cc4d0cb93178a896bf7d482b6"}
  *
  * Go source:
  * positionMapEntry struct {
@@ -47,7 +47,7 @@ export interface positionMapEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::func::ComputePositionMap","kind":"func","status":"implemented","sigHash":"fff86f76341e89022ab461dc09de223a2c9e92843e134094017d124b9fd2c221","bodyHash":"0e718a3bcab5bea0b8a36e8348be3f3195be41f2ee72b897913a3f85a5e9ef15"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::func::ComputePositionMap","kind":"func","status":"implemented","sigHash":"fff86f76341e89022ab461dc09de223a2c9e92843e134094017d124b9fd2c221"}
  *
  * Go source:
  * func ComputePositionMap(text string) *PositionMap {
@@ -100,7 +100,7 @@ export function ComputePositionMap(text: string): GoPtr<PositionMap> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.IsAsciiOnly","kind":"method","status":"implemented","sigHash":"3ca6e7a255b0bda5f4a4905f20447b628326a55271f6b6aae5309186ffff9786","bodyHash":"964995c6fd9041f3f12f53d1bd679a566c9da369b54095bd9136c5f16543b56f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.IsAsciiOnly","kind":"method","status":"implemented","sigHash":"3ca6e7a255b0bda5f4a4905f20447b628326a55271f6b6aae5309186ffff9786"}
  *
  * Go source:
  * func (pm *PositionMap) IsAsciiOnly() bool {
@@ -112,7 +112,7 @@ export function PositionMap_IsAsciiOnly(receiver: GoPtr<PositionMap>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.UTF8ToUTF16","kind":"method","status":"implemented","sigHash":"ec6d98013f62f40cfe05a12d91f9b5db522abda6a71167adee816ba96db7897c","bodyHash":"1d8b1ed4fb218a77f02494dff26037bfeeb7c760c22f21818ed22f621bff04eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.UTF8ToUTF16","kind":"method","status":"implemented","sigHash":"ec6d98013f62f40cfe05a12d91f9b5db522abda6a71167adee816ba96db7897c"}
  *
  * Go source:
  * func (pm *PositionMap) UTF8ToUTF16(utf8Offset int) int {
@@ -159,7 +159,7 @@ export function PositionMap_UTF8ToUTF16(receiver: GoPtr<PositionMap>, utf8Offset
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.UTF16ToUTF8","kind":"method","status":"implemented","sigHash":"8d4c98ac64241c4ce3e00e20529e6736fdb1f59747a8972425bf0d9a0d8726ce","bodyHash":"20de00b26bea07006a2628c1d0ebba09e8c0015880626cd464f33fd382ac26dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/positionmap.go::method::PositionMap.UTF16ToUTF8","kind":"method","status":"implemented","sigHash":"8d4c98ac64241c4ce3e00e20529e6736fdb1f59747a8972425bf0d9a0d8726ce"}
  *
  * Go source:
  * func (pm *PositionMap) UTF16ToUTF8(utf16Offset int) int {

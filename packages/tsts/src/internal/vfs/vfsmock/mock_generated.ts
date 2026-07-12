@@ -5,7 +5,7 @@ import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"becd17795858d6bc1ce786ea719bd003a78794f0eae151fd48e00e3959292ac1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ vfs.FS = &FSMock{}
@@ -30,7 +30,7 @@ export function FSMock_as_vfs_FS(receiver: GoPtr<FSMock>): FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::type::FSMock","kind":"type","status":"implemented","sigHash":"63137d3b9716b0d6541d9642ae022defa81415558200782dbaf65612ae45fa6b","bodyHash":"237f4b01b75bf87a26cb7cd26c4f96e0d6a5e3cb5190d95e3b50d7452063626d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::type::FSMock","kind":"type","status":"implemented","sigHash":"63137d3b9716b0d6541d9642ae022defa81415558200782dbaf65612ae45fa6b"}
  *
  * Go source:
  * FSMock struct {
@@ -183,7 +183,7 @@ export interface FSMock {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.AppendFile","kind":"method","status":"implemented","sigHash":"6f7dc2f4b2e2f1848a0dce08fbaf347d190e09b3ca6758b2c9180e3684ec7acb","bodyHash":"9b23502a919c7d7a1441d1af6ae98df7a1bb7938c57367deb85c804755d92ac7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.AppendFile","kind":"method","status":"implemented","sigHash":"6f7dc2f4b2e2f1848a0dce08fbaf347d190e09b3ca6758b2c9180e3684ec7acb"}
  *
  * Go source:
  * func (mock *FSMock) AppendFile(path string, data string) error {
@@ -215,7 +215,7 @@ export function FSMock_AppendFile(receiver: GoPtr<FSMock>, path: string, data: s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.AppendFileCalls","kind":"method","status":"implemented","sigHash":"2d41361f157f4fe180ce5c769fc9de61d4cf296417c68bed3ab9709ed975c177","bodyHash":"c0fde1071833ff0cc4802a35a596f04ab77e92e9a03dd49af97d056217e08b7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.AppendFileCalls","kind":"method","status":"implemented","sigHash":"2d41361f157f4fe180ce5c769fc9de61d4cf296417c68bed3ab9709ed975c177"}
  *
  * Go source:
  * func (mock *FSMock) AppendFileCalls() []struct {
@@ -240,7 +240,7 @@ export function FSMock_AppendFileCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Chtimes","kind":"method","status":"implemented","sigHash":"390bfea9730b32baf05187df677d0cc482a803dbd1629574e39f879f52b1ab41","bodyHash":"ee1e5359aee23984454c9b25de23e1bcde9c0caba4ec22b4b3c4f37c874eaeab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Chtimes","kind":"method","status":"implemented","sigHash":"390bfea9730b32baf05187df677d0cc482a803dbd1629574e39f879f52b1ab41"}
  *
  * Go source:
  * func (mock *FSMock) Chtimes(path string, aTime time.Time, mTime time.Time) error {
@@ -274,7 +274,7 @@ export function FSMock_Chtimes(receiver: GoPtr<FSMock>, path: string, aTime: Tim
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ChtimesCalls","kind":"method","status":"implemented","sigHash":"5fb60baa29bbf5e4c25e447c4b4ef0cd199c304fdafc36ac6a53161ff5391c1c","bodyHash":"45262c7a0afca14aa2c5153b0bf76f0dcfb04afe5e3aeaa0a5900a25d10e0ce6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ChtimesCalls","kind":"method","status":"implemented","sigHash":"5fb60baa29bbf5e4c25e447c4b4ef0cd199c304fdafc36ac6a53161ff5391c1c"}
  *
  * Go source:
  * func (mock *FSMock) ChtimesCalls() []struct {
@@ -301,7 +301,7 @@ export function FSMock_ChtimesCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.DirectoryExists","kind":"method","status":"implemented","sigHash":"bfd1e2c5f2169f22aa160088546dfa2ba939443f98b5f01e71e1228759e9bbfb","bodyHash":"1dee7f3cbcdd9ca6499f101e3a9d938cf2fb05b83485d642deb51897538ca656"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.DirectoryExists","kind":"method","status":"implemented","sigHash":"bfd1e2c5f2169f22aa160088546dfa2ba939443f98b5f01e71e1228759e9bbfb"}
  *
  * Go source:
  * func (mock *FSMock) DirectoryExists(path string) bool {
@@ -331,7 +331,7 @@ export function FSMock_DirectoryExists(receiver: GoPtr<FSMock>, path: string): b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.DirectoryExistsCalls","kind":"method","status":"implemented","sigHash":"6e193b95c8bf4ff5cc4a0749e1b738775e97f2c25ae7c5e160a0345ad29330f5","bodyHash":"781668a0ad042a330b3c697e537c71639fdbf061970b7454c56ff1d80f75c74f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.DirectoryExistsCalls","kind":"method","status":"implemented","sigHash":"6e193b95c8bf4ff5cc4a0749e1b738775e97f2c25ae7c5e160a0345ad29330f5"}
  *
  * Go source:
  * func (mock *FSMock) DirectoryExistsCalls() []struct {
@@ -354,7 +354,7 @@ export function FSMock_DirectoryExistsCalls(receiver: GoPtr<FSMock>): GoSlice<{ 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.FileExists","kind":"method","status":"implemented","sigHash":"60a9aae61ec522ab72621fffa07afb3393a039c936c658b8f275fd368f3224ed","bodyHash":"569320242e0fad2db8ba7736406e8220e94a14acd791946a764ec22d3e7ad1a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.FileExists","kind":"method","status":"implemented","sigHash":"60a9aae61ec522ab72621fffa07afb3393a039c936c658b8f275fd368f3224ed"}
  *
  * Go source:
  * func (mock *FSMock) FileExists(path string) bool {
@@ -384,7 +384,7 @@ export function FSMock_FileExists(receiver: GoPtr<FSMock>, path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.FileExistsCalls","kind":"method","status":"implemented","sigHash":"5f2e868462bcead67726781ce2bbdc66b160f972b9ef2df9f7d6e85694adbe71","bodyHash":"879beb662ad58b10ded6717b68cdeee43621ba933bb0da311d8aee336d5086ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.FileExistsCalls","kind":"method","status":"implemented","sigHash":"5f2e868462bcead67726781ce2bbdc66b160f972b9ef2df9f7d6e85694adbe71"}
  *
  * Go source:
  * func (mock *FSMock) FileExistsCalls() []struct {
@@ -407,7 +407,7 @@ export function FSMock_FileExistsCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"b36270b53d87e0f6919f1c0e998ea015299849bacc24f0136ad000fd574c0ac7","bodyHash":"015a80a2aa861c85df2ff28470ef4b7cf25ba4b998393a8d90657641bc26a6f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"b36270b53d87e0f6919f1c0e998ea015299849bacc24f0136ad000fd574c0ac7"}
  *
  * Go source:
  * func (mock *FSMock) GetAccessibleEntries(path string) vfs.Entries {
@@ -437,7 +437,7 @@ export function FSMock_GetAccessibleEntries(receiver: GoPtr<FSMock>, path: strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.GetAccessibleEntriesCalls","kind":"method","status":"implemented","sigHash":"82ce85a3dc58de816679567740235d7ccaf079d3f1fd47b7211fa216089558bb","bodyHash":"a8adbdd3629dffd745a6cd380cd5096232de9ee581816a55d8c82c2a90adf739"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.GetAccessibleEntriesCalls","kind":"method","status":"implemented","sigHash":"82ce85a3dc58de816679567740235d7ccaf079d3f1fd47b7211fa216089558bb"}
  *
  * Go source:
  * func (mock *FSMock) GetAccessibleEntriesCalls() []struct {
@@ -460,7 +460,7 @@ export function FSMock_GetAccessibleEntriesCalls(receiver: GoPtr<FSMock>): GoSli
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ReadFile","kind":"method","status":"implemented","sigHash":"8118c5b65aae90f59d829de6f6d5bd7be2cde3fdcb87f87d883889b45f49d3e9","bodyHash":"c4e0403507ca3f1a30fa3efb78476504358add1e83c945cc9db85de5e4cc48c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ReadFile","kind":"method","status":"implemented","sigHash":"8118c5b65aae90f59d829de6f6d5bd7be2cde3fdcb87f87d883889b45f49d3e9"}
  *
  * Go source:
  * func (mock *FSMock) ReadFile(path string) (string, bool) {
@@ -490,7 +490,7 @@ export function FSMock_ReadFile(receiver: GoPtr<FSMock>, path: string): [string,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ReadFileCalls","kind":"method","status":"implemented","sigHash":"4d72997a5687dc85b96bac9ee81b4c77c109709a4de4029391d2fc29ca1c36c8","bodyHash":"8959c2b83c074218852eed76e8f3069142a39d0fa097ba4a8c53bc58c5d163e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.ReadFileCalls","kind":"method","status":"implemented","sigHash":"4d72997a5687dc85b96bac9ee81b4c77c109709a4de4029391d2fc29ca1c36c8"}
  *
  * Go source:
  * func (mock *FSMock) ReadFileCalls() []struct {
@@ -513,7 +513,7 @@ export function FSMock_ReadFileCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Realpath","kind":"method","status":"implemented","sigHash":"660c0a69b1afd0a06e2656cef01cbcc502cf924e06a8b48b65ac278d077afc50","bodyHash":"dfd18388ea27c411de042385e3a8570a2f243d73ff6cc3f9a79e4b6d17368e53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Realpath","kind":"method","status":"implemented","sigHash":"660c0a69b1afd0a06e2656cef01cbcc502cf924e06a8b48b65ac278d077afc50"}
  *
  * Go source:
  * func (mock *FSMock) Realpath(path string) string {
@@ -543,7 +543,7 @@ export function FSMock_Realpath(receiver: GoPtr<FSMock>, path: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.RealpathCalls","kind":"method","status":"implemented","sigHash":"bcda6da60b683c088d7245bc9dcdc13fe74480d45bb4c8262a1f2b0fc7a07d64","bodyHash":"16947bc596817dffe2e379c98c913b64e3aa879d48e65563b873d7bd775d84b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.RealpathCalls","kind":"method","status":"implemented","sigHash":"bcda6da60b683c088d7245bc9dcdc13fe74480d45bb4c8262a1f2b0fc7a07d64"}
  *
  * Go source:
  * func (mock *FSMock) RealpathCalls() []struct {
@@ -566,7 +566,7 @@ export function FSMock_RealpathCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Remove","kind":"method","status":"implemented","sigHash":"eaad7d0fc0be5eb8ccaaecf0db1539bc4b36833262584b98bd3d2ebf4da51d7d","bodyHash":"b0ac153d06215725ea3e0b2fd4397a807de68d419c3db0da58e9a4b447baaad5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Remove","kind":"method","status":"implemented","sigHash":"eaad7d0fc0be5eb8ccaaecf0db1539bc4b36833262584b98bd3d2ebf4da51d7d"}
  *
  * Go source:
  * func (mock *FSMock) Remove(path string) error {
@@ -596,7 +596,7 @@ export function FSMock_Remove(receiver: GoPtr<FSMock>, path: string): GoError {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.RemoveCalls","kind":"method","status":"implemented","sigHash":"4704db2461f7902a54a6bf5ad5f5a9c99c8ed44f018792c2272e8bd2ae706bdc","bodyHash":"c54fbbe8af6a19aec138196b74d4327175707c1243975bbe2f613f7c65b9afb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.RemoveCalls","kind":"method","status":"implemented","sigHash":"4704db2461f7902a54a6bf5ad5f5a9c99c8ed44f018792c2272e8bd2ae706bdc"}
  *
  * Go source:
  * func (mock *FSMock) RemoveCalls() []struct {
@@ -619,7 +619,7 @@ export function FSMock_RemoveCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Stat","kind":"method","status":"implemented","sigHash":"711524571f2009d8ddaddbc7dfc43664f7a42ddf29a45b054235302b83240218","bodyHash":"11fef6baadc93e9ea6758f57abbfda27e94e32869c0d8b9d856548d677d0c6ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.Stat","kind":"method","status":"implemented","sigHash":"711524571f2009d8ddaddbc7dfc43664f7a42ddf29a45b054235302b83240218"}
  *
  * Go source:
  * func (mock *FSMock) Stat(path string) vfs.FileInfo {
@@ -649,7 +649,7 @@ export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): GoPtr<FileIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.StatCalls","kind":"method","status":"implemented","sigHash":"82682f11e15be1497eac9fa54cc0f124c96450e62201dc57130420fd2b4c55c6","bodyHash":"542d5844cdb52e1d7ba854bff20730251b75135d991f251ca6f5acf0fed1c531"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.StatCalls","kind":"method","status":"implemented","sigHash":"82682f11e15be1497eac9fa54cc0f124c96450e62201dc57130420fd2b4c55c6"}
  *
  * Go source:
  * func (mock *FSMock) StatCalls() []struct {
@@ -672,7 +672,7 @@ export function FSMock_StatCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"2b45e8089b7d8c41eea034ed6e46b731516d742cd6a3e3c627c9c94daad35d83","bodyHash":"dd1468d66caeda03231d6b72d79eced4eba452c2742ec7e4acb1f0fc4d689782"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"2b45e8089b7d8c41eea034ed6e46b731516d742cd6a3e3c627c9c94daad35d83"}
  *
  * Go source:
  * func (mock *FSMock) UseCaseSensitiveFileNames() bool {
@@ -698,7 +698,7 @@ export function FSMock_UseCaseSensitiveFileNames(receiver: GoPtr<FSMock>): bool 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.UseCaseSensitiveFileNamesCalls","kind":"method","status":"implemented","sigHash":"a8642a2b0918d9a23ba6025e37e707c5e6ab444454d81af16e0b17e3d66e449f","bodyHash":"f304e04581daef1848a6eb3f227bbea732b265ebf542e9720e69fdc3e4172b95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.UseCaseSensitiveFileNamesCalls","kind":"method","status":"implemented","sigHash":"a8642a2b0918d9a23ba6025e37e707c5e6ab444454d81af16e0b17e3d66e449f"}
  *
  * Go source:
  * func (mock *FSMock) UseCaseSensitiveFileNamesCalls() []struct{} {
@@ -717,7 +717,7 @@ export function FSMock_UseCaseSensitiveFileNamesCalls(receiver: GoPtr<FSMock>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WalkDir","kind":"method","status":"implemented","sigHash":"6d8fbe9e596541d707fe9e349e09ac3648b32ea002fa7c93cbe94274174c30de","bodyHash":"79e078097b2783ca9bccea6dc622e2b518cd69f7680fed946ec68589a1859c11"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WalkDir","kind":"method","status":"implemented","sigHash":"6d8fbe9e596541d707fe9e349e09ac3648b32ea002fa7c93cbe94274174c30de"}
  *
  * Go source:
  * func (mock *FSMock) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
@@ -749,7 +749,7 @@ export function FSMock_WalkDir(receiver: GoPtr<FSMock>, root: string, walkFn: Wa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WalkDirCalls","kind":"method","status":"implemented","sigHash":"487bdfe2e8fbf00b6e8c1f5ac3c922838eaf9c67cb04cfa55449586f8e051cbd","bodyHash":"df74f94511b8f828a60649c05386819c090fe7209e8bb35b6c18aa55e6fc3fc4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WalkDirCalls","kind":"method","status":"implemented","sigHash":"487bdfe2e8fbf00b6e8c1f5ac3c922838eaf9c67cb04cfa55449586f8e051cbd"}
  *
  * Go source:
  * func (mock *FSMock) WalkDirCalls() []struct {
@@ -774,7 +774,7 @@ export function FSMock_WalkDirCalls(receiver: GoPtr<FSMock>): GoSlice<{ Root: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WriteFile","kind":"method","status":"implemented","sigHash":"0c286757842638047c1e0f6649084239488fa8231487aaa114fab1f845c1cfb0","bodyHash":"e0c7284c994a85ca89107d04dc7e0e58687117bbc4139938d6b05c8af23c4404"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WriteFile","kind":"method","status":"implemented","sigHash":"0c286757842638047c1e0f6649084239488fa8231487aaa114fab1f845c1cfb0"}
  *
  * Go source:
  * func (mock *FSMock) WriteFile(path string, data string) error {
@@ -806,7 +806,7 @@ export function FSMock_WriteFile(receiver: GoPtr<FSMock>, path: string, data: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WriteFileCalls","kind":"method","status":"implemented","sigHash":"56edfc83335fd59d0ea51bfc63ee1a8631c8c7c3dc30beb68d1622a8d22df079","bodyHash":"cd00f68ec3a049672c67438ea776e03c129d4847e0751c680faf53f693db8a73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::method::FSMock.WriteFileCalls","kind":"method","status":"implemented","sigHash":"56edfc83335fd59d0ea51bfc63ee1a8631c8c7c3dc30beb68d1622a8d22df079"}
  *
  * Go source:
  * func (mock *FSMock) WriteFileCalls() []struct {

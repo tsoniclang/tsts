@@ -83,7 +83,7 @@ import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"implemented","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933","bodyHash":"0193b40fc4d14b1b5da8852c1dff25eed2eab9a176c8f40f532ff5e047a74227"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"implemented","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933"}
  *
  * Go source:
  * func needsScopeMarker(result *ast.Node) bool {
@@ -95,7 +95,7 @@ export function needsScopeMarker(result: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::canHaveLiteralInitializer","kind":"func","status":"implemented","sigHash":"499fa813f7479096e87aaec7a8c2f189eaa61f77e836a90180e44ac614ae2eff","bodyHash":"620dfdb52cb2dade77fc5c47739349d5e253c76009edde06f74dae3d7f1835f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::canHaveLiteralInitializer","kind":"func","status":"implemented","sigHash":"499fa813f7479096e87aaec7a8c2f189eaa61f77e836a90180e44ac614ae2eff"}
  *
  * Go source:
  * func canHaveLiteralInitializer(host DeclarationEmitHost, node *ast.Node) bool {
@@ -123,7 +123,7 @@ export function canHaveLiteralInitializer(host: DeclarationEmitHost, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::canProduceDiagnostics","kind":"func","status":"implemented","sigHash":"e23aba0a5f9955eeb93bbcb851c626c720ea88b6305bb26f6c78876d1c238266","bodyHash":"e4567f4c2e67fb9ae439aca33d8526870696723ed3269b77261816089384e7fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::canProduceDiagnostics","kind":"func","status":"implemented","sigHash":"e23aba0a5f9955eeb93bbcb851c626c720ea88b6305bb26f6c78876d1c238266"}
  *
  * Go source:
  * func canProduceDiagnostics(node *ast.Node) bool {
@@ -180,7 +180,7 @@ export function canProduceDiagnostics(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isDeclarationAndNotVisible","kind":"func","status":"implemented","sigHash":"22f3ad7e95b5a5f6e1b23c741fb2b5959d1cbf82841f6c40d0801623630d7d08","bodyHash":"71a196a05cdcdfc6252fff90de375cd3075f07b58f26dda190992810c6d40a3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isDeclarationAndNotVisible","kind":"func","status":"implemented","sigHash":"22f3ad7e95b5a5f6e1b23c741fb2b5959d1cbf82841f6c40d0801623630d7d08"}
  *
  * Go source:
  * func isDeclarationAndNotVisible(emitContext *printer.EmitContext, resolver printer.EmitResolver, node *ast.Node) bool {
@@ -236,7 +236,7 @@ export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, reso
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getBindingNameVisible","kind":"func","status":"implemented","sigHash":"b22483ac11dd007659fc4b438344149334ee5fadc1fc543064026b239271843f","bodyHash":"c30c295ee6b82fc3e86f5366fa2f07a2b464e1d76abaf0eaad45bf1918824342"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getBindingNameVisible","kind":"func","status":"implemented","sigHash":"b22483ac11dd007659fc4b438344149334ee5fadc1fc543064026b239271843f"}
  *
  * Go source:
  * func getBindingNameVisible(resolver printer.EmitResolver, elem *ast.Node) bool {
@@ -284,7 +284,7 @@ export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"implemented","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac","bodyHash":"cbf6d472c671faa96578fdd44173e96c18f85f228f8266f4ee8a818d2173b4ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"implemented","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac"}
  *
  * Go source:
  * func isEnclosingDeclaration(node *ast.Node) bool {
@@ -312,7 +312,7 @@ export function isEnclosingDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isAlwaysType","kind":"func","status":"implemented","sigHash":"0c48daea82de0ca5411a19aa6dbd929fdfa1c0d817e6e05278665c21d379b4d0","bodyHash":"d7c439a4c15bf02220eab1f187d65a11bfd0b1282d267dc9ea0520ad796d2d04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isAlwaysType","kind":"func","status":"implemented","sigHash":"0c48daea82de0ca5411a19aa6dbd929fdfa1c0d817e6e05278665c21d379b4d0"}
  *
  * Go source:
  * func isAlwaysType(node *ast.Node) bool {
@@ -330,7 +330,7 @@ export function isAlwaysType(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::maskModifierFlags","kind":"func","status":"implemented","sigHash":"d52749acacff48feaf8f008c345fad6c60ee42d366c6697eba3bc55079f6f976","bodyHash":"33980b7e7e0efd22ef8072c1efffa8bd752d5bd4b10962cf041e02ae4c9ac26c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::maskModifierFlags","kind":"func","status":"implemented","sigHash":"d52749acacff48feaf8f008c345fad6c60ee42d366c6697eba3bc55079f6f976"}
  *
  * Go source:
  * func maskModifierFlags(node *ast.Node, modifierMask ast.ModifierFlags, modifierAdditions ast.ModifierFlags) ast.ModifierFlags {
@@ -360,7 +360,7 @@ export function maskModifierFlags(node: GoPtr<Node>, modifierMask: ModifierFlags
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::unwrapParenthesizedExpression","kind":"func","status":"implemented","sigHash":"f1e11a8429623cb78e4afeeeb5dbad0a4b3940ee57b7aa34f7fb4fb1fe0929b4","bodyHash":"28c3378ac3ad425d509b82c64936c631c12b82cd9fb54a987172e89eaf755bc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::unwrapParenthesizedExpression","kind":"func","status":"implemented","sigHash":"f1e11a8429623cb78e4afeeeb5dbad0a4b3940ee57b7aa34f7fb4fb1fe0929b4"}
  *
  * Go source:
  * func unwrapParenthesizedExpression(o *ast.Node) *ast.Node {
@@ -378,7 +378,7 @@ export function unwrapParenthesizedExpression(o: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isPrivateMethodTypeParameter","kind":"func","status":"implemented","sigHash":"57f6d289f376bfbccdc52a1cbc60e4bc1de52f675dba18b8965ef7713c9892b6","bodyHash":"6f5f3c7f3d15b1cff1588620db8758e875e40d759682e18fd9d9fd788e03a383"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isPrivateMethodTypeParameter","kind":"func","status":"implemented","sigHash":"57f6d289f376bfbccdc52a1cbc60e4bc1de52f675dba18b8965ef7713c9892b6"}
  *
  * Go source:
  * func isPrivateMethodTypeParameter(host DeclarationEmitHost, node *ast.TypeParameterDeclaration) bool {
@@ -390,7 +390,7 @@ export function isPrivateMethodTypeParameter(host: DeclarationEmitHost, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"implemented","sigHash":"9f69d137b57130cdec0a098bc830b16299a5aba56531ccfc7ea955185a87eacd","bodyHash":"c2183f2ce74142e188233f377dfcd3a9f4ca352b3da0a91464894d0488d3d542"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"implemented","sigHash":"9f69d137b57130cdec0a098bc830b16299a5aba56531ccfc7ea955185a87eacd"}
  *
  * Go source:
  * func shouldEmitFunctionProperties(input *ast.FunctionDeclaration) bool {
@@ -412,7 +412,7 @@ export function shouldEmitFunctionProperties(input: GoPtr<FunctionDeclaration>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getEffectiveBaseTypeNode","kind":"func","status":"implemented","sigHash":"44b42b4f12b8ede2a340739236e0234e7da73dd869f4702255a687b12e692ed2","bodyHash":"eccae320d8748f6c80c5cbc5bc5f476554a263fe86a7c26623839e736cb47036"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getEffectiveBaseTypeNode","kind":"func","status":"implemented","sigHash":"44b42b4f12b8ede2a340739236e0234e7da73dd869f4702255a687b12e692ed2"}
  *
  * Go source:
  * func getEffectiveBaseTypeNode(node *ast.Node) *ast.Node {
@@ -442,7 +442,7 @@ export function getEffectiveBaseTypeNode(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isScopeMarker","kind":"func","status":"implemented","sigHash":"94a0775b2c4dd2596dc714072023bd43b3da5fcd89ea52d2e7bbc9b12f57ed54","bodyHash":"3d1c06e30c4dc5d0ba31bd8c974d6a7054b31fef89e37e6f3156e1145a66fa24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isScopeMarker","kind":"func","status":"implemented","sigHash":"94a0775b2c4dd2596dc714072023bd43b3da5fcd89ea52d2e7bbc9b12f57ed54"}
  *
  * Go source:
  * func isScopeMarker(node *ast.Node) bool {
@@ -454,7 +454,7 @@ export function isScopeMarker(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::hasScopeMarker","kind":"func","status":"implemented","sigHash":"8fc21ece0e9395e575a890742e2dc95ced5b7df517d727fc3e4de3e2c6a380e4","bodyHash":"c41e80d581699f7fff8fc4716f54eca357a34dc6443c289737edd73f0526f1b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::hasScopeMarker","kind":"func","status":"implemented","sigHash":"8fc21ece0e9395e575a890742e2dc95ced5b7df517d727fc3e4de3e2c6a380e4"}
  *
  * Go source:
  * func hasScopeMarker(statements *ast.StatementList) bool {

@@ -4,7 +4,7 @@ import type { Symbol } from "../ast/symbol.js";
 import type { UTF16Offset } from "../core/core.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emittextwriter.go::type::EmitTextWriter","kind":"type","status":"implemented","sigHash":"e60d200b49433cda0c2093cde1749e3c969fb07be990c2aecf3f32eb48d9c0ef","bodyHash":"e5bb7b56ed83c931445ccd2de855d12d53ba0a02494302c79f28ca34916cb112"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emittextwriter.go::type::EmitTextWriter","kind":"type","status":"implemented","sigHash":"e60d200b49433cda0c2093cde1749e3c969fb07be990c2aecf3f32eb48d9c0ef"}
  *
  * Go source:
  * EmitTextWriter interface {

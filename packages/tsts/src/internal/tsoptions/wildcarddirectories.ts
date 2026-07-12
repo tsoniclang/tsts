@@ -12,7 +12,7 @@ import {
 import { IsImplicitGlob, NewSpecMatcher, SpecMatcher_MatchString, UsageExclude } from "../vfs/vfsmatch/vfsmatch.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectories","kind":"func","status":"implemented","sigHash":"b28e9bda9ec15acd9b0664a3466d8c69e2ffb017497fc37e43d86c9d83e55cc2","bodyHash":"90afd2eb741b92625e581f99a44751a737fc8fdc2e18ec4fd42fdf37abbaef62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectories","kind":"func","status":"implemented","sigHash":"b28e9bda9ec15acd9b0664a3466d8c69e2ffb017497fc37e43d86c9d83e55cc2"}
  *
  * Go source:
  * func getWildcardDirectories(include []string, exclude []string, comparePathsOptions tspath.ComparePathsOptions) map[string]bool {
@@ -168,7 +168,7 @@ export function getWildcardDirectories(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::toCanonicalKey","kind":"func","status":"implemented","sigHash":"a13efd0f04a066b6b6a69172e340eea0affc0171456380b8f90194ff37e864cf","bodyHash":"9d3b178da52a597ea987047d5d844c3bcfcc882bb1f45fe1b7d9cc1e1711656d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::toCanonicalKey","kind":"func","status":"implemented","sigHash":"a13efd0f04a066b6b6a69172e340eea0affc0171456380b8f90194ff37e864cf"}
  *
  * Go source:
  * func toCanonicalKey(path string, useCaseSensitiveFileNames bool) string {
@@ -186,7 +186,7 @@ export function toCanonicalKey(path: string, useCaseSensitiveFileNames: bool): s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::type::wildcardDirectoryMatch","kind":"type","status":"implemented","sigHash":"1f3dd5db5c192667ae73746111a4f7ee18c5e1d26b9dec2e6fbfd0dc40b2a314","bodyHash":"9284185e9bd7682bcd9e7be33c5e2f90668fe9e890bc270ee986137029f8bcfb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::type::wildcardDirectoryMatch","kind":"type","status":"implemented","sigHash":"1f3dd5db5c192667ae73746111a4f7ee18c5e1d26b9dec2e6fbfd0dc40b2a314"}
  *
  * Go source:
  * wildcardDirectoryMatch struct {
@@ -202,7 +202,7 @@ export interface wildcardDirectoryMatch {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectoryFromSpec","kind":"func","status":"implemented","sigHash":"f52fa1ea7625d193fb6dd5583fca1e55d314d3b702596b3a9b418130efc5341b","bodyHash":"753a9737032c47051253e4ca2e2c37182daccf481f164b20fec83609d47d7748"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/wildcarddirectories.go::func::getWildcardDirectoryFromSpec","kind":"func","status":"implemented","sigHash":"f52fa1ea7625d193fb6dd5583fca1e55d314d3b702596b3a9b418130efc5341b"}
  *
  * Go source:
  * func getWildcardDirectoryFromSpec(spec string, useCaseSensitiveFileNames bool) *wildcardDirectoryMatch {

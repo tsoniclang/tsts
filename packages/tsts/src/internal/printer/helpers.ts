@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::Priority","kind":"type","status":"implemented","sigHash":"e45a20d4215421395016743450c400ac5a036a54551ebf389bcf72e97792bafc","bodyHash":"2ab6d6a4dd675ef3c0c291801db9ec07f9bb7327fe479c4d9c642f66ddd4160c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::Priority","kind":"type","status":"implemented","sigHash":"e45a20d4215421395016743450c400ac5a036a54551ebf389bcf72e97792bafc"}
  *
  * Go source:
  * Priority struct {
@@ -14,7 +14,7 @@ export interface Priority {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::EmitHelper","kind":"type","status":"implemented","sigHash":"fb8b475b77a631d7dba481d5932e322c07601ea12eecd8ee9d88282bf4f268ce","bodyHash":"ebae1db40dab2b764d75dfb12fba9b6bfbc72ad3a9b665b8cf7bff0527f5ffdb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::EmitHelper","kind":"type","status":"implemented","sigHash":"fb8b475b77a631d7dba481d5932e322c07601ea12eecd8ee9d88282bf4f268ce"}
  *
  * Go source:
  * EmitHelper struct {
@@ -38,7 +38,7 @@ export interface EmitHelper {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::func::compareEmitHelpers","kind":"func","status":"implemented","sigHash":"950fd9826c98a6720b8a949f4dccef594dc0ffd482585545220de5cd85e96346","bodyHash":"acdc67c100f2432fe74df46caff1814f61e79bafa82437e1b499d842ef8c47ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::func::compareEmitHelpers","kind":"func","status":"implemented","sigHash":"950fd9826c98a6720b8a949f4dccef594dc0ffd482585545220de5cd85e96346"}
  *
  * Go source:
  * func compareEmitHelpers(x *EmitHelper, y *EmitHelper) int {
@@ -74,7 +74,7 @@ export function compareEmitHelpers(x: GoPtr<EmitHelper>, y: GoPtr<EmitHelper>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::decorateHelper","kind":"varGroup","status":"implemented","sigHash":"fc3d975abeb7fb79728a2f11d19af582b13f5d63d3174915d8421d159a0e5596","bodyHash":"d130ddb21229e7e4b7643c2964ade8a27d4c48759a6f19558908cec8be3e7a59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::decorateHelper","kind":"varGroup","status":"implemented","sigHash":"fc3d975abeb7fb79728a2f11d19af582b13f5d63d3174915d8421d159a0e5596"}
  *
  * Go source:
  * var decorateHelper = &EmitHelper{
@@ -106,7 +106,7 @@ export let decorateHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::metadataHelper","kind":"varGroup","status":"implemented","sigHash":"dfb6fc8ef2d82ef9f9fece8c9c31456c2289bdd5258b373c7c1fe5156c709a6e","bodyHash":"80ea101251bd8339bb4a159ca4568ab555e76101e75b9976d0a233146534e968"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::metadataHelper","kind":"varGroup","status":"implemented","sigHash":"dfb6fc8ef2d82ef9f9fece8c9c31456c2289bdd5258b373c7c1fe5156c709a6e"}
  *
  * Go source:
  * var metadataHelper = &EmitHelper{
@@ -132,7 +132,7 @@ export let metadataHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::paramHelper","kind":"varGroup","status":"implemented","sigHash":"3086092f92bf2c8402a8dab813f54f64848e8c97d4e5bfb5059f7ccc6f9980ab","bodyHash":"0c45b0ba095b57eacae3508f29edd63b921683deca14b7fb6a40bc58d4f3e843"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::paramHelper","kind":"varGroup","status":"implemented","sigHash":"3086092f92bf2c8402a8dab813f54f64848e8c97d4e5bfb5059f7ccc6f9980ab"}
  *
  * Go source:
  * var paramHelper = &EmitHelper{
@@ -158,7 +158,7 @@ export let paramHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::addDisposableResourceHelper","kind":"varGroup","status":"implemented","sigHash":"548031f6e1f618db128ea3b0db2fdfbbd92203d35114ef48f714a8c6378bf3cb","bodyHash":"2be75abc3c75ced5c371a881bac3ebea8cc16af9c10349d09d8df9de2b0f689e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::addDisposableResourceHelper","kind":"varGroup","status":"implemented","sigHash":"548031f6e1f618db128ea3b0db2fdfbbd92203d35114ef48f714a8c6378bf3cb"}
  *
  * Go source:
  * var addDisposableResourceHelper = &EmitHelper{
@@ -221,7 +221,7 @@ export let addDisposableResourceHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::disposeResourcesHelper","kind":"varGroup","status":"implemented","sigHash":"b2856c689ca84ce6878951b499eee027ff502075d4c343ec6ceb86179e27f0cb","bodyHash":"a6a0b338526320a3fe8e08a09867b145e3f1b4ddbdce7a1e7d82fd256c2a8d4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::disposeResourcesHelper","kind":"varGroup","status":"implemented","sigHash":"b2856c689ca84ce6878951b499eee027ff502075d4c343ec6ceb86179e27f0cb"}
  *
  * Go source:
  * var disposeResourcesHelper = &EmitHelper{
@@ -300,7 +300,7 @@ export let disposeResourcesHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldGetHelper","kind":"varGroup","status":"implemented","sigHash":"15d6b4f8f3f87dec14b3d2b99fbaa18c1611b9137f0fab60848ddee4c3c311b2","bodyHash":"2b5a393b8cd83203cb63c04635ca45d2c16aef8269aeb66e6b189a9ce43e6c26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldGetHelper","kind":"varGroup","status":"implemented","sigHash":"15d6b4f8f3f87dec14b3d2b99fbaa18c1611b9137f0fab60848ddee4c3c311b2"}
  *
  * Go source:
  * var classPrivateFieldGetHelper = &EmitHelper{
@@ -329,7 +329,7 @@ export let classPrivateFieldGetHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldSetHelper","kind":"varGroup","status":"implemented","sigHash":"3280e27a46c4f33560e516adf6b1f200efa4f9a67c55b63bd75e24041691b9c6","bodyHash":"27a7ccab040fb280c5603a2c205265c2dc434700c67dd9104db0b51e8c5d52e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldSetHelper","kind":"varGroup","status":"implemented","sigHash":"3280e27a46c4f33560e516adf6b1f200efa4f9a67c55b63bd75e24041691b9c6"}
  *
  * Go source:
  * var classPrivateFieldSetHelper = &EmitHelper{
@@ -360,7 +360,7 @@ export let classPrivateFieldSetHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldInHelper","kind":"varGroup","status":"implemented","sigHash":"4da1d679fa7e78a6e0ce7fdbdb4d90c43639ba8da154179ea076a01c7a786fb6","bodyHash":"d5e7f0fc7715958e2f53bcc257a8971da96d93ed99ce05812b57da228d1396bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::classPrivateFieldInHelper","kind":"varGroup","status":"implemented","sigHash":"4da1d679fa7e78a6e0ce7fdbdb4d90c43639ba8da154179ea076a01c7a786fb6"}
  *
  * Go source:
  * var classPrivateFieldInHelper = &EmitHelper{
@@ -387,7 +387,7 @@ export let classPrivateFieldInHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::awaitHelper","kind":"varGroup","status":"implemented","sigHash":"ff3fc94977bf096a3fcd6745dc82e67aaba83b5e2d085f3be6242f60c6b87500","bodyHash":"d564b0c2326bb7e1e46ea170e108d1e778f0f4e66e58640472a10f99d2028dfb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::awaitHelper","kind":"varGroup","status":"implemented","sigHash":"ff3fc94977bf096a3fcd6745dc82e67aaba83b5e2d085f3be6242f60c6b87500"}
  *
  * Go source:
  * var awaitHelper = &EmitHelper{
@@ -408,7 +408,7 @@ export let awaitHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncGeneratorHelper","kind":"varGroup","status":"implemented","sigHash":"93ebbfe2b2d214389f7508dbaef77757d682dbbccafee6a29fc98ebdcf8c792e","bodyHash":"f21dd99944bd066c3772b238c6062de43267f18ed3372e9e908dcd237bbf483c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncGeneratorHelper","kind":"varGroup","status":"implemented","sigHash":"93ebbfe2b2d214389f7508dbaef77757d682dbbccafee6a29fc98ebdcf8c792e"}
  *
  * Go source:
  * var asyncGeneratorHelper = &EmitHelper{
@@ -452,7 +452,7 @@ export let asyncGeneratorHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncDelegatorHelper","kind":"varGroup","status":"implemented","sigHash":"1d6a9eda2bb41ef5107c47b653d87525c5564455ba1651003e0504f8a9ebf2c9","bodyHash":"864fc1b681f8d87421325ccf958bb091deae7bbf2f158755fa24657f2d2352c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncDelegatorHelper","kind":"varGroup","status":"implemented","sigHash":"1d6a9eda2bb41ef5107c47b653d87525c5564455ba1651003e0504f8a9ebf2c9"}
  *
  * Go source:
  * var asyncDelegatorHelper = &EmitHelper{
@@ -482,7 +482,7 @@ export let asyncDelegatorHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncValuesHelper","kind":"varGroup","status":"implemented","sigHash":"9abf82f0b77c956253e0d0f7e07a7169ef70abd104ad65f36bc865f1e14f54ff","bodyHash":"b615bb5af27674efc24a8f017ce68c502e73fef77e238b0feda06f31ce321b24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::asyncValuesHelper","kind":"varGroup","status":"implemented","sigHash":"9abf82f0b77c956253e0d0f7e07a7169ef70abd104ad65f36bc865f1e14f54ff"}
  *
  * Go source:
  * var asyncValuesHelper = &EmitHelper{
@@ -515,7 +515,7 @@ export let asyncValuesHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::restHelper","kind":"varGroup","status":"implemented","sigHash":"036bb066ccf2fb6887613dfd01900cc473f817e6aeaf477294a6f490fa33ad2d","bodyHash":"40ed39be258ad3ae6bcb27f767321169f5811c25ec8a1a489f7a63bf3967c4b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::restHelper","kind":"varGroup","status":"implemented","sigHash":"036bb066ccf2fb6887613dfd01900cc473f817e6aeaf477294a6f490fa33ad2d"}
  *
  * Go source:
  * var restHelper = &EmitHelper{
@@ -556,7 +556,7 @@ export let restHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::awaiterHelper","kind":"varGroup","status":"implemented","sigHash":"51782c7cc1d85305fb7527f86a4cdb0f6ba5fdc6751da029facc2c1066e3bbce","bodyHash":"610cc8041ae967a35711fd977372a6a41f45130d1d1d8b5bd41b485030321ef0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::awaiterHelper","kind":"varGroup","status":"implemented","sigHash":"51782c7cc1d85305fb7527f86a4cdb0f6ba5fdc6751da029facc2c1066e3bbce"}
  *
  * Go source:
  * var awaiterHelper = &EmitHelper{
@@ -594,7 +594,7 @@ export let awaiterHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::AsyncSuperHelper","kind":"varGroup","status":"implemented","sigHash":"790cfedbe295d8d80f2dd53e637a741f29789041eae2e3cad3b87997bf099fce","bodyHash":"3e1afdeaee0d9901415853cad5a2f7cfa96b072206e2c267e460cec86b8c686c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::AsyncSuperHelper","kind":"varGroup","status":"implemented","sigHash":"790cfedbe295d8d80f2dd53e637a741f29789041eae2e3cad3b87997bf099fce"}
  *
  * Go source:
  * var AsyncSuperHelper = &EmitHelper{
@@ -618,7 +618,7 @@ export let AsyncSuperHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::AdvancedAsyncSuperHelper","kind":"varGroup","status":"implemented","sigHash":"5c79a7068690226b7b2264733bf1b3bb50478983073c3a23dae7140cc48d6898","bodyHash":"d83449894c0f9cdba038655408d43b4567727a8f496d186be6c9453f9cfb9fac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::AdvancedAsyncSuperHelper","kind":"varGroup","status":"implemented","sigHash":"5c79a7068690226b7b2264733bf1b3bb50478983073c3a23dae7140cc48d6898"}
  *
  * Go source:
  * var AdvancedAsyncSuperHelper = &EmitHelper{
@@ -648,7 +648,7 @@ export let AdvancedAsyncSuperHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::esDecorateHelper","kind":"varGroup","status":"implemented","sigHash":"82f6bf8b922162a9abeefc3aa7171065e599cfba5042c8a2d302a33ae8700757","bodyHash":"c29ea1ff4bfeded9864d60d6cd54bcc3f3a05f1786c98803aa9976ed97c62f50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::esDecorateHelper","kind":"varGroup","status":"implemented","sigHash":"82f6bf8b922162a9abeefc3aa7171065e599cfba5042c8a2d302a33ae8700757"}
  *
  * Go source:
  * var esDecorateHelper = &EmitHelper{
@@ -722,7 +722,7 @@ export let esDecorateHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::runInitializersHelper","kind":"varGroup","status":"implemented","sigHash":"81b6f0310e6668ce4c3498aad2b928ef2c3ea4fc498ea005d6257d9b37f123fa","bodyHash":"dec8a9b12e82259818ffb4c6921c7e11835ed1014668c08a1dff8271c1204c02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::runInitializersHelper","kind":"varGroup","status":"implemented","sigHash":"81b6f0310e6668ce4c3498aad2b928ef2c3ea4fc498ea005d6257d9b37f123fa"}
  *
  * Go source:
  * var runInitializersHelper = &EmitHelper{
@@ -756,7 +756,7 @@ export let runInitializersHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::makeTemplateObjectHelper","kind":"varGroup","status":"implemented","sigHash":"9a3e6a8d12999091ae44ba18e47b8f03a33e217be332b7c18e85ec350c5fa3e6","bodyHash":"c37ad8f1a01e074989a09bbc6a2ac8c69b74d01ab4c398439be7cc914a1a919b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::makeTemplateObjectHelper","kind":"varGroup","status":"implemented","sigHash":"9a3e6a8d12999091ae44ba18e47b8f03a33e217be332b7c18e85ec350c5fa3e6"}
  *
  * Go source:
  * var makeTemplateObjectHelper = &EmitHelper{
@@ -784,7 +784,7 @@ export let makeTemplateObjectHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::propKeyHelper","kind":"varGroup","status":"implemented","sigHash":"027680d11c31b3c465b17df80989d002aa9d3496e6680b3e83fbd22560023b64","bodyHash":"8786c5440734dbf041260449c8808dc2181b34eca4e720afc31ad45c0ec9ef58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::propKeyHelper","kind":"varGroup","status":"implemented","sigHash":"027680d11c31b3c465b17df80989d002aa9d3496e6680b3e83fbd22560023b64"}
  *
  * Go source:
  * var propKeyHelper = &EmitHelper{
@@ -809,7 +809,7 @@ export let propKeyHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::setFunctionNameHelper","kind":"varGroup","status":"implemented","sigHash":"f948b3c837ab7f0694d46d11504a4f2fa9278aa36d60be456d2f6860294fc233","bodyHash":"19a721de56beeea845b527294a935e3a0373c0738641bcffc0a2dec5c83df25e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::setFunctionNameHelper","kind":"varGroup","status":"implemented","sigHash":"f948b3c837ab7f0694d46d11504a4f2fa9278aa36d60be456d2f6860294fc233"}
  *
  * Go source:
  * var setFunctionNameHelper = &EmitHelper{
@@ -836,7 +836,7 @@ export let setFunctionNameHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::createBindingHelper","kind":"varGroup","status":"implemented","sigHash":"19930eab78c4c6a8a41fe8af343d10525a1f1a29e650bd848784201774c634ec","bodyHash":"503e045302d389045920cc5532dcb4ef1037e6e8068be5b518deccc05d335a89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::createBindingHelper","kind":"varGroup","status":"implemented","sigHash":"19930eab78c4c6a8a41fe8af343d10525a1f1a29e650bd848784201774c634ec"}
  *
  * Go source:
  * var createBindingHelper = &EmitHelper{
@@ -878,7 +878,7 @@ export let createBindingHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::setModuleDefaultHelper","kind":"varGroup","status":"implemented","sigHash":"5894bf5c3c22952714262503097868aaba61bc85aab0c93c8799b656e769ea1c","bodyHash":"06fbcbbfafc882a72f04b865b028e45b3688cddfabc79a27572621d056bd9fb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::setModuleDefaultHelper","kind":"varGroup","status":"implemented","sigHash":"5894bf5c3c22952714262503097868aaba61bc85aab0c93c8799b656e769ea1c"}
  *
  * Go source:
  * var setModuleDefaultHelper = &EmitHelper{
@@ -908,7 +908,7 @@ export let setModuleDefaultHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::importStarHelper","kind":"varGroup","status":"implemented","sigHash":"f683ed9b2cc0e485887e0005b78ceb0b2db415ae33b5e819893458ec2d17d810","bodyHash":"6a35d7d178df224a4bd79a687eda5d9e94c914af263ec619b3f0c4080d18b609"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::importStarHelper","kind":"varGroup","status":"implemented","sigHash":"f683ed9b2cc0e485887e0005b78ceb0b2db415ae33b5e819893458ec2d17d810"}
  *
  * Go source:
  * var importStarHelper = &EmitHelper{
@@ -963,7 +963,7 @@ export let importStarHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::importDefaultHelper","kind":"varGroup","status":"implemented","sigHash":"616d6b09fb58f74989c289a7a994fbab65e78ebcf58ee844cd08a543a8d89f62","bodyHash":"9cff0e76cd5f6f46663cdd08b1c39cdc368724ca7aa2bdbc079f694e90f08a1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::importDefaultHelper","kind":"varGroup","status":"implemented","sigHash":"616d6b09fb58f74989c289a7a994fbab65e78ebcf58ee844cd08a543a8d89f62"}
  *
  * Go source:
  * var importDefaultHelper = &EmitHelper{
@@ -988,7 +988,7 @@ export let importDefaultHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::exportStarHelper","kind":"varGroup","status":"implemented","sigHash":"375fafc84f0f0b6eb956dd99b4903703ef99c1e4cb8577f65d8b88f0400cd5f3","bodyHash":"5929db2d899c1bcb7db463dc8134cf925997a9f5bb2faae520507bf267925a13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::exportStarHelper","kind":"varGroup","status":"implemented","sigHash":"375fafc84f0f0b6eb956dd99b4903703ef99c1e4cb8577f65d8b88f0400cd5f3"}
  *
  * Go source:
  * var exportStarHelper = &EmitHelper{
@@ -1015,7 +1015,7 @@ export let exportStarHelper: GoPtr<EmitHelper> = {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::rewriteRelativeImportExtensionsHelper","kind":"varGroup","status":"implemented","sigHash":"5c7fd4d16a8b49dcd61ec3ff540c03b93e6666b0d9a6f8eb997e34b92fc1faa7","bodyHash":"48ede1b8193fc72a91d58dd00a5b97ff3990f1e2156b97a80ad0b84e692cd1c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::varGroup::rewriteRelativeImportExtensionsHelper","kind":"varGroup","status":"implemented","sigHash":"5c7fd4d16a8b49dcd61ec3ff540c03b93e6666b0d9a6f8eb997e34b92fc1faa7"}
  *
  * Go source:
  * var rewriteRelativeImportExtensionsHelper = &EmitHelper{

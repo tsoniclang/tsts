@@ -1,7 +1,7 @@
 import type { int, uint } from "../../go/scalars.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::type::CheckFlags","kind":"type","status":"implemented","sigHash":"8783fe522e6fb728eda21975eac65cc4e65e974800f115a4801bc8cffe63fa24","bodyHash":"bc5b0aaffe170f45300b26c2000cf73afff3e70e2b4884987366c08876b2f849"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::type::CheckFlags","kind":"type","status":"implemented","sigHash":"8783fe522e6fb728eda21975eac65cc4e65e974800f115a4801bc8cffe63fa24"}
  *
  * Go source:
  * CheckFlags uint32
@@ -9,7 +9,7 @@ import type { int, uint } from "../../go/scalars.js";
 export type CheckFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::constGroup::CheckFlagsNone+CheckFlagsInstantiated+CheckFlagsSyntheticProperty+CheckFlagsSyntheticMethod+CheckFlagsReadonly+CheckFlagsReadPartial+CheckFlagsWritePartial+CheckFlagsHasNonUniformType+CheckFlagsHasLiteralType+CheckFlagsContainsPublic+CheckFlagsContainsProtected+CheckFlagsContainsPrivate+CheckFlagsContainsStatic+CheckFlagsLate+CheckFlagsReverseMapped+CheckFlagsOptionalParameter+CheckFlagsRestParameter+CheckFlagsDeferredType+CheckFlagsHasNeverType+CheckFlagsMapped+CheckFlagsStripOptional+CheckFlagsUnresolved+CheckFlagsIsDiscriminantComputed+CheckFlagsIsDiscriminant+CheckFlagsIndexSymbol+CheckFlagsSynthetic+CheckFlagsNonUniformAndLiteral+CheckFlagsPartial","kind":"constGroup","status":"implemented","sigHash":"57e1c6ccbeb0fdd2def846a1d0a96dbcda51d95c9ae0f4b1b528dff91e62403f","bodyHash":"d47848dd3cc88429023447214b3e07f10a8a65a3fc8819b7dccb30b0002429bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::constGroup::CheckFlagsNone+CheckFlagsInstantiated+CheckFlagsSyntheticProperty+CheckFlagsSyntheticMethod+CheckFlagsReadonly+CheckFlagsReadPartial+CheckFlagsWritePartial+CheckFlagsHasNonUniformType+CheckFlagsHasLiteralType+CheckFlagsContainsPublic+CheckFlagsContainsProtected+CheckFlagsContainsPrivate+CheckFlagsContainsStatic+CheckFlagsLate+CheckFlagsReverseMapped+CheckFlagsOptionalParameter+CheckFlagsRestParameter+CheckFlagsDeferredType+CheckFlagsHasNeverType+CheckFlagsMapped+CheckFlagsStripOptional+CheckFlagsUnresolved+CheckFlagsIsDiscriminantComputed+CheckFlagsIsDiscriminant+CheckFlagsIndexSymbol+CheckFlagsSynthetic+CheckFlagsNonUniformAndLiteral+CheckFlagsPartial","kind":"constGroup","status":"implemented","sigHash":"57e1c6ccbeb0fdd2def846a1d0a96dbcda51d95c9ae0f4b1b528dff91e62403f"}
  *
  * Go source:
  * const (

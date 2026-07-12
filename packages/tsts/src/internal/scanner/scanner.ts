@@ -255,7 +255,7 @@ function scannerDecodeLastRuneInStringBefore(s: Scanner, end: int): [GoRune, int
 const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::EscapeSequenceScanningFlags","kind":"type","status":"implemented","sigHash":"945576f942128ce3405a91fe648e1822285ca48c016cae349df227738097bc86","bodyHash":"189b74d9bf24455a01aaf8068fc46a6d76864423aaaf881ad7c6c6ed62c2f944"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::EscapeSequenceScanningFlags","kind":"type","status":"implemented","sigHash":"945576f942128ce3405a91fe648e1822285ca48c016cae349df227738097bc86"}
  *
  * Go source:
  * EscapeSequenceScanningFlags int32
@@ -263,7 +263,7 @@ const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r)
 export type EscapeSequenceScanningFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::constGroup::EscapeSequenceScanningFlagsString+EscapeSequenceScanningFlagsReportErrors+EscapeSequenceScanningFlagsRegularExpression+EscapeSequenceScanningFlagsAnnexB+EscapeSequenceScanningFlagsAnyUnicodeMode+EscapeSequenceScanningFlagsAtomEscape+EscapeSequenceScanningFlagsReportInvalidEscapeErrors+EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape","kind":"constGroup","status":"implemented","sigHash":"1ecea2d4d4c1df9823101696a98f6ae8a51ca05fb78196d94b8ca52a135c7f27","bodyHash":"1e173eb967e290fc5a0b5906cebff3c799c18e39a48a3322bc0cdde94e7ea7ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::constGroup::EscapeSequenceScanningFlagsString+EscapeSequenceScanningFlagsReportErrors+EscapeSequenceScanningFlagsRegularExpression+EscapeSequenceScanningFlagsAnnexB+EscapeSequenceScanningFlagsAnyUnicodeMode+EscapeSequenceScanningFlagsAtomEscape+EscapeSequenceScanningFlagsReportInvalidEscapeErrors+EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape","kind":"constGroup","status":"implemented","sigHash":"1ecea2d4d4c1df9823101696a98f6ae8a51ca05fb78196d94b8ca52a135c7f27"}
  *
  * Go source:
  * const (
@@ -289,7 +289,7 @@ export const EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape: EscapeSequen
   EscapeSequenceScanningFlagsString | EscapeSequenceScanningFlagsAnyUnicodeMode;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::ErrorCallback","kind":"type","status":"implemented","sigHash":"69b0f8115ebc75a05611a6c5a179822a0476e75d3eecd96a146b252dc35fb56b","bodyHash":"ed14b0d85dd6b0b2e4553c01940c44527a87a9c8bcb098a0c9a7d1fdebed31c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::ErrorCallback","kind":"type","status":"implemented","sigHash":"69b0f8115ebc75a05611a6c5a179822a0476e75d3eecd96a146b252dc35fb56b"}
  *
  * Go source:
  * ErrorCallback func(diagnostic *diagnostics.Message, start, length int, args ...any)
@@ -297,7 +297,7 @@ export const EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape: EscapeSequen
 export type ErrorCallback = (diagnostic: GoPtr<Message>, start: int, length: int, ...args: Array<unknown>) => void;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToKeyword","kind":"varGroup","status":"implemented","sigHash":"331eacad0b2c162c7810c59d097fe133a4d1ef5e2c07a09e8a2a5615d9f318e1","bodyHash":"3220721dff60605944e18f6d604dedb6ce0318fd667afb0498e21652bc6d6ca4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToKeyword","kind":"varGroup","status":"implemented","sigHash":"331eacad0b2c162c7810c59d097fe133a4d1ef5e2c07a09e8a2a5615d9f318e1"}
  *
  * Go source:
  * var textToKeyword = map[string]ast.Kind{
@@ -477,7 +477,7 @@ export let textToKeyword: GoMap<string, Kind> = new globalThis.Map<string, Kind>
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToToken","kind":"varGroup","status":"implemented","sigHash":"c4f61348f15a5aae11a5bae3120128df5529cf9ec7396baf3c1e652c421f648b","bodyHash":"920ca8aa9cb1454437c16812a89c2f43bcdff4076a0e9cf607e77ea103ba0fe4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToToken","kind":"varGroup","status":"implemented","sigHash":"c4f61348f15a5aae11a5bae3120128df5529cf9ec7396baf3c1e652c421f648b"}
  *
  * Go source:
  * var textToToken = func() map[string]ast.Kind {
@@ -619,7 +619,7 @@ export let textToToken: GoMap<string, Kind> = ((): GoMap<string, Kind> => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::ScannerState","kind":"type","status":"implemented","sigHash":"5a6d7a1b33afe89cf08d37854b783f21a9d22902036c0d5dff41054116c01c93","bodyHash":"6a02a4f43a82bf9d2971e2b646a0e3e98084f73f3181693c65c1f5dde6ea669c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::ScannerState","kind":"type","status":"implemented","sigHash":"5a6d7a1b33afe89cf08d37854b783f21a9d22902036c0d5dff41054116c01c93"}
  *
  * Go source:
  * ScannerState struct {
@@ -645,7 +645,7 @@ export interface ScannerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b","bodyHash":"fa2395147c39a85112b471d4e2826f03161db93c99a6f2e9bef286b7184e4a9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b"}
  * @tsgo-override {
  *   "category": "runtime-performance",
  *   "allow": ["signature"],
@@ -686,7 +686,7 @@ export interface Scanner {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::defaultScanner","kind":"func","status":"implemented","sigHash":"dc520b43edcfb4fa19b84a67ae3ac9213384fa5a843b109459810bd8dd3d5bb6","bodyHash":"2e15eefec61dfa69544b74ba92f9bbfc0a2ace53846cb08276dc28fe8311fa7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::defaultScanner","kind":"func","status":"implemented","sigHash":"dc520b43edcfb4fa19b84a67ae3ac9213384fa5a843b109459810bd8dd3d5bb6"}
  *
  * Go source:
  * func defaultScanner() Scanner {
@@ -731,7 +731,7 @@ function newScannerState(): ScannerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::NewScanner","kind":"func","status":"implemented","sigHash":"824b1c9d119d384513dbe8e8500292ae2b0912e2e0124cfaf3d35b98c8f0cc98","bodyHash":"b29c1c3cb784062067e024e16fe037df35c271d0c93d52216a840ff293e52d7a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::NewScanner","kind":"func","status":"implemented","sigHash":"824b1c9d119d384513dbe8e8500292ae2b0912e2e0124cfaf3d35b98c8f0cc98"}
  *
  * Go source:
  * func NewScanner() *Scanner {
@@ -745,7 +745,7 @@ export function NewScanner(): GoPtr<Scanner> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Reset","kind":"method","status":"implemented","sigHash":"81860126af7e9c4c3c1d20c1029c54c99c301e87d978c5bec8e14b1fe7606692","bodyHash":"8c3d03f7f94175f228f39c4a2cb37fff21f92508e0316b2e73711854e57deaa6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Reset","kind":"method","status":"implemented","sigHash":"81860126af7e9c4c3c1d20c1029c54c99c301e87d978c5bec8e14b1fe7606692"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Clear the scanner-local source byte-view cache when the scanner text is reset; the observable Scanner state remains TS-Go exact."}
  *
  * Go source:
@@ -782,7 +782,7 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::cleared","kind":"func","status":"implemented","sigHash":"1bbfef56d8cf46b679e2e91d918ef70872a3ec40711d7e517cb02f3d0ac2c96f","bodyHash":"ace5d48e3d2b43b2444e6f6c612d580a68927f07eb3e48b041a49a8126cdaf20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::cleared","kind":"func","status":"implemented","sigHash":"1bbfef56d8cf46b679e2e91d918ef70872a3ec40711d7e517cb02f3d0ac2c96f"}
  *
  * Go source:
  * func cleared[M ~map[K]V, K comparable, V any](m M) M {
@@ -799,7 +799,7 @@ export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K exte
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Text","kind":"method","status":"implemented","sigHash":"7a04356c5b198a952bcc4b2cd44f1f25290b6071dfe09eab5b8f6ddc786d8c0a","bodyHash":"0db52043412d99d2fe776ce9cd0dff226125303b5248ff4ce263294ebb444a8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Text","kind":"method","status":"implemented","sigHash":"7a04356c5b198a952bcc4b2cd44f1f25290b6071dfe09eab5b8f6ddc786d8c0a"}
  *
  * Go source:
  * func (s *Scanner) Text() string {
@@ -811,7 +811,7 @@ export function Scanner_Text(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Token","kind":"method","status":"implemented","sigHash":"329b864e3dee67eb1fcca8c61564dc3a640ab22e7325fc00a198e81ab68946f4","bodyHash":"ef1a2ab696454d878f4f80c06c1783adf9692e1e34a046ff231b251cd4bf52fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Token","kind":"method","status":"implemented","sigHash":"329b864e3dee67eb1fcca8c61564dc3a640ab22e7325fc00a198e81ab68946f4"}
  *
  * Go source:
  * func (s *Scanner) Token() ast.Kind {
@@ -823,7 +823,7 @@ export function Scanner_Token(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenFlags","kind":"method","status":"implemented","sigHash":"d958025732a7ade0566c5597387342a6716fe320fd6c1f6ebdeaf650bf4ef41b","bodyHash":"345ae5241abe5355a545e6cc72cfffe5a81560a059210dcd1c7722bffb169eed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenFlags","kind":"method","status":"implemented","sigHash":"d958025732a7ade0566c5597387342a6716fe320fd6c1f6ebdeaf650bf4ef41b"}
  *
  * Go source:
  * func (s *Scanner) TokenFlags() ast.TokenFlags {
@@ -835,7 +835,7 @@ export function Scanner_TokenFlags(receiver: GoPtr<Scanner>): TokenFlags_4c7e9c2
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenFullStart","kind":"method","status":"implemented","sigHash":"7d79759df5df93f37b42202bdd7ee1c8c16bc8ee5a633059cbffa59c1d322fa1","bodyHash":"5e98ab038e14adc612c16b063227b44f7dff8a17044c5b2a0350a528867d89d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenFullStart","kind":"method","status":"implemented","sigHash":"7d79759df5df93f37b42202bdd7ee1c8c16bc8ee5a633059cbffa59c1d322fa1"}
  *
  * Go source:
  * func (s *Scanner) TokenFullStart() int {
@@ -847,7 +847,7 @@ export function Scanner_TokenFullStart(receiver: GoPtr<Scanner>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenStart","kind":"method","status":"implemented","sigHash":"9e27e4896173256750d66506eba0ae5d52b776ae2bdb3191c76df9e23a9b75f5","bodyHash":"c1f81dadca37007c9b54f96b67055a46ca77435424d093666552e84f729d9ce2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenStart","kind":"method","status":"implemented","sigHash":"9e27e4896173256750d66506eba0ae5d52b776ae2bdb3191c76df9e23a9b75f5"}
  *
  * Go source:
  * func (s *Scanner) TokenStart() int {
@@ -859,7 +859,7 @@ export function Scanner_TokenStart(receiver: GoPtr<Scanner>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenEnd","kind":"method","status":"implemented","sigHash":"f894c4872fe8bc212c65409f3cdb53aa9476894b6854b83307ca6fcf63038143","bodyHash":"f3a1df33f5fac1150eabc66b383aa8aab7a88a44c315da1d5449b463c824d7d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenEnd","kind":"method","status":"implemented","sigHash":"f894c4872fe8bc212c65409f3cdb53aa9476894b6854b83307ca6fcf63038143"}
  *
  * Go source:
  * func (s *Scanner) TokenEnd() int {
@@ -871,7 +871,7 @@ export function Scanner_TokenEnd(receiver: GoPtr<Scanner>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenText","kind":"method","status":"implemented","sigHash":"ccfc66dd051d6e9cf4d55f15be6a0271cdeea0c397ebac3160a504fffd8f2f8c","bodyHash":"674c308611e10f1afffacebcf558f312ee8402f6b4aec9f1c55252e92fe0fbae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenText","kind":"method","status":"implemented","sigHash":"ccfc66dd051d6e9cf4d55f15be6a0271cdeea0c397ebac3160a504fffd8f2f8c"}
  *
  * Go source:
  * func (s *Scanner) TokenText() string {
@@ -884,7 +884,7 @@ export function Scanner_TokenText(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenValue","kind":"method","status":"implemented","sigHash":"22ef3e4949cd0abc50983e77fc5b8b7821e4c14c0a3b90f8bd4067af43c40f4f","bodyHash":"e34257d6be24f5aa1f92875f646234a2006d0e9b2db8f6350d5c2d663ec131d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenValue","kind":"method","status":"implemented","sigHash":"22ef3e4949cd0abc50983e77fc5b8b7821e4c14c0a3b90f8bd4067af43c40f4f"}
  *
  * Go source:
  * func (s *Scanner) TokenValue() string {
@@ -896,7 +896,7 @@ export function Scanner_TokenValue(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenRange","kind":"method","status":"implemented","sigHash":"5846d9e2a986f56a70c871937a8d467b406f6a05dfe0b844d177e955ea5f14f9","bodyHash":"cb0ecfce338a5730f1b445a3a934a07dab73e60d78556e5a2094120c4e0da190"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.TokenRange","kind":"method","status":"implemented","sigHash":"5846d9e2a986f56a70c871937a8d467b406f6a05dfe0b844d177e955ea5f14f9"}
  *
  * Go source:
  * func (s *Scanner) TokenRange() core.TextRange {
@@ -909,7 +909,7 @@ export function Scanner_TokenRange(receiver: GoPtr<Scanner>): TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.CommentDirectives","kind":"method","status":"implemented","sigHash":"8bb177e3a622bf30aa8985f59c1c890e83c4a31f1431e05d0d5fcd0a5decd32c","bodyHash":"b4020ed76da9fed40c4ab1ff9ccca8fcdd482829f4916eed4cc49b1e6fac1778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.CommentDirectives","kind":"method","status":"implemented","sigHash":"8bb177e3a622bf30aa8985f59c1c890e83c4a31f1431e05d0d5fcd0a5decd32c"}
  *
  * Go source:
  * func (s *Scanner) CommentDirectives() []ast.CommentDirective {
@@ -921,7 +921,7 @@ export function Scanner_CommentDirectives(receiver: GoPtr<Scanner>): GoSlice<Com
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Mark","kind":"method","status":"implemented","sigHash":"bfa17a5c7a0c803fb17cf30ceb243ee8e3f82c5464e2f6483b95a69916cbe9b7","bodyHash":"d9d7447aab40ac0c27e15852ac332c11d726b42592c5e0e17dd1aa66422bf899"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Mark","kind":"method","status":"implemented","sigHash":"bfa17a5c7a0c803fb17cf30ceb243ee8e3f82c5464e2f6483b95a69916cbe9b7"}
  *
  * Go source:
  * func (s *Scanner) Mark() ScannerState {
@@ -945,7 +945,7 @@ export function Scanner_Mark(receiver: GoPtr<Scanner>): ScannerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Rewind","kind":"method","status":"implemented","sigHash":"77e2ac1ac2f64f14a99e68f5148d7a85c4ad48956dcc1ae409555acb66f2a549","bodyHash":"3ba534c3a8d73a6647aed5a34d4eb30dd030b9e9d607eb46bcee2ea896c62ec5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Rewind","kind":"method","status":"implemented","sigHash":"77e2ac1ac2f64f14a99e68f5148d7a85c4ad48956dcc1ae409555acb66f2a549"}
  *
  * Go source:
  * func (s *Scanner) Rewind(state ScannerState) {
@@ -966,7 +966,7 @@ export function Scanner_Rewind(receiver: GoPtr<Scanner>, state: ScannerState): v
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ResetPos","kind":"method","status":"implemented","sigHash":"b5e28b8c9fe788cb27cde990a89a636486b9961927b9503da2618f5be1a6a92b","bodyHash":"f99dc3e5d9adb1afb1e05f6f1c6f20dd3b81d4cd04cd97ed949ae6e7b5d88977"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ResetPos","kind":"method","status":"implemented","sigHash":"b5e28b8c9fe788cb27cde990a89a636486b9961927b9503da2618f5be1a6a92b"}
  *
  * Go source:
  * func (s *Scanner) ResetPos(pos int) {
@@ -989,7 +989,7 @@ export function Scanner_ResetPos(receiver: GoPtr<Scanner>, pos: int): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ResetTokenState","kind":"method","status":"implemented","sigHash":"38e040605eacfc1462d6a7340e4f21d0eed1393d704c08e2eb9ef242e525544f","bodyHash":"a177f998203aef101fff593618f06ce04ad0b774d89f0dfad66ca01be494c504"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ResetTokenState","kind":"method","status":"implemented","sigHash":"38e040605eacfc1462d6a7340e4f21d0eed1393d704c08e2eb9ef242e525544f"}
  *
  * Go source:
  * func (s *Scanner) ResetTokenState(pos int) {
@@ -1008,7 +1008,7 @@ export function Scanner_ResetTokenState(receiver: GoPtr<Scanner>, pos: int): voi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetSkipJSDocLeadingAsterisks","kind":"method","status":"implemented","sigHash":"cf226a2e45752b631ff0153462a3ce7cbb4362920679a29e386ef36f456a5dd9","bodyHash":"217ceb0b0d9a261ef8075a65171c2f08dbba9759086a1beb6fd965d405c1a559"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetSkipJSDocLeadingAsterisks","kind":"method","status":"implemented","sigHash":"cf226a2e45752b631ff0153462a3ce7cbb4362920679a29e386ef36f456a5dd9"}
  *
  * Go source:
  * func (scanner *Scanner) SetSkipJSDocLeadingAsterisks(skip bool) {
@@ -1029,7 +1029,7 @@ export function Scanner_SetSkipJSDocLeadingAsterisks(receiver: GoPtr<Scanner>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetSkipTrivia","kind":"method","status":"implemented","sigHash":"370f0069c53ca628b07503812c5084d7d9308a0bac141190d68535e6efdd3fc0","bodyHash":"0e350d937d15c613811778d1870840ebc3c2dc5f5be85be3d2660fef7305360f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetSkipTrivia","kind":"method","status":"implemented","sigHash":"370f0069c53ca628b07503812c5084d7d9308a0bac141190d68535e6efdd3fc0"}
  *
  * Go source:
  * func (scanner *Scanner) SetSkipTrivia(skip bool) {
@@ -1041,7 +1041,7 @@ export function Scanner_SetSkipTrivia(receiver: GoPtr<Scanner>, skip: bool): voi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasUnicodeEscape","kind":"method","status":"implemented","sigHash":"d0297f607c7a34e71cddd75bfdd159cf83e15df7a9102cffb9929b030688e62d","bodyHash":"9cd141fca9df4a1b9181caa9147259cd389dccedc23f85109328d2732221fac1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasUnicodeEscape","kind":"method","status":"implemented","sigHash":"d0297f607c7a34e71cddd75bfdd159cf83e15df7a9102cffb9929b030688e62d"}
  *
  * Go source:
  * func (s *Scanner) HasUnicodeEscape() bool {
@@ -1053,7 +1053,7 @@ export function Scanner_HasUnicodeEscape(receiver: GoPtr<Scanner>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ContainsNonASCII","kind":"method","status":"implemented","sigHash":"b04200be91535e223f441fbc251d17ec7598ef5a6b85d85941c11340aa0a04a7","bodyHash":"1110d61df2722e9c33441156bdc07be89a08f97221c20d71ef96a3084ed07f1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ContainsNonASCII","kind":"method","status":"implemented","sigHash":"b04200be91535e223f441fbc251d17ec7598ef5a6b85d85941c11340aa0a04a7"}
  *
  * Go source:
  * func (s *Scanner) ContainsNonASCII() bool {
@@ -1065,7 +1065,7 @@ export function Scanner_ContainsNonASCII(receiver: GoPtr<Scanner>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasExtendedUnicodeEscape","kind":"method","status":"implemented","sigHash":"1cf07172b4f52e545a091ae5604d2011d9d80094c65b4e922cdadbd9594af624","bodyHash":"c5607772d1520784d04019847c8dc39aebbaac7fda2c3b42c5e286fc6f027470"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasExtendedUnicodeEscape","kind":"method","status":"implemented","sigHash":"1cf07172b4f52e545a091ae5604d2011d9d80094c65b4e922cdadbd9594af624"}
  *
  * Go source:
  * func (s *Scanner) HasExtendedUnicodeEscape() bool {
@@ -1077,7 +1077,7 @@ export function Scanner_HasExtendedUnicodeEscape(receiver: GoPtr<Scanner>): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingLineBreak","kind":"method","status":"implemented","sigHash":"abaee7c2f90d4c1a373960a7e0b044115f98711471a6a7b2917e4ecb5e7fd739","bodyHash":"4b9b2a0b1d51030cf26005d8939f1196bdbf1bdc0fe8c8c8339cd16064c674af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingLineBreak","kind":"method","status":"implemented","sigHash":"abaee7c2f90d4c1a373960a7e0b044115f98711471a6a7b2917e4ecb5e7fd739"}
  *
  * Go source:
  * func (s *Scanner) HasPrecedingLineBreak() bool {
@@ -1089,7 +1089,7 @@ export function Scanner_HasPrecedingLineBreak(receiver: GoPtr<Scanner>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocComment","kind":"method","status":"implemented","sigHash":"8babfeec8b6321396b713e2fec6cc96366618056605b9c9fb07aed62dbc8ec29","bodyHash":"e8a1c68420075f88865ef26714e19a5fbca1e090edc46749f4276773bea34c37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocComment","kind":"method","status":"implemented","sigHash":"8babfeec8b6321396b713e2fec6cc96366618056605b9c9fb07aed62dbc8ec29"}
  *
  * Go source:
  * func (s *Scanner) HasPrecedingJSDocComment() bool {
@@ -1101,7 +1101,7 @@ export function Scanner_HasPrecedingJSDocComment(receiver: GoPtr<Scanner>): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocLeadingAsterisks","kind":"method","status":"implemented","sigHash":"200f836560264d0279a4a4ff0ddcb9046016f5bdfd25e2741a629bc4ee333f0b","bodyHash":"5ab74eee58e8afda8b930d859e9b7edbdc6c61bf9a512f6b5fb5ecc3ce70eab6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocLeadingAsterisks","kind":"method","status":"implemented","sigHash":"200f836560264d0279a4a4ff0ddcb9046016f5bdfd25e2741a629bc4ee333f0b"}
  *
  * Go source:
  * func (s *Scanner) HasPrecedingJSDocLeadingAsterisks() bool {
@@ -1113,7 +1113,7 @@ export function Scanner_HasPrecedingJSDocLeadingAsterisks(receiver: GoPtr<Scanne
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocWithDeprecatedTag","kind":"method","status":"implemented","sigHash":"8504cc5c13882cbf020176f1d592d183b851f13711ba3adaa3f159b59fe60b73","bodyHash":"58bd65937d917082008c85281cb6fd7bf2b533f19604bf32aa81ce36f4215ec1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocWithDeprecatedTag","kind":"method","status":"implemented","sigHash":"8504cc5c13882cbf020176f1d592d183b851f13711ba3adaa3f159b59fe60b73"}
  *
  * Go source:
  * func (s *Scanner) HasPrecedingJSDocWithDeprecatedTag() bool {
@@ -1125,7 +1125,7 @@ export function Scanner_HasPrecedingJSDocWithDeprecatedTag(receiver: GoPtr<Scann
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocWithSeeOrLink","kind":"method","status":"implemented","sigHash":"c8e9349d53fe928267efa23da778974a7e23ab0e94fd3380be31a84a71281f93","bodyHash":"33cc49ffe1989bd6881708eae1739661a1504408b1d22c2f4480805024b6c936"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.HasPrecedingJSDocWithSeeOrLink","kind":"method","status":"implemented","sigHash":"c8e9349d53fe928267efa23da778974a7e23ab0e94fd3380be31a84a71281f93"}
  *
  * Go source:
  * func (s *Scanner) HasPrecedingJSDocWithSeeOrLink() bool {
@@ -1137,7 +1137,7 @@ export function Scanner_HasPrecedingJSDocWithSeeOrLink(receiver: GoPtr<Scanner>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanJSDocCommentForTags","kind":"method","status":"implemented","sigHash":"6bdaeea7925c4dc0dd4e55cc5c1b1b46e28041eb30226cbdde9795967bb0aecc","bodyHash":"7870ae49e2dc423db3a1be445482732ce20feeaebf8021e8f0ea5a585f6bf827"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanJSDocCommentForTags","kind":"method","status":"implemented","sigHash":"6bdaeea7925c4dc0dd4e55cc5c1b1b46e28041eb30226cbdde9795967bb0aecc"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the existing UTF-8 byte view by range instead of repeatedly slicing and re-encoding JSDoc comment text; tag detection and TS-Go byte-offset semantics are unchanged."}
  *
  * Go source:
@@ -1211,7 +1211,7 @@ function stringByteViewIndexByteInRange(text: string, view: utf8.StringByteView,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::hasJSDocTag","kind":"func","status":"implemented","sigHash":"f361aaea4875a620ff76aa9e159099efa0daae87a2b07cf5f788d1bd3193644f","bodyHash":"a50eb36fef5eb098eed434da4e02ef6301ad7e75a778885cfa3a4617b8dd5f8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::hasJSDocTag","kind":"func","status":"implemented","sigHash":"f361aaea4875a620ff76aa9e159099efa0daae87a2b07cf5f788d1bd3193644f"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Share the UTF-8 byte-view prefix check used by scanner JSDoc range scanning, avoiding temporary substring views while preserving TS-Go tag-boundary behavior."}
  *
  * Go source:
@@ -1261,7 +1261,7 @@ function hasJSDocTagAt(text: string, view: utf8.StringByteView, start: int, end:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetText","kind":"method","status":"implemented","sigHash":"82064155a55a75a9b3e24e3a8f91ca17729da58c43eff21848500a222365a84d","bodyHash":"030d02a7218ce8c7b38b60179e3e24b52733498c775852828ae24d4d467da653"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetText","kind":"method","status":"implemented","sigHash":"82064155a55a75a9b3e24e3a8f91ca17729da58c43eff21848500a222365a84d"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Pin one UTF-8 byte view per scanner source text so byte-offset scanning does not repeatedly reclassify the same JS/.NET UTF-16 string."}
  *
  * Go source:
@@ -1291,7 +1291,7 @@ export function Scanner_SetTextEnd(receiver: GoPtr<Scanner>, text: string, end: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetOnError","kind":"method","status":"implemented","sigHash":"33f9cebd2e8da0068aed6e5b299560100d6ad16e9a316af88af10c492035f3c3","bodyHash":"0ec53962dcc084ae4daa010a4f07ce3faaa6f5d542546bddec182cd9da9597d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetOnError","kind":"method","status":"implemented","sigHash":"33f9cebd2e8da0068aed6e5b299560100d6ad16e9a316af88af10c492035f3c3"}
  *
  * Go source:
  * func (s *Scanner) SetOnError(errorCallback ErrorCallback) {
@@ -1303,7 +1303,7 @@ export function Scanner_SetOnError(receiver: GoPtr<Scanner>, errorCallback: Erro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetLanguageVariant","kind":"method","status":"implemented","sigHash":"754cd5ac3da7f60d7b89e6022e474772a3d61540c5f6b6f2f2fb7a20a00ef229","bodyHash":"9300bb4c06a2880a461305f873ca65e5cbec838d714267189834b73d7b859cd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetLanguageVariant","kind":"method","status":"implemented","sigHash":"754cd5ac3da7f60d7b89e6022e474772a3d61540c5f6b6f2f2fb7a20a00ef229"}
  *
  * Go source:
  * func (s *Scanner) SetLanguageVariant(languageVariant core.LanguageVariant) {
@@ -1315,7 +1315,7 @@ export function Scanner_SetLanguageVariant(receiver: GoPtr<Scanner>, languageVar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetScriptTarget","kind":"method","status":"implemented","sigHash":"72a7461df5cd26ebc8f0b90786c550656d17125747f282e042bd954f250f7de6","bodyHash":"aaa721ebf1c0d7f61d5be7f6894547308e66ea674957f1b8b9f9b25604b0573c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetScriptTarget","kind":"method","status":"implemented","sigHash":"72a7461df5cd26ebc8f0b90786c550656d17125747f282e042bd954f250f7de6"}
  *
  * Go source:
  * func (s *Scanner) SetScriptTarget(scriptTarget core.ScriptTarget) {
@@ -1327,7 +1327,7 @@ export function Scanner_SetScriptTarget(receiver: GoPtr<Scanner>, scriptTarget: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.languageVersion","kind":"method","status":"implemented","sigHash":"b28eb96c1084e588d4b113d6dea4fba23da0af63aafb67520bbfad17446802be","bodyHash":"84fa3e5182144c507ebf4ef270c6bde053c14882a3bd5f3b7ece8f27bb4a9d90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.languageVersion","kind":"method","status":"implemented","sigHash":"b28eb96c1084e588d4b113d6dea4fba23da0af63aafb67520bbfad17446802be"}
  *
  * Go source:
  * func (s *Scanner) languageVersion() core.ScriptTarget {
@@ -1346,7 +1346,7 @@ export function Scanner_languageVersion(receiver: GoPtr<Scanner>): ScriptTarget 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.error","kind":"method","status":"implemented","sigHash":"784bcbad7386c574324f7251fe56a241a8431adcf7ca5ea01a5c5d2a53c30009","bodyHash":"43ecff846b340a0f690accf50efb47fbd3444b2cfd054b007bec3cb9ab8a14aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.error","kind":"method","status":"implemented","sigHash":"784bcbad7386c574324f7251fe56a241a8431adcf7ca5ea01a5c5d2a53c30009"}
  *
  * Go source:
  * func (s *Scanner) error(diagnostic *diagnostics.Message) {
@@ -1359,7 +1359,7 @@ export function Scanner_error(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Messag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.errorAt","kind":"method","status":"implemented","sigHash":"9463ec0f6ed593e9acc1b266d10a3116c4bf7487b261c511ade254a62c19b8e9","bodyHash":"3d88616823e42f77e82af113b743bf2538612a6b2384ccc1396efa5ac0ca2178"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.errorAt","kind":"method","status":"implemented","sigHash":"9463ec0f6ed593e9acc1b266d10a3116c4bf7487b261c511ade254a62c19b8e9"}
  *
  * Go source:
  * func (s *Scanner) errorAt(diagnostic *diagnostics.Message, pos int, length int, args ...any) {
@@ -1376,7 +1376,7 @@ export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Mess
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.char","kind":"method","status":"implemented","sigHash":"83b9f5c499d55cb42ecff92a9698b5d07b83e98bfc19ce7e8d9464bd49aed11a","bodyHash":"04dd1c9c3c4cc4876bb9b349ade0eb577fc352a2d398cf992b1021424fdbdd3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.char","kind":"method","status":"implemented","sigHash":"83b9f5c499d55cb42ecff92a9698b5d07b83e98bfc19ce7e8d9464bd49aed11a"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every byte access."}
  *
  * Go source:
@@ -1396,7 +1396,7 @@ export function Scanner_char(receiver: GoPtr<Scanner>): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAt","kind":"method","status":"implemented","sigHash":"da7fb8267c9d51bb48b7ab642034a5e6b9ba11614d5be412238c0917f439a26f","bodyHash":"8899ba70b7386f7e6861ef2dc2af29fb0f6af0ab77b551e389197d02b078966f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAt","kind":"method","status":"implemented","sigHash":"da7fb8267c9d51bb48b7ab642034a5e6b9ba11614d5be412238c0917f439a26f"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every offset probe."}
  *
  * Go source:
@@ -1416,7 +1416,7 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"53999882a6597734c93b240d0823bd51399ff1732381f6aa94eaff838eee7084"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode from the scanner-local source byte view while preserving TS-Go byte-offset rune size semantics."}
  *
  * Go source:
@@ -1455,7 +1455,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanASCIIWhile","kind":"method","status":"implemented","sigHash":"43b4e929d6def6f9ba2bd93f8ceb888db4e5dffbbc6a805e447a79074d942f12","bodyHash":"b98fd457d9e43cde7e81a876f1b69058c8e0c77a94321c20ef8a6df042cc8c3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanASCIIWhile","kind":"method","status":"implemented","sigHash":"43b4e929d6def6f9ba2bd93f8ceb888db4e5dffbbc6a805e447a79074d942f12"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan directly over the scanner-local source byte view instead of materializing Go-style string slices; byte advancement remains TS-Go exact."}
  *
  * Go source:
@@ -1508,7 +1508,7 @@ export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (arg0: by
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Scan","kind":"method","status":"implemented","sigHash":"4b2d16399efbd4afd7ee8c9b9dfeec6408ed7100a1a83bcded650f8c210392b0","bodyHash":"3310d5907b0bb6c2ef92faecb27f889f73ca4449ae4e85910506c86198763186"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Scan","kind":"method","status":"implemented","sigHash":"4b2d16399efbd4afd7ee8c9b9dfeec6408ed7100a1a83bcded650f8c210392b0"}
  *
  * Go source:
  * func (s *Scanner) Scan() ast.Kind {
@@ -2605,7 +2605,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.processCommentDirective","kind":"method","status":"implemented","sigHash":"7c2edc7a657dd3296e46f228cc02e076147ea57685be63dcb6e56dd6cb1a9317","bodyHash":"14449bf543d4745d8e2d1234c9fa3321dbde6aa7ec6e0bab84cd3bb5b6e8b579"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.processCommentDirective","kind":"method","status":"implemented","sigHash":"7c2edc7a657dd3296e46f228cc02e076147ea57685be63dcb6e56dd6cb1a9317"}
  *
  * Go source:
  * func (s *Scanner) processCommentDirective(start int, end int, multiline bool) {
@@ -2692,7 +2692,7 @@ export function Scanner_processCommentDirective(receiver: GoPtr<Scanner>, start:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanLessThanToken","kind":"method","status":"implemented","sigHash":"8cf6ad70255e4cd535eca193d008aeedcb3beda8e14d6e02e9e5a4e4125a42ac","bodyHash":"941a44d95965ae74a363719be105cfd5279efa7e0c1d6c8b6bf49d1355c11bc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanLessThanToken","kind":"method","status":"implemented","sigHash":"8cf6ad70255e4cd535eca193d008aeedcb3beda8e14d6e02e9e5a4e4125a42ac"}
  *
  * Go source:
  * func (s *Scanner) ReScanLessThanToken() ast.Kind {
@@ -2714,7 +2714,7 @@ export function Scanner_ReScanLessThanToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanGreaterThanToken","kind":"method","status":"implemented","sigHash":"e452c833a215e1071dd6e67ed4d5d6e080aa43f1e384e4f804f3b55dcf712c63","bodyHash":"d103f60b7c6a59146fcfdd513cb65b1ada6ef5f9a94163dda0b3cf3f47c3b1e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanGreaterThanToken","kind":"method","status":"implemented","sigHash":"e452c833a215e1071dd6e67ed4d5d6e080aa43f1e384e4f804f3b55dcf712c63"}
  *
  * Go source:
  * func (s *Scanner) ReScanGreaterThanToken() ast.Kind {
@@ -2734,7 +2734,7 @@ export function Scanner_ReScanGreaterThanToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.reScanGreaterThanTokenInner","kind":"method","status":"implemented","sigHash":"83fdb65bf3205c4b65e3ba8d5a6d39937fd378d6db8b228392c45d6914b4ec8b","bodyHash":"0e4311dcb2931d8e0f3722e86b5340855665e00e2bc63042f1303d1bab7098b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.reScanGreaterThanTokenInner","kind":"method","status":"implemented","sigHash":"83fdb65bf3205c4b65e3ba8d5a6d39937fd378d6db8b228392c45d6914b4ec8b"}
  *
  * Go source:
  * func (s *Scanner) reScanGreaterThanTokenInner() {
@@ -2788,7 +2788,7 @@ export function Scanner_reScanGreaterThanTokenInner(receiver: GoPtr<Scanner>): v
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanTemplateToken","kind":"method","status":"implemented","sigHash":"083c9ae0db1a9fb2d185d1669816a650909628ffa48c736ab8d00d2cd2c5e629","bodyHash":"27beeea676b50f58831d7207690e118c9d72206cc29d3212ce58b5267c8e9285"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanTemplateToken","kind":"method","status":"implemented","sigHash":"083c9ae0db1a9fb2d185d1669816a650909628ffa48c736ab8d00d2cd2c5e629"}
  *
  * Go source:
  * func (s *Scanner) ReScanTemplateToken(isTaggedTemplate bool) ast.Kind {
@@ -2806,7 +2806,7 @@ export function Scanner_ReScanTemplateToken(receiver: GoPtr<Scanner>, isTaggedTe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanAsteriskEqualsToken","kind":"method","status":"implemented","sigHash":"682da5630dd5128de5d5d104a3731209cf0f493ad25eedd84291179a789d9efa","bodyHash":"2a362590bead42bdaf22b241b57484d020d04df2af70ee5ca044418e365aead3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanAsteriskEqualsToken","kind":"method","status":"implemented","sigHash":"682da5630dd5128de5d5d104a3731209cf0f493ad25eedd84291179a789d9efa"}
  *
  * Go source:
  * func (s *Scanner) ReScanAsteriskEqualsToken() ast.Kind {
@@ -2830,7 +2830,7 @@ export function Scanner_ReScanAsteriskEqualsToken(receiver: GoPtr<Scanner>): Kin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanSlashToken","kind":"method","status":"implemented","sigHash":"c030ae5fe9eab8eea38f59894a51ca09228c4c0c0edca7d66aa337f821508214","bodyHash":"11f78a7268cacca312bafd26ee99f480df8bee733ec5360d03f64e9859cf6cf2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanSlashToken","kind":"method","status":"implemented","sigHash":"c030ae5fe9eab8eea38f59894a51ca09228c4c0c0edca7d66aa337f821508214"}
  *
  * Go source:
  * func (s *Scanner) ReScanSlashToken(reportErrors ...bool) ast.Kind {
@@ -3162,7 +3162,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanJsxToken","kind":"method","status":"implemented","sigHash":"09636accd75be5e1365f4f770f4dd13b0e52b284452b375604596c1f7c3dfe72","bodyHash":"1a89eb3b4f1088a13b9588a9368a4f9224846ff0ac4a05e122f3429c58844ad8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanJsxToken","kind":"method","status":"implemented","sigHash":"09636accd75be5e1365f4f770f4dd13b0e52b284452b375604596c1f7c3dfe72"}
  *
  * Go source:
  * func (s *Scanner) ReScanJsxToken(allowMultilineJsxText bool) ast.Kind {
@@ -3182,7 +3182,7 @@ export function Scanner_ReScanJsxToken(receiver: GoPtr<Scanner>, allowMultilineJ
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanHashToken","kind":"method","status":"implemented","sigHash":"56dc450f40a2391260769db80f10e14c8ed5ec1fc99afa1e2c0a67037f3146cf","bodyHash":"eb0ea335360b7ec0300fbb55233cd7e643984d5280085325c56143d41f1031a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanHashToken","kind":"method","status":"implemented","sigHash":"56dc450f40a2391260769db80f10e14c8ed5ec1fc99afa1e2c0a67037f3146cf"}
  *
  * Go source:
  * func (s *Scanner) ReScanHashToken() ast.Kind {
@@ -3204,7 +3204,7 @@ export function Scanner_ReScanHashToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanQuestionToken","kind":"method","status":"implemented","sigHash":"7db444f3b3124362bd223b468fe84e290b845c2b51f14cf1d30dbc22c914822f","bodyHash":"a6d190e6c647d9f4ccadce0715b2f4b8199081ecf15c0e56ded9cc05e2d1783b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanQuestionToken","kind":"method","status":"implemented","sigHash":"7db444f3b3124362bd223b468fe84e290b845c2b51f14cf1d30dbc22c914822f"}
  *
  * Go source:
  * func (s *Scanner) ReScanQuestionToken() ast.Kind {
@@ -3228,7 +3228,7 @@ export function Scanner_ReScanQuestionToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxToken","kind":"method","status":"implemented","sigHash":"cb0adce9446e1ee158b3c22735a4ff3ccd6f92d9ca657debfb6514a277d766fb","bodyHash":"977508030592620fb4d65f84afcfaaa3865cbc0813531c2990eca4a11ee1e050"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxToken","kind":"method","status":"implemented","sigHash":"cb0adce9446e1ee158b3c22735a4ff3ccd6f92d9ca657debfb6514a277d766fb"}
  *
  * Go source:
  * func (s *Scanner) ScanJsxToken() ast.Kind {
@@ -3240,7 +3240,7 @@ export function Scanner_ScanJsxToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxTokenEx","kind":"method","status":"implemented","sigHash":"d4be52292dd57b50a63a124ceccaded2017f4f7eeda633eeb2149aba4bdad483","bodyHash":"72bd2d9481ea3eacf4a34bff5b81614d371da56d31152b9bf323b16ee39fc109"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxTokenEx","kind":"method","status":"implemented","sigHash":"d4be52292dd57b50a63a124ceccaded2017f4f7eeda633eeb2149aba4bdad483"}
  *
  * Go source:
  * func (s *Scanner) ScanJsxTokenEx(allowMultilineJsxText bool) ast.Kind {
@@ -3379,7 +3379,7 @@ export function Scanner_ScanJsxTokenEx(receiver: GoPtr<Scanner>, allowMultilineJ
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxIdentifier","kind":"method","status":"implemented","sigHash":"0255ddbdedb241450e4ad55230021e8972070f21741c176e28c245f44208c87f","bodyHash":"c77aff5547fc32199b92ff7c21b43ccfadcd6596d0cd6533a2d8766adc73c894"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxIdentifier","kind":"method","status":"implemented","sigHash":"0255ddbdedb241450e4ad55230021e8972070f21741c176e28c245f44208c87f"}
  *
  * Go source:
  * func (s *Scanner) ScanJsxIdentifier() ast.Kind {
@@ -3439,7 +3439,7 @@ export function Scanner_ScanJsxIdentifier(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxAttributeValue","kind":"method","status":"implemented","sigHash":"067ad1668467a4fd2547060e2f63aea42d97e6d5af1c20221e0f17aeb19944fc","bodyHash":"3b6fdb367f3c1fa198c18469466b5dc27ab5484537dab88b01a5b4d1bb67fc9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJsxAttributeValue","kind":"method","status":"implemented","sigHash":"067ad1668467a4fd2547060e2f63aea42d97e6d5af1c20221e0f17aeb19944fc"}
  *
  * Go source:
  * func (s *Scanner) ScanJsxAttributeValue() ast.Kind {
@@ -3484,7 +3484,7 @@ export function Scanner_ScanJsxAttributeValue(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanJsxAttributeValue","kind":"method","status":"implemented","sigHash":"c41ce8a593390d023792191f693ef9b39da3510ee122118ab373a2ffebfbbadf","bodyHash":"72ebc966acd2c453ec969014e03c38f431bcfc197630cfe06733b1394a918346"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanJsxAttributeValue","kind":"method","status":"implemented","sigHash":"c41ce8a593390d023792191f693ef9b39da3510ee122118ab373a2ffebfbbadf"}
  *
  * Go source:
  * func (s *Scanner) ReScanJsxAttributeValue() ast.Kind {
@@ -3502,7 +3502,7 @@ export function Scanner_ReScanJsxAttributeValue(receiver: GoPtr<Scanner>): Kind 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJSDocCommentTextToken","kind":"method","status":"implemented","sigHash":"b25724dcb2e01691a417a9380986cfe33b8f7de6f690579a3796a93b7d5faac1","bodyHash":"8da06f84d8bc2c4d92e4b94e9345637ef702a4dbcf0481db3b31d3f88df0c58e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJSDocCommentTextToken","kind":"method","status":"implemented","sigHash":"b25724dcb2e01691a417a9380986cfe33b8f7de6f690579a3796a93b7d5faac1"}
  *
  * Go source:
  * func (s *Scanner) ScanJSDocCommentTextToken(inBackticks bool) ast.Kind {
@@ -3578,7 +3578,7 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.CanFollowJSDocAt","kind":"method","status":"implemented","sigHash":"4a27df09b7ff46d72e20dd20d9e9c6749399088a951da1439b55faf85e9555f9","bodyHash":"f9b1b1446a237af9c0261e86533b4faf99c768083ac1e6ece80c32a451cd67cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.CanFollowJSDocAt","kind":"method","status":"implemented","sigHash":"4a27df09b7ff46d72e20dd20d9e9c6749399088a951da1439b55faf85e9555f9"}
  *
  * Go source:
  * func (s *Scanner) CanFollowJSDocAt() bool {
@@ -3600,7 +3600,7 @@ export function Scanner_CanFollowJSDocAt(receiver: GoPtr<Scanner>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJSDocToken","kind":"method","status":"implemented","sigHash":"6b4ef73eabac22e1f1fefd885de1a646dca34c8bf9791d541412fd6726a1e0ac","bodyHash":"f2dfddd5e40e6dd75d42d8cad12ca959b62d59d104e0e22375ae89e2674ff0f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ScanJSDocToken","kind":"method","status":"implemented","sigHash":"6b4ef73eabac22e1f1fefd885de1a646dca34c8bf9791d541412fd6726a1e0ac"}
  *
  * Go source:
  * func (s *Scanner) ScanJSDocToken() ast.Kind {
@@ -3833,7 +3833,7 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifier","kind":"method","status":"implemented","sigHash":"8d0b6ebcb4ea537e635fa8157441f3c091dc975721578bcc8957a7d672b26a75","bodyHash":"f12c4d9842d62c237d4883ecea3e245508588b1c84863882c896100aa3061341"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifier","kind":"method","status":"implemented","sigHash":"8d0b6ebcb4ea537e635fa8157441f3c091dc975721578bcc8957a7d672b26a75"}
  *
  * Go source:
  * func (s *Scanner) scanIdentifier(prefixLength int) bool {
@@ -3910,7 +3910,7 @@ export function Scanner_scanIdentifier(receiver: GoPtr<Scanner>, prefixLength: i
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifierParts","kind":"method","status":"implemented","sigHash":"0a7d8fb99511f040ab34d0ad3591ef186e84aef7e98d7af97eea5781856eacc5","bodyHash":"264d1bc94929fff862234c00e3f9b633702cd0cf97e431678130d92036a1481b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifierParts","kind":"method","status":"implemented","sigHash":"0a7d8fb99511f040ab34d0ad3591ef186e84aef7e98d7af97eea5781856eacc5"}
  *
  * Go source:
  * func (s *Scanner) scanIdentifierParts() string {
@@ -3964,7 +3964,7 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379","bodyHash":"bb449bb53dae2ba8d795d9e8e7189db93174c6e4dec732213aa8d523afef69af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the simple-string fast path over the scanner byte view before materializing token text; Go string slices are O(1), but JS/.NET text slices allocate."}
  *
  * Go source:
@@ -4078,7 +4078,7 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanTemplateAndSetTokenValue","kind":"method","status":"implemented","sigHash":"cdb72c37603e1f52d47695665dc1968c946dc859b904297162a536d5ddaede2e","bodyHash":"62f48bfa5164a51de3d0cd7e724084d49342619564ded3af874aba58d63e52a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanTemplateAndSetTokenValue","kind":"method","status":"implemented","sigHash":"cdb72c37603e1f52d47695665dc1968c946dc859b904297162a536d5ddaede2e"}
  *
  * Go source:
  * func (s *Scanner) scanTemplateAndSetTokenValue(shouldEmitInvalidEscapeError bool) ast.Kind {
@@ -4188,7 +4188,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06","bodyHash":"2ccbc32f98cb965c5cdc6211ee737c03a0023357b7748131c63e8269d97ccab1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06"}
  *
  * Go source:
  * func (s *Scanner) scanEscapeSequence(flags EscapeSequenceScanningFlags) string {
@@ -4557,7 +4557,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanUnicodeEscape","kind":"method","status":"implemented","sigHash":"80e7172552dfdaccf7aef6dc5cc1c0310c3a707e33be09874e88077b19f2ae58","bodyHash":"8de13559085196d477ed33d55edf2b5d0db3f15b1bcdd845b58dbd80317641b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanUnicodeEscape","kind":"method","status":"implemented","sigHash":"80e7172552dfdaccf7aef6dc5cc1c0310c3a707e33be09874e88077b19f2ae58"}
  *
  * Go source:
  * func (s *Scanner) scanUnicodeEscape(shouldEmitInvalidEscapeError bool) rune {
@@ -4663,7 +4663,7 @@ export function Scanner_scanUnicodeEscape(receiver: GoPtr<Scanner>, shouldEmitIn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanLowSurrogateEscape","kind":"method","status":"implemented","sigHash":"1cc0ef6e3a6fda2e3c88bbe9114b88806bc07575d62f0b08ff659e3e4420aaac","bodyHash":"0005d0e7cc211fda4de147fc36afd044b608695c776466939ab77a00c334b01e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanLowSurrogateEscape","kind":"method","status":"implemented","sigHash":"1cc0ef6e3a6fda2e3c88bbe9114b88806bc07575d62f0b08ff659e3e4420aaac"}
  *
  * Go source:
  * // scanLowSurrogateEscape attempts to consume a low-surrogate Unicode escape
@@ -4712,7 +4712,7 @@ export function Scanner_scanLowSurrogateEscape(receiver: GoPtr<Scanner>, high: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.peekUnicodeEscape","kind":"method","status":"implemented","sigHash":"fa10a4a7af22d4c808e531c19fc17954c9991281da5bb3a3d4a4dd871e8329d1","bodyHash":"e250ce068130aa8b0286a47ede7bf5e8bc7697d6dac3d5fbd0466bbb4ad86ffd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.peekUnicodeEscape","kind":"method","status":"implemented","sigHash":"fa10a4a7af22d4c808e531c19fc17954c9991281da5bb3a3d4a4dd871e8329d1"}
  *
  * Go source:
  * func (s *Scanner) peekUnicodeEscape() rune {
@@ -4742,7 +4742,7 @@ export function Scanner_peekUnicodeEscape(receiver: GoPtr<Scanner>): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumber","kind":"method","status":"implemented","sigHash":"a0b8ba021d0a5a9d013b09bd9ee72e7ba3553b04884ed0e7d4ef270d962646e5","bodyHash":"cabdc220c190914901a813149e1a3630c87fdd06fd132934c4a1768af0d7da0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumber","kind":"method","status":"implemented","sigHash":"a0b8ba021d0a5a9d013b09bd9ee72e7ba3553b04884ed0e7d4ef270d962646e5"}
  *
  * Go source:
  * func (s *Scanner) scanNumber() ast.Kind {
@@ -4948,7 +4948,7 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumberFragment","kind":"method","status":"implemented","sigHash":"107eac2d2e9ee776e96ea451d6cfc0c5ece86f77f0bb651ff35be1e39a2a99ed","bodyHash":"87edd40884f034481fed14d577944801df0fff461a2abab496bac20045fe0376"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumberFragment","kind":"method","status":"implemented","sigHash":"107eac2d2e9ee776e96ea451d6cfc0c5ece86f77f0bb651ff35be1e39a2a99ed"}
  *
  * Go source:
  * func (s *Scanner) scanNumberFragment() string {
@@ -5045,7 +5045,7 @@ export function Scanner_scanNumberFragment(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanDigits","kind":"method","status":"implemented","sigHash":"5173f46cb2963cb6535aa7efb7e0ec4dbc04157729d125e168f751140a6e2f59","bodyHash":"72c187e377a6c821768510e1f0301dda005e33d972cbd597993d673c91f8a0ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanDigits","kind":"method","status":"implemented","sigHash":"5173f46cb2963cb6535aa7efb7e0ec4dbc04157729d125e168f751140a6e2f59"}
  *
  * Go source:
  * func (s *Scanner) scanDigits() (string, bool) {
@@ -5074,7 +5074,7 @@ export function Scanner_scanDigits(receiver: GoPtr<Scanner>): [string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanHexDigits","kind":"method","status":"implemented","sigHash":"c50827184f304547ec3ed0bbcc255bc50ec34bfdbea3c6ec9a8caf9170c281c0","bodyHash":"cb1f92a2a61fbcbe7e944ebe4e1180b242737db1f53d25adc1299246b6be676f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanHexDigits","kind":"method","status":"implemented","sigHash":"c50827184f304547ec3ed0bbcc255bc50ec34bfdbea3c6ec9a8caf9170c281c0"}
  *
  * Go source:
  * func (s *Scanner) scanHexDigits(minCount int, scanAsManyAsPossible bool, canHaveSeparators bool) string {
@@ -5178,7 +5178,7 @@ export function Scanner_scanHexDigits(receiver: GoPtr<Scanner>, minCount: int, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanBinaryOrOctalDigits","kind":"method","status":"implemented","sigHash":"ad6e8ca7a23e3a771a31fabeea1ea7447749212e9a0094f14cea30d10a7fedbc","bodyHash":"191a9f75561933ea01c0d6a35d46676528bc351ca7fc539f18a679328a86de3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanBinaryOrOctalDigits","kind":"method","status":"implemented","sigHash":"ad6e8ca7a23e3a771a31fabeea1ea7447749212e9a0094f14cea30d10a7fedbc"}
  *
  * Go source:
  * func (s *Scanner) scanBinaryOrOctalDigits(base int32) string {
@@ -5245,7 +5245,7 @@ export function Scanner_scanBinaryOrOctalDigits(receiver: GoPtr<Scanner>, base: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanBigIntSuffix","kind":"method","status":"implemented","sigHash":"e95bb479091bc5d6c9e3a91662339b84a77f4403395003bcd1c8a2a36685966f","bodyHash":"38dfd43db86635a06346fe07523d45b21d9664d78335a82e3b081d04267e3490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanBigIntSuffix","kind":"method","status":"implemented","sigHash":"e95bb479091bc5d6c9e3a91662339b84a77f4403395003bcd1c8a2a36685966f"}
  *
  * Go source:
  * func (s *Scanner) scanBigIntSuffix() ast.Kind {
@@ -5301,7 +5301,7 @@ export function Scanner_scanBigIntSuffix(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanInvalidCharacter","kind":"method","status":"implemented","sigHash":"c99739e486c38e56db4be3f3b8ca30c5a1074b7803f962d5e03e3622cf003a5e","bodyHash":"803ea138f96033afdfe1ffe2cd224465ee69f5078d33dea05704e34857fa513b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanInvalidCharacter","kind":"method","status":"implemented","sigHash":"c99739e486c38e56db4be3f3b8ca30c5a1074b7803f962d5e03e3622cf003a5e"}
  *
  * Go source:
  * func (s *Scanner) scanInvalidCharacter() {
@@ -5320,7 +5320,7 @@ export function Scanner_scanInvalidCharacter(receiver: GoPtr<Scanner>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetIdentifierToken","kind":"func","status":"implemented","sigHash":"a5e7f979cfd8a669e6b4be3494c2953ad7fbec7fd2e111b3f38f2ee61f5282c7","bodyHash":"dc7293fe327a8e8093c2e5907803c5adb9f824f233ad6b49fc63e45e6ef5d0b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetIdentifierToken","kind":"func","status":"implemented","sigHash":"a5e7f979cfd8a669e6b4be3494c2953ad7fbec7fd2e111b3f38f2ee61f5282c7"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Keyword spellings are ASCII-only, so JS/.NET UTF-16 length and first code unit are sufficient to decide whether a textToKeyword probe can succeed; non-ASCII identifiers cannot equal a keyword and do not need UTF-8 byte-view materialization."}
  *
  * Go source:
@@ -5345,7 +5345,7 @@ export function GetIdentifierToken(str: string): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsValidIdentifier","kind":"func","status":"implemented","sigHash":"6f2f2e0fa3f0726fd3acac525f61e6739551580772c0110f3bd049ad7184f931","bodyHash":"1f4836c7935e22c71a33ca860a69db1ea8df3d4edde0f6f1d0c30e22989fdee7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsValidIdentifier","kind":"func","status":"implemented","sigHash":"6f2f2e0fa3f0726fd3acac525f61e6739551580772c0110f3bd049ad7184f931"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode identifier text by byte offset over one UTF-8 byte view; Go's s[i:] slice is O(1), but JS substring/decode would allocate each iteration."}
  *
  * Go source:
@@ -5380,7 +5380,7 @@ export function IsValidIdentifier(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isWordCharacter","kind":"func","status":"implemented","sigHash":"a654575bb78b2151379e65a1996036e6071b2d19af09613b101e52e9673f9c66","bodyHash":"e457db9e8c427e744c523582f2d654aaf938dbd5c56c3ffc9de48e4b85c5f50e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isWordCharacter","kind":"func","status":"implemented","sigHash":"a654575bb78b2151379e65a1996036e6071b2d19af09613b101e52e9673f9c66"}
  *
  * Go source:
  * func isWordCharacter(ch rune) bool {
@@ -5392,7 +5392,7 @@ export function isWordCharacter(ch: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierStart","kind":"func","status":"implemented","sigHash":"8b0307f4d91cd33861040bbfc48694a01347ba78919e2991be6d068aec5dccbe","bodyHash":"5b5021d10d577795d4dc138041b2d15e3f733761c824d43edf887426082048f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierStart","kind":"func","status":"implemented","sigHash":"8b0307f4d91cd33861040bbfc48694a01347ba78919e2991be6d068aec5dccbe"}
  *
  * Go source:
  * func IsIdentifierStart(ch rune) bool {
@@ -5404,7 +5404,7 @@ export function IsIdentifierStart(ch: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierPart","kind":"func","status":"implemented","sigHash":"cea9d76e44b84d6f31e6a1068929975367984f606075f3fa68621c45548ec513","bodyHash":"aad3ed98a58a301217522a5d19d89f94d9b1b6175439dbea905d355895116d10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierPart","kind":"func","status":"implemented","sigHash":"cea9d76e44b84d6f31e6a1068929975367984f606075f3fa68621c45548ec513"}
  *
  * Go source:
  * func IsIdentifierPart(ch rune) bool {
@@ -5416,7 +5416,7 @@ export function IsIdentifierPart(ch: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierPartEx","kind":"func","status":"implemented","sigHash":"fe71015c9adb72b3bb73c5f06c60928a8091d9c42fd9756c58f8521c8354da5a","bodyHash":"eace31691b6c6e12063796c0021f59dbd74f65116e27112ab506b93a1ad922d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsIdentifierPartEx","kind":"func","status":"implemented","sigHash":"fe71015c9adb72b3bb73c5f06c60928a8091d9c42fd9756c58f8521c8354da5a"}
  *
  * Go source:
  * func IsIdentifierPartEx(ch rune, languageVariant core.LanguageVariant) bool {
@@ -5435,7 +5435,7 @@ export function IsIdentifierPartEx(ch: GoRune, languageVariant: LanguageVariant)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::tokenToText","kind":"varGroup","status":"implemented","sigHash":"e5a9cc66c2b51098cc72bf196270817ff6bf88bbb8ec9025dbde20e7a35e777d","bodyHash":"52b81e82b1334903d601a1d60aa3a6cd3718942acf382b43ebdcbc28e05894cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::tokenToText","kind":"varGroup","status":"implemented","sigHash":"e5a9cc66c2b51098cc72bf196270817ff6bf88bbb8ec9025dbde20e7a35e777d"}
  *
  * Go source:
  * var tokenToText = func() [ast.KindCount]string {
@@ -5460,7 +5460,7 @@ export let tokenToText: GoArray<string, "351"> = ((): GoArray<string, "351"> => 
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::TokenToString","kind":"func","status":"implemented","sigHash":"20e1dd05f8e7d661bc30b7bc2c31b7f60320e11ca0802d131982fbd836fedd0c","bodyHash":"52506d4929d1e6f06f0153607170bf52a154bf0c78525acb62e62f1b84b64079"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::TokenToString","kind":"func","status":"implemented","sigHash":"20e1dd05f8e7d661bc30b7bc2c31b7f60320e11ca0802d131982fbd836fedd0c"}
  *
  * Go source:
  * func TokenToString(token ast.Kind) string {
@@ -5474,7 +5474,7 @@ export function TokenToString(token: Kind): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::StringToToken","kind":"func","status":"implemented","sigHash":"4c20e171dbdbb1ff97fcba7ee0de6b02588c190c1ed6a58b5256fa15765d473d","bodyHash":"77c5a1fc35d161b3d865f201e1353e57338ade7c04077238c4b5a3ae65bffa5a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::StringToToken","kind":"func","status":"implemented","sigHash":"4c20e171dbdbb1ff97fcba7ee0de6b02588c190c1ed6a58b5256fa15765d473d"}
  *
  * Go source:
  * func StringToToken(s string) ast.Kind {
@@ -5494,7 +5494,7 @@ export function StringToToken(s: string): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetViableKeywordSuggestions","kind":"func","status":"implemented","sigHash":"2f2d9a13c7823044eb44954bbb1819c3dcbd5330409dfa78eecb621e2db5f4aa","bodyHash":"422d3fc9fc9ccfe49fbcdbc352848b0bef738ffc6fa33768ccc4c34912926595"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetViableKeywordSuggestions","kind":"func","status":"implemented","sigHash":"2f2d9a13c7823044eb44954bbb1819c3dcbd5330409dfa78eecb621e2db5f4aa"}
  *
  * Go source:
  * func GetViableKeywordSuggestions() []string {
@@ -5518,7 +5518,7 @@ export function GetViableKeywordSuggestions(): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::couldStartTrivia","kind":"func","status":"implemented","sigHash":"d345ca05aa62f5a74debe24692e3fde8362eed27d9bca1df1354f50ce92eb8a2","bodyHash":"bbe1e47534757cd4b79b01b8f4beb80a516802cef31a9b53c2991716f9656cf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::couldStartTrivia","kind":"func","status":"implemented","sigHash":"d345ca05aa62f5a74debe24692e3fde8362eed27d9bca1df1354f50ce92eb8a2"}
  *
  * Go source:
  * func couldStartTrivia(text string, pos int) bool {
@@ -5564,7 +5564,7 @@ export function couldStartTrivia(text: string, pos: int): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::SkipTriviaOptions","kind":"type","status":"implemented","sigHash":"373bc82db9112bc86f2ed42563f285ee9cbbabe64b90797332e1b257258e8d6a","bodyHash":"05f5c7befbfc7e6f070207a16d483124b96b9e04ddbe228c1ace1844fefe503d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::SkipTriviaOptions","kind":"type","status":"implemented","sigHash":"373bc82db9112bc86f2ed42563f285ee9cbbabe64b90797332e1b257258e8d6a"}
  *
  * Go source:
  * SkipTriviaOptions struct {
@@ -5580,7 +5580,7 @@ export interface SkipTriviaOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTrivia","kind":"func","status":"implemented","sigHash":"d1e1b780a1d61f6ba5b5d4214f3c70e7196a14c34a708e8161ead0e56ec45045","bodyHash":"256084d1efc752f6e877a256bb5a7afdb9ec523631c5df64b6867316915b1286"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTrivia","kind":"func","status":"implemented","sigHash":"d1e1b780a1d61f6ba5b5d4214f3c70e7196a14c34a708e8161ead0e56ec45045"}
  *
  * Go source:
  * func SkipTrivia(text string, pos int) int {
@@ -5592,7 +5592,7 @@ export function SkipTrivia(text: string, pos: int): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTriviaEx","kind":"func","status":"implemented","sigHash":"f42acfbbaab25a2aa14a08e991389f62a5072c61df54c5805c5d6b51e941080e","bodyHash":"264f0ba89784e8af4179e796b7094804838591eb6ee18f155ed929dacf112ada"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTriviaEx","kind":"func","status":"implemented","sigHash":"f42acfbbaab25a2aa14a08e991389f62a5072c61df54c5805c5d6b51e941080e"}
  *
  * Go source:
  * func SkipTriviaEx(text string, pos int, options *SkipTriviaOptions) int {
@@ -5802,7 +5802,7 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::mergeConflictMarkerLength+maxAsciiCharacter","kind":"varGroup","status":"implemented","sigHash":"596b779c4bc35b59555559243640f5e7a78883f0513cbae3302e688bc6cdf3f6","bodyHash":"106ca23fde3a90a8e95f79369042b88d1ce5a7cf294d673355f01f7acf6a30e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::mergeConflictMarkerLength+maxAsciiCharacter","kind":"varGroup","status":"implemented","sigHash":"596b779c4bc35b59555559243640f5e7a78883f0513cbae3302e688bc6cdf3f6"}
  *
  * Go source:
  * var (
@@ -5814,7 +5814,7 @@ export let mergeConflictMarkerLength: int = byteLen("<<<<<<<");
 export let maxAsciiCharacter: byte = 127 as byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"9ea6f9f957b7886eeeb5b9323e900e44d6ace7d03a8b8a1b27df3442b47addc4","bodyHash":"8d05e9232b29f7976a75551535369a390faa47616116f73064629084f3a2ae3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"9ea6f9f957b7886eeeb5b9323e900e44d6ace7d03a8b8a1b27df3442b47addc4"}
  *
  * Go source:
  * func isConflictMarkerTrivia(text string, pos int) bool {
@@ -5888,7 +5888,7 @@ export function isConflictMarkerTrivia(text: string, pos: int): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::scanConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"b334ec17533056d478a1cc632d556d9373722284c91f77eccfd35b2de2441b8f","bodyHash":"8e7392f3a0929d4bc5030cde3ff4a9fb144ec5f40f98c402d6bb8e9dc53aef7a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::scanConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"b334ec17533056d478a1cc632d556d9373722284c91f77eccfd35b2de2441b8f"}
  *
  * Go source:
  * func scanConflictMarkerTrivia(text string, pos int, reportError func(diag *diagnostics.Message, pos int, length int, args ...any)) int {
@@ -5962,7 +5962,7 @@ export function scanConflictMarkerTrivia(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isShebangTrivia","kind":"func","status":"implemented","sigHash":"a4154018edaa22762f18889ebf0f1c21a75488c8c3de3256b4e4be0248f9fafc","bodyHash":"2a727f4711cee1e5105f083045903c6bb65019b3e1b6365bdbf58abf6f47aad3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isShebangTrivia","kind":"func","status":"implemented","sigHash":"a4154018edaa22762f18889ebf0f1c21a75488c8c3de3256b4e4be0248f9fafc"}
  *
  * Go source:
  * func isShebangTrivia(text string, pos int) bool {
@@ -5986,7 +5986,7 @@ export function isShebangTrivia(text: string, pos: int): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::scanShebangTrivia","kind":"func","status":"implemented","sigHash":"28a213d56556961662565da12a7916edcd4b0948db4de4d905b125da462ac792","bodyHash":"c6a44a836eaea90164d2a1a90c89562e49ebc0b7187ddbea8e43e4fc0b8ee98c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::scanShebangTrivia","kind":"func","status":"implemented","sigHash":"28a213d56556961662565da12a7916edcd4b0948db4de4d905b125da462ac792"}
  *
  * Go source:
  * func scanShebangTrivia(text string, pos int) int {
@@ -6014,7 +6014,7 @@ export function scanShebangTrivia(text: string, pos: int): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetShebang","kind":"func","status":"implemented","sigHash":"db88210c534669395c1be1b7fdcf4e87d71c243d8f28773915e7b3f066ac9375","bodyHash":"ac529f036b1bd89b33b2e5988b968145e34cad5ec9f30852e0d19bb9d7a22164"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetShebang","kind":"func","status":"implemented","sigHash":"db88210c534669395c1be1b7fdcf4e87d71c243d8f28773915e7b3f066ac9375"}
  *
  * Go source:
  * func GetShebang(text string) string {
@@ -6036,7 +6036,7 @@ export function GetShebang(text: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetScannerForSourceFile","kind":"func","status":"implemented","sigHash":"720bc4aa046156e241c1cc279919d890b8d4aab6a56c0fd5ec1af0aa9b3b8865","bodyHash":"79c2d6bc1c53a79f5b5e9f483ec10e0c80925451b7647df913bf3740b36200dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetScannerForSourceFile","kind":"func","status":"implemented","sigHash":"720bc4aa046156e241c1cc279919d890b8d4aab6a56c0fd5ec1af0aa9b3b8865"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Route source-file scanner initialization through SetText so the scanner-local source byte-view cache is refreshed with the new text."}
  *
  * Go source:
@@ -6060,7 +6060,7 @@ export function GetScannerForSourceFile(sourceFile: GoPtr<SourceFile>, pos: int)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ScanTokenAtPosition","kind":"func","status":"implemented","sigHash":"82ccdc5191586c5ff3bb3565403b3e6a80285e94fd4c2bba2eeca7f22893777b","bodyHash":"f6658dac6f33b211b2aa210418c83d4389a503692d4e52f8141ae92db047817e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ScanTokenAtPosition","kind":"func","status":"implemented","sigHash":"82ccdc5191586c5ff3bb3565403b3e6a80285e94fd4c2bba2eeca7f22893777b"}
  *
  * Go source:
  * func ScanTokenAtPosition(sourceFile *ast.SourceFile, pos int) ast.Kind {
@@ -6074,7 +6074,7 @@ export function ScanTokenAtPosition(sourceFile: GoPtr<SourceFile>, pos: int): Ki
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetRangeOfTokenAtPosition","kind":"func","status":"implemented","sigHash":"fee4ce249dbcf24159eca90bfad4e9f7d734e179a86d55d4dd332444d36166de","bodyHash":"66dc75483bc7287529bb85f6dde614d20cc57dda7b27db195444d12cfcdfa6a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetRangeOfTokenAtPosition","kind":"func","status":"implemented","sigHash":"fee4ce249dbcf24159eca90bfad4e9f7d734e179a86d55d4dd332444d36166de"}
  *
  * Go source:
  * func GetRangeOfTokenAtPosition(sourceFile *ast.SourceFile, pos int) core.TextRange {
@@ -6088,7 +6088,7 @@ export function GetRangeOfTokenAtPosition(sourceFile: GoPtr<SourceFile>, pos: in
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetTokenPosOfNode","kind":"func","status":"implemented","sigHash":"330a29f50e4ee95a9d06155e051769eb55062293a4081c031a75e1bf1255fae4","bodyHash":"13003ccba4e9233d74642a7e76a8fa56a56b9cc7f24ac1e9f0407a02c61461f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetTokenPosOfNode","kind":"func","status":"implemented","sigHash":"330a29f50e4ee95a9d06155e051769eb55062293a4081c031a75e1bf1255fae4"}
  *
  * Go source:
  * func GetTokenPosOfNode(node *ast.Node, sourceFile *ast.SourceFile, includeJSDoc bool) int {
@@ -6128,7 +6128,7 @@ export function GetTokenPosOfNode(node: GoPtr<Node>, sourceFile: GoPtr<SourceFil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::getErrorRangeForArrowFunction","kind":"func","status":"implemented","sigHash":"745fd8ac0c5c82cb873015ab0fb22adbf0a6e10bc1810f5afe445cd1711f1c94","bodyHash":"c3cb3621a2c15d043b28e466edb101b57952189f1f91736414eb3e88a00dbe50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::getErrorRangeForArrowFunction","kind":"func","status":"implemented","sigHash":"745fd8ac0c5c82cb873015ab0fb22adbf0a6e10bc1810f5afe445cd1711f1c94"}
  *
  * Go source:
  * func getErrorRangeForArrowFunction(sourceFile *ast.SourceFile, node *ast.Node) core.TextRange {
@@ -6161,7 +6161,7 @@ export function getErrorRangeForArrowFunction(sourceFile: GoPtr<SourceFile>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::findOriginatingJSDocSatisfiesTag","kind":"func","status":"implemented","sigHash":"cb7d7bf439f1a032ef71624184dc920359f82a46e1b6df8d58a6c02c1159a8fd","bodyHash":"3411ad91775919a51e6e33233327d4794b8e65f625db168c8de4ffe526eeec47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::findOriginatingJSDocSatisfiesTag","kind":"func","status":"implemented","sigHash":"cb7d7bf439f1a032ef71624184dc920359f82a46e1b6df8d58a6c02c1159a8fd"}
  *
  * Go source:
  * func findOriginatingJSDocSatisfiesTag(sourceFile *ast.SourceFile, node *ast.Node) *ast.Node {
@@ -6232,7 +6232,7 @@ export function findOriginatingJSDocSatisfiesTag(sourceFile: GoPtr<SourceFile>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetErrorRangeForNode","kind":"func","status":"implemented","sigHash":"2c7127c8ae87742dba321bd9edcb696827cf7e18cf6b86504269b47f981d0b8f","bodyHash":"fcafd548fdbaf5609f0e3b840e8df366db40b15113be48581aa4fbbe9cf15763"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetErrorRangeForNode","kind":"func","status":"implemented","sigHash":"2c7127c8ae87742dba321bd9edcb696827cf7e18cf6b86504269b47f981d0b8f"}
  *
  * Go source:
  * func GetErrorRangeForNode(sourceFile *ast.SourceFile, node *ast.Node) core.TextRange {
@@ -6404,7 +6404,7 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputeLineOfPosition","kind":"func","status":"implemented","sigHash":"88aee24aadc9fee51b18945d924462217cd2d3ca5d7f51b5b9b2a079992b9d24","bodyHash":"764b1ee024cb311ad085dc669b89910580a23f7fec50ad294b43d99713d13337"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputeLineOfPosition","kind":"func","status":"implemented","sigHash":"88aee24aadc9fee51b18945d924462217cd2d3ca5d7f51b5b9b2a079992b9d24"}
  *
  * Go source:
  * func ComputeLineOfPosition(lineStarts []core.TextPos, pos int) int {
@@ -6442,7 +6442,7 @@ export function ComputeLineOfPosition(lineStarts: GoSlice<TextPos>, pos: int): i
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineStarts","kind":"func","status":"implemented","sigHash":"ed4ce1b156e7490182553431e03280dc4a9e7948b41e879866d7454a65588567","bodyHash":"27d07300345f770e0006749b31460320dc91ef8271a0dba726abcc19d73b7cd0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineStarts","kind":"func","status":"implemented","sigHash":"ed4ce1b156e7490182553431e03280dc4a9e7948b41e879866d7454a65588567"}
  *
  * Go source:
  * func GetECMALineStarts(sourceFile ast.SourceFileLike) []core.TextPos {
@@ -6462,7 +6462,7 @@ const sourceFileLikeFromSourceFile = (sourceFile: GoPtr<SourceFile>): SourceFile
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineOfPosition","kind":"func","status":"implemented","sigHash":"d32a3b05d4d0452e2e07144c3f04c3be049398a4866fefb9db3f221359cd21c4","bodyHash":"eb81450ca1ea59c13e4f9ed5ab4f277828e40aa2a05d5f92f30f0cffd555fc93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineOfPosition","kind":"func","status":"implemented","sigHash":"d32a3b05d4d0452e2e07144c3f04c3be049398a4866fefb9db3f221359cd21c4"}
  *
  * Go source:
  * func GetECMALineOfPosition(sourceFile ast.SourceFileLike, pos int) int {
@@ -6476,7 +6476,7 @@ export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndUTF16CharacterOfPosition","kind":"func","status":"implemented","sigHash":"3053c689ece6d87b64937f35b03ebebae053b2951b4d2af6800fa0daf5c7dead","bodyHash":"b473bc8093a3b6dc2f0ce2e3e5a9180336e485fc25ba5f5b9167002d895587dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndUTF16CharacterOfPosition","kind":"func","status":"implemented","sigHash":"3053c689ece6d87b64937f35b03ebebae053b2951b4d2af6800fa0daf5c7dead"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Compute UTF-16 length for a byte range over the source byte view instead of allocating sourceFile.Text()[lineStart:pos]."}
  *
  * Go source:
@@ -6497,7 +6497,7 @@ export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: SourceFileLik
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndByteOffsetOfPosition","kind":"func","status":"implemented","sigHash":"fb3e96156b62bc4b0ea02c48ec19961d1f3e4431cfd767069f7c41deed622348","bodyHash":"1659cb494be9d83aa84d3fb6846b08c2b6bb74fb6544f7ec2a342a7978f089fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndByteOffsetOfPosition","kind":"func","status":"implemented","sigHash":"fb3e96156b62bc4b0ea02c48ec19961d1f3e4431cfd767069f7c41deed622348"}
  *
  * Go source:
  * func GetECMALineAndByteOffsetOfPosition(sourceFile ast.SourceFileLike, pos int) (line int, byteOffset int) {
@@ -6515,7 +6515,7 @@ export function GetECMALineAndByteOffsetOfPosition(sourceFile: SourceFileLike, p
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAEndLinePosition","kind":"func","status":"implemented","sigHash":"e9bc917e99ad20417260f3e011d7986e87ef43699ac88a31609c73348c8fa402","bodyHash":"1c1df8983c27fb7061f0e192636903a00da9f78b0fb6decdf8c671b8a800e2fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAEndLinePosition","kind":"func","status":"implemented","sigHash":"e9bc917e99ad20417260f3e011d7986e87ef43699ac88a31609c73348c8fa402"}
  *
  * Go source:
  * func GetECMAEndLinePosition(sourceFile *ast.SourceFile, line int) int {
@@ -6542,7 +6542,7 @@ export function GetECMAEndLinePosition(sourceFile: GoPtr<SourceFile>, line: int)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAPositionOfLineAndUTF16Character","kind":"func","status":"implemented","sigHash":"9c46ed1e97225af0e454c95cf844604ae34723ba8140f37c87281bd6b9bb2cf3","bodyHash":"12c608b1d33dac1b9c65145f6a73c5f50535294d4c5d82013bedefe8cf2b3ab6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAPositionOfLineAndUTF16Character","kind":"func","status":"implemented","sigHash":"9c46ed1e97225af0e454c95cf844604ae34723ba8140f37c87281bd6b9bb2cf3"}
  *
  * Go source:
  * func GetECMAPositionOfLineAndUTF16Character(sourceFile ast.SourceFileLike, line int, character core.UTF16Offset) int {
@@ -6556,7 +6556,7 @@ export function GetECMAPositionOfLineAndUTF16Character(sourceFile: SourceFileLik
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAPositionOfLineAndByteOffset","kind":"func","status":"implemented","sigHash":"8423e812ccd80b66f50668ad4d5b4480b0c2313e978c547282ad4e68ae4ee9ab","bodyHash":"09b5eb4fcc89560d57f20eca44f493c91a0b4e59612bacc1c7dc02440fe262b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMAPositionOfLineAndByteOffset","kind":"func","status":"implemented","sigHash":"8423e812ccd80b66f50668ad4d5b4480b0c2313e978c547282ad4e68ae4ee9ab"}
  *
  * Go source:
  * func GetECMAPositionOfLineAndByteOffset(sourceFile ast.SourceFileLike, line int, byteOffset int) int {
@@ -6568,7 +6568,7 @@ export function GetECMAPositionOfLineAndByteOffset(sourceFile: SourceFileLike, l
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputePositionOfLineAndByteOffset","kind":"func","status":"implemented","sigHash":"4822b86373efe37c98ba76ff97d16394b8908f5f9cc04b281081339673f14d53","bodyHash":"f2a4e7b3081d1f78e844e68753a821ca47201c2a66e0959bb862649da20db993"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputePositionOfLineAndByteOffset","kind":"func","status":"implemented","sigHash":"4822b86373efe37c98ba76ff97d16394b8908f5f9cc04b281081339673f14d53"}
  *
  * Go source:
  * func ComputePositionOfLineAndByteOffset(lineStarts []core.TextPos, line int, byteOffset int) int {
@@ -6586,7 +6586,7 @@ export function ComputePositionOfLineAndByteOffset(lineStarts: GoSlice<TextPos>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputePositionOfLineAndUTF16Character","kind":"func","status":"implemented","sigHash":"910342beb68a483b42495f22eba79f0b6c7939153374e904f166b3d67c23ebb0","bodyHash":"50534c9b9097fb08b686b54f4f8483349cc3cd6202152d8e25ccda8833767520"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::ComputePositionOfLineAndUTF16Character","kind":"func","status":"implemented","sigHash":"910342beb68a483b42495f22eba79f0b6c7939153374e904f166b3d67c23ebb0"}
  *
  * Go source:
  * func ComputePositionOfLineAndUTF16Character(lineStarts []core.TextPos, line int, character core.UTF16Offset, text string, allowEdits bool) int {
@@ -6706,7 +6706,7 @@ export function ComputePositionOfLineAndUTF16Character(lineStarts: GoSlice<TextP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetLeadingCommentRanges","kind":"func","status":"implemented","sigHash":"4117676ed75986086d2dd9450cd26fe8d9a9eecdbdbd80583e2bc89d7e5e39c0","bodyHash":"be8a468f55a9af19e50b8aff0cf4e089e90be2f851830bd8b0f2556e07a705aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetLeadingCommentRanges","kind":"func","status":"implemented","sigHash":"4117676ed75986086d2dd9450cd26fe8d9a9eecdbdbd80583e2bc89d7e5e39c0"}
  *
  * Go source:
  * func GetLeadingCommentRanges(f *ast.NodeFactory, text string, pos int) iter.Seq[ast.CommentRange] {
@@ -6718,7 +6718,7 @@ export function GetLeadingCommentRanges(f: GoPtr<NodeFactory>, text: string, pos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetTrailingCommentRanges","kind":"func","status":"implemented","sigHash":"2c082fe2bb6a864d99ada3c874fa0f5549a00c5ef6be9741275ec867204c28c7","bodyHash":"954192d0ab9acd599d22664b82a7d003a936f1ea7975b35faa2a73473c5fde32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetTrailingCommentRanges","kind":"func","status":"implemented","sigHash":"2c082fe2bb6a864d99ada3c874fa0f5549a00c5ef6be9741275ec867204c28c7"}
  *
  * Go source:
  * func GetTrailingCommentRanges(f *ast.NodeFactory, text string, pos int) iter.Seq[ast.CommentRange] {
@@ -6730,7 +6730,7 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec","bodyHash":"f132c9ea9991faeac70e2d456bd494f5c398097f236bb1040bb7b1fbe7b6ab24"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec"}
  * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Search comment terminators and test bounds against a cached byte view instead of materializing text[pos:] slices; comment ranges remain TS-Go byte-offset exact."}
  *
  * Go source:

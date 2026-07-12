@@ -2,7 +2,7 @@ import type { bool, int } from "../../go/scalars.js";
 import type { GoConstraint, GoSlice } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/binarysearch.go::func::BinarySearchUniqueFunc","kind":"func","status":"implemented","sigHash":"eb9aa8d5ae45b66b6740ea5a604ff6184345506ebd0c4f35d9d51c339045e8f6","bodyHash":"6551b934ed24c11e0cd49d524a7771d895f2f69a3bbcb812b8afa3f69a536667"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/binarysearch.go::func::BinarySearchUniqueFunc","kind":"func","status":"implemented","sigHash":"eb9aa8d5ae45b66b6740ea5a604ff6184345506ebd0c4f35d9d51c339045e8f6"}
  *
  * Go source:
  * func BinarySearchUniqueFunc[S ~[]E, E any](x S, cmp func(int, E) int) (int, bool) {

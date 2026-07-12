@@ -39,7 +39,7 @@ const runesOf = (s: string): GoRune[] => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895","bodyHash":"b1bf4af2732113dcf17fee1f4e6faad1162ed68cb2e5a8e2d69cbc880e14e210"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::Host","kind":"type","status":"implemented","sigHash":"87dbe6f0cfe05a5aa6179f6a36adf26e7d8bf5f0f92113c8de338be891efa895"}
  *
  * Go source:
  * Host interface {
@@ -55,7 +55,7 @@ export interface Host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::MappedPosition","kind":"type","status":"implemented","sigHash":"60e3f0bb65a3e1662d9235975510a9c4b9e3e51dd226a544161605c59909f457","bodyHash":"61851ed315c339f101c87b841f7bc369c10703fd062a126a046b6f6c3a4a966e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::MappedPosition","kind":"type","status":"implemented","sigHash":"60e3f0bb65a3e1662d9235975510a9c4b9e3e51dd226a544161605c59909f457"}
  *
  * Go source:
  * MappedPosition struct {
@@ -73,7 +73,7 @@ export interface MappedPosition {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::constGroup::missingPosition","kind":"constGroup","status":"implemented","sigHash":"8631f72bd303e15bee0bb99c126778fb902a2f95ef775772f2cde69ceac7f85e","bodyHash":"f671143dc06a38520c791bc6e72a9dce779ec00cca1d9f52a4bae8656bda2cff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::constGroup::missingPosition","kind":"constGroup","status":"implemented","sigHash":"8631f72bd303e15bee0bb99c126778fb902a2f95ef775772f2cde69ceac7f85e"}
  *
  * Go source:
  * const (
@@ -83,7 +83,7 @@ export interface MappedPosition {
 export const missingPosition: int = -1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::MappedPosition.isSourceMappedPosition","kind":"method","status":"implemented","sigHash":"e3939c5f93517db8ba20a4511dc6134b373329dc6a70b97f47afbce6fd0ea8ac","bodyHash":"3358173f192b99c01bfd0c66d3b349d75f270a3e6b89e03d67b3d51da9982e1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::MappedPosition.isSourceMappedPosition","kind":"method","status":"implemented","sigHash":"e3939c5f93517db8ba20a4511dc6134b373329dc6a70b97f47afbce6fd0ea8ac"}
  *
  * Go source:
  * func (m *MappedPosition) isSourceMappedPosition() bool {
@@ -96,7 +96,7 @@ export function MappedPosition_isSourceMappedPosition(receiver: GoPtr<MappedPosi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::SourceMappedPosition","kind":"type","status":"implemented","sigHash":"c388ce027fa63fb1c9f6192754142e96d6005bb73b3c2769adb79597368addfa","bodyHash":"68f59dc927992b723df6ab63d3a25ef0d55880804b2a16098a1a5d1116fcb179"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::SourceMappedPosition","kind":"type","status":"implemented","sigHash":"c388ce027fa63fb1c9f6192754142e96d6005bb73b3c2769adb79597368addfa"}
  *
  * Go source:
  * SourceMappedPosition = MappedPosition
@@ -104,7 +104,7 @@ export function MappedPosition_isSourceMappedPosition(receiver: GoPtr<MappedPosi
 export type SourceMappedPosition = MappedPosition;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::DocumentPositionMapper","kind":"type","status":"implemented","sigHash":"a59b7ce882528e8dab419b7c4bc089b0bddd6d3602d26b4593d5bdadc8c3729b","bodyHash":"c04b12ae54e311960ea5d50b05291849fa3f128bea9fcf9ae9f3bab2a7ccdd3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::DocumentPositionMapper","kind":"type","status":"implemented","sigHash":"a59b7ce882528e8dab419b7c4bc089b0bddd6d3602d26b4593d5bdadc8c3729b"}
  *
  * Go source:
  * DocumentPositionMapper struct {
@@ -128,7 +128,7 @@ export interface DocumentPositionMapper {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::createDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"aa0fb35a859f95528dd71a98b53fd0075b18a2c1d45fbd59ae694cc5cac7c5a4","bodyHash":"e18b22aea19764bcf0f82882ef406ca9925ce75515b83d1f47ec461cabf585d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::createDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"aa0fb35a859f95528dd71a98b53fd0075b18a2c1d45fbd59ae694cc5cac7c5a4"}
  *
  * Go source:
  * func createDocumentPositionMapper(host Host, sourceMap *RawSourceMap, mapPath string) *DocumentPositionMapper {
@@ -358,7 +358,7 @@ export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSou
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::DocumentPosition","kind":"type","status":"implemented","sigHash":"72d6aa15b60a245e4bf37bb7c3eb2704757e5db7c906cb277aff04ad44c598e5","bodyHash":"50d151d591632ea209d11a1010a40f51d0211eaa28ef3b16f49124c233e3ac2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::type::DocumentPosition","kind":"type","status":"implemented","sigHash":"72d6aa15b60a245e4bf37bb7c3eb2704757e5db7c906cb277aff04ad44c598e5"}
  *
  * Go source:
  * DocumentPosition struct {
@@ -372,7 +372,7 @@ export interface DocumentPosition {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::DocumentPositionMapper.GetSourcePosition","kind":"method","status":"implemented","sigHash":"a2edb4299755a31ef25d276639ee78066b3512a7d6e92c4d93e0cf90c12816cd","bodyHash":"2301c21feac19a78c37ab32366be3b9f5fe72a774f694a2e3433c49cabfa12c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::DocumentPositionMapper.GetSourcePosition","kind":"method","status":"implemented","sigHash":"a2edb4299755a31ef25d276639ee78066b3512a7d6e92c4d93e0cf90c12816cd"}
  *
  * Go source:
  * func (d *DocumentPositionMapper) GetSourcePosition(loc *DocumentPosition) *DocumentPosition {
@@ -433,7 +433,7 @@ export function DocumentPositionMapper_GetSourcePosition(receiver: GoPtr<Documen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::DocumentPositionMapper.GetGeneratedPosition","kind":"method","status":"implemented","sigHash":"12f70b52e1943fd1566ad4d411cd6325e6f58ec7c95a8833c624b8091bb57d3e","bodyHash":"39677053ead4d82685deff6630c2a28f58cc5b57853c01fd1b7cfd2d9b20d612"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::method::DocumentPositionMapper.GetGeneratedPosition","kind":"method","status":"implemented","sigHash":"12f70b52e1943fd1566ad4d411cd6325e6f58ec7c95a8833c624b8091bb57d3e"}
  *
  * Go source:
  * func (d *DocumentPositionMapper) GetGeneratedPosition(loc *DocumentPosition) *DocumentPosition {
@@ -504,7 +504,7 @@ export function DocumentPositionMapper_GetGeneratedPosition(receiver: GoPtr<Docu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::GetDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"a83374a7dcd8fe31c4879adfb4605af5d16023838ffcc5d782252d8f85624d75","bodyHash":"8e7920615216acea228452b2d9156529b77bab0a643da09062c71332b2a55f45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::GetDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"a83374a7dcd8fe31c4879adfb4605af5d16023838ffcc5d782252d8f85624d75"}
  *
  * Go source:
  * func GetDocumentPositionMapper(host Host, generatedFileName string) *DocumentPositionMapper {
@@ -567,7 +567,7 @@ export function GetDocumentPositionMapper(host: Host, generatedFileName: string)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::convertDocumentToSourceMapper","kind":"func","status":"implemented","sigHash":"e2228f77b8e746e1f19340626ef279437c66ff525e4a5224a3035ceb9a3357bb","bodyHash":"78c65eaebb0f2bb16f08f2939278a3d1bc1b148a76ef743a77bcac5571d1fada"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::convertDocumentToSourceMapper","kind":"func","status":"implemented","sigHash":"e2228f77b8e746e1f19340626ef279437c66ff525e4a5224a3035ceb9a3357bb"}
  *
  * Go source:
  * func convertDocumentToSourceMapper(host Host, contents string, mapFileName string) *DocumentPositionMapper {
@@ -601,7 +601,7 @@ export function convertDocumentToSourceMapper(host: Host, contents: string, mapF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryParseRawSourceMap","kind":"func","status":"implemented","sigHash":"2c5011aad6978bf4b7d62b73da6e8ff1eaed6fcc32fe5c25b8c40759c34cf9ab","bodyHash":"0cf3bec4001635193685ad51e0234bedcc70d248db245d5e7d2ff630d1a6a83f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryParseRawSourceMap","kind":"func","status":"implemented","sigHash":"2c5011aad6978bf4b7d62b73da6e8ff1eaed6fcc32fe5c25b8c40759c34cf9ab"}
  *
  * Go source:
  * func tryParseRawSourceMap(contents string) *RawSourceMap {
@@ -638,7 +638,7 @@ export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryGetSourceMappingURL","kind":"func","status":"implemented","sigHash":"95c86edec2accb78fb8becae56fbdfe84d3b71de32920e052357e2a8eab8d3b5","bodyHash":"875b4c4de647aeec73abb26385500a2bfe32c3e4f869a29393f956124531b8f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryGetSourceMappingURL","kind":"func","status":"implemented","sigHash":"95c86edec2accb78fb8becae56fbdfe84d3b71de32920e052357e2a8eab8d3b5"}
  *
  * Go source:
  * func tryGetSourceMappingURL(host Host, fileName string) string {
@@ -652,7 +652,7 @@ export function tryGetSourceMappingURL(host: Host, fileName: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryParseBase64Url","kind":"func","status":"implemented","sigHash":"591897e461ea3547429946a75e6d2b9c92cc71539bbc9b1587aa4f12b0f1d9c7","bodyHash":"5088fcce9a6c3a6e87d44719810a92815ac021b5254f5a40377f009f7888d46e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::tryParseBase64Url","kind":"func","status":"implemented","sigHash":"591897e461ea3547429946a75e6d2b9c92cc71539bbc9b1587aa4f12b0f1d9c7"}
  *
  * Go source:
  * func tryParseBase64Url(url string) (parseableUrl string, isBase64Url bool) {

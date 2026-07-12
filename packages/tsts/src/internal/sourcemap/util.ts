@@ -21,7 +21,7 @@ const byteSliceFrom = (s: string, start: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/util.go::func::TryGetSourceMappingURL","kind":"func","status":"implemented","sigHash":"09086edeefb94b9c830c2bb219653b54a96b00863c1bcf54355811074edb81e3","bodyHash":"e686535550d886a6f0d911cc1f9408eecc5c6483943fae340110ebe8522fbd06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/util.go::func::TryGetSourceMappingURL","kind":"func","status":"implemented","sigHash":"09086edeefb94b9c830c2bb219653b54a96b00863c1bcf54355811074edb81e3"}
  *
  * Go source:
  * func TryGetSourceMappingURL(lineInfo *ECMALineInfo) string {

@@ -40,7 +40,7 @@ import { resolutionExtensionIsTSOrJson } from "./state.js";
 import { Checker_addDiagnostic } from "../checker.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation","kind":"method","status":"implemented","sigHash":"2180b8be90753b343b6f30f261b683d348387d3a1b55268c2d0ae7421d6dbeae","bodyHash":"a6bc03af285f7b6510ad1b0f4c130967a7b3531d8d19adfcfacf8d96144f8681"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation","kind":"method","status":"implemented","sigHash":"2180b8be90753b343b6f30f261b683d348387d3a1b55268c2d0ae7421d6dbeae"}
  *
  * Go source:
  * func (c *Checker) mergeModuleAugmentation(moduleName *ast.Node) {
@@ -145,7 +145,7 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkModuleAugmentationElement","kind":"method","status":"implemented","sigHash":"19449ac93dafe5141d4f4d64277b51b06e1ca84fd54b910ef9f80d190d9f0115","bodyHash":"25b0de7de9fad6e6c029eaf2a5e5fcab3e0974632577ccd645f1ce0e4b811302"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkModuleAugmentationElement","kind":"method","status":"implemented","sigHash":"19449ac93dafe5141d4f4d64277b51b06e1ca84fd54b910ef9f80d190d9f0115"}
  *
  * Go source:
  * func (c *Checker) checkModuleAugmentationElement(node *ast.Node) {
@@ -211,7 +211,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfModuleDefault","kind":"method","status":"implemented","sigHash":"29eddee9b813cc6f9c64dc6afbb020ccdb69232f96bd08a027600a07103693cd","bodyHash":"cc83e4fc25b7a702810d969bdf3021460cea04d2c27334f865b35a3973e30867"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfModuleDefault","kind":"method","status":"implemented","sigHash":"29eddee9b813cc6f9c64dc6afbb020ccdb69232f96bd08a027600a07103693cd"}
  *
  * Go source:
  * func (c *Checker) getTargetOfModuleDefault(moduleSymbol *ast.Symbol, node *ast.Node, dontResolveAlias bool) *ast.Symbol {
@@ -315,7 +315,7 @@ export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, modul
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getEmitSyntaxForModuleSpecifierExpression","kind":"method","status":"implemented","sigHash":"34f4590bc4f247eb352193e8005adf6c32a22eac31c1f59144a40e468950c5ed","bodyHash":"aebe78e02902646ba6c64b0a209d697cda027e120710c29ec9539858165124e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getEmitSyntaxForModuleSpecifierExpression","kind":"method","status":"implemented","sigHash":"34f4590bc4f247eb352193e8005adf6c32a22eac31c1f59144a40e468950c5ed"}
  *
  * Go source:
  * func (c *Checker) getEmitSyntaxForModuleSpecifierExpression(usage *ast.Node) core.ResolutionMode {
@@ -334,7 +334,7 @@ export function Checker_getEmitSyntaxForModuleSpecifierExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveExternalModule","kind":"method","status":"implemented","sigHash":"bebce0095380521cfebda9c3077c42103ee27fa2b04caece40715ccd9c291f0a","bodyHash":"d16ba5c1b860ab976af7d38e2b436eeee4cd713bf2119ef7e0a3a5ad77ae3cda"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveExternalModule","kind":"method","status":"implemented","sigHash":"bebce0095380521cfebda9c3077c42103ee27fa2b04caece40715ccd9c291f0a"}
  *
  * Go source:
  * func (c *Checker) resolveExternalModule(location *ast.Node, moduleReference string, moduleNotFoundError *diagnostics.Message, errorNode *ast.Node, isForAugmentation bool) *ast.Symbol {
@@ -901,7 +901,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createModuleNotFoundChain","kind":"method","status":"implemented","sigHash":"22bde6a6b58afde1b761dd035ddfece60fa16f5ef3e2c6f1bbfd6fbeac767136","bodyHash":"f7efec4d3519d74a3248b104e86aa8cf147114676ca3f5998a91a87a94b4500f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createModuleNotFoundChain","kind":"method","status":"implemented","sigHash":"22bde6a6b58afde1b761dd035ddfece60fa16f5ef3e2c6f1bbfd6fbeac767136"}
  *
  * Go source:
  * func (c *Checker) createModuleNotFoundChain(resolvedModule *module.ResolvedModule, errorNode *ast.Node, moduleReference string, mode core.ResolutionMode, packageName string) *ast.Diagnostic {
@@ -940,7 +940,7 @@ export function Checker_createModuleNotFoundChain(receiver: GoPtr<Checker>, reso
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.tryFindAmbientModule","kind":"method","status":"implemented","sigHash":"250b9304cd1606d9ecc1d27e7e08dec40491adfa555ee61dfbe4d35bc93ad306","bodyHash":"be15902581633fac8b1c7d22e382600c819948661c7723c889b066c105b329d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.tryFindAmbientModule","kind":"method","status":"implemented","sigHash":"250b9304cd1606d9ecc1d27e7e08dec40491adfa555ee61dfbe4d35bc93ad306"}
  *
  * Go source:
  * func (c *Checker) tryFindAmbientModule(moduleName string, withAugmentations bool) *ast.Symbol {
@@ -967,7 +967,7 @@ export function Checker_tryFindAmbientModule(receiver: GoPtr<Checker>, moduleNam
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetAmbientModules","kind":"method","status":"implemented","sigHash":"57b2d1bddb2a2d07bdf07e2252120955cdd5ca5e066d4ef7a1315a200c69aad5","bodyHash":"f0755c6fecde13b318c6008c29f53a88cbfbac0345690c06aff08547b3a525fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetAmbientModules","kind":"method","status":"implemented","sigHash":"57b2d1bddb2a2d07bdf07e2252120955cdd5ca5e066d4ef7a1315a200c69aad5"}
  *
  * Go source:
  * func (c *Checker) GetAmbientModules() []*ast.Symbol {

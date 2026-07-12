@@ -13,7 +13,7 @@ import type { ComparePathsOptions } from "../tspath/path.js";
 import { ResolvePath } from "../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"38430521b70f19c4577653334ca223fc0270319362c20f5925094804f9baee54","bodyHash":"34d6e236b3813a9814ee5118fb03da108b503c446cfe8ee915b12fac81ab1559"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::type::ParsedBuildCommandLine","kind":"type","status":"implemented","sigHash":"38430521b70f19c4577653334ca223fc0270319362c20f5925094804f9baee54"}
  *
  * Go source:
  * ParsedBuildCommandLine struct {
@@ -48,7 +48,7 @@ export interface ParsedBuildCommandLine {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::method::ParsedBuildCommandLine.ResolvedProjectPaths","kind":"method","status":"implemented","sigHash":"62d754c0a97d15832830d10c5f4f3c52e86d46117e3f8b18cee454ea84eba9d3","bodyHash":"d7ab444200098a4ff923891337b44c60ed0dd6dc607c7cc4f1b51725e86ef2c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::method::ParsedBuildCommandLine.ResolvedProjectPaths","kind":"method","status":"implemented","sigHash":"62d754c0a97d15832830d10c5f4f3c52e86d46117e3f8b18cee454ea84eba9d3"}
  *
  * Go source:
  * func (p *ParsedBuildCommandLine) ResolvedProjectPaths() []string {
@@ -75,7 +75,7 @@ export function ParsedBuildCommandLine_ResolvedProjectPaths(receiver: GoPtr<Pars
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::method::ParsedBuildCommandLine.Locale","kind":"method","status":"implemented","sigHash":"9a8cd080656f5b01c936f67be6eefe5787f36aa224c0a6d49e1db0d2401fce0a","bodyHash":"9c06ca9f98856b30fb4bac17621e49be3be130f6cb88ac0378f6fd806ac74195"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedbuildcommandline.go::method::ParsedBuildCommandLine.Locale","kind":"method","status":"implemented","sigHash":"9a8cd080656f5b01c936f67be6eefe5787f36aa224c0a6d49e1db0d2401fce0a"}
  *
  * Go source:
  * func (p *ParsedBuildCommandLine) Locale() locale.Locale {

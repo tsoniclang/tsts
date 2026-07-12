@@ -30,7 +30,7 @@ function* rangeRunes(s: string): Generator<GoRune> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::method::Number.String","kind":"method","status":"implemented","sigHash":"85837c5f07b57c31a06f77adb1f019dc796d72c87338cf5849ce3b4b05fb1bf0","bodyHash":"4c9056c5e4b8dbdb2241be2b1375f2de564d7849219a3aad14fd47f7bf0c822e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::method::Number.String","kind":"method","status":"implemented","sigHash":"85837c5f07b57c31a06f77adb1f019dc796d72c87338cf5849ce3b4b05fb1bf0"}
  *
  * Go source:
  * func (n Number) String() string {
@@ -81,7 +81,7 @@ export function Number_String(receiver: Number): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::FromString","kind":"func","status":"implemented","sigHash":"b9851dc3e956098f0c4483c4d0108a4bae66c5f58c33c723d074d1f162926fe5","bodyHash":"0a909ee676f52dc32914cd5e5260fe7125a23f162fdfdb9db9603c5748bd50d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::FromString","kind":"func","status":"implemented","sigHash":"b9851dc3e956098f0c4483c4d0108a4bae66c5f58c33c723d074d1f162926fe5"}
  *
  * Go source:
  * func FromString(s string) Number {
@@ -209,7 +209,7 @@ export function FromString(s: string): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isStrWhiteSpace","kind":"func","status":"implemented","sigHash":"5edd2eb63ab31225f5e694f03448794f9f914ca4e04e16ff6d41c75dae85c428","bodyHash":"712fe8f4f125b8e97a44ea5bbea0a5b7a0a135df14258c6d59f65e1b4c08659e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isStrWhiteSpace","kind":"func","status":"implemented","sigHash":"5edd2eb63ab31225f5e694f03448794f9f914ca4e04e16ff6d41c75dae85c428"}
  *
  * Go source:
  * func isStrWhiteSpace(r rune) bool {
@@ -257,7 +257,7 @@ export function isStrWhiteSpace(r: GoRune): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::varGroup::errUnknownPrefix","kind":"varGroup","status":"implemented","sigHash":"df22c667042dad784e643fa0ee7ec7fe4c2d764c56518bb6cee437f6f27ae2ff","bodyHash":"fbe33c7fa968290b9ecd4d8351d8e9fe1a5b5a5142809c1878c272e4ebfe0e41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::varGroup::errUnknownPrefix","kind":"varGroup","status":"implemented","sigHash":"df22c667042dad784e643fa0ee7ec7fe4c2d764c56518bb6cee437f6f27ae2ff"}
  *
  * Go source:
  * var errUnknownPrefix = errors.New("unknown number prefix")
@@ -265,7 +265,7 @@ export function isStrWhiteSpace(r: GoRune): bool {
 export let errUnknownPrefix: GoError = errors_New("unknown number prefix");
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::tryParseInt","kind":"func","status":"implemented","sigHash":"65f4d9e2cf198633f067545126beaa144ac71d34bc3271659af155413470de0e","bodyHash":"f9423630e7ad7f01f90b34a23a1713f2fdbc362a62e0677b9a9d86900f26b89d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::tryParseInt","kind":"func","status":"implemented","sigHash":"65f4d9e2cf198633f067545126beaa144ac71d34bc3271659af155413470de0e"}
  *
  * Go source:
  * func tryParseInt(s string) (Number, bool) {
@@ -386,7 +386,7 @@ export function tryParseInt(s: string): [Number, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::parseFloatString","kind":"func","status":"implemented","sigHash":"da1a29c51c6f24300e3bdd61c19faeb83360e709e10111541878e9f67abd43fa","bodyHash":"af5c2a45a7d46e8ae4232c38d3d7646ba525b31782028ec02a624e151158cc1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::parseFloatString","kind":"func","status":"implemented","sigHash":"da1a29c51c6f24300e3bdd61c19faeb83360e709e10111541878e9f67abd43fa"}
  *
  * Go source:
  * func parseFloatString(s string) float64 {
@@ -537,7 +537,7 @@ export function parseFloatString(s: string): double {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::cutAny","kind":"func","status":"implemented","sigHash":"bf997525c3ca144465aa6b6430b2732cddc8e1ccae8fb2e5e211f75881dc7bf4","bodyHash":"5d54bf96461cdb9b9af81f021765025c5426cef3281d4582956f6e53dd12953a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::cutAny","kind":"func","status":"implemented","sigHash":"bf997525c3ca144465aa6b6430b2732cddc8e1ccae8fb2e5e211f75881dc7bf4"}
  *
  * Go source:
  * func cutAny(s string, cutset string) (before, after string, found bool) {
@@ -563,7 +563,7 @@ export function cutAny(s: string, cutset: string): [string, string, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::trimLeadingZeros","kind":"func","status":"implemented","sigHash":"a42bbc5ea42c49b75eb3e6842e7e29fdf455d99d37b49b15a281de25e144631e","bodyHash":"41900ef2f395024dc309c1dcb8c3b3d3262a95fcb78de8ab3bab3fe7244698cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::trimLeadingZeros","kind":"func","status":"implemented","sigHash":"a42bbc5ea42c49b75eb3e6842e7e29fdf455d99d37b49b15a281de25e144631e"}
  *
  * Go source:
  * func trimLeadingZeros(s string) string {
@@ -587,7 +587,7 @@ export function trimLeadingZeros(s: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::trimTrailingZeros","kind":"func","status":"implemented","sigHash":"e6b97c796d62737272ec7a5f3b68f82e240cc6d1fad9c02ac4e37f37f9f7a95b","bodyHash":"c7940dbaaef0dfc31733240bdd483db504df923561a862e2f14550f928a71d5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::trimTrailingZeros","kind":"func","status":"implemented","sigHash":"e6b97c796d62737272ec7a5f3b68f82e240cc6d1fad9c02ac4e37f37f9f7a95b"}
  *
  * Go source:
  * func trimTrailingZeros(s string) string {
@@ -611,7 +611,7 @@ export function trimTrailingZeros(s: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::stringToFloat64","kind":"func","status":"implemented","sigHash":"9f713a39ad5c1bc18e2602d0bdd29d831419a03f9ea65cee5f4842619c72ca08","bodyHash":"cd960b1026d93ec13c7ac912bc0740b87d42bd2f19c2a635dc2722feb553eff9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::stringToFloat64","kind":"func","status":"implemented","sigHash":"9f713a39ad5c1bc18e2602d0bdd29d831419a03f9ea65cee5f4842619c72ca08"}
  *
  * Go source:
  * func stringToFloat64(s string) float64 {
@@ -638,7 +638,7 @@ export function stringToFloat64(s: string): double {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllDigits","kind":"func","status":"implemented","sigHash":"8fbdd67e86fae2133199ae0543a168feabb1f20153234b63a243c7cd9f72ba18","bodyHash":"afd5ff3c98a4f2d6ded8b9c12125ab29df2e77f170a864f4a9f50899e8c74257"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllDigits","kind":"func","status":"implemented","sigHash":"8fbdd67e86fae2133199ae0543a168feabb1f20153234b63a243c7cd9f72ba18"}
  *
  * Go source:
  * func isAllDigits(s string) bool {
@@ -660,7 +660,7 @@ export function isAllDigits(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllBinaryDigits","kind":"func","status":"implemented","sigHash":"16ddbb644d49c4542a89db7a92c6c1d75ae34ffe123610729e0f972fc0ad80ae","bodyHash":"b88bef73a0e5d9a499d1bb817d130197c1c6f9bac117f192ee1128d0bc0c5ce2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllBinaryDigits","kind":"func","status":"implemented","sigHash":"16ddbb644d49c4542a89db7a92c6c1d75ae34ffe123610729e0f972fc0ad80ae"}
  *
  * Go source:
  * func isAllBinaryDigits(s string) bool {
@@ -682,7 +682,7 @@ export function isAllBinaryDigits(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllOctalDigits","kind":"func","status":"implemented","sigHash":"dc8fa846f6709c6516e50213e0438e8c3bba29fcbbe9c7905e6eb87a70866a8e","bodyHash":"b4d6d1a4a181df80875b7feb45f74a67664379479a9af669f6ce7e2fedb03191"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllOctalDigits","kind":"func","status":"implemented","sigHash":"dc8fa846f6709c6516e50213e0438e8c3bba29fcbbe9c7905e6eb87a70866a8e"}
  *
  * Go source:
  * func isAllOctalDigits(s string) bool {
@@ -704,7 +704,7 @@ export function isAllOctalDigits(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllHexDigits","kind":"func","status":"implemented","sigHash":"82c57160ac3580055a220f076698ffeead42dccaf55633c289b2d92eb0065e7c","bodyHash":"d19f560ff2b936a848534fd257d2b44c0acbd8d8f27a54afa376eeea001d8a78"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isAllHexDigits","kind":"func","status":"implemented","sigHash":"82c57160ac3580055a220f076698ffeead42dccaf55633c289b2d92eb0065e7c"}
  *
  * Go source:
  * func isAllHexDigits(s string) bool {
@@ -726,7 +726,7 @@ export function isAllHexDigits(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isNumberRune","kind":"func","status":"implemented","sigHash":"d6a0f332901222a82dda0f5e97b0e66a104a445adf94a156389c56943866d6f2","bodyHash":"0d518bc413910c9b95732bfec0913bb096144a698a59f3987cae54cff46c5b57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::isNumberRune","kind":"func","status":"implemented","sigHash":"d6a0f332901222a82dda0f5e97b0e66a104a445adf94a156389c56943866d6f2"}
  *
  * Go source:
  * func isNumberRune(r rune) bool {

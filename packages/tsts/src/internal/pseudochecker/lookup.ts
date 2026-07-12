@@ -177,7 +177,7 @@ import {
 } from "./type.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetReturnTypeOfSignature","kind":"method","status":"implemented","sigHash":"1855ca2a41c0c7f8defa6ad836870cc5e79a17863177c8787c5fc9e383b33c67","bodyHash":"e758730e23dc178289852656367655fce4fc6a18b5173a9c42fa08fe7b9874cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetReturnTypeOfSignature","kind":"method","status":"implemented","sigHash":"1855ca2a41c0c7f8defa6ad836870cc5e79a17863177c8787c5fc9e383b33c67"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetReturnTypeOfSignature(signatureNode *ast.Node) *PseudoType {
@@ -220,7 +220,7 @@ export function PseudoChecker_GetReturnTypeOfSignature(receiver: GoPtr<PseudoChe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfAccessor","kind":"method","status":"implemented","sigHash":"4bea194521a8c02987f517cdb427623b0293c12e805e795b0a488007d7dfd100","bodyHash":"0f632c3378a963144a02a6fd090c436b6a187f1414eb268be3072a49f766304d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfAccessor","kind":"method","status":"implemented","sigHash":"4bea194521a8c02987f517cdb427623b0293c12e805e795b0a488007d7dfd100"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetTypeOfAccessor(accessor *ast.Node) *PseudoType {
@@ -240,7 +240,7 @@ export function PseudoChecker_GetTypeOfAccessor(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfExpression","kind":"method","status":"implemented","sigHash":"f32eb8c40a283385bf68a05e761f09daccea00f8ad2cb254bab7d37cdf454243","bodyHash":"4f55ef8e2bbab9c2aaf8c6e9be2d3d82d6cbfb6f84f35354e3eb478379d54b6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfExpression","kind":"method","status":"implemented","sigHash":"f32eb8c40a283385bf68a05e761f09daccea00f8ad2cb254bab7d37cdf454243"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetTypeOfExpression(node *ast.Node) *PseudoType {
@@ -252,7 +252,7 @@ export function PseudoChecker_GetTypeOfExpression(receiver: GoPtr<PseudoChecker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"e78a7bd0685491afef13c98a21d0430fbe1722724bbebef2d9668f7541322826","bodyHash":"177fa2f3b2099b9008d73e345077d2d6a31b46c51b4193af11cc5730004cd3eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"e78a7bd0685491afef13c98a21d0430fbe1722724bbebef2d9668f7541322826"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetTypeOfDeclaration(node *ast.Node) *PseudoType {
@@ -333,7 +333,7 @@ export function PseudoChecker_GetTypeOfDeclaration(receiver: GoPtr<PseudoChecker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPropertyAssignment","kind":"method","status":"implemented","sigHash":"ba7f28fa5c9dff6b07fdf0ff34d5d475fe1b4e3b4075883702517ca59698e5e8","bodyHash":"54b415297307302c10a4f93f824f00d06bcab72333d97b2a007c91d6288f5a8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPropertyAssignment","kind":"method","status":"implemented","sigHash":"ba7f28fa5c9dff6b07fdf0ff34d5d475fe1b4e3b4075883702517ca59698e5e8"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromPropertyAssignment(node *ast.Node) *PseudoType {
@@ -372,7 +372,7 @@ export function PseudoChecker_typeFromPropertyAssignment(receiver: GoPtr<PseudoC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"implemented","sigHash":"b8c9125065bb98bcc0ab9e73998e6eddc91cd8cf14c78fed5da6414817ea43ca","bodyHash":"dcb1bf57e61f5bcb4da7d4623691ef2712936bd901d3a4f3eb5f45da6dc1016a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"implemented","sigHash":"b8c9125065bb98bcc0ab9e73998e6eddc91cd8cf14c78fed5da6414817ea43ca"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpandoProperty(node *ast.Node) *PseudoType {
@@ -394,7 +394,7 @@ export function PseudoChecker_typeFromExpandoProperty(receiver: GoPtr<PseudoChec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromProperty","kind":"method","status":"implemented","sigHash":"7741ca3e4bbf28590ac12d9274eefd62c63e5f26f84ed3145c23025a8eb9605d","bodyHash":"6949cb472a612e0aef65b0c8474f0209edb64f7cfef7faed37103ccf08b95844"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromProperty","kind":"method","status":"implemented","sigHash":"7741ca3e4bbf28590ac12d9274eefd62c63e5f26f84ed3145c23025a8eb9605d"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromProperty(node *ast.Node) *PseudoType {
@@ -448,7 +448,7 @@ export function PseudoChecker_typeFromProperty(receiver: GoPtr<PseudoChecker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromVariable","kind":"method","status":"implemented","sigHash":"e4b8ccccd0481814a9b255dc19989228d07374a84c502d56a2631b65558aa452","bodyHash":"4136cca2cb18636253ad1c8978435ca8d615ed695d1b1b51bac29a2be37e4592"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromVariable","kind":"method","status":"implemented","sigHash":"e4b8ccccd0481814a9b255dc19989228d07374a84c502d56a2631b65558aa452"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromVariable(declaration *ast.VariableDeclaration) *PseudoType {
@@ -495,7 +495,7 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"implemented","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f","bodyHash":"5e9750ed6d3c9d4bf559186063abe94fd4cb2e6c577996bc259218fbcaa74224"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"implemented","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromAccessor(accessor *ast.Node) *PseudoType {
@@ -523,7 +523,7 @@ export function PseudoChecker_typeFromAccessor(receiver: GoPtr<PseudoChecker>, a
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.inferAccessorType","kind":"method","status":"implemented","sigHash":"afa707c76198a50ef428945f2e11b22be4c073c12954dc83ee2de8a3246ee4c7","bodyHash":"d7fcda71d0d49239a37fc54f9d493b179dec623dd36a2cbe8f26d9ef10222164"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.inferAccessorType","kind":"method","status":"implemented","sigHash":"afa707c76198a50ef428945f2e11b22be4c073c12954dc83ee2de8a3246ee4c7"}
  *
  * Go source:
  * func (ch *PseudoChecker) inferAccessorType(node *ast.Node) *PseudoType {
@@ -541,7 +541,7 @@ export function PseudoChecker_inferAccessorType(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAllAccessorDeclarations","kind":"method","status":"implemented","sigHash":"1d0e0a751fb7aa01af56c012bf7fc7c325f34f1e1b9ae4e5029706b2d3a7eab9","bodyHash":"07f6c4458171becd0e7b99baafaa70d57f74b674068f7507d6e419e2197dbb72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAllAccessorDeclarations","kind":"method","status":"implemented","sigHash":"1d0e0a751fb7aa01af56c012bf7fc7c325f34f1e1b9ae4e5029706b2d3a7eab9"}
  *
  * Go source:
  * func (ch *PseudoChecker) getTypeAnnotationFromAllAccessorDeclarations(node *ast.Node, accessors ast.AllAccessorDeclarations) *ast.Node {
@@ -567,7 +567,7 @@ export function PseudoChecker_getTypeAnnotationFromAllAccessorDeclarations(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAccessor","kind":"method","status":"implemented","sigHash":"208cf5e87f116cb3660d9919715a67f2837c405366c6d3a80d06588d5e4ce50d","bodyHash":"3060dd320f21973e6f8fbfc8324e770f9c57af6f09aea31cc12e03085173c0b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAccessor","kind":"method","status":"implemented","sigHash":"208cf5e87f116cb3660d9919715a67f2837c405366c6d3a80d06588d5e4ce50d"}
  *
  * Go source:
  * func (ch *PseudoChecker) getTypeAnnotationFromAccessor(node *ast.Node) *ast.Node {
@@ -609,7 +609,7 @@ export function PseudoChecker_getTypeAnnotationFromAccessor(receiver: GoPtr<Pseu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isValueSignatureDeclaration","kind":"func","status":"implemented","sigHash":"0f8c17b8c38271e7b61aefdd6c11c4d35c2520d23104c21c6ea6c02ce99a3bb7","bodyHash":"3e7dbd1d8ec88b2f6f5132084dc61ef33925e902db078f02ab0332c4eb56f070"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isValueSignatureDeclaration","kind":"func","status":"implemented","sigHash":"0f8c17b8c38271e7b61aefdd6c11c4d35c2520d23104c21c6ea6c02ce99a3bb7"}
  *
  * Go source:
  * func isValueSignatureDeclaration(node *ast.Node) bool {
@@ -621,7 +621,7 @@ export function isValueSignatureDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"implemented","sigHash":"eb9eff182475121cf128223c7cb8435014ba73ceb8792c4ad93954d410afa07a","bodyHash":"0d2f409e1c73b9a45e5915f5d628452dd6b0fcdf1a03f506671c8e1df9528e38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"implemented","sigHash":"eb9eff182475121cf128223c7cb8435014ba73ceb8792c4ad93954d410afa07a"}
  *
  * Go source:
  * func (ch *PseudoChecker) createReturnFromSignature(fn *ast.Node) *PseudoType {
@@ -654,7 +654,7 @@ export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoCh
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"implemented","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb","bodyHash":"ab00ff87266414e2212f3014310115a05129356368f5e77262a0da2d6eb8549d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"implemented","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromSingleReturnExpression(fn *ast.Node) *PseudoType {
@@ -747,7 +747,7 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8","bodyHash":"813760a61e16b8a6f0be7529e7a35054d6d373beafb963d7d13e767eec12b97f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpression(node *ast.Node) *PseudoType {
@@ -856,7 +856,7 @@ export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8","bodyHash":"6c3221ef20c28151cbcde104d910a0bc07398e95d5e674217cccde16a6e1c4cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromObjectLiteral(node *ast.ObjectLiteralExpression) *PseudoType {
@@ -960,7 +960,7 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"implemented","sigHash":"27c3a56df69a565adda57a91f5f6d0d8b0c4073c905454a4a21c80444ae515ff","bodyHash":"265e7f34d87197a225839bf9fe6b4fc74c4f6402bebd79676c9347d031a3833f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"implemented","sigHash":"27c3a56df69a565adda57a91f5f6d0d8b0c4073c905454a4a21c80444ae515ff"}
  *
  * Go source:
  * func (ch *PseudoChecker) getAccessorMember(accessor *ast.Node, name *ast.Node) *PseudoObjectElement {
@@ -1038,7 +1038,7 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"1226e2752992795fb28dd29b11d7a352292325d3a9b30f6a6a2b2ac098dbb865","bodyHash":"9ee4c24a0fe8f4e4c099d20bd2f4e53e1fcde9474f95d0168d5c20f25231e7fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"1226e2752992795fb28dd29b11d7a352292325d3a9b30f6a6a2b2ac098dbb865"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromObjectLiteral(node *ast.ObjectLiteralExpression) []*ast.Node {
@@ -1107,7 +1107,7 @@ export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<Pseudo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e","bodyHash":"73eca39ca2a5acbd51460d9e55b7df4d46221d1dffcb913439cdccb6fd0cfb02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromArrayLiteral(node *ast.ArrayLiteralExpression) *PseudoType {
@@ -1141,7 +1141,7 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"78652ca9524c988036370168d3c17039f551f22c102d1f481746e117a6da3651","bodyHash":"4175eaffa62a3f80020dd170e88dabb13b3867763a16c30496e3ca63318dbc25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"78652ca9524c988036370168d3c17039f551f22c102d1f481746e117a6da3651"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromArrayLiteral(node *ast.ArrayLiteralExpression) []*ast.Node {
@@ -1169,7 +1169,7 @@ export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"implemented","sigHash":"4e32ee959c1077231186f0c53bf9aaa47b3cebb5f978fea5ec2c0653e5a772cf","bodyHash":"67565545348bc20a5ff6935dbc1f121a9f46f1276313bde04b3d40f04f147a08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"implemented","sigHash":"4e32ee959c1077231186f0c53bf9aaa47b3cebb5f978fea5ec2c0653e5a772cf"}
  *
  * Go source:
  * func isConstContextPropagatingKind(kind ast.Kind) bool {
@@ -1198,7 +1198,7 @@ export function isConstContextPropagatingKind(kind: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"implemented","sigHash":"4785acdc832c3e0b6c20ce64ec94e0a15cdc8da9748bc95ef7ed5a6e057b2b49","bodyHash":"854d49cb912a212055e9af756454ed4f2907c87317006d041bd306511f6d3905"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"implemented","sigHash":"4785acdc832c3e0b6c20ce64ec94e0a15cdc8da9748bc95ef7ed5a6e057b2b49"}
  *
  * Go source:
  * func IsInConstContext(node *ast.Node) bool {
@@ -1224,7 +1224,7 @@ export function IsInConstContext(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPrimitiveLiteralPrefix","kind":"method","status":"implemented","sigHash":"ab3b8b826136fabd5263e35bf395cb9492e5424d6e02a67b11e4eafacb854f5c","bodyHash":"41040bc0def17399773ab2740c814c704998d1447f0bd9263c9d22eb3341831f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPrimitiveLiteralPrefix","kind":"method","status":"implemented","sigHash":"ab3b8b826136fabd5263e35bf395cb9492e5424d6e02a67b11e4eafacb854f5c"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromPrimitiveLiteralPrefix(node *ast.PrefixUnaryExpression) *PseudoType {
@@ -1261,7 +1261,7 @@ export function PseudoChecker_typeFromPrimitiveLiteralPrefix(receiver: GoPtr<Pse
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromTypeAssertion","kind":"method","status":"implemented","sigHash":"9e05471195a1fe901d0923d89525385756e6c931d48d79f8ee8f5f237868ac29","bodyHash":"141af64ff4846f6e4e703c7f0bec35dde2733406dd1853a6df71330f7b30ba2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromTypeAssertion","kind":"method","status":"implemented","sigHash":"9e05471195a1fe901d0923d89525385756e6c931d48d79f8ee8f5f237868ac29"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromTypeAssertion(expression *ast.Node, typeNode *ast.Node) *PseudoType {
@@ -1279,7 +1279,7 @@ export function PseudoChecker_typeFromTypeAssertion(receiver: GoPtr<PseudoChecke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"implemented","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce","bodyHash":"403a1de86c69032ac88f0e70b9a115f48bcc24c1235f826fe336105ae6fb2820"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"implemented","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromFunctionLikeExpression(node *ast.Node) *PseudoType {
@@ -1320,7 +1320,7 @@ export function PseudoChecker_typeFromFunctionLikeExpression(receiver: GoPtr<Pse
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneTypeParameters","kind":"method","status":"implemented","sigHash":"478e4a6f64d7a5e19d7626609c4ca899ecff58164c6a2fddb49edfc9c5ec4d46","bodyHash":"8e240e98dc594e5e036000d3c3a7d8a9117c0885a951f7d4a36acfd020551029"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneTypeParameters","kind":"method","status":"implemented","sigHash":"478e4a6f64d7a5e19d7626609c4ca899ecff58164c6a2fddb49edfc9c5ec4d46"}
  *
  * Go source:
  * func (ch *PseudoChecker) cloneTypeParameters(nodes *ast.NodeList) []*ast.TypeParameterDeclaration {
@@ -1352,7 +1352,7 @@ export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isUndefinedPseudoType","kind":"func","status":"implemented","sigHash":"dc07fe45ed787ff2750f0dcfa8f75ce355b734dea07ec2f0e38badfb0696a12d","bodyHash":"32a3e8f0c07b6fa874f4e595095e92a739fa40f3f50b42f37dd365f325ec7853"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isUndefinedPseudoType","kind":"func","status":"implemented","sigHash":"dc07fe45ed787ff2750f0dcfa8f75ce355b734dea07ec2f0e38badfb0696a12d"}
  *
  * Go source:
  * func isUndefinedPseudoType(t *PseudoType) bool {
@@ -1364,7 +1364,7 @@ export function isUndefinedPseudoType(t: GoPtr<PseudoType>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::typeNodeCouldReferToUndefined","kind":"func","status":"implemented","sigHash":"328eddc236093c5d48f2722e8373bea37f20c934a504bb8ccd45ab584c3301c3","bodyHash":"310da50dff4ce8598d80664cabaf0a17fcf0504eb2b0f30c65452dd854974ba8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::typeNodeCouldReferToUndefined","kind":"func","status":"implemented","sigHash":"328eddc236093c5d48f2722e8373bea37f20c934a504bb8ccd45ab584c3301c3"}
  *
  * Go source:
  * func typeNodeCouldReferToUndefined(node *ast.Node) bool {
@@ -1424,7 +1424,7 @@ export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187","bodyHash":"3332494dbbc0cd1252628cb3396156696e8febc22605f30eb1abd34bbe7f81bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187"}
  *
  * Go source:
  * func couldAlreadyReferToUndefinedType(t *PseudoType) bool {
@@ -1465,7 +1465,7 @@ export function couldAlreadyReferToUndefinedType(t: GoPtr<PseudoType>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isOptionalInitializedOrRestParameter","kind":"func","status":"implemented","sigHash":"08d6b5b1e1caf9da28c07d2babf308db8fbafe3e30f7221ecab21d4439634f21","bodyHash":"0535185f1dde09b8dd8af7d41f047b603271a82264f3323408bc5fe31c279bd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isOptionalInitializedOrRestParameter","kind":"func","status":"implemented","sigHash":"08d6b5b1e1caf9da28c07d2babf308db8fbafe3e30f7221ecab21d4439634f21"}
  *
  * Go source:
  * func isOptionalInitializedOrRestParameter(node *ast.ParameterDeclarationNode) bool {
@@ -1485,7 +1485,7 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"f984f8061c687349341f1ae62bfd902ff9ef63da0c0a816a43cbd9ab3d3e7fbd","bodyHash":"241d1f596b7b564eabcf068e47483c5e46d2e3dcc2c898faaee3401f1e207938"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::lastRequiredParamIndex","kind":"func","status":"implemented","sigHash":"f984f8061c687349341f1ae62bfd902ff9ef63da0c0a816a43cbd9ab3d3e7fbd"}
  *
  * Go source:
  * // lastRequiredParamIndex returns the index just past the last required parameter
@@ -1512,7 +1512,7 @@ export function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"implemented","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9","bodyHash":"00b39adb003864d39cfcf739f651c2e7b4c4d93c96f3cfe562ac41818314ee81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"implemented","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9"}
  *
  * Go source:
  * func addUndefinedIfDefinitelyRequired(expr *PseudoType) *PseudoType {
@@ -1535,7 +1535,7 @@ export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameter","kind":"method","status":"implemented","sigHash":"2e5ea3b5a7e5eaeee002ba1fc7b655b1aafc49885cf870ed9277a4de078a80f7","bodyHash":"be26eb9b4c87087a9e791f6998eaf561db733ada7d887eea046ada0b459bb6ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameter","kind":"method","status":"implemented","sigHash":"2e5ea3b5a7e5eaeee002ba1fc7b655b1aafc49885cf870ed9277a4de078a80f7"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromParameter(node *ast.ParameterDeclaration) *PseudoType {
@@ -1575,7 +1575,7 @@ export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameterWorker","kind":"method","status":"implemented","sigHash":"448e76d1588c918da3cd18dbfd0e0a02d43196af461b4bb14b9d931b3ace821f","bodyHash":"5886a2f08a1fbb49ed2ee22314064c269aef1b6ce0fdbcebb18970b7e4bf53f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameterWorker","kind":"method","status":"implemented","sigHash":"448e76d1588c918da3cd18dbfd0e0a02d43196af461b4bb14b9d931b3ace821f"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromParameterWorker(node *ast.ParameterDeclaration, selfIdx int, lastRequired int) *PseudoType {
@@ -1649,7 +1649,7 @@ export function PseudoChecker_typeFromParameterWorker(receiver: GoPtr<PseudoChec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneParameters","kind":"method","status":"implemented","sigHash":"877e9bb3c299bafe31a9cf616e9b35142e177381118c88224b517a723deae078","bodyHash":"8ece7f9ab61f42e4ae76b1f6424e4d6b9d45d6b79b89abb8ba236cd57abd14f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneParameters","kind":"method","status":"implemented","sigHash":"877e9bb3c299bafe31a9cf616e9b35142e177381118c88224b517a723deae078"}
  *
  * Go source:
  * func (ch *PseudoChecker) cloneParameters(nodes *ast.NodeList) []*PseudoParameter {
@@ -1710,7 +1710,7 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isContextuallyTyped","kind":"func","status":"implemented","sigHash":"8c94d3856488caadca77acf93e2092e109a0fe88aefe38dd4a90061658f7837f","bodyHash":"a4a8044b2c467831bb99efc6c15ce548bdde378cdf760a11ba524be89b252285"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isContextuallyTyped","kind":"func","status":"implemented","sigHash":"8c94d3856488caadca77acf93e2092e109a0fe88aefe38dd4a90061658f7837f"}
  *
  * Go source:
  * func isContextuallyTyped(node *ast.Node) bool {

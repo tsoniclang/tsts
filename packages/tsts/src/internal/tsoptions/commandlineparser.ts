@@ -63,7 +63,7 @@ import { CommandLineCompilerOptionsMap, convertMapToOptions, validateJsonOptionV
 import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidEnumType, getCompilerOptionValueTypeString } from "./errors.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3","bodyHash":"056161029ee4944550f999527abb187aedbb19f7b8abeeaead760247ab8db584"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3"}
  *
  * Go source:
  * func (p *commandLineParser) AlternateMode() *AlternateModeDiagnostics {
@@ -76,7 +76,7 @@ export function commandLineParser_AlternateMode(receiver: GoPtr<commandLineParse
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.OptionsDeclarations","kind":"method","status":"implemented","sigHash":"97f3f4f181f8583d4a1038ff86438d6f74d2c7e1b956a5c0ee0fbb0a156140b0","bodyHash":"2b9ebfed5341565ee19d79163959f5639ab03808da69985d8c2d8fa1080168cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.OptionsDeclarations","kind":"method","status":"implemented","sigHash":"97f3f4f181f8583d4a1038ff86438d6f74d2c7e1b956a5c0ee0fbb0a156140b0"}
  *
  * Go source:
  * func (p *commandLineParser) OptionsDeclarations() []*CommandLineOption {
@@ -89,7 +89,7 @@ export function commandLineParser_OptionsDeclarations(receiver: GoPtr<commandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.UnknownOptionDiagnostic","kind":"method","status":"implemented","sigHash":"1994feecac07e08365ebae35690a24a63302cf0f8f3fc9241aa206d29e945f5a","bodyHash":"25cb680289286f8f20a2f52fab2623bdd34c60503de459910957e3aeb9d369e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.UnknownOptionDiagnostic","kind":"method","status":"implemented","sigHash":"1994feecac07e08365ebae35690a24a63302cf0f8f3fc9241aa206d29e945f5a"}
  *
  * Go source:
  * func (p *commandLineParser) UnknownOptionDiagnostic() *diagnostics.Message {
@@ -102,7 +102,7 @@ export function commandLineParser_UnknownOptionDiagnostic(receiver: GoPtr<comman
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.UnknownDidYouMeanDiagnostic","kind":"method","status":"implemented","sigHash":"56af45c4595276168341f6e19deabcb67421480b1ceda0f1ef544368c045b017","bodyHash":"20657e14d95384cfc4dc138965a9afca4ee40365970aed59dbf614a472e8781d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.UnknownDidYouMeanDiagnostic","kind":"method","status":"implemented","sigHash":"56af45c4595276168341f6e19deabcb67421480b1ceda0f1ef544368c045b017"}
  *
  * Go source:
  * func (p *commandLineParser) UnknownDidYouMeanDiagnostic() *diagnostics.Message {
@@ -115,7 +115,7 @@ export function commandLineParser_UnknownDidYouMeanDiagnostic(receiver: GoPtr<co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::type::commandLineParser","kind":"type","status":"implemented","sigHash":"79d325265cbddb5df61fab09767bd110f16ddb7661c5b27191ea9f07420c7d1d","bodyHash":"e7913c62fb7907f966c8f2b7799cf7a9045dfa530c035c42dc698a5aaf5fb208"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::type::commandLineParser","kind":"type","status":"implemented","sigHash":"79d325265cbddb5df61fab09767bd110f16ddb7661c5b27191ea9f07420c7d1d"}
  *
  * Go source:
  * commandLineParser struct {
@@ -139,7 +139,7 @@ export interface commandLineParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseCommandLine","kind":"func","status":"implemented","sigHash":"562e3a384361cd843bc6d51c8fe529fb5a9fc4d9b2f88128540ac7356f5f8511","bodyHash":"c69d08ac69c7544c2f6963b5789356181e906a65365339bf88071b05253c4d49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseCommandLine","kind":"func","status":"implemented","sigHash":"562e3a384361cd843bc6d51c8fe529fb5a9fc4d9b2f88128540ac7356f5f8511"}
  *
  * Go source:
  * func ParseCommandLine(
@@ -186,7 +186,7 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfig
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseBuildCommandLine","kind":"func","status":"implemented","sigHash":"0bcf99ad375f4adacac48e524467665ecba5dc50fcf1fc301eeb09baf42e5b39","bodyHash":"d9cd9f2b10f6a2a576f3d13cc565e387dbaa796834d587e37b8801e3f1b3323c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseBuildCommandLine","kind":"func","status":"implemented","sigHash":"0bcf99ad375f4adacac48e524467665ecba5dc50fcf1fc301eeb09baf42e5b39"}
  *
  * Go source:
  * func ParseBuildCommandLine(
@@ -293,7 +293,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::parseCommandLineWorker","kind":"func","status":"implemented","sigHash":"1c8d65c87a28485582e91bb856a2c8601a55102a1a0ef6544ea09acfdf97e404","bodyHash":"4b0dc6ed5d2e3eb1489506ff424d92c5f1e81992d1ee57ae1623e613df71435a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::parseCommandLineWorker","kind":"func","status":"implemented","sigHash":"1c8d65c87a28485582e91bb856a2c8601a55102a1a0ef6544ea09acfdf97e404"}
  *
  * Go source:
  * func parseCommandLineWorker(
@@ -331,7 +331,7 @@ export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<Pa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseStrings","kind":"method","status":"implemented","sigHash":"367937963448225249aa9aa8b0554a96b59a22c7303a30b93f292c039220f30a","bodyHash":"f97740bf1e26f7f2b6ec2ae3c058a9b69f1c79325eb47a8e574e4f8f5c796d45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseStrings","kind":"method","status":"implemented","sigHash":"367937963448225249aa9aa8b0554a96b59a22c7303a30b93f292c039220f30a"}
  *
  * Go source:
  * func (p *commandLineParser) parseStrings(args []string) {
@@ -396,7 +396,7 @@ export function commandLineParser_parseStrings(receiver: GoPtr<commandLineParser
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::getInputOptionName","kind":"func","status":"implemented","sigHash":"3734cf522f5a77cb11e01f1c540b4191e033a462570a16046e36052045d0c351","bodyHash":"25c333e0eaaef3058968244c496fce2af335ab9b123eb8e33343620ddf13c250"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::getInputOptionName","kind":"func","status":"implemented","sigHash":"3734cf522f5a77cb11e01f1c540b4191e033a462570a16046e36052045d0c351"}
  *
  * Go source:
  * func getInputOptionName(input string) string {
@@ -410,7 +410,7 @@ export function getInputOptionName(input: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseResponseFile","kind":"method","status":"implemented","sigHash":"2c89dbe560e0fa0c00fa3b994cbd27f49cf846b78df1a09568e024cd5695686e","bodyHash":"4011e519c57a7cafdfd9a3ca5c25ddfbe4c6ad829549fbe575aba24fd8368b71"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseResponseFile","kind":"method","status":"implemented","sigHash":"2c89dbe560e0fa0c00fa3b994cbd27f49cf846b78df1a09568e024cd5695686e"}
  *
  * Go source:
  * func (p *commandLineParser) parseResponseFile(fileName string) {
@@ -511,7 +511,7 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::tryReadFile","kind":"func","status":"implemented","sigHash":"a24f82b6b66c8b49644f5f0e5467ccdcbf953d690be7396a2707c41188849145","bodyHash":"ccc5df9076d6f626dd9f1a426ca998eba274f909b43a13655cd8d1c4e1270d94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::tryReadFile","kind":"func","status":"implemented","sigHash":"a24f82b6b66c8b49644f5f0e5467ccdcbf953d690be7396a2707c41188849145"}
  *
  * Go source:
  * func tryReadFile(fileName string, readFile func(string) (string, bool), errors []*ast.Diagnostic) (string, []*ast.Diagnostic) {
@@ -541,7 +541,7 @@ export function tryReadFile(fileName: string, readFile: (arg0: string) => [strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseOptionValue","kind":"method","status":"implemented","sigHash":"bfa56544e75f49c873c7d19e48baf5368dcb24d80ae936cfd0970c7932e32319","bodyHash":"78b944d1b55172b2794f51a44c25e33eb636c6472fbbbf6175d5a50cc2997647"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseOptionValue","kind":"method","status":"implemented","sigHash":"bfa56544e75f49c873c7d19e48baf5368dcb24d80ae936cfd0970c7932e32319"}
  *
  * Go source:
  * func (p *commandLineParser) parseOptionValue(
@@ -764,7 +764,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseListTypeOption","kind":"method","status":"implemented","sigHash":"7d6a1ab08c5d4cb9afcd730cefa82a959f433b1b9e785a461614b8c1eccee2c4","bodyHash":"f84a8c07e35e1665c19d576b48c76ee9bd278a07d04c52b918cd6262eb1a7fd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseListTypeOption","kind":"method","status":"implemented","sigHash":"7d6a1ab08c5d4cb9afcd730cefa82a959f433b1b9e785a461614b8c1eccee2c4"}
  *
  * Go source:
  * func (p *commandLineParser) parseListTypeOption(opt *CommandLineOption, value string) ([]any, []*ast.Diagnostic) {
@@ -776,7 +776,7 @@ export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseListTypeOption","kind":"func","status":"implemented","sigHash":"9b147c03da5c20135894bb08966266e3a8217ae4e6d3788f64014ae7dfcc7690","bodyHash":"ea80b29e68862134b43504862791160f20ae5c7794a33e1c4a0554b9a271a2c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseListTypeOption","kind":"func","status":"implemented","sigHash":"9b147c03da5c20135894bb08966266e3a8217ae4e6d3788f64014ae7dfcc7690"}
  *
  * Go source:
  * func ParseListTypeOption(opt *CommandLineOption, value string) ([]any, []*ast.Diagnostic) {
@@ -876,7 +876,7 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType","kind":"func","status":"implemented","sigHash":"1e73b48b6273364dada906e24fa936e03652113afa5c578c3221f861d4629ba1","bodyHash":"fe1ef0b12861440f67da7f5bfd8c3cd49d42965c18d4aa82f38dfa58f8b050ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType","kind":"func","status":"implemented","sigHash":"1e73b48b6273364dada906e24fa936e03652113afa5c578c3221f861d4629ba1"}
  *
  * Go source:
  * func convertJsonOptionOfEnumType(

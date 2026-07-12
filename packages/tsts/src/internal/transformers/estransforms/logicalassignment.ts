@@ -20,7 +20,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { IsSimpleCopiableExpression } from "../utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::type::logicalAssignmentTransformer","kind":"type","status":"implemented","sigHash":"b09bb19ec1eadb5a9ace607f3a03d261b660c1f10d6f675a7b9e007e082efa21","bodyHash":"ebd8aaa8280e61cfad975e2cc1ba9b40d3dabe297c2de9a927d9175e9ed0c717"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::type::logicalAssignmentTransformer","kind":"type","status":"implemented","sigHash":"b09bb19ec1eadb5a9ace607f3a03d261b660c1f10d6f675a7b9e007e082efa21"}
  *
  * Go source:
  * logicalAssignmentTransformer struct {
@@ -32,7 +32,7 @@ export interface logicalAssignmentTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::method::logicalAssignmentTransformer.visit","kind":"method","status":"implemented","sigHash":"76107665c519402058410017851c730012ebb9e739a3c64d42de3c73b580a1c4","bodyHash":"2f4915ccd08336efef7a11e0ee8bd12bba3b0282992decafa8af17694adbdd89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::method::logicalAssignmentTransformer.visit","kind":"method","status":"implemented","sigHash":"76107665c519402058410017851c730012ebb9e739a3c64d42de3c73b580a1c4"}
  *
  * Go source:
  * func (ch *logicalAssignmentTransformer) visit(node *ast.Node) *ast.Node {
@@ -60,7 +60,7 @@ export function logicalAssignmentTransformer_visit(receiver: GoPtr<logicalAssign
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::method::logicalAssignmentTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"f08c96530ad57f7e2137a8262108e7ecec70069da4ff940031827e9cacec2fcc","bodyHash":"c3edacf773fac35d4f906b654569578ca7a423f91e214796e7c583b0ff945b50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::method::logicalAssignmentTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"f08c96530ad57f7e2137a8262108e7ecec70069da4ff940031827e9cacec2fcc"}
  *
  * Go source:
  * func (ch *logicalAssignmentTransformer) visitBinaryExpression(node *ast.BinaryExpression) *ast.Node {
@@ -253,7 +253,7 @@ export function logicalAssignmentTransformer_visitBinaryExpression(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::func::newLogicalAssignmentTransformer","kind":"func","status":"implemented","sigHash":"e668b93baec8d6b719a939426aa15c17c311d4d58fc95095a2e9ebf6ce198878","bodyHash":"047e678383f404e4921ead21b8dcac2ca9cdcf82e94f80c29e2e3db5c55c99cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/logicalassignment.go::func::newLogicalAssignmentTransformer","kind":"func","status":"implemented","sigHash":"e668b93baec8d6b719a939426aa15c17c311d4d58fc95095a2e9ebf6ce198878"}
  *
  * Go source:
  * func newLogicalAssignmentTransformer(opts *transformers.TransformOptions) *transformers.Transformer {

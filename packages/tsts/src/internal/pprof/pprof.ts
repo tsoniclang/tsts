@@ -12,7 +12,7 @@ import * as pprof from "../../go/runtime/pprof.js";
 import * as time from "../../go/time.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"a76723aee5edb81e8c1f6267b0588ad887b2600150fd55b9359a35d02584972b","bodyHash":"9c7b63f36067a4f2f8855292fabf046b03e3b4ab7ee006c3f944514a17a2b87a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"a76723aee5edb81e8c1f6267b0588ad887b2600150fd55b9359a35d02584972b"}
  *
  * Go source:
  * ProfileSession struct {
@@ -30,7 +30,7 @@ export interface ProfileSession {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"implemented","sigHash":"a03af38b93e0ea5e9b3679a92098b32afd8ab657ebc16f01b62c318a3b301399","bodyHash":"21f6df63a3a5240f32fbcfa3e390f242daf5663fbaeba66e9d432c228a719057"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"implemented","sigHash":"a03af38b93e0ea5e9b3679a92098b32afd8ab657ebc16f01b62c318a3b301399"}
  *
  * Go source:
  * func BeginProfiling(profileDir string, logWriter io.Writer) *ProfileSession {
@@ -84,7 +84,7 @@ export function BeginProfiling(profileDir: string, logWriter: Writer): GoPtr<Pro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::ProfileSession.Stop","kind":"method","status":"implemented","sigHash":"383f6c1004cf555d9405f4764a856ab6f44a6242bcc29aeeecd00a70350fb664","bodyHash":"24a708fabe90294b3553921965d509443694035da607f6f7de2b302d253e7365"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::ProfileSession.Stop","kind":"method","status":"implemented","sigHash":"383f6c1004cf555d9405f4764a856ab6f44a6242bcc29aeeecd00a70350fb664"}
  *
  * Go source:
  * func (p *ProfileSession) Stop() {
@@ -129,7 +129,7 @@ export function ProfileSession_Stop(receiver: GoPtr<ProfileSession>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::CPUProfiler","kind":"type","status":"implemented","sigHash":"758f83a1a8afe5668daa84d92f1939ba14796c4820896e11c396f95e5867a988","bodyHash":"b5e9b96d1ab1a8a93a70fb4f4a0c812766c25cf044a928ea95adae619be3ea71"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::CPUProfiler","kind":"type","status":"implemented","sigHash":"758f83a1a8afe5668daa84d92f1939ba14796c4820896e11c396f95e5867a988"}
  *
  * Go source:
  * CPUProfiler struct {
@@ -143,7 +143,7 @@ export interface CPUProfiler {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"implemented","sigHash":"336f17798607a75b5afc3ee6b67a7f5dd39f54e8b340ef8331e1478ba6b701ef","bodyHash":"37c77fbf384b13bebe991a21537c033f3a673a69dbb6b9156b5ea8b4d6870801"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"implemented","sigHash":"336f17798607a75b5afc3ee6b67a7f5dd39f54e8b340ef8331e1478ba6b701ef"}
  *
  * Go source:
  * func (c *CPUProfiler) StartCPUProfile(profileDir string) error {
@@ -213,7 +213,7 @@ export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"implemented","sigHash":"265a83d69f78d31aaf7f3b1b83149ac1799609bd56f05cade4c12650bcad334f","bodyHash":"1dd7f6d5e3dd36274c4ae9b79f63e045e12d3131e116c2e120b9e7e144b0f0c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"implemented","sigHash":"265a83d69f78d31aaf7f3b1b83149ac1799609bd56f05cade4c12650bcad334f"}
  *
  * Go source:
  * func (c *CPUProfiler) StopCPUProfile() (string, error) {
@@ -250,7 +250,7 @@ export function CPUProfiler_StopCPUProfile(receiver: GoPtr<CPUProfiler>): [strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"implemented","sigHash":"493a044c790af1b846f6a90ad8cd166dc93081e24d57ac0c319400474bfa114e","bodyHash":"8314850d02bdde5789f2b3c4541cc1d270a50953e0d0c5bedf6217f7bc3bf2b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"implemented","sigHash":"493a044c790af1b846f6a90ad8cd166dc93081e24d57ac0c319400474bfa114e"}
  *
  * Go source:
  * func SaveHeapProfile(profileDir string) (string, error) {
@@ -299,7 +299,7 @@ export function SaveHeapProfile(profileDir: string): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"implemented","sigHash":"88938cc5084d6b8f0ea6ded5d38ca9c8155b861b1cd9a998bfa4733955bf1e96","bodyHash":"cb4afc11bf378ca4cdc90ec1a7b33f336e3f6584f6386403ae4fc881d6ec2a07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"implemented","sigHash":"88938cc5084d6b8f0ea6ded5d38ca9c8155b861b1cd9a998bfa4733955bf1e96"}
  *
  * Go source:
  * func SaveAllocProfile(profileDir string) (string, error) {
@@ -346,7 +346,7 @@ export function SaveAllocProfile(profileDir: string): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::RunGC","kind":"func","status":"implemented","sigHash":"8f507d8d1ba55f3c46badf76e6f03b91604cc0fd40e4afc582dfec3d26dacc4c","bodyHash":"5d96aaf762583125e894aa4d0b3e0d9b72568402afeb89ace19da8ee82768b9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::RunGC","kind":"func","status":"implemented","sigHash":"8f507d8d1ba55f3c46badf76e6f03b91604cc0fd40e4afc582dfec3d26dacc4c"}
  *
  * Go source:
  * func RunGC() {

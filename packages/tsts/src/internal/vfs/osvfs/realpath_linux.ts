@@ -27,7 +27,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
 // or chroots without procfs mounted).
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184","bodyHash":"cb954cedd01898122ff5f4e66abd8344cecc872e881ac8aea86612e8fd10c55f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::constGroup::_procSelfFD","kind":"constGroup","status":"implemented","sigHash":"91f52da369124eda157655cdefd8adf58bf3db47f012efcaa8aa27af5aa3a184"}
  *
  * Go source:
  * const _procSelfFD = "/proc/self/fd/"
@@ -35,7 +35,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
 export const _procSelfFD: string = "/proc/self/fd/";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233","bodyHash":"167bc9acff221338d8a8cf37c697c0655a0006bd54bcd25664f930d0e88922d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233"}
  *
  * Go source:
  * var hasProcSelfFD = sync.OnceValue(func() bool {
@@ -49,7 +49,7 @@ export let hasProcSelfFD: () => bool = OnceValue<bool>((): bool => {
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721","bodyHash":"2383a412fe65f7a82fa90d20b62f8ba29b05f1060d405e60a545f1e122358a4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::func::realpath","kind":"func","status":"implemented","sigHash":"508722058bcc5fa76607b13bc59e8f966d9f9163f69d336a8e1b7975a4fdb721"}
  *
  * Go source:
  * func realpath(path string) (string, error) {

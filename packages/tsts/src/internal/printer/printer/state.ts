@@ -17,7 +17,7 @@ import type { NameGenerator } from "../namegenerator.js";
 import type { lineCharacterCache } from "../utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrinterOptions","kind":"type","status":"implemented","sigHash":"e05c9b3336abcef2ef37a751378d949c3d6e7064f9bce544fdcba0c8fa66a958","bodyHash":"4c7efb44ac24239eda3ed0e7d022159d8f5d9785dae83438b399025455c55e9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrinterOptions","kind":"type","status":"implemented","sigHash":"e05c9b3336abcef2ef37a751378d949c3d6e7064f9bce544fdcba0c8fa66a958"}
  *
  * Go source:
  * PrinterOptions struct {
@@ -56,7 +56,7 @@ export interface PrinterOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrintHandlers","kind":"type","status":"implemented","sigHash":"f62453a560569c829ada5cc0c2ce8be833c1ef6e0d4250c4acb1617c7e4cdc55","bodyHash":"bce28de34be34e21bed7e3f2f56e9c02456f9835563a3e6bc4cbdb7240c020da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrintHandlers","kind":"type","status":"implemented","sigHash":"f62453a560569c829ada5cc0c2ce8be833c1ef6e0d4250c4acb1617c7e4cdc55"}
  *
  * Go source:
  * PrintHandlers struct {
@@ -129,7 +129,7 @@ export interface PrintHandlers {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::Printer","kind":"type","status":"implemented","sigHash":"fcfaf25a4675b1c48962bca97058109f3fc983a6115ab3083bfaa783c635607e","bodyHash":"b0074479d036be6e89c4ae44470374c2f3110ae36087144f8e47cb6b7f2338e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::Printer","kind":"type","status":"implemented","sigHash":"fcfaf25a4675b1c48962bca97058109f3fc983a6115ab3083bfaa783c635607e"}
  *
  * Go source:
  * Printer struct {
@@ -197,7 +197,7 @@ export interface Printer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::detachedCommentsInfo","kind":"type","status":"implemented","sigHash":"3970aa080ef2767a66f0ee8df2f09b615abadff9afcf0f8c56887e6060a4cd67","bodyHash":"49d0943cf7858a5e1ae7cb46810f38c736d1ab424b6a25b8b4b60d250089aac8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::detachedCommentsInfo","kind":"type","status":"implemented","sigHash":"3970aa080ef2767a66f0ee8df2f09b615abadff9afcf0f8c56887e6060a4cd67"}
  *
  * Go source:
  * detachedCommentsInfo struct {
@@ -211,7 +211,7 @@ export interface detachedCommentsInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentState","kind":"type","status":"implemented","sigHash":"926dadfcef3fa3f73fe7a8ea8588a46c607cae86d19331c9140ba5968598c517","bodyHash":"0124d32cc9034dbfb1562e64c32015e4b7a059a483386a85dc0886b057fe0df3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentState","kind":"type","status":"implemented","sigHash":"926dadfcef3fa3f73fe7a8ea8588a46c607cae86d19331c9140ba5968598c517"}
  *
  * Go source:
  * commentState struct {
@@ -231,7 +231,7 @@ export interface commentState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::sourceMapState","kind":"type","status":"implemented","sigHash":"a68ff8de837fa3fc6a6f9ad5ab796aaa2b65a8e5366cdc0741f1fb9c2a95ae9d","bodyHash":"576a247cceb189c86e5295c1ed63a8cc59568c0d953af66091b7159b66c3a69c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::sourceMapState","kind":"type","status":"implemented","sigHash":"a68ff8de837fa3fc6a6f9ad5ab796aaa2b65a8e5366cdc0741f1fb9c2a95ae9d"}
  *
  * Go source:
  * sourceMapState struct {
@@ -247,7 +247,7 @@ export interface sourceMapState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::printerState","kind":"type","status":"implemented","sigHash":"11057588982d3f230c8498bfee870042d0a88f3a4e7698edb227364499229f62","bodyHash":"242d829da1b02353715675ece3a66b0d68c00956e667cb948883dfc89a30f295"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::printerState","kind":"type","status":"implemented","sigHash":"11057588982d3f230c8498bfee870042d0a88f3a4e7698edb227364499229f62"}
  *
  * Go source:
  * printerState struct {
@@ -261,7 +261,7 @@ export interface printerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::WriteKind","kind":"type","status":"implemented","sigHash":"cff0cd2c0ce98ae8e1d007610b529ba1f2cb8488272b8ce547e528877633be17","bodyHash":"c17d0f3a968fef6a2bf529b5a823a0827e769e79e1b6c39d22c152756b29e8ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::WriteKind","kind":"type","status":"implemented","sigHash":"cff0cd2c0ce98ae8e1d007610b529ba1f2cb8488272b8ce547e528877633be17"}
  *
  * Go source:
  * WriteKind int
@@ -269,7 +269,7 @@ export interface printerState {
 export type WriteKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::WriteKindNone+WriteKindKeyword+WriteKindOperator+WriteKindPunctuation+WriteKindStringLiteral+WriteKindParameter+WriteKindProperty+WriteKindComment+WriteKindLiteral","kind":"constGroup","status":"implemented","sigHash":"f857e88bbd770a526a1409900bf938f7c504daa712f75842be7b9b8a96a57f4f","bodyHash":"98067c5f12d438bbee5189e77a0ab115d66989aff33acc3e8c4e9d20b7fafa68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::WriteKindNone+WriteKindKeyword+WriteKindOperator+WriteKindPunctuation+WriteKindStringLiteral+WriteKindParameter+WriteKindProperty+WriteKindComment+WriteKindLiteral","kind":"constGroup","status":"implemented","sigHash":"f857e88bbd770a526a1409900bf938f7c504daa712f75842be7b9b8a96a57f4f"}
  *
  * Go source:
  * const (
@@ -295,7 +295,7 @@ export const WriteKindComment: WriteKind = 7;
 export const WriteKindLiteral: WriteKind = 8;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentSeparator","kind":"type","status":"implemented","sigHash":"563a47c13ee551302187f172cb5cde7c504d640dc6e5386babd6b1734cabf941","bodyHash":"14db9e627ce5ccf7b13eeb029b91b7deb12733d2f0b85dc7b4780d9c041bbbad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentSeparator","kind":"type","status":"implemented","sigHash":"563a47c13ee551302187f172cb5cde7c504d640dc6e5386babd6b1734cabf941"}
  *
  * Go source:
  * commentSeparator uint32
@@ -303,7 +303,7 @@ export const WriteKindLiteral: WriteKind = 8;
 export type commentSeparator = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::commentSeparatorNone+commentSeparatorBefore+commentSeparatorAfter","kind":"constGroup","status":"implemented","sigHash":"a2a79165f3b5e5fbbbc4c2b324ec30896284bed59c16f00ba415b9f8252fad08","bodyHash":"bc5a40dfeaef1fd2298fea9d89aab404cfb5b603428bc6f67e2dae1e2f82cf91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::commentSeparatorNone+commentSeparatorBefore+commentSeparatorAfter","kind":"constGroup","status":"implemented","sigHash":"a2a79165f3b5e5fbbbc4c2b324ec30896284bed59c16f00ba415b9f8252fad08"}
  *
  * Go source:
  * const (
@@ -317,7 +317,7 @@ export const commentSeparatorBefore: commentSeparator = 1;
 export const commentSeparatorAfter: commentSeparator = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::tokenEmitFlags","kind":"type","status":"implemented","sigHash":"525979afb92adb5c028cfc4227291d6d0c4297954f83a6c3743a31f66fb12de1","bodyHash":"f0795874869c058db20479aee1ba55ac1e184a898642ee096876680bf242495c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::tokenEmitFlags","kind":"type","status":"implemented","sigHash":"525979afb92adb5c028cfc4227291d6d0c4297954f83a6c3743a31f66fb12de1"}
  *
  * Go source:
  * tokenEmitFlags uint32
@@ -325,7 +325,7 @@ export const commentSeparatorAfter: commentSeparator = 2;
 export type tokenEmitFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::tefNoComments+tefIndentLeadingComments+tefNoSourceMaps+tefNone","kind":"constGroup","status":"implemented","sigHash":"a86d6c8334930890a3002ea14ea47b2d7ea6aadfaff0ddd13d668ae2263ec45d","bodyHash":"c6000ff791a40b622bcf7cee63934f3e0c5f809e1fde39ade5b9b16390513d13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::tefNoComments+tefIndentLeadingComments+tefNoSourceMaps+tefNone","kind":"constGroup","status":"implemented","sigHash":"a86d6c8334930890a3002ea14ea47b2d7ea6aadfaff0ddd13d668ae2263ec45d"}
  *
  * Go source:
  * const (
@@ -342,7 +342,7 @@ export const tefNoSourceMaps: tokenEmitFlags = 1 << 2;
 export const tefNone: tokenEmitFlags = 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::ListFormat","kind":"type","status":"implemented","sigHash":"a4e14d03530120f1663ecbd3e112a96550946479937a20e890b806d00e4d15eb","bodyHash":"54acf5f2e63d036e62be55efe2ac6efde563d526d56d39062d38f8ceec015991"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::ListFormat","kind":"type","status":"implemented","sigHash":"a4e14d03530120f1663ecbd3e112a96550946479937a20e890b806d00e4d15eb"}
  *
  * Go source:
  * ListFormat int
@@ -350,7 +350,7 @@ export const tefNone: tokenEmitFlags = 0;
 export type ListFormat = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::LFNone+LFSingleLine+LFMultiLine+LFPreserveLines+LFLinesMask+LFNotDelimited+LFBarDelimited+LFAmpersandDelimited+LFCommaDelimited+LFAsteriskDelimited+LFDelimitersMask+LFAllowTrailingComma+LFIndented+LFSpaceBetweenBraces+LFSpaceBetweenSiblings+LFBraces+LFParenthesis+LFAngleBrackets+LFSquareBrackets+LFBracketsMask+LFOptionalIfNil+LFOptionalIfEmpty+LFOptional+LFPreferNewLine+LFNoTrailingNewLine+LFNoInterveningComments+LFNoSpaceIfEmpty+LFSingleElement+LFSpaceAfterList+LFModifiers+LFHeritageClauses+LFSingleLineTypeLiteralMembers+LFMultiLineTypeLiteralMembers+LFSingleLineTupleTypeElements+LFMultiLineTupleTypeElements+LFUnionTypeConstituents+LFIntersectionTypeConstituents+LFObjectBindingPatternElements+LFArrayBindingPatternElements+LFObjectLiteralExpressionProperties+LFImportAttributes+LFArrayLiteralExpressionElements+LFCommaListElements+LFCallExpressionArguments+LFNewExpressionArguments+LFTemplateExpressionSpans+LFSingleLineBlockStatements+LFMultiLineBlockStatements+LFVariableDeclarationList+LFSingleLineFunctionBodyStatements+LFMultiLineFunctionBodyStatements+LFClassHeritageClauses+LFClassMembers+LFInterfaceMembers+LFEnumMembers+LFCaseBlockClauses+LFNamedImportsOrExportsElements+LFJsxElementOrFragmentChildren+LFJsxElementAttributes+LFCaseOrDefaultClauseStatements+LFHeritageClauseTypes+LFSourceFileStatements+LFDecorators+LFTypeArguments+LFTypeParameters+LFParameters+LFSingleArrowParameter+LFIndexSignatureParameters+LFJSDocComment+LFImportClauseEntries","kind":"constGroup","status":"implemented","sigHash":"b6a4554872a04b2300e984ead8bb621efc9cdfe93ac9df72242d803e71c69416","bodyHash":"15139928f8518dd260c3c0bc322390f7c3efaba40a56b25d7220e914734a1b02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::LFNone+LFSingleLine+LFMultiLine+LFPreserveLines+LFLinesMask+LFNotDelimited+LFBarDelimited+LFAmpersandDelimited+LFCommaDelimited+LFAsteriskDelimited+LFDelimitersMask+LFAllowTrailingComma+LFIndented+LFSpaceBetweenBraces+LFSpaceBetweenSiblings+LFBraces+LFParenthesis+LFAngleBrackets+LFSquareBrackets+LFBracketsMask+LFOptionalIfNil+LFOptionalIfEmpty+LFOptional+LFPreferNewLine+LFNoTrailingNewLine+LFNoInterveningComments+LFNoSpaceIfEmpty+LFSingleElement+LFSpaceAfterList+LFModifiers+LFHeritageClauses+LFSingleLineTypeLiteralMembers+LFMultiLineTypeLiteralMembers+LFSingleLineTupleTypeElements+LFMultiLineTupleTypeElements+LFUnionTypeConstituents+LFIntersectionTypeConstituents+LFObjectBindingPatternElements+LFArrayBindingPatternElements+LFObjectLiteralExpressionProperties+LFImportAttributes+LFArrayLiteralExpressionElements+LFCommaListElements+LFCallExpressionArguments+LFNewExpressionArguments+LFTemplateExpressionSpans+LFSingleLineBlockStatements+LFMultiLineBlockStatements+LFVariableDeclarationList+LFSingleLineFunctionBodyStatements+LFMultiLineFunctionBodyStatements+LFClassHeritageClauses+LFClassMembers+LFInterfaceMembers+LFEnumMembers+LFCaseBlockClauses+LFNamedImportsOrExportsElements+LFJsxElementOrFragmentChildren+LFJsxElementAttributes+LFCaseOrDefaultClauseStatements+LFHeritageClauseTypes+LFSourceFileStatements+LFDecorators+LFTypeArguments+LFTypeParameters+LFParameters+LFSingleArrowParameter+LFIndexSignatureParameters+LFJSDocComment+LFImportClauseEntries","kind":"constGroup","status":"implemented","sigHash":"b6a4554872a04b2300e984ead8bb621efc9cdfe93ac9df72242d803e71c69416"}
  *
  * Go source:
  * const (

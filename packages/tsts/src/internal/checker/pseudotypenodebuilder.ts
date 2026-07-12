@@ -94,7 +94,7 @@ import { ContextFlagsNone, ElementFlagsNonRequired, TernaryTrue, Type_TargetTupl
 import { FlagsInObjectTypeLiteral, FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0","bodyHash":"ea437a86880cf12ceefbd487e7d6f5d6df53237efdddaf3a44bc7786370207df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToNodeWithCheckerFallback(t *pseudochecker.PseudoType, checkerType *Type) *ast.Node {
@@ -164,7 +164,7 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"implemented","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d","bodyHash":"605aba82bf14d054086ddb9fa80b69600449fe16b08b9f60847ce88994628487"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"implemented","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToNode(t *pseudochecker.PseudoType) *ast.Node {
@@ -704,7 +704,7 @@ export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParametersToNodeList","kind":"method","status":"implemented","sigHash":"f0fe4b415b152c002383a80811a992fc65a5c6b021b6dde24a423bb2907fd723","bodyHash":"bf32582af4421b5c821573823df0a36f36e6d984ad1cf1a0618e0408e751944d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParametersToNodeList","kind":"method","status":"implemented","sigHash":"f0fe4b415b152c002383a80811a992fc65a5c6b021b6dde24a423bb2907fd723"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoParametersToNodeList(params []*pseudochecker.PseudoParameter) *ast.NodeList {
@@ -725,7 +725,7 @@ export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParameterToNode","kind":"method","status":"implemented","sigHash":"0a9a217c93e6aaa3ee3c061f128d5c336c3f8c6b40606d23b0d0559245ba6f58","bodyHash":"80b72720ca1fe2db12e987f0e9f31df22aab156ffcde6acc6b9628756c02f439"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParameterToNode","kind":"method","status":"implemented","sigHash":"0a9a217c93e6aaa3ee3c061f128d5c336c3f8c6b40606d23b0d0559245ba6f58"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoParameterToNode(p *pseudochecker.PseudoParameter) *ast.Node {
@@ -780,7 +780,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"implemented","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73","bodyHash":"fa2fbe90b13972a8cbdcd2ebd12417ba738ddf6150061dfd08ced96f2aa0b5b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"implemented","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeEquivalentToType(t *pseudochecker.PseudoType, type_ *Type, isOptionalAnnotated bool, reportErrors bool) bool {
@@ -1223,7 +1223,7 @@ export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParametersEquivalentToParameters","kind":"method","status":"implemented","sigHash":"8f17b6baa8627827a8b550e6be52d186f0d7e85a8289ae609ecb3dedbf74bfd5","bodyHash":"0bfc37f74014a6341db6824af1b0860058eb8c3022c2630caf3310a99e3dc3fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParametersEquivalentToParameters","kind":"method","status":"implemented","sigHash":"8f17b6baa8627827a8b550e6be52d186f0d7e85a8289ae609ecb3dedbf74bfd5"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoParametersEquivalentToParameters(params []*pseudochecker.PseudoParameter, targetSig *Signature, reportErrors bool, nonParamErrorLocation *ast.Node) bool {
@@ -1325,7 +1325,7 @@ export function NodeBuilderImpl_pseudoParametersEquivalentToParameters(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::func::isStructuralPseudoType","kind":"func","status":"implemented","sigHash":"2a1e667d34bc84505730961c22e313a4b894e57e9c173ee40f095605b3f599e9","bodyHash":"13bfaa29a0f9857d8dabe9a42a0ef3326b69b831856d1b7165ef7639a031fb26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::func::isStructuralPseudoType","kind":"func","status":"implemented","sigHash":"2a1e667d34bc84505730961c22e313a4b894e57e9c173ee40f095605b3f599e9"}
  *
  * Go source:
  * func isStructuralPseudoType(t *pseudochecker.PseudoType) bool {
@@ -1354,7 +1354,7 @@ export function isStructuralPseudoType(t: GoPtr<PseudoType>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoReturnTypeMatchesPredicate","kind":"method","status":"implemented","sigHash":"f724e7b5afefecc94a62f0cf82933721516b9d8c8a7cf3dc8752dafa87ff3d14","bodyHash":"3aa0d7ed95fa60e2470898c172f96537cd655e5d57f693a56755a8cc9d4d4968"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoReturnTypeMatchesPredicate","kind":"method","status":"implemented","sigHash":"f724e7b5afefecc94a62f0cf82933721516b9d8c8a7cf3dc8752dafa87ff3d14"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoReturnTypeMatchesPredicate(rt *pseudochecker.PseudoType, predicate *TypePredicate) bool {
@@ -1447,7 +1447,7 @@ export function NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToType","kind":"method","status":"implemented","sigHash":"514ab67c04d4af90f1383d187835e33312acaf16adc0f56bd81a2a78097466cb","bodyHash":"f519a13fa5c0ee58b2c153ae066a85024e464bf4f38db6c091368c97ee472e02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToType","kind":"method","status":"implemented","sigHash":"514ab67c04d4af90f1383d187835e33312acaf16adc0f56bd81a2a78097466cb"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToType(t *pseudochecker.PseudoType) *Type {

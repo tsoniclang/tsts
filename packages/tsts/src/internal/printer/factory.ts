@@ -60,7 +60,7 @@ import type { GeneratedIdentifierFlags } from "./generatedidentifierflags.js";
 import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsKindMask, GeneratedIdentifierFlagsLoop, GeneratedIdentifierFlagsNode, GeneratedIdentifierFlagsOptimistic, GeneratedIdentifierFlagsUnique } from "./generatedidentifierflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NodeFactory","kind":"type","status":"implemented","sigHash":"090eeeccd7a9312c831c8c23dfcfe79fc09da23cd3a387758c5fda1591b6992f","bodyHash":"a712ecc9d60b4ded4861ea18bb957773602cb73b7775e87938062ca2de6cfd5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NodeFactory","kind":"type","status":"implemented","sigHash":"090eeeccd7a9312c831c8c23dfcfe79fc09da23cd3a387758c5fda1591b6992f"}
  *
  * Go source:
  * NodeFactory struct {
@@ -75,7 +75,7 @@ export interface NodeFactory {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::NewNodeFactory","kind":"func","status":"implemented","sigHash":"580750f8820bc9f53e1feb77e23e6325616c0c74c53aab83bf8128ee179d8a45","bodyHash":"448c9362a2cae9a3cd611ffc4f4097d9636456f71756041efb063dfea92b55e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::NewNodeFactory","kind":"func","status":"implemented","sigHash":"580750f8820bc9f53e1feb77e23e6325616c0c74c53aab83bf8128ee179d8a45"}
  *
  * Go source:
  * func NewNodeFactory(context *EmitContext) *NodeFactory {
@@ -113,7 +113,7 @@ function normalizeAutoGenerateOptions(options: GoPtr<AutoGenerateOptions>): Auto
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.newGeneratedIdentifier","kind":"method","status":"implemented","sigHash":"bd65bc9bb79cb9b5e957beb9597f38912038626f7684e4bfd9a342fcfddaf2b3","bodyHash":"4898d8a55f5291f9d781f03e48d9a81c8794f8ff23cb3966643119aba03aa716"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.newGeneratedIdentifier","kind":"method","status":"implemented","sigHash":"bd65bc9bb79cb9b5e957beb9597f38912038626f7684e4bfd9a342fcfddaf2b3"}
  *
  * Go source:
  * func (f *NodeFactory) newGeneratedIdentifier(kind GeneratedIdentifierFlags, text string, node *ast.Node, options AutoGenerateOptions) *ast.IdentifierNode {
@@ -177,7 +177,7 @@ export function NodeFactory_newGeneratedIdentifier(receiver: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTempVariable","kind":"method","status":"implemented","sigHash":"3c3fe94ccb05f0e146eaa728c4dfcbe7dba8e437ebac923484a480af37b974eb","bodyHash":"109b9570d64a18cbb52603676032c6c1b7b692b44ff2c5691b6d756aa300ad81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTempVariable","kind":"method","status":"implemented","sigHash":"3c3fe94ccb05f0e146eaa728c4dfcbe7dba8e437ebac923484a480af37b974eb"}
  *
  * Go source:
  * func (f *NodeFactory) NewTempVariable() *ast.IdentifierNode {
@@ -189,7 +189,7 @@ export function NodeFactory_NewTempVariable(receiver: GoPtr<NodeFactory>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTempVariableEx","kind":"method","status":"implemented","sigHash":"2765e567212e8bd92d2750f20e4e54662ca08bf9ba9020adb7ba1cefec3c700e","bodyHash":"b7d72a9bfc172a67704ab0f047d4a7c44ab7b2b8f4e5850f46bd2151d6584666"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTempVariableEx","kind":"method","status":"implemented","sigHash":"2765e567212e8bd92d2750f20e4e54662ca08bf9ba9020adb7ba1cefec3c700e"}
  *
  * Go source:
  * func (f *NodeFactory) NewTempVariableEx(options AutoGenerateOptions) *ast.IdentifierNode {
@@ -201,7 +201,7 @@ export function NodeFactory_NewTempVariableEx(receiver: GoPtr<NodeFactory>, opti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLoopVariable","kind":"method","status":"implemented","sigHash":"f79fa4035202bc9dfc78dcf42e917f6a48ac60eca10d276c007cf1b2427b2efe","bodyHash":"2207fe251c9f4112ad60ae179b276f97ea99ff4f2c3b661546e648310c8c5fc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLoopVariable","kind":"method","status":"implemented","sigHash":"f79fa4035202bc9dfc78dcf42e917f6a48ac60eca10d276c007cf1b2427b2efe"}
  *
  * Go source:
  * func (f *NodeFactory) NewLoopVariable() *ast.IdentifierNode {
@@ -213,7 +213,7 @@ export function NodeFactory_NewLoopVariable(receiver: GoPtr<NodeFactory>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLoopVariableEx","kind":"method","status":"implemented","sigHash":"11103854ba70849c1760ca1b8f7fb076e579ad9d1384acba12af4d8e7c8ddc1b","bodyHash":"df0a88678b1e56071f9ee334b5d29a5dfbe83c76b3309d3340ddecea7d20d8d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLoopVariableEx","kind":"method","status":"implemented","sigHash":"11103854ba70849c1760ca1b8f7fb076e579ad9d1384acba12af4d8e7c8ddc1b"}
  *
  * Go source:
  * func (f *NodeFactory) NewLoopVariableEx(options AutoGenerateOptions) *ast.IdentifierNode {
@@ -225,7 +225,7 @@ export function NodeFactory_NewLoopVariableEx(receiver: GoPtr<NodeFactory>, opti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniqueName","kind":"method","status":"implemented","sigHash":"5e0acbadc9e15055cc197c25d72d6489ab51d85d00500550a9ecc89c0280dd02","bodyHash":"c8167aa23ad3a76fcd00fbb18043c2e83aeaf8cc5fdb6e4f7c6dd33b840971e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniqueName","kind":"method","status":"implemented","sigHash":"5e0acbadc9e15055cc197c25d72d6489ab51d85d00500550a9ecc89c0280dd02"}
  *
  * Go source:
  * func (f *NodeFactory) NewUniqueName(text string) *ast.IdentifierNode {
@@ -237,7 +237,7 @@ export function NodeFactory_NewUniqueName(receiver: GoPtr<NodeFactory>, text: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniqueNameEx","kind":"method","status":"implemented","sigHash":"13cbcf642bd8a4fb65dcd2add1b7498820a0ff49d05960759f8b2605d5673c27","bodyHash":"a433165ff75a53e3159594471e21b8b653cd48683af2136d37035c509d4a6d94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniqueNameEx","kind":"method","status":"implemented","sigHash":"13cbcf642bd8a4fb65dcd2add1b7498820a0ff49d05960759f8b2605d5673c27"}
  *
  * Go source:
  * func (f *NodeFactory) NewUniqueNameEx(text string, options AutoGenerateOptions) *ast.IdentifierNode {
@@ -249,7 +249,7 @@ export function NodeFactory_NewUniqueNameEx(receiver: GoPtr<NodeFactory>, text: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedNameForNode","kind":"method","status":"implemented","sigHash":"5dbf5625976ed22b2731738ad11a255111fd6c16ed8f3469e0bbe5f78eb1d835","bodyHash":"a925d3248e7a1bcd31d595b279f6df3c330f6899b60c2389c3717f18631da61a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedNameForNode","kind":"method","status":"implemented","sigHash":"5dbf5625976ed22b2731738ad11a255111fd6c16ed8f3469e0bbe5f78eb1d835"}
  *
  * Go source:
  * func (f *NodeFactory) NewGeneratedNameForNode(node *ast.Node) *ast.IdentifierNode {
@@ -261,7 +261,7 @@ export function NodeFactory_NewGeneratedNameForNode(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedNameForNodeEx","kind":"method","status":"implemented","sigHash":"ee04af44cabed1692b8a8596a847cf2958dee6454defa09d21fc32f82b27773f","bodyHash":"04c69df2530a72190f0d7b5a77afdeedec6d209747fd10e77f262437c1fcaff5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedNameForNodeEx","kind":"method","status":"implemented","sigHash":"ee04af44cabed1692b8a8596a847cf2958dee6454defa09d21fc32f82b27773f"}
  *
  * Go source:
  * func (f *NodeFactory) NewGeneratedNameForNodeEx(node *ast.Node, options AutoGenerateOptions) *ast.IdentifierNode {
@@ -282,7 +282,7 @@ export function NodeFactory_NewGeneratedNameForNodeEx(receiver: GoPtr<NodeFactor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.newGeneratedPrivateIdentifier","kind":"method","status":"implemented","sigHash":"a1b3679d9370a830c39f55d9d0440eb130ffa0e6cfd218bf2f6a3c3ed2d47d8c","bodyHash":"9ef46bfeeb3cc494dea57cd0e26acdd96ff7cc6891de810130fa0e533167428d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.newGeneratedPrivateIdentifier","kind":"method","status":"implemented","sigHash":"a1b3679d9370a830c39f55d9d0440eb130ffa0e6cfd218bf2f6a3c3ed2d47d8c"}
  *
  * Go source:
  * func (f *NodeFactory) newGeneratedPrivateIdentifier(kind GeneratedIdentifierFlags, text string, node *ast.Node, options AutoGenerateOptions) *ast.PrivateIdentifierNode {
@@ -350,7 +350,7 @@ export function NodeFactory_newGeneratedPrivateIdentifier(receiver: GoPtr<NodeFa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniquePrivateName","kind":"method","status":"implemented","sigHash":"0d9283b79d5268e64f721f4dad6b10b4168851f75493914d34809393f259aee3","bodyHash":"c3f54800fef3538824f826b07dbf96dcefc982fa3a99ea45ae2eb97773aea7d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniquePrivateName","kind":"method","status":"implemented","sigHash":"0d9283b79d5268e64f721f4dad6b10b4168851f75493914d34809393f259aee3"}
  *
  * Go source:
  * func (f *NodeFactory) NewUniquePrivateName(text string) *ast.PrivateIdentifierNode {
@@ -362,7 +362,7 @@ export function NodeFactory_NewUniquePrivateName(receiver: GoPtr<NodeFactory>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniquePrivateNameEx","kind":"method","status":"implemented","sigHash":"9d7b41125f600e2a44f321453a6b8f64611af3fa017a018da2d9d2e8f1c0da91","bodyHash":"f8e6f6039b0ef7c3e57cd8c6590b292930fffbef78fd0ccac20d3f21332c1d27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUniquePrivateNameEx","kind":"method","status":"implemented","sigHash":"9d7b41125f600e2a44f321453a6b8f64611af3fa017a018da2d9d2e8f1c0da91"}
  *
  * Go source:
  * func (f *NodeFactory) NewUniquePrivateNameEx(text string, options AutoGenerateOptions) *ast.PrivateIdentifierNode {
@@ -374,7 +374,7 @@ export function NodeFactory_NewUniquePrivateNameEx(receiver: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedPrivateNameForNode","kind":"method","status":"implemented","sigHash":"844037d4a7680f3eea0049faf7b91d3f60ae0c20b8c3ff7df8c063d9e60d0ee1","bodyHash":"40244d5cca261e8d63a21e00ee72d30c1ad262f3c426d57ecaabe5b67978328a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedPrivateNameForNode","kind":"method","status":"implemented","sigHash":"844037d4a7680f3eea0049faf7b91d3f60ae0c20b8c3ff7df8c063d9e60d0ee1"}
  *
  * Go source:
  * func (f *NodeFactory) NewGeneratedPrivateNameForNode(node *ast.Node) *ast.PrivateIdentifierNode {
@@ -386,7 +386,7 @@ export function NodeFactory_NewGeneratedPrivateNameForNode(receiver: GoPtr<NodeF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedPrivateNameForNodeEx","kind":"method","status":"implemented","sigHash":"eb2d7257b49cff05644937865dbd8720ba0db13d231968b6d2bd4dc4ae508f97","bodyHash":"543c49649e9be46eea897f678e3f9619e9170f4489ba0cae1579a0097f52bc66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGeneratedPrivateNameForNodeEx","kind":"method","status":"implemented","sigHash":"eb2d7257b49cff05644937865dbd8720ba0db13d231968b6d2bd4dc4ae508f97"}
  *
  * Go source:
  * func (f *NodeFactory) NewGeneratedPrivateNameForNodeEx(node *ast.Node, options AutoGenerateOptions) *ast.PrivateIdentifierNode {
@@ -407,7 +407,7 @@ export function NodeFactory_NewGeneratedPrivateNameForNodeEx(receiver: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStringLiteralFromNode","kind":"method","status":"implemented","sigHash":"9abaa7a2c78fbb1b5f46bdd6ce5f92a14895489f544492adeacdcec7ba06dcd0","bodyHash":"e74fedc5eda2c3c1cf8f6b849e807bfef836ae0ea704538b8e32355ef7acc85f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStringLiteralFromNode","kind":"method","status":"implemented","sigHash":"9abaa7a2c78fbb1b5f46bdd6ce5f92a14895489f544492adeacdcec7ba06dcd0"}
  *
  * Go source:
  * func (f *NodeFactory) NewStringLiteralFromNode(textSourceNode *ast.Node) *ast.Node {
@@ -460,7 +460,7 @@ export function NodeFactory_NewStringLiteralFromNode(receiver: GoPtr<NodeFactory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewThisExpression","kind":"method","status":"implemented","sigHash":"b3fd6aaa8b941193649a9573517606d71d78d46ee2aea8e16aca4ef7810a6412","bodyHash":"179bbacda19b7f247557b938c1aa83d947b9ea404256fea2a10e5873f4193450"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewThisExpression","kind":"method","status":"implemented","sigHash":"b3fd6aaa8b941193649a9573517606d71d78d46ee2aea8e16aca4ef7810a6412"}
  *
  * Go source:
  * func (f *NodeFactory) NewThisExpression() *ast.Expression {
@@ -472,7 +472,7 @@ export function NodeFactory_NewThisExpression(receiver: GoPtr<NodeFactory>): GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTrueExpression","kind":"method","status":"implemented","sigHash":"af67827a925e6d2882b472fa4fcad810915abd5a038838ef2927f6eb30b89b9c","bodyHash":"7ad1e29632d26c259f162e233128fad987ede334052f15c08ca17d96e7c53526"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTrueExpression","kind":"method","status":"implemented","sigHash":"af67827a925e6d2882b472fa4fcad810915abd5a038838ef2927f6eb30b89b9c"}
  *
  * Go source:
  * func (f *NodeFactory) NewTrueExpression() *ast.Expression {
@@ -484,7 +484,7 @@ export function NodeFactory_NewTrueExpression(receiver: GoPtr<NodeFactory>): GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFalseExpression","kind":"method","status":"implemented","sigHash":"4c87aa011f8ce224ed484f2450e983708cc7f0b5b27ab6800313a0bd2ccb82c3","bodyHash":"d7e5e5b8083ae874cc764b7f89f9d144c82910ec2ea1eed158176eeee39ebdd0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFalseExpression","kind":"method","status":"implemented","sigHash":"4c87aa011f8ce224ed484f2450e983708cc7f0b5b27ab6800313a0bd2ccb82c3"}
  *
  * Go source:
  * func (f *NodeFactory) NewFalseExpression() *ast.Expression {
@@ -496,7 +496,7 @@ export function NodeFactory_NewFalseExpression(receiver: GoPtr<NodeFactory>): Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewCommaExpression","kind":"method","status":"implemented","sigHash":"fa0b315d900205c995a56c4e67ec0e09f1f1243051f7b7b98e7820358dc27769","bodyHash":"3d433274e43c6aa92eae75bf6d46e92e6700fd4a89895e97f83d8290854a22fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewCommaExpression","kind":"method","status":"implemented","sigHash":"fa0b315d900205c995a56c4e67ec0e09f1f1243051f7b7b98e7820358dc27769"}
  *
  * Go source:
  * func (f *NodeFactory) NewCommaExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -509,7 +509,7 @@ export function NodeFactory_NewCommaExpression(receiver: GoPtr<NodeFactory>, lef
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignmentExpression","kind":"method","status":"implemented","sigHash":"d65469557959ceed9d833db5ac18d0868ff68ecc07bd4b32a65b9915dee5cc88","bodyHash":"d3f76563e2b1ba7903c24b3ebf43fc9cb6082fc503bd8e57d44d2b7e98a64e2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignmentExpression","kind":"method","status":"implemented","sigHash":"d65469557959ceed9d833db5ac18d0868ff68ecc07bd4b32a65b9915dee5cc88"}
  *
  * Go source:
  * func (f *NodeFactory) NewAssignmentExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -522,7 +522,7 @@ export function NodeFactory_NewAssignmentExpression(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLogicalORExpression","kind":"method","status":"implemented","sigHash":"108c7f9599666454afe6359498c19d47a99fa459199fce35fb22242f0df40768","bodyHash":"fadb85212a1a3a1eca95493eecbf5c27225c8148bfa32c7bb159f73d939579d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLogicalORExpression","kind":"method","status":"implemented","sigHash":"108c7f9599666454afe6359498c19d47a99fa459199fce35fb22242f0df40768"}
  *
  * Go source:
  * func (f *NodeFactory) NewLogicalORExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -535,7 +535,7 @@ export function NodeFactory_NewLogicalORExpression(receiver: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLogicalANDExpression","kind":"method","status":"implemented","sigHash":"a6eec390aa3a0ee1c49dfadccfc1676df31e10e41beed79c7acf33f1aedb55d4","bodyHash":"f6097dc8604c870836b93058b4b2343e872cf352284ac1a25fc9a8bda5b4039f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewLogicalANDExpression","kind":"method","status":"implemented","sigHash":"a6eec390aa3a0ee1c49dfadccfc1676df31e10e41beed79c7acf33f1aedb55d4"}
  *
  * Go source:
  * func (f *NodeFactory) NewLogicalANDExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -548,7 +548,7 @@ export function NodeFactory_NewLogicalANDExpression(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStrictEqualityExpression","kind":"method","status":"implemented","sigHash":"6058e95570b57fd149bb6e25e0063b859d8d05af3e88ff083906f22d8bbcb317","bodyHash":"3bf78970075fd7d08a5e06c702d25c84cca540f7068daa5a2c94397aeb4def83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStrictEqualityExpression","kind":"method","status":"implemented","sigHash":"6058e95570b57fd149bb6e25e0063b859d8d05af3e88ff083906f22d8bbcb317"}
  *
  * Go source:
  * func (f *NodeFactory) NewStrictEqualityExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -561,7 +561,7 @@ export function NodeFactory_NewStrictEqualityExpression(receiver: GoPtr<NodeFact
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStrictInequalityExpression","kind":"method","status":"implemented","sigHash":"67135c4626f9343c2e1adcb9267c748ef953743acbf1ca12aa72fe0c44d4fedf","bodyHash":"10c3784396619a5ac816e499447154aca9fe1435dc3af670529baf904bdef4a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewStrictInequalityExpression","kind":"method","status":"implemented","sigHash":"67135c4626f9343c2e1adcb9267c748ef953743acbf1ca12aa72fe0c44d4fedf"}
  *
  * Go source:
  * func (f *NodeFactory) NewStrictInequalityExpression(left *ast.Expression, right *ast.Expression) *ast.Expression {
@@ -574,7 +574,7 @@ export function NodeFactory_NewStrictInequalityExpression(receiver: GoPtr<NodeFa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewVoidZeroExpression","kind":"method","status":"implemented","sigHash":"be9bafc263983f75c771764fc33e2151d15eb1209bd0ef0951e4c2ab0e2fdbd3","bodyHash":"90aa87ed50f3aa733243066b20e32f7415cabbf1c3f197c04b44963e10f1650f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewVoidZeroExpression","kind":"method","status":"implemented","sigHash":"be9bafc263983f75c771764fc33e2151d15eb1209bd0ef0951e4c2ab0e2fdbd3"}
  *
  * Go source:
  * func (f *NodeFactory) NewVoidZeroExpression() *ast.Expression {
@@ -587,7 +587,7 @@ export function NodeFactory_NewVoidZeroExpression(receiver: GoPtr<NodeFactory>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElement","kind":"func","status":"implemented","sigHash":"4dba9a3211c3451b688f07594b484c6c40d78703109fb320351423438c9a23a1","bodyHash":"866ac93aaf0b486833292b91b567d1f8e8a1b31f9f46d7883ea5c91f0333d260"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElement","kind":"func","status":"implemented","sigHash":"4dba9a3211c3451b688f07594b484c6c40d78703109fb320351423438c9a23a1"}
  *
  * Go source:
  * func flattenCommaElement(node *ast.Expression, expressions []*ast.Expression) []*ast.Expression {
@@ -611,7 +611,7 @@ export function flattenCommaElement(node: GoPtr<Expression>, expressions: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElements","kind":"func","status":"implemented","sigHash":"84f941a6d494a5d83cacb06a8fe8a6c846c4a9674d329d67355a3de984759259","bodyHash":"634c319aca6097f2770d8f60e781c15afc9573046413b3d026f286de266d3919"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::func::flattenCommaElements","kind":"func","status":"implemented","sigHash":"84f941a6d494a5d83cacb06a8fe8a6c846c4a9674d329d67355a3de984759259"}
  *
  * Go source:
  * func flattenCommaElements(expressions []*ast.Expression) []*ast.Expression {
@@ -631,7 +631,7 @@ export function flattenCommaElements(expressions: GoSlice<GoPtr<Expression>>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.InlineExpressions","kind":"method","status":"implemented","sigHash":"2bc1eae13585141dba5bfa940201e0f3f8b8f66598c6da167c9b5a180057c4ea","bodyHash":"6e1ef244730734e006aa9b2b4c88c560d871c6358e3e6606f8c26577059d313f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.InlineExpressions","kind":"method","status":"implemented","sigHash":"2bc1eae13585141dba5bfa940201e0f3f8b8f66598c6da167c9b5a180057c4ea"}
  *
  * Go source:
  * func (f *NodeFactory) InlineExpressions(expressions []*ast.Expression) *ast.Expression {
@@ -665,7 +665,7 @@ export function NodeFactory_InlineExpressions(receiver: GoPtr<NodeFactory>, expr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateExpressionFromEntityName","kind":"method","status":"implemented","sigHash":"98ffd03b1ee302a932f4cc71d05fb215e641b285015700c5e08fa7e45ba1ecb9","bodyHash":"ee0a9a9c4276f786a437db40fc7df053be5e80921539f99c4078cda5e3aa0dfb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateExpressionFromEntityName","kind":"method","status":"implemented","sigHash":"98ffd03b1ee302a932f4cc71d05fb215e641b285015700c5e08fa7e45ba1ecb9"}
  *
  * Go source:
  * func (f *NodeFactory) CreateExpressionFromEntityName(node *ast.Node) *ast.Expression {
@@ -706,7 +706,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreEnclosingLabel","kind":"method","status":"implemented","sigHash":"fff69a5f287d6c3b561a537d1218bfb18105629decea3120ddc567a37c74e817","bodyHash":"d427ab10f2e1d1bfa0dc9c33d9798911718e55b4f4eb28bce5eb98800e7b7da5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreEnclosingLabel","kind":"method","status":"implemented","sigHash":"fff69a5f287d6c3b561a537d1218bfb18105629decea3120ddc567a37c74e817"}
  *
  * Go source:
  * func (f *NodeFactory) RestoreEnclosingLabel(node *ast.Node, outermostLabeledStatement *ast.LabeledStatement) *ast.Node {
@@ -741,7 +741,7 @@ export function NodeFactory_RestoreEnclosingLabel(receiver: GoPtr<NodeFactory>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateForOfBindingStatement","kind":"method","status":"implemented","sigHash":"5ab3bdf513a608bbf44d098922348b8ab830abe60f6777f1e16816d6196847d4","bodyHash":"508ec0fea3942edfea7ac2b6dd42054050b1b388e6d75fad761774ef1e995678"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateForOfBindingStatement","kind":"method","status":"implemented","sigHash":"5ab3bdf513a608bbf44d098922348b8ab830abe60f6777f1e16816d6196847d4"}
  *
  * Go source:
  * func (f *NodeFactory) CreateForOfBindingStatement(node *ast.Node, boundValue *ast.Node) *ast.Node {
@@ -802,7 +802,7 @@ export function NodeFactory_CreateForOfBindingStatement(receiver: GoPtr<NodeFact
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTypeCheck","kind":"method","status":"implemented","sigHash":"9929c8c20c6a528830ff5b0f95200736c4587d5f365464de75f02ccfa82c7e13","bodyHash":"8ee9ed7fb698af8436b17ea897a4145a399ea7bb203d8f836ffdda7ffac7c34b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTypeCheck","kind":"method","status":"implemented","sigHash":"9929c8c20c6a528830ff5b0f95200736c4587d5f365464de75f02ccfa82c7e13"}
  *
  * Go source:
  * func (f *NodeFactory) NewTypeCheck(value *ast.Node, tag string) *ast.Node {
@@ -827,7 +827,7 @@ export function NodeFactory_NewTypeCheck(receiver: GoPtr<NodeFactory>, value: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewMethodCall","kind":"method","status":"implemented","sigHash":"1a2b13b373216fc0b93624895eb0f8a7722bda836b6dda25f8ad6480ae7bf466","bodyHash":"bfee906b07f1c369ed647e8277ed68997d9828571ccf53d83e18f0b201906b6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewMethodCall","kind":"method","status":"implemented","sigHash":"1a2b13b373216fc0b93624895eb0f8a7722bda836b6dda25f8ad6480ae7bf466"}
  *
  * Go source:
  * func (f *NodeFactory) NewMethodCall(object *ast.Node, methodName *ast.Node, argumentsList []*ast.Node) *ast.Node {
@@ -874,7 +874,7 @@ export function NodeFactory_NewMethodCall(receiver: GoPtr<NodeFactory>, object: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGlobalMethodCall","kind":"method","status":"implemented","sigHash":"b366904a54ba7f958f3168d517d86f1e788634b2d4960b4e81b21aced8f28da1","bodyHash":"2f893a749483cc792f723b25f5af1fe55c68c5fd6d0466978b734ea68295700e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewGlobalMethodCall","kind":"method","status":"implemented","sigHash":"b366904a54ba7f958f3168d517d86f1e788634b2d4960b4e81b21aced8f28da1"}
  *
  * Go source:
  * func (f *NodeFactory) NewGlobalMethodCall(globalObjectName string, methodName string, argumentsList []*ast.Node) *ast.Node {
@@ -887,7 +887,7 @@ export function NodeFactory_NewGlobalMethodCall(receiver: GoPtr<NodeFactory>, gl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionCallCall","kind":"method","status":"implemented","sigHash":"bd1019e963afc5048dc8e423c20228f60ef74008c254a64ded70685e797efab4","bodyHash":"cf046faf3f5e6c4d68eb2be95fb664d736591dec31f62a89d9426864ba5830a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionCallCall","kind":"method","status":"implemented","sigHash":"bd1019e963afc5048dc8e423c20228f60ef74008c254a64ded70685e797efab4"}
  *
  * Go source:
  * func (f *NodeFactory) NewFunctionCallCall(target *ast.Expression, thisArg *ast.Expression, argumentsList []*ast.Node) *ast.Node {
@@ -908,7 +908,7 @@ export function NodeFactory_NewFunctionCallCall(receiver: GoPtr<NodeFactory>, ta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewArraySliceCall","kind":"method","status":"implemented","sigHash":"2b27df829d064d1a78ff952a8ef8673e571bac59793574865d0d4bd30f750b6d","bodyHash":"74912cd9d0ef75d121cc736eaf63049769a6b84df8b29bb766dcd7073841e0c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewArraySliceCall","kind":"method","status":"implemented","sigHash":"2b27df829d064d1a78ff952a8ef8673e571bac59793574865d0d4bd30f750b6d"}
  *
  * Go source:
  * func (f *NodeFactory) NewArraySliceCall(array *ast.Expression, start int) *ast.Node {
@@ -929,7 +929,7 @@ export function NodeFactory_NewArraySliceCall(receiver: GoPtr<NodeFactory>, arra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.isIgnorableParen","kind":"method","status":"implemented","sigHash":"a02818fab46f3aa19c55cb8c295f11bfcef701b86805a821cbe7731450e7323e","bodyHash":"a2d5b3d3d8745e0ecf4e1f8ea1329d2fb0f8257f8ce32dd4a01f8584c4cf8c04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.isIgnorableParen","kind":"method","status":"implemented","sigHash":"a02818fab46f3aa19c55cb8c295f11bfcef701b86805a821cbe7731450e7323e"}
  *
  * Go source:
  * func (f *NodeFactory) isIgnorableParen(node *ast.Expression) bool {
@@ -952,7 +952,7 @@ export function NodeFactory_isIgnorableParen(receiver: GoPtr<NodeFactory>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.updateOuterExpression","kind":"method","status":"implemented","sigHash":"10888fc30677b7efe8b432e8d2b2e10afa17c9f1af2a181a0a101f666b69080d","bodyHash":"cf9fd459a9c6f62c171591c1c618d3934615e644f0741e2bb78ba588744690d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.updateOuterExpression","kind":"method","status":"implemented","sigHash":"10888fc30677b7efe8b432e8d2b2e10afa17c9f1af2a181a0a101f666b69080d"}
  *
  * Go source:
  * func (f *NodeFactory) updateOuterExpression(outerExpression *ast.Expression /*OuterExpression* /, expression *ast.Expression) *ast.Expression {
@@ -999,7 +999,7 @@ export function NodeFactory_updateOuterExpression(receiver: GoPtr<NodeFactory>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreOuterExpressions","kind":"method","status":"implemented","sigHash":"576a40f626c8cdab8f513253cce9641b9f38598014338e247aa2ad9324473fa5","bodyHash":"1fab13ebb071e3b3407cdcc287a577a74962559eaa1f5cccb5ff229833947df0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreOuterExpressions","kind":"method","status":"implemented","sigHash":"576a40f626c8cdab8f513253cce9641b9f38598014338e247aa2ad9324473fa5"}
  *
  * Go source:
  * func (f *NodeFactory) RestoreOuterExpressions(outerExpression *ast.Expression, innerExpression *ast.Expression, kinds ast.OuterExpressionKinds) *ast.Expression {
@@ -1024,7 +1024,7 @@ export function NodeFactory_RestoreOuterExpressions(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.EnsureUseStrict","kind":"method","status":"implemented","sigHash":"d6e817bbbe2d78ef2a1a8169aa420b12345cc1dc182d43c0dadbce83642848e5","bodyHash":"d41a6f64cd1f54a38d5ee50ce1664a04eafbb5339859998bcfe2304ca4ee776e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.EnsureUseStrict","kind":"method","status":"implemented","sigHash":"d6e817bbbe2d78ef2a1a8169aa420b12345cc1dc182d43c0dadbce83642848e5"}
  *
  * Go source:
  * func (f *NodeFactory) EnsureUseStrict(statements []*ast.Statement) []*ast.Statement {
@@ -1054,7 +1054,7 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitStandardPrologue","kind":"method","status":"implemented","sigHash":"ec1321842bf1a79f3033af884f3af28534183676c6717a8b529bbfb0ea3ec225","bodyHash":"ca05124590515a23008e265ce4f8e41b1a164c619ef2e7a5ae035af9c733089f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitStandardPrologue","kind":"method","status":"implemented","sigHash":"ec1321842bf1a79f3033af884f3af28534183676c6717a8b529bbfb0ea3ec225"}
  *
  * Go source:
  * func (f *NodeFactory) SplitStandardPrologue(source []*ast.Statement) (prologue []*ast.Statement, rest []*ast.Statement) {
@@ -1076,7 +1076,7 @@ export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitCustomPrologue","kind":"method","status":"implemented","sigHash":"e91d02a2935b8cdb5f9ff1cb88e21d928afa9bd28e9b7e9e0200e33d3b08f917","bodyHash":"a3f9a0412989deaecfc527140d4815db45a42dee2096028aab24b3466b75213a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.SplitCustomPrologue","kind":"method","status":"implemented","sigHash":"e91d02a2935b8cdb5f9ff1cb88e21d928afa9bd28e9b7e9e0200e33d3b08f917"}
  *
  * Go source:
  * func (f *NodeFactory) SplitCustomPrologue(source []*ast.Statement) (prologue []*ast.Statement, rest []*ast.Statement) {
@@ -1098,7 +1098,7 @@ export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, so
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NameOptions","kind":"type","status":"implemented","sigHash":"527393d83b3941274188da203e671265636a8541bf12c1d1d0d3882e893e65a1","bodyHash":"b5e525e776ab1eb4d0bb26748e8950d51c00f94bae8e21b43e0d00c043c5f038"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::NameOptions","kind":"type","status":"implemented","sigHash":"527393d83b3941274188da203e671265636a8541bf12c1d1d0d3882e893e65a1"}
  *
  * Go source:
  * NameOptions struct {
@@ -1112,7 +1112,7 @@ export interface NameOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::AssignedNameOptions","kind":"type","status":"implemented","sigHash":"d20864e6de276da9f874cb3434aaf4aa18163b803296bd182288169ecc1c3b90","bodyHash":"45211a23d1de959a1a77d812bff033e1bec13eb2e7393a450c561915e5f4b45e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::AssignedNameOptions","kind":"type","status":"implemented","sigHash":"d20864e6de276da9f874cb3434aaf4aa18163b803296bd182288169ecc1c3b90"}
  *
  * Go source:
  * AssignedNameOptions struct {
@@ -1128,7 +1128,7 @@ export interface AssignedNameOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.getName","kind":"method","status":"implemented","sigHash":"29e529817f00078524add6ee54e17af1fd188edd3a47c1c49497c21168be5abe","bodyHash":"506a0269a0cb556c1d28ed185c81343c3e965f3d100d92d03ee09fc4ecc4e6db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.getName","kind":"method","status":"implemented","sigHash":"29e529817f00078524add6ee54e17af1fd188edd3a47c1c49497c21168be5abe"}
  *
  * Go source:
  * func (f *NodeFactory) getName(node *ast.Declaration, emitFlags EmitFlags, opts AssignedNameOptions) *ast.IdentifierNode {
@@ -1183,7 +1183,7 @@ export function NodeFactory_getName(receiver: GoPtr<NodeFactory>, node: GoPtr<De
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetLocalName","kind":"method","status":"implemented","sigHash":"c2bd21c2253d3de7d0cac30dcb1095a057e62456b80d3669c641aaf8914cb84e","bodyHash":"53bfcdb8fc049ae59bc5bd4c01aca54fe2fe1f47d56ff687f5b12a6058f4612f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetLocalName","kind":"method","status":"implemented","sigHash":"c2bd21c2253d3de7d0cac30dcb1095a057e62456b80d3669c641aaf8914cb84e"}
  *
  * Go source:
  * func (f *NodeFactory) GetLocalName(node *ast.Declaration) *ast.IdentifierNode {
@@ -1195,7 +1195,7 @@ export function NodeFactory_GetLocalName(receiver: GoPtr<NodeFactory>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetLocalNameEx","kind":"method","status":"implemented","sigHash":"04632020e49d1e3e57df204399af000906fa539aa4e37706c1e668168bc4d90e","bodyHash":"634f937d65abffbf20bfb3fc36baaeed0f587d42f184c5dec03dbd3a1ac1cea6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetLocalNameEx","kind":"method","status":"implemented","sigHash":"04632020e49d1e3e57df204399af000906fa539aa4e37706c1e668168bc4d90e"}
  *
  * Go source:
  * func (f *NodeFactory) GetLocalNameEx(node *ast.Declaration, opts AssignedNameOptions) *ast.IdentifierNode {
@@ -1207,7 +1207,7 @@ export function NodeFactory_GetLocalNameEx(receiver: GoPtr<NodeFactory>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExportName","kind":"method","status":"implemented","sigHash":"3a59c3bc6b1fc124472ab2a64e9b5cd1f5bbd176d8d8d5e887e4a622525f6b24","bodyHash":"994df15a0c66be19a859bc77509bc5479a74ee297658eb86736c519f4941a33a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExportName","kind":"method","status":"implemented","sigHash":"3a59c3bc6b1fc124472ab2a64e9b5cd1f5bbd176d8d8d5e887e4a622525f6b24"}
  *
  * Go source:
  * func (f *NodeFactory) GetExportName(node *ast.Declaration) *ast.IdentifierNode {
@@ -1219,7 +1219,7 @@ export function NodeFactory_GetExportName(receiver: GoPtr<NodeFactory>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExportNameEx","kind":"method","status":"implemented","sigHash":"13bf7475c0b13e00ad4571daca9d10c1cd66e93e94f9242d8aaa49e23e896e08","bodyHash":"de1a16fe9ad1bd5da348884071fcac4bbb1f5f021e964ddf68e3bda6a6557634"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExportNameEx","kind":"method","status":"implemented","sigHash":"13bf7475c0b13e00ad4571daca9d10c1cd66e93e94f9242d8aaa49e23e896e08"}
  *
  * Go source:
  * func (f *NodeFactory) GetExportNameEx(node *ast.Declaration, opts AssignedNameOptions) *ast.IdentifierNode {
@@ -1231,7 +1231,7 @@ export function NodeFactory_GetExportNameEx(receiver: GoPtr<NodeFactory>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetDeclarationName","kind":"method","status":"implemented","sigHash":"e19ef55638aed93f54546615e2b98453f10bc36f5246c26f77246a1cffd93dcd","bodyHash":"9cddc3da27451cf68b92e61b0de71f81cd3e349abd18f600148bb4e4336e5edc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetDeclarationName","kind":"method","status":"implemented","sigHash":"e19ef55638aed93f54546615e2b98453f10bc36f5246c26f77246a1cffd93dcd"}
  *
  * Go source:
  * func (f *NodeFactory) GetDeclarationName(node *ast.Declaration) *ast.IdentifierNode {
@@ -1243,7 +1243,7 @@ export function NodeFactory_GetDeclarationName(receiver: GoPtr<NodeFactory>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetDeclarationNameEx","kind":"method","status":"implemented","sigHash":"e1f8c24787ffe4888f6d7da23bfdf725935baa78a99b5a0c1376eff52d78bfbf","bodyHash":"3c37d81db7a3a4fa3c9607be0e1bbaabe15d635a2b5c4d38898342e2994cdf3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetDeclarationNameEx","kind":"method","status":"implemented","sigHash":"e1f8c24787ffe4888f6d7da23bfdf725935baa78a99b5a0c1376eff52d78bfbf"}
  *
  * Go source:
  * func (f *NodeFactory) GetDeclarationNameEx(node *ast.Declaration, opts NameOptions) *ast.IdentifierNode {
@@ -1255,7 +1255,7 @@ export function NodeFactory_GetDeclarationNameEx(receiver: GoPtr<NodeFactory>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetNamespaceMemberName","kind":"method","status":"implemented","sigHash":"a9566c9944a8234ea6946c55f8404e3a308fdff286a6d11a616ed13d135ff159","bodyHash":"2cc552a44b48ec88173d609f1c8012317c3a09b24f38e691253c153716c5953f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetNamespaceMemberName","kind":"method","status":"implemented","sigHash":"a9566c9944a8234ea6946c55f8404e3a308fdff286a6d11a616ed13d135ff159"}
  *
  * Go source:
  * func (f *NodeFactory) GetNamespaceMemberName(ns *ast.IdentifierNode, name *ast.IdentifierNode, opts NameOptions) *ast.IdentifierNode {
@@ -1290,7 +1290,7 @@ export function NodeFactory_GetNamespaceMemberName(receiver: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExternalModuleOrNamespaceExportName","kind":"method","status":"implemented","sigHash":"ba41712a76476a175a4eedd295d12296933a418d347ec101feb934bf35b364a1","bodyHash":"9af36d3f599c69c95a5c1c355803010a087bf0ecfd1a577ec578262bd9c580a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.GetExternalModuleOrNamespaceExportName","kind":"method","status":"implemented","sigHash":"ba41712a76476a175a4eedd295d12296933a418d347ec101feb934bf35b364a1"}
  *
  * Go source:
  * func (f *NodeFactory) GetExternalModuleOrNamespaceExportName(ns *ast.IdentifierNode, node *ast.Declaration, allowComments bool, allowSourceMaps bool) *ast.Node {
@@ -1310,7 +1310,7 @@ export function NodeFactory_GetExternalModuleOrNamespaceExportName(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUnscopedHelperName","kind":"method","status":"implemented","sigHash":"f942c1e968f485ef3ea317e3052fa8d7aa841ccd3a3134be4c91965a1cb09ccf","bodyHash":"63a5773beca703e912e99f5e63d17e6d62877db2bc6937654fcaaeefca24daef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewUnscopedHelperName","kind":"method","status":"implemented","sigHash":"f942c1e968f485ef3ea317e3052fa8d7aa841ccd3a3134be4c91965a1cb09ccf"}
  *
  * Go source:
  * func (f *NodeFactory) NewUnscopedHelperName(name string) *ast.IdentifierNode {
@@ -1327,7 +1327,7 @@ export function NodeFactory_NewUnscopedHelperName(receiver: GoPtr<NodeFactory>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewDecorateHelper","kind":"method","status":"implemented","sigHash":"1b391f8443b00f72f6c3263a6ec035c73c121b85b0dcd035777d04eebc46d2cd","bodyHash":"62358f4c549e0f8408819ad9e033681ec76f76c4e9142d57da5c377b0d230cc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewDecorateHelper","kind":"method","status":"implemented","sigHash":"1b391f8443b00f72f6c3263a6ec035c73c121b85b0dcd035777d04eebc46d2cd"}
  *
  * Go source:
  * func (f *NodeFactory) NewDecorateHelper(decoratorExpressions []*ast.Node, target *ast.Node, memberName *ast.Node, descriptor *ast.Node) *ast.Expression {
@@ -1377,7 +1377,7 @@ export function NodeFactory_NewDecorateHelper(receiver: GoPtr<NodeFactory>, deco
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewMetadataHelper","kind":"method","status":"implemented","sigHash":"764b5e2b774c71d7333d0c02183dec99a9cef57a2f32523cd67d85dc1b043d8a","bodyHash":"8c3e1f3d98ca0feea955b108146d64b0575700392372407b9ce55c0588ce91ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewMetadataHelper","kind":"method","status":"implemented","sigHash":"764b5e2b774c71d7333d0c02183dec99a9cef57a2f32523cd67d85dc1b043d8a"}
  *
  * Go source:
  * func (f *NodeFactory) NewMetadataHelper(metadataKey string, metadataValue *ast.Node) *ast.Node {
@@ -1413,7 +1413,7 @@ export function NodeFactory_NewMetadataHelper(receiver: GoPtr<NodeFactory>, meta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewParamHelper","kind":"method","status":"implemented","sigHash":"111982e09290ccc02bc3e72e65f614382bf60f3c781ae397d9a3e62896a4b149","bodyHash":"848c2e40090e8f0734d6b7610e76fd2c433f40e49d3482d7f262429d4c5c6852"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewParamHelper","kind":"method","status":"implemented","sigHash":"111982e09290ccc02bc3e72e65f614382bf60f3c781ae397d9a3e62896a4b149"}
  *
  * Go source:
  * func (f *NodeFactory) NewParamHelper(expression *ast.Node, parameterOffset int, location core.TextRange) *ast.Expression {
@@ -1445,7 +1445,7 @@ export function NodeFactory_NewParamHelper(receiver: GoPtr<NodeFactory>, express
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAddDisposableResourceHelper","kind":"method","status":"implemented","sigHash":"c45019fade4d6c661675e0a87e8f5aa881644d131f420997d4a730a042069c20","bodyHash":"91bed8f9b1c9b187503d7181fc368956b33814d14515bf5da1a54450d3b9f6ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAddDisposableResourceHelper","kind":"method","status":"implemented","sigHash":"c45019fade4d6c661675e0a87e8f5aa881644d131f420997d4a730a042069c20"}
  *
  * Go source:
  * func (f *NodeFactory) NewAddDisposableResourceHelper(envBinding *ast.Expression, value *ast.Expression, async bool) *ast.Expression {
@@ -1473,7 +1473,7 @@ export function NodeFactory_NewAddDisposableResourceHelper(receiver: GoPtr<NodeF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewDisposeResourcesHelper","kind":"method","status":"implemented","sigHash":"7bb268ed7b228c99940f0b8c37c27f7306a5973a897430ef0b5860cdd6beeef0","bodyHash":"087233c6a5f686cdf002c5cda95d631838aa9c2cd417f633052ff525a8716afe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewDisposeResourcesHelper","kind":"method","status":"implemented","sigHash":"7bb268ed7b228c99940f0b8c37c27f7306a5973a897430ef0b5860cdd6beeef0"}
  *
  * Go source:
  * func (f *NodeFactory) NewDisposeResourcesHelper(envBinding *ast.Expression) *ast.Expression {
@@ -1501,7 +1501,7 @@ export function NodeFactory_NewDisposeResourcesHelper(receiver: GoPtr<NodeFactor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::PrivateIdentifierKind","kind":"type","status":"implemented","sigHash":"21c0c107db435d0d5364c3bd032bd9d83b8ccf23ba027eb41afc19869fa6852f","bodyHash":"7e75697350348a6dae519f26d69517ffa7831f77c3377a212224d3bf7352b67e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::type::PrivateIdentifierKind","kind":"type","status":"implemented","sigHash":"21c0c107db435d0d5364c3bd032bd9d83b8ccf23ba027eb41afc19869fa6852f"}
  *
  * Go source:
  * PrivateIdentifierKind string
@@ -1509,7 +1509,7 @@ export function NodeFactory_NewDisposeResourcesHelper(receiver: GoPtr<NodeFactor
 export type PrivateIdentifierKind = string;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::constGroup::PrivateIdentifierKindField+PrivateIdentifierKindMethod+PrivateIdentifierKindAccessor+PrivateIdentifierKindUntransformed","kind":"constGroup","status":"implemented","sigHash":"ec138418501a02f702e9572e8a2a1fff47c001f67dcdf958880f9e8d66eccef7","bodyHash":"68c8b9e2b3ff99988487469eb7ca4b2de4f6e1fc63d57736c39063b24a63efb0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::constGroup::PrivateIdentifierKindField+PrivateIdentifierKindMethod+PrivateIdentifierKindAccessor+PrivateIdentifierKindUntransformed","kind":"constGroup","status":"implemented","sigHash":"ec138418501a02f702e9572e8a2a1fff47c001f67dcdf958880f9e8d66eccef7"}
  *
  * Go source:
  * const (
@@ -1525,7 +1525,7 @@ export const PrivateIdentifierKindAccessor: PrivateIdentifierKind = "a";
 export const PrivateIdentifierKindUntransformed: PrivateIdentifierKind = "untransformed";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldGetHelper","kind":"method","status":"implemented","sigHash":"ab4b8de627f79e3d6558803188fb5edc4e5365911a604b0b24da1f2e5ad15b11","bodyHash":"7d22abcd052b7202164d7f320c4d0ad7e0ce10eede8786528032b28bffdfd8a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldGetHelper","kind":"method","status":"implemented","sigHash":"ab4b8de627f79e3d6558803188fb5edc4e5365911a604b0b24da1f2e5ad15b11"}
  *
  * Go source:
  * func (f *NodeFactory) NewClassPrivateFieldGetHelper(receiver *ast.Expression, state *ast.IdentifierNode, kind PrivateIdentifierKind, fn *ast.IdentifierNode) *ast.Expression {
@@ -1562,7 +1562,7 @@ export function NodeFactory_NewClassPrivateFieldGetHelper(receiver: GoPtr<NodeFa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldSetHelper","kind":"method","status":"implemented","sigHash":"1b56046fc2bc4eafe319fb043be190c7046902f734259e910e973a8bfc11f37f","bodyHash":"b109748d311cc488a9db42c27b65d857aeb7391c97b3a8b9a535a334b5a5e39f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldSetHelper","kind":"method","status":"implemented","sigHash":"1b56046fc2bc4eafe319fb043be190c7046902f734259e910e973a8bfc11f37f"}
  *
  * Go source:
  * func (f *NodeFactory) NewClassPrivateFieldSetHelper(receiver *ast.Expression, state *ast.IdentifierNode, value *ast.Expression, kind PrivateIdentifierKind, fn *ast.IdentifierNode) *ast.Expression {
@@ -1599,7 +1599,7 @@ export function NodeFactory_NewClassPrivateFieldSetHelper(receiver: GoPtr<NodeFa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldInHelper","kind":"method","status":"implemented","sigHash":"a342b0ffe1e442de1c97fbc55bdf3d9735417401751c82f25cf0e3651eb524f5","bodyHash":"0cfc2e92ca6ae63fdd6cf1550b90363f73d5e3d9aef3d74160451471222c702f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewClassPrivateFieldInHelper","kind":"method","status":"implemented","sigHash":"a342b0ffe1e442de1c97fbc55bdf3d9735417401751c82f25cf0e3651eb524f5"}
  *
  * Go source:
  * func (f *NodeFactory) NewClassPrivateFieldInHelper(state *ast.IdentifierNode, receiver *ast.Expression) *ast.Expression {
@@ -1627,7 +1627,7 @@ export function NodeFactory_NewClassPrivateFieldInHelper(receiver: GoPtr<NodeFac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewObjectDefinePropertyCall","kind":"method","status":"implemented","sigHash":"9ae7510f60635f6310ca57a83c42ae63eab79f0c6761fad4a702dbf9e5ecdb6f","bodyHash":"0ad2d4a20a689cc95ed5fbbfac81b6599bd939b2737593097c7b056c76f3c370"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewObjectDefinePropertyCall","kind":"method","status":"implemented","sigHash":"9ae7510f60635f6310ca57a83c42ae63eab79f0c6761fad4a702dbf9e5ecdb6f"}
  *
  * Go source:
  * func (f *NodeFactory) NewObjectDefinePropertyCall(target *ast.Expression, name *ast.Expression, descriptor *ast.Expression) *ast.Expression {
@@ -1664,7 +1664,7 @@ export function NodeFactory_NewObjectDefinePropertyCall(receiver: GoPtr<NodeFact
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewReflectGetCall","kind":"method","status":"implemented","sigHash":"bb88bd22904e3722d5bbe72b1c658c82b6b5f4ef5c1a742178e66d7b5169a785","bodyHash":"6b2438104820948c03ded5bfd3884116f4b703e22ca3853df41542ab0fc2a3f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewReflectGetCall","kind":"method","status":"implemented","sigHash":"bb88bd22904e3722d5bbe72b1c658c82b6b5f4ef5c1a742178e66d7b5169a785"}
  *
  * Go source:
  * func (f *NodeFactory) NewReflectGetCall(target *ast.Expression, propertyKey *ast.Expression, receiver *ast.Expression) *ast.Expression {
@@ -1701,7 +1701,7 @@ export function NodeFactory_NewReflectGetCall(receiver: GoPtr<NodeFactory>, targ
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewReflectSetCall","kind":"method","status":"implemented","sigHash":"63d8b3668e4e11fa6c820073c918ebd5d6daa9a3719384e152a511e048606948","bodyHash":"b1c1a8933f2cd9037d14b89fd31a06ed890003fffdc07c4c9f9491a341daee1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewReflectSetCall","kind":"method","status":"implemented","sigHash":"63d8b3668e4e11fa6c820073c918ebd5d6daa9a3719384e152a511e048606948"}
  *
  * Go source:
  * func (f *NodeFactory) NewReflectSetCall(target *ast.Expression, propertyKey *ast.Expression, value *ast.Expression, receiver *ast.Expression) *ast.Expression {
@@ -1738,7 +1738,7 @@ export function NodeFactory_NewReflectSetCall(receiver: GoPtr<NodeFactory>, targ
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionBindCall","kind":"method","status":"implemented","sigHash":"3611c1be12258bcd25732d0966b65ba0464de768dd021a51a073d8355b9da506","bodyHash":"8340ac6f84dabe901a7e5b83e52010cd14cca96714a89236cc4df44039330b0e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewFunctionBindCall","kind":"method","status":"implemented","sigHash":"3611c1be12258bcd25732d0966b65ba0464de768dd021a51a073d8355b9da506"}
  *
  * Go source:
  * func (f *NodeFactory) NewFunctionBindCall(target *ast.Expression, thisArg *ast.Expression, argumentsList []*ast.Node) *ast.Expression {
@@ -1755,7 +1755,7 @@ export function NodeFactory_NewFunctionBindCall(receiver: GoPtr<NodeFactory>, ta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImmediatelyInvokedArrowFunction","kind":"method","status":"implemented","sigHash":"8e73b2aea8d69635da903f7060bd06bebcea32fc76fb92a3358d240e43a85214","bodyHash":"7a6bc9282e46767adef14203a6729021a20e94aa685fefb24536592a25dfcc3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImmediatelyInvokedArrowFunction","kind":"method","status":"implemented","sigHash":"8e73b2aea8d69635da903f7060bd06bebcea32fc76fb92a3358d240e43a85214"}
  *
  * Go source:
  * func (f *NodeFactory) NewImmediatelyInvokedArrowFunction(statements []*ast.Statement) *ast.Expression {
@@ -1800,7 +1800,7 @@ export function NodeFactory_NewImmediatelyInvokedArrowFunction(receiver: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExportDefault","kind":"method","status":"implemented","sigHash":"2ac6504a00202c826551b66028975237c3440700a506fd9018c3cd3e974099f4","bodyHash":"a54f39c6adfb8ef1e97e64a4a31ded037dd8a6a9f4e200caeaa318259e79edde"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExportDefault","kind":"method","status":"implemented","sigHash":"2ac6504a00202c826551b66028975237c3440700a506fd9018c3cd3e974099f4"}
  *
  * Go source:
  * func (f *NodeFactory) NewExportDefault(expression *ast.Expression) *ast.Statement {
@@ -1813,7 +1813,7 @@ export function NodeFactory_NewExportDefault(receiver: GoPtr<NodeFactory>, expre
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExternalModuleExport","kind":"method","status":"implemented","sigHash":"02af76eafa36b21182345f41deba09e72379c15972c7b44175b407b6c5e6f819","bodyHash":"b931302e2cdcbe8392c833c49420a5df766ac379c1adc3094433a5e3b9f6cf38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExternalModuleExport","kind":"method","status":"implemented","sigHash":"02af76eafa36b21182345f41deba09e72379c15972c7b44175b407b6c5e6f819"}
  *
  * Go source:
  * func (f *NodeFactory) NewExternalModuleExport(name *ast.IdentifierNode) *ast.Statement {
@@ -1830,7 +1830,7 @@ export function NodeFactory_NewExternalModuleExport(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignHelper","kind":"method","status":"implemented","sigHash":"b05953b344be84fd5df77d771e4abf427312ec7a1ccf104d17ca6da6044100ad","bodyHash":"73b0ac887357bafb7a823cc4318f4a09b37ee63f75541cfd49c1b7668ea68253"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignHelper","kind":"method","status":"implemented","sigHash":"b05953b344be84fd5df77d771e4abf427312ec7a1ccf104d17ca6da6044100ad"}
  *
  * Go source:
  * func (f *NodeFactory) NewAssignHelper(attributesSegments []*ast.Expression, scriptTarget core.ScriptTarget) *ast.Expression {
@@ -1843,7 +1843,7 @@ export function NodeFactory_NewAssignHelper(receiver: GoPtr<NodeFactory>, attrib
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRestHelper","kind":"method","status":"implemented","sigHash":"9a928547e1de56ea38e37be92f4e72e874087e78064bae6f92b7ce2b86e25153","bodyHash":"323157021063964b424e1cc893759bb39a7cc38c0a9c46d7e5fe0b0383f274a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRestHelper","kind":"method","status":"implemented","sigHash":"9a928547e1de56ea38e37be92f4e72e874087e78064bae6f92b7ce2b86e25153"}
  *
  * Go source:
  * func (f *NodeFactory) NewRestHelper(value *ast.Expression, elements []*ast.Node, computedTempVariables []*ast.Node, location core.TextRange) *ast.Expression {
@@ -1932,7 +1932,7 @@ export function NodeFactory_NewRestHelper(receiver: GoPtr<NodeFactory>, value: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAwaitHelper","kind":"method","status":"implemented","sigHash":"3e7e2a412eb3b9d14802c7c421641f70eeb41903b4632ca9e81050d115c058ca","bodyHash":"f8873de7d90deab86398851e1eafc67a39870ddfe953071e7c005d1714f7aae7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAwaitHelper","kind":"method","status":"implemented","sigHash":"3e7e2a412eb3b9d14802c7c421641f70eeb41903b4632ca9e81050d115c058ca"}
  *
  * Go source:
  * func (f *NodeFactory) NewAwaitHelper(expression *ast.Expression) *ast.Expression {
@@ -1960,7 +1960,7 @@ export function NodeFactory_NewAwaitHelper(receiver: GoPtr<NodeFactory>, express
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncGeneratorHelper","kind":"method","status":"implemented","sigHash":"e6091bc42778e164f97f9af33da320ef535252224573c68258fdbdfac457b0eb","bodyHash":"f695aad4250759cec6a1b7f5fd7390b907e250935ff550663ad99e12fa04c621"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncGeneratorHelper","kind":"method","status":"implemented","sigHash":"e6091bc42778e164f97f9af33da320ef535252224573c68258fdbdfac457b0eb"}
  *
  * Go source:
  * func (f *NodeFactory) NewAsyncGeneratorHelper(
@@ -2020,7 +2020,7 @@ export function NodeFactory_NewAsyncGeneratorHelper(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncDelegatorHelper","kind":"method","status":"implemented","sigHash":"66928c0f84acf9eb280db80b7e8686ade10b5b04cf537d70c0f17133b023ebf1","bodyHash":"6ec05eadf95f0fdaa7bf3bf3393130d0b29e01a2fa19a587597a7772198d9a01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncDelegatorHelper","kind":"method","status":"implemented","sigHash":"66928c0f84acf9eb280db80b7e8686ade10b5b04cf537d70c0f17133b023ebf1"}
  *
  * Go source:
  * func (f *NodeFactory) NewAsyncDelegatorHelper(expression *ast.Expression) *ast.Expression {
@@ -2050,7 +2050,7 @@ export function NodeFactory_NewAsyncDelegatorHelper(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncValuesHelper","kind":"method","status":"implemented","sigHash":"37a801db66a3bbd9302528e3aa0a3dce8bd4b4657daf6682aca3b9dfa2d96993","bodyHash":"38f8ebb11a912b198c6baeabc70fbac35c41fb6992a54bca97090f85f8700722"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAsyncValuesHelper","kind":"method","status":"implemented","sigHash":"37a801db66a3bbd9302528e3aa0a3dce8bd4b4657daf6682aca3b9dfa2d96993"}
  *
  * Go source:
  * func (f *NodeFactory) NewAsyncValuesHelper(expression *ast.Expression) *ast.Expression {
@@ -2078,7 +2078,7 @@ export function NodeFactory_NewAsyncValuesHelper(receiver: GoPtr<NodeFactory>, e
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAwaiterHelper","kind":"method","status":"implemented","sigHash":"2ca8ea6275361f73ac951bfa929b568e6ef7f9491c6446c77719a64dee880dee","bodyHash":"939ebb562f2205c8bc82638a12fada3835a914de6c1e3cb0435c327ac45ca6a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAwaiterHelper","kind":"method","status":"implemented","sigHash":"2ca8ea6275361f73ac951bfa929b568e6ef7f9491c6446c77719a64dee880dee"}
  *
  * Go source:
  * func (f *NodeFactory) NewAwaiterHelper(
@@ -2183,7 +2183,7 @@ export function NodeFactory_NewAwaiterHelper(receiver: GoPtr<NodeFactory>, hasLe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassContextObject","kind":"method","status":"implemented","sigHash":"04d9f16cffa994e2e2bdc43eaed2446579dc1e2ba94b5bd5bdc03373831038b1","bodyHash":"0ca2c2c33238a1abcbd3ed30a6b5175e5fd856cfe8d25f7281525eed268c781b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassContextObject","kind":"method","status":"implemented","sigHash":"04d9f16cffa994e2e2bdc43eaed2446579dc1e2ba94b5bd5bdc03373831038b1"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassContextObject(nameExpr *ast.Expression, metadata *ast.IdentifierNode) *ast.Expression {
@@ -2206,7 +2206,7 @@ export function NodeFactory_NewESDecorateClassContextObject(receiver: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessGetMethod","kind":"method","status":"implemented","sigHash":"f2d59a8a96c952737cf7e7bf24d8e9f9ed4967a5b8b48a43acfca66b52d2a04e","bodyHash":"6c07d5c690735987e2eb5cfcb9276d1166731487cc3913c6933ae0a740f2f6e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessGetMethod","kind":"method","status":"implemented","sigHash":"f2d59a8a96c952737cf7e7bf24d8e9f9ed4967a5b8b48a43acfca66b52d2a04e"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassElementAccessGetMethod(
@@ -2254,7 +2254,7 @@ export function NodeFactory_NewESDecorateClassElementAccessGetMethod(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessSetMethod","kind":"method","status":"implemented","sigHash":"d2e100872bdee7c96c6b9b7e5263226098044a27b0f9c541d75b694f3de37ba9","bodyHash":"d76271ca318c00f82e56f74f409cf09a72ab93eeecaaf2fd4d67704a4d4a89b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessSetMethod","kind":"method","status":"implemented","sigHash":"d2e100872bdee7c96c6b9b7e5263226098044a27b0f9c541d75b694f3de37ba9"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassElementAccessSetMethod(
@@ -2312,7 +2312,7 @@ export function NodeFactory_NewESDecorateClassElementAccessSetMethod(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessHasMethod","kind":"method","status":"implemented","sigHash":"66d14160c85fc63bd2adf59f53701720c1acefce2df6ead64cf7b017eac6a51e","bodyHash":"184bee1ce54396f2419daa47bf3b4ae597cbec47531b3b2d65eae26c3606b7c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessHasMethod","kind":"method","status":"implemented","sigHash":"66d14160c85fc63bd2adf59f53701720c1acefce2df6ead64cf7b017eac6a51e"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassElementAccessHasMethod(
@@ -2364,7 +2364,7 @@ export function NodeFactory_NewESDecorateClassElementAccessHasMethod(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessObject","kind":"method","status":"implemented","sigHash":"24a9d76fa683c9193fd9dac4c817dbaa2c9c6810f15844767b7cc65a1574aeec","bodyHash":"3afa2af5c9450a44fd8b9c77ab64385903d51977fdbbcb56c96d9e1214eab80f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementAccessObject","kind":"method","status":"implemented","sigHash":"24a9d76fa683c9193fd9dac4c817dbaa2c9c6810f15844767b7cc65a1574aeec"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassElementAccessObject(
@@ -2412,7 +2412,7 @@ export function NodeFactory_NewESDecorateClassElementAccessObject(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementContextObject","kind":"method","status":"implemented","sigHash":"5c0e1d5157ce59a555d52660509de2afca8d5cb4498f3649d703a2de1e13283c","bodyHash":"7c39c538636cf6485a333145f5154464ed85fd5d26d727c5b90b7292f1672499"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateClassElementContextObject","kind":"method","status":"implemented","sigHash":"5c0e1d5157ce59a555d52660509de2afca8d5cb4498f3649d703a2de1e13283c"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateClassElementContextObject(
@@ -2491,7 +2491,7 @@ export function NodeFactory_NewESDecorateClassElementContextObject(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateHelper","kind":"method","status":"implemented","sigHash":"7aa36484b4618d77aa789b48d01a12a3f9f7059bd6419bb846384a9d9a86645c","bodyHash":"1cfc210f8bd3a5d7a1ced1095ddd71f819f517c0947f956deff646ddcd08a3f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewESDecorateHelper","kind":"method","status":"implemented","sigHash":"7aa36484b4618d77aa789b48d01a12a3f9f7059bd6419bb846384a9d9a86645c"}
  *
  * Go source:
  * func (f *NodeFactory) NewESDecorateHelper(ctor *ast.Expression, descriptorIn *ast.Expression, decorators *ast.Expression, contextIn *ast.Expression, initializers *ast.Expression, extraInitializers *ast.Expression) *ast.Expression {
@@ -2519,7 +2519,7 @@ export function NodeFactory_NewESDecorateHelper(receiver: GoPtr<NodeFactory>, ct
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRunInitializersHelper","kind":"method","status":"implemented","sigHash":"567cc8687e3e3bab4c30805b51dd7c5bde2e1d09807a7d2f9a0dc05e3a572b94","bodyHash":"1cf51f716342ee4e701f43bc7e73f8a2e98a15eadaeb4fe65a2cf912430c729c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRunInitializersHelper","kind":"method","status":"implemented","sigHash":"567cc8687e3e3bab4c30805b51dd7c5bde2e1d09807a7d2f9a0dc05e3a572b94"}
  *
  * Go source:
  * func (f *NodeFactory) NewRunInitializersHelper(thisArg *ast.Expression, initializers *ast.Expression, value *ast.Expression) *ast.Expression {
@@ -2556,7 +2556,7 @@ export function NodeFactory_NewRunInitializersHelper(receiver: GoPtr<NodeFactory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTemplateObjectHelper","kind":"method","status":"implemented","sigHash":"a42d9cb8d3bca58bea97ad02778210b0ba04414f97e50782e72b63cfdc0c7c33","bodyHash":"c725feccb906db65aeaa13bce4dfe9c0bcb8f6608f21a4075b54dc78ff8c4715"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewTemplateObjectHelper","kind":"method","status":"implemented","sigHash":"a42d9cb8d3bca58bea97ad02778210b0ba04414f97e50782e72b63cfdc0c7c33"}
  *
  * Go source:
  * func (f *NodeFactory) NewTemplateObjectHelper(cookedArray *ast.Expression, rawArray *ast.Expression) *ast.Expression {
@@ -2584,7 +2584,7 @@ export function NodeFactory_NewTemplateObjectHelper(receiver: GoPtr<NodeFactory>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewPropKeyHelper","kind":"method","status":"implemented","sigHash":"2cd1c9c62c0f6f25c024e3ef7395e371378fc84491c6bad996f7f12f18e4c4bb","bodyHash":"4a293f8cec28280a6d19a0e7737f23c2a5897f586068815ec40a0f6c29edb1dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewPropKeyHelper","kind":"method","status":"implemented","sigHash":"2cd1c9c62c0f6f25c024e3ef7395e371378fc84491c6bad996f7f12f18e4c4bb"}
  *
  * Go source:
  * func (f *NodeFactory) NewPropKeyHelper(expr *ast.Expression) *ast.Expression {
@@ -2612,7 +2612,7 @@ export function NodeFactory_NewPropKeyHelper(receiver: GoPtr<NodeFactory>, expr:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewSetFunctionNameHelper","kind":"method","status":"implemented","sigHash":"84921489cb579917fb5c8c19e69d04a621f6ff185b956e7a34f25cea691c2ad7","bodyHash":"0c64d608ab60c543256ae1af586eee71293449804469716e5af1136cf2fa158a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewSetFunctionNameHelper","kind":"method","status":"implemented","sigHash":"84921489cb579917fb5c8c19e69d04a621f6ff185b956e7a34f25cea691c2ad7"}
  *
  * Go source:
  * func (f *NodeFactory) NewSetFunctionNameHelper(fn *ast.Expression, name *ast.Expression, prefix string) *ast.Expression {
@@ -2649,7 +2649,7 @@ export function NodeFactory_NewSetFunctionNameHelper(receiver: GoPtr<NodeFactory
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImportDefaultHelper","kind":"method","status":"implemented","sigHash":"c6c296d9fd3cce207cdb96300cb718d5ee5bcdc59db27904a9f879e02325fc48","bodyHash":"c90990871cfa14f7150bd025c1044a40402b9fd32895f7dcb8f5c637acc249c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImportDefaultHelper","kind":"method","status":"implemented","sigHash":"c6c296d9fd3cce207cdb96300cb718d5ee5bcdc59db27904a9f879e02325fc48"}
  *
  * Go source:
  * func (f *NodeFactory) NewImportDefaultHelper(expression *ast.Expression) *ast.Expression {
@@ -2677,7 +2677,7 @@ export function NodeFactory_NewImportDefaultHelper(receiver: GoPtr<NodeFactory>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImportStarHelper","kind":"method","status":"implemented","sigHash":"57e9001a2db105331bd5488f02ce4e1a95f73a39d283a518cf00cdafa3237a93","bodyHash":"2e5109f07dbc7821e7bf41a72ee8521b4f8f7fb2c3f32974c2537b821af05c2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewImportStarHelper","kind":"method","status":"implemented","sigHash":"57e9001a2db105331bd5488f02ce4e1a95f73a39d283a518cf00cdafa3237a93"}
  *
  * Go source:
  * func (f *NodeFactory) NewImportStarHelper(expression *ast.Expression) *ast.Expression {
@@ -2705,7 +2705,7 @@ export function NodeFactory_NewImportStarHelper(receiver: GoPtr<NodeFactory>, ex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExportStarHelper","kind":"method","status":"implemented","sigHash":"2047e20bfd90f2d08bf061fdeabb7757c3b4ac760a18f5ae8d8dded65c2a0618","bodyHash":"f52d1f755e19d2f2284d4d63c557bf9a032a59ee2ed8d90031d987e3e81fe7c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewExportStarHelper","kind":"method","status":"implemented","sigHash":"2047e20bfd90f2d08bf061fdeabb7757c3b4ac760a18f5ae8d8dded65c2a0618"}
  *
  * Go source:
  * func (f *NodeFactory) NewExportStarHelper(moduleExpression *ast.Expression, exportsExpression *ast.Expression) *ast.Expression {
@@ -2733,7 +2733,7 @@ export function NodeFactory_NewExportStarHelper(receiver: GoPtr<NodeFactory>, mo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignmentTargetWrapper","kind":"method","status":"implemented","sigHash":"05292a8713012246c159c10364eb72c643dbf05e2c5516adeb73b74bdc24442c","bodyHash":"4df8beba57244ba8ac8276acc0be3acaa85166a8084bf845e3f02da3eae7f25b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewAssignmentTargetWrapper","kind":"method","status":"implemented","sigHash":"05292a8713012246c159c10364eb72c643dbf05e2c5516adeb73b74bdc24442c"}
  *
  * Go source:
  * func (f *NodeFactory) NewAssignmentTargetWrapper(paramName *ast.IdentifierNode, expression *ast.Expression) *ast.Node {
@@ -2785,7 +2785,7 @@ export function NodeFactory_NewAssignmentTargetWrapper(receiver: GoPtr<NodeFacto
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRewriteRelativeImportExtensionsHelper","kind":"method","status":"implemented","sigHash":"362075c24bca367e7b2db84c9262709635adae5017c875e9fdf3e51798e4cccb","bodyHash":"0f50bc349f8859315c6c1f8cc7e335cbb03912fa23521da69d884df169899bfb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.NewRewriteRelativeImportExtensionsHelper","kind":"method","status":"implemented","sigHash":"362075c24bca367e7b2db84c9262709635adae5017c875e9fdf3e51798e4cccb"}
  *
  * Go source:
  * func (f *NodeFactory) NewRewriteRelativeImportExtensionsHelper(firstArgument *ast.Node, preserveJsx bool) *ast.Expression {

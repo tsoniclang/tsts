@@ -57,7 +57,7 @@ const byteAt = StringByteAt;
 const byteSlice = StringByteSlice;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12","bodyHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12"}
  *
  * Go source:
  * JSXTransformer struct {
@@ -85,7 +85,7 @@ export interface JSXTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::NewJSXTransformer","kind":"func","status":"implemented","sigHash":"29835ab7065cb1ebe8fb083beca71c929e309981dbe55498b53a24467274d575","bodyHash":"fb1cf81a0ed533b3afc438d422dca6c6c9e60164c88fb9bb40f38f623d97c725"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::NewJSXTransformer","kind":"func","status":"implemented","sigHash":"29835ab7065cb1ebe8fb083beca71c929e309981dbe55498b53a24467274d575"}
  *
  * Go source:
  * func NewJSXTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -115,7 +115,7 @@ export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transfor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getCurrentFileNameExpression","kind":"method","status":"implemented","sigHash":"f67f49fed61267f6058d23cb6f62a0ba7a6af24279aa0de90ccbe3d710bd853f","bodyHash":"346beda3bd2ffc4a4f553a765b103a1c0366a83298bf81c7d652d812ed672457"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getCurrentFileNameExpression","kind":"method","status":"implemented","sigHash":"f67f49fed61267f6058d23cb6f62a0ba7a6af24279aa0de90ccbe3d710bd853f"}
  *
  * Go source:
  * func (tx *JSXTransformer) getCurrentFileNameExpression() *ast.Node {
@@ -156,7 +156,7 @@ export function JSXTransformer_getCurrentFileNameExpression(receiver: GoPtr<JSXT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCalleePrimitive","kind":"method","status":"implemented","sigHash":"66f6956c88a560d3d6356d9b430ce453ce8777a7b1e22041625f6434716efb90","bodyHash":"85664336374ba7f4439c2d21f567be62673ca2c0e093a6bd2697f6ba14ee0825"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCalleePrimitive","kind":"method","status":"implemented","sigHash":"66f6956c88a560d3d6356d9b430ce453ce8777a7b1e22041625f6434716efb90"}
  *
  * Go source:
  * func (tx *JSXTransformer) getJsxFactoryCalleePrimitive(isStaticChildren bool) string {
@@ -180,7 +180,7 @@ export function JSXTransformer_getJsxFactoryCalleePrimitive(receiver: GoPtr<JSXT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCallee","kind":"method","status":"implemented","sigHash":"d2ef3b46db25829b7a7083fb6ef490a8e8213431b2d714b383a43b2f2da3dad7","bodyHash":"ffa40e046d3ddf1b12e4f291a6e0e9f7911b237f8de6191ce7219abb45a9c4b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCallee","kind":"method","status":"implemented","sigHash":"d2ef3b46db25829b7a7083fb6ef490a8e8213431b2d714b383a43b2f2da3dad7"}
  *
  * Go source:
  * func (tx *JSXTransformer) getJsxFactoryCallee(isStaticChildren bool) *ast.Node {
@@ -194,7 +194,7 @@ export function JSXTransformer_getJsxFactoryCallee(receiver: GoPtr<JSXTransforme
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitJsxFragmentReference","kind":"method","status":"implemented","sigHash":"32cdb023740a4398d1f0cef995d6f2faf36082cbc27bb7fed228da6849902c10","bodyHash":"79bf6a15a9fc6ddd9f06ffb15324d92ef3d32aeece534a3bf622d69921a94b50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitJsxFragmentReference","kind":"method","status":"implemented","sigHash":"32cdb023740a4398d1f0cef995d6f2faf36082cbc27bb7fed228da6849902c10"}
  *
  * Go source:
  * func (tx *JSXTransformer) getImplicitJsxFragmentReference() *ast.Node {
@@ -206,7 +206,7 @@ export function JSXTransformer_getImplicitJsxFragmentReference(receiver: GoPtr<J
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitImportForName","kind":"method","status":"implemented","sigHash":"bf50e5f1a91428d2c425223ed98145487b875045253e761c4d1a2ca68bc895eb","bodyHash":"c595260d9c743edec5d120f59e4174bfe95fee142ee435edd4afa84aa17c5289"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitImportForName","kind":"method","status":"implemented","sigHash":"bf50e5f1a91428d2c425223ed98145487b875045253e761c4d1a2ca68bc895eb"}
  *
  * Go source:
  * func (tx *JSXTransformer) getImplicitImportForName(name string) *ast.Node {
@@ -263,7 +263,7 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.setInChild","kind":"method","status":"implemented","sigHash":"8036f65d1d9fa194dab5f84c27b6fa065622b82de6e6d732017fdbca7d49f28a","bodyHash":"82ed2ac87c1d950f9bec65412049107d7936964f565861895e4ac992b579dbcb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.setInChild","kind":"method","status":"implemented","sigHash":"8036f65d1d9fa194dab5f84c27b6fa065622b82de6e6d732017fdbca7d49f28a"}
  *
  * Go source:
  * func (tx *JSXTransformer) setInChild(v bool) {
@@ -275,7 +275,7 @@ export function JSXTransformer_setInChild(receiver: GoPtr<JSXTransformer>, v: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visit","kind":"method","status":"implemented","sigHash":"d506fd405ffb5b15f0c87fe4693328c29a4a0665ee9ae8d67bd3eccf913d8dc9","bodyHash":"5eb77053b6db23d39256c06e25dc4f5a3482aeff3993d96eded095e7f42ba85f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visit","kind":"method","status":"implemented","sigHash":"d506fd405ffb5b15f0c87fe4693328c29a4a0665ee9ae8d67bd3eccf913d8dc9"}
  *
  * Go source:
  * func (tx *JSXTransformer) visit(node *ast.Node) *ast.Node {
@@ -343,7 +343,7 @@ export function JSXTransformer_visit(receiver: GoPtr<JSXTransformer>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"implemented","sigHash":"410dfa82121e57aa7b00154093b4c575db0069df96b273cff1976c9d3f473443","bodyHash":"fc27af3a69cdac8503d810a1950d3929869e54b206d19e0f3f56ae5945e6fcc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"implemented","sigHash":"410dfa82121e57aa7b00154093b4c575db0069df96b273cff1976c9d3f473443"}
  *
  * Go source:
  * func hasKeyAfterPropsSpread(node *ast.Node) bool {
@@ -380,7 +380,7 @@ export function hasKeyAfterPropsSpread(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.shouldUseCreateElement","kind":"method","status":"implemented","sigHash":"85963fef37ebdbcb7cfef0d68279d27d72c74fe95928a8760b3327cfcfaabac1","bodyHash":"e45525fc060c4b0ef0be4fd8aec5c20f2f7f0a3e393edb56c3b08c07b4867b45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.shouldUseCreateElement","kind":"method","status":"implemented","sigHash":"85963fef37ebdbcb7cfef0d68279d27d72c74fe95928a8760b3327cfcfaabac1"}
  *
  * Go source:
  * func (tx *JSXTransformer) shouldUseCreateElement(node *ast.Node) bool {
@@ -392,7 +392,7 @@ export function JSXTransformer_shouldUseCreateElement(receiver: GoPtr<JSXTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::insertStatementAfterPrologue","kind":"func","status":"implemented","sigHash":"f832143b0e7f3a7f35e765c94ce2612ab78265ee196bc795a362822f5bc88bf1","bodyHash":"2d74604c56f163f5feaf55de653a94b72ea34f26a6748da67b7c1e28a4294e6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::insertStatementAfterPrologue","kind":"func","status":"implemented","sigHash":"f832143b0e7f3a7f35e765c94ce2612ab78265ee196bc795a362822f5bc88bf1"}
  *
  * Go source:
  * func insertStatementAfterPrologue[T any](to []*ast.Node, statement *ast.Node, isPrologueDirective func(callee T, node *ast.Node) bool, callee T) []*ast.Node {
@@ -424,7 +424,7 @@ export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.isAnyPrologueDirective","kind":"method","status":"implemented","sigHash":"0bbb36cd4cfc35cc05d92623a458f1b9bb6c9dc9fb0f6665966884e6f3488ca7","bodyHash":"adba537c945702e36a64fe190b401f31ecf6d7965326d3fd4f63aa0b2f0636f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.isAnyPrologueDirective","kind":"method","status":"implemented","sigHash":"0bbb36cd4cfc35cc05d92623a458f1b9bb6c9dc9fb0f6665966884e6f3488ca7"}
  *
  * Go source:
  * func (tx *JSXTransformer) isAnyPrologueDirective(node *ast.Node) bool {
@@ -436,7 +436,7 @@ export function JSXTransformer_isAnyPrologueDirective(receiver: GoPtr<JSXTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.insertStatementAfterCustomPrologue","kind":"method","status":"implemented","sigHash":"25161bbccce5a2455bf329eaccafa851964941e9369eb14802004bde26ac1c07","bodyHash":"d4f0f8f172e24794906f74faaf9333f58646370d378a9c1304cbcab0d55d5204"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.insertStatementAfterCustomPrologue","kind":"method","status":"implemented","sigHash":"25161bbccce5a2455bf329eaccafa851964941e9369eb14802004bde26ac1c07"}
  *
  * Go source:
  * func (tx *JSXTransformer) insertStatementAfterCustomPrologue(to []*ast.Node, statement *ast.Node) []*ast.Node {
@@ -448,7 +448,7 @@ export function JSXTransformer_insertStatementAfterCustomPrologue(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::sortImportSpecifiers","kind":"func","status":"implemented","sigHash":"13eedef921187722636169983beb3233354db81cc50dedd588a28c37565ed5fd","bodyHash":"adab7f7f9aed4dd065e7ecf0450f0d49732c7ee1a804953ee80784a5a5a65796"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::sortImportSpecifiers","kind":"func","status":"implemented","sigHash":"13eedef921187722636169983beb3233354db81cc50dedd588a28c37565ed5fd"}
  *
  * Go source:
  * func sortImportSpecifiers(a *ast.Node, b *ast.Node) int {
@@ -468,7 +468,7 @@ export function sortImportSpecifiers(a: GoPtr<Node>, b: GoPtr<Node>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::getSortedSpecifiers","kind":"func","status":"implemented","sigHash":"45b6fde0106693ef0478f9fb2a78ec492c9812d6fd06fd650a62a326bfcb1874","bodyHash":"6337134fd4fa77b10c72dcdfcc592339d7b79ab82c897c466a6aeb3d936659c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::getSortedSpecifiers","kind":"func","status":"implemented","sigHash":"45b6fde0106693ef0478f9fb2a78ec492c9812d6fd06fd650a62a326bfcb1874"}
  *
  * Go source:
  * func getSortedSpecifiers(m map[string]*ast.Node) []*ast.Node {
@@ -484,7 +484,7 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"cce2e0463e5a5aa3ed9661f146af4a491bd5546ac199d1fc0a02643fab6e9a23","bodyHash":"94c819c7a71033a35b4b9ad11a7869f92fe95a52d5ea56ad85d824b560b51827"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"cce2e0463e5a5aa3ed9661f146af4a491bd5546ac199d1fc0a02643fab6e9a23"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitSourceFile(file *ast.SourceFile) *ast.Node {
@@ -680,7 +680,7 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxElement","kind":"method","status":"implemented","sigHash":"d5761f92ca2ec4e98cb3af820f783572e895782cdaa60e5b0285a6447ea81e86","bodyHash":"b6632afad8016fcce673709eb3b9ccdf74b8f77f3309c1034253488d7f28ca86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxElement","kind":"method","status":"implemented","sigHash":"d5761f92ca2ec4e98cb3af820f783572e895782cdaa60e5b0285a6447ea81e86"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxElement(element *ast.JsxElement) *ast.Node {
@@ -705,7 +705,7 @@ export function JSXTransformer_visitJsxElement(receiver: GoPtr<JSXTransformer>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxSelfClosingElement","kind":"method","status":"implemented","sigHash":"a6a4e323adf8a41eb524b3f4f7306ff26f08f35fdf40194ec37e221382bf5ca2","bodyHash":"ad08192f77f7e268612bb664b6cec4d2535c39a60614ab352962d0a938c3d8e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxSelfClosingElement","kind":"method","status":"implemented","sigHash":"a6a4e323adf8a41eb524b3f4f7306ff26f08f35fdf40194ec37e221382bf5ca2"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxSelfClosingElement(element *ast.JsxSelfClosingElement) *ast.Node {
@@ -730,7 +730,7 @@ export function JSXTransformer_visitJsxSelfClosingElement(receiver: GoPtr<JSXTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxFragment","kind":"method","status":"implemented","sigHash":"76e42a60a7a34f843c07e67935a221e526a4ed806001756dd6cbcbf7b0b71a0a","bodyHash":"165ababa17163779967211f053946e3d2fca8c7126d2774e6a666ed783c2eca7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxFragment","kind":"method","status":"implemented","sigHash":"76e42a60a7a34f843c07e67935a221e526a4ed806001756dd6cbcbf7b0b71a0a"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxFragment(fragment *ast.JsxFragment) *ast.Node {
@@ -755,7 +755,7 @@ export function JSXTransformer_visitJsxFragment(receiver: GoPtr<JSXTransformer>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropObject","kind":"method","status":"implemented","sigHash":"02106466e4197ee5402fdbbd492c44fe3cab7c9e4b5132b24570771553bb253a","bodyHash":"16411bb922b8c38faa104ab778e53b8fc65221550431e7395ff54d053d6fabd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropObject","kind":"method","status":"implemented","sigHash":"02106466e4197ee5402fdbbd492c44fe3cab7c9e4b5132b24570771553bb253a"}
  *
  * Go source:
  * func (tx *JSXTransformer) convertJsxChildrenToChildrenPropObject(children []*ast.JsxChild) *ast.Node {
@@ -777,7 +777,7 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxChildToExpression","kind":"method","status":"implemented","sigHash":"1e346b779434456b9ca346c734bbd66f823cb5217411c3c7880476c837af44fa","bodyHash":"447d6ac7461afebabd738131b66243d4fb317e3751c5158f5ab9cc1145fcdb9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxChildToExpression","kind":"method","status":"implemented","sigHash":"1e346b779434456b9ca346c734bbd66f823cb5217411c3c7880476c837af44fa"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxChildToExpression(node *ast.Node) *ast.Node {
@@ -798,7 +798,7 @@ export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSX
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment","kind":"method","status":"implemented","sigHash":"f8adc13a5c690fe86ac97a56fa6ebe0c881888e65609a6f16c5c19db82bfa647","bodyHash":"755e7b267f1c52a2cbc5c437e2dc9856323a407ce775f13f3de02e2df31043f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment","kind":"method","status":"implemented","sigHash":"f8adc13a5c690fe86ac97a56fa6ebe0c881888e65609a6f16c5c19db82bfa647"}
  *
  * Go source:
  * func (tx *JSXTransformer) convertJsxChildrenToChildrenPropAssignment(children []*ast.JsxChild) *ast.Node {
@@ -857,7 +857,7 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getTagName","kind":"method","status":"implemented","sigHash":"391d8292148fcef36d5507213d02d50717168b47816d49b9fa4b77e19ee0f43c","bodyHash":"80e6f25c46f253b99a0f130b16b1350e31538c06c3969a22e574cb4a6cdfaf7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getTagName","kind":"method","status":"implemented","sigHash":"391d8292148fcef36d5507213d02d50717168b47816d49b9fa4b77e19ee0f43c"}
  *
  * Go source:
  * func (tx *JSXTransformer) getTagName(node *ast.Node) *ast.Node {
@@ -903,7 +903,7 @@ export function JSXTransformer_getTagName(receiver: GoPtr<JSXTransformer>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementJSX","kind":"method","status":"implemented","sigHash":"6f2cee7e0bb8987f9d608a701b8d8908570f8cad3e60f0f9365acd8ec31f426d","bodyHash":"cc37a8bc8ffccbda13197a68d678249243f66a4f7746eb70e8d1a673817a5b7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementJSX","kind":"method","status":"implemented","sigHash":"6f2cee7e0bb8987f9d608a701b8d8908570f8cad3e60f0f9365acd8ec31f426d"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementJSX(element *ast.Node, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -980,7 +980,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToObjectProps","kind":"method","status":"implemented","sigHash":"a727ebb6c31c5d6a5f8db5db7c8c4abfd36c90ed88bd89a606ddf4e9783703b6","bodyHash":"e5ec2b7f47235718468b7768e16582f863d7fdefed5fd97c3527743e28b4842c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToObjectProps","kind":"method","status":"implemented","sigHash":"a727ebb6c31c5d6a5f8db5db7c8c4abfd36c90ed88bd89a606ddf4e9783703b6"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToObjectProps(attrs []*ast.Node, childrenProp *ast.Node) *ast.Node {
@@ -1004,7 +1004,7 @@ export function JSXTransformer_transformJsxAttributesToObjectProps(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToExpression","kind":"method","status":"implemented","sigHash":"096a5d938414fe75c743c0cb6cd3c152131082656fc2a51751f5fb5aff89ed11","bodyHash":"75a14f92ddde5f8b879c046bcc4e23cc3aabd60a3f945f924d48deb4afbf0ee0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToExpression","kind":"method","status":"implemented","sigHash":"096a5d938414fe75c743c0cb6cd3c152131082656fc2a51751f5fb5aff89ed11"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToExpression(attrs []*ast.Node, childrenProp *ast.Node) *ast.Node {
@@ -1100,7 +1100,7 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.combinePropertiesIntoNewExpression","kind":"method","status":"implemented","sigHash":"5a0fac7dfda6d2247e496d797fc22b2a9adc5570cd18c6ccd50bc7d28f216539","bodyHash":"c96d3b385d24749305210b9f559b73af32fc96bb7c49a39c01aec4e05693c136"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.combinePropertiesIntoNewExpression","kind":"method","status":"implemented","sigHash":"5a0fac7dfda6d2247e496d797fc22b2a9adc5570cd18c6ccd50bc7d28f216539"}
  *
  * Go source:
  * func (tx *JSXTransformer) combinePropertiesIntoNewExpression(expressions []*ast.Expression, props []*ast.ObjectLiteralElement) ([]*ast.Expression, []*ast.ObjectLiteralElement) {
@@ -1124,7 +1124,7 @@ export function JSXTransformer_combinePropertiesIntoNewExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToProps","kind":"method","status":"implemented","sigHash":"769720f39f3d89219d911d9edc628adec9dbfd2fda8983f30b7a9604a84d8011","bodyHash":"dc41db1c97a9339d3ddc4f58be1d67823802ddf603c2a1e6c074274d1559612d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToProps","kind":"method","status":"implemented","sigHash":"769720f39f3d89219d911d9edc628adec9dbfd2fda8983f30b7a9604a84d8011"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToProps(attrs []*ast.Node, childrenProp *ast.Node) []*ast.Node {
@@ -1160,7 +1160,7 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasProto","kind":"func","status":"implemented","sigHash":"8d95351a84f4bc2ae415834ab3d41bb981c05e55c24cfeedc6ff815025e15330","bodyHash":"d64fa2c1b9665ca0771b894c15bcabf9780cb958eb1654c4bb08c45e3376b524"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasProto","kind":"func","status":"implemented","sigHash":"8d95351a84f4bc2ae415834ab3d41bb981c05e55c24cfeedc6ff815025e15330"}
  *
  * Go source:
  * func hasProto(obj *ast.ObjectLiteralExpression) bool {
@@ -1182,7 +1182,7 @@ export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps","kind":"method","status":"implemented","sigHash":"d18800099aa396872b1797984584d6102eef25d9f9c431ab09974a7641256fa5","bodyHash":"c649130bc66ab2a46c97fe5bd8717b11456f94d3851cdb275204b4df47da2cd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps","kind":"method","status":"implemented","sigHash":"d18800099aa396872b1797984584d6102eef25d9f9c431ab09974a7641256fa5"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxSpreadAttributesToProps(node *ast.JsxSpreadAttribute) []*ast.Node {
@@ -1204,7 +1204,7 @@ export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeToObjectLiteralElement","kind":"method","status":"implemented","sigHash":"773dbf9e494f64d11be73d404f338adf4ed8a1e73527c767ba00681c94cd9351","bodyHash":"7dfd0d0ed6fe122b1073cc781cc20c546dffe1e43d0f4c86b14a7b8beb91b8f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeToObjectLiteralElement","kind":"method","status":"implemented","sigHash":"773dbf9e494f64d11be73d404f338adf4ed8a1e73527c767ba00681c94cd9351"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributeToObjectLiteralElement(node *ast.JsxAttribute) *ast.Node {
@@ -1222,7 +1222,7 @@ export function JSXTransformer_transformJsxAttributeToObjectLiteralElement(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"implemented","sigHash":"e164f6c3b366746481f32e6ec8643428d4b7b03c4e270d03d6b9014b0f5bff67","bodyHash":"03efd43451396c58ae7a0d84cde26e787f61a369f10af9f6c85e0e5dd5f16d01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"implemented","sigHash":"e164f6c3b366746481f32e6ec8643428d4b7b03c4e270d03d6b9014b0f5bff67"}
  *
  * Go source:
  * func (tx *JSXTransformer) getAttributeName(node *ast.JsxAttribute) *ast.Node {
@@ -1260,7 +1260,7 @@ export function JSXTransformer_getAttributeName(receiver: GoPtr<JSXTransformer>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeInitializer","kind":"method","status":"implemented","sigHash":"992a1b432f04a4f8c4c54860261947e8dc740d85db48926d8b9acd53973a8a43","bodyHash":"c71c56322e634623a1ea54b4e2012c49d105b6311800cc97f1bf676475b365ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeInitializer","kind":"method","status":"implemented","sigHash":"992a1b432f04a4f8c4c54860261947e8dc740d85db48926d8b9acd53973a8a43"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributeInitializer(node *ast.Node) *ast.Node {
@@ -1318,7 +1318,7 @@ export function JSXTransformer_transformJsxAttributeInitializer(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementOrFragmentJSX","kind":"method","status":"implemented","sigHash":"5ad4943db7b62c70024513125b0c4c95406c1a83f951fb1bd3a6affce95b3784","bodyHash":"da74b1ee3b0a58a64ee05ce57e0adf5ef3220d5f18eea0db1c45699727f67483"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementOrFragmentJSX","kind":"method","status":"implemented","sigHash":"5ad4943db7b62c70024513125b0c4c95406c1a83f951fb1bd3a6affce95b3784"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementOrFragmentJSX(
@@ -1438,7 +1438,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentJSX","kind":"method","status":"implemented","sigHash":"ee40516ff6c23ef634ea95583d0e4cb6a4d8f85238a7524bc14236cbf8f17086","bodyHash":"ee18639fc0c685d5a90af15a5beac0155a75ef87aaf8ddab4a0abbfe7fb7132b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentJSX","kind":"method","status":"implemented","sigHash":"ee40516ff6c23ef634ea95583d0e4cb6a4d8f85238a7524bc14236cbf8f17086"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningFragmentJSX(fragment *ast.JsxOpeningFragment, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -1485,7 +1485,7 @@ export function JSXTransformer_visitJsxOpeningFragmentJSX(receiver: GoPtr<JSXTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createReactNamespace","kind":"method","status":"implemented","sigHash":"d18c67a2e8e841a49ac09ddd532c5c3677623b64c54a90f8ea17e51812a46a10","bodyHash":"37581b853ca0f40a5f3c77d0e7c9c862d47f9fa0eedd0b52f2124a6f2e2b2980"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createReactNamespace","kind":"method","status":"implemented","sigHash":"d18c67a2e8e841a49ac09ddd532c5c3677623b64c54a90f8ea17e51812a46a10"}
  *
  * Go source:
  * func (tx *JSXTransformer) createReactNamespace(reactNamespace string, parent *ast.Node) *ast.Node {
@@ -1541,7 +1541,7 @@ export function JSXTransformer_createReactNamespace(receiver: GoPtr<JSXTransform
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpressionFromEntityName","kind":"method","status":"implemented","sigHash":"f10375993dbd1f03075f6372af5c6bfa4ba55d2c60e08cdd88cda529e8116928","bodyHash":"d4bd43371721963dec7b536feb41df61e366b1703ff89a3447018ec6fb9cb7ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpressionFromEntityName","kind":"method","status":"implemented","sigHash":"f10375993dbd1f03075f6372af5c6bfa4ba55d2c60e08cdd88cda529e8116928"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFactoryExpressionFromEntityName(e *ast.Node, parent *ast.Node) *ast.Node {
@@ -1565,7 +1565,7 @@ export function JSXTransformer_createJsxFactoryExpressionFromEntityName(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxPseudoFactoryExpression","kind":"method","status":"implemented","sigHash":"77be78769325668cbeac36ec71745d7051f8f9619dcb9d9b18999e13ce5b2ab6","bodyHash":"d5fa84b5232dfebbd22e26a60d34539091101162b37faefafd6c34d759e89ba2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxPseudoFactoryExpression","kind":"method","status":"implemented","sigHash":"77be78769325668cbeac36ec71745d7051f8f9619dcb9d9b18999e13ce5b2ab6"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxPseudoFactoryExpression(parent *ast.Node, e *ast.Node, target string) *ast.Node {
@@ -1596,7 +1596,7 @@ export function JSXTransformer_createJsxPseudoFactoryExpression(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpression","kind":"method","status":"implemented","sigHash":"af223043145f5d5727d5424d8e8411b4355e5aef7122d8527bcf5bea106c9e08","bodyHash":"71ccc2393509e696a5ecc5a2c27c7f90b7d2a1bf122c8b51bdee3372d7b07491"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpression","kind":"method","status":"implemented","sigHash":"af223043145f5d5727d5424d8e8411b4355e5aef7122d8527bcf5bea106c9e08"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFactoryExpression(parent *ast.Node) *ast.Node {
@@ -1610,7 +1610,7 @@ export function JSXTransformer_createJsxFactoryExpression(receiver: GoPtr<JSXTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFragmentFactoryExpression","kind":"method","status":"implemented","sigHash":"eef477f14fe925ed7203e644439a87ef8557bf1eb94db83eb87a360fad79731b","bodyHash":"c61c6a131ac5fe16beaf992bed0b88edfa9b7cc2fb262e91b0ceb1002d415b89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFragmentFactoryExpression","kind":"method","status":"implemented","sigHash":"eef477f14fe925ed7203e644439a87ef8557bf1eb94db83eb87a360fad79731b"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFragmentFactoryExpression(parent *ast.Node) *ast.Node {
@@ -1624,7 +1624,7 @@ export function JSXTransformer_createJsxFragmentFactoryExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementCreateElement","kind":"method","status":"implemented","sigHash":"5aa5881cbd88d11788e6e2386acc7e6036dee885c48cbb1e1ad117adbe99d843","bodyHash":"e928e1e7bb85e27ddc87240dbc25e2e6fb9b42427ad08718436d526ea20dddb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementCreateElement","kind":"method","status":"implemented","sigHash":"5aa5881cbd88d11788e6e2386acc7e6036dee885c48cbb1e1ad117adbe99d843"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementCreateElement(element *ast.Node, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -1740,7 +1740,7 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentCreateElement","kind":"method","status":"implemented","sigHash":"e34d68ca7a2a072a5a80c653f20618329581ac3fe489b095177582757f9bd99d","bodyHash":"5d2b9d9b6b9eaaa8fea5581de6e1d2e0425eb4ca8d4d5acf470c17ea90e29e5d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentCreateElement","kind":"method","status":"implemented","sigHash":"e34d68ca7a2a072a5a80c653f20618329581ac3fe489b095177582757f9bd99d"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningFragmentCreateElement(fragment *ast.JsxOpeningFragment, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -1830,7 +1830,7 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxText","kind":"method","status":"implemented","sigHash":"dcea0b5d1d62ee7eccf9d3e721415c810dd34819039e0ed4f8cd74624b8f4376","bodyHash":"7d4e840d3930a133ece20ffd6742a4d2e59f954257e7a7688a932202cc186b20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxText","kind":"method","status":"implemented","sigHash":"dcea0b5d1d62ee7eccf9d3e721415c810dd34819039e0ed4f8cd74624b8f4376"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxText(text *ast.JsxText) *ast.Node {
@@ -1852,7 +1852,7 @@ export function JSXTransformer_visitJsxText(receiver: GoPtr<JSXTransformer>, tex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::addLineOfJsxText","kind":"func","status":"implemented","sigHash":"8b9ec69ca75e105770ebdacaa19351647925d4ce3746b3404b453e49554feb0e","bodyHash":"fddcbfbf47283e3d1a3ed0247abd55a1a7209479445ad631cbc2f53fdef81a92"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::addLineOfJsxText","kind":"func","status":"implemented","sigHash":"8b9ec69ca75e105770ebdacaa19351647925d4ce3746b3404b453e49554feb0e"}
  *
  * Go source:
  * func addLineOfJsxText(b *strings.Builder, trimmedLine string, isInitial bool) {
@@ -1876,7 +1876,7 @@ export function addLineOfJsxText(b: GoPtr<Builder>, trimmedLine: string, isIniti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::fixupWhitespaceAndDecodeEntities","kind":"func","status":"implemented","sigHash":"fcb43910d27aa4159bdedd9732075c712e12d22a52f13a46ed5fc3bae9a5cdca","bodyHash":"0cfc3eb238e50ad2a27c892d458a4f40925c01b5f1c530453a782bceeec654df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::fixupWhitespaceAndDecodeEntities","kind":"func","status":"implemented","sigHash":"fcb43910d27aa4159bdedd9732075c712e12d22a52f13a46ed5fc3bae9a5cdca"}
  *
  * Go source:
  * func fixupWhitespaceAndDecodeEntities(text string) string {
@@ -1965,7 +1965,7 @@ export function fixupWhitespaceAndDecodeEntities(text: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxExpression","kind":"method","status":"implemented","sigHash":"16aa083d8146d82cdf8ef39a1825bdf6a10c05c98365ef2db031c15f22f23ea2","bodyHash":"b4a0734cb89f0d59c3c82adb4727a3c02c1a65b444fa0d86c82a3d7e236ddb67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxExpression","kind":"method","status":"implemented","sigHash":"16aa083d8146d82cdf8ef39a1825bdf6a10c05c98365ef2db031c15f22f23ea2"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxExpression(expression *ast.JsxExpression) *ast.Node {
@@ -1987,7 +1987,7 @@ export function JSXTransformer_visitJsxExpression(receiver: GoPtr<JSXTransformer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntities","kind":"func","status":"implemented","sigHash":"ba81d1a1c2207e3826d333a469d95b3918d58f513134444890792e50b4a023f0","bodyHash":"f8373dd13dbfbc6784c4a24bca91941922906e9d69c29599d71a94aac81eb4f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntities","kind":"func","status":"implemented","sigHash":"ba81d1a1c2207e3826d333a469d95b3918d58f513134444890792e50b4a023f0"}
  *
  * Go source:
  * func decodeEntities(text string) string {
@@ -2092,7 +2092,7 @@ export function decodeEntities(text: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntity","kind":"func","status":"implemented","sigHash":"4bb9aac76a120e8bbe20916b93f1ac0c265495822afaba8e4cc07923912ced7c","bodyHash":"94bedc7259efeeb9f316aee33ca968399723144efbb30fd68d51d8b919810646"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::decodeEntity","kind":"func","status":"implemented","sigHash":"4bb9aac76a120e8bbe20916b93f1ac0c265495822afaba8e4cc07923912ced7c"}
  *
  * Go source:
  * func decodeEntity(entity string) (rune, bool) {
@@ -2182,7 +2182,7 @@ export function decodeEntity(entity: string): [GoRune, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::varGroup::entities","kind":"varGroup","status":"implemented","sigHash":"51404371608f057592af4d34bb1c92b8d1a5e5983a57acc92602ab706c0a4ca8","bodyHash":"71bd3ae041595410d72be25f78a4c529c0a344d00900e897c8275b4ce16844fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::varGroup::entities","kind":"varGroup","status":"implemented","sigHash":"51404371608f057592af4d34bb1c92b8d1a5e5983a57acc92602ab706c0a4ca8"}
  *
  * Go source:
  * var entities = map[string]rune{

@@ -34,7 +34,7 @@ import {
 } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"7d4350127685ad85d1d7c869b509a1b8e4995e6ecf4b77829c7cae4a68a38b9a","bodyHash":"7ed9cff31c57be9eb2bea4b79dc6b331f648fc004da573f49c42e6bd58df1bff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::shouldAllowImportingTsExtension","kind":"func","status":"implemented","sigHash":"7d4350127685ad85d1d7c869b509a1b8e4995e6ecf4b77829c7cae4a68a38b9a"}
  *
  * Go source:
  * func shouldAllowImportingTsExtension(compilerOptions *core.CompilerOptions, fromFileName string) bool {
@@ -46,7 +46,7 @@ export function shouldAllowImportingTsExtension(compilerOptions: GoPtr<CompilerO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::usesExtensionsOnImports","kind":"func","status":"implemented","sigHash":"ca9485891208ae5f15e0d38f9d136370b02822dd641b6949dfdc9541befd6920","bodyHash":"69bfa28c8b7e8d9891549b2919d658099f566131c31ab9d579452161316da7b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::usesExtensionsOnImports","kind":"func","status":"implemented","sigHash":"ca9485891208ae5f15e0d38f9d136370b02822dd641b6949dfdc9541befd6920"}
  *
  * Go source:
  * func usesExtensionsOnImports(file SourceFileForSpecifierGeneration) bool {
@@ -70,7 +70,7 @@ export function usesExtensionsOnImports(file: SourceFileForSpecifierGeneration):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::inferPreference","kind":"func","status":"implemented","sigHash":"dd2f3ce2f51425a7d6370accc0948d646de045f610568ad620fb8869b69b7b91","bodyHash":"b404a78e9fb76840c937a236a9d6a194e6e4197cd2d4a212831377d0c422d47c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::inferPreference","kind":"func","status":"implemented","sigHash":"dd2f3ce2f51425a7d6370accc0948d646de045f610568ad620fb8869b69b7b91"}
  *
  * Go source:
  * func inferPreference(
@@ -149,7 +149,7 @@ export function inferPreference(resolutionMode: ResolutionMode, sourceFile: Sour
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierEndingPreference","kind":"func","status":"implemented","sigHash":"61632fc70011b868203184f89e7bc1653d15795b92c117fabaed5cf5cfc5243e","bodyHash":"eb50c50d0402d8cb195f0275d28be0595bdd1c0e6265386211c22d3400999865"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierEndingPreference","kind":"func","status":"implemented","sigHash":"61632fc70011b868203184f89e7bc1653d15795b92c117fabaed5cf5cfc5243e"}
  *
  * Go source:
  * func getModuleSpecifierEndingPreference(
@@ -238,7 +238,7 @@ export function getModuleSpecifierEndingPreference(pref: ImportModuleSpecifierEn
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getPreferredEnding","kind":"func","status":"implemented","sigHash":"030aa65ff276530d90ca9c7615baf7ad1607e7c2fc97a187541ae1744a9200d3","bodyHash":"e8150d360b8a857acbaf420835ee5c0e9842afeba936ede84db088b9641888a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getPreferredEnding","kind":"func","status":"implemented","sigHash":"030aa65ff276530d90ca9c7615baf7ad1607e7c2fc97a187541ae1744a9200d3"}
  *
  * Go source:
  * func getPreferredEnding(
@@ -282,7 +282,7 @@ export function getPreferredEnding(prefs: UserPreferences, host: ModuleSpecifier
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"implemented","sigHash":"526c81e2bad67b3df88ec66937d4eafcccf1ec64bee02703b1fa5c83326c7130","bodyHash":"6b9197e979443465e5e8c4f3e9787cf800a1667e4079421e3ea1ef58bcfc6cb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"implemented","sigHash":"526c81e2bad67b3df88ec66937d4eafcccf1ec64bee02703b1fa5c83326c7130"}
  *
  * Go source:
  * ModuleSpecifierPreferences struct {
@@ -298,7 +298,7 @@ export interface ModuleSpecifierPreferences {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::GetAllowedEndingsInPreferredOrder","kind":"func","status":"implemented","sigHash":"d681bac04f83b4c5ae5c17476badb8a4028ab94583383ad79e7fe3af9c7c6db3","bodyHash":"2cd75af743083efb6126bdcf6c52501438f2dc6e9a1b8b2f2492e67054dfb84e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::GetAllowedEndingsInPreferredOrder","kind":"func","status":"implemented","sigHash":"d681bac04f83b4c5ae5c17476badb8a4028ab94583383ad79e7fe3af9c7c6db3"}
  *
  * Go source:
  * func GetAllowedEndingsInPreferredOrder(
@@ -401,7 +401,7 @@ export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierPreferences","kind":"func","status":"implemented","sigHash":"4d7b610b087e5c6c565c0a3d9dbadd8a62dc0a2e3de94af1f995b1bb629aa1ec","bodyHash":"d7048861aaa932bed12ff1569b6426db04357271ae7e35934bb89a23d6e7d54b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierPreferences","kind":"func","status":"implemented","sigHash":"4d7b610b087e5c6c565c0a3d9dbadd8a62dc0a2e3de94af1f995b1bb629aa1ec"}
  *
  * Go source:
  * func getModuleSpecifierPreferences(

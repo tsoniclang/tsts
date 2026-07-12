@@ -18,7 +18,7 @@ import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::type::exponentiationTransformer","kind":"type","status":"implemented","sigHash":"ebc8b5b371fca078fe4ad9e897c21e1f94e1212d3d77cfcf3fb427b3fa484a80","bodyHash":"2523adac1feebbc2203b099649dbe314c593b2a554179a79c9641e4a54835db1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::type::exponentiationTransformer","kind":"type","status":"implemented","sigHash":"ebc8b5b371fca078fe4ad9e897c21e1f94e1212d3d77cfcf3fb427b3fa484a80"}
  *
  * Go source:
  * exponentiationTransformer struct {
@@ -30,7 +30,7 @@ export interface exponentiationTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visit","kind":"method","status":"implemented","sigHash":"e9ffa2c1f873f6d47b807b42d38df63e8293d2948ddd39f8523ab4050504be6d","bodyHash":"59dc4e5dcf3a832757960f3d656aefee81e7d2248b4b2d19b45c0f2e39e2d4a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visit","kind":"method","status":"implemented","sigHash":"e9ffa2c1f873f6d47b807b42d38df63e8293d2948ddd39f8523ab4050504be6d"}
  *
  * Go source:
  * func (ch *exponentiationTransformer) visit(node *ast.Node) *ast.Node {
@@ -59,7 +59,7 @@ export function exponentiationTransformer_visit(receiver: GoPtr<exponentiationTr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"610f3653de7e3635bd7c5b337d878d462956fca6ffc88757b446bbddc4de8018","bodyHash":"5929fefe7812d357db0abf32cd3f53a1397d5ed9e6a1fe9373f5b7096143dfdf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitBinaryExpression","kind":"method","status":"implemented","sigHash":"610f3653de7e3635bd7c5b337d878d462956fca6ffc88757b446bbddc4de8018"}
  *
  * Go source:
  * func (ch *exponentiationTransformer) visitBinaryExpression(node *ast.BinaryExpression) *ast.Node {
@@ -84,7 +84,7 @@ export function exponentiationTransformer_visitBinaryExpression(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitExponentiationAssignmentExpression","kind":"method","status":"implemented","sigHash":"ab27c5291c1329e5dffe20ad47c1f6c7363befa3a5c27e53fb176499935bbb35","bodyHash":"a1c731db2cb431397422085332286a7354a715b6327288cbe23067f0e887e933"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitExponentiationAssignmentExpression","kind":"method","status":"implemented","sigHash":"ab27c5291c1329e5dffe20ad47c1f6c7363befa3a5c27e53fb176499935bbb35"}
  *
  * Go source:
  * func (ch *exponentiationTransformer) visitExponentiationAssignmentExpression(node *ast.BinaryExpression) *ast.Node {
@@ -182,7 +182,7 @@ export function exponentiationTransformer_visitExponentiationAssignmentExpressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitExponentiationExpression","kind":"method","status":"implemented","sigHash":"840f8f322ebeae75744a71fbc019e3e036e7f919bd27e8b9aaff8f2894840534","bodyHash":"1b59c8a8f4f9245cf1720a38b6b1f126b11cdcdf120b6b995970a597b7c8fde0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::method::exponentiationTransformer.visitExponentiationExpression","kind":"method","status":"implemented","sigHash":"840f8f322ebeae75744a71fbc019e3e036e7f919bd27e8b9aaff8f2894840534"}
  *
  * Go source:
  * func (ch *exponentiationTransformer) visitExponentiationExpression(node *ast.BinaryExpression) *ast.Node {
@@ -204,7 +204,7 @@ export function exponentiationTransformer_visitExponentiationExpression(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::func::newExponentiationTransformer","kind":"func","status":"implemented","sigHash":"e22a9d453704aac914a1496f5ec2ba3f80ded705229015f0dedeb6db3539bff0","bodyHash":"3967ffaf60b99de5955a84e78968df523f5efdb499c6b9a0e97422ad7ce87764"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/exponentiation.go::func::newExponentiationTransformer","kind":"func","status":"implemented","sigHash":"e22a9d453704aac914a1496f5ec2ba3f80ded705229015f0dedeb6db3539bff0"}
  *
  * Go source:
  * func newExponentiationTransformer(opts *transformers.TransformOptions) *transformers.Transformer {

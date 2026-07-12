@@ -20,7 +20,7 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 import type { ProgramOptions } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6","bodyHash":"c70ffa65c0a7cbf4488dcb61bb0f1edc90d7ae2469629d6e4783f50b6301ad94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6"}
  *
  * Go source:
  * projectReferenceFileMapper struct {
@@ -49,7 +49,7 @@ export interface projectReferenceFileMapper {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getParseFileRedirect","kind":"method","status":"implemented","sigHash":"443d5fbcdb23fe26450f2b867958ab98864f90a7fd948906f5068179a8889dcc","bodyHash":"b874a38a83ad474eb6682b3bec65bcb60b5f87b4c795f253fa30ec6450e0b4a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getParseFileRedirect","kind":"method","status":"implemented","sigHash":"443d5fbcdb23fe26450f2b867958ab98864f90a7fd948906f5068179a8889dcc"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getParseFileRedirect(file ast.HasFileName) string {
@@ -93,7 +93,7 @@ export function projectReferenceFileMapper_getParseFileRedirect(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getResolvedProjectReferences","kind":"method","status":"implemented","sigHash":"574bc40821ce53dc86eaadc776ebae140295e7963308985d393cf5a36f3b4243","bodyHash":"80d3985d9f060a57c8fa452f0fe6cae59e933e72fdf12f9576b37535bd395a07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getResolvedProjectReferences","kind":"method","status":"implemented","sigHash":"574bc40821ce53dc86eaadc776ebae140295e7963308985d393cf5a36f3b4243"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getResolvedProjectReferences() []*tsoptions.ParsedCommandLine {
@@ -131,7 +131,7 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getProjectReferenceFromSource","kind":"method","status":"implemented","sigHash":"0d58e28c39846a67abdcadaca766b3f4d5093b40254947a76625df623286ac5d","bodyHash":"09ffe140fd6e5ea2d25aff278dfa4fbc00d0f883fafd7d5bd1ac7462f3aa3a5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getProjectReferenceFromSource","kind":"method","status":"implemented","sigHash":"0d58e28c39846a67abdcadaca766b3f4d5093b40254947a76625df623286ac5d"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getProjectReferenceFromSource(path tspath.Path) *tsoptions.SourceOutputAndProjectReference {
@@ -143,7 +143,7 @@ export function projectReferenceFileMapper_getProjectReferenceFromSource(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getProjectReferenceFromOutputDts","kind":"method","status":"implemented","sigHash":"e481e0eb7459bbf651ea47b68269b41f6f4780dd41b99042ac4925173a9c8dc2","bodyHash":"1554eba4056d2e732e9c1b009585333acf016220b4be0600ce81c84c71d15556"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getProjectReferenceFromOutputDts","kind":"method","status":"implemented","sigHash":"e481e0eb7459bbf651ea47b68269b41f6f4780dd41b99042ac4925173a9c8dc2"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getProjectReferenceFromOutputDts(path tspath.Path) *tsoptions.SourceOutputAndProjectReference {
@@ -155,7 +155,7 @@ export function projectReferenceFileMapper_getProjectReferenceFromOutputDts(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.isSourceFromProjectReference","kind":"method","status":"implemented","sigHash":"e60ee5d125e9553239739a0e5e2c3d68f3d8791d55c07cee56ec9824e0a08bf3","bodyHash":"24a987763f278b507986cd48007d977658eee31f800528d4f7600822415d1f20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.isSourceFromProjectReference","kind":"method","status":"implemented","sigHash":"e60ee5d125e9553239739a0e5e2c3d68f3d8791d55c07cee56ec9824e0a08bf3"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) isSourceFromProjectReference(path tspath.Path) bool {
@@ -167,7 +167,7 @@ export function projectReferenceFileMapper_isSourceFromProjectReference(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getCompilerOptionsForFile","kind":"method","status":"implemented","sigHash":"648ac6345ae46efeb4c78b1f11f11c5b27263be410527329bf2a131eaf3f46bf","bodyHash":"e46f623c4d740cc401770b98254d9778fc128012385ba2b0395302269facacc2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getCompilerOptionsForFile","kind":"method","status":"implemented","sigHash":"648ac6345ae46efeb4c78b1f11f11c5b27263be410527329bf2a131eaf3f46bf"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getCompilerOptionsForFile(file ast.HasFileName) *core.CompilerOptions {
@@ -184,7 +184,7 @@ export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getRedirectParsedCommandLineForResolution","kind":"method","status":"implemented","sigHash":"81228748952f1031e9ccb4601ddef04a082645d305150efc155c46b340d5006a","bodyHash":"2afe0acb8bf8d74f30e2a7acd8662e08fb9720c808ee7958e678496d709f5b6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getRedirectParsedCommandLineForResolution","kind":"method","status":"implemented","sigHash":"81228748952f1031e9ccb4601ddef04a082645d305150efc155c46b340d5006a"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getRedirectParsedCommandLineForResolution(file ast.HasFileName) *tsoptions.ParsedCommandLine {
@@ -198,7 +198,7 @@ export function projectReferenceFileMapper_getRedirectParsedCommandLineForResolu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getRedirectForResolution","kind":"method","status":"implemented","sigHash":"23dffafde00401d006e7f08c2b83e05ac9dedcd9b8354396bf7fabe02332588b","bodyHash":"497d882d21e6e6435e6fc3f68babfe8b05a71ac06775635d1b23e3f99bfcda44"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getRedirectForResolution","kind":"method","status":"implemented","sigHash":"23dffafde00401d006e7f08c2b83e05ac9dedcd9b8354396bf7fabe02332588b"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getRedirectForResolution(file ast.HasFileName) (*tsoptions.ParsedCommandLine, string) {
@@ -244,7 +244,7 @@ export function projectReferenceFileMapper_getRedirectForResolution(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getResolvedReferenceFor","kind":"method","status":"implemented","sigHash":"5e2d0e4e01d7349b0c9a21f85804d930008798cb003e03b7a6390f70d69ce155","bodyHash":"e5f6f6ca6e2e317cfbf58e99ab9efc6e614ba69276384c1567087c54e60f79bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getResolvedReferenceFor","kind":"method","status":"implemented","sigHash":"5e2d0e4e01d7349b0c9a21f85804d930008798cb003e03b7a6390f70d69ce155"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getResolvedReferenceFor(path tspath.Path) (*tsoptions.ParsedCommandLine, bool) {
@@ -259,7 +259,7 @@ export function projectReferenceFileMapper_getResolvedReferenceFor(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedProjectReference","kind":"method","status":"implemented","sigHash":"bb49154f76c97e6e48c99f97162d83bf1802886e9adc44a191b9d080f5f3e586","bodyHash":"5b9cd4c0d0d98721ee289b5929f603afdf5eb80fbc1783ffff18743673985577"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedProjectReference","kind":"method","status":"implemented","sigHash":"bb49154f76c97e6e48c99f97162d83bf1802886e9adc44a191b9d080f5f3e586"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) rangeResolvedProjectReference(
@@ -285,7 +285,7 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedReferenceWorker","kind":"method","status":"implemented","sigHash":"75d3bc5f39713329e257b3eb8767d820b86644eb9468be82762a278a0435bb7b","bodyHash":"162f208ad8ac6ef51b25e11500673e8af530079fb3eb6a217de5bdbf4b900b3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedReferenceWorker","kind":"method","status":"implemented","sigHash":"75d3bc5f39713329e257b3eb8767d820b86644eb9468be82762a278a0435bb7b"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) rangeResolvedReferenceWorker(
@@ -327,7 +327,7 @@ export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedProjectReferenceInChildConfig","kind":"method","status":"implemented","sigHash":"73e5edd34ec23f6bfd6a48b272b609c4bb6ba0b61f44b4621b481ecc0f469014","bodyHash":"ed5f44aeca629d9c68b82c6376dc703b195e2eeabd34a5df0fd5c96290224f66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.rangeResolvedProjectReferenceInChildConfig","kind":"method","status":"implemented","sigHash":"73e5edd34ec23f6bfd6a48b272b609c4bb6ba0b61f44b4621b481ecc0f469014"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) rangeResolvedProjectReferenceInChildConfig(
@@ -354,7 +354,7 @@ export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getSourceToDtsIfSymlink","kind":"method","status":"implemented","sigHash":"b34848f0b911065e69c686d3afddf6ad646fff612b7f76182f3ac1340a2f385a","bodyHash":"69097be86ed3afffa567258058fe3411af21d388810eeece979a951f711fd13c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::method::projectReferenceFileMapper.getSourceToDtsIfSymlink","kind":"method","status":"implemented","sigHash":"b34848f0b911065e69c686d3afddf6ad646fff612b7f76182f3ac1340a2f385a"}
  *
  * Go source:
  * func (mapper *projectReferenceFileMapper) getSourceToDtsIfSymlink(file ast.HasFileName) *tsoptions.SourceOutputAndProjectReference {

@@ -11,7 +11,7 @@ import type { ComparePathsOptions } from "../../tspath/path.js";
 import type { FS } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::Usage","kind":"type","status":"implemented","sigHash":"47e8ee4b4da9d149b50eedf7a872fae159481b92e688730c131fe23c21e25fbf","bodyHash":"56c72bc27d92dabb6a98e08c0218812331e176b895533580d85b7591ec37069d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::Usage","kind":"type","status":"implemented","sigHash":"47e8ee4b4da9d149b50eedf7a872fae159481b92e688730c131fe23c21e25fbf"}
  *
  * Go source:
  * Usage int8
@@ -19,7 +19,7 @@ import type { FS } from "../vfs.js";
 export type Usage = sbyte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UsageFiles+UsageDirectories+UsageExclude","kind":"constGroup","status":"implemented","sigHash":"a53d6d662e8ca29c2d0fa9fec4b00d1a7fc4952b2991d601cb7799374510f440","bodyHash":"951aca00c806bad6e498aec253e74f97521185aa8ca351f29373368d11c45c30"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UsageFiles+UsageDirectories+UsageExclude","kind":"constGroup","status":"implemented","sigHash":"a53d6d662e8ca29c2d0fa9fec4b00d1a7fc4952b2991d601cb7799374510f440"}
  *
  * Go source:
  * const (
@@ -33,7 +33,7 @@ export const UsageDirectories: Usage = 1 as Usage;
 export const UsageExclude: Usage = 2 as Usage;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UnlimitedDepth","kind":"constGroup","status":"implemented","sigHash":"014f91465101a37e9f3d5e3d2269e6189ded89b9430d014ea987228d62bc25f5","bodyHash":"149f35c49dfd7dc3818eb9917c518953feb4f1a3c47b34a53135f2b53bdecfa7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::UnlimitedDepth","kind":"constGroup","status":"implemented","sigHash":"014f91465101a37e9f3d5e3d2269e6189ded89b9430d014ea987228d62bc25f5"}
  *
  * Go source:
  * const UnlimitedDepth = math.MaxInt
@@ -41,7 +41,7 @@ export const UsageExclude: Usage = 2 as Usage;
 export const UnlimitedDepth: int = MaxInt;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::ReadDirectory","kind":"func","status":"implemented","sigHash":"d4e3e6106bc8f65e288e603282ad88d4ff63bd888990ec2d2e1136aa420b27e0","bodyHash":"4c8d9a4776bfded31a67d3ea6a7bf82c5e229d06d2efab36d4768b2a7479725f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::ReadDirectory","kind":"func","status":"implemented","sigHash":"d4e3e6106bc8f65e288e603282ad88d4ff63bd888990ec2d2e1136aa420b27e0"}
  *
  * Go source:
  * func ReadDirectory(host vfs.FS, currentDir string, path string, extensions []string, excludes []string, includes []string, depth int) []string {
@@ -53,7 +53,7 @@ export function ReadDirectory(host: FS, currentDir: string, path: string, extens
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::IsImplicitGlob","kind":"func","status":"implemented","sigHash":"2d31e1769b8918d7248ff122f1df44979f642208bcd229eb61f1a743f4f59282","bodyHash":"abb9d43b95d70edb2b0ea8c223555f23195bd7e71d22cb9bbaaf622e0d338f1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::IsImplicitGlob","kind":"func","status":"implemented","sigHash":"2d31e1769b8918d7248ff122f1df44979f642208bcd229eb61f1a743f4f59282"}
  *
  * Go source:
  * func IsImplicitGlob(lastPathComponent string) bool {
@@ -65,7 +65,7 @@ export function IsImplicitGlob(lastPathComponent: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::varGroup::wildcardCharCodes","kind":"varGroup","status":"implemented","sigHash":"2b0c76c5c3cbfae697e8362c3f5706232dc2854a327a1d5121f0a95235850929","bodyHash":"260b8dc9dcb50655a22c16a47f99b61e3f950f5da7614a3ef29337bf39561911"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::varGroup::wildcardCharCodes","kind":"varGroup","status":"implemented","sigHash":"2b0c76c5c3cbfae697e8362c3f5706232dc2854a327a1d5121f0a95235850929"}
  *
  * Go source:
  * var wildcardCharCodes = []rune{'*', '?'}
@@ -73,7 +73,7 @@ export function IsImplicitGlob(lastPathComponent: string): bool {
 export let wildcardCharCodes: GoSlice<GoRune> = [0x2a, 0x3f] as GoSlice<GoRune>; // '*', '?'
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getIncludeBasePath","kind":"func","status":"implemented","sigHash":"8d50a317ffb7fb224ecf550f5c6cee8f39ba6f9c84401ed760249cc559bd9a70","bodyHash":"0f7e4b2610803f0cf46a924db1bb35f53e0d9eb95102ff13f1dc44bd73efbf43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getIncludeBasePath","kind":"func","status":"implemented","sigHash":"8d50a317ffb7fb224ecf550f5c6cee8f39ba6f9c84401ed760249cc559bd9a70"}
  *
  * Go source:
  * func getIncludeBasePath(absolute string) string {
@@ -116,7 +116,7 @@ function findFirstWildcard(s: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getBasePaths","kind":"func","status":"implemented","sigHash":"979ce35f7d356d25332b0898eccc14986ef19c73e864ec995fb40c2c4590a767","bodyHash":"b1ce1df8bd5fc810112af9f041b1987ec67bf48bb2dc35827b70ebfef039b485"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::getBasePaths","kind":"func","status":"implemented","sigHash":"979ce35f7d356d25332b0898eccc14986ef19c73e864ec995fb40c2c4590a767"}
  *
  * Go source:
  * func getBasePaths(path string, includes []string, useCaseSensitiveFileNames bool) []string {
@@ -191,7 +191,7 @@ export function getBasePaths(path: string, includes: GoPtr<GoSlice<string>>, use
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globPattern","kind":"type","status":"implemented","sigHash":"073759b00fb56a17d01343148759131d7f1fe08d7f2dcd158f69ab45fb458865","bodyHash":"b6ad296dea8a6b88c65b0cd490b00b4353a2cee9c54e873d328df823e5c34a5d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globPattern","kind":"type","status":"implemented","sigHash":"073759b00fb56a17d01343148759131d7f1fe08d7f2dcd158f69ab45fb458865"}
  *
  * Go source:
  * globPattern struct {
@@ -209,7 +209,7 @@ export interface globPattern {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::component","kind":"type","status":"implemented","sigHash":"a263a079c092653238449adb9d078ed32c79a17b563a595ec00faf22c27fea6f","bodyHash":"2db8da8f1069d478e904f4889fb517c7e39d30ad67330a1042ba975203792081"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::component","kind":"type","status":"implemented","sigHash":"a263a079c092653238449adb9d078ed32c79a17b563a595ec00faf22c27fea6f"}
  *
  * Go source:
  * component struct {
@@ -228,7 +228,7 @@ export interface component {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::componentKind","kind":"type","status":"implemented","sigHash":"28243866ad66398833f148a1c476e8a10c84f142727b77519a8ae2e87be7e376","bodyHash":"d24512119ee1c70f0a621c39e9b7f9569b8d5fc782f67e45c5f5bc11eaf33895"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::componentKind","kind":"type","status":"implemented","sigHash":"28243866ad66398833f148a1c476e8a10c84f142727b77519a8ae2e87be7e376"}
  *
  * Go source:
  * componentKind int
@@ -236,7 +236,7 @@ export interface component {
 export type componentKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::kindLiteral+kindWildcard+kindDoubleAsterisk","kind":"constGroup","status":"implemented","sigHash":"e8a05df27f88e9ed290cfcc84175116fe54f88bcb4fefcb8232f8bb4f7b52ad1","bodyHash":"44e371906d92af9a02f13cb4448c11b7f534888439be6b52e3232e80a23b1c1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::kindLiteral+kindWildcard+kindDoubleAsterisk","kind":"constGroup","status":"implemented","sigHash":"e8a05df27f88e9ed290cfcc84175116fe54f88bcb4fefcb8232f8bb4f7b52ad1"}
  *
  * Go source:
  * const (
@@ -250,7 +250,7 @@ export const kindWildcard: componentKind = 1 as componentKind;
 export const kindDoubleAsterisk: componentKind = 2 as componentKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::segment","kind":"type","status":"implemented","sigHash":"45f4e296cff4b805c8121b192a03684b3d2ed5b9db5ced879965b380d4d8d459","bodyHash":"f2f71cb560baf8146d57432a1843a4a85c0b1234d053e46e8269fcd1a4a61674"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::segment","kind":"type","status":"implemented","sigHash":"45f4e296cff4b805c8121b192a03684b3d2ed5b9db5ced879965b380d4d8d459"}
  *
  * Go source:
  * segment struct {
@@ -264,7 +264,7 @@ export interface segment {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::segmentKind","kind":"type","status":"implemented","sigHash":"19c985deb44e2f58b8f824be1bed5e98f45a9a84822253c1fc77a90f7afa6aef","bodyHash":"138b5917537a844639cfdad997d1d26a478082269b62b91fda21f7124d5d4b36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::segmentKind","kind":"type","status":"implemented","sigHash":"19c985deb44e2f58b8f824be1bed5e98f45a9a84822253c1fc77a90f7afa6aef"}
  *
  * Go source:
  * segmentKind int
@@ -272,7 +272,7 @@ export interface segment {
 export type segmentKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::segLiteral+segStar+segQuestion","kind":"constGroup","status":"implemented","sigHash":"6d13ee50d992180fda91fde9a5782fa860b016bee1041851d2dc324dc4ca13cb","bodyHash":"ec20df886a8ab77c384b393c3699b0b571234c235a1cdba5df43cd6207ec3bf9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::constGroup::segLiteral+segStar+segQuestion","kind":"constGroup","status":"implemented","sigHash":"6d13ee50d992180fda91fde9a5782fa860b016bee1041851d2dc324dc4ca13cb"}
  *
  * Go source:
  * const (
@@ -286,7 +286,7 @@ export const segStar: segmentKind = 1 as segmentKind;
 export const segQuestion: segmentKind = 2 as segmentKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::compileGlobPattern","kind":"func","status":"implemented","sigHash":"73acfa566b73726ec1696d86eac308b62bff6e3e92f0a3c793543142e2d25bb9","bodyHash":"1e49ebedb0bb17d63689443975670d468cba20da50f0bc8164c622890852e06c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::compileGlobPattern","kind":"func","status":"implemented","sigHash":"73acfa566b73726ec1696d86eac308b62bff6e3e92f0a3c793543142e2d25bb9"}
  *
  * Go source:
  * func compileGlobPattern(spec string, basePath string, usage Usage, caseSensitive bool) (globPattern, bool) {
@@ -349,7 +349,7 @@ export function compileGlobPattern(spec: string, basePath: string, usage: Usage,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::parseComponent","kind":"func","status":"implemented","sigHash":"63a4282a73c6ff2b67e20fc041d4263b1217b7d4d741703cd6eed7268bc07cbe","bodyHash":"9cc87507b99d066b8295e7cf1418bff6919f3b94c934575330af6adafe8b5c84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::parseComponent","kind":"func","status":"implemented","sigHash":"63a4282a73c6ff2b67e20fc041d4263b1217b7d4d741703cd6eed7268bc07cbe"}
  *
  * Go source:
  * func parseComponent(s string, isInclude bool) component {
@@ -382,7 +382,7 @@ export function parseComponent(s: string, isInclude: bool): component {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::parseSegments","kind":"func","status":"implemented","sigHash":"28122925789061e4ae9d16f2b676a3fbcebd22985d3f7d2f6815f3c85b2c86b3","bodyHash":"73cbc3b03adb12a609d5899dec386384698fb41d9040d09c65541bf30896f653"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::parseSegments","kind":"func","status":"implemented","sigHash":"28122925789061e4ae9d16f2b676a3fbcebd22985d3f7d2f6815f3c85b2c86b3"}
  *
  * Go source:
  * func parseSegments(s string) []segment {
@@ -439,7 +439,7 @@ export function parseSegments(s: string): GoSlice<segment> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matches","kind":"method","status":"implemented","sigHash":"51f1aa6c9ff4fb020b8e6b007b3a83e4950193a75231083759a71416cdce7541","bodyHash":"df3b558296caac30b46dfe49ce5d5cb25dea31f8a871a8da22ea264f6805579e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matches","kind":"method","status":"implemented","sigHash":"51f1aa6c9ff4fb020b8e6b007b3a83e4950193a75231083759a71416cdce7541"}
  *
  * Go source:
  * func (p *globPattern) matches(path string) bool {
@@ -451,7 +451,7 @@ export function globPattern_matches(receiver: GoPtr<globPattern>, path: string):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchesParts","kind":"method","status":"implemented","sigHash":"e7cf518b6ff47b161ce6ad80bf71628861197c5d3061e6b9c2d9be202a814df0","bodyHash":"e39c10b4ae8310c8603e4e1418194ab921476bd054e9bcc4318ce601ea52efea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchesParts","kind":"method","status":"implemented","sigHash":"e7cf518b6ff47b161ce6ad80bf71628861197c5d3061e6b9c2d9be202a814df0"}
  *
  * Go source:
  * func (p *globPattern) matchesParts(prefix, suffix string) bool {
@@ -463,7 +463,7 @@ export function globPattern_matchesParts(receiver: GoPtr<globPattern>, prefix: s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchesPrefixParts","kind":"method","status":"implemented","sigHash":"5cf142c057cf6051b8ee3d9143d47080ba474552f4718c302ffa518c946e7e02","bodyHash":"461b177c637e12f6279d8098db55f315c219a501fa4214e65bd3e4950eb91714"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchesPrefixParts","kind":"method","status":"implemented","sigHash":"5cf142c057cf6051b8ee3d9143d47080ba474552f4718c302ffa518c946e7e02"}
  *
  * Go source:
  * func (p *globPattern) matchesPrefixParts(prefix, suffix string) bool {
@@ -475,7 +475,7 @@ export function globPattern_matchesPrefixParts(receiver: GoPtr<globPattern>, pre
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchPathParts","kind":"method","status":"implemented","sigHash":"94e3333c819df5b86d152ff8b01cbf0c26c00eb798cac7c1259f528a37ce0ca6","bodyHash":"cbedbde2941b7688d46b7c04b495d5a0013e1f8896ea9154a446ba1a00e76860"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchPathParts","kind":"method","status":"implemented","sigHash":"94e3333c819df5b86d152ff8b01cbf0c26c00eb798cac7c1259f528a37ce0ca6"}
  *
  * Go source:
  * func (p *globPattern) matchPathParts(prefix, suffix string, pathOffset, compIdx int, prefixOnly bool) bool {
@@ -571,7 +571,7 @@ export function globPattern_matchPathParts(receiver: GoPtr<globPattern>, prefix:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.patternSatisfied","kind":"method","status":"implemented","sigHash":"135482bf64d60ed39955c49a4242d2a1bc02ae29bac39d7521cb66eb9472621f","bodyHash":"2b2501bbdf1d01f21e54eb5c2a5f50f17e4ed81c5097886db720f3fa20efb0b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.patternSatisfied","kind":"method","status":"implemented","sigHash":"135482bf64d60ed39955c49a4242d2a1bc02ae29bac39d7521cb66eb9472621f"}
  *
  * Go source:
  * func (p *globPattern) patternSatisfied(compIdx int) bool {
@@ -595,7 +595,7 @@ export function globPattern_patternSatisfied(receiver: GoPtr<globPattern>, compI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::nextPathPartSingle","kind":"func","status":"implemented","sigHash":"1c44748f692241fd2f9e1f87a56e8a79237a2ebacb26e1686d68120392528f2f","bodyHash":"55fbc7247dff9f607929b530545115f7296401575dd2678a341f57481f7dbca8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::nextPathPartSingle","kind":"func","status":"implemented","sigHash":"1c44748f692241fd2f9e1f87a56e8a79237a2ebacb26e1686d68120392528f2f"}
  *
  * Go source:
  * func nextPathPartSingle(s string, offset int) (part string, nextOffset int, ok bool) {
@@ -641,7 +641,7 @@ export function nextPathPartSingle(s: string, offset: int): [string, int, bool] 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::nextPathPartParts","kind":"func","status":"implemented","sigHash":"73943580feb1e39ee4d91fe6233a98aa09c17f864c51c10143929d4a6078c99e","bodyHash":"59d446d892bf179341fb616a5f406ba911afa76f0cbfbd5536b58ea607498cf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::nextPathPartParts","kind":"func","status":"implemented","sigHash":"73943580feb1e39ee4d91fe6233a98aa09c17f864c51c10143929d4a6078c99e"}
  *
  * Go source:
  * func nextPathPartParts(prefix, suffix string, offset int) (part string, nextOffset int, ok bool) {
@@ -732,7 +732,7 @@ export function nextPathPartParts(prefix: string, suffix: string, offset: int): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchWildcard","kind":"method","status":"implemented","sigHash":"0dc89760f1b9fe918dbbb81b82b6e006b5f868ea5da9d6a797f156122af78a23","bodyHash":"b310548205877b0a2f96afa6fc2b16c8c843a9fb45b53d9f75d893175b1ab45e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchWildcard","kind":"method","status":"implemented","sigHash":"0dc89760f1b9fe918dbbb81b82b6e006b5f868ea5da9d6a797f156122af78a23"}
  *
  * Go source:
  * func (p *globPattern) matchWildcard(segs []segment, s string) bool {
@@ -772,7 +772,7 @@ export function globPattern_matchWildcard(receiver: GoPtr<globPattern>, segs: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchSegments","kind":"method","status":"implemented","sigHash":"c58ca1b78f9a701ba1ea205284a3fd135967be4f023cb04ef335a6cedbc566d3","bodyHash":"a209f26a48636575d6c7299acc345af98f973dc553208c5a35f4b5372f5cc497"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.matchSegments","kind":"method","status":"implemented","sigHash":"c58ca1b78f9a701ba1ea205284a3fd135967be4f023cb04ef335a6cedbc566d3"}
  *
  * Go source:
  * func (p *globPattern) matchSegments(segs []segment, s string) bool {
@@ -882,7 +882,7 @@ export function globPattern_matchSegments(receiver: GoPtr<globPattern>, segs: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.shouldIncludeMinJs","kind":"method","status":"implemented","sigHash":"1483e3bca64f4fc7597d01cae97a7e363454b834eccdb14c77c6c5bf9b6478c6","bodyHash":"09a9ffa1b61caabd2f5a65df7bc20b180946938f620ab7062ec847bbfe163c8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.shouldIncludeMinJs","kind":"method","status":"implemented","sigHash":"1483e3bca64f4fc7597d01cae97a7e363454b834eccdb14c77c6c5bf9b6478c6"}
  *
  * Go source:
  * func (p *globPattern) shouldIncludeMinJs(filename string, segs []segment) bool {
@@ -918,7 +918,7 @@ export function globPattern_shouldIncludeMinJs(receiver: GoPtr<globPattern>, fil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.hasMinJsSuffix","kind":"method","status":"implemented","sigHash":"7249efc0bd57d472b1ae95fd1ff0e5552008414fb0f5e0aca550a9b253e49f22","bodyHash":"81de31b4fe8bd5fee0d55fb9b1af443c703e2cfd6d65abfa0125d37b19015589"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.hasMinJsSuffix","kind":"method","status":"implemented","sigHash":"7249efc0bd57d472b1ae95fd1ff0e5552008414fb0f5e0aca550a9b253e49f22"}
  *
  * Go source:
  * func (p *globPattern) hasMinJsSuffix(filename string) bool {
@@ -946,7 +946,7 @@ export function globPattern_hasMinJsSuffix(receiver: GoPtr<globPattern>, filenam
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.patternMentionsMinSuffix","kind":"method","status":"implemented","sigHash":"90b5d254a5e437042f85bcc978995bd102f79551a19b0c2b3242120a85294673","bodyHash":"2cc2f80f237349f9bf9b8153cca0fa465ba0a47fd132fe22aae7527ef6c74888"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.patternMentionsMinSuffix","kind":"method","status":"implemented","sigHash":"90b5d254a5e437042f85bcc978995bd102f79551a19b0c2b3242120a85294673"}
  *
  * Go source:
  * func (p *globPattern) patternMentionsMinSuffix(segs []segment) bool {
@@ -982,7 +982,7 @@ export function globPattern_patternMentionsMinSuffix(receiver: GoPtr<globPattern
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.stringsEqual","kind":"method","status":"implemented","sigHash":"fdf01a92a6ca468f1e28eac73831fe7b5efab24048011f77a06c04f3b108d435","bodyHash":"914dcfea83f165140e37b767727efb786f96cccdf48144aa3757c17973ee3b9c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globPattern.stringsEqual","kind":"method","status":"implemented","sigHash":"fdf01a92a6ca468f1e28eac73831fe7b5efab24048011f77a06c04f3b108d435"}
  *
  * Go source:
  * func (p *globPattern) stringsEqual(a, b string) bool {
@@ -1000,7 +1000,7 @@ export function globPattern_stringsEqual(receiver: GoPtr<globPattern>, a: string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::isHiddenPath","kind":"func","status":"implemented","sigHash":"14ca41a53f57f797dbd1b5666bb431ffa904c73b2823446388d5cd3fd44c5595","bodyHash":"47bcb1b2dbec268bb22e9426607ec93b1da0f95de662ca7aefe84a72b78a479e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::isHiddenPath","kind":"func","status":"implemented","sigHash":"14ca41a53f57f797dbd1b5666bb431ffa904c73b2823446388d5cd3fd44c5595"}
  *
  * Go source:
  * func isHiddenPath(name string) bool {
@@ -1012,7 +1012,7 @@ export function isHiddenPath(name: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::isPackageFolder","kind":"func","status":"implemented","sigHash":"a179e864919179b2a389038992e97e6cc4e0c591de0467473b5b278ed637f3e8","bodyHash":"7de120dfa3114fdc96a9943ceb1926b0cf90789c6611535062b4a3ff858f24f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::isPackageFolder","kind":"func","status":"implemented","sigHash":"a179e864919179b2a389038992e97e6cc4e0c591de0467473b5b278ed637f3e8"}
  *
  * Go source:
  * func isPackageFolder(name string) bool {
@@ -1040,7 +1040,7 @@ export function isPackageFolder(name: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::ensureTrailingSlash","kind":"func","status":"implemented","sigHash":"d765a88e09ac1b8b43ec682681714ee1448f58ff5ebf848ab86099accf287c0f","bodyHash":"4d07de59aa2193ea7a8cf67b1d841434eac35e82a70f3807483cbcfac1ceeebb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::ensureTrailingSlash","kind":"func","status":"implemented","sigHash":"d765a88e09ac1b8b43ec682681714ee1448f58ff5ebf848ab86099accf287c0f"}
  *
  * Go source:
  * func ensureTrailingSlash(s string) string {
@@ -1058,7 +1058,7 @@ export function ensureTrailingSlash(s: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globMatcher","kind":"type","status":"implemented","sigHash":"9210470a7c612ec2a7991ce49741a6ff3321bb129500529970d5983b3c31e3b1","bodyHash":"d905b9008e73b76351d900df492b73c157ec49b5abf1428173b9e0123ae51456"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globMatcher","kind":"type","status":"implemented","sigHash":"9210470a7c612ec2a7991ce49741a6ff3321bb129500529970d5983b3c31e3b1"}
  *
  * Go source:
  * globMatcher struct {
@@ -1074,7 +1074,7 @@ export interface globMatcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::newGlobMatcher","kind":"func","status":"implemented","sigHash":"00dce2ed78e83667a0cfbf819df8ed59a3868b43b0b8b4d158720574825a955c","bodyHash":"0eaa12fc88b375a2e90ae95932e74e917c27aa8c4dc0a6275f1dd13cda67dd9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::newGlobMatcher","kind":"func","status":"implemented","sigHash":"00dce2ed78e83667a0cfbf819df8ed59a3868b43b0b8b4d158720574825a955c"}
  *
  * Go source:
  * func newGlobMatcher(includeSpecs, excludeSpecs []string, basePath string, caseSensitive bool, usage Usage) *globMatcher {
@@ -1122,7 +1122,7 @@ export function newGlobMatcher(includeSpecs: GoPtr<GoSlice<string>>, excludeSpec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globMatcher.matchesFileParts","kind":"method","status":"implemented","sigHash":"5d85bff380c3c971da290b2a5416b74bc3ea9dea72f40f15d0672337f4922b12","bodyHash":"722e4715ecf8aadc4344e47f3885c209b0c1742fbe3f9574f95559b491e57db0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globMatcher.matchesFileParts","kind":"method","status":"implemented","sigHash":"5d85bff380c3c971da290b2a5416b74bc3ea9dea72f40f15d0672337f4922b12"}
  *
  * Go source:
  * func (m *globMatcher) matchesFileParts(prefix, suffix string) (int, bool) {
@@ -1166,7 +1166,7 @@ export function globMatcher_matchesFileParts(receiver: GoPtr<globMatcher>, prefi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globMatcher.matchesDirectoryParts","kind":"method","status":"implemented","sigHash":"6ce3df45e74aff0c708eb4f0e414a3b3bfc82d8a2987814126d1008e0a078228","bodyHash":"682a90eff36629eeaea8d0141dd41459f3bc08d615afe5f05c788ef57aefad69"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globMatcher.matchesDirectoryParts","kind":"method","status":"implemented","sigHash":"6ce3df45e74aff0c708eb4f0e414a3b3bfc82d8a2987814126d1008e0a078228"}
  *
  * Go source:
  * func (m *globMatcher) matchesDirectoryParts(prefix, suffix string) bool {
@@ -1204,7 +1204,7 @@ export function globMatcher_matchesDirectoryParts(receiver: GoPtr<globMatcher>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globVisitor","kind":"type","status":"implemented","sigHash":"0206a31108ef60284a4f39e2bc49ac759903fa60d3d4f5296eaf6fd443b68225","bodyHash":"83b834331519256a5881e74c55ffabd7cb21e9b4f7d846c37c07fdf9e16a5b75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::globVisitor","kind":"type","status":"implemented","sigHash":"0206a31108ef60284a4f39e2bc49ac759903fa60d3d4f5296eaf6fd443b68225"}
  *
  * Go source:
  * globVisitor struct {
@@ -1228,7 +1228,7 @@ export interface globVisitor {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globVisitor.visit","kind":"method","status":"implemented","sigHash":"a9acd0b47be9e76092b15613a92f00e01a37e5e4d8a7a9f5bd5bf04a0f320ca1","bodyHash":"03ccf2893b6d8e93933ad3d27f2f18faf45e843d1d918d9cf349ac8ee9f7b037"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::globVisitor.visit","kind":"method","status":"implemented","sigHash":"a9acd0b47be9e76092b15613a92f00e01a37e5e4d8a7a9f5bd5bf04a0f320ca1"}
  *
  * Go source:
  * // visit walks a directory tree, collecting files that match the glob patterns.
@@ -1346,7 +1346,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::matchFiles","kind":"func","status":"implemented","sigHash":"d49c8a50798469b5926e6428bff9230615efa440d458dc3a93315cae332efe5f","bodyHash":"af27c654ebb6556a0e63d9f31d216d1f32d2568a463f60fc49ff24d9671794b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::matchFiles","kind":"func","status":"implemented","sigHash":"d49c8a50798469b5926e6428bff9230615efa440d458dc3a93315cae332efe5f"}
  *
  * Go source:
  * func matchFiles(path string, extensions, excludes, includes []string, useCaseSensitiveFileNames bool, currentDirectory string, depth int, host vfs.FS) []string {
@@ -1414,7 +1414,7 @@ export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, exc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::SpecMatcher","kind":"type","status":"implemented","sigHash":"efa1ded7d567802084fc0773e49becda42e0afb57421471b94ab81ecdffe7941","bodyHash":"3f47c690592ccf63c71407d3509460a38e69aa7f7260d365e10dd3a414b43147"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::type::SpecMatcher","kind":"type","status":"implemented","sigHash":"efa1ded7d567802084fc0773e49becda42e0afb57421471b94ab81ecdffe7941"}
  *
  * Go source:
  * SpecMatcher struct {
@@ -1426,7 +1426,7 @@ export interface SpecMatcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::SpecMatcher.MatchString","kind":"method","status":"implemented","sigHash":"d9de923b5bccf93191c028b5375691ad5cd2dd88c0bb2412e5c570a29c62551a","bodyHash":"4b4610c3ef1594b9963f0ddf9499fb02fc906fe611e981f5e433a6782eae72eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::SpecMatcher.MatchString","kind":"method","status":"implemented","sigHash":"d9de923b5bccf93191c028b5375691ad5cd2dd88c0bb2412e5c570a29c62551a"}
  *
  * Go source:
  * func (m *SpecMatcher) MatchString(path string) bool {
@@ -1448,7 +1448,7 @@ export function SpecMatcher_MatchString(receiver: GoPtr<SpecMatcher>, path: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::SpecMatcher.MatchIndex","kind":"method","status":"implemented","sigHash":"0f9647190b3e6245530173e738fb1dbe9476a265716ca8c6254a4314dd050aea","bodyHash":"c89a96f098a0fce69f11bb70095f6da42169cce9d4a16d6c9976df4fc8fbbe16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::method::SpecMatcher.MatchIndex","kind":"method","status":"implemented","sigHash":"0f9647190b3e6245530173e738fb1dbe9476a265716ca8c6254a4314dd050aea"}
  *
  * Go source:
  * func (m *SpecMatcher) MatchIndex(path string) int {
@@ -1470,7 +1470,7 @@ export function SpecMatcher_MatchIndex(receiver: GoPtr<SpecMatcher>, path: strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::NewSpecMatcher","kind":"func","status":"implemented","sigHash":"9bc9a9376484f8f61e0698cdec2a3c491a79c77d02d8d2a7ffc2f283d097ce1c","bodyHash":"a6778307ad2d9dd12a180334f13af3e354a612fe3c56842e00e137546d4a243b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmatch/vfsmatch.go::func::NewSpecMatcher","kind":"func","status":"implemented","sigHash":"9bc9a9376484f8f61e0698cdec2a3c491a79c77d02d8d2a7ffc2f283d097ce1c"}
  *
  * Go source:
  * func NewSpecMatcher(specs []string, basePath string, usage Usage, useCaseSensitiveFileNames bool) *SpecMatcher {

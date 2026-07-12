@@ -4,7 +4,7 @@ import * as maps from "../../go/maps.js";
 import { OnceValue } from "../../go/sync.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::UnprefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"00dcfbd0671d494a2d849d412f7532fcef4b7342281d62da72e1cc8efb4a5388","bodyHash":"deab4cdc75268ded243c07b22762d88a5b55f8a08870a71412b6ec041d022e57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::UnprefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"00dcfbd0671d494a2d849d412f7532fcef4b7342281d62da72e1cc8efb4a5388"}
  *
  * Go source:
  * var UnprefixedNodeCoreModules = map[string]bool{
@@ -122,7 +122,7 @@ export let UnprefixedNodeCoreModules: GoMap<string, bool> = new globalThis.Map<s
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::ExclusivelyPrefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"1db47baaadc57ffe138dcb45fa85e4a84d64d3391a600e1cd44ba285fea0ea05","bodyHash":"6dd187856f4b8b4ae561cbeffcac268824c4862dd922657c3cd41c9f7e6fff07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::ExclusivelyPrefixedNodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"1db47baaadc57ffe138dcb45fa85e4a84d64d3391a600e1cd44ba285fea0ea05"}
  *
  * Go source:
  * var ExclusivelyPrefixedNodeCoreModules = map[string]bool{
@@ -142,7 +142,7 @@ export let ExclusivelyPrefixedNodeCoreModules: GoMap<string, bool> = new globalT
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::NodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"893e6ca72485f496815b62d5df8d4f69651f3576f404eca9f21e8878ac7f3118","bodyHash":"80b9c18f681fec392f25f4ed90fd2b21b4cd13170d76b97d00fe9ae53034c115"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::varGroup::NodeCoreModules","kind":"varGroup","status":"implemented","sigHash":"893e6ca72485f496815b62d5df8d4f69651f3576f404eca9f21e8878ac7f3118"}
  *
  * Go source:
  * var NodeCoreModules = sync.OnceValue(func() map[string]bool {
@@ -166,7 +166,7 @@ export let NodeCoreModules: () => GoMap<string, bool> = OnceValue<GoMap<string, 
 });
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::func::NonRelativeModuleNameForTypingCache","kind":"func","status":"implemented","sigHash":"8ba3d267469749957b259accc676fb2847f346f8c34510a0614298c10e48e3a7","bodyHash":"6a949d2e31d637c43d8e2438d4fed4a830a037d8aee5f94dd6c9d3371f8f654f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/nodemodules.go::func::NonRelativeModuleNameForTypingCache","kind":"func","status":"implemented","sigHash":"8ba3d267469749957b259accc676fb2847f346f8c34510a0614298c10e48e3a7"}
  *
  * Go source:
  * func NonRelativeModuleNameForTypingCache(moduleName string) string {

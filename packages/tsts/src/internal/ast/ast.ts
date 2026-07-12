@@ -298,7 +298,7 @@ import type { NodeVisitor } from "./visitor.js";
 export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeBase } from "./spine.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::varGroup::parseJSDocForNode","kind":"varGroup","status":"implemented","sigHash":"5ac2e1c2b1fa4923ca9e2b5a393324ec40d359485e4b84a71e90a0e3709b2a59","bodyHash":"ee0732b6f5907671106f1890827985a41457e26b69ec619310f430583e750e74"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::varGroup::parseJSDocForNode","kind":"varGroup","status":"implemented","sigHash":"5ac2e1c2b1fa4923ca9e2b5a393324ec40d359485e4b84a71e90a0e3709b2a59"}
  *
  * Go source:
  * var parseJSDocForNode func(*SourceFile, *Node) []*Node
@@ -306,7 +306,7 @@ export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeD
 export let parseJSDocForNode: (arg0: GoPtr<SourceFile>, arg1: GoPtr<Node>) => GoSlice<GoPtr<Node>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::SetParseJSDocForNode","kind":"func","status":"implemented","sigHash":"5aca890b39fdda6f4899a1aa07e2be2add8bfdb3e21fbf63d0ef1efdeccb0d2a","bodyHash":"42d8f8eca703ba54c171f8255bb5ea33de96b58602e639bc20aa9a826183ce5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::SetParseJSDocForNode","kind":"func","status":"implemented","sigHash":"5aca890b39fdda6f4899a1aa07e2be2add8bfdb3e21fbf63d0ef1efdeccb0d2a"}
  *
  * Go source:
  * func SetParseJSDocForNode(fn func(*SourceFile, *Node) []*Node) {
@@ -318,7 +318,7 @@ export function SetParseJSDocForNode(fn: (arg0: GoPtr<SourceFile>, arg1: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ParameterList","kind":"method","status":"implemented","sigHash":"74b6967bc8926b8a1c8985126ff19ca776119579407d529c03f57ea474b592ad","bodyHash":"306d1278e586826119d6993be361606d65ac5cef2ed3d056d9504d2371f1fb10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ParameterList","kind":"method","status":"implemented","sigHash":"74b6967bc8926b8a1c8985126ff19ca776119579407d529c03f57ea474b592ad"}
  *
  * Go source:
  * func (n *Node) ParameterList() *ParameterList             { return n.data.FunctionLikeData().Parameters }
@@ -328,7 +328,7 @@ export function Node_ParameterList(receiver: GoPtr<Node>): GoPtr<ParameterList_5
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Parameters","kind":"method","status":"implemented","sigHash":"23cf975d760f34a8befc8b0300529b27a330b0a6f5f699459e4a6535e1360d20","bodyHash":"25c5242a76db327b5348ff6821dbce5e95d90da3edb45ae378f8315b9b3f2c9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Parameters","kind":"method","status":"implemented","sigHash":"23cf975d760f34a8befc8b0300529b27a330b0a6f5f699459e4a6535e1360d20"}
  *
  * Go source:
  * func (n *Node) Parameters() []*ParameterDeclarationNode   { return n.ParameterList().Nodes }
@@ -338,7 +338,7 @@ export function Node_Parameters(receiver: GoPtr<Node>): GoSlice<GoPtr<ParameterD
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Decorators","kind":"method","status":"implemented","sigHash":"a93d7aca147a7b35e6c93423739ca898e430c565f89c7bfcbcc4252a3f5739f6","bodyHash":"c15a7dc4bacf014e60bd659110c713a63d65f63a38f74e966439cc9b468c7b2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Decorators","kind":"method","status":"implemented","sigHash":"a93d7aca147a7b35e6c93423739ca898e430c565f89c7bfcbcc4252a3f5739f6"}
  *
  * Go source:
  * func (n *Node) Decorators() []*Node {
@@ -356,7 +356,7 @@ export function Node_Decorators(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | u
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::MutableNode","kind":"type","status":"implemented","sigHash":"680e266ad37e89e56bcec1ff45c8b38e43c4dc5964c0dfc644285e9d4b5b6ffd","bodyHash":"74404c47623ed24ff296978787381a3ba81ceee723b5f5d85ce60f76a136442e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::MutableNode","kind":"type","status":"implemented","sigHash":"680e266ad37e89e56bcec1ff45c8b38e43c4dc5964c0dfc644285e9d4b5b6ffd"}
  *
  * Go source:
  * MutableNode Node
@@ -364,7 +364,7 @@ export function Node_Decorators(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | u
 export type MutableNode = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsMutable","kind":"method","status":"implemented","sigHash":"4283fb273144f250fc065d8d19a61bff0c1f8b54520e82bd6adf17b4f7695cb3","bodyHash":"ca8df0015ba1b5cff80ce1f57a5b18834be506677e05871d649fcb0ed6b45db0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsMutable","kind":"method","status":"implemented","sigHash":"4283fb273144f250fc065d8d19a61bff0c1f8b54520e82bd6adf17b4f7695cb3"}
  *
  * Go source:
  * func (n *Node) AsMutable() *MutableNode                     { return (*MutableNode)(n) }
@@ -374,7 +374,7 @@ export function Node_AsMutable(receiver: GoPtr<Node>): GoPtr<MutableNode> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetModifiers","kind":"method","status":"implemented","sigHash":"0ca0cec51609e27334688c2d7fbb55e4c922de4c80c463c4e7fc819e8a670c0a","bodyHash":"a4aa87a4c81e435a076eafc78e3b70cd4216c2cced7125619a7cbc07165f2350"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetModifiers","kind":"method","status":"implemented","sigHash":"0ca0cec51609e27334688c2d7fbb55e4c922de4c80c463c4e7fc819e8a670c0a"}
  *
  * Go source:
  * func (n *MutableNode) SetModifiers(modifiers *ModifierList) { n.data.setModifiers(modifiers) }
@@ -384,7 +384,7 @@ export function MutableNode_SetModifiers(receiver: GoPtr<MutableNode>, modifiers
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Symbol","kind":"method","status":"implemented","sigHash":"ea82523908dc157b6fd2262662b05f615a4ac39ce27e570b753a1242b3b094f0","bodyHash":"2341cb25830d96aed66d74985a64610058eedf7be04c8502c6e0a01ba536014e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Symbol","kind":"method","status":"implemented","sigHash":"ea82523908dc157b6fd2262662b05f615a4ac39ce27e570b753a1242b3b094f0"}
  *
  * Go source:
  * func (n *Node) Symbol() *Symbol {
@@ -404,7 +404,7 @@ export function Node_Symbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.LocalSymbol","kind":"method","status":"implemented","sigHash":"e564329fbf0f616daa60682bf81ee2c219b3428dd95e009b85a2c4d0fed59f44","bodyHash":"892b36923cecf19c682d60f1986f1b87cd83cb34d5db0e29fe4a3faef837d656"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.LocalSymbol","kind":"method","status":"implemented","sigHash":"e564329fbf0f616daa60682bf81ee2c219b3428dd95e009b85a2c4d0fed59f44"}
  *
  * Go source:
  * func (n *Node) LocalSymbol() *Symbol {
@@ -424,7 +424,7 @@ export function Node_LocalSymbol(receiver: GoPtr<Node>): GoPtr<Symbol_4919c5f0> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Locals","kind":"method","status":"implemented","sigHash":"96cc6e0f6d53895751a7e2645ec3fa462ce5e01286476998db8cfac3aea047c9","bodyHash":"9b2e77308b497b3559bac318b2a7f17966334c73e00d92ffae8d73f9f9f31eb9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Locals","kind":"method","status":"implemented","sigHash":"96cc6e0f6d53895751a7e2645ec3fa462ce5e01286476998db8cfac3aea047c9"}
  *
  * Go source:
  * func (n *Node) Locals() SymbolTable {
@@ -444,7 +444,7 @@ export function Node_Locals(receiver: GoPtr<Node>): SymbolTable {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Body","kind":"method","status":"implemented","sigHash":"5e7666cfdb8d5ab11f3f0f64ad018f85e37676783a6fc9717fa05615193a47d3","bodyHash":"63a8eea0ad583858627aea55c6730afb22e6d4bed8e931433d630fa9f1d7bb99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Body","kind":"method","status":"implemented","sigHash":"5e7666cfdb8d5ab11f3f0f64ad018f85e37676783a6fc9717fa05615193a47d3"}
  *
  * Go source:
  * func (n *Node) Body() *Node {
@@ -464,7 +464,7 @@ export function Node_Body(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Text","kind":"method","status":"implemented","sigHash":"a6aba8a47a0b182d8908213b0c85105a97a394c5582e9943985e1641fe18474e","bodyHash":"cc9ab44b3987b720e322b9b3f36edd0e231e58acddeaa8482b8fe856f42262bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Text","kind":"method","status":"implemented","sigHash":"a6aba8a47a0b182d8908213b0c85105a97a394c5582e9943985e1641fe18474e"}
  *
  * Go source:
  * func (n *Node) Text() string {
@@ -544,7 +544,7 @@ export function Node_Text(receiver: GoPtr<Node>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Expression","kind":"method","status":"implemented","sigHash":"a453427ef69453f5942ee80cf683d4eab35ae7ed427489a29dbb9eb971bdb4e2","bodyHash":"38c7bf76b34f69c9a297f6b23b331d26d01eb9f74bc849395424485d97e6c480"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Expression","kind":"method","status":"implemented","sigHash":"a453427ef69453f5942ee80cf683d4eab35ae7ed427489a29dbb9eb971bdb4e2"}
  *
  * Go source:
  * func (n *Node) Expression() *Node {
@@ -701,7 +701,7 @@ export function Node_Expression(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.RawText","kind":"method","status":"implemented","sigHash":"380d953fd044b1a507136c6d94f31de03b2ddb60d6aeafeb450112cb659c92b4","bodyHash":"f9fd02b52d8f6cca08a88643c6a0f41055e9ba795fa23110775d7aa262a2950c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.RawText","kind":"method","status":"implemented","sigHash":"380d953fd044b1a507136c6d94f31de03b2ddb60d6aeafeb450112cb659c92b4"}
  *
  * Go source:
  * func (n *Node) RawText() string {
@@ -729,7 +729,7 @@ export function Node_RawText(receiver: GoPtr<Node>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetExpression","kind":"method","status":"implemented","sigHash":"2ea3b5d2e59d72a764a1dd0d905a1a3a1fd173b78da421cc0def68cb864a6bd9","bodyHash":"3c62dc877dd419cd07f784d05cc09cd35c25c953a6e97c9e7d725af4911d3e7a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetExpression","kind":"method","status":"implemented","sigHash":"2ea3b5d2e59d72a764a1dd0d905a1a3a1fd173b78da421cc0def68cb864a6bd9"}
  *
  * Go source:
  * func (m *MutableNode) SetExpression(expr *Node) {
@@ -925,7 +925,7 @@ export function MutableNode_SetExpression(receiver: GoPtr<MutableNode>, expr: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ArgumentList","kind":"method","status":"implemented","sigHash":"018f4d26efb4dc96cd74f4dca512cdce361ada9dde6596130108508f4c92d4d7","bodyHash":"3d0eb2f0b95510e01682995708700533759f868d25cfec121417d6abb7f6b48b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ArgumentList","kind":"method","status":"implemented","sigHash":"018f4d26efb4dc96cd74f4dca512cdce361ada9dde6596130108508f4c92d4d7"}
  *
  * Go source:
  * func (n *Node) ArgumentList() *NodeList {
@@ -949,7 +949,7 @@ export function Node_ArgumentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Arguments","kind":"method","status":"implemented","sigHash":"4991e3b1d6b60d99977a8e87a7d8410aa8f8249f97b53247ece29a51302f7ec0","bodyHash":"1648053b7d51b1fb560dbf6ff4930f1a8ce6e95221cfaf0754bcb1dba2eeb87e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Arguments","kind":"method","status":"implemented","sigHash":"4991e3b1d6b60d99977a8e87a7d8410aa8f8249f97b53247ece29a51302f7ec0"}
  *
  * Go source:
  * func (n *Node) Arguments() []*Node {
@@ -969,7 +969,7 @@ export function Node_Arguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | un
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeArgumentList","kind":"method","status":"implemented","sigHash":"33c00bff7d5efb518863aa138bfbffe7cd7bd3b5b69bc77738b542b481a3bb89","bodyHash":"0e3ed6f0933dbabb251f47b2624bc37bfec423d269d8083f8b05bb3bbb0e1ab4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeArgumentList","kind":"method","status":"implemented","sigHash":"33c00bff7d5efb518863aa138bfbffe7cd7bd3b5b69bc77738b542b481a3bb89"}
  *
  * Go source:
  * func (n *Node) TypeArgumentList() *NodeList {
@@ -1021,7 +1021,7 @@ export function Node_TypeArgumentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeArguments","kind":"method","status":"implemented","sigHash":"8e0c26f2c4258529661c05e8fcd66a2b2f917ce0a0e37e371a87f911a302f884","bodyHash":"27a0c7a1ff085b18725eea4d802a2828193e24d8d5a94482f4302773f5b6ed57"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeArguments","kind":"method","status":"implemented","sigHash":"8e0c26f2c4258529661c05e8fcd66a2b2f917ce0a0e37e371a87f911a302f884"}
  *
  * Go source:
  * func (n *Node) TypeArguments() []*Node {
@@ -1041,7 +1041,7 @@ export function Node_TypeArguments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeParameterList","kind":"method","status":"implemented","sigHash":"19423008898710885d601fe16d603321dbcebcc21c658363b8a1e614c0604554","bodyHash":"92d683bdff431bad0da76f38fadc4f14b35b9824f8711a2da07c08ef1ddcbaad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeParameterList","kind":"method","status":"implemented","sigHash":"19423008898710885d601fe16d603321dbcebcc21c658363b8a1e614c0604554"}
  *
  * Go source:
  * func (n *Node) TypeParameterList() *NodeList {
@@ -1089,7 +1089,7 @@ export function Node_TypeParameterList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeParameters","kind":"method","status":"implemented","sigHash":"317c4b970e6c3c05a95e2272c17fe37279af7691443eb78d81ad1d500e3eedfc","bodyHash":"38dc00cceb6e63d3f341d09f501d894df5e894b2419c0ddfa0a44885350cefb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeParameters","kind":"method","status":"implemented","sigHash":"317c4b970e6c3c05a95e2272c17fe37279af7691443eb78d81ad1d500e3eedfc"}
  *
  * Go source:
  * func (n *Node) TypeParameters() []*Node {
@@ -1109,7 +1109,7 @@ export function Node_TypeParameters(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.MemberList","kind":"method","status":"implemented","sigHash":"94773b319c6fef9bb7b6c71e06a7461198456451f8a20cc36eab160e818927a8","bodyHash":"4115beefaf441365c0576a3b5abcf359f19487cf547128e1289d165cbe5a8799"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.MemberList","kind":"method","status":"implemented","sigHash":"94773b319c6fef9bb7b6c71e06a7461198456451f8a20cc36eab160e818927a8"}
  *
  * Go source:
  * func (n *Node) MemberList() *NodeList {
@@ -1149,7 +1149,7 @@ export function Node_MemberList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Members","kind":"method","status":"implemented","sigHash":"6981b89b11fdafc2f09dd9fb999e3568ce00bff2c82857b977aaf2daec4689c9","bodyHash":"d4b6bbb0f55cf81d3b72af3aee314f0d7382b97e105c43726854d161e4c97502"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Members","kind":"method","status":"implemented","sigHash":"6981b89b11fdafc2f09dd9fb999e3568ce00bff2c82857b977aaf2daec4689c9"}
  *
  * Go source:
  * func (n *Node) Members() []*Node {
@@ -1169,7 +1169,7 @@ export function Node_Members(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | unde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.StatementList","kind":"method","status":"implemented","sigHash":"07c566de6753738c8253d99218a4f0aae9a8d6dda7af6b09ae2f18472a5cbc59","bodyHash":"239cb5c874f032ed1cc9884fa2dde0a83d7bca9b09e3b95ef4977dea1fc482fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.StatementList","kind":"method","status":"implemented","sigHash":"07c566de6753738c8253d99218a4f0aae9a8d6dda7af6b09ae2f18472a5cbc59"}
  *
  * Go source:
  * func (n *Node) StatementList() *NodeList {
@@ -1202,7 +1202,7 @@ export function Node_StatementList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Statements","kind":"method","status":"implemented","sigHash":"532d997f2231da797fedeabd37f7e9cb80dc43e0770d6370b83282268ac6292f","bodyHash":"35f4ce03949023e2740b28636492b2d454660142b85a1312cfca71c50453739b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Statements","kind":"method","status":"implemented","sigHash":"532d997f2231da797fedeabd37f7e9cb80dc43e0770d6370b83282268ac6292f"}
  *
  * Go source:
  * func (n *Node) Statements() []*Node {
@@ -1222,7 +1222,7 @@ export function Node_Statements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | u
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.CanHaveStatements","kind":"method","status":"implemented","sigHash":"ec609876401aa4a8ead475adf46be6e537641353288def2d8c4ec66e405b8247","bodyHash":"3cd5389f751c1f1438f030fd5cec02bf91a63e03065bfdf70abc31013dbe6710"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.CanHaveStatements","kind":"method","status":"implemented","sigHash":"ec609876401aa4a8ead475adf46be6e537641353288def2d8c4ec66e405b8247"}
  *
  * Go source:
  * func (n *Node) CanHaveStatements() bool {
@@ -1248,7 +1248,7 @@ export function Node_CanHaveStatements(receiver: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModifierFlags","kind":"method","status":"implemented","sigHash":"4123e1777e8e8653aaa4f35916df0b5a3a93cbdc8768c8369de483ce6612cd65","bodyHash":"22e4d55a90a78dc20ce70247e0cda316eb16ab1fa1b2257b486f8ea671aba792"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModifierFlags","kind":"method","status":"implemented","sigHash":"4123e1777e8e8653aaa4f35916df0b5a3a93cbdc8768c8369de483ce6612cd65"}
  *
  * Go source:
  * func (n *Node) ModifierFlags() ModifierFlags {
@@ -1268,7 +1268,7 @@ export function Node_ModifierFlags(receiver: GoPtr<Node>): ModifierFlags_d6bd836
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModifierNodes","kind":"method","status":"implemented","sigHash":"85068ebfe90393905e7e2b35e28f508999d7ebd72c5f6d6ee2b0723f2c617bc3","bodyHash":"8989d6ad2085f89bf569331dbddd87eaecc0e1c181138013a6fcb782ee454c3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModifierNodes","kind":"method","status":"implemented","sigHash":"85068ebfe90393905e7e2b35e28f508999d7ebd72c5f6d6ee2b0723f2c617bc3"}
  *
  * Go source:
  * func (n *Node) ModifierNodes() []*Node {
@@ -1288,7 +1288,7 @@ export function Node_ModifierNodes(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Type","kind":"method","status":"implemented","sigHash":"d120617346d2454b9b23ca70430df0558a869e82851205023d858d1d889d710d","bodyHash":"1c9143e224b78001641ffd1c168d03a72d505ca5472f2e2fc3e02d12f9454223"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Type","kind":"method","status":"implemented","sigHash":"d120617346d2454b9b23ca70430df0558a869e82851205023d858d1d889d710d"}
  *
  * Go source:
  * func (n *Node) Type() *Node {
@@ -1416,7 +1416,7 @@ export function Node_Type(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetType","kind":"method","status":"implemented","sigHash":"4b2f396e5bcf615594613fb71d30ae0baf6f2fda8ed951da7918fa37f49558e4","bodyHash":"6ecdcf63c8754e41752aaf9c51e89379fed3bd66e6e0b5c24e6c5fa41c9feaf2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetType","kind":"method","status":"implemented","sigHash":"4b2f396e5bcf615594613fb71d30ae0baf6f2fda8ed951da7918fa37f49558e4"}
  *
  * Go source:
  * func (m *MutableNode) SetType(t *Node) {
@@ -1573,7 +1573,7 @@ export function MutableNode_SetType(receiver: GoPtr<MutableNode>, t: GoPtr<Node>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Initializer","kind":"method","status":"implemented","sigHash":"3e1776a793c2166ed6e16e270c0df24a1824b90193a8ff35cf648194e97a531d","bodyHash":"085ff4561c16ac23e8e7f1b56d137f5a9abf0e6d1fa538d1a9dcdc6c4c993ce1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Initializer","kind":"method","status":"implemented","sigHash":"3e1776a793c2166ed6e16e270c0df24a1824b90193a8ff35cf648194e97a531d"}
  *
  * Go source:
  * func (n *Node) Initializer() *Node {
@@ -1630,7 +1630,7 @@ export function Node_Initializer(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetInitializer","kind":"method","status":"implemented","sigHash":"64f21c4461a65c71df46052f93bb54362768496601aefcad1fdce063cb6fa2fe","bodyHash":"17292fbcc0893c66f5a3fa9c19f46d78d0b9342c999eeaeccbdd3e7b90d4f027"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MutableNode.SetInitializer","kind":"method","status":"implemented","sigHash":"64f21c4461a65c71df46052f93bb54362768496601aefcad1fdce063cb6fa2fe"}
  *
  * Go source:
  * func (m *MutableNode) SetInitializer(initializer *Node) {
@@ -1701,7 +1701,7 @@ export function MutableNode_SetInitializer(receiver: GoPtr<MutableNode>, initial
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TagName","kind":"method","status":"implemented","sigHash":"84a4dabde8dae9fd2a382c718ddf350d8336fc9046ec00256bd526c61c79223d","bodyHash":"2f412fc7c02073ce9deb4a3f1a345146021a46cefeaa4b79e3bf205a523163b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TagName","kind":"method","status":"implemented","sigHash":"84a4dabde8dae9fd2a382c718ddf350d8336fc9046ec00256bd526c61c79223d"}
  *
  * Go source:
  * func (n *Node) TagName() *Node {
@@ -1814,7 +1814,7 @@ export function Node_TagName(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyName","kind":"method","status":"implemented","sigHash":"9d10c798e2310d13fd0364d2e0b775f1ba6388df2b1212cc1d66fb16eadd11eb","bodyHash":"b0848a03c49385f03db7ac8331ad7014de183ef42268d38d41b6fe340497764e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyName","kind":"method","status":"implemented","sigHash":"9d10c798e2310d13fd0364d2e0b775f1ba6388df2b1212cc1d66fb16eadd11eb"}
  *
  * Go source:
  * func (n *Node) PropertyName() *Node {
@@ -1842,7 +1842,7 @@ export function Node_PropertyName(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyNameOrName","kind":"method","status":"implemented","sigHash":"00ddf835c852f3a88d45420e07f069de8ce8ba4d6fec313baba1d1066325c3f5","bodyHash":"b42acc1cd809e7cc2c61ce4ad8e37cdb17faac23eeaf3bcfd2ccfdad099efbe4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyNameOrName","kind":"method","status":"implemented","sigHash":"00ddf835c852f3a88d45420e07f069de8ce8ba4d6fec313baba1d1066325c3f5"}
  *
  * Go source:
  * func (n *Node) PropertyNameOrName() *Node {
@@ -1862,7 +1862,7 @@ export function Node_PropertyNameOrName(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IsTypeOnly","kind":"method","status":"implemented","sigHash":"f3e04789b31553bd06f6c343d1924597c398ae04c92a531dacb91e09b3080b9d","bodyHash":"200a434ffae30f9acd7edeb34fb4e5ef1f53281be0707c15b9ba0594f2c009ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IsTypeOnly","kind":"method","status":"implemented","sigHash":"f3e04789b31553bd06f6c343d1924597c398ae04c92a531dacb91e09b3080b9d"}
  *
  * Go source:
  * func (n *Node) IsTypeOnly() bool {
@@ -1898,7 +1898,7 @@ export function Node_IsTypeOnly(receiver: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.CommentList","kind":"method","status":"implemented","sigHash":"6c839d4167cfd1fcfbd013a627bf12f8c1be7f739ace9674c0bcb3d54f8cfd58","bodyHash":"b90e29ebe49ba862402c46fd816fa10096a647081c5694a7e7902c0cffca84af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.CommentList","kind":"method","status":"implemented","sigHash":"6c839d4167cfd1fcfbd013a627bf12f8c1be7f739ace9674c0bcb3d54f8cfd58"}
  *
  * Go source:
  * func (n *Node) CommentList() *NodeList {
@@ -2003,7 +2003,7 @@ export function Node_CommentList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Comments","kind":"method","status":"implemented","sigHash":"2ea09c721f3101e1efc81e110b9c43dbf6c55f435d1bdad008e73115d803fdb4","bodyHash":"7d061eec2b0c133c87a3985174cbf3cfad8f0c217f4c65f177e9f5b75e549fe5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Comments","kind":"method","status":"implemented","sigHash":"2ea09c721f3101e1efc81e110b9c43dbf6c55f435d1bdad008e73115d803fdb4"}
  *
  * Go source:
  * func (n *Node) Comments() []*Node {
@@ -2023,7 +2023,7 @@ export function Node_Comments(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | und
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Label","kind":"method","status":"implemented","sigHash":"c443b8e2c6c6ce8036f93d5c9588a02671b224ed188f46f95528baae5bf919f9","bodyHash":"109b88d8d28cac5b745ffcc05743ed584a70494e4cb573c0dc9ae46264b73227"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Label","kind":"method","status":"implemented","sigHash":"c443b8e2c6c6ce8036f93d5c9588a02671b224ed188f46f95528baae5bf919f9"}
  *
  * Go source:
  * func (n *Node) Label() *Node {
@@ -2051,7 +2051,7 @@ export function Node_Label(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Attributes","kind":"method","status":"implemented","sigHash":"f7bb831a53c1c57cbe7fb35b10d77f27f175a06b3bccc97fd513e049b9b8d73a","bodyHash":"b3119ffd885d252868d252233d1bb30de9af73616e50395cc5c426edf5c9c993"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Attributes","kind":"method","status":"implemented","sigHash":"f7bb831a53c1c57cbe7fb35b10d77f27f175a06b3bccc97fd513e049b9b8d73a"}
  *
  * Go source:
  * func (n *Node) Attributes() *Node {
@@ -2075,7 +2075,7 @@ export function Node_Attributes(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Children","kind":"method","status":"implemented","sigHash":"e032dd8275f90262bec0027ac0c13a92b9332da7210b21cfb2a54962f50d5e6d","bodyHash":"224c8359aa03e95ab01b69cf9e4e4dbd173ea2225955f60dbe611202edcc98aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Children","kind":"method","status":"implemented","sigHash":"e032dd8275f90262bec0027ac0c13a92b9332da7210b21cfb2a54962f50d5e6d"}
  *
  * Go source:
  * func (n *Node) Children() *NodeList {
@@ -2099,7 +2099,7 @@ export function Node_Children(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModuleSpecifier","kind":"method","status":"implemented","sigHash":"847b0ec0ec1a398ce04fa392fa08621d7172a0c401f8245a7cc3bf44afdb72a9","bodyHash":"99fb20a708bd50995bcf310b32ae17b5e50738cbd7ac5783ea61b354d11d2299"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ModuleSpecifier","kind":"method","status":"implemented","sigHash":"847b0ec0ec1a398ce04fa392fa08621d7172a0c401f8245a7cc3bf44afdb72a9"}
  *
  * Go source:
  * func (n *Node) ModuleSpecifier() *Expression {
@@ -2128,7 +2128,7 @@ export function Node_ModuleSpecifier(receiver: GoPtr<Node>): GoPtr<Expression_9a
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ImportClause","kind":"method","status":"implemented","sigHash":"38ba01306083818baa900335af19e8f9109df3588735600d3cb812a6b931fa7d","bodyHash":"2ebd25b9691893f94c6751ae9d2f2319821a80b7cf3a34c596de9824909ceafe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ImportClause","kind":"method","status":"implemented","sigHash":"38ba01306083818baa900335af19e8f9109df3588735600d3cb812a6b931fa7d"}
  *
  * Go source:
  * func (n *Node) ImportClause() *Node {
@@ -2153,7 +2153,7 @@ export function Node_ImportClause(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Statement","kind":"method","status":"implemented","sigHash":"e57df22ecec78e292f93df3c95132ba0d137bff4a9e27026c2cd8af50f21e28e","bodyHash":"d36ac9cebfcb466bafbc2434dca821206837fa4d6c38ad2d926c5dc6ec1e3756"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Statement","kind":"method","status":"implemented","sigHash":"e57df22ecec78e292f93df3c95132ba0d137bff4a9e27026c2cd8af50f21e28e"}
  *
  * Go source:
  * func (n *Node) Statement() *Statement {
@@ -2194,7 +2194,7 @@ export function Node_Statement(receiver: GoPtr<Node>): GoPtr<Statement_98c7cd47>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyList","kind":"method","status":"implemented","sigHash":"bbe64a53d54ff22f39264e2e58132e9544afd5a680577f51bf05995542ae01cf","bodyHash":"741580be630539b512e7f0f57012e894212ee5e2bba06870cabfb4559a5cfd6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PropertyList","kind":"method","status":"implemented","sigHash":"bbe64a53d54ff22f39264e2e58132e9544afd5a680577f51bf05995542ae01cf"}
  *
  * Go source:
  * func (n *Node) PropertyList() *NodeList {
@@ -2218,7 +2218,7 @@ export function Node_PropertyList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Properties","kind":"method","status":"implemented","sigHash":"3c3ff7bb53bcbf57e9e47453fc18a5334f725836546ecd89fde2855d83f2d881","bodyHash":"069ae4079449dfce6fdc26d8384a45025dd2ea4c2000aa9ca4bd847ad6890522"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Properties","kind":"method","status":"implemented","sigHash":"3c3ff7bb53bcbf57e9e47453fc18a5334f725836546ecd89fde2855d83f2d881"}
  *
  * Go source:
  * func (n *Node) Properties() []*Node {
@@ -2238,7 +2238,7 @@ export function Node_Properties(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | u
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ElementList","kind":"method","status":"implemented","sigHash":"e986fecf3ab267ed5b96df61d2b6b2d5aa1f09d1f128153afeade0905bdbf88a","bodyHash":"f0976abdf53edaafdb21676b4049f8c98a41e845a4dc7a33c4e913c5f60fa40c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ElementList","kind":"method","status":"implemented","sigHash":"e986fecf3ab267ed5b96df61d2b6b2d5aa1f09d1f128153afeade0905bdbf88a"}
  *
  * Go source:
  * func (n *Node) ElementList() *NodeList {
@@ -2275,7 +2275,7 @@ export function Node_ElementList(receiver: GoPtr<Node>): GoPtr<NodeList> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Elements","kind":"method","status":"implemented","sigHash":"b616476bc1eae9b64e028543c5f2a25a1e15f23c3819df87e111130156cfa003","bodyHash":"d53c75ce3a86b54cf67b392f906e0fabe8022b6ca24598b3b64713fe27241617"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Elements","kind":"method","status":"implemented","sigHash":"b616476bc1eae9b64e028543c5f2a25a1e15f23c3819df87e111130156cfa003"}
  *
  * Go source:
  * func (n *Node) Elements() []*Node {
@@ -2295,7 +2295,7 @@ export function Node_Elements(receiver: GoPtr<Node>): GoSlice<GoPtr<Node>> | und
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PostfixToken","kind":"method","status":"implemented","sigHash":"8904f6d40b9cb9f638c8960b7074dc4615ff0d7d804d1f7fca557e75970e6aa6","bodyHash":"673dad292f914208552af426a361dc560f491b307d1e8670f8f8298fd502882e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.PostfixToken","kind":"method","status":"implemented","sigHash":"8904f6d40b9cb9f638c8960b7074dc4615ff0d7d804d1f7fca557e75970e6aa6"}
  *
  * Go source:
  * func (n *Node) PostfixToken() *Node {
@@ -2347,7 +2347,7 @@ export function Node_PostfixToken(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.QuestionToken","kind":"method","status":"implemented","sigHash":"add8ef50e96b396a11b9db493c68e7aca0b0350801c284a34fe3cc7411a2a0c0","bodyHash":"ae6e52547634d46f46f2b73371bd2a57ea049bd8928b990aa94e1b80d0d1ba20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.QuestionToken","kind":"method","status":"implemented","sigHash":"add8ef50e96b396a11b9db493c68e7aca0b0350801c284a34fe3cc7411a2a0c0"}
  *
  * Go source:
  * func (n *Node) QuestionToken() *TokenNode {
@@ -2387,7 +2387,7 @@ export function Node_QuestionToken(receiver: GoPtr<Node>): GoPtr<TokenNode> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.QuestionDotToken","kind":"method","status":"implemented","sigHash":"c0083bafc8199729f729eb686aa6b4c7569878d4671881ecd39f0d96aacce037","bodyHash":"d2c31e550523923e059e2bb1d6bb47ccfdbd7a13578e90375dffb8a5c38f140d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.QuestionDotToken","kind":"method","status":"implemented","sigHash":"c0083bafc8199729f729eb686aa6b4c7569878d4671881ecd39f0d96aacce037"}
  *
  * Go source:
  * func (n *Node) QuestionDotToken() *Node {
@@ -2419,7 +2419,7 @@ export function Node_QuestionDotToken(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeExpression","kind":"method","status":"implemented","sigHash":"bb7658e1d6e5f6aa338ec32c9e49eec023f48508794f163c1ef6158702d095f7","bodyHash":"71b45a89b3ab38d6736c6df140d449be54b3e7dd9fbd5932d74b65dfef7a4b92"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeExpression","kind":"method","status":"implemented","sigHash":"bb7658e1d6e5f6aa338ec32c9e49eec023f48508794f163c1ef6158702d095f7"}
  *
  * Go source:
  * func (n *Node) TypeExpression() *Node {
@@ -2464,7 +2464,7 @@ export function Node_TypeExpression(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ClassName","kind":"method","status":"implemented","sigHash":"42ae67a56328d501b91fe6e58b3962b306f096fd87962131b883706f56311c22","bodyHash":"300edf50d45543a21079a49107f2b9c61d183ffbbf787189d30cd761c12ec073"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.ClassName","kind":"method","status":"implemented","sigHash":"42ae67a56328d501b91fe6e58b3962b306f096fd87962131b883706f56311c22"}
  *
  * Go source:
  * func (n *Node) ClassName() *Node {
@@ -2488,7 +2488,7 @@ export function Node_ClassName(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Contains","kind":"method","status":"implemented","sigHash":"35d61fb7cf5a8e89e7c433da3d3961bb8aafb695be32170aca21ec6a41482ead","bodyHash":"5bbbbce3c245bd8c7ce019c651fd83f3e060c2993d57da9cae9f0829bc6686a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.Contains","kind":"method","status":"implemented","sigHash":"35d61fb7cf5a8e89e7c433da3d3961bb8aafb695be32170aca21ec6a41482ead"}
  *
  * Go source:
  * func (n *Node) Contains(descendant *Node) bool {
@@ -2520,7 +2520,7 @@ export function Node_Contains(receiver: GoPtr<Node>, descendant: GoPtr<Node>): b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsFlowSwitchClauseData","kind":"method","status":"implemented","sigHash":"119bed177d08d70df373c8859b32220579faa882651026276d341c6156dfc896","bodyHash":"285971301a7b23fb84b70cac8c242ea4665634831e1b8f3f132c66047277f8aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsFlowSwitchClauseData","kind":"method","status":"implemented","sigHash":"119bed177d08d70df373c8859b32220579faa882651026276d341c6156dfc896"}
  *
  * Go source:
  * func (n *Node) AsFlowSwitchClauseData() *FlowSwitchClauseData {
@@ -2532,7 +2532,7 @@ export function Node_AsFlowSwitchClauseData(receiver: GoPtr<Node>): GoPtr<FlowSw
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsFlowReduceLabelData","kind":"method","status":"implemented","sigHash":"037468d65e06901b0b7c1b782bd2a2da875927cfc0988e5daa9d3632610268bf","bodyHash":"164678c0f5bd3d53b8311d6d0925b752d7c900b865d9dc104d823c521972d351"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.AsFlowReduceLabelData","kind":"method","status":"implemented","sigHash":"037468d65e06901b0b7c1b782bd2a2da875927cfc0988e5daa9d3632610268bf"}
  *
  * Go source:
  * func (n *Node) AsFlowReduceLabelData() *FlowReduceLabelData {
@@ -2544,7 +2544,7 @@ export function Node_AsFlowReduceLabelData(receiver: GoPtr<Node>): GoPtr<FlowRed
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NamedMember","kind":"type","status":"implemented","sigHash":"e24e1dee7707e1f1320b5dcc6a6178733206112ef4fbd250c4b170af5c05c67d","bodyHash":"6c82401e57f641b5ab4b0474ef61a08cd7606ebf27cb1c4b505f58883161f557"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NamedMember","kind":"type","status":"implemented","sigHash":"e24e1dee7707e1f1320b5dcc6a6178733206112ef4fbd250c4b170af5c05c67d"}
  *
  * Go source:
  * NamedMember                 = Node
@@ -2552,7 +2552,7 @@ export function Node_AsFlowReduceLabelData(receiver: GoPtr<Node>): GoPtr<FlowRed
 export type NamedMember = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AnyValidImportOrReExport","kind":"type","status":"implemented","sigHash":"1873e3dbd63889d7f9bf5579172e6545ad333dc5f2a6161ff2df408ba289f0c9","bodyHash":"503ddf72e017e94309265986928e1d4ffbc86ba3b41a2e39d5aff080cdc04123"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AnyValidImportOrReExport","kind":"type","status":"implemented","sigHash":"1873e3dbd63889d7f9bf5579172e6545ad333dc5f2a6161ff2df408ba289f0c9"}
  *
  * Go source:
  * AnyValidImportOrReExport    = Node
@@ -2560,7 +2560,7 @@ export type NamedMember = Node;
 export type AnyValidImportOrReExport = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ValidImportTypeNode","kind":"type","status":"implemented","sigHash":"cef62c308942eee138cf95571c189dec5fd28588d723238e90d6ba4c5f391141","bodyHash":"0f4d29c6c04b7e883ef82ef8aaf290c658eda46d0b6e2a173dcdcd879bfc8980"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ValidImportTypeNode","kind":"type","status":"implemented","sigHash":"cef62c308942eee138cf95571c189dec5fd28588d723238e90d6ba4c5f391141"}
  *
  * Go source:
  * ValidImportTypeNode         = Node
@@ -2568,7 +2568,7 @@ export type AnyValidImportOrReExport = Node;
 export type ValidImportTypeNode = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::TypeOnlyImportDeclaration","kind":"type","status":"implemented","sigHash":"5b2415ba0b681ff826c6549ebd52e52663fcbacad5525fc3559e7bd739c6ceee","bodyHash":"6269543a21323f4a29ceba7da3f5d6b16c2ad3429bd0ec43731aaae79e39afdf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::TypeOnlyImportDeclaration","kind":"type","status":"implemented","sigHash":"5b2415ba0b681ff826c6549ebd52e52663fcbacad5525fc3559e7bd739c6ceee"}
  *
  * Go source:
  * TypeOnlyImportDeclaration   = Node
@@ -2576,7 +2576,7 @@ export type ValidImportTypeNode = Node;
 export type TypeOnlyImportDeclaration = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::StringLiteralLike","kind":"type","status":"implemented","sigHash":"06d241158a99b435e88984ebf91142ca3efad178c583c079107acb3553d2036b","bodyHash":"bc42c4db84976a5c76c75a207bcce4c017c3b8f8643ee6672fccfd24a7185c0a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::StringLiteralLike","kind":"type","status":"implemented","sigHash":"06d241158a99b435e88984ebf91142ca3efad178c583c079107acb3553d2036b"}
  *
  * Go source:
  * StringLiteralLike           = Node
@@ -2584,7 +2584,7 @@ export type TypeOnlyImportDeclaration = Node;
 export type StringLiteralLike = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ObjectLiteralLike","kind":"type","status":"implemented","sigHash":"70563e300a2f6783bd3cff429e0ff1084acc63cbcb1e1727ba7d38b19d7cf98b","bodyHash":"f7913c11d905782cef77a66a7a57aaaf5c2edab558145f1bc3df6c2cd5af1a17"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::ObjectLiteralLike","kind":"type","status":"implemented","sigHash":"70563e300a2f6783bd3cff429e0ff1084acc63cbcb1e1727ba7d38b19d7cf98b"}
  *
  * Go source:
  * ObjectLiteralLike           = Node
@@ -2592,7 +2592,7 @@ export type StringLiteralLike = Node;
 export type ObjectLiteralLike = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AnyImportOrRequireStatement","kind":"type","status":"implemented","sigHash":"ede08ab972393168f59689077782bffa5b64d5e27c206e771b7e4fa15fa4a6d7","bodyHash":"1434676bfae3e530d5417603b016f2161bd7934afefda08b7d89a63b2f475c68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AnyImportOrRequireStatement","kind":"type","status":"implemented","sigHash":"ede08ab972393168f59689077782bffa5b64d5e27c206e771b7e4fa15fa4a6d7"}
  *
  * Go source:
  * AnyImportOrRequireStatement = Node
@@ -2600,7 +2600,7 @@ export type ObjectLiteralLike = Node;
 export type AnyImportOrRequireStatement = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteOnlyAccess","kind":"func","status":"implemented","sigHash":"d57baffc30fed3407bd99da97d4f43b57f8483b3bff70837c90630a43ea32332","bodyHash":"d84c58d7aa7f1af7af09de1e0997a2637ba788cb193a5dade0cb259c2db779b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteOnlyAccess","kind":"func","status":"implemented","sigHash":"d57baffc30fed3407bd99da97d4f43b57f8483b3bff70837c90630a43ea32332"}
  *
  * Go source:
  * func IsWriteOnlyAccess(node *Node) bool {
@@ -2612,7 +2612,7 @@ export function IsWriteOnlyAccess(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteAccess","kind":"func","status":"implemented","sigHash":"e56383f933a603974abc8e6c0cea0f134a9b2b18c5323ee999e8cc0b730df5b1","bodyHash":"cc9fb353bba0ba8ea843e783f05e91d33679f451cda0611bca79a060f05ad483"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteAccess","kind":"func","status":"implemented","sigHash":"e56383f933a603974abc8e6c0cea0f134a9b2b18c5323ee999e8cc0b730df5b1"}
  *
  * Go source:
  * func IsWriteAccess(node *Node) bool {
@@ -2624,7 +2624,7 @@ export function IsWriteAccess(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteAccessForReference","kind":"func","status":"implemented","sigHash":"89d985bb07ea5462d9c03594878094a48c8cd43780df7125025b66a7346b503a","bodyHash":"19c2c2555ce26d0e8a9123ab24f01763d5a2e4b348e2f9a27e3a26755a705dc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsWriteAccessForReference","kind":"func","status":"implemented","sigHash":"89d985bb07ea5462d9c03594878094a48c8cd43780df7125025b66a7346b503a"}
  *
  * Go source:
  * func IsWriteAccessForReference(node *Node) bool {
@@ -2638,7 +2638,7 @@ export function IsWriteAccessForReference(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationFromName","kind":"func","status":"implemented","sigHash":"1accab3cf6f95159875c42f14a785efecf4c8e038a8b7110e5de54559dbeafac","bodyHash":"1816dad79e74806a6f8fe84445d039df9cbc98e253130d916ae43886365cf9fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationFromName","kind":"func","status":"implemented","sigHash":"1accab3cf6f95159875c42f14a785efecf4c8e038a8b7110e5de54559dbeafac"}
  *
  * Go source:
  * func GetDeclarationFromName(name *Node) *Declaration {
@@ -2738,7 +2738,7 @@ export function GetDeclarationFromName(name: GoPtr<Node>): GoPtr<Declaration> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::declarationIsWriteAccess","kind":"func","status":"implemented","sigHash":"48c27de57fb067bc0ed9d75ce6547ca8fef16bfaae0022d5fe3da9fd4766ba9a","bodyHash":"f99823bcc31174f8a3da78167fc73d194dc8cd51ba90d809e5478383f992514e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::declarationIsWriteAccess","kind":"func","status":"implemented","sigHash":"48c27de57fb067bc0ed9d75ce6547ca8fef16bfaae0022d5fe3da9fd4766ba9a"}
  *
  * Go source:
  * func declarationIsWriteAccess(decl *Node) bool {
@@ -2912,7 +2912,7 @@ export function declarationIsWriteAccess(decl: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsArrayLiteralOrObjectLiteralDestructuringPattern","kind":"func","status":"implemented","sigHash":"de41f011534199e5fecedede4217313f1ef14e3e749ab21fa9c845a2eb8efe50","bodyHash":"b9b198c40c2bb3f012caabb3f8ee633b98ca564566001e7bf722b05ef54cb338"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsArrayLiteralOrObjectLiteralDestructuringPattern","kind":"func","status":"implemented","sigHash":"de41f011534199e5fecedede4217313f1ef14e3e749ab21fa9c845a2eb8efe50"}
  *
  * Go source:
  * func IsArrayLiteralOrObjectLiteralDestructuringPattern(node *Node) bool {
@@ -2964,7 +2964,7 @@ export function IsArrayLiteralOrObjectLiteralDestructuringPattern(node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::accessKind","kind":"func","status":"implemented","sigHash":"863210d2dff016f721f03d9cd72e7435f1fe2d931c83aafcb0c6d26faff510d9","bodyHash":"aa5c6114266540577361e43acfbea4cd5c499e78d31a4f1d4987c1a4a4b78271"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::accessKind","kind":"func","status":"implemented","sigHash":"863210d2dff016f721f03d9cd72e7435f1fe2d931c83aafcb0c6d26faff510d9"}
  *
  * Go source:
  * func accessKind(node *Node) AccessKind {
@@ -3094,7 +3094,7 @@ export function accessKind(node: GoPtr<Node>): AccessKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::reverseAccessKind","kind":"func","status":"implemented","sigHash":"4b9714bb565319daa3cc0495c261020ac3793c547493b7618ba87c9e2f1b63fd","bodyHash":"3be55e8a3a0b24f091a511857da165a9a191eaf954983d3fa9f77c90a16f9c7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::reverseAccessKind","kind":"func","status":"implemented","sigHash":"4b9714bb565319daa3cc0495c261020ac3793c547493b7618ba87c9e2f1b63fd"}
  *
  * Go source:
  * func reverseAccessKind(a AccessKind) AccessKind {
@@ -3122,7 +3122,7 @@ export function reverseAccessKind(a: AccessKind): AccessKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AccessKind","kind":"type","status":"implemented","sigHash":"c684aae4d01e4ed551c5c5f13e9fa2ed34251e8a8e654f261bc194c4852f6dad","bodyHash":"cea11ce6d8d92272d99b15aba159167b5f67b18c092f982c0d90c6ccb1df2a58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::AccessKind","kind":"type","status":"implemented","sigHash":"c684aae4d01e4ed551c5c5f13e9fa2ed34251e8a8e654f261bc194c4852f6dad"}
  *
  * Go source:
  * AccessKind int32
@@ -3130,7 +3130,7 @@ export function reverseAccessKind(a: AccessKind): AccessKind {
 export type AccessKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::AccessKindRead+AccessKindWrite+AccessKindReadWrite","kind":"constGroup","status":"implemented","sigHash":"e3a6ad2cbf1ed6b0f9d5ead8ec03dbf798a3cf2cbd35fffb277b82ca04d5079a","bodyHash":"4f400ec76a911d3aabc92958dbf26c9d521ead320e8eeba10b1996c20c76f640"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::AccessKindRead+AccessKindWrite+AccessKindReadWrite","kind":"constGroup","status":"implemented","sigHash":"e3a6ad2cbf1ed6b0f9d5ead8ec03dbf798a3cf2cbd35fffb277b82ca04d5079a"}
  *
  * Go source:
  * const (
@@ -3144,7 +3144,7 @@ export const AccessKindWrite: AccessKind = 1;
 export const AccessKindReadWrite: AccessKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsDeclarationNode","kind":"func","status":"implemented","sigHash":"8c648e660252469cf80d372ca421bbdca6d4893c6806133b3914a3ac35b76b89","bodyHash":"f75ed3ee84a9df817353139e1c29b4a86bdef8241369a9f318c34b211f488520"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsDeclarationNode","kind":"func","status":"implemented","sigHash":"8c648e660252469cf80d372ca421bbdca6d4893c6806133b3914a3ac35b76b89"}
  *
  * Go source:
  * func IsDeclarationNode(node *Node) bool {
@@ -3156,7 +3156,7 @@ export function IsDeclarationNode(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsLocalsContainer","kind":"func","status":"implemented","sigHash":"10827d07286c61b7a32df28ba9ec42dbccd36a247bb149d63bad52d171332ade","bodyHash":"f34ff2661a2eedb13f702ec57d04235a14908137e96ecaec3a9f1d048b829ac5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsLocalsContainer","kind":"func","status":"implemented","sigHash":"10827d07286c61b7a32df28ba9ec42dbccd36a247bb149d63bad52d171332ade"}
  *
  * Go source:
  * func IsLocalsContainer(node *Node) bool {
@@ -3168,7 +3168,7 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc","kind":"method","status":"implemented","sigHash":"1d3cb1d38faf7da5151a84121dbb168530bdb76d1d2635bff4233a5f578ff362","bodyHash":"ca10b85819bcd16331ec0db578a050d65273704844816a269c21500830ebea7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc","kind":"method","status":"implemented","sigHash":"1d3cb1d38faf7da5151a84121dbb168530bdb76d1d2635bff4233a5f578ff362"}
  *
  * Go source:
  * func (node *Node) JSDoc(file *SourceFile) []*Node {
@@ -3205,7 +3205,7 @@ export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc","kind":"method","status":"implemented","sigHash":"e1b1dc027f606be82d9a51f3ca645f4d04947c0767ea65a7f6cbf47bf6a8b3a2","bodyHash":"76d96b9c8c86f92cf8d4793d5808deb5c9682c7601a303ad3ddb6ed382d4b813"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc","kind":"method","status":"implemented","sigHash":"e1b1dc027f606be82d9a51f3ca645f4d04947c0767ea65a7f6cbf47bf6a8b3a2"}
  *
  * Go source:
  * func (node *Node) EagerJSDoc(file *SourceFile) []*Node {
@@ -3248,7 +3248,7 @@ export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeSyntaxBase.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0a155b6c10c56850bc5c9dee88d60443a23e5bf307e4667470f6ea4dbe8c0623","bodyHash":"c5e668160e6fab60d4ee6aeb7e89f0b677862802fc38edf3fb94209dd89124c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeSyntaxBase.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0a155b6c10c56850bc5c9dee88d60443a23e5bf307e4667470f6ea4dbe8c0623"}
  *
  * Go source:
  * func (node *TypeSyntaxBase) computeSubtreeFacts() SubtreeFacts   { return SubtreeContainsTypeScript }
@@ -3258,7 +3258,7 @@ export function TypeSyntaxBase_computeSubtreeFacts(receiver: GoPtr<TypeSyntaxBas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeSyntaxBase.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"951e71aaa46d124ce9a37e93643f574fde7752a7bdf829a11cde55f1f8adb47f","bodyHash":"1b0fc97b7c29447ccf78c3066b29624f7a012b2f915b30da5d0fe5c3451e4598"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeSyntaxBase.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"951e71aaa46d124ce9a37e93643f574fde7752a7bdf829a11cde55f1f8adb47f"}
  *
  * Go source:
  * func (node *TypeSyntaxBase) propagateSubtreeFacts() SubtreeFacts { return SubtreeContainsTypeScript }
@@ -3268,7 +3268,7 @@ export function TypeSyntaxBase_propagateSubtreeFacts(receiver: GoPtr<TypeSyntaxB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Token.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"63dc263f4e13845bbee64c9678e5c8471d49cfc0768d2461821b394d0a96785d","bodyHash":"1c60a087c132b7b7568b9c127f10d40e308f9690c8a2c06f994c0f58d46453ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Token.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"63dc263f4e13845bbee64c9678e5c8471d49cfc0768d2461821b394d0a96785d"}
  *
  * Go source:
  * func (node *Token) computeSubtreeFacts() SubtreeFacts {
@@ -3369,7 +3369,7 @@ export function Token_computeSubtreeFacts(receiver: GoPtr<Token>): SubtreeFacts 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PrivateIdentifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"113fa669799693d01b21b5195a25f7388c32f82d7d9c33d9ebc7a55811dc5c15","bodyHash":"505e211e5d132d52411654d76c6cb240314c61246443e4992e4469266f805daf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PrivateIdentifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"113fa669799693d01b21b5195a25f7388c32f82d7d9c33d9ebc7a55811dc5c15"}
  *
  * Go source:
  * func (node *PrivateIdentifier) computeSubtreeFacts() SubtreeFacts {
@@ -3381,7 +3381,7 @@ export function PrivateIdentifier_computeSubtreeFacts(receiver: GoPtr<PrivateIde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewModifier","kind":"method","status":"implemented","sigHash":"d62f0b230a9c040f1324d26a6d85ec018ec8b15394d66b31ac97c8447dba7b7c","bodyHash":"bf44c15a5e564de2f1c36d66622f2accdc1cd29387e29c7244a6a894e8004d8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewModifier","kind":"method","status":"implemented","sigHash":"d62f0b230a9c040f1324d26a6d85ec018ec8b15394d66b31ac97c8447dba7b7c"}
  *
  * Go source:
  * func (f *NodeFactory) NewModifier(kind Kind) *Node {
@@ -3393,7 +3393,7 @@ export function NodeFactory_NewModifier(receiver: GoPtr<NodeFactory>, kind: Kind
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Decorator.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"80aa0e3300dc3e8409355e4652d0468cb5d7a4277092e9fbc55ce195a4a3c5ca","bodyHash":"4bdae84c562449732253ea5346716a65708c7ba90eaafd9dc1b8b5828d929da1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Decorator.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"80aa0e3300dc3e8409355e4652d0468cb5d7a4277092e9fbc55ce195a4a3c5ca"}
  *
  * Go source:
  * func (node *Decorator) computeSubtreeFacts() SubtreeFacts {
@@ -3409,7 +3409,7 @@ export function Decorator_computeSubtreeFacts(receiver: GoPtr<Decorator>): Subtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ForInOrOfStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"17c634a447354dea46c41ecdfb926bc3cfc090e5b1e8b87c4c88adb2a8428792","bodyHash":"131bfa7d3f92ce7aa6e84b094861ce098a7d928a9bab590b809572982c84741f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ForInOrOfStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"17c634a447354dea46c41ecdfb926bc3cfc090e5b1e8b87c4c88adb2a8428792"}
  *
  * Go source:
  * func (node *ForInOrOfStatement) computeSubtreeFacts() SubtreeFacts {
@@ -3427,7 +3427,7 @@ export function ForInOrOfStatement_computeSubtreeFacts(receiver: GoPtr<ForInOrOf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ReturnStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"73728f6de77b39ab57d6d86eb959642df307903b1f45462bc74e3fa6ada1002b","bodyHash":"ba84919bd9bb81da6ad599dedef71df9e7593586d5abe63f57b15b1b485f4ec8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ReturnStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"73728f6de77b39ab57d6d86eb959642df307903b1f45462bc74e3fa6ada1002b"}
  *
  * Go source:
  * func (node *ReturnStatement) computeSubtreeFacts() SubtreeFacts {
@@ -3441,7 +3441,7 @@ export function ReturnStatement_computeSubtreeFacts(receiver: GoPtr<ReturnStatem
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CatchClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8481a7deee27410a3f80144c1c4f5ffac42c6b2fa4e8814316dcf4814b180945","bodyHash":"32ad1f516b07e1fc4b657f6f10cdc12cb2355bf22de996bae5f1a260707adf2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CatchClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8481a7deee27410a3f80144c1c4f5ffac42c6b2fa4e8814316dcf4814b180945"}
  *
  * Go source:
  * func (node *CatchClause) computeSubtreeFacts() SubtreeFacts {
@@ -3463,7 +3463,7 @@ export function CatchClause_computeSubtreeFacts(receiver: GoPtr<CatchClause>): S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CatchClause.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"67af478b126eec14469534526214f97535f1f0cc905cc27ee04752391c537184","bodyHash":"03499d53243457fd2c78b7b0ab706bb62e7c1b803c628be88db58cfc3eab5dbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CatchClause.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"67af478b126eec14469534526214f97535f1f0cc905cc27ee04752391c537184"}
  *
  * Go source:
  * func (node *CatchClause) propagateSubtreeFacts() SubtreeFacts {
@@ -3475,7 +3475,7 @@ export function CatchClause_propagateSubtreeFacts(receiver: GoPtr<CatchClause>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"d9ef7215adec6dcaac30e6c90567b20c64b83b60407924fd5e21992633426eec","bodyHash":"0a62bbca679a7ecd109907ddf6a3d42d907b373076849acc9c53960d0dc6058a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableStatement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"d9ef7215adec6dcaac30e6c90567b20c64b83b60407924fd5e21992633426eec"}
  *
  * Go source:
  * func (node *VariableStatement) computeSubtreeFacts() SubtreeFacts {
@@ -3497,7 +3497,7 @@ export function VariableStatement_computeSubtreeFacts(receiver: GoPtr<VariableSt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"a590a3ef3209817fe68396523dc5ecee2d8f6d66af24694b4bc0f0ee9838a230","bodyHash":"8a8a70c6b68c4dbfef82d8baa66470b7299eba8c4a58edfdbee4e1e5674efc07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"a590a3ef3209817fe68396523dc5ecee2d8f6d66af24694b4bc0f0ee9838a230"}
  *
  * Go source:
  * func (node *VariableDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3515,7 +3515,7 @@ export function VariableDeclaration_computeSubtreeFacts(receiver: GoPtr<Variable
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclarationList.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"084ba366a13832b4d5eb8bc184141bae20ac740f70de8f5d11b1b96436317ba7","bodyHash":"e8eb09af30691fda9baccdf6111e3c6b8ad0ebe04950ab779375798e3d784d36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclarationList.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"084ba366a13832b4d5eb8bc184141bae20ac740f70de8f5d11b1b96436317ba7"}
  *
  * Go source:
  * func (node *VariableDeclarationList) computeSubtreeFacts() SubtreeFacts {
@@ -3529,7 +3529,7 @@ export function VariableDeclarationList_computeSubtreeFacts(receiver: GoPtr<Vari
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclarationList.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"fbd76450d773caf9795d67624214a9ce9531fe1b1735f7af66098d9876717370","bodyHash":"20f03cf5be817d872f522d9f58c66362580d685e8a1f488a3863e97626b7ea58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::VariableDeclarationList.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"fbd76450d773caf9795d67624214a9ce9531fe1b1735f7af66098d9876717370"}
  *
  * Go source:
  * func (node *VariableDeclarationList) propagateSubtreeFacts() SubtreeFacts {
@@ -3541,7 +3541,7 @@ export function VariableDeclarationList_propagateSubtreeFacts(receiver: GoPtr<Va
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingPattern.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"38d67e4775dd9a1728cfeacae040f42819e7f5f6f8f84a499f38f4b80845ecba","bodyHash":"9d94f77c5f71462d48dd7708122427450002dc07d7a4482e0c644c8ba2048070"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingPattern.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"38d67e4775dd9a1728cfeacae040f42819e7f5f6f8f84a499f38f4b80845ecba"}
  *
  * Go source:
  * func (node *BindingPattern) computeSubtreeFacts() SubtreeFacts {
@@ -3567,7 +3567,7 @@ export function BindingPattern_computeSubtreeFacts(receiver: GoPtr<BindingPatter
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingPattern.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"05249009a89973895efbf7c0d0a5549c760e7e083965b725ea587332097280b3","bodyHash":"a2013d6d09c42e9b7c3bff6f8026496e3d46787f26366c77e59aca3769cae511"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingPattern.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"05249009a89973895efbf7c0d0a5549c760e7e083965b725ea587332097280b3"}
  *
  * Go source:
  * func (node *BindingPattern) propagateSubtreeFacts() SubtreeFacts {
@@ -3579,7 +3579,7 @@ export function BindingPattern_propagateSubtreeFacts(receiver: GoPtr<BindingPatt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ParameterDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2e33ffdc1ef782e908496238c5f7b25e8426a98f84542978af2c7c5748c8f9d7","bodyHash":"504eee77fe9b4a1876387f0188bd320916f8d830281f56f90235cbd823b26ced"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ParameterDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2e33ffdc1ef782e908496238c5f7b25e8426a98f84542978af2c7c5748c8f9d7"}
  *
  * Go source:
  * func (node *ParameterDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3606,7 +3606,7 @@ export function ParameterDeclaration_computeSubtreeFacts(receiver: GoPtr<Paramet
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ParameterDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"d5158308f9fcf6c3afaf5f88f9e560edbdb82dc807bfd6b8515d02223515c29f","bodyHash":"22cc800fd18551ec8bfa163082f146f1618fd002a97201cb54374cdc500d31b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ParameterDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"d5158308f9fcf6c3afaf5f88f9e560edbdb82dc807bfd6b8515d02223515c29f"}
  *
  * Go source:
  * func (node *ParameterDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -3618,7 +3618,7 @@ export function ParameterDeclaration_propagateSubtreeFacts(receiver: GoPtr<Param
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"c907425bb7402d0e8ca10174d63d801f93610a3b91c48988de780a0c491cc650","bodyHash":"2bede2962e46f4c822556067bc1307e1048574a4d4defe37aea51d4436965474"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BindingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"c907425bb7402d0e8ca10174d63d801f93610a3b91c48988de780a0c491cc650"}
  *
  * Go source:
  * func (node *BindingElement) computeSubtreeFacts() SubtreeFacts {
@@ -3636,7 +3636,7 @@ export function BindingElement_computeSubtreeFacts(receiver: GoPtr<BindingElemen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6fcc8cc535fbd9e630616b74a064f639c1ed74315c58ac3b775d502b458afdde","bodyHash":"08c9a8f339ea0cb3e1976559bf44b5a08bbcb9800711afaa8a2ed5d344cf37a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6fcc8cc535fbd9e630616b74a064f639c1ed74315c58ac3b775d502b458afdde"}
  *
  * Go source:
  * func (node *FunctionDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3678,7 +3678,7 @@ export function FunctionDeclaration_computeSubtreeFacts(receiver: GoPtr<Function
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"4380c737648fa6c3ec8576aea4bf62308670a8391bbd627e81be60a471ff8840","bodyHash":"38ad45d32ca1ea843e5749b1e1f66195bf40e2c4e2652c95d5d6e33726034b38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"4380c737648fa6c3ec8576aea4bf62308670a8391bbd627e81be60a471ff8840"}
  *
  * Go source:
  * func (node *FunctionDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -3690,7 +3690,7 @@ export function FunctionDeclaration_propagateSubtreeFacts(receiver: GoPtr<Functi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"85eefae30ce964e5943433d0036b248ac5a3589b2dc87b694bb4c48abb845760","bodyHash":"b6e2264eb2366e2e7b72596022fccab24d82f2c1d6a26593cc175e2f1d1e6b7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"85eefae30ce964e5943433d0036b248ac5a3589b2dc87b694bb4c48abb845760"}
  *
  * Go source:
  * func (node *ClassDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -3702,7 +3702,7 @@ export function ClassDeclaration_propagateSubtreeFacts(receiver: GoPtr<ClassDecl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"90ae1e4584c267048fccda287aa86568c304f5cbe0d631da13800fd613c880bd","bodyHash":"1f4a1618c4dafa3c277f0312e5339f7349330455f6789dc7e1d1644f52ae455b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"90ae1e4584c267048fccda287aa86568c304f5cbe0d631da13800fd613c880bd"}
  *
  * Go source:
  * func (node *ClassExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -3714,7 +3714,7 @@ export function ClassExpression_propagateSubtreeFacts(receiver: GoPtr<ClassExpre
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::HeritageClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"891fd4123f534195f5a76b531c419fd9b2fd85fada600c2661ff2a509d7e5ef6","bodyHash":"656ea754ad33269d1c9b6647e3c5ea99d22791bb66b344c9bf67056dc70a89cf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::HeritageClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"891fd4123f534195f5a76b531c419fd9b2fd85fada600c2661ff2a509d7e5ef6"}
  *
  * Go source:
  * func (node *HeritageClause) computeSubtreeFacts() SubtreeFacts {
@@ -3740,7 +3740,7 @@ export function HeritageClause_computeSubtreeFacts(receiver: GoPtr<HeritageClaus
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsTypeOrJSTypeAliasDeclaration","kind":"func","status":"implemented","sigHash":"cdc0381c834e14e84fdc41668935417112a6b562f44dd4b4f34ed56824329af0","bodyHash":"780b4ff7bb4c0f25ccc5fc757c141d9d1043300eda1a23f4d2c65a360d79468f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsTypeOrJSTypeAliasDeclaration","kind":"func","status":"implemented","sigHash":"cdc0381c834e14e84fdc41668935417112a6b562f44dd4b4f34ed56824329af0"}
  *
  * Go source:
  * func IsTypeOrJSTypeAliasDeclaration(node *Node) bool {
@@ -3752,7 +3752,7 @@ export function IsTypeOrJSTypeAliasDeclaration(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::EnumMember.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ca487a59ca331c9cf8280501c0ea184c1bccbb35ba302f25bb3f6dbbc7982b88","bodyHash":"be54f57cba2eb4eb6bb0a9a85e36e737208e541fea0131408d64817200522e4f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::EnumMember.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ca487a59ca331c9cf8280501c0ea184c1bccbb35ba302f25bb3f6dbbc7982b88"}
  *
  * Go source:
  * func (node *EnumMember) computeSubtreeFacts() SubtreeFacts {
@@ -3768,7 +3768,7 @@ export function EnumMember_computeSubtreeFacts(receiver: GoPtr<EnumMember>): Sub
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::EnumDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8fab9c407e8ecf7d8ae1680b0e011e09bd0c21a22587e1c72dfa0603e89301ba","bodyHash":"f3cf6507a501d423226febacf252bfafa1ada7e55fe39a4ba0ad8d26d5dfff31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::EnumDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8fab9c407e8ecf7d8ae1680b0e011e09bd0c21a22587e1c72dfa0603e89301ba"}
  *
  * Go source:
  * func (node *EnumDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3794,7 +3794,7 @@ export function EnumDeclaration_computeSubtreeFacts(receiver: GoPtr<EnumDeclarat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModuleDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"beffcfe564d2ae514458a46d53afb5f5b52621375166c98e94e0ffab9253f102","bodyHash":"062fba552c88062abb463d76a1296e21b0d2255acef7bc6de17609f63903fc40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModuleDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"beffcfe564d2ae514458a46d53afb5f5b52621375166c98e94e0ffab9253f102"}
  *
  * Go source:
  * func (node *ModuleDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3820,7 +3820,7 @@ export function ModuleDeclaration_computeSubtreeFacts(receiver: GoPtr<ModuleDecl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModuleDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"61da7370679ee5f15dea93f5f42c7e120f6a730786ee1a180350f903ef224dfc","bodyHash":"93d83881b17c7af007dd387b16fb68a7f41a401b467ff8aba571750e89bdccb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModuleDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"61da7370679ee5f15dea93f5f42c7e120f6a730786ee1a180350f903ef224dfc"}
  *
  * Go source:
  * func (node *ModuleDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -3832,7 +3832,7 @@ export function ModuleDeclaration_propagateSubtreeFacts(receiver: GoPtr<ModuleDe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportEqualsDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"b61b9b71560c23eb899c9cdfb0ff187140291830c327a316299e7ebdde9e58a7","bodyHash":"79a6b8ae80e39968dee173964294b33cba0436c57970965a9b6f1809fa558f5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportEqualsDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"b61b9b71560c23eb899c9cdfb0ff187140291830c327a316299e7ebdde9e58a7"}
  *
  * Go source:
  * func (node *ImportEqualsDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3856,7 +3856,7 @@ export function ImportEqualsDeclaration_computeSubtreeFacts(receiver: GoPtr<Impo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsImportDeclarationOrJSImportDeclaration","kind":"func","status":"implemented","sigHash":"561df0ffe38b60838ea208112499cf02b7fd395f8b64f4aacb4c10035469bf2f","bodyHash":"9ca480bd22cb4b46df133a637cbac859e525234480b6cc8af00a413a1d36c5d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsImportDeclarationOrJSImportDeclaration","kind":"func","status":"implemented","sigHash":"561df0ffe38b60838ea208112499cf02b7fd395f8b64f4aacb4c10035469bf2f"}
  *
  * Go source:
  * func IsImportDeclarationOrJSImportDeclaration(node *Node) bool {
@@ -3868,7 +3868,7 @@ export function IsImportDeclarationOrJSImportDeclaration(node: GoPtr<Node>): boo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportSpecifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"3093e7355f3d5f7f48add19adfa71e8656c6a9a7cbba992111d5baaa61f100bc","bodyHash":"18e4434d2dcc4eb3071d7b346e0db340bcb1667d1f2662a1442278c5923136e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportSpecifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"3093e7355f3d5f7f48add19adfa71e8656c6a9a7cbba992111d5baaa61f100bc"}
  *
  * Go source:
  * func (node *ImportSpecifier) computeSubtreeFacts() SubtreeFacts {
@@ -3890,7 +3890,7 @@ export function ImportSpecifier_computeSubtreeFacts(receiver: GoPtr<ImportSpecif
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2c8511653b40ccbd2dde19da523df88c22e6242baf0326336806e79326fb9e9b","bodyHash":"9ee3d062985e694ccad8ab804e53fb56ede0664b89fbbc81bd1bccb37a0ad444"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportClause.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2c8511653b40ccbd2dde19da523df88c22e6242baf0326336806e79326fb9e9b"}
  *
  * Go source:
  * func (node *ImportClause) computeSubtreeFacts() SubtreeFacts {
@@ -3912,7 +3912,7 @@ export function ImportClause_computeSubtreeFacts(receiver: GoPtr<ImportClause_58
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e69dc85d0ae3b56c48974682ca467a64f76135b51fe35130b11db4ee0c6e1954","bodyHash":"efdada7523f7a48051911e1ec4468511a83b213d80c4928b14aee835b6cf4391"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e69dc85d0ae3b56c48974682ca467a64f76135b51fe35130b11db4ee0c6e1954"}
  *
  * Go source:
  * func (node *ExportAssignment) computeSubtreeFacts() SubtreeFacts {
@@ -3924,7 +3924,7 @@ export function ExportAssignment_computeSubtreeFacts(receiver: GoPtr<ExportAssig
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsAnyExportAssignment","kind":"func","status":"implemented","sigHash":"07dcaf9fd13ad3949db1d4d5829224d39e7550681caf87c017ef9818a36da19f","bodyHash":"c275b691611d9342b9fd2d75521d7209507e867a582acbb109de1ad362eb94cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::IsAnyExportAssignment","kind":"func","status":"implemented","sigHash":"07dcaf9fd13ad3949db1d4d5829224d39e7550681caf87c017ef9818a36da19f"}
  *
  * Go source:
  * func IsAnyExportAssignment(node *Node) bool {
@@ -3936,7 +3936,7 @@ export function IsAnyExportAssignment(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"3cfb3720b2a07d7eb88fc0c898ff2085ef1e21ad8c4f723518f84b6c26f5f935","bodyHash":"a502820b3966660117f161d4278558aa61dda8cdfa0ec328af82cc9c3ae2802d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"3cfb3720b2a07d7eb88fc0c898ff2085ef1e21ad8c4f723518f84b6c26f5f935"}
  *
  * Go source:
  * func (node *ExportDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -3956,7 +3956,7 @@ export function ExportDeclaration_computeSubtreeFacts(receiver: GoPtr<ExportDecl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportSpecifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"acf23d17754c209af9e51f2f4624e9eecb00a94c4795772169a182d5407c1222","bodyHash":"2d2487dfdf5b2334177a5331bc6e8104dba56dd760aa7bbc1bc28c73ef9f4940"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExportSpecifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"acf23d17754c209af9e51f2f4624e9eecb00a94c4795772169a182d5407c1222"}
  *
  * Go source:
  * func (node *ExportSpecifier) computeSubtreeFacts() SubtreeFacts {
@@ -3978,7 +3978,7 @@ export function ExportSpecifier_computeSubtreeFacts(receiver: GoPtr<ExportSpecif
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ConstructorDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"faf750dea5f221670bd33a86445a89c3ffc9287a0fd62b082392233783488291","bodyHash":"52d37d40ad53878870e1cc85d8cd469990407ccd9eaac969712fb56e723e6766"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ConstructorDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"faf750dea5f221670bd33a86445a89c3ffc9287a0fd62b082392233783488291"}
  *
  * Go source:
  * func (node *ConstructorDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -4008,7 +4008,7 @@ export function ConstructorDeclaration_computeSubtreeFacts(receiver: GoPtr<Const
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ConstructorDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"0eaccb55feb8622b25ab622c0f96091839dbe7970336e2359044ce61b2599686","bodyHash":"d832268d5bd5c672e0cbde37b0fce67d2d89b61cff36556ec8e32b51781d1794"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ConstructorDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"0eaccb55feb8622b25ab622c0f96091839dbe7970336e2359044ce61b2599686"}
  *
  * Go source:
  * func (node *ConstructorDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -4020,7 +4020,7 @@ export function ConstructorDeclaration_propagateSubtreeFacts(receiver: GoPtr<Con
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.IsAccessorDeclaration","kind":"method","status":"implemented","sigHash":"d1a3bedb33255dd16c8cb6e872b05d2bf891466b3e5bf881d2bdd26609c1cbfc","bodyHash":"16265746c4f47e17662df9aaed91913a42c0b12b942c9e295cd342cc2f0d546a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.IsAccessorDeclaration","kind":"method","status":"implemented","sigHash":"d1a3bedb33255dd16c8cb6e872b05d2bf891466b3e5bf881d2bdd26609c1cbfc"}
  *
  * Go source:
  * func (node *AccessorDeclarationBase) IsAccessorDeclaration() {}
@@ -4029,7 +4029,7 @@ export function AccessorDeclarationBase_IsAccessorDeclaration(receiver: GoPtr<Ac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ec9f2b765bec45b93a5e616d8e16bce00f1d1575d968aac03e9b06b13b81e668","bodyHash":"a3d608b0192c35269cd5d51d86a2b17f284d359a7eb4f21543ceae41e29a2e21"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ec9f2b765bec45b93a5e616d8e16bce00f1d1575d968aac03e9b06b13b81e668"}
  *
  * Go source:
  * func (node *AccessorDeclarationBase) computeSubtreeFacts() SubtreeFacts {
@@ -4061,7 +4061,7 @@ export function AccessorDeclarationBase_computeSubtreeFacts(receiver: GoPtr<Acce
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"26da712bb97858e999ccbef9cb62ccc926dc6192a684b1ef02488e10b823d01b","bodyHash":"2f9a3ddbb66c176fa783ffee78870811e91bbe490c29865963dc04b7f4a1331a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AccessorDeclarationBase.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"26da712bb97858e999ccbef9cb62ccc926dc6192a684b1ef02488e10b823d01b"}
  *
  * Go source:
  * func (node *AccessorDeclarationBase) propagateSubtreeFacts() SubtreeFacts {
@@ -4075,7 +4075,7 @@ export function AccessorDeclarationBase_propagateSubtreeFacts(receiver: GoPtr<Ac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MethodDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"907a8612c11072bb5282fb73dfbd34e1ae03ac08eaa5c83721097202ff5423f5","bodyHash":"0483ccb253479fc6c3eb7df34545084bd2217c8cba1e879f614ef1c37bbc01cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MethodDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"907a8612c11072bb5282fb73dfbd34e1ae03ac08eaa5c83721097202ff5423f5"}
  *
  * Go source:
  * func (node *MethodDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -4119,7 +4119,7 @@ export function MethodDeclaration_computeSubtreeFacts(receiver: GoPtr<MethodDecl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MethodDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"142494937807fd9ae4b96267d6d0d3e898e79583eaad9fc0d5c9745959afc69e","bodyHash":"5b30c3e5d9037c2cf89deddc78a17244d11ee4ad231caf80d3a6e169ec323d25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MethodDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"142494937807fd9ae4b96267d6d0d3e898e79583eaad9fc0d5c9745959afc69e"}
  *
  * Go source:
  * func (node *MethodDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -4133,7 +4133,7 @@ export function MethodDeclaration_propagateSubtreeFacts(receiver: GoPtr<MethodDe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"45c241882e0f942350181095f9b604208892c4dc2119b83a38cccde320a0de1a","bodyHash":"bba80967f1c6abb1a258dc7b1b5c5a6cc115ddc16bdcc633fc31b196dd624435"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"45c241882e0f942350181095f9b604208892c4dc2119b83a38cccde320a0de1a"}
  *
  * Go source:
  * func (node *PropertyDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -4155,7 +4155,7 @@ export function PropertyDeclaration_computeSubtreeFacts(receiver: GoPtr<Property
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"7a72f10093d4d3c0f03e0aefef925068947437361e4826c9b94ec2ddd2204634","bodyHash":"87c94cbe2f5f593b011701efad8da390514c5b9bf525e33ea6471442f4384c5a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyDeclaration.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"7a72f10093d4d3c0f03e0aefef925068947437361e4826c9b94ec2ddd2204634"}
  *
  * Go source:
  * func (node *PropertyDeclaration) propagateSubtreeFacts() SubtreeFacts {
@@ -4169,7 +4169,7 @@ export function PropertyDeclaration_propagateSubtreeFacts(receiver: GoPtr<Proper
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassStaticBlockDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8cd2b84b2f4c89a3e095815c856b9873a13139b77af3929de94d5c701ce86243","bodyHash":"9fb7e27333992842a69b6bff62e5ff34ddc3aea44bdc341bf1b128a1743cda77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ClassStaticBlockDeclaration.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"8cd2b84b2f4c89a3e095815c856b9873a13139b77af3929de94d5c701ce86243"}
  *
  * Go source:
  * func (node *ClassStaticBlockDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -4185,7 +4185,7 @@ export function ClassStaticBlockDeclaration_computeSubtreeFacts(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::KeywordExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9005bb0c00db66fa8c12a4eec3b35e80d014fcfe000dd2e45fdebe4dbeb4c2c0","bodyHash":"537d6d01d432932c8dae6c962462dabf0f2bf3738ad13b90d56ab11dadb3824f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::KeywordExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9005bb0c00db66fa8c12a4eec3b35e80d014fcfe000dd2e45fdebe4dbeb4c2c0"}
  *
  * Go source:
  * func (node *KeywordExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4209,7 +4209,7 @@ export function KeywordExpression_computeSubtreeFacts(receiver: GoPtr<KeywordExp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BigIntLiteral.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"a78ff3a3ad723e2d747b60a76238fdc67db36f0689a2004c202cc5afc7980cf0","bodyHash":"fc1312241431649ecc09a61c8448fb18ab1889340376a67f3e0488d865a06657"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BigIntLiteral.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"a78ff3a3ad723e2d747b60a76238fdc67db36f0689a2004c202cc5afc7980cf0"}
  *
  * Go source:
  * func (node *BigIntLiteral) computeSubtreeFacts() SubtreeFacts {
@@ -4221,7 +4221,7 @@ export function BigIntLiteral_computeSubtreeFacts(receiver: GoPtr<BigIntLiteral>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Identifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"562477747d797928017e54ecfaa0acf6fe2f4c4235b6adb40c68e7a879af136b","bodyHash":"c980f3f2024df9eba0a68677c4fb6734079c5d535174ea4909e092791a54baaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Identifier.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"562477747d797928017e54ecfaa0acf6fe2f4c4235b6adb40c68e7a879af136b"}
  *
  * Go source:
  * func (node *Identifier) computeSubtreeFacts() SubtreeFacts {
@@ -4233,7 +4233,7 @@ export function Identifier_computeSubtreeFacts(receiver: GoPtr<Identifier>): Sub
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NoSubstitutionTemplateLiteral.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"1162368deb5333eab7b6fae42937a4e05c600f9623ffdca6203748d2fa4a6593","bodyHash":"cbd29c297964d2f6fad93687437bca3447a812a2b625d1ba1dd79cbe706fab52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NoSubstitutionTemplateLiteral.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"1162368deb5333eab7b6fae42937a4e05c600f9623ffdca6203748d2fa4a6593"}
  *
  * Go source:
  * func (node *NoSubstitutionTemplateLiteral) computeSubtreeFacts() SubtreeFacts {
@@ -4251,7 +4251,7 @@ export function NoSubstitutionTemplateLiteral_computeSubtreeFacts(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BinaryExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0e0de814ebf95d2453b1142327f30f15a456327d0c01e5fd5aa2c85b68240923","bodyHash":"d77df7b9ee1fa290a48bf43a538f5f90bd9a06464cc547c9561e2881e37d5a47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BinaryExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0e0de814ebf95d2453b1142327f30f15a456327d0c01e5fd5aa2c85b68240923"}
  *
  * Go source:
  * func (node *BinaryExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4298,7 +4298,7 @@ export function BinaryExpression_computeSubtreeFacts(receiver: GoPtr<BinaryExpre
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BinaryExpression.setModifiers","kind":"method","status":"implemented","sigHash":"45631c0604651e778156b70a86f5f1c8708999b090ba325485138b2a833e9d00","bodyHash":"5466ef6583a1e481085cce0a139452e6ed80d97134bb957baf9e1a1e3ab32426"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::BinaryExpression.setModifiers","kind":"method","status":"implemented","sigHash":"45631c0604651e778156b70a86f5f1c8708999b090ba325485138b2a833e9d00"}
  *
  * Go source:
  * func (node *BinaryExpression) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
@@ -4308,7 +4308,7 @@ export function BinaryExpression_setModifiers(receiver: GoPtr<BinaryExpression>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::YieldExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"d2097e7faa0dca4d6908597b349318b0c034f2668e65e31e1cb9d4a06d3399d6","bodyHash":"54ffb49713ac3081f2a1f8f4a5a17c5f661ef740019690d95aeaddcc68592ba5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::YieldExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"d2097e7faa0dca4d6908597b349318b0c034f2668e65e31e1cb9d4a06d3399d6"}
  *
  * Go source:
  * func (node *YieldExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4320,7 +4320,7 @@ export function YieldExpression_computeSubtreeFacts(receiver: GoPtr<YieldExpress
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrowFunction.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"b3d6c10d7e0bd342fb87647cf0ad9c3331527c0b2495c0c2add1e20cbd1c14ff","bodyHash":"36da4e24e0b8f76e989d799444e56c464d6f46531b86f6d1ff876d21f86b78db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrowFunction.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"b3d6c10d7e0bd342fb87647cf0ad9c3331527c0b2495c0c2add1e20cbd1c14ff"}
  *
  * Go source:
  * func (node *ArrowFunction) computeSubtreeFacts() SubtreeFacts {
@@ -4344,7 +4344,7 @@ export function ArrowFunction_computeSubtreeFacts(receiver: GoPtr<ArrowFunction>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrowFunction.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"7c5bf0c19e9333f507945a09c818907cb99ccfa83decabfa6386f21794f74ae2","bodyHash":"0905d07006ec0e1124b57f54b7a212e2ba7e2dac41f1d93f0b3d01798adbc9e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrowFunction.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"7c5bf0c19e9333f507945a09c818907cb99ccfa83decabfa6386f21794f74ae2"}
  *
  * Go source:
  * func (node *ArrowFunction) propagateSubtreeFacts() SubtreeFacts {
@@ -4356,7 +4356,7 @@ export function ArrowFunction_propagateSubtreeFacts(receiver: GoPtr<ArrowFunctio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f80309d27bc5aeacc3d87e8db9d788197c4d800b1450400a24ac717c8e857611","bodyHash":"81bb9bb95fc1669c3a6e545bb85fae63703e8208fd8c5ff5234533b041000d77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f80309d27bc5aeacc3d87e8db9d788197c4d800b1450400a24ac717c8e857611"}
  *
  * Go source:
  * func (node *FunctionExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4390,7 +4390,7 @@ export function FunctionExpression_computeSubtreeFacts(receiver: GoPtr<FunctionE
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"5c3977ed9571553699a6f1bf68993e8f625d99b00359806fe8c775ab2c912558","bodyHash":"c3308a8d97bf1c0c036a7fe3ec1e142fa862054ff501ea182290ae9f8265d679"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"5c3977ed9571553699a6f1bf68993e8f625d99b00359806fe8c775ab2c912558"}
  *
  * Go source:
  * func (node *FunctionExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4402,7 +4402,7 @@ export function FunctionExpression_propagateSubtreeFacts(receiver: GoPtr<Functio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AsExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9fe493323b584d7769db45f11b0a783b40da78e0877df5bd2661a841aa2c7ba6","bodyHash":"c0691ca00bc48207b7e52cf1a1178a6f07ab9f9c2ce91065ad7f54b3ed74c7d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AsExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9fe493323b584d7769db45f11b0a783b40da78e0877df5bd2661a841aa2c7ba6"}
  *
  * Go source:
  * func (node *AsExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4414,7 +4414,7 @@ export function AsExpression_computeSubtreeFacts(receiver: GoPtr<AsExpression>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AsExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"8e92bd227ebd23112da3caf86f0a05e8c60513c67b446b3c4b8541db246d7afd","bodyHash":"7c1fc3dc4d8f855f44100c27102ea44254a0ac6220a52d6ae203a6a4c0b29c84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AsExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"8e92bd227ebd23112da3caf86f0a05e8c60513c67b446b3c4b8541db246d7afd"}
  *
  * Go source:
  * func (node *AsExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4426,7 +4426,7 @@ export function AsExpression_propagateSubtreeFacts(receiver: GoPtr<AsExpression>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SatisfiesExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"078a428caa90311b16b3562af7ea59d3c5a3cb8e4efc069af825368cc993408a","bodyHash":"1690f9cb74a2a9bb79ba213b9cebf2e539e38a20e0ff0b63f8f4bd4ec2d1f6f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SatisfiesExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"078a428caa90311b16b3562af7ea59d3c5a3cb8e4efc069af825368cc993408a"}
  *
  * Go source:
  * func (node *SatisfiesExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4438,7 +4438,7 @@ export function SatisfiesExpression_computeSubtreeFacts(receiver: GoPtr<Satisfie
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SatisfiesExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"6607fa64c8de5311f14811b3d655c7036971d56be6598e9d561db3317e6a5790","bodyHash":"0671992ae9fef0b8b196e78af2cde5496820fc01952971ab4d9117dfc5b7e7e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SatisfiesExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"6607fa64c8de5311f14811b3d655c7036971d56be6598e9d561db3317e6a5790"}
  *
  * Go source:
  * func (node *SatisfiesExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4450,7 +4450,7 @@ export function SatisfiesExpression_propagateSubtreeFacts(receiver: GoPtr<Satisf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAccessExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ca47498bf087d4bf141136eb5311b566e5246db4175ff753f15e410449d4139a","bodyHash":"04f7777c0b9fc66c49175c71a5aa9ab8ea18b8f450c31457b726c0836a3a193a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAccessExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ca47498bf087d4bf141136eb5311b566e5246db4175ff753f15e410449d4139a"}
  *
  * Go source:
  * func (node *PropertyAccessExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4474,7 +4474,7 @@ export function PropertyAccessExpression_computeSubtreeFacts(receiver: GoPtr<Pro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAccessExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"0dd4b982ab1c90f421e6f24d0680f5ae36555b1a37cf2ad73b2345f81b9b8e51","bodyHash":"633bbe9983abd75a66ab6a26b0b727e324e2f5fdf9de1daf4e2dda34c82d04c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAccessExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"0dd4b982ab1c90f421e6f24d0680f5ae36555b1a37cf2ad73b2345f81b9b8e51"}
  *
  * Go source:
  * func (node *PropertyAccessExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4486,7 +4486,7 @@ export function PropertyAccessExpression_propagateSubtreeFacts(receiver: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ElementAccessExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"e3bf1704bbb54f4a30dca700ae9aa0eb93d439b3c5f5c4c963ea77c6ca324d2f","bodyHash":"4fa965aee04ed65f0d8a7c373d3ebbf3c43ad44c77426444c1beca3c2f8a76cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ElementAccessExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"e3bf1704bbb54f4a30dca700ae9aa0eb93d439b3c5f5c4c963ea77c6ca324d2f"}
  *
  * Go source:
  * func (node *ElementAccessExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4498,7 +4498,7 @@ export function ElementAccessExpression_propagateSubtreeFacts(receiver: GoPtr<El
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CallExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"c8fee996dd681bc138b06e820d59c59e6aa82f62886044158e9a4142a6572d65","bodyHash":"7d880a508efc515a8407c171543fea291e43712eaf81f2d78a1fb8395e854812"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CallExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"c8fee996dd681bc138b06e820d59c59e6aa82f62886044158e9a4142a6572d65"}
  *
  * Go source:
  * func (node *CallExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4518,7 +4518,7 @@ export function CallExpression_computeSubtreeFacts(receiver: GoPtr<CallExpressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CallExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"71a4ede2b15e57cfd2e677d970a8117738d3e1dfc6e552cdc8a1b965db13be8d","bodyHash":"e51292dea55da12a30192969dfb5b5b81a4888b6b4711050bf6339f3554c9392"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::CallExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"71a4ede2b15e57cfd2e677d970a8117738d3e1dfc6e552cdc8a1b965db13be8d"}
  *
  * Go source:
  * func (node *CallExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4530,7 +4530,7 @@ export function CallExpression_propagateSubtreeFacts(receiver: GoPtr<CallExpress
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NewExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"27d79ca2daf6bcc85e7c1e0602625763937b9b8a2414733de81b0341418fa220","bodyHash":"a970c02d45e36af13ee259d7088d6d4f5efb6ceb0dd004b3bf7ec9ef7d119c28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NewExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"27d79ca2daf6bcc85e7c1e0602625763937b9b8a2414733de81b0341418fa220"}
  *
  * Go source:
  * func (node *NewExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4546,7 +4546,7 @@ export function NewExpression_computeSubtreeFacts(receiver: GoPtr<NewExpression>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NewExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"e3b6c957e3bbb70c0bc0e5cd79a42d0eceeb561089edeca91de5abb1a1da0c0d","bodyHash":"cdae1fef3d05d538d7a294985a0035b11f68631d66f92fe755b0c27e5ae78114"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NewExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"e3b6c957e3bbb70c0bc0e5cd79a42d0eceeb561089edeca91de5abb1a1da0c0d"}
  *
  * Go source:
  * func (node *NewExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4558,7 +4558,7 @@ export function NewExpression_propagateSubtreeFacts(receiver: GoPtr<NewExpressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MetaProperty.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"82d7e8d44699deae2dbf0aec7bd37df933e1f9cc48b4b48f4486bc49dd3e82f7","bodyHash":"a6ab2c1bbbed3191d16ba9af599c4e227ccc40bb40fd30e56274908b347e75c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MetaProperty.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"82d7e8d44699deae2dbf0aec7bd37df933e1f9cc48b4b48f4486bc49dd3e82f7"}
  *
  * Go source:
  * func (node *MetaProperty) computeSubtreeFacts() SubtreeFacts {
@@ -4570,7 +4570,7 @@ export function MetaProperty_computeSubtreeFacts(receiver: GoPtr<MetaProperty>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NonNullExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e86bbc16c3fe7e1c0593e5c02078dd44fa042a25b4efb0023d9253cbe55aa8cd","bodyHash":"647fe62ea26d8d82e5b65ea8571e0268b01953bab315d153d7cfaa5034650cfe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NonNullExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e86bbc16c3fe7e1c0593e5c02078dd44fa042a25b4efb0023d9253cbe55aa8cd"}
  *
  * Go source:
  * func (node *NonNullExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4582,7 +4582,7 @@ export function NonNullExpression_computeSubtreeFacts(receiver: GoPtr<NonNullExp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SpreadElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"cd5768cb47d391e8c924f63a4efe050f8a92aa1eee5de85e8347967f6d3557dd","bodyHash":"7cdeb2e95f5c3b32cfdae7220e105ecba56675cabe896be8c0d8bc481a8f9a02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SpreadElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"cd5768cb47d391e8c924f63a4efe050f8a92aa1eee5de85e8347967f6d3557dd"}
  *
  * Go source:
  * func (node *SpreadElement) computeSubtreeFacts() SubtreeFacts {
@@ -4594,7 +4594,7 @@ export function SpreadElement_computeSubtreeFacts(receiver: GoPtr<SpreadElement>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TaggedTemplateExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"418812817c7215cfb7f539c93dd0d2710cc56d0904859a01efb6bec29a9eb7b6","bodyHash":"3fba5a1ff793a9fbbadcb460fb1ce26b6579c1bfde682c2722971d3d42de53c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TaggedTemplateExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"418812817c7215cfb7f539c93dd0d2710cc56d0904859a01efb6bec29a9eb7b6"}
  *
  * Go source:
  * func (node *TaggedTemplateExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4612,7 +4612,7 @@ export function TaggedTemplateExpression_computeSubtreeFacts(receiver: GoPtr<Tag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrayLiteralExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"41a897a87133c912aa9439318cf56cdf1cc481ef61205af4222f66dfd1d02bbb","bodyHash":"132941e62a473666d10f0ddbf02418e51caf9d62024470306dbbc556f7adb71e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ArrayLiteralExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"41a897a87133c912aa9439318cf56cdf1cc481ef61205af4222f66dfd1d02bbb"}
  *
  * Go source:
  * func (node *ArrayLiteralExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4624,7 +4624,7 @@ export function ArrayLiteralExpression_propagateSubtreeFacts(receiver: GoPtr<Arr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ObjectLiteralExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"f4663847857e92bcab654a659d6c3475854d1cec4b95dcd84e0daa4bc8b12ed3","bodyHash":"a83474975bd7c66a3aebe08b53359e249f029702c97d6f46b77037e4fc1c9c8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ObjectLiteralExpression.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"f4663847857e92bcab654a659d6c3475854d1cec4b95dcd84e0daa4bc8b12ed3"}
  *
  * Go source:
  * func (node *ObjectLiteralExpression) propagateSubtreeFacts() SubtreeFacts {
@@ -4636,7 +4636,7 @@ export function ObjectLiteralExpression_propagateSubtreeFacts(receiver: GoPtr<Ob
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SpreadAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6143e8c5142c88fcdf8ec9f6a4fd7234a55d7cb9ac5f2792d1abc122f04fb567","bodyHash":"668e74fb028865fab2d16feae406ddd1c6d3912032ebd41063fefb2df777b730"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SpreadAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6143e8c5142c88fcdf8ec9f6a4fd7234a55d7cb9ac5f2792d1abc122f04fb567"}
  *
  * Go source:
  * func (node *SpreadAssignment) computeSubtreeFacts() SubtreeFacts {
@@ -4648,7 +4648,7 @@ export function SpreadAssignment_computeSubtreeFacts(receiver: GoPtr<SpreadAssig
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6366226d0d3172acdc339656a5806281f4c856f852d7cdf9948357d3d34de276","bodyHash":"b801aa9c9fe24a9ce76698e7b37468e030ea561006c75007009fa9c77718946e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PropertyAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"6366226d0d3172acdc339656a5806281f4c856f852d7cdf9948357d3d34de276"}
  *
  * Go source:
  * func (node *PropertyAssignment) computeSubtreeFacts() SubtreeFacts {
@@ -4664,7 +4664,7 @@ export function PropertyAssignment_computeSubtreeFacts(receiver: GoPtr<PropertyA
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ShorthandPropertyAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"646f57ecb31afdff0d4d314cf512ef681ea70e476412430a26e3ec0eb2374d61","bodyHash":"3c50f832a6fe927d2122e5a0d40fcc35aecdcf7d6e82084126199b49649d2073"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ShorthandPropertyAssignment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"646f57ecb31afdff0d4d314cf512ef681ea70e476412430a26e3ec0eb2374d61"}
  *
  * Go source:
  * func (node *ShorthandPropertyAssignment) computeSubtreeFacts() SubtreeFacts {
@@ -4682,7 +4682,7 @@ export function ShorthandPropertyAssignment_computeSubtreeFacts(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AwaitExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"84624141a6c1409cbe862a78fcdedf7dc8b1275eaab5c03f9e5b662dc1846428","bodyHash":"a33d2c2b2c449bf2b0a7cbf2f2ae9c5700c83654600aa2233cac4b2147759292"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::AwaitExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"84624141a6c1409cbe862a78fcdedf7dc8b1275eaab5c03f9e5b662dc1846428"}
  *
  * Go source:
  * func (node *AwaitExpression) computeSubtreeFacts() SubtreeFacts {
@@ -4696,7 +4696,7 @@ export function AwaitExpression_computeSubtreeFacts(receiver: GoPtr<AwaitExpress
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeAssertion.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"5566c3bd779a177007f18de2caf68ad1f3decf0acbf9853b4d997efd6f5b7828","bodyHash":"4f4b03fb0d3eaf9e35ccaefd7e19142207c01f851f5de0851d4cb89dad91af88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeAssertion.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"5566c3bd779a177007f18de2caf68ad1f3decf0acbf9853b4d997efd6f5b7828"}
  *
  * Go source:
  * func (node *TypeAssertion) computeSubtreeFacts() SubtreeFacts {
@@ -4708,7 +4708,7 @@ export function TypeAssertion_computeSubtreeFacts(receiver: GoPtr<TypeAssertion>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeAssertion.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"5babb23316f239a6eacb30f6afface2aa6fe0268e9d4fa53d0adc1f48ede6450","bodyHash":"847a197dea42ccec63dc4ddf577f2e6492aa4797e8a9cfffa25776cde5023554"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TypeAssertion.propagateSubtreeFacts","kind":"method","status":"implemented","sigHash":"5babb23316f239a6eacb30f6afface2aa6fe0268e9d4fa53d0adc1f48ede6450"}
  *
  * Go source:
  * func (node *TypeAssertion) propagateSubtreeFacts() SubtreeFacts {
@@ -4720,7 +4720,7 @@ export function TypeAssertion_propagateSubtreeFacts(receiver: GoPtr<TypeAssertio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExpressionWithTypeArguments.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"693e3c874376f96bdd9bfc61c31486ca1cc083206cfbce56eea64df23741d9f0","bodyHash":"c92d9142c41d48aee80d6c3c909d40b8fb6d4d3eeae8de3d42c1718ff2acf275"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ExpressionWithTypeArguments.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"693e3c874376f96bdd9bfc61c31486ca1cc083206cfbce56eea64df23741d9f0"}
  *
  * Go source:
  * func (node *ExpressionWithTypeArguments) computeSubtreeFacts() SubtreeFacts {
@@ -4734,7 +4734,7 @@ export function ExpressionWithTypeArguments_computeSubtreeFacts(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportAttributesNode.GetResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0f6ecc67d1522690bd28a0da88f2b92d3183687c4a45101e5d2628ba15f61c","bodyHash":"0727c4069bd79bf0cee7ff51bf99d0d2623828021423713179818da025ac956d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ImportAttributesNode.GetResolutionModeOverride","kind":"method","status":"implemented","sigHash":"7e0f6ecc67d1522690bd28a0da88f2b92d3183687c4a45101e5d2628ba15f61c"}
  *
  * Go source:
  * func (node *ImportAttributesNode) GetResolutionModeOverride( /* !!! grammarErrorOnNode?: (node: Node, diagnostic: DiagnosticMessage) => void* / ) (core.ResolutionMode, bool) {
@@ -4817,7 +4817,7 @@ export function ImportAttributesNode_GetResolutionModeOverride(receiver: GoPtr<I
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionOrConstructorTypeNodeBase.DeclarationData","kind":"method","status":"implemented","sigHash":"54b1ed8c1a40f0dc87c85ae6468c3ddf8e2aae440b30ee62712b7fc76202afb3","bodyHash":"d0bdfb7692610014561ca8841817299587cd905d960b90586d239ef15a4951f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::FunctionOrConstructorTypeNodeBase.DeclarationData","kind":"method","status":"implemented","sigHash":"54b1ed8c1a40f0dc87c85ae6468c3ddf8e2aae440b30ee62712b7fc76202afb3"}
  *
  * Go source:
  * func (node *FunctionOrConstructorTypeNodeBase) DeclarationData() *DeclarationBase {
@@ -4829,7 +4829,7 @@ export function FunctionOrConstructorTypeNodeBase_DeclarationData(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateHead.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"095e135f58d8936aa68e27e81a7095f9a39b600e51e38fb64abacaaca4d8275d","bodyHash":"b07cd7378638404732744bad3f80a4801e0680531f5e1ab5e986cf0e1c416526"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateHead.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"095e135f58d8936aa68e27e81a7095f9a39b600e51e38fb64abacaaca4d8275d"}
  *
  * Go source:
  * func (node *TemplateHead) computeSubtreeFacts() SubtreeFacts {
@@ -4847,7 +4847,7 @@ export function TemplateHead_computeSubtreeFacts(receiver: GoPtr<TemplateHead>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateMiddle.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f22840854ec1446d33ebad461518ef58584a0f93ce0646e41422e14eee3ba250","bodyHash":"5f491b42092980b6ec8902beddcf0ee03812f0424699201465362783dd833400"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateMiddle.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f22840854ec1446d33ebad461518ef58584a0f93ce0646e41422e14eee3ba250"}
  *
  * Go source:
  * func (node *TemplateMiddle) computeSubtreeFacts() SubtreeFacts {
@@ -4865,7 +4865,7 @@ export function TemplateMiddle_computeSubtreeFacts(receiver: GoPtr<TemplateMiddl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateTail.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"51ffbaffdbdfc46467ed17c778a9aa9b0fdbabfaefc5e320a50fd34c9e5bea61","bodyHash":"64a744ba7b8fbdf0ebdfaad86661da7f62bf4e43004cbce6c4bd4bcb0db1a8f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::TemplateTail.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"51ffbaffdbdfc46467ed17c778a9aa9b0fdbabfaefc5e320a50fd34c9e5bea61"}
  *
  * Go source:
  * func (node *TemplateTail) computeSubtreeFacts() SubtreeFacts {
@@ -4883,7 +4883,7 @@ export function TemplateTail_computeSubtreeFacts(receiver: GoPtr<TemplateTail>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"5fe69ec92cae33b2f6a5bc117a0e9762da340ea884c9565c46d61e230aa2d89b","bodyHash":"dcce323c6ea4e6f950e28448416e6ac67b9eb2d1aa3dec64c527d0bb3538cc9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"5fe69ec92cae33b2f6a5bc117a0e9762da340ea884c9565c46d61e230aa2d89b"}
  *
  * Go source:
  * func (node *JsxElement) computeSubtreeFacts() SubtreeFacts {
@@ -4901,7 +4901,7 @@ export function JsxElement_computeSubtreeFacts(receiver: GoPtr<JsxElement>): Sub
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxAttributes.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"427148050d872cf4f37c9a74caf88b1ea819e5348e5feea52f023d6cf82e2e7b","bodyHash":"ed228fe790b8cb5cb7d13f675f56eaf6b704a7b692d135b348d79ca0d4af9a64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxAttributes.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"427148050d872cf4f37c9a74caf88b1ea819e5348e5feea52f023d6cf82e2e7b"}
  *
  * Go source:
  * func (node *JsxAttributes) computeSubtreeFacts() SubtreeFacts {
@@ -4915,7 +4915,7 @@ export function JsxAttributes_computeSubtreeFacts(receiver: GoPtr<JsxAttributes>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxNamespacedName.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0c002dc9afc77170b6d7fa2512f91880fd3f59c3f0f3a93d58c68796b38f332c","bodyHash":"877bc3f2de139f17f59ec7ead74812be9c15ff589ab2157fb7593653ab23ba01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxNamespacedName.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"0c002dc9afc77170b6d7fa2512f91880fd3f59c3f0f3a93d58c68796b38f332c"}
  *
  * Go source:
  * func (node *JsxNamespacedName) computeSubtreeFacts() SubtreeFacts {
@@ -4931,7 +4931,7 @@ export function JsxNamespacedName_computeSubtreeFacts(receiver: GoPtr<JsxNamespa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxOpeningElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9270b478a6281c5ad6f76c1ecdac565832a24dda0e3a137eaec22a5052d8c1ad","bodyHash":"35f59a8953ac68d476ae916799f313aef0f0ea7044335d1e88e56e0f7570243b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxOpeningElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"9270b478a6281c5ad6f76c1ecdac565832a24dda0e3a137eaec22a5052d8c1ad"}
  *
  * Go source:
  * func (node *JsxOpeningElement) computeSubtreeFacts() SubtreeFacts {
@@ -4949,7 +4949,7 @@ export function JsxOpeningElement_computeSubtreeFacts(receiver: GoPtr<JsxOpening
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxSelfClosingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"19c2441316c41a80cff84dc287ea23d0af4ced102523950c218bc295515772d1","bodyHash":"6c3db3185bc89a7f5e86b40f7f8e953ffc830c25ef6d32f02a1d65355c4f2d16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxSelfClosingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"19c2441316c41a80cff84dc287ea23d0af4ced102523950c218bc295515772d1"}
  *
  * Go source:
  * func (node *JsxSelfClosingElement) computeSubtreeFacts() SubtreeFacts {
@@ -4967,7 +4967,7 @@ export function JsxSelfClosingElement_computeSubtreeFacts(receiver: GoPtr<JsxSel
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"40c663e60ed0faa852abb59e08166b9275ecfcff4e2295022fe218b4f8be1b32","bodyHash":"240307305b8fddfdff51e71c542007616eb2f5830a11c703d0f4e96dc6fc8802"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"40c663e60ed0faa852abb59e08166b9275ecfcff4e2295022fe218b4f8be1b32"}
  *
  * Go source:
  * func (node *JsxFragment) computeSubtreeFacts() SubtreeFacts {
@@ -4981,7 +4981,7 @@ export function JsxFragment_computeSubtreeFacts(receiver: GoPtr<JsxFragment>): S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxOpeningFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"065e31c0dfbe688e3485f7eb076efc594af3e8262d42baa418a62c0dc1c4eb89","bodyHash":"6b0c9465caf09a32d00a03f75dd806bb7d5ddd6a89e070ef0834b8e599b8beba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxOpeningFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"065e31c0dfbe688e3485f7eb076efc594af3e8262d42baa418a62c0dc1c4eb89"}
  *
  * Go source:
  * func (node *JsxOpeningFragment) computeSubtreeFacts() SubtreeFacts {
@@ -4993,7 +4993,7 @@ export function JsxOpeningFragment_computeSubtreeFacts(receiver: GoPtr<JsxOpenin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxClosingFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f9d49dce075729175574ab49309714bf8d97c58e228a62ce3e65e1d933dce459","bodyHash":"b020962b7b3ec0af74435e62601c9cab2b5fbab5318e04c220a1a7fa8f32d395"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxClosingFragment.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"f9d49dce075729175574ab49309714bf8d97c58e228a62ce3e65e1d933dce459"}
  *
  * Go source:
  * func (node *JsxClosingFragment) computeSubtreeFacts() SubtreeFacts {
@@ -5005,7 +5005,7 @@ export function JsxClosingFragment_computeSubtreeFacts(receiver: GoPtr<JsxClosin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxAttribute.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"360430820536d6810c1e211880d854a8e546e5cacd509de03e1ce08bdd6f5a1d","bodyHash":"5c34b0d15591a0eace4fadfc9e062d8585ae9e3d790dedaf0b4af51262d023bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxAttribute.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"360430820536d6810c1e211880d854a8e546e5cacd509de03e1ce08bdd6f5a1d"}
  *
  * Go source:
  * func (node *JsxAttribute) computeSubtreeFacts() SubtreeFacts {
@@ -5021,7 +5021,7 @@ export function JsxAttribute_computeSubtreeFacts(receiver: GoPtr<JsxAttribute>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxSpreadAttribute.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"28905d81e99786fd4f5220bc919fb381519c72a5e3a14d2095f61ac4606db104","bodyHash":"c6cad9706d5dd7afc4e8b9ea81e7b8994ff85eaf320f82215fd8014cd56f422a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxSpreadAttribute.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"28905d81e99786fd4f5220bc919fb381519c72a5e3a14d2095f61ac4606db104"}
  *
  * Go source:
  * func (node *JsxSpreadAttribute) computeSubtreeFacts() SubtreeFacts {
@@ -5033,7 +5033,7 @@ export function JsxSpreadAttribute_computeSubtreeFacts(receiver: GoPtr<JsxSpread
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxClosingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e23f087fd588930e53d23aed0399b03e1c051815cc032732b163514899daefbb","bodyHash":"210734b7fd3ea23930e8f92f638b819db2fd4119229e9569e2d3f63a1f5515a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxClosingElement.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"e23f087fd588930e53d23aed0399b03e1c051815cc032732b163514899daefbb"}
  *
  * Go source:
  * func (node *JsxClosingElement) computeSubtreeFacts() SubtreeFacts {
@@ -5045,7 +5045,7 @@ export function JsxClosingElement_computeSubtreeFacts(receiver: GoPtr<JsxClosing
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"471771838c1aabb6925e1e39b00a8b7909789f23dff50e518045f681b6e74f8f","bodyHash":"538bcce2b653dbe0f9e20d43a4cc7d8d9766d3840662323399c4ca1aeb364365"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxExpression.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"471771838c1aabb6925e1e39b00a8b7909789f23dff50e518045f681b6e74f8f"}
  *
  * Go source:
  * func (node *JsxExpression) computeSubtreeFacts() SubtreeFacts {
@@ -5057,7 +5057,7 @@ export function JsxExpression_computeSubtreeFacts(receiver: GoPtr<JsxExpression>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxText.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ee8ea9a99ebc707b2c7ac5902ecf32efe235a4da576c0458bdb803f377651633","bodyHash":"9e7f47182be226b59c1198d0f08485fabe3cb02a6e9122d4f2f26c6d5f3f2075"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::JsxText.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"ee8ea9a99ebc707b2c7ac5902ecf32efe235a4da576c0458bdb803f377651633"}
  *
  * Go source:
  * func (node *JsxText) computeSubtreeFacts() SubtreeFacts {
@@ -5069,7 +5069,7 @@ export function JsxText_computeSubtreeFacts(receiver: GoPtr<JsxText>): SubtreeFa
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IsJSDoc","kind":"method","status":"implemented","sigHash":"2f377fbafee03c3026ae5656806a92e92dbb6000db1a4bb39e53f898eaa0e44d","bodyHash":"f30418ab0e0a1113430080c92f43bf7c299b05be5bf204fc92c44d03a970e662"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.IsJSDoc","kind":"method","status":"implemented","sigHash":"2f377fbafee03c3026ae5656806a92e92dbb6000db1a4bb39e53f898eaa0e44d"}
  *
  * Go source:
  * func (node *Node) IsJSDoc() bool {
@@ -5081,7 +5081,7 @@ export function Node_IsJSDoc(receiver: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PatternAmbientModule","kind":"type","status":"implemented","sigHash":"5c578c4109ac436eda4952dd1f76e183906b1488f81b42929516b6bcc8f68dcb","bodyHash":"d33f3b72a5b625ac4eed0f36275ecd5dbdc09bf46688019164ef2eb80d1ac30e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PatternAmbientModule","kind":"type","status":"implemented","sigHash":"5c578c4109ac436eda4952dd1f76e183906b1488f81b42929516b6bcc8f68dcb"}
  *
  * Go source:
  * PatternAmbientModule struct {
@@ -5095,7 +5095,7 @@ export interface PatternAmbientModule {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentDirectiveKind","kind":"type","status":"implemented","sigHash":"2bf26aa79418695c4ae1fa44a6163cba6943e806c07c95197ccf77375b3e8b87","bodyHash":"df022af03aeefe5f53f2e2ce4a6e0c8240235039e87874dfbc8c62b2f10f4e50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentDirectiveKind","kind":"type","status":"implemented","sigHash":"2bf26aa79418695c4ae1fa44a6163cba6943e806c07c95197ccf77375b3e8b87"}
  *
  * Go source:
  * CommentDirectiveKind int32
@@ -5103,7 +5103,7 @@ export interface PatternAmbientModule {
 export type CommentDirectiveKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::CommentDirectiveKindUnknown+CommentDirectiveKindExpectError+CommentDirectiveKindIgnore","kind":"constGroup","status":"implemented","sigHash":"5698df3bff31f08ea8b3d1f940f04f662a4c1190179ad0534b6206bb4ae7f49c","bodyHash":"da9749e66614232c3d94840fdcf4761dd1ce7c38f8d4f3cf2782217077d2f81f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::CommentDirectiveKindUnknown+CommentDirectiveKindExpectError+CommentDirectiveKindIgnore","kind":"constGroup","status":"implemented","sigHash":"5698df3bff31f08ea8b3d1f940f04f662a4c1190179ad0534b6206bb4ae7f49c"}
  *
  * Go source:
  * const (
@@ -5117,7 +5117,7 @@ export const CommentDirectiveKindExpectError: CommentDirectiveKind = 1;
 export const CommentDirectiveKindIgnore: CommentDirectiveKind = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentDirective","kind":"type","status":"implemented","sigHash":"e373af1e299efa1a5fb1148f49bcf52a5f957ac66035d647f95cca95abf5c784","bodyHash":"fb5d9320dfacfe8175e41a653e2aec9f0d685cc8d26efc8ca7cb79ed25db878f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentDirective","kind":"type","status":"implemented","sigHash":"e373af1e299efa1a5fb1148f49bcf52a5f957ac66035d647f95cca95abf5c784"}
  *
  * Go source:
  * CommentDirective struct {
@@ -5131,7 +5131,7 @@ export interface CommentDirective {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFileMetaData","kind":"type","status":"implemented","sigHash":"4b2a19a6f67a369a9cf1f1476c60ec83d77d2a787e1a9e4edd04c66a1c06cab3","bodyHash":"2105c9357bddbfd1ddb1fc14b49a6b096d377da02172ca6a17a1df47620ef7da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFileMetaData","kind":"type","status":"implemented","sigHash":"4b2a19a6f67a369a9cf1f1476c60ec83d77d2a787e1a9e4edd04c66a1c06cab3"}
  *
  * Go source:
  * SourceFileMetaData struct {
@@ -5147,7 +5147,7 @@ export interface SourceFileMetaData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CheckJsDirective","kind":"type","status":"implemented","sigHash":"1c0eacfc1e2dedb6f4d82f90d85d0cb6dbb0fc92f34312d8a1d5da547f475dd7","bodyHash":"f0a89880a168deda4cfae67bf54f953c68bf4599463f15640e2b162849e2c078"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CheckJsDirective","kind":"type","status":"implemented","sigHash":"1c0eacfc1e2dedb6f4d82f90d85d0cb6dbb0fc92f34312d8a1d5da547f475dd7"}
  *
  * Go source:
  * CheckJsDirective struct {
@@ -5161,7 +5161,7 @@ export interface CheckJsDirective {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::HasFileName","kind":"type","status":"implemented","sigHash":"e72177473a93e23c9f236e698213f4fd5e015e09352b98dd507fad1981267a51","bodyHash":"9f26b203fce1096d80abd97bea5e832a66e3474e2526fc94bfb6b64f76ac4038"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::HasFileName","kind":"type","status":"implemented","sigHash":"e72177473a93e23c9f236e698213f4fd5e015e09352b98dd507fad1981267a51"}
  *
  * Go source:
  * HasFileName interface {
@@ -5175,7 +5175,7 @@ export interface HasFileName {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::TokenCacheKey","kind":"type","status":"implemented","sigHash":"c212331b5565fb1e485fc2373d2016ac0c3a390cc33678feeca5319f86bdde3a","bodyHash":"8539474677e01804b24d35e2d51c51f2ddb6d924742878bd3ef243f8cf682011"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::TokenCacheKey","kind":"type","status":"implemented","sigHash":"c212331b5565fb1e485fc2373d2016ac0c3a390cc33678feeca5319f86bdde3a"}
  *
  * Go source:
  * TokenCacheKey struct {
@@ -5193,7 +5193,7 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9","bodyHash":"1544dafdd77c4d0f387a639475526fd1733904026a2433ebb63bc31804f02f87"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9"}
  *
  * Go source:
  * SourceFile struct {
@@ -5399,7 +5399,7 @@ export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e","bodyHash":"6892b9b6566cfd7095dd835823697c16146bdc757ce1ffced931ebbad6e391df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewSourceFile","kind":"method","status":"implemented","sigHash":"e4940d9f3428e9275d7d63fa9892eb9e80b6175579425eaaca1143b60814b22e"}
  */
 export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: SourceFileParseOptions, text: string, statements: GoPtr<NodeList>, endOfFileToken: GoPtr<TokenNode>): GoPtr<Node> {
   if (GetEncodedRootLength(opts.FileName) === 0 || opts.FileName !== NormalizePath(opts.FileName)) {
@@ -5448,7 +5448,7 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ParseOptions","kind":"method","status":"implemented","sigHash":"940524c927e1180e0832f9b7b2a570e1094f8036bdfd91e5554e2ef43dda8405","bodyHash":"9dc97cda2475483be2d5b5fdec51395a4747412060d7ae849e3070da475e3a77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ParseOptions","kind":"method","status":"implemented","sigHash":"940524c927e1180e0832f9b7b2a570e1094f8036bdfd91e5554e2ef43dda8405"}
  *
  * Go source:
  * func (node *SourceFile) ParseOptions() SourceFileParseOptions {
@@ -5460,7 +5460,7 @@ export function SourceFile_ParseOptions(receiver: GoPtr<SourceFile>): SourceFile
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Text","kind":"method","status":"implemented","sigHash":"c3a456f50179d44a72d54ea8a47519b0ba3c192989bcd352e88a197161bd8c6a","bodyHash":"f54db0b3dddea5a2c52125b8354ea8e8fbd86dd39ea77384ac3d8a737a6ad470"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Text","kind":"method","status":"implemented","sigHash":"c3a456f50179d44a72d54ea8a47519b0ba3c192989bcd352e88a197161bd8c6a"}
  *
  * Go source:
  * func (node *SourceFile) Text() string {
@@ -5472,7 +5472,7 @@ export function SourceFile_Text(receiver: GoPtr<SourceFile>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.FileName","kind":"method","status":"implemented","sigHash":"5d5b7371eac058827ed0d0f12dd69cdc09be6b9f466918ac0694eeb727219c82","bodyHash":"694b9e1221863f51130a8ea18fddf839086bfed238b5f9bea4fdee2468436c41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.FileName","kind":"method","status":"implemented","sigHash":"5d5b7371eac058827ed0d0f12dd69cdc09be6b9f466918ac0694eeb727219c82"}
  *
  * Go source:
  * func (node *SourceFile) FileName() string {
@@ -5484,7 +5484,7 @@ export function SourceFile_FileName(receiver: GoPtr<SourceFile>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Path","kind":"method","status":"implemented","sigHash":"1abc603c48a2b8dad5dee4777dd2dc2a495cf83eead546da3138375a2fe545e5","bodyHash":"a004bc3cc492a600e5e62fe3630f22f7a63aa20878a4c1ebf52b8f6d644bed16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Path","kind":"method","status":"implemented","sigHash":"1abc603c48a2b8dad5dee4777dd2dc2a495cf83eead546da3138375a2fe545e5"}
  *
  * Go source:
  * func (node *SourceFile) Path() tspath.Path {
@@ -5503,7 +5503,7 @@ export function SourceFile_as_ast_HasFileName(receiver: GoPtr<SourceFile>): HasF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Imports","kind":"method","status":"implemented","sigHash":"279edf65bfae1dd40e7b89d6530ce9196979a40832ae39c8437c0bd7250bb028","bodyHash":"134e49d263c3481c7a03c1d229e18cada6e75cc87b7bc34f6033f1bea7352c99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Imports","kind":"method","status":"implemented","sigHash":"279edf65bfae1dd40e7b89d6530ce9196979a40832ae39c8437c0bd7250bb028"}
  *
  * Go source:
  * func (node *SourceFile) Imports() []*LiteralLikeNode {
@@ -5515,7 +5515,7 @@ export function SourceFile_Imports(receiver: GoPtr<SourceFile>): GoSlice<GoPtr<L
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Diagnostics","kind":"method","status":"implemented","sigHash":"179beb9d023562e7dc3f865f1da6a3c43e845ada8782fded28a56f67c9fb375c","bodyHash":"774fb21e20d7d845bea1622be1d24b129bd5c274d508409270dcff83d1fc33fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Diagnostics","kind":"method","status":"implemented","sigHash":"179beb9d023562e7dc3f865f1da6a3c43e845ada8782fded28a56f67c9fb375c"}
  *
  * Go source:
  * func (node *SourceFile) Diagnostics() []*Diagnostic {
@@ -5527,7 +5527,7 @@ export function SourceFile_Diagnostics(receiver: GoPtr<SourceFile>): GoSlice<GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetDiagnostics","kind":"method","status":"implemented","sigHash":"84991e3e1510fd70c8043d4e51a42697d09a1d5e5aaf5982dbfc7cafce427152","bodyHash":"c8a5a83a215d89fef57b816ea85f8a4c3f7b38f7dc99c1342b3730cbea4da1ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetDiagnostics","kind":"method","status":"implemented","sigHash":"84991e3e1510fd70c8043d4e51a42697d09a1d5e5aaf5982dbfc7cafce427152"}
  *
  * Go source:
  * func (node *SourceFile) SetDiagnostics(diags []*Diagnostic) {
@@ -5539,7 +5539,7 @@ export function SourceFile_SetDiagnostics(receiver: GoPtr<SourceFile>, diags: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.JSDiagnostics","kind":"method","status":"implemented","sigHash":"599957913035a01d38541b93152b96e85b655dceb9a53dad0efa33adeab8904b","bodyHash":"b79393010f250891c5aea9ff3a9921a4a3a2764bb7d723bd48f44c19637e97e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.JSDiagnostics","kind":"method","status":"implemented","sigHash":"599957913035a01d38541b93152b96e85b655dceb9a53dad0efa33adeab8904b"}
  *
  * Go source:
  * func (node *SourceFile) JSDiagnostics() []*Diagnostic {
@@ -5551,7 +5551,7 @@ export function SourceFile_JSDiagnostics(receiver: GoPtr<SourceFile>): GoSlice<G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDiagnostics","kind":"method","status":"implemented","sigHash":"19638104b2bf6ec2af9e5f70b4ac30156404bfcec98bc2cb34083315154087cd","bodyHash":"8055041365e0ace3b8c0e95a49a808d95c2fa2d1fac44faae9dd3938039353e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDiagnostics","kind":"method","status":"implemented","sigHash":"19638104b2bf6ec2af9e5f70b4ac30156404bfcec98bc2cb34083315154087cd"}
  *
  * Go source:
  * func (node *SourceFile) SetJSDiagnostics(diags []*Diagnostic) {
@@ -5563,7 +5563,7 @@ export function SourceFile_SetJSDiagnostics(receiver: GoPtr<SourceFile>, diags: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.JSDocDiagnostics","kind":"method","status":"implemented","sigHash":"4cbb154b1288cbb1b6f0dbbbb680637f55062ccd1cf683d0cc9bc819ff6ffd77","bodyHash":"1b47352ecb0c491146fe7c1d77f3900708e4500f17bbeb9eadf26c8945430faf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.JSDocDiagnostics","kind":"method","status":"implemented","sigHash":"4cbb154b1288cbb1b6f0dbbbb680637f55062ccd1cf683d0cc9bc819ff6ffd77"}
  *
  * Go source:
  * func (node *SourceFile) JSDocDiagnostics() []*Diagnostic {
@@ -5575,7 +5575,7 @@ export function SourceFile_JSDocDiagnostics(receiver: GoPtr<SourceFile>): GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDocDiagnostics","kind":"method","status":"implemented","sigHash":"18460bf5d4739ccf236267afa032fce64bba2636ad5739060d6ed481d4bd931b","bodyHash":"12653ebd98f87a6029c6ae546f937a3dff828dfa4115bb29a73652bddabeeb6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDocDiagnostics","kind":"method","status":"implemented","sigHash":"18460bf5d4739ccf236267afa032fce64bba2636ad5739060d6ed481d4bd931b"}
  *
  * Go source:
  * func (node *SourceFile) SetJSDocDiagnostics(diags []*Diagnostic) {
@@ -5587,7 +5587,7 @@ export function SourceFile_SetJSDocDiagnostics(receiver: GoPtr<SourceFile>, diag
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDocCache","kind":"method","status":"implemented","sigHash":"a9f922f59ad6626e26a22947c508ee3f71789b21939055546c51c223bf7a1ec3","bodyHash":"fcbe64ccd7d2e4fb60be2bbf4fff81d513d484686b762cac885f2a6416d2b569"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetJSDocCache","kind":"method","status":"implemented","sigHash":"a9f922f59ad6626e26a22947c508ee3f71789b21939055546c51c223bf7a1ec3"}
  *
  * Go source:
  * func (node *SourceFile) SetJSDocCache(cache map[*Node][]*Node) {
@@ -5599,7 +5599,7 @@ export function SourceFile_SetJSDocCache(receiver: GoPtr<SourceFile>, cache: GoM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetHasLazyJSDoc","kind":"method","status":"implemented","sigHash":"528dcb2e91a7dc029803b8bb310dc70ddd98383a2d37bcdb430bb6bdc3c24e4f","bodyHash":"e5ebdce454911228a4e5873630e4427532ced2a27feb8ede3d57f3641cf9110f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetHasLazyJSDoc","kind":"method","status":"implemented","sigHash":"528dcb2e91a7dc029803b8bb310dc70ddd98383a2d37bcdb430bb6bdc3c24e4f"}
  *
  * Go source:
  * func (node *SourceFile) SetHasLazyJSDoc(lazy bool) {
@@ -5611,7 +5611,7 @@ export function SourceFile_SetHasLazyJSDoc(receiver: GoPtr<SourceFile>, lazy: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.resolveJSDoc","kind":"method","status":"implemented","sigHash":"0b0900b712b8fc654369cddb39ce74621004cb090e3312c3d2ed0c0360ca483e","bodyHash":"795db99ad5d3a52abd4379a3f133c6ae959c46ec2752dfd1856beea041464abc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.resolveJSDoc","kind":"method","status":"implemented","sigHash":"0b0900b712b8fc654369cddb39ce74621004cb090e3312c3d2ed0c0360ca483e"}
  *
  * Go source:
  * func (node *SourceFile) resolveJSDoc(n *Node) []*Node {
@@ -5673,7 +5673,7 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.BindDiagnostics","kind":"method","status":"implemented","sigHash":"235a151865b3e621bf037b6c8f2b11bccaf1313ee2d2a316d5ed24a008cfcf09","bodyHash":"fd1c217aa6e1a8a41a45a27b4b1fed75772361793e3dfd1a49339214cc685c0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.BindDiagnostics","kind":"method","status":"implemented","sigHash":"235a151865b3e621bf037b6c8f2b11bccaf1313ee2d2a316d5ed24a008cfcf09"}
  *
  * Go source:
  * func (node *SourceFile) BindDiagnostics() []*Diagnostic {
@@ -5685,7 +5685,7 @@ export function SourceFile_BindDiagnostics(receiver: GoPtr<SourceFile>): GoSlice
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetBindDiagnostics","kind":"method","status":"implemented","sigHash":"b17ee72e255032b896438d688f5fcaa9d67a9450b456889b971c0fe2f5845e9d","bodyHash":"f8fd2d08d815a531d54060c9385df4a1a7ff302993322e00fac69b2e065213b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.SetBindDiagnostics","kind":"method","status":"implemented","sigHash":"b17ee72e255032b896438d688f5fcaa9d67a9450b456889b971c0fe2f5845e9d"}
  *
  * Go source:
  * func (node *SourceFile) SetBindDiagnostics(diags []*Diagnostic) {
@@ -5697,7 +5697,7 @@ export function SourceFile_SetBindDiagnostics(receiver: GoPtr<SourceFile>, diags
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ForEachChild","kind":"method","status":"implemented","sigHash":"eff1e7f74cc8c522b9386f2a71939504766e2114656ee9a748077638cdeb7c15","bodyHash":"5cd709a2152deb5c212eaa0beb65d23a000609ba3a61aaeceff4d2f8d790f19e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ForEachChild","kind":"method","status":"implemented","sigHash":"eff1e7f74cc8c522b9386f2a71939504766e2114656ee9a748077638cdeb7c15"}
  *
  * Go source:
  * func (node *SourceFile) ForEachChild(v Visitor) bool {
@@ -5709,7 +5709,7 @@ export function SourceFile_ForEachChild(receiver: GoPtr<SourceFile>, v: Visitor)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.VisitEachChild","kind":"method","status":"implemented","sigHash":"7ccd1da3d76ce97dd985b9e88e52fff0146ab03b0436b893033cd0d724469460","bodyHash":"3ebefbcf580e504aad3b1d0e8421902546810cd14da612b0a8e5dc857869455a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.VisitEachChild","kind":"method","status":"implemented","sigHash":"7ccd1da3d76ce97dd985b9e88e52fff0146ab03b0436b893033cd0d724469460"}
  *
  * Go source:
  * func (node *SourceFile) VisitEachChild(v *NodeVisitor) *Node {
@@ -5721,7 +5721,7 @@ export function SourceFile_VisitEachChild(receiver: GoPtr<SourceFile>, v: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsJS","kind":"method","status":"implemented","sigHash":"8923da1293787c287f2d91e4167695611ab66db39e777bc21860a04dcfaf5921","bodyHash":"b7577558c73970c7bad964ad57d2ecd7c0d0450f7b8e59a95d25aecdae15d6c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsJS","kind":"method","status":"implemented","sigHash":"8923da1293787c287f2d91e4167695611ab66db39e777bc21860a04dcfaf5921"}
  *
  * Go source:
  * func (node *SourceFile) IsJS() bool {
@@ -5733,7 +5733,7 @@ export function SourceFile_IsJS(receiver: GoPtr<SourceFile>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.copyFrom","kind":"method","status":"implemented","sigHash":"ae744035c63cc00a52b1a4b8cbd46f351607b7d8c7788b73c49d4fd1741c998a","bodyHash":"fcb7efd368bfbbb08404b38ca524050b10631017b61a1332fb88e05c1ef38aaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.copyFrom","kind":"method","status":"implemented","sigHash":"ae744035c63cc00a52b1a4b8cbd46f351607b7d8c7788b73c49d4fd1741c998a"}
  *
  * Go source:
  * func (node *SourceFile) copyFrom(other *SourceFile) {
@@ -5779,7 +5779,7 @@ export function SourceFile_copyFrom(receiver: GoPtr<SourceFile>, other: GoPtr<So
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Clone","kind":"method","status":"implemented","sigHash":"e1d4a0a17e7f613eb0e24078725cd5e75726237761cb9010855963ee374207d5","bodyHash":"d13cfed49d3ca29b6f621e1784098619b91da51cd78d2db75b1af23b2ee98001"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Clone","kind":"method","status":"implemented","sigHash":"e1d4a0a17e7f613eb0e24078725cd5e75726237761cb9010855963ee374207d5"}
  *
  * Go source:
  * func (node *SourceFile) Clone(f NodeFactoryCoercible) *Node {
@@ -5797,7 +5797,7 @@ export function SourceFile_Clone(receiver: GoPtr<SourceFile>, f: NodeFactoryCoer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2a300548dca62b8e5356063d81f006089dc5cacfeaa623eedf5cec94d7f5729f","bodyHash":"6281e5de44530b5fab663f52d7a1133e87a6b3b052678a13035510f93b8cf0fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"2a300548dca62b8e5356063d81f006089dc5cacfeaa623eedf5cec94d7f5729f"}
  *
  * Go source:
  * func (node *SourceFile) computeSubtreeFacts() SubtreeFacts {
@@ -5809,7 +5809,7 @@ export function SourceFile_computeSubtreeFacts(receiver: GoPtr<SourceFile>): Sub
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.UpdateSourceFile","kind":"method","status":"implemented","sigHash":"e3ea0b4fb25a98e1a176b9dfd8aa512d28e87999379b4ee6f870b9fdb3b341b4","bodyHash":"faaa62137f77ef448bfb6f4bfb29ade94e950dce538e6c942390fe3f427f2874"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.UpdateSourceFile","kind":"method","status":"implemented","sigHash":"e3ea0b4fb25a98e1a176b9dfd8aa512d28e87999379b4ee6f870b9fdb3b341b4"}
  *
  * Go source:
  * func (f *NodeFactory) UpdateSourceFile(node *SourceFile, statements *StatementList, endOfFileToken *TokenNode) *Node {
@@ -5831,7 +5831,7 @@ export function NodeFactory_UpdateSourceFile(receiver: GoPtr<NodeFactory>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ECMALineMap","kind":"method","status":"implemented","sigHash":"a2c1e1c1ccffb866337bd78c077854301d915dc94b284419811762566d57ca19","bodyHash":"d0562dd997bba445e106e5bc5cf99877bd8093a668d76d8e97e9d0ce13ba7e7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.ECMALineMap","kind":"method","status":"implemented","sigHash":"a2c1e1c1ccffb866337bd78c077854301d915dc94b284419811762566d57ca19"}
  *
  * Go source:
  * func (node *SourceFile) ECMALineMap() []core.TextPos {
@@ -5870,7 +5870,7 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetNameTable","kind":"method","status":"implemented","sigHash":"20bd78e754e0ad84523304e016214ac4a2fa92fbf3bfd6b21f4adac851102b0d","bodyHash":"ac2966a6a3e02c8f51e6d67b354cb6066ce61187f0229511a9f29491681cde36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetNameTable","kind":"method","status":"implemented","sigHash":"20bd78e754e0ad84523304e016214ac4a2fa92fbf3bfd6b21f4adac851102b0d"}
  *
  * Go source:
  * func (file *SourceFile) GetNameTable() map[string]int {
@@ -5935,7 +5935,7 @@ export function SourceFile_GetNameTable(receiver: GoPtr<SourceFile>): GoMap<stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsBound","kind":"method","status":"implemented","sigHash":"e9f541a6ff5e7a68b670fc674b1a642966e756ac57d4c6cbd6858dab0891ac2e","bodyHash":"83b89cd435ca1f9bc970dc30245634b548b836a5ce4f7aed71c976adfbe2a0c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsBound","kind":"method","status":"implemented","sigHash":"e9f541a6ff5e7a68b670fc674b1a642966e756ac57d4c6cbd6858dab0891ac2e"}
  *
  * Go source:
  * func (node *SourceFile) IsBound() bool {
@@ -5947,7 +5947,7 @@ export function SourceFile_IsBound(receiver: GoPtr<SourceFile>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetPositionMap","kind":"method","status":"implemented","sigHash":"7a37e4f7ef341ef4db949d8ecd688078936938df9edc481082cfa83671f5523d","bodyHash":"e93fb10115ea853e3720e776ca00fb52b79e76efcc83b1d4fa41517166868a0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetPositionMap","kind":"method","status":"implemented","sigHash":"7a37e4f7ef341ef4db949d8ecd688078936938df9edc481082cfa83671f5523d"}
  *
  * Go source:
  * func (file *SourceFile) GetPositionMap() *PositionMap {
@@ -5975,7 +5975,7 @@ export function SourceFile_GetPositionMap(receiver: GoPtr<SourceFile>): GoPtr<Po
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.BindOnce","kind":"method","status":"implemented","sigHash":"d20d09214a537f5b634793ce42cc932703f40fee3b052924aab90e02fdbd1379","bodyHash":"98459b80fb37086a3fea24531c538541af253e70a48ca68a24790ae95e5a7f61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.BindOnce","kind":"method","status":"implemented","sigHash":"d20d09214a537f5b634793ce42cc932703f40fee3b052924aab90e02fdbd1379"}
  *
  * Go source:
  * func (node *SourceFile) BindOnce(bind func()) {
@@ -5993,7 +5993,7 @@ export function SourceFile_BindOnce(receiver: GoPtr<SourceFile>, bind: () => voi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetOrCreateToken","kind":"method","status":"implemented","sigHash":"17e4735a41f9c362dfa26a185738e75708765a49480e183fbd984638d9c73b63","bodyHash":"1fd96d5121156a8f85ec3bf9ea0c8d6caddb789e6c50499f598602f265cfccee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetOrCreateToken","kind":"method","status":"implemented","sigHash":"17e4735a41f9c362dfa26a185738e75708765a49480e183fbd984638d9c73b63"}
  *
  * Go source:
  * func (node *SourceFile) GetOrCreateToken(
@@ -6062,7 +6062,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::createToken","kind":"func","status":"implemented","sigHash":"5de2094d9a107a1a3508ac0414666f642fa8ab577f11758b31a281c3f1bcc510","bodyHash":"efea1dfb31a5771292db456584f36dde8b05960c979705f9a431409df5b2fcdf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::createToken","kind":"func","status":"implemented","sigHash":"5de2094d9a107a1a3508ac0414666f642fa8ab577f11758b31a281c3f1bcc510"}
  * @tsgo-override {"category":"runtime-correctness-performance","allow":["body"],"reason":"Use TS-Go byte-offset slicing over JS/.NET UTF-16 source storage; direct JS slice would mis-handle non-ASCII positions and bypass the shared byte-view cache."}
  *
  * Go source:
@@ -6134,7 +6134,7 @@ export function createToken(kind: Kind, file: GoPtr<SourceFile>, pos: int, end: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetDeclarationMap","kind":"method","status":"implemented","sigHash":"3a5aa189eddf2eb3c25facd5c54bd48b51709fef3d8343083a42ebadb72d012f","bodyHash":"edb9132ae5d8a291b15710bede0e2ef37392b22f4afa035bdcda37ab9abc4dd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetDeclarationMap","kind":"method","status":"implemented","sigHash":"3a5aa189eddf2eb3c25facd5c54bd48b51709fef3d8343083a42ebadb72d012f"}
  *
  * Go source:
  * func (node *SourceFile) GetDeclarationMap() map[string][]*Node {
@@ -6159,7 +6159,7 @@ export function SourceFile_GetDeclarationMap(receiver: GoPtr<SourceFile>): GoMap
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeDeclarationMap","kind":"method","status":"implemented","sigHash":"d8c644a80f56e42c73fc71a7078b43b2909d7f1f086ad31f4f0f9c33566e9939","bodyHash":"90bb4c17553afb94f076dc6773ac89c58be7468efaa02197ebcda7d5c73a032e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeDeclarationMap","kind":"method","status":"implemented","sigHash":"d8c644a80f56e42c73fc71a7078b43b2909d7f1f086ad31f4f0f9c33566e9939"}
  *
  * Go source:
  * func (node *SourceFile) computeDeclarationMap() map[string][]*Node {
@@ -6413,7 +6413,7 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationName","kind":"func","status":"implemented","sigHash":"5a472dfd7101cb40f01ea5fceb094f15016e8984d829000672fe63d3b1999747","bodyHash":"9add130be4bd285f4f7cc4353865ba50ee6146726e4fc56316f81e9aee14726f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationName","kind":"func","status":"implemented","sigHash":"5a472dfd7101cb40f01ea5fceb094f15016e8984d829000672fe63d3b1999747"}
  *
  * Go source:
  * func GetDeclarationName(declaration *Node) string {
@@ -6452,7 +6452,7 @@ export function GetDeclarationName(declaration: GoPtr<Node>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFileLike","kind":"type","status":"implemented","sigHash":"a778b740f2af5187430d8b9b63518951c188705c8ed904f7cfd59b2404d6452a","bodyHash":"49188745e74ebb4858cfc773e13682014e09d92155993b8b9df20758ab850b75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFileLike","kind":"type","status":"implemented","sigHash":"a778b740f2af5187430d8b9b63518951c188705c8ed904f7cfd59b2404d6452a"}
  *
  * Go source:
  * SourceFileLike interface {
@@ -6466,7 +6466,7 @@ export interface SourceFileLike {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentRange","kind":"type","status":"implemented","sigHash":"6abe6c7c0d330cd4dda72b74e6c12e3884675c76deef16376c593072bef825ba","bodyHash":"3b9e0a382184a8ccc0e5f36a83497657f69de1ad7dd98caa96e9a7fa7a7fd3eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::CommentRange","kind":"type","status":"implemented","sigHash":"6abe6c7c0d330cd4dda72b74e6c12e3884675c76deef16376c593072bef825ba"}
  *
  * Go source:
  * CommentRange struct {
@@ -6481,7 +6481,7 @@ export interface CommentRange extends TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewCommentRange","kind":"method","status":"implemented","sigHash":"5b3542c99846156a532cc1d8533a381000773536be1a10a2a72592c9a9e592d3","bodyHash":"0f50fc997fd520b1a6b5337b8fe9765c57ca13ad88b60be95535b6902744b625"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.NewCommentRange","kind":"method","status":"implemented","sigHash":"5b3542c99846156a532cc1d8533a381000773536be1a10a2a72592c9a9e592d3"}
  *
  * Go source:
  * func (f *NodeFactory) NewCommentRange(kind Kind, pos int, end int, hasTrailingNewLine bool) CommentRange {
@@ -6503,7 +6503,7 @@ export function NodeFactory_NewCommentRange(receiver: GoPtr<NodeFactory>, kind: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::FileReference","kind":"type","status":"implemented","sigHash":"8e4016d25dc67b7eff4c2c9d74613a043bc230db6abab32c67d01e370d7bad49","bodyHash":"187b3a5726141ea60d2ba6ee985693b75f15274ea200f7096aee6c2cc20641cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::FileReference","kind":"type","status":"implemented","sigHash":"8e4016d25dc67b7eff4c2c9d74613a043bc230db6abab32c67d01e370d7bad49"}
  *
  * Go source:
  * FileReference struct {
@@ -6520,7 +6520,7 @@ export interface FileReference extends TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgument","kind":"type","status":"implemented","sigHash":"3f902144cb82dbf89d2255bc3fce73baed3e4d0f32d617cdf592a5db11f610d9","bodyHash":"b480ef215b7a3c0f6f0ce7a849547a8ca828f0b0eca6a14b8b60e0e916454605"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgument","kind":"type","status":"implemented","sigHash":"3f902144cb82dbf89d2255bc3fce73baed3e4d0f32d617cdf592a5db11f610d9"}
  *
  * Go source:
  * PragmaArgument struct {
@@ -6535,7 +6535,7 @@ export interface PragmaArgument extends TextRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Pragma","kind":"type","status":"implemented","sigHash":"468c93cec9912ff95bb395fa13974742ec5b2b0295bff67a3e3f0865d51a29fa","bodyHash":"5517b7318097a4a61ec97ebda6b34b50f42928bf5b3fce3da5a3e563fed0036b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::Pragma","kind":"type","status":"implemented","sigHash":"468c93cec9912ff95bb395fa13974742ec5b2b0295bff67a3e3f0865d51a29fa"}
  *
  * Go source:
  * Pragma struct {
@@ -6550,7 +6550,7 @@ export interface Pragma extends CommentRange {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaKindFlags","kind":"type","status":"implemented","sigHash":"f469162de0392a0d8dd2a350abb167bc19c62c88d8a363ee0e6e591fe4a6dbec","bodyHash":"535c9798f46aeb5158dc1a9f60303de6a8bb4b4e1019c61ca253c26fa47c9a3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaKindFlags","kind":"type","status":"implemented","sigHash":"f469162de0392a0d8dd2a350abb167bc19c62c88d8a363ee0e6e591fe4a6dbec"}
  *
  * Go source:
  * PragmaKindFlags = uint8
@@ -6558,7 +6558,7 @@ export interface Pragma extends CommentRange {
 export type PragmaKindFlags = byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::PragmaKindTripleSlashXML+PragmaKindSingleLine+PragmaKindMultiLine+PragmaKindFlagsNone+PragmaKindAll+PragmaKindDefault","kind":"constGroup","status":"implemented","sigHash":"f63774f9681cad2228f8dc2884ae43cffabe334ec69c7da7e80a8acefda6b44d","bodyHash":"63b94510f25bf46c0321d4262a7b41f912d6a2513385e1dea0d7697d500efb88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::constGroup::PragmaKindTripleSlashXML+PragmaKindSingleLine+PragmaKindMultiLine+PragmaKindFlagsNone+PragmaKindAll+PragmaKindDefault","kind":"constGroup","status":"implemented","sigHash":"f63774f9681cad2228f8dc2884ae43cffabe334ec69c7da7e80a8acefda6b44d"}
  *
  * Go source:
  * const (
@@ -6578,7 +6578,7 @@ export const PragmaKindAll: PragmaKindFlags = (PragmaKindTripleSlashXML | Pragma
 export const PragmaKindDefault: PragmaKindFlags = PragmaKindAll;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgumentSpecification","kind":"type","status":"implemented","sigHash":"2b3ede31b1a4d191575bdd573254af18d051ccc9918f0c5c0365f2315cbe04a0","bodyHash":"0796d17ee075da388b4a655988d7f19c0f6923607de9a40f1923d3cd0d23fa41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaArgumentSpecification","kind":"type","status":"implemented","sigHash":"2b3ede31b1a4d191575bdd573254af18d051ccc9918f0c5c0365f2315cbe04a0"}
  *
  * Go source:
  * PragmaArgumentSpecification struct {
@@ -6594,7 +6594,7 @@ export interface PragmaArgumentSpecification {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaSpecification","kind":"type","status":"implemented","sigHash":"9970a408b49706480fdc5b02e1ed5e65b992aafb19f24b4804075c1918fe2a78","bodyHash":"d451777ea24f578ae4b2890c9fecf38555e76303dfb30413b174b3ae85cc6bf4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::PragmaSpecification","kind":"type","status":"implemented","sigHash":"9970a408b49706480fdc5b02e1ed5e65b992aafb19f24b4804075c1918fe2a78"}
  *
  * Go source:
  * PragmaSpecification struct {
@@ -6608,7 +6608,7 @@ export interface PragmaSpecification {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PragmaSpecification.IsTripleSlash","kind":"method","status":"implemented","sigHash":"b7c2b47a53b28c730a5f716911d5c127b3176b52fdb042215ed61a5ae0c02210","bodyHash":"9cebce6276d7e038c0e8181094b5f230cadea7c79e7558772f44cdfa986b3fd9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::PragmaSpecification.IsTripleSlash","kind":"method","status":"implemented","sigHash":"b7c2b47a53b28c730a5f716911d5c127b3176b52fdb042215ed61a5ae0c02210"}
  *
  * Go source:
  * func (spec *PragmaSpecification) IsTripleSlash() bool {
@@ -6620,7 +6620,7 @@ export function PragmaSpecification_IsTripleSlash(receiver: GoPtr<PragmaSpecific
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::forEachChild_JSDocParameterOrPropertyTag","kind":"func","status":"implemented","sigHash":"7d73492f7af8705421d1c00f841cdc250bad0b90fe86f8131f8f00bfdf4090ea","bodyHash":"07e08080187d11d1fc5728ec9acba1669796be3936e6c21c7c24f4ab3caeb4a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::forEachChild_JSDocParameterOrPropertyTag","kind":"func","status":"implemented","sigHash":"7d73492f7af8705421d1c00f841cdc250bad0b90fe86f8131f8f00bfdf4090ea"}
  *
  * Go source:
  * func forEachChild_JSDocParameterOrPropertyTag(node *JSDocParameterOrPropertyTag, v Visitor) bool {
@@ -6642,7 +6642,7 @@ export function forEachChild_JSDocParameterOrPropertyTag(node: GoPtr<JSDocParame
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::visitEachChild_JSDocParameterOrPropertyTag","kind":"func","status":"implemented","sigHash":"480579fe34c08cd210e2180dc687d3a7b1c7c400f8bb0aefb88a8a860565c869","bodyHash":"ac98a9a736af99239000481a05b7e0864abbe0e34eb3d5b982424a0943d32258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::visitEachChild_JSDocParameterOrPropertyTag","kind":"func","status":"implemented","sigHash":"480579fe34c08cd210e2180dc687d3a7b1c7c400f8bb0aefb88a8a860565c869"}
  *
  * Go source:
  * func visitEachChild_JSDocParameterOrPropertyTag(node *JSDocParameterOrPropertyTag, v *NodeVisitor) *Node {
@@ -6682,7 +6682,7 @@ export function NodeFactory_UpdateJSDocParameterOrPropertyTag(receiver: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.ReleaseArenas","kind":"method","status":"implemented","sigHash":"5f60c1b96ee97c17702c2b35d40a988074adcf77965b995340c93883e9758567","bodyHash":"5a2c80ebdf5af96bdf002847add0dcda4cfc5871ca3f4eeda347a471517863bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.ReleaseArenas","kind":"method","status":"implemented","sigHash":"5f60c1b96ee97c17702c2b35d40a988074adcf77965b995340c93883e9758567"}
  *
  * Go source:
  * func (f *NodeFactory) ReleaseArenas() {

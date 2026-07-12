@@ -29,7 +29,7 @@ import type { includeExplainingDiagnostic } from "./processingDiagnostic.js";
 import type { Program } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::type::includeProcessor","kind":"type","status":"implemented","sigHash":"47421cd2765ce00a1920cbe94dae00d40ea4fa84c1ec0c9aab767432346ac1ef","bodyHash":"2efafe763ea3a3c2973f6532b40068cec44411815fa26a6fe84b2d6e54e440f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::type::includeProcessor","kind":"type","status":"implemented","sigHash":"47421cd2765ce00a1920cbe94dae00d40ea4fa84c1ec0c9aab767432346ac1ef"}
  *
  * Go source:
  * includeProcessor struct {
@@ -58,7 +58,7 @@ export interface includeProcessor {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::func::updateFileIncludeProcessor","kind":"func","status":"implemented","sigHash":"cd9ede619520787b2eed9a5f979052266af0014ff54619cadeb1671b0fc53678","bodyHash":"f4c777c342c77e5f54f7e2ee3f2efc95c54107c7362e7afeb08ad449c09d9218"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::func::updateFileIncludeProcessor","kind":"func","status":"implemented","sigHash":"cd9ede619520787b2eed9a5f979052266af0014ff54619cadeb1671b0fc53678"}
  *
  * Go source:
  * func updateFileIncludeProcessor(p *Program) {
@@ -84,7 +84,7 @@ export function updateFileIncludeProcessor(p: GoPtr<Program>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getDiagnostics","kind":"method","status":"implemented","sigHash":"a20014f7daf68398b649bd2efaac7828ef6e056e8d14593b47eed90a616e26e9","bodyHash":"f1d0010fe34b94c3274d7cbdb2ad992347428e2b200ec1b007a3e249c4f740e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getDiagnostics","kind":"method","status":"implemented","sigHash":"a20014f7daf68398b649bd2efaac7828ef6e056e8d14593b47eed90a616e26e9"}
  *
  * Go source:
  * func (i *includeProcessor) getDiagnostics(p *Program) *ast.DiagnosticsCollection {
@@ -150,7 +150,7 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.addProcessingDiagnostic","kind":"method","status":"implemented","sigHash":"87c749047e25e59bee8a129fb081853430430809eeab16cdd008755641a3335c","bodyHash":"5351fa45e531044fb58e564fd07a1a4ade79f28669d17f6ec8b354f0430f0377"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.addProcessingDiagnostic","kind":"method","status":"implemented","sigHash":"87c749047e25e59bee8a129fb081853430430809eeab16cdd008755641a3335c"}
  *
  * Go source:
  * func (i *includeProcessor) addProcessingDiagnostic(d ...*processingDiagnostic) {
@@ -162,7 +162,7 @@ export function includeProcessor_addProcessingDiagnostic(receiver: GoPtr<include
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.addProcessingDiagnosticsForFileCasing","kind":"method","status":"implemented","sigHash":"e622d80191db1ccdbfcac4fc01bb75104868961288907dd8491941d2995f1230","bodyHash":"0f014cfdcbc2f737fd7f8e7341f45e6e1d183772f59ffcee6f88e99c7e2ed67b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.addProcessingDiagnosticsForFileCasing","kind":"method","status":"implemented","sigHash":"e622d80191db1ccdbfcac4fc01bb75104868961288907dd8491941d2995f1230"}
  *
  * Go source:
  * func (i *includeProcessor) addProcessingDiagnosticsForFileCasing(file tspath.Path, existingCasing string, currentCasing string, reason *FileIncludeReason) {
@@ -217,7 +217,7 @@ export function includeProcessor_addProcessingDiagnosticsForFileCasing(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getReferenceLocation","kind":"method","status":"implemented","sigHash":"00b35dc9c1869b9e7f9c49d815681c829cd06af5681e9894a50f8408065d34b3","bodyHash":"6c9effaf0e51687b47cf39f6d5cb200bcb655679db5f19cfdab051a8ebb53ed8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getReferenceLocation","kind":"method","status":"implemented","sigHash":"00b35dc9c1869b9e7f9c49d815681c829cd06af5681e9894a50f8408065d34b3"}
  *
  * Go source:
  * func (i *includeProcessor) getReferenceLocation(r *FileIncludeReason, program *Program) *referenceFileLocation {
@@ -239,7 +239,7 @@ export function includeProcessor_getReferenceLocation(receiver: GoPtr<includePro
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getCompilerOptionsObjectLiteralSyntax","kind":"method","status":"implemented","sigHash":"583b0a3cd6f5921f51f82cbf825230aac9b343b2c89898e21d7d691895c37924","bodyHash":"6a91b69b93fc6b58cdb69277570cc31586d83b2cf545eaff9e69f7decb3e6742"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getCompilerOptionsObjectLiteralSyntax","kind":"method","status":"implemented","sigHash":"583b0a3cd6f5921f51f82cbf825230aac9b343b2c89898e21d7d691895c37924"}
  *
  * Go source:
  * func (i *includeProcessor) getCompilerOptionsObjectLiteralSyntax(program *Program) *ast.ObjectLiteralExpression {
@@ -276,7 +276,7 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getRelatedInfo","kind":"method","status":"implemented","sigHash":"2769a6ec55d6285538bdd516c8ec90b5c9f75c42b72236428d47d752e93a5a67","bodyHash":"b0416fd962dcfe736b8242727bdd44ba514ea0800e34a55b31cf8d80add922e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.getRelatedInfo","kind":"method","status":"implemented","sigHash":"2769a6ec55d6285538bdd516c8ec90b5c9f75c42b72236428d47d752e93a5a67"}
  *
  * Go source:
  * func (i *includeProcessor) getRelatedInfo(r *FileIncludeReason, program *Program) *ast.Diagnostic {
@@ -298,7 +298,7 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.explainRedirectAndImpliedFormat","kind":"method","status":"implemented","sigHash":"e202b35c33de1654b2cd84c97131572b8405bf39afe3f60583766fbfb5eadc5c","bodyHash":"f841b15d333cbe0a2fca5f0a30520fb1928e1215c0c395b5e25cd850ca910a2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.explainRedirectAndImpliedFormat","kind":"method","status":"implemented","sigHash":"e202b35c33de1654b2cd84c97131572b8405bf39afe3f60583766fbfb5eadc5c"}
  *
  * Go source:
  * func (i *includeProcessor) explainRedirectAndImpliedFormat(

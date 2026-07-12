@@ -79,7 +79,7 @@ export const lastNewlineBefore = (text: string, end: int): int => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::getLanguageVariant","kind":"func","status":"implemented","sigHash":"4c5ee87fd9820be6daa04017b5c0edc7a2877024645c650bdab8194a3da6286b","bodyHash":"13c7111a0611fe78ed4af50148613b6c6f4ac28950c0080c87902c309eb7de82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::getLanguageVariant","kind":"func","status":"implemented","sigHash":"4c5ee87fd9820be6daa04017b5c0edc7a2877024645c650bdab8194a3da6286b"}
  *
  * Go source:
  * func getLanguageVariant(scriptKind core.ScriptKind) core.LanguageVariant {
@@ -104,7 +104,7 @@ export function getLanguageVariant(scriptKind: ScriptKind): LanguageVariant {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::tokenIsIdentifierOrKeyword","kind":"func","status":"implemented","sigHash":"538026bcddd56581a52c2d4c5ae6b1f36ef3386ee89dd8f7605ba57f9f21df7d","bodyHash":"b09ca2afbed17046efb355bbc5fa534f58fc7cb9b3b212c37a3ba8428a1b3726"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::tokenIsIdentifierOrKeyword","kind":"func","status":"implemented","sigHash":"538026bcddd56581a52c2d4c5ae6b1f36ef3386ee89dd8f7605ba57f9f21df7d"}
  *
  * Go source:
  * func tokenIsIdentifierOrKeyword(token ast.Kind) bool {
@@ -116,7 +116,7 @@ export function tokenIsIdentifierOrKeyword(token: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::tokenIsIdentifierOrKeywordOrGreaterThan","kind":"func","status":"implemented","sigHash":"8c2bbccf98db702c946063640450b133e7c0c3a1978a7263dc599cb503470a5c","bodyHash":"9c4b664d2fc422eddefcedbe8884f7565459bc1020b09a71cf200b48340e8865"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::tokenIsIdentifierOrKeywordOrGreaterThan","kind":"func","status":"implemented","sigHash":"8c2bbccf98db702c946063640450b133e7c0c3a1978a7263dc599cb503470a5c"}
  *
  * Go source:
  * func tokenIsIdentifierOrKeywordOrGreaterThan(token ast.Kind) bool {
@@ -128,7 +128,7 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges","kind":"func","status":"implemented","sigHash":"abe27f30e9295ee1de1c8e361301cd0f43503a6a7610221b954137e14cf1de5f","bodyHash":"634b57b5113bebc9488a8a7f8a1b22bf79284fc4a6d2da6e3850c6fbb8db4e0e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges","kind":"func","status":"implemented","sigHash":"abe27f30e9295ee1de1c8e361301cd0f43503a6a7610221b954137e14cf1de5f"}
  *
  * Go source:
  * func GetJSDocCommentRanges(f *ast.NodeFactory, commentRanges []ast.CommentRange, node *ast.Node, text string) []ast.CommentRange {
@@ -190,7 +190,7 @@ export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::isKeywordOrPunctuation","kind":"func","status":"implemented","sigHash":"53f2f63cdd996e985a35c1fad8a26455a9a94463fa1e21564c5abceb63419a67","bodyHash":"0b38ee7685fe7b143c5d253720aa4667b27dc8308a65b30ac3c74cd62aa5df6c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::isKeywordOrPunctuation","kind":"func","status":"implemented","sigHash":"53f2f63cdd996e985a35c1fad8a26455a9a94463fa1e21564c5abceb63419a67"}
  *
  * Go source:
  * func isKeywordOrPunctuation(token ast.Kind) bool {
@@ -202,7 +202,7 @@ export function isKeywordOrPunctuation(token: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::isJSDocLikeText","kind":"func","status":"implemented","sigHash":"c61fe909f944ef817f69d9192197de1b7ddcd4d111f961c160e90fd1aba46450","bodyHash":"4b1f735bd42ffc5633fd4c4946f823c7ff15ff09b9de169a12d4e7228a783725"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::isJSDocLikeText","kind":"func","status":"implemented","sigHash":"c61fe909f944ef817f69d9192197de1b7ddcd4d111f961c160e90fd1aba46450"}
  *
  * Go source:
  * func isJSDocLikeText(text string) bool {

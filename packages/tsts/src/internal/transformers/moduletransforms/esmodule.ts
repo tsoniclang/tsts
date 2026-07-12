@@ -65,7 +65,7 @@ import { createExternalHelpersImportDeclarationIfNeeded } from "./externalmodule
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e","bodyHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e"}
  *
  * Go source:
  * ESModuleTransformer struct {
@@ -89,7 +89,7 @@ export interface ESModuleTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"implemented","sigHash":"41fb7a91a9ec1916a7753b16ebf45f9c52d827c42a9f8a24f64351b8a18ae871","bodyHash":"f6d97b8dfeb17579411e8e57f9f5471107fa16315d7b27fdf2b9e61292eb6a5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"implemented","sigHash":"41fb7a91a9ec1916a7753b16ebf45f9c52d827c42a9f8a24f64351b8a18ae871"}
  *
  * Go source:
  * importRequireStatements struct {
@@ -107,7 +107,7 @@ function ESModuleTransformer_importRequireStatements(receiver: GoPtr<ESModuleTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::func::NewESModuleTransformer","kind":"func","status":"implemented","sigHash":"07a6fdf6da302091c6c0a082a9144139b59c7e4accd721eff596e57b9afb12bc","bodyHash":"642a888570c3c2275caa85b219b5b8923f43f9fd7b1f7ef80765ea509109380c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::func::NewESModuleTransformer","kind":"func","status":"implemented","sigHash":"07a6fdf6da302091c6c0a082a9144139b59c7e4accd721eff596e57b9afb12bc"}
  *
  * Go source:
  * func NewESModuleTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -131,7 +131,7 @@ export function NewESModuleTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"68009ebc3d37e1c86b102a70e313c4b1445af0dfc43595caab302b07c2f66c2e","bodyHash":"17074bc440b9f23fdb064f56bba116169a840a96aab2be70e55dfb1301c03351"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visit","kind":"method","status":"implemented","sigHash":"68009ebc3d37e1c86b102a70e313c4b1445af0dfc43595caab302b07c2f66c2e"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visit(node *ast.Node) *ast.Node {
@@ -183,7 +183,7 @@ export function ESModuleTransformer_visit(receiver: GoPtr<ESModuleTransformer>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"04698977e3c4dfcb186b029e68105aaaeca0e8db95c9ca03fb481f10cee2563e","bodyHash":"523269839f128f247ce744f1e1620299bc781d4d282130d1809015b39a1c5530"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"04698977e3c4dfcb186b029e68105aaaeca0e8db95c9ca03fb481f10cee2563e"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -289,7 +289,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportDeclaration","kind":"method","status":"implemented","sigHash":"3e603a88d691e18210a61bdadced69800497ce64e339d9793d10e51bda61c14f","bodyHash":"def9fa1a7d8ac645ff000f0d74e1e2529707e937b678f989f7c7d48dcf741dc8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportDeclaration","kind":"method","status":"implemented","sigHash":"3e603a88d691e18210a61bdadced69800497ce64e339d9793d10e51bda61c14f"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitImportDeclaration(node *ast.ImportDeclaration) *ast.Node {
@@ -327,7 +327,7 @@ export function ESModuleTransformer_visitImportDeclaration(receiver: GoPtr<ESMod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"7de3de168f0e745d04e34e91e03e17f0800d0f462fbd77871442eeaed35e0ae7","bodyHash":"d2646e1ffc79106e93d3f5d0f1cd0eec2e5d9be1e34258a1a5c9396813d1a054"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"7de3de168f0e745d04e34e91e03e17f0800d0f462fbd77871442eeaed35e0ae7"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) *ast.Node {
@@ -390,7 +390,7 @@ export function ESModuleTransformer_visitImportEqualsDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.appendExportsOfImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"6558a12f09dc0241d7ad5d45d257a2bb33c072c77471d796b947ec2b7547cbcc","bodyHash":"1fb9ff5ee6b33a90e15140eba794bb0ea1bb835e9480ac4a505dd2b579c38a9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.appendExportsOfImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"6558a12f09dc0241d7ad5d45d257a2bb33c072c77471d796b947ec2b7547cbcc"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) appendExportsOfImportEqualsDeclaration(statements []*ast.Statement, node *ast.ImportEqualsDeclaration) []*ast.Statement {
@@ -432,7 +432,7 @@ export function ESModuleTransformer_appendExportsOfImportEqualsDeclaration(recei
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitExportAssignment","kind":"method","status":"implemented","sigHash":"bbade563ba2711e8adcafd6386343b0c11c6ce3f2c5c28c9c723d88ed5dc9764","bodyHash":"8b8df468a410f914693a055297b6b4bf60a820fd65cd922b321b9556c2958772"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitExportAssignment","kind":"method","status":"implemented","sigHash":"bbade563ba2711e8adcafd6386343b0c11c6ce3f2c5c28c9c723d88ed5dc9764"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitExportAssignment(node *ast.ExportAssignment) *ast.Node {
@@ -486,7 +486,7 @@ export function ESModuleTransformer_visitExportAssignment(receiver: GoPtr<ESModu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitExportDeclaration","kind":"method","status":"implemented","sigHash":"b0db251d935be86442ca373636f92f073cd4099b321a2c6efb1f8aaeb86e11e9","bodyHash":"d487036b777af300e9e16f54ff1d3cd7a5e777bf479ec5b46b150b6601eb7050"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitExportDeclaration","kind":"method","status":"implemented","sigHash":"b0db251d935be86442ca373636f92f073cd4099b321a2c6efb1f8aaeb86e11e9"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitExportDeclaration(node *ast.ExportDeclaration) *ast.Node {
@@ -586,7 +586,7 @@ export function ESModuleTransformer_visitExportDeclaration(receiver: GoPtr<ESMod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"e51744528e06a0b0be040cb75259c140f93bc41d6387debe8119cd4643e6f5ea","bodyHash":"b709171f306fa6eea49030f26ee9bcfae174df4a215cb8a197482bb5bd52a0cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitCallExpression","kind":"method","status":"implemented","sigHash":"e51744528e06a0b0be040cb75259c140f93bc41d6387debe8119cd4643e6f5ea"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitCallExpression(node *ast.CallExpression) *ast.Node {
@@ -612,7 +612,7 @@ export function ESModuleTransformer_visitCallExpression(receiver: GoPtr<ESModule
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportOrRequireCall","kind":"method","status":"implemented","sigHash":"6eda03400ba9afce4c86fabb23aea0eada82dfb85e8b7f8585076a25afa80cf3","bodyHash":"b9662b871de971e1f01b74d5ac708fbd8618b816e767c68dba30045d62b114db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.visitImportOrRequireCall","kind":"method","status":"implemented","sigHash":"6eda03400ba9afce4c86fabb23aea0eada82dfb85e8b7f8585076a25afa80cf3"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) visitImportOrRequireCall(node *ast.CallExpression) *ast.Node {
@@ -684,7 +684,7 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.createRequireCall","kind":"method","status":"implemented","sigHash":"d16211b5fbb64896681a42fffde5a6838900f6d989e294fa10836aaacc1d7584","bodyHash":"54a8c85d50261ca111892be89647b6327d9b2bf77f01991483a3df8003871abc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::method::ESModuleTransformer.createRequireCall","kind":"method","status":"implemented","sigHash":"d16211b5fbb64896681a42fffde5a6838900f6d989e294fa10836aaacc1d7584"}
  *
  * Go source:
  * func (tx *ESModuleTransformer) createRequireCall(node *ast.Node) *ast.Expression {

@@ -18,7 +18,7 @@ import { NameResolver_Resolve } from "./nameresolver.js";
 import type { NameResolver } from "./nameresolver.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d","bodyHash":"23c7bfe98262f5cb06698ba14803aa4c1ecaea7af86f4da690c2c05961d68630"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d"}
  *
  * Go source:
  * ReferenceResolver interface {
@@ -40,7 +40,7 @@ export interface ReferenceResolver {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"implemented","sigHash":"afa0bd5df77f55a410bd96e8f9b76de4c6af96c22d1e8eed3c0fd3c674b48f9d","bodyHash":"efabe0e4f89da5388f36ad96fb3378825427007e2e956e76bd25f34ecfe0340f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"implemented","sigHash":"afa0bd5df77f55a410bd96e8f9b76de4c6af96c22d1e8eed3c0fd3c674b48f9d"}
  *
  * Go source:
  * ReferenceResolverHooks struct {
@@ -66,7 +66,7 @@ export interface ReferenceResolverHooks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"7eec38edc86a7918083e72681c153c62ad2df3d5c8dc7fc6cb04cab4db51e2fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
@@ -74,7 +74,7 @@ export interface ReferenceResolverHooks {
 export let __e8d524b9_0: ReferenceResolver = referenceResolver_as_ReferenceResolver(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2","bodyHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2"}
  *
  * Go source:
  * referenceResolver struct {
@@ -122,7 +122,7 @@ function referenceResolver_as_ReferenceResolver(receiver: GoPtr<referenceResolve
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::func::NewReferenceResolver","kind":"func","status":"implemented","sigHash":"ba184e1c6ff3ed11ae3071a1c716cd90a8347e0d3c45d360c5ee8d3b297548a0","bodyHash":"f6201c0662571a6d511aaf71cbd013631cbdb1e70183ba67f6aa06bf83f3d527"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::func::NewReferenceResolver","kind":"func","status":"implemented","sigHash":"ba184e1c6ff3ed11ae3071a1c716cd90a8347e0d3c45d360c5ee8d3b297548a0"}
  */
 export function NewReferenceResolver(options: GoPtr<CompilerOptions>, hooks: ReferenceResolverHooks): ReferenceResolver {
   const r: referenceResolver = {
@@ -134,7 +134,7 @@ export function NewReferenceResolver(options: GoPtr<CompilerOptions>, hooks: Ref
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getResolvedSymbol","kind":"method","status":"implemented","sigHash":"16459d3c9352e0a3966f15f846f0e563c91b04b891d6e93b1d31ca282be27789","bodyHash":"276b1306c2dded7ec6df1094269073faa72d2b46869333e063e7ec9bd9ef391f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getResolvedSymbol","kind":"method","status":"implemented","sigHash":"16459d3c9352e0a3966f15f846f0e563c91b04b891d6e93b1d31ca282be27789"}
  *
  * Go source:
  * func (r *referenceResolver) getResolvedSymbol(node *ast.Node) *ast.Symbol {
@@ -156,7 +156,7 @@ export function referenceResolver_getResolvedSymbol(receiver: GoPtr<referenceRes
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getMergedSymbol","kind":"method","status":"implemented","sigHash":"fd08f7722334c86ac60a66b5d62921818ab3ce11b7c475bbda588a82d5cb0b1e","bodyHash":"b1dd183a7b2e22b542c1771dba784cc1088950028a0f001cb177c39418898e26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getMergedSymbol","kind":"method","status":"implemented","sigHash":"fd08f7722334c86ac60a66b5d62921818ab3ce11b7c475bbda588a82d5cb0b1e"}
  *
  * Go source:
  * func (r *referenceResolver) getMergedSymbol(symbol *ast.Symbol) *ast.Symbol {
@@ -180,7 +180,7 @@ export function referenceResolver_getMergedSymbol(receiver: GoPtr<referenceResol
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getParentOfSymbol","kind":"method","status":"implemented","sigHash":"49b601c55b6eab5d43fb9578c8195a5cfd937f5cc71e407ecf80e722988afac8","bodyHash":"499cb42368a993be778ec31f268a7615d2f749e99eb3c1e161177f6b954e0a2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getParentOfSymbol","kind":"method","status":"implemented","sigHash":"49b601c55b6eab5d43fb9578c8195a5cfd937f5cc71e407ecf80e722988afac8"}
  *
  * Go source:
  * func (r *referenceResolver) getParentOfSymbol(symbol *ast.Symbol) *ast.Symbol {
@@ -204,7 +204,7 @@ export function referenceResolver_getParentOfSymbol(receiver: GoPtr<referenceRes
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getSymbolOfDeclaration","kind":"method","status":"implemented","sigHash":"f4e180358811236e2393285cd4c5c87e451ac162f085f1e4fddcdcdcade4e6b7","bodyHash":"6288387865039a66cd553a9cbdd01b4491d8f0a6d02ad5cf54944cddda02cd2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getSymbolOfDeclaration","kind":"method","status":"implemented","sigHash":"f4e180358811236e2393285cd4c5c87e451ac162f085f1e4fddcdcdcade4e6b7"}
  *
  * Go source:
  * func (r *referenceResolver) getSymbolOfDeclaration(declaration *ast.Declaration) *ast.Symbol {
@@ -228,7 +228,7 @@ export function referenceResolver_getSymbolOfDeclaration(receiver: GoPtr<referen
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getReferencedValueSymbol","kind":"method","status":"implemented","sigHash":"bb79436e805eb797f57d8174e65811f5b851b5383b10f7ae2b58d26936e0ed85","bodyHash":"e4e44b2358312f30f0a599946d4ab828d534258162ba5ab947fa6b540fe8c6a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getReferencedValueSymbol","kind":"method","status":"implemented","sigHash":"bb79436e805eb797f57d8174e65811f5b851b5383b10f7ae2b58d26936e0ed85"}
  *
  * Go source:
  * func (r *referenceResolver) getReferencedValueSymbol(reference *ast.IdentifierNode, startInDeclarationContainer bool) *ast.Symbol {
@@ -280,7 +280,7 @@ export function referenceResolver_getReferencedValueSymbol(receiver: GoPtr<refer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.isTypeOnlyAliasDeclaration","kind":"method","status":"implemented","sigHash":"390ec139fdee1fb264dfd80b8200c141c8339f20c0b7e6fbe742ee66226b8dc5","bodyHash":"e66eae3a7641f70184794f9939ca904bef95f9f89d912058c9000178110f2c50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.isTypeOnlyAliasDeclaration","kind":"method","status":"implemented","sigHash":"390ec139fdee1fb264dfd80b8200c141c8339f20c0b7e6fbe742ee66226b8dc5"}
  *
  * Go source:
  * func (r *referenceResolver) isTypeOnlyAliasDeclaration(symbol *ast.Symbol) bool {
@@ -342,7 +342,7 @@ export function referenceResolver_isTypeOnlyAliasDeclaration(receiver: GoPtr<ref
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getDeclarationOfAliasSymbol","kind":"method","status":"implemented","sigHash":"dcec728a41d3c4fdab0f005793f43d54b5ab20c639e0b511173988e01b28ddd7","bodyHash":"63b7f12f5e8353a39db34863d2177ed5fe6db3d661fa37dcd7351a36c160d25a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getDeclarationOfAliasSymbol","kind":"method","status":"implemented","sigHash":"dcec728a41d3c4fdab0f005793f43d54b5ab20c639e0b511173988e01b28ddd7"}
  *
  * Go source:
  * func (r *referenceResolver) getDeclarationOfAliasSymbol(symbol *ast.Symbol) *ast.Declaration {
@@ -354,7 +354,7 @@ export function referenceResolver_getDeclarationOfAliasSymbol(receiver: GoPtr<re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getExportSymbolOfValueSymbolIfExported","kind":"method","status":"implemented","sigHash":"7e51b4a844ba037afc1fa77c11a4c27bae7e6484303a549372ea9ebee5513f90","bodyHash":"a4ac5086752d6bf391b281a2f049be18adb60c35bb8e5cd698fba6206bfe6aba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.getExportSymbolOfValueSymbolIfExported","kind":"method","status":"implemented","sigHash":"7e51b4a844ba037afc1fa77c11a4c27bae7e6484303a549372ea9ebee5513f90"}
  *
  * Go source:
  * func (r *referenceResolver) getExportSymbolOfValueSymbolIfExported(symbol *ast.Symbol) *ast.Symbol {
@@ -384,7 +384,7 @@ export function referenceResolver_getExportSymbolOfValueSymbolIfExported(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedExportContainer","kind":"method","status":"implemented","sigHash":"6ca27a644888b56ef1bdd7412e826e8f07c33e83434f7ba991950fa8190d0ca8","bodyHash":"784c64b8f5928dff365773c33fcbad23d7c75ad445072cedf6b8e4c29d1c62d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedExportContainer","kind":"method","status":"implemented","sigHash":"6ca27a644888b56ef1bdd7412e826e8f07c33e83434f7ba991950fa8190d0ca8"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedExportContainer(node *ast.IdentifierNode, prefixLocals bool) *ast.Node /*SourceFile|ModuleDeclaration|EnumDeclaration* / {
@@ -459,7 +459,7 @@ export function referenceResolver_GetReferencedExportContainer(receiver: GoPtr<r
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"f79ee5f24e9ac5224edcc61714cf1326e03ce1ab5cc85cc6bf77612b509a308b","bodyHash":"221aabe5cb3795f02f140f361266b33f7ecd6e2cc73d16c85c16fd43fbdd2b50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"f79ee5f24e9ac5224edcc61714cf1326e03ce1ab5cc85cc6bf77612b509a308b"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedImportDeclaration(node *ast.IdentifierNode) *ast.Declaration {
@@ -486,7 +486,7 @@ export function referenceResolver_GetReferencedImportDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedValueDeclaration","kind":"method","status":"implemented","sigHash":"42bd3c17f392be3b02d0c4ebc85cc4a08605df617d99ecf44f565008f39f0cc1","bodyHash":"9f783fe3a87577f05a5038906f70fd187d6ad2e82778a0460956f7c2bd28d72d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedValueDeclaration","kind":"method","status":"implemented","sigHash":"42bd3c17f392be3b02d0c4ebc85cc4a08605df617d99ecf44f565008f39f0cc1"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedValueDeclaration(node *ast.IdentifierNode) *ast.Declaration {
@@ -505,7 +505,7 @@ export function referenceResolver_GetReferencedValueDeclaration(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"a3d9679e1913650645bee1fc3f393223b6b2b7ef53262eccab4acb000fc1d613","bodyHash":"45579779989c5cca63af855533dcf26543c398437eac68913efa284337205c79"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"a3d9679e1913650645bee1fc3f393223b6b2b7ef53262eccab4acb000fc1d613"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedValueDeclarations(node *ast.IdentifierNode) []*ast.Declaration {
@@ -573,7 +573,7 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetElementAccessExpressionName","kind":"method","status":"implemented","sigHash":"dd077d1f1f4f5dcfcdb0b948b002d75d0160c3ad74ec3e5f7435b5e6b9c7c05a","bodyHash":"ecbde15c346537caed89d9e5f83486cf9e7031b3f4cb7fb43bb66dffe9ee71ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetElementAccessExpressionName","kind":"method","status":"implemented","sigHash":"dd077d1f1f4f5dcfcdb0b948b002d75d0160c3ad74ec3e5f7435b5e6b9c7c05a"}
  *
  * Go source:
  * func (r *referenceResolver) GetElementAccessExpressionName(expression *ast.ElementAccessExpression) string {
@@ -600,7 +600,7 @@ export function referenceResolver_GetElementAccessExpressionName(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedMemberValueDeclaration","kind":"method","status":"implemented","sigHash":"42ea677a7cc7f2b3129dc968cbaf00f111375ff7a24c311bb005ad842a8246df","bodyHash":"29eafcdbf4f1621c83c4352c44fa4552701fdb8e453e2c2aa8cd5fe33502bd54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::method::referenceResolver.GetReferencedMemberValueDeclaration","kind":"method","status":"implemented","sigHash":"42ea677a7cc7f2b3129dc968cbaf00f111375ff7a24c311bb005ad842a8246df"}
  *
  * Go source:
  * func (r *referenceResolver) GetReferencedMemberValueDeclaration(node *ast.Node) *ast.Declaration {

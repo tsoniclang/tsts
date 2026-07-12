@@ -30,7 +30,7 @@ import { newTaggedTemplateLiftRestrictionTransformer } from "./taggedtemplate.js
 import { newUsingDeclarationTransformer } from "./using.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::varGroup::esDecoratorAndClassFields+NewESNextTransformer+NewES2021Transformer+NewES2020Transformer+NewES2019Transformer+NewES2018Transformer+NewES2017Transformer+NewES2016Transformer","kind":"varGroup","status":"implemented","sigHash":"4f34f45d06e8a43b258e7b3839619324bd97c56c44afbf09a16d06c8484b9efe","bodyHash":"b9b7be70ffb5bf6acc08ad764f47f87a7b7508571344ea4510865d2b2d75bbb2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::varGroup::esDecoratorAndClassFields+NewESNextTransformer+NewES2021Transformer+NewES2020Transformer+NewES2019Transformer+NewES2018Transformer+NewES2017Transformer+NewES2016Transformer","kind":"varGroup","status":"implemented","sigHash":"4f34f45d06e8a43b258e7b3839619324bd97c56c44afbf09a16d06c8484b9efe"}
  *
  * Go source:
  * var (
@@ -62,7 +62,7 @@ export let NewES2017Transformer: TransformerFactory = Chain(NewES2018Transformer
 export let NewES2016Transformer: TransformerFactory = Chain(NewES2017Transformer, newExponentiationTransformer);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::func::GetESTransformer","kind":"func","status":"implemented","sigHash":"4a230e67717c0e5f8565aaaa3cdd441426d3011e691956574b0738fb83a76068","bodyHash":"890c167a79d0f363bd81ab7c4c34c88e793072922aa695f5976feda606108478"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/definitions.go::func::GetESTransformer","kind":"func","status":"implemented","sigHash":"4a230e67717c0e5f8565aaaa3cdd441426d3011e691956574b0738fb83a76068"}
  *
  * Go source:
  * func GetESTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
