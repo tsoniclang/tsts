@@ -11,12 +11,13 @@ const base = {
   snapshotOut: ".temp/snapshot.json",
   statusOut: ".temp/status.json",
   reportOut: ".temp/status.md",
+  nonGoDeclarationManifestPath: "porter.non-go-declarations.json",
   primaryUnitKinds: ["func", "type"],
 };
 
 test("Porter config rejects unknown and retired top-level contracts", () => {
   assert.equal(assertPorterConfig(structuredClone(base)).schemaVersion, 1);
-  for (const key of ["astGeneratedStatusOut", "diagnosticsGeneratedStatusOut", "generatedPolicy", "schemaSourceSyncChecks", "futureGuess"]) {
+  for (const key of ["astGeneratedStatusOut", "diagnosticsGeneratedStatusOut", "generatedPolicy", "nonGoDeclarationPolicies", "nonGoExportRoutePolicies", "schemaSourceSyncChecks", "futureGuess"]) {
     assert.throws(() => assertPorterConfig({ ...base, [key]: true }), /unknown current-contract key/);
   }
 });
@@ -24,6 +25,7 @@ test("Porter config rejects unknown and retired top-level contracts", () => {
 test("Porter config requires exact core identity and unit-kind fields", () => {
   assert.throws(() => assertPorterConfig({ ...base, schemaVersion: 2 }), /schemaVersion must be 1/);
   assert.throws(() => assertPorterConfig({ ...base, goModulePath: "" }), /goModulePath must be a non-empty string/);
+  assert.throws(() => assertPorterConfig({ ...base, nonGoDeclarationManifestPath: "../manifest.json" }), /canonical repository-relative/);
   assert.throws(() => assertPorterConfig({ ...base, primaryUnitKinds: ["func", "func"] }), /must be unique/);
 });
 

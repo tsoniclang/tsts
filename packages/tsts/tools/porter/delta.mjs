@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { compareText } from "./core/deterministic-order.mjs";
+import { buildSemanticUnitEligibility } from "./core/semantic-unit-eligibility.mjs";
 import { semanticProfileKey } from "./core/snapshot-validation.mjs";
 
 export const DELTA_EVIDENCE_ARTIFACTS = Object.freeze(["delta.json", "from-snapshot.json", "summary.md", "to-snapshot.json"]);
@@ -200,9 +201,11 @@ function unitRecords(snapshot) {
 
 function activeUnitRecords(snapshot, options) {
   const primaryKinds = new Set(options.primaryUnitKinds);
+  const eligibility = buildSemanticUnitEligibility(snapshot);
   const records = new Map();
   const profileKeys = snapshotProfileKeys(snapshot);
   for (const file of snapshot.files ?? []) {
+    if (!eligibility.includes(file)) continue;
     for (const unit of file.units ?? []) {
       if (!primaryKinds.has(unit.kind)) continue;
       const policy = options.policyForUnit(unit, file);

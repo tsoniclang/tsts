@@ -6,6 +6,7 @@
   "snapshotOut": ".temp/porter/tsgo-snapshot.json",
   "statusOut": ".temp/porter/status.json",
   "reportOut": ".temp/porter/status.md",
+  "nonGoDeclarationManifestPath": "packages/tsts/porter.non-go-declarations.json",
   "largeFileLineThreshold": 5000,
   "overrideCategories": [
     "bundled-asset-mode",

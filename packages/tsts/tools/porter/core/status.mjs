@@ -10,6 +10,7 @@ import { buildLargeFileSplitStatus } from "./large-files.mjs";
 import { emptyLocalOverrideStatus } from "./local-overrides.mjs";
 import { expectedTsPath, inactiveSourcePolicyFor, isActivePortPolicy, policyFor, policyForUnit, tsFilePolicyFor } from "./policies.mjs";
 import { countsByModule, increment, moduleNameFor, repoRoot, resolveRepo, walk } from "./runtime.mjs";
+import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
 import { normalizeEmbeddedGoSource, renderGoSourceComment, validateTsgoUnitMetadata } from "./ts-units.mjs";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -145,6 +146,7 @@ export function buildStatus(
   globalGeneratedArtifacts = { issues: [], providerCount: 0 },
 ) {
   const primaryKinds = new Set(config.primaryUnitKinds);
+  const semanticEligibility = buildSemanticUnitEligibility(snapshot);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const generatedSourcePolicies = buildGeneratedSourcePolicyStatus(snapshot, {
     isInactive: (sourcePath) => inactiveSourcePolicyFor(config, sourcePath) !== undefined,
@@ -158,7 +160,7 @@ export function buildStatus(
   });
   const sourceInterpretationIssues = [];
   for (const file of snapshot.files) {
-    const filePolicy = policyFor(config, file.path, file.generated);
+    const filePolicy = semanticEligibility.policyFor(file, policyFor(config, file.path, file.generated));
     if (!isActivePortPolicy(filePolicy)) continue;
     for (const imported of file.imports ?? []) {
       if (imported.path === "C") {
@@ -173,9 +175,9 @@ export function buildStatus(
   const duplicateGoIDs = [];
 
   for (const file of snapshot.files) {
-    const filePolicy = policyFor(config, file.path, file.generated);
+    const filePolicy = semanticEligibility.policyFor(file, policyFor(config, file.path, file.generated));
     for (const unit of file.units ?? []) {
-      const policy = policyForUnit(config, unit, file);
+      const policy = semanticEligibility.policyFor(file, policyForUnit(config, unit, file));
       const record = {
         ...unit,
         file: {

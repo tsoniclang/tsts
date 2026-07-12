@@ -28,6 +28,7 @@ import { buildTypeEquivalenceRelationRegistry } from "./sig-check/type-equivalen
 import { buildAmbientReferenceRelationRegistry } from "./sig-check/ambient-reference-relations.mjs";
 import { buildDeclarationOwnershipRegistry } from "./sig-check/declaration-ownership.mjs";
 import { buildExternalFacadeStorageCatalog } from "./core/external-facades.mjs";
+import { loadNonGoDeclarationManifest } from "./core/non-go-declaration-manifest.mjs";
 import {
   resolveOverride,
   unitSignatureSnapshot,
@@ -51,12 +52,19 @@ export async function computeSignatureReport(deps, options = {}) {
   const wholeProgramAuditNotRun = () => notRunAudit(
     `The --id filter ${JSON.stringify(idFilter)} limits signature-unit comparison, so this whole-program subaudit was not run.`,
   );
+  const prerequisiteMismatches = generatedArtifactPrerequisiteMismatches(deps.generatedArtifacts);
+  if (prerequisiteMismatches.length > 0) {
+    return prerequisiteBlockedReport(idFilter, prerequisiteMismatches);
+  }
   const profile = loadProfile(deps.config);
   const api = await loadParser({
     distRoot: join(deps.repoRoot, profile.parser.distRoot),
     freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((directory) => join(deps.repoRoot, directory)),
   });
   const conventions = loadConventions(profile.conventions ?? {});
+  const nonGoManifest = wholeProgramAudit
+    ? deps.nonGoManifest ?? loadNonGoDeclarationManifest(deps.config, deps.repoRoot)
+    : undefined;
   const overrideIssues = [];
 
   const goById = new Map();
@@ -179,9 +187,10 @@ export async function computeSignatureReport(deps, options = {}) {
       accountedDeclarationIds: declarationOwnership.ids,
       config: deps.config,
       moduleIndex,
+      nonGoManifest,
       valueEnvironments,
     })
-    : { exportedDeclarations: [], privateDeclarations: [], reExports: [], reviewedDeclarations: [], mismatches: [] };
+    : { exportedDeclarations: [], privateDeclarations: [], reExports: [], reviewedDeclarations: [], reviewedRoutes: [], testParityFiles: [], mismatches: [] };
   mismatches.push(...untrackedTypeScript.mismatches);
 
   for (const id of [...expectedIds].sort(compareText)) {
@@ -282,13 +291,58 @@ export async function computeSignatureReport(deps, options = {}) {
         privateDeclarationCount: untrackedTypeScript.privateDeclarations.length,
         reExportCount: untrackedTypeScript.reExports.length,
         reviewedDeclarationCount: untrackedTypeScript.reviewedDeclarations.length,
+        reviewedRouteCount: untrackedTypeScript.reviewedRoutes.length,
+        testParityDeclarationCount: untrackedTypeScript.testParityFiles.reduce((count, file) => count + file.declarationCount, 0),
+        testParityFileCount: untrackedTypeScript.testParityFiles.length,
         exportedDeclarations: untrackedTypeScript.exportedDeclarations,
         privateDeclarations: untrackedTypeScript.privateDeclarations,
         reExports: untrackedTypeScript.reExports,
         reviewedDeclarations: untrackedTypeScript.reviewedDeclarations,
+        reviewedRoutes: untrackedTypeScript.reviewedRoutes,
+        testParityFiles: untrackedTypeScript.testParityFiles,
       })
       : wholeProgramAuditNotRun(),
   });
+}
+
+export function generatedArtifactPrerequisiteMismatches(status) {
+  if (status === undefined) return [];
+  const rows = [];
+  for (const category of ["missing", "stale", "orphan", "untracked", "invalid", "unresolved"]) {
+    const entries = status?.[category];
+    if (!Array.isArray(entries)) throw new Error(`generated artifact prerequisite status.${category} must be an array`);
+    for (const entry of entries) {
+      const path = typeof entry?.path === "string" && entry.path !== "" ? entry.path : "<generated-artifact>";
+      const symbol = typeof entry?.symbol === "string" && entry.symbol !== "" ? `::${entry.symbol}` : "";
+      rows.push({
+        id: `generated-artifact:${category}:${path}${symbol}`,
+        file: path,
+        kind: "signature-generated-artifact-prerequisite",
+        detail: `${category} generated declaration artifact blocks exact signature comparison: ${entry?.reason ?? "no exact artifact evidence"}`,
+      });
+    }
+  }
+  return rows.sort((left, right) => compareText(left.file, right.file) || compareText(left.id, right.id));
+}
+
+function prerequisiteBlockedReport(idFilter, mismatches) {
+  const reason = `${mismatches.length} generated declaration artifact prerequisite(s) failed; signature comparison was not run against a stale type universe.`;
+  const skipped = () => notRunAudit(reason);
+  return {
+    state: "not-run",
+    reason,
+    selection: idFilter === undefined ? { kind: "all-active" } : { kind: "id-filter", pattern: idFilter, matchedUnitCount: 0 },
+    mismatches,
+    overrideIssues: [],
+    jsonTags: skipped(),
+    authoredFacades: skipped(),
+    externalPackageSurface: skipped(),
+    typeStoragePolicies: skipped(),
+    typeEquivalenceRelations: skipped(),
+    ambientReferenceRelations: skipped(),
+    declarationOwnership: skipped(),
+    untrackedTypeScript: skipped(),
+  };
 }
 
 export function generatedTypeDeclarations(config, moduleIndex) {

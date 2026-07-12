@@ -1,4 +1,5 @@
 import { normalizeExternalPackageSurfaceSelections } from "./external-package-declarations.mjs";
+import { validateNonGoDeclarationManifestPath } from "./non-go-declaration-manifest.mjs";
 
 const allowedKeys = new Set([
   "astGeneratedDir",
@@ -17,8 +18,7 @@ const allowedKeys = new Set([
   "largeFileSplitPlan",
   "largeFileSplitPlanPath",
   "largeFileSplitStatusOut",
-  "nonGoDeclarationPolicies",
-  "nonGoExportRoutePolicies",
+  "nonGoDeclarationManifestPath",
   "overrideCategories",
   "overrides",
   "policies",
@@ -38,7 +38,7 @@ const allowedKeys = new Set([
   "unitPolicies",
 ]);
 
-const requiredStrings = ["goModulePath", "reportOut", "snapshotOut", "sourceRoot", "statusOut", "tsRoot"];
+const requiredStrings = ["goModulePath", "nonGoDeclarationManifestPath", "reportOut", "snapshotOut", "sourceRoot", "statusOut", "tsRoot"];
 
 export function assertPorterConfig(config) {
   if (!isPlainObject(config)) throw new Error("Porter config must be one plain object");
@@ -56,6 +56,7 @@ export function assertPorterConfig(config) {
     throw new Error("Porter config primaryUnitKinds must be unique");
   }
   normalizeExternalPackageSurfaceSelections(config);
+  validateNonGoDeclarationManifestPath(config.nonGoDeclarationManifestPath);
   return config;
 }
 

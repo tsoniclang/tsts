@@ -46,6 +46,7 @@ const callable = (signature = {}) => {
   const { role: _role, declarationModifiers: _declarationModifiers, ...descriptor } = exact;
   return { t: "fn", ...descriptor };
 };
+
 const func = (signature) => ({ kind: "func", modifiers: ["export"], signatures: [exactSignature(signature)] });
 const funcSet = (signatures) => ({ kind: "func", modifiers: ["export"], signatures: signatures.map(exactSignature) });
 const member = (name, type, options = {}) => {

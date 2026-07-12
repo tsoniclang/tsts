@@ -12,7 +12,7 @@ export function signatureAuditSummaryLines(status) {
     auditSummaryLine(signature?.typeEquivalenceRelations, "TypeScript type-equivalence relation audit", () => `TypeScript type-equivalence relations checked/issues: ${metric(signature.typeEquivalenceRelations.checked)}/${metric(signature.typeEquivalenceRelations.mismatchCount)}`),
     auditSummaryLine(signature?.ambientReferenceRelations, "Ambient reference relation audit", () => `Ambient reference relations checked/issues: ${metric(signature.ambientReferenceRelations.checked)}/${metric(signature.ambientReferenceRelations.mismatchCount)}`),
     auditSummaryLine(signature?.declarationOwnership, "Declaration ownership audit", () => `Declaration ownership entries checked/issues: ${metric(signature.declarationOwnership.checked)}/${metric(signature.declarationOwnership.mismatchCount)}`),
-    auditSummaryLine(signature?.untrackedTypeScript, "Unmatched TypeScript declaration audit", () => `TypeScript exported/private/reviewed/re-export inventories/issues: ${metric(signature.untrackedTypeScript.exportedDeclarationCount)}/${metric(signature.untrackedTypeScript.privateDeclarationCount)}/${metric(signature.untrackedTypeScript.reviewedDeclarationCount)}/${metric(signature.untrackedTypeScript.reExportCount)}/${metric(signature.untrackedTypeScript.mismatchCount)}`),
+    auditSummaryLine(signature?.untrackedTypeScript, "Unmatched TypeScript declaration audit", () => `TypeScript exported/private/reviewed/re-export/reviewed-route/test-files/test-declarations inventories/issues: ${metric(signature.untrackedTypeScript.exportedDeclarationCount)}/${metric(signature.untrackedTypeScript.privateDeclarationCount)}/${metric(signature.untrackedTypeScript.reviewedDeclarationCount)}/${metric(signature.untrackedTypeScript.reExportCount)}/${metric(signature.untrackedTypeScript.reviewedRouteCount)}/${metric(signature.untrackedTypeScript.testParityFileCount)}/${metric(signature.untrackedTypeScript.testParityDeclarationCount)}/${metric(signature.untrackedTypeScript.mismatchCount)}`),
     auditSummaryLine(jsonTags, "Go struct JSON-tag declaration audit", () => `JSON tagged structs/fields declaration contracts/fields/issues: ${metric(jsonTags.taggedUnits)}/${metric(jsonTags.taggedFields)} ${metric(jsonTags.contractUnits)}/${metric(jsonTags.contractFields)}/${metric(jsonTags.mismatches)}`),
   ];
 }
@@ -43,7 +43,17 @@ export function appendSignatureAuditMarkdown(lines, status) {
     appendTypeScriptDeclarationInventory(lines, "Module-Private TypeScript Declarations", untracked.privateDeclarations);
     appendTypeScriptDeclarationInventory(lines, "Reviewed Non-Go TypeScript Declarations", untracked.reviewedDeclarations);
     appendReExportInventory(lines, untracked.reExports);
+    appendReviewedReExportInventory(lines, untracked.reviewedRoutes);
+    appendTestParityInventory(lines, untracked.testParityFiles);
   }
+}
+
+function appendTestParityInventory(lines, rows) {
+  appendTable(lines, "Test-Parity Declaration Inventories", ["TS test file", "Declarations", "Inventory hash"], rows, (row) => [
+    row.file,
+    row.declarationCount,
+    row.declarationInventoryHash,
+  ]);
 }
 
 function appendExternalPackageSurfaceInventory(lines, rows) {
@@ -84,7 +94,7 @@ function appendMethodBindingInventory(lines, rows) {
 }
 
 function appendTypeScriptDeclarationInventory(lines, title, rows) {
-  appendTable(lines, title, ["TS file", "Declaration kind", "Name", "Fragment", "Namespaces", "Source-visible", "Contract hash"], rows, (row) => [
+  appendTable(lines, title, ["TS file", "Declaration kind", "Name", "Fragment", "Namespaces", "Source-visible", "Contract hash", "Owner", "Owner reason"], rows, (row) => [
     row.file,
     row.kind,
     row.name,
@@ -92,16 +102,31 @@ function appendTypeScriptDeclarationInventory(lines, title, rows) {
     Array.isArray(row.namespaces) ? row.namespaces.join(", ") : "",
     row.sourceVisible,
     row.declarationHash,
+    row.owner,
+    row.ownerReason,
   ]);
 }
 
 function appendReExportInventory(lines, rows) {
-  appendTable(lines, "TypeScript Re-Export Routes", ["TS file", "Namespace", "Export", "Target", "Route hash"], rows, (row) => [
+  appendTable(lines, "TypeScript Re-Export Routes", ["TS file", "Namespace", "Export", "Target", "Expanded exports", "Route hash"], rows, (row) => [
+    row.file,
+    row.namespace,
+    row.name,
+    row.target,
+    (row.expandedTargets ?? []).map((target) => `${target.name} -> ${target.identity}`).join("; "),
+    row.routeHash,
+  ]);
+}
+
+function appendReviewedReExportInventory(lines, rows) {
+  appendTable(lines, "Reviewed Non-Go TypeScript Export Routes", ["TS file", "Namespace", "Export", "Target", "Route hash", "Owner", "Owner reason"], rows, (row) => [
     row.file,
     row.namespace,
     row.name,
     row.target,
     row.routeHash,
+    row.owner,
+    row.ownerReason,
   ]);
 }
 

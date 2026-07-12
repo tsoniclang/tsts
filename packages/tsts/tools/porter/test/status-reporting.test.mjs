@@ -134,6 +134,9 @@ test("signature summaries retain audit state and every concrete inventory row", 
       reExports: [reExport],
       reviewedDeclarationCount: 1,
       reviewedDeclarations: [reviewedDeclaration],
+      testParityDeclarationCount: 2,
+      testParityFileCount: 1,
+      testParityFiles: [{ file: "pkg/example.test.ts", declarationCount: 2, declarationInventoryHash: "c".repeat(64) }],
     },
   });
   assert.equal(summary.state, "complete");
@@ -152,6 +155,7 @@ test("signature summaries retain audit state and every concrete inventory row", 
   assert.deepEqual(summary.untrackedTypeScript.privateDeclarations, [privateDeclaration]);
   assert.deepEqual(summary.untrackedTypeScript.reExports, [reExport]);
   assert.deepEqual(summary.untrackedTypeScript.reviewedDeclarations, [reviewedDeclaration]);
+  assert.equal(summary.untrackedTypeScript.testParityDeclarationCount, 2);
 
   const markdown = renderStatusMarkdown({
     ...minimalStatus(),
@@ -164,7 +168,7 @@ test("signature summaries retain audit state and every concrete inventory row", 
     "Add", "ToDate", "FileMode_IsDir", "extra", "helper", "reviewed", "pkg/time.ts::Time", "route-hash",
     "go/time.ts::Time", "go/a.ts::Node", "fixture-use", "global::ReadonlyArray", "fixture-ambient-use",
     "pkg/time.ts::type::class::Time", "authored-facade:time::type::Time",
-    "errors::func::New",
+    "errors::func::New", "pkg/example.test.ts",
   ]) {
     assert.match(markdown, new RegExp(evidence));
   }

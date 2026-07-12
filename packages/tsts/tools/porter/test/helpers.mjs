@@ -73,6 +73,8 @@ export function snapshotWith(files) {
       unitCount: files.reduce((sum, file) => sum + file.units.length, 0),
     },
     semantic: {
+      requiredFiles: files.map((file) => file.path).sort(),
+      excludedFiles: [],
       dependencyTypeDeclarations: [],
       externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
       methodSetSignatures: [],

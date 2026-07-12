@@ -1,7 +1,9 @@
 import { computeSignatureReport } from "../sig-check.mjs";
+import { buildGeneratedArtifactStatus } from "./generated-artifacts.mjs";
 import { isActivePortPolicy, policyForUnit } from "./policies.mjs";
 import { repoRoot, resolveRepo } from "./runtime.mjs";
 import { runPinnedScan } from "./scan-runner.mjs";
+import { buildSemanticUnitEligibility } from "./semantic-unit-eligibility.mjs";
 import { signatureAuditSummaryLines } from "./signature-reporting.mjs";
 import { parserOptionsForConfig, scanTsUnits } from "./ts-units.mjs";
 import process from "node:process";
@@ -17,11 +19,12 @@ export async function runSigCheck(config, options = {}) {
     idFilter = options.id;
   }
   const snapshot = runPinnedScan(config);
+  const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
   const tsUnits = await scanTsUnits(resolveRepo(config.tsRoot), { parser: parserOptionsForConfig(config) });
   const tsById = new Map(tsUnits.units.map((u) => [u.id, u]));
   const tsFiles = tsUnits.files.filter((file) => file.metadataCount > 0);
   const report = await computeSignatureReport(
-    { config, snapshot, repoRoot, tsFiles, tsById, activeIds: activeSignatureUnitIds(config, snapshot) },
+    { config, generatedArtifacts, snapshot, repoRoot, tsFiles, tsById, activeIds: activeSignatureUnitIds(config, snapshot) },
     { idFilter },
   );
   if (options.json === true) {
@@ -36,8 +39,10 @@ export async function runSigCheck(config, options = {}) {
 
 export function activeSignatureUnitIds(config, snapshot) {
   const primary = new Set(config.primaryUnitKinds);
+  const eligibility = buildSemanticUnitEligibility(snapshot);
   const ids = new Set();
   for (const file of snapshot.files ?? []) {
+    if (!eligibility.includes(file)) continue;
     for (const unit of file.units ?? []) {
       if (primary.has(unit.kind) && isActivePortPolicy(policyForUnit(config, unit, file))) ids.add(unit.id);
     }

@@ -121,14 +121,19 @@ function variableDescriptor(api, node, baseCtx) {
   for (const nodeDeclaration of statement.DeclarationList?.Declarations?.Nodes ?? []) {
     const declaration = api.Casts.AsVariableDeclaration(nodeDeclaration);
     const identifier = declaration.name?.Kind === api.Kinds.KindIdentifier;
-    const evaluation = declarationKind === "const"
+    const callableInitializer = declaration.Initializer?.Kind === api.Kinds.KindArrowFunction ||
+      declaration.Initializer?.Kind === api.Kinds.KindFunctionExpression;
+    const inferredCallable = declaration.Type === undefined && callableInitializer
+      ? callableInitializerDescriptor(api, declaration.Initializer, ctx)
+      : undefined;
+    const evaluation = declarationKind === "const" && !callableInitializer
       ? evaluateTypeScriptConstant(api, declaration.Initializer, ctx.valueEnvironment)
       : undefined;
     declarations.push({
       name: identifier ? declaration.name.Text : "<binding-pattern>",
       ...(identifier ? {} : { binding: bindingNameDescriptor(api, declaration.name, ctx) }),
-      missing: !declaration.Type,
-      type: declaration.Type ? canonicalizeType(declaration.Type, ctx) : null,
+      missing: declaration.Type === undefined && inferredCallable === undefined,
+      type: declaration.Type ? canonicalizeType(declaration.Type, ctx) : inferredCallable ?? null,
       ...(evaluation === undefined ? {} : {
         value: canonicalTypeScriptConstantValue(evaluation),
         valueIssue: evaluation.status === "known" ? undefined : constantEvaluationIssue(evaluation),
@@ -140,6 +145,20 @@ function variableDescriptor(api, node, baseCtx) {
     });
   }
   return { kind: "value", modifiers, decls: declarations };
+}
+
+function callableInitializerDescriptor(api, initializer, ctx) {
+  if (initializer?.Kind !== api.Kinds.KindArrowFunction && initializer?.Kind !== api.Kinds.KindFunctionExpression) return undefined;
+  const callable = callableDescriptor(api, initializer, ctx, "required", false);
+  return {
+    t: "fn",
+    params: callable.params,
+    ret: callable.ret,
+    missingReturnType: callable.missingReturnType,
+    returnTypePolicy: callable.returnTypePolicy,
+    typeParams: callable.typeParams,
+    signatureModifiers: callable.signatureModifiers,
+  };
 }
 
 function moduleDescriptor(api, node, baseCtx) {

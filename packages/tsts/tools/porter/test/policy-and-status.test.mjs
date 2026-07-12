@@ -288,6 +288,20 @@ test("extractor snapshots reject schema drift, removed fields, unknown units, an
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, structTagCount: 1 } }, config).some((issue) => issue.includes("structTagCount")));
   assert.ok(validatePorterSnapshot({ ...snapshot, summary: { ...snapshot.summary, nodeKindCounts: {} } }, config).some((issue) => issue.includes("keys must be exactly")));
 
+  for (const [description, mutate] of [
+    ["missing external surface object", (value) => value.semantic.externalPackageSurface = null],
+    ["malformed external declarations", (value) => value.semantic.externalPackageSurface.declarations = [null]],
+    ["malformed external dependency declarations", (value) => value.semantic.externalPackageSurface.dependencyTypeDeclarations = null],
+    ["malformed external selection list", (value) => value.semantic.externalPackageSurface.selections = null],
+    ["malformed unresolved external selection", (value) => value.semantic.externalPackageSurface.unresolvedSelections = [null]],
+  ]) {
+    const changed = structuredClone(snapshot);
+    mutate(changed);
+    let issues;
+    assert.doesNotThrow(() => issues = validatePorterSnapshot(changed, config), description);
+    assert.ok(issues.length > 0, `${description} must fail closed`);
+  }
+
   for (const key of ["generated", "imports", "metadata", "sourceHash", "units"]) {
     const missing = structuredClone(file);
     delete missing[key];
@@ -560,4 +574,25 @@ test("buildStatus reports missing, stale, orphan, unitless, and untracked TS fil
   assert.equal(status.counts.untrackedTsFiles, 1);
   assert.equal(status.counts.forbiddenTsFiles, 1);
   assert.match(renderStatusMarkdown(status), /Coverage Diagnostics/);
+});
+
+test("buildStatus excludes files omitted from every semantic profile", () => {
+  const file = fileRecord({
+    path: "internal/generator/generate.go",
+    units: [unitRecord({
+      id: "m::internal/generator/generate.go::func::main",
+      kind: "func",
+      name: "main",
+      qualifiedName: "main",
+      goPath: "internal/generator/generate.go",
+    })],
+  });
+  const snapshot = snapshotWith([file]);
+  snapshot.semantic.requiredFiles = [];
+  snapshot.semantic.excludedFiles = [file.path];
+  snapshot.semantic.profiles[0].coveredFiles = [];
+  const status = buildStatus(baseConfig, snapshot, { fileCount: 0, files: [], units: [] });
+  assert.equal(status.counts.excluded, 1);
+  assert.equal(status.counts.missing, 0);
+  assert.equal(status.excluded[0].category, "semantic-excluded");
 });

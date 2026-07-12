@@ -219,6 +219,7 @@ export async function main() {
       const signatureReport = await computeSignatureReport(
         {
           config,
+          generatedArtifacts,
           snapshot,
           repoRoot,
           tsFiles: tsUnits.files.filter((file) => file.metadataCount > 0),

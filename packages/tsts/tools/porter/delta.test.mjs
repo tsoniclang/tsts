@@ -14,9 +14,11 @@ test("porter delta reports file, raw-unit, active-unit, and move changes", () =>
     file("internal/a/changed.go", "after", [unit("m::internal/a/changed.go::func::Changed", "func", "Changed", "sig", "body-2")]),
     file("internal/ignored/ignored.go", "ignored-2", [unit("m::internal/ignored/ignored.go::func::Ignored", "func", "Ignored", "sig", "body-2")]),
   ]);
+  excludeSemanticFile(from, "internal/ignored/ignored.go");
+  excludeSemanticFile(to, "internal/ignored/ignored.go");
   const report = buildPorterDelta(from, to, {
     primaryUnitKinds: ["func"],
-    policyForUnit: (candidate) => ({ category: candidate.id.includes("ignored") ? "out-of-scope" : "literal-port", active: !candidate.id.includes("ignored") }),
+    policyForUnit: () => ({ category: "literal-port", active: true }),
     isActivePortPolicy: (policy) => policy.active !== false && policy.category === "literal-port",
   });
 
@@ -108,7 +110,14 @@ function snapshot(gitRevision, files) {
     modulePath: "m",
     gitRevision,
     environment: { goVersion: "go1.26.4", goos: "linux", goarch: "amd64" },
-    semantic: { dependencyTypeDeclarations: [], externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] }, methodSetSignatures: [], profiles: [profile("linux", "amd64", "GOAMD64=v1")] },
+    semantic: {
+      requiredFiles: files.map((file) => file.path).sort(),
+      excludedFiles: [],
+      dependencyTypeDeclarations: [],
+      externalPackageSurface: { declarations: [], dependencyTypeDeclarations: [], selections: [], unresolvedSelections: [] },
+      methodSetSignatures: [],
+      profiles: [profile("linux", "amd64", "GOAMD64=v1")],
+    },
     summary: { goFileCount: files.length, unitCount: files.reduce((count, candidate) => count + candidate.units.length, 0) },
     files,
   };
@@ -147,4 +156,10 @@ function semanticConstant(exact) {
 
 function profile(goos, goarch, architecture) {
   return { goos, goarch, cgoEnabled: false, architecture, experiments: "", goexperiment: "", buildTags: [] };
+}
+
+function excludeSemanticFile(snapshot, file) {
+  snapshot.semantic.requiredFiles = snapshot.semantic.requiredFiles.filter((path) => path !== file);
+  snapshot.semantic.excludedFiles.push(file);
+  snapshot.semantic.excludedFiles.sort();
 }
