@@ -373,6 +373,26 @@ test("trusted verification requires every whole-program declaration subaudit", (
   ]);
 });
 
+test("blocked signature verification preserves the exact intended audit selection", () => {
+  const status = completeVerificationStatus();
+  const skipped = { state: "not-run", reason: "declaration prerequisites failed" };
+  status.signatureCheck = {
+    ...skipped,
+    selection: { kind: "all-active" },
+    authoredFacades: { ...skipped },
+    externalPackageSurface: { ...skipped },
+    typeStoragePolicies: { ...skipped },
+    typeEquivalenceRelations: { ...skipped },
+    ambientReferenceRelations: { ...skipped },
+    declarationOwnership: { ...skipped },
+    untrackedTypeScript: { ...skipped },
+  };
+  assert.doesNotThrow(() => collectVerifyFailures(status));
+
+  delete status.signatureCheck.selection;
+  assert.throws(() => collectVerifyFailures(status), /signatureCheck keys must be exactly/);
+});
+
 test("trusted verification rejects forged status envelopes and summary-only audit claims", () => {
   const extra = completeVerificationStatus();
   extra.trusted = true;

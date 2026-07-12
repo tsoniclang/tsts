@@ -24,6 +24,7 @@ export function declarationAuditsNotRun(subject = "This command") {
   return {
     signatureCheck: {
       ...skipped("Go/TypeScript signature unit audit"),
+      selection: { kind: "all-active" },
       authoredFacades: skipped("authored facade audit"),
       externalPackageSurface: skipped("external package surface audit"),
       typeStoragePolicies: skipped("reviewed type storage policy audit"),
