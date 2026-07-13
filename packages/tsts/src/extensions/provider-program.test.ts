@@ -27,7 +27,9 @@ import {
   Program_GetSourceFile,
   Program_GetSourceFiles,
   Program_GetSyntacticDiagnostics,
+  Program_GetTypeCheckerForFile,
 } from "../internal/compiler/program.js";
+import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
@@ -36,6 +38,7 @@ import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest } from "./index.js";
+import { recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -1537,6 +1540,173 @@ test("checker exposes selected source member evidence on checked property access
   assert.ok(lengthRequest?.sourceResultType !== undefined);
   const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
   assert.equal(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, semanticSubject("int32"));
+});
+
+test("repeated checked property observations preserve equivalent source result type provenance", () => {
+  const observedRequests: CheckedPropertyAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+
+      interface SymbolConstructor {
+        readonly iterator: unique symbol;
+      }
+      declare var Symbol: SymbolConstructor;
+
+      interface IteratorResult<T, TReturn = unknown> {
+        done?: boolean;
+        value: T | TReturn;
+      }
+      interface Iterator<T, TReturn = unknown, TNext = unknown> {
+        next(...args: [] | [TNext]): IteratorResult<T, TReturn>;
+      }
+      interface Iterable<T> {
+        [Symbol.iterator](): Iterator<T>;
+      }
+      interface Array<T> extends Iterable<T> {
+        readonly Length: number;
+        [index: number]: T;
+      }
+      type Parameters<T extends (...args: any) => any> =
+        T extends (...args: infer P) => any ? P : never;
+    `],
+    ["/src/index.ts", `
+      type Fn = (input: { count: number }) => number;
+      type Args = Parameters<Fn>;
+
+      interface LeftBox {
+        value: { count: number };
+      }
+      interface RightBox {
+        value: { count: number };
+      }
+      interface OtherBox {
+        value: string;
+      }
+      declare const leftBox: LeftBox;
+      declare const rightBox: RightBox;
+      declare const otherBox: OtherBox;
+      const leftValue = leftBox.value;
+      const rightValue = rightBox.value;
+      const otherValue = otherBox.value;
+
+      export function read([input]: Args): number {
+        return input.count;
+      }
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-repeated-property-extension", {
+      identity: semanticProviderIdentity("acme-repeated-property-provider"),
+      mapCheckedPropertyAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation("Acme.DeclarationOnly.Property", "property", "int32"),
+          resultType: semanticSubject("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const iteratorRequest = observedRequests.find((request) => request.propertyName === "iterator");
+  assert.ok(iteratorRequest !== undefined);
+  assert.ok(iteratorRequest.sourceSelectedSymbol !== undefined);
+  assert.ok(iteratorRequest.sourceSelectedDeclaration !== undefined);
+  assert.ok(iteratorRequest.sourceResultType !== undefined);
+  const iteratorFact = extended.extensionHost.facts.get(iteratorRequest.expression, targetOperationFactKey);
+  assert.equal(iteratorFact?.provenance?.sourceExpression, iteratorRequest.expression);
+  assert.equal(iteratorFact?.provenance?.sourceReceiver, iteratorRequest.receiver);
+  assert.equal(iteratorFact?.provenance?.sourceSelectedSymbol, iteratorRequest.sourceSelectedSymbol);
+  assert.equal(iteratorFact?.provenance?.sourceSelectedDeclaration, iteratorRequest.sourceSelectedDeclaration);
+  assert.equal(iteratorFact?.provenance?.sourceResultType, iteratorRequest.sourceResultType);
+
+  const valueRequests = observedRequests.filter((request) => request.propertyName === "value");
+  assert.equal(valueRequests.length, 3);
+  const firstValueRequest = valueRequests[0]!;
+  const secondValueRequest = valueRequests[1]!;
+  const incompatibleValueRequest = valueRequests[2]!;
+  assert.ok(firstValueRequest.sourceSelectedSymbol !== undefined);
+  assert.ok(firstValueRequest.sourceResultType !== undefined);
+  assert.ok(secondValueRequest.sourceResultType !== undefined);
+  assert.ok(incompatibleValueRequest.sourceResultType !== undefined);
+  assert.notEqual(firstValueRequest.sourceResultType, secondValueRequest.sourceResultType);
+
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
+  try {
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      iteratorRequest.expression as GoPtr<Node>,
+      iteratorRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      iteratorRequest.sourceResultType as GoPtr<Type>,
+    );
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    const sourceResultType = firstValueRequest.sourceResultType as GoPtr<Type>;
+    const equivalentResultType = secondValueRequest.sourceResultType as GoPtr<Type>;
+    assert.equal(Checker_isTypeIdenticalTo(checker, sourceResultType, equivalentResultType), true);
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      firstValueRequest.expression as GoPtr<Node>,
+      firstValueRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      equivalentResultType,
+    );
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+    assert.equal(
+      extended.extensionHost.facts.get(firstValueRequest.expression, targetOperationFactKey)?.provenance?.sourceResultType,
+      sourceResultType,
+    );
+
+    const incompatibleResultType = incompatibleValueRequest.sourceResultType as GoPtr<Type>;
+    assert.equal(Checker_isTypeIdenticalTo(checker, sourceResultType, incompatibleResultType), false);
+    recordExtensionCheckedPropertyAccessMapping(
+      checker,
+      firstValueRequest.expression as GoPtr<Node>,
+      firstValueRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      incompatibleResultType,
+    );
+  } finally {
+    done();
+  }
+
+  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+
+  const countAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "count");
+  const countFact = extended.extensionHost.facts.get(countAccess, targetOperationFactKey);
+  assert.equal(countFact?.provenance?.sourceExpression, countAccess);
+  assert.ok(countFact?.provenance?.sourceReceiver !== undefined);
+  assert.ok(countFact?.provenance?.sourceSelectedSymbol !== undefined);
+  assert.ok(countFact?.provenance?.sourceSelectedDeclaration !== undefined);
+  assert.ok(countFact?.provenance?.sourceResultType !== undefined);
 });
 
 test("checker exposes selected source index-signature evidence on checked element access", () => {

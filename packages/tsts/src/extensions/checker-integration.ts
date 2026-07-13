@@ -11,6 +11,7 @@ import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
+import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
@@ -122,13 +123,19 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   const operation = result.value.provenance === undefined
     ? operationWithResult
     : withTargetOperationProvenance(operationWithResult, result.value.provenance);
-  extensionHost.facts.set(propertyAccessExpression, targetOperationFactKey, withTargetOperationProvenance(operation, {
+  const operationWithProvenance = withTargetOperationProvenance(operation, {
     sourceExpression: propertyAccessExpression,
     sourceReceiver: receiver,
     ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
     ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
     ...(sourceResultType !== undefined ? { sourceResultType } : {}),
-  }), result.evidence ?? []);
+  });
+  extensionHost.facts.set(
+    propertyAccessExpression,
+    targetOperationFactKey,
+    preserveEquivalentCheckedSourceResultType(checker, extensionHost, propertyAccessExpression, operationWithProvenance, sourceResultType),
+    result.evidence ?? [],
+  );
 }
 
 export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
@@ -175,13 +182,19 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
   const operation = result.value.provenance === undefined
     ? operationWithResult
     : withTargetOperationProvenance(operationWithResult, result.value.provenance);
-  extensionHost.facts.set(elementAccessExpression, targetOperationFactKey, withTargetOperationProvenance(operation, {
+  const operationWithProvenance = withTargetOperationProvenance(operation, {
     sourceExpression: elementAccessExpression,
     sourceReceiver: receiver,
     ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
     ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
     ...(sourceResultType !== undefined ? { sourceResultType } : {}),
-  }), result.evidence ?? []);
+  });
+  extensionHost.facts.set(
+    elementAccessExpression,
+    targetOperationFactKey,
+    preserveEquivalentCheckedSourceResultType(checker, extensionHost, elementAccessExpression, operationWithProvenance, sourceResultType),
+    result.evidence ?? [],
+  );
 }
 
 export function recordExtensionCheckedOperatorMapping(checker: GoPtr<Checker>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
@@ -662,6 +675,32 @@ function withTargetOperationProvenance(operation: TargetOperationFact, provenanc
       ...provenance,
     },
   };
+}
+
+function preserveEquivalentCheckedSourceResultType(
+  checker: GoPtr<Checker>,
+  extensionHost: ExtensionHost,
+  subject: ExtensionFactSubject,
+  incoming: TargetOperationFact,
+  incomingSourceResultType: GoPtr<Type>,
+): TargetOperationFact {
+  if (incomingSourceResultType === undefined) {
+    return incoming;
+  }
+  const existing = extensionHost.facts.get(subject, targetOperationFactKey);
+  const existingSourceResultType = existing?.provenance?.sourceResultType as GoPtr<Type>;
+  if (existing === undefined || existingSourceResultType === undefined || existingSourceResultType === incomingSourceResultType) {
+    return incoming;
+  }
+  const withExistingSourceResultType = withTargetOperationProvenance(incoming, {
+    sourceResultType: existingSourceResultType,
+  });
+  if (!targetOperationFactKey.equals(existing, withExistingSourceResultType)) {
+    return incoming;
+  }
+  return Checker_isTypeIdenticalTo(checker, existingSourceResultType, incomingSourceResultType)
+    ? withExistingSourceResultType
+    : incoming;
 }
 
 function withCheckedOperationResultType(operation: TargetOperationFact, resultType: ExtensionFactSubject | undefined): TargetOperationFact {
