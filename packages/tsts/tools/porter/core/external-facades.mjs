@@ -120,9 +120,19 @@ export function externalFacadeStoragePlanAuthoredRoots(plan) {
   return new Map(requireExternalFacadeStoragePlan(plan).authoredRoots);
 }
 
-export function externalFacadeStoragePlanBootstrapFacades(plan) {
+export function externalFacadeStoragePlanBootstrapFacades(plan, requestedModules = new Set()) {
   const { auditContext } = requireExternalFacadeStoragePlan(plan);
-  const selected = selectExternalFacadeObjectIds(auditContext, undefined, true);
+  if (!(requestedModules instanceof Set) || [...requestedModules].some((moduleId) => typeof moduleId !== "string" || moduleId === "")) {
+    throw new Error("external facade bootstrap module requests must be a Set of non-empty module ids");
+  }
+  const selected = selectExternalFacadeObjectIds(auditContext, undefined);
+  for (const semantic of auditContext.semanticIndex.values()) {
+    const configured = auditContext.policies.get(semantic.objectId);
+    const moduleId = configured?.tsModule ?? externalFacadeModulePath(auditContext.config, auditContext.profile, semantic.packagePath);
+    if (!requestedModules.has(moduleId)) continue;
+    const policy = configured ?? auditContext.resolvePolicy(semantic.objectId);
+    if (policy?.storageStrategy === "generated") selected.add(semantic.objectId);
+  }
   return new Map([...materializeExternalFacadeMap(auditContext, selected)]
     .filter(([_objectId, facade]) => facade.storageStrategy === "generated"));
 }
@@ -229,6 +239,7 @@ function buildExternalFacadeContext(config, snapshot, includeExternalPackageSurf
     localStorageTypeProfileKeys,
     methodSetSignatures,
     policies,
+    profile,
     profileStorage,
     resolvePolicy,
     semanticIndex,
@@ -395,7 +406,7 @@ function requireExactOptionKeys(options, allowed, label) {
   if (unknown.length > 0) throw new Error(`${label} options contain unknown current-contract key(s): ${unknown.join(", ")}`);
 }
 
-function selectExternalFacadeObjectIds(context, authoredSurfaces, expandCompleteAuthoredSurface = false) {
+function selectExternalFacadeObjectIds(context, authoredSurfaces) {
   const {
     config,
     directUsages,
@@ -435,13 +446,14 @@ function selectExternalFacadeObjectIds(context, authoredSurfaces, expandComplete
     }
     selected.add(current.objectId);
     if (policy.storageStrategy === "authored") {
-      if ((!finalized && !expandCompleteAuthoredSurface) || expanded.has(current.key)) continue;
+      if (!finalized || expanded.has(current.key)) continue;
       expanded.add(current.key);
       const facade = materializeExternalFacade(config, semantic, policy);
-      const authoredSurface = authoredSurfaces?.get(current.objectId);
-      const contractSurface = finalized
-        ? buildAuthoredContractSurface(facade, declaration, methodSetSignatures, authoredSurface)
-        : undefined;
+      const authoredSurface = authoredSurfaces.get(current.objectId);
+      if (authoredSurface === undefined) {
+        throw new Error(`authored external facade '${current.objectId}' has no finalized declaration surface`);
+      }
+      const contractSurface = buildAuthoredContractSurface(facade, declaration, methodSetSignatures, authoredSurface);
       for (const dependency of dependencyDeclarationDependencies(
         declaration,
         semanticIndex,
@@ -449,8 +461,8 @@ function selectExternalFacadeObjectIds(context, authoredSurfaces, expandComplete
         config.goModulePath,
         methodSetSignatures,
         current.profile,
-        finalized ? "authored-surface" : "generated-surface",
-        contractSurface === undefined ? {} : { contractSurface },
+        "authored-surface",
+        { contractSurface },
       )) {
         requireDependencySemanticUsage(
           semanticIndex,
