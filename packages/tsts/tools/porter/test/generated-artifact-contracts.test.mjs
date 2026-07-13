@@ -301,8 +301,10 @@ test("facade catalog bootstrap uses bounded authored sources and virtual generat
     mkdirSync(generatedRoot, { recursive: true });
     writeFileSync(path.join(generatedRoot, "io.ts"), `import type { byte, int } from "./scalars.js";
 import type { GoError, GoSlice } from "./compat.js";
+import type { Token } from "./example.com/native.js";
 
 export interface Writer { Write(value: GoSlice<byte>): [int, GoError]; }
+export type WriterToken = Token;
 `);
     writeFileSync(path.join(root, "src/internal/unrelated.ts"), 'export { Missing } from "./absent.js";\n');
 
@@ -311,6 +313,7 @@ export interface Writer { Write(value: GoSlice<byte>): [int, GoError]; }
     const facades = await prepareExternalFacadeStorageCatalog(config, snapshot, repoRoot);
 
     assert.ok(facades.artifactFacades(config, snapshot).has("io::type::Writer"));
+    assert.ok(facades.artifactFacades(config, snapshot).has("example.com/native::type::Token"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -407,9 +410,17 @@ test("authoredFacadeModules require the exact public symbol while remaining excl
 });
 
 function authoredWriterConfig(root) {
+  const tsRoot = path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/");
   return {
     ...baseConfig,
-    tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
+    tsRoot,
+    signatureCheck: {
+      facadeTemplate: `${tsRoot}/go/{importPath}.ts`,
+      modules: {
+        compat: `${tsRoot}/go/compat.ts`,
+        core: `${tsRoot}/go/scalars.ts`,
+      },
+    },
     authoredFacadeModules: ["go/io.ts"],
     externalFacadePolicies: [{ objectId: "io::type::Writer", tsModule: "go/io.ts", tsName: "Writer", storageStrategy: "authored" }],
   };
@@ -417,15 +428,27 @@ function authoredWriterConfig(root) {
 
 function authoredWriterSnapshot() {
   const snapshot = snapshotWith([fileRecord({
-    imports: [{ path: "io" }],
-    units: [unitRecord({
-      id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail",
-      parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
-      semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "Fail", [
-        { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
-      ]),
-    })],
+    imports: [{ path: "example.com/native" }, { path: "io" }],
+    units: [
+      unitRecord({
+        id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::Fail",
+        parameters: [{ names: ["writer"], type: selectorType("io", "Writer") }],
+        semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "Fail", [
+          { name: "writer", type: semanticNamedType("io::type::Writer", "io", "Writer", true) },
+        ]),
+      }),
+      unitRecord({
+        id: "github.com/microsoft/typescript-go::internal/debug/debug.go::func::UseToken",
+        parameters: [{ names: ["token"], type: selectorType("example.com/native", "Token") }],
+        semantic: semanticFunctionFixture("github.com/microsoft/typescript-go/internal/debug", "UseToken", [
+          { name: "token", type: semanticNamedType("example.com/native::type::Token", "example.com/native", "Token") },
+        ]),
+      }),
+    ],
   })]);
-  snapshot.semantic.dependencyTypeDeclarations = [writerTypeFixture()];
+  snapshot.semantic.dependencyTypeDeclarations = [
+    semanticTypeFixture("example.com/native", "Token", semanticBasicType("string")),
+    writerTypeFixture(),
+  ];
   return snapshot;
 }
