@@ -90,6 +90,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export function GoNilChan<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
   assert.match(source, /if \(GoChanIsNil\(channel\)\) return false as bool;/);
   assert.match(source, /export type GoFunc<F> = GoNilable<F>;/);
+  assert.match(source, /export type GoDefined<T, Identity extends string> = T extends undefined\s*\? T\s*:\s*T & \{ readonly \[__goDefinedTypeBrand\]\?: Identity \};/);
   assert.match(source, /export type GoInterface<I> = GoNilable<I>;/);
   assert.doesNotMatch(source, /\bGoSeq2?\b/);
   assert.match(source, /export type GoError = GoInterface<Error>;/);
@@ -98,6 +99,45 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(source, /GoMapGetExisting<K, V>\(map: NonNullable<GoMap<K, V>>/);
   assert.match(source, /GoAppend<T>\(slice: GoSlice<T>, \.\.\.items: T\[]\): NonNullable<GoSlice<T>>/);
+});
+
+test("defined Go types preserve nil and unnamed-to-named assignment without becoming mutually assignable", () => {
+  const fileName = "/go-defined-contract.ts";
+  const source = `${renderGoCompatModule().replace(
+    /^import type \{ bool, int \} from "\.\/scalars\.js";\n\n/,
+    "type bool = boolean;\ntype int = number;\n\n",
+  )}
+type Underlying = (value: number) => number;
+type First = GoDefined<GoFunc<Underlying>, "first">;
+type Second = GoDefined<GoFunc<Underlying>, "second">;
+const raw: Underlying = (value) => value;
+const first: First = raw;
+const nil: First = undefined;
+// @ts-expect-error distinct defined Go types with identical underlying types are not assignable
+const second: Second = first;
+void nil;
+void second;
+`;
+  const options = {
+    module: ts.ModuleKind.ESNext,
+    noEmit: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  };
+  const host = ts.createCompilerHost(options);
+  const defaultGetSourceFile = host.getSourceFile.bind(host);
+  const defaultFileExists = host.fileExists.bind(host);
+  const defaultReadFile = host.readFile.bind(host);
+  host.getSourceFile = (path, languageVersion, onError, shouldCreateNewSourceFile) => path === fileName
+    ? ts.createSourceFile(path, source, languageVersion, true)
+    : defaultGetSourceFile(path, languageVersion, onError, shouldCreateNewSourceFile);
+  host.fileExists = (path) => path === fileName || defaultFileExists(path);
+  host.readFile = (path) => path === fileName ? source : defaultReadFile(path);
+  const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([fileName], options, host));
+  assert.deepEqual(diagnostics.map((diagnostic) => ({
+    code: diagnostic.code,
+    message: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+  })), []);
 });
 
 test("operation-bearing nil carriers execute their Go zero-value operations", async () => {

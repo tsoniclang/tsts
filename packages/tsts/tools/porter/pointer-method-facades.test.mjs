@@ -53,7 +53,7 @@ test("facade values expose value methods while pointer carriers recover the comp
   };
 
   const source = renderExternalFacadeModules(config, snapshot, finalizeGeneratedFacadeFixtureCatalog(config, snapshot)).get("go/example.com/native.ts");
-  assert.match(source, /import type \{ GoPointerMethodSet \} from "\.\.\/compat\.js";/);
+  assert.match(source, /import type \{ GoDefined, GoPointerMethodSet \} from "\.\.\/compat\.js";/);
   assert.equal(source.match(/\bValue\(/g)?.length, 2, "value method appears on Thing and in its pointer metadata");
   assert.equal(source.match(/\bPointer\(/g)?.length, 1, "pointer-only method appears only in pointer metadata");
   assert.match(source, /readonly \[__tsgoPointerMethodSet\]\?: GoPointerMethodSet<\{/);

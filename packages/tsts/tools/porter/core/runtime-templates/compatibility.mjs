@@ -10,8 +10,12 @@ declare global {
 }
 
 declare const __goBrand: unique symbol;
+declare const __goDefinedTypeBrand: unique symbol;
 
 export type GoNilable<T> = T | undefined;
+export type GoDefined<T, Identity extends string> = T extends undefined
+  ? T
+  : T & { readonly [__goDefinedTypeBrand]?: Identity };
 export type GoPointerMethodSet<Methods extends object> = Methods;
 type GoPointerMethods<T> = typeof ${pointerMethodSetSymbol} extends keyof T
   ? T extends { readonly [${pointerMethodSetSymbol}]?: infer Methods }
