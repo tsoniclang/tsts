@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
-import type { Node, NodeList, NodeVisitor } from "../../ast/spine.js";
+import type { Node, NodeList } from "../../ast/spine.js";
+import type { NodeVisitor } from "../../ast/visitor.js";
 import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Modifiers, Node_Name } from "../../ast/spine.js";

@@ -14,7 +14,7 @@ import type { GoFunc } from "../../../go/compat.js";
  * 	mu    sync.Mutex
  * }
  */
-export interface parseCacheEntry<V extends GoComparable = unknown> {
+export interface parseCacheEntry<V extends GoComparable> {
   value: V;
   mu: Mutex;
 }
@@ -27,7 +27,7 @@ export interface parseCacheEntry<V extends GoComparable = unknown> {
  * 	entries collections.SyncMap[K, *parseCacheEntry[V]]
  * }
  */
-export interface parseCache<K extends GoComparable = unknown, V extends GoComparable = unknown> {
+export interface parseCache<K extends GoComparable, V extends GoComparable> {
   entries: SyncMap<K, GoPtr<parseCacheEntry<V>>>;
 }
 

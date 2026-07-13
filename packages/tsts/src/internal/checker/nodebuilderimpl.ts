@@ -1,7 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroMap, GoZeroNumber, GoZeroPointer, NewGoStructMap } from "../../go/compat.js";
-import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../ast/spine.js";
+import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../ast/spine.js";
+import type { NodeVisitor } from "../ast/visitor.js";
 import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";

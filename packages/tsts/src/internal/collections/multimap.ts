@@ -14,7 +14,7 @@ import type { GoFunc } from "../../go/compat.js";
  * 	M map[K][]V
  * }
  */
-export interface MultiMap<K extends GoComparable = unknown, V extends GoComparable = unknown> {
+export interface MultiMap<K extends GoComparable, V extends GoComparable> {
   M: GoMap<K, GoSlice<V>>;
 }
 

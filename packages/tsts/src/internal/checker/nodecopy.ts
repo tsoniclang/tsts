@@ -1,7 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { GoZeroMap } from "../../go/compat.js";
-import type { Node, NodeList, ModifierList, NodeVisitor } from "../ast/spine.js";
+import type { Node, NodeList, ModifierList } from "../ast/spine.js";
+import type { NodeVisitor } from "../ast/visitor.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { TypeNode } from "../ast/generated/unions.js";
 import type { Symbol } from "../ast/symbol.js";

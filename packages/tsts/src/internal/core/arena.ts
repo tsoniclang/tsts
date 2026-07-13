@@ -11,7 +11,7 @@ import type { GoRef } from "../../go/compat.js";
  * 	data []T
  * }
  */
-export interface Arena<T = unknown> {
+export interface Arena<T> {
   data: GoSlice<T>;
 }
 

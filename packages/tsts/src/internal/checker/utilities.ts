@@ -2231,7 +2231,7 @@ export const orderedSetMapThreshold: int = 16;
  * 	values      []T
  * }
  */
-export interface orderedSet<T extends GoComparable = unknown> {
+export interface orderedSet<T extends GoComparable> {
   valuesByKey: GoMap<T, { readonly __tsgoEmpty?: never }>;
   values: GoSlice<T>;
 }

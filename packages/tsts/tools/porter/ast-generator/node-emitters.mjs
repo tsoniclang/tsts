@@ -266,7 +266,7 @@ export function resolveAdapterTarget(schema, nodeName, method) {
   }
   if (method === "VisitEachChild") {
     if (schema.definitions[nodeName].handWrittenVisitor) {
-      return { fn: `AstManual.visitEachChild_${nodeName}`, takesNodeVisitor: true, takesConcreteNodeVisitor: true };
+      return { fn: `AstManual.visitEachChild_${nodeName}`, takesNodeVisitor: true };
     }
     if (generated.has("VisitEachChild")) return { fn: `${nodeName}_VisitEachChild`, takesNodeVisitor: true };
     return { fn: "NodeDefault_VisitEachChild", takesNodeVisitor: true };

@@ -206,6 +206,12 @@ test("ast-generator: one registry declares every consumed input", () => {
     const files = buildAstGeneratedFiles(config, "rev-input-registry");
     const metadata = JSON.parse(/^\/\/ @tsgo-generated (.+)$/m.exec(files.get("internal/ast/generated/kinds.ts"))[1]);
     assert.deepEqual(metadata.schemaInputs.map((input) => input.path), registry.map((input) => input.path));
+    const flags = files.get("internal/ast/generated/flags.ts");
+    assert.match(flags, /export type \{ NodeFlags \} from "\.\.\/nodeflags\.js";/);
+    assert.match(flags, /export \{\s+NodeFlagsNone,\s+\} from "\.\.\/nodeflags\.js";/);
+    assert.match(flags, /export type \{ SymbolFlags \} from "\.\.\/symbolflags\.js";/);
+    assert.match(flags, /export \{\s+SymbolFlagsNone,\s+\} from "\.\.\/symbolflags\.js";/);
+    assert.doesNotMatch(flags, /export (?:type|const) (?:NodeFlags|SymbolFlags)/);
     const manifestPath = resolveRepo(config.sourcePinManifest);
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     manifest.generatorInputs.pop();

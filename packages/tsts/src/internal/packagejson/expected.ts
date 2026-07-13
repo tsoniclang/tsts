@@ -12,7 +12,7 @@ import type { GoError, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js"
  * 	Value          T
  * }
  */
-export interface Expected<T = unknown> {
+export interface Expected<T> {
   actualJSONType: string;
   Null: bool;
   Valid: bool;

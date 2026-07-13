@@ -19,7 +19,7 @@ import type { GoFunc } from "../../go/compat.js";
  * 	Path    []N
  * }
  */
-export interface BreadthFirstSearchResult<N = unknown> {
+export interface BreadthFirstSearchResult<N> {
   Stopped: bool;
   Path: GoSlice<N>;
 }
@@ -33,7 +33,7 @@ export interface BreadthFirstSearchResult<N = unknown> {
  * 	parent *breadthFirstSearchJob[N]
  * }
  */
-export interface breadthFirstSearchJob<N = unknown> {
+export interface breadthFirstSearchJob<N> {
   node: N;
   parent: GoPtr<breadthFirstSearchJob<N>>;
 }
@@ -46,7 +46,7 @@ export interface breadthFirstSearchJob<N = unknown> {
  * 	jobs *collections.OrderedMap[K, *breadthFirstSearchJob[N]]
  * }
  */
-export interface BreadthFirstSearchLevel<K extends GoComparable = unknown, N = unknown> {
+export interface BreadthFirstSearchLevel<K extends GoComparable, N> {
   jobs: GoPtr<OrderedMap<K, GoPtr<breadthFirstSearchJob<N>>>>;
 }
 
@@ -109,7 +109,7 @@ export function BreadthFirstSearchLevel_Range<K extends GoComparable, N>(receive
  * 	PreprocessLevel func(*BreadthFirstSearchLevel[K, N])
  * }
  */
-export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N = unknown> {
+export interface BreadthFirstSearchOptions<K extends GoComparable, N> {
   Visited: GoPtr<SyncSet<K>>;
   PreprocessLevel: GoFunc<(arg0: GoPtr<BreadthFirstSearchLevel<K, N>>) => void>;
 }

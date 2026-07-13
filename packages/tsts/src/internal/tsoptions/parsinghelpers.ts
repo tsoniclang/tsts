@@ -49,7 +49,7 @@ import { GoValueRef } from "../../go/compat.js";
 import type { GoInterface, GoRef } from "../../go/compat.js";
 // Go's `value.(*collections.OrderedMap[string, any])` type assertion: the JSON
 // parser yields OrderedMap instances, which structurally carry `keys`/`mp`.
-function asOrderedMap(value: unknown): GoPtr<OrderedMap> {
+function asOrderedMap(value: GoInterface<unknown>): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
   if (
     value !== undefined &&
     value !== null &&
@@ -57,7 +57,7 @@ function asOrderedMap(value: unknown): GoPtr<OrderedMap> {
     "keys" in value &&
     "mp" in value
   ) {
-    return value as GoPtr<OrderedMap>;
+    return value as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   }
   return undefined;
 }

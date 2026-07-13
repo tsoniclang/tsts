@@ -5,6 +5,8 @@ import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
+import type { SourceFile } from "../../ast/ast.js";
+import type { SourceFileParseOptions } from "../../ast/parseoptions.js";
 import { Set_Has, Set_Add, NewSetFromItems } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store, SyncMap_Clone, SyncMap_Range } from "../../collections/syncmap.js";
@@ -903,11 +905,11 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 	return orchestrator
  * }
  */
-function newSyncMap<K extends GoComparable = unknown, V = unknown>(): SyncMap<K, V> {
+function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
   return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<K, V>;
 }
 
-function newParseCache(): parseCache {
+function newParseCache<K extends GoComparable, V extends GoComparable>(): parseCache<K, V> {
   return { entries: newSyncMap() };
 }
 
@@ -939,9 +941,9 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
       undefined,
     ),
     extendedConfigCache,
-    sourceFiles: newParseCache() as unknown as host["sourceFiles"],
+    sourceFiles: newParseCache<SourceFileParseOptions, GoPtr<SourceFile>>(),
     configTimes: newSyncMap(),
-    resolvedReferences: newParseCache() as unknown as host["resolvedReferences"],
+    resolvedReferences: newParseCache<Path, GoPtr<ParsedCommandLine>>(),
     mTimes: newSyncMap(),
   };
   orchestrator.host = innerHost;

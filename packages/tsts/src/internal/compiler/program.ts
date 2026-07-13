@@ -149,7 +149,7 @@ export function ProgramOptions_canUseProjectReferenceSource(receiver: GoPtr<Prog
  * 	initialized atomic.Bool
  * }
  */
-export interface lazyValue<T = unknown> {
+export interface lazyValue<T> {
   value: GoRef<T>;
   once: Once;
   initialized: Bool;

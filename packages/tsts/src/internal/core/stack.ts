@@ -9,7 +9,7 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
  * 	data []T
  * }
  */
-export interface Stack<T = unknown> {
+export interface Stack<T> {
   data: GoSlice<T>;
 }
 

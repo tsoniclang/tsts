@@ -14,7 +14,7 @@ import type { GoRef } from "../../go/compat.js";
  * 	arena   Arena[V]
  * }
  */
-export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
+export interface LinkStore<K extends GoComparable, V> {
   entries: GoMap<K, GoRef<V>>;
   arena: Arena<V>;
 }

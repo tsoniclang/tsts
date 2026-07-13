@@ -8,7 +8,7 @@ import { NewBlock } from "./generated/factory.js";
 import type { NodeFactory } from "./generated/factory.js";
 import { KindSyntaxList } from "./generated/kinds.js";
 import type { BlockOrExpression, ParameterList, Statement, StatementList, TokenNode } from "./generated/unions.js";
-import type { ModifierList, Node, NodeList, NodeVisitor as NodeVisitorBrand } from "./spine.js";
+import type { ModifierList, Node, NodeList } from "./spine.js";
 import { NewNodeFactory, NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
 
 import type { GoFunc } from "../../go/compat.js";
@@ -24,7 +24,7 @@ import type { GoFunc } from "../../go/compat.js";
  * 	Hooks   NodeVisitorHooks       // Hooks to be invoked when visiting a node
  * }
  */
-export interface NodeVisitor extends NodeVisitorBrand {
+export interface NodeVisitor {
   Visit: GoFunc<(node: GoPtr<Node>) => GoPtr<Node>>;
   Factory: GoPtr<NodeFactory>;
   Hooks: NodeVisitorHooks;

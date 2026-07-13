@@ -5,7 +5,8 @@ import { AsSourceFile, Node_Text, SourceFile_FileName, SourceFile_Path, Node_Ele
 import type { HasFileName, SourceFile } from "../../ast/ast.js";
 import { IsAssignmentExpression, IsCommaExpression, IsDestructuringAssignment, IsEffectiveExternalModule, IsExpression, IsExternalModule, IsExternalModuleImportEqualsDeclaration, IsInJSFile, IsRequireCall, IsStringLiteralLike, IsImportCall, ShouldTransformImportCall, FindAncestor } from "../../ast/utilities.js";
 import { Node_SubtreeFacts } from "../../ast/spine.js";
-import type { ModifierList, Node, NodeVisitor } from "../../ast/spine.js";
+import type { ModifierList, Node } from "../../ast/spine.js";
+import type { NodeVisitor } from "../../ast/visitor.js";
 import { Node_AsNode } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList } from "../../ast/spine.js";
 import { NewArrowFunction, NewBinaryExpression, NewBlock, NewCallExpression, NewClassDeclaration, NewElementAccessExpression, NewEmptyStatement, NewExpressionStatement, NewFunctionDeclaration, NewFunctionExpression, NewObjectLiteralExpression, NewParameterDeclaration, NewPropertyAccessExpression, NewPropertyAssignment, NewReturnStatement, NewSetAccessorDeclaration, NewStringLiteral, NewTemplateExpression, NewTemplateHead, NewTemplateSpan, NewTemplateTail, NewToken, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement, NewIdentifier, NewClassExpression, NewShorthandPropertyAssignment, NewLabeledStatement } from "../../ast/generated/factory.js";

@@ -33,11 +33,11 @@ import type {
   NodeFactoryCoercible,
   NodeFactoryHooks,
   NodeIter,
-  NodeVisitor,
   ModifierList,
   Visitor,
   nodeData,
 } from "./spine.js";
+import type { NodeVisitor } from "./visitor.js";
 import type { SubtreeFacts } from "./subtreefacts.js";
 
 // FlowFlags

@@ -1,7 +1,8 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import { GoNilMap, GoPointerKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
-import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../../ast/spine.js";
+import type { ModifierList, Node, NodeFactoryCoercible, NodeList } from "../../ast/spine.js";
+import type { NodeVisitor } from "../../ast/visitor.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_ParameterList, Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";

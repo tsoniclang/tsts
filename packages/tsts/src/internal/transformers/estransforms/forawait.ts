@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { GoStringKey, type GoPtr, type GoSlice } from "../../../go/compat.js";
-import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
+import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
+import type { NodeVisitor } from "../../ast/visitor.js";
 import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
 import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateBlock, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
 import { AsSourceFile } from "../../ast/ast.js";

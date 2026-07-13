@@ -11,7 +11,7 @@ import * as maps from "../../go/maps.js";
  * 	M map[T]struct{}
  * }
  */
-export interface Set<T extends GoComparable = unknown> {
+export interface Set<T extends GoComparable> {
   M: GoMap<T, { readonly __tsgoEmpty?: never }>;
 }
 

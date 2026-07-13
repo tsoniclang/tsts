@@ -21,7 +21,7 @@ import {
  * 	m OrderedMap[T, struct{}]
  * }
  */
-export interface OrderedSet<T extends GoComparable = unknown> {
+export interface OrderedSet<T extends GoComparable> {
   m: OrderedMap<T, { readonly __tsgoEmpty?: never }>;
 }
 

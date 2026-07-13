@@ -27,6 +27,7 @@ import type { CompositeBase as CompositeBaseType } from "./generated/node.js";
 import type { NodeFactory } from "./generated/factory.js";
 import type { DeclarationName } from "./generated/unions.js";
 import type { SubtreeFacts } from "./subtreefacts.js";
+import type { NodeVisitor } from "./visitor.js";
 import {
   SubtreeContainsTypeScript,
   SubtreeExclusionsNode,
@@ -290,13 +291,6 @@ export interface nodeData extends GoInterfaceValue<unknown> {
 // `iter.Seq[*Node]`: an iterator-yielding function. Modeled faithfully as a
 // Go range-func (a function taking a `yield` callback returning bool).
 export type NodeIter = Seq<GoPtr<Node>>;
-
-// `*NodeVisitor` is owned by the hand-written `internal/ast/visitor.go` (a later,
-// co-landing wave). The spine only needs its identity for the `nodeData`/Node
-// `VisitEachChild` signatures; the concrete shape lands with that wave.
-export interface NodeVisitor {
-  readonly __nodeVisitorBrand?: never;
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::NodeDefault","kind":"type","status":"implemented","sigHash":"98473325b5fb802ab1d83d800388f663291e457c1b9fb2fd0ef00e4092d4e71b"}

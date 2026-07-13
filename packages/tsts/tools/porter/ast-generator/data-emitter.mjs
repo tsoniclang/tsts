@@ -44,8 +44,8 @@ export function emitData(schema) {
   // base data-view free-fns referenced by adapters
   for (const fn of baseFreeFnsUsed()) lines.push(`  ${fn},`);
   lines.push(`} from "../spine.js";`);
-  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeList, NodeVisitor, Visitor, nodeData } from "../spine.js";`);
-  lines.push(`import type { NodeVisitor as ConcreteNodeVisitor } from "../visitor.js";`);
+  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeList, Visitor, nodeData } from "../spine.js";`);
+  lines.push(`import type { NodeVisitor } from "../visitor.js";`);
   lines.push(`import type { SubtreeFacts } from "../subtreefacts.js";`);
   lines.push(`import {`);
   lines.push(`  propagateBindingElementSubtreeFacts,`);
@@ -552,9 +552,6 @@ function adapterSlot(node, method, t) {
     return `ForEachChild(v: Visitor): bool { return ${t.fn}(${receiver}, v); }`;
   }
   if (method === "VisitEachChild") {
-    if (t.takesConcreteNodeVisitor) {
-      return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v as GoPtr<ConcreteNodeVisitor>); }`;
-    }
     return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v); }`;
   }
   if (method === "setModifiers") {

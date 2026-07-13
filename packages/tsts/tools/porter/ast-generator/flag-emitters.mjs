@@ -274,28 +274,17 @@ export function emitFlags(schema) {
   const nodeFlags = parseGoFlagFile(schema.nodeFlagsSource, "NodeFlags");
   const symbolFlags = parseGoFlagFile(schema.symbolFlagsSource, "SymbolFlags");
   const lines = [];
-  lines.push(`import type { uint } from "../../../go/scalars.js";`);
-  lines.push("");
-  emitFlagGroup(lines, "NodeFlags", "Go: type NodeFlags uint32", nodeFlags);
-  lines.push("");
-  emitFlagGroup(lines, "SymbolFlags", "Go: type SymbolFlags uint32", symbolFlags);
-  lines.push("");
+  emitFlagExports(lines, "NodeFlags", "../nodeflags.js", nodeFlags);
+  emitFlagExports(lines, "SymbolFlags", "../symbolflags.js", symbolFlags);
   return lines.join("\n");
 }
 
-function emitFlagGroup(lines, typeName, banner, entries) {
-  lines.push(`// ${banner}`);
-  lines.push(`export type ${typeName} = uint;`);
-  for (const entry of entries) {
-    if (entry.kind === "blank") {
-      lines.push("");
-      continue;
-    }
-    if (entry.kind === "comment") {
-      lines.push(`// ${entry.text}`);
-      continue;
-    }
-    const suffix = entry.comment ? ` // ${entry.comment}` : "";
-    lines.push(`export const ${entry.name}: ${typeName} = ${entry.value};${suffix}`);
-  }
+function emitFlagExports(lines, typeName, moduleSpecifier, entries) {
+  const names = entries.filter((entry) => entry.kind === "const").map((entry) => entry.name);
+  if (names.length === 0) throw new Error(`${typeName} has no constants to re-export`);
+  lines.push(`export type { ${typeName} } from "${moduleSpecifier}";`);
+  lines.push("export {");
+  for (const name of names) lines.push(`  ${name},`);
+  lines.push(`} from "${moduleSpecifier}";`);
+  lines.push("");
 }

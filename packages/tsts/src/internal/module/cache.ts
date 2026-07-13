@@ -15,7 +15,7 @@ import type { ModeAwareCacheKey, ResolvedModule, ResolvedProjectReference, Resol
  * Go source:
  * ModeAwareCache[T any] map[ModeAwareCacheKey]T
  */
-export type ModeAwareCache<T = unknown> = GoMap<ModeAwareCacheKey, T>;
+export type ModeAwareCache<T> = GoMap<ModeAwareCacheKey, T>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/cache.go::type::moduleResolutionCacheKey","kind":"type","status":"implemented","sigHash":"cbb92ff37ce938b2d50ea24f3016fb25bf89d2cbe5e703d89db31479364a79d5"}

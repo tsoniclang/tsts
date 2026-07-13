@@ -33,7 +33,7 @@ import * as strconv from "../../go/strconv.js";
  * 	mp   map[K]V
  * }
  */
-export interface OrderedMap<K extends GoComparable = unknown, V = unknown> {
+export interface OrderedMap<K extends GoComparable, V> {
   __tsgoBlank0: noCopy;
   keys: GoSlice<K>;
   mp: GoMap<K, V>;
@@ -109,7 +109,7 @@ export function newMapWithSizeHint<K extends GoComparable, V>(hint: int, keyDesc
  * 	Value V
  * }
  */
-export interface MapEntry<K extends GoComparable = unknown, V = unknown> {
+export interface MapEntry<K extends GoComparable, V> {
   Key: K;
   Value: V;
 }

@@ -15,7 +15,7 @@ import type { GoFunc } from "../../go/compat.js";
  *
  * The zero value is an empty map ready to use (m nil/undefined, owned false).
  */
-export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
+export interface CopyOnWriteMap<K extends GoComparable, V> {
   m: GoMap<K, V>;
   owned: bool;
 }
@@ -121,7 +121,7 @@ export function CopyOnWriteMap_EnterScope<K extends GoComparable, V>(receiver: G
  * 	m CopyOnWriteMap[K, struct{}]
  * }
  */
-export interface CopyOnWriteSet<K extends GoComparable = unknown> {
+export interface CopyOnWriteSet<K extends GoComparable> {
   m: CopyOnWriteMap<K, { readonly __tsgoEmpty?: never }>;
 }
 

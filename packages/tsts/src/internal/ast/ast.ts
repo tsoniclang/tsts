@@ -226,7 +226,8 @@ import {
 import { NodeFlagsAmbient, NodeFlagsUsing, NodeFlagsHasJSDoc, NodeFlagsReparsed } from "./generated/flags.js";
 import type { NodeFlags } from "./generated/flags.js";
 import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
-import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks, NodeVisitor as NodeDataVisitor } from "./spine.js";
+import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
+import type { NodeVisitor as NodeDataVisitor } from "./visitor.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
 import { ModifierFlagsParameterPropertyModifier } from "./modifierflags.js";
 import type { ModifierFlags as ModifierFlags_d6bd8366 } from "./modifierflags.js";
