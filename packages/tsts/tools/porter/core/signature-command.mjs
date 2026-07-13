@@ -45,8 +45,8 @@ export function summarizeSignatureReport(report) {
     declarationOwnership: preserveSubaudit(report?.declarationOwnership),
     untrackedTypeScript: preserveSubaudit(report?.untrackedTypeScript),
   };
-  if (report?.state !== "complete") return execution;
-  return {
+  if (report?.state !== "complete") return jsonEvidence(execution, "signature audit summary");
+  return jsonEvidence({
     ...execution,
     checked: report.checked,
     descriptors: report.descriptors,
@@ -56,7 +56,7 @@ export function summarizeSignatureReport(report) {
     overrideIssueCount: report.overrideIssues.length,
     overrideIssues: report.overrideIssues.map((issue) => ({ ...issue })),
     byKind,
-  };
+  }, "signature audit summary");
 }
 
 export function summarizeJsonTagReport(report) {
@@ -64,10 +64,10 @@ export function summarizeJsonTagReport(report) {
     state: report?.state,
     ...(report?.reason === undefined ? {} : { reason: report.reason }),
   };
-  if (report?.state !== "complete") return execution;
+  if (report?.state !== "complete") return jsonEvidence(execution, "JSON-tag audit summary");
   const byKind = {};
   for (const mismatch of report?.mismatches ?? []) byKind[mismatch.kind] = (byKind[mismatch.kind] ?? 0) + 1;
-  return {
+  return jsonEvidence({
     ...execution,
     taggedUnits: report?.taggedUnits ?? 0,
     taggedFields: report?.taggedFields ?? 0,
@@ -76,7 +76,7 @@ export function summarizeJsonTagReport(report) {
     mismatchCount: report.mismatches.length,
     mismatches: report.mismatches.map((mismatch) => ({ ...mismatch })),
     byKind,
-  };
+  }, "JSON-tag audit summary");
 }
 
 export function printSigReport(report) {
@@ -113,6 +113,33 @@ export function printSigReport(report) {
 function preserveSubaudit(audit) {
   if (audit === undefined) return undefined;
   return { ...audit };
+}
+
+function jsonEvidence(value, label, seen = new Set()) {
+  if (value === null || typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))) return value;
+  if (value === undefined) return undefined;
+  if (typeof value !== "object") throw new Error(`${label} contains a non-JSON value`);
+  if (seen.has(value)) throw new Error(`${label} contains a cycle`);
+  seen.add(value);
+  if (Array.isArray(value)) {
+    const result = value.map((entry, index) => {
+      const normalized = jsonEvidence(entry, `${label}[${index}]`, seen);
+      if (normalized === undefined) throw new Error(`${label}[${index}] cannot be undefined`);
+      return normalized;
+    });
+    seen.delete(value);
+    return result;
+  }
+  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    throw new Error(`${label} contains a non-plain object`);
+  }
+  const result = {};
+  for (const key of Object.keys(value)) {
+    const normalized = jsonEvidence(value[key], `${label}.${key}`, seen);
+    if (normalized !== undefined) result[key] = normalized;
+  }
+  seen.delete(value);
+  return result;
 }
 
 function printableIdentity(value) {

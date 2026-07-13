@@ -282,6 +282,50 @@ test("filtered signature summaries preserve every skipped whole-program subaudit
   assert.equal(lines.filter((line) => line.includes("not run")).length, 7);
 });
 
+test("signature summaries preserve descriptor evidence as exact JSON data", () => {
+  const skipped = { state: "not-run", reason: "fixture" };
+  const declaration = {
+    descriptor: { initializerStatus: "missing", initializer: undefined },
+    file: "pkg/example.ts",
+    kind: "function",
+    name: "example",
+  };
+  const summary = summarizeSignatureReport({
+    state: "complete",
+    selection: { kind: "all-active" },
+    checked: 0,
+    descriptors: 0,
+    overriddenUnits: 0,
+    mismatches: [],
+    overrideIssues: [],
+    authoredFacades: skipped,
+    externalPackageSurface: skipped,
+    typeStoragePolicies: skipped,
+    typeEquivalenceRelations: skipped,
+    ambientReferenceRelations: skipped,
+    declarationOwnership: skipped,
+    untrackedTypeScript: {
+      state: "complete",
+      mismatchCount: 0,
+      exportedDeclarationCount: 1,
+      exportedDeclarations: [declaration],
+      privateDeclarationCount: 0,
+      privateDeclarations: [],
+      reExportCount: 0,
+      reExports: [],
+      reviewedDeclarationCount: 0,
+      reviewedDeclarations: [],
+      reviewedRouteCount: 0,
+      reviewedRoutes: [],
+      testParityDeclarationCount: 0,
+      testParityFileCount: 0,
+      testParityFiles: [],
+    },
+  });
+  assert.deepEqual(summary.untrackedTypeScript.exportedDeclarations[0].descriptor, { initializerStatus: "missing" });
+  assert.doesNotThrow(() => JSON.stringify(summary));
+});
+
 function minimalStatus() {
   return buildStatus({
     config: baseConfig,
