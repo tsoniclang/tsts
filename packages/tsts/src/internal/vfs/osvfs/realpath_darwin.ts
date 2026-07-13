@@ -1,9 +1,7 @@
 import type { bool, byte, int, nuint } from "../../../go/scalars.js";
 import type { GoArray, GoError, GoPtr } from "../../../go/compat.js";
-import { EvalSymlinks } from "../../../go/path/filepath.js";
 import { OnceValue } from "../../../go/sync.js";
-import * as unix from "../../../go/golang.org/x/sys/unix.js";
-import { ignoringEINTR } from "./eintr_unix.js";
+import * as nodeFs from "node:fs";
 
 // On macOS, we use open + fcntl(F_GETPATH) to resolve the canonical path in
 // O(1) syscalls instead of Go's filepath.EvalSymlinks which does an lstat per
@@ -37,18 +35,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
  * })
  */
 export let hasFGetPath: () => bool = OnceValue<bool>((): bool => {
-  // Verify that F_GETPATH is supported by this kernel version.
-  const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "1024">;
-  const [fd, err] = unix.Open(".", (unix.O_EVTONLY as number) | (unix.O_NONBLOCK as number) | (unix.O_CLOEXEC as number), 0) as [int, GoError];
-  if (err !== undefined) {
-    return false as bool;
-  }
-  try {
-    const [, getPathErr] = fcntlGetPath(fd, buf);
-    return (getPathErr === undefined) as bool;
-  } finally {
-    unix.Close(fd);
-  }
+  return (process.platform === "darwin") as bool;
 });
 
 /**
@@ -62,9 +49,17 @@ export let hasFGetPath: () => bool = OnceValue<bool>((): bool => {
  * }
  */
 export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "1024">>): [int, GoError] {
-  return ignoringEINTR<int>((): [int, GoError] => {
-    return fcntlGetPathPtr(fd as unknown as nuint, buf as unknown as nuint);
-  });
+  try {
+    const resolved = new TextEncoder().encode(nodeFs.realpathSync.native(`/dev/fd/${fd}`));
+    if (buf === undefined || resolved.length >= buf.length) {
+      return [0 as int, new globalThis.Error("resolved path does not fit in F_GETPATH buffer")];
+    }
+    for (let index = 0; index < resolved.length; index++) buf[index] = resolved[index] as byte;
+    buf[resolved.length] = 0 as byte;
+    return [0 as int, undefined];
+  } catch (error) {
+    return [0 as int, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
+  }
 }
 
 /**
@@ -77,7 +72,9 @@ export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "1024">>): [int, 
  * }
  */
 export function fcntlGetPathPtr(fd: nuint, buf: nuint): [int, GoError] {
-  return unix.FcntlInt(fd, unix.F_GETPATH, buf) as [int, GoError];
+  void fd;
+  void buf;
+  return [0 as int, new globalThis.Error("raw F_GETPATH pointers are unavailable on the Node host")];
 }
 
 /**
@@ -104,23 +101,9 @@ export function fcntlGetPathPtr(fd: nuint, buf: nuint): [int, GoError] {
  * }
  */
 export function realpath(path: string): [string, GoError] {
-  if (!hasFGetPath()) {
-    return EvalSymlinks(path);
-  }
-
-  const [fd, err] = unix.Open(path, (unix.O_EVTONLY as number) | (unix.O_NONBLOCK as number) | (unix.O_CLOEXEC as number), 0) as [int, GoError];
-  if (err !== undefined) {
-    return ["", err];
-  }
   try {
-    const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "1024">;
-    const [, getPathErr] = fcntlGetPath(fd, buf);
-    if (getPathErr !== undefined) {
-      return ["", getPathErr];
-    }
-
-    return [unix.ByteSliceToString(buf) as string, undefined];
-  } finally {
-    unix.Close(fd);
+    return [nodeFs.realpathSync.native(path), undefined];
+  } catch (error) {
+    return ["", error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
   }
 }

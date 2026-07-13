@@ -26,10 +26,11 @@ export const processAliveSupported: bool = true as bool;
  * 	return err == nil || errors.Is(err, syscall.EPERM)
  * }
  */
-// NOTE: A faithful body requires os.FindProcess + (*os.Process).Signal, which are
-// not provided by the go/os facade in src/. The only consumer (cmd/tsgo/lsp.go) is
-// not ported, so this is stubbed as unimplemented (matching the platform-stub
-// precedent in cmd/tsgo/enablevtprocessing_windows.ts) pending facade support.
 export function isProcessAlive(pid: int): bool {
-  throw new globalThis.Error("TSGO_EXTERNAL_FACADE_UNIMPLEMENTED os.FindProcess / (*os.Process).Signal");
+  try {
+    process.kill(pid, 0);
+    return true as bool;
+  } catch (error) {
+    return ((error as NodeJS.ErrnoException).code === "EPERM") as bool;
+  }
 }

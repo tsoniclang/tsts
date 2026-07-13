@@ -4,7 +4,6 @@ import { Fprintln } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";
 import { Background } from "../../go/context.js";
 import { NotifyContext } from "../../go/os/signal.js";
-import { SIGINT, SIGTERM } from "../../go/syscall.js";
 import { ApplyDebugStackLimit } from "../../internal/core/core.js";
 import { CommandLine } from "../../internal/execute/tsc.js";
 import { runAPI } from "./api.js";
@@ -55,7 +54,7 @@ export function runMain(): int {
         return runAPI(args.slice(1));
     }
   }
-  const [ctx, stop] = NotifyContext(Background(), SIGINT as NodeJS.Signals, SIGTERM as NodeJS.Signals);
+  const [ctx, stop] = NotifyContext(Background(), "SIGINT", "SIGTERM");
   try {
     const result = CommandLine(ctx, osSys_as_tsc_System(newSystem()), args, undefined);
     return result.Status as int;

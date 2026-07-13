@@ -1,6 +1,4 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoError } from "../../go/compat.js";
-import * as syscall from "../../go/syscall.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_windows.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"cb51e9ea32c184706a4d2cd1cbcad16927646693ac9daad79dd8eb56c7420775"}
@@ -34,20 +32,10 @@ export const processAliveSupported: bool = true as bool;
  * }
  */
 export function isProcessAlive(pid: int): bool {
-  const SYNCHRONIZE = 0x00100000;
-  const [handle, err] = syscall.OpenProcess(SYNCHRONIZE, false, pid >>> 0) as [unknown, GoError];
-  if (err !== undefined) {
-    return false as bool;
-  }
   try {
-    const [ret, waitErr] = syscall.WaitForSingleObject(handle, 0) as [int, GoError];
-    if (waitErr !== undefined) {
-      return false as bool;
-    }
-    const WAIT_TIMEOUT = 258;
-    return (ret === WAIT_TIMEOUT) as bool;
-  } finally {
-    // defer func() { _ = syscall.CloseHandle(handle) }()
-    syscall.CloseHandle(handle);
+    process.kill(pid, 0);
+    return true as bool;
+  } catch (error) {
+    return ((error as NodeJS.ErrnoException).code === "EPERM") as bool;
   }
 }

@@ -1,5 +1,5 @@
-import type { bool, int } from "../../../go/scalars.js";
-import * as syscall from "../../../go/syscall.js";
+import type { bool } from "../../../go/scalars.js";
+import * as nodeFs from "node:fs";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/reparsepoint_windows.go::func::isReparsePoint","kind":"func","status":"implemented","sigHash":"d4bef745351fcd4ddf809d58eb14bebafb475ab0154b95d6c3969a6ec92e71bf"}
@@ -29,25 +29,9 @@ import * as syscall from "../../../go/syscall.js";
  * }
  */
 export function isReparsePoint(path: string): bool {
-  let p = path;
-  if (p.length >= 248) {
-    p = "\\\\?\\" + p;
-  }
-
-  const [pathUTF16, pathUTF16Err] = syscall.UTF16PtrFromString(p) as [unknown, { message: string } | undefined];
-  if (pathUTF16Err !== undefined) {
+  try {
+    return nodeFs.lstatSync(path).isSymbolicLink() as bool;
+  } catch {
     return false as bool;
   }
-
-  const data = { FileAttributes: 0 as int };
-  const getAttrErr = syscall.GetFileAttributesEx(
-    pathUTF16,
-    syscall.GetFileExInfoStandard,
-    data,
-  ) as { message: string } | undefined;
-  if (getAttrErr !== undefined) {
-    return false as bool;
-  }
-
-  return ((data.FileAttributes & (syscall.FILE_ATTRIBUTE_REPARSE_POINT as int)) !== 0) as bool;
 }
