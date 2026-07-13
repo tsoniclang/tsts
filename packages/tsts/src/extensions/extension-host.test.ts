@@ -525,6 +525,8 @@ test("semantic provider methods own typed observations without hook boilerplate"
     expression: convertedExpression,
     source: byteType,
     target: int32Type,
+    sourceExpression: convertedExpression,
+    explicitTargetTypeNode: int32Type,
     targetPlatform: "acme",
   }, () => noConversion, { requireOwner: true });
   assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "Acme.Convert.ToInt32");

@@ -12,7 +12,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindAsExpression, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeAssertionExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindAsExpression, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindParenthesizedExpression, KindPropertyAccessExpression, KindTypeAssertionExpression, KindTypeReference, KindUnionType, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import { Type_Flags, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
@@ -38,7 +38,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, RuntimeCarrierFactRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
 import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
@@ -54,6 +54,7 @@ function createExampleSourceSemanticsExtension(): CompilerExtension {
       subpath: "types.js",
       exports: [
         sourcePrimitive("int", "int32", "number", true, 32),
+        sourcePrimitive("byte", "uint8", "number", false, 8),
       ],
     }, {
       moduleSpecifier: "@example/native/lang.js",
@@ -2714,6 +2715,7 @@ test("checker records parameter mode facts per argument without collapsing them 
 
 test("checker records provider-owned runtime carrier and argument conversion facts", () => {
   const observedConversionRequests: CheckedConversionMappingRequest[] = [];
+  const observedRuntimeCarrierRequests: RuntimeCarrierFactRequest[] = [];
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       import type { SearchValues } from "@example/target/Acme.Buffers.js";
@@ -2744,7 +2746,10 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [providerExtension("@example/target/Acme.Buffers.js", false, carrierConversionSemanticProvider((request) => observedConversionRequests.push(request)))],
+    extensions: [providerExtension("@example/target/Acme.Buffers.js", false, carrierConversionSemanticProvider(
+      (request) => observedConversionRequests.push(request),
+      (request) => observedRuntimeCarrierRequests.push(request),
+    ))],
   });
 
   const program = NewProgram(options);
@@ -2753,6 +2758,9 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   assertCleanProgram(program, index);
 
   const searchValuesTypeReference = findFirstNodeByKind(index, KindTypeReference);
+  assert.equal(observedRuntimeCarrierRequests.length, 1);
+  assert.equal(observedRuntimeCarrierRequests[0]?.sourceTypeReference, searchValuesTypeReference);
+  assert.ok(observedRuntimeCarrierRequests[0]?.sourceSymbol !== undefined);
   const runtimeCarrierFact = extended.extensionHost.facts.get(searchValuesTypeReference, runtimeCarrierFactKey);
   const runtimeCarrier = runtimeCarrierFact?.carrier;
   assert.equal(runtimeCarrier?.kind, "target-named");
@@ -2849,6 +2857,8 @@ test("checker records selected source and target types for ordinary assertion co
 
   assert.equal(observedRequests.length, 6);
   assert.ok(observedRequests.every((request) => request.conversionKind === "assertion"));
+  const assertionRequests = observedRequests.filter((request): request is Extract<CheckedConversionMappingRequest, { readonly conversionKind: "assertion" }> => request.conversionKind === "assertion");
+  assert.equal(assertionRequests.length, 6);
   assert.equal(observedRequests.filter((request) => request.assertionKind === "as").length, 5);
   assert.equal(observedRequests.filter((request) => request.assertionKind === "angle-bracket").length, 1);
   assert.equal(observedRequests.filter((request) => (request.expression as GoPtr<Node>)?.Kind === KindAsExpression).length, 5);
@@ -2857,6 +2867,16 @@ test("checker records selected source and target types for ordinary assertion co
   assert.ok(observedRequests.every((request) => request.call === undefined));
   assert.ok(observedRequests.every((request) => request.parameterIndex === undefined));
   assert.ok(observedRequests.every((request) => request.selectedSignature === undefined));
+  assert.ok(assertionRequests.every((request) => request.sourceExpression !== undefined));
+  assert.ok(assertionRequests.every((request) => request.explicitTargetTypeNode !== undefined));
+  assert.equal((assertionRequests[0]?.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
+  assert.ok(assertionRequests[0]?.sourceSelectedSymbol !== undefined);
+  assert.ok(assertionRequests[0]?.sourceSelectedDeclaration !== undefined);
+  assert.equal((assertionRequests[0]?.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((assertionRequests[0]?.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.ok(assertionRequests.every((request) => request.sourceExpression !== request.expression));
+  assert.ok(assertionRequests.some((request) => request.sourceSelectedDeclarationTypeNode === undefined));
+  assert.ok(assertionRequests.some((request) => (request.explicitTargetTypeNode as GoPtr<Node>)?.Kind === KindUnionType));
   assert.deepEqual(
     observedRequests.map((request) => [Type_Symbol(request.source as GoPtr<Type>)?.Name, Type_Symbol(request.target as GoPtr<Type>)?.Name]),
     [["Animal", "Dog"], ["Animal", "Dog"], ["Animal", "Dog"], ["Dog", "Animal"], [undefined, undefined], ["Animal", "Dog"]],
@@ -2898,6 +2918,148 @@ test("checker records selected source and target types for ordinary assertion co
     done();
   }
   assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+});
+
+test("checker preserves source alias provenance for checked assertion conversions", () => {
+  const observed: {
+    readonly request: Extract<CheckedConversionMappingRequest, { readonly conversionKind: "assertion" }>;
+    readonly semanticSourcePrimitive: SourcePrimitiveFact | undefined;
+    readonly semanticTargetPrimitive: SourcePrimitiveFact | undefined;
+    readonly declaredSourcePrimitive: SourcePrimitiveFact | undefined;
+    readonly explicitTargetPrimitive: SourcePrimitiveFact | undefined;
+  }[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import type { int as Count, byte as Byte } from "@example/native/types.js";
+
+      export function toByte(value: Count): Byte {
+        return (value) as Byte;
+      }
+
+      export function narrowedToByte(value: Count | undefined): void {
+        if (value !== undefined) {
+          const narrowed = value as Byte;
+        }
+      }
+
+      interface Box { value: Count; }
+      declare const box: Box;
+      declare function readCount(): Count;
+      export const propertyByte = box.value as Byte;
+      export const callByte = readCount() as Byte;
+    `],
+    ["/src/node_modules/@example/native/package.json", JSON.stringify({
+      name: "@example/native",
+      version: "1.0.0",
+      type: "module",
+      exports: {
+        "./types.js": {
+          types: "./types.d.ts",
+          default: "./types.js",
+        },
+      },
+    })],
+    ["/src/node_modules/@example/native/types.d.ts", `
+      export type int = number;
+      export type byte = number;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [
+      createExampleSourceSemanticsExtension(),
+      semanticOnlyExtension("acme-assertion-alias-extension", {
+        identity: semanticProviderIdentity("acme-assertion-alias-provider"),
+        mapCheckedConversion: (request, context) => {
+          if (request.conversionKind === "assertion") {
+            observed.push({
+              request,
+              semanticSourcePrimitive: context.factResolver.resolve(request.source, sourcePrimitiveFactKey),
+              semanticTargetPrimitive: context.factResolver.resolve(request.target, sourcePrimitiveFactKey),
+              declaredSourcePrimitive: request.sourceSelectedDeclarationTypeNode === undefined
+                ? undefined
+                : context.factResolver.resolve(request.sourceSelectedDeclarationTypeNode, sourcePrimitiveFactKey),
+              explicitTargetPrimitive: context.factResolver.resolve(request.explicitTargetTypeNode, sourcePrimitiveFactKey),
+            });
+          }
+          return acceptObservation({
+            convertedType: { kind: "source-primitive", name: "uint8" },
+          });
+        },
+      }),
+    ],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  assert.equal(observed.length, 4);
+  const result = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindParenthesizedExpression);
+  assert.ok(result !== undefined);
+  assert.equal(result.request.source, result.request.target);
+  assert.equal(result.semanticSourcePrimitive, undefined);
+  assert.equal(result.semanticTargetPrimitive, undefined);
+  assert.deepEqual(result.declaredSourcePrimitive, {
+    kind: "int32",
+    runtimeBase: "number",
+    signed: true,
+    width: 32,
+  });
+  assert.deepEqual(result.explicitTargetPrimitive, {
+    kind: "uint8",
+    runtimeBase: "number",
+    signed: false,
+    width: 8,
+  });
+  assert.equal((result.request.sourceExpression as GoPtr<Node>)?.Kind, KindParenthesizedExpression);
+  assert.ok(result.request.sourceSelectedSymbol !== undefined);
+  assert.ok(result.request.sourceSelectedDeclaration !== undefined);
+  assert.equal((result.request.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((result.request.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
+  const narrowedResult = observed.find((candidate) => (candidate.request.sourceSelectedDeclarationTypeNode as GoPtr<Node>)?.Kind === KindUnionType);
+  assert.ok(narrowedResult !== undefined);
+  assert.equal(narrowedResult.declaredSourcePrimitive, undefined);
+  assert.deepEqual(narrowedResult.explicitTargetPrimitive, {
+    kind: "uint8",
+    runtimeBase: "number",
+    signed: false,
+    width: 8,
+  });
+  assert.equal((narrowedResult.request.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
+  const propertyResult = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindPropertyAccessExpression);
+  assert.ok(propertyResult !== undefined);
+  assert.equal(propertyResult.declaredSourcePrimitive?.kind, "int32");
+  assert.ok(propertyResult.request.sourceSelectedSymbol !== undefined);
+  assert.ok(propertyResult.request.sourceSelectedDeclaration !== undefined);
+  const callResult = observed.find((candidate) => (candidate.request.sourceExpression as GoPtr<Node>)?.Kind === KindCallExpression);
+  assert.ok(callResult !== undefined);
+  assert.equal(callResult.request.sourceSelectedDeclarationTypeNode, undefined);
+  assert.deepEqual(callResult.explicitTargetPrimitive, {
+    kind: "uint8",
+    runtimeBase: "number",
+    signed: false,
+    width: 8,
+  });
 });
 
 test("checker classifies JSDoc assertions as explicit checked conversions", () => {
@@ -2964,6 +3126,8 @@ test("checker classifies JSDoc assertions as explicit checked conversions", () =
   assert.equal(observedRequests[0]!.conversionKind, "assertion");
   assert.equal(observedRequests[0]!.assertionKind, "jsdoc");
   assert.equal((observedRequests[0]!.expression as GoPtr<Node>)?.Kind, KindAsExpression);
+  assert.equal((observedRequests[0]!.sourceExpression as GoPtr<Node>)?.Kind, KindIdentifier);
+  assert.equal((observedRequests[0]!.explicitTargetTypeNode as GoPtr<Node>)?.Kind, KindTypeReference);
   assert.equal(Type_Symbol(observedRequests[0]!.source as GoPtr<Type>)?.Name, "Animal");
   assert.equal(Type_Symbol(observedRequests[0]!.target as GoPtr<Type>)?.Name, "Dog");
   assert.ok(extended.extensionHost.facts.get(observedRequests[0]!.expression, targetConversionFactKey) !== undefined);
@@ -5263,7 +5427,10 @@ function parameterModeSequenceSemanticProvider(selectedSignature: SelectedTarget
   };
 }
 
-function carrierConversionSemanticProvider(onConversion?: (request: CheckedConversionMappingRequest) => void): TargetSemanticProvider {
+function carrierConversionSemanticProvider(
+  onConversion?: (request: CheckedConversionMappingRequest) => void,
+  onRuntimeCarrier?: (request: RuntimeCarrierFactRequest) => void,
+): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-carrier-conversion-semantic-provider"),
     mapCheckedCall: () => acceptObservation({
@@ -5279,13 +5446,16 @@ function carrierConversionSemanticProvider(onConversion?: (request: CheckedConve
         operation: targetOperation("Acme.Convert.ToByte", "method", "number"),
       });
     },
-    resolveRuntimeCarrier: () => acceptObservation({
-      carrier: { kind: "target-named", id: "Acme.Buffers.SearchValues`1" },
-      requiresAllocation: false,
-      provenance: {
-        providerDeclaration: providerDeclarationIdentity("acme-carrier-provider", "acme-native", "acme.runtime", "SearchValues"),
-      },
-    }),
+    resolveRuntimeCarrier: (request) => {
+      onRuntimeCarrier?.(request);
+      return acceptObservation({
+        carrier: { kind: "target-named", id: "Acme.Buffers.SearchValues`1" },
+        requiresAllocation: false,
+        provenance: {
+          providerDeclaration: providerDeclarationIdentity("acme-carrier-provider", "acme-native", "acme.runtime", "SearchValues"),
+        },
+      });
+    },
   };
 }
 

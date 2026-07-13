@@ -185,9 +185,19 @@ export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBas
   readonly sourceSelectedSignature?: ExtensionFactSubject;
   readonly selectedSignature: SelectedTargetSignatureFact;
   readonly assertionKind?: never;
+  readonly sourceExpression?: never;
+  readonly sourceSelectedSymbol?: never;
+  readonly sourceSelectedDeclaration?: never;
+  readonly sourceSelectedDeclarationTypeNode?: never;
+  readonly explicitTargetTypeNode?: never;
 } | {
   readonly conversionKind: "assertion";
   readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
+  readonly sourceExpression: ExtensionFactSubject;
+  readonly sourceSelectedSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
+  readonly sourceSelectedDeclarationTypeNode?: ExtensionFactSubject;
+  readonly explicitTargetTypeNode: ExtensionFactSubject;
   readonly call?: never;
   readonly parameterIndex?: never;
   readonly targetParameter?: never;
@@ -217,6 +227,8 @@ export interface ParameterPassingResult {
 
 export interface RuntimeCarrierFactRequest {
   readonly type: ExtensionFactSubject;
+  readonly sourceTypeReference?: ExtensionFactSubject;
+  readonly sourceSymbol?: ExtensionFactSubject;
   readonly target?: string;
 }
 

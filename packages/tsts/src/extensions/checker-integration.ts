@@ -1,9 +1,10 @@
 import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Expression, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Symbol, Node_Text, Node_Type, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
+import { SkipParentheses } from "../internal/ast/utilities.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
 import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
@@ -13,6 +14,7 @@ import { Type_Flags, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/ch
 import type { Signature, Type } from "../internal/checker/types.js";
 import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
 import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
+import { Checker_getResolvedSymbolOrNil } from "../internal/checker/checker/symbols.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
@@ -208,12 +210,25 @@ export function recordExtensionCheckedAssertionConversion(checker: GoPtr<Checker
   if (extensionHost === undefined) {
     return;
   }
+  const sourceExpression = Node_Expression(assertionExpression);
+  const explicitTargetTypeNode = Node_Type(assertionExpression);
+  if (sourceExpression === undefined || explicitTargetTypeNode === undefined) {
+    return;
+  }
+  const sourceSelectedSymbol = selectedSourceSymbol(checker, Checker_getResolvedSymbolOrNil(checker, SkipParentheses(sourceExpression)));
+  const sourceSelectedDeclaration = primarySymbolDeclaration(sourceSelectedSymbol);
+  const sourceSelectedDeclarationTypeNode = sourceSelectedDeclaration === undefined ? undefined : Node_Type(sourceSelectedDeclaration);
   recordExtensionCheckedConversion(extensionHost, {
     conversionKind: "assertion",
     assertionKind,
     expression: assertionExpression,
     source: sourceType,
     target: targetType,
+    sourceExpression,
+    ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
+    ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+    ...(sourceSelectedDeclarationTypeNode !== undefined ? { sourceSelectedDeclarationTypeNode } : {}),
+    explicitTargetTypeNode,
     ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
   });
 }
@@ -376,6 +391,8 @@ export function recordExtensionRuntimeCarrierFact(checker: GoPtr<Checker>, typeR
     ExtensionObservationPoint.resolveRuntimeCarrier,
     {
       type,
+      ...(typeReference !== undefined ? { sourceTypeReference: typeReference } : {}),
+      ...(symbol !== undefined ? { sourceSymbol: symbol } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
