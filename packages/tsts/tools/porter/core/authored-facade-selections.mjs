@@ -118,7 +118,9 @@ function requestedRelativeModules(api, authoredSources, moduleRoot) {
   for (const [moduleId, source] of authoredSources) {
     const parsed = parseTypeScriptModule(api, moduleId, source);
     for (const reference of parsed.structure.moduleReferences) {
-      if (reference.relative && reference.resolved.startsWith(prefix)) requested.add(reference.resolved.slice(prefix.length));
+      if (reference.relative && reference.resolved.startsWith(prefix) && !authoredSources.has(reference.resolved)) {
+        requested.add(reference.resolved.slice(prefix.length));
+      }
     }
   }
   return requested;
