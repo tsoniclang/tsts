@@ -184,7 +184,7 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
   Checker_checkSourceElement(receiver, typeParameterDeclarationNode);
   const symbol_ = Checker_getSymbolOfDeclaration(receiver, typeParameterDeclarationNode);
   if ((symbol_!.Declarations?.length ?? 0) > 1) {
-    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
+    const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
     if (!links!.typeParametersChecked) {
       links!.typeParametersChecked = true as bool;
       const typeParameter = Checker_getDeclaredTypeOfTypeParameter(receiver, symbol_);
@@ -1065,7 +1065,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   } else {
     declaration = t!.symbol!.Declarations![0];
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, declaration)!.v;
   let target: GoPtr<Type>;
   if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
     target = links!.resolvedType;

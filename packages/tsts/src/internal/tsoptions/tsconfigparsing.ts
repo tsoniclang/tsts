@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoValueRef } from "../../go/compat.js";
+import { GoNilMap, GoValueRef } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -2519,7 +2519,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       exclude: [],
       files: [],
       compileOnSave: false,
-      extendedSourceFiles: new Set() as unknown as import("../collections/set.js").Set<string>,
+      extendedSourceFiles: { M: GoNilMap() },
     };
     if (typeof ownConfig!.extendedConfigPath === "string") {
       applyExtendedConfig(result, ownConfig!.extendedConfigPath as string);

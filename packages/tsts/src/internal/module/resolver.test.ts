@@ -20,7 +20,7 @@ test("ResolveModuleNameTrailingSlash", () => {
     ["/repo/node_modules/pkg/main.d.ts", "export const x: number;"],
     ["/repo/node_modules/pkg/main.js", "exports.x = 1;"],
     ["/repo/src/file.ts", ""],
-  ]), true as bool);
+  ]), true as bool)!;
   const host: ResolutionHost = {
     FS: (): FS => fs,
     GetCurrentDirectory: (): string => "/repo",
@@ -30,7 +30,7 @@ test("ResolveModuleNameTrailingSlash", () => {
     Module: ModuleKindESNext,
     Target: ScriptTargetESNext,
   } as CompilerOptions;
-  const resolver = NewResolver(host, opts, "", "");
+  const resolver = NewResolver(host, opts, "", "")!;
 
   for (const name of ["pkg", "pkg/"]) {
     const [r] = Resolver_ResolveModuleName(resolver, name, "/repo/src/file.ts", ModuleKindESNext, undefined);

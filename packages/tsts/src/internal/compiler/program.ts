@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -3871,9 +3871,9 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
       emitterDiagnostics: {
         mu: new (class { Lock(): void {} Unlock(): void {} TryLock(): bool { return true as bool; } })(),
         count: 0 as int,
-        fileDiagnostics: undefined,
-        fileDiagnosticsSorted: { M: new globalThis.Map() } as unknown as import("../collections/set.js").Set<string>,
-        nonFileDiagnostics: undefined,
+        fileDiagnostics: GoNilMap(),
+        fileDiagnosticsSorted: { M: GoNilMap() },
+        nonFileDiagnostics: GoNilSlice(),
         nonFileDiagnosticsSorted: false as bool,
       },
       emitResult: { EmitSkipped: false as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] },

@@ -2128,7 +2128,7 @@ export function Checker_isTemplateLiteralContextualType(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_checkRegularExpressionLiteral(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const nodeLinks = LinkStore_Get(receiver!.nodeLinks, node) as GoPtr<NodeLinks>;
+  const nodeLinks = LinkStore_Get(receiver!.nodeLinks, node)!.v;
   if ((nodeLinks!.flags & NodeCheckFlagsTypeChecked) === 0) {
     nodeLinks!.flags |= NodeCheckFlagsTypeChecked;
     Checker_checkGrammarRegularExpressionLiteral(receiver, AsRegularExpressionLiteral(node));
@@ -2610,7 +2610,7 @@ export function Checker_checkFunctionExpressionOrObjectLiteralMethod(receiver: G
  * }
  */
 export function Checker_contextuallyCheckFunctionExpressionOrObjectLiteralMethod(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): void {
-  const links = LinkStore_Get(receiver!.nodeLinks, node) as GoPtr<NodeLinks>;
+  const links = LinkStore_Get(receiver!.nodeLinks, node)!.v;
   if ((links!.flags & NodeCheckFlagsContextChecked) === 0) {
     const contextualSignature = Checker_getContextualSignature(receiver, node);
     if ((links!.flags & NodeCheckFlagsContextChecked) === 0) {
@@ -2938,7 +2938,7 @@ export function Checker_removeOptionalityFromDeclaredType(receiver: GoPtr<Checke
  * }
  */
 export function Checker_parameterInitializerContainsUndefined(receiver: GoPtr<Checker>, declaration: GoPtr<Node>): bool {
-  const links = LinkStore_Get(receiver!.nodeLinks, declaration) as GoPtr<NodeLinks>;
+  const links = LinkStore_Get(receiver!.nodeLinks, declaration)!.v;
   if ((links!.flags & NodeCheckFlagsInitializerIsUndefinedComputed) === 0) {
     if (!Checker_pushTypeResolution(receiver, declaration, TypeSystemPropertyNameInitializerIsUndefined)) {
       Checker_reportCircularityError(receiver, Node_Symbol(declaration));
@@ -3811,7 +3811,7 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
         const declarations = core.Concatenate(leftProp!.Declarations, rightProp!.Declarations);
         const flags = (SymbolFlagsProperty | (leftProp!.Flags & SymbolFlagsOptional)) as SymbolFlags;
         const result = Checker_newSymbol(receiver, flags, leftProp!.Name);
-        const links = LinkStore_Get(receiver!.valueSymbolLinks, result) as GoPtr<ValueSymbolLinks>;
+        const links = LinkStore_Get(receiver!.valueSymbolLinks, result)!.v;
         const leftType = Checker_getTypeOfSymbol(receiver, leftProp);
         const leftTypeWithoutUndefined = Checker_removeMissingOrUndefinedType(receiver, leftType);
         const rightTypeWithoutUndefined = Checker_removeMissingOrUndefinedType(receiver, rightType);
@@ -3820,10 +3820,10 @@ export function Checker_getSpreadType(receiver: GoPtr<Checker>, left: GoPtr<Type
         } else {
           links!.resolvedType = Checker_getUnionTypeEx(receiver, [leftType, rightTypeWithoutUndefined], UnionReductionSubtype, undefined, undefined);
         }
-        (LinkStore_Get(receiver!.spreadLinks, result) as GoPtr<SpreadLinks>)!.leftSpread = leftProp;
-        (LinkStore_Get(receiver!.spreadLinks, result) as GoPtr<SpreadLinks>)!.rightSpread = rightProp;
+        LinkStore_Get(receiver!.spreadLinks, result)!.v.leftSpread = leftProp;
+        LinkStore_Get(receiver!.spreadLinks, result)!.v.rightSpread = rightProp;
         result!.Declarations = declarations;
-        links!.nameType = (LinkStore_Get(receiver!.valueSymbolLinks, leftProp) as GoPtr<ValueSymbolLinks>)!.nameType;
+        links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, leftProp)!.v.nameType;
         members.set(leftProp!.Name, result);
       }
     } else {
@@ -3952,15 +3952,15 @@ export function Checker_tryMergeUnionOfObjectTypeAndEmptyObject(receiver: GoPtr<
       const isSetonlyAccessor = (prop!.Flags & SymbolFlagsSetAccessor) !== 0 && (prop!.Flags & SymbolFlagsGetAccessor) === 0;
       const flags = (SymbolFlagsProperty | SymbolFlagsOptional) as SymbolFlags;
       const result = Checker_newSymbolEx(receiver, flags, prop!.Name, (prop!.CheckFlags & CheckFlagsLate) | (readonly ? CheckFlagsReadonly : 0));
-      const links = LinkStore_Get(receiver!.valueSymbolLinks, result) as GoPtr<ValueSymbolLinks>;
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, result)!.v;
       if (isSetonlyAccessor) {
         links!.resolvedType = receiver!.undefinedType;
       } else {
         links!.resolvedType = Checker_addOptionalityEx(receiver, Checker_getTypeOfSymbol(receiver, prop), true, true);
       }
       result!.Declarations = prop!.Declarations;
-      links!.nameType = (LinkStore_Get(receiver!.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.nameType;
-      (LinkStore_Get(receiver!.mappedSymbolLinks, result) as GoPtr<MappedSymbolLinks>)!.syntheticOrigin = prop;
+      links!.nameType = LinkStore_Get(receiver!.valueSymbolLinks, prop)!.v.nameType;
+      LinkStore_Get(receiver!.mappedSymbolLinks, result)!.v.syntheticOrigin = prop;
       members.set(prop!.Name, result);
     }
   }
@@ -4354,7 +4354,7 @@ export function Checker_getWidenedLiteralTypeForInitializer(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getTypeOfFuncClassEnumModule(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>);
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
   if (links!.resolvedType === undefined) {
     links!.resolvedType = Checker_getTypeOfFuncClassEnumModuleWorker(receiver, symbol_);
   }
@@ -4492,7 +4492,7 @@ export function Checker_isFunctionType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  * }
  */
 export function Checker_getDeclaredTypeOfClassOrInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
+  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
   if (links!.declaredType === undefined) {
     const kind = (symbol_!.Flags & SymbolFlagsClass) !== 0 ? ObjectFlagsClass : ObjectFlagsInterface;
     const t = Checker_newObjectType(receiver, kind, symbol_);
@@ -4691,7 +4691,7 @@ export function Checker_getTypeForBindingElementParent(receiver: GoPtr<Checker>,
   if (checkMode === CheckModeNormal) {
     const symbol_ = Checker_getSymbolOfDeclaration(receiver, node);
     if (symbol_ !== undefined) {
-      const resolvedType = (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType;
+      const resolvedType = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v.resolvedType;
       if (resolvedType !== undefined && !(receiver!.strictNullChecks && isOptionalDeclaration(node))) {
         return resolvedType;
       }
@@ -5572,7 +5572,7 @@ export function WideningContext_getChildContext(receiver: GoPtr<WideningContext>
  * }
  */
 export function Checker_getTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
   if (links!.resolvedType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameType)) {
       return receiver!.errorType;
@@ -5661,7 +5661,7 @@ export function Checker_getTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: Go
  * }
  */
 export function Checker_getWriteTypeOfAccessors(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>;
+  const links = LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v;
   if (links!.writeType === undefined) {
     if (!Checker_pushTypeResolution(receiver, symbol_, TypeSystemPropertyNameWriteType)) {
       return receiver!.errorType;
@@ -7073,7 +7073,7 @@ export function Checker_couldContainTypeVariablesWorker(receiver: GoPtr<Checker>
         (Type_AsTypeReference(t)!.node !== undefined || core.Some(Checker_getTypeArguments(receiver, t), (typeArgument: GoPtr<Type>): bool => receiver!.couldContainTypeVariables!(typeArgument)))) ||
         ((objectFlags & ObjectFlagsAnonymous) !== 0 && t!.symbol !== undefined &&
           (t!.symbol.Flags & (SymbolFlagsFunction | SymbolFlagsMethod | SymbolFlagsClass | SymbolFlagsTypeLiteral | SymbolFlagsObjectLiteral)) !== 0 &&
-          t!.symbol.Declarations !== undefined) ||
+          !GoSliceIsNil(t!.symbol.Declarations)) ||
         ((objectFlags & (ObjectFlagsMapped | ObjectFlagsReverseMapped | ObjectFlagsObjectRestType | ObjectFlagsInstantiationExpressionType)) !== 0))) ||
     ((t!.flags & TypeFlagsUnionOrIntersection) !== 0 && (t!.flags & TypeFlagsEnumLiteral) === 0 && !Checker_isNonGenericTopLevelType(receiver, t) &&
       core.Some(Type_Types(t), (type_: GoPtr<Type>): bool => receiver!.couldContainTypeVariables!(type_)))) as bool;
@@ -7963,7 +7963,7 @@ export function Checker_getTypeFromLiteralTypeNode(receiver: GoPtr<Checker>, nod
   if (literal!.Kind === KindNullKeyword) {
     return receiver!.nullType;
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     links!.resolvedType = Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpression(receiver, literal));
   }
@@ -8818,7 +8818,7 @@ export function Checker_getTupleElementType(receiver: GoPtr<Checker>, t: GoPtr<T
  * }
  */
 export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
+  const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_)!.v;
   if (links!.declaredType === undefined) {
     const memberTypeList: GoSlice<GoPtr<Type>> = [];
     for (const declaration of symbol_!.Declarations ?? []) {
@@ -8833,7 +8833,7 @@ export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_:
             } else {
               memberType = Checker_createComputedEnumType(receiver, memberSymbol);
             }
-            (LinkStore_Get(receiver!.declaredTypeLinks, memberSymbol) as GoPtr<DeclaredTypeLinks>)!.declaredType = Checker_getFreshTypeOfLiteralType(receiver, memberType);
+            LinkStore_Get(receiver!.declaredTypeLinks, memberSymbol)!.v.declaredType = Checker_getFreshTypeOfLiteralType(receiver, memberType);
             memberTypeList.push(memberType);
           }
         }
@@ -8938,7 +8938,7 @@ export function Checker_getTypeFromTypeQueryNode(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_getTypeFromArrayOrTupleTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const target = Checker_getArrayOrTupleTargetType(receiver, node);
     if (target === receiver!.emptyGenericType) {
@@ -9088,7 +9088,7 @@ export function Checker_getTypeFromOptionalTypeNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeFromUnionTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const alias = Checker_getAliasForTypeNode(receiver, node);
     links!.resolvedType = Checker_getUnionTypeEx(receiver, core.Map(AsUnionTypeNode(node)!.Types!.Nodes, (typeNode) => Checker_getTypeFromTypeNode(receiver, typeNode)), UnionReductionLiteral, alias, undefined);
@@ -9122,7 +9122,7 @@ export function Checker_getTypeFromUnionTypeNode(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_getTypeFromIntersectionTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const alias = Checker_getAliasForTypeNode(receiver, node);
     const types = core.Map(AsIntersectionTypeNode(node)!.Types!.Nodes, (typeNode) => Checker_getTypeFromTypeNode(receiver, typeNode));
@@ -9161,7 +9161,7 @@ export function Checker_getTypeFromIntersectionTypeNode(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getTypeFromTemplateTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const data = AsTemplateLiteralTypeNode(node)!;
     const spans = data.TemplateSpans!.Nodes;
@@ -9197,7 +9197,7 @@ export function Checker_getTypeFromTemplateTypeNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTypeFromMappedTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const t = Checker_newObjectType(receiver, ObjectFlagsMapped, Node_Symbol(node));
     Type_AsMappedType(t)!.declaration = AsMappedTypeNode(node);
@@ -9244,7 +9244,7 @@ export function Checker_getTypeFromMappedTypeNode(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const conditionalTypeNode = AsConditionalTypeNode(node)!;
     const checkType = Checker_getTypeFromTypeNode(receiver, conditionalTypeNode.CheckType);
@@ -9859,7 +9859,7 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
           strconv.Itoa(index),
           readonly ? CheckFlagsReadonly : 0,
         );
-        (LinkStore_Get(receiver!.valueSymbolLinks, property) as GoPtr<ValueSymbolLinks>)!.resolvedType = typeParameter;
+        LinkStore_Get(receiver!.valueSymbolLinks, property)!.v.resolvedType = typeParameter;
         members.set(property!.Name, property);
       }
     }
@@ -9867,13 +9867,13 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
   const fixedLength = members.size;
   const lengthSymbol = Checker_newSymbolEx(receiver, SymbolFlagsProperty, "length", readonly ? CheckFlagsReadonly : 0);
   if ((combinedFlags & ElementFlagsVariable) !== 0) {
-    (LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol) as GoPtr<ValueSymbolLinks>)!.resolvedType = receiver!.numberType;
+    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol)!.v.resolvedType = receiver!.numberType;
   } else {
     const literalTypes: GoSlice<GoPtr<Type>> = [];
     for (let length = minLength; length <= arity; length++) {
       literalTypes.push(Checker_getNumberLiteralType(receiver, length));
     }
-    (LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol) as GoPtr<ValueSymbolLinks>)!.resolvedType = Checker_getUnionType(receiver, literalTypes);
+    LinkStore_Get(receiver!.valueSymbolLinks, lengthSymbol)!.v.resolvedType = Checker_getUnionType(receiver, literalTypes);
   }
   members.set(lengthSymbol!.Name, lengthSymbol);
   const t = Checker_newObjectType(receiver, ObjectFlagsTuple | ObjectFlagsReference, undefined);
@@ -14487,7 +14487,7 @@ export function Checker_getContextualTypeForObjectLiteralElement(receiver: GoPtr
   if (contextualType !== undefined) {
     if (Checker_hasBindableName(receiver, element)) {
       const symbol_ = Checker_getSymbolOfDeclaration(receiver, element);
-      return Checker_getTypeOfPropertyOfContextualTypeEx(receiver, contextualType, symbol_!.Name, (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.nameType);
+      return Checker_getTypeOfPropertyOfContextualTypeEx(receiver, contextualType, symbol_!.Name, LinkStore_Get(receiver!.valueSymbolLinks, symbol_)!.v.nameType);
     }
     if (HasDynamicName(element)) {
       const name = GetNameOfDeclaration(element);

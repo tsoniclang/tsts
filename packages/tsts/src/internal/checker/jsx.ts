@@ -1743,7 +1743,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
         if (member!.ValueDeclaration !== undefined) {
           attributeSymbol!.ValueDeclaration = member!.ValueDeclaration;
         }
-        const links = LinkStore_Get(receiver!.valueSymbolLinks, attributeSymbol) as GoPtr<ValueSymbolLinks>;
+        const links = LinkStore_Get(receiver!.valueSymbolLinks, attributeSymbol)!.v;
         links!.resolvedType = exprType;
         links!.target = member;
         attributesTable.set(attributeSymbol!.Name, attributeSymbol);
@@ -1823,7 +1823,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
         }
       }
       const childrenPropSymbol = Checker_newSymbol(receiver, SymbolFlagsProperty, jsxChildrenPropertyName);
-      const links = LinkStore_Get(receiver!.valueSymbolLinks, childrenPropSymbol) as GoPtr<ValueSymbolLinks>;
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, childrenPropSymbol)!.v;
       if (childTypes.length === 1) {
         links!.resolvedType = childTypes[0];
       } else if (childrenContextualType !== undefined && someType(childrenContextualType, (candidate) => Checker_isTupleLikeType(receiver, candidate))) {
@@ -2242,7 +2242,7 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
   const declaredManagedType = Checker_getDeclaredTypeOfSymbol(receiver, managedSym);
   // fetches interface type, or initializes symbol links type parameters
   if (managedSym!.Flags & SymbolFlagsTypeAlias) {
-    const params = (LinkStore_Get(receiver!.typeAliasLinks, managedSym) as GoPtr<TypeAliasLinks>)!.typeParameters;
+    const params = LinkStore_Get(receiver!.typeAliasLinks, managedSym)!.v.typeParameters;
     // Go len(nil) == 0: a non-generic alias has a nil typeParameters slice.
     if ((params ?? []).length >= typeArguments.length) {
       const args = Checker_fillMissingTypeArguments(receiver, typeArguments, params, typeArguments.length, inJavaScript);
@@ -2525,7 +2525,7 @@ export function Checker_createSignatureForJSXIntrinsic(receiver: GoPtr<Checker>,
   // returnNode := typeSymbol && c.nodeBuilder.symbolToEntityName(typeSymbol, ast.SymbolFlagsType, node)
   // declaration := factory.createFunctionTypeNode(...)
   const parameterSymbol = Checker_newSymbol(receiver, SymbolFlagsFunctionScopedVariable as SymbolFlags, "props");
-  (LinkStore_Get(receiver!.valueSymbolLinks, parameterSymbol) as GoPtr<ValueSymbolLinks>)!.resolvedType = result;
+  LinkStore_Get(receiver!.valueSymbolLinks, parameterSymbol)!.v.resolvedType = result;
   return Checker_newSignature(receiver, SignatureFlagsNone, undefined, [], undefined, [parameterSymbol], elementType, undefined, 1);
 }
 
@@ -2557,7 +2557,7 @@ export function Checker_createSignatureForJSXIntrinsic(receiver: GoPtr<Checker>,
  */
 export function Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
   // debug.Assert(isJsxIntrinsicTagName(node.TagName()))
-  const links = LinkStore_Get(receiver!.jsxElementLinks, node) as GoPtr<JsxElementLinks>;
+  const links = LinkStore_Get(receiver!.jsxElementLinks, node)!.v;
   if (links!.resolvedJsxElementAttributesType !== undefined) {
     return links!.resolvedJsxElementAttributesType;
   }
@@ -2625,7 +2625,7 @@ export function Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(rece
  * }
  */
 export function Checker_getIntrinsicTagSymbol(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
-  const links = LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>;
+  const links = LinkStore_Get(receiver!.symbolNodeLinks, node)!.v;
   if (links!.resolvedSymbol !== undefined) {
     return links!.resolvedSymbol;
   }
@@ -2639,19 +2639,19 @@ export function Checker_getIntrinsicTagSymbol(receiver: GoPtr<Checker>, node: Go
     const propName = Node_Text(tagName);
     const intrinsicProp = Checker_getPropertyOfType(receiver, intrinsicElementsType, propName);
     if (intrinsicProp !== undefined) {
-      (LinkStore_Get(receiver!.jsxElementLinks, node) as GoPtr<JsxElementLinks>)!.jsxFlags |= JsxFlagsIntrinsicNamedElement;
+      LinkStore_Get(receiver!.jsxElementLinks, node)!.v.jsxFlags |= JsxFlagsIntrinsicNamedElement;
       links!.resolvedSymbol = intrinsicProp;
       return links!.resolvedSymbol;
     }
     // Intrinsic string indexer case
     const indexSymbol = Checker_getApplicableIndexSymbol(receiver, intrinsicElementsType, Checker_getStringLiteralType(receiver, propName));
     if (indexSymbol !== undefined) {
-      (LinkStore_Get(receiver!.jsxElementLinks, node) as GoPtr<JsxElementLinks>)!.jsxFlags |= JsxFlagsIntrinsicIndexedElement;
+      LinkStore_Get(receiver!.jsxElementLinks, node)!.v.jsxFlags |= JsxFlagsIntrinsicIndexedElement;
       links!.resolvedSymbol = indexSymbol;
       return links!.resolvedSymbol;
     }
     if (Checker_getTypeOfPropertyOrIndexSignatureOfType(receiver, intrinsicElementsType, propName) !== undefined) {
-      (LinkStore_Get(receiver!.jsxElementLinks, node) as GoPtr<JsxElementLinks>)!.jsxFlags |= JsxFlagsIntrinsicIndexedElement;
+      LinkStore_Get(receiver!.jsxElementLinks, node)!.v.jsxFlags |= JsxFlagsIntrinsicIndexedElement;
       links!.resolvedSymbol = intrinsicElementsType!["symbol"];
       return links!.resolvedSymbol;
     }
@@ -2826,7 +2826,7 @@ export function Checker_getJsxType(receiver: GoPtr<Checker>, name: string, locat
 export function Checker_getJsxNamespaceAt(receiver: GoPtr<Checker>, location: GoPtr<Node>): GoPtr<Symbol> {
   let links: GoPtr<JsxElementLinks>;
   if (location !== undefined) {
-    links = LinkStore_Get(receiver!.jsxElementLinks, location) as GoPtr<JsxElementLinks>;
+    links = LinkStore_Get(receiver!.jsxElementLinks, location)!.v;
   }
   if (links !== undefined && links!.jsxNamespace !== undefined && links!.jsxNamespace !== receiver!.unknownSymbol) {
     return links!.jsxNamespace;
@@ -3140,7 +3140,7 @@ export function Checker_getJsxNamespaceContainerForImplicitImport(receiver: GoPt
   if (location !== undefined) {
     file = GetSourceFileOfNode(location);
     if (file !== undefined) {
-      links = LinkStore_Get(receiver!.jsxElementLinks, file as GoPtr<Node>) as GoPtr<JsxElementLinks>;
+      links = LinkStore_Get(receiver!.jsxElementLinks, file as GoPtr<Node>)!.v;
     }
   }
   if (links !== undefined && links!.jsxImplicitImportContainer !== undefined) {

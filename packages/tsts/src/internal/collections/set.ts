@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 /**
@@ -46,7 +47,7 @@ export function Set_Has<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T)
   if (receiver === undefined) {
     return false;
   }
-  const ok = receiver.M?.has(key) ?? false;
+  const ok = receiver.M.has(key);
   return ok;
 }
 
@@ -62,7 +63,7 @@ export function Set_Has<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T)
  * }
  */
 export function Set_Add<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T): void {
-  if (receiver!.M === undefined) {
+  if (GoMapIsNil(receiver!.M)) {
     receiver!.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
   }
   receiver!.M.set(key, {});
@@ -77,7 +78,7 @@ export function Set_Add<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T)
  * }
  */
 export function Set_Delete<T extends GoComparable>(receiver: GoPtr<Set<T>>, key: T): void {
-  receiver!.M?.delete(key);
+  receiver!.M.delete(key);
 }
 
 /**
@@ -95,7 +96,7 @@ export function Set_Len<T extends GoComparable>(receiver: GoPtr<Set<T>>): int {
   if (receiver === undefined) {
     return 0;
   }
-  return receiver.M?.size ?? 0;
+  return receiver.M.size;
 }
 
 /**
@@ -110,8 +111,8 @@ export function Set_Len<T extends GoComparable>(receiver: GoPtr<Set<T>>): int {
  * }
  */
 export function Set_Keys<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoMap<T, { readonly __tsgoEmpty?: never }> {
-  if (receiver === undefined || receiver.M === undefined) {
-    return new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+  if (receiver === undefined) {
+    return GoNilMap();
   }
   return receiver.M;
 }
@@ -131,7 +132,7 @@ export function Set_Clear<T extends GoComparable>(receiver: GoPtr<Set<T>>): void
   if (receiver === undefined) {
     return;
   }
-  receiver.M?.clear();
+  receiver.M.clear();
 }
 
 /**
@@ -170,7 +171,7 @@ export function Set_Clone<T extends GoComparable>(receiver: GoPtr<Set<T>>): GoPt
   if (receiver === undefined) {
     return undefined;
   }
-  const clone: Set<T> = { M: maps.Clone(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())! };
+  const clone: Set<T> = { M: maps.Clone(receiver.M) };
   return clone;
 }
 
@@ -199,11 +200,11 @@ export function Set_Union<T extends GoComparable>(receiver: GoPtr<Set<T>>, other
   if (receiver === undefined) {
     throw new globalThis.Error("cannot modify nil Set");
   }
-  if (receiver.M === undefined) {
-    receiver.M = maps.Clone(other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())!;
+  if (GoMapIsNil(receiver.M)) {
+    receiver.M = maps.Clone(other!.M);
     return;
   }
-  maps.Copy(receiver.M, other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  maps.Copy(receiver.M, other!.M);
 }
 
 /**
@@ -237,11 +238,11 @@ export function Set_UnionedWith<T extends GoComparable>(receiver: GoPtr<Set<T>>,
   }
   const result = cloned !== undefined
     ? cloned
-    : { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
-  if (result.M === undefined) {
+    : { M: GoNilMap<T, { readonly __tsgoEmpty?: never }>() };
+  if (GoMapIsNil(result.M)) {
     result.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
   }
-  maps.Copy(result.M, other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  maps.Copy(result.M, other.M);
   return result;
 }
 
@@ -266,7 +267,7 @@ export function Set_Equals<T extends GoComparable>(receiver: GoPtr<Set<T>>, othe
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  return maps.Equal(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>(), other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
+  return maps.Equal(receiver.M, other.M);
 }
 
 /**
@@ -289,7 +290,7 @@ export function Set_IsSubsetOf<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
   if (receiver === undefined) {
     return true;
   }
-  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
+  for (const key of receiver.M.keys()) {
     if (!Set_Has(other, key)) {
       return false;
     }
@@ -317,7 +318,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
+  for (const key of receiver.M.keys()) {
     if (Set_Has(other, key)) {
       return true;
     }
@@ -338,7 +339,7 @@ export function Set_Intersects<T extends GoComparable>(receiver: GoPtr<Set<T>>, 
  * }
  */
 export function NewSetFromItems<T extends GoComparable>(...items: Array<T>): GoPtr<Set<T>> {
-  const s: Set<T> = { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
+  const s: Set<T> = { M: GoNilMap() };
   for (const item of items) {
     Set_Add(s, item);
   }

@@ -5513,7 +5513,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
     if (!Checker_isErrorType(receiver!.ch, propertyType) && !Checker_isErrorType(receiver!.ch, writeType)) {
       const propDeclaration = GetDeclarationOfKind(propertySymbol, KindPropertyDeclaration);
       if (propertyType !== writeType || (propertySymbol!.Parent !== undefined && (propertySymbol!.Parent!.Flags & SymbolFlagsClass) !== 0 && propDeclaration === undefined)) {
-        const symbolMapper = (LinkStore_Get(receiver!.ch!.valueSymbolLinks, propertySymbol) as GoPtr<ValueSymbolLinks>)!.mapper;
+        const symbolMapper = LinkStore_Get(receiver!.ch!.valueSymbolLinks, propertySymbol)!.v.mapper;
         const getterDeclaration = GetDeclarationOfKind(propertySymbol, KindGetAccessor);
         if (getterDeclaration !== undefined) {
           let getterSignature = Checker_getSignatureFromDeclaration(receiver!.ch, getterDeclaration);
@@ -5557,7 +5557,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
         typeElements.push(fakeGetterDeclaration as GoPtr<TypeElement>);
 
         const setterParam = Checker_newSymbol(receiver!.ch, SymbolFlagsFunctionScopedVariable, "arg");
-        (LinkStore_Get(receiver!.ch!.valueSymbolLinks, setterParam) as GoPtr<ValueSymbolLinks>)!.resolvedType = writeType;
+        LinkStore_Get(receiver!.ch!.valueSymbolLinks, setterParam)!.v.resolvedType = writeType;
         const fakeSetterSignature = Checker_newSignature(receiver!.ch, SignatureFlagsNone, undefined, [], undefined, [setterParam], receiver!.ch!.voidType, undefined, 0);
         const fakeSetterDeclaration = NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, fakeSetterSignature, KindSetAccessor, {
           modifiers: [],

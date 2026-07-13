@@ -1,7 +1,9 @@
 import type { bool, int } from "../../go/scalars.js";
 import * as strconv from "../../go/strconv.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
+import { Uint64 } from "../../go/sync/atomic.js";
 import {
   Node_Arguments,
   Node_Body,
@@ -595,7 +597,7 @@ export interface ExpandoAssignmentInfo {
  */
 export interface Binder {
   file: GoPtr<SourceFile>;
-  bindFunc: (arg0: GoPtr<Node>) => bool;
+  bindFunc: GoFunc<(arg0: GoPtr<Node>) => bool>;
   unreachableFlow: GoPtr<FlowNode>;
   container: GoPtr<Node>;
   thisContainer: GoPtr<Node>;
@@ -697,7 +699,51 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
  * 	},
  * }
  */
-export let binderPool: Pool = new Pool<Binder>();
+export let binderPool: Pool = (() => {
+  const pool = new Pool<Binder>();
+  pool.New = () => {
+    const binder = newBinderValue(undefined);
+    binder.bindFunc = (node) => Binder_bind(binder, node);
+    return binder;
+  };
+  return pool;
+})();
+
+function newBinderValue(bindFunc: GoFunc<(arg0: GoPtr<Node>) => bool>): Binder {
+  return {
+    file: undefined,
+    bindFunc,
+    unreachableFlow: undefined,
+    container: undefined,
+    thisContainer: undefined,
+    blockScopeContainer: undefined,
+    lastContainer: undefined,
+    currentFlow: undefined,
+    currentBreakTarget: undefined,
+    currentContinueTarget: undefined,
+    currentReturnTarget: undefined,
+    currentTrueTarget: undefined,
+    currentFalseTarget: undefined,
+    currentExceptionTarget: undefined,
+    preSwitchCaseFlow: undefined,
+    activeLabelList: undefined,
+    emitFlags: 0,
+    seenThisKeyword: false,
+    hasExplicitReturn: false,
+    hasFlowEffects: false,
+    inAssignmentPattern: false,
+    seenParseError: false,
+    symbolCount: 0,
+    classifiableNames: { M: GoNilMap() },
+    notConstEnumOnlyModules: { M: GoNilMap() },
+    symbolArena: { data: GoNilSlice() },
+    flowNodeArena: { data: GoNilSlice() },
+    flowListArena: { data: GoNilSlice() },
+    singleDeclarationsArena: { data: GoNilSlice() },
+    expandoAssignments: GoNilSlice(),
+    nestedCJSExports: GoNilSlice(),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"implemented","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2"}
@@ -708,17 +754,7 @@ export let binderPool: Pool = new Pool<Binder>();
  * }
  */
 export function getBinder(): GoPtr<Binder> {
-  if (binderPool.New === undefined) {
-    binderPool.New = () => {
-      const b = {} as Binder;
-      b.bindFunc = (node) => Binder_bind(b, node);
-      return b;
-    };
-  }
-  const binder = binderPool.Get() as Binder;
-  binder.classifiableNames = { M: undefined as unknown as GoMap<string, { readonly __tsgoEmpty?: never }> };
-  binder.notConstEnumOnlyModules = { M: undefined as unknown as GoMap<GoPtr<Symbol>, { readonly __tsgoEmpty?: never }> };
-  return binder;
+  return binderPool.Get() as Binder;
 }
 
 /**
@@ -732,13 +768,37 @@ export function getBinder(): GoPtr<Binder> {
  */
 export function putBinder(b: GoPtr<Binder>): void {
   const savedBindFunc = b!.bindFunc;
-  // Reset all fields to zero values preserving bindFunc
-  const bAsRecord = b as unknown as Record<string, unknown>;
-  const keys = globalThis.Object.keys(bAsRecord) as Array<string>;
-  for (const key of keys) {
-    bAsRecord[key] = undefined;
-  }
+  b!.file = undefined;
   b!.bindFunc = savedBindFunc;
+  b!.unreachableFlow = undefined;
+  b!.container = undefined;
+  b!.thisContainer = undefined;
+  b!.blockScopeContainer = undefined;
+  b!.lastContainer = undefined;
+  b!.currentFlow = undefined;
+  b!.currentBreakTarget = undefined;
+  b!.currentContinueTarget = undefined;
+  b!.currentReturnTarget = undefined;
+  b!.currentTrueTarget = undefined;
+  b!.currentFalseTarget = undefined;
+  b!.currentExceptionTarget = undefined;
+  b!.preSwitchCaseFlow = undefined;
+  b!.activeLabelList = undefined;
+  b!.emitFlags = 0;
+  b!.seenThisKeyword = false;
+  b!.hasExplicitReturn = false;
+  b!.hasFlowEffects = false;
+  b!.inAssignmentPattern = false;
+  b!.seenParseError = false;
+  b!.symbolCount = 0;
+  b!.classifiableNames = { M: GoNilMap() };
+  b!.notConstEnumOnlyModules = { M: GoNilMap() };
+  b!.symbolArena = { data: GoNilSlice() };
+  b!.flowNodeArena = { data: GoNilSlice() };
+  b!.flowListArena = { data: GoNilSlice() };
+  b!.singleDeclarationsArena = { data: GoNilSlice() };
+  b!.expandoAssignments = GoNilSlice();
+  b!.nestedCJSExports = GoNilSlice();
   binderPool.Put(b!);
 }
 
@@ -789,8 +849,18 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
 export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, name: string): GoPtr<Symbol> {
   receiver!.symbolCount = (receiver!.symbolCount as number + 1) as int;
   const result = Arena_New(receiver!.symbolArena);
-  result!.v.Flags = flags;
-  result!.v.Name = name;
+  result!.v = {
+    Flags: flags,
+    CheckFlags: 0,
+    Name: name,
+    Declarations: GoNilSlice(),
+    ValueDeclaration: undefined,
+    Members: GoNilMap(),
+    Exports: GoNilMap(),
+    id: new Uint64(),
+    Parent: undefined,
+    ExportSymbol: undefined,
+  };
   return result!.v;
 }
 
@@ -1402,7 +1472,12 @@ export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>,
  */
 export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): GoPtr<FlowNode> {
   const result = Arena_New(receiver!.flowNodeArena);
-  result!.v.Flags = flags;
+  result!.v = {
+    Flags: flags,
+    Node: undefined,
+    Antecedent: undefined,
+    Antecedents: undefined,
+  };
   return result!.v;
 }
 
@@ -1571,8 +1646,7 @@ export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr
  */
 export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode>, tail: GoPtr<FlowList>): GoPtr<FlowList> {
   const result = Arena_New(receiver!.flowListArena);
-  result!.v.Flow = head;
-  result!.v.Next = tail;
+  result!.v = { Flow: head, Next: tail };
   return result!.v;
 }
 

@@ -1,6 +1,6 @@
 import type { bool, byte, int, uint } from "../../../go/scalars.js";
 import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoBooleanKey, GoDynamicValue, GoInterfaceKey, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStringKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
@@ -1979,10 +1979,10 @@ function newDiagnosticsCollection(): DiagnosticsCollection {
   return {
     mu: new Mutex(),
     count: 0 as int,
-    fileDiagnostics: undefined,
+    fileDiagnostics: GoNilMap(),
     fileDiagnosticsSorted: newCheckerSet<string>(),
-    nonFileDiagnostics: undefined,
-    nonFileDiagnosticsSorted: true,
+    nonFileDiagnostics: GoNilSlice(),
+    nonFileDiagnosticsSorted: false,
   };
 }
 

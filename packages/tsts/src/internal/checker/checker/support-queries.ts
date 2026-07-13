@@ -135,7 +135,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  return ((LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds ?? SymbolFlagsNone) !== 0;
+  return (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.v.referenceKinds ?? SymbolFlagsNone) !== 0;
 }
 
 /**
@@ -964,7 +964,7 @@ export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location:
  * }
  */
 export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<Node>): [int, int] {
-  const links = (LinkStore_Get(receiver!.arrayLiteralLinks, node) as GoPtr<ArrayLiteralLinks>)!;
+  const links = LinkStore_Get(receiver!.arrayLiteralLinks, node)!.v;
   if (!links.indicesComputed) {
     let first = -1;
     let last = -1;

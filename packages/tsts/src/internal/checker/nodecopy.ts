@@ -731,7 +731,7 @@ export function NodeBuilderImpl_getModuleSpecifierOverride(receiver: GoPtr<NodeB
     }
     let name = Node_Text(lit);
     const originalName = name;
-    const nodeSymbol = (LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent) as unknown as GoPtr<SymbolNodeLinks>)!.resolvedSymbol;
+    const nodeSymbol = LinkStore_Get(receiver!.ch!.symbolNodeLinks, parent)!.v.resolvedSymbol;
     let meaning: SymbolFlags = SymbolFlagsType;
     if (importTypeNode.IsTypeOf) {
       meaning = SymbolFlagsValue;
@@ -954,7 +954,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsConstTypeReference(node)) {
       return undefined;
     }
-    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node) as unknown as GoPtr<SymbolNodeLinks>;
+    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node)!.v;
     const symbol_ = links?.resolvedSymbol;
     if (symbol_ === undefined) {
       return undefined;

@@ -1,5 +1,6 @@
 import type { bool } from "./scalars.js";
 import type { GoMap, GoSeq } from "./compat.js";
+import { GoMapIsNil, GoNilMap } from "./compat.js";
 
 // Go: package maps (standard library, Go 1.21+/1.23 iterators).
 //
@@ -9,10 +10,10 @@ import type { GoMap, GoSeq } from "./compat.js";
 
 // Clone returns a copy of m. This is a shallow clone: the new keys and values
 // are set using ordinary assignment.
-export function Clone<K, V>(m: GoMap<K, V> | undefined): GoMap<K, V> | undefined {
+export function Clone<K, V>(m: GoMap<K, V>): GoMap<K, V> {
   // Go: Clone(nil) returns nil.
-  if (m === undefined) {
-    return undefined;
+  if (GoMapIsNil(m)) {
+    return GoNilMap();
   }
   return new globalThis.Map<K, V>(m);
 }
@@ -69,9 +70,9 @@ export function EqualFunc<K, V1, V2>(
 
 // Keys returns an iterator over keys in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Keys<K, V>(m: GoMap<K, V> | undefined): GoSeq<K> {
+export function Keys<K, V>(m: GoMap<K, V>): GoSeq<K> {
   return (yieldValue: (value: K) => bool): void => {
-    for (const k of (m ?? new globalThis.Map<K, V>()).keys()) {
+    for (const k of m.keys()) {
       if (!yieldValue(k)) {
         return;
       }
@@ -81,9 +82,9 @@ export function Keys<K, V>(m: GoMap<K, V> | undefined): GoSeq<K> {
 
 // Values returns an iterator over values in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Values<K, V>(m: GoMap<K, V> | undefined): GoSeq<V> {
+export function Values<K, V>(m: GoMap<K, V>): GoSeq<V> {
   return (yieldValue: (value: V) => bool): void => {
-    for (const v of (m ?? new globalThis.Map<K, V>()).values()) {
+    for (const v of m.values()) {
       if (!yieldValue(v)) {
         return;
       }

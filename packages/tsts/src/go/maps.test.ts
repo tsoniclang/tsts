@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as maps from "./maps.js";
 import { Clone, Copy, DeleteFunc, Equal, EqualFunc, Keys, Values } from "./maps.js";
+import { GoMapIsNil, GoNilMap } from "./compat.js";
 
 test("maps.Clone returns a shallow copy", () => {
   const m = new globalThis.Map<string, number>([
@@ -16,8 +17,8 @@ test("maps.Clone returns a shallow copy", () => {
   assert.equal(m.get("a"), 1, "mutating clone must not affect original");
 });
 
-test("maps.Clone(undefined) returns undefined", () => {
-  assert.equal(Clone<string, number>(undefined), undefined);
+test("maps.Clone preserves a nil Go map", () => {
+  assert.equal(GoMapIsNil(Clone(GoNilMap<string, number>())), true);
 });
 
 test("maps.Copy copies and overwrites entries", () => {

@@ -17,7 +17,7 @@ function createTestFS(): MapFS {
 }
 
 test("IOFS mirrors TS-Go ReadFile, existence, directory entries, walking, and realpath", () => {
-  const fs = From(MapFS_as_FS(createTestFS()), true as bool);
+  const fs = From(MapFS_as_FS(createTestFS()), true as bool)!;
 
   assert.deepEqual(fs.ReadFile("/foo.ts"), ["hello, world", true]);
   assert.deepEqual(fs.ReadFile("/does/not/exist.ts"), ["", false]);

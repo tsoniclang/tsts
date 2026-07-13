@@ -99,7 +99,7 @@ test("convertMapFS mirrors TS-Go duplicate and parent-file panics", () => {
 });
 
 test("FromMap mirrors TS-Go read/write/delete and path validation behavior", () => {
-  const fs = FromMap<unknown>(new Map(), false as bool);
+  const fs = FromMap<unknown>(new Map(), false as bool)!;
 
   assert.equal(fs.WriteFile("/foo/bar/baz", "hello, world"), undefined);
   assert.deepEqual(fs.ReadFile("/foo/bar/baz"), ["hello, world", true]);
@@ -140,7 +140,7 @@ test("FromMap mirrors TS-Go POSIX, Windows, and BOM read behavior", () => {
     ["/string", "hello, world"],
     ["/bytes", bytes("hello, world")],
     ["/mapfile", { Data: bytes("hello, world") } satisfies MapFile],
-  ]), false as bool);
+  ]), false as bool)!;
   assert.deepEqual(posix.ReadFile("/string"), ["hello, world", true]);
   assert.deepEqual(posix.ReadFile("/bytes"), ["hello, world", true]);
   assert.deepEqual(posix.ReadFile("/mapfile"), ["hello, world", true]);
@@ -149,7 +149,7 @@ test("FromMap mirrors TS-Go POSIX, Windows, and BOM read behavior", () => {
     ["c:/string", "hello, world"],
     ["d:/bytes", bytes("hello, world")],
     ["e:/mapfile", { Data: bytes("hello, world") } satisfies MapFile],
-  ]), false as bool);
+  ]), false as bool)!;
   assert.deepEqual(windows.ReadFile("c:/string"), ["hello, world", true]);
   assert.deepEqual(windows.ReadFile("d:/bytes"), ["hello, world", true]);
   assert.deepEqual(windows.ReadFile("e:/mapfile"), ["hello, world", true]);
@@ -157,9 +157,9 @@ test("FromMap mirrors TS-Go POSIX, Windows, and BOM read behavior", () => {
   const utf16be = new Uint8Array([0xfe, 0xff, 0x00, 0x68, 0x00, 0x69]);
   const utf16le = new Uint8Array([0xff, 0xfe, 0x68, 0x00, 0x69, 0x00]);
   const utf8Bom = new Uint8Array([0xef, 0xbb, 0xbf, ...bytes("hi")]);
-  assert.deepEqual(FromMap(new Map([["/foo.ts", utf16be]]), true as bool).ReadFile("/foo.ts"), ["hi", true]);
-  assert.deepEqual(FromMap(new Map([["/foo.ts", utf16le]]), true as bool).ReadFile("/foo.ts"), ["hi", true]);
-  assert.deepEqual(FromMap(new Map([["/foo.ts", utf8Bom]]), true as bool).ReadFile("/foo.ts"), ["hi", true]);
+  assert.deepEqual(FromMap(new Map([["/foo.ts", utf16be]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);
+  assert.deepEqual(FromMap(new Map([["/foo.ts", utf16le]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);
+  assert.deepEqual(FromMap(new Map([["/foo.ts", utf8Bom]]), true as bool)!.ReadFile("/foo.ts"), ["hi", true]);
 });
 
 test("FromMap mirrors TS-Go symlink read, realpath, existence, and writable behavior", () => {
@@ -172,7 +172,7 @@ test("FromMap mirrors TS-Go symlink read, realpath, existence, and writable beha
     ["/b", Symlink("/c")],
     ["/c", Symlink("/d")],
     ["/d/existing.ts", "this is existing.ts"],
-  ]), false as bool);
+  ]), false as bool)!;
 
   assert.deepEqual(fs.ReadFile("/symlink.ts"), ["hello, world", true]);
   assert.deepEqual(fs.ReadFile("/some/dirlink/file.ts"), ["hello, world", true]);

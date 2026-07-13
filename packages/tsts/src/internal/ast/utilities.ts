@@ -658,7 +658,7 @@ export function GetSymbolTable(data: GoRef<SymbolTable>): SymbolTable {
  * }
  */
 export function GetMembers(symbol_: GoPtr<Symbol>): SymbolTable {
-  if (symbol_!.Members === undefined) {
+  if (GoMapIsNil(symbol_!.Members)) {
     symbol_!.Members = new Map();
   }
   return symbol_!.Members;
@@ -673,7 +673,7 @@ export function GetMembers(symbol_: GoPtr<Symbol>): SymbolTable {
  * }
  */
 export function GetExports(symbol_: GoPtr<Symbol>): SymbolTable {
-  if (symbol_!.Exports === undefined) {
+  if (GoMapIsNil(symbol_!.Exports)) {
     symbol_!.Exports = new Map();
   }
   return symbol_!.Exports;

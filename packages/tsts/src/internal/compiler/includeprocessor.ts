@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoValueRef } from "../../go/compat.js";
+import { GoNilMap, GoNilSlice, GoValueRef } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
 import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
@@ -118,9 +118,9 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
     const coll: DiagnosticsCollection = {
       mu: new (class { Lock(): void {} Unlock(): void {} TryLock(): bool { return true; } })(),
       count: 0 as int,
-      fileDiagnostics: undefined,
-      fileDiagnosticsSorted: { m: new globalThis.Map() } as unknown as Set<string>,
-      nonFileDiagnostics: undefined,
+      fileDiagnostics: GoNilMap(),
+      fileDiagnosticsSorted: { M: GoNilMap() },
+      nonFileDiagnostics: GoNilSlice(),
       nonFileDiagnosticsSorted: false as bool,
     };
     receiver!.computedDiagnostics = coll;

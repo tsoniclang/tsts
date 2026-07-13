@@ -20,7 +20,7 @@ import { ParseExtendedConfig, ParseJsonSourceFileConfigFileContent } from "./tsc
 
 // tsoptionstest.NewVFSParseConfigHost
 function vfsParseConfigHost(files: ReadonlyMap<string, string>, currentDirectory: string, useCaseSensitiveFileNames: bool): ParseConfigHost {
-  const fs = FromMap(new Map(files), useCaseSensitiveFileNames);
+  const fs = FromMap(new Map(files), useCaseSensitiveFileNames)!;
   return {
     FS: (): FS => fs,
     GetCurrentDirectory: (): string => currentDirectory,
@@ -48,13 +48,14 @@ class memoCache implements ExtendedConfigCache {
 
 function makeParseConfig(host: ParseConfigHost): (configFileName: string, cache: ExtendedConfigCache) => GoPtr<import("./parsedcommandline.js").ParsedCommandLine> {
   return (configFileName, cache) => {
-    const cfgPath = ToPath(configFileName, host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames());
-    const [jsonText, ok] = host.FS().ReadFile(configFileName);
+    const fs = host.FS()!;
+    const cfgPath = ToPath(configFileName, host.GetCurrentDirectory(), fs.UseCaseSensitiveFileNames());
+    const [jsonText, ok] = fs.ReadFile(configFileName);
     assert.ok(ok, `missing ${configFileName} in test fs`);
     const tsConfigSourceFile: TsConfigSourceFile = {
       ExtendedSourceFiles: [],
       configFileSpecs: undefined,
-      SourceFile: ParseSourceFile({ FileName: configFileName, Path: cfgPath } as SourceFileParseOptions, jsonText, ScriptKindJSON),
+      SourceFile: ParseSourceFile({ FileName: configFileName, Path: cfgPath } as SourceFileParseOptions, jsonText, ScriptKindJSON)!,
     };
     return ParseJsonSourceFileConfigFileContent(
       tsConfigSourceFile,
@@ -66,7 +67,7 @@ function makeParseConfig(host: ParseConfigHost): (configFileName: string, cache:
       [],
       [],
       cache,
-    );
+    )!;
   };
 }
 

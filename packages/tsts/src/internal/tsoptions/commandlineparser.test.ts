@@ -17,7 +17,7 @@ import type { ParseConfigHost } from "./tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "./tsconfigparsing.js";
 
 function parseHost(files: ReadonlyMap<string, string>, currentDirectory: string, useCaseSensitiveFileNames = true): ParseConfigHost {
-  const fs = FromMap(new Map(files), useCaseSensitiveFileNames as bool);
+  const fs = FromMap(new Map(files), useCaseSensitiveFileNames as bool)!;
   return {
     FS: (): FS => fs,
     GetCurrentDirectory: (): string => currentDirectory,
@@ -38,7 +38,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
     ["/project/index.ts", ""],
   ]), "/project");
 
-  const commandLine = ParseCommandLine(["--project", "/project", "--customConditions", "null"], host);
+  const commandLine = ParseCommandLine(["--project", "/project", "--customConditions", "null"], host)!;
   assert.ok(commandLine !== undefined);
   assertNoDiagnostics(commandLine.Errors);
 
@@ -47,7 +47,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   assert.equal(rawCustomConditionsExists, true);
   assert.equal(rawCustomConditions, undefined);
 
-  const wrappedRaw = NewOrderedMapWithSizeHint<string, unknown>(1 as int);
+  const wrappedRaw = NewOrderedMapWithSizeHint<string, unknown>(1 as int)!;
   OrderedMap_Set(wrappedRaw, "compilerOptions", commandLine.Raw);
   const [parsed, errors] = GetParsedCommandLineOfConfigFile(
     "/project/tsconfig.json",
@@ -59,20 +59,20 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
 
   assertNoDiagnostics(errors);
   assert.ok(parsed !== undefined);
-  assertNoDiagnostics(parsed.Errors);
-  assert.equal(parsed.ParsedConfig!.CompilerOptions!.CustomConditions, undefined);
+  assertNoDiagnostics(parsed!.Errors);
+  assert.equal(parsed!.ParsedConfig!.CompilerOptions!.CustomConditions, undefined);
 });
 
 test("ParseCommandLine mirrors boolean false and null option values", () => {
   const host = parseHost(new Map<string, string>(), "/project");
 
-  const falseValue = ParseCommandLine(["--composite", "false", "0.ts"], host);
+  const falseValue = ParseCommandLine(["--composite", "false", "0.ts"], host)!;
   assert.ok(falseValue !== undefined);
   assertNoDiagnostics(falseValue.Errors);
   assert.deepEqual(falseValue.ParsedConfig!.FileNames, ["0.ts"]);
   assert.equal(falseValue.ParsedConfig!.CompilerOptions!.Composite, TSFalse);
 
-  const nullValue = ParseCommandLine(["--composite", "null", "0.ts"], host);
+  const nullValue = ParseCommandLine(["--composite", "null", "0.ts"], host)!;
   assert.ok(nullValue !== undefined);
   assertNoDiagnostics(nullValue.Errors);
   assert.deepEqual(nullValue.ParsedConfig!.FileNames, ["0.ts"]);
@@ -82,12 +82,12 @@ test("ParseCommandLine mirrors boolean false and null option values", () => {
 test("ParseBuildCommandLine mirrors default project and project ordering", () => {
   const host = parseHost(new Map<string, string>(), "/repo");
 
-  const defaultBuild = ParseBuildCommandLine([], host);
+  const defaultBuild = ParseBuildCommandLine([], host)!;
   assert.ok(defaultBuild !== undefined);
   assert.deepEqual(defaultBuild.Projects, ["."]);
   assertNoDiagnostics(defaultBuild.Errors);
 
-  const orderedBuild = ParseBuildCommandLine(["--force", "src", "tests", "--verbose"], host);
+  const orderedBuild = ParseBuildCommandLine(["--force", "src", "tests", "--verbose"], host)!;
   assert.ok(orderedBuild !== undefined);
   assert.deepEqual(orderedBuild.Projects, ["src", "tests"]);
   assert.equal(Tristate_IsTrue(orderedBuild.BuildOptions!.Force), true);
@@ -105,7 +105,7 @@ test("ParseBuildCommandLine reports nonsensical build option combinations", () =
   ];
 
   for (const [args, expectedArgs] of cases) {
-    const parsed = ParseBuildCommandLine([...args], host);
+    const parsed = ParseBuildCommandLine([...args], host)!;
     assert.ok(parsed !== undefined);
     assert.equal(parsed.Errors.length, 1, args.join(" "));
     assert.deepEqual(parsed.Errors[0]!.messageArgs, expectedArgs);

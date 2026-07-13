@@ -14,7 +14,7 @@ test("TestingLibPath mirrors upstream test lib directory contract", () => {
 });
 
 test("embedded bundled filesystem mirrors upstream lib names", () => {
-  const fs = WrapFS(OSFS());
+  const fs = WrapFS(OSFS())!;
   const files: string[] = [];
   const err = fs.WalkDir(LibPath(), (path, dirEntry, walkErr) => {
     if (walkErr !== undefined) {

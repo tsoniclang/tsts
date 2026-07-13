@@ -484,7 +484,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): void {
-  (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds |= meaning;
+  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.v.referenceKinds |= meaning;
 }
 
 /**
@@ -994,7 +994,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
  */
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
   for (const node of receiver!.renamedBindingElementsInTypes) {
-    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node)) as GoPtr<SymbolReferenceLinks>;
+    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node))!.v;
     if ((links!.referenceKinds ?? SymbolFlagsNone) === 0) {
       const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
       Assert(IsPartOfParameterDeclaration(wrappingDeclaration), "Only parameter declaration should be checked here");
@@ -1038,7 +1038,7 @@ export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checke
  */
 export function Checker_checkWeakMapSetCollision(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const enclosingBlockScope = GetEnclosingBlockScopeContainer(node);
-  if (((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
+  if ((LinkStore_Get(receiver!.nodeLinks, enclosingBlockScope)!.v.flags & NodeCheckFlagsContainsClassWithPrivateIdentifiers) !== 0) {
     const name = Node_Name(node);
     if (name !== undefined && IsIdentifier(name)) {
       Checker_errorSkippedOnNoEmit(receiver, node, Compiler_reserves_name_0_when_emitting_private_identifier_downlevel, Node_Text(name));
@@ -1083,18 +1083,18 @@ export function Checker_checkReflectCollision(receiver: GoPtr<Checker>, node: Go
   let hasCollision: bool = false;
   if (IsClassExpression(node)) {
     for (const member of Node_Members(node) ?? []) {
-      if (((LinkStore_Get(receiver!.nodeLinks, member) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+      if ((LinkStore_Get(receiver!.nodeLinks, member)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
         hasCollision = true;
         break;
       }
     }
   } else if (IsFunctionExpression(node)) {
-    if (((LinkStore_Get(receiver!.nodeLinks, node) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if ((LinkStore_Get(receiver!.nodeLinks, node)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   } else {
     const container = GetEnclosingBlockScopeContainer(node);
-    if (container !== undefined && ((LinkStore_Get(receiver!.nodeLinks, container) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
+    if (container !== undefined && (LinkStore_Get(receiver!.nodeLinks, container)!.v.flags & NodeCheckFlagsContainsSuperPropertyInStaticInitializer) !== 0) {
       hasCollision = true;
     }
   }
@@ -1178,7 +1178,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
     }
     return Checker_getRegularTypeOfLiteralType(receiver, exprType);
   }
-  const links = LinkStore_Get(receiver!.assertionLinks, node) as GoPtr<AssertionLinks>;
+  const links = LinkStore_Get(receiver!.assertionLinks, node)!.v;
   links!.exprType = exprType;
   Checker_checkSourceElement(receiver, typeNode);
   Checker_checkNodeDeferred(receiver, node);
@@ -1207,7 +1207,7 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
  */
 export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const typeNode = Node_Type(node);
-  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, (LinkStore_Get(receiver!.assertionLinks, node) as GoPtr<AssertionLinks>)!.exprType));
+  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, LinkStore_Get(receiver!.assertionLinks, node)!.v.exprType));
   const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
   if (!Checker_isErrorType(receiver, targetType)) {
     const widenedType = Checker_getWidenedType(receiver, exprType);

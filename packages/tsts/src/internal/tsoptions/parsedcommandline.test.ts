@@ -43,7 +43,7 @@ function parseConfig(jsonText: string, files: ReadonlyMap<string, string> = sour
   const fs = FromMap(new Map<string, string>([
     ...files,
     ["/dev/tsconfig.json", jsonText],
-  ]), true as bool);
+  ]), true as bool)!;
   const host: ParseConfigHost = {
     FS: (): FS => fs,
     GetCurrentDirectory: (): string => "/dev",
@@ -52,7 +52,7 @@ function parseConfig(jsonText: string, files: ReadonlyMap<string, string> = sour
   assert.deepEqual(errors ?? [], []);
   assert.deepEqual(parsed?.Errors ?? [], []);
   assert.ok(parsed !== undefined);
-  return parsed;
+  return parsed!;
 }
 
 function assertMatches(parsedCommandLine: ParsedCommandLine, files: ReadonlyMap<string, string>, matches: readonly string[]): void {
@@ -76,7 +76,7 @@ function assertMatches(parsedCommandLine: ParsedCommandLine, files: ReadonlyMap<
 }
 
 test("ParsedCommandLine.PossiblyMatchesFileName mirrors TS-Go literal files and include lists", () => {
-  const noFilesFS = FromMap(new Map<string, string>(), true as bool);
+  const noFilesFS = FromMap(new Map<string, string>(), true as bool)!;
 
   const literalFiles = parseConfig(`{
     "files": [
@@ -103,7 +103,7 @@ test("ParsedCommandLine.PossiblyMatchesFileName mirrors TS-Go literal files and 
     "/dev/b.ts",
   ]);
 
-  const reloadedLiteralFiles = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(literalFilesWithExclude, noFilesFS);
+  const reloadedLiteralFiles = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(literalFilesWithExclude, noFilesFS)!;
   assert.ok(reloadedLiteralFiles !== undefined);
   assertMatches(reloadedLiteralFiles, new Map(), [
     "/dev/a.ts",
@@ -133,7 +133,7 @@ test("ParsedCommandLine.PossiblyMatchesFileName mirrors TS-Go literal files and 
     "/dev/b.ts",
   ]);
 
-  const reloadedLiteralIncludes = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(literalIncludes, noFilesFS);
+  const reloadedLiteralIncludes = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(literalIncludes, noFilesFS)!;
   assert.ok(reloadedLiteralIncludes !== undefined);
   assertMatches(reloadedLiteralIncludes, new Map(), [
     "/dev/a.ts",

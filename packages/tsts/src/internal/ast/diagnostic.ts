@@ -1,5 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Mutex } from "../../go/sync.js";
@@ -524,11 +525,9 @@ export function NewCompilerDiagnostic(message: GoPtr<Message>, ...args: Array<un
 export interface DiagnosticsCollection {
   mu: Mutex;
   count: int;
-  // Go zero values are a nil map / nil slice; modelled here as undefined and
-  // tolerated via Go-faithful nil-safe operations (append(nil,...), range nil).
-  fileDiagnostics: GoMap<string, GoSlice<GoPtr<Diagnostic>>> | undefined;
+  fileDiagnostics: GoMap<string, GoSlice<GoPtr<Diagnostic>>>;
   fileDiagnosticsSorted: Set<string>;
-  nonFileDiagnostics: GoSlice<GoPtr<Diagnostic>> | undefined;
+  nonFileDiagnostics: GoSlice<GoPtr<Diagnostic>>;
   nonFileDiagnosticsSorted: bool;
 }
 
@@ -562,13 +561,13 @@ export function DiagnosticsCollection_Add(receiver: GoPtr<DiagnosticsCollection>
 
     if (Diagnostic_File(diagnostic) !== undefined) {
       const fileName = SourceFile_FileName(Diagnostic_File(diagnostic));
-      if (receiver!.fileDiagnostics === undefined) {
+      if (GoMapIsNil(receiver!.fileDiagnostics)) {
         receiver!.fileDiagnostics = new globalThis.Map<string, GoSlice<GoPtr<Diagnostic>>>();
       }
-      receiver!.fileDiagnostics.set(fileName, [...(receiver!.fileDiagnostics.get(fileName) ?? []), diagnostic]);
+      receiver!.fileDiagnostics.set(fileName, [...(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice()), diagnostic]);
       collections.Set_Delete(receiver!.fileDiagnosticsSorted, fileName);
     } else {
-      receiver!.nonFileDiagnostics = [...(receiver!.nonFileDiagnostics ?? []), diagnostic];
+      receiver!.nonFileDiagnostics = [...receiver!.nonFileDiagnostics, diagnostic];
       receiver!.nonFileDiagnosticsSorted = false;
     }
   } finally {
@@ -646,12 +645,10 @@ export function DiagnosticsCollection_GetGlobalDiagnostics(receiver: GoPtr<Diagn
  */
 export function DiagnosticsCollection_getGlobalDiagnosticsLocked(receiver: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
   if (!receiver!.nonFileDiagnosticsSorted) {
-    if (receiver!.nonFileDiagnostics !== undefined) {
-      slices.SortStableFunc(receiver!.nonFileDiagnostics, CompareDiagnostics);
-    }
+    slices.SortStableFunc(receiver!.nonFileDiagnostics, CompareDiagnostics);
     receiver!.nonFileDiagnosticsSorted = true;
   }
-  return slices.Clone(receiver!.nonFileDiagnostics) ?? [];
+  return slices.Clone(receiver!.nonFileDiagnostics)!;
 }
 
 /**
@@ -688,13 +685,11 @@ export function DiagnosticsCollection_GetDiagnosticsForFile(receiver: GoPtr<Diag
  */
 export function DiagnosticsCollection_getDiagnosticsForFileLocked(receiver: GoPtr<DiagnosticsCollection>, fileName: string): GoSlice<GoPtr<Diagnostic>> {
   if (!collections.Set_Has(receiver!.fileDiagnosticsSorted, fileName)) {
-    const diags = receiver!.fileDiagnostics?.get(fileName);
-    if (diags !== undefined) {
-      slices.SortStableFunc(diags, CompareDiagnostics);
-    }
+    const diags = receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice();
+    slices.SortStableFunc(diags, CompareDiagnostics);
     collections.Set_Add(receiver!.fileDiagnosticsSorted, fileName);
   }
-  return slices.Clone(receiver!.fileDiagnostics?.get(fileName)) ?? [];
+  return slices.Clone(receiver!.fileDiagnostics.get(fileName) ?? GoNilSlice())!;
 }
 
 /**
@@ -718,11 +713,9 @@ export function DiagnosticsCollection_GetDiagnostics(receiver: GoPtr<Diagnostics
   receiver!.mu.Lock();
   try {
     const diagnostics_: GoSlice<GoPtr<Diagnostic>> = [];
-    diagnostics_.push(...(receiver!.nonFileDiagnostics ?? []));
-    if (receiver!.fileDiagnostics !== undefined) {
-      for (const diags of receiver!.fileDiagnostics.values()) {
-        diagnostics_.push(...diags);
-      }
+    diagnostics_.push(...receiver!.nonFileDiagnostics);
+    for (const diags of receiver!.fileDiagnostics.values()) {
+      diagnostics_.push(...diags);
     }
     slices.SortFunc(diagnostics_, CompareDiagnostics);
     return diagnostics_;

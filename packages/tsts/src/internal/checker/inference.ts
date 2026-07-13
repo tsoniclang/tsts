@@ -654,7 +654,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
       // Source and target are types originating in the same generic type alias declaration.
       // Simply infer from source type arguments to target type arguments, with defaults applied.
       const aliasSymbol = source!.alias!["symbol"] as GoPtr<Symbol>;
-      const params = (LinkStore_Get(c.typeAliasLinks, aliasSymbol) as GoPtr<TypeAliasLinks>)!.typeParameters;
+      const params = LinkStore_Get(c.typeAliasLinks, aliasSymbol)!.v.typeParameters;
       const minParams = Checker_getMinTypeArgumentCount(c, params);
       const nodeIsInJsFile = IsInJSFile(aliasSymbol!.ValueDeclaration);
       const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
@@ -2581,8 +2581,8 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
     const checkFlags = CheckFlagsReverseMapped | (readonlyMask && Checker_isReadonlySymbol(receiver, prop) ? CheckFlagsReadonly : 0);
     const inferredProp = Checker_newSymbolEx(receiver, SymbolFlagsProperty | (prop!.Flags & optionalMask), prop!.Name, checkFlags);
     inferredProp!.Declarations = prop!.Declarations;
-    (LinkStore_Get(c.valueSymbolLinks, inferredProp) as GoPtr<ValueSymbolLinks>)!.nameType = (LinkStore_Get(c.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.nameType;
-    const links = (LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp) as GoPtr<ReverseMappedSymbolLinks>)!;
+    LinkStore_Get(c.valueSymbolLinks, inferredProp)!.v.nameType = LinkStore_Get(c.valueSymbolLinks, prop)!.v.nameType;
+    const links = LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp)!.v;
     links.propertyType = Checker_getTypeOfSymbol(receiver, prop);
     const constraintTarget = Type_AsIndexType(r.constraintType)!.target;
     if ((constraintTarget!.flags & TypeFlagsIndexedAccess) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.objectType!.flags & TypeFlagsTypeParameter) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.indexType!.flags & TypeFlagsTypeParameter) !== 0) {
@@ -2614,9 +2614,9 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
  */
 export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
   const c = receiver!;
-  const links = (LinkStore_Get(c.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!;
+  const links = LinkStore_Get(c.valueSymbolLinks, symbol_)!.v;
   if (links.resolvedType === undefined) {
-    const reverseLinks = (LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_) as GoPtr<ReverseMappedSymbolLinks>)!;
+    const reverseLinks = LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_)!.v;
     links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType);
   }
   return links.resolvedType;
@@ -2827,7 +2827,7 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
     }
     const name = getStringLiteralValue(t2);
     const literalProp = Checker_newSymbol(receiver, SymbolFlagsProperty, name);
-    (LinkStore_Get(c.valueSymbolLinks, literalProp) as GoPtr<ValueSymbolLinks>)!.resolvedType = c.anyType;
+    LinkStore_Get(c.valueSymbolLinks, literalProp)!.v.resolvedType = c.anyType;
     if (t2!.symbol !== undefined) {
       literalProp!.Declarations = t2!.symbol!.Declarations;
       literalProp!.ValueDeclaration = t2!.symbol!.ValueDeclaration;

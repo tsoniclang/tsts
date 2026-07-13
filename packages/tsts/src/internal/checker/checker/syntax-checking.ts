@@ -1360,7 +1360,7 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
   if (checkMode !== CheckModeNormal) {
     return Checker_checkExpressionEx(receiver, node, checkMode);
   }
-  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node)!.v;
   if (links!.resolvedType === undefined) {
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
@@ -1833,7 +1833,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
     ) {
       for (let current = GetEnclosingBlockScopeContainer(node!.Parent); current !== undefined; current = GetEnclosingBlockScopeContainer(current)) {
         if (!IsSourceFile(current) || IsExternalOrCommonJSModule(AsSourceFile(current))) {
-          (LinkStore_Get(receiver!.nodeLinks, current) as GoPtr<NodeLinks>)!.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
+          LinkStore_Get(receiver!.nodeLinks, current)!.v.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
         }
       }
     }
@@ -3423,7 +3423,7 @@ export function Checker_checkInExpression(receiver: GoPtr<Checker>, left: GoPtr<
     ) {
       Checker_checkExternalEmitHelpers(receiver, left, ExternalEmitHelpersClassPrivateFieldIn);
     }
-    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>) as GoPtr<SymbolNodeLinks>;
+    const links = LinkStore_Get(receiver!.symbolNodeLinks, left as unknown as GoPtr<Node>)!.v;
     if (links!.resolvedSymbol === undefined && GetContainingClass(left as unknown as GoPtr<Node>) !== undefined) {
       const isUncheckedJS = Checker_isUncheckedJSSuggestion(receiver, left as unknown as GoPtr<Node>, rightType!.symbol, true);
       Checker_reportNonexistentProperty(receiver, left as unknown as GoPtr<Node>, rightType, isUncheckedJS);

@@ -259,8 +259,8 @@ const programTestCases: programTest[] = [
 for (const testCase of programTestCases) {
   test(`Program ${testCase.testName}`, () => {
     const libPrefix = LibPath() + "/";
-    let fs = FromMap(new Map<string, string>(), false as bool /*useCaseSensitiveFileNames*/);
-    fs = WrapFS(fs);
+    let fs = FromMap(new Map<string, string>(), false as bool /*useCaseSensitiveFileNames*/)!;
+    fs = WrapFS(fs)!;
 
     for (const file of testCase.files) {
       fs.WriteFile(file.fileName, file.contents);
@@ -269,9 +269,9 @@ for (const testCase of programTestCases) {
     const opts = { Target: testCase.target } as CompilerOptions;
 
     const program = NewProgram({
-      Config: parsedCommandLine(["c:/dev/src/index.ts"], opts),
-      Host: NewCompilerHost("c:/dev/src", fs, LibPath(), undefined, undefined),
-    });
+      Config: parsedCommandLine(["c:/dev/src/index.ts"], opts)!,
+      Host: NewCompilerHost("c:/dev/src", fs, LibPath(), undefined, undefined)!,
+    })!;
 
     const actualFiles: string[] = [];
     for (const file of Program_GetSourceFiles(program)) {

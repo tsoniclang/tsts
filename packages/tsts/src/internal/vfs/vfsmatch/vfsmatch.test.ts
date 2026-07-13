@@ -41,7 +41,7 @@ function caseInsensitiveHost(): FS {
     ["/dev/js/ab.min.js", ""],
     ["/ext/ext.ts", ""],
     ["/ext/b/a..b.ts", ""],
-  ]), false as bool);
+  ]), false as bool)!;
 }
 
 function caseSensitiveHost(): FS {
@@ -63,7 +63,7 @@ function caseSensitiveHost(): FS {
     ["/dev/js/a.js", ""],
     ["/dev/js/b.js", ""],
     ["/dev/js/d.MIN.js", ""],
-  ]), true as bool);
+  ]), true as bool)!;
 }
 
 function commonFoldersHost(): FS {
@@ -76,7 +76,7 @@ function commonFoldersHost(): FS {
     ["/dev/node_modules/a.ts", ""],
     ["/dev/bower_components/a.ts", ""],
     ["/dev/jspm_packages/a.ts", ""],
-  ]), false as bool);
+  ]), false as bool)!;
 }
 
 function dottedFoldersHost(): FS {
@@ -88,7 +88,7 @@ function dottedFoldersHost(): FS {
     ["/dev/.z/.b.ts", ""],
     ["/dev/.z/c.ts", ""],
     ["/dev/w/.u/e.ts", ""],
-  ]), false as bool);
+  ]), false as bool)!;
 }
 
 function mixedExtensionHost(): FS {
@@ -104,7 +104,7 @@ function mixedExtensionHost(): FS {
     ["/dev/d.js", ""],
     ["/dev/e.jsx", ""],
     ["/dev/f.other", ""],
-  ]), false as bool);
+  ]), false as bool)!;
 }
 
 type ReadDirCase = {
