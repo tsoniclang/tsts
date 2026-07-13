@@ -10,6 +10,20 @@ Porter is deliberately not a Go-to-TypeScript translator. It must not infer impl
 
 The scope is closed at the declaration boundary. Porter captures functions and methods, receivers, parameters, results, variadics, named types and aliases, structs, interfaces, type parameters, complete constraints and type sets, constants, variables, array lengths, channel directions, type-intrinsic nilability, embedding, and struct tags. Named Go multi-results map to labeled TypeScript tuple elements. A single Go result binding has no corresponding TypeScript return-type syntax, so its binding name remains pinned by the unit's exact Go declaration `sigHash` while the TypeScript descriptor independently proves its scalar return type. Nilability is recorded by `go/types` on every canonical type occurrence; it is never inferred from TypeScript optional syntax or carrier spelling. Operation-bearing slice, map, and channel carriers encode their nil state as valid carrier values because Go permits operations such as `len`, range, lookup, delete, and blocked channel selection on nil values. Pointer, function, interface, and unsafe-pointer carriers use `undefined` because dereference, invocation, or member selection on nil is invalid. The Go declaration checker runs with `go/types.Config.IgnoreFuncBodies = true`. The TypeScript extractor traverses declaration syntax only. Implementation bodies are parsed only to establish source boundaries; Porter never visits, hashes, copies, or gates on them.
 
+Generic Go zero values use one explicit runtime dictionary contract. The
+generated compatibility module exports `GoZeroFactory<T>` and shared factories
+for primitive, pointer/reference, function, interface, slice, map, channel, and
+empty-struct zero values. An authored generic implementation that executes
+`var zero T` in JavaScript may accept the required factory as a reviewed local
+`runtime-representation` signature override. It must not guess from a value,
+type name, constructor, or source spelling. The factory is attached only to the
+generic operation that needs erased type evidence; ordinary map and slice
+carriers do not carry mandatory descriptor fields. This keeps the JavaScript
+fast path direct and leaves a native target free to monomorphize the dictionary
+away. Porter verifies the declaration divergence and its exact snapshots but,
+consistent with its declaration-only boundary, never inserts factories by
+scanning implementation bodies.
+
 ## Nilability Carriers
 
 Nilability has one declaration contract. `GoPtr<T>`, `GoRef<T>`, `GoFunc<F>`,

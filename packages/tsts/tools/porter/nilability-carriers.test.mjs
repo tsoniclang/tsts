@@ -85,6 +85,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
   assert.match(source, /export type GoMap<K, V> = Map<K, V>;/);
   assert.match(source, /export function GoNilMap<K, V>\(\): GoMap<K, V>/);
+  assert.doesNotMatch(source, /__tsgo(?:Key|Value)Zero|class GoNativeMap|function NewGoMap/);
   assert.match(source, /assignment to entry in nil map/);
   assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = \{/);
   assert.match(source, /export function GoNilChan<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
@@ -95,6 +96,19 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.doesNotMatch(source, /\bGoSeq2?\b/);
   assert.match(source, /export type GoError = GoInterface<Error>;/);
   assert.match(source, /export type GoUnsafePointer = GoNilable<\{ readonly \[goUnsafePointerBrand\]: never \}>;/);
+  assert.match(source, /export type GoZeroFactory<T> = \(\) => T;/);
+  assert.match(source, /export function GoZeroBoolean\(\): bool/);
+  assert.match(source, /export function GoZeroNumber\(\): number/);
+  assert.match(source, /export function GoZeroBigInt\(\): bigint/);
+  assert.match(source, /export function GoZeroString\(\): string/);
+  assert.match(source, /export function GoZeroPointer<T>\(\): GoPtr<T>/);
+  assert.match(source, /export function GoZeroRef<T>\(\): GoRef<T>/);
+  assert.match(source, /export function GoZeroFunction<F>\(\): GoFunc<F>/);
+  assert.match(source, /export function GoZeroInterface<I>\(\): GoInterface<I>/);
+  assert.match(source, /export function GoZeroSlice<T>\(\): GoSlice<T>/);
+  assert.match(source, /export function GoZeroMap<K, V>\(\): GoMap<K, V>/);
+  assert.match(source, /export function GoZeroChannel<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
+  assert.match(source, /export function GoZeroEmptyStruct\(\): \{ readonly __tsgoEmpty\?: never \}/);
   assert.doesNotMatch(source, /Nilable extends boolean/);
   assert.match(source, /MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(source, /GoMapGetExisting<K, V>\(map: NonNullable<GoMap<K, V>>/);
@@ -148,6 +162,19 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   const nilSlice = runtime.GoNilSlice();
   const sameNilSlice = runtime.GoNilSlice();
   assert.equal(nilSlice.length, 0);
+
+  assert.equal(runtime.GoZeroBoolean(), false);
+  assert.equal(runtime.GoZeroNumber(), 0);
+  assert.equal(runtime.GoZeroBigInt(), 0n);
+  assert.equal(runtime.GoZeroString(), "");
+  assert.equal(runtime.GoZeroPointer(), undefined);
+  assert.equal(runtime.GoZeroFunction(), undefined);
+  assert.equal(runtime.GoZeroInterface(), undefined);
+  assert.equal(runtime.GoSliceIsNil(runtime.GoZeroSlice()), true);
+  assert.equal(runtime.GoZeroRef(), undefined);
+  assert.equal(runtime.GoMapIsNil(runtime.GoZeroMap()), true);
+  assert.equal(runtime.GoChanIsNil(runtime.GoZeroChannel()), true);
+  assert.deepEqual(runtime.GoZeroEmptyStruct(), {});
   assert.notEqual(nilSlice, sameNilSlice);
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil(sameNilSlice), true);
@@ -174,6 +201,11 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   nilMap.clear();
   assert.equal(runtime.GoMapIsNil(nilMap), true);
   assert.throws(() => nilMap.set("key", 1), /assignment to entry in nil map/);
+  const allocatedMap = new Map();
+  assert.equal(runtime.GoMapIsNil(allocatedMap), false);
+  assert.deepEqual(runtime.GoMapLookup(allocatedMap, "missing", runtime.GoZeroNumber), [0, false]);
+  allocatedMap.set("key", 1);
+  assert.deepEqual(runtime.GoMapLookup(allocatedMap, "key", runtime.GoZeroNumber), [1, true]);
 
   class StructuredKey {
     constructor(value) { this.value = value; }
@@ -189,6 +221,7 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   sourceKey.value = 2;
   assert.equal(structuredMap.get(new StructuredKey(1)), "stored");
   assert.equal(structuredMap.keys().next().value.text(), "1");
+  assert.deepEqual(runtime.GoMapLookup(structuredMap, new StructuredKey(2), runtime.GoZeroString), ["", false]);
 
   const nilChannel = runtime.GoNilChan();
   assert.equal(runtime.GoChanIsNil(nilChannel), true);

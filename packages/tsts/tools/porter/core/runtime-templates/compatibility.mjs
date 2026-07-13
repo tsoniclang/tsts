@@ -43,6 +43,55 @@ export type GoComplex128 = { readonly real: number; readonly imag: number };
 declare const goUnsafePointerBrand: unique symbol;
 export type GoUnsafePointer = GoNilable<{ readonly [goUnsafePointerBrand]: never }>;
 export type GoRune = int;
+export type GoZeroFactory<T> = () => T;
+
+export function GoZeroBoolean(): bool {
+  return false;
+}
+
+export function GoZeroNumber(): number {
+  return 0;
+}
+
+export function GoZeroBigInt(): bigint {
+  return 0n;
+}
+
+export function GoZeroString(): string {
+  return "";
+}
+
+export function GoZeroPointer<T>(): GoPtr<T> {
+  return undefined;
+}
+
+export function GoZeroRef<T>(): GoRef<T> {
+  return undefined;
+}
+
+export function GoZeroFunction<F>(): GoFunc<F> {
+  return undefined;
+}
+
+export function GoZeroInterface<I>(): GoInterface<I> {
+  return undefined;
+}
+
+export function GoZeroSlice<T>(): GoSlice<T> {
+  return GoNilSlice();
+}
+
+export function GoZeroMap<K, V>(): GoMap<K, V> {
+  return GoNilMap();
+}
+
+export function GoZeroChannel<T, Direction extends string = "bidirectional">(): GoChan<T, Direction> {
+  return GoNilChan();
+}
+
+export function GoZeroEmptyStruct(): { readonly __tsgoEmpty?: never } {
+  return {};
+}
 
 export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
   return { v: value } as NonNullable<GoRef<T>>;
@@ -395,7 +444,7 @@ export function GoMapGetExisting<K, V>(map: NonNullable<GoMap<K, V>>, key: K): V
   throw new TypeError("map key lookup is inconsistent with its entries");
 }
 
-export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: () => V): [V, bool] {
+export function GoMapLookup<K, V>(map: GoMap<K, V>, key: K, zeroValue: GoZeroFactory<V>): [V, bool] {
   if (!map.has(key)) {
     return [zeroValue(), false];
   }
