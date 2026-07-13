@@ -485,6 +485,8 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.doesNotMatch(data, /goReceiverKey/);
   assert.match(data, /export interface Identifier extends PrimaryExpressionBase, FlowNodeBase, nodeData \{/);
   assert.match(data, /__tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \}/);
+  assert.match(data, /Pos\(\): int \{ return Node_Pos\(this\); \}/);
+  assert.match(data, /End\(\): int \{ return Node_End\(this\); \}/);
   assert.match(data, /interface IdentifierNodeData extends Identifier \{\}/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return receiver!;\s*\}/);
   assert.match(data, /export function createIdentifierData\(\): Identifier \{\s*return new IdentifierNodeData\(\);\s*\}/);
