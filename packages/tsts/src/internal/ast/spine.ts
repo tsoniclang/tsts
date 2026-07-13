@@ -147,9 +147,9 @@ export function visitModifiers(v: Visitor, modifiers: GoPtr<ModifierList>): bool
  * }
  */
 export interface NodeFactoryHooks {
-  OnCreate?: GoPtr<(node: GoPtr<Node>) => void>;
-  OnUpdate?: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
-  OnClone?: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
+  OnCreate?: GoFunc<(node: GoPtr<Node>) => void>;
+  OnUpdate?: GoFunc<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
+  OnClone?: GoFunc<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
 }
 
 /**

@@ -158,7 +158,7 @@ export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectRe
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => projectReferenceDtsFakingVfs_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => projectReferenceDtsFakingVfs_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => projectReferenceDtsFakingVfs_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => projectReferenceDtsFakingVfs_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => projectReferenceDtsFakingVfs_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => projectReferenceDtsFakingVfs_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => projectReferenceDtsFakingVfs_Realpath(receiver, path),
   };

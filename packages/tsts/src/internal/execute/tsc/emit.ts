@@ -48,9 +48,9 @@ import type { GoInterface } from "../../../go/compat.js";
  * 	}
  * }
  */
-export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
+export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: GoInterface<CommandLineTesting>): (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void {
   if (testing === undefined) {
-    return (msg: GoPtr<Message>, ...args: Array<unknown>): void => {
+    return (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void => {
       Fprintln(w!, Message_Localize(msg, locale, ...args));
     };
   } else {
@@ -87,7 +87,7 @@ export interface EmitInput {
   Writer: GoInterface<Writer>;
   WriteFile: WriteFile;
   CompileTimes: GoPtr<CompileTimes>;
-  Testing: CommandLineTesting | undefined;
+  Testing: GoInterface<CommandLineTesting>;
   TestingMTimesCache: GoPtr<SyncMap<Path, Time>>;
   Tracing: GoPtr<Tracing>;
 }

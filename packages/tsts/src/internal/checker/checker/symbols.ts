@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
-import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoInterface, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
 import { GoBigIntKey, GoEqualStrict, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStringKey, GoStructField, GoStructKey, GoValueRef, GoZeroNumber, GoZeroPointer, GoZeroSlice, NewGoStructMap } from "../../../go/compat.js";
 import { Uint64 } from "../../../go/sync/atomic.js";
@@ -19072,7 +19072,7 @@ export function Checker_getAwaitedTypeNoAlias(receiver: GoPtr<Checker>, t: GoPtr
  * 	return t
  * }
  */
-export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Type> {
+export function Checker_getAwaitedTypeNoAliasEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
   if (IsTypeAny(t)) {
     return t;
   }

@@ -145,7 +145,7 @@ export function affectedFilesHandler_isChangedSignature(receiver: GoPtr<affected
     GoZeroPointer<updatedSignature>,
     GoStringKey
   );
-  const [oldInfo] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+  const [oldInfo] = SyncMap_Load<Path, GoInterface<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     path,
     GoZeroPointer<FileInfo>,
@@ -273,7 +273,7 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
     return false as bool;
   }
 
-  const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+  const [info] = SyncMap_Load<Path, GoInterface<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     SourceFile_Path(file),
     GoZeroPointer<FileInfo>,
@@ -338,7 +338,7 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
     return [file];
   }
 
-  const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+  const [info] = SyncMap_Load<Path, GoInterface<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     SourceFile_Path(file),
     GoZeroPointer<FileInfo>,
@@ -686,7 +686,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfFileAndReferences(recei
  * }
  */
 export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: GoPtr<affectedFilesHandler>, dtsMayChange: dtsMayChange, filePath: Path, invalidateJsFiles: bool): bool {
-  const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+  const [info, ok] = SyncMap_Load<Path, GoInterface<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     filePath,
     GoZeroPointer<FileInfo>,
@@ -781,7 +781,7 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
   SyncMap_Range<Path, GoPtr<updatedSignature>>(
     receiver!.updatedSignatures as SyncMap<Path, GoPtr<updatedSignature>>,
     (filePath: Path, update: GoPtr<updatedSignature>): bool => {
-      const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
+      const [info, ok] = SyncMap_Load<Path, GoInterface<FileInfo>>(
         receiver!.program!.snapshot!.fileInfos,
         filePath,
         GoZeroPointer<FileInfo>,

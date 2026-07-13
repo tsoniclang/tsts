@@ -290,18 +290,18 @@ export interface Watcher {
   configFileName: string;
   config: GoPtr<ParsedCommandLine>;
   compilerOptionsFromCommandLine: GoPtr<CompilerOptions>;
-  commandLineRaw: GoPtr<OrderedMap<string, unknown>>;
+  commandLineRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   reportDiagnostic: DiagnosticReporter;
   reportErrorSummary: DiagnosticsReporter;
   reportWatchStatus: DiagnosticReporter;
-  testing: CommandLineTesting | undefined;
+  testing: GoInterface<CommandLineTesting>;
   program: GoPtr<Program>;
-  extendedConfigCache: GoPtr<ExtendedConfigCache>;
+  extendedConfigCache: GoInterface<ExtendedConfigCache>;
   configModified: bool;
   configHasErrors: bool;
   configFilePaths: GoSlice<string>;
   sourceFileCache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
-  backend: WatchBackend | undefined;
+  backend: GoInterface<WatchBackend>;
   watchedDirs: GoMap<string, GoPtr<watchedDir>>;
   seenFiles: GoPtr<Set<Path>>;
   configMtimes: GoMap<string, Time>;
@@ -369,7 +369,7 @@ function newSyncSet<T>(): SyncSet<T> {
  * 	return w
  * }
  */
-export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, unknown>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
+export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: GoInterface<CommandLineTesting>): GoPtr<Watcher> {
   const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   const w: Watcher = {
     mu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["mu"],
@@ -411,7 +411,7 @@ export function createWatcher(sys: GoInterface<System>, configParseResult: GoPtr
 // Go type-assertion `testing.(commandLineTestingWithWatchBackend)`: a CommandLineTesting
 // also satisfies commandLineTestingWithWatchBackend iff it carries a WatchBackend() method.
 // Structural duck-typing matches the Go interface assertion (ok == method present).
-function asCommandLineTestingWithWatchBackend(testing: CommandLineTesting | undefined): commandLineTestingWithWatchBackend | undefined {
+function asCommandLineTestingWithWatchBackend(testing: GoInterface<CommandLineTesting>): GoInterface<commandLineTestingWithWatchBackend> {
   if (testing === undefined) {
     return undefined;
   }

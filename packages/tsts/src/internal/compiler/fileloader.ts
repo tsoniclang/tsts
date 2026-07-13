@@ -202,7 +202,7 @@ export interface LibFile {
  */
 export interface sourceFileFromReferenceDiagnostic {
   message: GoPtr<Message>;
-  args: GoSlice<unknown>;
+  args: GoSlice<GoInterface<unknown>>;
 }
 
 /**

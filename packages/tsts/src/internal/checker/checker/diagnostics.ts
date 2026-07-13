@@ -2250,7 +2250,7 @@ export function Checker_addDuplicateDeclarationError(receiver: GoPtr<Checker>, n
  * 	return diagnostic
  * }
  */
-export function Checker_lookupOrIssueError(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function Checker_lookupOrIssueError(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const diagnostic = NewDiagnosticForNode(location, message, ...args);
   const existing = DiagnosticsCollection_Lookup(receiver!.diagnostics, diagnostic);
   if (existing !== undefined) {

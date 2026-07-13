@@ -1,6 +1,6 @@
 import type { bool, int, uint } from "../../go/scalars.js";
 import type { Seq } from "../../go/iter.js";
-import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoEqualStrict, GoNilSlice, GoValueRef, GoZeroMap, GoZeroPointer } from "../../go/compat.js";
 import { Index as SliceIndex, Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
@@ -849,8 +849,8 @@ export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: G
       nonArrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
     }
     let invalidTextDiagnostic: GoPtr<Message>;
-    let invalidTextDiagnosticArgs: GoSlice<unknown> = [];
-    const getInvalidTextualChildDiagnostic = (): [GoPtr<Message>, GoSlice<unknown>] => {
+    let invalidTextDiagnosticArgs: GoSlice<GoInterface<unknown>> = [];
+    const getInvalidTextualChildDiagnostic = (): [GoPtr<Message>, GoSlice<GoInterface<unknown>>] => {
       if (invalidTextDiagnostic === undefined) {
         const tagNameText = GetTextOfNode(Node_TagName(node!.Parent));
         invalidTextDiagnostic = X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2;
@@ -898,7 +898,7 @@ export interface JsxElaborationElement {
   errorNode: GoPtr<Node>;
   innerExpression: GoPtr<Node>;
   nameType: GoPtr<Type>;
-  createDiagnostic: GoPtr<(prop: GoPtr<Node>) => GoPtr<Diagnostic>>;
+  createDiagnostic: GoFunc<(prop: GoPtr<Node>) => GoPtr<Diagnostic>>;
 }
 
 /**
@@ -922,7 +922,7 @@ export interface JsxElaborationElement {
  * 	}
  * }
  */
-export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): Seq<JsxElaborationElement> {
+export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]): Seq<JsxElaborationElement> {
   return (yieldValue) => {
     let memberOffset = 0;
     const children = Node_Children(node)!.Nodes;
@@ -972,7 +972,7 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
  * 	panic("Unhandled case in getElaborationElementForJsxChild")
  * }
  */
-export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker>, child: GoPtr<Node>, nameType: GoPtr<Type>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): JsxElaborationElement {
+export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker>, child: GoPtr<Node>, nameType: GoPtr<Type>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]): JsxElaborationElement {
   switch (child!.Kind) {
     case KindJsxExpression:
       // child is of the type of the expression

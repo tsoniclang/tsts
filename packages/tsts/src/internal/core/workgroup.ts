@@ -206,7 +206,7 @@ export function singleThreadedWorkGroup_RunAndWait(receiver: GoPtr<singleThreade
  * 	return fn
  * }
  */
-export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGroup>): GoPtr<() => void> {
+export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGroup>): GoFunc<() => void> {
   receiver!.fnsMu.Lock();
   if (receiver!.fns.length === 0) {
     receiver!.fnsMu.Unlock();

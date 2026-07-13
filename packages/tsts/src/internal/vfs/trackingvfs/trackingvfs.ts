@@ -40,7 +40,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_2329d319 {
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FS_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => FS_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => FS_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => FS_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => FS_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => FS_Realpath(receiver, path),
   };
@@ -167,7 +167,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  * 	return fs.Inner.Stat(path)
  * }
  */
-export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
+export function FS_Stat(receiver: GoPtr<FS>, path: string): GoInterface<FileInfo> {
   SyncSet_Add(receiver!.SeenFiles, path, GoStringKey);
   return receiver!.Inner!.Stat(path);
 }

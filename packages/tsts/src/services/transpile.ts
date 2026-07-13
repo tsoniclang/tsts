@@ -1,5 +1,5 @@
 import type { bool, int } from "../go/scalars.js";
-import type { GoError, GoPtr, GoSlice } from "../go/compat.js";
+import type { GoError, GoInterface, GoPtr, GoSlice } from "../go/compat.js";
 import { GoNilMap } from "../go/compat.js";
 import type { Writer } from "../go/io.js";
 import { Background } from "../go/context.js";
@@ -340,7 +340,7 @@ class TranspileFileSystem implements FS {
     };
   }
 
-  Stat(fileName: string): GoPtr<FileInfo> {
+  Stat(fileName: string): GoInterface<FileInfo> {
     const normalized = normalizeTranspileKey(fileName);
     if (this.FileExists(normalized)) {
       return new TranspileFileInfo(baseName(normalized), false);

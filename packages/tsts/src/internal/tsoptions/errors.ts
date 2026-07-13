@@ -1,4 +1,4 @@
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import { Collect } from "../../go/slices.js";
 import { Join, ToLower } from "../../go/strings.js";
@@ -187,7 +187,7 @@ export function createUnknownOptionError(unknownOption: string, unknownOptionDia
  * 	return ast.NewDiagnostic(sourceFile, core.NewTextRange(scanner.SkipTrivia(sourceFile.Text(), node.Loc.Pos()), node.End()), message, args...)
  * }
  */
-export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const text = SourceFile_Text(sourceFile);
   const pos = SkipTrivia(text, TextRange_Pos(node!.Loc));
   return NewDiagnostic(sourceFile, NewTextRange(pos, Node_End(node)), message, ...args);
@@ -204,7 +204,7 @@ export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile
  * 	return ast.NewCompilerDiagnostic(message, args...)
  * }
  */
-export function CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (sourceFile !== undefined && node !== undefined) {
     return CreateDiagnosticForNodeInSourceFile(sourceFile, node, message, ...args);
   }

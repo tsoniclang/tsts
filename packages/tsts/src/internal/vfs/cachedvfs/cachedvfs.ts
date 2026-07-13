@@ -38,7 +38,7 @@ export interface FS {
   fileExistsCache: SyncMap<string, bool>;
   getAccessibleEntriesCache: SyncMap<string, Entries>;
   realpathCache: SyncMap<string, string>;
-  statCache: SyncMap<string, GoPtr<FileInfo>>;
+  statCache: SyncMap<string, GoInterface<FileInfo>>;
 }
 
 /**
@@ -60,7 +60,7 @@ export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FS_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => FS_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => FS_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => FS_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => FS_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => FS_Realpath(receiver, path),
   };
@@ -330,16 +330,16 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  * 	return ret
  * }
  */
-export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
+export function FS_Stat(receiver: GoPtr<FS>, path: string): GoInterface<FileInfo> {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, GoPtr<FileInfo>>(receiver!.statCache, path, GoZeroPointer<FileInfo>, GoStringKey);
+    const [ret, ok] = SyncMap_Load<string, GoInterface<FileInfo>>(receiver!.statCache, path, GoZeroPointer<FileInfo>, GoStringKey);
     if (ok) {
       return ret;
     }
   }
   const ret = receiver!.fs!.Stat(path);
   if (receiver!.enabled.Load()) {
-    SyncMap_Store<string, GoPtr<FileInfo>>(receiver!.statCache, path, ret, GoStringKey);
+    SyncMap_Store<string, GoInterface<FileInfo>>(receiver!.statCache, path, ret, GoStringKey);
   }
   return ret;
 }

@@ -43,7 +43,7 @@ export interface extendedConfigCacheEntry {
  */
 export let __a568fcce_0: GoInterface<ExtendedConfigCache_f02f7376> = ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(undefined);
 
-export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: GoPtr<ExtendedConfigCache>): ExtendedConfigCache_f02f7376 {
+export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: GoInterface<ExtendedConfigCache>): ExtendedConfigCache_f02f7376 {
   return {
     GetExtendedConfig: (fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry> =>
       ExtendedConfigCache_GetExtendedConfig(receiver, fileName, path, resolutionStack, host),
@@ -63,7 +63,7 @@ export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: G
  * 	return entry.ExtendedConfigCacheEntry
  * }
  */
-export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedConfigCache>, fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: GoInterface<ParseConfigHost>): GoPtr<ExtendedConfigCacheEntry> {
+export function ExtendedConfigCache_GetExtendedConfig(receiver: GoInterface<ExtendedConfigCache>, fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: GoInterface<ParseConfigHost>): GoPtr<ExtendedConfigCacheEntry> {
   const [entry, loaded] = ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver, path);
   try {
     if (!loaded) {
@@ -89,7 +89,7 @@ export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedCo
  * 	return entry, false
  * }
  */
-export function ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver: GoPtr<ExtendedConfigCache>, path: Path): [GoPtr<extendedConfigCacheEntry>, bool] {
+export function ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver: GoInterface<ExtendedConfigCache>, path: Path): [GoPtr<extendedConfigCacheEntry>, bool] {
   const entry: extendedConfigCacheEntry = { __tsgoEmbedded0: undefined, mu: new Mutex() };
   entry.mu.Lock();
   const [existing, loaded] = SyncMap_LoadOrStore<Path, GoPtr<extendedConfigCacheEntry>>(receiver!.m, path, entry, GoZeroPointer<extendedConfigCacheEntry>, GoStringKey);

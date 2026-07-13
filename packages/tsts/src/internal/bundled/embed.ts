@@ -304,7 +304,7 @@ export let libsEntries: GoSlice<DirEntry> = LibNames.map((name): DirEntry =>
  * 	return vfs.fs.Stat(path)
  * }
  */
-export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoPtr<FileInfo> {
+export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoInterface<FileInfo> {
   const [rest, ok] = splitPath(path);
   if (ok) {
     if (rest === "" || rest === "libs") {

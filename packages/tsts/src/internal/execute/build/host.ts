@@ -91,7 +91,7 @@ export function host_as_compiler_CompilerHost(receiver: GoPtr<host>): CompilerHo
     FS: (): FS_7f03dc1c => host_FS(receiver)!,
     DefaultLibraryPath: (): string => host_DefaultLibraryPath(receiver),
     GetCurrentDirectory: (): string => host_GetCurrentDirectory(receiver),
-    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => host_Trace(receiver, msg, ...args),
+    Trace: (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void => host_Trace(receiver, msg, ...args),
     GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => host_GetSourceFile(receiver, opts),
     GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => host_GetResolvedProjectReference(receiver, fileName, path),
   };
@@ -154,7 +154,7 @@ export function host_GetCurrentDirectory(receiver: GoPtr<host>): string {
  * 	panic("build.Orchestrator.host does not support tracing, use a different host for tracing")
  * }
  */
-export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, ...args: Array<unknown>): void {
+export function host_Trace(receiver: GoPtr<host>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
   throw new globalThis.Error("build.Orchestrator.host does not support tracing, use a different host for tracing");
 }
 
@@ -201,12 +201,12 @@ export function host_GetSourceFile(receiver: GoPtr<host>, opts: SourceFileParseO
 export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName: string, path: Path): GoPtr<ParsedCommandLine> {
   return parseCache_loadOrStore(receiver!.resolvedReferences, path, (p: Path): GoPtr<ParsedCommandLine> => {
     const configStart = receiver!.orchestrator!.opts.Sys!.Now();
-    let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
+    let commandLineRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>> = undefined;
     const raw = receiver!.orchestrator!.opts.Command!.Raw;
     if (raw !== undefined && raw !== null) {
-      const rawMap = raw as OrderedMap<string, unknown>;
+      const rawMap = raw as OrderedMap<string, GoInterface<unknown>>;
       if (rawMap.keys !== undefined) {
-        const wrapped: OrderedMap<string, unknown> = { __tsgoBlank0: {}, keys: [], mp: new Map() };
+        const wrapped: OrderedMap<string, GoInterface<unknown>> = { __tsgoBlank0: {}, keys: [], mp: new Map() };
         OrderedMap_Set(wrapped, "compilerOptions", rawMap, GoStringKey);
         commandLineRaw = wrapped;
       }

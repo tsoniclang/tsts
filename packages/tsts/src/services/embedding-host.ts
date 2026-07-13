@@ -1,5 +1,5 @@
 import type { bool } from "../go/scalars.js";
-import type { GoPtr } from "../go/compat.js";
+import type { GoInterface, GoPtr } from "../go/compat.js";
 import type { Message } from "../internal/diagnostics/diagnostics.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import { NewCachedFSCompilerHost, NewCompilerHost } from "../internal/compiler/host.js";
@@ -15,7 +15,7 @@ export interface CompilerHostOptions {
   readonly currentDirectory: string;
   readonly fileSystem: CompilerFileSystem;
   readonly defaultLibraryPath?: string;
-  readonly extendedConfigCache?: GoPtr<ExtendedConfigCache>;
+  readonly extendedConfigCache?: GoInterface<ExtendedConfigCache>;
   readonly trace?: CompilerTraceCallback;
   readonly cacheFileSystem?: boolean;
   readonly includeBundledLibraries?: boolean;

@@ -1,5 +1,5 @@
 import type { int } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { NewDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -19,7 +19,7 @@ import type { Parser } from "./state.js";
  * 	p.parseErrorAtRange(core.NewTextRange(pos, pos+length), message, args...)
  * }
  */
-export function Parser_scanError(receiver: GoPtr<Parser>, message: GoPtr<Message>, pos: int, length: int, ...args: Array<unknown>): void {
+export function Parser_scanError(receiver: GoPtr<Parser>, message: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>): void {
   Parser_parseErrorAtRange(receiver, NewTextRange(pos, pos + length), message, ...args);
 }
 
@@ -31,7 +31,7 @@ export function Parser_scanError(receiver: GoPtr<Parser>, message: GoPtr<Message
  * 	return p.parseErrorAtRange(core.NewTextRange(pos, end), message, args...)
  * }
  */
-export function Parser_parseErrorAt(receiver: GoPtr<Parser>, pos: int, end: int, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function Parser_parseErrorAt(receiver: GoPtr<Parser>, pos: int, end: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return Parser_parseErrorAtRange(receiver, NewTextRange(pos, end), message, ...args);
 }
 
@@ -50,7 +50,7 @@ export function Parser_parseErrorAt(receiver: GoPtr<Parser>, pos: int, end: int,
  * 	return result
  * }
  */
-export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function Parser_parseErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   // Don't report another error if it would just be at the same location as the last error
   let result: GoPtr<Diagnostic> = undefined;
   if (receiver!.diagnostics.length === 0 || Diagnostic_Pos(receiver!.diagnostics[receiver!.diagnostics.length - 1]) !== TextRange_Pos(loc)) {
@@ -93,6 +93,6 @@ export function attachFileToDiagnostics(diagnostics: GoSlice<GoPtr<Diagnostic>>,
  * 	p.jsDiagnostics = append(p.jsDiagnostics, ast.NewDiagnostic(nil, core.NewTextRange(scanner.SkipTrivia(p.sourceText, loc.Pos()), loc.End()), message, args...))
  * }
  */
-export function Parser_jsErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<unknown>): void {
+export function Parser_jsErrorAtRange(receiver: GoPtr<Parser>, loc: TextRange, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
   receiver!.jsDiagnostics = [...receiver!.jsDiagnostics, NewDiagnostic(undefined, NewTextRange(SkipTrivia(receiver!.sourceText, TextRange_Pos(loc)), TextRange_End(loc)), message, ...args)];
 }

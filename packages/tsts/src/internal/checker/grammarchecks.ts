@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoZeroPointer } from "../../go/compat.js";
 import { GetSourceFileOfNode, HasSyntacticModifier, HasDecorators, IsDynamicName, IsEntityNameExpression, IsEffectiveExternalModule, IsInTopLevelContext, IsFunctionLikeDeclaration, IsBindingPattern, IsAmbientModule, IsAutoAccessorPropertyDeclaration, IsStringOrNumericLiteralLike, CanHaveIllegalDecorators, CanHaveIllegalModifiers, CanHaveModifiers, HasAbstractModifier, NodeCanBeDecorated, IsIterationStatement, IsFunctionLikeOrClassStaticBlockDeclaration, IsClassLike, IsCommaSequence, IsDeclaration, GetContainingFunction, GetAllAccessorDeclarationsForDeclaration, SkipParentheses, IsInJSFile } from "../ast/utilities.js";
 import { Node_EagerJSDoc, Node_ModifierNodes, Node_PostfixToken, Node_Attributes, Node_TagName, Node_TypeArgumentList, Node_Parameters, Node_Label, Node_Statement, Node_ClassName, Node_Statements, Node_StatementList, Node_Properties } from "../ast/ast.js";
@@ -324,7 +324,7 @@ function GoZeroNodeLinks(): NodeLinks {
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): bool {
+export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     const span = GetRangeOfTokenAtPosition(sourceFile, Node_Pos(node));
@@ -347,7 +347,7 @@ export function Checker_grammarErrorOnFirstToken(receiver: GoPtr<Checker>, node:
  * 	return false
  * }
  */
-export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourceFile: GoPtr<Node>, start: int, length: int, message: GoPtr<Message>, ...args: Array<unknown>): bool {
+export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourceFile: GoPtr<Node>, start: int, length: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(nodeForSourceFile);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     Checker_addDiagnostic(receiver, NewDiagnostic(sourceFile, NewTextRange(start, start + length), message, ...args));
@@ -369,7 +369,7 @@ export function Checker_grammarErrorAtPos(receiver: GoPtr<Checker>, nodeForSourc
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): bool {
+export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     Checker_error(receiver, node, message, ...args);
@@ -393,7 +393,7 @@ export function Checker_grammarErrorOnNode(receiver: GoPtr<Checker>, node: GoPtr
  * 	return false
  * }
  */
-export function Checker_grammarErrorOnNodeSkippedOnNoEmit(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): bool {
+export function Checker_grammarErrorOnNodeSkippedOnNoEmit(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): bool {
   const sourceFile = GetSourceFileOfNode(node);
   if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
     const d = createDiagnosticForNode(node, message, ...args);
@@ -474,7 +474,7 @@ export function Checker_checkGrammarRegularExpressionLiteral(receiver: GoPtr<Che
     }
     Scanner_SetScriptTarget(receiver!.regExpScanner, receiver!.languageVersion);
     Scanner_SetLanguageVariant(receiver!.regExpScanner, sourceFile!.LanguageVariant);
-    Scanner_SetOnError(receiver!.regExpScanner, (message: GoPtr<Message>, start: int, length: int, ...args: Array<unknown>): void => {
+    Scanner_SetOnError(receiver!.regExpScanner, (message: GoPtr<Message>, start: int, length: int, ...args: Array<GoInterface<unknown>>): void => {
       if (Message_Category(message) === CategoryMessage && lastError !== undefined && start === Diagnostic_Pos(lastError) && length === Diagnostic_Len(lastError)) {
         const err = NewDiagnostic(undefined, NewTextRange(start, start + length), message, ...args);
         Diagnostic_AddRelatedInfo(lastError, err);

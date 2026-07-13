@@ -33,7 +33,7 @@ export interface Replacements {
   Chtimes: GoFunc<(arg0: string, arg1: Time, arg2: Time) => GoError>;
   DirectoryExists: GoFunc<(arg0: string) => bool>;
   GetAccessibleEntries: GoFunc<(arg0: string) => Entries>;
-  Stat: (arg0: string) => GoPtr<FileInfo>;
+  Stat: (arg0: string) => GoInterface<FileInfo>;
   WalkDir: GoFunc<(arg0: string, arg1: WalkDirFunc) => GoError>;
   Realpath: GoFunc<(arg0: string) => string>;
 }
@@ -241,7 +241,7 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
  * 	return w.fs.Stat(path)
  * }
  */
-export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoPtr<FileInfo> {
+export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoInterface<FileInfo> {
   if (receiver!.replacements.Stat !== undefined) {
     return receiver!.replacements.Stat(path);
   }
@@ -303,7 +303,7 @@ export function wrappedFS_as_vfs_FS(receiver: GoPtr<wrappedFS>): FS {
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => wrappedFS_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => wrappedFS_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => wrappedFS_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => wrappedFS_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => wrappedFS_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => wrappedFS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => wrappedFS_Realpath(receiver, path),
   };

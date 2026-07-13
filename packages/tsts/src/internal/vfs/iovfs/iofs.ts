@@ -299,7 +299,7 @@ export function ioFS_as_vfs_FS(receiver: GoPtr<ioFS>): FS_f717df58 {
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => ioFS_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => ioFS_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => ioFS_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => ioFS_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => ioFS_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => ioFS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => ioFS_Realpath(receiver, path),
   };
@@ -369,7 +369,7 @@ export function ioFS_GetAccessibleEntries(receiver: GoPtr<ioFS>, path: string): 
  * 	return vfs.common.Stat(path)
  * }
  */
-export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): GoPtr<FileInfo> {
+export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): GoInterface<FileInfo> {
   void RootLength(path); // Assert path is rooted
   return Common_Stat(receiver!.common, path);
 }

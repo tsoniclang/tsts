@@ -534,7 +534,7 @@ function goZeroNodeBuilderSymbolLinks(): NodeBuilderSymbolLinks {
  */
 export interface NodeBuilderContext {
   host: GoInterface<Host>;
-  tracker: GoPtr<SymbolTracker>;
+  tracker: GoInterface<SymbolTracker>;
   approximateLength: int;
   maxTruncationLength: int;
   encounteredError: bool;

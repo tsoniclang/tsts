@@ -7,7 +7,7 @@
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
 import type { bool, int } from "../../go/scalars.js";
-import { GoDynamicValue, GoEqualStrict, GoNamedStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoDynamicValue, GoEqualStrict, GoNamedStringKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
 import { ParseInt } from "../../go/strconv.js";
@@ -188,7 +188,7 @@ export function Message_String(receiver: GoPtr<Message>): string {
  * 	return Localize(locale, m, "", StringifyArgs(args)...)
  * }
  */
-export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, ...args: Array<unknown>): string {
+export function Message_Localize(receiver: GoPtr<Message>, locale: Locale, ...args: Array<GoInterface<unknown>>): string {
   return Localize(locale, receiver, "", ...StringifyArgs(args));
 }
 
@@ -352,7 +352,7 @@ export function Format(text: string, args: GoSlice<string>): string {
  * 	return result
  * }
  */
-export function StringifyArgs(args: GoSlice<unknown>): GoSlice<string> {
+export function StringifyArgs(args: GoSlice<GoInterface<unknown>>): GoSlice<string> {
   if (args.length === 0) {
     return [];
   }

@@ -112,9 +112,9 @@ import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
 export interface extendsResult {
   options: GoPtr<CompilerOptions>;
   watchOptionsCopied: bool;
-  include: GoSlice<unknown>;
-  exclude: GoSlice<unknown>;
-  files: GoSlice<unknown>;
+  include: GoSlice<GoInterface<unknown>>;
+  exclude: GoSlice<GoInterface<unknown>>;
+  files: GoSlice<GoInterface<unknown>>;
   compileOnSave: bool;
   extendedSourceFiles: Set<string>;
 }
@@ -810,8 +810,8 @@ export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonCon
  */
 // In Go this is a reflect.Type used to check if a value is *OrderedMap[string, any].
 // In TypeScript we represent this as a sentinel and use isOrderedMap() for the check.
-export let orderedMapType: GoInterface<Type> = reflect_TypeFor<GoPtr<OrderedMap<string, unknown>>>();
-export function isOrderedMap(value: unknown): value is OrderedMap<string, unknown> {
+export let orderedMapType: GoInterface<Type> = reflect_TypeFor<GoPtr<OrderedMap<string, GoInterface<unknown>>>>();
+export function isOrderedMap(value: unknown): value is OrderedMap<string, GoInterface<unknown>> {
   if (value === undefined || value === null || typeof value !== "object") {
     return false;
   }
@@ -985,7 +985,7 @@ export function validateJsonOptionValue(opt: GoPtr<CommandLineOption>, val: GoIn
  * 	return nil, errors
  * }
  */
-export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, values: GoInterface<unknown>, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
+export function convertJsonOptionOfListType(option: GoPtr<CommandLineOption>, values: GoInterface<unknown>, basePath: string, propertyAssignment: GoPtr<PropertyAssignment>, valueExpression: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): [GoSlice<GoInterface<unknown>>, GoSlice<GoPtr<Diagnostic>>] {
   let expression: GoPtr<Node> = undefined;
   const errors: GoPtr<Diagnostic>[] = [];
   if (Array.isArray(values)) {
@@ -1408,9 +1408,9 @@ export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLi
  * 	return result
  * }
  */
-export function convertMapToOptions<O extends optionParser>(compilerOptions: GoPtr<OrderedMap<string, unknown>>, result: O): O {
+export function convertMapToOptions<O extends optionParser>(compilerOptions: GoPtr<OrderedMap<string, GoInterface<unknown>>>, result: O): O {
   // this assumes any `key`, `value` pair in `options` will have `value` already be the correct type. this function should no error handling
-  OrderedMap_Entries(compilerOptions as GoPtr<OrderedMap<string, unknown>>)!((key: string, value: unknown): bool => {
+  OrderedMap_Entries(compilerOptions as GoPtr<OrderedMap<string, GoInterface<unknown>>>)!((key: string, value: unknown): bool => {
     result.ParseOption(key, value);
     return true;
   });
@@ -1474,7 +1474,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     // !!! probably should be an error
     return [result, []];
   }
-  const jsonMap = jsonOptions as GoPtr<OrderedMap<string, unknown>>;
+  const jsonMap = jsonOptions as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   const errors: GoPtr<Diagnostic>[] = [];
   OrderedMap_Entries(jsonMap)!((key: string, value: unknown): bool => {
     const opt = CommandLineOptionNameMap_Get(optionsNameMap, key);
@@ -1668,9 +1668,9 @@ export function resolverHost_Trace(receiver: GoPtr<resolverHost>, msg: string): 
  * 	return result
  * }
  */
-export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap<string, unknown>>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
+export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoInterface<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
   // tracing?.push(tracing.Phase.Parse, "parseJsonSourceFileConfigFileContent", { path: sourceFile.fileName });
-  const result = parseJsonConfigFileContentWorker(undefined /*json*/, sourceFile, host, basePath, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, unknown>>, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
+  const result = parseJsonConfigFileContentWorker(undefined /*json*/, sourceFile, host, basePath, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
   // tracing?.pop();
   return result;
 }
@@ -1728,8 +1728,8 @@ export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigS
  * 	return result, errors
  * }
  */
-export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, returnValue: bool, node: GoPtr<ObjectLiteralExpression>, objectOption: GoPtr<CommandLineOption>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoPtr<OrderedMap<string, unknown>>, GoSlice<GoPtr<Diagnostic>>] {
-  let result: GoPtr<OrderedMap<string, unknown>> = undefined;
+export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFile>, returnValue: bool, node: GoPtr<ObjectLiteralExpression>, objectOption: GoPtr<CommandLineOption>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [GoPtr<OrderedMap<string, GoInterface<unknown>>>, GoSlice<GoPtr<Diagnostic>>] {
+  let result: GoPtr<OrderedMap<string, GoInterface<unknown>>> = undefined;
   if (returnValue) {
     result = newMapWithSizeHint<string, unknown>(0, GoStringKey);
   }
@@ -1762,7 +1762,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     errors.push(...err);
     if (keyText !== "") {
       if (returnValue) {
-        OrderedMap_Set(result as GoPtr<OrderedMap<string, unknown>>, keyText, value, GoStringKey);
+        OrderedMap_Set(result as GoPtr<OrderedMap<string, GoInterface<unknown>>>, keyText, value, GoStringKey);
       }
       // Notify key value set, if user asked for it
       if (jsonConversionNotifier !== undefined) {
@@ -1932,8 +1932,8 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
  * 	return result
  * }
  */
-export function ParseJsonConfigFileContent(json: GoInterface<unknown>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
-  const result = parseJsonConfigFileContentWorker(parseJsonToStringKey(json) as GoPtr<OrderedMap<string, unknown>>, undefined /*sourceFile*/, host, basePath, existingOptions, undefined /*existingOptionsRaw*/, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
+export function ParseJsonConfigFileContent(json: GoInterface<unknown>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoInterface<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
+  const result = parseJsonConfigFileContentWorker(parseJsonToStringKey(json) as GoPtr<OrderedMap<string, GoInterface<unknown>>>, undefined /*sourceFile*/, host, basePath, existingOptions, undefined /*existingOptionsRaw*/, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
   return result;
 }
 
@@ -2082,9 +2082,9 @@ export function convertTypeAcquisitionFromJsonWorker(jsonOptions: GoInterface<un
  * 	return parsedConfig, errors
  * }
  */
-export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, unknown>>, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, GoInterface<unknown>>>, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   const errors: GoPtr<Diagnostic>[] = [];
-  const jsonMap = json as GoPtr<OrderedMap<string, unknown>>;
+  const jsonMap = json as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   if (OrderedMap_Has(jsonMap, "excludes")) {
     errors.push(NewCompilerDiagnostic(diagnostics.Unknown_option_excludes_Did_you_mean_exclude));
   }
@@ -2199,7 +2199,7 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: GoFun
  * 	return cacheEntry.extendedConfig, errors
  * }
  */
-export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: GoInterface<ParseConfigHost>, resolutionStack: GoSlice<Path>, extendedConfigCache: GoPtr<ExtendedConfigCache>, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: GoInterface<ParseConfigHost>, resolutionStack: GoSlice<Path>, extendedConfigCache: GoInterface<ExtendedConfigCache>, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   const errors: GoPtr<Diagnostic>[] = [];
   const extendedConfigPath = ToPath(extendedConfigFileName, host!.GetCurrentDirectory(), host!.FS()!.UseCaseSensitiveFileNames());
 
@@ -2261,7 +2261,7 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
  * 	return entry
  * }
  */
-export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: GoInterface<ParseConfigHost>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ExtendedConfigCacheEntry> {
+export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: GoInterface<ParseConfigHost>, extendedConfigCache: GoInterface<ExtendedConfigCache>): GoPtr<ExtendedConfigCacheEntry> {
   const [extendedResult, readErrors] = readJsonConfigFile(fileName, path, host!.FS()!.ReadFile.bind(host!.FS()));
   const entry: ExtendedConfigCacheEntry = {
     extendedResult: extendedResult,
@@ -2420,7 +2420,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 	return ownConfig, errors
  * }
  */
-export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string, resolutionStack: GoSlice<Path>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function parseConfig(json: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, configFileName: string, resolutionStack: GoSlice<Path>, extendedConfigCache: GoInterface<ExtendedConfigCache>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   basePath = NormalizeSlashes(basePath);
   const resolvedPath = ToPath(configFileName, basePath, host!.FS()!.UseCaseSensitiveFileNames());
   const errors: GoPtr<Diagnostic>[] = [];
@@ -2428,7 +2428,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
   if (Contains(resolutionStack, resolvedPath, GoEqualStrict<Path>)) {
     errors.push(NewCompilerDiagnostic(diagnostics.Circularity_detected_while_resolving_configuration_Colon_0));
     let result: GoPtr<parsedTsconfig>;
-    const jsonMap = json as GoPtr<OrderedMap<string, unknown>>;
+    const jsonMap = json as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
     if (json !== undefined && OrderedMap_Size(jsonMap) === 0) {
       result = { raw: json, options: undefined, typeAcquisition: undefined, extendedConfigPath: undefined };
     } else {
@@ -2462,12 +2462,12 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       let relativeDifference = "";
       const setPropertyValue = (propertyName: string): void => {
         const ownRawMap = ownConfig!.raw;
-        if (isOrderedMap(ownRawMap) && OrderedMap_Has(ownRawMap as GoPtr<OrderedMap<string, unknown>>, propertyName)) {
+        if (isOrderedMap(ownRawMap) && OrderedMap_Has(ownRawMap as GoPtr<OrderedMap<string, GoInterface<unknown>>>, propertyName)) {
           return;
         }
         if (propertyName === "include" || propertyName === "exclude" || propertyName === "files") {
-          if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName)) {
-            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName, GoZeroInterface);
+          if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, propertyName)) {
+            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, propertyName, GoZeroInterface);
             if (Array.isArray(sliceVal) && sliceVal !== undefined) {
               const slice = sliceVal as unknown[];
               const value = core.Map(slice, (path: unknown): unknown => {
@@ -2499,8 +2499,8 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       setPropertyValue("include");
       setPropertyValue("exclude");
       setPropertyValue("files");
-      if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave")) {
-        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave", GoZeroInterface);
+      if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, "compileOnSave")) {
+        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, "compileOnSave", GoZeroInterface);
         if (typeof compileOnSave === "boolean") {
           result!.compileOnSave = compileOnSave;
         }
@@ -2528,7 +2528,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
         applyExtendedConfig(result, extendedConfigPath);
       }
     }
-    const ownRawMap = ownConfig!.raw as GoPtr<OrderedMap<string, unknown>>;
+    const ownRawMap = ownConfig!.raw as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
     if (result.include !== undefined && (result.include as unknown[]).length > 0) {
       OrderedMap_Set(ownRawMap, "include", result.include, GoStringKey);
     }
@@ -2571,7 +2571,7 @@ export const defaultIncludeSpec: string = "**/*";
  * }
  */
 export interface propOfRaw {
-  sliceValue: GoSlice<unknown>;
+  sliceValue: GoSlice<GoInterface<unknown>>;
   wrongValue: string;
 }
 
@@ -2785,7 +2785,7 @@ export interface propOfRaw {
  * 	}
  * }
  */
-export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, unknown>>, sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap<string, unknown>>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
+export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sourceFile: GoPtr<TsConfigSourceFile>, host: GoInterface<ParseConfigHost>, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoInterface<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
   const basePathForFileNames: string = configFileName !== ""
     ? NormalizePath(directoryOfCombinedPath(configFileName, basePath))
     : NormalizePath(basePath);
@@ -2793,10 +2793,10 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
   const errors: GoPtr<Diagnostic>[] = [];
   const [parsedConfig, parseConfigErrors] = parseConfig(json, sourceFile, host, basePath, configFileName, resolutionStack, extendedConfigCache);
   errors.push(...parseConfigErrors);
-  mergeCompilerOptions(parsedConfig!.options, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, unknown>>);
+  mergeCompilerOptions(parsedConfig!.options, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>);
   parsedConfig!.options = NormalizeCompilerOptions(parsedConfig!.options);
   handleOptionConfigDirTemplateSubstitution(parsedConfig!.options, basePathForFileNames);
-  const rawConfig = parseJsonToStringKey(parsedConfig!.raw) as GoPtr<OrderedMap<string, unknown>>;
+  const rawConfig = parseJsonToStringKey(parsedConfig!.raw) as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   if (configFileName !== "" && parsedConfig!.options !== undefined) {
     parsedConfig!.options.ConfigFilePath = NormalizeSlashes(configFileName);
   }
@@ -2813,10 +2813,10 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
         return { sliceValue: result as unknown[], wrongValue: "" };
       } else if (sourceFile === undefined) {
         errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, prop, "Array"));
-        return { sliceValue: undefined as unknown as GoSlice<unknown>, wrongValue: "not-array" };
+        return { sliceValue: undefined as unknown as GoSlice<GoInterface<unknown>>, wrongValue: "not-array" };
       }
     }
-    return { sliceValue: undefined as unknown as GoSlice<unknown>, wrongValue: "no-prop" };
+    return { sliceValue: undefined as unknown as GoSlice<GoInterface<unknown>>, wrongValue: "no-prop" };
   };
   const referencesOfRaw = getPropFromRaw("references", (element: unknown): bool => isOrderedMap(element), "object");
   let fileSpecs = getPropFromRaw("files", (element: unknown): bool => typeof element === "string", "string");
@@ -2966,7 +2966,7 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
  * 	return !filesExists && !referencesExists
  * }
  */
-export function canJsonReportNoInputFiles(rawConfig: GoPtr<OrderedMap<string, unknown>>): bool {
+export function canJsonReportNoInputFiles(rawConfig: GoPtr<OrderedMap<string, GoInterface<unknown>>>): bool {
   const filesExists = OrderedMap_Has(rawConfig, "files");
   const referencesExists = OrderedMap_Has(rawConfig, "references");
   return !filesExists && !referencesExists;
@@ -3192,7 +3192,7 @@ export function ForEachTsConfigPropArray<T>(tsConfigSourceFile: GoPtr<SourceFile
  * 	})
  * }
  */
-export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function CreateDiagnosticAtReferenceSyntax(config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   const result = ForEachTsConfigPropArray<Diagnostic>(config!.ConfigFile!.SourceFile, "references", (property: GoPtr<PropertyAssignment>): GoRef<Diagnostic> => {
     if (IsArrayLiteralExpression(property!.Initializer)) {
       const value = Node_Elements(property!.Initializer) ?? [];
@@ -3839,7 +3839,7 @@ export function GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOption
  * 	return GetParsedCommandLineOfConfigFilePath(configFileName, tspath.ToPath(configFileName, sys.GetCurrentDirectory(), sys.FS().UseCaseSensitiveFileNames()), options, optionsRaw, sys, extendedConfigCache)
  * }
  */
-export function GetParsedCommandLineOfConfigFile(configFileName: string, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, unknown>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
+export function GetParsedCommandLineOfConfigFile(configFileName: string, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoInterface<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
   const normalizedFileName = GetNormalizedAbsolutePath(configFileName, sys!.GetCurrentDirectory());
   return GetParsedCommandLineOfConfigFilePath(normalizedFileName, ToPath(normalizedFileName, sys!.GetCurrentDirectory(), sys!.FS()!.UseCaseSensitiveFileNames()), options, optionsRaw, sys, extendedConfigCache);
 }
@@ -3879,11 +3879,11 @@ export function GetParsedCommandLineOfConfigFile(configFileName: string, options
  * 	), nil
  * }
  */
-export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, unknown>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
+export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>>, sys: GoInterface<ParseConfigHost>, extendedConfigCache: GoInterface<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
   const [configFileText, readErrors] = tryReadFile(configFileName, sys!.FS()!.ReadFile.bind(sys!.FS()), []);
   if ((readErrors ?? []).length > 0) {
     return [undefined, readErrors];
   }
   const tsConfigSourceFile = NewTsconfigSourceFileFromFilePath(configFileName, path, configFileText);
-  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw as GoPtr<OrderedMap<string, unknown>>, configFileName, [], undefined as unknown as GoSlice<FileExtensionInfo>, extendedConfigCache), undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+  return [ParseJsonSourceFileConfigFileContent(tsConfigSourceFile, sys, GetDirectoryPath(configFileName), options, optionsRaw as GoPtr<OrderedMap<string, GoInterface<unknown>>>, configFileName, [], undefined as unknown as GoSlice<FileExtensionInfo>, extendedConfigCache), undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
 }

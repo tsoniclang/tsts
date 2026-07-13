@@ -151,7 +151,7 @@ export function parseStringMap(value: GoInterface<unknown>): GoPtr<OrderedMap<st
   const m = asOrderedMap(value);
   if (m !== undefined) {
     const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m), GoStringKey);
-    OrderedMap_Entries(m as GoPtr<OrderedMap<string, unknown>>)!((k: string, v: unknown): bool => {
+    OrderedMap_Entries(m as GoPtr<OrderedMap<string, GoInterface<unknown>>>)!((k: string, v: unknown): bool => {
       OrderedMap_Set(result, k, ParseStringArray(v), GoStringKey);
       return true;
     });
@@ -234,13 +234,13 @@ export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr
   if (v !== undefined) {
     const reference: ProjectReference = { Path: "", OriginalPath: "", Circular: false };
     {
-      const [pv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "path", GoZeroInterface);
+      const [pv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, GoInterface<unknown>>>, "path", GoZeroInterface);
       if (ok) {
         reference.Path = pv as string;
       }
     }
     {
-      const [cv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, unknown>>, "circular", GoZeroInterface);
+      const [cv, ok] = OrderedMap_Get(v as GoPtr<OrderedMap<string, GoInterface<unknown>>>, "circular", GoZeroInterface);
       if (ok) {
         reference.Circular = cv as bool;
       }
@@ -288,9 +288,9 @@ export function parseProjectReference(json: GoInterface<unknown>): GoSlice<GoPtr
  * 	return result
  * }
  */
-export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedMap<string, unknown>> {
+export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
   const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int, GoStringKey);
-  const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
+  const m = asOrderedMap(json) as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   if (m !== undefined) {
     {
       const [v, ok] = OrderedMap_Get(m, "include", GoZeroInterface);
@@ -321,7 +321,7 @@ export function parseJsonToStringKey(json: GoInterface<unknown>): GoPtr<OrderedM
       if (ok) {
         if (typeof v === "string") {
           const str: string = v;
-          OrderedMap_Set(result, "extends", [str] as GoSlice<unknown>, GoStringKey);
+          OrderedMap_Set(result, "extends", [str] as GoSlice<GoInterface<unknown>>, GoStringKey);
         }
         OrderedMap_Set(result, "extends", v, GoStringKey);
       }
@@ -1308,11 +1308,11 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
 
   const explicitNullFields = new globalThis.Set<string>();
   if (rawSource !== undefined) {
-    const rawMap = asOrderedMap(rawSource) as GoPtr<OrderedMap<string, unknown>>;
+    const rawMap = asOrderedMap(rawSource) as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
     if (rawMap !== undefined) {
       const [compilerOptionsRaw, exists] = OrderedMap_Get(rawMap, "compilerOptions", GoZeroInterface);
       if (exists) {
-        const compilerOptionsMap = asOrderedMap(compilerOptionsRaw) as GoPtr<OrderedMap<string, unknown>>;
+        const compilerOptionsMap = asOrderedMap(compilerOptionsRaw) as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
         if (compilerOptionsMap !== undefined) {
           OrderedMap_Entries(compilerOptionsMap)!((key: string, value: unknown): bool => {
             if (value === undefined || value === null) {
@@ -1377,13 +1377,13 @@ function compilerOptionFieldNameToJsonKey(fieldName: string): string {
  * 	return optionsBase
  * }
  */
-export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<string, unknown>>, optionMap: CommandLineOptionNameMap, cwd: string): GoPtr<OrderedMap<string, unknown>> {
+export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<string, GoInterface<unknown>>>, optionMap: CommandLineOptionNameMap, cwd: string): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
   // !!! convert to options with absolute paths was previously done with `CompilerOptions` object, but for ease of implementation, we do it pre-conversion.
   // !!! Revisit this choice if/when refactoring when conversion is done in tsconfig parsing
   if (optionsBase === undefined) {
     return undefined;
   }
-  const base = optionsBase as GoPtr<OrderedMap<string, unknown>>;
+  const base = optionsBase as GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   OrderedMap_Entries(base)!((o: string, v: unknown): bool => {
     const [result, ok] = ConvertOptionToAbsolutePath(o, v, optionMap, cwd);
     if (ok) {
@@ -1444,7 +1444,7 @@ export function ConvertOptionToAbsolutePath(o: string, v: GoInterface<unknown>, 
         ];
       }
       if (globalThis.Array.isArray(v)) {
-        const arr: GoSlice<unknown> = v;
+        const arr: GoSlice<GoInterface<unknown>> = v;
         return [
           core_Map(arr, (item: unknown): unknown => {
             if (typeof item === "string") {

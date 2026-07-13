@@ -166,7 +166,7 @@ export function referenceFileLocation_text(receiver: GoPtr<referenceFileLocation
  * 	}
  * }
  */
-export function referenceFileLocation_diagnosticAt(receiver: GoPtr<referenceFileLocation>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function referenceFileLocation_diagnosticAt(receiver: GoPtr<referenceFileLocation>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (receiver!.node !== undefined) {
     return CreateDiagnosticForNodeInSourceFile(receiver!.file, receiver!.node, message, ...args);
   } else {

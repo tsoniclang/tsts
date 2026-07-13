@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoError, GoInterface, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry as DirEntry_697d4ab0, FileInfo as FileInfo_d0619f84, WalkDirFunc as WalkDirFunc_40040532 } from "../../go/io/fs.js";
 import { ErrInvalid as fs_ErrInvalid, ErrPermission as fs_ErrPermission, ErrExist as fs_ErrExist, ErrNotExist as fs_ErrNotExist, ErrClosed as fs_ErrClosed, SkipAll as fs_SkipAll, SkipDir as fs_SkipDir } from "../../go/io/fs.js";
 import type { Time } from "../../go/time.js";
@@ -58,7 +58,7 @@ export interface FS {
   Chtimes(path: string, aTime: Time, mTime: Time): GoError;
   DirectoryExists(path: string): bool;
   GetAccessibleEntries(path: string): Entries;
-  Stat(path: string): GoPtr<FileInfo>;
+  Stat(path: string): GoInterface<FileInfo>;
   WalkDir(root: string, walkFn: WalkDirFunc): GoError;
   Realpath(path: string): string;
 }

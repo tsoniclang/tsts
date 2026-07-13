@@ -967,7 +967,7 @@ export function Memoize<T>(create: GoFunc<() => T>, zeroValue: GoZeroFactory<T>)
   // Go reassigns `create = nil` after the first call to release it and gate
   // re-invocation. The scaffold signature keeps `create` non-nullable, so the
   // nil-able gate is held in a local copy.
-  let createOrNil: GoPtr<() => T> = create;
+  let createOrNil: GoFunc<() => T> = create;
   return (): T => {
     if (createOrNil !== undefined) {
       value = createOrNil();
@@ -1247,7 +1247,7 @@ export function Must<T>(v: T, err: GoError): T {
  * 	return t1
  * }
  */
-export function FirstResult<T1>(t1: T1, ...arg: Array<unknown>): T1 {
+export function FirstResult<T1>(t1: T1, ...arg: Array<GoInterface<unknown>>): T1 {
   return t1;
 }
 

@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoZeroMap } from "../../go/compat.js";
 import type { Node, NodeList, ModifierList } from "../ast/spine.js";
 import type { NodeVisitor } from "../ast/visitor.js";
@@ -307,7 +307,7 @@ export interface recoveryBoundary {
   ctx: GoPtr<NodeBuilderContext>;
   hadError: bool;
   deferredReports: GoSlice<() => void>;
-  oldTracker: GoPtr<SymbolTracker>;
+  oldTracker: GoInterface<SymbolTracker>;
   oldTrackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   oldEncounteredError: bool;
@@ -325,7 +325,7 @@ export interface recoveryBoundary {
  * 	}
  * }
  */
-export function recoveryBoundary_markError(receiver: GoPtr<recoveryBoundary>, f: GoPtr<() => void>): void {
+export function recoveryBoundary_markError(receiver: GoPtr<recoveryBoundary>, f: GoFunc<() => void>): void {
   receiver!.hadError = true;
   if (f !== undefined) {
     receiver!.deferredReports = [...receiver!.deferredReports, f];
@@ -390,7 +390,7 @@ export function recoveryBoundary_endRecoveryScope(receiver: GoPtr<recoveryBounda
  * }
  */
 export interface wrappingTracker {
-  wrapped: GoPtr<SymbolTracker>;
+  wrapped: GoInterface<SymbolTracker>;
   bound: GoPtr<recoveryBoundary>;
 }
 
@@ -564,14 +564,14 @@ export function wrappingTracker_TrackSymbol(receiver: GoPtr<wrappingTracker>, sy
  * 	}
  * }
  */
-export function newWrappingTracker(inner: GoPtr<SymbolTracker>, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
+export function newWrappingTracker(inner: GoInterface<SymbolTracker>, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
   return {
     wrapped: inner,
     bound: bound,
   };
 }
 
-export function wrappingTracker_as_SymbolTracker(receiver: GoPtr<wrappingTracker>): GoPtr<SymbolTracker> {
+export function wrappingTracker_as_SymbolTracker(receiver: GoPtr<wrappingTracker>): GoInterface<SymbolTracker> {
   if (receiver === undefined) {
     return undefined;
   }

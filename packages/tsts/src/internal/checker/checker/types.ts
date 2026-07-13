@@ -16185,7 +16185,7 @@ export function Checker_getAwaitedType(receiver: GoPtr<Checker>, t: GoPtr<Type>)
  * 	return nil
  * }
  */
-export function Checker_getAwaitedTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Type> {
+export function Checker_getAwaitedTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
   const awaitedType = Checker_getAwaitedTypeNoAliasEx(receiver, t, errorNode, diagnosticMessage, ...args);
   if (awaitedType !== undefined) {
     return Checker_createAwaitedTypeIfNeeded(receiver, awaitedType);
@@ -16354,7 +16354,7 @@ export function Checker_getAwaitedTypeOfPromise(receiver: GoPtr<Checker>, t: GoP
  * 	return nil
  * }
  */
-export function Checker_getAwaitedTypeOfPromiseEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Type> {
+export function Checker_getAwaitedTypeOfPromiseEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Type> {
   const promisedType = Checker_getPromisedTypeOfPromiseEx(receiver, t, errorNode, undefined);
   if (promisedType !== undefined) {
     return Checker_getAwaitedTypeEx(receiver, promisedType, errorNode, diagnosticMessage, ...args);

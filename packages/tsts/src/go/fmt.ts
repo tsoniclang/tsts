@@ -12,7 +12,7 @@
 // operand error so errors.Is/Unwrap see it (matching Go's fmt.wrapError).
 
 import type { bool, byte, int } from "./scalars.js";
-import type { GoError, GoSlice } from "./compat.js";
+import type { GoError, GoInterface, GoSlice } from "./compat.js";
 
 // fmt.Stringer: any value with a String() string method participates in %v/%s
 // formatting. Represented structurally so plain ported objects satisfy it.
@@ -515,7 +515,7 @@ function isAsciiDigitAt(s: string, i: int): bool {
   return ch !== undefined && ch >= "0" && ch <= "9";
 }
 
-function formatCore(format: string, args: readonly unknown[]): FormatOutput {
+function formatCore(format: string, args: readonly GoInterface<unknown>[]): FormatOutput {
   const out: string[] = [];
   let argIndex = 0;
   let wrapped: GoError | undefined = undefined;
@@ -640,14 +640,14 @@ function formatCore(format: string, args: readonly unknown[]): FormatOutput {
 
 // fmt.Sprintf formats according to a format specifier and returns the resulting
 // string.
-export function Sprintf(format: string, ...args: unknown[]): string {
+export function Sprintf(format: string, ...args: GoInterface<unknown>[]): string {
   return formatCore(format, args).text;
 }
 
 // fmt.Errorf formats according to a format specifier and returns the string as a
 // value that satisfies error. If the format includes a %w verb, the returned error
 // wraps the corresponding operand error and Unwrap() exposes it.
-export function Errorf(format: string, ...args: unknown[]): GoError {
+export function Errorf(format: string, ...args: GoInterface<unknown>[]): GoError {
   const { text, wrapped } = formatCore(format, args);
   if (wrapped !== undefined) {
     return new wrapError(text, wrapped);
@@ -662,18 +662,18 @@ function defaultOperand(v: unknown): string {
 
 // fmt.Sprint formats using the default formats for its operands and returns the
 // resulting string. Spaces are added between operands when neither is a string.
-export function Sprint(...args: unknown[]): string {
+export function Sprint(...args: GoInterface<unknown>[]): string {
   return joinOperands(args, false);
 }
 
 // fmt.Sprintln formats using the default formats for its operands and returns the
 // resulting string. Spaces are always added between operands and a newline is
 // appended.
-export function Sprintln(...args: unknown[]): string {
+export function Sprintln(...args: GoInterface<unknown>[]): string {
   return joinOperands(args, true) + "\n";
 }
 
-function joinOperands(args: readonly unknown[], alwaysSpace: bool): string {
+function joinOperands(args: readonly GoInterface<unknown>[], alwaysSpace: bool): string {
   const out: string[] = [];
   for (let idx = 0; idx < args.length; idx++) {
     const cur = defaultOperand(args[idx]);
@@ -692,7 +692,7 @@ function joinOperands(args: readonly unknown[], alwaysSpace: bool): string {
 // fmt.Println formats using the default formats for its operands and writes to
 // standard output. Spaces are always added between operands and a newline is
 // appended. Returns [bytesWritten, error] per Go.
-export function Println(...args: unknown[]): [int, GoError] {
+export function Println(...args: GoInterface<unknown>[]): [int, GoError] {
   const text = joinOperands(args, true) + "\n";
   globalThis.console.log(joinOperands(args, true));
   return [utf8Bytes(text).length, undefined];
@@ -701,19 +701,19 @@ export function Println(...args: unknown[]): [int, GoError] {
 // fmt.Fprint formats using the default formats for its operands and writes to w.
 // Spaces are added between operands when neither is a string. Returns the number of
 // bytes written and any write error.
-export function Fprint(w: Writer, ...args: unknown[]): [int, GoError] {
+export function Fprint(w: Writer, ...args: GoInterface<unknown>[]): [int, GoError] {
   return writeToWriter(w, joinOperands(args, false));
 }
 
 // fmt.Fprintf formats according to a format specifier and writes to w. Returns the
 // number of bytes written and any write error.
-export function Fprintf(w: Writer, format: string, ...args: unknown[]): [int, GoError] {
+export function Fprintf(w: Writer, format: string, ...args: GoInterface<unknown>[]): [int, GoError] {
   return writeToWriter(w, formatCore(format, args).text);
 }
 
 // fmt.Fprintln formats using the default formats for its operands and writes to w.
 // Spaces are always added between operands and a newline is appended.
-export function Fprintln(w: Writer, ...args: unknown[]): [int, GoError] {
+export function Fprintln(w: Writer, ...args: GoInterface<unknown>[]): [int, GoError] {
   return writeToWriter(w, joinOperands(args, true) + "\n");
 }
 

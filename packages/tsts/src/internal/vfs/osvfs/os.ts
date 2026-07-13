@@ -231,7 +231,7 @@ export function osFS_GetAccessibleEntries(receiver: GoPtr<osFS>, path: string): 
  * 	return vfs.common.Stat(path)
  * }
  */
-export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoPtr<FileInfo> {
+export function osFS_Stat(receiver: GoPtr<osFS>, path: string): GoInterface<FileInfo> {
   // defer blockingOpSema.Acquire()() — no-op in single-threaded TS
   return Common_Stat(receiver!.common, path);
 }

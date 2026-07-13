@@ -66,7 +66,7 @@ import type { GoInterface } from "../../../go/compat.js";
  * 	}
  * }
  */
-export function WriteConfigFile(sys: GoInterface<System>, locale: Locale, reportDiagnostic: DiagnosticReporter, options: GoPtr<OrderedMap<string, unknown>>): void {
+export function WriteConfigFile(sys: GoInterface<System>, locale: Locale, reportDiagnostic: DiagnosticReporter, options: GoPtr<OrderedMap<string, GoInterface<unknown>>>): void {
   const getCurrentDirectory = sys!.GetCurrentDirectory();
   const file = NormalizePath(CombinePaths(getCurrentDirectory, "tsconfig.json"));
   if (sys!.FS()!.FileExists(file)) {
@@ -268,7 +268,7 @@ export function WriteConfigFile(sys: GoInterface<System>, locale: Locale, report
  * 	return strings.Join(result, "\n")
  * }
  */
-export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, locale: Locale): string {
+export function generateTSConfig(options: GoPtr<OrderedMap<string, GoInterface<unknown>>>, locale: Locale): string {
   const tab = "  ";
   const result: string[] = [];
 

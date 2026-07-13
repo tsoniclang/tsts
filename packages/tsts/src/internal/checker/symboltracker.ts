@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import type { GoInterface, GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Symbol } from "../ast/symbol.js";
@@ -20,7 +20,7 @@ import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js
  */
 export interface SymbolTrackerImpl {
   context: GoPtr<NodeBuilderContext>;
-  inner: GoPtr<SymbolTracker>;
+  inner: GoInterface<SymbolTracker>;
   DisableTrackSymbol: bool;
 }
 
@@ -42,7 +42,7 @@ export interface SymbolTrackerImpl {
  * 	return &SymbolTrackerImpl{context, tracker, false}
  * }
  */
-export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: GoPtr<SymbolTracker>): GoPtr<SymbolTrackerImpl> {
+export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: GoInterface<SymbolTracker>): GoPtr<SymbolTrackerImpl> {
   if (tracker !== undefined) {
     for (;;) {
       const t = tracker as unknown as GoPtr<SymbolTrackerImpl>;
@@ -55,7 +55,7 @@ export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker
   return { context, inner: tracker, DisableTrackSymbol: false };
 }
 
-export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTrackerImpl>): GoPtr<SymbolTracker> {
+export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTrackerImpl>): GoInterface<SymbolTracker> {
   if (receiver === undefined) {
     return undefined;
   }

@@ -134,7 +134,7 @@ export interface commandLineParser {
   optionsMap: GoPtr<NameMap>;
   fs: GoInterface<FS>;
   currentDirectory: string;
-  options: GoPtr<OrderedMap<string, unknown>>;
+  options: GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   fileNames: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
 }
@@ -169,12 +169,12 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: GoInterface
     commandLine = [];
   }
   const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
-  const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, unknown>>, GoStringKey), CommandLineCompilerOptionsMap, host!.GetCurrentDirectory());
+  const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, GoStringKey), CommandLineCompilerOptionsMap, host!.GetCurrentDirectory());
   const compilerParser: compilerOptionsParser = { __tsgoEmbedded0: {} as CompilerOptions };
-  convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, unknown>>, compilerOptionsParser_as_optionParser(compilerParser));
+  convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, GoInterface<unknown>>>, compilerOptionsParser_as_optionParser(compilerParser));
   const compilerOptions = compilerParser.__tsgoEmbedded0;
   const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
-  convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, unknown>>, watchOptionsParser_as_optionParser(watchParser));
+  convertMapToOptions(optionsWithAbsolutePaths as GoPtr<OrderedMap<string, GoInterface<unknown>>>, watchOptionsParser_as_optionParser(watchParser));
   const watchOptions = watchParser.__tsgoEmbedded0;
   const result = NewParsedCommandLine(compilerOptions, parser!.fileNames, {
     UseCaseSensitiveFileNames: host!.FS()!.UseCaseSensitiveFileNames(),
@@ -247,7 +247,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInte
   }
   const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host!.FS(), host!.GetCurrentDirectory());
   const compilerOptions: CompilerOptions = {} as CompilerOptions;
-  OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, unknown>>)!((key: string, value: unknown): bool => {
+  OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>)!((key: string, value: unknown): bool => {
     const buildOption = NameMap_Get(BuildNameMap, key);
     if (buildOption === TscBuildOption || buildOption === NameMap_Get(CompilerNameMap, key)) {
       ParseCompilerOptions(key, value, compilerOptions);
@@ -255,9 +255,9 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: GoInte
     return true;
   });
   const buildParser: buildOptionsParser = { __tsgoEmbedded0: {} as BuildOptions };
-  convertMapToOptions(parser!.options as GoPtr<OrderedMap<string, unknown>>, buildOptionsParser_as_optionParser(buildParser));
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, buildOptionsParser_as_optionParser(buildParser));
   const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
-  convertMapToOptions(parser!.options as GoPtr<OrderedMap<string, unknown>>, watchOptionsParser_as_optionParser(watchParser));
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, watchOptionsParser_as_optionParser(watchParser));
   let result: ParsedBuildCommandLine = {
     BuildOptions: buildParser.__tsgoEmbedded0,
     CompilerOptions: compilerOptions,
@@ -659,11 +659,11 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
       optValue = args[i]!;
     }
     if (optValue === "null") {
-      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, undefined, GoStringKey);
+      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, undefined, GoStringKey);
       i++;
     } else if (opt!.Kind === CommandLineOptionTypeBoolean) {
       if (optValue === "false") {
-        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, false, GoStringKey);
+        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, false, GoStringKey);
         i++;
       } else {
         if (optValue === "true") {
@@ -683,12 +683,12 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
       if (opt!.Kind !== CommandLineOptionTypeBoolean) {
         p.errors = [...p.errors, NewCompilerDiagnostic(diag, opt!.Name, getCompilerOptionValueTypeString(opt))];
         if (opt!.Kind === CommandLineOptionTypeList) {
-          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, [], GoStringKey);
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, [], GoStringKey);
         } else if (opt!.Kind === "enum") {
           p.errors = [...p.errors, createDiagnosticForInvalidEnumType(opt, undefined, undefined)];
         }
       } else {
-        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, true, GoStringKey);
+        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, true, GoStringKey);
       }
       return i;
     }
@@ -699,7 +699,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
           const [num, e] = Atoi(args[i]!);
           if (e === undefined) {
             if (num >= opt!.minValue) {
-              OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, num, GoStringKey);
+              OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, num, GoStringKey);
             } else {
               p.errors = [...p.errors, NewCompilerDiagnostic(Option_0_requires_value_to_be_greater_than_1, opt!.Name, Itoa(opt!.minValue))];
             }
@@ -715,9 +715,9 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
 
           // check next argument as boolean flag value
           if (optValue === "false") {
-            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, false, GoStringKey);
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, false, GoStringKey);
           } else {
-            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, true, GoStringKey);
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, true, GoStringKey);
           }
           // try to consume next argument as value for boolean flag; do not consume argument if it is not "true" or "false"
           if (optValue === "false" || optValue === "true") {
@@ -728,7 +728,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         case CommandLineOptionTypeString: {
           const [val, err] = validateJsonOptionValue(opt, args[i]!, undefined, undefined);
           if (err === undefined || err.length === 0) {
-            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, val, GoStringKey);
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, val, GoStringKey);
           } else {
             p.errors = [...p.errors, ...err];
           }
@@ -737,7 +737,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         }
         case CommandLineOptionTypeList: {
           const [result, err] = commandLineParser_parseListTypeOption(p, opt, args[i]!);
-          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, result, GoStringKey);
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, result, GoStringKey);
           p.errors = [...p.errors, ...err];
           if (result.length > 0 || err.length > 0) {
             i++;
@@ -750,14 +750,14 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
         }
         default: {
           const [val, err] = convertJsonOptionOfEnumType(opt, strings.TrimFunc(args[i]!, IsWhiteSpaceLike), undefined, undefined);
-          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, val, GoStringKey);
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, val, GoStringKey);
           p.errors = [...p.errors, ...err];
           i++;
           break;
         }
       }
     } else {
-      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, undefined, GoStringKey);
+      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, opt!.Name, undefined, GoStringKey);
       i++;
     }
   }
@@ -772,7 +772,7 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
  * 	return ParseListTypeOption(opt, value)
  * }
  */
-export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLineParser>, opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
+export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLineParser>, opt: GoPtr<CommandLineOption>, value: string): [GoSlice<GoInterface<unknown>>, GoSlice<GoPtr<Diagnostic>>] {
   return ParseListTypeOption(opt, value);
 }
 
@@ -825,7 +825,7 @@ export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLin
  * 	}
  * }
  */
-export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
+export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoSlice<GoInterface<unknown>>, GoSlice<GoPtr<Diagnostic>>] {
   value = strings.TrimSpace(value);
   let errors: GoSlice<GoPtr<Diagnostic>> = [];
   if (strings.HasPrefix(value, "-")) {

@@ -24,7 +24,7 @@ export function FSMock_as_vfs_FS(receiver: GoPtr<FSMock>): FS {
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FSMock_Chtimes(receiver, path, aTime, mTime),
     DirectoryExists: (path: string): bool => FSMock_DirectoryExists(receiver, path),
     GetAccessibleEntries: (path: string): Entries => FSMock_GetAccessibleEntries(receiver, path),
-    Stat: (path: string): GoPtr<FileInfo> => FSMock_Stat(receiver, path),
+    Stat: (path: string): GoInterface<FileInfo> => FSMock_Stat(receiver, path),
     WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FSMock_WalkDir(receiver, root, walkFn),
     Realpath: (path: string): string => FSMock_Realpath(receiver, path),
   };
@@ -164,7 +164,7 @@ export interface FSMock {
   ReadFileFunc: GoFunc<(path: string) => [string, bool]>;
   RealpathFunc: GoFunc<(path: string) => string>;
   RemoveFunc: GoFunc<(path: string) => GoError>;
-  StatFunc: (path: string) => GoPtr<FileInfo>;
+  StatFunc: (path: string) => GoInterface<FileInfo>;
   UseCaseSensitiveFileNamesFunc: GoFunc<() => bool>;
   WalkDirFunc: GoFunc<(root: string, walkFn: WalkDirFunc) => GoError>;
   WriteFileFunc: GoFunc<(path: string, data: string) => GoError>;
@@ -638,7 +638,7 @@ export function FSMock_RemoveCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: str
  * 	return mock.StatFunc(path)
  * }
  */
-export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): GoPtr<FileInfo> {
+export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): GoInterface<FileInfo> {
   if (receiver!.StatFunc === undefined) {
     throw new globalThis.Error("FSMock.StatFunc: method is nil but FS.Stat was just called");
   }

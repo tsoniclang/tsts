@@ -21,7 +21,7 @@ import type { GoInterface } from "../../../go/compat.js";
  */
 export interface compilerHost {
   host: GoPtr<host>;
-  trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void;
+  trace: (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
 }
 
 /**
@@ -37,7 +37,7 @@ export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHo
     FS: (): FS_d7943d56 => compilerHost_FS(receiver)!,
     DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath(receiver),
     GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory(receiver),
-    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => compilerHost_Trace(receiver, msg, ...args),
+    Trace: (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void => compilerHost_Trace(receiver, msg, ...args),
     GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => compilerHost_GetSourceFile(receiver, opts),
     GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => compilerHost_GetResolvedProjectReference(receiver, fileName, path),
   };
@@ -87,7 +87,7 @@ export function compilerHost_GetCurrentDirectory(receiver: GoPtr<compilerHost>):
  * 	h.trace(msg, args...)
  * }
  */
-export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<unknown>): void {
+export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
   receiver!.trace(msg, ...args);
 }
 

@@ -234,7 +234,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
  * 	return ast.NewDiagnostic(file, loc, message, args...)
  * }
  */
-export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   let file: GoPtr<SourceFile> = undefined;
   let loc: TextRange = NewTextRange(0, 0);
   if (node !== undefined) {
@@ -255,7 +255,7 @@ export function NewDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>,
  * 	return NewDiagnosticForNode(node, message, args...)
  * }
  */
-export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   if (chain !== undefined) {
     return NewDiagnosticChain(chain, message, ...args);
   }
@@ -2473,7 +2473,7 @@ export function isValidBigIntString(s: string, roundTripOnly: bool): bool {
   const scanner = NewScanner();
   Scanner_SetSkipTrivia(scanner, false as bool);
   let success: bool = true as bool;
-  Scanner_SetOnError(scanner, (_diagnostic: GoPtr<Message>, _start: int, _length: int, ..._args: Array<unknown>): void => {
+  Scanner_SetOnError(scanner, (_diagnostic: GoPtr<Message>, _start: int, _length: int, ..._args: Array<GoInterface<unknown>>): void => {
     success = false as bool;
   });
   Scanner_SetText(scanner, s + "n");
@@ -4328,7 +4328,7 @@ export function Checker_isJSLiteralType(receiver: GoPtr<Checker>, t: GoPtr<Type>
  */
 export interface DiagnosticDetails {
   Message: GoPtr<Message>;
-  Args: GoSlice<unknown>;
+  Args: GoSlice<GoInterface<unknown>>;
 }
 
 /**

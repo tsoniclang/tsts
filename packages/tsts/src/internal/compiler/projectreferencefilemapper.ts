@@ -178,7 +178,7 @@ export function projectReferenceFileMapper_isSourceFromProjectReference(receiver
  */
 export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: GoPtr<projectReferenceFileMapper>, file: GoInterface<HasFileName>): GoPtr<CompilerOptions> {
   const redirect = projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver, file);
-  const redirectedReference: GoPtr<ResolvedProjectReference> = redirect !== undefined
+  const redirectedReference: GoInterface<ResolvedProjectReference> = redirect !== undefined
     ? ParsedCommandLine_as_ResolvedProjectReference(redirect)
     : undefined;
   return GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectedReference);

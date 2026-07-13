@@ -182,7 +182,7 @@ export function TypeScriptSubmoduleExists(): bool {
  */
 export interface SkippableTest {
   Helper(): void;
-  Skipf(format: string, ...args: Array<unknown>): void;
+  Skipf(format: string, ...args: Array<GoInterface<unknown>>): void;
 }
 
 /**

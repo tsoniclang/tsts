@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -116,7 +116,7 @@ export function PackageJson_GetDependencyFields(receiver: GoPtr<PackageJson>): D
  */
 export interface diagnosticAndArgs {
   message: GoPtr<Message>;
-  args: GoSlice<unknown>;
+  args: GoSlice<GoInterface<unknown>>;
 }
 
 /**
@@ -183,7 +183,7 @@ export interface diagnosticAndArgs {
  * 	return p.versionPaths
  * }
  */
-export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: (m: GoPtr<Message>, ...args: Array<unknown>) => void): VersionPaths {
+export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: (m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void): VersionPaths {
   receiver!.once.Do(() => {
     const typesVersions: JSONValue = receiver!.__tsgoEmbedded0?.__tsgoEmbedded1?.TypesVersions ?? { Type: JSONValueTypeNotPresent, Value: undefined };
     receiver!.versionTraces ??= [];

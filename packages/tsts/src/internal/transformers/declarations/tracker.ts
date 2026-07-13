@@ -443,7 +443,7 @@ export function SymbolTrackerImpl_handleSymbolAccessibilityError(receiver: GoPtr
  * 	return checker.NewDiagnosticForNode(node, message, args...)
  * }
  */
-export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return NewDiagnosticForNode(node, message, ...args);
 }
 

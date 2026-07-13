@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoMap, type GoPtr } from "../../go/compat.js";
+import { GoBooleanKey, GoNumberKey, GoStringKey, GoStructField, GoStructKey, GoZeroPointer, type GoInterface, type GoMap, type GoPtr } from "../../go/compat.js";
 import { Map, Once } from "../../go/sync.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store } from "../collections/syncmap.js";
@@ -207,7 +207,7 @@ export function newCaches(currentDirectory: string, useCaseSensitiveFileNames: b
  * 	return redirect.ConfigName()
  * }
  */
-export function getRedirectConfigName(redirect: GoPtr<ResolvedProjectReference>): string {
+export function getRedirectConfigName(redirect: GoInterface<ResolvedProjectReference>): string {
   if (redirect === undefined) {
     return "";
   }

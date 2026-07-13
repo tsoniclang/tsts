@@ -547,7 +547,7 @@ export function toBuildInfo_collectRootFiles(receiver: GoPtr<toBuildInfo>): void
  */
 export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuildInfo>): void {
   receiver!.buildInfo!.FileInfos = core.Map(Program_GetSourceFiles(receiver!.program), (file: GoPtr<import("../../ast/ast.js").SourceFile>) => {
-    const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(receiver!.snapshot!.fileInfos, SourceFile_Path(file), GoZeroPointer<FileInfo>, GoStringKey);
+    const [info] = SyncMap_Load<Path, GoInterface<FileInfo>>(receiver!.snapshot!.fileInfos, SourceFile_Path(file), GoZeroPointer<FileInfo>, GoStringKey);
     const fileId = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
     if (receiver!.buildInfo!.FileNames[fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
       const libFile = Program_GetDefaultLibFile(receiver!.program, SourceFile_Path(file));
@@ -676,7 +676,7 @@ export function toBuildInfo_setCompilerOptions(receiver: GoPtr<toBuildInfo>): vo
       if (receiver!.buildInfo!.Options === undefined) {
         receiver!.buildInfo!.Options = newMapWithSizeHint<string, unknown>(0, GoStringKey);
       }
-      OrderedMap_Set(receiver!.buildInfo!.Options as GoPtr<OrderedMap<string, unknown>>, option!.Name, toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver, option, value.Interface()), GoStringKey);
+      OrderedMap_Set(receiver!.buildInfo!.Options as GoPtr<OrderedMap<string, GoInterface<unknown>>>, option!.Name, toBuildInfo_toRelativeToBuildInfoCompilerOptionValue(receiver, option, value.Interface()), GoStringKey);
       return false;
     },
   );

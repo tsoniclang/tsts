@@ -361,7 +361,7 @@ export function CreateReportErrorSummary(sys: GoInterface<System>, locale: Local
  * 	}
  * }
  */
-export function CreateBuilderStatusReporter(sys: GoInterface<System>, w: GoInterface<Writer>, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
+export function CreateBuilderStatusReporter(sys: GoInterface<System>, w: GoInterface<Writer>, locale: Locale, options: GoPtr<CompilerOptions>, testing: GoInterface<CommandLineTesting>): DiagnosticReporter {
   if (Tristate_IsTrue(options!.Quiet)) {
     return QuietDiagnosticReporter;
   }
@@ -403,7 +403,7 @@ export function CreateBuilderStatusReporter(sys: GoInterface<System>, w: GoInter
  * 	}
  * }
  */
-export function CreateWatchStatusReporter(sys: GoInterface<System>, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
+export function CreateWatchStatusReporter(sys: GoInterface<System>, locale: Locale, options: GoPtr<CompilerOptions>, testing: GoInterface<CommandLineTesting>): DiagnosticReporter {
   const formatOpts = getFormatOptsOfSys(sys, locale);
   const writeStatus = shouldBePretty(sys, options) ? FormatDiagnosticsStatusWithColorAndTime : FormatDiagnosticsStatusAndTime;
   return (diagnostic: GoPtr<Diagnostic>): void => {

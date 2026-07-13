@@ -2345,7 +2345,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return undefined;
   }, GoZeroPointer<ObjectLiteralExpression>);
 
-  const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<ObjectLiteralExpression>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<ObjectLiteralExpression>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     const diag = ForEachPropertyAssignment<Diagnostic>(objectLiteral, key1, (property) => {
       return GoValueRef(CreateDiagnosticForNodeInSourceFile(sourceFile!()!, onKey ? NamedMemberBase_Name(property) : property!.Initializer, message, ...args)!);
     }, key2);
@@ -2355,7 +2355,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag?.v;
   };
 
-  const createCompilerOptionsDiagnostic = (message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createCompilerOptionsDiagnostic = (message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax!();
     let diag: GoPtr<Diagnostic>;
     if (compilerOptionsProperty !== undefined) {
@@ -2367,7 +2367,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag;
   };
 
-  const createDiagnosticForOption = (onKey: bool, option1: string, option2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createDiagnosticForOption = (onKey: bool, option1: string, option2: string, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     let diag = createOptionDiagnosticInObjectLiteralSyntax(getCompilerOptionsObjectLiteralSyntax!(), onKey, option1, option2, message, ...args);
     if (diag === undefined) {
       diag = createCompilerOptionsDiagnostic(message, ...args);
@@ -2375,17 +2375,17 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag;
   };
 
-  const createDiagnosticForOptionName = (message: GoPtr<Message>, option1: string, option2: string, ...args: unknown[]): void => {
+  const createDiagnosticForOptionName = (message: GoPtr<Message>, option1: string, option2: string, ...args: GoInterface<unknown>[]): void => {
     createDiagnosticForOption(true as bool, option1, option2, message, option1, option2, ...args);
   };
 
-  const createOptionValueDiagnostic = (option1: string, message: GoPtr<Message>, ...args: unknown[]): void => {
+  const createOptionValueDiagnostic = (option1: string, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): void => {
     createDiagnosticForOption(false as bool, option1, "", message, ...args);
   };
 
   const createRemovedOptionDiagnostic = (name: string, value: string, useInstead: string): void => {
     let message: GoPtr<Message>;
-    let args: unknown[];
+    let args: GoInterface<unknown>[];
     if (value === "") {
       message = diagnostics.Option_0_has_been_removed_Please_remove_it_from_your_configuration;
       args = [name];
@@ -2517,7 +2517,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     })?.v;
   };
 
-  const createDiagnosticForOptionPaths = (onKey: bool, key: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createDiagnosticForOptionPaths = (onKey: bool, key: string, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
         return createOptionDiagnosticInObjectLiteralSyntax(AsObjectLiteralExpression(pathProp!.Initializer!), onKey, key, "", message, ...args);
@@ -2530,7 +2530,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag;
   };
 
-  const createDiagnosticForOptionPathKeyValue = (key: string, valueIndex: int, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createDiagnosticForOptionPathKeyValue = (key: string, valueIndex: int, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
         return ForEachPropertyAssignment<Diagnostic>(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
@@ -2862,7 +2862,7 @@ export function Program_IsEmitBlocked(receiver: GoPtr<Program>, emitFileName: st
  */
 export function Program_verifyProjectReferences(receiver: GoPtr<Program>): void {
   const buildInfoFileName = !Tristate_IsTrue(Program_Options(receiver)!.SuppressOutputPathCheck) ? ParsedCommandLine_GetBuildInfoFileName(receiver!.opts.Config) : "";
-  const createDiagnosticForReference = (config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: unknown[]): void => {
+  const createDiagnosticForReference = (config: GoPtr<ParsedCommandLine>, index: int, message: GoPtr<Message>, ...args: GoInterface<unknown>[]): void => {
     let diag = CreateDiagnosticAtReferenceSyntax(config, index, message, ...args);
     if (diag === undefined) {
       diag = NewCompilerDiagnostic(message, ...args);

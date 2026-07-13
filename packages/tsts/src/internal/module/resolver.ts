@@ -240,7 +240,7 @@ export interface tracer {
  */
 export interface DiagAndArgs {
   Message: GoPtr<Message>;
-  Args: GoSlice<unknown>;
+  Args: GoSlice<GoInterface<unknown>>;
 }
 
 /**
@@ -253,7 +253,7 @@ export interface DiagAndArgs {
  * 	}
  * }
  */
-export function tracer_write(receiver: GoPtr<tracer>, diag: GoPtr<Message>, ...args: Array<unknown>): void {
+export function tracer_write(receiver: GoPtr<tracer>, diag: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
   if (receiver !== undefined) {
     receiver.traces = [...receiver.traces, { Message: diag, Args: args }];
   }
@@ -381,7 +381,7 @@ export interface resolutionState {
  * 	return state
  * }
  */
-export function newResolutionState(name: string, containingDirectory: string, isTypeReferenceDirective: bool, resolutionMode: ResolutionMode, compilerOptions: GoPtr<CompilerOptions>, redirectedReference: GoPtr<ResolvedProjectReference>, resolver: GoPtr<Resolver>, traceBuilder: GoPtr<tracer>): GoPtr<resolutionState> {
+export function newResolutionState(name: string, containingDirectory: string, isTypeReferenceDirective: bool, resolutionMode: ResolutionMode, compilerOptions: GoPtr<CompilerOptions>, redirectedReference: GoInterface<ResolvedProjectReference>, resolver: GoPtr<Resolver>, traceBuilder: GoPtr<tracer>): GoPtr<resolutionState> {
   const state: resolutionState = {
     name: name,
     containingDirectory: containingDirectory,
@@ -446,7 +446,7 @@ export function newResolutionState(name: string, containingDirectory: string, is
  * 	return compilerOptions
  * }
  */
-export function GetCompilerOptionsWithRedirect(compilerOptions: GoPtr<CompilerOptions>, redirectedReference: GoPtr<ResolvedProjectReference>): GoPtr<CompilerOptions> {
+export function GetCompilerOptionsWithRedirect(compilerOptions: GoPtr<CompilerOptions>, redirectedReference: GoInterface<ResolvedProjectReference>): GoPtr<CompilerOptions> {
   if (redirectedReference === undefined) {
     return compilerOptions;
   }
@@ -625,7 +625,7 @@ export function Resolver_GetPackageScopeForPath(receiver: GoPtr<Resolver>, direc
  * 	}
  * }
  */
-export function tracer_traceResolutionUsingProjectReference(receiver: GoPtr<tracer>, redirectedReference: GoPtr<ResolvedProjectReference>): void {
+export function tracer_traceResolutionUsingProjectReference(receiver: GoPtr<tracer>, redirectedReference: GoInterface<ResolvedProjectReference>): void {
   if (redirectedReference !== undefined && redirectedReference.CompilerOptions() !== undefined) {
     tracer_write(receiver, diagnostics.Using_compiler_options_of_project_reference_redirect_0, redirectedReference.ConfigName());
   }
@@ -680,7 +680,7 @@ export function tracer_traceResolutionUsingProjectReference(receiver: GoPtr<trac
  * 	return result, traceBuilder.getTraces()
  * }
  */
-export function Resolver_ResolveTypeReferenceDirective(receiver: GoPtr<Resolver>, typeReferenceDirectiveName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoPtr<ResolvedProjectReference>): [GoPtr<ResolvedTypeReferenceDirective>, GoSlice<DiagAndArgs>] {
+export function Resolver_ResolveTypeReferenceDirective(receiver: GoPtr<Resolver>, typeReferenceDirectiveName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoInterface<ResolvedProjectReference>): [GoPtr<ResolvedTypeReferenceDirective>, GoSlice<DiagAndArgs>] {
   const containingDirectory = tspath.GetDirectoryPath(containingFile);
   const traceBuilder = Resolver_newTraceBuilder(receiver);
   const fromInferredTypesContainingFile = strings.HasSuffix(containingFile, InferredTypesContainingFile);
@@ -777,7 +777,7 @@ export function Resolver_ResolveTypeReferenceDirective(receiver: GoPtr<Resolver>
  * 	return finalResult, traceBuilder.getTraces()
  * }
  */
-export function Resolver_ResolveModuleName(receiver: GoPtr<Resolver>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoPtr<ResolvedProjectReference>): [GoPtr<ResolvedModule>, GoSlice<DiagAndArgs>] {
+export function Resolver_ResolveModuleName(receiver: GoPtr<Resolver>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoInterface<ResolvedProjectReference>): [GoPtr<ResolvedModule>, GoSlice<DiagAndArgs>] {
   const containingDirectory = tspath.GetDirectoryPath(containingFile);
   const traceBuilder = Resolver_newTraceBuilder(receiver);
   const cacheKey: moduleResolutionCacheKey = {
@@ -851,7 +851,7 @@ export function Resolver_ResolveModuleName(receiver: GoPtr<Resolver>, moduleName
  * 	return nil
  * }
  */
-export function Resolver_ResolvePackageDirectory(receiver: GoPtr<Resolver>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoPtr<ResolvedProjectReference>): GoPtr<ResolvedModule> {
+export function Resolver_ResolvePackageDirectory(receiver: GoPtr<Resolver>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode, redirectedReference: GoInterface<ResolvedProjectReference>): GoPtr<ResolvedModule> {
   const compilerOptions = GetCompilerOptionsWithRedirect(receiver!.compilerOptions, redirectedReference);
   const containingDirectory = tspath.GetDirectoryPath(containingFile);
   const state = newResolutionState(moduleName, containingDirectory, false, resolutionMode, compilerOptions, redirectedReference, receiver, undefined);
@@ -3608,7 +3608,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
   let packageFile = "";
   let versionPaths: VersionPaths = { Version: "", pathsJSON: undefined, paths: undefined };
   if (InfoCacheEntry_Exists(packageInfo)) {
-    const traceFunc = resolutionState_getTraceFunc(receiver) ?? ((_m: GoPtr<Message>, ..._args: Array<unknown>) => {});
+    const traceFunc = resolutionState_getTraceFunc(receiver) ?? ((_m: GoPtr<Message>, ..._args: Array<GoInterface<unknown>>) => {});
     versionPaths = PackageJson_GetVersionPaths(packageInfo!.Contents, traceFunc);
     const comparePaths0: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.resolver!.host!.FS()!.UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
     if (tspath.ComparePaths(candidate, packageInfo!.PackageDirectory, comparePaths0) === 0) {
@@ -4168,9 +4168,9 @@ export function resolutionState_conditionMatches(receiver: GoPtr<resolutionState
  * 	return nil
  * }
  */
-export function resolutionState_getTraceFunc(receiver: GoPtr<resolutionState>): GoPtr<(m: GoPtr<Message>, ...args: Array<unknown>) => void> {
+export function resolutionState_getTraceFunc(receiver: GoPtr<resolutionState>): GoFunc<(m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void> {
   if (receiver!.tracer !== undefined) {
-    return (m: GoPtr<Message>, ...args: Array<unknown>) => tracer_write(receiver!.tracer, m, ...args);
+    return (m: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => tracer_write(receiver!.tracer, m, ...args);
   }
   return undefined;
 }

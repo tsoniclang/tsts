@@ -89,7 +89,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
  * 	return tr
  * }
  */
-export function startTracingIfNeeded(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): GoPtr<Tracing> {
+export function startTracingIfNeeded(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, testing: GoInterface<CommandLineTesting>): GoPtr<Tracing> {
   const traceDir = ParsedCommandLine_CompilerOptions(config)!.GenerateTrace ?? "";
   if (traceDir === "") {
     return undefined;
@@ -145,7 +145,7 @@ export function stopTracing(sys: GoInterface<System>, tr: GoPtr<Tracing>): void 
  * 	return tscCompilation(ctx, sys, tsoptions.ParseCommandLine(commandLineArgs, sys), testing)
  * }
  */
-export function CommandLine(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLineArgs: GoSlice<string>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function CommandLine(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLineArgs: GoSlice<string>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   if (commandLineArgs.length > 0) {
     switch (ToLower(commandLineArgs[0]!)) {
       case "-b":
@@ -227,7 +227,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
  * 	return orchestrator.Start(ctx)
  * }
  */
-export function tscBuildCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function tscBuildCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   const locale = ParsedBuildCommandLine_Locale(buildCommand);
   const reportDiagnostic = CreateDiagnosticReporter(sys, sys!.Writer(), locale, buildCommand!.CompilerOptions);
 
@@ -409,7 +409,7 @@ export function tscBuildCompilation(ctx: GoInterface<Context>, sys: GoInterface<
  * 	)
  * }
  */
-export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLine: GoPtr<ParsedCommandLine>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<System>, commandLine: GoPtr<ParsedCommandLine>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   let configFileName = "";
   const locale = ParsedCommandLine_Locale(commandLine);
   let reportDiagnostic = CreateDiagnosticReporter(sys, sys!.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
@@ -429,7 +429,7 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
   }
   try {
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Init)) {
-      WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap<string, unknown>>);
+      WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap<string, GoInterface<unknown>>>);
       return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
@@ -493,12 +493,12 @@ export function tscCompilation(ctx: GoInterface<Context>, sys: GoInterface<Syste
     let configForCompilation = commandLine;
     const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, GoPtr<extendedConfigCacheEntry>> };
     const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
-    let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
+    let commandLineRaw: GoPtr<OrderedMap<string, GoInterface<unknown>>> = undefined;
     if (configFileName !== "") {
       const configStart = sys!.Now();
       const raw = commandLine!.Raw;
       if (raw !== undefined && raw !== null) {
-        const rawMap = raw as OrderedMap<string, unknown>;
+        const rawMap = raw as OrderedMap<string, GoInterface<unknown>>;
         if (rawMap.keys !== undefined) {
           // Wrap command line options in a "compilerOptions" key to match tsconfig.json structure
           const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0, GoStringKey);
@@ -605,7 +605,7 @@ export function findConfigFile(searchPath: string, fileExists: GoFunc<(arg0: str
  * 	return tsc.GetTraceWithWriterFromSys(sys.Writer(), locale, testing)
  * }
  */
-export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
+export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testing: GoInterface<CommandLineTesting>): (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void {
   return GetTraceWithWriterFromSys(sys!.Writer(), locale, testing);
 }
 
@@ -662,7 +662,7 @@ export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testin
  * 	}
  * }
  */
-export function performIncrementalCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function performIncrementalCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
   const buildInfoReadStart = sys!.Now();
   const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
@@ -744,7 +744,7 @@ export function performIncrementalCompilation(sys: GoInterface<System>, config: 
  * 	}
  * }
  */
-export function performCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting | undefined): CommandLineResult {
+export function performCompilation(sys: GoInterface<System>, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: GoInterface<CommandLineTesting>): CommandLineResult {
   const host = NewCachedFSCompilerHost(sys!.GetCurrentDirectory(), sys!.FS(), sys!.DefaultLibraryPath(), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache), getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
 
   const tr = startTracingIfNeeded(sys, config, testing);

@@ -247,7 +247,7 @@ export function statisticsFromProgram(input: EmitInput, memStats: GoPtr<MemStats
  * 	table.print(w)
  * }
  */
-export function Statistics_Report(receiver: GoPtr<Statistics>, w: GoInterface<Writer>, testing: CommandLineTesting | undefined): void {
+export function Statistics_Report(receiver: GoPtr<Statistics>, w: GoInterface<Writer>, testing: GoInterface<CommandLineTesting>): void {
   const s = receiver!;
   if (testing !== undefined) {
     testing.OnStatisticsStart(w);

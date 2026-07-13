@@ -296,7 +296,7 @@ export const EscapeSequenceScanningFlagsAllowExtendedUnicodeEscape: EscapeSequen
  * Go source:
  * ErrorCallback func(diagnostic *diagnostics.Message, start, length int, args ...any)
  */
-export type ErrorCallback = (diagnostic: GoPtr<Message>, start: int, length: int, ...args: Array<unknown>) => void;
+export type ErrorCallback = (diagnostic: GoPtr<Message>, start: int, length: int, ...args: Array<GoInterface<unknown>>) => void;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::varGroup::textToKeyword","kind":"varGroup","status":"implemented","sigHash":"331eacad0b2c162c7810c59d097fe133a4d1ef5e2c07a09e8a2a5615d9f318e1"}
@@ -1366,7 +1366,7 @@ export function Scanner_error(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Messag
  * 	}
  * }
  */
-export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Message>, pos: int, length: int, ...args: Array<unknown>): void {
+export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>): void {
   const s = receiver!;
   if (s.onError !== undefined) {
     s.onError(diagnostic, pos, length, ...args);
@@ -5916,7 +5916,7 @@ export function isConflictMarkerTrivia(text: string, pos: int): bool {
 export function scanConflictMarkerTrivia(
   text: string,
   pos: int,
-  reportError: ((diag: GoPtr<Message>, pos: int, length: int, ...args: Array<unknown>) => void) | undefined,
+  reportError: ((diag: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>) => void) | undefined,
 ): int {
   if (reportError !== undefined) {
     reportError(Merge_conflict_marker_encountered, pos, mergeConflictMarkerLength);

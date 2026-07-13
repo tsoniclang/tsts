@@ -59,7 +59,7 @@ import type { GoFunc, GoInterface } from "../../../go/compat.js";
 export interface Options {
   Sys: GoInterface<System>;
   Command: GoPtr<ParsedBuildCommandLine>;
-  Testing: CommandLineTesting | undefined;
+  Testing: GoInterface<CommandLineTesting>;
 }
 
 /**

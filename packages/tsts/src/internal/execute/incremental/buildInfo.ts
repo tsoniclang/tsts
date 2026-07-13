@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
-import { GoStringKey, GoZeroPointer, GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoError, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -242,7 +242,7 @@ export interface BuildInfoFileInfo {
  * 	}}
  * }
  */
-export function newBuildInfoFileInfo(fileInfo: GoPtr<FileInfo>): GoPtr<BuildInfoFileInfo> {
+export function newBuildInfoFileInfo(fileInfo: GoInterface<FileInfo>): GoPtr<BuildInfoFileInfo> {
   if (fileInfo!.version === fileInfo!.signature) {
     if (!fileInfo!.affectsGlobalScope && fileInfo!.impliedNodeFormat === ResolutionModeCommonJS) {
       return { signature: fileInfo!.signature, noSignature: undefined, fileInfo: undefined };
@@ -301,7 +301,7 @@ export function newBuildInfoFileInfo(fileInfo: GoPtr<FileInfo>): GoPtr<BuildInfo
  * 	}
  * }
  */
-export function BuildInfoFileInfo_GetFileInfo(receiver: GoPtr<BuildInfoFileInfo>): GoPtr<FileInfo> {
+export function BuildInfoFileInfo_GetFileInfo(receiver: GoPtr<BuildInfoFileInfo>): GoInterface<FileInfo> {
   if (receiver === undefined) {
     return undefined;
   }
@@ -1134,7 +1134,7 @@ export interface BuildInfo {
   FileNames: GoSlice<string>;
   FileInfos: GoSlice<GoPtr<BuildInfoFileInfo>>;
   FileIdsList: GoSlice<GoSlice<BuildInfoFileId>>;
-  Options: GoPtr<OrderedMap<string, unknown>>;
+  Options: GoPtr<OrderedMap<string, GoInterface<unknown>>>;
   ReferencedMap: GoSlice<GoPtr<BuildInfoReferenceMapEntry>>;
   SemanticDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoSemanticDiagnostic>>;
   EmitDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>>;
@@ -1216,7 +1216,7 @@ export function BuildInfo_fileInfo(receiver: GoPtr<BuildInfo>, fileId: BuildInfo
  */
 export function BuildInfo_GetCompilerOptions(receiver: GoPtr<BuildInfo>, buildInfoDirectory: string): GoPtr<CompilerOptions> {
   const options: CompilerOptions = {} as CompilerOptions;
-  const entries: Seq2<string, unknown> = OrderedMap_Entries(receiver!.Options as import("../../collections/ordered_map.js").OrderedMap<string, unknown>);
+  const entries: Seq2<string, unknown> = OrderedMap_Entries(receiver!.Options as import("../../collections/ordered_map.js").OrderedMap<string, GoInterface<unknown>>);
   entries!((option: string, value: unknown): bool => {
     if (buildInfoDirectory !== "") {
       const [result, ok] = ConvertOptionToAbsolutePath(option, value, CommandLineCompilerOptionsMap, buildInfoDirectory);

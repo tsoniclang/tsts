@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoInterface, GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NewDiagnostic } from "../../ast/diagnostic.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
@@ -128,7 +128,7 @@ import type { GoFunc } from "../../../go/compat.js";
  * 	return p.parseErrorAtRange(p.scanner.TokenRange(), message, args...)
  * }
  */
-export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
+export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): GoPtr<Diagnostic> {
   return Parser_parseErrorAtRange(receiver, Scanner_TokenRange(receiver!.scanner), message, ...args);
 }
 

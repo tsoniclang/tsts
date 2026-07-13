@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, type GoComparable, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoStringKey, GoZeroPointer, type GoComparable, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
 import { Map as GoSyncMap, Once } from "../../../go/sync.js";
@@ -123,7 +123,7 @@ export function programToSnapshot(program: GoPtr<Program>, oldProgram: GoPtr<Pro
     return oldProgram.snapshot;
   }
   const snap: snapshot = {
-    fileInfos: newSyncMap<Path, GoPtr<FileInfo>>(),
+    fileInfos: newSyncMap<Path, GoInterface<FileInfo>>(),
     options: Program_Options(program),
     referencedMap: {
       references: newSyncMap<Path, GoPtr<Set<Path>>>(),
@@ -394,7 +394,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
 export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnapshot>): void {
   if (receiver!.oldProgram !== undefined) {
     // If the global file is removed, add all files as changed
-    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos, (filePath: Path, oldInfo: GoPtr<FileInfo>) => {
+    SyncMap_Range(receiver!.oldProgram.snapshot!.fileInfos, (filePath: Path, oldInfo: GoInterface<FileInfo>) => {
       const [, ok] = SyncMap_Load(
         receiver!.snapshot!.fileInfos,
         filePath,

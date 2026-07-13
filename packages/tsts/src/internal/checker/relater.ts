@@ -382,7 +382,7 @@ export const RelationComparisonResultOverflow: RelationComparisonResult = Relati
  */
 export interface DiagnosticAndArguments {
   message: GoPtr<Message>;
-  "arguments": GoSlice<unknown>;
+  "arguments": GoSlice<GoInterface<unknown>>;
 }
 
 /**
@@ -405,7 +405,7 @@ export interface ErrorOutputContainer {
  * Go source:
  * ErrorReporter func(message *diagnostics.Message, args ...any)
  */
-export type ErrorReporter = (message: GoPtr<Message>, ...args: Array<unknown>) => void;
+export type ErrorReporter = (message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::RecursionId","kind":"type","status":"implemented","sigHash":"368c8aeb348677cd34967d0743746c23a0620b09f747f077a5fe903038586520"}
@@ -1515,7 +1515,7 @@ export function Checker_elaborateArrayLiteral(receiver: GoPtr<Checker>, node: Go
  * 	return true
  * }
  */
-export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, prop: GoPtr<Node>, next: GoPtr<Node>, nameType: GoPtr<Type>, errorMessage: GoPtr<Message>, diagnosticFactory: GoPtr<(prop: GoPtr<Node>) => GoPtr<Diagnostic>>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
+export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, prop: GoPtr<Node>, next: GoPtr<Node>, nameType: GoPtr<Type>, errorMessage: GoPtr<Message>, diagnosticFactory: GoFunc<(prop: GoPtr<Node>) => GoPtr<Diagnostic>>, diagnosticOutput: GoRef<GoSlice<GoPtr<Diagnostic>>>): bool {
   let targetPropType = Checker_getBestMatchIndexedAccessTypeOrUndefined(receiver, source, target, nameType);
   if (targetPropType === undefined || (targetPropType!.flags & TypeFlagsIndexedAccess) !== 0) {
     return false;
@@ -5576,7 +5576,7 @@ export interface errorState {
 export interface ErrorChain {
   next: GoPtr<ErrorChain>;
   message: GoPtr<Message>;
-  args: GoSlice<unknown>;
+  args: GoSlice<GoInterface<unknown>>;
 }
 
 /**
@@ -5869,7 +5869,7 @@ export function Relater_isRelatedToEx(receiver: GoPtr<Relater>, originalSource: 
   if (originalSource === originalTarget) {
     return TernaryTrue;
   }
-  const reportError: ErrorReporter = (message: GoPtr<Message>, ...args: Array<unknown>) => Relater_reportError(receiver, message, ...args);
+  const reportError: ErrorReporter = (message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => Relater_reportError(receiver, message, ...args);
   if ((originalSource!.flags & TypeFlagsObject) !== 0 && (originalTarget!.flags & TypeFlagsPrimitive) !== 0) {
     if (
       (receiver!.relation === receiver!.c!.comparableRelation && (originalTarget!.flags & TypeFlagsNever) === 0 && Checker_isSimpleTypeRelatedTo(receiver!.c, originalTarget, originalSource, receiver!.relation, undefined as unknown as ErrorReporter)) ||
@@ -9599,7 +9599,7 @@ export function Relater_signatureRelatedTo(receiver: GoPtr<Relater>, source: GoP
     targetSignature,
     checkMode,
     reportErrors,
-    (message: GoPtr<Message>, ...args: Array<unknown>) => Relater_reportError(receiver, message, ...args),
+    (message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => Relater_reportError(receiver, message, ...args),
     isRelatedToWorker,
     receiver!.c!.reportUnreliableMapper,
   );
@@ -10215,7 +10215,7 @@ export function Relater_reportRelationError(receiver: GoPtr<Relater>, message: G
  * 	r.errorChain = &ErrorChain{next: r.errorChain, message: message, args: args}
  * }
  */
-export function Relater_reportError(receiver: GoPtr<Relater>, message: GoPtr<Message>, ...args: Array<unknown>): void {
+export function Relater_reportError(receiver: GoPtr<Relater>, message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
   if (message === Types_of_property_0_are_incompatible) {
     switch (Relater_getChainMessage(receiver, 0)) {
       case Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1:
@@ -10351,7 +10351,7 @@ export function Relater_getChainMessage(receiver: GoPtr<Relater>, index: int): G
  * 	return true
  * }
  */
-export function Relater_chainArgsMatch(receiver: GoPtr<Relater>, ...args: Array<unknown>): bool {
+export function Relater_chainArgsMatch(receiver: GoPtr<Relater>, ...args: Array<GoInterface<unknown>>): bool {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a !== undefined && a !== receiver!.errorChain!.args[i]) {

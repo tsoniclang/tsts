@@ -101,7 +101,7 @@ export function Tracer_RecordType(receiver: GoPtr<Tracer>, typ: GoPtr<Type>): vo
  * 	}
  * }
  */
-export function Tracer_Push(receiver: GoPtr<Tracer>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): GoFunc<() => void> {
+export function Tracer_Push(receiver: GoPtr<Tracer>, phase: Phase, name: string, args: GoMap<string, GoInterface<unknown>>, separateBeginAndEnd: bool): GoFunc<() => void> {
   if (!separateBeginAndEnd) {
     return Tracing_Push(receiver!.tracing, phase, name, Tracer_copyWithCheckerIndex(receiver, args), separateBeginAndEnd);
   }
@@ -128,7 +128,7 @@ export function Tracer_Push(receiver: GoPtr<Tracer>, phase: Phase, name: string,
  * 	t.tracing.Instant(phase, name, t.copyWithCheckerIndex(args))
  * }
  */
-export function Tracer_Instant(receiver: GoPtr<Tracer>, phase: Phase, name: string, args: GoMap<string, unknown>): void {
+export function Tracer_Instant(receiver: GoPtr<Tracer>, phase: Phase, name: string, args: GoMap<string, GoInterface<unknown>>): void {
   Tracing_Instant(receiver!.tracing, phase, name, Tracer_copyWithCheckerIndex(receiver, args));
 }
 
@@ -143,7 +143,7 @@ export function Tracer_Instant(receiver: GoPtr<Tracer>, phase: Phase, name: stri
  * 	return withCheckerIndex
  * }
  */
-export function Tracer_copyWithCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, unknown>): GoMap<string, unknown> {
+export function Tracer_copyWithCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, GoInterface<unknown>>): GoMap<string, GoInterface<unknown>> {
   const withCheckerIndex = new globalThis.Map<string, unknown>();
   maps.Copy(withCheckerIndex, args ?? new globalThis.Map<string, unknown>());
   withCheckerIndex.set("checkerId", receiver!.checkerIndex);
@@ -171,7 +171,7 @@ export function Tracer_copyWithCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap
  * 	}
  * }
  */
-export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, unknown>): [GoMap<string, unknown>, () => void] {
+export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, GoInterface<unknown>>): [GoMap<string, GoInterface<unknown>>, () => void] {
   if (args === undefined) {
     args = new globalThis.Map<string, unknown>();
   }

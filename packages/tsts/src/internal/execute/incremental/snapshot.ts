@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoInterface, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoStringKey } from "../../../go/compat.js";
 import * as strings from "../../../go/strings.js";
 import type { Builder } from "../../../go/strings.js";
@@ -82,7 +82,7 @@ export interface FileInfo {
  * Go source:
  * func (f *FileInfo) Version() string                        { return f.version }
  */
-export function FileInfo_Version(receiver: GoPtr<FileInfo>): string {
+export function FileInfo_Version(receiver: GoInterface<FileInfo>): string {
   return receiver!.version;
 }
 
@@ -92,7 +92,7 @@ export function FileInfo_Version(receiver: GoPtr<FileInfo>): string {
  * Go source:
  * func (f *FileInfo) Signature() string                      { return f.signature }
  */
-export function FileInfo_Signature(receiver: GoPtr<FileInfo>): string {
+export function FileInfo_Signature(receiver: GoInterface<FileInfo>): string {
   return receiver!.signature;
 }
 
@@ -102,7 +102,7 @@ export function FileInfo_Signature(receiver: GoPtr<FileInfo>): string {
  * Go source:
  * func (f *FileInfo) AffectsGlobalScope() bool               { return f.affectsGlobalScope }
  */
-export function FileInfo_AffectsGlobalScope(receiver: GoPtr<FileInfo>): bool {
+export function FileInfo_AffectsGlobalScope(receiver: GoInterface<FileInfo>): bool {
   return receiver!.affectsGlobalScope;
 }
 
@@ -112,7 +112,7 @@ export function FileInfo_AffectsGlobalScope(receiver: GoPtr<FileInfo>): bool {
  * Go source:
  * func (f *FileInfo) ImpliedNodeFormat() core.ResolutionMode { return f.impliedNodeFormat }
  */
-export function FileInfo_ImpliedNodeFormat(receiver: GoPtr<FileInfo>): ResolutionMode {
+export function FileInfo_ImpliedNodeFormat(receiver: GoInterface<FileInfo>): ResolutionMode {
   return receiver!.impliedNodeFormat;
 }
 
@@ -741,7 +741,7 @@ export function DiagnosticsOrBuildInfoDiagnosticsWithFileName_getDiagnostics(rec
  * }
  */
 export interface snapshot {
-  fileInfos: SyncMap<Path, GoPtr<FileInfo>>;
+  fileInfos: SyncMap<Path, GoInterface<FileInfo>>;
   options: GoPtr<CompilerOptions>;
   referencedMap: referenceMap;
   semanticDiagnosticsPerFile: SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>;

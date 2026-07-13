@@ -161,7 +161,7 @@ export interface traceEvent {
   Name: string;
   S: string;
   Dur: GoRef<double>;
-  Args: GoMap<string, unknown>;
+  Args: GoMap<string, GoInterface<unknown>>;
 }
 
 /**
@@ -345,7 +345,7 @@ export function StartTracing(fs: GoInterface<FS>, traceDir: string, configFilePa
   tr.traceContent.WriteString(",\n");
   Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "__metadata", TS: metaTs, Name: "thread_name", S: "", Dur: undefined, Args: new globalThis.Map([["name", "Main"]]) });
   tr.traceContent.WriteString(",\n");
-  Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser", S: "", Dur: undefined, Args: undefined as unknown as GoMap<string, unknown> });
+  Tracing_writeEvent(tr, { PID: 1, TID: mainThreadID, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser", S: "", Dur: undefined, Args: undefined as unknown as GoMap<string, GoInterface<unknown>> });
 
   // Truncate any existing trace file with the header so subsequent AppendFile
   // calls extend a clean file.
@@ -468,7 +468,7 @@ export function Tracing_maybeFlushLocked(receiver: GoPtr<Tracing>): void {
  * 	tr.maybeFlushLocked()
  * }
  */
-export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>): void {
+export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, GoInterface<unknown>>): void {
   const tr = receiver;
   if (tr === undefined || !tr.traceStarted.Load()) {
     return;
@@ -553,7 +553,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * 	}
  * }
  */
-export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): GoFunc<() => void> {
+export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, GoInterface<unknown>>, separateBeginAndEnd: bool): GoFunc<() => void> {
   const tr = receiver;
   if (tr === undefined || !tr.traceStarted.Load()) {
     return (): void => {};
@@ -594,7 +594,7 @@ export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: strin
     return (): void => {};
   }
   const startMicros = (globalThis.performance.now() * 1000.0) as double;
-  const argsClone: GoMap<string, unknown> = new globalThis.Map(args);
+  const argsClone: GoMap<string, GoInterface<unknown>> = new globalThis.Map(args);
   return (): void => {
     const endMicros = (globalThis.performance.now() * 1000.0) as double;
     const dur = (endMicros as number - startMicros as number) as double;
@@ -704,7 +704,7 @@ export interface traceThreadKey {
  * 	return tid
  * }
  */
-export function Tracing_threadIDLocked(receiver: GoPtr<Tracing>, args: GoMap<string, unknown>): int {
+export function Tracing_threadIDLocked(receiver: GoPtr<Tracing>, args: GoMap<string, GoInterface<unknown>>): int {
   const tr = receiver!;
   const [key, ok] = traceThreadKeyFromArgs(args);
   if (!ok) {
@@ -765,7 +765,7 @@ export function Tracing_writeThreadNameEventLocked(receiver: GoPtr<Tracing>, tid
  * 	return traceThreadKey{}, false
  * }
  */
-export function traceThreadKeyFromArgs(args: GoMap<string, unknown>): [traceThreadKey, bool] {
+export function traceThreadKeyFromArgs(args: GoMap<string, GoInterface<unknown>>): [traceThreadKey, bool] {
   if ((args?.size ?? 0) === 0) {
     return [{ kind: "", text: "", index: 0 as int, hasIndex: false as bool }, false as bool];
   }

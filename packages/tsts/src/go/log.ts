@@ -1,4 +1,5 @@
 import type { int } from "./scalars.js";
+import type { GoInterface } from "./compat.js";
 import { Sprintf } from "./fmt.js";
 
 export const Ldate: int = 1;
@@ -20,14 +21,14 @@ export function Flags(): int {
   return flags;
 }
 
-export function Printf(format: string, ...args: unknown[]): void {
+export function Printf(format: string, ...args: GoInterface<unknown>[]): void {
   globalThis.console.error(formatMessage(format, args));
 }
 
-export function Fatalf(format: string, ...args: unknown[]): never {
+export function Fatalf(format: string, ...args: GoInterface<unknown>[]): never {
   throw new globalThis.Error(formatMessage(format, args));
 }
 
-function formatMessage(format: string, args: readonly unknown[]): string {
+function formatMessage(format: string, args: readonly GoInterface<unknown>[]): string {
   return Sprintf(format, ...args);
 }

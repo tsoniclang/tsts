@@ -81,7 +81,7 @@ export interface includeExplainingDiagnostic {
   file: Path;
   diagnosticReason: GoPtr<FileIncludeReason>;
   message: GoPtr<Message>;
-  args: GoSlice<unknown>;
+  args: GoSlice<GoInterface<unknown>>;
 }
 
 /**

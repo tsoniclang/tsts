@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import { GoNilSlice } from "../../go/compat.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/helpers.go::type::Priority","kind":"type","status":"implemented","sigHash":"e45a20d4215421395016743450c400ac5a036a54551ebf389bcf72e97792bafc"}
@@ -32,7 +32,7 @@ export interface EmitHelper {
   Name: string;
   Scoped: bool;
   Text: string;
-  TextCallback: GoPtr<(makeUniqueName: (arg0: string) => string) => string>;
+  TextCallback: GoFunc<(makeUniqueName: (arg0: string) => string) => string>;
   Priority: GoPtr<Priority>;
   Dependencies: GoSlice<GoPtr<EmitHelper>>;
   ImportName: string;

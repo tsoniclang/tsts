@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoNumberKey, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoNumberKey, type GoInterface, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
@@ -641,7 +641,7 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
       receiver!.contextFlags = NodeFlagsNone;
   }
   Scanner_SetText(receiver!.scanner, receiver!.sourceText);
-  Scanner_SetOnError(receiver!.scanner, (message: GoPtr<Message>, pos: int, length: int, ...args: Array<unknown>): void => Parser_scanError(receiver, message, pos, length, ...args));
+  Scanner_SetOnError(receiver!.scanner, (message: GoPtr<Message>, pos: int, length: int, ...args: Array<GoInterface<unknown>>): void => Parser_scanError(receiver, message, pos, length, ...args));
   Scanner_SetLanguageVariant(receiver!.scanner, receiver!.languageVariant);
 }
 

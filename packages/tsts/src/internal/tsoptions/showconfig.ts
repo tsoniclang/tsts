@@ -135,8 +135,8 @@ export let impliedOptions: GoSlice<impliedOption> = [
  * }
  */
 export interface TSConfig {
-  CompilerOptions: GoPtr<OrderedMap<string, unknown>>;
-  References: GoSlice<unknown>;
+  CompilerOptions: GoPtr<OrderedMap<string, GoInterface<unknown>>>;
+  References: GoSlice<GoInterface<unknown>>;
   Files: GoSlice<string>;
   Include: GoSlice<string>;
   Exclude: GoSlice<string>;
@@ -262,7 +262,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   // Add references
   const refs = ParsedCommandLine_ProjectReferences(configParseResult);
   if (refs.length > 0) {
-    const references: GoSlice<unknown> = [];
+    const references: GoSlice<GoInterface<unknown>> = [];
     for (const r of refs) {
       const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int, GoStringKey);
       OrderedMap_Set(ref, "path", r!.OriginalPath, GoStringKey);
@@ -469,7 +469,7 @@ export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMa
  * 	return result
  * }
  */
-export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, configFilePath: string, comparePathsOptions: ComparePathsOptions): GoPtr<OrderedMap<string, unknown>> {
+export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, configFilePath: string, comparePathsOptions: ComparePathsOptions): GoPtr<OrderedMap<string, GoInterface<unknown>>> {
   const result = NewOrderedMapWithSizeHint<string, unknown>(32 as int, GoStringKey);
   const configDir = GetDirectoryPath(configFilePath);
   const optionsObj = options as unknown as globalThis.Record<string, unknown>;
@@ -680,7 +680,7 @@ export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<O
  * 	}
  * }
  */
-export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, unknown>>, options: GoPtr<CompilerOptions>, arg: string, arg1: ComparePathsOptions): void {
+export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, GoInterface<unknown>>>, options: GoPtr<CompilerOptions>, arg: string, arg1: ComparePathsOptions): void {
   // Build the set of explicitly provided option JSON names (e.g., "module", "target").
   const provided = new globalThis.Map<string, bool>();
   OrderedMap_Keys(optionMap)!((k: unknown): bool => {
