@@ -350,7 +350,7 @@ export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<Node
   const signature = Checker_getSignatureFromDeclaration(b.impl!.ch, signatureDeclaration);
   const [, cleanup] = NodeBuilderImpl_enterSignatureScope(b.impl, signature);
   const result = NodeBuilderImpl_serializeReturnTypeForSignature(b.impl, signature, true);
-  cleanup();
+  cleanup!();
   return NodeBuilder_exitContext(b, result);
 }
 

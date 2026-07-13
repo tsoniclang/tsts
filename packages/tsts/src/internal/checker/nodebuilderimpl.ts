@@ -4263,7 +4263,7 @@ export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: 
     default:
       throw new globalThis.Error("Unhandled kind in signatureToSignatureDeclarationHelper");
   }
-  cleanup();
+  cleanup!();
   return node;
 }
 

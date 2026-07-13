@@ -619,7 +619,7 @@ export function globPattern_patternSatisfied(receiver: GoPtr<globPattern>, compI
  * 	return rest, len(s), true
  * }
  */
-export function nextPathPartSingle(s: string, offset: int): [string, int, bool] {
+export function nextPathPartSingle(s: string, offset: int): [part: string, nextOffset: int, ok: bool] {
   let off = offset as number;
   if (off >= s.length) {
     return ["", off as int, false];
@@ -690,7 +690,7 @@ export function nextPathPartSingle(s: string, offset: int): [string, int, bool] 
  * 	return suffix[sOff:], totalLen, true
  * }
  */
-export function nextPathPartParts(prefix: string, suffix: string, offset: int): [string, int, bool] {
+export function nextPathPartParts(prefix: string, suffix: string, offset: int): [part: string, nextOffset: int, ok: bool] {
   // Fast paths: keep the hot single-string scan tight.
   if (suffix.length === 0) {
     return nextPathPartSingle(prefix, offset);

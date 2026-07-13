@@ -2194,7 +2194,7 @@ export function newLineCharacterCache(source: GoInterface<Source>): GoPtr<lineCh
  * 	return line, character
  * }
  */
-export function lineCharacterCache_getLineAndCharacter(receiver: GoPtr<lineCharacterCache>, pos: int): [int, UTF16Offset] {
+export function lineCharacterCache_getLineAndCharacter(receiver: GoPtr<lineCharacterCache>, pos: int): [line: int, character: UTF16Offset] {
   const line = ComputeLineOfPosition(receiver!.lineMap, pos);
   const lineStart = receiver!.lineMap[line]!;
   // When pos is beyond the source text (e.g., for error-recovery tokens like

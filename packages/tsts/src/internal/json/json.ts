@@ -57,7 +57,7 @@ export let allowInvalid: GoSlice<Options> = Clip([jsontext_AllowInvalidUTF8(true
  * 	return json.Marshal(in, opts...)
  * }
  */
-export function Marshal(in_: GoInterface<unknown>, ...opts: Array<Options>): [GoSlice<byte>, GoError] {
+export function Marshal(in_: GoInterface<unknown>, ...opts: Array<Options>): [out: GoSlice<byte>, err: GoError] {
   const resolvedOpts: Array<Options> = opts.length === 0 ? allowInvalid : [...allowInvalid, ...opts];
   return json_Marshal(in_, ...resolvedOpts) as [GoSlice<byte>, GoError];
 }
@@ -110,7 +110,7 @@ export function MarshalWrite(out: GoInterface<Writer>, in_: GoInterface<unknown>
  * 	return Marshal(in, jsontext.WithIndentPrefix(prefix), jsontext.WithIndent(indent))
  * }
  */
-export function MarshalIndent(in_: GoInterface<unknown>, prefix: string, indent: string): [GoSlice<byte>, GoError] {
+export function MarshalIndent(in_: GoInterface<unknown>, prefix: string, indent: string): [out: GoSlice<byte>, err: GoError] {
   if (prefix === "" && indent === "") {
     return Marshal(in_);
   }

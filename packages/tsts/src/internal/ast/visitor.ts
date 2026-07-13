@@ -284,7 +284,7 @@ export function NodeVisitor_VisitModifiers(receiver: GoPtr<NodeVisitor>, nodes: 
  * 	return nodes, false
  * }
  */
-export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {
+export function NodeVisitor_VisitSlice(receiver: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [result: GoSlice<GoPtr<Node>>, changed: bool] {
   if (nodes === undefined || receiver!.Visit === undefined) {
     return [nodes, false as bool];
   }

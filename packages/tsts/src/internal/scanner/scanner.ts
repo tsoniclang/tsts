@@ -6476,7 +6476,7 @@ export function GetECMALineOfPosition(sourceFile: GoInterface<SourceFileLike>, p
  * 	return line, character
  * }
  */
-export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [int, UTF16Offset] {
+export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [line: int, character: UTF16Offset] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
   const text = sourceFile!.Text();
@@ -6496,7 +6496,7 @@ export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: GoInterface<S
  * 	return line, byteOffset
  * }
  */
-export function GetECMALineAndByteOffsetOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [int, int] {
+export function GetECMALineAndByteOffsetOfPosition(sourceFile: GoInterface<SourceFileLike>, pos: int): [line: int, byteOffset: int] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
   const byteOffset = pos - (lineMap[line]! as int);

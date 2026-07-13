@@ -2976,7 +2976,7 @@ export function Parser_parseImportSpecifier(receiver: GoPtr<Parser>): GoPtr<Node
  * 	return isTypeOnly, propertyName, name
  * }
  */
-export function Parser_parseImportOrExportSpecifier(receiver: GoPtr<Parser>, kind: Kind): [bool, GoPtr<Node>, GoPtr<Node>] {
+export function Parser_parseImportOrExportSpecifier(receiver: GoPtr<Parser>, kind: Kind): [isTypeOnly: bool, propertyName: GoPtr<Node>, name: GoPtr<Node>] {
   let canParseAsKeyword = true;
   const disallowKeywords = kind === KindImportSpecifier;
   let [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
@@ -3063,7 +3063,7 @@ export function Parser_canParseModuleExportName(receiver: GoPtr<Parser>): bool {
  * 	return p.parseIdentifierName(), nameOk
  * }
  */
-export function Parser_parseModuleExportName(receiver: GoPtr<Parser>, disallowKeywords: bool): [GoPtr<Node>, bool] {
+export function Parser_parseModuleExportName(receiver: GoPtr<Parser>, disallowKeywords: bool): [node: GoPtr<Node>, nameOk: bool] {
   let nameOk = true;
 
   if (receiver!.token === KindStringLiteral) {

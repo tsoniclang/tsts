@@ -175,7 +175,7 @@ export function osFS_UseCaseSensitiveFileNames(receiver: GoPtr<osFS>): bool {
  * 	return vfs.common.ReadFile(path)
  * }
  */
-export function osFS_ReadFile(receiver: GoPtr<osFS>, path: string): [string, bool] {
+export function osFS_ReadFile(receiver: GoPtr<osFS>, path: string): [contents: string, ok: bool] {
   // defer readSema.Acquire()() — no-op in single-threaded TS
   return Common_ReadFile(receiver!.common, path);
 }

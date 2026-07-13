@@ -2708,7 +2708,7 @@ export function classFieldsTransformer_visitExpressionStatement(receiver: GoPtr<
  * 	return readExpression, initializeExpression
  * }
  */
-export function classFieldsTransformer_createCopiableReceiverExpr(receiver: GoPtr<classFieldsTransformer>, receiver1: GoPtr<Expression>): [GoPtr<Expression>, GoPtr<Expression>] {
+export function classFieldsTransformer_createCopiableReceiverExpr(receiver: GoPtr<classFieldsTransformer>, receiver1: GoPtr<Expression>): [readExpression: GoPtr<Expression>, initializeExpression: GoPtr<Expression>] {
   let clone: GoPtr<Expression> = receiver1;
   if (!NodeIsSynthesized(receiver1)) {
     clone = Node_Clone(receiver1, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<Expression>;
@@ -4711,7 +4711,7 @@ export function classFieldsTransformer_visitThisExpression(receiver: GoPtr<class
  * 	return members, prologue
  * }
  */
-export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): [GoPtr<NodeList>, GoPtr<Expression>] {
+export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): [members: GoPtr<NodeList>, prologue: GoPtr<Expression>] {
   const shouldTransformPrivateStaticElementsInClass = (EmitContext_EmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node) & EFTransformPrivateStaticElements) !== 0;
 
   // Declare private names
@@ -7253,7 +7253,7 @@ export function createMemberAccessForPropertyName(factory: GoPtr<NodeFactory>, e
  * 	return thisArg, target
  * }
  */
-export function classFieldsTransformer_createCallBinding(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): [GoPtr<Expression>, GoPtr<Expression>] {
+export function classFieldsTransformer_createCallBinding(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): [thisArg: GoPtr<Expression>, target: GoPtr<Expression>] {
   if (IsSuperProperty(node)) {
     return [NodeFactory_NewThisExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!)), node as unknown as GoPtr<Expression>];
   }

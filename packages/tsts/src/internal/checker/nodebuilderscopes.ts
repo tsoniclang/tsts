@@ -137,7 +137,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
  * 	return expandedParams, cleanup
  * }
  */
-export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [GoSlice<GoPtr<Symbol>>, () => void] {
+export function NodeBuilderImpl_enterSignatureScope(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>): [expandedParams: GoSlice<GoPtr<Symbol>>, cleanup: GoFunc<() => void>] {
   const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? [];
   const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
   return [expandedParams, cleanup!];

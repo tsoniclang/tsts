@@ -55,7 +55,8 @@ import {
   Node_Name,
   Node_Pos,
 } from "./spine.js";
-import type { AccessorDeclaration, BinaryExpression, ClassElement, ClassLikeDeclaration, Expression, ExpressionWithTypeArgumentsNode, GetAccessorDeclaration, JsxChild, LiteralLikeNode, NodeFactory, ParameterDeclarationNode, SetAccessorDeclaration, Statement, TokenNode, TypeNode } from "./generated/index.js";
+import type { AccessorDeclaration, BinaryExpression, ClassElement, Expression, ExpressionWithTypeArgumentsNode, GetAccessorDeclaration, JsxChild, LiteralLikeNode, NodeFactory, ParameterDeclarationNode, SetAccessorDeclaration, Statement, TokenNode, TypeNode } from "./generated/index.js";
+import type { ClassLikeDeclaration } from "./generated/unions.js";
 import {
   AsArrayTypeNode,
   AsArrowFunction,
@@ -3916,7 +3917,7 @@ export function TryGetClassExtendingExpressionWithTypeArguments(node: GoPtr<Node
  * 	return nil, false
  * }
  */
-export function TryGetClassImplementingOrExtendingExpressionWithTypeArguments(node: GoPtr<Node>): [GoPtr<ClassLikeDeclaration>, bool] {
+export function TryGetClassImplementingOrExtendingExpressionWithTypeArguments(node: GoPtr<Node>): [class_: GoPtr<ClassLikeDeclaration>, isImplements: bool] {
   if (IsExpressionWithTypeArguments(node)) {
     if (IsHeritageClause(node!.Parent) && IsClassLike(node!.Parent!.Parent)) {
       return [node!.Parent!.Parent, (AsHeritageClause(node!.Parent)!.Token === KindImplementsKeyword) as bool];
@@ -6980,7 +6981,7 @@ function sourceTextByteViewHasBytes(text: string, view: utf8.StringByteView, sta
  * 	return -1, 0
  * }
  */
-export function findImportOrRequire(text: string, start: int): [int, int] {
+export function findImportOrRequire(text: string, start: int): [index: int, size: int] {
   const view = utf8.GetStringByteView(text);
   const n: int = utf8.StringByteViewLen(text, view);
   let index = globalThis.Math.max(start, 0) as int;

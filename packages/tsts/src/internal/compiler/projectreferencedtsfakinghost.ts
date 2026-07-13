@@ -211,7 +211,7 @@ export function projectReferenceDtsFakingVfs_FileExists(receiver: GoPtr<projectR
  * 	return fs.projectReferenceFileMapper.opts.Host.FS().ReadFile(path)
  * }
  */
-export function projectReferenceDtsFakingVfs_ReadFile(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): [string, bool] {
+export function projectReferenceDtsFakingVfs_ReadFile(receiver: GoPtr<projectReferenceDtsFakingVfs>, path: string): [contents: string, ok: bool] {
   // Dont need to override as we cannot mimick read file
   return receiver!.projectReferenceFileMapper!.opts.Host!.FS()!.ReadFile(path);
 }

@@ -51,7 +51,7 @@ import type { Time } from "../../go/time.js";
 export interface FS {
   UseCaseSensitiveFileNames(): bool;
   FileExists(path: string): bool;
-  ReadFile(path: string): [string, bool];
+  ReadFile(path: string): [contents: string, ok: bool];
   WriteFile(path: string, data: string): GoError;
   AppendFile(path: string, data: string): GoError;
   Remove(path: string): GoError;

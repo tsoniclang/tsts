@@ -6968,7 +6968,7 @@ export function Checker_checkAndAggregateReturnExpressionTypes(receiver: GoPtr<C
  * 	return yieldTypes, nextTypes
  * }
  */
-export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Checker>, fn: GoPtr<Node>, checkMode: CheckMode): [GoSlice<GoPtr<Type>>, GoSlice<GoPtr<Type>>] {
+export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Checker>, fn: GoPtr<Node>, checkMode: CheckMode): [yieldTypes: GoSlice<GoPtr<Type>>, nextTypes: GoSlice<GoPtr<Type>>] {
   const isAsync = (GetFunctionFlags(fn) & FunctionFlagsAsync) !== 0;
   let yieldTypes: GoSlice<GoPtr<Type>> = [];
   let nextTypes: GoSlice<GoPtr<Type>> = [];

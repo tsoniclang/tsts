@@ -1,5 +1,5 @@
 import type { bool } from "../../../go/scalars.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoFunc, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { GoPointerKey, GoStringKey, GoZeroBoolean, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
@@ -401,7 +401,7 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
 export function affectedFilesHandler_forEachFileReferencedBy(
   receiver: GoPtr<affectedFilesHandler>,
   file: GoPtr<SourceFile>,
-  fn: (currentFile: GoPtr<SourceFile>, currentPath: Path) => [bool, bool]
+  fn: GoFunc<(currentFile: GoPtr<SourceFile>, currentPath: Path) => [queueForFile: bool, fastReturn: bool]>
 ): GoMap<Path, GoPtr<SourceFile>> {
   const seenFileNamesMap: GoMap<Path, GoPtr<SourceFile>> = new Map<Path, GoPtr<SourceFile>>();
   seenFileNamesMap.set(SourceFile_Path(file), file);
@@ -418,7 +418,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
     if (!seenFileNamesMap.has(currentPath!)) {
       const currentFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, currentPath!);
       seenFileNamesMap.set(currentPath!, currentFile);
-      const [queueForFile, fastReturn] = fn(currentFile, currentPath!);
+      const [queueForFile, fastReturn] = fn!(currentFile, currentPath!);
       if (fastReturn) {
         return seenFileNamesMap;
       }

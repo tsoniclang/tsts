@@ -3101,7 +3101,7 @@ export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node:
  * 	return classSymbol, symbolTable
  * }
  */
-export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoPtr<Symbol>, SymbolTable] {
+export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [classSymbol: GoPtr<Symbol>, symbolTable: SymbolTable] {
   if (receiver!.thisContainer === undefined) {
     return [undefined, undefined as unknown as SymbolTable];
   }

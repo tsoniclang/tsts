@@ -248,7 +248,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  * 	return fsys.fs.ReadFile(path)
  * }
  */
-export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [string, bool] {
+export function FS_ReadFile(receiver: GoPtr<FS>, path: string): [contents: string, ok: bool] {
   return receiver!.fs!.ReadFile(path);
 }
 

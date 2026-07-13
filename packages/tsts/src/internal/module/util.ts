@@ -140,7 +140,7 @@ export function ParseNodeModuleFromPath(resolved: string, isFolder: bool): strin
  * 	return moduleName[:idx], moduleName[idx+1:]
  * }
  */
-export function ParsePackageName(moduleName: string): [string, string] {
+export function ParsePackageName(moduleName: string): [packageName: string, rest: string] {
   const idxAfterScope = ((): int => {
     const idx0 = strings.Index(moduleName, "/");
     if (moduleName.length > 0 && moduleName.charCodeAt(0) === CHAR_AT) {

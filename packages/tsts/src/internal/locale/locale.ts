@@ -65,7 +65,7 @@ export function FromContext(ctx: GoInterface<Context>): Locale {
  * 	return Locale(tag), err == nil
  * }
  */
-export function Parse(localeStr: string): [Locale, bool] {
+export function Parse(localeStr: string): [locale: Locale, ok: bool] {
   const [tag, err] = language_Parse(localeStr) as [Tag, Error | undefined];
   return [tag as Locale, (err === undefined) as bool];
 }

@@ -382,7 +382,7 @@ export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): GoInterface<File
  * 	return vfs.common.ReadFile(path)
  * }
  */
-export function ioFS_ReadFile(receiver: GoPtr<ioFS>, path: string): [string, bool] {
+export function ioFS_ReadFile(receiver: GoPtr<ioFS>, path: string): [contents: string, ok: bool] {
   return Common_ReadFile(receiver!.common, path);
 }
 

@@ -10615,7 +10615,7 @@ export function Checker_getExportsOfModule(receiver: GoPtr<Checker>, moduleSymbo
  * 	return exports, typeOnlyExportStarMap
  * }
  */
-export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>): [SymbolTable, GoMap<string, GoPtr<Node>>] {
+export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>): [exports: SymbolTable, typeOnlyExportStarMap: GoMap<string, GoPtr<Node>>] {
   const visitedSymbols: GoSlice<GoPtr<Symbol>> = [];
   const nonTypeOnlyNames = NewSetWithSizeHint<string>((moduleSymbol?.Exports?.size ?? 0) as int, GoStringKey)!;
   const typeOnlyExportStarMap: GoMap<string, GoPtr<Node>> = new globalThis.Map();
@@ -12130,7 +12130,7 @@ export function Checker_getEffectivePropertyNameForPropertyNameNode(receiver: Go
  * 	}
  * }
  */
-export function Checker_tryGetNameFromType(receiver: GoPtr<Checker>, t: GoPtr<Type>): [string, bool] {
+export function Checker_tryGetNameFromType(receiver: GoPtr<Checker>, t: GoPtr<Type>): [name: string, ok: bool] {
   if ((t!.flags & TypeFlagsUniqueESSymbol) !== 0) {
     return [Type_AsUniqueESSymbolType(t)!.name, true];
   }

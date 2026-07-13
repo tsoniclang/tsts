@@ -1283,7 +1283,7 @@ export interface Program extends Host {
   GetResolvedModules(): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>>;
   GetPackagesMap(): GoMap<string, bool>;
   GetSourceFileMetaData(path: Path): SourceFileMetaData;
-  GetJSXRuntimeImportSpecifier(path: Path): [string, GoPtr<Node>];
+  GetJSXRuntimeImportSpecifier(path: Path): [moduleReference: string, specifier: GoPtr<Node>];
   GetImportHelpersImportSpecifier(path: Path): GoPtr<Node>;
   SourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): bool;
   IsSourceFileDefaultLibrary(path: Path): bool;

@@ -3206,6 +3206,6 @@ export function Checker_getJsxNamespaceContainerForImplicitImport(receiver: GoPt
  * 	return c.program.GetJSXRuntimeImportSpecifier(file.Path())
  * }
  */
-export function Checker_getJSXRuntimeImportSpecifier(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): [string, GoPtr<Node>] {
+export function Checker_getJSXRuntimeImportSpecifier(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): [moduleReference: string, specifier: GoPtr<Node>] {
   return receiver!.program!.GetJSXRuntimeImportSpecifier(SourceFile_Path(file));
 }

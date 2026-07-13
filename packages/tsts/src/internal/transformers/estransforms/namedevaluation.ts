@@ -285,7 +285,7 @@ export function getAssignedNameOfIdentifier(emitContext: GoPtr<EmitContext>, nam
  * 	return assignedName, updatedName
  * }
  */
-export function getAssignedNameOfPropertyName(emitContext: GoPtr<EmitContext>, name: GoPtr<PropertyName>, assignedNameText: string): [GoPtr<Expression>, GoPtr<PropertyName>] {
+export function getAssignedNameOfPropertyName(emitContext: GoPtr<EmitContext>, name: GoPtr<PropertyName>, assignedNameText: string): [assignedName: GoPtr<Expression>, updatedName: GoPtr<PropertyName>] {
   const factory = emitContext!.Factory;
   if (assignedNameText.length > 0) {
     const assignedName = NewStringLiteral(factory!.__tsgoEmbedded0!, assignedNameText, TokenFlagsNone) as unknown as GoPtr<Expression>;

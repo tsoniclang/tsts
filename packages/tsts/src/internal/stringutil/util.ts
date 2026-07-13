@@ -752,7 +752,7 @@ export function SurrogatePairToCodePoint(high: GoRune, low: GoRune): GoRune {
  * 	return utf16.EncodeRune(ch)
  * }
  */
-export function CodePointToSurrogatePair(ch: GoRune): [GoRune, GoRune] {
+export function CodePointToSurrogatePair(ch: GoRune): [high: GoRune, low: GoRune] {
   return utf16.EncodeRune(ch);
 }
 

@@ -681,7 +681,7 @@ export function tryGetSourceMappingURL(host: GoInterface<Host>, fileName: string
  * 	return url, true
  * }
  */
-export function tryParseBase64Url(url: string): [string, bool] {
+export function tryParseBase64Url(url: string): [parseableUrl: string, isBase64Url: bool] {
   let found: bool;
   [url, found] = CutPrefix(url, "data:");
   if (!found) {

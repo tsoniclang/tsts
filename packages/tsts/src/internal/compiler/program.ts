@@ -9,7 +9,8 @@ import { Bool } from "../../go/sync/atomic.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import { BindSourceFile } from "../binder/binder.js";
-import type { CheckJsDirective, CommentDirective, FileReference, HasFileName, Node, SourceFile, SourceFileMetaData, SourceFileLike, StringLiteralLike, Visitor } from "../ast/ast.js";
+import type { CheckJsDirective, CommentDirective, FileReference, HasFileName, SourceFile, SourceFileMetaData, SourceFileLike, StringLiteralLike, Visitor } from "../ast/ast.js";
+import type { Node } from "../ast/spine.js";
 import { CommentDirectiveKindIgnore, CommentDirectiveKindExpectError, SourceFile_as_ast_HasFileName } from "../ast/ast.js";
 import { NewDiagnostic, NewCompilerDiagnostic, CompareDiagnostics, EqualDiagnosticsNoRelatedInfo, EqualDiagnostics } from "../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
@@ -4450,7 +4451,7 @@ export function Program_IsSourceFileFromExternalLibrary(receiver: GoPtr<Program>
  * 	return "", nil
  * }
  */
-export function Program_GetJSXRuntimeImportSpecifier(receiver: GoPtr<Program>, path: Path): [string, GoPtr<Node>] {
+export function Program_GetJSXRuntimeImportSpecifier(receiver: GoPtr<Program>, path: Path): [moduleReference: string, specifier: GoPtr<Node>] {
   const result = receiver!.__tsgoEmbedded0!.jsxRuntimeImportSpecifiers.get(path);
   if (result !== undefined) {
     return [result.moduleReference, result.specifier as unknown as GoPtr<Node>];

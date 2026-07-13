@@ -1129,7 +1129,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
  * 	return toParse, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics
  * }
  */
-export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [GoSlice<resolvedRef>, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, GoSlice<DiagAndArgs>, GoSlice<GoPtr<processingDiagnostic>>] {
+export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [toParse: GoSlice<resolvedRef>, typeResolutionsInFile: ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>, typeResolutionsTrace: GoSlice<DiagAndArgs>, pDiagnostics: GoSlice<GoPtr<processingDiagnostic>>] {
   const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
   if (automaticTypeDirectiveNames.length !== 0) {
     let toParse: GoSlice<resolvedRef> = [];

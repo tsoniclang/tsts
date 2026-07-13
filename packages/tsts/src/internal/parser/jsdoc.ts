@@ -1440,7 +1440,7 @@ export function Parser_tryParseTypeExpression(receiver: GoPtr<Parser>): GoPtr<No
  * 	return name, isBracketed
  * }
  */
-export function Parser_parseBracketNameInPropertyAndParamTag(receiver: GoPtr<Parser>, target: propertyLikeParse): [GoPtr<EntityName>, bool] {
+export function Parser_parseBracketNameInPropertyAndParamTag(receiver: GoPtr<Parser>, target: propertyLikeParse): [name: GoPtr<EntityName>, isBracketed: bool] {
   // Looking for something like '[foo]', 'foo', '[foo.bar]' or 'foo.bar'
   const isBracketed = Parser_parseOptionalJsdoc(receiver, KindOpenBracketToken);
   if (isBracketed) {

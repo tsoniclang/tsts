@@ -862,7 +862,7 @@ export function match(elems: GoSlice<element>, input: string): bool {
  * 	return first, ""
  * }
  */
-export function split(input: string): [string, string] {
+export function split(input: string): [first: string, rest: string] {
   const i = strings.IndexByte(input, "/".charCodeAt(0));
   if (i < 0) {
     return [input, ""];

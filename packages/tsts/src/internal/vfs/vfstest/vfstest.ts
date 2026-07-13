@@ -850,7 +850,7 @@ export function MapFS_setEntry(receiver: GoPtr<MapFS>, realpath: string, canonic
  * 	return s[:idx+offset], s[idx+1+offset:]
  * }
  */
-export function splitPath(s: string, offset: int): [string, string] {
+export function splitPath(s: string, offset: int): [before: string, after: string] {
   const idx = s.indexOf("/", offset);
   if (idx < 0) {
     return [s, ""];

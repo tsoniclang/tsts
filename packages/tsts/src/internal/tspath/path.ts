@@ -2208,7 +2208,7 @@ export function HasExtension(fileName: string): bool {
  * 	return "", path, false
  * }
  */
-export function SplitVolumePath(path: string): [string, string, bool] {
+export function SplitVolumePath(path: string): [volume: string, rest: string, ok: bool] {
   if (path.length >= 2 && IsVolumeCharacter(path.charCodeAt(0)) && path.charCodeAt(1) === CHAR_COLON) {
     return [strings.ToLower(path.slice(0, 2)), path.slice(2), true];
   }
@@ -2258,7 +2258,7 @@ export function SplitVolumePath(path: string): [string, string, bool] {
  * 	return resultPaths, ignored
  * }
  */
-export function GetCommonParents(paths: GoSlice<string>, minComponents: int, getPathComponents: GoFunc<(path: string, currentDirectory: string) => GoSlice<string>>, options: ComparePathsOptions): [GoSlice<string>, GoMap<string, { readonly __tsgoEmpty?: never }>] {
+export function GetCommonParents(paths: GoSlice<string>, minComponents: int, getPathComponents: GoFunc<(path: string, currentDirectory: string) => GoSlice<string>>, options: ComparePathsOptions): [parents: GoSlice<string>, ignored: GoMap<string, { readonly __tsgoEmpty?: never }>] {
   if (minComponents < 1) {
     throw new globalThis.Error("minComponents must be at least 1");
   }

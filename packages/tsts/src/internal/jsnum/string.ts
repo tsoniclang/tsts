@@ -551,7 +551,7 @@ export function parseFloatString(s: string): double {
  * 	return s, "", false
  * }
  */
-export function cutAny(s: string, cutset: string): [string, string, bool] {
+export function cutAny(s: string, cutset: string): [before: string, after: string, found: bool] {
   const i = IndexAny(s, cutset);
   if (i >= 0) {
     const before = byteSlice(s, 0, i);

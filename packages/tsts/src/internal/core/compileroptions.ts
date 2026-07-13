@@ -833,7 +833,7 @@ export function CompilerOptions_GetStrictOptionValue(receiver: GoPtr<CompilerOpt
  * 	return typeRoots, false
  * }
  */
-export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOptions>, currentDirectory: string): [GoSlice<string>, bool] {
+export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOptions>, currentDirectory: string): [result: GoSlice<string>, fromConfig: bool] {
   const options: GoPtr<CompilerOptions> = receiver;
   if (options!.TypeRoots !== undefined) {
     return [options!.TypeRoots, true];

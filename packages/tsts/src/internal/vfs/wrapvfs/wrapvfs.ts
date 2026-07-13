@@ -115,7 +115,7 @@ export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): 
  * 	return w.fs.ReadFile(path)
  * }
  */
-export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [string, bool] {
+export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [contents: string, ok: bool] {
   if (receiver!.replacements.ReadFile !== undefined) {
     return receiver!.replacements.ReadFile(path);
   }

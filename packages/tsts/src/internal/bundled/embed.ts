@@ -85,7 +85,7 @@ export const scheme: string = "bundled:///";
  * 	return strings.CutPrefix(path, scheme)
  * }
  */
-export function splitPath(path: string): [string, bool] {
+export function splitPath(path: string): [rest: string, ok: bool] {
   return strings.CutPrefix(path, scheme);
 }
 
@@ -208,7 +208,7 @@ export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): 
  * 	return vfs.fs.ReadFile(path)
  * }
  */
-export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [string, bool] {
+export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [contents: string, ok: bool] {
   const [rest, ok] = splitPath(path);
   if (ok) {
     const contents = readEmbeddedContent(rest);

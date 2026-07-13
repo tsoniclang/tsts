@@ -1447,7 +1447,7 @@ export function Printer_emitDetachedCommentsAndUpdateCommentsInfo(receiver: GoPt
  * 	return result, hasResult
  * }
  */
-export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange: TextRange): [detachedCommentsInfo, bool] {
+export function Printer_emitDetachedComments(receiver: GoPtr<Printer>, textRange: TextRange): [result: detachedCommentsInfo, hasResult: bool] {
   const result: detachedCommentsInfo = { nodePos: 0 as int, detachedCommentEndPos: 0 as int };
   let hasResult = false as bool;
 

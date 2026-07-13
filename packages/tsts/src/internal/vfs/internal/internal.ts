@@ -69,7 +69,7 @@ export function RootLength(p: string): int {
  * 	return rootName, rest
  * }
  */
-export function SplitPath(p: string): [string, string] {
+export function SplitPath(p: string): [rootName: string, rest: string] {
   p = NormalizePath(p);
   const l = RootLength(p);
   let rootName = p.slice(0, l);
@@ -90,7 +90,7 @@ export function SplitPath(p: string): [string, string] {
  * 	return vfs.RootFor(rootName), rootName, rest
  * }
  */
-export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [GoInterface<FS>, string, string] {
+export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [fsys: GoInterface<FS>, rootName: string, rest: string] {
   let [rootName, rest] = SplitPath(path);
   if (rest === "") {
     rest = ".";
@@ -352,7 +352,7 @@ export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: Wa
  * 	return decodeBytes(s)
  * }
  */
-export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string, bool] {
+export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [contents: string, ok: bool] {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
   if (fsys === undefined) {
     return ["", false];
@@ -394,7 +394,7 @@ export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string,
  * 	return s, true
  * }
  */
-export function decodeBytes(s: string): [string, bool] {
+export function decodeBytes(s: string): [contents: string, ok: bool] {
   return decodeBytesFromBytes(binaryStringToBytes(s));
 }
 

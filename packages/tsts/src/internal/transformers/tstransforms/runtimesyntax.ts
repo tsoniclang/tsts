@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Coalesce, Find, IfElse } from "../../core/core.js";
 import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
@@ -185,7 +185,7 @@ export interface RuntimeSyntaxTransformer {
   currentNode: GoPtr<Node>;
   currentSourceFile: GoPtr<Node>;
   currentScope: GoPtr<Node>;
-  currentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>> | undefined;
+  currentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>>;
   currentEnum: GoPtr<EnumDeclarationNode>;
   currentNamespace: GoPtr<ModuleDeclarationNode>;
   resolver: GoInterface<ReferenceResolver>;
@@ -213,7 +213,7 @@ export function NewRuntimeSyntaxTransformer(opt: GoPtr<TransformOptions>): GoPtr
     currentNode: undefined,
     currentSourceFile: undefined,
     currentScope: undefined,
-    currentScopeFirstDeclarationsOfName: undefined,
+    currentScopeFirstDeclarationsOfName: GoNilMap<string, GoPtr<Node>>(),
     currentEnum: undefined,
     currentNamespace: undefined,
     resolver: opt!.Resolver,
@@ -275,20 +275,20 @@ export function RuntimeSyntaxTransformer_popNode(receiver: GoPtr<RuntimeSyntaxTr
  * 	return savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName
  * }
  */
-export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): [GoPtr<Node>, GoMap<string, GoPtr<Node>> | undefined] {
+export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): [savedCurrentScope: GoPtr<Node>, savedCurrentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>>] {
   const savedCurrentScope = receiver!.currentScope;
   const savedCurrentScopeFirstDeclarationsOfName = receiver!.currentScopeFirstDeclarationsOfName;
   switch (node!.Kind) {
     case KindSourceFile:
       receiver!.currentScope = node;
       receiver!.currentSourceFile = node;
-      receiver!.currentScopeFirstDeclarationsOfName = undefined;
+      receiver!.currentScopeFirstDeclarationsOfName = GoNilMap<string, GoPtr<Node>>();
       break;
     case KindCaseBlock:
     case KindModuleBlock:
     case KindBlock:
       receiver!.currentScope = node;
-      receiver!.currentScopeFirstDeclarationsOfName = undefined;
+      receiver!.currentScopeFirstDeclarationsOfName = GoNilMap<string, GoPtr<Node>>();
       break;
     case KindFunctionDeclaration:
     case KindClassDeclaration:
@@ -312,7 +312,7 @@ export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntax
  * 	tx.currentScope = savedCurrentScope
  * }
  */
-export function RuntimeSyntaxTransformer_popScope(receiver: GoPtr<RuntimeSyntaxTransformer>, savedCurrentScope: GoPtr<Node>, savedCurrentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>> | undefined): void {
+export function RuntimeSyntaxTransformer_popScope(receiver: GoPtr<RuntimeSyntaxTransformer>, savedCurrentScope: GoPtr<Node>, savedCurrentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>>): void {
   if (receiver!.currentScope !== savedCurrentScope) {
     // only reset the first declaration for a name if we are exiting the scope in which it was declared
     receiver!.currentScopeFirstDeclarationsOfName = savedCurrentScopeFirstDeclarationsOfName;
@@ -511,7 +511,7 @@ export function RuntimeSyntaxTransformer_recordDeclarationInScope(receiver: GoPt
   const name = Node_Name(node);
   if (name !== undefined) {
     if (IsIdentifier(name)) {
-      if (receiver!.currentScopeFirstDeclarationsOfName === undefined) {
+      if (GoMapIsNil(receiver!.currentScopeFirstDeclarationsOfName)) {
         receiver!.currentScopeFirstDeclarationsOfName = new Map<string, GoPtr<Node>>();
       }
       const text = Node_Text(name);
@@ -543,7 +543,7 @@ export function RuntimeSyntaxTransformer_isFirstDeclarationInScope(receiver: GoP
   const name = Node_Name(node);
   if (name !== undefined && IsIdentifier(name)) {
     const text = Node_Text(name);
-    const firstDeclaration = receiver!.currentScopeFirstDeclarationsOfName?.get(text);
+    const firstDeclaration = receiver!.currentScopeFirstDeclarationsOfName.get(text);
     if (firstDeclaration !== undefined) {
       return (firstDeclaration === node) as bool;
     }
@@ -1012,7 +1012,7 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
   const savedCurrentScopeFirstDeclarationsOfName = receiver!.currentScopeFirstDeclarationsOfName;
 
   receiver!.currentNamespace = Node_AsNode(node) as unknown as GoPtr<ModuleDeclarationNode>;
-  receiver!.currentScopeFirstDeclarationsOfName = undefined;
+  receiver!.currentScopeFirstDeclarationsOfName = GoNilMap<string, GoPtr<Node>>();
 
   let statements: GoSlice<GoPtr<Statement>> = [];
   EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));

@@ -1157,7 +1157,7 @@ export function ComputeECMALineStartsSeq(text: string): Seq<TextPos> {
  * 	return line, position - int(lineStarts[line])
  * }
  */
-export function PositionToLineAndByteOffset(position: int, lineStarts: GoSlice<TextPos>): [int, int] {
+export function PositionToLineAndByteOffset(position: int, lineStarts: GoSlice<TextPos>): [line: int, byteOffset: int] {
   const line = globalThis.Math.max(
     sort.Search(lineStarts.length, (i: int): bool => {
       return lineStarts[i]! > position;

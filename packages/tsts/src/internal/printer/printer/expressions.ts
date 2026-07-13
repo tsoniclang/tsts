@@ -1498,7 +1498,7 @@ export function Printer_getLiteralKindOfBinaryPlusOperand(receiver: GoPtr<Printe
  * 	return leftPrec, rightPrec
  * }
  */
-export function Printer_getBinaryExpressionPrecedence(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>): [OperatorPrecedence, OperatorPrecedence] {
+export function Printer_getBinaryExpressionPrecedence(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>): [leftPrec: OperatorPrecedence, rightPrec: OperatorPrecedence] {
   const precedence = GetExpressionPrecedence(node);
   let leftPrec = precedence;
   let rightPrec = precedence;

@@ -14,7 +14,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
  */
 export interface Semaphore {
   Acquire(): GoFunc<() => void>;
-  TryAcquire(ctx: GoInterface<Context>): [() => void, bool];
+  TryAcquire(ctx: GoInterface<Context>): [release: GoFunc<() => void>, acquired: bool];
 }
 
 /**
@@ -37,8 +37,8 @@ export interface UnlimitedSemaphore {
 
 export function UnlimitedSemaphore_as_Semaphore(receiver: UnlimitedSemaphore): Semaphore {
   return {
-    Acquire: (): () => void => UnlimitedSemaphore_Acquire(receiver)!,
-    TryAcquire: (ctx: Context): [() => void, bool] => UnlimitedSemaphore_TryAcquire(receiver, ctx),
+    Acquire: (): GoFunc<() => void> => UnlimitedSemaphore_Acquire(receiver),
+    TryAcquire: (ctx: GoInterface<Context>): [release: GoFunc<() => void>, acquired: bool] => UnlimitedSemaphore_TryAcquire(receiver, ctx),
   };
 }
 
@@ -62,7 +62,7 @@ export function UnlimitedSemaphore_Acquire(receiver: UnlimitedSemaphore): GoFunc
  * 	return func() {}, true
  * }
  */
-export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx: GoInterface<Context>): [() => void, bool] {
+export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx: GoInterface<Context>): [release: GoFunc<() => void>, acquired: bool] {
   return [(): void => {}, true];
 }
 
@@ -90,8 +90,8 @@ export interface LimitedSemaphore {
 
 export function LimitedSemaphore_as_Semaphore(receiver: GoPtr<LimitedSemaphore>): Semaphore {
   return {
-    Acquire: (): () => void => LimitedSemaphore_Acquire(receiver)!,
-    TryAcquire: (ctx: Context): [() => void, bool] => LimitedSemaphore_TryAcquire(receiver, ctx),
+    Acquire: (): GoFunc<() => void> => LimitedSemaphore_Acquire(receiver),
+    TryAcquire: (ctx: GoInterface<Context>): [release: GoFunc<() => void>, acquired: bool] => LimitedSemaphore_TryAcquire(receiver, ctx),
   };
 }
 
@@ -148,7 +148,7 @@ export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): GoF
  * 	}
  * }
  */
-export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: GoInterface<Context>): [() => void, bool] {
+export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: GoInterface<Context>): [release: GoFunc<() => void>, acquired: bool] {
   // Single-threaded: select always takes the acquire branch (no ctx.Done blocking).
   return [receiver!.release!, true];
 }

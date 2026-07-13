@@ -1066,7 +1066,7 @@ export function NodeFactory_EnsureUseStrict(receiver: GoPtr<NodeFactory>, statem
  * 	return source, nil
  * }
  */
-export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [GoSlice<GoPtr<Statement>>, GoSlice<GoPtr<Statement>>] {
+export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [prologue: GoSlice<GoPtr<Statement>>, rest: GoSlice<GoPtr<Statement>>] {
   for (let i = 0; i < source.length; i++) {
     if (!IsPrologueDirective(source[i])) {
       return [source.slice(0, i), source.slice(i)];
@@ -1088,7 +1088,7 @@ export function NodeFactory_SplitStandardPrologue(receiver: GoPtr<NodeFactory>, 
  * 	return nil, source
  * }
  */
-export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [GoSlice<GoPtr<Statement>>, GoSlice<GoPtr<Statement>>] {
+export function NodeFactory_SplitCustomPrologue(receiver: GoPtr<NodeFactory>, source: GoSlice<GoPtr<Statement>>): [prologue: GoSlice<GoPtr<Statement>>, rest: GoSlice<GoPtr<Statement>>] {
   for (let i = 0; i < source.length; i++) {
     if (IsPrologueDirective(source[i]) || (EmitContext_EmitFlags(receiver!.emitContext, source[i]) & EFCustomPrologue) === 0) {
       return [source.slice(0, i), source.slice(i)];

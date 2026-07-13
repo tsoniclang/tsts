@@ -324,7 +324,7 @@ export function MappingsDecoder_Values(receiver: GoPtr<MappingsDecoder>): Seq<Go
  * 	return d.stopIterating()
  * }
  */
-export function MappingsDecoder_Next(receiver: GoPtr<MappingsDecoder>): [GoPtr<Mapping>, bool] {
+export function MappingsDecoder_Next(receiver: GoPtr<MappingsDecoder>): [value: GoPtr<Mapping>, done: bool] {
   const d: MappingsDecoder = receiver!;
   while (!d.done && d.pos < byteLenOf(d.mappings)) {
     const ch: byte = byteAtOf(d.mappings, d.pos);

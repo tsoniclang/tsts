@@ -96,7 +96,7 @@ export function Expected_IsPresent<T>(receiver: GoPtr<Expected<T>>): bool {
  * 	return e.Value, e.Valid
  * }
  */
-export function Expected_GetValue<T>(receiver: GoPtr<Expected<T>>): [T, bool] {
+export function Expected_GetValue<T>(receiver: GoPtr<Expected<T>>): [value: T, ok: bool] {
   return [receiver?.Value as T, receiver?.Valid ?? false as bool];
 }
 
