@@ -1,7 +1,19 @@
 import type { bool } from "../../go/scalars.js";
-import { GoStringKey, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import {
+  GoDynamicValue,
+  GoNamedNumberKey,
+  GoStringKey,
+  GoZeroComparableInterface,
+  GoZeroInterface,
+  type GoComparable,
+  type GoComparableInterface,
+  type GoMap,
+  type GoMapKeyDescriptor,
+  type GoPtr,
+  type GoSlice,
+} from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
-import type { OrderedMap } from "../collections/ordered_map.js";
+import type { MapEntry, OrderedMap } from "../collections/ordered_map.js";
 import {
   NewOrderedMapFromList,
   OrderedMap_Get,
@@ -11,7 +23,15 @@ import {
 import type { Set } from "../collections/set.js";
 import { NewSetFromItems, Set_Has } from "../collections/set.js";
 import * as core from "../core/core.js";
-import type { CompilerOptions, ScriptTarget } from "../core/compileroptions.js";
+import type {
+  CompilerOptions,
+  JsxEmit,
+  ModuleDetectionKind,
+  ModuleKind,
+  ModuleResolutionKind,
+  NewLineKind,
+  ScriptTarget,
+} from "../core/compileroptions.js";
 import {
   CompilerOptions_GetEmitScriptTarget,
   JsxEmitPreserve,
@@ -72,7 +92,29 @@ import {
   WatchFileKindUseFsEvents,
   WatchFileKindUseFsEventsOnParentDirectory,
 } from "../core/watchoptions.js";
+import type { PollingKind, WatchDirectoryKind, WatchFileKind } from "../core/watchoptions.js";
 import { ToFileNameLowerCase } from "../tspath/path.js";
+
+function newCommandLineEnumMap<K extends GoComparable>(
+  items: GoSlice<MapEntry<string, K>>,
+  valueKey: GoMapKeyDescriptor<K>,
+): GoPtr<OrderedMap<string, GoComparableInterface<K>>> {
+  const boxed: Array<MapEntry<string, GoComparableInterface<K>>> = [];
+  for (const item of items) {
+    boxed.push({ Key: item.Key, Value: GoDynamicValue(valueKey, item.Value) });
+  }
+  return NewOrderedMapFromList(boxed, GoStringKey);
+}
+
+const moduleResolutionKindKey = GoNamedNumberKey<ModuleResolutionKind>();
+const scriptTargetKey = GoNamedNumberKey<ScriptTarget>();
+const moduleKindKey = GoNamedNumberKey<ModuleKind>();
+const moduleDetectionKindKey = GoNamedNumberKey<ModuleDetectionKind>();
+const jsxEmitKey = GoNamedNumberKey<JsxEmit>();
+const newLineKindKey = GoNamedNumberKey<NewLineKind>();
+const watchFileKindKey = GoNamedNumberKey<WatchFileKind>();
+const watchDirectoryKindKey = GoNamedNumberKey<WatchDirectoryKind>();
+const pollingKindKey = GoNamedNumberKey<PollingKind>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::LibMap","kind":"varGroup","status":"implemented","sigHash":"21c746f7178dcd816b138a028a3217efb05851c01982ee0831e9921f9726c6a7"}
@@ -194,7 +236,7 @@ import { ToFileNameLowerCase } from "../tspath/path.js";
  * 	{Key: "decorators.legacy", Value: "lib.decorators.legacy.d.ts"},
  * })
  */
-export let LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let LibMap: GoPtr<OrderedMap<string, GoComparableInterface<string>>> = newCommandLineEnumMap<string>([
   // JavaScript only
   { Key: "es5", Value: "lib.es5.d.ts" },
   { Key: "es6", Value: "lib.es2015.d.ts" },
@@ -322,8 +364,11 @@ export let LibMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<st
 export let Libs: GoSlice<string> = slices.Collect(OrderedMap_Keys(LibMap));
 export let LibFilesSet: GoPtr<Set<string>> = NewSetFromItems<string>(
   GoStringKey,
-  ...core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: unknown): string => {
-    return s as string;
+  ...core.Map(slices.Collect(OrderedMap_Values(LibMap)), (s: GoComparableInterface<string>): string => {
+    if (s === undefined) {
+      throw new TypeError("interface conversion: interface is nil, not string");
+    }
+    return s.value;
   }),
 );
 
@@ -350,11 +395,14 @@ export function GetLibFileName(libName: string): [string, bool] {
   if (Set_Has(LibFilesSet, lowered)) {
     return [lowered, true];
   }
-  const [lib, ok] = OrderedMap_Get(LibMap, lowered, GoZeroInterface);
+  const [lib, ok] = OrderedMap_Get(LibMap, lowered, GoZeroComparableInterface<string>);
   if (!ok) {
     return ["", false];
   }
-  return [lib as string, true];
+  if (lib === undefined) {
+    throw new TypeError("interface conversion: interface is nil, not string");
+  }
+  return [lib.value, true];
 }
 
 /**
@@ -370,14 +418,14 @@ export function GetLibFileName(libName: string): [string, bool] {
  * 	{Key: "node10", Value: core.ModuleResolutionKindNode10},
  * })
  */
-export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<ModuleResolutionKind>>> = newCommandLineEnumMap<ModuleResolutionKind>([
   { Key: "node16", Value: ModuleResolutionKindNode16 },
   { Key: "nodenext", Value: ModuleResolutionKindNodeNext },
   { Key: "bundler", Value: ModuleResolutionKindBundler },
   { Key: "classic", Value: ModuleResolutionKindClassic },
   { Key: "node", Value: ModuleResolutionKindNode10 },
   { Key: "node10", Value: ModuleResolutionKindNode10 },
-], GoStringKey);
+], moduleResolutionKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetOptionMap","kind":"varGroup","status":"implemented","sigHash":"92a48d3d94cc5a2f462dbcfec9ae6f229dff387c261b19be382e4884767f8961"}
@@ -400,7 +448,7 @@ export let moduleResolutionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOr
  * 	{Key: "esnext", Value: core.ScriptTargetESNext},
  * })
  */
-export let targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let targetOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<ScriptTarget>>> = newCommandLineEnumMap<ScriptTarget>([
   { Key: "es5", Value: ScriptTargetES5 },
   { Key: "es6", Value: ScriptTargetES2015 },
   { Key: "es2015", Value: ScriptTargetES2015 },
@@ -415,7 +463,7 @@ export let targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
   { Key: "es2024", Value: ScriptTargetES2024 },
   { Key: "es2025", Value: ScriptTargetES2025 },
   { Key: "esnext", Value: ScriptTargetESNext },
-], GoStringKey);
+], scriptTargetKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleOptionMap","kind":"varGroup","status":"implemented","sigHash":"d0dd550632fe1a8a4dcaae49672b36df2c1ea14aca7968e260f162565c008c60"}
@@ -438,7 +486,7 @@ export let targetOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
  * 	{Key: "preserve", Value: core.ModuleKindPreserve},
  * })
  */
-export let moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<ModuleKind>>> = newCommandLineEnumMap<ModuleKind>([
   { Key: "commonjs", Value: ModuleKindCommonJS },
   { Key: "amd", Value: ModuleKindAMD },
   { Key: "system", Value: ModuleKindSystem },
@@ -453,7 +501,7 @@ export let moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
   { Key: "node20", Value: ModuleKindNode20 },
   { Key: "nodenext", Value: ModuleKindNodeNext },
   { Key: "preserve", Value: ModuleKindPreserve },
-], GoStringKey);
+], moduleKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::moduleDetectionOptionMap","kind":"varGroup","status":"implemented","sigHash":"b1d7ff4c506a30641873666d457d5cfe8de0f7b3c284efc32134614edd7401f4"}
@@ -465,11 +513,11 @@ export let moduleOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFr
  * 	{Key: "force", Value: core.ModuleDetectionKindForce},
  * })
  */
-export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<ModuleDetectionKind>>> = newCommandLineEnumMap<ModuleDetectionKind>([
   { Key: "auto", Value: ModuleDetectionKindAuto },
   { Key: "legacy", Value: ModuleDetectionKindLegacy },
   { Key: "force", Value: ModuleDetectionKindForce },
-], GoStringKey);
+], moduleDetectionKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::jsxOptionMap","kind":"varGroup","status":"implemented","sigHash":"67a1927d0067927b27a294e7887e3c4828ccb4d7155d1a2c1abbab40e69b6532"}
@@ -483,13 +531,13 @@ export let moduleDetectionOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrd
  * 	{Key: "react", Value: core.JsxEmitReact},
  * })
  */
-export let jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let jsxOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<JsxEmit>>> = newCommandLineEnumMap<JsxEmit>([
   { Key: "preserve", Value: JsxEmitPreserve },
   { Key: "react-native", Value: JsxEmitReactNative },
   { Key: "react-jsx", Value: JsxEmitReactJSX },
   { Key: "react-jsxdev", Value: JsxEmitReactJSXDev },
   { Key: "react", Value: JsxEmitReact },
-], GoStringKey);
+], jsxEmitKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::newLineOptionMap","kind":"varGroup","status":"implemented","sigHash":"1bee69fa1348308e4a98214939c9257767dbb4ac18f27e9953c12fa9b0e3cefd"}
@@ -500,10 +548,10 @@ export let jsxOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromL
  * 	{Key: "lf", Value: core.NewLineKindLF},
  * })
  */
-export let newLineOptionMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let newLineOptionMap: GoPtr<OrderedMap<string, GoComparableInterface<NewLineKind>>> = newCommandLineEnumMap<NewLineKind>([
   { Key: "crlf", Value: NewLineKindCRLF },
   { Key: "lf", Value: NewLineKindLF },
-], GoStringKey);
+], newLineKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::targetToLibMap","kind":"varGroup","status":"implemented","sigHash":"1ff6ecd54d75b300816a428a8de0ff6e050ae9d83afbf5df21cdb43fe2991df4"}
@@ -586,14 +634,14 @@ export function GetDefaultLibFileName(options: GoPtr<CompilerOptions>): string {
  * 	{Key: "usefseventsonparentdirectory", Value: core.WatchFileKindUseFsEventsOnParentDirectory},
  * })
  */
-export let watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let watchFileEnumMap: GoPtr<OrderedMap<string, GoComparableInterface<WatchFileKind>>> = newCommandLineEnumMap<WatchFileKind>([
   { Key: "fixedpollinginterval", Value: WatchFileKindFixedPollingInterval },
   { Key: "prioritypollinginterval", Value: WatchFileKindPriorityPollingInterval },
   { Key: "dynamicprioritypolling", Value: WatchFileKindDynamicPriorityPolling },
   { Key: "fixedchunksizepolling", Value: WatchFileKindFixedChunkSizePolling },
   { Key: "usefsevents", Value: WatchFileKindUseFsEvents },
   { Key: "usefseventsonparentdirectory", Value: WatchFileKindUseFsEventsOnParentDirectory },
-], GoStringKey);
+], watchFileKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::watchDirectoryEnumMap","kind":"varGroup","status":"implemented","sigHash":"40f83ac41ebf2272716ba8266adcb474c4fdbdd6f8518dace47766b504baef72"}
@@ -606,12 +654,12 @@ export let watchFileEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapF
  * 	{Key: "fixedchunksizepolling", Value: core.WatchDirectoryKindFixedChunkSizePolling},
  * })
  */
-export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, GoComparableInterface<WatchDirectoryKind>>> = newCommandLineEnumMap<WatchDirectoryKind>([
   { Key: "usefsevents", Value: WatchDirectoryKindUseFsEvents },
   { Key: "fixedpollinginterval", Value: WatchDirectoryKindFixedPollingInterval },
   { Key: "dynamicprioritypolling", Value: WatchDirectoryKindDynamicPriorityPolling },
   { Key: "fixedchunksizepolling", Value: WatchDirectoryKindFixedChunkSizePolling },
-], GoStringKey);
+], watchDirectoryKindKey);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/enummaps.go::varGroup::fallbackEnumMap","kind":"varGroup","status":"implemented","sigHash":"c031524664983e24b8bfc74381b1a808b5f6710b4dc6512b27e6bf3964cfa201"}
@@ -624,9 +672,9 @@ export let watchDirectoryEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrdere
  * 	{Key: "fixedchunksize", Value: core.PollingKindFixedChunkSize},
  * })
  */
-export let fallbackEnumMap: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapFromList<string, unknown>([
+export let fallbackEnumMap: GoPtr<OrderedMap<string, GoComparableInterface<PollingKind>>> = newCommandLineEnumMap<PollingKind>([
   { Key: "fixedinterval", Value: PollingKindFixedInterval },
   { Key: "priorityinterval", Value: PollingKindPriorityInterval },
   { Key: "dynamicpriority", Value: PollingKindDynamicPriority },
   { Key: "fixedchunksize", Value: PollingKindFixedChunkSize },
-], GoStringKey);
+], pollingKindKey);

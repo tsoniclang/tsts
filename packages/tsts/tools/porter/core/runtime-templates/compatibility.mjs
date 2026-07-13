@@ -86,6 +86,10 @@ export function GoZeroInterface<I>(): GoInterface<I> {
   return undefined;
 }
 
+export function GoZeroComparableInterface<T>(): GoComparableInterface<T> {
+  return undefined;
+}
+
 export function GoZeroSlice<T>(): GoSlice<T> {
   return GoNilSlice();
 }
@@ -166,9 +170,13 @@ export interface GoStructKeyField<K, V> {
 }
 
 export interface GoDynamicComparable<T = unknown> {
-  readonly descriptor: GoMapKeyDescriptor<T>;
+  readonly typeIdentity: symbol;
   readonly value: T;
+  appendHashParts(parts: unknown[]): void;
+  snapshot(): GoDynamicComparable<T>;
 }
+
+export type GoComparableInterface<T = unknown> = GoDynamicComparable<T> | undefined;
 
 const goNilPointerKey = Symbol("GoKey.nilPointer");
 const goNilInterfaceKey = Symbol("GoKey.nilInterface");
@@ -317,7 +325,16 @@ export function GoNamedNumberKey<K extends number>(): GoMapKeyDescriptor<K> {
 }
 
 export function GoDynamicValue<T>(descriptor: GoMapKeyDescriptor<T>, value: T): GoDynamicComparable<T> {
-  return { descriptor, value };
+  return globalThis.Object.freeze({
+    typeIdentity: descriptor.identity,
+    value,
+    appendHashParts(parts: unknown[]): void {
+      descriptor.appendHashParts(parts, value);
+    },
+    snapshot(): GoDynamicComparable<T> {
+      return GoDynamicValue(descriptor, descriptor.snapshot(value));
+    },
+  });
 }
 
 export function GoInterfaceKey<K>(
@@ -330,14 +347,20 @@ export function GoInterfaceKey<K>(
       parts.push(goNilInterfaceKey);
       return;
     }
-    appendGoMapKey(parts, selected.descriptor, selected.value);
+    parts.push(selected.typeIdentity);
+    selected.appendHashParts(parts);
   }, (value) => {
     const selected = dynamic(value);
     return selected === undefined
       ? construct(undefined)
-      : construct(GoDynamicValue(selected.descriptor, selected.descriptor.snapshot(selected.value)));
+      : construct(selected.snapshot());
   }, newStructuredGoMap);
 }
+
+export const GoComparableInterfaceKey: GoMapKeyDescriptor<GoComparableInterface> = GoInterfaceKey<GoComparableInterface>(
+  (value) => value,
+  (value) => value,
+);
 
 interface GoNumberMapEntry<K extends number, V> {
   readonly key: K;

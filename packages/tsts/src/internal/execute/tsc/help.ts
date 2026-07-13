@@ -1,5 +1,13 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoAppend, GoValueRef, GoZeroSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import {
+  GoAppend,
+  GoComparableInterfaceKey,
+  GoValueRef,
+  GoZeroSlice,
+  type GoComparableInterface,
+  type GoPtr,
+  type GoSlice,
+} from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import { SortFunc } from "../../../go/slices.js";
 import { Clone } from "../../../go/slices.js";
@@ -692,9 +700,9 @@ export function formatDefaultValue(defaultValue: GoInterface<unknown>, option: G
     // e.g. ScriptTarget.ES2015 -> "es6/es2015"
     const names: string[] = [];
     const enumMap = CommandLineOption_EnumMap(option);
-    OrderedMap_Entries(enumMap)!((name: unknown, value: unknown): bool => {
-      if (value === defaultValue) {
-        names.push(name as string);
+    OrderedMap_Entries(enumMap)!((name: string, value: GoComparableInterface): bool => {
+      if (value?.value === defaultValue) {
+        names.push(name);
       }
       return true;
     });
@@ -858,12 +866,20 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
       // Map<string, number | string>
       // Group synonyms: es6/es2015
       const enumMap = CommandLineOption_EnumMap(option);
-      const inverted = NewOrderedMapWithSizeHint<unknown, GoSlice<string>>(OrderedMap_Size(enumMap));
+      const inverted = NewOrderedMapWithSizeHint<GoComparableInterface, GoSlice<string>>(
+        OrderedMap_Size(enumMap),
+        GoComparableInterfaceKey,
+      );
       const deprecatedKeys = CommandLineOption_DeprecatedKeys(option);
 
-      OrderedMap_Entries(enumMap)!((name: unknown, value: unknown): bool => {
-        if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name as string)) {
-          OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value, GoZeroSlice), name as string));
+      OrderedMap_Entries(enumMap)!((name: string, value: GoComparableInterface): bool => {
+        if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name)) {
+          OrderedMap_Set(
+            inverted,
+            value,
+            GoAppend(OrderedMap_GetOrZero(inverted, value, GoZeroSlice), name),
+            GoComparableInterfaceKey,
+          );
         }
         return true;
       });

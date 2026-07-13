@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNilMap, GoStringKey, GoValueRef, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoNilMap, GoStringKey, GoValueRef, GoZeroComparableInterface, GoZeroInterface, GoZeroPointer, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -1490,9 +1490,9 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
       if (typeof value === "string") {
-        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value), GoZeroInterface);
+        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal, strings.ToLower(value), GoZeroComparableInterface);
         if (ok) {
-          const compilerOptionsErr = result.ParseOption(key, val);
+          const compilerOptionsErr = result.ParseOption(key, val?.value);
           errors.push(...(compilerOptionsErr ?? []));
         }
       } else {

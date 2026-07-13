@@ -53,7 +53,7 @@ import type { AlternateModeDiagnostics } from "./diagnostics.js";
  * }
  */
 export function createDiagnosticForInvalidEnumType(opt: GoPtr<CommandLineOption>, sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>): GoPtr<Diagnostic> {
-  const namesOfType = Collect(OrderedMap_Keys<string, unknown>(CommandLineOption_EnumMap(opt) as GoPtr<OrderedMap<string, unknown>>));
+  const namesOfType = Collect(OrderedMap_Keys(CommandLineOption_EnumMap(opt)));
   const stringNames = formatEnumTypeKeys(opt, namesOfType);
   const optName = "--" + opt!.Name;
   return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, node, Argument_for_0_option_must_be_Colon_1, optName, stringNames);

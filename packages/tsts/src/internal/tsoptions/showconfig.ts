@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import { GoEqualStrict, GoStringKey, GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoEqualStrict, GoStringKey, GoZeroInterface, type GoComparableInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -335,12 +335,12 @@ export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<stri
  * 	return ""
  * }
  */
-export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
+export function getNameOfCompilerOptionValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoComparableInterface>>): string {
   let found = "";
   let matched = false as bool;
-  OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
-    if (v === value) {
-      found = k as string;
+  OrderedMap_Entries(enumMap)!((k: string, v: GoComparableInterface): bool => {
+    if (v?.value === value) {
+      found = k;
       matched = true;
       return false;
     }
@@ -609,12 +609,12 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
  * 	return getNameOfCompilerOptionValue(value, enumMap)
  * }
  */
-export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, unknown>>): string {
+export function serializeEnumValue(value: GoInterface<unknown>, enumMap: GoPtr<OrderedMap<string, GoComparableInterface>>): string {
   if (typeof value === "number") {
     const container = { result: "" };
-    OrderedMap_Entries(enumMap)!((k: unknown, v: unknown): bool => {
-      if (typeof v === "number" && v === value) {
-        container.result = k as string;
+    OrderedMap_Entries(enumMap)!((k: string, v: GoComparableInterface): bool => {
+      if (typeof v?.value === "number" && v.value === value) {
+        container.result = k;
         return false as bool;
       }
       return true as bool;

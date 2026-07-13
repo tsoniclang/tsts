@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import { GoStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, type GoComparableInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Set } from "../collections/set.js";
 import { NewSetFromItems } from "../collections/set.js";
@@ -187,7 +187,7 @@ export function CommandLineOption_DeprecatedKeys(receiver: GoPtr<CommandLineOpti
  * 	return commandLineOptionEnumMap[o.Name]
  * }
  */
-export function CommandLineOption_EnumMap(receiver: GoPtr<CommandLineOption>): GoPtr<OrderedMap<string, unknown>> {
+export function CommandLineOption_EnumMap(receiver: GoPtr<CommandLineOption>): GoPtr<OrderedMap<string, GoComparableInterface>> {
   const o = receiver!;
   if (o.Kind !== CommandLineOptionTypeEnum) {
     return undefined;
@@ -440,17 +440,17 @@ export let commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = 
  * 	"fallbackPolling":  fallbackEnumMap,
  * }
  */
-export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, unknown>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, unknown>>>([
-  ["lib", LibMap as GoPtr<OrderedMap<string, unknown>>],
-  ["moduleResolution", moduleResolutionOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["module", moduleOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["target", targetOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["moduleDetection", moduleDetectionOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["jsx", jsxOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["newLine", newLineOptionMap as GoPtr<OrderedMap<string, unknown>>],
-  ["watchFile", watchFileEnumMap as GoPtr<OrderedMap<string, unknown>>],
-  ["watchDirectory", watchDirectoryEnumMap as GoPtr<OrderedMap<string, unknown>>],
-  ["fallbackPolling", fallbackEnumMap as GoPtr<OrderedMap<string, unknown>>],
+export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap<string, GoComparableInterface>>> = new globalThis.Map<string, GoPtr<OrderedMap<string, GoComparableInterface>>>([
+  ["lib", LibMap],
+  ["moduleResolution", moduleResolutionOptionMap],
+  ["module", moduleOptionMap],
+  ["target", targetOptionMap],
+  ["moduleDetection", moduleDetectionOptionMap],
+  ["jsx", jsxOptionMap],
+  ["newLine", newLineOptionMap],
+  ["watchFile", watchFileEnumMap],
+  ["watchDirectory", watchDirectoryEnumMap],
+  ["fallbackPolling", fallbackEnumMap],
 ]);
 
 /**

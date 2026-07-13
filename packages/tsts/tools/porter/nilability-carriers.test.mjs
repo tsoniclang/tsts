@@ -90,7 +90,9 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /export function GoMapMake<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoMap<K, V>/);
   assert.match(source, /export function GoMapClone<K, V>\(map: GoMap<K, V>, keyDescriptor: GoMapKeyDescriptor<K>\): GoMap<K, V>/);
   assert.doesNotMatch(source, /instanceof Go(?:Struct|Number)Map|isGoCloneableMap/);
-  assert.match(source, /export class GoNumberMap<V> implements Map<number, V>/);
+  assert.match(source, /export class GoNumberMap<K extends number = number, V = unknown> implements Map<K, V>/);
+  assert.match(source, /export type GoComparableInterface<T = unknown> = GoDynamicComparable<T> \| undefined;/);
+  assert.match(source, /export const GoComparableInterfaceKey: GoMapKeyDescriptor<GoComparableInterface>/);
   assert.match(source, /assignment to entry in nil map/);
   assert.match(source, /export type GoChan<T, Direction extends string = "bidirectional"> = \{/);
   assert.match(source, /export function GoNilChan<T, Direction extends string = "bidirectional">\(\): GoChan<T, Direction>/);
@@ -236,6 +238,15 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.deepEqual(runtime.GoMapLookup(numberMap, Number.NaN, runtime.GoZeroString), ["", false]);
   assert.deepEqual([...numberMap.values()], ["negative zero", "first NaN", "second NaN"]);
   assert.deepEqual([...runtime.GoMapClone(numberMap, runtime.GoNumberKey).values()], ["negative zero", "first NaN", "second NaN"]);
+
+  const firstNamedNumberKey = runtime.GoNamedNumberKey();
+  const secondNamedNumberKey = runtime.GoNamedNumberKey();
+  const interfaceMap = runtime.GoMapMake(runtime.GoComparableInterfaceKey);
+  interfaceMap.set(runtime.GoDynamicValue(firstNamedNumberKey, 1), "first type");
+  assert.equal(interfaceMap.get(runtime.GoDynamicValue(firstNamedNumberKey, 1)), "first type");
+  assert.equal(interfaceMap.get(runtime.GoDynamicValue(secondNamedNumberKey, 1)), undefined);
+  interfaceMap.set(runtime.GoDynamicValue(secondNamedNumberKey, 1), "second type");
+  assert.deepEqual([...interfaceMap.values()], ["first type", "second type"]);
 
   class StructuredKey {
     constructor(value) { this.value = value; }
