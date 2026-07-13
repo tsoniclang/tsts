@@ -119,6 +119,7 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(fieldRef.v, 3);
   fieldRef.v = 4;
   assert.equal(object.value, 4);
+  assert.equal(runtime.GoFieldRef(object, "value"), fieldRef);
   const values = [1, 2];
   const elementRef = runtime.GoSliceElementRef(values, 1);
   assert.equal(elementRef.v, 2);
