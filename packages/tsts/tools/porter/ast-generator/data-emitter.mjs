@@ -373,8 +373,8 @@ function emitGeneratedVisitHelpers(lines) {
 }
 
 function emitConcreteInterface(schema, node, lines) {
-  const exts = schema.extendsKeysOf(node);
-  const extendsClause = exts.length > 0 ? ` extends ${exts.join(", ")}` : "";
+  const exts = [...schema.extendsKeysOf(node), "nodeData"];
+  const extendsClause = ` extends ${exts.join(", ")}`;
   const fieldLines = [];
   for (const m of schema.members(node)) {
     if (m.noTS && !m.goOnly) continue;
@@ -518,21 +518,23 @@ function emitComputeSubtreeFactsFreeFn(schema, node, lines) {
 }
 
 function emitAdapter(schema, node, lines) {
-  lines.push(`const ${node}_nodeDataPrototype: nodeData & ThisType<GoPtr<${node}>> = {`);
-  lines.push(`  __tsgoGoReceiver(): GoPtr<${node}> { return this; },`);
+  const adapter = `${node}NodeData`;
+  lines.push(`class ${adapter} implements nodeData {`);
+  lines.push(`  __tsgoGoReceiver(): GoPtr<${node}> { return this; }`);
   for (const method of NODE_DATA_METHODS) {
     const t = resolveAdapterTarget(schema, node, method);
     const slot = adapterSlot(node, method, t);
     lines.push(`  ${slot}`);
   }
-  lines.push(`};`);
+  lines.push(`}`);
+  lines.push(`interface ${adapter} extends ${node} {}`);
   lines.push("");
   lines.push(`export function ${node}_as_nodeData(receiver: GoPtr<${node}>): nodeData {`);
-  lines.push(`  return globalThis.Object.setPrototypeOf(receiver!, ${node}_nodeDataPrototype) as nodeData;`);
+  lines.push(`  return receiver!;`);
   lines.push(`}`);
   lines.push("");
-  lines.push(`export function create${node}Data(): ${node} & nodeData {`);
-  lines.push(`  return globalThis.Object.create(${node}_nodeDataPrototype) as ${node} & nodeData;`);
+  lines.push(`export function create${node}Data(): ${node} {`);
+  lines.push(`  return new ${adapter}();`);
   lines.push(`}`);
   lines.push("");
 }
@@ -540,25 +542,25 @@ function emitAdapter(schema, node, lines) {
 function adapterSlot(node, method, t) {
   const receiver = `this`;
   if (method === "Clone") {
-    return `Clone(f: NodeFactoryCoercible): GoPtr<Node> { return ${t.fn}(${receiver}, f); },`;
+    return `Clone(f: NodeFactoryCoercible): GoPtr<Node> { return ${t.fn}(${receiver}, f); }`;
   }
   if (method === "ForEachChild") {
-    return `ForEachChild(v: Visitor): bool { return ${t.fn}(${receiver}, v); },`;
+    return `ForEachChild(v: Visitor): bool { return ${t.fn}(${receiver}, v); }`;
   }
   if (method === "VisitEachChild") {
     if (t.takesConcreteNodeVisitor) {
-      return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v as GoPtr<ConcreteNodeVisitor>); },`;
+      return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v as GoPtr<ConcreteNodeVisitor>); }`;
     }
-    return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v); },`;
+    return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v); }`;
   }
   if (method === "setModifiers") {
-    return `setModifiers(modifiers: GoPtr<ModifierList>): void { ${t.fn}(${receiver}, modifiers); },`;
+    return `setModifiers(modifiers: GoPtr<ModifierList>): void { ${t.fn}(${receiver}, modifiers); }`;
   }
   if (method === "subtreeFactsWorker") {
-    return `subtreeFactsWorker(self: nodeData): SubtreeFacts { return ${t.fn}(${receiver}, self); },`;
+    return `subtreeFactsWorker(self: nodeData): SubtreeFacts { return ${t.fn}(${receiver}, self); }`;
   }
   if (method === "AsNode") {
-    return `AsNode(): GoPtr<Node> { return ${t.fn}(${receiver}); },`;
+    return `AsNode(): GoPtr<Node> { return ${t.fn}(${receiver}); }`;
   }
-  return `${method}() { return ${t.fn}(${receiver}); },`;
+  return `${method}() { return ${t.fn}(${receiver}); }`;
 }
