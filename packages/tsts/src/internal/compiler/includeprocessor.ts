@@ -234,7 +234,7 @@ export function includeProcessor_addProcessingDiagnosticsForFileCasing(receiver:
  * }
  */
 export function includeProcessor_getReferenceLocation(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<referenceFileLocation> {
-  const [existing, ok] = SyncMap_Load(receiver!.reasonToReferenceLocation, r, GoZeroPointer<referenceFileLocation>);
+  const [existing, ok] = SyncMap_Load(receiver!.reasonToReferenceLocation, r, GoZeroPointer<referenceFileLocation>, fileIncludeReasonKey);
   if (ok) {
     return existing;
   }
@@ -293,7 +293,7 @@ export function includeProcessor_getCompilerOptionsObjectLiteralSyntax(receiver:
  * }
  */
 export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor>, r: GoPtr<FileIncludeReason>, program: GoPtr<Program>): GoPtr<Diagnostic> {
-  const [existing, ok] = SyncMap_Load(receiver!.includeReasonToRelatedInfo, r, GoZeroPointer<Diagnostic>);
+  const [existing, ok] = SyncMap_Load(receiver!.includeReasonToRelatedInfo, r, GoZeroPointer<Diagnostic>, fileIncludeReasonKey);
   if (ok) {
     return existing;
   }
@@ -369,7 +369,7 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
  * }
  */
 export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr<includeProcessor>, program: GoPtr<Program>, filePath: Path, toFileName: GoFunc<(fileName: string) => string>): GoSlice<GoPtr<Diagnostic>> {
-  const [existing, ok] = SyncMap_Load(receiver!.redirectAndFileFormat, filePath, GoZeroSlice<GoPtr<Diagnostic>>);
+  const [existing, ok] = SyncMap_Load(receiver!.redirectAndFileFormat, filePath, GoZeroSlice<GoPtr<Diagnostic>>, GoStringKey);
   if (ok) {
     return existing;
   }

@@ -725,7 +725,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
  * }
  */
 export let binderPool: Pool = (() => {
-  const pool = new Pool<Binder>();
+  const pool = new Pool();
   pool.New = () => {
     const binder = newBinderValue(undefined);
     binder.bindFunc = (node) => Binder_bind(binder, node);

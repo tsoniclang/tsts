@@ -532,7 +532,10 @@ function requireExactAuthoredSurfaces(authoredRoots, value, methodSetSignatures)
     }
     const configuredHash = root.runtimeAdaptation?.tsDeclarationHash;
     if (configuredHash !== undefined && surface.declarationHash !== configuredHash) {
-      throw new Error(`authored facade surface '${objectId}' drifted from its reviewed TypeScript declaration hash`);
+      throw new Error(
+        `authored facade surface '${objectId}' drifted from its reviewed TypeScript declaration hash: ` +
+        `config=${configuredHash} current=${surface.declarationHash}`,
+      );
     }
     for (const variant of root.variants) {
       buildAuthoredContractSurface(root, variant.declaration, methodSetSignatures, surface);

@@ -471,7 +471,7 @@ export interface InfoCache {
  */
 export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames: bool): GoPtr<InfoCache> {
   return {
-    cache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap<Path, GoPtr<InfoCacheEntry>>() },
+    cache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() },
     currentDirectory,
     useCaseSensitiveFileNames,
   };
@@ -491,7 +491,7 @@ export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames
  */
 export function InfoCache_Get(receiver: GoPtr<InfoCache>, packageJsonPath: string): GoPtr<InfoCacheEntry> {
   const key = ToPath(packageJsonPath, receiver!.currentDirectory, receiver!.useCaseSensitiveFileNames);
-  const [value, ok] = SyncMap_Load(receiver!.cache, key, GoZeroPointer<InfoCacheEntry>);
+  const [value, ok] = SyncMap_Load(receiver!.cache, key, GoZeroPointer<InfoCacheEntry>, GoStringKey);
   if (ok) {
     return value;
   }

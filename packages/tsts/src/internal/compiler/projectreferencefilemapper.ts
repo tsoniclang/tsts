@@ -395,7 +395,7 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
   // Note:: Currently we try the real path only if the
   // file is from node_modules to avoid having to run real path on all file paths
   const path = file!.Path();
-  const [realpathDtsToSource, ok] = SyncMap_Load(receiver!.realpathDtsToSource, path, GoZeroPointer<SourceOutputAndProjectReference>);
+  const [realpathDtsToSource, ok] = SyncMap_Load(receiver!.realpathDtsToSource, path, GoZeroPointer<SourceOutputAndProjectReference>, GoStringKey);
   if (ok) {
     return realpathDtsToSource;
   }

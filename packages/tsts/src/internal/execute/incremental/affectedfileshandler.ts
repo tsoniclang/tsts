@@ -142,12 +142,14 @@ export function affectedFilesHandler_isChangedSignature(receiver: GoPtr<affected
   const [newSignature] = SyncMap_Load<Path, GoPtr<updatedSignature>>(
     receiver!.updatedSignatures,
     path,
-    GoZeroPointer<updatedSignature>
+    GoZeroPointer<updatedSignature>,
+    GoStringKey
   );
   const [oldInfo] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     path,
-    GoZeroPointer<FileInfo>
+    GoZeroPointer<FileInfo>,
+    GoStringKey
   );
   return (newSignature!.signature !== oldInfo!.signature) as bool;
 }
@@ -274,7 +276,8 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     SourceFile_Path(file),
-    GoZeroPointer<FileInfo>
+    GoZeroPointer<FileInfo>,
+    GoStringKey
   );
   const prevSignature = info!.signature;
   if (!file!.IsDeclarationFile && !useFileVersionAsSignature) {
@@ -338,7 +341,8 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     SourceFile_Path(file),
-    GoZeroPointer<FileInfo>
+    GoZeroPointer<FileInfo>,
+    GoStringKey
   );
   if (info!.affectsGlobalScope) {
     receiver!.hasAllFilesExcludingDefaultLibraryFile.Store(true as bool);
@@ -523,7 +527,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
   }
 
   if (
-    !SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(affectedFile)) ||
+    !SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(affectedFile), GoStringKey) ||
     !affectedFilesHandler_isChangedSignature(receiver, SourceFile_Path(affectedFile))
   ) {
     return;
@@ -685,7 +689,8 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
   const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos,
     filePath,
-    GoZeroPointer<FileInfo>
+    GoZeroPointer<FileInfo>,
+    GoStringKey
   );
   if (!ok || !info!.affectsGlobalScope) {
     return false as bool;
@@ -719,7 +724,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
  * }
  */
 export function affectedFilesHandler_handleDtsMayChangeOf(receiver: GoPtr<affectedFilesHandler>, dtsMayChange: dtsMayChange, path: Path, invalidateJsFiles: bool): void {
-  if (SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, path)) {
+  if (SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, path, GoStringKey)) {
     return;
   }
   const file = compiler_Program_GetSourceFileByPath(receiver!.program!.program, path);
@@ -779,7 +784,8 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
       const [info, ok] = SyncMap_Load<Path, GoPtr<FileInfo>>(
         receiver!.program!.snapshot!.fileInfos,
         filePath,
-        GoZeroPointer<FileInfo>
+        GoZeroPointer<FileInfo>,
+        GoStringKey
       );
       if (ok) {
         info!.signature = update!.signature;
@@ -795,7 +801,8 @@ export function affectedFilesHandler_updateSnapshot(receiver: GoPtr<affectedFile
     (file: Path): bool => {
       SyncMap_Delete<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.program!.snapshot!.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-        file
+        file,
+        GoStringKey
       );
       return true as bool;
     }

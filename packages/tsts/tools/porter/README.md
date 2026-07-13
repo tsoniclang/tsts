@@ -174,18 +174,21 @@ name, order, and inferred type. Its TypeScript initializer expression is an
 implementation body and is not compared. In contrast, Go `const` values and
 parameter defaults are declaration semantics and remain exact.
 
-Signature overrides must capture both current snapshots locally:
+Signature overrides must capture SHA-256 hashes of both current canonical
+snapshots locally. The hashes pin the complete declaration descriptors without
+embedding multi-kilobyte structural snapshots in source comments:
 
 ```ts
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"..."}
- * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"Use a target-native source text carrier.","goSignature":"func{source:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,string)=>void}","tsSignature":"func{implementation:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,packages/tsts/src/internal/core/source_text.ts::SourceText)=>void}"}
+ * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"Use a target-native source text carrier.","goSignatureHash":"9377f5ca112c28713ccba50ad2ad84c696f4a4da49a335c656a27a0f1da93769","tsSignatureHash":"391028e8d692720c64404de565ceb248248f4b469763978ade3b4be29938dc89"}
  */
 ```
 
-The signature checker recomputes these snapshots from the pinned Go source and
-the actual TypeScript declaration. Any upstream Go drift or local TS signature
-drift invalidates the override and fails `porter:verify`.
+The signature checker recomputes each complete canonical snapshot from the
+pinned Go source and actual TypeScript declaration, then hashes it. Any upstream
+Go drift or local TypeScript signature drift invalidates the override and fails
+`porter:verify`; hashes are storage compression, not a weaker comparison.
 
 One narrower signature contract exists for erased generic execution that must
 materialize a Go zero value. JavaScript cannot construct `var zero T` from an

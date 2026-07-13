@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GoNumberKey, GoStringKey, GoStructField, GoStructKey } from "./compat.js";
+import { GoDynamicValue, GoNumberKey, GoStringKey, GoStructField, GoStructKey, type GoDynamicComparable } from "./compat.js";
 import {
   Mutex,
   RWMutex,
@@ -31,8 +31,8 @@ test("sync.RWMutex no-ops + RLocker", () => {
   assert.equal(rw.TryLock(), true);
   assert.equal(rw.TryRLock(), true);
   const locker = rw.RLocker();
-  locker.Lock();
-  locker.Unlock();
+  locker!.Lock();
+  locker!.Unlock();
 });
 
 test("sync.Once.Do runs exactly once", () => {
@@ -52,9 +52,9 @@ test("sync.OnceFunc runs once", () => {
   const f = OnceFunc(() => {
     count = count + 1;
   });
-  f();
-  f();
-  f();
+  f!();
+  f!();
+  f!();
   assert.equal(count, 1);
 });
 
@@ -64,8 +64,8 @@ test("sync.OnceValue memoizes the result", () => {
     calls = calls + 1;
     return "value";
   });
-  assert.equal(get(), "value");
-  assert.equal(get(), "value");
+  assert.equal(get!(), "value");
+  assert.equal(get!(), "value");
   assert.equal(calls, 1);
 });
 
@@ -75,33 +75,34 @@ test("sync.OnceValues memoizes a tuple", () => {
     calls = calls + 1;
     return ["s", 42];
   });
-  assert.deepEqual(get(), ["s", 42]);
-  assert.deepEqual(get(), ["s", 42]);
+  assert.deepEqual(get!(), ["s", 42]);
+  assert.deepEqual(get!(), ["s", 42]);
   assert.equal(calls, 1);
 });
 
 test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
-  const m = new SyncMap<string, number>();
+  const m = new SyncMap();
+  const key = (value: string) => GoDynamicValue(GoStringKey, value);
   // Missing key -> (undefined, false).
-  assert.deepEqual(m.Load("a"), [undefined, false]);
+  assert.deepEqual(m.Load(key("a")), [undefined, false]);
 
-  m.Store("a", 1, GoStringKey);
-  assert.deepEqual(m.Load("a"), [1, true]);
+  m.Store(key("a"), 1);
+  assert.deepEqual(m.Load(key("a")), [1, true]);
 
   // LoadOrStore returns existing without overwriting.
-  assert.deepEqual(m.LoadOrStore("a", 99, GoStringKey), [1, true]);
-  assert.deepEqual(m.LoadOrStore("b", 2, GoStringKey), [2, false]);
-  assert.deepEqual(m.Load("b"), [2, true]);
+  assert.deepEqual(m.LoadOrStore(key("a"), 99), [1, true]);
+  assert.deepEqual(m.LoadOrStore(key("b"), 2), [2, false]);
+  assert.deepEqual(m.Load(key("b")), [2, true]);
 
   // LoadAndDelete.
-  assert.deepEqual(m.LoadAndDelete("b"), [2, true]);
-  assert.deepEqual(m.Load("b"), [undefined, false]);
+  assert.deepEqual(m.LoadAndDelete(key("b")), [2, true]);
+  assert.deepEqual(m.Load(key("b")), [undefined, false]);
 
   // Range over all entries.
-  m.Store("c", 3, GoStringKey);
+  m.Store(key("c"), 3);
   const seen = new globalThis.Map<string, number>();
   m.Range((k, v) => {
-    seen.set(k, v);
+    seen.set((k as GoDynamicComparable<string>).value, v as number);
     return true;
   });
   assert.equal(seen.get("a"), 1);
@@ -115,8 +116,8 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
   });
   assert.equal(count, 1);
 
-  m.Delete("a");
-  assert.deepEqual(m.Load("a"), [undefined, false]);
+  m.Delete(key("a"));
+  assert.deepEqual(m.Load(key("a")), [undefined, false]);
 
   m.Clear();
   let any = false;
@@ -128,11 +129,11 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
 });
 
 test("sync.Map keeps Go NaN key lookup semantics", () => {
-  const m = new SyncMap<number, string>();
+  const m = new SyncMap();
   const key = globalThis.Number.NaN;
-  m.Store(key, "value", GoNumberKey);
-  assert.deepEqual(m.Load(key), [undefined, false]);
-  assert.deepEqual(m.LoadAndDelete(key), [undefined, false]);
+  m.Store(GoDynamicValue(GoNumberKey, key), "value");
+  assert.deepEqual(m.Load(GoDynamicValue(GoNumberKey, key)), [undefined, false]);
+  assert.deepEqual(m.LoadAndDelete(GoDynamicValue(GoNumberKey, key)), [undefined, false]);
 });
 
 test("sync.Map uses an explicit descriptor for Go struct value keys", () => {
@@ -141,17 +142,17 @@ test("sync.Map uses an explicit descriptor for Go struct value keys", () => {
     [GoStructField((key) => key.value, GoNumberKey)],
     ([value]) => ({ value }),
   );
-  const map = new SyncMap<Key, string>();
+  const map = new SyncMap();
   const source = { value: 1 };
-  map.Store(source, "stored", keyDescriptor);
+  map.Store(GoDynamicValue(keyDescriptor, source), "stored");
   source.value = 2;
-  assert.deepEqual(map.Load({ value: 1 }), ["stored", true]);
-  assert.deepEqual(map.Load({ value: 2 }), [undefined, false]);
+  assert.deepEqual(map.Load(GoDynamicValue(keyDescriptor, { value: 1 })), ["stored", true]);
+  assert.deepEqual(map.Load(GoDynamicValue(keyDescriptor, { value: 2 })), [undefined, false]);
 });
 
 test("sync.Pool reuses values and falls back to New", () => {
   let constructed = 0;
-  const p = new Pool<{ id: number }>();
+  const p = new Pool();
   p.New = () => {
     constructed = constructed + 1;
     return { id: constructed };
@@ -164,7 +165,7 @@ test("sync.Pool reuses values and falls back to New", () => {
   assert.equal(p.Get(), a);
 
   // Without New, Get returns undefined (Go: nil).
-  const empty = new Pool<number>();
+  const empty = new Pool();
   assert.equal(empty.Get(), undefined);
 });
 

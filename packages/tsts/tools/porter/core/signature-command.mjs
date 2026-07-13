@@ -99,8 +99,8 @@ export function printSigReport(report) {
     if (m.expected !== undefined || m.actual !== undefined) {
       console.log(`  expected: ${m.expected}\n  actual:   ${m.actual}`);
     }
-    if (m.goSignature !== undefined || m.tsSignature !== undefined) {
-      console.log(`  goSignature: ${m.goSignature}\n  tsSignature: ${m.tsSignature}`);
+    if (m.goSignatureHash !== undefined || m.tsSignatureHash !== undefined) {
+      console.log(`  goSignatureHash: ${m.goSignatureHash}\n  tsSignatureHash: ${m.tsSignatureHash}`);
     }
   }
   for (const m of (report.jsonTags?.mismatches ?? []).slice(0, 50)) {

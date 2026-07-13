@@ -1437,7 +1437,7 @@ export interface levenshteinBuffers {
  * 	},
  * }
  */
-export let levenshteinBuffersPool: Pool = globalThis.Object.assign(new Pool<levenshteinBuffers>(), {
+export let levenshteinBuffersPool: Pool = globalThis.Object.assign(new Pool(), {
   New: (): levenshteinBuffers => {
     return { previous: [], current: [] };
   },

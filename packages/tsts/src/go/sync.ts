@@ -1,6 +1,6 @@
 import type { bool, int } from "./scalars.js";
-import type { GoMap, GoMapKeyDescriptor } from "./compat.js";
-import { GoMapGetExisting, GoMapIsNil, GoMapMake, GoNilMap } from "./compat.js";
+import type { GoComparableInterface, GoFunc, GoInterface, GoMap, GoPtr } from "./compat.js";
+import { GoComparableInterfaceKey, GoMapGetExisting, GoMapIsNil, GoMapMake, GoNilMap } from "./compat.js";
 
 // Go: package sync
 //
@@ -41,7 +41,7 @@ export class RWMutex {
     return true;
   }
   // RLocker returns a Locker interface backed by the read lock.
-  RLocker(): Locker {
+  RLocker(): GoInterface<Locker> {
     return { Lock: () => this.RLock(), Unlock: () => this.RUnlock() };
   }
 }
@@ -58,17 +58,17 @@ export class Once {
   private done: bool = false;
 
   // Do calls f only the first time Do is invoked for this Once.
-  Do(f: () => void): void {
+  Do(f: GoFunc<() => void>): void {
     if (!this.done) {
       this.done = true;
-      f();
+      f!();
     }
   }
 }
 
 // OnceFunc returns a function that invokes f only once. The returned function may
 // be called concurrently in Go; here it is simply memoized.
-export function OnceFunc(f: () => void): () => void {
+export function OnceFunc(f: GoFunc<() => void>): GoFunc<() => void> {
   const once = new Once();
   return (): void => {
     once.Do(f);
@@ -77,13 +77,13 @@ export function OnceFunc(f: () => void): () => void {
 
 // OnceValue returns a function that invokes f only once and returns the value
 // returned by f. The returned function may be called any number of times.
-export function OnceValue<T>(f: () => T): () => T {
+export function OnceValue<T>(f: GoFunc<() => T>): GoFunc<() => T> {
   let called = false;
   let value!: T;
   return (): T => {
     if (!called) {
       called = true;
-      value = f();
+      value = f!();
     }
     return value;
   };
@@ -91,14 +91,14 @@ export function OnceValue<T>(f: () => T): () => T {
 
 // OnceValues returns a function that invokes f only once and returns the two
 // values returned by f. Modeled as a tuple return to match Go's (T1, T2).
-export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
+export function OnceValues<T1, T2>(f: GoFunc<() => [T1, T2]>): GoFunc<() => [T1, T2]> {
   let called = false;
   let v1!: T1;
   let v2!: T2;
   return (): [T1, T2] => {
     if (!called) {
       called = true;
-      const result = f();
+      const result = f!();
       v1 = result[0];
       v2 = result[1];
     }
@@ -108,42 +108,46 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 
 // Map is like a Go sync.Map: a concurrent map of any/any. Single-threaded, it is
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
-export class Map<K = unknown, V = unknown> {
-  private entries: GoMap<K, V> = GoNilMap();
+export class Map {
+  private entries: GoMap<GoComparableInterface, GoInterface<unknown>> = GoNilMap();
 
   // Load returns the value stored for key, and whether it was present.
-  Load(key: K): [V | undefined, bool] {
-    return this.entries.has(key)
-      ? [GoMapGetExisting(this.entries, key), true]
+  Load(key: GoInterface<unknown>): [GoInterface<unknown>, bool] {
+    const comparableKey = key as GoComparableInterface;
+    return this.entries.has(comparableKey)
+      ? [GoMapGetExisting(this.entries, comparableKey), true]
       : [undefined, false];
   }
 
   // Store sets the value for a key.
-  Store(key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): void {
-    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<K, V>(keyDescriptor);
-    this.entries.set(key, value);
+  Store(key: GoInterface<unknown>, value: GoInterface<unknown>): void {
+    const comparableKey = key as GoComparableInterface;
+    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<GoComparableInterface, GoInterface<unknown>>(GoComparableInterfaceKey);
+    this.entries.set(comparableKey, value);
   }
 
   // LoadOrStore returns the existing value if present; otherwise stores and returns
   // the given value. loaded is true if the value was already present.
-  LoadOrStore(key: K, value: V, keyDescriptor: GoMapKeyDescriptor<K>): [V, bool] {
-    if (this.entries.has(key)) return [GoMapGetExisting(this.entries, key), true];
-    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<K, V>(keyDescriptor);
-    this.entries.set(key, value);
+  LoadOrStore(key: GoInterface<unknown>, value: GoInterface<unknown>): [GoInterface<unknown>, bool] {
+    const comparableKey = key as GoComparableInterface;
+    if (this.entries.has(comparableKey)) return [GoMapGetExisting(this.entries, comparableKey), true];
+    if (GoMapIsNil(this.entries)) this.entries = GoMapMake<GoComparableInterface, GoInterface<unknown>>(GoComparableInterfaceKey);
+    this.entries.set(comparableKey, value);
     return [value, false];
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
-  LoadAndDelete(key: K): [V | undefined, bool] {
-    if (!this.entries.has(key)) return [undefined, false];
-    const existing = GoMapGetExisting(this.entries, key);
-    this.entries.delete(key);
+  LoadAndDelete(key: GoInterface<unknown>): [GoInterface<unknown>, bool] {
+    const comparableKey = key as GoComparableInterface;
+    if (!this.entries.has(comparableKey)) return [undefined, false];
+    const existing = GoMapGetExisting(this.entries, comparableKey);
+    this.entries.delete(comparableKey);
     return [existing, true];
   }
 
   // Delete deletes the value for a key.
-  Delete(key: K): void {
-    this.entries.delete(key);
+  Delete(key: GoInterface<unknown>): void {
+    this.entries.delete(key as GoComparableInterface);
   }
 
   // Clear deletes all the entries.
@@ -153,23 +157,23 @@ export class Map<K = unknown, V = unknown> {
 
   // Range calls f sequentially for each key and value present in the map.
   // If f returns false, Range stops the iteration.
-  Range(f: (key: K, value: V) => bool): void {
+  Range(f: GoFunc<(key: GoInterface<unknown>, value: GoInterface<unknown>) => bool>): void {
     // Snapshot keys so the callback may safely Store/Delete during iteration,
     // matching sync.Map's "Range does not necessarily correspond to any
     // consistent snapshot" but allowing concurrent mutation.
     for (const [key, value] of globalThis.Array.from(this.entries)) {
-      if (!f(key, value)) {
+      if (!f!(key, value)) {
         return;
       }
     }
   }
 }
 
-export class Pool<T = unknown> {
-  New?: () => T;
-  private readonly items: T[] = [];
+export class Pool {
+  New!: GoFunc<() => GoInterface<unknown>>;
+  private readonly items: Array<GoInterface<unknown>> = [];
 
-  Get(): T | undefined {
+  Get(): GoInterface<unknown> {
     const item = this.items.pop();
     if (item !== undefined) {
       return item;
@@ -180,8 +184,8 @@ export class Pool<T = unknown> {
     return undefined;
   }
 
-  Put(x: T): void {
-    if (x !== undefined && x !== null) {
+  Put(x: GoInterface<unknown>): void {
+    if (x !== undefined) {
       this.items.push(x);
     }
   }
@@ -192,17 +196,17 @@ export class Pool<T = unknown> {
 // model Wait as a non-blocking yield point and Signal/Broadcast as no-ops.
 export class Cond {
   // L is held while observing or changing the condition.
-  readonly L: Locker;
+  L!: GoInterface<Locker>;
 
-  constructor(l: Locker) {
+  constructor(l: GoInterface<Locker>) {
     this.L = l;
   }
 
   // Wait atomically unlocks L and suspends; on wakeup it re-locks L. Single-threaded
   // there is nothing to wait for, so it returns immediately with L re-locked.
   Wait(): void {
-    this.L.Unlock();
-    this.L.Lock();
+    this.L!.Unlock();
+    this.L!.Lock();
   }
 
   // Signal wakes one goroutine waiting on c, if there is any. No-op single-threaded.
@@ -213,7 +217,7 @@ export class Cond {
 }
 
 // NewCond returns a new Cond with Locker l.
-export function NewCond(l: Locker): Cond {
+export function NewCond(l: GoInterface<Locker>): GoPtr<Cond> {
   return new Cond(l);
 }
 
@@ -241,10 +245,10 @@ export class WaitGroup {
   Wait(): void {}
 
   // Go runs f in a new goroutine and tracks it. Single-threaded, f runs synchronously.
-  Go(f: () => void): void {
+  Go(f: GoFunc<() => void>): void {
     this.Add(1);
     try {
-      f();
+      f!();
     } finally {
       this.Done();
     }

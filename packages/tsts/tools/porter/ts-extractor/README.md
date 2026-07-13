@@ -144,9 +144,9 @@ the exact Go and/or TypeScript declaration hashes it depends on; there is no
 name-only mapping table.
 
 Per-unit signature acceptances are intentionally not configured here. They live
-next to the declaration as local `@tsgo-override` metadata with full
-`goSignature` and `tsSignature` snapshots. The verifier fails if either snapshot
-drifts.
+next to the declaration as local `@tsgo-override` metadata with exact
+`goSignatureHash` and `tsSignatureHash` values over the complete canonical
+snapshots. The verifier fails if either declaration hash drifts.
 
 This checker is part of the TSTS Porter contract. It is not a general Go-to-TS
 migration framework and does not infer implementation bodies or representation

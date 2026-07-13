@@ -38,7 +38,7 @@ test("scanTsUnits records declaration metadata without interpreting TypeScript b
     mkdirSync(path.join(root, "internal/debug"), { recursive: true });
     writeFileSync(path.join(root, "internal/debug/debug.ts"), `/**
  * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
- * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This declaration carries an audited local signature override.","goSignature":"go","tsSignature":"ts"}
+ * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This declaration carries an audited local signature override.","goSignatureHash":"0000000000000000000000000000000000000000000000000000000000000000","tsSignatureHash":"1111111111111111111111111111111111111111111111111111111111111111"}
  *
  * Go source:
  * func Fail() {}
@@ -57,8 +57,8 @@ export function Fail(): void {
       category: "runtime-performance",
       allow: ["signature"],
       reason: "This declaration carries an audited local signature override.",
-      goSignature: "go",
-      tsSignature: "ts",
+      goSignatureHash: "0".repeat(64),
+      tsSignatureHash: "1".repeat(64),
     });
     for (const field of removedBodySemanticFields) assert.equal(Object.hasOwn(result.units[0], field), false, field);
     assert.deepEqual(result.files.map((file) => file.metadataCount).sort((left, right) => left - right), [0, 1]);
@@ -139,8 +139,8 @@ export function Bad(): void {}
 
     writeFileSync(path.join(root, "duplicate.ts"), `/**
  * @tsgo-unit {"id":"m::bad.go::func::Bad","kind":"func","status":"implemented","sigHash":"${testSigHash}"}
- * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignature":"go","tsSignature":"ts"}
- * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignature":"go","tsSignature":"ts"}
+ * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignatureHash":"0000000000000000000000000000000000000000000000000000000000000000","tsSignatureHash":"1111111111111111111111111111111111111111111111111111111111111111"}
+ * @tsgo-override {"category":"runtime-performance","allow":["signature"],"reason":"This durable reason is intentionally long enough for validation.","goSignatureHash":"0000000000000000000000000000000000000000000000000000000000000000","tsSignatureHash":"1111111111111111111111111111111111111111111111111111111111111111"}
  */
 export function Bad(): void {}
 `);

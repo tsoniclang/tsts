@@ -60,10 +60,8 @@ function singleLineStringWriter_as_EmitTextWriter(
  * 	},
  * }
  */
-export let singleLineStringWriterPool: Pool = ((): Pool<
-  GoPtr<singleLineStringWriter>
-> => {
-  const pool = new Pool<GoPtr<singleLineStringWriter>>();
+export let singleLineStringWriterPool: Pool = ((): Pool => {
+  const pool = new Pool();
   pool.New = (): GoPtr<singleLineStringWriter> => ({
     builder: new Builder(),
     lastWritten: "",

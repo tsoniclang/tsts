@@ -256,7 +256,7 @@ export function Orchestrator_Downstream(receiver: GoPtr<Orchestrator>, configNam
  * }
  */
 export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path): GoPtr<BuildTask> {
-  const [task, ok] = SyncMap_Load(receiver!.tasks, path, GoZeroPointer<BuildTask>);
+  const [task, ok] = SyncMap_Load(receiver!.tasks, path, GoZeroPointer<BuildTask>, GoStringKey);
   if (!ok) {
     throw new globalThis.Error("No build task found for " + path);
   }
@@ -307,7 +307,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
       let task: GoPtr<BuildTask> = undefined;
       let buildInfo = undefined;
       if (oldTasks !== undefined) {
-        const [existing, ok] = SyncMap_Load(oldTasks, path, GoZeroPointer<BuildTask>);
+        const [existing, ok] = SyncMap_Load(oldTasks, path, GoZeroPointer<BuildTask>, GoStringKey);
         if (ok) {
           if (!existing!.dirty) {
             task = existing;

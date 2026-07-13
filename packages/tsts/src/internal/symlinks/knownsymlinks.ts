@@ -72,7 +72,7 @@ export interface KnownSymlinks {
  * }
  */
 export function KnownSymlinks_HasDirectory(receiver: GoPtr<KnownSymlinks>, symlinkPath: Path): bool {
-  const [, ok] = SyncMap_Load(receiver!.directories, EnsureTrailingDirectorySeparator(symlinkPath), GoZeroPointer<KnownDirectoryLink>);
+  const [, ok] = SyncMap_Load(receiver!.directories, EnsureTrailingDirectorySeparator(symlinkPath), GoZeroPointer<KnownDirectoryLink>, GoStringKey);
   return ok;
 }
 
@@ -140,7 +140,7 @@ export function KnownSymlinks_FilesByRealpath(receiver: GoPtr<KnownSymlinks>): G
  */
 export function KnownSymlinks_SetDirectory(receiver: GoPtr<KnownSymlinks>, symlink: string, symlinkPath: Path, realDirectory: GoPtr<KnownDirectoryLink>): void {
   if (realDirectory !== undefined) {
-    const [, ok] = SyncMap_Load(receiver!.directories, symlinkPath, GoZeroPointer<KnownDirectoryLink>);
+    const [, ok] = SyncMap_Load(receiver!.directories, symlinkPath, GoZeroPointer<KnownDirectoryLink>, GoStringKey);
     if (!ok) {
       const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };
       const [set] = SyncMap_LoadOrStore<Path, GoPtr<SyncSet<string>>>(receiver!.directoriesByRealpath as SyncMap<Path, GoPtr<SyncSet<string>>>, realDirectory!.RealPath, newSet, GoZeroPointer<SyncSet<string>>, GoStringKey);
@@ -164,7 +164,7 @@ export function KnownSymlinks_SetDirectory(receiver: GoPtr<KnownSymlinks>, symli
  * }
  */
 export function KnownSymlinks_SetFile(receiver: GoPtr<KnownSymlinks>, symlink: string, symlinkPath: Path, realpath: string): void {
-  const [, ok] = SyncMap_Load(receiver!.files, symlinkPath, GoZeroString);
+  const [, ok] = SyncMap_Load(receiver!.files, symlinkPath, GoZeroString, GoStringKey);
   if (!ok) {
     const realpathPath = ToPath(realpath, receiver!.cwd, receiver!.useCaseSensitiveFileNames);
     const newSet: SyncSet<string> = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new Map() } };

@@ -525,7 +525,12 @@ test("authored scalar adaptation accepts one exact branded scalar storage type",
     });
   };
   assert.deepEqual(audit(exactSource).mismatches, []);
-  assert.throws(() => audit("export type Tag = number;"), /reviewed TypeScript declaration hash/);
+  const numberSource = "export type Tag = number;";
+  const numberHash = authoredTypeHash(moduleId, "Tag", numberSource);
+  assert.throws(
+    () => audit(numberSource),
+    new RegExp(`reviewed TypeScript declaration hash: config=${tsDeclarationHash} current=${numberHash}`),
+  );
   assert.throws(() => audit('export type Tag = string & { mutable: "Tag" };'), /reviewed TypeScript declaration hash/);
   assert.throws(() => buildExternalFacadeStoragePlan({
     ...config,

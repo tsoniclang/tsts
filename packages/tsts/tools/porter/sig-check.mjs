@@ -30,9 +30,9 @@ import { requireFinalizedExternalFacadeStorageCatalog } from "./core/external-fa
 import { loadNonGoDeclarationManifest } from "./core/non-go-declaration-manifest.mjs";
 import {
   resolveOverride,
-  unitSignatureSnapshot,
+  unitSignatureHash,
   validateOverrideUse,
-  withSignatureOverrideSnapshots,
+  withSignatureOverrideHashes,
 } from "./sig-check/overrides.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
@@ -357,7 +357,7 @@ export function compareSignatureUnit({
     const active = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
     return {
       overridden,
-      mismatches: withSignatureOverrideSnapshots(active, expected, actual, canonicalIdentity)
+      mismatches: withSignatureOverrideHashes(active, expected, actual, canonicalIdentity)
         .map((mismatch) => ({ id, file, ...mismatch })),
     };
   } catch (error) {
@@ -395,4 +395,4 @@ export function descriptorInventoryMismatches(expectedIds, descriptorsById) {
   return mismatches.sort((left, right) => compareText(left.id, right.id) || compareText(left.kind, right.kind));
 }
 
-export { compareSignatures, resolveOverride, unitSignatureSnapshot, validateOverrideUse, withSignatureOverrideSnapshots };
+export { compareSignatures, resolveOverride, unitSignatureHash, validateOverrideUse, withSignatureOverrideHashes };

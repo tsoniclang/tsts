@@ -13,12 +13,13 @@ import type { GoFunc } from "../../go/compat.js";
  * 	m SyncMap[T, struct{}]
  * }
  */
-export interface SyncSet<T extends GoComparable = unknown> {
+export interface SyncSet<T extends GoComparable> {
   m: SyncMap<T, { readonly __tsgoEmpty?: never }>;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Has","kind":"method","status":"implemented","sigHash":"bda102f39a3640ceaf05f8aa32bb85c92ab9913ffd0914ca831c6bc00f2ca693"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized-set lookup receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *SyncSet[T]) Has(key T) bool {
@@ -26,8 +27,8 @@ export interface SyncSet<T extends GoComparable = unknown> {
  * 	return ok
  * }
  */
-export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): bool {
-  const [, ok] = SyncMap_Load(receiver!.m, key, GoZeroEmptyStruct);
+export function SyncSet_Has<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): bool {
+  const [, ok] = SyncMap_Load(receiver!.m, key, GoZeroEmptyStruct, keyDescriptor);
   return ok;
 }
 
@@ -61,14 +62,15 @@ export function SyncSet_AddIfAbsent<T extends GoComparable>(receiver: GoPtr<Sync
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::method::SyncSet.Delete","kind":"method","status":"implemented","sigHash":"0ba5a3353c582a1a670608fa549418d2bb31ec8fd3c886a1a4e72b77a65450db"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic synchronized-set deletion receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"T"}]}
  *
  * Go source:
  * func (s *SyncSet[T]) Delete(key T) {
  * 	s.m.Delete(key)
  * }
  */
-export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T): void {
-  SyncMap_Delete(receiver!.m, key);
+export function SyncSet_Delete<T extends GoComparable>(receiver: GoPtr<SyncSet<T>>, key: T, keyDescriptor: GoMapKeyDescriptor<T>): void {
+  SyncMap_Delete(receiver!.m, key, keyDescriptor);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { compareSignatures } from "./comparison.mjs";
+import { hashText } from "../core/runtime.mjs";
 
 const SIGNATURE_MISMATCH_KINDS = new Set([
   "declaration-kind", "declaration-modifier", "declaration-fragment-contract", "declaration-fragment-count",
@@ -24,8 +25,8 @@ export function resolveOverride(localOverride, id, expected, actual, canon, over
   const issues = [];
   if (localOverride?.allow?.includes?.("signature")) {
     if (localOverride.runtimeDictionaries === undefined) {
-      requireSnapshot(localOverride.goSignature, unitSignatureSnapshot(expected, canon), "goSignature", issues);
-      requireSnapshot(localOverride.tsSignature, unitSignatureSnapshot(actual, canon), "tsSignature", issues);
+      requireSnapshot(localOverride.goSignatureHash, unitSignatureHash(expected, canon), "goSignatureHash", issues);
+      requireSnapshot(localOverride.tsSignatureHash, unitSignatureHash(actual, canon), "tsSignatureHash", issues);
     } else {
       validateRuntimeDictionaryProjection(localOverride.runtimeDictionaries, expected, actual, canon, conventions, ambientReferences, issues);
     }
@@ -194,6 +195,10 @@ export function unitSignatureSnapshot(descriptor, canon = (identity) => identity
   return stableSnapshot(descriptor, canon);
 }
 
+export function unitSignatureHash(descriptor, canon = (identity) => identity) {
+  return hashText(unitSignatureSnapshot(descriptor, canon));
+}
+
 function stableSnapshot(value, canon = (identity) => identity, owner = undefined) {
   return JSON.stringify(snapshotValue(value, canon, owner));
 }
@@ -209,10 +214,10 @@ function snapshotValue(value, canon, owner) {
   return ["object", entries];
 }
 
-export function withSignatureOverrideSnapshots(mismatches, expected, actual, canon = (identity) => identity) {
-  const goSignature = unitSignatureSnapshot(expected, canon);
-  const tsSignature = unitSignatureSnapshot(actual, canon);
-  return mismatches.map((mismatch) => ({ ...mismatch, goSignature, tsSignature }));
+export function withSignatureOverrideHashes(mismatches, expected, actual, canon = (identity) => identity) {
+  const goSignatureHash = unitSignatureHash(expected, canon);
+  const tsSignatureHash = unitSignatureHash(actual, canon);
+  return mismatches.map((mismatch) => ({ ...mismatch, goSignatureHash, tsSignatureHash }));
 }
 
 export { unitInitializerSnapshot, unitValueOrderSnapshot };

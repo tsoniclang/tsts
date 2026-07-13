@@ -1,6 +1,6 @@
 import type { bool } from "../../go/scalars.js";
 import type { Seq2 } from "../../go/iter.js";
-import { GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoStringKey, GoZeroBoolean, GoZeroPointer, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
 import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
@@ -691,7 +691,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
       host!.GetGlobalTypingsCacheLocation(),
       GetDirectoryPath(fullImportedFileName),
       (realPathDirectory: string): [boolean, boolean] => {
-        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host!.UseCaseSensitiveFileNames())), GoZeroPointer<SyncSet<string>>);
+        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host!.UseCaseSensitiveFileNames())), GoZeroPointer<SyncSet<string>>, GoStringKey);
         if (!ok) {
           return [false, false]; // Continue to ancestor directory
         }

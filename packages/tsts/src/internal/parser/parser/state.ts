@@ -233,7 +233,7 @@ export let missingListNodes: GoSlice<GoPtr<Node>> = [];
  * 	},
  * }
  */
-export let parserPool: Pool = new Pool<Parser>();
+export let parserPool: Pool = new Pool();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::type::ParserState","kind":"type","status":"implemented","sigHash":"398a9313b037dfc819ac14636817daed6e0ee86b0e916701d82f4cc1a2715093"}

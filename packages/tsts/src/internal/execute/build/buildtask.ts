@@ -564,7 +564,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     ChangesComputeTime: 0 as import("../../../go/time.js").Duration,
   };
 
-  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path, GoZeroNumber);
+  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path, GoZeroNumber, GoStringKey);
   compileTimes.ConfigTime = configTime as import("../../../go/time.js").Duration;
 
   const buildInfoReadStart = orchestrator!.opts.Sys!.Now();
@@ -1596,7 +1596,7 @@ export function BuildTask_resetStatus(receiver: GoPtr<BuildTask>): void {
  */
 export function BuildTask_resetConfig(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): void {
   receiver!.dirty = true;
-  parseCache_delete(orchestrator!.host!.resolvedReferences, path);
+  parseCache_delete(orchestrator!.host!.resolvedReferences, path, GoStringKey);
 }
 
 /**

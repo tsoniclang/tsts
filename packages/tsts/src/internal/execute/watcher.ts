@@ -227,7 +227,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
   type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
   const info = receiver!.__tsgoEmbedded0!.FS()!.Stat(opts.FileName);
 
-  const [cached, ok] = SyncMap_Load(receiver!.cache, opts.Path, GoZeroPointer<cachedSourceFile>);
+  const [cached, ok] = SyncMap_Load(receiver!.cache, opts.Path, GoZeroPointer<cachedSourceFile>, GoStringKey);
   if (ok) {
     if (info !== undefined && (info as unknown as FileInfoWithModTime).ModTime().Equal(cached!.modTime)) {
       return cached!.file;
@@ -243,7 +243,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
       }, GoStringKey);
     }
   } else {
-    SyncMap_Delete(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+    SyncMap_Delete(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path, GoStringKey);
   }
   return file;
 }
@@ -1459,7 +1459,7 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const programFiles = Program_FilesByPath(Program_GetProgram(receiver!.program));
   SyncMap_Range(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, (path: Path) => {
     if (!programFiles.has(path)) {
-      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, path);
+      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, path, GoStringKey);
     }
     return true;
   });
@@ -1499,12 +1499,12 @@ export function Watcher_evictChangedSourceFiles(receiver: GoPtr<Watcher>, change
   const cwd = receiver!.sys!.GetCurrentDirectory();
   for (const [eventPath] of changedPaths) {
     const p = ToPath(eventPath, cwd, caseSensitive);
-    const [, ok] = SyncMap_Load(receiver!.sourceFileCache, p, GoZeroPointer<cachedSourceFile>);
+    const [, ok] = SyncMap_Load(receiver!.sourceFileCache, p, GoZeroPointer<cachedSourceFile>, GoStringKey);
     if (ok) {
       if (receiver!.debugLog !== undefined) {
         Fprintf(receiver!.debugLog, "[watch] evicting cached source file: %s\n", p);
       }
-      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p);
+      SyncMap_Delete(receiver!.sourceFileCache as SyncMap<Path, GoPtr<cachedSourceFile>>, p, GoStringKey);
     }
   }
 }

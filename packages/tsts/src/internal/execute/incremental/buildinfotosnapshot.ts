@@ -304,7 +304,7 @@ export function toSnapshot_setFileInfoAndEmitSignatures(receiver: GoPtr<toSnapsh
   }
   for (const value of receiver!.buildInfo!.EmitSignatures) {
     if (BuildInfoEmitSignature_noEmitSignature(value)) {
-      SyncMap_Delete(receiver!.snapshot.emitSignatures, toSnapshot_toFilePath(receiver, value!.FileId));
+      SyncMap_Delete(receiver!.snapshot.emitSignatures, toSnapshot_toFilePath(receiver, value!.FileId), GoStringKey);
     } else {
       const path = toSnapshot_toFilePath(receiver, value!.FileId);
       SyncMap_Store(receiver!.snapshot.emitSignatures, path, BuildInfoEmitSignature_toEmitSignature(value, path, receiver!.snapshot.emitSignatures), GoStringKey);
@@ -372,7 +372,7 @@ export function toSnapshot_setChangeFileSet(receiver: GoPtr<toSnapshot>): void {
 export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): void {
   SyncMap_Range(receiver!.snapshot.fileInfos as SyncMap<Path, FileInfo>, (path: Path, _info: FileInfo) => {
     // Initialize to have no diagnostics if its not changed file
-    if (!SyncSet_Has(receiver!.snapshot.changedFilesSet as SyncSet<Path>, path)) {
+    if (!SyncSet_Has(receiver!.snapshot.changedFilesSet as SyncSet<Path>, path, GoStringKey)) {
       SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, path, { diagnostics: [], buildInfoDiagnostics: [] }, GoStringKey);
     }
     return true;
@@ -380,7 +380,7 @@ export function toSnapshot_setSemanticDiagnostics(receiver: GoPtr<toSnapshot>): 
   for (const diagnostic of receiver!.buildInfo!.SemanticDiagnosticsPerFile) {
     if (diagnostic!.FileId !== 0) {
       const filePath = toSnapshot_toFilePath(receiver, diagnostic!.FileId);
-      SyncMap_Delete(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath); // does not have cached diagnostics
+      SyncMap_Delete(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, GoStringKey); // does not have cached diagnostics
     } else {
       const filePath = toSnapshot_toFilePath(receiver, diagnostic!.Diagnostics!.FileId);
       SyncMap_Store(receiver!.snapshot.semanticDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>, filePath, toSnapshot_toDiagnosticsOrBuildInfoDiagnosticsWithFileName(receiver, diagnostic!.Diagnostics), GoStringKey);

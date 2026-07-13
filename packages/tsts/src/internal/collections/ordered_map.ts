@@ -165,7 +165,7 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"d32439c79fc90fa79c6ccc0d49a836f88237405347f2c6405ea0dd7bf357813b"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic deletion receives the exact static missing-value zero and key equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equalKey","typeParameter":"K"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic lookup receives the exact static missing-value zero operation.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Get(key K) (V, bool) {
@@ -182,7 +182,7 @@ export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.GetOrZero","kind":"method","status":"implemented","sigHash":"8ab8a933ca7d7e86a8870543eff284236741ef6c0af43c71f73013d3561f173f"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic lookup receives the exact static missing-value zero operation.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) GetOrZero(key K) V {
@@ -239,7 +239,7 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Delete","kind":"method","status":"implemented","sigHash":"c9fe7cf0be22689301b59a2c908bb19938a9b00e5035ef0e6875dd4fb446786e"}
- * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic deletion receives the exact static missing-value zero and key equality operations.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"},{"kind":"equality","parameter":"equalKey","typeParameter":"K"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Delete(key K) (V, bool) {

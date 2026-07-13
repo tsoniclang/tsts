@@ -81,14 +81,15 @@ export function parseCache_store<K extends GoComparable, V extends GoComparable>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/parseCache.go::method::parseCache.delete","kind":"method","status":"implemented","sigHash":"272892ac9a7ddf92faaecb351b9543a4a036adc848b61a398fd591728756cab3"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic parse-cache deletion receives the exact static Go map-key descriptor.","runtimeDictionaries":[{"kind":"map-key","parameter":"keyDescriptor","typeParameter":"K"}]}
  *
  * Go source:
  * func (c *parseCache[K, V]) delete(key K) {
  * 	c.entries.Delete(key)
  * }
  */
-export function parseCache_delete<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K): void {
-  SyncMap_Delete<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key);
+export function parseCache_delete<K extends GoComparable, V extends GoComparable>(receiver: GoPtr<parseCache<K, V>>, key: K, keyDescriptor: GoMapKeyDescriptor<K>): void {
+  SyncMap_Delete<K, GoPtr<parseCacheEntry<V>>>(receiver!.entries as SyncMap<K, GoPtr<parseCacheEntry<V>>>, key, keyDescriptor);
 }
 
 /**

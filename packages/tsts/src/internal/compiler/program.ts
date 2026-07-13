@@ -1250,7 +1250,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
  * 	return p.checkerPool.GetChecker(ctx, nil)
  * }
  */
-export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: GoInterface<Context>): [GoPtr<Checker>, GoFunc<() => void>] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerNonExclusive(receiver!.compilerCheckerPool);
   }
@@ -1284,7 +1284,7 @@ export function Program_ForEachCheckerParallel(receiver: GoPtr<Program>, cb: GoF
  * 	return p.checkerPool.GetChecker(ctx, file)
  * }
  */
-export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileNonExclusive(receiver!.compilerCheckerPool, file);
   }
@@ -1302,7 +1302,7 @@ export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: GoI
  * 	return p.checkerPool.GetChecker(ctx, file)
  * }
  */
-export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] {
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileExclusive(receiver!.compilerCheckerPool, ctx, file);
   }
@@ -1476,7 +1476,7 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
     }
     const [c, done] = Program_GetTypeCheckerForFileExclusive(receiver, ctx, sourceFile);
     const result = collect(ctx!, c, sourceFile);
-    done();
+    done!();
     return SortAndDeduplicateDiagnostics(result);
   }
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, collect);
@@ -1524,7 +1524,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
       }
       const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
       diagnostics[i] = collect(ctx!, c, file);
-      done();
+      done!();
     }
   }
   return diagnostics;
@@ -3196,14 +3196,14 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
   if (sourceFile!.IsDeclarationFile) {
     return [];
   }
-  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile, GoZeroSlice<GoPtr<Diagnostic>>);
+  const [cached, ok] = SyncMap_Load(receiver!.declarationDiagnosticCache, sourceFile, GoZeroSlice<GoPtr<Diagnostic>>, sourceFileKey);
   if (ok) {
     return cached as GoSlice<GoPtr<Diagnostic>>;
   }
   const [host, done] = newEmitHost(ctx, receiver, sourceFile);
   const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
   const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags, GoZeroSlice<GoPtr<Diagnostic>>, sourceFileKey);
-  done();
+  done!();
   return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
 }
 
@@ -3890,7 +3890,7 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: GoInterface<Context>
     e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
     emitter_emit(e);
     e.writer = undefined!;
-    done();
+    done!();
   }
 
   return CombineEmitResults(core_Map(emitters, (e) => e !== undefined ? e!.emitResult : undefined));

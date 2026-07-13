@@ -547,7 +547,7 @@ export function toBuildInfo_collectRootFiles(receiver: GoPtr<toBuildInfo>): void
  */
 export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuildInfo>): void {
   receiver!.buildInfo!.FileInfos = core.Map(Program_GetSourceFiles(receiver!.program), (file: GoPtr<import("../../ast/ast.js").SourceFile>) => {
-    const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(receiver!.snapshot!.fileInfos, SourceFile_Path(file), GoZeroPointer<FileInfo>);
+    const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(receiver!.snapshot!.fileInfos, SourceFile_Path(file), GoZeroPointer<FileInfo>, GoStringKey);
     const fileId = toBuildInfo_toFileId(receiver, SourceFile_Path(file));
     if (receiver!.buildInfo!.FileNames[fileId - 1] !== toBuildInfo_relativeToBuildInfo(receiver, SourceFile_Path(file) as string)) {
       const libFile = Program_GetDefaultLibFile(receiver!.program, SourceFile_Path(file));
@@ -557,7 +557,7 @@ export function toBuildInfo_setFileInfoAndEmitSignatures(receiver: GoPtr<toBuild
     }
     if (Tristate_IsTrue(receiver!.snapshot!.options!.Composite)) {
       if (!IsJsonSourceFile(file) && Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
-        const [emitSignature, loaded] = SyncMap_Load<Path, GoPtr<emitSignature>>(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), GoZeroPointer<emitSignature>);
+        const [emitSignature, loaded] = SyncMap_Load<Path, GoPtr<emitSignature>>(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), GoZeroPointer<emitSignature>, GoStringKey);
         if (!loaded) {
           receiver!.buildInfo!.EmitSignatures.push({ FileId: fileId, Signature: "", DiffersOnlyInDtsMap: false, DiffersInOptions: false });
         } else if (emitSignature!.signature !== info!.signature) {
@@ -752,9 +752,9 @@ export function toBuildInfo_setChangeFileSet(receiver: GoPtr<toBuildInfo>): void
  */
 export function toBuildInfo_setSemanticDiagnostics(receiver: GoPtr<toBuildInfo>): void {
   for (const file of Program_GetSourceFiles(receiver!.program)) {
-    const [value, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>);
+    const [value, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, GoStringKey);
     if (!ok) {
-      if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file))) {
+      if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as import("../../collections/syncset.js").SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
         receiver!.buildInfo!.SemanticDiagnosticsPerFile.push({ FileId: toBuildInfo_toFileId(receiver, SourceFile_Path(file)), Diagnostics: undefined });
       }
     } else {
@@ -783,7 +783,7 @@ export function toBuildInfo_setEmitDiagnostics(receiver: GoPtr<toBuildInfo>): vo
   const files = slices.Collect(SyncMap_Keys(receiver!.snapshot!.emitDiagnosticsPerFile));
   slices.Sort(files);
   receiver!.buildInfo!.EmitDiagnosticsPerFile = core.Map(files, (filePath: Path) => {
-    const [value] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.emitDiagnosticsPerFile, filePath, GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>);
+    const [value] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(receiver!.snapshot!.emitDiagnosticsPerFile, filePath, GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>, GoStringKey);
     return toBuildInfo_toBuildInfoDiagnosticsOfFile(receiver, filePath, value);
   });
 }
@@ -818,7 +818,7 @@ export function toBuildInfo_setAffectedFilesPendingEmit(receiver: GoPtr<toBuildI
     if (file === undefined || !Program_SourceFileMayBeEmitted(receiver!.program, file, false)) {
       continue;
     }
-    const [pendingEmit] = SyncMap_Load<Path, FileEmitKind>(receiver!.snapshot!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone);
+    const [pendingEmit] = SyncMap_Load<Path, FileEmitKind>(receiver!.snapshot!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone, GoStringKey);
     receiver!.buildInfo!.AffectedFilesPendingEmit.push({
       FileId: toBuildInfo_toFileId(receiver, filePath),
       EmitKind: core.IfElse(pendingEmit === fullEmitKind, 0, pendingEmit),

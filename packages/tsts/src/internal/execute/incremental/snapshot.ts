@@ -791,10 +791,10 @@ export function snapshot_addFileToChangeSet(receiver: GoPtr<snapshot>, filePath:
  * }
  */
 export function snapshot_addFileToAffectedFilesPendingEmit(receiver: GoPtr<snapshot>, filePath: Path, emitKind: FileEmitKind): void {
-  const [existingKind] = SyncMap_Load(receiver!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone);
+  const [existingKind] = SyncMap_Load(receiver!.affectedFilesPendingEmit, filePath, (): FileEmitKind => FileEmitKindNone, GoStringKey);
   SyncMap_Store(receiver!.affectedFilesPendingEmit, filePath, (existingKind | emitKind) as FileEmitKind, GoStringKey);
   if ((emitKind & FileEmitKindDtsErrors) !== 0) {
-    SyncMap_Delete(receiver!.emitDiagnosticsPerFile, filePath);
+    SyncMap_Delete(receiver!.emitDiagnosticsPerFile, filePath, GoStringKey);
   }
   receiver!.buildInfoEmitPending.Store(true);
 }

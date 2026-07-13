@@ -2016,7 +2016,7 @@ export function fileLoader_createSyntheticImport(receiver: GoPtr<fileLoader>, te
  * }
  */
 export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: string): GoPtr<LibFile> {
-  const [cached, ok] = SyncMap_Load(receiver!.pathForLibFileCache, name, GoZeroPointer<LibFile>);
+  const [cached, ok] = SyncMap_Load(receiver!.pathForLibFileCache, name, GoZeroPointer<LibFile>, GoStringKey);
   if (ok) {
     return cached;
   }

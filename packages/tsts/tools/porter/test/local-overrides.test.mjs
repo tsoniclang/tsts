@@ -77,7 +77,7 @@ import {
   unitRecord,
 } from "./helpers.mjs";
 
-test("buildLocalOverrideStatus accepts local signature overrides with snapshots", () => {
+test("buildLocalOverrideStatus accepts local signature overrides with exact hashes", () => {
   const status = buildLocalOverrideStatus(
     baseConfig,
     {
@@ -91,8 +91,8 @@ test("buildLocalOverrideStatus accepts local signature overrides with snapshots"
             category: "runtime-performance",
             allow: ["signature"],
             reason: "Use a target-native source-text model while preserving the exact scanner call and result contract.",
-            goSignature: "func(K:string)=>K:void",
-            tsSignature: "func(K:string)=>K:void",
+            goSignatureHash: "0".repeat(64),
+            tsSignatureHash: "1".repeat(64),
           },
         },
       ],
@@ -192,8 +192,8 @@ test("runtime dictionary metadata is closed and declaration-specific", () => {
       allow: ["signature"],
       reason: "This invalid fixture attempts to preserve a broad signature snapshot beside a dictionary.",
       runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
-      goSignature: "broad snapshot",
-    }, /unknown or inapplicable override key 'goSignature'/],
+      goSignatureHash: "0".repeat(64),
+    }, /unknown or inapplicable override key 'goSignatureHash'/],
   ];
 
   for (const [override, expectedIssue] of invalidOverrides) {
@@ -275,7 +275,7 @@ test("buildLocalOverrideStatus flags malformed local overrides", () => {
             category: "",
             allow: ["signature"],
             reason: "",
-            goSignature: "",
+            goSignatureHash: "",
           },
         },
       ],
@@ -295,8 +295,8 @@ test("buildLocalOverrideStatus rejects unknown keys, duplicate allowances, and u
       category: "unreviewed-exception",
       allow: ["signature", "signature"],
       reason: "This explanation is deliberately long enough but its exception category and shape are not registered.",
-      goSignature: "go",
-      tsSignature: "ts",
+      goSignatureHash: "0".repeat(64),
+      tsSignatureHash: "1".repeat(64),
       wildcard: true,
     },
   }] });
@@ -330,8 +330,8 @@ test("buildLocalOverrideStatus rejects stub and declaration-inapplicable overrid
         category: "runtime-performance",
         allow: ["signature"],
         reason: "A traceable scaffold cannot carry a declaration-signature exception.",
-        goSignature: "go",
-        tsSignature: "ts",
+        goSignatureHash: "0".repeat(64),
+        tsSignatureHash: "1".repeat(64),
       },
     },
   ] });

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
-import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse, withSignatureOverrideSnapshots } from "./sig-check.mjs";
+import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureHash, validateOverrideUse, withSignatureOverrideHashes } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
@@ -338,7 +338,7 @@ test("descriptor inventory rejects duplicate and unexpected extracted declaratio
   assert.ok(kinds(compareSignatures(func({ typeParams: [], ret: kw("void"), params: [] }), undefined, null)).has("actual-missing"));
 });
 
-test("local signature override captures go and ts snapshots", () => {
+test("local signature override captures exact Go and TypeScript hashes", () => {
   const exp = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
   const actual = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] });
   actual.signatures[0].params[0].initializerStatus = "known";
@@ -350,8 +350,8 @@ test("local signature override captures go and ts snapshots", () => {
       category: "runtime-performance",
       allow: ["signature"],
       reason: "Target-native carrier.",
-      goSignature: unitSignatureSnapshot(exp),
-      tsSignature: unitSignatureSnapshot(actual),
+      goSignatureHash: unitSignatureHash(exp),
+      tsSignatureHash: unitSignatureHash(actual),
     },
     "id",
     exp,
@@ -368,8 +368,8 @@ test("local signature override captures go and ts snapshots", () => {
       category: "runtime-performance",
       allow: ["signature"],
       reason: "Target-native carrier.",
-      goSignature: "stale",
-      tsSignature: unitSignatureSnapshot(actual),
+      goSignatureHash: "0".repeat(64),
+      tsSignatureHash: unitSignatureHash(actual),
     },
     "id",
     exp,
@@ -381,14 +381,14 @@ test("local signature override captures go and ts snapshots", () => {
   assert.equal(staleIssues.length, 1);
 });
 
-test("signature mismatches carry exact local-override snapshots", () => {
+test("signature mismatches carry exact local-override hashes", () => {
   const expected = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] });
   const actual = func({ typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] });
-  const [mismatch] = withSignatureOverrideSnapshots(compareSignatures(expected, actual, null), expected, actual);
+  const [mismatch] = withSignatureOverrideHashes(compareSignatures(expected, actual, null), expected, actual);
 
-  assert.equal(mismatch.goSignature, unitSignatureSnapshot(expected));
-  assert.equal(mismatch.tsSignature, unitSignatureSnapshot(actual));
-  assert.match(mismatch.goSignature, /optionalSyntax/);
+  assert.equal(mismatch.goSignatureHash, unitSignatureHash(expected));
+  assert.equal(mismatch.tsSignatureHash, unitSignatureHash(actual));
+  assert.match(mismatch.goSignatureHash, /^[0-9a-f]{64}$/);
 });
 
 test("signature override cannot waive initializer or value-order drift", () => {
@@ -411,8 +411,8 @@ test("signature override cannot waive initializer or value-order drift", () => {
     category: "runtime-representation",
     allow: ["signature"],
     reason: "The declaration uses an explicitly reviewed target representation.",
-    goSignature: unitSignatureSnapshot(expected),
-    tsSignature: unitSignatureSnapshot(actual),
+    goSignatureHash: unitSignatureHash(expected),
+    tsSignatureHash: unitSignatureHash(actual),
   }, "id", expected, actual, (value) => value, issues);
   assert.deepEqual(issues, []);
   const mismatchKinds = kinds(compareSignatures(expected, actual, override));

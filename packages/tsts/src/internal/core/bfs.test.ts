@@ -19,7 +19,7 @@ function makeVisitedSet(): SyncSet<string> {
     m: {
       __tsgoBlank0: [],
       __tsgoBlank1: [],
-      m: new SyncMapBacking<string, { readonly __tsgoEmpty?: never }>(),
+      m: new SyncMapBacking(),
     },
   };
 }

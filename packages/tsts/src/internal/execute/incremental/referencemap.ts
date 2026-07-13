@@ -48,7 +48,7 @@ export function referenceMap_storeReferences(receiver: GoPtr<referenceMap>, path
  * }
  */
 export function referenceMap_getReferences(receiver: GoPtr<referenceMap>, path: Path): [GoPtr<Set<Path>>, bool] {
-  const [refs, ok] = SyncMap_Load(receiver!.references, path, GoZeroPointer<Set<Path>>);
+  const [refs, ok] = SyncMap_Load(receiver!.references, path, GoZeroPointer<Set<Path>>, GoStringKey);
   return [refs, ok];
 }
 

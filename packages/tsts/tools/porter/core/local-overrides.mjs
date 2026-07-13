@@ -94,12 +94,8 @@ export function validateOverrideShape(value, config, unit) {
   }
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
     if (value.runtimeDictionaries === undefined) {
-      if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
-        issues.push("signature overrides require goSignature");
-      }
-      if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
-        issues.push("signature overrides require tsSignature");
-      }
+      requireSignatureHash(value.goSignatureHash, "goSignatureHash", issues);
+      requireSignatureHash(value.tsSignatureHash, "tsSignatureHash", issues);
     } else {
       issues.push(...validateRuntimeDictionaries(value, unit));
     }
@@ -125,8 +121,8 @@ export function validateOverrideShape(value, config, unit) {
   const permittedKeys = new Set(["category", "allow", "reason"]);
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
     if (value.runtimeDictionaries === undefined) {
-      permittedKeys.add("goSignature");
-      permittedKeys.add("tsSignature");
+      permittedKeys.add("goSignatureHash");
+      permittedKeys.add("tsSignatureHash");
     } else {
       permittedKeys.add("runtimeDictionaries");
     }
@@ -143,6 +139,12 @@ export function validateOverrideShape(value, config, unit) {
     if (!permittedKeys.has(key)) issues.push(`unknown or inapplicable override key '${key}'`);
   }
   return issues;
+}
+
+function requireSignatureHash(value, name, issues) {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value)) {
+    issues.push(`signature overrides require ${name} as one lowercase SHA-256 hash`);
+  }
 }
 
 function validateRuntimeDictionaries(value, unit) {

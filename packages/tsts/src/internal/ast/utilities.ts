@@ -2625,8 +2625,8 @@ export function GetSourceFileOfNode(node: GoPtr<Node>): GoPtr<SourceFile> {
  * 	},
  * }
  */
-export let setParentInChildrenPool: Pool = ((): Pool<(node: GoPtr<Node>) => bool> => {
-  const pool = new PoolValue<(node: GoPtr<Node>) => bool>();
+export let setParentInChildrenPool: Pool = ((): Pool => {
+  const pool = new PoolValue();
   pool.New = (): ((node: GoPtr<Node>) => bool) => {
     return newParentInChildrenSetter()!;
   };

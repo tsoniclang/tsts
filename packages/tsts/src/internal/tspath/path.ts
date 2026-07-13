@@ -2119,9 +2119,9 @@ export function FileExtensionIs(path: string, extension: string): bool {
  * 	return result
  * }
  */
-export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: (directory: string) => [T, bool], zeroValue: GoZeroFactory<T>): T {
-  const [result] = ForEachAncestorDirectory<T>(directory, (ancestorDirectory: string): [T, bool] => {
-    const [result, stop] = callback(ancestorDirectory);
+export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLocation: string, directory: string, callback: GoFunc<(directory: string) => [result: T, stop: bool]>, zeroValue: GoZeroFactory<T>): T {
+  const [result] = ForEachAncestorDirectory<T>(directory, (ancestorDirectory: string): [result: T, stop: bool] => {
+    const [result, stop] = callback!(ancestorDirectory);
     if (stop || ancestorDirectory === globalCacheLocation) {
       return [result, true];
     }
@@ -2152,9 +2152,9 @@ export function ForEachAncestorDirectoryStoppingAtGlobalCache<T>(globalCacheLoca
  * 	}
  * }
  */
-export function ForEachAncestorDirectory<T>(directory: string, callback: (directory: string) => [T, bool], zeroValue: GoZeroFactory<T>): [T, bool] {
+export function ForEachAncestorDirectory<T>(directory: string, callback: GoFunc<(directory: string) => [result: T, stop: bool]>, zeroValue: GoZeroFactory<T>): [result: T, ok: bool] {
   for (;;) {
-    const [result, stop] = callback(directory);
+    const [result, stop] = callback!(directory);
     if (stop) {
       return [result, true];
     }
@@ -2179,9 +2179,9 @@ export function ForEachAncestorDirectory<T>(directory: string, callback: (direct
  * 	})
  * }
  */
-export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: (directory: Path) => [T, bool], zeroValue: GoZeroFactory<T>): [T, bool] {
-  return ForEachAncestorDirectory<T>(directory, (directory: string): [T, bool] => {
-    return callback(directory);
+export function ForEachAncestorDirectoryPath<T>(directory: Path, callback: GoFunc<(directory: Path) => [result: T, stop: bool]>, zeroValue: GoZeroFactory<T>): [result: T, ok: bool] {
+  return ForEachAncestorDirectory<T>(directory, (directory: string): [result: T, stop: bool] => {
+    return callback!(directory);
   }, zeroValue);
 }
 

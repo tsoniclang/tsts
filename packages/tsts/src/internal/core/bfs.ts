@@ -127,7 +127,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
  * 	return BreadthFirstSearchParallelEx(start, neighbors, visit, BreadthFirstSearchOptions[N, N]{}, Identity)
  * }
  */
-export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], zeroKey: GoZeroFactory<N>, keyDescriptor: GoMapKeyDescriptor<N>): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: GoFunc<(node: N) => [isResult: bool, stop: bool]>, zeroKey: GoZeroFactory<N>, keyDescriptor: GoMapKeyDescriptor<N>): BreadthFirstSearchResult<N> {
   return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, { Visited: undefined, PreprocessLevel: undefined }, (n: N): N => n, zeroKey, keyDescriptor);
 }
 
@@ -144,14 +144,14 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * 	getKey func(N) K,
  * ) BreadthFirstSearchResult[N] { ... }
  */
-export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>, zeroKey: GoZeroFactory<K>, keyDescriptor: GoMapKeyDescriptor<K>): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: GoFunc<(node: N) => [isResult: bool, stop: bool]>, options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>, zeroKey: GoZeroFactory<K>, keyDescriptor: GoMapKeyDescriptor<K>): BreadthFirstSearchResult<N> {
   let visited = options.Visited;
   if (visited === undefined) {
     visited = {
       m: {
         __tsgoBlank0: [],
         __tsgoBlank1: [],
-        m: new SyncMapBacking<K, { readonly __tsgoEmpty?: never }>(),
+        m: new SyncMapBacking(),
       },
     };
   }
@@ -184,7 +184,7 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
       if (!SyncSet_AddIfAbsent(visited, getKey!(j!.node), keyDescriptor)) {
         return true;
       }
-      const [isResult, stop] = visit(j!.node);
+      const [isResult, stop] = visit!(j!.node);
       if (isResult) {
         if (stop) {
           if (curI < lowestGoal) {

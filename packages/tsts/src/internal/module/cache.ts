@@ -66,7 +66,7 @@ export interface moduleResolutionCache {
  * }
  */
 export function moduleResolutionCache_Get(receiver: GoPtr<moduleResolutionCache>, key: moduleResolutionCacheKey): [GoPtr<ResolvedModule>, bool] {
-  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedModule>);
+  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedModule>, moduleResolutionCacheKeyDescriptor);
 }
 
 /**
@@ -133,7 +133,7 @@ export interface typeRefDirectiveResolutionCache {
  * }
  */
 export function typeRefDirectiveResolutionCache_Get(receiver: GoPtr<typeRefDirectiveResolutionCache>, key: typeRefDirectiveResolutionCacheKey): [GoPtr<ResolvedTypeReferenceDirective>, bool] {
-  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedTypeReferenceDirective>);
+  return SyncMap_Load(receiver!.cache, key, GoZeroPointer<ResolvedTypeReferenceDirective>, typeRefDirectiveResolutionCacheKeyDescriptor);
 }
 
 /**

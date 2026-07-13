@@ -543,7 +543,7 @@ export interface filesParser {
  * }
  */
 export let parseTaskDataPool: Pool = (() => {
-  const pool = new Pool<parseTaskData>();
+  const pool = new Pool();
   pool.New = (): parseTaskData => ({
     tasks: new globalThis.Map<string, GoPtr<parseTask>>(),
     mu: new Mutex(),
@@ -1059,6 +1059,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
         receiver!.taskDataByPath,
         task!.path,
         GoZeroPointer<parseTaskData>,
+        GoStringKey,
       );
       if (!task!.loaded) {
         continue;
@@ -1216,6 +1217,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       loader!.pathForLibFileResolutions,
       key,
       GoZeroPointer<libResolution>,
+      GoStringKey,
     );
     const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>(GoStructKey(
       [GoStructField((value: ModeAwareCacheKey) => value.Name, GoStringKey), GoStructField((value: ModeAwareCacheKey) => value.Mode, GoNumberKey)],

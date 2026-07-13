@@ -24,7 +24,7 @@ import type { GoFunc, GoInterface } from "../../go/compat.js";
  * }
  */
 export interface CheckerPool {
-  GetChecker(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void];
+  GetChecker(ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>];
 }
 
 /**
@@ -60,7 +60,7 @@ export let __34031131_0: GoInterface<CheckerPool> = checkerPool_as_compiler_Chec
 
 export function checkerPool_as_compiler_CheckerPool(receiver: GoPtr<checkerPool>): CheckerPool {
   return {
-    GetChecker: (ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] => checkerPool_GetChecker(receiver, ctx, file),
+    GetChecker: (ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] => checkerPool_GetChecker(receiver, ctx, file),
   };
 }
 
@@ -139,7 +139,7 @@ export function newCheckerPoolWithTracing(program: GoPtr<Program>, tr: GoPtr<Tra
  * 	})
  * }
  */
-export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] {
   if (file !== undefined) {
     return checkerPool_getCheckerForFileExclusive(receiver, ctx, file);
   }
@@ -160,7 +160,7 @@ export function checkerPool_GetChecker(receiver: GoPtr<checkerPool>, ctx: GoInte
  * 	return p.fileAssociations[file], noop
  * }
  */
-export function checkerPool_getCheckerForFileNonExclusive(receiver: GoPtr<checkerPool>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function checkerPool_getCheckerForFileNonExclusive(receiver: GoPtr<checkerPool>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] {
   checkerPool_createCheckers(receiver);
   return [receiver!.fileAssociations.get(file), noop];
 }
@@ -179,7 +179,7 @@ export function checkerPool_getCheckerForFileNonExclusive(receiver: GoPtr<checke
  * 	})
  * }
  */
-export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] {
+export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPool>, ctx: GoInterface<Context>, file: GoPtr<SourceFile>): [GoPtr<Checker>, GoFunc<() => void>] {
   checkerPool_createCheckers(receiver);
   const c = receiver!.fileAssociations.get(file);
   const idx = Index(receiver!.checkers, c, GoEqualStrict);
@@ -198,7 +198,7 @@ export function checkerPool_getCheckerForFileExclusive(receiver: GoPtr<checkerPo
  * 	return p.checkers[0], noop
  * }
  */
-export function checkerPool_getCheckerNonExclusive(receiver: GoPtr<checkerPool>): [GoPtr<Checker>, () => void] {
+export function checkerPool_getCheckerNonExclusive(receiver: GoPtr<checkerPool>): [GoPtr<Checker>, GoFunc<() => void>] {
   checkerPool_createCheckers(receiver);
   return [receiver!.checkers[0], noop];
 }

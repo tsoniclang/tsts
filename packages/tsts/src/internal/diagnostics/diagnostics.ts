@@ -7,7 +7,7 @@
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
 import type { bool, int } from "../../go/scalars.js";
-import { GoEqualStrict, GoNamedStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
+import { GoDynamicValue, GoEqualStrict, GoNamedStringKey, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";
 import { ParseInt } from "../../go/strconv.js";
@@ -236,7 +236,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
  * Go source:
  * var localizedMessagesCache sync.Map // map[language.Tag]map[Key]string
  */
-export let localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = new Map<Tag, GoMap<Key, string> | undefined>();
+export let localizedMessagesCache: Map = new Map();
 const languageTagKey = GoNamedStringKey<Tag>();
 
 /**
@@ -273,12 +273,12 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
   if (loc === Und) {
     return undefined;
   }
-  const cached = localizedMessagesCache.Load(loc);
+  const cached = localizedMessagesCache.Load(GoDynamicValue(languageTagKey, loc));
   if (cached[1]) {
     return cached[0] as GoMap<Key, string> | undefined;
   }
   const messages = loadMatchedLocaleMessages(loc);
-  localizedMessagesCache.Store(loc, messages, languageTagKey);
+  localizedMessagesCache.Store(GoDynamicValue(languageTagKey, loc), messages);
   return messages;
 }
 

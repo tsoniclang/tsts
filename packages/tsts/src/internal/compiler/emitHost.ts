@@ -48,7 +48,7 @@ import {
 } from "./program.js";
 import type { Program } from "./program.js";
 
-import type { GoInterface } from "../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b"}
  *
@@ -213,7 +213,7 @@ export interface emitHost {
  * 	}, done
  * }
  */
-export function newEmitHost(ctx: GoInterface<Context>, program: GoPtr<Program>, file: GoPtr<SourceFile>): [GoPtr<emitHost>, () => void] {
+export function newEmitHost(ctx: GoInterface<Context>, program: GoPtr<Program>, file: GoPtr<SourceFile>): [GoPtr<emitHost>, GoFunc<() => void>] {
   const [checker, done] = Program_GetTypeCheckerForFile(program, ctx, file);
   const emitResolver = EmitResolver_as_printer_EmitResolver(Checker_GetEmitResolver(checker));
   return [{ program, emitResolver }, done];

@@ -82,7 +82,7 @@ import {
 import { referenceMap_getReferences, referenceMap_storeReferences } from "./referencemap.js";
 
 function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
-  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new GoSyncMap<K, V>() };
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new GoSyncMap() };
 }
 
 function newSyncSet<T extends GoComparable>(): SyncSet<T> {
@@ -283,6 +283,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
           receiver!.oldProgram.snapshot!.fileInfos,
           SourceFile_Path(file),
           GoZeroPointer<FileInfo>,
+          GoStringKey,
         );
         if (ok) {
           signature = oldFileInfo!.signature;
@@ -300,6 +301,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
                     receiver!.oldProgram.snapshot!.fileInfos,
                     refPath,
                     GoZeroPointer<FileInfo>,
+                    GoStringKey,
                   );
                   if (hadOldInfo) {
                     // Referenced file was deleted in the new program
@@ -313,11 +315,12 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
         } else {
           snapshot_addFileToChangeSet(receiver!.snapshot, SourceFile_Path(file));
         }
-        if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file))) {
+        if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
           const [emitDiagnostics, hasEmitDiag] = SyncMap_Load(
             receiver!.oldProgram.snapshot!.emitDiagnosticsPerFile,
             SourceFile_Path(file),
             GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+            GoStringKey,
           );
           if (hasEmitDiag) {
             SyncMap_Store(receiver!.snapshot!.emitDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(emitDiagnostics, receiver!.program, file), GoStringKey);
@@ -330,6 +333,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
                 receiver!.oldProgram.snapshot!.semanticDiagnosticsPerFile,
                 SourceFile_Path(file),
                 GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+                GoStringKey,
               );
               if (hasDiag) {
                 SyncMap_Store(receiver!.snapshot!.semanticDiagnosticsPerFile, SourceFile_Path(file), repopulateDiagnosticsOfFile(diagnostics, receiver!.program, file), GoStringKey);
@@ -342,6 +346,7 @@ export function toProgramSnapshot_computeProgramFileChanges(receiver: GoPtr<toPr
             receiver!.oldProgram.snapshot!.emitSignatures,
             SourceFile_Path(file),
             GoZeroPointer<emitSignature>,
+            GoStringKey,
           );
           if (hasOldEmit) {
             SyncMap_Store(receiver!.snapshot!.emitSignatures, SourceFile_Path(file), emitSignature_getNewEmitSignature(oldEmitSignature, receiver!.oldProgram.snapshot!.options, receiver!.snapshot!.options), GoStringKey);
@@ -394,6 +399,7 @@ export function toProgramSnapshot_handleFileDelete(receiver: GoPtr<toProgramSnap
         receiver!.snapshot!.fileInfos,
         filePath,
         GoZeroPointer<FileInfo>,
+        GoStringKey,
       );
       if (!ok) {
         if (oldInfo!.affectsGlobalScope) {
@@ -446,7 +452,7 @@ export function toProgramSnapshot_handlePendingEmit(receiver: GoPtr<toProgramSna
       // Add all files to affectedFilesPendingEmit since emit changed
       for (const file of Program_GetSourceFiles(receiver!.program)) {
         // Add to affectedFilesPending emit only if not changed since any changed file will do full emit
-        if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file))) {
+        if (!SyncSet_Has(receiver!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(file), GoStringKey)) {
           snapshot_addFileToAffectedFilesPendingEmit(receiver!.snapshot, SourceFile_Path(file), pendingEmitKind);
         }
       }
@@ -649,7 +655,7 @@ export function getReferencedFiles(program: GoPtr<Program>, file: GoPtr<SourceFi
       addReferencedFilesFromSymbol(file, referencedFiles, ambientModule);
     }
   } finally {
-    done();
+    done!();
   }
   return core.IfElse(Set_Len(referencedFiles) > 0, referencedFiles, undefined);
 }

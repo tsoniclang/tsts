@@ -454,7 +454,8 @@ export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, f
   const [cachedDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
     receiver!.snapshot!.semanticDiagnosticsPerFile,
     SourceFile_Path(file),
-    GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
+    GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+    GoStringKey
   );
   if (!ok) {
     throw new globalThis.Error("After handling all the affected files, there shouldnt be more changes");
@@ -633,7 +634,8 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile,
       SourceFile_Path(file),
-      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
+      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+      GoStringKey
     );
     if (ok) {
       return;
@@ -644,7 +646,8 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.semanticDiagnosticsPerFile,
         SourceFile_Path(f),
-        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
+        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+        GoStringKey
       );
       if (!ok) {
         affectedFiles.push(f);
@@ -853,7 +856,8 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.emitDiagnosticsPerFile,
         SourceFile_Path(file),
-        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
+        GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+        GoStringKey
       );
       if (ok) {
         hasEmitDiagnostics = true;
@@ -896,7 +900,8 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: G
     const [semanticDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile,
       SourceFile_Path(file),
-      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>
+      GoZeroPointer<DiagnosticsOrBuildInfoDiagnosticsWithFileName>,
+      GoStringKey
     );
     if (!ok) {
       return CompilerOptions_IsIncremental(receiver!.snapshot!.options) as boolean;

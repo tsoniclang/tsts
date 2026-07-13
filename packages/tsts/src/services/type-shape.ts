@@ -189,7 +189,7 @@ function withChecker<T>(
   try {
     return callback(checker);
   } finally {
-    done();
+    done!();
   }
 }
 

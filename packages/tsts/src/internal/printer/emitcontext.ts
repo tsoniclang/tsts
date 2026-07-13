@@ -155,7 +155,7 @@ export function NewEmitContext(): GoPtr<EmitContext> {
  * }
  */
 export let emitContextPool: Pool = (() => {
-  const p = new Pool<GoPtr<EmitContext>>();
+  const p = new Pool();
   p.New = () => NewEmitContext();
   return p;
 })();

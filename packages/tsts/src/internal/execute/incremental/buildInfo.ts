@@ -875,7 +875,7 @@ export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfo
   let signatureWithDifferentOptions: GoSlice<string> | undefined;
   if (receiver!.DiffersOnlyInDtsMap) {
     signatureWithDifferentOptions = [];
-    const [info] = SyncMap_Load(emitSignatures, path, GoZeroPointer<emitSignature>);
+    const [info] = SyncMap_Load(emitSignatures, path, GoZeroPointer<emitSignature>, GoStringKey);
     signatureWithDifferentOptions.push(info!.signature);
   } else if (receiver!.DiffersInOptions) {
     signatureWithDifferentOptions = [receiver!.Signature];
