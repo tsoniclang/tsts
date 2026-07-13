@@ -177,6 +177,80 @@ test("public embedding API drives a provider-backed program without internal imp
   assert.throws(() => consumer.mustSelectedTargetIteration(boxedValue, "emitting non-iteration"), /requires extension fact/);
 });
 
+test("public AST reader classifies variable declaration kinds without conflating modifiers", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    files: {
+      "/src/index.ts": `
+        export {};
+        declare function acquire(): unknown;
+        declare function acquireAsync(): unknown;
+
+        var classicVar = 1, secondVar = 2;
+        let blockLet = 3;
+        export const fixedConst = 4;
+        using syncResource = acquire();
+        await using asyncResource = acquireAsync();
+
+        for (let loopLet = 0; loopLet < 1; loopLet++) {}
+        for (const loopConst of [1]) {}
+
+        export const enum Mode { Value }
+      `,
+    },
+    rootFiles: ["/src/index.ts"],
+    compilerOptions: {
+      module: "esnext",
+      moduleResolution: "bundler",
+      target: "esnext",
+    },
+  });
+
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  const syntacticDiagnostics = session.getDiagnostics("syntactic", sourceFile);
+  assert.equal(syntacticDiagnostics.length, 0, formatDiagnostics(syntacticDiagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+  const expectedKinds = new Map([
+    ["classicVar", "var"],
+    ["secondVar", "var"],
+    ["blockLet", "let"],
+    ["fixedConst", "const"],
+    ["syncResource", "using"],
+    ["asyncResource", "await using"],
+    ["loopLet", "let"],
+    ["loopConst", "const"],
+  ] as const);
+
+  for (const [name, expectedKind] of expectedKinds) {
+    const declaration = findNode(sourceFile, session.ast, (node, ast) =>
+      ast.is.IsVariableDeclaration(node) && ast.text(ast.name(node)) === name);
+    const declarationList = session.ast.parent(declaration);
+    assert.equal(session.ast.is.IsVariableDeclarationList(declarationList), true, name);
+    assert.equal(session.ast.variableDeclarationKind(declaration), expectedKind, name);
+    assert.equal(session.ast.variableDeclarationKind(declarationList), expectedKind, name);
+
+    const owner = session.ast.parent(declarationList);
+    if (session.ast.is.IsVariableStatement(owner)) {
+      assert.equal(session.ast.variableDeclarationKind(owner), expectedKind, name);
+    } else {
+      assert.equal(session.ast.variableDeclarationKind(owner), undefined, name);
+    }
+  }
+
+  const fixedConst = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsVariableDeclaration(node) && ast.text(ast.name(node)) === "fixedConst");
+  const fixedConstList = session.ast.parent(fixedConst);
+  const fixedConstStatement = session.ast.parent(fixedConstList);
+  assert.equal(session.ast.hasModifierKind(fixedConstList, "const"), false);
+  assert.equal(session.ast.hasModifierKind(fixedConstStatement, "const"), false);
+  assert.equal(session.ast.hasModifierKind(fixedConstStatement, "export"), true);
+
+  const mode = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsEnumDeclaration(node) && ast.text(ast.name(node)) === "Mode");
+  assert.equal(session.ast.hasModifierKind(mode, "const"), true);
+  assert.equal(session.ast.variableDeclarationKind(mode), undefined);
+});
+
 test("provider virtual named exports use declaration name when exportName is omitted", () => {
   const session = createCompilerSessionFromFiles({
     currentDirectory: "/src",

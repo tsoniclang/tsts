@@ -23,6 +23,7 @@ import type { Kind } from "../internal/ast/generated/kinds.js";
 import { KindString } from "../internal/ast/generated/kinds.js";
 import * as casts from "../internal/ast/generated/casts.js";
 import * as predicates from "../internal/ast/generated/predicates.js";
+import { NodeFlagsBlockScoped, NodeFlagsNone } from "../internal/ast/generated/flags.js";
 import {
   ModifierFlagsAbstract,
   ModifierFlagsAmbient,
@@ -37,7 +38,7 @@ import {
   ModifierFlagsReadonly,
   ModifierFlagsStatic,
 } from "../internal/ast/modifierflags.js";
-import { GetHeritageElements, GetSourceFileOfNode, HasModifier, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration } from "../internal/ast/utilities.js";
+import { GetCombinedNodeFlags, GetHeritageElements, GetSourceFileOfNode, HasModifier, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, IsVarAwaitUsing, IsVarConst, IsVarLet, IsVarUsing } from "../internal/ast/utilities.js";
 import { KindExtendsKeyword, KindImplementsKeyword } from "../internal/ast/generated/kinds.js";
 
 export type AstModifierKind =
@@ -53,6 +54,8 @@ export type AstModifierKind =
   | "async"
   | "default"
   | "const";
+
+export type AstVariableDeclarationKind = "var" | "let" | "const" | "using" | "await using";
 
 export interface AstReader {
   readonly kind: (node: GoPtr<Node>) => Kind | undefined;
@@ -74,7 +77,10 @@ export interface AstReader {
   readonly modifiers: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly modifierFlags: (node: GoPtr<Node>) => number;
   readonly hasModifier: (node: GoPtr<Node>, flags: number) => boolean;
+  /** Tests syntactic modifiers. `"const"` means the `const enum` modifier, not a variable declaration kind. */
   readonly hasModifierKind: (node: GoPtr<Node>, kind: AstModifierKind) => boolean;
+  /** Classifies a variable statement, declaration list, or direct variable declaration. */
+  readonly variableDeclarationKind: (node: GoPtr<Node>) => AstVariableDeclarationKind | undefined;
   readonly heritageElements: (node: GoPtr<Node>, kind: "extends" | "implements") => readonly GoPtr<Node>[];
   readonly extendsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly implementsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
@@ -120,6 +126,7 @@ export function createAstReader(): AstReader {
     modifierFlags: (node) => node === undefined ? 0 : Node_ModifierFlags(node),
     hasModifier: (node, flags) => node !== undefined && HasModifier(node, flags) === true,
     hasModifierKind: (node, kind) => node !== undefined && HasModifier(node, modifierFlagForKind(kind)) === true,
+    variableDeclarationKind,
     heritageElements: (node, kind) => GetHeritageElements(node, kind === "extends" ? KindExtendsKeyword : KindImplementsKeyword) ?? [],
     extendsHeritageElements: (node) => GetHeritageElements(node, KindExtendsKeyword) ?? [],
     implementsHeritageElements: (node) => GetHeritageElements(node, KindImplementsKeyword) ?? [],
@@ -146,6 +153,42 @@ export function createAstReader(): AstReader {
     is: predicates,
     as: casts,
   };
+}
+
+function variableDeclarationKind(node: GoPtr<Node>): AstVariableDeclarationKind | undefined {
+  const declarationList = variableDeclarationList(node);
+  if (declarationList === undefined) {
+    return undefined;
+  }
+  if (IsVarAwaitUsing(declarationList)) {
+    return "await using";
+  }
+  if (IsVarUsing(declarationList)) {
+    return "using";
+  }
+  if (IsVarConst(declarationList)) {
+    return "const";
+  }
+  if (IsVarLet(declarationList)) {
+    return "let";
+  }
+  return (GetCombinedNodeFlags(declarationList) & NodeFlagsBlockScoped) === NodeFlagsNone ? "var" : undefined;
+}
+
+function variableDeclarationList(node: GoPtr<Node>): GoPtr<Node> {
+  if (node === undefined) {
+    return undefined;
+  }
+  if (predicates.IsVariableStatement(node)) {
+    return casts.AsVariableStatement(node)?.DeclarationList;
+  }
+  if (predicates.IsVariableDeclarationList(node)) {
+    return node;
+  }
+  if (predicates.IsVariableDeclaration(node) && predicates.IsVariableDeclarationList(node.Parent)) {
+    return node.Parent;
+  }
+  return undefined;
 }
 
 function modifierFlagForKind(kind: AstModifierKind): number {
