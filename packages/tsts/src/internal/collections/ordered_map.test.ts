@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { GoZeroInterface, GoZeroNumber, GoZeroString } from "../../go/compat.js";
 import type { byte, int } from "../../go/scalars.js";
 import { Collect, IsSorted } from "../../go/slices.js";
 import { NewDecoder } from "../../go/github.com/go-json-experiment/json/jsontext.js";
@@ -10,6 +11,7 @@ import {
   OrderedMap_Clone,
   OrderedMap_Delete,
   OrderedMap_Entries,
+  OrderedMap_EntryAt,
   OrderedMap_Get,
   OrderedMap_GetOrZero,
   OrderedMap_Has,
@@ -62,7 +64,7 @@ test("OrderedMap mirrors upstream insertion, overwrite, iteration, and deletion"
   assert.equal(OrderedMap_Size(map), count);
 
   for (let index = start; index < end; index++) {
-    const [value, ok] = OrderedMap_Get(map, index);
+    const [value, ok] = OrderedMap_Get(map, index, GoZeroString);
     assert.equal(ok, true);
     assert.equal(value, padInt(index));
   }
@@ -84,22 +86,24 @@ test("OrderedMap mirrors upstream insertion, overwrite, iteration, and deletion"
   assert.deepEqual(collectEntries(map)[0], [start, padInt(start)]);
 
   for (let index = start + 1; index < end; index++) {
-    const [deletedValue, deletedOk] = OrderedMap_Delete(map, index);
+    const [deletedValue, deletedOk] = OrderedMap_Delete(map, index, GoZeroString);
     assert.equal(deletedOk, true);
     assert.equal(deletedValue, padInt(index));
     assert.equal(OrderedMap_Has(map, index), false);
 
-    const [, getOk] = OrderedMap_Get(map, index);
+    const [missingValue, getOk] = OrderedMap_Get(map, index, GoZeroString);
     assert.equal(getOk, false);
+    assert.equal(missingValue, "");
 
-    const [, deleteOk] = OrderedMap_Delete(map, index);
+    const [missingDeletedValue, deleteOk] = OrderedMap_Delete(map, index, GoZeroString);
     assert.equal(deleteOk, false);
+    assert.equal(missingDeletedValue, "");
   }
 
   assert.equal(OrderedMap_Size(map), 1);
   assert.equal(OrderedMap_Has(map, start), true);
 
-  const [deletedValue, deletedOk] = OrderedMap_Delete(map, start);
+  const [deletedValue, deletedOk] = OrderedMap_Delete(map, start, GoZeroString);
   assert.equal(deletedOk, true);
   assert.equal(deletedValue, padInt(start));
 
@@ -118,11 +122,11 @@ test("OrderedMap.Clone mirrors upstream copy isolation", () => {
   assert.deepEqual(Collect(OrderedMap_Keys(clone)), [1, 2]);
   assert.deepEqual(Collect(OrderedMap_Values(clone)), ["one", "two"]);
 
-  const [value, ok] = OrderedMap_Get(clone, 1);
+  const [value, ok] = OrderedMap_Get(clone, 1, GoZeroString);
   assert.equal(ok, true);
   assert.equal(value, "one");
 
-  OrderedMap_Delete(map, 1);
+  OrderedMap_Delete(map, 1, GoZeroString);
 
   assert.equal(OrderedMap_Size(map), 1);
   assert.equal(OrderedMap_Size(clone), 2);
@@ -152,7 +156,11 @@ test("NewOrderedMapWithSizeHint preserves ordered-map behavior", () => {
 
   assert.equal(OrderedMap_Size(map), count);
   assert.deepEqual(Collect(OrderedMap_Keys(map)).slice(0, 4), [0, 1, 2, 3]);
-  assert.equal(OrderedMap_GetOrZero(map, 1023), 1023);
+  assert.equal(OrderedMap_GetOrZero(map, 1023, GoZeroNumber), 1023);
+  assert.equal(OrderedMap_GetOrZero(map, 2048, GoZeroNumber), 0);
+
+  const [missingKey, missingValue, ok] = OrderedMap_EntryAt<number, number>(map, count, GoZeroNumber, GoZeroNumber);
+  assert.deepEqual([missingKey, missingValue, ok], [0, 0, false]);
 });
 
 test("OrderedMap.UnmarshalJSONFrom mirrors upstream object/null/non-object behavior", () => {
@@ -162,7 +170,7 @@ test("OrderedMap.UnmarshalJSONFrom mirrors upstream object/null/non-object behav
   assert.equal(error, undefined);
 
   assert.equal(OrderedMap_Size(map), 3);
-  assert.equal(OrderedMap_GetOrZero(map, "a"), 1);
+  assert.equal(OrderedMap_GetOrZero(map, "a", GoZeroInterface), 1);
   assert.deepEqual(Collect(OrderedMap_Keys(map)), ["a", "b", "c"]);
 
   error = OrderedMap_as_json_UnmarshalerFrom(map).UnmarshalJSONFrom(NewDecoder(jsonBytes(`null`)));

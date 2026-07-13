@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { GoZeroString } from "../../go/compat.js";
 import { Map as SyncMapBacking } from "../../go/sync.js";
 import { SyncSet_Has } from "../collections/syncset.js";
 import {
@@ -40,7 +41,7 @@ test("BreadthFirstSearchParallel finds a specific node", () => {
 
   const result = BreadthFirstSearchParallel("A", childrenFromGraph(graph), (node: string): [boolean, boolean] => {
     return [node === "D", true];
-  });
+  }, GoZeroString);
 
   assert.equal(result.Stopped, true);
   assert.deepEqual(result.Path, ["D", "B", "A"]);
@@ -58,7 +59,7 @@ test("BreadthFirstSearchParallel visits all nodes when visit never stops", () =>
   const result = BreadthFirstSearchParallel("A", childrenFromGraph(graph), (node: string): [boolean, boolean] => {
     visitedNodes.push(node);
     return [false, false];
-  });
+  }, GoZeroString);
 
   assert.equal(result.Stopped, false);
   assert.deepEqual(result.Path, []);
@@ -83,6 +84,7 @@ test("BreadthFirstSearchParallelEx stops before visiting deeper levels", () => {
     (node: string): [boolean, boolean] => [node === "L2B", true],
     makeOptions(visited),
     (node: string): string => node,
+    GoZeroString,
   );
 
   assert.equal(SyncSet_Has(visited, "Root"), true);
@@ -108,6 +110,7 @@ test("BreadthFirstSearchParallelEx returns fallback when no stop result exists",
     (node: string): [boolean, boolean] => [node === "A", false],
     makeOptions(visited),
     (node: string): string => node,
+    GoZeroString,
   );
 
   assert.equal(result.Stopped, false);
@@ -134,7 +137,7 @@ test("BreadthFirstSearchParallel prefers a stop result over fallback", () => {
       default:
         return [false, false];
     }
-  });
+  }, GoZeroString);
 
   assert.equal(result.Stopped, true);
   assert.deepEqual(result.Path, ["D", "B", "A"]);

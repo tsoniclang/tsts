@@ -29,6 +29,7 @@ const [
   { NewParsedCommandLine },
   { ParseJsonSourceFileConfigFileContent },
   { OrderedMap_Get },
+  { GoZeroInterface },
   { ParseSourceFile },
   { ScriptKindJSON },
   { GetNormalizedAbsolutePath, GetBaseFileName, GetDirectoryPath, ToPath, CombinePaths },
@@ -46,6 +47,7 @@ const [
   dist("internal/tsoptions/parsedcommandline.js"),
   dist("internal/tsoptions/tsconfigparsing.js"),
   dist("internal/collections/ordered_map.js"),
+  dist("go/compat.js"),
   dist("internal/parser/parser/statements-declarations.js"),
   dist("internal/core/scriptkind.js"),
   dist("internal/tspath/path.js"),
@@ -130,7 +132,7 @@ function getOptionValue(option, value, cwd) {
       }
     case "enum": {
       const enumMap = CommandLineOption_EnumMap(option);
-      const [enumVal, ok] = enumMap !== undefined ? OrderedMap_Get(enumMap, value.toLowerCase()) : [undefined, false];
+      const [enumVal, ok] = enumMap !== undefined ? OrderedMap_Get(enumMap, value.toLowerCase(), GoZeroInterface) : [undefined, false];
       if (!ok) {
         throw new globalThis.Error(`Unknown value '${value}' for compiler option '${option.Name}'`);
       }

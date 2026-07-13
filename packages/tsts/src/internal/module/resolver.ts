@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroSlice, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import { Map as SyncGoMap, Once } from "../../go/sync.js";
@@ -1596,7 +1596,7 @@ export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolution
       if (ExportsOrImports_IsConditions(packageExports)) {
         mainExport = packageExports;
       } else {
-        const [dotEntry, dotOk] = OrderedMap_Get<string, ExportsOrImports>(ExportsOrImports_AsObject(packageExports) as GoPtr<OrderedMap<string, ExportsOrImports>>, ".");
+        const [dotEntry, dotOk] = OrderedMap_Get<string, ExportsOrImports>(ExportsOrImports_AsObject(packageExports) as GoPtr<OrderedMap<string, ExportsOrImports>>, ".", packageJsonZeroExportsOrImports);
         if (dotOk) {
           mainExport = dotEntry;
         }
@@ -1664,7 +1664,7 @@ export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolution
  */
 export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, lookupTable: GoPtr<OrderedMap<string, ExportsOrImports>>, scope: GoPtr<InfoCacheEntry>, isImports: bool): GoPtr<resolved> {
   if (!strings.HasSuffix(moduleName, "/") && !strings.Contains(moduleName, "*")) {
-    const [target, targetOk] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, moduleName);
+    const [target, targetOk] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, moduleName, packageJsonZeroExportsOrImports);
     if (targetOk) {
       return resolutionState_loadModuleFromTargetExportOrImport(receiver, extensions, moduleName, scope, isImports, target, "", false, moduleName);
     }
@@ -1679,16 +1679,16 @@ export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<r
   slices.SortFunc(expandingKeys, ComparePatternKeys);
   for (const potentialTarget of expandingKeys) {
     if ((receiver!.features & NodeResolutionFeaturesExportsPatternTrailers) !== 0 && matchesPatternWithTrailer(potentialTarget, moduleName)) {
-      const [target2] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget);
+      const [target2] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget, packageJsonZeroExportsOrImports);
       const starPos = potentialTarget.indexOf("*");
       const subpath = moduleName.slice(potentialTarget.slice(0, starPos).length, moduleName.length - (potentialTarget.length - 1 - starPos));
       return resolutionState_loadModuleFromTargetExportOrImport(receiver, extensions, moduleName, scope, isImports, target2, subpath, true, potentialTarget);
     } else if (strings.HasSuffix(potentialTarget, "*") && strings.HasPrefix(moduleName, potentialTarget.slice(0, potentialTarget.length - 1))) {
-      const [target3] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget);
+      const [target3] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget, packageJsonZeroExportsOrImports);
       const subpath2 = moduleName.slice(potentialTarget.length - 1);
       return resolutionState_loadModuleFromTargetExportOrImport(receiver, extensions, moduleName, scope, isImports, target3, subpath2, true, potentialTarget);
     } else if (strings.HasPrefix(moduleName, potentialTarget)) {
-      const [target4] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget);
+      const [target4] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, potentialTarget, packageJsonZeroExportsOrImports);
       const subpath3 = moduleName.slice(potentialTarget.length);
       return resolutionState_loadModuleFromTargetExportOrImport(receiver, extensions, moduleName, scope, isImports, target4, subpath3, false, potentialTarget);
     }
@@ -2853,7 +2853,7 @@ export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resoluti
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.Module_name_0_matched_pattern_1, moduleName, matchedPattern.Text);
     }
-    for (const subst of OrderedMap_GetOrZero<string, GoSlice<string>>(paths as GoPtr<OrderedMap<string, GoSlice<string>>>, matchedPattern.Text)) {
+    for (const subst of OrderedMap_GetOrZero<string, GoSlice<string>>(paths as GoPtr<OrderedMap<string, GoSlice<string>>>, matchedPattern.Text, GoZeroSlice)) {
       const path2 = strings.Replace(subst, "*", matchedStar, 1);
       const candidate = tspath.NormalizePath(tspath.CombinePaths(containingDirectory, path2));
       if (receiver!.tracer !== undefined) {

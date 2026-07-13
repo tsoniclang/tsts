@@ -1,6 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNilMap, GoValueRef } from "../../go/compat.js";
+import { GoNilMap, GoValueRef, GoZeroInterface, GoZeroString, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import { TypeFor as reflect_TypeFor } from "../../go/reflect.js";
 import type { Type } from "../../go/reflect.js";
@@ -1490,7 +1489,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
       if (typeof value === "string") {
-        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value));
+        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value), GoZeroInterface);
         if (ok) {
           const compilerOptionsErr = result.ParseOption(key, val);
           errors.push(...(compilerOptionsErr ?? []));
@@ -2088,14 +2087,14 @@ export function parseOwnConfigOfJson(json: GoPtr<OrderedMap<string, unknown>>, h
   if (OrderedMap_Has(jsonMap, "excludes")) {
     errors.push(NewCompilerDiagnostic(diagnostics.Unknown_option_excludes_Did_you_mean_exclude));
   }
-  const [options, err] = convertCompilerOptionsFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "compilerOptions"), basePath, configFileName);
-  const [typeAcquisition, err2] = convertTypeAcquisitionFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "typeAcquisition"), basePath, configFileName);
+  const [options, err] = convertCompilerOptionsFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "compilerOptions", GoZeroInterface), basePath, configFileName);
+  const [typeAcquisition, err2] = convertTypeAcquisitionFromJsonWorker(OrderedMap_GetOrZero(jsonMap, "typeAcquisition", GoZeroInterface), basePath, configFileName);
   errors.push(...err);
   errors.push(...err2);
   // watchOptions := convertWatchOptionsFromJsonWorker(json.watchOptions, basePath, errors)
   // json.compileOnSave = convertCompileOnSaveOptionFromJson(json, basePath, errors)
   let extendedConfigPath: unknown = undefined;
-  const extendsVal = OrderedMap_GetOrZero(jsonMap, "extends");
+  const extendsVal = OrderedMap_GetOrZero(jsonMap, "extends", GoZeroInterface);
   if (extendsVal !== undefined && extendsVal !== null && extendsVal !== "") {
     const [configPath, extErr] = getExtendsConfigPathOrArray(extendsVal as CompilerOptionsValue, host, basePath, configFileName, undefined, undefined, undefined);
     extendedConfigPath = configPath;
@@ -2467,7 +2466,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
         }
         if (propertyName === "include" || propertyName === "exclude" || propertyName === "files") {
           if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName)) {
-            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName);
+            const sliceVal = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, propertyName, GoZeroInterface);
             if (Array.isArray(sliceVal) && sliceVal !== undefined) {
               const slice = sliceVal as unknown[];
               const value = core.Map(slice, (path: unknown): unknown => {
@@ -2500,7 +2499,7 @@ export function parseConfig(json: GoPtr<OrderedMap<string, unknown>>, sourceFile
       setPropertyValue("exclude");
       setPropertyValue("files");
       if (isOrderedMap(extendsRaw) && OrderedMap_Has(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave")) {
-        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave");
+        const compileOnSave = OrderedMap_GetOrZero(extendsRaw as GoPtr<OrderedMap<string, unknown>>, "compileOnSave", GoZeroInterface);
         if (typeof compileOnSave === "boolean") {
           result!.compileOnSave = compileOnSave;
         }
@@ -2801,10 +2800,10 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
     parsedConfig!.options.ConfigFilePath = NormalizeSlashes(configFileName);
   }
   const getPropFromRaw = (prop: string, validateElement: (value: unknown) => bool, elementTypeName: string): propOfRaw => {
-    const [value, exists] = OrderedMap_Get(rawConfig, prop);
+    const [value, exists] = OrderedMap_Get(rawConfig, prop, GoZeroInterface);
     if (exists && value !== undefined && value !== null) {
       if (Array.isArray(value)) {
-        const result = OrderedMap_GetOrZero(rawConfig, prop);
+        const result = OrderedMap_GetOrZero(rawConfig, prop, GoZeroInterface);
         if (Array.isArray(result)) {
           if (sourceFile === undefined && !core.Every(result, validateElement)) {
             errors.push(NewCompilerDiagnostic(diagnostics.Compiler_option_0_requires_a_value_of_type_1, prop, elementTypeName));
@@ -2823,7 +2822,7 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap<string, 
   if ((fileSpecs.sliceValue as unknown) !== undefined || fileSpecs.wrongValue === "") {
     const hasZeroOrNoReferences: bool =
       referencesOfRaw.wrongValue === "no-prop" || referencesOfRaw.wrongValue === "not-array" || ((referencesOfRaw.sliceValue as unknown as unknown[]) ?? []).length === 0;
-    const hasExtends = OrderedMap_GetOrZero(rawConfig, "extends");
+    const hasExtends = OrderedMap_GetOrZero(rawConfig, "extends", GoZeroInterface);
     if (((fileSpecs.sliceValue as unknown as unknown[]) ?? []).length === 0 && hasZeroOrNoReferences && (hasExtends === undefined || hasExtends === null)) {
       if (sourceFile !== undefined) {
         const fileName: string = configFileName !== "" ? configFileName : "tsconfig.json";
@@ -3565,7 +3564,7 @@ export function removeWildcardFilesWithLowerPriorityExtension(file: string, wild
       return;
     }
     const lowerPriorityPath = keyMapper!(ChangeExtension(file, ext!));
-    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath);
+    OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath, GoZeroString);
   }
 }
 

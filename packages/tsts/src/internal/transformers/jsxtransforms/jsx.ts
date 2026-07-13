@@ -1,6 +1,5 @@
 import type { bool, int, long } from "../../../go/scalars.js";
-import type { GoMap, GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
-import type { GoError } from "../../../go/compat.js";
+import { GoZeroMap, type GoError, type GoMap, type GoPtr, type GoRune, type GoSlice } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
 import { FormatInt, ParseInt } from "../../../go/strconv.js";
 import { DecodeRuneInStringAt, StringByteAt, StringByteLen, StringByteSlice } from "../../../go/unicode/utf8.js";
@@ -240,7 +239,7 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
   if (name !== "createElement") {
     importSource = GetJSXRuntimeImport(importSource, receiver!.compilerOptions);
   }
-  const [existing, ok] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
+  const [existing, ok] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource, GoZeroMap);
   if (ok) {
     const elem = existing!.get(name);
     if (elem !== undefined) {
@@ -258,7 +257,7 @@ export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTrans
   });
   const specifier = NewImportSpecifier(astFactory, false, NewIdentifier(astFactory, name), generatedName);
   receiver!.emitResolver!.SetReferencedImportDeclaration(generatedName, specifier);
-  const [existingMap] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
+  const [existingMap] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource, GoZeroMap);
   existingMap!.set(name, specifier);
   return AsImportSpecifier(specifier)!.name;
 }

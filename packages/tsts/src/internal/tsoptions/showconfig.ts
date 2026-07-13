@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { JsonFieldNamesForGoStructContract } from "../json/json.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
@@ -244,7 +244,7 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
 
   // Remove command-line-only options from the output
   for (const name of ["showConfig", "configFile", "configFilePath", "help", "init", "listFilesOnly", "listEmittedFiles", "project", "build", "version"]) {
-    OrderedMap_Delete(optionMap, name);
+    OrderedMap_Delete(optionMap, name, GoZeroInterface);
   }
 
   // Add implied compiler options

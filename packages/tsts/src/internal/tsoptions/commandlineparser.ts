@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroInterface, type GoPtr, type GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -910,7 +910,7 @@ export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value
   if (typeMap === undefined) {
     return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
   }
-  const [val, ok] = OrderedMap_Get(typeMap as GoPtr<OrderedMap<string, unknown>>, key);
+  const [val, ok] = OrderedMap_Get(typeMap as GoPtr<OrderedMap<string, unknown>>, key, GoZeroInterface);
   if (ok) {
     return validateJsonOptionValue(opt, val, valueExpression, sourceFile);
   }

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr } from "../../go/compat.js";
+import { GoZeroInterface, type GoPtr } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -43,7 +43,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   assertNoDiagnostics(commandLine.Errors);
 
   const [rawCustomConditions, rawCustomConditionsExists] =
-    OrderedMap_Get(commandLine.Raw as OrderedMap<string, unknown>, "customConditions");
+    OrderedMap_Get(commandLine.Raw as OrderedMap<string, unknown>, "customConditions", GoZeroInterface);
   assert.equal(rawCustomConditionsExists, true);
   assert.equal(rawCustomConditions, undefined);
 

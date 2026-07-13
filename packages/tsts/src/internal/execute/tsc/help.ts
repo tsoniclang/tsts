@@ -1,5 +1,5 @@
 import type { bool, int } from "../../../go/scalars.js";
-import { GoAppend, GoValueRef, type GoPtr, type GoSlice } from "../../../go/compat.js";
+import { GoAppend, GoValueRef, GoZeroSlice, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import { SortFunc } from "../../../go/slices.js";
 import { Clone } from "../../../go/slices.js";
@@ -863,7 +863,7 @@ export function getPossibleValues(option: GoPtr<CommandLineOption>): string {
 
       OrderedMap_Entries(enumMap)!((name: unknown, value: unknown): bool => {
         if (deprecatedKeys === undefined || !Set_Has(deprecatedKeys, name as string)) {
-          OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value), name as string));
+          OrderedMap_Set(inverted, value, GoAppend(OrderedMap_GetOrZero(inverted, value, GoZeroSlice), name as string));
         }
         return true;
       });

@@ -30,6 +30,10 @@ function parseJSONValue(text: string): JSONValue {
   return value;
 }
 
+function zeroJSONValue(): JSONValue {
+  return { Type: JSONValueTypeNotPresent, Value: undefined };
+}
+
 test("JSONValue.UnmarshalJSONFrom mirrors upstream primitive/object/array/null decoding", () => {
   const value = parseJSONValue(`{
     "private": true,
@@ -54,32 +58,32 @@ test("JSONValue.UnmarshalJSONFrom mirrors upstream primitive/object/array/null d
   assert.equal(value.Type, JSONValueTypeObject);
   const root = JSONValue_AsObject(value);
 
-  const privateValue = OrderedMap_GetOrZero<string, JSONValue>(root, "private");
+  const privateValue = OrderedMap_GetOrZero<string, JSONValue>(root, "private", zeroJSONValue);
   assert.equal(privateValue.Type, JSONValueTypeBoolean);
   assert.equal(privateValue.Value, true);
 
-  const falseValue = OrderedMap_GetOrZero<string, JSONValue>(root, "false");
+  const falseValue = OrderedMap_GetOrZero<string, JSONValue>(root, "false", zeroJSONValue);
   assert.equal(falseValue.Type, JSONValueTypeBoolean);
   assert.equal(falseValue.Value, false);
 
-  const nameValue = OrderedMap_GetOrZero<string, JSONValue>(root, "name");
+  const nameValue = OrderedMap_GetOrZero<string, JSONValue>(root, "name", zeroJSONValue);
   assert.equal(nameValue.Type, JSONValueTypeString);
   assert.equal(nameValue.Value, "test");
 
-  const versionValue = OrderedMap_GetOrZero<string, JSONValue>(root, "version");
+  const versionValue = OrderedMap_GetOrZero<string, JSONValue>(root, "version", zeroJSONValue);
   assert.equal(versionValue.Type, JSONValueTypeNumber);
   assert.equal(versionValue.Value, 2);
 
-  const exportsValue = OrderedMap_GetOrZero<string, JSONValue>(root, "exports");
+  const exportsValue = OrderedMap_GetOrZero<string, JSONValue>(root, "exports", zeroJSONValue);
   assert.equal(exportsValue.Type, JSONValueTypeObject);
   const exportsObject = JSONValue_AsObject(exportsValue);
   assert.equal(OrderedMap_Size(exportsObject), 3);
 
-  const dot = OrderedMap_GetOrZero<string, JSONValue>(exportsObject, ".");
+  const dot = OrderedMap_GetOrZero<string, JSONValue>(exportsObject, ".", zeroJSONValue);
   assert.equal(dot.Type, JSONValueTypeObject);
-  assert.equal(OrderedMap_GetOrZero<string, JSONValue>(JSONValue_AsObject(dot), "import").Value, "./test.ts");
+  assert.equal(OrderedMap_GetOrZero<string, JSONValue>(JSONValue_AsObject(dot), "import", zeroJSONValue).Value, "./test.ts");
 
-  const testArray = OrderedMap_GetOrZero<string, JSONValue>(exportsObject, "./test");
+  const testArray = OrderedMap_GetOrZero<string, JSONValue>(exportsObject, "./test", zeroJSONValue);
   assert.equal(testArray.Type, JSONValueTypeArray);
   const testItems = JSONValue_AsArray(testArray);
   assert.equal(testItems.length, 3);
@@ -87,9 +91,9 @@ test("JSONValue.UnmarshalJSONFrom mirrors upstream primitive/object/array/null d
   assert.equal(testItems[1]!.Value, "./test2.ts");
   assert.equal(testItems[2]!.Type, JSONValueTypeNull);
 
-  assert.equal(OrderedMap_GetOrZero<string, JSONValue>(exportsObject, "./null").Type, JSONValueTypeNull);
+  assert.equal(OrderedMap_GetOrZero<string, JSONValue>(exportsObject, "./null", zeroJSONValue).Type, JSONValueTypeNull);
 
-  const importsValue = OrderedMap_GetOrZero<string, JSONValue>(root, "imports");
+  const importsValue = OrderedMap_GetOrZero<string, JSONValue>(root, "imports", zeroJSONValue);
   assert.equal(importsValue.Type, JSONValueTypeNull);
   assert.equal(importsValue.Value, undefined);
 });

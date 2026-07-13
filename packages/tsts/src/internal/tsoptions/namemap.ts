@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_GetOrZero, OrderedMap_Set } from "../collections/ordered_map.js";
 import * as strings from "../../go/strings.js";
@@ -83,7 +83,7 @@ export interface NameMap {
  */
 export function NameMap_Get(receiver: GoPtr<NameMap>, name: string): GoPtr<CommandLineOption> {
   const nm = receiver!;
-  return OrderedMap_GetOrZero(nm.optionsNames, strings.ToLower(name)) as GoPtr<CommandLineOption>;
+  return OrderedMap_GetOrZero<string, GoPtr<CommandLineOption>>(nm.optionsNames, strings.ToLower(name), GoZeroPointer);
 }
 
 /**

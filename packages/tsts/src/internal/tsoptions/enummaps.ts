@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroInterface, type GoMap, type GoPtr, type GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -349,7 +349,7 @@ export function GetLibFileName(libName: string): [string, bool] {
   if (Set_Has(LibFilesSet, lowered)) {
     return [lowered, true];
   }
-  const [lib, ok] = OrderedMap_Get(LibMap, lowered);
+  const [lib, ok] = OrderedMap_Get(LibMap, lowered, GoZeroInterface);
   if (!ok) {
     return ["", false];
   }

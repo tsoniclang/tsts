@@ -1,6 +1,6 @@
 import type { bool, int } from "../../go/scalars.js";
 import type { Seq, Seq2 } from "../../go/iter.js";
-import type { GoComparable, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoComparable, GoEquality, GoError, GoFunc, GoInterface, GoMap, GoPtr, GoSlice, GoZeroFactory } from "../../go/compat.js";
 import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
@@ -9,7 +9,6 @@ import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
 
-import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"671bcec921be98d7ca21605a749133736df54c2b4c9e9e08fe72c5ecd5265e1b"}
  *
@@ -148,6 +147,7 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"d32439c79fc90fa79c6ccc0d49a836f88237405347f2c6405ea0dd7bf357813b"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Get(key K) (V, bool) {
@@ -155,28 +155,30 @@ export function OrderedMap_Set<K extends GoComparable, V>(receiver: GoPtr<Ordere
  * 	return v, ok
  * }
  */
-export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): [V, bool] {
+export function OrderedMap_Get<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>): [V, bool] {
   const m = receiver!;
   const ok = m.mp.has(key);
-  const v = m.mp.get(key) as V;
+  const v = ok ? m.mp.get(key)! : zeroValue();
   return [v, ok];
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.GetOrZero","kind":"method","status":"implemented","sigHash":"8ab8a933ca7d7e86a8870543eff284236741ef6c0af43c71f73013d3561f173f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) GetOrZero(key K) V {
  * 	return m.mp[key]
  * }
  */
-export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): V {
+export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>): V {
   const m = receiver!;
-  return m.mp.get(key) as V;
+  return m.mp.has(key) ? m.mp.get(key)! : zeroValue();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.EntryAt","kind":"method","status":"implemented","sigHash":"57f46ffa42a364a35ede98eb6aecdf235862499af9603ae406ae3e4c032351cd"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives explicit static key and value zero dictionaries for the out-of-range result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"},{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) EntryAt(index int) (K, V, bool) {
@@ -191,16 +193,14 @@ export function OrderedMap_GetOrZero<K extends GoComparable, V>(receiver: GoPtr<
  * 	return key, value, true
  * }
  */
-export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, index: int): [K, V, bool] {
+export function OrderedMap_EntryAt<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, index: int, zeroKey: GoZeroFactory<K>, zeroValue: GoZeroFactory<V>): [K, V, bool] {
   const m = receiver!;
   if (index < 0 || index >= m.keys.length) {
-    const zero = undefined as K;
-    const zeroV = undefined as V;
-    return [zero, zeroV, false];
+    return [zeroKey(), zeroValue(), false];
   }
 
   const key = m.keys[index]!;
-  const value = m.mp.get(key) as V;
+  const value = m.mp.get(key)!;
   return [key, value, true];
 }
 
@@ -221,6 +221,7 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Delete","kind":"method","status":"implemented","sigHash":"c9fe7cf0be22689301b59a2c908bb19938a9b00e5035ef0e6875dd4fb446786e"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) Delete(key K) (V, bool) {
@@ -248,27 +249,21 @@ export function OrderedMap_Has<K extends GoComparable, V>(receiver: GoPtr<Ordere
  * 	return v, true
  * }
  */
-export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K): [V, bool] {
+export function OrderedMap_Delete<K extends GoComparable, V>(receiver: GoPtr<OrderedMap<K, V>>, key: K, zeroValue: GoZeroFactory<V>): [V, bool] {
   const m = receiver!;
-  const v = m.mp.get(key) as V;
   const ok = m.mp.has(key);
   if (!ok) {
-    const zero = undefined as V;
-    return [zero, false];
+    return [zeroValue(), false];
   }
+  const v = m.mp.get(key)!;
 
   m.mp.delete(key);
   const i = slices.Index(m.keys, key);
-  // If we're just removing the first or last element, avoid shifting everything around.
   if (i === 0) {
-    const zero = undefined as K;
-    m.keys[0] = zero;
     m.keys = m.keys.slice(1);
   } else {
     const end = m.keys.length - 1;
     if (i === end) {
-      const zero = undefined as K;
-      m.keys[end] = zero;
       m.keys = m.keys.slice(0, end);
     } else {
       m.keys = slices.Delete(m.keys, i, i + 1);
@@ -659,6 +654,7 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::DiffOrderedMaps","kind":"func","status":"implemented","sigHash":"14c021339a1b5bdbeb90d48187aa8a40b6dedb2a4300745dedb85b1408bc4b2f"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Go comparable equality over an erased value type is supplied as one exact static operation.","runtimeDictionaries":[{"kind":"equality","parameter":"equalValues","typeParameter":"V"}]}
  *
  * Go source:
  * func DiffOrderedMaps[K comparable, V comparable](m1 *OrderedMap[K, V], m2 *OrderedMap[K, V], onAdded func(key K, value V), onRemoved func(key K, value V), onModified func(key K, oldValue V, newValue V)) {
@@ -667,10 +663,8 @@ export function OrderedMap_UnmarshalJSONFrom<K extends GoComparable, V>(receiver
  * 	}, onAdded, onRemoved, onModified)
  * }
  */
-export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, onAdded: GoFunc<(key: K, value: V) => void>, onRemoved: GoFunc<(key: K, value: V) => void>, onModified: GoFunc<(key: K, oldValue: V, newValue: V) => void>): void {
-  DiffOrderedMapsFunc(m1, m2, (a: V, b: V): bool => {
-    return a === b;
-  }, onAdded, onRemoved, onModified);
+export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, onAdded: GoFunc<(key: K, value: V) => void>, onRemoved: GoFunc<(key: K, value: V) => void>, onModified: GoFunc<(key: K, oldValue: V, newValue: V) => void>, equalValues: GoEquality<V>): void {
+  DiffOrderedMapsFunc(m1, m2, equalValues, onAdded, onRemoved, onModified);
 }
 
 /**
@@ -696,14 +690,15 @@ export function DiffOrderedMaps<K extends GoComparable, V extends GoComparable>(
  */
 export function DiffOrderedMapsFunc<K extends GoComparable, V>(m1: GoPtr<OrderedMap<K, V>>, m2: GoPtr<OrderedMap<K, V>>, equalValues: GoFunc<(a: V, b: V) => bool>, onAdded: GoFunc<(key: K, value: V) => void>, onRemoved: GoFunc<(key: K, value: V) => void>, onModified: GoFunc<(key: K, oldValue: V, newValue: V) => void>): void {
   OrderedMap_Entries(m2)!((k: K, v2: V): bool => {
-    const [, ok] = OrderedMap_Get(m1, k);
+    const ok = m1!.mp.has(k);
     if (!ok) {
       onAdded!(k, v2);
     }
     return true;
   });
   OrderedMap_Entries(m1)!((k: K, v1: V): bool => {
-    const [v2, ok] = OrderedMap_Get(m2, k);
+    const ok = m2!.mp.has(k);
+    const v2 = m2!.mp.get(k)!;
     if (ok) {
       if (!equalValues!(v1, v2)) {
         onModified!(k, v1, v2);

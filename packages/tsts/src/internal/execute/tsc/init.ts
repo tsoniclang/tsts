@@ -1,4 +1,4 @@
-import type { GoPtr } from "../../../go/compat.js";
+import { GoZeroInterface, type GoPtr } from "../../../go/compat.js";
 import { Fprint } from "../../../go/fmt.js";
 import * as strings from "../../../go/strings.js";
 import {
@@ -368,7 +368,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
         break;
     }
 
-    const [optValue, ok] = OrderedMap_Get(options, setting);
+    const [optValue, ok] = OrderedMap_Get(options, setting, GoZeroInterface);
     const value = ok ? optValue : defaultValue;
 
     if (comment) {
@@ -393,7 +393,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
   emitOption("module", ModuleKindNodeNext, commentedNever);
   emitOption("target", ScriptTargetESNext, commentedNever);
   emitOption("types", [], commentedNever);
-  const [lib, libOk] = OrderedMap_Get(options, "lib");
+  const [lib, libOk] = OrderedMap_Get(options, "lib", GoZeroInterface);
   if (libOk) {
     emitOption("lib", lib, commentedNever);
   }
@@ -441,7 +441,7 @@ export function generateTSConfig(options: GoPtr<OrderedMap<string, unknown>>, lo
     newline();
     while (allSetOptions.length > 0) {
       const firstOpt = allSetOptions[0]!;
-      emitOption(firstOpt, OrderedMap_GetOrZero(options, firstOpt), commentedNever);
+      emitOption(firstOpt, OrderedMap_GetOrZero(options, firstOpt, GoZeroInterface), commentedNever);
     }
   }
 

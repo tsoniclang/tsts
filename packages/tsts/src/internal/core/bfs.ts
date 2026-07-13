@@ -1,5 +1,5 @@
 import type { bool, int, long } from "../../go/scalars.js";
-import type { GoComparable, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoZeroPointer, type GoComparable, type GoPtr, type GoSlice, type GoZeroFactory } from "../../go/compat.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Delete, OrderedMap_EntryAt, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
@@ -71,7 +71,7 @@ export function BreadthFirstSearchLevel_Has<K extends GoComparable, N>(receiver:
  * }
  */
 export function BreadthFirstSearchLevel_Delete<K extends GoComparable, N>(receiver: GoPtr<BreadthFirstSearchLevel<K, N>>, key: K): void {
-  OrderedMap_Delete(receiver!.jobs, key);
+  OrderedMap_Delete(receiver!.jobs, key, GoZeroPointer);
 }
 
 /**
@@ -115,6 +115,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"implemented","sigHash":"5b479e33bd171b6ba49da3f144e952a82e69fe245d13aa2e9b148836b846669a"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search forwards an exact static key zero factory to OrderedMap.EntryAt.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"N"}]}
  *
  * Go source:
  * func BreadthFirstSearchParallel[N comparable](
@@ -125,12 +126,13 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
  * 	return BreadthFirstSearchParallelEx(start, neighbors, visit, BreadthFirstSearchOptions[N, N]{}, Identity)
  * }
  */
-export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool]): BreadthFirstSearchResult<N> {
-  return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {} as BreadthFirstSearchOptions<N, N>, (n: N): N => n);
+export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], zeroKey: GoZeroFactory<N>): BreadthFirstSearchResult<N> {
+  return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {} as BreadthFirstSearchOptions<N, N>, (n: N): N => n, zeroKey);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705"}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"The generic search supplies OrderedMap.EntryAt with the exact erased key zero value.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroKey","typeParameter":"K"}]}
  *
  * Go source:
  * func BreadthFirstSearchParallelEx[K comparable, N any](
@@ -141,7 +143,7 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * 	getKey func(N) K,
  * ) BreadthFirstSearchResult[N] { ... }
  */
-export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>): BreadthFirstSearchResult<N> {
+export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: GoFunc<(arg0: N) => GoSlice<N>>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: GoFunc<(arg0: N) => K>, zeroKey: GoZeroFactory<K>): BreadthFirstSearchResult<N> {
   let visited = options.Visited;
   if (visited === undefined) {
     visited = { set: new globalThis.Set<unknown>() } as unknown as SyncSet<K>;
@@ -203,12 +205,12 @@ export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N
       return true;
     });
     if (lowestGoal !== Number.MAX_SAFE_INTEGER) {
-      const [, job] = OrderedMap_EntryAt(jobs, lowestGoal as int);
+      const [, job] = OrderedMap_EntryAt(jobs, lowestGoal as int, zeroKey, GoZeroPointer<breadthFirstSearchJob<N>>);
       return { stop: true, job: job, next: undefined };
     }
     if (fallback === undefined) {
       if (lowestFallback !== Number.MAX_SAFE_INTEGER) {
-        const [, fb] = OrderedMap_EntryAt(jobs, lowestFallback as int);
+        const [, fb] = OrderedMap_EntryAt(jobs, lowestFallback as int, zeroKey, GoZeroPointer<breadthFirstSearchJob<N>>);
         fallback = fb;
       }
     }

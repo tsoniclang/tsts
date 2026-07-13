@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq, Seq2 } from "../../../go/iter.js";
 import type { JsonFieldNamesForGoStructContract } from "../../json/json.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoZeroString, type GoError, type GoMap, type GoPtr, type GoSlice } from "../../../go/compat.js";
 import { Errorf } from "../../../go/fmt.js";
 import type { RepopulateDiagnosticKind } from "../../ast/diagnostic.js";
 import {
@@ -1381,7 +1381,7 @@ export function BuildInfoRootInfoReader_GetBuildInfoFileInfo(receiver: GoPtr<Bui
   if (info !== undefined) {
     return [info, inputFilePath];
   }
-  const [resolved, ok] = OrderedMap_Get(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>, inputFilePath);
+  const [resolved, ok] = OrderedMap_Get(receiver!.rootToResolved as import("../../collections/ordered_map.js").OrderedMap<Path, Path>, inputFilePath, GoZeroString);
   if (ok) {
     return [(receiver!.resolvedRootFileInfos as Map<Path, GoPtr<BuildInfoFileInfo>>).get(resolved), resolved];
   }
