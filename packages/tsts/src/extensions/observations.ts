@@ -170,17 +170,30 @@ export interface CheckedOperationMappingResult {
   readonly provenance?: TargetOperationProvenance;
 }
 
-export interface CheckedConversionMappingRequest {
+interface CheckedConversionMappingRequestBase {
   readonly expression: ExtensionFactSubject;
   readonly source: ExtensionFactSubject;
   readonly target: ExtensionFactSubject;
-  readonly call?: ExtensionFactSubject;
-  readonly parameterIndex?: number;
-  readonly targetParameter?: TargetParameter;
-  readonly sourceSelectedSignature?: ExtensionFactSubject;
-  readonly selectedSignature?: SelectedTargetSignatureFact;
   readonly targetPlatform?: string;
 }
+
+export type CheckedConversionMappingRequest = CheckedConversionMappingRequestBase & ({
+  readonly conversionKind: "call-argument";
+  readonly call: ExtensionFactSubject;
+  readonly parameterIndex: number;
+  readonly targetParameter: TargetParameter;
+  readonly sourceSelectedSignature?: ExtensionFactSubject;
+  readonly selectedSignature: SelectedTargetSignatureFact;
+  readonly assertionKind?: never;
+} | {
+  readonly conversionKind: "assertion";
+  readonly assertionKind: "as" | "angle-bracket" | "jsdoc";
+  readonly call?: never;
+  readonly parameterIndex?: never;
+  readonly targetParameter?: never;
+  readonly sourceSelectedSignature?: never;
+  readonly selectedSignature?: never;
+});
 
 export interface CheckedConversionMappingResult {
   readonly convertedType?: TargetTypeRef;

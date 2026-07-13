@@ -14,7 +14,7 @@ import type { Signature, Type } from "../internal/checker/types.js";
 import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
 import { Checker_isTypeIdenticalTo } from "../internal/checker/relater.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetOperationFact, TargetOperationProvenance, TargetParameter, TargetTypeRef } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
@@ -197,6 +197,25 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     preserveEquivalentCheckedSourceResultType(checker, extensionHost, elementAccessExpression, operationWithProvenance, sourceResultType),
     result.evidence ?? [],
   );
+}
+
+export function recordExtensionCheckedAssertionConversion(checker: GoPtr<Checker>, assertionExpression: GoPtr<Node>, sourceType: GoPtr<Type>, targetType: GoPtr<Type>, assertionKind: "as" | "angle-bracket" | "jsdoc"): void {
+  if (checker === undefined || assertionExpression === undefined || sourceType === undefined || targetType === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined) {
+    return;
+  }
+  recordExtensionCheckedConversion(extensionHost, {
+    conversionKind: "assertion",
+    assertionKind,
+    expression: assertionExpression,
+    source: sourceType,
+    target: targetType,
+    ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
+  });
 }
 
 export function recordExtensionCheckedOperatorMapping(checker: GoPtr<Checker>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
@@ -565,7 +584,7 @@ function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, 
 }
 
 function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
-  if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedConversion) === undefined) {
+  if (callExpression === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedConversion) === undefined) {
     return;
   }
   const parameters = callResult.selectedSignature.member.parameters;
@@ -575,32 +594,40 @@ function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, ca
     if (parameter === undefined || argument === undefined) {
       continue;
     }
-    const result = extensionHost.runObservation(
-      ExtensionObservationPoint.mapCheckedConversion,
-      {
-        expression: argument,
-        source: argument,
-        target: parameter.type,
-        ...(callExpression !== undefined ? { call: callExpression } : {}),
-        parameterIndex: index,
-        targetParameter: parameter,
-        ...(callResult.selectedSignature.sourceSignature !== undefined ? { sourceSelectedSignature: callResult.selectedSignature.sourceSignature } : {}),
-        selectedSignature: callResult.selectedSignature,
-        ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
-      },
-      () => {
-        throw new Error("Extension-owned conversion resolution unexpectedly reached core fallback.");
-      },
-      { requireOwner: true },
-    );
-    if (result.kind !== "accept" || (result.value.convertedType === undefined && result.value.operation === undefined)) {
-      continue;
-    }
-    extensionHost.facts.set(argument, targetConversionFactKey, {
-      ...(result.value.convertedType !== undefined ? { convertedType: result.value.convertedType } : {}),
-      ...(result.value.operation !== undefined ? { operation: result.value.operation } : {}),
-    }, result.evidence ?? []);
+    recordExtensionCheckedConversion(extensionHost, {
+      conversionKind: "call-argument",
+      expression: argument,
+      source: argument,
+      target: parameter.type,
+      call: callExpression,
+      parameterIndex: index,
+      targetParameter: parameter,
+      ...(callResult.selectedSignature.sourceSignature !== undefined ? { sourceSelectedSignature: callResult.selectedSignature.sourceSignature } : {}),
+      selectedSignature: callResult.selectedSignature,
+      ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
+    });
   }
+}
+
+function recordExtensionCheckedConversion(extensionHost: ExtensionHost, request: CheckedConversionMappingRequest): void {
+  if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedConversion) === undefined) {
+    return;
+  }
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedConversion,
+    request,
+    () => {
+      throw new Error("Extension-owned conversion resolution unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+  if (result.kind !== "accept" || (result.value.convertedType === undefined && result.value.operation === undefined)) {
+    return;
+  }
+  extensionHost.facts.set(request.expression, targetConversionFactKey, {
+    ...(result.value.convertedType !== undefined ? { convertedType: result.value.convertedType } : {}),
+    ...(result.value.operation !== undefined ? { operation: result.value.operation } : {}),
+  }, result.evidence ?? []);
 }
 
 function definedFactSubjects<T extends object>(subjects: readonly (T | undefined)[]): readonly ExtensionFactSubject[] {

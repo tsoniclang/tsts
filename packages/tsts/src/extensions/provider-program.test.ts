@@ -12,7 +12,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindAsExpression, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeAssertionExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import { Type_Flags, Type_Symbol, TypeFlagsUniqueESSymbol } from "../internal/checker/types.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
@@ -39,7 +39,7 @@ import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest, TargetTypeRef } from "./index.js";
-import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
+import { recordExtensionCheckedAssertionConversion, recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping } from "./checker-integration.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -2763,6 +2763,7 @@ test("checker records provider-owned runtime carrier and argument conversion fac
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
+  assert.equal(observedConversionRequests[0]?.conversionKind, "call-argument");
   assert.equal(observedConversionRequests[0]?.call, call);
   assert.equal(observedConversionRequests[0]?.parameterIndex, 0);
   assert.equal(observedConversionRequests[0]?.targetParameter?.name, "value");
@@ -2774,6 +2775,329 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier.kind, "target-named");
   assert.equal(consumer.getTargetConversionFact(argument)?.operation?.targetOperation, "Acme.Convert.ToByte");
+});
+
+test("checker records selected source and target types for ordinary assertion conversions only", () => {
+  const observedRequests: CheckedConversionMappingRequest[] = [];
+  let convertedTypeId = "Acme.Dog";
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {}
+    `],
+    ["/src/index.ts", `
+      class Animal {}
+      class Dog extends Animal {}
+
+      declare const animal: Animal;
+      declare const maybeDog: Dog | undefined;
+      declare const holder: { animal?: Animal };
+
+      export const asDog = animal as Dog;
+      export const angleDog = <Dog>animal;
+      export const nested = (animal as Dog) as Animal;
+      export const optionalAdjacent = holder?.animal as Dog | undefined;
+      export const deferred = () => animal as Dog;
+      export const literal = 1 as const;
+      export const angleLiteral = <const>1;
+      export const checkedOnly = animal satisfies Animal;
+      export const nonNullDog = maybeDog!;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        strictNullChecks: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-assertion-conversion-extension", {
+      identity: semanticProviderIdentity("acme-assertion-conversion-provider"),
+      mapCheckedConversion: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          convertedType: { kind: "target-named", id: convertedTypeId },
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  assert.equal(observedRequests.length, 6);
+  assert.ok(observedRequests.every((request) => request.conversionKind === "assertion"));
+  assert.equal(observedRequests.filter((request) => request.assertionKind === "as").length, 5);
+  assert.equal(observedRequests.filter((request) => request.assertionKind === "angle-bracket").length, 1);
+  assert.equal(observedRequests.filter((request) => (request.expression as GoPtr<Node>)?.Kind === KindAsExpression).length, 5);
+  assert.equal(observedRequests.filter((request) => (request.expression as GoPtr<Node>)?.Kind === KindTypeAssertionExpression).length, 1);
+  assert.ok(observedRequests.every((request) => request.targetPlatform === "acme"));
+  assert.ok(observedRequests.every((request) => request.call === undefined));
+  assert.ok(observedRequests.every((request) => request.parameterIndex === undefined));
+  assert.ok(observedRequests.every((request) => request.selectedSignature === undefined));
+  assert.deepEqual(
+    observedRequests.map((request) => [Type_Symbol(request.source as GoPtr<Type>)?.Name, Type_Symbol(request.target as GoPtr<Type>)?.Name]),
+    [["Animal", "Dog"], ["Animal", "Dog"], ["Animal", "Dog"], ["Dog", "Animal"], [undefined, undefined], ["Animal", "Dog"]],
+  );
+  assert.equal(observedRequests[0]!.source, observedRequests[1]!.source);
+  assert.equal(observedRequests[0]!.target, observedRequests[1]!.target);
+  assert.equal(observedRequests[0]!.source, observedRequests[2]!.source);
+  assert.equal(observedRequests[0]!.target, observedRequests[2]!.target);
+  assert.equal(observedRequests[0]!.target, observedRequests[3]!.source);
+  assert.equal(observedRequests[0]!.source, observedRequests[3]!.target);
+  assert.equal(observedRequests[0]!.source, observedRequests[5]!.source);
+  assert.equal(observedRequests[0]!.target, observedRequests[5]!.target);
+  assert.ok(observedRequests.every((request) => extended.extensionHost.facts.get(request.expression, targetConversionFactKey)?.convertedType?.kind === "target-named"));
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(observedRequests.length, 6);
+
+  const firstRequest = observedRequests[0];
+  assert.ok(firstRequest !== undefined);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), index);
+  try {
+    recordExtensionCheckedAssertionConversion(
+      checker,
+      firstRequest.expression as GoPtr<Node>,
+      firstRequest.source as GoPtr<Type>,
+      firstRequest.target as GoPtr<Type>,
+      firstRequest.assertionKind,
+    );
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    convertedTypeId = "Acme.Animal";
+    recordExtensionCheckedAssertionConversion(
+      checker,
+      firstRequest.expression as GoPtr<Node>,
+      firstRequest.source as GoPtr<Type>,
+      firstRequest.target as GoPtr<Type>,
+      firstRequest.assertionKind,
+    );
+  } finally {
+    done();
+  }
+  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+});
+
+test("checker classifies JSDoc assertions as explicit checked conversions", () => {
+  const observedRequests: CheckedConversionMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {}
+    `],
+    ["/src/index.js", `
+      // @ts-check
+      class Animal {}
+      class Dog extends Animal {}
+      /** @type {Animal} */
+      const animal = new Animal();
+      export const dog = /** @type {Dog} */ (animal);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        allowJs: true,
+        checkJs: true,
+        noEmit: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.js"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-jsdoc-assertion-extension", {
+      identity: semanticProviderIdentity("acme-jsdoc-assertion-provider"),
+      mapCheckedConversion: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          convertedType: { kind: "target-named", id: "Acme.Dog" },
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.js");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+  assert.equal(observedRequests.length, 1);
+  assert.equal(observedRequests[0]!.conversionKind, "assertion");
+  assert.equal(observedRequests[0]!.assertionKind, "jsdoc");
+  assert.equal((observedRequests[0]!.expression as GoPtr<Node>)?.Kind, KindAsExpression);
+  assert.equal(Type_Symbol(observedRequests[0]!.source as GoPtr<Type>)?.Name, "Animal");
+  assert.equal(Type_Symbol(observedRequests[0]!.target as GoPtr<Type>)?.Name, "Dog");
+  assert.ok(extended.extensionHost.facts.get(observedRequests[0]!.expression, targetConversionFactKey) !== undefined);
+});
+
+test("target assertion mappings cannot rescue invalid TypeScript assertions", () => {
+  const observedRequests: CheckedConversionMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {}
+    `],
+    ["/src/index.ts", `
+      class Dog { bark(): void {} }
+      declare const text: string;
+      export const invalid = text as Dog;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-invalid-assertion-extension", {
+      identity: semanticProviderIdentity("acme-invalid-assertion-provider"),
+      mapCheckedConversion: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          convertedType: { kind: "target-named", id: "Acme.Dog" },
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 2352);
+  assert.equal(observedRequests.length, 0);
+  assert.equal(extended.extensionHost.facts.get(findFirstNodeByKind(index, KindAsExpression), targetConversionFactKey), undefined);
+});
+
+test("rejected assertion conversions surface deterministic extension diagnostics", () => {
+  const observedRequests: CheckedConversionMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {}
+    `],
+    ["/src/index.ts", `
+      class Animal {}
+      class Dog extends Animal {}
+      declare const animal: Animal;
+      export const rejected = animal as Dog;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-rejected-assertion-extension", {
+      identity: semanticProviderIdentity("acme-rejected-assertion-provider"),
+      mapCheckedConversion: (request, context) => {
+        observedRequests.push(request);
+        return rejectObservation({
+          extensionId: context.extensionId,
+          extensionCode: "ACME_ASSERTION_REJECTED",
+          numericCode: 9910451,
+          publicCode: "ACME0451",
+          category: "error",
+          message: "The checked assertion has no Acme target conversion.",
+          nodeOrSpan: request.expression,
+          identity: `acme-assertion-rejected:${String((request.expression as GoPtr<Node>)?.id ?? "unknown")}`,
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9910451);
+  assert.match(Diagnostic_String(diagnostics[0]), /ACME0451/);
+  assert.equal(observedRequests.length, 1);
+  assert.equal(observedRequests[0]!.conversionKind, "assertion");
+  assert.equal(observedRequests[0]!.assertionKind, "as");
+  assert.equal(extended.extensionHost.facts.get(observedRequests[0]!.expression, targetConversionFactKey), undefined);
 });
 
 test("checker validates provider-owned flow use diagnostics from source-semantics marker facts", () => {

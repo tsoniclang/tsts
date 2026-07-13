@@ -520,6 +520,8 @@ test("semantic provider methods own typed observations without hook boilerplate"
 
   const noConversion: CheckedConversionMappingResult = {};
   const conversion = host.runObservation(ExtensionObservationPoint.mapCheckedConversion, {
+    conversionKind: "assertion",
+    assertionKind: "as",
     expression: convertedExpression,
     source: byteType,
     target: int32Type,
