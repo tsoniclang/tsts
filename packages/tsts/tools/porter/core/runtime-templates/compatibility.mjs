@@ -88,7 +88,7 @@ export function GoMapIsNil<K, V>(map: GoMap<K, V>): bool {
 }
 
 export interface GoInterfaceValue<T> {
-  readonly __tsgoGoReceiver: GoPtr<T>;
+  __tsgoGoReceiver(): GoPtr<T>;
 }
 
 ${channelRuntime}

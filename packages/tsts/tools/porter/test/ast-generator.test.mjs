@@ -482,7 +482,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   // The statically named carrier field preserves the concrete interface receiver.
   assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.doesNotMatch(data, /goReceiverKey/);
-  assert.match(data, /get __tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \},/);
+  assert.match(data, /__tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \},/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
   assert.match(data, /export function createIdentifierData\(\): Identifier & nodeData \{\s*return globalThis\.Object\.create\(Identifier_nodeDataPrototype\) as Identifier & nodeData;\s*\}/);
 });
@@ -504,7 +504,7 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
   );
   const casts = files.get("internal/ast/generated/casts.ts");
   assert.doesNotMatch(casts, /goReceiverKey/);
-  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data!\.__tsgoGoReceiver as GoPtr<Identifier>;/);
+  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data!\.__tsgoGoReceiver\(\) as GoPtr<Identifier>;/);
 });
 
 test("ast-generator: raw slices use their intrinsic carrier", () => {
