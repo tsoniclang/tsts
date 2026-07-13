@@ -479,10 +479,10 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   // Child-bearing nodes get generated VisitEachChild rewrites.
   assert.match(data, /export function ExpressionStatement_VisitEachChild\(receiver: GoPtr<ExpressionStatement>, v: GoPtr<NodeVisitor>\): GoPtr<Node> \{\s*return Factory\.NodeFactory_UpdateExpressionStatement\(generatedVisitorFactory\(v\), receiver, generatedVisitNode\(v, receiver!\.Expression\) as GoPtr<Expression>\);\s*\}/);
   assert.match(data, /const ExpressionStatement_nodeDataPrototype: nodeData & ThisType<GoPtr<ExpressionStatement>> = \{[\s\S]*?VisitEachChild\(v: GoPtr<NodeVisitor>\): GoPtr<Node> \{ return ExpressionStatement_VisitEachChild\(this, v\); \},/);
-  // The brand carries the concrete receiver.
-  assert.match(data, /import \{ GoNilSlice, goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
-  assert.doesNotMatch(data, /import \{ goReceiverKey \} from "\.\.\/spine\.js";/);
-  assert.match(data, /get \[goReceiverKey\]\(\): GoPtr<Identifier> \{ return this; \},/);
+  // The statically named carrier field preserves the concrete interface receiver.
+  assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.doesNotMatch(data, /goReceiverKey/);
+  assert.match(data, /get __tsgoGoReceiver\(\): GoPtr<Identifier> \{ return this; \},/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
   assert.match(data, /export function createIdentifierData\(\): Identifier & nodeData \{\s*return globalThis\.Object\.create\(Identifier_nodeDataPrototype\) as Identifier & nodeData;\s*\}/);
 });
@@ -503,8 +503,8 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
     /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?const data = createIdentifierData\(\);[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, data\);/,
   );
   const casts = files.get("internal/ast/generated/casts.ts");
-  assert.match(casts, /import \{ goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
-  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data!\[goReceiverKey\] as GoPtr<Identifier>;/);
+  assert.doesNotMatch(casts, /goReceiverKey/);
+  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data!\.__tsgoGoReceiver as GoPtr<Identifier>;/);
 });
 
 test("ast-generator: raw slices use their intrinsic carrier", () => {
@@ -516,7 +516,7 @@ test("ast-generator: raw slices use their intrinsic carrier", () => {
   assert.equal(astMemberTsType(textField), "GoSlice<string>");
 
   const data = buildAstGeneratedFiles(repositoryAstConfig, "rev-ast-slices").get("internal/ast/generated/data.ts");
-  assert.match(data, /import \{ GoNilSlice, goReceiverKey \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
+  assert.match(data, /import \{ GoNilSlice \} from "\.\.\/\.\.\/\.\.\/go\/compat\.js";/);
   assert.match(data, /let nodes: GoSlice<GoPtr<Node>> = GoNilSlice\(\);/);
   assert.doesNotMatch(data, /let nodes: GoSlice<GoPtr<Node>> = undefined;/);
   assert.doesNotMatch(data, /AsSyntaxList\(visited\)!\.Children \?\? \[\]/);

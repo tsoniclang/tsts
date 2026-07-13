@@ -58,12 +58,11 @@ test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata",
   assert.match(compat, /export function NewGoStructMap<K, V>\(keyDescriptor: GoMapKeyDescriptor<K>\): GoStructMap<K, V>/);
   assert.match(compat, /export function GoStructKey<K, const Values extends readonly unknown\[\]>/);
   assert.match(compat, /export function GoInterfaceKey<K>/);
+  assert.match(compat, /export interface GoInterfaceValue<T> \{\s*readonly __tsgoGoReceiver: GoPtr<T>;/);
   assert.match(compat, /readonly identity: symbol/);
   assert.match(compat, /snapshot\(value: K\): K/);
   assert.doesNotMatch(compat, /goStructMapKey|JSON\.stringify|\.Hi\b|\.Lo\b|\.pos\b|\.end\b/);
-  assert.match(compat, /export function GoInterfaceAdapter<T, I extends object>/);
-  assert.match(compat, /export function GoInterfaceTryAssert<T>/);
-  assert.match(compat, /export function GoInterfaceAssert<T>/);
+  assert.doesNotMatch(compat, /goReceiverKey|GoInterfaceAdapter|GoInterfaceTryAssert|GoInterfaceAssert|Object\.defineProperties/);
   assert.match(compat, /export function MakeGoChan<T>\(capacity: number, zeroValue: \(\) => T\): GoChan<T>/);
   assert.match(compat, /export function GoRequireNonNilAfterSuccess<T>/);
   assert.match(compat, /export function GoMapLookup<K, V>/);

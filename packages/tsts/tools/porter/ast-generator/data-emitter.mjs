@@ -14,7 +14,7 @@ export function emitData(schema) {
   const lines = [];
   lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { ${dataCompatTypes(schema).join(", ")} } from "../../../go/compat.js";`);
-  lines.push(`import { GoNilSlice, goReceiverKey } from "../../../go/compat.js";`);
+  lines.push(`import { GoNilSlice } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -519,7 +519,7 @@ function emitComputeSubtreeFactsFreeFn(schema, node, lines) {
 
 function emitAdapter(schema, node, lines) {
   lines.push(`const ${node}_nodeDataPrototype: nodeData & ThisType<GoPtr<${node}>> = {`);
-  lines.push(`  get [goReceiverKey](): GoPtr<${node}> { return this; },`);
+  lines.push(`  get __tsgoGoReceiver(): GoPtr<${node}> { return this; },`);
   for (const method of NODE_DATA_METHODS) {
     const t = resolveAdapterTarget(schema, node, method);
     const slot = adapterSlot(node, method, t);
