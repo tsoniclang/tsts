@@ -284,9 +284,6 @@ export function semanticRendererOperations(context, unit) {
     basic: (name) => renderBasic(name, context),
     carrier: (key) => useCompat(context, requireBridge(context, key)),
     pointerCarrier: (representation) => {
-      if (representation === "polymorphic") {
-        throw new Error(`cannot render representation-polymorphic Go pointer in scaffold '${unit.id}': no exact runtime carrier is configured; use a narrow local representation override`);
-      }
       return useCompat(context, requireBridge(context, pointerBridgeKey(representation)));
     },
     compat: (name) => useCompat(context, name),
@@ -436,7 +433,7 @@ function requireBridge(context, key) {
 
 function pointerBridgeKey(representation) {
   if (representation === "aggregate") return "pointer";
-  if (representation === "reference") return "ref";
+  if (representation === "slot") return "ref";
   throw new Error(`canonical semantic pointer has unknown representation '${representation}'`);
 }
 

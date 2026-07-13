@@ -78,6 +78,8 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /type GoPointerMethods<T> = typeof __tsgoPointerMethodSet extends keyof T/);
   assert.match(source, /export type GoPtr<T> = GoNilable<T & GoPointerMethods<T>>;/);
   assert.match(source, /export type GoRef<T> = GoNilable<\{ v: T \} & GoPointerMethods<T>>;/);
+  assert.match(source, /export function GoValueRef<T>\(value: T\): NonNullable<GoRef<T>>/);
+  assert.match(source, /export function GoSliceElementRef<T>\(slice: GoSlice<T>, index: int\): NonNullable<GoRef<T>>/);
   assert.match(source, /export type GoSlice<T> = T\[];/);
   assert.match(source, /export function GoNilSlice<T>\(\): GoSlice<T>/);
   assert.match(source, /export function GoSliceIsNil<T>\(slice: GoSlice<T>\): bool/);
@@ -108,6 +110,15 @@ test("operation-bearing nil carriers execute their Go zero-value operations", as
   assert.equal(nilSlice.length, 0);
   assert.equal(runtime.GoSliceIsNil(nilSlice), true);
   assert.equal(runtime.GoSliceIsNil([]), false);
+  const valueRef = runtime.GoValueRef(1);
+  valueRef.v = 2;
+  assert.equal(valueRef.v, 2);
+  const values = [1, 2];
+  const elementRef = runtime.GoSliceElementRef(values, 1);
+  assert.equal(elementRef.v, 2);
+  elementRef.v = 3;
+  assert.deepEqual(values, [1, 3]);
+  assert.throws(() => runtime.GoSliceElementRef(values, 2), /index out of range/);
   assert.equal(runtime.GoAppend(nilSlice), nilSlice);
   assert.deepEqual(runtime.GoAppend(nilSlice, 1), [1]);
 
@@ -176,7 +187,7 @@ test("direct nilable kinds use their exact carriers", () => {
   }, context(index)), { t: "ref", id: `${compat}::GoError`, args: [] });
 });
 
-test("pointer lowering selects GoRef only from scalar representation evidence", () => {
+test("pointer lowering uses addressable slots for scalar and open type-parameter storage", () => {
   const record = { kind: "struct", nilable: false, struct: { fields: [] } };
   const index = indexWith([["Flag", basic("bool")], ["Record", record]]);
   const scalarPointer = { kind: "pointer", nilable: true, element: named("Flag", false) };
@@ -189,12 +200,15 @@ test("pointer lowering selects GoRef only from scalar representation evidence", 
     kind: "pointer", nilable: true,
     element: { kind: "typeParameter", nilable: false, typeParameter: { ownerId: "owner", role: "type", index: 0, name: "T" } },
   };
-  const polymorphic = semanticTypeDescriptor(typeParameter, {
+  const openTypeParameter = semanticTypeDescriptor(typeParameter, {
     ...context(index),
     typeParameters: new Map([["owner::type::0", { depth: 0, index: 0 }]]),
   });
-  assert.equal(polymorphic.t, "unsupported");
-  assert.match(polymorphic.reason, /representation-polymorphic Go pointer/);
+  assert.deepEqual(openTypeParameter, {
+    t: "ref",
+    id: `${compat}::GoRef`,
+    args: [{ t: "tp", depth: 0, index: 0 }],
+  });
 });
 
 test("pointers to builtin interface values use mutable slot storage", () => {

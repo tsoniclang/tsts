@@ -7,7 +7,7 @@ const operations = {
   basic: (name) => `basic:${name}`,
   compat: (name) => name,
   carrier: (name) => ({ array: "GoArray", slice: "GoSlice", chan: "GoChan", unsafePointer: "GoUnsafePointer" })[name],
-  pointerCarrier: (representation) => representation === "reference" ? "GoRef" : "GoPtr",
+  pointerCarrier: (representation) => representation === "slot" ? "GoRef" : "GoPtr",
   reference: (reference, typeArguments) => `${reference.packagePath}::${reference.name}${typeArguments.length === 0 ? "" : `<${typeArguments.join(",")}>`}`,
 };
 
@@ -60,12 +60,12 @@ test("canonical carrier rendering uses intrinsic nilability with no synthetic bo
   }, operations), 'GoChan<basic:int, "receive">');
   assert.equal(renderCanonicalType({
     kind: "pointer",
-    representation: "reference",
+    representation: "slot",
     element: { kind: "basic", name: "int" },
   }, operations), "GoRef<basic:int>");
   assert.equal(renderCanonicalType({
     kind: "pointer",
-    representation: "reference",
+    representation: "slot",
     element: {
       kind: "carrier",
       carrier: "slice",
@@ -75,7 +75,7 @@ test("canonical carrier rendering uses intrinsic nilability with no synthetic bo
   }, operations), "GoRef<GoSlice<basic:int>>");
   assert.equal(renderCanonicalType({
     kind: "pointer",
-    representation: "reference",
+    representation: "slot",
     element: {
       kind: "pointer",
       representation: "aggregate",

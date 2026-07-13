@@ -12,11 +12,12 @@ The scope is closed at the declaration boundary. Porter captures functions and m
 
 ## Nilability Carriers
 
-Nilability has one declaration contract: `GoNilable<T> = T | undefined`.
-`GoPtr<T>`, `GoSlice<T>`, `GoMap<K, V>`, `GoChan<T, D>`, `GoFunc<F>`,
-and `GoInterface<I>` specialize that carrier for their Go representation;
-`GoError` is `GoInterface<Error>`. Parameters and properties remain required
-syntax. Porter never substitutes a question mark or an extra `GoPtr`.
+Nilability has one declaration contract. `GoPtr<T>`, `GoRef<T>`, `GoFunc<F>`,
+and `GoInterface<I>` use `GoNilable<T> = T | undefined`; `GoError` is
+`GoInterface<Error>`. Operation-bearing `GoSlice<T>`, `GoMap<K, V>`, and
+`GoChan<T, D>` preserve nil as valid carrier state so their legal nil
+operations remain available. Parameters and properties remain required syntax.
+Porter never substitutes a question mark or an extra `GoPtr`.
 
 Direct anonymous `func` and `interface` value types become `GoFunc<F>` and
 `GoInterface<I>`. A declared Go interface remains a TypeScript `interface` so
@@ -31,13 +32,15 @@ Pointer lowering also follows representation evidence. For example, the Go
 parameter `differsOnlyInMap *bool` is a mutable scalar cell and maps to
 `GoRef<bool>`; `GoRef<T>` is itself nilable. A pointer to direct aggregate object
 storage may use `GoPtr<T>`. A pointer to a scalar or replaceable header/reference
-value requires a distinct mutable slot: `*[]int` becomes
+value requires a distinct addressable slot: `*[]int` becomes
 `GoRef<GoSlice<int>>`, and `**Node` becomes `GoRef<GoPtr<Node>>`. Named pointees
 are resolved through the exact profile-specific declared type RHS before the
-carrier is selected. An unconstrained `*T` cannot prove the required storage,
-so Porter reports that design issue instead of guessing. Direct-kind nilability
-contradictions, missing named RHS, and absent explicit facade/profile evidence
-are hard errors.
+carrier is selected. A pointer through an open or mixed type parameter also uses
+the addressable-slot carrier `GoRef<T>`: the generic port must construct a value
+cell or a storage-backed getter/setter cell, rather than guessing whether a
+particular instantiation can use direct aggregate object identity. Direct-kind
+nilability contradictions, missing named RHS, and absent explicit
+facade/profile evidence are hard errors.
 
 Expected Go constants and inferred top-level variable types come directly from `go/types` and `go/constant`; Porter never reconstructs them from Go source text. Actual TypeScript declaration initializers use the closed evaluator contract below. Unsupported declaration/type variants fail rather than becoming approximate evidence. Build-profile selection covers every declaration-bearing source file and fails if a profile changes a declaration contract.
 

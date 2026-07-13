@@ -282,10 +282,6 @@ function descriptorOperations(index) {
     basic: (name) => basicDescriptor(name, index),
     carrierId: (key) => `${index.compat}::${requireBridge(index, key)}`,
     pointerCarrierId: (representation) => `${index.compat}::${requireBridge(index, pointerBridgeKey(representation))}`,
-    polymorphicPointerDescriptor: (element) => ({
-      t: "unsupported",
-      reason: `representation-polymorphic Go pointer has no exact runtime carrier: ${JSON.stringify({ element })}`,
-    }),
     compatId: (name) => `${index.compat}::${name}`,
     reference: (reference, argumentsList) => referenceDescriptor(reference, argumentsList, index),
   };
@@ -399,7 +395,7 @@ function requireBridge(index, key) {
 
 function pointerBridgeKey(representation) {
   if (representation === "aggregate") return "pointer";
-  if (representation === "reference") return "ref";
+  if (representation === "slot") return "ref";
   throw new Error(`canonical semantic pointer has unknown representation '${representation}'`);
 }
 
