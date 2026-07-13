@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../../go/compat.js";
+import { GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoValueRef } from "../../../go/compat.js";
 import { GoBigIntKey, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
@@ -5849,9 +5849,9 @@ export function Checker_getWidenedTypeWithContext(receiver: GoPtr<Checker>, t: G
           parent: undefined,
           propertyName: "",
           siblings: Type_Types(t),
-          resolvedProperties: undefined as unknown as GoSlice<GoPtr<Symbol>>,
-          childContexts: undefined as unknown as GoMap<string, GoPtr<WideningContext>>,
-          widenedTypes: undefined as unknown as GoMap<GoPtr<Type>, GoPtr<Type>>,
+          resolvedProperties: GoNilSlice(),
+          childContexts: GoNilMap(),
+          widenedTypes: GoNilMap(),
         };
       }
       const widenedTypes = core.SameMap(Type_Types(t) ?? [], (type_: GoPtr<Type>): GoPtr<Type> => {
@@ -5944,7 +5944,7 @@ export function Checker_getWidenedTypeOfObjectLiteral(receiver: GoPtr<Checker>, 
   );
   result!.objectFlags = (result!.objectFlags | (t!.objectFlags & (ObjectFlagsJSLiteral | ObjectFlagsNonInferrableType))) as ObjectFlags;
   if (context !== undefined && context!.parent !== undefined) {
-    if (context!.widenedTypes === undefined) {
+    if (GoMapIsNil(context!.widenedTypes)) {
       context!.widenedTypes = new Map<GoPtr<Type>, GoPtr<Type>>();
     }
     context!.widenedTypes.set(t, result);
@@ -5976,12 +5976,12 @@ export function WideningContext_getChildContext(receiver: GoPtr<WideningContext>
   const result: GoPtr<WideningContext> = {
     parent: receiver,
     propertyName,
-    siblings: undefined as unknown as GoSlice<GoPtr<Type>>,
-    resolvedProperties: undefined as unknown as GoSlice<GoPtr<Symbol>>,
-    childContexts: undefined as unknown as GoMap<string, GoPtr<WideningContext>>,
-    widenedTypes: undefined as unknown as GoMap<GoPtr<Type>, GoPtr<Type>>,
+    siblings: GoNilSlice(),
+    resolvedProperties: GoNilSlice(),
+    childContexts: GoNilMap(),
+    widenedTypes: GoNilMap(),
   };
-  if (receiver!.childContexts === undefined) {
+  if (GoMapIsNil(receiver!.childContexts)) {
     receiver!.childContexts = new Map<string, GoPtr<WideningContext>>();
   }
   receiver!.childContexts.set(propertyName, result);
@@ -6384,7 +6384,7 @@ export function Checker_getPropertiesOfObjectType(receiver: GoPtr<Checker>, t: G
  */
 export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
   const d = Type_AsUnionOrIntersectionType(t);
-  if (d!.resolvedProperties === undefined) {
+  if (GoSliceIsNil(d!.resolvedProperties)) {
     const checked: orderedSet<string> = { valuesByKey: new globalThis.Map(), values: [] };
     let props: GoSlice<GoPtr<Symbol>> = [];
     for (const current of d!.types) {

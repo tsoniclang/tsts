@@ -8562,12 +8562,12 @@ export function Checker_appendSignatures(receiver: GoPtr<Checker>, signatures: G
  */
 export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Type>> {
   const d = Type_AsTypeReference(t);
-  if (d!.resolvedTypeArguments === undefined) {
+  if (GoSliceIsNil(d!.resolvedTypeArguments)) {
     const targetInterface = Type_TargetInterfaceType(t);
     if (!Checker_pushTypeResolution(receiver, t, TypeSystemPropertyNameResolvedTypeArguments)) {
       return slices.Repeat([receiver!.errorType], InterfaceType_TypeParameters(targetInterface).length);
     }
-    let typeArguments: GoSlice<GoPtr<Type>> = [];
+    let typeArguments: GoSlice<GoPtr<Type>> = GoNilSlice();
     const node = d!.node;
     if (node !== undefined) {
       switch (node.Kind) {
@@ -8585,11 +8585,11 @@ export function Checker_getTypeArguments(receiver: GoPtr<Checker>, t: GoPtr<Type
       }
     }
     if (Checker_popTypeResolution(receiver)) {
-      if (d!.resolvedTypeArguments === undefined) {
+      if (GoSliceIsNil(d!.resolvedTypeArguments)) {
         d!.resolvedTypeArguments = Checker_instantiateTypes(receiver, typeArguments, Type_Mapper(t));
       }
     } else {
-      if (d!.resolvedTypeArguments === undefined) {
+      if (GoSliceIsNil(d!.resolvedTypeArguments)) {
         d!.resolvedTypeArguments = slices.Repeat([receiver!.errorType], InterfaceType_TypeParameters(targetInterface).length);
       }
       const errorNode = node !== undefined ? node : receiver!.currentNode;

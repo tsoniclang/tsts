@@ -2,7 +2,7 @@ import type { bool, int } from "../../../go/scalars.js";
 import type { Seq } from "../../../go/iter.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { GoBigIntKey, GoMapIsNil, GoNilMap, GoNilSlice, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoMapIsNil, GoNilMap, GoNilSlice, GoSliceIsNil, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
 import { Uint64 } from "../../../go/sync/atomic.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -12093,7 +12093,7 @@ export function Checker_typeResolutionHasProperty(receiver: GoPtr<Checker>, r: G
     case TypeSystemPropertyNameDeclaredType:
       return LinkStore_Get(receiver!.typeAliasLinks, r!.target as GoPtr<Symbol>)!.v.declaredType !== undefined;
     case TypeSystemPropertyNameResolvedTypeArguments:
-      return Type_AsTypeReference(r!.target as GoPtr<Type>)!.resolvedTypeArguments !== undefined;
+      return !GoSliceIsNil(Type_AsTypeReference(r!.target as GoPtr<Type>)!.resolvedTypeArguments);
     case TypeSystemPropertyNameResolvedBaseTypes:
       return (Type_AsInterfaceType(r!.target as GoPtr<Type>)!.baseTypesResolved as bool) !== false;
     case TypeSystemPropertyNameResolvedBaseConstructorType:

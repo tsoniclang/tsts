@@ -1,6 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { GoSliceIsNil } from "../../../go/compat.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Modifiers } from "../../ast/spine.js";
@@ -593,7 +594,7 @@ export function keyBuilder_hash(receiver: GoPtr<keyBuilder>): CacheHashKey {
  * }
  */
 export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context: GoPtr<WideningContext>): GoSlice<GoPtr<Symbol>> {
-  if (context!.resolvedProperties === undefined) {
+  if (GoSliceIsNil(context!.resolvedProperties)) {
     const names = new globalThis.Map<string, GoPtr<Symbol>>();
     for (const t of Checker_getSiblingsOfContext(receiver, context)) {
       if (isObjectLiteralType(t) && (t!.objectFlags & ObjectFlagsContainsSpread) === 0) {
@@ -628,7 +629,7 @@ export function Checker_getPropertiesOfContext(receiver: GoPtr<Checker>, context
  * }
  */
 export function Checker_getSiblingsOfContext(receiver: GoPtr<Checker>, context: GoPtr<WideningContext>): GoSlice<GoPtr<Type>> {
-  if (context!.siblings === undefined) {
+  if (GoSliceIsNil(context!.siblings)) {
     const siblings: GoSlice<GoPtr<Type>> = [];
     for (const t of Checker_getSiblingsOfContext(receiver, context!.parent)) {
       if (isObjectLiteralType(t)) {
