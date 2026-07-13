@@ -22,7 +22,8 @@ import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBoo
 import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
 import type { Declaration, IdentifierNode, TypeNode } from "../../ast/generated/unions.js";
 import { NodeFlagsAmbient } from "../../ast/generated/flags.js";
-import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
+import type { NodeFlags } from "../../ast/generated/flags.js";
+import type { SymbolFlags } from "../../ast/symbolflags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsModule, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeLiteral, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
@@ -1707,8 +1708,8 @@ export interface Checker {
   moduleSymbols: GoMap<GoPtr<Node>, GoPtr<Symbol>>;
   globalThisSymbol: GoPtr<Symbol>;
   symbolTableAliasCache: GoMap<symbolTableID, GoSlice<GoPtr<Symbol>>>;
-  resolveName: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
-  resolveNameForSymbolSuggestion: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
+  resolveName: GoFunc<(location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>>;
+  resolveNameForSymbolSuggestion: GoFunc<(location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>>;
   tupleTypes: GoMap<CacheHashKey, GoPtr<Type>>;
   unionTypes: GoMap<CacheHashKey, GoPtr<Type>>;
   unionOfUnionTypes: GoMap<UnionOfUnionKey, GoPtr<Type>>;
@@ -1947,7 +1948,7 @@ export interface Checker {
   withinUnreachableCode: bool;
   reportedUnreachableNodes: Set<GoPtr<Node>>;
   nonExistentProperties: Set<NonExistentPropertyKey>;
-  deferredDiagnosticCallbacks: GoSlice<() => void> | undefined;
+  deferredDiagnosticCallbacks: GoSlice<GoFunc<() => void>>;
   typeToStringNodebuilder: GoPtr<NodeBuilder>;
   mu: Mutex;
   tracer: GoPtr<Tracer>;

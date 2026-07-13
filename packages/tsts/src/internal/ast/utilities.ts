@@ -55,7 +55,8 @@ import {
   Node_Name,
   Node_Pos,
 } from "./spine.js";
-import type { AccessorDeclaration, BinaryExpression, ClassElement, Expression, ExpressionWithTypeArgumentsNode, GetAccessorDeclaration, JsxChild, LiteralLikeNode, NodeFactory, ParameterDeclarationNode, SetAccessorDeclaration, Statement, TokenNode, TypeNode } from "./generated/index.js";
+import type { AccessorDeclaration, BinaryExpression, ClassElement, ExpressionWithTypeArgumentsNode, GetAccessorDeclaration, JsxChild, LiteralLikeNode, NodeFactory, ParameterDeclarationNode, SetAccessorDeclaration, Statement, TokenNode, TypeNode } from "./generated/index.js";
+import type { Expression } from "./generated/unions.js";
 import type { ClassLikeDeclaration } from "./generated/unions.js";
 import {
   AsArrayTypeNode,
@@ -7035,18 +7036,18 @@ export function findImportOrRequire(text: string, start: int): [index: int, size
  * 	return false
  * }
  */
-export function ForEachDynamicImportOrRequireCall(file: GoPtr<SourceFile>, includeTypeSpaceImports: bool, requireStringLiteralLikeArgument: bool, cb: (node: GoPtr<Node>, argument: GoPtr<Expression>) => bool): bool {
+export function ForEachDynamicImportOrRequireCall(file: GoPtr<SourceFile>, includeTypeSpaceImports: bool, requireStringLiteralLikeArgument: bool, cb: GoFunc<(node: GoPtr<Node>, argument: GoPtr<Expression>) => bool>): bool {
   const isJavaScriptFile: bool = IsInJSFile(NodeDefault_AsNode(file));
   const text: string = SourceFile_Text(file);
   const loop = (lastIndex: int, size: int): bool => {
     if (lastIndex < 0) return false as bool;
     const node: GoPtr<Node> = GetNodeAtPosition(file, lastIndex, (isJavaScriptFile && includeTypeSpaceImports) as bool);
     if (isJavaScriptFile && IsRequireCall(node, requireStringLiteralLikeArgument)) {
-      if (cb(node, Node_Arguments(node)![0])) return true as bool;
+      if (cb!(node, Node_Arguments(node)![0])) return true as bool;
     } else if (IsImportCall(node) && (Node_Arguments(node)?.length ?? 0) > 0 && (!requireStringLiteralLikeArgument || IsStringLiteralLike(Node_Arguments(node)![0]))) {
-      if (cb(node, Node_Arguments(node)![0])) return true as bool;
+      if (cb!(node, Node_Arguments(node)![0])) return true as bool;
     } else if (includeTypeSpaceImports && IsLiteralImportTypeNode(node)) {
-      if (cb(node, AsLiteralTypeNode(AsImportTypeNode(node)!.Argument)!.Literal)) return true as bool;
+      if (cb!(node, AsLiteralTypeNode(AsImportTypeNode(node)!.Argument)!.Literal)) return true as bool;
     }
     // skip past import/require
     const [nextIndex, nextSize] = findImportOrRequire(text, (lastIndex + size) as int);

@@ -9,7 +9,7 @@ import type { FS as FS_d7943d56 } from "../../vfs/vfs.js";
 import { host_DefaultLibraryPath, host_FS, host_GetCurrentDirectory, host_GetResolvedProjectReference, host_GetSourceFile } from "./host.js";
 import type { host } from "./host.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::type::compilerHost","kind":"type","status":"implemented","sigHash":"982024fc2e1946fec6a927ad0cf4e28a846e3a63f8797cb85d3f4f9b52080235"}
  *
@@ -21,7 +21,7 @@ import type { GoInterface } from "../../../go/compat.js";
  */
 export interface compilerHost {
   host: GoPtr<host>;
-  trace: (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
+  trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
 }
 
 /**
@@ -88,7 +88,7 @@ export function compilerHost_GetCurrentDirectory(receiver: GoPtr<compilerHost>):
  * }
  */
 export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
-  receiver!.trace(msg, ...args);
+  receiver!.trace!(msg, ...args);
 }
 
 /**

@@ -3227,7 +3227,7 @@ export function NodeBuilderImpl_setTextRange(receiver: GoPtr<NodeBuilderImpl>, r
  * }
  */
 export function NodeBuilderImpl_typeParameterShadowsOtherTypeParameterInScope(receiver: GoPtr<NodeBuilderImpl>, name: string, typeParameter: GoPtr<Type>): bool {
-  const result = receiver!.ch!.resolveName(receiver!.ctx!.enclosingDeclaration, name, SymbolFlagsType as SymbolFlags, undefined, false as bool, false as bool);
+  const result = receiver!.ch!.resolveName!(receiver!.ctx!.enclosingDeclaration, name, SymbolFlagsType as SymbolFlags, undefined, false as bool, false as bool);
   if (result !== undefined && (result!.Flags & SymbolFlagsTypeParameter) !== 0) {
     return result !== typeParameter!.symbol;
   }
@@ -5107,11 +5107,11 @@ export function NodeBuilderImpl_shouldUsePlaceholderForProperty(receiver: GoPtr<
  */
 export function NodeBuilderImpl_trackComputedName(receiver: GoPtr<NodeBuilderImpl>, accessExpression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): void {
   const firstIdentifier = GetFirstIdentifier(accessExpression);
-  const name = receiver!.ch!.resolveName(enclosingDeclaration, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
+  const name = receiver!.ch!.resolveName!(enclosingDeclaration, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
   if (name !== undefined) {
     receiver!.ctx!.tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
   } else {
-    const fallback = receiver!.ch!.resolveName(firstIdentifier, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
+    const fallback = receiver!.ch!.resolveName!(firstIdentifier, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
     if (fallback !== undefined) {
       receiver!.ctx!.tracker!.TrackSymbol(fallback, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
     }

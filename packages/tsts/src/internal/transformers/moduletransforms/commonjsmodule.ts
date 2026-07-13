@@ -56,7 +56,7 @@ import type { externalModuleInfo } from "./externalmoduleinfo.js";
 import { getExternalModuleNameLiteral, isDeclarationNameOfEnumOrNamespace, isFileLevelReservedGeneratedIdentifier, isSimpleInlineableExpression, rewriteModuleSpecifier } from "./utilities.js";
 import { OrderedSet_Values } from "../../collections/ordered_set.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 
 const moduleExportNamePointerKey = GoPointerKey<ModuleExportName>();
 /**
@@ -88,7 +88,7 @@ export interface CommonJSModuleTransformer {
   assignmentPatternVisitor: GoPtr<NodeVisitor>;
   compilerOptions: GoPtr<CompilerOptions>;
   resolver: GoInterface<ReferenceResolver>;
-  getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
+  getEmitModuleFormatOfFile: GoFunc<(file: GoInterface<HasFileName>) => ModuleKind>;
   moduleKind: ModuleKind;
   languageVersion: ScriptTarget;
   currentSourceFile: GoPtr<SourceFile>;
@@ -899,7 +899,7 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   let result = AsSourceFile(NodeFactory_UpdateSourceFile(f, node, statementList, node!.EndOfFileToken));
   EmitContext_AddEmitHelper(emitContext, result as GoPtr<Node>, ...EmitContext_ReadEmitHelpers(emitContext));
 
-  const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(emitContext, result, receiver!.compilerOptions, receiver!.getEmitModuleFormatOfFile({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }), false /*hasExportStarsToExportValues*/, false /*hasImportStar*/, false /*hasImportDefault*/);
+  const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(emitContext, result, receiver!.compilerOptions, receiver!.getEmitModuleFormatOfFile!({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }), false /*hasExportStarsToExportValues*/, false /*hasImportStar*/, false /*hasImportDefault*/);
   if (externalHelpersImportDeclaration !== undefined) {
     const [prologue2, rest2_0] = NodeFactory_SplitStandardPrologue(pf, result!.Statements!.Nodes);
     const [custom2, rest2] = NodeFactory_SplitCustomPrologue(pf, rest2_0);
@@ -3956,7 +3956,7 @@ export function CommonJSModuleTransformer_visitCallExpression(receiver: GoPtr<Co
  * }
  */
 export function CommonJSModuleTransformer_shouldTransformImportCall(receiver: GoPtr<CommonJSModuleTransformer>): bool {
-  return ShouldTransformImportCall(SourceFile_FileName(receiver!.currentSourceFile), receiver!.compilerOptions, receiver!.getEmitModuleFormatOfFile({ FileName: () => SourceFile_FileName(receiver!.currentSourceFile), Path: () => SourceFile_Path(receiver!.currentSourceFile) }));
+  return ShouldTransformImportCall(SourceFile_FileName(receiver!.currentSourceFile), receiver!.compilerOptions, receiver!.getEmitModuleFormatOfFile!({ FileName: () => SourceFile_FileName(receiver!.currentSourceFile), Path: () => SourceFile_Path(receiver!.currentSourceFile) }));
 }
 
 /**

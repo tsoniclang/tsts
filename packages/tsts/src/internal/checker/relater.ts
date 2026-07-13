@@ -405,7 +405,7 @@ export interface ErrorOutputContainer {
  * Go source:
  * ErrorReporter func(message *diagnostics.Message, args ...any)
  */
-export type ErrorReporter = (message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
+export type ErrorReporter = GoFunc<(message: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::RecursionId","kind":"type","status":"implemented","sigHash":"368c8aeb348677cd34967d0743746c23a0620b09f747f077a5fe903038586520"}
@@ -945,7 +945,7 @@ export function Checker_isEnumTypeRelatedTo(receiver: GoPtr<Checker>, source: Go
       const targetProperty = Checker_getPropertyOfType(receiver, targetEnumType, sourceProperty!.Name);
       if (targetProperty === undefined || (targetProperty!.Flags & SymbolFlagsEnumMember) === 0) {
         if (errorReporter !== undefined) {
-          errorReporter(Property_0_is_missing_in_type_1, Checker_symbolToString(receiver, sourceProperty), Checker_typeToStringEx(receiver, Checker_getDeclaredTypeOfSymbol(receiver, targetSymbol), undefined, TypeFormatFlagsUseFullyQualifiedType, undefined));
+          errorReporter!(Property_0_is_missing_in_type_1, Checker_symbolToString(receiver, sourceProperty), Checker_typeToStringEx(receiver, Checker_getDeclaredTypeOfSymbol(receiver, targetSymbol), undefined, TypeFormatFlagsUseFullyQualifiedType, undefined));
         }
         receiver!.enumRelation.set(key, RelationComparisonResultFailed);
         return false as bool;
@@ -955,7 +955,7 @@ export function Checker_isEnumTypeRelatedTo(receiver: GoPtr<Checker>, source: Go
       if (sourceValue.Value !== targetValue.Value) {
         if (sourceValue.Value !== undefined && targetValue.Value !== undefined) {
           if (errorReporter !== undefined) {
-            errorReporter(Each_declaration_of_0_1_differs_in_its_value_where_2_was_expected_but_3_was_given, Checker_symbolToString(receiver, targetSymbol), Checker_symbolToString(receiver, targetProperty), Checker_valueToString(receiver, targetValue.Value), Checker_valueToString(receiver, sourceValue.Value));
+            errorReporter!(Each_declaration_of_0_1_differs_in_its_value_where_2_was_expected_but_3_was_given, Checker_symbolToString(receiver, targetSymbol), Checker_symbolToString(receiver, targetProperty), Checker_valueToString(receiver, targetValue.Value), Checker_valueToString(receiver, sourceValue.Value));
           }
           receiver!.enumRelation.set(key, RelationComparisonResultFailed);
           return false as bool;
@@ -965,7 +965,7 @@ export function Checker_isEnumTypeRelatedTo(receiver: GoPtr<Checker>, source: Go
         if (sourceIsString || targetIsString) {
           if (errorReporter !== undefined) {
             const knownStringValue = sourceValue.Value !== undefined ? sourceValue.Value : targetValue.Value;
-            errorReporter(One_value_of_0_1_is_the_string_2_and_the_other_is_assumed_to_be_an_unknown_numeric_value, Checker_symbolToString(receiver, targetSymbol), Checker_symbolToString(receiver, targetProperty), Checker_valueToString(receiver, knownStringValue));
+            errorReporter!(One_value_of_0_1_is_the_string_2_and_the_other_is_assumed_to_be_an_unknown_numeric_value, Checker_symbolToString(receiver, targetSymbol), Checker_symbolToString(receiver, targetProperty), Checker_valueToString(receiver, knownStringValue));
           }
           receiver!.enumRelation.set(key, RelationComparisonResultFailed);
           return false as bool;
@@ -3543,7 +3543,7 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
   }
   if (sourceHasMoreParameters) {
     if (reportErrors && (checkMode & SignatureCheckModeStrictArity) === 0) {
-      errorReporter(Target_signature_provides_too_few_arguments_Expected_0_or_more_but_got_1, Checker_getMinArgumentCount(receiver, source), targetCount);
+      errorReporter!(Target_signature_provides_too_few_arguments_Expected_0_or_more_but_got_1, Checker_getMinArgumentCount(receiver, source), targetCount);
     }
     return TernaryFalse;
   }
@@ -3578,7 +3578,7 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
       }
       if (related === TernaryFalse) {
         if (reportErrors) {
-          errorReporter(The_this_types_of_each_signature_are_incompatible);
+          errorReporter!(The_this_types_of_each_signature_are_incompatible);
         }
         return TernaryFalse;
       }
@@ -3641,7 +3641,7 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
       }
       if (related === TernaryFalse) {
         if (reportErrors) {
-          errorReporter(Types_of_parameters_0_and_1_are_incompatible, Checker_getParameterNameAtPosition(receiver, src, i), Checker_getParameterNameAtPosition(receiver, tgt, i));
+          errorReporter!(Types_of_parameters_0_and_1_are_incompatible, Checker_getParameterNameAtPosition(receiver, src, i), Checker_getParameterNameAtPosition(receiver, tgt, i));
         }
         return TernaryFalse;
       }
@@ -3661,7 +3661,7 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
         result = (result & Checker_compareTypePredicateRelatedTo(receiver, sourceTypePredicate, targetTypePredicate, reportErrors, errorReporter, compareTypes)) as Ternary;
       } else if (targetTypePredicate!.kind === TypePredicateKindIdentifier || targetTypePredicate!.kind === TypePredicateKindThis) {
         if (reportErrors) {
-          errorReporter(Signature_0_must_be_a_type_predicate, Checker_signatureToString(receiver, src));
+          errorReporter!(Signature_0_must_be_a_type_predicate, Checker_signatureToString(receiver, src));
         }
         return TernaryFalse;
       }
@@ -3685,7 +3685,7 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
             ? Construct_signature_return_types_0_and_1_are_incompatible
             : Call_signature_return_types_0_and_1_are_incompatible;
         }
-        errorReporter(message, Checker_typeToString(receiver, sourceReturnType, undefined), Checker_typeToString(receiver, targetReturnType, undefined));
+        errorReporter!(message, Checker_typeToString(receiver, sourceReturnType, undefined), Checker_typeToString(receiver, targetReturnType, undefined));
       }
     }
   }
@@ -3731,16 +3731,16 @@ export function Checker_compareSignaturesRelated(receiver: GoPtr<Checker>, sourc
 export function Checker_compareTypePredicateRelatedTo(receiver: GoPtr<Checker>, source: GoPtr<TypePredicate>, target: GoPtr<TypePredicate>, reportErrors: bool, errorReporter: ErrorReporter, compareTypes: TypeComparer): Ternary {
   if (source!.kind !== target!.kind) {
     if (reportErrors) {
-      errorReporter(A_this_based_type_guard_is_not_compatible_with_a_parameter_based_type_guard);
-      errorReporter(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
+      errorReporter!(A_this_based_type_guard_is_not_compatible_with_a_parameter_based_type_guard);
+      errorReporter!(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
     }
     return TernaryFalse;
   }
   if (source!.kind === TypePredicateKindIdentifier || source!.kind === TypePredicateKindAssertsIdentifier) {
     if (source!.parameterIndex !== target!.parameterIndex) {
       if (reportErrors) {
-        errorReporter(Parameter_0_is_not_in_the_same_position_as_parameter_1, source!.parameterName, target!.parameterName);
-        errorReporter(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
+        errorReporter!(Parameter_0_is_not_in_the_same_position_as_parameter_1, source!.parameterName, target!.parameterName);
+        errorReporter!(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
       }
       return TernaryFalse;
     }
@@ -3754,7 +3754,7 @@ export function Checker_compareTypePredicateRelatedTo(receiver: GoPtr<Checker>, 
     related = TernaryFalse;
   }
   if (related === TernaryFalse && reportErrors) {
-    errorReporter(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
+    errorReporter!(Type_predicate_0_is_not_assignable_to_1, Checker_typePredicateToString(receiver, source), Checker_typePredicateToString(receiver, target));
   }
   return related;
 }

@@ -604,7 +604,7 @@ export function findConfigFile(searchPath: string, fileExists: GoFunc<(arg0: str
  * 	return tsc.GetTraceWithWriterFromSys(sys.Writer(), locale, testing)
  * }
  */
-export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testing: GoInterface<CommandLineTesting>): (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void {
+export function getTraceFromSys(sys: GoInterface<System>, locale: Locale, testing: GoInterface<CommandLineTesting>): GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void> {
   return GetTraceWithWriterFromSys(sys!.Writer(), locale, testing);
 }
 

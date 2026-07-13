@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
+import type { GoFunc, GoInterface, GoPtr, GoRef, GoSlice, GoMap } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
@@ -78,7 +78,6 @@ import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { Number_Abs, Number_IsInf, Number_IsNaN } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
-import type { GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3"}
  *
@@ -166,9 +165,9 @@ function GoZeroAliasSymbolLinks(): AliasSymbolLinks {
 export interface EmitResolver {
   checker: GoPtr<Checker>;
   checkerMu: GoPtr<Mutex>;
-  isValueAliasDeclaration: (node: GoPtr<Node>) => bool;
-  aliasMarkingVisitor: (node: GoPtr<Node>) => bool;
-  referenceResolver: ReferenceResolver | undefined;
+  isValueAliasDeclaration: GoFunc<(node: GoPtr<Node>) => bool>;
+  aliasMarkingVisitor: GoFunc<(node: GoPtr<Node>) => bool>;
+  referenceResolver: GoInterface<ReferenceResolver>;
   jsxLinks: LinkStore<GoPtr<Node>, JSXLinks>;
   declarationLinks: LinkStore<GoPtr<Node>, DeclarationLinks>;
   declarationFileLinks: LinkStore<GoPtr<Node>, DeclarationFileLinks>;
@@ -817,7 +816,7 @@ export function EmitResolver_aliasMarkingVisitorWorker(receiver: GoPtr<EmitResol
 export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): void {
   let exportSymbol: GoPtr<Symbol> = undefined;
   if (node!.Kind !== KindStringLiteral && node!.Parent !== undefined && (IsExportAssignment(node!.Parent) || isCommonJSModuleExports(node!.Parent))) {
-    exportSymbol = receiver!.checker!.resolveName(node, Node_Text(node) ?? "", (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, false as bool, false as bool);
+    exportSymbol = receiver!.checker!.resolveName!(node, Node_Text(node) ?? "", (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, false as bool, false as bool);
   } else if (node!.Parent!.Kind === KindExportSpecifier) {
     exportSymbol = Checker_getTargetOfExportSpecifier(receiver!.checker, node!.Parent, (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, false as bool);
   }
@@ -835,7 +834,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
         const internalModuleReference = AsImportEqualsDeclaration(declaration)!.ModuleReference;
         const firstIdentifier = GetFirstIdentifier(internalModuleReference);
-        const importSymbol = receiver!.checker!.resolveName(declaration, Node_Text(firstIdentifier) ?? "", (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, false as bool, false as bool);
+        const importSymbol = receiver!.checker!.resolveName!(declaration, Node_Text(firstIdentifier) ?? "", (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, false as bool, false as bool);
         nextSymbol = importSymbol;
       }
     }
@@ -957,7 +956,7 @@ export function EmitResolver_isEntityNameVisible(receiver: GoPtr<EmitResolver>, 
 
   const meaning = getMeaningOfEntityNameReference(entityName);
   const firstIdentifier = GetFirstIdentifier(entityName);
-  const symbol_ = receiver!.checker!.resolveName(enclosingDeclaration, Node_Text(firstIdentifier) ?? "", meaning, undefined, false as bool, false as bool);
+  const symbol_ = receiver!.checker!.resolveName!(enclosingDeclaration, Node_Text(firstIdentifier) ?? "", meaning, undefined, false as bool, false as bool);
 
   if (symbol_ !== undefined && (symbol_!.Flags & SymbolFlagsTypeParameter) !== 0 && (meaning & SymbolFlagsType) !== 0) {
     return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
@@ -2503,7 +2502,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
             }
 
             const firstIdentifier = GetFirstIdentifier(Node_Expression(Node_Name(component)));
-            const name = receiver!.checker!.resolveName(firstIdentifier, Node_Text(firstIdentifier), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true, false);
+            const name = receiver!.checker!.resolveName!(firstIdentifier, Node_Text(firstIdentifier), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true, false);
             if (name !== undefined) {
               tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
             }

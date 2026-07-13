@@ -64,7 +64,7 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 import { createExternalHelpersImportDeclarationIfNeeded } from "./externalmoduleinfo.js";
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e"}
  *
@@ -83,7 +83,7 @@ export interface ESModuleTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
   resolver: GoInterface<ReferenceResolver>;
-  getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
+  getEmitModuleFormatOfFile: GoFunc<(file: GoInterface<HasFileName>) => ModuleKind>;
   currentSourceFile: GoPtr<SourceFile>;
   importRequireStatements: GoPtr<importRequireStatements>;
   helperNameSubstitutions: GoMap<string, GoPtr<IdentifierNode>>;
@@ -251,7 +251,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
 
   const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(
     emitContext, result, receiver!.compilerOptions,
-    receiver!.getEmitModuleFormatOfFile({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }),
+    receiver!.getEmitModuleFormatOfFile!({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }),
     false, /*hasExportStarsToExportValues*/
     false, /*hasImportStar*/
     false, /*hasImportDefault*/

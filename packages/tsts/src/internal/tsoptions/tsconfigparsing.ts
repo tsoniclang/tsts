@@ -738,7 +738,7 @@ export function NewTsconfigSourceFileFromFilePath(configFileName: string, config
  */
 export interface jsonConversionNotifier {
   rootOptions: GoPtr<CommandLineOption>;
-  onPropertySet: (keyText: string, value: unknown, propertyAssignment: GoPtr<PropertyAssignment>, parentOption: GoPtr<CommandLineOption>, option: GoPtr<CommandLineOption>) => [unknown, GoSlice<GoPtr<Diagnostic>>];
+  onPropertySet: GoFunc<(keyText: string, value: GoInterface<unknown>, propertyAssignment: GoPtr<PropertyAssignment>, parentOption: GoPtr<CommandLineOption>, option: GoPtr<CommandLineOption>) => [GoInterface<unknown>, GoSlice<GoPtr<Diagnostic>>]>;
 }
 
 /**
@@ -1766,7 +1766,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
       }
       // Notify key value set, if user asked for it
       if (jsonConversionNotifier !== undefined) {
-        const [, notifyErr] = jsonConversionNotifier!.onPropertySet(keyText, value, propAssign, objectOption, option);
+        const [, notifyErr] = jsonConversionNotifier!.onPropertySet!(keyText, value, propAssign, objectOption, option);
         errors.push(...notifyErr);
       }
     }

@@ -13,7 +13,7 @@ import { NewESModuleTransformer } from "./esmodule.js";
 import { NewCommonJSModuleTransformer } from "./commonjsmodule.js";
 import { Transformer_TransformSourceFile } from "../transformer.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/impliedmodule.go::type::ImpliedModuleTransformer","kind":"type","status":"implemented","sigHash":"bba3453ca65bca4bf252bde994f7397978a8d160d66c5f665c723414bb0db34b"}
  *
@@ -31,7 +31,7 @@ export interface ImpliedModuleTransformer {
   __tsgoEmbedded0: Transformer;
   opts: GoPtr<TransformOptions>;
   resolver: GoInterface<ReferenceResolver>;
-  getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
+  getEmitModuleFormatOfFile: GoFunc<(file: GoInterface<HasFileName>) => ModuleKind>;
   cjsTransformer: GoPtr<Transformer>;
   esmTransformer: GoPtr<Transformer>;
 }
@@ -110,7 +110,7 @@ export function ImpliedModuleTransformer_visitSourceFile(receiver: GoPtr<Implied
     return NodeDefault_AsNode(node);
   }
 
-  const format = receiver!.getEmitModuleFormatOfFile(node as unknown as HasFileName);
+  const format = receiver!.getEmitModuleFormatOfFile!(node);
 
   let transformer: GoPtr<Transformer>;
   if (format >= ModuleKindES2015) {

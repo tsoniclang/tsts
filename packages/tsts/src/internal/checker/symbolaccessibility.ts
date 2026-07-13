@@ -1,5 +1,5 @@
 import type { bool, int } from "../../go/scalars.js";
-import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { GoBooleanKey, GoEqualStrict, GoNilMap, GoNilSlice, GoNumberKey, GoPointerKey, GoStructField, GoStructKey, GoValueRef, GoZeroPointer, GoZeroRef, NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
@@ -1651,12 +1651,12 @@ export function isPropertyOrMethodDeclarationSymbol(symbol_: GoPtr<Symbol>): boo
  * 	return callback(c.globals, symbolTableIDFromGlobals(), false, true, nil)
  * }
  */
-export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosingDeclaration: GoPtr<Node>, callback: (symbolTable: GoPtr<SymbolTable>, tableId: symbolTableID, ignoreQualification: bool, isLocalNameLookup: bool, scopeNode: GoPtr<Node>) => bool): bool {
+export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosingDeclaration: GoPtr<Node>, callback: GoFunc<(symbolTable: GoPtr<SymbolTable>, tableId: symbolTableID, ignoreQualification: bool, isLocalNameLookup: bool, scopeNode: GoPtr<Node>) => bool>): bool {
   let location: GoPtr<Node> = enclosingDeclaration;
   while (location !== undefined) {
     // Locals of a source file are not in scope (because they get merged into the global symbol table)
     if (canHaveLocals(location) && Node_Locals(location) !== undefined && !IsGlobalSourceFile(location)) {
-      if (callback(Node_Locals(location)!, symbolTableIDFromLocals(location), false, true, location)) {
+      if (callback!(Node_Locals(location)!, symbolTableIDFromLocals(location), false, true, location)) {
         return true;
       }
     }
@@ -1667,7 +1667,7 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
         break;
       }
       const sym = Checker_getSymbolOfDeclaration(receiver, GetReparsedNodeForNode(location));
-      if (callback(sym!.Exports!, symbolTableIDFromExports(sym), false, true, location)) {
+      if (callback!(sym!.Exports!, symbolTableIDFromExports(sym), false, true, location)) {
         return true;
       }
       break;
@@ -1686,7 +1686,7 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
           table.set(key, memberSymbol);
         }
       }
-      if (table !== undefined && callback(table, symbolTableIDFromMembers(sym), false, false, location)) {
+      if (table !== undefined && callback!(table, symbolTableIDFromMembers(sym), false, false, location)) {
         return true;
       }
       break;
@@ -1695,7 +1695,7 @@ export function Checker_someSymbolTableInScope(receiver: GoPtr<Checker>, enclosi
     location = location!.Parent;
   }
 
-  return callback(receiver!.globals, symbolTableIDFromGlobals(), false, true, undefined);
+  return callback!(receiver!.globals, symbolTableIDFromGlobals(), false, true, undefined);
 }
 
 /**

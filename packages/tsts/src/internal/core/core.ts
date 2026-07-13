@@ -515,10 +515,10 @@ export function Every<T>(slice: GoSlice<T> | undefined, f: GoFunc<(arg0: T) => b
  * 	}
  * }
  */
-export function Or<T>(...funcs: Array<(arg0: T) => bool>): GoFunc<(arg0: T) => bool> {
+export function Or<T>(...funcs: Array<GoFunc<(arg0: T) => bool>>): GoFunc<(arg0: T) => bool> {
   return (input: T): bool => {
     for (const f of funcs) {
-      if (f(input)) {
+      if (f!(input)) {
         return true;
       }
     }

@@ -922,7 +922,7 @@ export interface JsxElaborationElement {
  * 	}
  * }
  */
-export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]): Seq<JsxElaborationElement> {
+export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: GoFunc<() => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]>): Seq<JsxElaborationElement> {
   return (yieldValue) => {
     let memberOffset = 0;
     const children = Node_Children(node)!.Nodes;
@@ -972,7 +972,7 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
  * 	panic("Unhandled case in getElaborationElementForJsxChild")
  * }
  */
-export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker>, child: GoPtr<Node>, nameType: GoPtr<Type>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]): JsxElaborationElement {
+export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker>, child: GoPtr<Node>, nameType: GoPtr<Type>, getInvalidTextDiagnostic: GoFunc<() => [GoPtr<Message>, GoSlice<GoInterface<unknown>>]>): JsxElaborationElement {
   switch (child!.Kind) {
     case KindJsxExpression:
       // child is of the type of the expression
@@ -988,7 +988,7 @@ export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker
         innerExpression: undefined,
         nameType,
         createDiagnostic: (prop: GoPtr<Node>): GoPtr<Diagnostic> => {
-          const [errorMessage, errorArgs] = getInvalidTextDiagnostic();
+          const [errorMessage, errorArgs] = getInvalidTextDiagnostic!();
           return NewDiagnosticForNode(prop, errorMessage, ...errorArgs);
         },
       };
@@ -1235,7 +1235,7 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
     if (!shouldModuleRefErr) {
       flags = flags & ~SymbolFlagsEnum;
     }
-    jsxFactorySymbol = receiver!.resolveName(node, jsxFragmentFactoryName, flags as SymbolFlags, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, true as bool, false as bool);
+    jsxFactorySymbol = receiver!.resolveName!(node, jsxFragmentFactoryName, flags as SymbolFlags, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, true as bool, false as bool);
   }
   if (jsxFactorySymbol === undefined) {
     links!.jsxFragmentType = receiver!.errorType;
@@ -2871,7 +2871,7 @@ export function Checker_getJsxNamespaceAt(receiver: GoPtr<Checker>, location: Go
     let resolvedNamespace = Checker_getJsxNamespaceContainerForImplicitImport(receiver, location);
     if (resolvedNamespace === undefined || resolvedNamespace === receiver!.unknownSymbol) {
       const namespaceName = Checker_getJsxNamespace(receiver, location);
-      resolvedNamespace = receiver!.resolveName(location, namespaceName, SymbolFlagsNamespace as SymbolFlags, undefined, false as bool, false as bool);
+      resolvedNamespace = receiver!.resolveName!(location, namespaceName, SymbolFlagsNamespace as SymbolFlags, undefined, false as bool, false as bool);
     }
     if (resolvedNamespace !== undefined) {
       const candidate = Checker_resolveSymbol(receiver, Checker_getSymbol(receiver, Checker_getExportsOfSymbol(receiver, Checker_resolveSymbol(receiver, resolvedNamespace)), JsxNames.JSX, SymbolFlagsNamespace));

@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoFunc, GoPtr, GoSlice } from "../../go/compat.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import {
   CompilerOptions_GetEmitModuleDetectionKind,
@@ -20,7 +20,8 @@ import {
   IsDeclarationFileName,
 } from "../tspath/extension.js";
 import type { Path } from "../tspath/path.js";
-import type { Node, SourceFile, SourceFileMetaData } from "./ast.js";
+import type { SourceFile, SourceFileMetaData } from "./ast.js";
+import type { Node } from "./spine.js";
 import { AsImportEqualsDeclaration } from "./generated/casts.js";
 import {
   IsExportAssignment,
@@ -298,10 +299,10 @@ export function getImportMetaIfNecessary(sourceFile: GoPtr<SourceFile>): GoPtr<N
  * 	return result
  * }
  */
-export function findChildNode(root: GoPtr<Node>, check: (arg0: GoPtr<Node>) => bool): GoPtr<Node> {
+export function findChildNode(root: GoPtr<Node>, check: GoFunc<(arg0: GoPtr<Node>) => bool>): GoPtr<Node> {
   const container = { result: undefined as GoPtr<Node> };
   const visit: Visitor = (node: GoPtr<Node>): bool => {
-    if (check(node)) {
+    if (check!(node)) {
       container.result = node;
       return true;
     }

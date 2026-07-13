@@ -121,7 +121,7 @@ export function parallelWorkGroup_RunAndWait(receiver: GoPtr<parallelWorkGroup>)
 export interface singleThreadedWorkGroup {
   done: Bool;
   fnsMu: Mutex;
-  fns: GoSlice<() => void>;
+  fns: GoSlice<GoFunc<() => void>>;
 }
 
 /**

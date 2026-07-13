@@ -179,7 +179,7 @@ export function GetComputedCommonSourceDirectory(emittedFiles: GoSlice<string>, 
  * 	return commonSourceDirectory
  * }
  */
-export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: GoFunc<() => GoSlice<string>>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: ((sourceFiles: GoSlice<string>, rootDirectory: string) => bool) | undefined): string {
+export function GetCommonSourceDirectory(options: GoPtr<CompilerOptions>, files: GoFunc<() => GoSlice<string>>, currentDirectory: string, useCaseSensitiveFileNames: bool, checkSourceFilesBelongToPath: GoFunc<(sourceFiles: GoSlice<string>, rootDirectory: string) => bool>): string {
   let commonSourceDirectory = "";
   if (options!.RootDir !== "") {
     // If a rootDir is specified use it as the commonSourceDirectory

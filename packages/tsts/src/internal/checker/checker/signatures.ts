@@ -5,7 +5,8 @@ import { recordExtensionCheckedCallMapping } from "../../../extensions/checker-i
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import type { Number } from "../../jsnum/jsnum.js";
-import type { Node, SourceFile } from "../../ast/ast.js";
+import type { SourceFile } from "../../ast/ast.js";
+import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { ParameterDeclarationNode } from "../../ast/ast_generated.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -1384,11 +1385,11 @@ export function Checker_checkTypeParameterListsIdentical(receiver: GoPtr<Checker
  * 	return true
  * }
  */
-export function Checker_areTypeParametersIdentical(receiver: GoPtr<Checker>, declarations: GoSlice<GoPtr<Node>>, targetParameters: GoSlice<GoPtr<Type>>, getTypeParameterDeclarations: (node: GoPtr<Node>) => GoSlice<GoPtr<Node>>): bool {
+export function Checker_areTypeParametersIdentical(receiver: GoPtr<Checker>, declarations: GoSlice<GoPtr<Node>>, targetParameters: GoSlice<GoPtr<Type>>, getTypeParameterDeclarations: GoFunc<(node: GoPtr<Node>) => GoSlice<GoPtr<Node>>>): bool {
   const maxTypeArgumentCount = targetParameters.length;
   const minTypeArgumentCount = Checker_getMinTypeArgumentCount(receiver, targetParameters);
   for (const declaration of declarations) {
-    const sourceParameters = getTypeParameterDeclarations(declaration);
+    const sourceParameters = getTypeParameterDeclarations!(declaration);
     if (sourceParameters.length < minTypeArgumentCount || sourceParameters.length > maxTypeArgumentCount) {
       return false;
     }
@@ -2471,7 +2472,7 @@ export function Checker_isSymbolOrSymbolForCall(receiver: GoPtr<Checker>, node: 
   if (globalESSymbol === undefined) {
     return false;
   }
-  return globalESSymbol === receiver!.resolveName(left, "Symbol", SymbolFlagsValue, undefined, false, false);
+  return globalESSymbol === receiver!.resolveName!(left, "Symbol", SymbolFlagsValue, undefined, false, false);
 }
 
 /**
@@ -7147,7 +7148,7 @@ export function Checker_getSignatureFromDeclaration(receiver: GoPtr<Checker>, de
     let paramSymbol = Node_Symbol(param);
     const typeNode = Node_Type(param);
     if (paramSymbol !== undefined && (paramSymbol!.Flags & SymbolFlagsProperty) !== 0 && !IsBindingPattern(Node_Name(param))) {
-      const resolvedSymbol = receiver!.resolveName(param, paramSymbol!.Name, SymbolFlagsValue, undefined, false, false);
+      const resolvedSymbol = receiver!.resolveName!(param, paramSymbol!.Name, SymbolFlagsValue, undefined, false, false);
       paramSymbol = resolvedSymbol;
     }
     if (i === 0 && paramSymbol!.Name === InternalSymbolNameThis) {

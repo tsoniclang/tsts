@@ -164,7 +164,7 @@ export interface FSMock {
   ReadFileFunc: GoFunc<(path: string) => [string, bool]>;
   RealpathFunc: GoFunc<(path: string) => string>;
   RemoveFunc: GoFunc<(path: string) => GoError>;
-  StatFunc: (path: string) => GoInterface<FileInfo>;
+  StatFunc: GoFunc<(path: string) => GoInterface<FileInfo>>;
   UseCaseSensitiveFileNamesFunc: GoFunc<() => bool>;
   WalkDirFunc: GoFunc<(root: string, walkFn: WalkDirFunc) => GoError>;
   WriteFileFunc: GoFunc<(path: string, data: string) => GoError>;

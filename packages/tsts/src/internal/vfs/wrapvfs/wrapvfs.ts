@@ -33,7 +33,7 @@ export interface Replacements {
   Chtimes: GoFunc<(arg0: string, arg1: Time, arg2: Time) => GoError>;
   DirectoryExists: GoFunc<(arg0: string) => bool>;
   GetAccessibleEntries: GoFunc<(arg0: string) => Entries>;
-  Stat: (arg0: string) => GoInterface<FileInfo>;
+  Stat: GoFunc<(arg0: string) => GoInterface<FileInfo>>;
   WalkDir: GoFunc<(arg0: string, arg1: WalkDirFunc) => GoError>;
   Realpath: GoFunc<(arg0: string) => string>;
 }

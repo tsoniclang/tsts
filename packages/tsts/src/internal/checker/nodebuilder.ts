@@ -746,7 +746,7 @@ export function NewNodeBuilderEx(ch: GoPtr<Checker>, e: GoPtr<EmitContext_3f6f58
  * 	return c.typeToStringNodebuilder, releaseNodes
  * }
  */
-export function Checker_getNodeBuilder(receiver: GoPtr<Checker>): [GoPtr<NodeBuilder>, () => void] {
+export function Checker_getNodeBuilder(receiver: GoPtr<Checker>): [GoPtr<NodeBuilder>, GoFunc<() => void>] {
   const releaseNodes = (): void => {
     NodeFactory_ReleaseArenas(NodeBuilder_EmitContext(receiver!.typeToStringNodebuilder)!.Factory!.AsNodeFactory()); // Allow any allocated nodes to be freed if they're no longer in a cache
   };

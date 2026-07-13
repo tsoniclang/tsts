@@ -1,5 +1,5 @@
 import type { bool } from "../../go/scalars.js";
-import { GoStringKey, GoZeroPointer, GoZeroString, type GoPtr } from "../../go/compat.js";
+import { GoStringKey, GoZeroPointer, GoZeroString, type GoFunc, type GoPtr } from "../../go/compat.js";
 import { Map } from "../../go/sync.js";
 import * as strings from "../../go/strings.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -212,11 +212,11 @@ export function NewKnownSymlink(currentDirectory: string, useCaseSensitiveFileNa
  * 	}, nil)
  * }
  */
-export function KnownSymlinks_SetSymlinksFromResolutions(receiver: GoPtr<KnownSymlinks>, forEachResolvedModule: (callback: (resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>) => void, forEachResolvedTypeReferenceDirective: (callback: (resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>) => void): void {
-  forEachResolvedModule((resolution: GoPtr<ResolvedModule>, _moduleName: string, _mode: ResolutionMode, _filePath: Path): void => {
+export function KnownSymlinks_SetSymlinksFromResolutions(receiver: GoPtr<KnownSymlinks>, forEachResolvedModule: GoFunc<(callback: GoFunc<(resolution: GoPtr<ResolvedModule>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>) => void>, forEachResolvedTypeReferenceDirective: GoFunc<(callback: GoFunc<(resolution: GoPtr<ResolvedTypeReferenceDirective>, moduleName: string, mode: ResolutionMode, filePath: Path) => void>, file: GoPtr<SourceFile>) => void>): void {
+  forEachResolvedModule!((resolution: GoPtr<ResolvedModule>, _moduleName: string, _mode: ResolutionMode, _filePath: Path): void => {
     KnownSymlinks_ProcessResolution(receiver, resolution!.OriginalPath, resolution!.ResolvedFileName);
   }, undefined);
-  forEachResolvedTypeReferenceDirective((resolution: GoPtr<ResolvedTypeReferenceDirective>, _moduleName: string, _mode: ResolutionMode, _filePath: Path): void => {
+  forEachResolvedTypeReferenceDirective!((resolution: GoPtr<ResolvedTypeReferenceDirective>, _moduleName: string, _mode: ResolutionMode, _filePath: Path): void => {
     KnownSymlinks_ProcessResolution(receiver, resolution!.OriginalPath, resolution!.ResolvedFileName);
   }, undefined);
 }

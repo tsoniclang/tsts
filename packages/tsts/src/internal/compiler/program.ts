@@ -829,7 +829,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * 	return result, newFile, true
  * }
  */
-export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: GoInterface<CompilerHost>, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, GoPtr<SourceFile>, bool] {
+export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: GoInterface<CompilerHost>, createCheckerPool: GoFunc<(arg0: GoPtr<Program>) => GoInterface<CheckerPool>>): [GoPtr<Program>, GoPtr<SourceFile>, bool] {
   const newOpts: ProgramOptions = { ...receiver!.opts, Host: newHost };
   if (createCheckerPool !== undefined) {
     newOpts.CreateCheckerPool = createCheckerPool;
@@ -1418,10 +1418,10 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
  * 	return SortAndDeduplicateDiagnostics(result)
  * }
  */
-export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
   let result: GoSlice<GoPtr<Diagnostic>>;
   if (sourceFile !== undefined) {
-    result = collect(ctx!, sourceFile);
+    result = collect!(ctx, sourceFile);
   } else {
     const diagnostics = Program_collectDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, concurrent, collect);
     result = slices.Concat(...diagnostics);
@@ -1445,10 +1445,10 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: GoInte
  * 	return diagnostics
  * }
  */
-export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
+export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, concurrent: bool, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
   for (let i = 0; i < sourceFiles.length; i++) {
-    diagnostics[i] = collect(ctx!, sourceFiles[i]);
+    diagnostics[i] = collect!(ctx, sourceFiles[i]);
   }
   return diagnostics;
 }
@@ -1470,13 +1470,13 @@ export function Program_collectDiagnosticsFromFiles(receiver: GoPtr<Program>, ct
  * 	return SortAndDeduplicateDiagnostics(slices.Concat(p.collectCheckerDiagnosticsFromFiles(ctx, p.files, collect)...))
  * }
  */
-export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFile: GoPtr<SourceFile>, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     if (Program_SkipTypeChecking(receiver, sourceFile, false as bool)) {
       return undefined!;
     }
     const [c, done] = Program_GetTypeCheckerForFileExclusive(receiver, ctx, sourceFile);
-    const result = collect(ctx!, c, sourceFile);
+    const result = collect!(ctx, c, sourceFile);
     done!();
     return SortAndDeduplicateDiagnostics(result);
   }
@@ -1511,11 +1511,11 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
  * 	return diagnostics
  * }
  */
-export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: (arg0: Context, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
+export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Program>, ctx: GoInterface<Context>, sourceFiles: GoSlice<GoPtr<SourceFile>>, collect: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<Checker>, arg2: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoSlice<GoPtr<Diagnostic>>> {
   const diagnostics: GoSlice<GoPtr<Diagnostic>>[] = new Array(sourceFiles.length);
   if (receiver!.compilerCheckerPool !== undefined) {
     checkerPool_forEachCheckerGroupDo(receiver!.compilerCheckerPool, ctx, sourceFiles, Program_SingleThreaded(receiver), (c, fileIndex, file) => {
-      diagnostics[fileIndex] = collect(ctx!, c, file);
+      diagnostics[fileIndex] = collect!(ctx, c, file);
     });
   } else {
     for (let i = 0; i < sourceFiles.length; i++) {
@@ -1524,7 +1524,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
         continue;
       }
       const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
-      diagnostics[i] = collect(ctx!, c, file);
+      diagnostics[i] = collect!(ctx, c, file);
       done!();
     }
   }
@@ -4093,7 +4093,7 @@ export function HandleNoEmitOnError(ctx: GoInterface<Context>, program: GoInterf
  * 	return allDiagnostics
  * }
  */
-export function GetDiagnosticsOfAnyProgram(ctx: GoInterface<Context>, program: GoInterface<ProgramLike>, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>, getSemanticDiagnostics: (arg0: Context, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>): GoSlice<GoPtr<Diagnostic>> {
+export function GetDiagnosticsOfAnyProgram(ctx: GoInterface<Context>, program: GoInterface<ProgramLike>, file: GoPtr<SourceFile>, skipNoEmitCheckForDtsDiagnostics: bool, getBindDiagnostics: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>, getSemanticDiagnostics: GoFunc<(arg0: GoInterface<Context>, arg1: GoPtr<SourceFile>) => GoSlice<GoPtr<Diagnostic>>>): GoSlice<GoPtr<Diagnostic>> {
   let allDiagnostics: GoPtr<Diagnostic>[] = [...(slices.Clip(program!.GetConfigFileParsingDiagnostics()) ?? [])];
   const configFileParsingDiagnosticsLength = allDiagnostics.length;
 
@@ -4104,13 +4104,13 @@ export function GetDiagnosticsOfAnyProgram(ctx: GoInterface<Context>, program: G
   if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
     allDiagnostics = [...allDiagnostics, ...(program!.GetProgramDiagnostics() ?? [])];
 
-    getBindDiagnostics(ctx!, file);
+    getBindDiagnostics!(ctx, file);
 
     if (Tristate_IsFalseOrUnknown(program!.Options()!.ListFilesOnly)) {
       allDiagnostics = [...allDiagnostics, ...(program!.GetGlobalDiagnostics(ctx) ?? [])];
 
       if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
-        allDiagnostics = [...allDiagnostics, ...(getSemanticDiagnostics(ctx!, file) ?? [])];
+        allDiagnostics = [...allDiagnostics, ...(getSemanticDiagnostics!(ctx, file) ?? [])];
         allDiagnostics = [...allDiagnostics, ...(program!.GetGlobalDiagnostics(ctx) ?? [])];
       }
 

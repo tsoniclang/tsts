@@ -173,7 +173,7 @@ export let emitContextPool: Pool = (() => {
  * 	}
  * }
  */
-export function GetEmitContext(): [GoPtr<EmitContext>, () => void] {
+export function GetEmitContext(): [GoPtr<EmitContext>, GoFunc<() => void>] {
   const c = emitContextPool.Get() as EmitContext;
   return [c, () => {
     EmitContext_Reset(c);

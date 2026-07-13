@@ -11,7 +11,7 @@ import type { Path } from "../../tspath/path.js";
 import type { FS } from "../../vfs/vfs.js";
 import type { Program } from "../incremental/program.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/compile.go::type::System","kind":"type","status":"implemented","sigHash":"9796f5a63a81e48716f70a9ce1144968740f12fb78d508829d5be302b9df34ef"}
  *
@@ -124,7 +124,7 @@ export interface CommandLineTesting {
   OnBuildStatusReportEnd(w: GoInterface<Writer>): void;
   OnWatchStatusReportStart(): void;
   OnWatchStatusReportEnd(): void;
-  GetTrace(w: GoInterface<Writer>, locale: Locale): (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
+  GetTrace(w: GoInterface<Writer>, locale: Locale): GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
   OnProgram(program: GoPtr<Program>): void;
 }
 

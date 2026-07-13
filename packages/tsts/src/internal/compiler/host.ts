@@ -73,7 +73,7 @@ export interface compilerHost {
   fs: GoInterface<FS_4e804012>;
   defaultLibraryPath: string;
   extendedConfigCache: GoInterface<ExtendedConfigCache>;
-  trace: (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void;
+  trace: GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void>;
 }
 
 /**
@@ -176,7 +176,7 @@ export function compilerHost_GetCurrentDirectory(receiver: GoPtr<compilerHost>):
  * }
  */
 export function compilerHost_Trace(receiver: GoPtr<compilerHost>, msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void {
-  receiver!.trace(msg, ...args);
+  receiver!.trace!(msg, ...args);
 }
 
 /**

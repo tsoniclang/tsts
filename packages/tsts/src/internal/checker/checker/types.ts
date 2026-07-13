@@ -2546,7 +2546,7 @@ export function Checker_checkConstEnumAccess(receiver: GoPtr<Checker>, node: GoP
   }
   if (
     receiver!.compilerOptions!.IsolatedModules === TSTrue ||
-    (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && ok && receiver!.resolveName(node, Node_Text(GetFirstIdentifier(node)), SymbolFlagsAlias, undefined, false, true) === undefined)
+    (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && ok && receiver!.resolveName!(node, Node_Text(GetFirstIdentifier(node)), SymbolFlagsAlias, undefined, false, true) === undefined)
   ) {
     const constEnumDeclaration = t!.symbol!.ValueDeclaration;
     const redirect = receiver!.program!.GetProjectReferenceFromOutputDts(SourceFile_Path(GetSourceFileOfNode(constEnumDeclaration)));
@@ -5762,7 +5762,7 @@ export function Checker_reportImplicitAny(receiver: GoPtr<Checker>, declaration:
         if (
           (IsCallSignatureDeclaration(declaration!.Parent) || IsMethodSignatureDeclaration(declaration!.Parent) || IsFunctionTypeNode(declaration!.Parent)) &&
           slices.Contains(parameters, declaration, GoEqualStrict<GoPtr<Node>>) &&
-          (IsTypeNodeKind(originalKeywordKind) || receiver!.resolveName(declaration, Node_Text(name), SymbolFlagsType, undefined, true, false) !== undefined)
+          (IsTypeNodeKind(originalKeywordKind) || receiver!.resolveName!(declaration, Node_Text(name), SymbolFlagsType, undefined, true, false) !== undefined)
         ) {
           const newName = `arg${slices.Index(parameters, declaration, GoEqualStrict<GoPtr<Node>>)}`;
           const typeName = DeclarationNameToString(name) + core.IfElse(hasDotDotDotToken(declaration), "[]", "");

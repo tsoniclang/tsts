@@ -306,7 +306,7 @@ export function NodeBuilderImpl_walkNodeForExpandability(receiver: GoPtr<NodeBui
 export interface recoveryBoundary {
   ctx: GoPtr<NodeBuilderContext>;
   hadError: bool;
-  deferredReports: GoSlice<() => void>;
+  deferredReports: GoSlice<GoFunc<() => void>>;
   oldTracker: GoInterface<SymbolTracker>;
   oldTrackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
@@ -656,7 +656,7 @@ export function NodeBuilderImpl_finalizeBoundary(receiver: GoPtr<NodeBuilderImpl
   receiver!.ctx!.approximateLength = bound!.oldApproximateLength;
 
   for (const f of bound!.deferredReports) {
-    f();
+    f!();
   }
   if (bound!.hadError) {
     return false;

@@ -864,7 +864,7 @@ export function Checker_typeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
       nodeBuilder!.verbosity = oldVerbosity;
     }
   } finally {
-    release();
+    release!();
   }
 }
 
@@ -1005,10 +1005,10 @@ export function Checker_symbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
       Printer_Write(printer_, entity, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined); // TODO: GH#18217
       return writer.String();
     } finally {
-      release();
+      release!();
     }
   } finally {
-    putWriter();
+    putWriter!();
   }
 }
 
@@ -1113,13 +1113,13 @@ export function Checker_signatureToStringEx(receiver: GoPtr<Checker>, signature:
         Printer_Write(p, sig, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined);
         return writer.String();
       } finally {
-        putWriter();
+        putWriter!();
       }
     } finally {
       nodeBuilder!.verbosity = oldVerbosity;
     }
   } finally {
-    release();
+    release!();
   }
 }
 
@@ -1175,10 +1175,10 @@ export function Checker_typePredicateToStringEx(receiver: GoPtr<Checker>, typePr
       Printer_Write(printer_, predicate, sourceFile, writer, undefined);
       return writer.String();
     } finally {
-      release();
+      release!();
     }
   } finally {
-    putWriter();
+    putWriter!();
   }
 }
 
@@ -1302,7 +1302,7 @@ export function Checker_SignatureToSignatureDeclaration(receiver: GoPtr<Checker>
   try {
     return NodeBuilder_SignatureToSignatureDeclaration(nodeBuilder, signature, kind, enclosingDeclaration, flags, InternalFlagsNone, undefined);
   } finally {
-    release();
+    release!();
   }
 }
 
@@ -1365,7 +1365,7 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
       nodeBuilder!.verbosity = oldVerbosity;
     }
   } finally {
-    release();
+    release!();
   }
 }
 
@@ -1414,7 +1414,7 @@ export function Checker_TypeParameterToStringEx(receiver: GoPtr<Checker>, t: GoP
       nodeBuilder!.verbosity = oldVerbosity;
     }
   } finally {
-    release();
+    release!();
   }
 }
 

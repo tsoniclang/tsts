@@ -108,14 +108,14 @@ export function Tracer_Push(receiver: GoPtr<Tracer>, phase: Phase, name: string,
 
   const [args_0, restore] = Tracer_temporarilyAddCheckerIndex(receiver, args);
   const pop = Tracing_Push(receiver!.tracing, phase, name, args_0, separateBeginAndEnd);
-  restore();
+  restore!();
 
   return (): void => {
     const [, restoreEndArgs] = Tracer_temporarilyAddCheckerIndex(receiver, args_0);
     try {
       pop!();
     } finally {
-      restoreEndArgs();
+      restoreEndArgs!();
     }
   };
 }
@@ -171,7 +171,7 @@ export function Tracer_copyWithCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap
  * 	}
  * }
  */
-export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, GoInterface<unknown>>): [GoMap<string, GoInterface<unknown>>, () => void] {
+export function Tracer_temporarilyAddCheckerIndex(receiver: GoPtr<Tracer>, args: GoMap<string, GoInterface<unknown>>): [GoMap<string, GoInterface<unknown>>, GoFunc<() => void>] {
   if (args === undefined) {
     args = new globalThis.Map<string, unknown>();
   }

@@ -1,9 +1,10 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoEqualStrict, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
+import { GoEqualStrict, GoNilSlice, GoValueRef, GoZeroPointer } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
-import type { Node, SourceFile } from "../../ast/ast.js";
+import type { SourceFile } from "../../ast/ast.js";
+import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_Clone, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
@@ -232,7 +233,7 @@ export function Checker_checkAndReportErrorForMissingPrefix(receiver: GoPtr<Chec
 export function Checker_checkAndReportErrorForUsingTypeAsNamespace(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
   const c = receiver!;
   if (meaning === SymbolFlagsNamespace) {
-    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool));
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName!(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool));
     if (symbol !== undefined) {
       const parent = errorLocation!.Parent;
       if (IsQualifiedName(parent)) {
@@ -295,13 +296,13 @@ export function Checker_checkAndReportErrorForExportingPrimitiveType(receiver: G
 export function Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
   const c = receiver!;
   if ((meaning & ((SymbolFlagsValue & ~SymbolFlagsType) as SymbolFlags)) !== 0) {
-    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, SymbolFlagsNamespaceModule, undefined, false as bool, false as bool));
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName!(errorLocation, name, SymbolFlagsNamespaceModule, undefined, false as bool, false as bool));
     if (symbol !== undefined) {
       Checker_error(receiver, errorLocation, Cannot_use_namespace_0_as_a_value, name);
       return true;
     }
   } else if ((meaning & ((SymbolFlagsType & ~SymbolFlagsValue) as SymbolFlags)) !== 0) {
-    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, SymbolFlagsModule, undefined, false as bool, false as bool));
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName!(errorLocation, name, SymbolFlagsModule, undefined, false as bool, false as bool));
     if (symbol !== undefined) {
       Checker_error(receiver, errorLocation, Cannot_use_namespace_0_as_a_type, name);
       return true;
@@ -371,7 +372,7 @@ export function Checker_checkAndReportErrorForUsingTypeAsValue(receiver: GoPtr<C
       }
       return true;
     }
-    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName!(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
     if (symbol !== undefined) {
       const allFlags = Checker_getSymbolFlags(receiver, symbol);
       if ((allFlags & SymbolFlagsValue) === 0) {
@@ -407,7 +408,7 @@ export function Checker_checkAndReportErrorForUsingTypeAsValue(receiver: GoPtr<C
 export function Checker_checkAndReportErrorForUsingValueAsType(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
   const c = receiver!;
   if ((meaning & ((SymbolFlagsType & ~SymbolFlagsNamespace) as SymbolFlags)) !== 0) {
-    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (~SymbolFlagsType & SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName!(errorLocation, name, (~SymbolFlagsType & SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
     if (symbol !== undefined && (symbol!.Flags & SymbolFlagsNamespace) === 0) {
       Checker_error(receiver, errorLocation, X_0_refers_to_a_value_but_is_being_used_as_a_type_here_Did_you_mean_typeof_0, name);
       return true;
@@ -856,7 +857,7 @@ export function Checker_unusedIsError(receiver: GoPtr<Checker>, kind: UnusedKind
  * 	return t
  * }
  */
-export function Checker_checkNonNullTypeWithReporter(receiver: GoPtr<Checker>, t: GoPtr<Type>, node: GoPtr<Node>, reportError: (c: GoPtr<Checker>, node: GoPtr<Node>, facts: TypeFacts) => void): GoPtr<Type> {
+export function Checker_checkNonNullTypeWithReporter(receiver: GoPtr<Checker>, t: GoPtr<Type>, node: GoPtr<Node>, reportError: GoFunc<(c: GoPtr<Checker>, node: GoPtr<Node>, facts: TypeFacts) => void>): GoPtr<Type> {
   const c = receiver!;
   if (c.strictNullChecks && (t!.flags & TypeFlagsUnknown) !== 0) {
     if (IsEntityNameExpression(node)) {
@@ -871,7 +872,7 @@ export function Checker_checkNonNullTypeWithReporter(receiver: GoPtr<Checker>, t
   }
   const facts = Checker_getTypeFacts(receiver, t, TypeFactsIsUndefinedOrNull);
   if ((facts & TypeFactsIsUndefinedOrNull) !== 0) {
-    reportError(receiver, node, facts);
+    reportError!(receiver, node, facts);
     const nonNullable = Checker_GetNonNullableType(receiver, t);
     if ((nonNullable!.flags & (TypeFlagsNullable | TypeFlagsNever)) !== 0) {
       return c.errorType;
@@ -1353,7 +1354,7 @@ export function Checker_isPromiseResolveArityError(receiver: GoPtr<Checker>, nod
   if (!IsCallExpression(node) || !IsIdentifier(Node_Expression(node))) {
     return false;
   }
-  const symbol = c.resolveName(Node_Expression(node), Node_Text(Node_Expression(node)), SymbolFlagsValue, undefined, false as bool, false as bool);
+  const symbol = c.resolveName!(Node_Expression(node), Node_Text(Node_Expression(node)), SymbolFlagsValue, undefined, false as bool, false as bool);
   if (symbol === undefined) {
     return false;
   }
@@ -1737,7 +1738,7 @@ export function Checker_checkAndReportErrorForExtendingInterface(receiver: GoPtr
  * 	}
  * }
  */
-export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, isRelated: ((left: GoPtr<Type>, right: GoPtr<Type>) => bool) | undefined): void {
+export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, isRelated: GoFunc<(left: GoPtr<Type>, right: GoPtr<Type>) => bool>): void {
   let wouldWorkWithAwait = false;
   if (isRelated !== undefined) {
     const awaitedLeftType = Checker_getAwaitedTypeNoAlias(receiver, leftType);
@@ -1966,7 +1967,7 @@ export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<
 export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: GoFunc<() => void>): void {
   const c = receiver!;
   if (c.saveDeferredDiagnostics) {
-    c.deferredDiagnosticCallbacks = [...(c.deferredDiagnosticCallbacks ?? []), callback!];
+    c.deferredDiagnosticCallbacks = [...c.deferredDiagnosticCallbacks, callback];
   }
 }
 
@@ -1983,10 +1984,10 @@ export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback
  */
 export function Checker_produceDeferredDiagnostics(receiver: GoPtr<Checker>): void {
   const c = receiver!;
-  for (const cb of c.deferredDiagnosticCallbacks ?? []) {
-    cb();
+  for (const cb of c.deferredDiagnosticCallbacks) {
+    cb!();
   }
-  c.deferredDiagnosticCallbacks = undefined;
+  c.deferredDiagnosticCallbacks = GoNilSlice<GoFunc<() => void>>();
 }
 
 /**

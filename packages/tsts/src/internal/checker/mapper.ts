@@ -493,14 +493,14 @@ export function ArrayToSingleTypeMapper_Map(receiver: GoPtr<ArrayToSingleTypeMap
 export interface DeferredTypeMapper {
   __tsgoEmbedded0: TypeMapperBase;
   sources: GoSlice<GoPtr<Type>>;
-  targets: GoSlice<() => GoPtr<Type>>;
+  targets: GoSlice<GoFunc<() => GoPtr<Type>>>;
 }
 
 class DeferredTypeMapperValue implements DeferredTypeMapper, TypeMapperData {
   constructor(
     public __tsgoEmbedded0: TypeMapperBase,
     public sources: GoSlice<GoPtr<Type>>,
-    public targets: GoSlice<() => GoPtr<Type>>,
+    public targets: GoSlice<GoFunc<() => GoPtr<Type>>>,
   ) {}
 
   __tsgoGoReceiver(): GoPtr<DeferredTypeMapper> {
@@ -528,7 +528,7 @@ class DeferredTypeMapperValue implements DeferredTypeMapper, TypeMapperData {
  * 	return &m.TypeMapper
  * }
  */
-export function newDeferredTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<() => GoPtr<Type>>): GoPtr<TypeMapper> {
+export function newDeferredTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoFunc<() => GoPtr<Type>>>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
   const m = new DeferredTypeMapperValue(base, sources, targets);
   mapper.data = m;

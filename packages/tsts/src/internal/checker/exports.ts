@@ -735,7 +735,7 @@ export function Checker_GetJsxFragmentFactory(receiver: GoPtr<Checker>, location
  * }
  */
 export function Checker_ResolveName(receiver: GoPtr<Checker>, name: string, location: GoPtr<Node>, meaning: SymbolFlags, excludeGlobals: bool): GoPtr<Symbol> {
-  return receiver!.resolveName(location, name, meaning, undefined, true as bool, excludeGlobals);
+  return receiver!.resolveName!(location, name, meaning, undefined, true as bool, excludeGlobals);
 }
 
 /**

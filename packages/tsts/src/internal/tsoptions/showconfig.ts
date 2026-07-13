@@ -58,7 +58,7 @@ import type { GoFunc, GoInterface, GoRef } from "../../go/compat.js";
  * 	}
  * }
  */
-export function computeFn<T>(fn: GoFunc<(arg0: GoPtr<CompilerOptions>) => T>): (arg0: GoPtr<CompilerOptions>) => unknown {
+export function computeFn<T>(fn: GoFunc<(arg0: GoPtr<CompilerOptions>) => T>): GoFunc<(arg0: GoPtr<CompilerOptions>) => GoInterface<unknown>> {
   return (opts: GoPtr<CompilerOptions>): unknown => {
     return fn!(opts);
   };
@@ -80,7 +80,7 @@ export function computeFn<T>(fn: GoFunc<(arg0: GoPtr<CompilerOptions>) => T>): (
 export interface impliedOption {
   name: string;
   dependencies: GoSlice<string>;
-  compute: (opts: GoPtr<CompilerOptions>) => unknown;
+  compute: GoFunc<(opts: GoPtr<CompilerOptions>) => GoInterface<unknown>>;
 }
 
 /**
@@ -708,8 +708,8 @@ export function addImpliedOptions(optionMap: GoPtr<OrderedMap<string, GoInterfac
     }
 
     // Compute the effective value with current options and the default value with empty options.
-    const implied = entry.compute(options);
-    const defaultVal = entry.compute(defaultOpts);
+    const implied = entry.compute!(options);
+    const defaultVal = entry.compute!(defaultOpts);
 
     // If the implied value equals the default, this option doesn't add useful information.
     // For primitives (numbers, booleans, strings), === suffices; arrays we stringify-compare.

@@ -557,7 +557,7 @@ export function Checker_isCommonJSRequire(receiver: GoPtr<Checker>, node: GoPtr<
   if (!IsIdentifier(expression)) {
     throw new globalThis.Error("Expected identifier for require call");
   }
-  const resolvedRequire = receiver!.resolveName(expression, Node_Text(expression), SymbolFlagsValue, undefined, true /*isUse*/, false /*excludeGlobals*/);
+  const resolvedRequire = receiver!.resolveName!(expression, Node_Text(expression), SymbolFlagsValue, undefined, true /*isUse*/, false /*excludeGlobals*/);
   if (resolvedRequire === receiver!.requireSymbol) {
     return true;
   }

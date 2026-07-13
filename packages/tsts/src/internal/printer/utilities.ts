@@ -1578,7 +1578,7 @@ export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: GoPt
  * 	return !ok
  * }
  */
-export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFile>, name: string, hasGlobalName: ((arg0: string) => bool) | undefined): bool {
+export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFile>, name: string, hasGlobalName: GoFunc<(arg0: string) => bool>): bool {
   if (hasGlobalName !== undefined && hasGlobalName(name)) {
     return false;
   }

@@ -8,7 +8,7 @@ import type { UTF16Offset } from "../core/core.js";
 import { IsWhiteSpaceLike } from "../stringutil/util.js";
 import type { EmitTextWriter } from "./emittextwriter.js";
 
-import type { GoInterface } from "../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 // singleLineStringWriter_as_EmitTextWriter adapts a *singleLineStringWriter to
 // the EmitTextWriter interface by delegating each method to the corresponding
 // free function (Go interface satisfaction -> method-bearing adapter).
@@ -92,7 +92,7 @@ export let __7e0fb603_0: GoInterface<EmitTextWriter> = singleLineStringWriter_as
  * 	}
  * }
  */
-export function GetSingleLineStringWriter(): [EmitTextWriter, () => void] {
+export function GetSingleLineStringWriter(): [EmitTextWriter, GoFunc<() => void>] {
   const w = singleLineStringWriterPool.Get() as singleLineStringWriter;
   singleLineStringWriter_Clear(w);
   return [

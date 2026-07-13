@@ -69,7 +69,7 @@ export interface TransformOptions {
   CompilerOptions: GoPtr<CompilerOptions>;
   Resolver: GoInterface<ReferenceResolver>;
   EmitResolver: GoInterface<EmitResolver>;
-  GetEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
+  GetEmitModuleFormatOfFile: GoFunc<(file: GoInterface<HasFileName>) => ModuleKind>;
 }
 
 /**

@@ -33,7 +33,7 @@ import type { DiagnosticReporter, DiagnosticsReporter } from "./diagnostics.js";
 import { statisticsFromProgram, Statistics_Report } from "./statistics.js";
 import type { Statistics } from "./statistics.js";
 
-import type { GoInterface } from "../../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::GetTraceWithWriterFromSys","kind":"func","status":"implemented","sigHash":"17a6384118d8903f7afa1b67bba22dbd81d93ed58d4f8ce909a645b6a1202124"}
  *
@@ -48,7 +48,7 @@ import type { GoInterface } from "../../../go/compat.js";
  * 	}
  * }
  */
-export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: GoInterface<CommandLineTesting>): (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void {
+export function GetTraceWithWriterFromSys(w: GoInterface<Writer>, locale: Locale, testing: GoInterface<CommandLineTesting>): GoFunc<(msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>) => void> {
   if (testing === undefined) {
     return (msg: GoPtr<Message>, ...args: Array<GoInterface<unknown>>): void => {
       Fprintln(w!, Message_Localize(msg, locale, ...args));
@@ -227,7 +227,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
     input.ProgramLike,
     undefined,
     false,
-    (innerCtx: Context, file: GoPtr<SourceFile>) => {
+    (innerCtx: GoInterface<Context>, file: GoPtr<SourceFile>) => {
       // Options diagnostics include global diagnostics (even though we collect them separately),
       // and global diagnostics create checkers, which then bind all of the files. Do this binding
       // early so we can track the time.
@@ -243,7 +243,7 @@ export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult
       }
       return diags;
     },
-    (innerCtx: Context, file: GoPtr<SourceFile>) => {
+    (innerCtx: GoInterface<Context>, file: GoPtr<SourceFile>) => {
       let pop: (() => void) | undefined;
       if (input.Tracing !== undefined) {
         pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined as unknown as Map<string, unknown>, true);

@@ -1,4 +1,4 @@
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoFunc, GoInterface, GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList } from "../../ast/spine.js";
 import { NodeFactory_UpdateSourceFile, AsSourceFile } from "../../ast/ast.js";
@@ -50,7 +50,7 @@ export function NewUseStrictTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tr
 export interface useStrictTransformer {
   __tsgoEmbedded0: Transformer;
   compilerOptions: GoPtr<CompilerOptions>;
-  getEmitModuleFormatOfFile: (file: HasFileName) => ModuleKind;
+  getEmitModuleFormatOfFile: GoFunc<(file: GoInterface<HasFileName>) => ModuleKind>;
 }
 
 /**
@@ -104,7 +104,7 @@ export function useStrictTransformer_visitSourceFile(receiver: GoPtr<useStrictTr
 
   const isExternalModule = IsExternalModule(node);
   const moduleKind = CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions);
-  const format = receiver!.getEmitModuleFormatOfFile(node as unknown as HasFileName);
+  const format = receiver!.getEmitModuleFormatOfFile!(node);
 
   // ESM is always strict. If the file is ESM, and CJS emit
   // has not been requested, then skip adding "use strict".

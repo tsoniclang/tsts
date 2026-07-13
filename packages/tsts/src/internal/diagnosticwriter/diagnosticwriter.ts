@@ -54,7 +54,7 @@ import {
 import { ConvertToRelativePath, PathIsAbsolute } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
-import type { GoInterface } from "../../go/compat.js";
+import type { GoFunc, GoInterface } from "../../go/compat.js";
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::type::FileLike","kind":"type","status":"implemented","sigHash":"c1f2b442a98ac11635887fcdf632a2de167ad0e61b071cd736139c21b5ff5cf1"}
  *
@@ -698,7 +698,7 @@ export function getCategoryFormat(category: Category): string {
  * Go source:
  * FormattedWriter func(output io.Writer, text string, formatStyle string)
  */
-export type FormattedWriter = (output: Writer, text: string, formatStyle: string) => void;
+export type FormattedWriter = GoFunc<(output: GoInterface<Writer>, text: string, formatStyle: string) => void>;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnosticwriter/diagnosticwriter.go::func::writeWithStyleAndReset","kind":"func","status":"implemented","sigHash":"1305615c81a4a4b3f7c9a5255aa3f3f63c28905a1f97394a55a3cd93e59d1ccd"}
@@ -745,11 +745,11 @@ export function WriteLocation(output: GoInterface<Writer>, file: GoInterface<Fil
     relativeFileName = file!.FileName();
   }
 
-  writeWithStyleAndReset(output!, relativeFileName, foregroundColorEscapeCyan);
+  writeWithStyleAndReset!(output, relativeFileName, foregroundColorEscapeCyan);
   Fprint(output!, ":");
-  writeWithStyleAndReset(output!, Itoa(firstLine + 1), foregroundColorEscapeYellow);
+  writeWithStyleAndReset!(output, Itoa(firstLine + 1), foregroundColorEscapeYellow);
   Fprint(output!, ":");
-  writeWithStyleAndReset(output!, Itoa(firstChar + 1), foregroundColorEscapeYellow);
+  writeWithStyleAndReset!(output, Itoa(firstChar + 1), foregroundColorEscapeYellow);
 }
 
 /**

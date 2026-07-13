@@ -463,7 +463,7 @@ export function Checker_getGlobalType(receiver: GoPtr<Checker>, name: string, ar
  * }
  */
 export function Checker_getGlobalSymbol(receiver: GoPtr<Checker>, name: string, meaning: SymbolFlags, diagnostic: GoPtr<Message>): GoPtr<Symbol> {
-  return receiver!.resolveName(undefined, name, meaning, diagnostic, false, false);
+  return receiver!.resolveName!(undefined, name, meaning, diagnostic, false, false);
 }
 
 /**
@@ -681,7 +681,7 @@ export function Checker_getSuggestedLibForNonExistentName(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getSuggestedSymbolForNonexistentSymbol(receiver: GoPtr<Checker>, location: GoPtr<Node>, outerName: string, meaning: SymbolFlags): GoPtr<Symbol> {
-  return receiver!.resolveNameForSymbolSuggestion(location, outerName, meaning, undefined, false, false);
+  return receiver!.resolveNameForSymbolSuggestion!(location, outerName, meaning, undefined, false, false);
 }
 
 /**
@@ -4023,7 +4023,7 @@ export function Checker_checkExportSpecifier(receiver: GoPtr<Checker>, node: GoP
     if (exportedName!.Kind === KindStringLiteral) {
       return;
     }
-    const symbol_ = receiver!.resolveName(exportedName, Node_Text(exportedName), (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, true, false);
+    const symbol_ = receiver!.resolveName!(exportedName, Node_Text(exportedName), (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, true, false);
     if (symbol_ !== undefined && (symbol_ === receiver!.undefinedSymbol || symbol_ === receiver!.globalThisSymbol || (symbol_!.Declarations !== undefined && IsGlobalSourceFile(GetDeclarationContainer(symbol_!.Declarations[0]))))) {
       Checker_error(receiver, exportedName, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, Node_Text(exportedName));
     } else {
@@ -4624,7 +4624,7 @@ export function Checker_checkVarDeclaredNamesNotShadowed(receiver: GoPtr<Checker
     if (!IsIdentifier(name)) {
       throw new globalThis.Error("Identifier expected");
     }
-    const localDeclarationSymbol = receiver!.resolveName(node, Node_Text(name), SymbolFlagsVariable, undefined, false, false);
+    const localDeclarationSymbol = receiver!.resolveName!(node, Node_Text(name), SymbolFlagsVariable, undefined, false, false);
     if (localDeclarationSymbol !== undefined && localDeclarationSymbol !== symbol_ && (localDeclarationSymbol!.Flags & SymbolFlagsBlockScopedVariable) !== 0) {
       if ((Checker_getDeclarationNodeFlagsFromSymbol(receiver, localDeclarationSymbol) & NodeFlagsBlockScoped) !== 0) {
         const variableDeclarationList = FindAncestorKind(localDeclarationSymbol!.ValueDeclaration, KindVariableDeclarationList);
@@ -7986,7 +7986,7 @@ export function Checker_getResolvedSymbol(receiver: GoPtr<Checker>, node: GoPtr<
   if (links!.resolvedSymbol === undefined) {
     let symbol_: GoPtr<Symbol> = undefined;
     if (!NodeIsMissing(node)) {
-      symbol_ = receiver!.resolveName(node, Node_Text(node), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags,
+      symbol_ = receiver!.resolveName!(node, Node_Text(node), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags,
         Checker_getCannotFindNameDiagnosticForName(receiver, node), !IsWriteOnlyAccess(node), false as bool);
     }
     links!.resolvedSymbol = OrElse(symbol_, receiver!.unknownSymbol, GoZeroPointer<Symbol>, GoEqualStrict<GoPtr<Symbol>>);
@@ -8023,7 +8023,7 @@ export function Checker_getReferencedValueOrAliasSymbol(receiver: GoPtr<Checker>
   if (resolvedSymbol !== undefined && resolvedSymbol !== receiver!.unknownSymbol) {
     return resolvedSymbol;
   }
-  return receiver!.resolveName(reference, Node_Text(reference), (SymbolFlagsValue | SymbolFlagsExportValue | SymbolFlagsAlias) as SymbolFlags, undefined, true as bool, false as bool);
+  return receiver!.resolveName!(reference, Node_Text(reference), (SymbolFlagsValue | SymbolFlagsExportValue | SymbolFlagsAlias) as SymbolFlags, undefined, true as bool, false as bool);
 }
 
 /**
@@ -9971,18 +9971,18 @@ export function Checker_resolveEntityName(receiver: GoPtr<Checker>, name: GoPtr<
       }
       const resolveLocation = location ?? name;
       if (meaning === SymbolFlagsNamespace) {
-        symbol_ = Checker_getMergedSymbol(receiver, receiver!.resolveName(resolveLocation, Node_Text(name), meaning, undefined, true, false));
+        symbol_ = Checker_getMergedSymbol(receiver, receiver!.resolveName!(resolveLocation, Node_Text(name), meaning, undefined, true, false));
         if (symbol_ === undefined) {
-          const alias = Checker_getMergedSymbol(receiver, receiver!.resolveName(resolveLocation, Node_Text(name), SymbolFlagsAlias, undefined, true, false));
+          const alias = Checker_getMergedSymbol(receiver, receiver!.resolveName!(resolveLocation, Node_Text(name), SymbolFlagsAlias, undefined, true, false));
           if (alias !== undefined && alias!.Name === InternalSymbolNameExportEquals) {
             symbol_ = alias!.Parent;
           }
         }
         if (symbol_ === undefined && message !== undefined) {
-          receiver!.resolveName(resolveLocation, Node_Text(name), meaning, message, true, false);
+          receiver!.resolveName!(resolveLocation, Node_Text(name), meaning, message, true, false);
         }
       } else {
-        symbol_ = Checker_getMergedSymbol(receiver, receiver!.resolveName(resolveLocation, Node_Text(name), meaning, message, true, false));
+        symbol_ = Checker_getMergedSymbol(receiver, receiver!.resolveName!(resolveLocation, Node_Text(name), meaning, message, true, false));
       }
       break;
     }
@@ -10165,7 +10165,7 @@ export function Checker_resolveQualifiedName(receiver: GoPtr<Checker>, name: GoP
  */
 export function Checker_tryGetQualifiedNameAsValue(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
   const id = GetFirstIdentifier(node);
-  let symbol_: GoPtr<Symbol> = receiver!.resolveName(id, Node_Text(id), SymbolFlagsValue, undefined, true as bool, false as bool);
+  let symbol_: GoPtr<Symbol> = receiver!.resolveName!(id, Node_Text(id), SymbolFlagsValue, undefined, true as bool, false as bool);
   if (symbol_ === undefined) {
     return undefined;
   }
@@ -17807,7 +17807,7 @@ export function Checker_markJsxAliasReferenced(receiver: GoPtr<Checker>, node: G
     if (!shouldFactoryRefErr) {
       flags = (flags & ~SymbolFlagsEnum) as SymbolFlags;
     }
-    jsxFactorySym = receiver!.resolveName(jsxFactoryLocation, jsxFactoryNamespace, flags, jsxFactoryRefErr, true as bool, false as bool);
+    jsxFactorySym = receiver!.resolveName!(jsxFactoryLocation, jsxFactoryNamespace, flags, jsxFactoryRefErr, true as bool, false as bool);
   }
   if (jsxFactorySym !== undefined) {
     Checker_symbolReferenced(receiver, jsxFactorySym, SymbolFlagsAll);
@@ -17824,7 +17824,7 @@ export function Checker_markJsxAliasReferenced(receiver: GoPtr<Checker>, node: G
       if (!shouldFactoryRefErr) {
         flags = (flags & ~SymbolFlagsEnum) as SymbolFlags;
       }
-      receiver!.resolveName(jsxFactoryLocation, localJsxNamespace, flags, jsxFactoryRefErr, true as bool, false as bool);
+      receiver!.resolveName!(jsxFactoryLocation, localJsxNamespace, flags, jsxFactoryRefErr, true as bool, false as bool);
     }
   }
 }
@@ -17877,7 +17877,7 @@ export function Checker_markExportSpecifierAliasReferenced(receiver: GoPtr<Check
     if (exportedName!.Kind === KindStringLiteral) {
       return;
     }
-    let symbol_ = receiver!.resolveName(exportedName, Node_Text(exportedName), (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, true as bool, false as bool);
+    let symbol_ = receiver!.resolveName!(exportedName, Node_Text(exportedName), (SymbolFlagsValue | SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias) as SymbolFlags, undefined, true as bool, false as bool);
     if (symbol_ !== undefined && (symbol_ === receiver!.undefinedSymbol || symbol_ === receiver!.globalThisSymbol || (symbol_!.Declarations !== undefined && IsGlobalSourceFile(GetDeclarationContainer(symbol_!.Declarations[0]))))) {
       return;
     }
@@ -18261,7 +18261,7 @@ export function Checker_markEntityNameOrEntityExpressionAsReference(receiver: Go
   }
   const rootName = GetFirstIdentifier(typeName);
   const meaning = (IfElse(typeName!.Kind === KindIdentifier, SymbolFlagsType, SymbolFlagsNamespace) | SymbolFlagsAlias) as SymbolFlags;
-  const rootSymbol = receiver!.resolveName(rootName, Node_Text(rootName), meaning, undefined, true as bool, false as bool);
+  const rootSymbol = receiver!.resolveName!(rootName, Node_Text(rootName), meaning, undefined, true as bool, false as bool);
   if (rootSymbol !== undefined && (rootSymbol!.Flags & SymbolFlagsAlias) !== 0) {
     if (
       receiver!.canCollectSymbolAliasAccessibilityData &&

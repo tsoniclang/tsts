@@ -505,7 +505,7 @@ export function emitter_emitJSFile(receiver: GoPtr<emitter>, sourceFile: GoPtr<S
 
     emitter_printSourceFile(receiver, jsFilePath, sourceMapFilePath, sf, p, options, shouldEmitSourceMaps(options, sf));
   } finally {
-    putEmitContext();
+    putEmitContext!();
     if (popTrace !== undefined) {
       popTrace();
     }
@@ -647,7 +647,7 @@ export function emitter_emitDeclarationFile(receiver: GoPtr<emitter>, sourceFile
     } as CompilerOptions;
     emitter_printSourceFile(receiver, declarationFilePath, declarationMapPath, sf, p, declarationMapOptions, shouldEmitSourceMaps(declarationMapOptions, sf));
   } finally {
-    putEmitContext();
+    putEmitContext!();
     if (popTrace !== undefined) {
       popTrace();
     }

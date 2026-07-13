@@ -1107,7 +1107,7 @@ export function DeclarationTransformer_getTypeReferences(receiver: GoPtr<Declara
  * 	}
  * }
  */
-export function DeclarationTransformer_setupDiagnosticContext(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>): [bool, () => void] {
+export function DeclarationTransformer_setupDiagnosticContext(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>): [bool, GoFunc<() => void>] {
   const canProdiceDiagnostic = canProduceDiagnostics(input);
   const oldWithinObjectLiteralType = receiver!.suppressNewDiagnosticContexts;
   const shouldEnterSuppressNewDiagnosticsContextContext = ((input!.Kind === KindTypeLiteral || input!.Kind === KindMappedType) &&
@@ -1412,7 +1412,7 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
   receiver!.enclosingDeclaration = previousEnclosingDeclaration;
   return result;
   } finally {
-    cleanupDiagnosticContext();
+    cleanupDiagnosticContext!();
   }
 }
 
@@ -4989,7 +4989,7 @@ export function DeclarationTransformer_visitExpressionStatement(receiver: GoPtr<
           break;
       }
     } finally {
-      cleanupDiagnosticContext();
+      cleanupDiagnosticContext!();
     }
   }
   return undefined;
@@ -5250,7 +5250,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
       }
       receiver!.expandoMembers!.set(hostId, [...(receiver!.expandoMembers!.get(hostId) ?? []), ...statements]);
     } finally {
-      cleanupDiagnosticContext();
+      cleanupDiagnosticContext!();
     }
   } finally {
     receiver!.enclosingDeclaration = oldEnclosing;
@@ -5383,7 +5383,7 @@ export function DeclarationTransformer_transformExpandoHost(receiver: GoPtr<Decl
       receiver!.lateStatementReplacementMap.set(id, DeclarationTransformer_createFullExpandoBlock(receiver, id));
     }
   } finally {
-    cleanupDiagnosticContext();
+    cleanupDiagnosticContext!();
   }
 }
 

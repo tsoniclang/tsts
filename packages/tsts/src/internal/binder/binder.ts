@@ -31,7 +31,8 @@ import {
   SourceFile_IsBound,
   SourceFile_SetBindDiagnostics,
 } from "../ast/ast.js";
-import type { ModifierList, Node, NodeList, SourceFile } from "../ast/ast.js";
+import type { ModifierList, NodeList, SourceFile } from "../ast/ast.js";
+import type { Node } from "../ast/spine.js";
 import type { BinaryExpression } from "../ast/ast_generated.js";
 import {
   AsBinaryExpression,
@@ -4499,12 +4500,12 @@ export function Binder_setContinueTarget(receiver: GoPtr<Binder>, node: GoPtr<No
  * 	b.currentFalseTarget = savedFalseTarget
  * }
  */
-export function Binder_doWithConditionalBranches(receiver: GoPtr<Binder>, action: (b: GoPtr<Binder>, value: GoPtr<Node>) => bool, value: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
+export function Binder_doWithConditionalBranches(receiver: GoPtr<Binder>, action: GoFunc<(b: GoPtr<Binder>, value: GoPtr<Node>) => bool>, value: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
   const savedTrueTarget = receiver!.currentTrueTarget;
   const savedFalseTarget = receiver!.currentFalseTarget;
   receiver!.currentTrueTarget = trueTarget;
   receiver!.currentFalseTarget = falseTarget;
-  action(receiver, value);
+  action!(receiver, value);
   receiver!.currentTrueTarget = savedTrueTarget;
   receiver!.currentFalseTarget = savedFalseTarget;
 }
