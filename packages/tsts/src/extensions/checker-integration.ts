@@ -139,7 +139,7 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   );
 }
 
-export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
+export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>, sourceSelectedElementIndex?: number): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
@@ -165,6 +165,7 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
       argument,
       ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
       ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+      ...(sourceSelectedElementIndex !== undefined ? { sourceSelectedElementIndex } : {}),
       ...(sourceResultType !== undefined ? { sourceResultType } : {}),
       ...(((elementAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),

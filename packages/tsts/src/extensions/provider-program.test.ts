@@ -2049,6 +2049,197 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
 });
 
+test("checker exposes only checker-selected fixed tuple element ordinals", () => {
+  const observedRequests: CheckedElementAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {
+        readonly length: number;
+        [index: number]: T;
+      }
+    `],
+    ["/src/index.ts", `
+      const one = 1 as const;
+      declare const index: number;
+      declare const eitherIndex: 0 | 1;
+      declare const pair: [number, string];
+      declare const labeled: [first: number, second: string];
+      declare const duplicate: [string, string];
+      declare const optional: [number, string?];
+      declare const rest: [string, ...number[]];
+      declare const union: [number, string] | [boolean, string];
+      declare const mixed: [number, string] | string[];
+      declare const intersection: [number, string] & { tag: string };
+      declare const maybePair: [number, string] | undefined;
+      declare let mutablePair: [number, string];
+
+      export const literal = pair[1];
+      export const stringLiteral = pair["1"];
+      export const constant = pair[one];
+      export const parenthesized = pair[(one)];
+      export const nonNull = pair[one!];
+      export const named = labeled[one];
+      export const sameTypes = duplicate[one];
+      export const optionalFixed = optional[one];
+      export const restFixed = rest[0];
+      export const restExpanded = rest[2];
+      export const unionFixed = union[one];
+      export const mixedReceiver = mixed[one];
+      export const intersectionReceiver = intersection[one];
+      export const generalNumber = pair[index];
+      export const ambiguousOrdinal = pair[eitherIndex];
+      export const optionalChain = maybePair?.[one];
+      mutablePair[one] = "updated";
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        strictNullChecks: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  let operationId = "Acme.Tuple.Get";
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-tuple-index-extension", {
+      identity: semanticProviderIdentity("acme-tuple-index-provider"),
+      mapCheckedElementAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation(operationId, "indexer", "int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const indexFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(indexFile !== undefined);
+  assertCleanProgram(program, indexFile);
+
+  assert.deepEqual(
+    observedRequests.map((request) => request.sourceSelectedElementIndex),
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, undefined, 1, undefined, 1, undefined, undefined, 1, 1],
+  );
+  assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
+
+  const canonicalRequestCount = observedRequests.length;
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), indexFile).length, 0);
+  assert.equal(observedRequests.length, canonicalRequestCount);
+
+  const firstRequest = observedRequests[0];
+  assert.ok(firstRequest?.sourceSelectedSymbol !== undefined);
+  assert.ok(firstRequest.sourceResultType !== undefined);
+  const [checker, done] = Program_GetTypeCheckerForFile(program, Background(), indexFile);
+  try {
+    recordExtensionCheckedElementAccessMapping(
+      checker,
+      firstRequest.expression as GoPtr<Node>,
+      firstRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      firstRequest.sourceResultType as GoPtr<Type>,
+      firstRequest.sourceSelectedElementIndex,
+    );
+    assert.equal(observedRequests.at(-1)?.sourceSelectedElementIndex, 1);
+    assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT"), false);
+
+    operationId = "Acme.Tuple.GetOther";
+    recordExtensionCheckedElementAccessMapping(
+      checker,
+      firstRequest.expression as GoPtr<Node>,
+      firstRequest.sourceSelectedSymbol as GoPtr<Symbol>,
+      firstRequest.sourceResultType as GoPtr<Type>,
+      firstRequest.sourceSelectedElementIndex,
+    );
+  } finally {
+    done();
+  }
+  assert.equal(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 1);
+});
+
+test("invalid tuple indexes never expose a selected fixed ordinal or bypass TypeScript diagnostics", () => {
+  const observedRequests: CheckedElementAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/profile.d.ts", `
+      interface Object {}
+      interface Function {}
+      interface Boolean {}
+      interface Number {}
+      interface String {}
+      interface RegExp {}
+      interface IArguments {}
+      interface Array<T> {
+        readonly length: number;
+        [index: number]: T;
+      }
+    `],
+    ["/src/index.ts", `
+      declare const pair: [number, string];
+      export const negative = pair[-1];
+      export const fractional = pair[1.5];
+      export const outOfRange = pair[2];
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["profile.d.ts", "index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-invalid-tuple-index-extension", {
+      identity: semanticProviderIdentity("acme-invalid-tuple-index-provider"),
+      mapCheckedElementAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation("Acme.Tuple.Get", "indexer", "int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const indexFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(indexFile !== undefined);
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), indexFile);
+  assert.equal(diagnostics.length, 3);
+  assert.ok(diagnostics.every((diagnostic) => Diagnostic_Code(diagnostic) < 9000000));
+  assert.equal(observedRequests.length, 3);
+  assert.ok(observedRequests.every((request) => request.sourceSelectedElementIndex === undefined));
+});
+
 test("checker exposes selected source member evidence on optional-chain property access", () => {
   const observedRequests: CheckedPropertyAccessMappingRequest[] = [];
   let fs = FromMap(new Map<string, string>([

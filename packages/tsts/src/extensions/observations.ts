@@ -139,6 +139,7 @@ export interface CheckedElementAccessMappingRequest {
   readonly argument: ExtensionFactSubject;
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
+  readonly sourceSelectedElementIndex?: number;
   readonly sourceResultType?: ExtensionFactSubject;
   readonly optionalChain?: boolean;
   readonly target?: string;
