@@ -49,6 +49,16 @@ export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
   return { v: value } as NonNullable<GoRef<T>>;
 }
 
+export function GoFieldRef<ObjectType extends object, Key extends keyof ObjectType>(
+  object: ObjectType,
+  key: Key,
+): NonNullable<GoRef<ObjectType[Key]>> {
+  return {
+    get v(): ObjectType[Key] { return object[key]; },
+    set v(value: ObjectType[Key]) { object[key] = value; },
+  } as NonNullable<GoRef<ObjectType[Key]>>;
+}
+
 export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable<GoRef<T>> {
   if (!Number.isSafeInteger(index) || index < 0 || index >= slice.length) {
     throw new RangeError("index out of range");
