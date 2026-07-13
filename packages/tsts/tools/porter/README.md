@@ -186,6 +186,30 @@ The signature checker recomputes these snapshots from the pinned Go source and
 the actual TypeScript declaration. Any upstream Go drift or local TS signature
 drift invalidates the override and fails `porter:verify`.
 
+One narrower signature contract exists for erased generic execution that must
+materialize a Go zero value. JavaScript cannot construct `var zero T` from an
+erased type parameter, so the implementation receives an explicit trailing
+`GoZeroFactory<T>` dictionary:
+
+```ts
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get","kind":"method","status":"implemented","sigHash":"..."}
+ * @tsgo-override {"category":"runtime-representation","allow":["signature"],"reason":"Erased generic execution receives an explicit static zero-value dictionary for the missing-result path.","runtimeDictionaries":[{"kind":"zero-value","parameter":"zeroValue","typeParameter":"V"}]}
+ */
+export function Get<K, V>(map: OrderedMap<K, V>, key: K, zeroValue: GoZeroFactory<V>): V;
+```
+
+This is not a general signature waiver. Porter proves that each declared
+dictionary is a required, non-rest, initializer-free trailing parameter with
+the exact name, exact `GoZeroFactory` identity, and exact lexical type-parameter
+binding stated in metadata. Porter removes only those declared dictionaries
+from a temporary descriptor and then performs the complete ordinary Go/TS
+declaration comparison. A changed ordinary parameter, result, constraint,
+modifier, overload, dictionary order, or dictionary type fails the gate. The
+metadata may use only category `runtime-representation` and exactly
+`allow:["signature"]`; broad snapshots and additional allowances cannot coexist
+with it.
+
 The comparison follows the mechanical port's declaration boundary:
 
 - A Go struct type unit is its data layout: declared fields plus required,

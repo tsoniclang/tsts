@@ -104,6 +104,72 @@ test("buildLocalOverrideStatus accepts local signature overrides with snapshots"
   assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
+test("buildLocalOverrideStatus accepts exact runtime zero dictionaries without broad snapshots", () => {
+  const status = buildLocalOverrideStatus(baseConfig, { units: [{
+    id: "github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.Get",
+    kind: "method",
+    status: "implemented",
+    path: "packages/tsts/src/internal/collections/ordered_map.ts",
+    override: {
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "Erased generic execution receives an explicit static zero-value dictionary for this declaration.",
+      runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
+    },
+  }] });
+
+  assert.equal(status.inline, 1);
+  assert.deepEqual(status.units[0].runtimeDictionaries, [
+    { kind: "zero-value", parameter: "zeroValue", typeParameter: "V" },
+  ]);
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
+});
+
+test("runtime dictionary metadata is closed and declaration-specific", () => {
+  const invalidOverrides = [
+    [{
+      category: "runtime-performance",
+      allow: ["signature"],
+      reason: "This invalid fixture uses the wrong registered category for a runtime dictionary.",
+      runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
+    }, /require category 'runtime-representation'/],
+    [{
+      category: "runtime-representation",
+      allow: ["signature", "initializer"],
+      reason: "This invalid fixture attempts to combine a dictionary projection with another allowance.",
+      runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
+    }, /require exactly allow/],
+    [{
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "This invalid fixture duplicates both the runtime parameter and its source type parameter.",
+      runtimeDictionaries: [
+        { kind: "zero-value", parameter: "zeroValue", typeParameter: "V" },
+        { kind: "zero-value", parameter: "zeroValue", typeParameter: "V" },
+      ],
+    }, /parameter duplicates 'zeroValue'.*typeParameter duplicates 'V'/],
+    [{
+      category: "runtime-representation",
+      allow: ["signature"],
+      reason: "This invalid fixture attempts to preserve a broad signature snapshot beside a dictionary.",
+      runtimeDictionaries: [{ kind: "zero-value", parameter: "zeroValue", typeParameter: "V" }],
+      goSignature: "broad snapshot",
+    }, /unknown or inapplicable override key 'goSignature'/],
+  ];
+
+  for (const [override, expectedIssue] of invalidOverrides) {
+    const status = buildLocalOverrideStatus(baseConfig, { units: [{
+      id: "m::ordered_map.go::method::OrderedMap.Get",
+      kind: "method",
+      status: "implemented",
+      path: "packages/tsts/src/internal/collections/ordered_map.ts",
+      override,
+    }] });
+    assert.equal(status.failureCount, 1);
+    assert.match(status.invalidInline[0].reason, expectedIssue);
+  }
+});
+
 test("buildLocalOverrideStatus accepts local initializer overrides with snapshots", () => {
   const status = buildLocalOverrideStatus(baseConfig, { units: [{
     id: "github.com/microsoft/typescript-go::internal/core/version.go::constGroup::Version",

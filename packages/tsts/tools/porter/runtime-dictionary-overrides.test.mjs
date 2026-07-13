@@ -1,0 +1,176 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { compareSignatures, resolveOverride } from "./sig-check.mjs";
+
+const zeroFactoryId = "packages/tsts/src/go/compat.ts::GoZeroFactory";
+const identity = (value) => value;
+const keyword = (name) => ({ t: "kw", kw: name });
+const typeParameterReference = (index) => ({ t: "tp", depth: 0, index });
+const typeParameter = (name, index) => ({
+  name,
+  binding: { depth: 0, index },
+  modifiers: { const: false, variance: null, unsupported: [] },
+  constraint: null,
+  default: null,
+  invalidConstraint: null,
+});
+const parameter = (name, type, changes = {}) => ({
+  name,
+  role: "parameter",
+  modifiers: [],
+  type,
+  rest: false,
+  optional: false,
+  optionalSyntax: "required",
+  question: false,
+  missingType: false,
+  initializerStatus: "missing",
+  initializer: undefined,
+  initializerIssue: undefined,
+  ...changes,
+});
+const zeroDictionaryParameter = (name, typeParameterIndex, changes = {}) => parameter(name, {
+  t: "ref",
+  id: zeroFactoryId,
+  args: [typeParameterReference(typeParameterIndex)],
+}, changes);
+const signature = ({ params, ret = keyword("void"), typeParams }) => ({
+  role: "implementation",
+  declarationModifiers: ["export"],
+  params,
+  ret,
+  missingReturnType: false,
+  returnTypePolicy: "required",
+  typeParams,
+  signatureModifiers: [],
+});
+const func = (value) => ({ kind: "func", modifiers: ["export"], signatures: [signature(value)] });
+const dictionary = (parameterName, typeParameterName) => ({
+  kind: "zero-value",
+  parameter: parameterName,
+  typeParameter: typeParameterName,
+});
+const override = (runtimeDictionaries) => ({
+  category: "runtime-representation",
+  allow: ["signature"],
+  reason: "Erased generic execution receives an explicit static zero-value dictionary for this declaration.",
+  runtimeDictionaries,
+});
+
+function resolve(runtimeDictionaries, expected, actual) {
+  const issues = [];
+  const resolved = resolveOverride(override(runtimeDictionaries), "unit", expected, actual, identity, issues);
+  return { issues, resolved };
+}
+
+test("runtime dictionary override projects one exact trailing zero factory", () => {
+  const typeParams = [typeParameter("V", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("key", keyword("string"))],
+    ret: typeParameterReference(0),
+  });
+  const actual = func({
+    typeParams,
+    params: [parameter("key", keyword("string")), zeroDictionaryParameter("zeroValue", 0)],
+    ret: typeParameterReference(0),
+  });
+  const { issues, resolved } = resolve([dictionary("zeroValue", "V")], expected, actual);
+
+  assert.deepEqual(issues, []);
+  assert.ok(compareSignatures(expected, actual, null).some((entry) => entry.kind === "arity"));
+  assert.deepEqual(compareSignatures(expected, actual, resolved), []);
+});
+
+test("runtime dictionary override preserves declared order for multiple factories", () => {
+  const typeParams = [typeParameter("K", 0), typeParameter("V", 1)];
+  const expected = func({ typeParams, params: [parameter("index", keyword("number"))], ret: keyword("void") });
+  const actual = func({
+    typeParams,
+    params: [
+      parameter("index", keyword("number")),
+      zeroDictionaryParameter("zeroKey", 0),
+      zeroDictionaryParameter("zeroValue", 1),
+    ],
+    ret: keyword("void"),
+  });
+
+  assert.deepEqual(resolve([
+    dictionary("zeroKey", "K"),
+    dictionary("zeroValue", "V"),
+  ], expected, actual).issues, []);
+  assert.match(resolve([
+    dictionary("zeroValue", "V"),
+    dictionary("zeroKey", "K"),
+  ], expected, actual).issues[0].reason, /must be trailing parameter/);
+});
+
+test("runtime dictionary override rejects every malformed dictionary parameter shape", () => {
+  const typeParams = [typeParameter("K", 0), typeParameter("V", 1)];
+  const expected = func({ typeParams, params: [parameter("key", typeParameterReference(0))], ret: typeParameterReference(1) });
+  const validParams = [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1)];
+  const unknownField = zeroDictionaryParameter("zeroValue", 1);
+  unknownField.legacy = true;
+  const missingField = zeroDictionaryParameter("zeroValue", 1);
+  delete missingField.initializerIssue;
+  const cases = [
+    ["name", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("other", 1)], /must be trailing parameter/],
+    ["factory", [parameter("key", typeParameterReference(0)), parameter("zeroValue", { t: "ref", id: "m::Other", args: [typeParameterReference(1)] })], /exact type GoZeroFactory/],
+    ["factory arity", [parameter("key", typeParameterReference(0)), parameter("zeroValue", { t: "ref", id: zeroFactoryId, args: [] })], /exact type GoZeroFactory/],
+    ["type parameter", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 0)], /exact lexical type parameter/],
+    ["optional", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { optional: true, optionalSyntax: "question", question: true })], /optional must be false/],
+    ["rest", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { rest: true })], /rest must be false/],
+    ["initializer", [parameter("key", typeParameterReference(0)), zeroDictionaryParameter("zeroValue", 1, { initializerStatus: "known", initializer: { kind: "identifier", name: "factory" } })], /initializerStatus must be "missing"/],
+    ["unknown descriptor field", [parameter("key", typeParameterReference(0)), unknownField], /unknown=legacy/],
+    ["missing descriptor field", [parameter("key", typeParameterReference(0)), missingField], /missing=initializerIssue/],
+  ];
+
+  for (const [label, params, pattern] of cases) {
+    const { issues, resolved } = resolve([dictionary("zeroValue", "V")], expected, func({ typeParams, params, ret: typeParameterReference(1) }));
+    assert.match(issues[0]?.reason ?? "", pattern, label);
+    assert.equal(resolved.ignore.size, 0, label);
+  }
+  assert.deepEqual(validParams[1].type.args, [typeParameterReference(1)]);
+});
+
+test("runtime dictionary projection cannot hide unrelated declaration drift", () => {
+  const typeParams = [typeParameter("V", 0)];
+  const expected = func({
+    typeParams,
+    params: [parameter("key", keyword("string"))],
+    ret: typeParameterReference(0),
+  });
+  const changedReturn = func({
+    typeParams,
+    params: [parameter("key", keyword("string")), zeroDictionaryParameter("zeroValue", 0)],
+    ret: keyword("string"),
+  });
+  const changedOrdinaryParameter = func({
+    typeParams,
+    params: [parameter("key", keyword("number")), zeroDictionaryParameter("zeroValue", 0)],
+    ret: typeParameterReference(0),
+  });
+
+  for (const actual of [changedReturn, changedOrdinaryParameter]) {
+    const { issues, resolved } = resolve([dictionary("zeroValue", "V")], expected, actual);
+    assert.match(issues[0]?.reason ?? "", /unrelated signature mismatch/);
+    assert.equal(resolved.ignore.size, 0);
+  }
+});
+
+test("runtime dictionary projection rejects missing, misplaced, and extra parameters", () => {
+  const typeParams = [typeParameter("V", 0)];
+  const expected = func({ typeParams, params: [parameter("key", keyword("string"))], ret: typeParameterReference(0) });
+  const cases = [
+    func({ typeParams, params: [parameter("key", keyword("string"))], ret: typeParameterReference(0) }),
+    func({ typeParams, params: [zeroDictionaryParameter("zeroValue", 0), parameter("key", keyword("string"))], ret: typeParameterReference(0) }),
+    func({ typeParams, params: [parameter("key", keyword("string")), zeroDictionaryParameter("zeroValue", 0), parameter("extra", keyword("boolean"))], ret: typeParameterReference(0) }),
+  ];
+
+  for (const actual of cases) {
+    const { issues, resolved } = resolve([dictionary("zeroValue", "V")], expected, actual);
+    assert.ok(issues.length > 0);
+    assert.equal(resolved.ignore.size, 0);
+  }
+});
