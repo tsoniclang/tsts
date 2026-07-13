@@ -49,37 +49,6 @@ export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
   return { v: value } as NonNullable<GoRef<T>>;
 }
 
-class GoObjectFieldRef<ObjectType extends object, Key extends keyof ObjectType> {
-  constructor(
-    private readonly object: ObjectType,
-    private readonly key: Key,
-  ) {}
-
-  get v(): ObjectType[Key] { return this.object[this.key]; }
-  set v(value: ObjectType[Key]) { this.object[this.key] = value; }
-}
-
-interface GoUntypedFieldRef { v: unknown; }
-
-const goObjectFieldRefs = new WeakMap<object, Map<PropertyKey, GoUntypedFieldRef>>();
-
-export function GoFieldRef<ObjectType extends object, Key extends keyof ObjectType>(
-  object: ObjectType,
-  key: Key,
-): NonNullable<GoRef<ObjectType[Key]>> {
-  let refs = goObjectFieldRefs.get(object);
-  if (refs === undefined) {
-    refs = new Map();
-    goObjectFieldRefs.set(object, refs);
-  }
-  let ref = refs.get(key as PropertyKey);
-  if (ref === undefined) {
-    ref = new GoObjectFieldRef(object, key) as unknown as GoUntypedFieldRef;
-    refs.set(key as PropertyKey, ref);
-  }
-  return ref as unknown as NonNullable<GoRef<ObjectType[Key]>>;
-}
-
 export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable<GoRef<T>> {
   if (!Number.isSafeInteger(index) || index < 0 || index >= slice.length) {
     throw new RangeError("index out of range");
