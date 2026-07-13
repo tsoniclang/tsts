@@ -137,7 +137,7 @@ export function emitCasts(schema) {
       continue;
     }
     lines.push(`export function As${node}(n: GoPtr<Node>): GoPtr<${node}> {`);
-    lines.push(`  return n!.data!.__tsgoGoReceiver as GoPtr<${node}>;`);
+    lines.push(`  return n!.data!.__tsgoGoReceiver() as GoPtr<${node}>;`);
     lines.push(`}`);
     lines.push("");
   }

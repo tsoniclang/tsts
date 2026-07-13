@@ -519,7 +519,7 @@ function emitComputeSubtreeFactsFreeFn(schema, node, lines) {
 
 function emitAdapter(schema, node, lines) {
   lines.push(`const ${node}_nodeDataPrototype: nodeData & ThisType<GoPtr<${node}>> = {`);
-  lines.push(`  get __tsgoGoReceiver(): GoPtr<${node}> { return this; },`);
+  lines.push(`  __tsgoGoReceiver(): GoPtr<${node}> { return this; },`);
   for (const method of NODE_DATA_METHODS) {
     const t = resolveAdapterTarget(schema, node, method);
     const slot = adapterSlot(node, method, t);
