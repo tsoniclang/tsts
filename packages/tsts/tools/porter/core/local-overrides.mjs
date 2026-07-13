@@ -43,6 +43,9 @@ export function buildLocalOverrideStatus(config, tsUnits) {
       category: unit.override.category,
       allow: [...unit.override.allow],
       reason: unit.override.reason,
+      ...(unit.override.runtimeDictionaries === undefined
+        ? {}
+        : { runtimeDictionaries: unit.override.runtimeDictionaries.map((dictionary) => ({ ...dictionary })) }),
     });
     if (unit.override.allow.includes("signature")) {
       signatureUnits.push({ id: unit.id, path: unit.path, category: unit.override.category, reason: unit.override.reason });
@@ -90,12 +93,18 @@ export function validateOverrideShape(value, config, unit) {
     issues.push("value-order overrides apply only to constGroup or varGroup units");
   }
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
-    if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
-      issues.push("signature overrides require goSignature");
+    if (value.runtimeDictionaries === undefined) {
+      if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
+        issues.push("signature overrides require goSignature");
+      }
+      if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
+        issues.push("signature overrides require tsSignature");
+      }
+    } else {
+      issues.push(...validateRuntimeDictionaries(value, unit));
     }
-    if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
-      issues.push("signature overrides require tsSignature");
-    }
+  } else if (value.runtimeDictionaries !== undefined) {
+    issues.push("runtimeDictionaries require the 'signature' allowance");
   }
   if (Array.isArray(value.allow) && value.allow.includes("initializer")) {
     if (typeof value.goInitializer !== "string" || value.goInitializer.trim() === "") {
@@ -115,8 +124,12 @@ export function validateOverrideShape(value, config, unit) {
   }
   const permittedKeys = new Set(["category", "allow", "reason"]);
   if (Array.isArray(value.allow) && value.allow.includes("signature")) {
-    permittedKeys.add("goSignature");
-    permittedKeys.add("tsSignature");
+    if (value.runtimeDictionaries === undefined) {
+      permittedKeys.add("goSignature");
+      permittedKeys.add("tsSignature");
+    } else {
+      permittedKeys.add("runtimeDictionaries");
+    }
   }
   if (Array.isArray(value.allow) && value.allow.includes("initializer")) {
     permittedKeys.add("goInitializer");
@@ -128,6 +141,52 @@ export function validateOverrideShape(value, config, unit) {
   }
   for (const key of Object.keys(value)) {
     if (!permittedKeys.has(key)) issues.push(`unknown or inapplicable override key '${key}'`);
+  }
+  return issues;
+}
+
+function validateRuntimeDictionaries(value, unit) {
+  const issues = [];
+  if (value.category !== "runtime-representation") {
+    issues.push("runtimeDictionaries require category 'runtime-representation'");
+  }
+  if (!Array.isArray(value.allow) || value.allow.length !== 1 || value.allow[0] !== "signature") {
+    issues.push("runtimeDictionaries require exactly allow ['signature']");
+  }
+  if (unit?.kind !== "func" && unit?.kind !== "method") {
+    issues.push("runtimeDictionaries apply only to function or method units");
+  }
+  if (!Array.isArray(value.runtimeDictionaries) || value.runtimeDictionaries.length === 0) {
+    issues.push("runtimeDictionaries must be a non-empty array");
+    return issues;
+  }
+  const parameters = new Set();
+  const typeParameters = new Set();
+  for (const [index, dictionary] of value.runtimeDictionaries.entries()) {
+    const label = `runtimeDictionaries[${index}]`;
+    if (dictionary === null || typeof dictionary !== "object" || Array.isArray(dictionary)) {
+      issues.push(`${label} must be an object`);
+      continue;
+    }
+    const keys = Object.keys(dictionary).sort();
+    if (JSON.stringify(keys) !== JSON.stringify(["kind", "parameter", "typeParameter"])) {
+      issues.push(`${label} must contain exactly kind, parameter, and typeParameter`);
+    }
+    if (dictionary.kind !== "zero-value") issues.push(`${label}.kind must be 'zero-value'`);
+    if (typeof dictionary.parameter !== "string" || dictionary.parameter.trim() === "") {
+      issues.push(`${label}.parameter must be a non-empty string`);
+    } else if (parameters.has(dictionary.parameter)) {
+      issues.push(`${label}.parameter duplicates '${dictionary.parameter}'`);
+    } else {
+      parameters.add(dictionary.parameter);
+    }
+    if (typeof dictionary.typeParameter !== "string" || dictionary.typeParameter.trim() === "") {
+      issues.push(`${label}.typeParameter must be a non-empty string`);
+    } else if (typeParameters.has(dictionary.typeParameter)) {
+      issues.push(`${label}.typeParameter duplicates '${dictionary.typeParameter}'`);
+    } else {
+      typeParameters.add(dictionary.typeParameter);
+    }
   }
   return issues;
 }

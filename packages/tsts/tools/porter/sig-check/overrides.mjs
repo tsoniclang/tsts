@@ -1,3 +1,5 @@
+import { compareSignatures } from "./comparison.mjs";
+
 const SIGNATURE_MISMATCH_KINDS = new Set([
   "declaration-kind", "declaration-modifier", "declaration-fragment-contract", "declaration-fragment-count",
   "declaration-fragment-modifier", "type-param-count", "type-param-name", "type-param-binding", "type-param-constraint",
@@ -17,12 +19,16 @@ const INITIALIZER_MISMATCH_KINDS = new Set([
 ]);
 const VALUE_ORDER_MISMATCH_KINDS = new Set(["value-order"]);
 
-export function resolveOverride(localOverride, id, expected, actual, canon, overrideIssues) {
+export function resolveOverride(localOverride, id, expected, actual, canon, overrideIssues, conventions = {}, ambientReferences = { accept: () => false }) {
   const ignore = new Set();
   const issues = [];
   if (localOverride?.allow?.includes?.("signature")) {
-    requireSnapshot(localOverride.goSignature, unitSignatureSnapshot(expected, canon), "goSignature", issues);
-    requireSnapshot(localOverride.tsSignature, unitSignatureSnapshot(actual, canon), "tsSignature", issues);
+    if (localOverride.runtimeDictionaries === undefined) {
+      requireSnapshot(localOverride.goSignature, unitSignatureSnapshot(expected, canon), "goSignature", issues);
+      requireSnapshot(localOverride.tsSignature, unitSignatureSnapshot(actual, canon), "tsSignature", issues);
+    } else {
+      validateRuntimeDictionaryProjection(localOverride.runtimeDictionaries, expected, actual, canon, conventions, ambientReferences, issues);
+    }
   }
   if (localOverride?.allow?.includes?.("initializer")) {
     requireSnapshot(localOverride.goInitializer, unitInitializerSnapshot(expected), "goInitializer", issues);
@@ -40,6 +46,95 @@ export function resolveOverride(localOverride, id, expected, actual, canon, over
   if (localOverride?.allow?.includes?.("initializer")) for (const kind of INITIALIZER_MISMATCH_KINDS) ignore.add(kind);
   if (localOverride?.allow?.includes?.("value-order")) for (const kind of VALUE_ORDER_MISMATCH_KINDS) ignore.add(kind);
   return { ignore, reason: localOverride?.reason ?? "" };
+}
+
+const GO_ZERO_FACTORY_ID = "packages/tsts/src/go/compat.ts::GoZeroFactory";
+const RUNTIME_DICTIONARY_PARAMETER_FIELDS = new Set([
+  "name", "role", "modifiers", "type", "rest", "optional", "optionalSyntax", "question", "missingType",
+  "initializerStatus", "initializer", "initializerIssue",
+]);
+
+function validateRuntimeDictionaryProjection(dictionaries, expected, actual, canon, conventions, ambientReferences, issues) {
+  if (!Array.isArray(dictionaries) || dictionaries.length === 0 || dictionaries.some((dictionary) => dictionary === null || typeof dictionary !== "object" || Array.isArray(dictionary))) {
+    issues.push("runtime dictionary projection requires a non-empty array of dictionary contracts");
+    return;
+  }
+  if (actual?.kind !== "func" || !Array.isArray(actual.signatures) || actual.signatures.length !== 1) {
+    issues.push("runtime dictionary projection requires exactly one TypeScript function signature");
+    return;
+  }
+  const signature = actual.signatures[0];
+  if (!Array.isArray(signature.params) || !Array.isArray(signature.typeParams)) {
+    issues.push("runtime dictionary projection requires complete parameter and type-parameter arrays");
+    return;
+  }
+  if (signature.params.length < dictionaries.length) {
+    issues.push(`runtime dictionary projection expected ${dictionaries.length} trailing parameter(s), found only ${signature.params.length} total parameter(s)`);
+    return;
+  }
+  const projected = structuredClone(actual);
+  const projectedSignature = projected.signatures[0];
+  const firstDictionary = signature.params.length - dictionaries.length;
+  for (const [index, dictionary] of dictionaries.entries()) {
+    const parameter = signature.params[firstDictionary + index];
+    const label = `runtime dictionary '${dictionary.parameter}'`;
+    if (parameter?.name !== dictionary.parameter) {
+      issues.push(`${label} must be trailing parameter #${firstDictionary + index}; found '${parameter?.name ?? "<missing>"}'`);
+      continue;
+    }
+    const typeParameterIndex = signature.typeParams.findIndex((candidate) => candidate?.name === dictionary.typeParameter);
+    if (typeParameterIndex < 0) {
+      issues.push(`${label} references missing type parameter '${dictionary.typeParameter}'`);
+      continue;
+    }
+    validateRuntimeDictionaryParameter(parameter, signature.typeParams[typeParameterIndex], typeParameterIndex, label, canon, issues);
+  }
+  projectedSignature.params = projectedSignature.params.slice(0, firstDictionary);
+  const mismatches = compareSignatures(expected, projected, null, canon, conventions, ambientReferences);
+  if (mismatches.length > 0) {
+    issues.push(`runtime dictionary projection leaves ${mismatches.length} unrelated signature mismatch(es): ${mismatches.slice(0, 4).map((mismatch) => `${mismatch.kind} (${mismatch.detail})`).join("; ")}`);
+  }
+}
+
+function validateRuntimeDictionaryParameter(parameter, typeParameter, typeParameterIndex, label, canon, issues) {
+  if (parameter === null || typeof parameter !== "object" || Array.isArray(parameter)) {
+    issues.push(`${label} must be a complete parameter descriptor`);
+    return;
+  }
+  const unknownFields = Object.keys(parameter).filter((field) => !RUNTIME_DICTIONARY_PARAMETER_FIELDS.has(field));
+  const missingFields = [...RUNTIME_DICTIONARY_PARAMETER_FIELDS].filter((field) => !Object.hasOwn(parameter, field));
+  if (unknownFields.length > 0 || missingFields.length > 0) {
+    issues.push(`${label} must use the exact parameter descriptor contract; missing=${missingFields.join(",") || "<none>"} unknown=${unknownFields.join(",") || "<none>"}`);
+  }
+  const expectedStaticFields = {
+    role: "parameter",
+    modifiers: [],
+    rest: false,
+    optional: false,
+    optionalSyntax: "required",
+    question: false,
+    missingType: false,
+    initializerStatus: "missing",
+  };
+  for (const [field, expected] of Object.entries(expectedStaticFields)) {
+    if (JSON.stringify(parameter?.[field]) !== JSON.stringify(expected)) {
+      issues.push(`${label} ${field} must be ${JSON.stringify(expected)}, found ${JSON.stringify(parameter?.[field])}`);
+    }
+  }
+  if (parameter?.initializer !== undefined || parameter?.initializerIssue !== undefined) {
+    issues.push(`${label} must not have an initializer or initializer issue`);
+  }
+  const type = parameter?.type;
+  const canonicalFactory = type?.t === "ref" && typeof type.id === "string" ? canon(type.id) : undefined;
+  if (type?.t !== "ref" || canonicalFactory !== canon(GO_ZERO_FACTORY_ID) || !Array.isArray(type.args) || type.args.length !== 1) {
+    issues.push(`${label} must have exact type GoZeroFactory<${typeParameter.name}>`);
+    return;
+  }
+  const argument = type.args[0];
+  const binding = typeParameter?.binding;
+  if (argument?.t !== "tp" || argument.depth !== binding?.depth || argument.index !== binding?.index || binding?.index !== typeParameterIndex) {
+    issues.push(`${label} must reference the exact lexical type parameter '${typeParameter.name}'`);
+  }
 }
 
 function requireSnapshot(recorded, current, name, issues) {

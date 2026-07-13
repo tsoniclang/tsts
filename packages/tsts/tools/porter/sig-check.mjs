@@ -350,7 +350,7 @@ export function compareSignatureUnit({
 }) {
   try {
     const expected = goUnitDescriptor(go, expectedIndex);
-    const override = resolveOverride(localOverride, id, expected, actual, canonicalIdentity, overrideIssues);
+    const override = resolveOverride(localOverride, id, expected, actual, canonicalIdentity, overrideIssues, conventions, ambientReferences);
     const allMismatches = compareSignatures(expected, actual, null, canonicalIdentity, conventions, ambientReferences);
     validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
     const overridden = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
