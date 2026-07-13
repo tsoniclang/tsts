@@ -1,5 +1,5 @@
 import type { int } from "../../go/scalars.js";
-import { GoNilSlice, GoSliceElementRef } from "../../go/compat.js";
+import { GoNilSlice, GoSliceElementRef, GoSliceIsNil } from "../../go/compat.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 import type { GoRef } from "../../go/compat.js";
@@ -36,6 +36,9 @@ function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
  */
 export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoRef<T> {
   const arena = ensureArena(receiver);
+  if (GoSliceIsNil(arena.data)) {
+    arena.data = [];
+  }
   const index = arena.data.length as int;
   arena.data.push({} as T);
   return GoSliceElementRef(arena.data, index);

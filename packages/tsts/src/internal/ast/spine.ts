@@ -1,5 +1,4 @@
 import type { bool, int, short } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoInterfaceValue, GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
@@ -188,6 +187,29 @@ export interface NodeList {
  */
 export interface ModifierList extends NodeList {
   ModifierFlags: ModifierFlags;
+}
+
+class NodeListValue implements NodeList, GoInterfaceValue<NodeList> {
+  Loc: TextRange;
+  Nodes: GoSlice<GoPtr<Node>>;
+
+  constructor(nodes: GoSlice<GoPtr<Node>>) {
+    this.Loc = UndefinedTextRange();
+    this.Nodes = nodes;
+  }
+
+  __tsgoGoReceiver(): GoPtr<NodeList> { return this; }
+  Pos(): int { return NodeList_Pos(this); }
+  End(): int { return NodeList_End(this); }
+}
+
+class ModifierListValue extends NodeListValue implements ModifierList {
+  ModifierFlags: ModifierFlags;
+
+  constructor(nodes: GoSlice<GoPtr<Node>>, modifierFlags: ModifierFlags) {
+    super(nodes);
+    this.ModifierFlags = modifierFlags;
+  }
 }
 
 /**
@@ -449,8 +471,7 @@ export function cloneNode(updated: GoPtr<Node>, original: GoPtr<Node>, hooks: No
  * }
  */
 export function NodeFactory_NewNodeList(receiver: GoPtr<NodeFactory>, nodes: GoSlice<GoPtr<Node>>): GoPtr<NodeList> {
-  const list: NodeList = { Loc: UndefinedTextRange(), Nodes: nodes ?? [] };
-  return list;
+  return new NodeListValue(nodes);
 }
 
 /**
@@ -522,8 +543,7 @@ export function NodeList_Clone(receiver: GoPtr<NodeList>, f: GoInterface<NodeFac
  * }
  */
 export function NodeFactory_NewModifierList(receiver: GoPtr<NodeFactory>, nodes: GoSlice<GoPtr<Node>>): GoPtr<ModifierList> {
-  const list: ModifierList = { Loc: UndefinedTextRange(), Nodes: nodes, ModifierFlags: ModifiersToFlags(nodes) };
-  return list;
+  return new ModifierListValue(nodes, ModifiersToFlags(nodes));
 }
 
 /**
@@ -539,7 +559,8 @@ export function NodeFactory_NewModifierList(receiver: GoPtr<NodeFactory>, nodes:
  * }
  */
 export function ModifierList_Clone(receiver: GoPtr<ModifierList>, f: GoPtr<NodeFactory>): GoPtr<ModifierList> {
-  const res: ModifierList = { Loc: receiver!.Loc, Nodes: receiver!.Nodes, ModifierFlags: receiver!.ModifierFlags };
+  const res = new ModifierListValue(receiver!.Nodes, receiver!.ModifierFlags);
+  res.Loc = receiver!.Loc;
   return res;
 }
 

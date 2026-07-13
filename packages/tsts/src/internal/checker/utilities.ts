@@ -1,7 +1,7 @@
 import type { bool, int } from "../../go/scalars.js";
 import { Every, Find, FirstOrNil, Filter, Some } from "../core/core.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { GoMapIsNil } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { IsTypeOrJSTypeAliasDeclaration, Node_Arguments, Node_Body, Node_Elements, Node_Expression, Node_ImportClause, Node_Initializer, Node_Members, Node_ModifierFlags, Node_Parameters, Node_Properties, Node_PropertyNameOrName, Node_Text, Node_Type, Node_TypeArguments, SourceFile_FileName, SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
@@ -1864,8 +1864,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
   }
   switch (kind1) {
     case TypeMapperKindSimple: {
-      const mapper1 = m1!.data![goReceiverKey] as GoPtr<SimpleTypeMapper>;
-      const mapper2 = m2!.data![goReceiverKey] as GoPtr<SimpleTypeMapper>;
+      const mapper1 = m1!.data!.__tsgoGoReceiver() as GoPtr<SimpleTypeMapper>;
+      const mapper2 = m2!.data!.__tsgoGoReceiver() as GoPtr<SimpleTypeMapper>;
       const sources = CompareTypes(mapper1!.source, mapper2!.source);
       if (sources !== 0) {
         return sources;
@@ -1873,8 +1873,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
       return CompareTypes(mapper1!.target, mapper2!.target);
     }
     case TypeMapperKindArray: {
-      const mapper1 = m1!.data![goReceiverKey] as GoPtr<ArrayTypeMapper>;
-      const mapper2 = m2!.data![goReceiverKey] as GoPtr<ArrayTypeMapper>;
+      const mapper1 = m1!.data!.__tsgoGoReceiver() as GoPtr<ArrayTypeMapper>;
+      const mapper2 = m2!.data!.__tsgoGoReceiver() as GoPtr<ArrayTypeMapper>;
       const sources = compareTypeLists(mapper1!.sources, mapper2!.sources);
       if (sources !== 0) {
         return sources;
@@ -1882,8 +1882,8 @@ export function compareTypeMappers(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>)
       return compareTypeLists(mapper1!.targets, mapper2!.targets);
     }
     case TypeMapperKindMerged: {
-      const mapper1 = m1!.data![goReceiverKey] as GoPtr<MergedTypeMapper>;
-      const mapper2 = m2!.data![goReceiverKey] as GoPtr<MergedTypeMapper>;
+      const mapper1 = m1!.data!.__tsgoGoReceiver() as GoPtr<MergedTypeMapper>;
+      const mapper2 = m2!.data!.__tsgoGoReceiver() as GoPtr<MergedTypeMapper>;
       const first = compareTypeMappers(mapper1!.m1, mapper2!.m1);
       if (first !== 0) {
         return first;
@@ -2248,7 +2248,7 @@ export interface orderedSet<T extends GoComparable = unknown> {
  * }
  */
 export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T): bool {
-  if (receiver!.valuesByKey === undefined) {
+  if (GoMapIsNil(receiver!.valuesByKey)) {
     return slices.Contains(receiver!.values, value);
   }
   return receiver!.valuesByKey.has(value) as bool;
@@ -2278,7 +2278,7 @@ export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSe
   receiver!.values = [...receiver!.values, value];
   // Small sets are served by a linear scan over values; only materialize the map once the set
   // grows large enough for hashing to win.
-  if (receiver!.valuesByKey === undefined) {
+  if (GoMapIsNil(receiver!.valuesByKey)) {
     if (receiver!.values.length <= orderedSetMapThreshold) {
       return;
     }

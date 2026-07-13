@@ -1,5 +1,4 @@
 import type { bool, byte, int, sbyte, uint } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoArray, GoInterfaceValue, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { EntityName } from "../ast/generated/unions.js";
@@ -1590,7 +1589,7 @@ export function Type_ObjectFlags(receiver: GoPtr<Type>): ObjectFlags {
  * func (t *Type) AsIntrinsicType() *IntrinsicType           { return t.data.(*IntrinsicType) }
  */
 export function Type_AsIntrinsicType(receiver: GoPtr<Type>): GoPtr<IntrinsicType> {
-  return receiver!.data as unknown as GoPtr<IntrinsicType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<IntrinsicType>;
 }
 
 /**
@@ -1600,7 +1599,7 @@ export function Type_AsIntrinsicType(receiver: GoPtr<Type>): GoPtr<IntrinsicType
  * func (t *Type) AsLiteralType() *LiteralType               { return t.data.(*LiteralType) }
  */
 export function Type_AsLiteralType(receiver: GoPtr<Type>): GoPtr<LiteralType> {
-  return receiver!.data as unknown as GoPtr<LiteralType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<LiteralType>;
 }
 
 /**
@@ -1610,7 +1609,7 @@ export function Type_AsLiteralType(receiver: GoPtr<Type>): GoPtr<LiteralType> {
  * func (t *Type) AsUniqueESSymbolType() *UniqueESSymbolType { return t.data.(*UniqueESSymbolType) }
  */
 export function Type_AsUniqueESSymbolType(receiver: GoPtr<Type>): GoPtr<UniqueESSymbolType> {
-  return receiver!.data as unknown as GoPtr<UniqueESSymbolType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<UniqueESSymbolType>;
 }
 
 /**
@@ -1620,7 +1619,7 @@ export function Type_AsUniqueESSymbolType(receiver: GoPtr<Type>): GoPtr<UniqueES
  * func (t *Type) AsTupleType() *TupleType                   { return t.data.(*TupleType) }
  */
 export function Type_AsTupleType(receiver: GoPtr<Type>): GoPtr<TupleType> {
-  return receiver!.data as unknown as GoPtr<TupleType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<TupleType>;
 }
 
 /**
@@ -1632,7 +1631,7 @@ export function Type_AsTupleType(receiver: GoPtr<Type>): GoPtr<TupleType> {
  * }
  */
 export function Type_AsInstantiationExpressionType(receiver: GoPtr<Type>): GoPtr<InstantiationExpressionType> {
-  return receiver!.data as unknown as GoPtr<InstantiationExpressionType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<InstantiationExpressionType>;
 }
 
 /**
@@ -1642,7 +1641,7 @@ export function Type_AsInstantiationExpressionType(receiver: GoPtr<Type>): GoPtr
  * func (t *Type) AsMappedType() *MappedType                   { return t.data.(*MappedType) }
  */
 export function Type_AsMappedType(receiver: GoPtr<Type>): GoPtr<MappedType> {
-  return receiver!.data as unknown as GoPtr<MappedType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<MappedType>;
 }
 
 /**
@@ -1652,7 +1651,7 @@ export function Type_AsMappedType(receiver: GoPtr<Type>): GoPtr<MappedType> {
  * func (t *Type) AsReverseMappedType() *ReverseMappedType     { return t.data.(*ReverseMappedType) }
  */
 export function Type_AsReverseMappedType(receiver: GoPtr<Type>): GoPtr<ReverseMappedType> {
-  return receiver!.data as unknown as GoPtr<ReverseMappedType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<ReverseMappedType>;
 }
 
 /**
@@ -1662,7 +1661,7 @@ export function Type_AsReverseMappedType(receiver: GoPtr<Type>): GoPtr<ReverseMa
  * func (t *Type) AsEvolvingArrayType() *EvolvingArrayType     { return t.data.(*EvolvingArrayType) }
  */
 export function Type_AsEvolvingArrayType(receiver: GoPtr<Type>): GoPtr<EvolvingArrayType> {
-  return receiver!.data as unknown as GoPtr<EvolvingArrayType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<EvolvingArrayType>;
 }
 
 /**
@@ -1672,7 +1671,7 @@ export function Type_AsEvolvingArrayType(receiver: GoPtr<Type>): GoPtr<EvolvingA
  * func (t *Type) AsTypeParameter() *TypeParameter             { return t.data.(*TypeParameter) }
  */
 export function Type_AsTypeParameter(receiver: GoPtr<Type>): GoPtr<TypeParameter> {
-  return receiver!.data as unknown as GoPtr<TypeParameter>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<TypeParameter>;
 }
 
 /**
@@ -1682,7 +1681,7 @@ export function Type_AsTypeParameter(receiver: GoPtr<Type>): GoPtr<TypeParameter
  * func (t *Type) AsUnionType() *UnionType                     { return t.data.(*UnionType) }
  */
 export function Type_AsUnionType(receiver: GoPtr<Type>): GoPtr<UnionType> {
-  return receiver!.data as unknown as GoPtr<UnionType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<UnionType>;
 }
 
 /**
@@ -1692,7 +1691,7 @@ export function Type_AsUnionType(receiver: GoPtr<Type>): GoPtr<UnionType> {
  * func (t *Type) AsIntersectionType() *IntersectionType       { return t.data.(*IntersectionType) }
  */
 export function Type_AsIntersectionType(receiver: GoPtr<Type>): GoPtr<IntersectionType> {
-  return receiver!.data as unknown as GoPtr<IntersectionType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<IntersectionType>;
 }
 
 /**
@@ -1702,7 +1701,7 @@ export function Type_AsIntersectionType(receiver: GoPtr<Type>): GoPtr<Intersecti
  * func (t *Type) AsIndexType() *IndexType                     { return t.data.(*IndexType) }
  */
 export function Type_AsIndexType(receiver: GoPtr<Type>): GoPtr<IndexType> {
-  return receiver!.data as unknown as GoPtr<IndexType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<IndexType>;
 }
 
 /**
@@ -1712,7 +1711,7 @@ export function Type_AsIndexType(receiver: GoPtr<Type>): GoPtr<IndexType> {
  * func (t *Type) AsIndexedAccessType() *IndexedAccessType     { return t.data.(*IndexedAccessType) }
  */
 export function Type_AsIndexedAccessType(receiver: GoPtr<Type>): GoPtr<IndexedAccessType> {
-  return receiver!.data as unknown as GoPtr<IndexedAccessType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<IndexedAccessType>;
 }
 
 /**
@@ -1722,7 +1721,7 @@ export function Type_AsIndexedAccessType(receiver: GoPtr<Type>): GoPtr<IndexedAc
  * func (t *Type) AsTemplateLiteralType() *TemplateLiteralType { return t.data.(*TemplateLiteralType) }
  */
 export function Type_AsTemplateLiteralType(receiver: GoPtr<Type>): GoPtr<TemplateLiteralType> {
-  return receiver!.data as unknown as GoPtr<TemplateLiteralType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<TemplateLiteralType>;
 }
 
 /**
@@ -1732,7 +1731,7 @@ export function Type_AsTemplateLiteralType(receiver: GoPtr<Type>): GoPtr<Templat
  * func (t *Type) AsStringMappingType() *StringMappingType     { return t.data.(*StringMappingType) }
  */
 export function Type_AsStringMappingType(receiver: GoPtr<Type>): GoPtr<StringMappingType> {
-  return receiver!.data as unknown as GoPtr<StringMappingType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<StringMappingType>;
 }
 
 /**
@@ -1742,7 +1741,7 @@ export function Type_AsStringMappingType(receiver: GoPtr<Type>): GoPtr<StringMap
  * func (t *Type) AsSubstitutionType() *SubstitutionType       { return t.data.(*SubstitutionType) }
  */
 export function Type_AsSubstitutionType(receiver: GoPtr<Type>): GoPtr<SubstitutionType> {
-  return receiver!.data as unknown as GoPtr<SubstitutionType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<SubstitutionType>;
 }
 
 /**
@@ -1752,7 +1751,7 @@ export function Type_AsSubstitutionType(receiver: GoPtr<Type>): GoPtr<Substituti
  * func (t *Type) AsConditionalType() *ConditionalType         { return t.data.(*ConditionalType) }
  */
 export function Type_AsConditionalType(receiver: GoPtr<Type>): GoPtr<ConditionalType> {
-  return receiver!.data as unknown as GoPtr<ConditionalType>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<ConditionalType>;
 }
 
 /**

@@ -1,5 +1,4 @@
 import type { bool, int } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
 import * as core from "../core/core.js";
 import type { Checker, InferenceContext, InferenceInfo } from "./checker/state.js";
@@ -249,6 +248,26 @@ export interface SimpleTypeMapper {
   target: GoPtr<Type>;
 }
 
+class SimpleTypeMapperValue implements SimpleTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public source: GoPtr<Type>,
+    public target: GoPtr<Type>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<SimpleTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return SimpleTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return SimpleTypeMapper_Kind(this);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newSimpleTypeMapper","kind":"func","status":"implemented","sigHash":"39a7a236196fa727dcebaed1f01dd5d908540788294fe84b67ca9cf127d94688"}
  *
@@ -263,21 +282,9 @@ export interface SimpleTypeMapper {
  */
 export function newSimpleTypeMapper(source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: SimpleTypeMapper = {
-    __tsgoEmbedded0: base,
-    source: source,
-    target: target,
-  };
-  mapper.data = SimpleTypeMapper_as_TypeMapperData(m);
+  const m = new SimpleTypeMapperValue(base, source, target);
+  mapper.data = m;
   return mapper;
-}
-
-function SimpleTypeMapper_as_TypeMapperData(receiver: GoPtr<SimpleTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => SimpleTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => SimpleTypeMapper_Kind(receiver),
-  };
 }
 
 /**
@@ -326,6 +333,26 @@ export interface ArrayTypeMapper {
   targets: GoSlice<GoPtr<Type>>;
 }
 
+class ArrayTypeMapperValue implements ArrayTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public sources: GoSlice<GoPtr<Type>>,
+    public targets: GoSlice<GoPtr<Type>>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<ArrayTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return ArrayTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return ArrayTypeMapper_Kind(this);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newArrayTypeMapper","kind":"func","status":"implemented","sigHash":"5af187ba0d403d01152b1047b41c77e2bfbe4d9f1b6b5ff47dd0f16e3df7a9c5"}
  *
@@ -340,21 +367,9 @@ export interface ArrayTypeMapper {
  */
 export function newArrayTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<GoPtr<Type>>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: ArrayTypeMapper = {
-    __tsgoEmbedded0: base,
-    sources: sources,
-    targets: targets,
-  };
-  mapper.data = ArrayTypeMapper_as_TypeMapperData(m);
+  const m = new ArrayTypeMapperValue(base, sources, targets);
+  mapper.data = m;
   return mapper;
-}
-
-function ArrayTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => ArrayTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => ArrayTypeMapper_Kind(receiver),
-  };
 }
 
 /**
@@ -408,6 +423,26 @@ export interface ArrayToSingleTypeMapper {
   target: GoPtr<Type>;
 }
 
+class ArrayToSingleTypeMapperValue implements ArrayToSingleTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public sources: GoSlice<GoPtr<Type>>,
+    public target: GoPtr<Type>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<ArrayToSingleTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return ArrayToSingleTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return TypeMapperBase_Kind(undefined);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newArrayToSingleTypeMapper","kind":"func","status":"implemented","sigHash":"66a15be83c8fa3657c7967e96dba9c0699dc618f20567633ca1696b01393f661"}
  *
@@ -422,21 +457,9 @@ export interface ArrayToSingleTypeMapper {
  */
 export function newArrayToSingleTypeMapper(sources: GoSlice<GoPtr<Type>>, target: GoPtr<Type>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: ArrayToSingleTypeMapper = {
-    __tsgoEmbedded0: base,
-    sources: sources,
-    target: target,
-  };
-  mapper.data = ArrayToSingleTypeMapper_as_TypeMapperData(m);
+  const m = new ArrayToSingleTypeMapperValue(base, sources, target);
+  mapper.data = m;
   return mapper;
-}
-
-function ArrayToSingleTypeMapper_as_TypeMapperData(receiver: GoPtr<ArrayToSingleTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => ArrayToSingleTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
-  };
 }
 
 /**
@@ -473,6 +496,26 @@ export interface DeferredTypeMapper {
   targets: GoSlice<() => GoPtr<Type>>;
 }
 
+class DeferredTypeMapperValue implements DeferredTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public sources: GoSlice<GoPtr<Type>>,
+    public targets: GoSlice<() => GoPtr<Type>>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<DeferredTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return DeferredTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return TypeMapperBase_Kind(undefined);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newDeferredTypeMapper","kind":"func","status":"implemented","sigHash":"2f61952977ac436ca730fb92992033a5aa0fcd9c6dad40caa8c80331c9adcda7"}
  *
@@ -487,21 +530,9 @@ export interface DeferredTypeMapper {
  */
 export function newDeferredTypeMapper(sources: GoSlice<GoPtr<Type>>, targets: GoSlice<() => GoPtr<Type>>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: DeferredTypeMapper = {
-    __tsgoEmbedded0: base,
-    sources: sources,
-    targets: targets,
-  };
-  mapper.data = DeferredTypeMapper_as_TypeMapperData(m);
+  const m = new DeferredTypeMapperValue(base, sources, targets);
+  mapper.data = m;
   return mapper;
-}
-
-function DeferredTypeMapper_as_TypeMapperData(receiver: GoPtr<DeferredTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => DeferredTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
-  };
 }
 
 /**
@@ -541,6 +572,25 @@ export interface FunctionTypeMapper {
   fn: GoFunc<(arg0: GoPtr<Type>) => GoPtr<Type>>;
 }
 
+class FunctionTypeMapperValue implements FunctionTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public fn: GoFunc<(arg0: GoPtr<Type>) => GoPtr<Type>>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<FunctionTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return FunctionTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return TypeMapperBase_Kind(undefined);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newFunctionTypeMapper","kind":"func","status":"implemented","sigHash":"a7dd317a670447601b6ffb5fb1599bbea45f3b7ad5b2ce931bcf1bdcd478115f"}
  *
@@ -554,20 +604,9 @@ export interface FunctionTypeMapper {
  */
 export function newFunctionTypeMapper(fn: GoFunc<(arg0: GoPtr<Type>) => GoPtr<Type>>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: FunctionTypeMapper = {
-    __tsgoEmbedded0: base,
-    fn: fn,
-  };
-  mapper.data = FunctionTypeMapper_as_TypeMapperData(m);
+  const m = new FunctionTypeMapperValue(base, fn);
+  mapper.data = m;
   return mapper;
-}
-
-function FunctionTypeMapper_as_TypeMapperData(receiver: GoPtr<FunctionTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => FunctionTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
-  };
 }
 
 /**
@@ -598,6 +637,26 @@ export interface MergedTypeMapper {
   m2: GoPtr<TypeMapper>;
 }
 
+class MergedTypeMapperValue implements MergedTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public m1: GoPtr<TypeMapper>,
+    public m2: GoPtr<TypeMapper>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<MergedTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return MergedTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return MergedTypeMapper_Kind(this);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newMergedTypeMapper","kind":"func","status":"implemented","sigHash":"83908bc9f7bb40a9a061269ad4d33c5cf3e2c8098d846381a48e84cbdea2856b"}
  *
@@ -612,21 +671,9 @@ export interface MergedTypeMapper {
  */
 export function newMergedTypeMapper(m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: MergedTypeMapper = {
-    __tsgoEmbedded0: base,
-    m1: m1,
-    m2: m2,
-  };
-  mapper.data = MergedTypeMapper_as_TypeMapperData(m);
+  const m = new MergedTypeMapperValue(base, m1, m2);
+  mapper.data = m;
   return mapper;
-}
-
-function MergedTypeMapper_as_TypeMapperData(receiver: GoPtr<MergedTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => MergedTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => MergedTypeMapper_Kind(receiver),
-  };
 }
 
 /**
@@ -671,6 +718,27 @@ export interface CompositeTypeMapper {
   m2: GoPtr<TypeMapper>;
 }
 
+class CompositeTypeMapperValue implements CompositeTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public c: GoPtr<Checker>,
+    public m1: GoPtr<TypeMapper>,
+    public m2: GoPtr<TypeMapper>,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<CompositeTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return CompositeTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return TypeMapperBase_Kind(undefined);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::func::newCompositeTypeMapper","kind":"func","status":"implemented","sigHash":"81a346bfb68d6de7b42794caadeae83ebbadd5b58786cf7f09971df434afa105"}
  *
@@ -686,22 +754,9 @@ export interface CompositeTypeMapper {
  */
 export function newCompositeTypeMapper(c: GoPtr<Checker>, m1: GoPtr<TypeMapper>, m2: GoPtr<TypeMapper>): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: CompositeTypeMapper = {
-    __tsgoEmbedded0: base,
-    c: c,
-    m1: m1,
-    m2: m2,
-  };
-  mapper.data = CompositeTypeMapper_as_TypeMapperData(m);
+  const m = new CompositeTypeMapperValue(base, c, m1, m2);
+  mapper.data = m;
   return mapper;
-}
-
-function CompositeTypeMapper_as_TypeMapperData(receiver: GoPtr<CompositeTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => CompositeTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
-  };
 }
 
 /**
@@ -742,6 +797,27 @@ export interface InferenceTypeMapper {
   fixing: bool;
 }
 
+class InferenceTypeMapperValue implements InferenceTypeMapper, TypeMapperData {
+  constructor(
+    public __tsgoEmbedded0: TypeMapperBase,
+    public c: GoPtr<Checker>,
+    public n: GoPtr<InferenceContext>,
+    public fixing: bool,
+  ) {}
+
+  __tsgoGoReceiver(): GoPtr<InferenceTypeMapper> {
+    return this;
+  }
+
+  Map(t: GoPtr<Type>): GoPtr<Type> {
+    return InferenceTypeMapper_Map(this, t);
+  }
+
+  Kind(): TypeMapperKind {
+    return TypeMapperBase_Kind(undefined);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/mapper.go::method::Checker.newInferenceTypeMapper","kind":"method","status":"implemented","sigHash":"3716c00d10957fcecca6cc19711c10de12b92e89d967997afef446e2f13095e3"}
  *
@@ -757,22 +833,9 @@ export interface InferenceTypeMapper {
  */
 export function Checker_newInferenceTypeMapper(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, fixing: bool): GoPtr<TypeMapper> {
   const [base, mapper] = newEmbeddedTypeMapper();
-  const m: InferenceTypeMapper = {
-    __tsgoEmbedded0: base,
-    c: receiver,
-    n: n,
-    fixing: fixing,
-  };
-  mapper.data = InferenceTypeMapper_as_TypeMapperData(m);
+  const m = new InferenceTypeMapperValue(base, receiver, n, fixing);
+  mapper.data = m;
   return mapper;
-}
-
-function InferenceTypeMapper_as_TypeMapperData(receiver: GoPtr<InferenceTypeMapper>): TypeMapperData {
-  return {
-    [goReceiverKey]: receiver,
-    Map: (t: GoPtr<Type>): GoPtr<Type> => InferenceTypeMapper_Map(receiver, t),
-    Kind: (): TypeMapperKind => TypeMapperBase_Kind(undefined),
-  };
 }
 
 /**

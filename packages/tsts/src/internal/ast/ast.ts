@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
-import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap, goReceiverKey } from "../../go/compat.js";
+import { GoNumberKey, GoPointerKey, GoStructField, GoStructKey, NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -225,8 +225,8 @@ import {
 } from "./generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsUsing, NodeFlagsHasJSDoc, NodeFlagsReparsed } from "./generated/flags.js";
 import type { NodeFlags } from "./generated/flags.js";
-import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
-import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks } from "./spine.js";
+import { NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_ExportableData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
+import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeFactoryHooks, NodeVisitor as NodeDataVisitor } from "./spine.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
 import { ModifierFlagsParameterPropertyModifier } from "./modifierflags.js";
 import type { ModifierFlags as ModifierFlags_d6bd8366 } from "./modifierflags.js";
@@ -2529,7 +2529,7 @@ export function Node_Contains(receiver: GoPtr<Node>, descendant: GoPtr<Node>): b
  * }
  */
 export function Node_AsFlowSwitchClauseData(receiver: GoPtr<Node>): GoPtr<FlowSwitchClauseData> {
-  return receiver!.data![goReceiverKey] as GoPtr<FlowSwitchClauseData>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<FlowSwitchClauseData>;
 }
 
 /**
@@ -2541,7 +2541,7 @@ export function Node_AsFlowSwitchClauseData(receiver: GoPtr<Node>): GoPtr<FlowSw
  * }
  */
 export function Node_AsFlowReduceLabelData(receiver: GoPtr<Node>): GoPtr<FlowReduceLabelData> {
-  return receiver!.data![goReceiverKey] as GoPtr<FlowReduceLabelData>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<FlowReduceLabelData>;
 }
 
 /**
@@ -5276,7 +5276,7 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
  * 	positionMap     *PositionMap
  * }
  */
-export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBase, CompositeBase {
+export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBase, CompositeBase, nodeData {
   FileName(): string;
   Path(): Path_79c49227;
   Text(): string;
@@ -5360,43 +5360,45 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
 // recovers the concrete *SourceFile receiver behind a node's `nodeData` interface
 // value, mirroring the generated `AsXxx` casts in generated/casts.ts.
 export function AsSourceFile(n: GoPtr<Node>): GoPtr<SourceFile> {
-  return n!.data![goReceiverKey] as GoPtr<SourceFile>;
+  return n!.data!.__tsgoGoReceiver() as GoPtr<SourceFile>;
 }
 
-// SourceFile_as_nodeData builds the method-bearing `nodeData` adapter for a
-// *SourceFile receiver. SourceFile embeds NodeBase, DeclarationBase,
-// LocalsContainerBase, and CompositeBase, so it delegates DeclarationData,
-// LocalsContainerData, subtreeFactsWorker, and computeSubtreeFacts accordingly,
-// while ForEachChild/VisitEachChild/Clone use the hand-written SourceFile methods.
+class SourceFileData implements nodeData {
+  __tsgoGoReceiver(): GoPtr<SourceFile> { return this; }
+  Pos(): int { return Node_Pos(this); }
+  End(): int { return Node_End(this); }
+  AsNode(): GoPtr<Node> { return NodeDefault_AsNode(this); }
+  ForEachChild(v: Visitor): bool { return SourceFile_ForEachChild(this, v); }
+  IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
+  VisitEachChild(v: GoPtr<NodeDataVisitor>): GoPtr<Node> { return SourceFile_VisitEachChild(this, v as GoPtr<NodeVisitor>); }
+  Clone(f: NodeFactoryCoercible): GoPtr<Node> { return SourceFile_Clone(this, f); }
+  Name() { return NodeDefault_Name(this); }
+  Modifiers() { return NodeDefault_Modifiers(this); }
+  setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
+  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
+  DeclarationData() { return DeclarationBase_DeclarationData(this); }
+  ExportableData() { return NodeDefault_ExportableData(this); }
+  LocalsContainerData() { return LocalsContainerBase_LocalsContainerData(this); }
+  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
+  BodyData() { return NodeDefault_BodyData(this); }
+  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts() { return SourceFile_computeSubtreeFacts(this); }
+  subtreeFactsWorker(self: nodeData): SubtreeFacts { return CompositeBase_subtreeFactsWorker(this, self); }
+  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+  FileName(): string { return SourceFile_FileName(this); }
+  Path(): Path_79c49227 { return SourceFile_Path(this); }
+  Text(): string { return SourceFile_Text(this); }
+  ECMALineMap(): GoSlice<TextPos> { return SourceFile_ECMALineMap(this); }
+  Imports(): GoSlice<GoPtr<LiteralLikeNode>> { return SourceFile_Imports(this); }
+  IsJS(): bool { return SourceFile_IsJS(this); }
+}
+interface SourceFileData extends SourceFile {}
+
 export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
-  return {
-    [goReceiverKey]: receiver,
-    AsNode: (): GoPtr<Node> => NodeDefault_AsNode(receiver),
-    ForEachChild: (v: Visitor): bool => SourceFile_ForEachChild(receiver, v),
-    IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),
-    // The spine `nodeData` interface forward-declares `*NodeVisitor` (a placeholder
-    // in spine.ts to break the spine<->visitor cycle); the concrete `NodeVisitor`
-    // lives in visitor.ts. In Go these are the same `internal/ast.NodeVisitor`, so we
-    // recover the concrete receiver type at this adapter boundary.
-    VisitEachChild: (v): GoPtr<Node> => SourceFile_VisitEachChild(receiver, v as GoPtr<NodeVisitor>),
-    Clone: (f: NodeFactoryCoercible): GoPtr<Node> => SourceFile_Clone(receiver, f),
-    Name: () => NodeDefault_Name(receiver),
-    Modifiers: () => NodeDefault_Modifiers(receiver),
-    setModifiers: (modifiers): void => NodeDefault_setModifiers(receiver, modifiers),
-    FlowNodeData: () => NodeDefault_FlowNodeData(receiver),
-    DeclarationData: () => DeclarationBase_DeclarationData(receiver),
-    ExportableData: () => NodeDefault_ExportableData(receiver),
-    LocalsContainerData: () => LocalsContainerBase_LocalsContainerData(receiver),
-    FunctionLikeData: () => NodeDefault_FunctionLikeData(receiver),
-    ClassLikeData: () => NodeDefault_ClassLikeData(receiver),
-    BodyData: () => NodeDefault_BodyData(receiver),
-    LiteralLikeData: () => NodeDefault_LiteralLikeData(receiver),
-    TemplateLiteralLikeData: () => NodeDefault_TemplateLiteralLikeData(receiver),
-    SubtreeFacts: () => NodeDefault_SubtreeFacts(receiver),
-    computeSubtreeFacts: () => SourceFile_computeSubtreeFacts(receiver),
-    subtreeFactsWorker: (self): SubtreeFacts => CompositeBase_subtreeFactsWorker(receiver, self),
-    propagateSubtreeFacts: () => NodeDefault_propagateSubtreeFacts(receiver),
-  };
+  return receiver!;
 }
 
 /**
@@ -5406,15 +5408,9 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   if (GetEncodedRootLength(opts.FileName) === 0 || opts.FileName !== NormalizePath(opts.FileName)) {
     throw new globalThis.Error("fileName should be normalized and absolute: " + opts.FileName);
   }
-  const data: SourceFile = {} as SourceFile;
+  const data: SourceFile = new SourceFileData();
   data.fileName = opts.FileName;
   data.parseOptions = opts;
-  data.FileName = (): string => SourceFile_FileName(data);
-  data.Path = (): Path_79c49227 => SourceFile_Path(data);
-  data.Text = (): string => SourceFile_Text(data);
-  data.ECMALineMap = (): GoSlice<TextPos> => SourceFile_ECMALineMap(data);
-  data.Imports = (): GoSlice<GoPtr<LiteralLikeNode>> => SourceFile_Imports(data);
-  data.IsJS = (): bool => SourceFile_IsJS(data);
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;

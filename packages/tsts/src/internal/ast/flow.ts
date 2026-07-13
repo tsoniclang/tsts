@@ -1,5 +1,4 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoPtr } from "../../go/compat.js";
 import { KindUnknown } from "./generated/kinds.js";
 import {
@@ -25,6 +24,8 @@ import {
   NodeDefault_propagateSubtreeFacts,
   NodeDefault_setModifiers,
   NodeDefault_subtreeFactsWorker,
+  Node_End,
+  Node_Pos,
 } from "./spine.js";
 import type {
   Node,
@@ -32,6 +33,8 @@ import type {
   NodeFactoryCoercible,
   NodeFactoryHooks,
   NodeIter,
+  NodeVisitor,
+  ModifierList,
   Visitor,
   nodeData,
 } from "./spine.js";
@@ -140,42 +143,42 @@ export type FlowLabel = FlowNode;
  * 	ClauseEnd       int32 // End index of case/default clause range
  * }
  */
-export interface FlowSwitchClauseData extends NodeBase {
+export interface FlowSwitchClauseData extends NodeBase, nodeData {
   SwitchStatement: GoPtr<Node>;
   ClauseStart: int; // Start index of case/default clause range
   ClauseEnd: int; // End index of case/default clause range
 }
 
-// `*FlowSwitchClauseData` satisfies the `nodeData` interface in Go via its
-// embedded `NodeBase`. The method-bearing adapter forwards each `nodeData`
-// method to the inherited `NodeDefault` implementation (FlowSwitchClauseData
-// adds no overrides), and attaches the concrete receiver under `goReceiverKey`
-// so `casts.ts` can recover it.
+class FlowSwitchClauseNodeData implements nodeData {
+  __tsgoGoReceiver(): GoPtr<FlowSwitchClauseData> { return this; }
+  Pos(): int { return Node_Pos(this); }
+  End(): int { return Node_End(this); }
+  AsNode(): GoPtr<Node> { return NodeDefault_AsNode(this); }
+  ForEachChild(v: Visitor): bool { return NodeDefault_ForEachChild(this, v); }
+  IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
+  VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return NodeDefault_VisitEachChild(this, v); }
+  Clone(f: NodeFactoryCoercible): GoPtr<Node> { return NodeDefault_Clone(this, f); }
+  Name() { return NodeDefault_Name(this); }
+  Modifiers() { return NodeDefault_Modifiers(this); }
+  setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
+  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
+  DeclarationData() { return NodeDefault_DeclarationData(this); }
+  ExportableData() { return NodeDefault_ExportableData(this); }
+  LocalsContainerData() { return NodeDefault_LocalsContainerData(this); }
+  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
+  BodyData() { return NodeDefault_BodyData(this); }
+  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts() { return NodeDefault_computeSubtreeFacts(this); }
+  subtreeFactsWorker(self: nodeData): SubtreeFacts { return NodeDefault_subtreeFactsWorker(this, self); }
+  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+}
+interface FlowSwitchClauseNodeData extends FlowSwitchClauseData {}
+
 export function FlowSwitchClauseData_as_nodeData(receiver: GoPtr<FlowSwitchClauseData>): nodeData {
-  return {
-    [goReceiverKey]: receiver,
-    AsNode: (): GoPtr<Node> => NodeDefault_AsNode(receiver),
-    ForEachChild: (v: Visitor): bool => NodeDefault_ForEachChild(receiver, v),
-    IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),
-    VisitEachChild: (v) => NodeDefault_VisitEachChild(receiver, v),
-    Clone: (f: NodeFactoryCoercible): GoPtr<Node> => NodeDefault_Clone(receiver, f),
-    Name: () => NodeDefault_Name(receiver),
-    Modifiers: () => NodeDefault_Modifiers(receiver),
-    setModifiers: (modifiers): void => NodeDefault_setModifiers(receiver, modifiers),
-    FlowNodeData: () => NodeDefault_FlowNodeData(receiver),
-    DeclarationData: () => NodeDefault_DeclarationData(receiver),
-    ExportableData: () => NodeDefault_ExportableData(receiver),
-    LocalsContainerData: () => NodeDefault_LocalsContainerData(receiver),
-    FunctionLikeData: () => NodeDefault_FunctionLikeData(receiver),
-    ClassLikeData: () => NodeDefault_ClassLikeData(receiver),
-    BodyData: () => NodeDefault_BodyData(receiver),
-    LiteralLikeData: () => NodeDefault_LiteralLikeData(receiver),
-    TemplateLiteralLikeData: () => NodeDefault_TemplateLiteralLikeData(receiver),
-    SubtreeFacts: () => NodeDefault_SubtreeFacts(receiver),
-    computeSubtreeFacts: () => NodeDefault_computeSubtreeFacts(receiver),
-    subtreeFactsWorker: (self): SubtreeFacts => NodeDefault_subtreeFactsWorker(receiver, self),
-    propagateSubtreeFacts: () => NodeDefault_propagateSubtreeFacts(receiver),
-  };
+  return receiver!;
 }
 
 /**
@@ -191,7 +194,7 @@ export function FlowSwitchClauseData_as_nodeData(receiver: GoPtr<FlowSwitchClaus
  * }
  */
 export function NewFlowSwitchClauseData(switchStatement: GoPtr<Node>, clauseStart: int, clauseEnd: int): GoPtr<Node> {
-  const node: FlowSwitchClauseData = {} as FlowSwitchClauseData;
+  const node: FlowSwitchClauseData = new FlowSwitchClauseNodeData();
   node.SwitchStatement = switchStatement;
   node.ClauseStart = clauseStart;
   node.ClauseEnd = clauseEnd;
@@ -222,38 +225,41 @@ export function FlowSwitchClauseData_IsEmpty(receiver: GoPtr<FlowSwitchClauseDat
  * 	Antecedents *FlowList  // Temporary antecedent list
  * }
  */
-export interface FlowReduceLabelData extends NodeBase {
+export interface FlowReduceLabelData extends NodeBase, nodeData {
   Target: GoPtr<FlowLabel>; // Target label
   Antecedents: GoPtr<FlowList>; // Temporary antecedent list
 }
 
-// `*FlowReduceLabelData` satisfies the `nodeData` interface in Go via its
-// embedded `NodeBase`; see `FlowSwitchClauseData_as_nodeData` above.
+class FlowReduceLabelNodeData implements nodeData {
+  __tsgoGoReceiver(): GoPtr<FlowReduceLabelData> { return this; }
+  Pos(): int { return Node_Pos(this); }
+  End(): int { return Node_End(this); }
+  AsNode(): GoPtr<Node> { return NodeDefault_AsNode(this); }
+  ForEachChild(v: Visitor): bool { return NodeDefault_ForEachChild(this, v); }
+  IterChildren(): NodeIter { return NodeDefault_IterChildren(this); }
+  VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return NodeDefault_VisitEachChild(this, v); }
+  Clone(f: NodeFactoryCoercible): GoPtr<Node> { return NodeDefault_Clone(this, f); }
+  Name() { return NodeDefault_Name(this); }
+  Modifiers() { return NodeDefault_Modifiers(this); }
+  setModifiers(modifiers: GoPtr<ModifierList>): void { NodeDefault_setModifiers(this, modifiers); }
+  FlowNodeData() { return NodeDefault_FlowNodeData(this); }
+  DeclarationData() { return NodeDefault_DeclarationData(this); }
+  ExportableData() { return NodeDefault_ExportableData(this); }
+  LocalsContainerData() { return NodeDefault_LocalsContainerData(this); }
+  FunctionLikeData() { return NodeDefault_FunctionLikeData(this); }
+  ClassLikeData() { return NodeDefault_ClassLikeData(this); }
+  BodyData() { return NodeDefault_BodyData(this); }
+  LiteralLikeData() { return NodeDefault_LiteralLikeData(this); }
+  TemplateLiteralLikeData() { return NodeDefault_TemplateLiteralLikeData(this); }
+  SubtreeFacts() { return NodeDefault_SubtreeFacts(this); }
+  computeSubtreeFacts() { return NodeDefault_computeSubtreeFacts(this); }
+  subtreeFactsWorker(self: nodeData): SubtreeFacts { return NodeDefault_subtreeFactsWorker(this, self); }
+  propagateSubtreeFacts() { return NodeDefault_propagateSubtreeFacts(this); }
+}
+interface FlowReduceLabelNodeData extends FlowReduceLabelData {}
+
 export function FlowReduceLabelData_as_nodeData(receiver: GoPtr<FlowReduceLabelData>): nodeData {
-  return {
-    [goReceiverKey]: receiver,
-    AsNode: (): GoPtr<Node> => NodeDefault_AsNode(receiver),
-    ForEachChild: (v: Visitor): bool => NodeDefault_ForEachChild(receiver, v),
-    IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),
-    VisitEachChild: (v) => NodeDefault_VisitEachChild(receiver, v),
-    Clone: (f: NodeFactoryCoercible): GoPtr<Node> => NodeDefault_Clone(receiver, f),
-    Name: () => NodeDefault_Name(receiver),
-    Modifiers: () => NodeDefault_Modifiers(receiver),
-    setModifiers: (modifiers): void => NodeDefault_setModifiers(receiver, modifiers),
-    FlowNodeData: () => NodeDefault_FlowNodeData(receiver),
-    DeclarationData: () => NodeDefault_DeclarationData(receiver),
-    ExportableData: () => NodeDefault_ExportableData(receiver),
-    LocalsContainerData: () => NodeDefault_LocalsContainerData(receiver),
-    FunctionLikeData: () => NodeDefault_FunctionLikeData(receiver),
-    ClassLikeData: () => NodeDefault_ClassLikeData(receiver),
-    BodyData: () => NodeDefault_BodyData(receiver),
-    LiteralLikeData: () => NodeDefault_LiteralLikeData(receiver),
-    TemplateLiteralLikeData: () => NodeDefault_TemplateLiteralLikeData(receiver),
-    SubtreeFacts: () => NodeDefault_SubtreeFacts(receiver),
-    computeSubtreeFacts: () => NodeDefault_computeSubtreeFacts(receiver),
-    subtreeFactsWorker: (self): SubtreeFacts => NodeDefault_subtreeFactsWorker(receiver, self),
-    propagateSubtreeFacts: () => NodeDefault_propagateSubtreeFacts(receiver),
-  };
+  return receiver!;
 }
 
 /**
@@ -268,7 +274,7 @@ export function FlowReduceLabelData_as_nodeData(receiver: GoPtr<FlowReduceLabelD
  * }
  */
 export function NewFlowReduceLabelData(target: GoPtr<FlowLabel>, antecedents: GoPtr<FlowList>): GoPtr<Node> {
-  const node: FlowReduceLabelData = {} as FlowReduceLabelData;
+  const node: FlowReduceLabelData = new FlowReduceLabelNodeData();
   node.Target = target;
   node.Antecedents = antecedents;
   return newNode(KindUnknown, FlowReduceLabelData_as_nodeData(node), {} as NodeFactoryHooks);

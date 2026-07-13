@@ -1,5 +1,4 @@
 import type { bool, sbyte, short } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoInterfaceValue, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { TypeParameterDeclaration } from "../ast/generated/data.js";
@@ -137,6 +136,19 @@ export function PseudoTypeDefault_AsPseudoType(receiver: GoPtr<PseudoTypeDefault
 export interface PseudoTypeBase extends PseudoTypeDefault {
 }
 
+class PseudoTypeBaseData implements PseudoTypeBase, pseudoTypeData {
+  Kind!: PseudoTypeKind;
+  data!: GoInterface<pseudoTypeData>;
+
+  __tsgoGoReceiver(): GoPtr<PseudoTypeBase> {
+    return this;
+  }
+
+  AsPseudoType(): GoPtr<PseudoType> {
+    return PseudoTypeDefault_AsPseudoType(this);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::varGroup::PseudoTypeUndefined+PseudoTypeNull+PseudoTypeAny+PseudoTypeString+PseudoTypeNumber+PseudoTypeBigInt+PseudoTypeBoolean+PseudoTypeFalse+PseudoTypeTrue","kind":"varGroup","status":"implemented","sigHash":"4791d024d013554a64e9e6e2f6ca43e65339de790b7773b9988cab3e870bcec9"}
  *
@@ -153,27 +165,15 @@ export interface PseudoTypeBase extends PseudoTypeDefault {
  * 	PseudoTypeTrue      = newPseudoType(PseudoTypeKindTrue, &PseudoTypeBase{})
  * )
  */
-export let PseudoTypeUndefined: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindUndefined, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeNull: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNull, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeAny: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindAny, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeString: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindString, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeNumber: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNumber, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeBigInt: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBigInt, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeBoolean: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBoolean, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeFalse: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindFalse, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-export let PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue, PseudoTypeBase_as_pseudoTypeData({} as PseudoTypeBase));
-
-// Interface satisfaction: a `*PseudoTypeBase`/concrete pseudo-type satisfies
-// `pseudoTypeData`. The concrete struct object IS the embedded `PseudoType`
-// (flattened embedding), so `AsPseudoType()` returns the receiver itself
-// (Go `return &b.PseudoType`). The `goReceiverKey` brand carries the concrete
-// receiver for the later `t.data.(*Concrete)` type assertions.
-export function PseudoTypeBase_as_pseudoTypeData(receiver: GoPtr<PseudoTypeBase>): pseudoTypeData {
-  return {
-    [goReceiverKey]: receiver,
-    AsPseudoType: (): GoPtr<PseudoType> => PseudoTypeDefault_AsPseudoType(receiver),
-  };
-}
+export let PseudoTypeUndefined: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindUndefined, new PseudoTypeBaseData());
+export let PseudoTypeNull: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNull, new PseudoTypeBaseData());
+export let PseudoTypeAny: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindAny, new PseudoTypeBaseData());
+export let PseudoTypeString: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindString, new PseudoTypeBaseData());
+export let PseudoTypeNumber: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindNumber, new PseudoTypeBaseData());
+export let PseudoTypeBigInt: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBigInt, new PseudoTypeBaseData());
+export let PseudoTypeBoolean: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindBoolean, new PseudoTypeBaseData());
+export let PseudoTypeFalse: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindFalse, new PseudoTypeBaseData());
+export let PseudoTypeTrue: GoPtr<PseudoType> = newPseudoType(PseudoTypeKindTrue, new PseudoTypeBaseData());
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::type::PseudoTypeDirect","kind":"type","status":"implemented","sigHash":"ae16d0b37acd2e0f8a650ca2db5b12d8652bf41bcaafbaaf370846f35d6008cf"}
@@ -188,6 +188,15 @@ export interface PseudoTypeDirect extends PseudoTypeBase {
   TypeNode: GoPtr<Node>;
 }
 
+class PseudoTypeDirectData extends PseudoTypeBaseData implements PseudoTypeDirect {
+  TypeNode: GoPtr<Node>;
+
+  constructor(typeNode: GoPtr<Node>) {
+    super();
+    this.TypeNode = typeNode;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeDirect","kind":"func","status":"implemented","sigHash":"e97af9665f64edefbf10bec7ef1a35f59be09f8aa40bdb4e37ddc9bc154aa4d1"}
  *
@@ -197,9 +206,7 @@ export interface PseudoTypeDirect extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeDirect(typeNode: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeDirect = {} as PseudoTypeDirect;
-  data.TypeNode = typeNode;
-  return newPseudoType(PseudoTypeKindDirect, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindDirect, new PseudoTypeDirectData(typeNode));
 }
 
 /**
@@ -209,7 +216,7 @@ export function NewPseudoTypeDirect(typeNode: GoPtr<Node>): GoPtr<PseudoType> {
  * func (t *PseudoType) AsPseudoTypeDirect() *PseudoTypeDirect { return t.data.(*PseudoTypeDirect) }
  */
 export function PseudoType_AsPseudoTypeDirect(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeDirect> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeDirect>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeDirect>;
 }
 
 /**
@@ -227,6 +234,17 @@ export interface PseudoTypeInferred extends PseudoTypeBase {
   ErrorNodes: GoSlice<GoPtr<Node>>;
 }
 
+class PseudoTypeInferredData extends PseudoTypeBaseData implements PseudoTypeInferred {
+  Expression: GoPtr<Node>;
+  ErrorNodes: GoSlice<GoPtr<Node>>;
+
+  constructor(expression: GoPtr<Node>, errorNodes: GoSlice<GoPtr<Node>>) {
+    super();
+    this.Expression = expression;
+    this.ErrorNodes = errorNodes;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeInferred","kind":"func","status":"implemented","sigHash":"c308eb2c68531c0b5146a5d93959fcd535c7fcb87a846f23d06292968676ce03"}
  *
@@ -236,10 +254,7 @@ export interface PseudoTypeInferred extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeInferred(expr: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeInferred = {} as PseudoTypeInferred;
-  data.Expression = expr;
-  data.ErrorNodes = [];
-  return newPseudoType(PseudoTypeKindInferred, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindInferred, new PseudoTypeInferredData(expr, []));
 }
 
 /**
@@ -251,10 +266,7 @@ export function NewPseudoTypeInferred(expr: GoPtr<Node>): GoPtr<PseudoType> {
  * }
  */
 export function NewPseudoTypeInferredWithErrors(expr: GoPtr<Node>, errorNodes: GoSlice<GoPtr<Node>>): GoPtr<PseudoType> {
-  const data: PseudoTypeInferred = {} as PseudoTypeInferred;
-  data.Expression = expr;
-  data.ErrorNodes = errorNodes;
-  return newPseudoType(PseudoTypeKindInferred, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindInferred, new PseudoTypeInferredData(expr, errorNodes));
 }
 
 /**
@@ -264,7 +276,7 @@ export function NewPseudoTypeInferredWithErrors(expr: GoPtr<Node>, errorNodes: G
  * func (t *PseudoType) AsPseudoTypeInferred() *PseudoTypeInferred { return t.data.(*PseudoTypeInferred) }
  */
 export function PseudoType_AsPseudoTypeInferred(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeInferred> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeInferred>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeInferred>;
 }
 
 /**
@@ -280,6 +292,15 @@ export interface PseudoTypeNoResult extends PseudoTypeBase {
   Declaration: GoPtr<Node>;
 }
 
+class PseudoTypeNoResultData extends PseudoTypeBaseData implements PseudoTypeNoResult {
+  Declaration: GoPtr<Node>;
+
+  constructor(declaration: GoPtr<Node>) {
+    super();
+    this.Declaration = declaration;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeNoResult","kind":"func","status":"implemented","sigHash":"8770f7871ee64ee34131dc3b1ad2fbb44ac6b69cb3b0dac0ab1c75649c11c02c"}
  *
@@ -289,9 +310,7 @@ export interface PseudoTypeNoResult extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeNoResult(decl: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeNoResult = {} as PseudoTypeNoResult;
-  data.Declaration = decl;
-  return newPseudoType(PseudoTypeKindNoResult, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindNoResult, new PseudoTypeNoResultData(decl));
 }
 
 /**
@@ -301,7 +320,7 @@ export function NewPseudoTypeNoResult(decl: GoPtr<Node>): GoPtr<PseudoType> {
  * func (t *PseudoType) AsPseudoTypeNoResult() *PseudoTypeNoResult { return t.data.(*PseudoTypeNoResult) }
  */
 export function PseudoType_AsPseudoTypeNoResult(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeNoResult> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeNoResult>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeNoResult>;
 }
 
 /**
@@ -321,6 +340,19 @@ export interface PseudoTypeMaybeConstLocation extends PseudoTypeBase {
   RegularType: GoPtr<PseudoType>;
 }
 
+class PseudoTypeMaybeConstLocationData extends PseudoTypeBaseData implements PseudoTypeMaybeConstLocation {
+  Node: GoPtr<Node>;
+  ConstType: GoPtr<PseudoType>;
+  RegularType: GoPtr<PseudoType>;
+
+  constructor(node: GoPtr<Node>, constType: GoPtr<PseudoType>, regularType: GoPtr<PseudoType>) {
+    super();
+    this.Node = node;
+    this.ConstType = constType;
+    this.RegularType = regularType;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeMaybeConstLocation","kind":"func","status":"implemented","sigHash":"e6e5a9e0201ee743500520ed545c9b34338044297287a9fd12c4163df42a4a9e"}
  *
@@ -330,11 +362,7 @@ export interface PseudoTypeMaybeConstLocation extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeMaybeConstLocation(loc: GoPtr<Node>, ct: GoPtr<PseudoType>, reg: GoPtr<PseudoType>): GoPtr<PseudoType> {
-  const data: PseudoTypeMaybeConstLocation = {} as PseudoTypeMaybeConstLocation;
-  data.Node = loc;
-  data.ConstType = ct;
-  data.RegularType = reg;
-  return newPseudoType(PseudoTypeKindMaybeConstLocation, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindMaybeConstLocation, new PseudoTypeMaybeConstLocationData(loc, ct, reg));
 }
 
 /**
@@ -346,7 +374,7 @@ export function NewPseudoTypeMaybeConstLocation(loc: GoPtr<Node>, ct: GoPtr<Pseu
  * }
  */
 export function PseudoType_AsPseudoTypeMaybeConstLocation(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeMaybeConstLocation> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeMaybeConstLocation>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeMaybeConstLocation>;
 }
 
 /**
@@ -362,6 +390,15 @@ export interface PseudoTypeUnion extends PseudoTypeBase {
   Types: GoSlice<GoPtr<PseudoType>>;
 }
 
+class PseudoTypeUnionData extends PseudoTypeBaseData implements PseudoTypeUnion {
+  Types: GoSlice<GoPtr<PseudoType>>;
+
+  constructor(types: GoSlice<GoPtr<PseudoType>>) {
+    super();
+    this.Types = types;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeUnion","kind":"func","status":"implemented","sigHash":"de6ab4aac9ebcffd68af6f3cc6d0f2227729776f4a21718e6c6d11c3f8101072"}
  *
@@ -371,9 +408,7 @@ export interface PseudoTypeUnion extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeUnion(types: GoSlice<GoPtr<PseudoType>>): GoPtr<PseudoType> {
-  const data: PseudoTypeUnion = {} as PseudoTypeUnion;
-  data.Types = types;
-  return newPseudoType(PseudoTypeKindUnion, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindUnion, new PseudoTypeUnionData(types));
 }
 
 /**
@@ -385,7 +420,7 @@ export function NewPseudoTypeUnion(types: GoSlice<GoPtr<PseudoType>>): GoPtr<Pse
  * }
  */
 export function PseudoType_AsPseudoTypeUnion(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeUnion> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeUnion>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeUnion>;
 }
 
 /**
@@ -442,6 +477,26 @@ export interface PseudoTypeSingleCallSignature extends PseudoTypeBase {
   ReturnType: GoPtr<PseudoType>;
 }
 
+class PseudoTypeSingleCallSignatureData extends PseudoTypeBaseData implements PseudoTypeSingleCallSignature {
+  Signature: GoPtr<Node>;
+  Parameters: GoSlice<GoPtr<PseudoParameter>>;
+  TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
+  ReturnType: GoPtr<PseudoType>;
+
+  constructor(
+    signature: GoPtr<Node>,
+    parameters: GoSlice<GoPtr<PseudoParameter>>,
+    typeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>,
+    returnType: GoPtr<PseudoType>,
+  ) {
+    super();
+    this.Signature = signature;
+    this.Parameters = parameters;
+    this.TypeParameters = typeParameters;
+    this.ReturnType = returnType;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeSingleCallSignature","kind":"func","status":"implemented","sigHash":"2abedf8c133c6c73caf378944e9b8adcd0b498b912e72e13a5466ef5e0b4c101"}
  *
@@ -456,12 +511,10 @@ export interface PseudoTypeSingleCallSignature extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeSingleCallSignature(signature: GoPtr<Node>, parameters: GoSlice<GoPtr<PseudoParameter>>, typeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>, returnType: GoPtr<PseudoType>): GoPtr<PseudoType> {
-  const data: PseudoTypeSingleCallSignature = {} as PseudoTypeSingleCallSignature;
-  data.Signature = signature;
-  data.Parameters = parameters;
-  data.TypeParameters = typeParameters;
-  data.ReturnType = returnType;
-  return newPseudoType(PseudoTypeKindSingleCallSignature, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(
+    PseudoTypeKindSingleCallSignature,
+    new PseudoTypeSingleCallSignatureData(signature, parameters, typeParameters, returnType),
+  );
 }
 
 /**
@@ -473,7 +526,7 @@ export function NewPseudoTypeSingleCallSignature(signature: GoPtr<Node>, paramet
  * }
  */
 export function PseudoType_AsPseudoTypeSingleCallSignature(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeSingleCallSignature> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeSingleCallSignature>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeSingleCallSignature>;
 }
 
 /**
@@ -489,6 +542,15 @@ export interface PseudoTypeTuple extends PseudoTypeBase {
   Elements: GoSlice<GoPtr<PseudoType>>;
 }
 
+class PseudoTypeTupleData extends PseudoTypeBaseData implements PseudoTypeTuple {
+  Elements: GoSlice<GoPtr<PseudoType>>;
+
+  constructor(elements: GoSlice<GoPtr<PseudoType>>) {
+    super();
+    this.Elements = elements;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeTuple","kind":"func","status":"implemented","sigHash":"6fa3e50938e873fa47caa50fbfc649332b36af67255ef5c665f485af6d5b0e95"}
  *
@@ -500,9 +562,7 @@ export interface PseudoTypeTuple extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeTuple(elements: GoSlice<GoPtr<PseudoType>>): GoPtr<PseudoType> {
-  const data: PseudoTypeTuple = {} as PseudoTypeTuple;
-  data.Elements = elements;
-  return newPseudoType(PseudoTypeKindTuple, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindTuple, new PseudoTypeTupleData(elements));
 }
 
 /**
@@ -514,7 +574,7 @@ export function NewPseudoTypeTuple(elements: GoSlice<GoPtr<PseudoType>>): GoPtr<
  * }
  */
 export function PseudoType_AsPseudoTypeTuple(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeTuple> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeTuple>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeTuple>;
 }
 
 /**
@@ -611,6 +671,21 @@ export interface pseudoObjectElementData extends GoInterfaceValue<unknown> {
   AsPseudoObjectElement(): GoPtr<PseudoObjectElement>;
 }
 
+class PseudoObjectElementData implements PseudoObjectElement, pseudoObjectElementData {
+  Name!: GoPtr<Node>;
+  Optional!: bool;
+  Kind!: PseudoObjectElementKind;
+  data!: GoInterface<pseudoObjectElementData>;
+
+  __tsgoGoReceiver(): GoPtr<PseudoObjectElement> {
+    return this;
+  }
+
+  AsPseudoObjectElement(): GoPtr<PseudoObjectElement> {
+    return PseudoObjectElement_AsPseudoObjectElement(this);
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::newPseudoObjectElement","kind":"func","status":"implemented","sigHash":"f0e107343c492c6c34aa73673ce8ed9ade0be7af61b460c8999c3d562d4159d9"}
  *
@@ -652,17 +727,24 @@ export interface PseudoObjectMethod extends PseudoObjectElement {
   ReturnType: GoPtr<PseudoType>;
 }
 
-// Interface satisfaction: a concrete pseudo-object element (`PseudoObjectMethod`,
-// `PseudoPropertyAssignment`, ...) satisfies `pseudoObjectElementData`. The
-// concrete struct object IS the embedded `PseudoObjectElement` (flattened
-// embedding), so `AsPseudoObjectElement()` returns the receiver itself (Go
-// `return e`). The `goReceiverKey` brand carries the concrete receiver for the
-// later `e.data.(*Concrete)` type assertions.
-export function PseudoObjectElement_as_pseudoObjectElementData(receiver: GoPtr<PseudoObjectElement>): pseudoObjectElementData {
-  return {
-    [goReceiverKey]: receiver,
-    AsPseudoObjectElement: (): GoPtr<PseudoObjectElement> => PseudoObjectElement_AsPseudoObjectElement(receiver),
-  };
+class PseudoObjectMethodData extends PseudoObjectElementData implements PseudoObjectMethod {
+  Signature: GoPtr<Node>;
+  TypeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>;
+  Parameters: GoSlice<GoPtr<PseudoParameter>>;
+  ReturnType: GoPtr<PseudoType>;
+
+  constructor(
+    signature: GoPtr<Node>,
+    typeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>,
+    parameters: GoSlice<GoPtr<PseudoParameter>>,
+    returnType: GoPtr<PseudoType>,
+  ) {
+    super();
+    this.Signature = signature;
+    this.TypeParameters = typeParameters;
+    this.Parameters = parameters;
+    this.ReturnType = returnType;
+  }
 }
 
 /**
@@ -679,12 +761,12 @@ export function PseudoObjectElement_as_pseudoObjectElementData(receiver: GoPtr<P
  * }
  */
 export function NewPseudoObjectMethod(signature: GoPtr<Node>, name: GoPtr<Node>, optional: bool, typeParameters: GoSlice<GoPtr<TypeParameterDeclaration>>, parameters: GoSlice<GoPtr<PseudoParameter>>, returnType: GoPtr<PseudoType>): GoPtr<PseudoObjectElement> {
-  const data: PseudoObjectMethod = {} as PseudoObjectMethod;
-  data.Signature = signature;
-  data.TypeParameters = typeParameters;
-  data.Parameters = parameters;
-  data.ReturnType = returnType;
-  return newPseudoObjectElement(PseudoObjectElementKindMethod, name, optional, PseudoObjectElement_as_pseudoObjectElementData(data));
+  return newPseudoObjectElement(
+    PseudoObjectElementKindMethod,
+    name,
+    optional,
+    new PseudoObjectMethodData(signature, typeParameters, parameters, returnType),
+  );
 }
 
 /**
@@ -696,7 +778,7 @@ export function NewPseudoObjectMethod(signature: GoPtr<Node>, name: GoPtr<Node>,
  * }
  */
 export function PseudoObjectElement_AsPseudoObjectMethod(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoObjectMethod> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoObjectMethod>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoObjectMethod>;
 }
 
 /**
@@ -714,6 +796,17 @@ export interface PseudoPropertyAssignment extends PseudoObjectElement {
   Type: GoPtr<PseudoType>;
 }
 
+class PseudoPropertyAssignmentData extends PseudoObjectElementData implements PseudoPropertyAssignment {
+  Readonly: bool;
+  Type: GoPtr<PseudoType>;
+
+  constructor(readonly: bool, type: GoPtr<PseudoType>) {
+    super();
+    this.Readonly = readonly;
+    this.Type = type;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoPropertyAssignment","kind":"func","status":"implemented","sigHash":"a10ea7d043613ca66ab2d1247149632eedb080a95eab4bfdbb80462f032737ea"}
  *
@@ -726,10 +819,12 @@ export interface PseudoPropertyAssignment extends PseudoObjectElement {
  * }
  */
 export function NewPseudoPropertyAssignment(readonly: bool, name: GoPtr<Node>, optional: bool, t: GoPtr<PseudoType>): GoPtr<PseudoObjectElement> {
-  const data: PseudoPropertyAssignment = {} as PseudoPropertyAssignment;
-  data.Readonly = readonly;
-  data.Type = t;
-  return newPseudoObjectElement(PseudoObjectElementKindPropertyAssignment, name, optional, PseudoObjectElement_as_pseudoObjectElementData(data));
+  return newPseudoObjectElement(
+    PseudoObjectElementKindPropertyAssignment,
+    name,
+    optional,
+    new PseudoPropertyAssignmentData(readonly, t),
+  );
 }
 
 /**
@@ -741,7 +836,7 @@ export function NewPseudoPropertyAssignment(readonly: bool, name: GoPtr<Node>, o
  * }
  */
 export function PseudoObjectElement_AsPseudoPropertyAssignment(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoPropertyAssignment> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoPropertyAssignment>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoPropertyAssignment>;
 }
 
 /**
@@ -759,6 +854,17 @@ export interface PseudoSetAccessor extends PseudoObjectElement {
   Parameter: GoPtr<PseudoParameter>;
 }
 
+class PseudoSetAccessorData extends PseudoObjectElementData implements PseudoSetAccessor {
+  Signature: GoPtr<Node>;
+  Parameter: GoPtr<PseudoParameter>;
+
+  constructor(signature: GoPtr<Node>, parameter: GoPtr<PseudoParameter>) {
+    super();
+    this.Signature = signature;
+    this.Parameter = parameter;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoSetAccessor","kind":"func","status":"implemented","sigHash":"311b865fccdb4cea34e429bfad8b8a428c0ab2e5323481cc22efb3fcdad047af"}
  *
@@ -771,10 +877,12 @@ export interface PseudoSetAccessor extends PseudoObjectElement {
  * }
  */
 export function NewPseudoSetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, optional: bool, p: GoPtr<PseudoParameter>): GoPtr<PseudoObjectElement> {
-  const data: PseudoSetAccessor = {} as PseudoSetAccessor;
-  data.Signature = signature;
-  data.Parameter = p;
-  return newPseudoObjectElement(PseudoObjectElementKindSetAccessor, name, optional, PseudoObjectElement_as_pseudoObjectElementData(data));
+  return newPseudoObjectElement(
+    PseudoObjectElementKindSetAccessor,
+    name,
+    optional,
+    new PseudoSetAccessorData(signature, p),
+  );
 }
 
 /**
@@ -786,7 +894,7 @@ export function NewPseudoSetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, 
  * }
  */
 export function PseudoObjectElement_AsPseudoSetAccessor(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoSetAccessor> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoSetAccessor>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoSetAccessor>;
 }
 
 /**
@@ -804,6 +912,17 @@ export interface PseudoGetAccessor extends PseudoObjectElement {
   Type: GoPtr<PseudoType>;
 }
 
+class PseudoGetAccessorData extends PseudoObjectElementData implements PseudoGetAccessor {
+  Signature: GoPtr<Node>;
+  Type: GoPtr<PseudoType>;
+
+  constructor(signature: GoPtr<Node>, type: GoPtr<PseudoType>) {
+    super();
+    this.Signature = signature;
+    this.Type = type;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoGetAccessor","kind":"func","status":"implemented","sigHash":"f32e9241b76a4babc1be01a79d00b857fb6b70e2ed7edbab7f810f50e5d7c02d"}
  *
@@ -816,10 +935,12 @@ export interface PseudoGetAccessor extends PseudoObjectElement {
  * }
  */
 export function NewPseudoGetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, optional: bool, t: GoPtr<PseudoType>): GoPtr<PseudoObjectElement> {
-  const data: PseudoGetAccessor = {} as PseudoGetAccessor;
-  data.Signature = signature;
-  data.Type = t;
-  return newPseudoObjectElement(PseudoObjectElementKindGetAccessor, name, optional, PseudoObjectElement_as_pseudoObjectElementData(data));
+  return newPseudoObjectElement(
+    PseudoObjectElementKindGetAccessor,
+    name,
+    optional,
+    new PseudoGetAccessorData(signature, t),
+  );
 }
 
 /**
@@ -831,7 +952,7 @@ export function NewPseudoGetAccessor(signature: GoPtr<Node>, name: GoPtr<Node>, 
  * }
  */
 export function PseudoObjectElement_AsPseudoGetAccessor(receiver: GoPtr<PseudoObjectElement>): GoPtr<PseudoGetAccessor> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoGetAccessor>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoGetAccessor>;
 }
 
 /**
@@ -847,6 +968,15 @@ export interface PseudoTypeObjectLiteral extends PseudoTypeBase {
   Elements: GoSlice<GoPtr<PseudoObjectElement>>;
 }
 
+class PseudoTypeObjectLiteralData extends PseudoTypeBaseData implements PseudoTypeObjectLiteral {
+  Elements: GoSlice<GoPtr<PseudoObjectElement>>;
+
+  constructor(elements: GoSlice<GoPtr<PseudoObjectElement>>) {
+    super();
+    this.Elements = elements;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeObjectLiteral","kind":"func","status":"implemented","sigHash":"3e3857fc04138ddb4d59be4d4dfb16bf1545a07d23f2be7592f7e453c79b4532"}
  *
@@ -858,9 +988,7 @@ export interface PseudoTypeObjectLiteral extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeObjectLiteral(elements: GoSlice<GoPtr<PseudoObjectElement>>): GoPtr<PseudoType> {
-  const data: PseudoTypeObjectLiteral = {} as PseudoTypeObjectLiteral;
-  data.Elements = elements;
-  return newPseudoType(PseudoTypeKindObjectLiteral, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindObjectLiteral, new PseudoTypeObjectLiteralData(elements));
 }
 
 /**
@@ -872,7 +1000,7 @@ export function NewPseudoTypeObjectLiteral(elements: GoSlice<GoPtr<PseudoObjectE
  * }
  */
 export function PseudoType_AsPseudoTypeObjectLiteral(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeObjectLiteral> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeObjectLiteral>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeObjectLiteral>;
 }
 
 /**
@@ -888,6 +1016,15 @@ export interface PseudoTypeLiteral extends PseudoTypeBase {
   Node: GoPtr<Node>;
 }
 
+class PseudoTypeLiteralData extends PseudoTypeBaseData implements PseudoTypeLiteral {
+  Node: GoPtr<Node>;
+
+  constructor(node: GoPtr<Node>) {
+    super();
+    this.Node = node;
+  }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/type.go::func::NewPseudoTypeStringLiteral","kind":"func","status":"implemented","sigHash":"419092da265483021824191954ffee2b51e84ddedc232855137a729bdb37585f"}
  *
@@ -899,9 +1036,7 @@ export interface PseudoTypeLiteral extends PseudoTypeBase {
  * }
  */
 export function NewPseudoTypeStringLiteral(node: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeLiteral = {} as PseudoTypeLiteral;
-  data.Node = node;
-  return newPseudoType(PseudoTypeKindStringLiteral, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindStringLiteral, new PseudoTypeLiteralData(node));
 }
 
 /**
@@ -915,9 +1050,7 @@ export function NewPseudoTypeStringLiteral(node: GoPtr<Node>): GoPtr<PseudoType>
  * }
  */
 export function NewPseudoTypeNumericLiteral(node: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeLiteral = {} as PseudoTypeLiteral;
-  data.Node = node;
-  return newPseudoType(PseudoTypeKindNumericLiteral, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindNumericLiteral, new PseudoTypeLiteralData(node));
 }
 
 /**
@@ -931,9 +1064,7 @@ export function NewPseudoTypeNumericLiteral(node: GoPtr<Node>): GoPtr<PseudoType
  * }
  */
 export function NewPseudoTypeBigIntLiteral(node: GoPtr<Node>): GoPtr<PseudoType> {
-  const data: PseudoTypeLiteral = {} as PseudoTypeLiteral;
-  data.Node = node;
-  return newPseudoType(PseudoTypeKindBigIntLiteral, PseudoTypeBase_as_pseudoTypeData(data));
+  return newPseudoType(PseudoTypeKindBigIntLiteral, new PseudoTypeLiteralData(node));
 }
 
 /**
@@ -945,5 +1076,5 @@ export function NewPseudoTypeBigIntLiteral(node: GoPtr<Node>): GoPtr<PseudoType>
  * }
  */
 export function PseudoType_AsPseudoTypeLiteral(receiver: GoPtr<PseudoType>): GoPtr<PseudoTypeLiteral> {
-  return receiver!.data![goReceiverKey] as GoPtr<PseudoTypeLiteral>;
+  return receiver!.data!.__tsgoGoReceiver() as GoPtr<PseudoTypeLiteral>;
 }

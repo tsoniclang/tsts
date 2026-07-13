@@ -1,7 +1,7 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
-import { GoBigIntKey, GoNilMap, GoNilSlice, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoMapIsNil, GoNilMap, GoNilSlice, GoStructField, GoStructKey, GoValueRef, NewGoStructMap } from "../../../go/compat.js";
 import { Uint64 } from "../../../go/sync/atomic.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -115,6 +115,7 @@ import type { Set } from "../../collections/set.js";
 import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_getIntersectionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, keyBuilder_writeType, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedType, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType, Checker_getTemplateTypeFromMappedType, Checker_getCombinedMappedTypeOptionality, Checker_getModifiersTypeFromMappedType, Checker_getTupleElementTypeOutOfStartCount, Checker_isSelfTypeAccess, Checker_newIntrinsicType, Checker_getTypeOfFuncClassEnumModule, Checker_removeOptionalTypeMarker, Checker_getAnnotatedAccessorTypeNode, Checker_getWriteTypeOfAccessors, Checker_getOptionalType, Checker_getContextualTypeForBindingElement, Checker_getTypeForBindingElement, Checker_getTypeFromBindingPattern, Checker_getNonNullableTypeIfNeeded, Checker_isNullOrUndefined, Checker_tryGetTypeFromTypeNode, Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_getTypeOfNode, Checker_getMatchingUnionConstituentForObjectLiteral, ObjectLiteralDiscriminator_len, ObjectLiteralDiscriminator_name, ObjectLiteralDiscriminator_matches, Checker_getBaseTypeOfLiteralType, Checker_removeOptionalityFromDeclaredType, Checker_getLiteralTypeFromProperties, Checker_instantiateTypeWorker, Checker_checkBaseTypeAccessibility, Checker_isValidBaseType, Checker_includeMixinType, Checker_getLowerBoundOfKeyType, Checker_removeMissingOrUndefinedType, Checker_filterType, Checker_markDecoratorMedataDataTypeNodeAsReferenced, Checker_getPromisedTypeOfPromiseEx, Checker_elaborateNeverIntersection, Checker_isAwaitedTypeNeeded, Checker_isThenableType } from "./types.js";
 import { Checker_newClassAccessorDecoratorContextType, Checker_newClassFieldDecoratorContextType, Checker_newClassGetterDecoratorContextType, Checker_newClassMethodDecoratorContextType, Checker_newClassSetterDecoratorContextType } from "./types.js";
 import { Checker_checkTypeReferenceNode } from "./types.js";
+import { IndexedAccessTypeData, IndexTypeData, UniqueESSymbolTypeData } from "./types.js";
 import { Checker_checkExpressionWithContextualType, Checker_getQuickTypeOfExpression, Checker_padObjectLiteralType, Checker_padTupleType } from "./types.js";
 import { Checker_getDeclaringClass, Checker_isClassDerivedFromDeclaringClasses, Checker_isNodeUsedDuringClassInitialization, Checker_isNodeWithinClass } from "./classes.js";
 import { Checker_isAssignmentToReadonlyEntity, Checker_isReadonlyAssignmentDeclaration, Checker_isTypeAssignableToKind, Checker_checkInheritedPropertiesAreIdentical, Checker_areDeclarationFlagsIdentical } from "./relations.js";
@@ -13863,7 +13864,7 @@ export function Checker_getUnionOrIntersectionProperty(receiver: GoPtr<Checker>,
   let cache = skipObjectFunctionPropertyAugment
     ? unionOrIntersection.propertyCacheWithoutFunctionPropertyAugment
     : unionOrIntersection.propertyCache;
-  if (cache === undefined) {
+  if (GoMapIsNil(cache)) {
     cache = new globalThis.Map<string, GoPtr<Symbol>>();
     if (skipObjectFunctionPropertyAugment) {
       unionOrIntersection.propertyCacheWithoutFunctionPropertyAugment = cache;
@@ -13880,7 +13881,7 @@ export function Checker_getUnionOrIntersectionProperty(receiver: GoPtr<Checker>,
     cache.set(name, prop);
     if (skipObjectFunctionPropertyAugment && (prop!.CheckFlags & CheckFlagsPartial) === 0) {
       let augmentedCache = unionOrIntersection.propertyCache;
-      if (augmentedCache === undefined) {
+      if (GoMapIsNil(augmentedCache)) {
         augmentedCache = new globalThis.Map<string, GoPtr<Symbol>>();
         unionOrIntersection.propertyCache = augmentedCache;
       }
@@ -15922,8 +15923,9 @@ export function Checker_isGenericIndexType(receiver: GoPtr<Checker>, t: GoPtr<Ty
  * }
  */
 export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, name: string): GoPtr<Type> {
-  const data: UniqueESSymbolType = { __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type }, name };
-  const t = Checker_newType(receiver, TypeFlagsUniqueESSymbol, ObjectFlagsNone, data as unknown as TypeData);
+  const data = new UniqueESSymbolTypeData();
+  data.name = name;
+  const t = Checker_newType(receiver, TypeFlagsUniqueESSymbol, ObjectFlagsNone, data);
   t!["symbol"] = symbol_;
   return t;
 }
@@ -15995,16 +15997,11 @@ export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_newIndexedAccessType(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, indexType: GoPtr<Type>, accessFlags: AccessFlags): GoPtr<Type> {
-  const data: IndexedAccessType = {
-    __tsgoEmbedded0: {
-      __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
-      resolvedBaseConstraint: undefined,
-    },
-    objectType,
-    indexType,
-    accessFlags,
-  };
-  return Checker_newType(receiver, TypeFlagsIndexedAccess, ObjectFlagsNone, data as unknown as TypeData);
+  const data = new IndexedAccessTypeData();
+  data.objectType = objectType;
+  data.indexType = indexType;
+  data.accessFlags = accessFlags;
+  return Checker_newType(receiver, TypeFlagsIndexedAccess, ObjectFlagsNone, data);
 }
 
 /**
@@ -16019,15 +16016,10 @@ export function Checker_newIndexedAccessType(receiver: GoPtr<Checker>, objectTyp
  * }
  */
 export function Checker_newIndexType(receiver: GoPtr<Checker>, target: GoPtr<Type>, indexFlags: IndexFlags): GoPtr<Type> {
-  const data: IndexType = {
-    __tsgoEmbedded0: {
-      __tsgoEmbedded0: { __tsgoEmbedded0: undefined as unknown as Type },
-      resolvedBaseConstraint: undefined,
-    },
-    target,
-    indexFlags,
-  };
-  return Checker_newType(receiver, TypeFlagsIndex, ObjectFlagsNone, data as unknown as TypeData);
+  const data = new IndexTypeData();
+  data.target = target;
+  data.indexFlags = indexFlags;
+  return Checker_newType(receiver, TypeFlagsIndex, ObjectFlagsNone, data);
 }
 
 /**

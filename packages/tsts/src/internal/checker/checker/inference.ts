@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { GoBigIntKey, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
+import { GoBigIntKey, GoMapIsNil, GoSliceIsNil, GoStructField, GoStructKey, NewGoStructMap } from "../../../go/compat.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -134,6 +134,7 @@ import type {
   TypeSystemPropertyName,
 } from "./state.js";
 import { Checker_instantiateType, Checker_getTypeFromTypeNode, Checker_mapType, Checker_getUnionType, Checker_getIntersectionType, Checker_getReducedType, Checker_getSimplifiedType, Checker_isGenericTupleType, Checker_maybeTypeOfKind, Checker_getConditionalType, Checker_isEmptyLiteralType, Checker_isEmptyArrayLiteralType, Checker_getWidenedLiteralTypeForInitializer, Checker_reportImplicitAny, Checker_IsEmptyAnonymousObjectType, Checker_getTemplateLiteralType, Checker_createTupleTypeEx, Checker_getElementTypes, Checker_isPatternLiteralType, Checker_isPatternLiteralPlaceholderType, Checker_isGenericMappedType, Checker_isArrayOrTupleType, Checker_getActualTypeVariable, Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getStringLiteralType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getTypeOfExpression, Checker_instantiateAnonymousType, Checker_instantiateMappedType, Checker_createDeferredTypeReference, Checker_newType, Checker_newObjectType, Checker_getPropertiesOfObjectType, Checker_getBaseTypes } from "./types.js";
+import { StringMappingTypeData, SubstitutionTypeData } from "./types.js";
 import { Checker_getTypeOfSymbol, Checker_getWriteTypeOfSymbol, Checker_instantiateSymbol, Checker_instantiateTypeWithAlias, Checker_instantiateTypeAlias, Checker_getDeclaredTypeOfSymbol, Checker_getNameTypeFromMappedType, Checker_isMappedTypeGenericIndexedAccess, Checker_getIndexedAccessTypeOrUndefined, Checker_substituteIndexedMappedType, Checker_isGenericIndexType, Checker_getIndexTypeForMappedType, Checker_mapTypeWithAlias, Checker_getSymbolOfDeclaration, Checker_registerForUnusedIdentifiersCheck, Checker_getIndexInfosOfType, Checker_getLiteralTypeFromProperty, Checker_getNonMissingTypeOfSymbol, Checker_hasBindableName, Checker_getParentOfSymbol, Checker_getPropertyOfObjectType, Checker_getIndexTypeOfType, Checker_resolveStructuredTypeMembers, Checker_setStructuredTypeMembers, Checker_newSymbol } from "./symbols.js";
 import { Checker_areTypeParametersIdentical, Checker_getConstraintOfTypeParameter, Checker_getConstraintFromTypeParameter, Checker_fillMissingTypeArguments, Checker_getMinTypeArgumentCount, Checker_isTypeParameterPossiblyReferenced, Checker_getTypeParameterFromMappedType, Checker_getOuterTypeParameters, Checker_getDeclaredTypeOfTypeParameter, Checker_getRestrictiveTypeParameter, Checker_getContextualTypeForArgument, Checker_getApplicableIndexInfos, Checker_checkIndexConstraintForIndexSignature, Checker_hasCorrectTypeArgumentArity, Checker_checkTypeArguments, Checker_getSignatureInstantiation } from "./signatures.js";
 import { Checker_checkSourceElement, Checker_error } from "./support.js";
@@ -1103,7 +1104,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   }
   const data = Type_AsObjectType(target);
   const key = getTypeInstantiationKey(typeArguments, newAlias, (t!.objectFlags & ObjectFlagsSingleSignatureType) !== 0);
-  if (data!.instantiations === undefined) {
+  if (GoMapIsNil(data!.instantiations)) {
     data!.instantiations = NewGoStructMap<CacheHashKey, GoPtr<Type>>(GoStructKey(
       [GoStructField((value: CacheHashKey) => value.Hi, GoBigIntKey), GoStructField((value: CacheHashKey) => value.Lo, GoBigIntKey)],
       ([Hi, Lo], source) => globalThis.Object.assign(globalThis.Object.create(globalThis.Object.getPrototypeOf(source)) as CacheHashKey, source, { Hi, Lo }),
@@ -1503,11 +1504,9 @@ export function Checker_getImpliedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
  * }
  */
 export function Checker_newStringMappingType(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, target: GoPtr<Type>): GoPtr<Type> {
-  const data = {
-    resolvedBaseConstraint: undefined,
-    target,
-  } as unknown as StringMappingType & ConstrainedType;
-  const t = Checker_newType(receiver, TypeFlagsStringMapping, ObjectFlagsNone, data as unknown as TypeData);
+  const data = new StringMappingTypeData();
+  data.target = target;
+  const t = Checker_newType(receiver, TypeFlagsStringMapping, ObjectFlagsNone, data);
   t!["symbol"] = symbol_;
   return t;
 }
@@ -1524,12 +1523,10 @@ export function Checker_newStringMappingType(receiver: GoPtr<Checker>, symbol_: 
  * }
  */
 export function Checker_newSubstitutionType(receiver: GoPtr<Checker>, baseType: GoPtr<Type>, constraint: GoPtr<Type>): GoPtr<Type> {
-  const data = {
-    resolvedBaseConstraint: undefined,
-    baseType,
-    constraint,
-  } as unknown as SubstitutionType & ConstrainedType;
-  return Checker_newType(receiver, TypeFlagsSubstitution, ObjectFlagsNone, data as unknown as TypeData);
+  const data = new SubstitutionTypeData();
+  data.baseType = baseType;
+  data.constraint = constraint;
+  return Checker_newType(receiver, TypeFlagsSubstitution, ObjectFlagsNone, data);
 }
 
 /**

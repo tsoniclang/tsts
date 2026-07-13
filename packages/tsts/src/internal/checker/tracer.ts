@@ -1,5 +1,5 @@
 import type { bool, int, uint } from "../../go/scalars.js";
-import { GoNilSlice, goReceiverKey } from "../../go/compat.js";
+import { GoNilSlice } from "../../go/compat.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import type { Node } from "../ast/spine.js";
@@ -203,6 +203,47 @@ export interface tracedTypeAdapter {
   checker: GoPtr<Checker>;
 }
 
+class TracedTypeAdapterValue implements tracedTypeAdapter, TracedType {
+  t: GoPtr<Type>;
+  checker: GoPtr<Checker>;
+
+  constructor(t: GoPtr<Type>, checker: GoPtr<Checker>) {
+    this.t = t;
+    this.checker = checker;
+  }
+
+  Id(): uint { return tracedTypeAdapter_Id(this); }
+  FormatFlags(): GoSlice<string> { return tracedTypeAdapter_FormatFlags(this); }
+  IsConditional(): bool { return tracedTypeAdapter_IsConditional(this); }
+  Symbol(): GoPtr<Symbol_0b94c68b> { return tracedTypeAdapter_Symbol(this); }
+  AliasSymbol(): GoPtr<Symbol_0b94c68b> { return tracedTypeAdapter_AliasSymbol(this); }
+  AliasTypeArguments(): GoSlice<GoInterface<TracedType>> { return tracedTypeAdapter_AliasTypeArguments(this); }
+  IntrinsicName(): string { return tracedTypeAdapter_IntrinsicName(this); }
+  UnionTypes(): GoSlice<GoInterface<TracedType>> { return tracedTypeAdapter_UnionTypes(this); }
+  IntersectionTypes(): GoSlice<GoInterface<TracedType>> { return tracedTypeAdapter_IntersectionTypes(this); }
+  IndexType(): GoInterface<TracedType> { return tracedTypeAdapter_IndexType(this); }
+  IndexedAccessObjectType(): GoInterface<TracedType> { return tracedTypeAdapter_IndexedAccessObjectType(this); }
+  IndexedAccessIndexType(): GoInterface<TracedType> { return tracedTypeAdapter_IndexedAccessIndexType(this); }
+  ConditionalCheckType(): GoInterface<TracedType> { return tracedTypeAdapter_ConditionalCheckType(this); }
+  ConditionalExtendsType(): GoInterface<TracedType> { return tracedTypeAdapter_ConditionalExtendsType(this); }
+  ConditionalTrueType(): GoInterface<TracedType> { return tracedTypeAdapter_ConditionalTrueType(this); }
+  ConditionalFalseType(): GoInterface<TracedType> { return tracedTypeAdapter_ConditionalFalseType(this); }
+  SubstitutionBaseType(): GoInterface<TracedType> { return tracedTypeAdapter_SubstitutionBaseType(this); }
+  SubstitutionConstraintType(): GoInterface<TracedType> { return tracedTypeAdapter_SubstitutionConstraintType(this); }
+  ReferenceTarget(): GoInterface<TracedType> { return tracedTypeAdapter_ReferenceTarget(this); }
+  ReferenceTypeArguments(): GoSlice<GoInterface<TracedType>> { return tracedTypeAdapter_ReferenceTypeArguments(this); }
+  ReferenceNode(): GoPtr<Node> { return tracedTypeAdapter_ReferenceNode(this); }
+  ReverseMappedSourceType(): GoInterface<TracedType> { return tracedTypeAdapter_ReverseMappedSourceType(this); }
+  ReverseMappedMappedType(): GoInterface<TracedType> { return tracedTypeAdapter_ReverseMappedMappedType(this); }
+  ReverseMappedConstraintType(): GoInterface<TracedType> { return tracedTypeAdapter_ReverseMappedConstraintType(this); }
+  EvolvingArrayElementType(): GoInterface<TracedType> { return tracedTypeAdapter_EvolvingArrayElementType(this); }
+  EvolvingArrayFinalType(): GoInterface<TracedType> { return tracedTypeAdapter_EvolvingArrayFinalType(this); }
+  IsTuple(): bool { return tracedTypeAdapter_IsTuple(this); }
+  Pattern(): GoPtr<Node> { return tracedTypeAdapter_Pattern(this); }
+  RecursionIdentity(): GoInterface<unknown> { return tracedTypeAdapter_RecursionIdentity(this); }
+  Display(): string { return tracedTypeAdapter_Display(this); }
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e"}
  *
@@ -314,7 +355,7 @@ export function tracedTypeAdapter_IntrinsicName(receiver: GoPtr<tracedTypeAdapte
   if ((receiver!.t!.flags & TypeFlagsIntrinsic) === 0) {
     return "";
   }
-  const data = receiver!.t!.data![goReceiverKey] as GoPtr<IntrinsicType>;
+  const data = receiver!.t!.data!.__tsgoGoReceiver() as GoPtr<IntrinsicType>;
   if (data === undefined) {
     return "";
   }
@@ -881,39 +922,7 @@ export function wrapType(t: GoPtr<Type>): GoInterface<TracedType> {
   if (t === undefined) {
     return undefined;
   }
-  const a: tracedTypeAdapter = { t, checker: t.checker };
-  return {
-    Id: () => tracedTypeAdapter_Id(a),
-    FormatFlags: () => tracedTypeAdapter_FormatFlags(a),
-    IsConditional: () => tracedTypeAdapter_IsConditional(a),
-    Symbol: () => tracedTypeAdapter_Symbol(a),
-    AliasSymbol: () => tracedTypeAdapter_AliasSymbol(a),
-    AliasTypeArguments: () => tracedTypeAdapter_AliasTypeArguments(a),
-    IntrinsicName: () => tracedTypeAdapter_IntrinsicName(a),
-    UnionTypes: () => tracedTypeAdapter_UnionTypes(a),
-    IntersectionTypes: () => tracedTypeAdapter_IntersectionTypes(a),
-    IndexType: () => tracedTypeAdapter_IndexType(a),
-    IndexedAccessObjectType: () => tracedTypeAdapter_IndexedAccessObjectType(a),
-    IndexedAccessIndexType: () => tracedTypeAdapter_IndexedAccessIndexType(a),
-    ConditionalCheckType: () => tracedTypeAdapter_ConditionalCheckType(a),
-    ConditionalExtendsType: () => tracedTypeAdapter_ConditionalExtendsType(a),
-    ConditionalTrueType: () => tracedTypeAdapter_ConditionalTrueType(a),
-    ConditionalFalseType: () => tracedTypeAdapter_ConditionalFalseType(a),
-    SubstitutionBaseType: () => tracedTypeAdapter_SubstitutionBaseType(a),
-    SubstitutionConstraintType: () => tracedTypeAdapter_SubstitutionConstraintType(a),
-    ReferenceTarget: () => tracedTypeAdapter_ReferenceTarget(a),
-    ReferenceTypeArguments: () => tracedTypeAdapter_ReferenceTypeArguments(a),
-    ReferenceNode: () => tracedTypeAdapter_ReferenceNode(a),
-    ReverseMappedSourceType: () => tracedTypeAdapter_ReverseMappedSourceType(a),
-    ReverseMappedMappedType: () => tracedTypeAdapter_ReverseMappedMappedType(a),
-    ReverseMappedConstraintType: () => tracedTypeAdapter_ReverseMappedConstraintType(a),
-    EvolvingArrayElementType: () => tracedTypeAdapter_EvolvingArrayElementType(a),
-    EvolvingArrayFinalType: () => tracedTypeAdapter_EvolvingArrayFinalType(a),
-    IsTuple: () => tracedTypeAdapter_IsTuple(a),
-    Pattern: () => tracedTypeAdapter_Pattern(a),
-    RecursionIdentity: () => tracedTypeAdapter_RecursionIdentity(a),
-    Display: () => tracedTypeAdapter_Display(a),
-  };
+  return new TracedTypeAdapterValue(t, t.checker);
 }
 
 /**

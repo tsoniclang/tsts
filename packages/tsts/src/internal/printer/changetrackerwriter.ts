@@ -1,9 +1,8 @@
 import type { bool, int } from "../../go/scalars.js";
-import { goReceiverKey } from "../../go/compat.js";
 import type { GoInterfaceValue, GoMap, GoPtr } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import type { ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
-import { Node_Clone, Node_End, Node_ForEachChild, Node_Pos, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone, NodeList_End, NodeList_Pos } from "../ast/spine.js";
+import { Node_Clone, Node_ForEachChild, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { NodeVisitor } from "../ast/visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitNodes } from "../ast/visitor.js";
@@ -84,35 +83,16 @@ export interface triviaPositionKey extends GoInterfaceValue<GoPtr<Node> | GoPtr<
   End(): int;
 }
 
-// `*ast.Node` satisfies `triviaPositionKey` (it has Pos()/End()). The method-bearing
-// adapter carries the underlying receiver via the goReceiver brand so the change
-// tracker's maps can key on pointer identity.
-const nodeTriviaPositionKeys = new WeakMap<Node, triviaPositionKey>();
-const nodeListTriviaPositionKeys = new WeakMap<NodeList, triviaPositionKey>();
+// Both concrete pointer implementations carry the interface method set directly.
+// Keeping that same concrete value as the map key preserves Go's dynamic-type and
+// pointer-identity comparison without a wrapper object or side-table cache.
 
 function Node_as_triviaPositionKey(receiver: GoPtr<Node>): triviaPositionKey {
-  let value = nodeTriviaPositionKeys.get(receiver!);
-  if (value !== undefined) return value;
-  value = {
-    [goReceiverKey]: receiver,
-    Pos: (): int => Node_Pos(receiver),
-    End: (): int => Node_End(receiver),
-  };
-  nodeTriviaPositionKeys.set(receiver!, value);
-  return value;
+  return receiver as Node & triviaPositionKey;
 }
 
-// `*ast.NodeList` satisfies `triviaPositionKey` as well.
 function NodeList_as_triviaPositionKey(receiver: GoPtr<NodeList>): triviaPositionKey {
-  let value = nodeListTriviaPositionKeys.get(receiver!);
-  if (value !== undefined) return value;
-  value = {
-    [goReceiverKey]: receiver,
-    Pos: (): int => NodeList_Pos(receiver),
-    End: (): int => NodeList_End(receiver),
-  };
-  nodeListTriviaPositionKeys.set(receiver!, value);
-  return value;
+  return receiver as NodeList & triviaPositionKey;
 }
 
 /**
