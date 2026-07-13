@@ -91,8 +91,7 @@ test("compat declares one exact family of nilability carriers", () => {
   assert.match(source, /if \(GoChanIsNil\(channel\)\) return false as bool;/);
   assert.match(source, /export type GoFunc<F> = GoNilable<F>;/);
   assert.match(source, /export type GoInterface<I> = GoNilable<I>;/);
-  assert.match(source, /export type GoSeq<T> = GoFunc<\(yieldValue: \(value: T\) => bool\) => void>;/);
-  assert.match(source, /export type GoSeq2<K, V> = GoFunc<\(yieldValue: \(key: K, value: V\) => bool\) => void>;/);
+  assert.doesNotMatch(source, /\bGoSeq2?\b/);
   assert.match(source, /export type GoError = GoInterface<Error>;/);
   assert.match(source, /export type GoUnsafePointer = GoNilable<\{ readonly \[goUnsafePointerBrand\]: never \}>;/);
   assert.doesNotMatch(source, /Nilable extends boolean/);

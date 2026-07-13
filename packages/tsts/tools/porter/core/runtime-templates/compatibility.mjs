@@ -29,8 +29,6 @@ export type GoChan<T, Direction extends string = "bidirectional"> = {
 };
 export type GoFunc<F> = GoNilable<F>;
 export type GoInterface<I> = GoNilable<I>;
-export type GoSeq<T> = GoFunc<(yieldValue: (value: T) => bool) => void>;
-export type GoSeq2<K, V> = GoFunc<(yieldValue: (key: K, value: V) => bool) => void>;
 export type GoError = GoInterface<Error>;
 export type GoComparable = unknown;
 export type GoOrdered = string | number | bigint | bool;
