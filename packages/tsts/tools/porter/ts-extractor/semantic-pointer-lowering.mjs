@@ -2,7 +2,7 @@ import { buildDependencySemanticTypeIndex, requireExternalFacadeStorageView } fr
 import { assertSemanticNilability } from "../core/semantic-type-nilability.mjs";
 import { buildDeclaredTypeContractIndex } from "./semantic-named-nilability.mjs";
 
-const directReferenceTerminals = new Set(["basic", "channel", "interface", "map", "pointer", "signature", "slice"]);
+const directSlotTerminals = new Set(["basic", "channel", "interface", "map", "pointer", "signature", "slice"]);
 
 export function buildTypeRepresentationEvidence(config, snapshot, facades) {
   const facadeScope = requireExternalFacadeStorageView(facades, config, snapshot);
@@ -109,12 +109,12 @@ function pointeeRepresentation(type, context, resolving) {
   if (!type || typeof type.kind !== "string") throw new Error("Go pointer has no canonical pointee type");
   assertSemanticNilability(type, "canonical Go pointer pointee");
   if (type.kind === "array" || type.kind === "struct") return "aggregate";
-  if (directReferenceTerminals.has(type.kind)) return "reference";
+  if (directSlotTerminals.has(type.kind)) return "slot";
   if (type.kind === "typeParameter") return typeParameterRepresentation(type, context, resolving);
   if (type.kind !== "named" && type.kind !== "alias") throw new Error(`cannot choose GoRef versus GoPtr for canonical Go ${type.kind} pointee`);
   const objectId = type.reference?.objectId;
   if (typeof objectId !== "string" || objectId === "") throw new Error("canonical named/alias Go pointee has no exact object identity");
-  if (objectId === "builtin::type::any" || objectId === "builtin::type::error") return "reference";
+  if (objectId === "builtin::type::any" || objectId === "builtin::type::error") return "slot";
   if (resolving.has(objectId)) throw new Error(`Go pointer pointee declaration RHS cycle at '${objectId}'`);
   const declaration = context.index.declaredTypeContractsByProfile?.get(context.profile)?.get(objectId);
   if (declaration !== undefined) {
@@ -139,9 +139,9 @@ function pointeeRepresentation(type, context, resolving) {
 function typeParameterRepresentation(type, context, resolving) {
   const key = typeParameterKey(type.typeParameter);
   const constraint = context.typeParameterConstraints?.get(key);
-  if (constraint === undefined) return "polymorphic";
+  if (constraint === undefined) return "slot";
   const representations = constraintRepresentations(constraint, context, resolving, new Set());
-  if (representations === undefined || representations.size !== 1) return "polymorphic";
+  if (representations === undefined || representations.size !== 1) return "slot";
   return representations.values().next().value;
 }
 
@@ -193,7 +193,7 @@ function dependencyPointerTerminalForProfile(objectId, contracts, resolving) {
     const terminal = dependencyTypeTerminal(contract.semanticType, contracts, resolving);
     if (terminal !== "aggregate") return terminal;
     if (contract.pointerStorage === "aggregate") return "aggregate";
-    if (contract.pointerStorage === "slot") return "reference";
+    if (contract.pointerStorage === "slot") return "slot";
     return undefined;
   } finally {
     resolving.delete(objectId);
@@ -202,8 +202,8 @@ function dependencyPointerTerminalForProfile(objectId, contracts, resolving) {
 
 function dependencyTypeTerminal(type, contracts, resolving) {
   if (type?.kind === "array" || type?.kind === "struct") return "aggregate";
-  if (directReferenceTerminals.has(type?.kind)) return "reference";
-  if (type?.kind === "typeParameter") return "polymorphic";
+  if (directSlotTerminals.has(type?.kind)) return "slot";
+  if (type?.kind === "typeParameter") return "slot";
   if (type?.kind !== "named" && type?.kind !== "alias") return undefined;
   const objectId = type.reference?.objectId;
   return typeof objectId === "string" ? dependencyPointerTerminalForProfile(objectId, contracts, resolving) : undefined;

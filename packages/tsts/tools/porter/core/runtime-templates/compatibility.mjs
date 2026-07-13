@@ -45,6 +45,20 @@ declare const goUnsafePointerBrand: unique symbol;
 export type GoUnsafePointer = GoNilable<{ readonly [goUnsafePointerBrand]: never }>;
 export type GoRune = int;
 
+export function GoValueRef<T>(value: T): NonNullable<GoRef<T>> {
+  return { v: value } as NonNullable<GoRef<T>>;
+}
+
+export function GoSliceElementRef<T>(slice: GoSlice<T>, index: int): NonNullable<GoRef<T>> {
+  if (!Number.isSafeInteger(index) || index < 0 || index >= slice.length) {
+    throw new RangeError("index out of range");
+  }
+  return {
+    get v(): T { return slice[index]!; },
+    set v(value: T) { slice[index] = value; },
+  } as NonNullable<GoRef<T>>;
+}
+
 export function GoRequireNonNilAfterSuccess<T>(value: GoPtr<T>, operation: string): T {
   if (value === undefined) {
     throw new TypeError(\`\${operation} returned nil after success\`);

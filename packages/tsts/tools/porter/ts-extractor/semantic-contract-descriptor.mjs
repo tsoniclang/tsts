@@ -19,12 +19,6 @@ export function semanticContractDescriptor(contract, context, operations, option
     }
     case "pointer": {
       const element = semanticContractDescriptor(contract.element, context, operations);
-      if (contract.representation === "polymorphic") {
-        if (operations.polymorphicPointerDescriptor === undefined) {
-          throw new Error("representation-polymorphic Go pointer has no exact descriptor reporting contract");
-        }
-        return operations.polymorphicPointerDescriptor(element, contract);
-      }
       return {
         t: "ref",
         id: operations.pointerCarrierId(contract.representation, contract),
